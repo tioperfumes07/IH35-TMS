@@ -218,7 +218,8 @@ export function DeductionsSection({ rows, onHold, onResume, isOpen, onAdd, onEdi
         </Button>
       }
     >
-      <ParityTable
+      <ParityTable appearance="board"
+           
         columns={columns}
         rows={rows}
         rowKey={(row) => row.id}

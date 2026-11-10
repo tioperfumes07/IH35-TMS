@@ -83,12 +83,24 @@ function checkFindings() {
   }
 
   const parity = read("apps/frontend/src/components/parity/ParityTable.tsx");
-  if (!/kind === "money"[\s\S]{0,120}text-ellipsis|moneyNoEllipsis|never ellipsis money/i.test(parity)
-    && !/isMoneyKind|kind === "money"/.test(parity)) {
-    // softer: require explicit money path that avoids ellipsis class pairing
-  }
   if (!/moneyNeverEllipsis|kind === "money" \?/.test(parity)) {
     fails.push('B1/shared: ParityTable must not ellipsis kind:"money" cells');
+  }
+
+  const truckMap = read("apps/frontend/src/pages/fleet/components/TruckServiceMap.tsx");
+  if (!/truckProfileBoardSvgHtml/.test(truckMap) || !/Odometer · Samsara/.test(truckMap)) {
+    fails.push("TruckProfile: TruckServiceMap must embed board SVG + Odometer/Now/Driver/Load chips");
+  }
+  if (!fs.existsSync(path.join(ROOT, "apps/frontend/src/pages/fleet/components/truckProfileBoardSvg.ts"))) {
+    fails.push("TruckProfile: missing truckProfileBoardSvg.ts (990×520 board SVG)");
+  }
+
+  const shopBay = read("apps/frontend/src/pages/maintenance/components/InShopBoard.tsx");
+  if (!/ShopBayFloorSvg/.test(shopBay)) {
+    fails.push("ShopBays: InShopBoard must mount ShopBayFloorSvg board floor graphics");
+  }
+  if (!fs.existsSync(path.join(ROOT, "apps/frontend/src/pages/maintenance/components/ShopBayFloorSvg.tsx"))) {
+    fails.push("ShopBays: missing ShopBayFloorSvg.tsx (300×330 bay SVG)");
   }
 
   return fails;

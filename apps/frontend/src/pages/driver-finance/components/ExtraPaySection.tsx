@@ -110,7 +110,8 @@ export function ExtraPaySection({ lines, isOpen, operatingCompanyId }: Props) {
         </Button>
       }
     >
-      <ParityTable
+      <ParityTable appearance="board"
+           
         columns={COLUMNS}
         rows={lines}
         rowKey={(line) => line.id}

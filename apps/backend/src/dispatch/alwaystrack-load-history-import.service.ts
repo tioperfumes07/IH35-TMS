@@ -12,6 +12,9 @@
  */
 import { randomUUID } from "node:crypto";
 import { bookLoadOnClient, type BookLoadInput } from "./book-load.service.js";
+import { canonicalBookedNotCancelledLoadClause } from "./canonical-active-load-set.js";
+import { ACTIVE_UNIT_STATUSES } from "./unit-active-load-guard.js";
+import { proposedExpenseLoadsMessage, proposedExpenseLoadsOnSettlement } from "../accounting/expense-load-confirmation.service.js";
 import { withCompanyScope } from "../accounting/db-scope.js";
 import { findCreatorCustomer } from "../driver-finance/settlement-creator-seed-loads.js";
 import { creatorLoadTrailerEquipmentId, printedTrailerChoice } from "../driver-finance/creator-trailer-choice.js";
@@ -108,6 +111,35 @@ async function resolveUnit(client: Q, opco: string, truck: string): Promise<stri
   if (r.rows.length === 1) return r.rows[0]!.id;
   if (!r.rows.length) throw new RowRefusal("unit_unmatched", `Truck "${truck}" is not an active unit of this company.`);
   throw new RowRefusal("unit_ambiguous", `Truck "${truck}" matches ${r.rows.length} units.`);
+}
+
+/**
+ * ACCT-F11108 part 3 — the driver's current trip: an open, untripped, unposted pre-settlement that still holds a live NB of his
+ * (the exact set presettlement-link.service.ts cannot join and uq_driver_settlements_one_open_per_driver forbids a second of).
+ */
+async function openTripHoldingNb(client: Q, opco: string, driverId: string): Promise<{ id: string; display_id: string | null; loads: string; in_motion: boolean } | null> {
+  const r = await client.query<{ id: string; display_id: string | null; loads: string | null; in_motion: boolean }>(
+    `SELECT s.id::text, s.display_id,
+            (SELECT string_agg(nb.load_number || ' ' || nb.status::text, ', ' ORDER BY nb.load_number) FROM mdata.loads nb
+              WHERE nb.operating_company_id = s.operating_company_id
+                AND (nb.presettlement_link_id = s.id OR nb.id = s.first_load_id) AND nb.soft_deleted_at IS NULL) AS loads,
+            EXISTS (SELECT 1 FROM mdata.loads m
+                     WHERE m.operating_company_id = s.operating_company_id
+                       AND (m.presettlement_link_id = s.id OR m.id = s.first_load_id) AND m.soft_deleted_at IS NULL
+                       AND m.status::text = ANY($3::text[])) AS in_motion
+       FROM driver_finance.driver_settlements s
+      WHERE s.operating_company_id = $1::uuid AND s.driver_id = $2::uuid AND s.status = 'open'
+        AND s.trip_closed_at IS NULL AND s.voided_at IS NULL
+        AND EXISTS (SELECT 1 FROM mdata.loads nb
+                     WHERE nb.operating_company_id = s.operating_company_id
+                       AND (nb.presettlement_link_id = s.id OR nb.id = s.first_load_id)
+                       AND nb.trip_type = 'NB' AND nb.assigned_primary_driver_id IS NOT DISTINCT FROM s.driver_id
+                       AND nb.soft_deleted_at IS NULL AND ${canonicalBookedNotCancelledLoadClause("nb")})
+      ORDER BY s.created_at DESC LIMIT 1`,
+    [opco, driverId, [...ACTIVE_UNIT_STATUSES]],
+  );
+  const o = r.rows[0];
+  return o ? { id: o.id, display_id: o.display_id, loads: o.loads ?? "none", in_motion: Boolean(o.in_motion) } : null;
 }
 
 export type CardRate = { loadedCents: number; emptyCents: number | null };
@@ -225,6 +257,30 @@ async function processRow(
     tourId = randomUUID();
   }
 
+  // ACCT-F11108 part 3 (measured 2026-11-09: 13 of 18 rows previewed "would book" and the commit then refused
+  // uq_driver_settlements_one_open_per_driver). A new NB tour opens a new pre-settlement; one open pre-settlement per driver
+  // is his current trip (SET-01), so while his current trip is open and still holds a live NB, the engine cannot open another.
+  // Closing a trip is the human-confirmed step (SET-01: "Closing is human-confirmed") — never done here. The row is refused
+  // BEFORE the preview answers, naming the open trip, so a preview says what the commit will do.
+  if (tripType === "NB") {
+    const open = await openTripHoldingNb(client, ctx.opco, driverId);
+    if (open) {
+      throw new RowRefusal(
+        "driver_trip_open",
+        `Load ${row.load_number}: driver ${row.driver_name}'s trip ${open.display_id ?? open.id} (loads ${open.loads}) is still open — ` +
+          (open.in_motion
+            ? `a load on it is still in motion; deliver it and close that trip, then re-run this file`
+            : await (async () => {
+                const proposed = await proposedExpenseLoadsOnSettlement(client as never, ctx.opco, open.id);
+                return proposed.length
+                  ? `${proposedExpenseLoadsMessage(proposed)} Then close that trip and re-run this file`
+                  : `close that trip (Close trip) and re-run this file`;
+              })()) +
+          `; this load starts a new trip (AlwaysTrack Settl.# ${settlement ?? "none"}).`,
+      );
+    }
+  }
+
   const planned: LoadHistoryRowResult = {
     ...base,
     outcome: disposition === "deliver" ? "would_book_delivered" : "would_book_dispatched",
@@ -311,7 +367,33 @@ export async function importAlwaysTrackLoadHistory(input: {
   const ordered = [...parsed.rows].sort((a, b) => (a.pickup_date === b.pickup_date ? a.load_number.localeCompare(b.load_number) : a.pickup_date.localeCompare(b.pickup_date)));
   const tours = new Map<string, string>();
   const results: LoadHistoryRowResult[] = [];
+  // ACCT-F11108 part 3 — pickup order is kept per driver and per truck: once a row is refused, a LATER row of that driver or
+  // truck that would stay IN MOTION (AT Dispatched) is held, never booked ahead of it — an in-motion load holds the truck and
+  // the driver's open trip, and refuses the earlier, already-ran load on every re-run. (A later Completed row is delivered in
+  // its own transaction and holds neither, so it still books.) Measured 2026-11-09: the first prod run refused 13708 /
+  // 13715 / 13728 and still booked the later 13727 / 13729 / 13735 (Dispatched), whose open trips and in-motion trucks then
+  // refused the earlier, already-ran loads on every re-run.
+  const refusedDriver = new Map<string, string>();
+  const refusedTruck = new Map<string, string>();
   for (const row of ordered) {
+    const dKey = driverKey(row.driver_name);
+    const tKey = row.truck_number.trim().toUpperCase();
+    const earlier = dispositionFor(row.at_status) === "dispatch" ? refusedDriver.get(dKey) ?? refusedTruck.get(tKey) : undefined;
+    if (earlier) {
+      results.push({
+        load_number: row.load_number,
+        outcome: "refused",
+        at_status: row.at_status,
+        charges_cents: row.charges_cents,
+        refusal: {
+          code: "earlier_load_refused",
+          message: `Load ${row.load_number}: held behind load ${earlier} (same driver or truck, earlier pickup), which was refused — an in-motion load is never booked ahead of an earlier load that already ran.`,
+        },
+      });
+      refusedDriver.set(dKey, refusedDriver.get(dKey) ?? earlier);
+      refusedTruck.set(tKey, refusedTruck.get(tKey) ?? earlier);
+      continue;
+    }
     try {
       const { result, afterCommit } = await scope((client) =>
         processRow(client, { actor: input.actor, opco: input.operatingCompanyId, companyCode, commit: input.commit, tours }, row),
@@ -327,6 +409,11 @@ export async function importAlwaysTrackLoadHistory(input: {
         charges_cents: row.charges_cents,
         refusal: { code, message: err instanceof Error ? err.message : String(err) },
       });
+    }
+    const last = results[results.length - 1]!;
+    if (last.outcome === "refused") {
+      refusedDriver.set(dKey, row.load_number);
+      refusedTruck.set(tKey, row.load_number);
     }
   }
   const tally = (pred: (r: LoadHistoryRowResult) => boolean) => {
