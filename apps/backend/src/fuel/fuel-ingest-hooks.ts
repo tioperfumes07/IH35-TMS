@@ -17,7 +17,7 @@ import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs
 import { withLuciaBypass } from "../auth/db.js";
 import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
 import { runFuelFollowsTruckSweep } from "./fuel-follows-truck-sweep.js";
-import { listRelayFillDocumentsWithoutRecords, recordAndLinkRelayFillDocument } from "./fuel-expense-document.service.js";
+import { listRelayFillDocumentsWithoutRecords, recordAndLinkRelayFillDocument, relayFillRunVerdict } from "./fuel-expense-document.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { rematchRelayFuelDrivers } from "../integrations/relay-payments/relay-fuel-driver-rematch.service.js";
 import { isUsmcaOperatingCompany } from "../integrations/relay-payments/relay-usmca-date-floor.js";
@@ -81,7 +81,7 @@ export async function onFuelIngestComplete(
       const companies = (companyIds ?? (await withLuciaBypass(async (client) =>
         (await client.query<{ id: string }>(`SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`)).rows.map((r) => r.id))))
         .filter((id) => isUsmcaOperatingCompany(id));
-      const refused: string[] = [];
+      const results: Array<{ relay_fill_id: string; outcome: string; reason: string | null }> = [];
       for (const id of companies) {
         const docs = await withLuciaBypass(async (client) => {
           await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
@@ -94,11 +94,15 @@ export async function onFuelIngestComplete(
             return recordAndLinkRelayFillDocument(client as never, { operating_company_id: id, ...d, actor_user_uuid: SYSTEM_ACTOR_USER_ID });
           });
           tally[r.outcome] = (tally[r.outcome] ?? 0) + 1;
-          if (r.outcome !== "linked") refused.push(`${d.relay_fill_id}: ${r.reason}`);
+          results.push({ relay_fill_id: d.relay_fill_id, outcome: r.outcome, reason: r.reason });
         }
         log.info({ operating_company_id: id, documents: docs.length, ...tally, source }, "[FUEL_INGEST_HOOK] relay fill records");
       }
-      if (refused.length) throw new Error(`relay_fill_records_refused (${refused.length}): ${refused.slice(0, 5).join(" | ")}`);
+      // ACCT-F11107: already-recorded (voided-duplicate) fills are done; a fill refused by name is audited and logged with its
+      // reason (a decision for a person), and does not fail the run. Only an unexplained non-link throws.
+      const { failures, refusals } = relayFillRunVerdict(results);
+      if (refusals.length) log.warn({ refusals: refusals.slice(0, 20), count: refusals.length, source }, "[FUEL_INGEST_HOOK] relay fills refused by name (audited)");
+      if (failures.length) throw new Error(`relay_fill_records_unlinked (${failures.length}): ${failures.slice(0, 5).join(" | ")}`);
     },
     log,
     { leaseSeconds: JOB_LEASE_SECONDS }
