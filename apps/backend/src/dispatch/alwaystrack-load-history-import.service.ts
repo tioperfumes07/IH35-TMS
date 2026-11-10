@@ -20,9 +20,10 @@ import {
   type AlwaysTrackLoadHistoryRow,
   dispositionFor,
   driverKey,
+  emptyPayMiles,
   isLocalMove,
+  loadedPayMiles,
   parseAlwaysTrackLoadHistory,
-  payMiles,
   practicalMiles,
   stopCountry,
 } from "./alwaystrack-load-history-import.js";
@@ -109,31 +110,39 @@ async function resolveUnit(client: Q, opco: string, truck: string): Promise<stri
   throw new RowRefusal("unit_ambiguous", `Truck "${truck}" matches ${r.rows.length} units.`);
 }
 
-async function activeCardRateCents(client: Q, opco: string, driverId: string): Promise<number | null> {
-  const r = await client.query<{ basis_type: string; c: number | null }>(
-    `SELECT basis_type, rate_per_mile_cents::float8 AS c FROM driver_finance.driver_pay_rates
+export type CardRate = { loadedCents: number; emptyCents: number | null };
+
+async function activeCardRate(client: Q, opco: string, driverId: string): Promise<CardRate | null> {
+  const r = await client.query<{ basis_type: string; c: number | null; e: number | null }>(
+    `SELECT basis_type, rate_per_mile_cents::float8 AS c, rate_empty_per_mile_cents::float8 AS e FROM driver_finance.driver_pay_rates
       WHERE operating_company_id = $1::uuid AND driver_id = $2::uuid AND is_active AND effective_to IS NULL
       ORDER BY effective_from DESC LIMIT 1`,
     [opco, driverId],
   );
   const row = r.rows[0];
-  return row && row.basis_type === "per_mile_pay" && row.c != null ? Number(row.c) : null;
+  if (!row || row.basis_type !== "per_mile_pay" || row.c == null) return null;
+  return { loadedCents: Number(row.c), emptyCents: row.e == null ? null : Number(row.e) };
 }
 
 /**
  * The GO-21 B5 reason-carrying override bookLoad already honors (the rate card is never edited): when AlwaysTrack paid a
  * per-mile rate the card would not, or paid nothing on a completed load, the load is booked at what was paid.
+ * AT pays ONE rate for both legs: the card matches only when its loaded rate is that rate AND — when the load has empty
+ * miles — its empty rate is too (null empty rate = the loaded rate, driver-finance/deadhead-rule.ts). An active override
+ * governs both legs at the same rate (book-load.service.ts), so the empty leg is never paid at a rate AT did not pay.
  */
 export function loadHistoryPayOverride(
-  row: Pick<AlwaysTrackLoadHistoryRow, "load_number" | "driver_pay" | "driver_rpm">,
+  row: Pick<AlwaysTrackLoadHistoryRow, "load_number" | "driver_pay" | "driver_rpm"> & Partial<Pick<AlwaysTrackLoadHistoryRow, "e_miles">>,
   disposition: "deliver" | "dispatch",
-  cardCents: number | null,
+  card: CardRate | null,
 ): { driver_pay_rate_per_mile: number; driver_pay_rate_override_reason: string } | null {
   const pay = Number(row.driver_pay ?? 0);
   const rpm = Number(row.driver_rpm ?? 0);
   if (pay > 0 && rpm > 0) {
     const rpmCents = Math.round(rpm * 100);
-    if (cardCents === rpmCents) return null;
+    const hasEmpty = emptyPayMiles({ driver_pay: row.driver_pay, driver_rpm: row.driver_rpm, e_miles: row.e_miles ?? null }) != null;
+    const emptyMatches = !hasEmpty || card?.emptyCents == null || card.emptyCents === rpmCents;
+    if (card?.loadedCents === rpmCents && emptyMatches) return null;
     return {
       driver_pay_rate_per_mile: rpmCents / 100,
       driver_pay_rate_override_reason: `AlwaysTrack load history load ${row.load_number}: driver paid $${(rpmCents / 100).toFixed(2)}/mi`,
@@ -188,11 +197,20 @@ async function processRow(
   if (!row.wo_number?.trim()) throw new RowRefusal("customer_po_or_wo_number_required", `Load ${row.load_number}: the export has no W.O. number.`);
 
   const practical = practicalMiles(row);
-  const short = payMiles(row) ?? practical;
+  const short = loadedPayMiles(row) ?? practical;
+  const empty = emptyPayMiles(row);
   if (disposition === "deliver" && (short == null || practical == null)) {
     throw new RowRefusal("miles_required", `Load ${row.load_number}: the export has no L.Miles / pay miles for a completed load.`);
   }
-  const payOverride = loadHistoryPayOverride(row, disposition, await activeCardRateCents(client, ctx.opco, driverId));
+  // The mdata.loads CHECK loads_miles_shortest_not_over_practical, checked BEFORE the preview answers, so a preview says what
+  // a commit will do (on 2026-11-09 the preview said "would book" 35 and the commit then refused 18 on this CHECK).
+  if (short != null && practical != null && short > practical) {
+    throw new RowRefusal(
+      "pay_miles_over_practical",
+      `Load ${row.load_number}: AlwaysTrack paid ${short} loaded miles (Driver Pay / R.P.M less ${empty ?? 0} E.Miles), more than its ${practical} L.Miles.`,
+    );
+  }
+  const payOverride = loadHistoryPayOverride(row, disposition, await activeCardRate(client, ctx.opco, driverId));
 
   const local = isLocalMove(row);
   let tripType: BookLoadInput["trip_type"];
@@ -237,6 +255,7 @@ async function processRow(
     load_trailer_equipment_id: trailerTypeId ?? undefined,
     miles_practical: practical ?? undefined,
     miles_shortest: short ?? undefined,
+    miles_deadhead: empty ?? undefined,
     mileage_source: "Operator entered",
     save_mode: "book_dispatch",
     addToOpenPresettlement: true,
