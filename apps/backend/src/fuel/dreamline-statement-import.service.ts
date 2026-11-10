@@ -158,7 +158,44 @@ export type DreamlineStatementLine = {
   discount_cents: number;
   net_cents: number;
   fee_cents: number;
+  /**
+   * ACCT-F11112 — false when the provider file prints no fill time (the WEX Transaction Report PDF: Tran Date only).
+   * transaction_at is then the company-zone noon placeholder: the fill moment is NEVER stamped from it and an imported
+   * row is written time_unknown (fill-truck-and-load holds it), exactly like a settlement-typed date.
+   */
+  time_known?: boolean;
+  /** ACCT-F11112 — the provider's own transaction id (WEX Enhanced Transaction Report "Transaction ID"), kept in the notes. */
+  provider_transaction_id?: string | null;
+  /**
+   * ACCT-F11112 — the truck this CARD carries on its other lines of the same file (withCardUnitFallback), used ONLY when
+   * the printed unit names no USMCA truck (WEX 94166 10-22, card 00154 typed unit "052"; the card's other 6 lines: 152).
+   */
+  unit_fallback_label?: string | null;
 };
+
+/**
+ * ACCT-F11112 — pure: each card's dominant unit in this file (the unit on more than half its lines). A line whose printed
+ * unit differs carries that dominant unit as its fallback; the engine uses it only when the printed unit is no truck.
+ */
+export function withCardUnitFallback<T extends Pick<DreamlineStatementLine, "card_number" | "unit_label" | "unit_fallback_label">>(lines: T[]): T[] {
+  const byCard = new Map<string, Map<string, number>>();
+  const key = (c: string) => c.replace(/\D+/g, "").slice(-4);
+  for (const l of lines) {
+    const u = (l.unit_label ?? "").trim();
+    if (!u) continue;
+    const m = byCard.get(key(l.card_number)) ?? new Map<string, number>();
+    m.set(u, (m.get(u) ?? 0) + 1);
+    byCard.set(key(l.card_number), m);
+  }
+  return lines.map((l) => {
+    const m = byCard.get(key(l.card_number));
+    if (!m) return l;
+    const total = [...m.values()].reduce((a, b) => a + b, 0);
+    const [top, n] = [...m.entries()].sort((a, b) => b[1] - a[1])[0]!;
+    if (n * 2 <= total || top === (l.unit_label ?? "").trim()) return l;
+    return { ...l, unit_fallback_label: top };
+  });
+}
 
 export type DreamlineLineOutcome =
   | "pre_cutoff"
@@ -795,8 +832,9 @@ export async function importFuelCardStatement(
       throw new Error(`${rail.key}_import_requires_posting_on_receipt: FUEL_POSTS_ON_RECEIPT_ENABLED and EXPENSE_GL_POSTING_ENABLED must be ON`);
     }
   }
-  const cardType = (await client.query<{ id: string }>(
-    `SELECT id::text FROM catalogs.fuel_card_types WHERE operating_company_id = $1::uuid AND code = $2 AND is_active LIMIT 1`,
+  const cardType = (await client.query<{ id: string; inactive_from: string | null }>(
+    `SELECT id::text, NULLIF(metadata ->> 'inactive_from', '') AS inactive_from
+       FROM catalogs.fuel_card_types WHERE operating_company_id = $1::uuid AND code = $2 AND is_active LIMIT 1`,
     [companyId, rail.card_type_code]
   )).rows[0];
   if (!cardType) throw new Error(`${rail.key}_card_type_missing`);
@@ -853,6 +891,22 @@ export async function importFuelCardStatement(
       h = crypto.createHash("sha256").update(`${base}:reissue:${n}`).digest("hex");
     }
   };
+  // ACCT-F11112 — the PROVIDER identity of a line already imported by an earlier statement run of this card: card (last 4)
+  // + provider invoice + product (+ its position on the ticket). The line hash also carries the fill instant, so the same
+  // ticket re-read from a file that prints a different clock (the WEX Transaction Report PDF prints the date only; the
+  // .csv prints Tran Time) hashed differently and the plan listed 9 live WEX fills (T148 93567 / 14284 / 04974, T175
+  // 78679 / 80999, T174 17938) as "imported" a second time. Counted per key from the live statement rows of this rail.
+  const liveProviderKeys = new Map<string, number>();
+  for (const r of (await client.query<{ k: string }>(
+    `SELECT concat_ws('|', substring(notes from 'card=…([0-9]{1,4})'), transaction_reference, fuel_type::text) AS k
+       FROM fuel.fuel_transactions
+      WHERE operating_company_id = $1::uuid AND fuel_card_id = $2::uuid AND voided_at IS NULL AND archived_at IS NULL
+        AND transaction_reference IS NOT NULL AND notes LIKE '%' || $3::text || '%'`,
+    [companyId, cardType.id, rail.notes_tag]
+  )).rows) liveProviderKeys.set(r.k, (liveProviderKeys.get(r.k) ?? 0) + 1);
+  const providerKeyOf = (line: DreamlineStatementLine) =>
+    [line.card_number.replace(/\D+/g, "").slice(-4), line.efs_invoice, line.product].join("|");
+
   const adoptedMarkers = new Map<string, string>();
   for (const b of booked) {
     for (const m of (b.notes ?? "").match(new RegExp(`${rail.marker_prefix}=[^;\\s]+`, "g")) ?? []) adoptedMarkers.set(m, b.expense_id);
@@ -872,7 +926,8 @@ export async function importFuelCardStatement(
   // line may fall back to another truck's receipt (the inline fallback below).
   const sameTruckPlan = planDreamlineSameTruckAdoptions(
     keyed
-      .filter((k) => k.line.local_date >= start && k.line.product !== "scale" && !lineIsLive(k.hash) && !adoptedMarkers.has(k.marker))
+      .filter((k) => k.line.local_date >= start && k.line.product !== "scale" && !lineIsLive(k.hash) && !adoptedMarkers.has(k.marker)
+        && k.seq > (liveProviderKeys.get(providerKeyOf(k.line)) ?? 0))
       .map((k) => k.line),
     booked,
     used
@@ -880,10 +935,16 @@ export async function importFuelCardStatement(
 
   for (const { line, fillKey, seq, hash, marker } of keyed) {
     if (line.local_date < start) { record(line, "pre_cutoff"); continue; }
+    // ACCT-F11112 — the card rail is closed from this date (fuel_card_types.metadata.inactive_from; the DB trigger
+    // trg_refuse_fuel_on_inactive_card refuses the row): listed for the owner's review, nothing written.
+    if (cardType.inactive_from && line.local_date >= cardType.inactive_from) {
+      record(line, "unresolved", { reason: `the ${rail.label} card is inactive from ${cardType.inactive_from} — listed for review, nothing written` });
+      continue;
+    }
     if (!feeSeen.has(fillKey)) { feeSeen.add(fillKey); summary.fees_not_posted_cents += line.fee_cents; }
-    if (lineIsLive(hash) || adoptedMarkers.has(marker)) {
+    if (lineIsLive(hash) || adoptedMarkers.has(marker) || seq <= (liveProviderKeys.get(providerKeyOf(line)) ?? 0)) {
       if (adoptedMarkers.has(marker)) used.add(adoptedMarkers.get(marker)!);
-      if (!dry || stampOnly) {
+      if ((!dry || stampOnly) && line.time_known !== false) {
         await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, marker, hash });
       }
       record(line, "already_imported");
@@ -930,7 +991,7 @@ export async function importFuelCardStatement(
           }
           if (hit.fuel_transaction_id) {
             await stampDreamlineReceiptAdopted(client, { companyId, fuelTransactionId: hit.fuel_transaction_id, marker });
-            await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: hit.fuel_transaction_id });
+            if (line.time_known !== false) await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: hit.fuel_transaction_id });
           }
         } else if (diff !== 0) summary.difference_posted_cents += diff;
         used.add(hit.expense_id); // adopted (stamped above; the dry run computes the same plan)
@@ -940,13 +1001,17 @@ export async function importFuelCardStatement(
     }
 
     // Not on the books -> import through the one poster / the one expense writer.
-    const unit = (await client.query<{ id: string }>(
+    const truckNumbered = async (label: string | null | undefined) => (await client.query<{ id: string }>(
       `SELECT id::text FROM mdata.units
         WHERE COALESCE(currently_leased_to_company_id, owner_company_id) = $1::uuid
           AND upper(regexp_replace(unit_number, '^[Tt]', '')) = $2 AND deactivated_at IS NULL
         ORDER BY (upper(unit_number) LIKE 'T%') DESC LIMIT 1`,
-      [companyId, unitNorm(line.unit_label)]
+      [companyId, unitNorm(label)]
     )).rows[0];
+    let unit = await truckNumbered(line.unit_label);
+    // ACCT-F11112 — the printed unit is no USMCA truck: the card's own truck on its other lines of this file.
+    const unitFromCard = !unit && line.unit_fallback_label ? line.unit_fallback_label : null;
+    if (unitFromCard) unit = await truckNumbered(unitFromCard);
     if (!unit) { record(line, "unresolved", { reason: `no USMCA truck numbered ${line.unit_label ?? "(blank)"}` }); continue; }
     const vendorName = dreamlineMerchantVendorName(line.location_name);
     const vendor = vendorName
@@ -1034,7 +1099,10 @@ export async function importFuelCardStatement(
     if (dry) { record(line, "imported", { reason: "dry_run" }); continue; }
 
     const notes = [`card=…${line.card_number.replace(/\D+/g, "").slice(-4)}`, `${rail.key === "dreamline" ? "efs_invoice" : `${rail.key}_invoice`}=${line.efs_invoice}`, `file_unit=${line.unit_label ?? ""}`,
-      line.driver_name ? `file_driver=${line.driver_name}` : null, rail.notes_tag].filter(Boolean).join("; ");
+      line.driver_name ? `file_driver=${line.driver_name}` : null,
+      unitFromCard ? `unit_from_card=${unitFromCard}` : null,
+      line.provider_transaction_id ? `${rail.key}_txn=${line.provider_transaction_id}` : null,
+      rail.notes_tag].filter(Boolean).join("; ");
     // Never a silent second copy: the same provider transaction (EFS invoice + product) already recorded live — by an
     // earlier statement, the fuel-card import or a Settlement Creator line — is that purchase (fuel-provider-reference.ts).
     const already = await findLiveFuelByProviderTransactionId(client as never, {
@@ -1046,10 +1114,10 @@ export async function importFuelCardStatement(
          operating_company_id, transaction_at, purchased_at, load_id, driver_id, unit_id, vendor_id, fuel_card_id, fuel_type,
          gallons, price_per_gallon, total_cost, gross_cost, discount_amount, location_city, location_state,
          transaction_reference, source, source_row_hash, notes, imported_at, load_required, load_exemption_reason,
-         created_by_user_id, trailer_id)
+         created_by_user_id, trailer_id, time_unknown)
        VALUES ($1::uuid, $2::timestamptz, $2::timestamptz, $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::uuid, $8,
          $9, $10, $11::numeric / 100, $12::numeric / 100, $13::numeric / 100, $14, $15,
-         $16, 'import', $17, $18, now(), $19, $20, $21::uuid, $22::uuid)
+         $16, 'import', $17, $18, now(), $19, $20, $21::uuid, $22::uuid, $23::boolean)
        ON CONFLICT (operating_company_id, source_row_hash) DO NOTHING
        RETURNING id::text`,
       [
@@ -1057,11 +1125,12 @@ export async function importFuelCardStatement(
         line.quantity, line.quantity ? Math.round((line.net_cents / 100 / line.quantity) * 10000) / 10000 : null,
         line.net_cents, line.gross_cents, line.discount_cents, line.city, line.state,
         line.efs_invoice, nextLineHash(hash), notes, true, null, input.actor_user_uuid, loadHit.trailer_id ?? null,
+        line.time_known === false,
       ]
     );
     const fuelId = ins.rows[0]?.id;
     if (!fuelId) { record(line, "already_imported"); continue; }
-    await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: fuelId });
+    if (line.time_known !== false) await stampStatementFillMoment(client, { companyId, railKey: rail.key, at: line.transaction_at, city: line.city, state: line.state, stationName: line.location_name, fuelTransactionId: fuelId });
     await postFuelFillOnReceipt(client as never, { operating_company_id: companyId, actor_user_uuid: input.actor_user_uuid, kind: "fuel_transaction", fill_id: fuelId });
     const doc = (await client.query<{ id: string }>(
       `SELECT id::text FROM accounting.expenses WHERE source_fuel_transaction_id = $1::uuid AND operating_company_id = $2::uuid AND voided_at IS NULL LIMIT 1`,

@@ -1,0 +1,1 @@
+export default { name: "verify:verify-fuel-card-inactive-from-refused", run(ctx) { ctx.run("node", ["scripts/verify-fuel-card-inactive-from-refused.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-fuel-card-inactive-from-refused.mjs"]); } };

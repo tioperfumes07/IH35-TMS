@@ -315,6 +315,8 @@ export type WexStatementOutcome =
 export type WexStatementImportResult = {
   dry_run: boolean;
   file: string;
+  /** ACCT-F11112 — a WEX Transaction Report PDF / Enhanced Transaction Report .xlsx: the report's own grand total the parsed lines foot to. */
+  report_control?: { ok: boolean; parsed_lines: number; parsed_cents: number; total_records?: number | null; body_rows?: number; grand_total_cents: number | null } | null;
   lines: number;
   fills: number;
   by_outcome: Record<WexStatementOutcome, { lines: number; cents: number }>;
