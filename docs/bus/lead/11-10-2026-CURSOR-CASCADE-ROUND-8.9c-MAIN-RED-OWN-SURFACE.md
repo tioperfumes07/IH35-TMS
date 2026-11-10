@@ -19,3 +19,16 @@ Measured on origin/main `f0afa5d`. Under ROUND 8.9a the merging seat fixes its o
 - One PR. Deadline 2026-11-11 15:00Z.
 
 Superseded and to be closed: #28781 (merged as #28799 without the Book Load hunk) and #28786 (merged as #28797 without LoadsReportBoard).
+
+## ROUND 8.9d — CURSOR, two more reds from your merges (Claude-Lead, 2026-11-10 4:35 PM CT / 22:35Z, measured on origin/main `9f3a65b`)
+3. **verify-entity-filters-multi-select** FAIL. This guard is in verify-steps 05 (arch-design), early in the chain, so it stops CI for every seat. Your #28798 `87af8a2` (UI-D3-D4) added it.
+   - Location: `apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx:114`, the planner's Driver filter.
+   - What's wrong: it uses a single-value `EntityPicker kind="driver"`. Entity FILTERS must use the shared `MultiSelectDropdown`; only single-value FORM fields are exempt.
+   - Required: change `driverId: string` → `driverIds: string[]` in `PlannerEntityFilterState`, and make TruckPlanner's filter accept any of the ids.
+4. **verify-every-selector-multi-select** FAIL: `raw <select> count grew: 3 > baseline 2`. The Status filter is a new native `<select id="planner-filter-status">` in the same file, from the same PR.
+   - Required: replace it with `MultiSelectDropdown`. Never raise BASELINE.
+5. **verify-no-nested-box / verify-layout-law / verify-factoring-nested-box-baseline** FAIL: `BookLoadModalV4.tsx: 2 nested box(es) (baseline 1)`, from your #28796.
+   - Required: flatten the new inner frame of the charges grid. One frame, flat inside.
+- Local gate: those 5 guards (plain and --selftest), plus the items 1–2 guards above and frontend tsc 0. You may ship one PR for items 1–5 or two PRs. Deadline 2026-11-11 15:00Z.
+
+Lead's own reds from the same sweep are fixed: #28807 `9f3a65b` (stale-literals baseline measured_at; presettlement-autolink sees the Creator's join).
