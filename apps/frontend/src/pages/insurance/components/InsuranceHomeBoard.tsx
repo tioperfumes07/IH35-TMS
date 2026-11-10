@@ -15,7 +15,6 @@ import {
 } from "../../../api/insurance";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ApiError } from "../../../api/client";
@@ -61,6 +60,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     key: "coverage",
     label: "Coverage",
     sortable: true,
+    cellClass: "whitespace-nowrap",
     sortValue: (row) => row.coverage,
     render: (row) =>
       row.policyId ? <EntityLink kind="insurance_policy" id={row.policyId} label={row.coverage} /> : row.coverage,
@@ -69,6 +69,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     key: "carrier",
     label: "Carrier",
     sortable: true,
+    cellClass: "whitespace-nowrap",
     sortValue: (row) => row.carrier,
     render: (row) => (row.vendorId ? <EntityLink kind="vendor" id={row.vendorId} label={row.carrier} /> : row.carrier),
   },
@@ -76,25 +77,25 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     key: "premium",
     label: "Premium",
     sortable: true,
-    kind: "money",
     className: "text-right",
-    cellClass: "text-right tabular-nums",
+    // Board: white-space:nowrap + plain dollars (206,372.39) — no $ glyph, no wrap/truncation.
+    cellClass: "text-right tabular-nums whitespace-nowrap",
     sortValue: (row) => row.premiumCents,
-    render: (row) =>
-      row.policyId ? (
-        <MoneyCell cents={row.premiumCents} drill={{ entity: { kind: "insurance_policy", id: row.policyId } }} />
+    render: (row) => {
+      const plain = formatQuantityTable(row.premiumCents / 100, 2);
+      return row.policyId ? (
+        <EntityLink kind="insurance_policy" id={row.policyId} label={plain} className="tabular-nums underline" />
       ) : (
-        <Link className="underline" to="/insurance" style={{ color: "inherit" }}>
-          {formatUsdCents(row.premiumCents)}
-        </Link>
-      ),
+        <span className="tabular-nums">{plain}</span>
+      );
+    },
   },
   {
     key: "share",
     label: "Share",
     sortable: true,
     className: "text-right",
-    cellClass: "text-right tabular-nums",
+    cellClass: "text-right tabular-nums whitespace-nowrap",
     sortValue: (row) => row.share,
     render: (row) => <span data-quantity="share-pct">{formatQuantityTable(row.share, 1)}%</span>,
   },
@@ -293,33 +294,39 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-home-policy-year"
         >
           {yearWindow ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "12px 14px" }}>
+            // Insurance.dc.html — SVG geometry: labels at x=0, bars at x=190 (BESIDE labels, never stacked above),
+            // premium at right edge, today line through the track. Live numbers only.
+            <div style={{ padding: "12px 14px" }} data-testid="insurance-policy-year-timeline">
               <div
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: 10,
-                  color: V3.muted,
+                  display: "grid",
+                  gridTemplateColumns: "190px minmax(0,1fr) auto",
+                  columnGap: 0,
+                  rowGap: 10,
+                  alignItems: "center",
                   fontFamily: V3.font,
                 }}
               >
-                <span>{formatDateUS(yearWindow.start) || "—"}</span>
-                <span>{formatDateUS(yearWindow.end) || "—"}</span>
-              </div>
-              {activePolicies.map((p) => {
-                const span = Math.max(1, yearWindow.span);
-                const leftDays = Math.max(0, daysBetween(yearWindow.start, p.effective_date));
-                const widthDays = Math.max(1, daysBetween(p.effective_date, p.expiry_date));
-                const leftPct = Math.max(0, Math.min(100, (leftDays / span) * 100));
-                const widthPct = Math.max(2, Math.min(100 - leftPct, (widthDays / span) * 100));
-                const todayPct = Math.max(0, Math.min(100, (yearWindow.dayOfYear / span) * 100));
-                const filledPct = Math.max(0, Math.min(widthPct, todayPct - leftPct));
-                return (
-                  <div key={p.id} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "baseline" }}>
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ font: `700 12px ${V3.font}`, color: V3.ink }}>{typeName(p)}</div>
-                        <div style={{ fontSize: 10, color: V3.muted, fontFamily: V3.font }}>
+                <div style={{ gridColumn: "2 / 3", display: "flex", justifyContent: "space-between", fontSize: 10, color: V3.muted }}>
+                  <span style={{ marginLeft: 0 }}>{formatDateUS(yearWindow.start) || "—"}</span>
+                  <span>{formatDateUS(yearWindow.end) || "—"}</span>
+                </div>
+                <div style={{ gridColumn: "3 / 4" }} />
+                {activePolicies.map((p) => {
+                  const span = Math.max(1, yearWindow.span);
+                  const leftDays = Math.max(0, daysBetween(yearWindow.start, p.effective_date));
+                  const widthDays = Math.max(1, daysBetween(p.effective_date, p.expiry_date));
+                  const leftPct = Math.max(0, Math.min(100, (leftDays / span) * 100));
+                  const widthPct = Math.max(2, Math.min(100 - leftPct, (widthDays / span) * 100));
+                  const todayPct = Math.max(0, Math.min(100, (yearWindow.dayOfYear / span) * 100));
+                  const filledPct = Math.max(0, Math.min(widthPct, todayPct - leftPct));
+                  return (
+                    <div key={p.id} style={{ display: "contents" }}>
+                      <div style={{ minWidth: 0, paddingRight: 8 }}>
+                        <div style={{ font: `700 12px ${V3.font}`, color: V3.ink, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                          {typeName(p)}
+                        </div>
+                        <div style={{ fontSize: 10, color: V3.muted, fontFamily: V3.font, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                           {p.vendor_id ? (
                             <EntityLink kind="vendor" id={p.vendor_id} label={p.insurer_name || "Carrier"} />
                           ) : (
@@ -329,54 +336,68 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                           <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} />
                         </div>
                       </div>
+                      <div style={{ position: "relative", height: 22, background: V3.chartGrid, borderRadius: 3, minWidth: 0 }}>
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: `${leftPct}%`,
+                            width: `${widthPct}%`,
+                            top: 0,
+                            bottom: 0,
+                            background: "#EEF0F3",
+                            borderRadius: 3,
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: `${leftPct}%`,
+                            width: `${Math.max(0, filledPct)}%`,
+                            top: 0,
+                            bottom: 0,
+                            background: V3.data,
+                            borderRadius: 3,
+                          }}
+                        />
+                        <div
+                          title="Today"
+                          style={{
+                            position: "absolute",
+                            left: `${todayPct}%`,
+                            top: -2,
+                            bottom: -2,
+                            width: 2,
+                            marginLeft: -1,
+                            background: V3.live,
+                          }}
+                        />
+                      </div>
                       <div
                         className="tabular-nums"
-                        style={{ font: `600 11px ${V3.font}`, color: V3.ink, whiteSpace: "nowrap" }}
+                        style={{
+                          font: `600 11px ${V3.font}`,
+                          color: V3.ink,
+                          whiteSpace: "nowrap",
+                          paddingLeft: 10,
+                          textAlign: "right",
+                        }}
                       >
                         {formatUsdCents(Number(p.total_premium_cents ?? 0))}
                       </div>
                     </div>
-                    <div style={{ position: "relative", height: 22, background: V3.chartGrid, borderRadius: 2 }}>
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: `${leftPct}%`,
-                          width: `${widthPct}%`,
-                          top: 0,
-                          bottom: 0,
-                          background: V3.chartBand,
-                          borderRadius: 2,
-                        }}
-                      />
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: `${leftPct}%`,
-                          width: `${Math.max(0, filledPct)}%`,
-                          top: 0,
-                          bottom: 0,
-                          background: V3.data,
-                          borderRadius: 2,
-                        }}
-                      />
-                      <div
-                        title="Today"
-                        style={{
-                          position: "absolute",
-                          left: `${todayPct}%`,
-                          top: -2,
-                          bottom: -2,
-                          width: 2,
-                          marginLeft: -1,
-                          background: V3.live,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-              <div style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font }}>
-                today · day {yearWindow.dayOfYear} / {yearWindow.span}
+                  );
+                })}
+                <div
+                  style={{
+                    gridColumn: "2 / 4",
+                    fontSize: 10,
+                    color: V3.live,
+                    fontFamily: V3.font,
+                    marginTop: 2,
+                  }}
+                >
+                  today · day {yearWindow.dayOfYear} / {yearWindow.span}
+                </div>
               </div>
             </div>
           ) : (
@@ -390,47 +411,49 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           title="Premium by coverage"
           onViewAll={() => navigate("/insurance/policies")}
           testId="insurance-home-premium-by-coverage"
+          footer={
+            <>
+              Per truck per month fills from{" "}
+              <Link to="/insurance/fleet-covered" style={{ color: V3.link, fontWeight: 600 }}>
+                Fleet Covered
+              </Link>
+              .
+            </>
+          }
         >
-          <div style={{ overflowX: "auto", padding: "0 0 4px" }}>
-            <ParityTable<PremiumShareRow>
-              tableTestId="insurance-home-premium-table"
-              appearance="board"
-              hidePager
-              density="compact"
-              suppressToolbarSearch
-              suppressToolbarRange
-              rows={premiumRows}
-              rowKey={(row) => `${row.coverage}-${row.policyId ?? row.carrier}`}
-              loading={loading}
-              emptyText="No active premiums."
-              columns={premiumColumns}
-              footerCells={
-                premiumRows.length > 0
-                  ? {
-                      coverage: <span style={{ fontWeight: 700 }}>Total</span>,
-                      premium: (
-                        <span className="text-right tabular-nums">
-                          <Link className="underline" to="/insurance" style={{ color: "inherit", fontWeight: 700 }}>
-                            {formatUsdCents(annualPremiumCents)}
-                          </Link>
-                        </span>
-                      ),
-                      share: <span className="tabular-nums" style={{ fontWeight: 700 }}>100%</span>,
-                    }
-                  : undefined
-              }
-            />
-          </div>
+          <ParityTable<PremiumShareRow>
+            tableTestId="insurance-home-premium-table"
+            appearance="board"
+            hidePager
+            density="compact"
+            suppressToolbarSearch
+            suppressToolbarRange
+            rows={premiumRows}
+            rowKey={(row) => `${row.coverage}-${row.policyId ?? row.carrier}`}
+            loading={loading}
+            emptyText="No active premiums."
+            columns={premiumColumns}
+            footerCells={
+              premiumRows.length > 0
+                ? {
+                    coverage: <span style={{ fontWeight: 700 }}>Total</span>,
+                    premium: (
+                      <span className="text-right tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                        {/* Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html */}
+                        {formatQuantityTable(annualPremiumCents / 100, 2)}
+                      </span>
+                    ),
+                    share: (
+                      <span className="tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
+                        100%
+                      </span>
+                    ),
+                  }
+                : undefined
+            }
+          />
         </BoardSection>
       </div>
-
-      <p style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, margin: 0 }}>
-        Per truck per month fills from{" "}
-        <Link to="/insurance/fleet-covered" style={{ color: V3.link, fontWeight: 600 }}>
-          Fleet Covered
-        </Link>
-        .
-      </p>
     </div>
   );
 }
