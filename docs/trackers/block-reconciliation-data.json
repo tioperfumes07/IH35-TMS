@@ -1,6 +1,6 @@
 {
  "date": "2026-11-10",
- "generated_at_iso": "2026-11-10T12:27:43.551Z",
+ "generated_at_iso": "2026-11-10T18:24:54.379Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,12 @@
  ],
  "merged_prs": [
   {
+   "number": 28792,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-10T12:29:18Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 28790,
    "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post until engine reds fixed",
    "mergedAt": "2026-11-10T07:10:11Z",
@@ -17330,12 +17336,6 @@
    "title": "FINDING: CRM detail + Dispatch need-company BoardSection shells",
    "mergedAt": "2026-11-02T22:58:53Z",
    "branch": "cursor/eng-build-shells18"
-  },
-  {
-   "number": 28173,
-   "title": "FINDING: Drivers module need-company BoardSection shells",
-   "mergedAt": "2026-11-02T22:55:24Z",
-   "branch": "cursor/eng-build-shells17"
   }
  ],
  "merged_pr_total": 3000,
