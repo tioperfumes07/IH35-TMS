@@ -17619,5 +17619,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-10",
     "purpose": "verify-fuel-card-inactive-from-refused"
+  },
+  "20009": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-void-block-counts-line-level-liveness"
   }
 }
