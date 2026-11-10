@@ -17664,5 +17664,10 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-load-fk-invariant-fuel-refusal (ACCT-F11107, migration 202616460100, #28734)"
   },
-  "total_claimed": 1100
+  "20053": {
+    "claimed_by": "lead",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-tracker-sync-regenerates-dependents (ACCT-F11100, #28673)"
+  },
+  "total_claimed": 1101
 }
