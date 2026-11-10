@@ -5,7 +5,55 @@ Scope: USMCA only (`5c854333-6ea5-4faa-af31-67cb272fef80`). Sources: prod `_syst
 ## 1 · Engine-run table (prod, 01:21Z)
 
 - 145 engines recorded. 4 had their last run failing; 40 had no success in 2 days.
-- Of the 40 stale: 32 are the QBO pull/push family (mirror pull blocked since 09-28 by the flag in `catalogs.blocked_feature_flags`); 3 run monthly/weekly and are on schedule (depreciation 11-01, insurance report 11-05, settlement auto-pay Fri 11-06); CSA BASIC pull is opt-in OFF (`ENABLE_CSA_BASIC_PULL_CRON`); and the 4 below.
+- Of the 40 stale: 32 are the QBO pull/push family. They are **OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync** (§1a), so they are not stale and not failing. That leaves 8: 3 run monthly/weekly and are on schedule (depreciation 11-01, insurance report 11-05, settlement auto-pay Fri 11-06); CSA BASIC pull is opt-in OFF (`ENABLE_CSA_BASIC_PULL_CRON`); and the 4 below.
+
+### 1a · QBO family — OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync
+
+Owner, 11-09 8:25 PM CT: "we are not syncing with quickbooks." No QBO pull or push is re-enabled. `catalogs.blocked_feature_flags` stays as is: 17 QBO rows, all set 09-28 17:52:37Z (ROUND 195). No QBO engine was changed and nothing was written to prod. USMCA has 0 rows in `integrations.qbo_connections` and 0 rows in `mdata.qbo_purchases` (measured 11-10 02:20Z).
+
+| # | Engine (`_system.background_jobs.job_name`) | Last success (UTC) | Status |
+|---|---|---|---|
+| 1 | `integrations.qbo_cdc_poll` | 08-21 13:20 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 2 | `integrations.qbo_inbound_sync` | 08-21 13:22 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 3 | `qbo.forensic_import_runner` | 09-26 00:28 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 4 | `qbo.master_data_sync.delta` | 09-28 12:15 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 5 | `qbo.master_data_sync.full` | 09-28 07:01 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 6 | `qbo.sync_alerts_cron` | 09-28 12:15 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 7 | `qbo.token_refresh_cron` | 09-26 00:01 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 8 | `qbo_sync.drift_scheduler` | 09-07 21:01 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 9 | `qbo_sync.step.ap_bill_payments_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 10 | `qbo_sync.step.ap_bill_payments_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 11 | `qbo_sync.step.ap_bills_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 12 | `qbo_sync.step.ap_bills_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 13 | `qbo_sync.step.ar_invoices_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 14 | `qbo_sync.step.ar_invoices_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 15 | `qbo_sync.step.ar_payments_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 16 | `qbo_sync.step.ar_payments_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 17 | `qbo_sync.step.chart_of_accounts_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 18 | `qbo_sync.step.chart_of_accounts_reconcile` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 19 | `qbo_sync.step.customers_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 20 | `qbo_sync.step.customers_reconcile` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 21 | `qbo_sync.step.drift_detect` | 09-07 21:01 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 22 | `qbo_sync.step.items_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 23 | `qbo_sync.step.items_reconcile` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 24 | `qbo_sync.step.qbo_purchases_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 25 | `qbo_sync.step.qbo_purchases_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 26 | `qbo_sync.step.qbo_vendor_credits_project` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 27 | `qbo_sync.step.qbo_vendor_credits_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 28 | `qbo_sync.step.vendors_pull` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 29 | `qbo_sync.step.vendors_reconcile` | 09-28 09:00 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 30 | `sync.qbo_accounts_push` | 09-26 00:27 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 31 | `sync.qbo_customers_push` | 09-26 00:27 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+| 32 | `sync.qbo_vendors_push` | 09-26 00:27 | OFF BY OWNER RULING 11-09 8:25 PM CT: no QuickBooks sync |
+
+Health and guards (read on main `fe88c563`): `/healthz` `checkBackgroundJobStaleness` (`apps/backend/src/health/health.routes.ts`) counts none of the 32 as never-succeeded or late:
+- All 32 have a recorded success, so none is counted as never-succeeded.
+- 9 (rows 1–4, 6, 7 and 30–32) return a dormant rule (`no_qbo_realm_connected` / `env_disabled`), because USMCA has 0 QBO connection rows and render.yaml sets `ENABLE_QBO_CDC_POLL` and `ENABLE_QBO_INBOUND_SYNC` to `"false"`, so they are skipped.
+- `qbo.master_data_sync.full`, the 21 `qbo_sync.step.*` jobs and `qbo_sync.drift_scheduler` have no late rule, so they are skipped.
+
+Live `GET https://api.ih35dispatch.com/api/v1/healthz` (11-10 02:28Z, sha `fe88c56`): `background_jobs.stale` = `never_succeeded_jobs`. From prod, 1 of 145 jobs has never succeeded (`last_successful_run_at IS NULL`), and it is `fuel.relay_fill_records` (F11107 lane), not QBO.
+- One condition was not read: `qbo.master_data_sync.delta` would be counted late only if `QBO_MASTERDATA_SYNC_ENABLED=true` were set in the Render dashboard. It is not in render.yaml. Its health rule is at `health.routes.ts` `case "qbo.master_data_sync.delta"`.
+- No `scripts/verify-*` guard reads prod job age. No code change was needed.
 
 | Engine | Before (01:21Z) | Fix | After |
 |---|---|---|---|
