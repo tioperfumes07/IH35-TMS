@@ -16,6 +16,7 @@ import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
+import { ImportLoadHistoryAction } from "../../components/imports/OwnerImportActions";
 import { LoadDetailDrawer } from "../../components/dispatch/LoadDetailDrawer";
 import { LoadHistoryDetailPanel } from "../../components/dispatch/LoadHistoryDetailPanel";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -285,6 +286,7 @@ export default function LoadHistoryBoardPage() {
         title="Load history"
         subtitle="every load ever booked · from the load hub (mdata.loads) · money from the load-cost rollup"
         breadcrumb={["Dispatch", "Load history"]}
+        actions={<ImportLoadHistoryAction />}
       />
 
       <ReportFilterBar
