@@ -20,7 +20,7 @@ import {
 } from "../../api/transaction-health";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
-import { SelectCombobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { companyToday, ctDateTime } from "../../lib/businessDate";
@@ -898,18 +898,23 @@ function QboSyncTab({ data }: { data: SystemData }) {
 function ProgramTab({ data }: { data: SystemData }) {
   const { tracker } = data;
   const t = tracker.data;
-  type PhaseFilter = "all" | "has_open" | "complete";
-  const [phaseFilter, setPhaseFilter] = useState<PhaseFilter>("all");
+  const PHASE_FILTER_OPTIONS = [
+    { value: "has_open", label: "Has open work" },
+    { value: "complete", label: "Complete" },
+  ] as const;
+  // U12: Phase progress MultiSelect (empty/both = all).
+  const [phaseFilter, setPhaseFilter] = useState<string[]>([]);
   const staged = useStagedListFilters({
     applied: { phaseFilter },
-    empty: { phaseFilter: "all" as PhaseFilter },
+    empty: { phaseFilter: [] as string[] },
     onApply: (next) => setPhaseFilter(next.phaseFilter),
   });
   const phaseRows = useMemo(() => {
     const phases = t?.phases ?? [];
-    if (phaseFilter === "all") return phases;
-    if (phaseFilter === "complete") return phases.filter((p) => p.total > 0 && p.completed >= p.total);
-    return phases.filter((p) => p.total === 0 || p.completed < p.total);
+    if (!phaseFilter.length || phaseFilter.length === 2) return phases;
+    if (phaseFilter[0] === "complete") return phases.filter((p) => p.total > 0 && p.completed >= p.total);
+    if (phaseFilter[0] === "has_open") return phases.filter((p) => p.total === 0 || p.completed < p.total);
+    return phases;
   }, [t?.phases, phaseFilter]);
   if (tracker.isError) {
     return (
@@ -942,7 +947,7 @@ function ProgramTab({ data }: { data: SystemData }) {
       <Card title="Phases" sub="Rollup by phase (from last reconcile sync).">
         <div className="space-y-2">
             <CollapsedListFilters
-              activeFilterCount={phaseFilter === "all" ? 0 : 1}
+              activeFilterCount={phaseFilter.length === 1 ? 1 : 0}
               onApply={staged.apply}
               onReset={staged.reset}
               onCancel={staged.cancel}
@@ -950,21 +955,19 @@ function ProgramTab({ data }: { data: SystemData }) {
               testIdPrefix="system-program"
               dataAttributes={{ "data-system-program-filter-toolbar": "collapsed" }}
             >
-              <label className="text-xs font-semibold text-[#4B5563]">
-                Phase progress
-                <SelectCombobox
-                  className="mt-1 block w-full"
-                  value={staged.draft.phaseFilter}
-                  onChange={(event) =>
-                    staged.setDraft({ phaseFilter: event.target.value as PhaseFilter })
-                  }
-                  data-testid="system-program-phase-filter"
-                >
-                  <option value="all">All phases</option>
-                  <option value="has_open">Has open work</option>
-                  <option value="complete">Complete</option>
-                </SelectCombobox>
-              </label>
+              <div className="text-xs font-semibold text-[#4B5563]" data-testid="system-program-phase-filter">
+                <span className="block">Phase progress</span>
+                <div className="mt-1">
+                  <MultiSelectDropdown
+                    label="Phase progress"
+                    options={[...PHASE_FILTER_OPTIONS]}
+                    selected={staged.draft.phaseFilter}
+                    onChange={(next) => staged.setDraft({ phaseFilter: next })}
+                    allLabel="All phases"
+                    data-testid="system-program-phase-multiselect"
+                  />
+                </div>
+              </div>
             </CollapsedListFilters>
             <ParityTable<TrackerPhase>
               title="Program phases"

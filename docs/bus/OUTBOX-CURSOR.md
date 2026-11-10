@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:25 PM CT) — U12 System Program phase MultiSelect
+- **PRIOR:** #28691 Legal contracts Template/Signer U12.
+- **THIS:** SystemModulePage Program Tracker phase progress SelectCombobox → MultiSelectDropdown (empty/both=all).
+- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:15 PM CT) — U12 Legal contracts Template + Signer MultiSelect
 - **PRIOR:** #28690 Users Role U12.
 - **THIS:** LegalContractInstancesPage Template + Signer type SelectCombobox → MultiSelectDropdown (empty=all; includes filter). Status already MultiSelect.
