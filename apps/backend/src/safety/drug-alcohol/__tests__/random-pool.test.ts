@@ -233,3 +233,16 @@ describe("listDrawHistory", () => {
     expect(result[0]?.uuid).toBe("d2");
   });
 });
+
+describe("ACCT-F11128 — the pool is active drivers only", () => {
+  it("listActiveEnrolledDrivers joins mdata.drivers on the scheduleTest active rule", async () => {
+    const { listActiveEnrolledDrivers } = await import("../random-pool.service.js");
+    const query = vi.fn().mockResolvedValue({ rows: [] });
+    await listActiveEnrolledDrivers({ query } as unknown as import("pg").PoolClient, "5c854333-6ea5-4faa-af31-67cb272fef80");
+    const sql = String(query.mock.calls[0]![0]);
+    expect(sql).toMatch(/JOIN mdata\.drivers d/);
+    expect(sql).toMatch(/d\.status = 'Active'/);
+    expect(sql).toMatch(/d\.deactivated_at IS NULL/);
+    expect(sql).toMatch(/d\.archived_at IS NULL/);
+  });
+});
