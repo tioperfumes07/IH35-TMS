@@ -85,9 +85,10 @@ import {
 } from "../accounting/fuel-posting/fuel-credit-preference.js";
 import { resolveCompanyDirectCreditAccount } from "../accounting/fuel-posting/company-direct-credit-account.js";
 import { resolveLineItemAndAccount } from "../accounting/line-item-account.js";
-import { resolveFuelItem, resolveItemByName } from "../accounting/fuel-posting/fuel-item-account.js";
+import { NON_FUEL_COST_ITEM_NAME, resolveFuelItem, resolveItemByName, resolvePostingKindItem } from "../accounting/fuel-posting/fuel-item-account.js";
 import { EXPENSE_SQL_NOW, reserveExpenseNumber, writeExpenseDocumentInClientTx, type ExpenseRow } from "../accounting/expense-writer.service.js";
 import { resolveLineLoadExemption } from "../accounting/expense-line-load-exemption.js";
+import { relayServiceCodeSql } from "./relay-service-code.js";
 
 export type QueryableClient = {
   query: <T = Record<string, unknown>>(
@@ -930,6 +931,8 @@ export async function listRelayFillDocumentsWithoutRecords(client: QueryableClie
         AND r.id::text = (regexp_match(e.memo, '^Relay fuel fill ([0-9a-f-]{36})'))[1]
       WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.source_fuel_transaction_id IS NULL
         AND r.voided_at IS NULL AND r.is_active
+        -- ACCT-F11127: a Relay service code (lumper / scale ticket) never gets a fuel record.
+        AND NOT ${relayServiceCodeSql("r")}
         AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions f
                          WHERE f.operating_company_id = e.operating_company_id AND f.relay_fuel_transaction_id = r.id
                            AND f.voided_at IS NULL AND f.archived_at IS NULL)
@@ -1019,15 +1022,17 @@ export async function adoptRelayFillExpenseDocument(
   let fills = await readFills();
   // 443.192 — the unit by the poster's one rule (fuel/relay-fill-unit.sql.ts): matched_unit_id, else the printed number
   // when exactly one active unit carries it. Reading matched_unit_id alone left the document unit-less where the JE had one.
-  const relayRow = await client.query<{ matched_driver_id: string | null; matched_unit_id: string | null }>(
-    `SELECT r.matched_driver_id::text, ${relayFillUnitIdSql("r")}::text AS matched_unit_id FROM integrations.relay_fuel_transactions r
+  const relayRow = await client.query<{ matched_driver_id: string | null; matched_unit_id: string | null; is_service: boolean }>(
+    `SELECT r.matched_driver_id::text, ${relayFillUnitIdSql("r")}::text AS matched_unit_id, ${relayServiceCodeSql("r")} AS is_service
+       FROM integrations.relay_fuel_transactions r
       WHERE r.id::text = $1 AND r.operating_company_id = $2::uuid`,
     [input.relay_fill_id, company],
   );
   // ENG-65 (LEAD 11-03): a fill adopted on receipt with no fuel record yet gets its records now (ensureRelayFillFuelRecords,
   // the one Relay record writer) on its posting's load — so the document points at a record from birth. A fill whose lines
   // cannot be recorded honestly is refused by name and audited; the document is still adopted (the money is already posted).
-  if (!fills.rows.length) {
+  // ACCT-F11127: a Relay service code (lumper / scale ticket) has no fuel record — it is an expense document only.
+  if (!fills.rows.length && !relayRow.rows[0]?.is_service) {
     const recorded = await recordRelayFillAtReceipt(client, {
       operating_company_id: company,
       relay_fill_id: input.relay_fill_id,
@@ -1059,6 +1064,11 @@ export async function adoptRelayFillExpenseDocument(
   if (!("refused" in fee)) itemByAccount.set(fee.expenseAccountId, fee.itemId);
   for (const t of RELAY_FILL_FUEL_TYPES) {
     const r = await resolveFuelItem(client as never, company, t);
+    if (r && !("refused" in r) && !itemByAccount.has(r.expenseAccountId)) itemByAccount.set(r.expenseAccountId, r.itemId);
+  }
+  // ACCT-F11127: a service code's leg carries its service item (Warehouse Lumper Expense / OTR-Scale Expense).
+  for (const kind of Object.keys(NON_FUEL_COST_ITEM_NAME)) {
+    const r = await resolvePostingKindItem(client as never, company, kind);
     if (r && !("refused" in r) && !itemByAccount.has(r.expenseAccountId)) itemByAccount.set(r.expenseAccountId, r.itemId);
   }
 
