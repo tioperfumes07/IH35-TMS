@@ -102,6 +102,7 @@ import { registerDocsFoundationRoutes } from "./docs/docs.routes.js";
 import { registerDocsFilesRoutes } from "./docs/files.routes.js";
 import { registerAttachmentsRoutes } from "./documents/attachments.routes.js";
 import { registerDispatchLoadRoutes } from "./dispatch/loads.routes.js";
+import { registerAlwaysTrackLoadHistoryImportRoutes } from "./dispatch/alwaystrack-load-history-import.routes.js";
 import { registerLoadSettlementSummaryRoutes } from "./dispatch/load-settlement-summary.routes.js";
 // Orphan-route mounts (batch 1, non-financial) — these route files existed and the frontend calls
 // them, but they were never registered (404). Verified uncalled + collision-free before mounting.
@@ -1026,6 +1027,7 @@ async function main() {
   await registerDocsFilesRoutes(app);
   await registerAttachmentsRoutes(app);
   await registerDispatchLoadRoutes(app);
+  await registerAlwaysTrackLoadHistoryImportRoutes(app);
   await registerLoadSettlementSummaryRoutes(app);
   // Orphan-route mounts (batch 1, non-financial) — see import block above.
   await registerLoadProfitabilityRoutes(app);
