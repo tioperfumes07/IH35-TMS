@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["dispatch"],"cols":["load","connectivity"],"leaves":["dispatch.panel.load_history_detail"],"task":"LST-F11139-LOAD-HISTORY-DETAIL-PANEL-LEAF","vertical":"class-sweep"} */
 /**
  * Rows 78 + 23 (LEAD 11-03, ACCT-F11057).
  *
@@ -29,6 +30,7 @@ const F = {
   subnav: "apps/frontend/src/components/dispatch/DispatchSubnav.tsx",
   api: "apps/frontend/src/api/reports.ts",
   lhService: "apps/backend/src/reports/loads-history.service.ts",
+  canon: "apps/backend/src/dispatch/canonical-active-load-set.ts",
   lhRoute: "apps/backend/src/reports/loads-history.routes.ts",
   pred: "apps/backend/src/accounting/ap-bill-payment-scope.sql.ts",
   bills: "apps/backend/src/accounting/bills.service.ts",
@@ -64,7 +66,13 @@ export function findDefects(s) {
   for (const k of ["customer", "driver", "unit", "trailer", "factoring_advance", "document", "expense"]) {
     if (!new RegExp(`kind="${k}"`).test(s.panel)) out.push(`the panel's linked ${k} does not open its record`);
   }
-  if (!/LOADS_REPORT_SCOPE_SQL/.test(s.lhService) || !/l\.status::text NOT IN \('draft', 'voided'\)/.test(s.lhService)) out.push("loads-history scope no longer derives from the loads-report scope");
+  // The "View all" status clause now comes from the canonical module (verify-one-canonical-active-load-set); it still must be
+  // exactly NOT IN ('draft', 'voided') — checked on the helper the service mounts.
+  const viewAll = /LOADS_REPORT_SCOPE_SQL/.test(s.lhService) && (
+    /l\.status::text NOT IN \('draft', 'voided'\)/.test(s.lhService) ||
+    (/canonicalBookedOrCancelledNotVoidedLoadClause\("l"\)/.test(s.lhService) &&
+      /export function canonicalBookedOrCancelledNotVoidedLoadClause\([^)]*\): string \{\s*return `\$\{alias\}\.status::text NOT IN \('draft', 'voided'\)`;/.test(s.canon ?? "")));
+  if (!viewAll) out.push("loads-history scope no longer derives from the loads-report scope");
   if (!/GROUP BY l\.status/.test(s.lhService) || !/ignoreStatus: true, includeCancelled: true/.test(s.lhService)) out.push("status counts do not count cancelled / follow the status filter");
   if (!/inv\.id IS NULL OR inv\.id = first_inv\.id/.test(s.lhService)) out.push("loads-history totals double-count loads with two live invoices");
   if (!/include_cancelled/.test(s.lhRoute)) out.push("the loads-history route cannot include cancelled loads");
@@ -92,6 +100,7 @@ if (process.argv.includes("--selftest")) {
     ["direct fetch", plant("panel", "const loadId = row.load_id;", "const loadId = row.load_id; void fetch(\"/x\");")],
     ["docs dropped", plant("panel", 'entity_type: "load"', 'entity_type: "driver"')],
     ["status counts lose cancelled", plant("lhService", "ignoreStatus: true, includeCancelled: true", "ignoreStatus: true")],
+    ["view-all helper widened to admit drafts", plant("canon", "NOT IN ('draft', 'voided')`;", "NOT IN ('voided')`;")],
     ["totals double count", plant("lhService", "inv.id IS NULL OR inv.id = first_inv.id", "TRUE")],
     ["predicate lets escrow in", plant("pred", "settlement_deduction_noncash IS NOT TRUE", "settlement_deduction_noncash IS NOT NULL")],
     ["list reader bypasses predicate", plant("bills", '      apBillPaymentOnlySql("bp"),\n', '      "TRUE",\n')],

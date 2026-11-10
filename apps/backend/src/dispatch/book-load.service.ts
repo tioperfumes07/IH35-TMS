@@ -259,6 +259,14 @@ export type BookLoadInput = {
   requested_load_number?: string;
   load_number?: string;
   addToOpenPresettlement?: boolean;
+  /**
+   * ACCT-F11141 — the Settlement Creator books a load that ALREADY RAN for a signed settlement and links it, in the same
+   * transaction, to THAT settlement (postSettlementCreatorInClientTx: presettlement_link_id + its pay lines). Joining the
+   * driver's live trip instead put a historical load on today's open trip, or — when the driver had another open trip —
+   * refused the booking (uq_driver_settlements_one_open_per_driver; measured on a prod fork for signed #5866 / #5867).
+   * Only the Creator's seeder sets it; every other booking links at creation (SET-01).
+   */
+  presettlement_linked_by_caller?: boolean;
   reservation_uuid?: string;
   anticipated_chargeback_cents?: number;
   anticipated_chargeback_reason?: string;
@@ -2216,7 +2224,12 @@ export async function bookLoadOnClient(
   const result = await createLoadWithFullSideEffects(client, input, { source });
   // LEAD 443.121 #2 — a fuel receipt posted before this load existed (deadhead / yard reason) whose fill time this load
   // covers is attached to it now: same JE, same document (fuel/fuel-receipt-repoint.service.ts). Never fails the booking.
-  if (result.kind === "ok" && result.row?.id) {
+  // ACCT-F11141 — NOT for a load that already ran (historical_backfill: the Settlement Creator). At booking it has no stop
+  // stamps yet, so the one rule reads it as the truck's unfinished load and pulled fills bought AFTER its signed delivery
+  // onto it (measured on a prod fork: Relay fill 2026-11-06 on T148 attached to 13701, delivered 2026-10-26 — owner rule
+  // "never to a load that was already completed"); the close then refused the settlement on that proposed expense. The
+  // signed document's own fills are adopted by the Creator; any other receipt stays where it was.
+  if (result.kind === "ok" && result.row?.id && source !== "historical_backfill") {
     const { repointFuelReceiptsToLoad } = await import("../fuel/fuel-receipt-repoint.service.js");
     await repointFuelReceiptsToLoad(client as never, {
       operatingCompanyId: input.operating_company_id,
@@ -4213,7 +4226,9 @@ export async function createLoadWithFullSideEffects(
       // Closing a settlement (trip_closed_at) remains a separate, human-confirmed step this does
       // not touch. Extracted to its own function (not inlined here) so the exact production call
       // shape is independently unit-testable against a mock client, without booking a real load.
-      if (input.assigned_primary_driver_id && input.trip_type) {
+      if (input.presettlement_linked_by_caller === true) {
+        // ACCT-F11141 — linked by the caller to its signed settlement in this same transaction (see the input's doc).
+      } else if (input.assigned_primary_driver_id && input.trip_type) {
         const presettlementLink = await linkLoadToPresettlementAtBookingInClientTx(client, {
           operating_company_id: input.operating_company_id,
           load_id: String(load.id),

@@ -209,10 +209,12 @@ export function check() {
  *  1. CHARGE_LINES: every load has at least one dispatch.load_charge_lines row.
  *  2. FACTORING_VENDOR: every load has factoring_company_vendor_id set.
  *  3. TOUR_LINK: every load has tour_id set (presettlement tour linkage).
- *  4. DRIVER_BILLS: every load OWED a per-load bill has at least one live driver_finance.driver_bills row. A load
- *     booked with the salaried 0-rate override (driver_pay_rate_per_mile = 0 AND reason in the salaried family —
- *     SALARIED_REASON_SQL_RE, the same test as isSalariedZeroRateOverride) is owed NO per-load bill (Lead 443.36 #2):
- *     the salary is the settlement's own line. LEAD 443.197 1b.
+ *  4. DRIVER_BILLS: every load OWED a per-load bill has at least one driver_finance.driver_bills row (live OR voided).
+ *     A voided bill is evidence the shared create path ran; whether the bill is currently live is a business concern,
+ *     not a create-path concern (the owner may void a bill for restatement — accrual_released_for_restate — without
+ *     that being a path failure). A load booked with the salaried 0-rate override (driver_pay_rate_per_mile = 0 AND
+ *     reason in the salaried family — SALARIED_REASON_SQL_RE, the same test as isSalariedZeroRateOverride) is owed
+ *     NO per-load bill (Lead 443.36 #2): the salary is the settlement's own line. LEAD 443.197 1b.
  *
  * Pure function — exported for selftest.
  */
@@ -290,7 +292,7 @@ export function classifyLoadOutcomes(input) {
     pass: billGap === 0,
   });
   if (billGap > 0) {
-    problems.push(`DRIVER_BILLS_MISSING: ${billGap} of ${billsOwed} non-salaried load(s) have no driver_finance.driver_bills row. The shared create path calls createDriverBillArtifacts but the outcome is absent.`);
+    problems.push(`DRIVER_BILLS_MISSING: ${billGap} of ${billsOwed} non-salaried load(s) have no driver_finance.driver_bills row (live or voided). The shared create path calls createDriverBillArtifacts but the outcome is absent.`);
   }
 
   return { checks, problems, allPass: problems.length === 0 };
@@ -387,7 +389,7 @@ export async function measureLoadOutcomes(client) {
     `SELECT count(*)::int AS cnt FROM mdata.loads l
       WHERE ${scopeSql}
         AND NOT ${SALARIED_ZERO_RATE_SQL}
-        AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id AND db.voided_at IS NULL)`,
+        AND EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id)`,
     [USMCA_COMPANY_ID, closedDays],
   );
   const salariedRes = await client.query(

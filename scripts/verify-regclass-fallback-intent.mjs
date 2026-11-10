@@ -158,6 +158,11 @@ if (process.argv.includes("--selftest")) {
     ["template SQL remains executable", () => scanSource("const t = q(`SELECT to_regclass('a.b')`); if (!t) return false;").bare, 1],
     ["comment cannot mask a real bare probe", () => scanSource("// unavailable\nconst t = q(`SELECT to_regclass('a.b')`); if (!t) return false;").bare, 1],
     ["structured missing reason declares intent", () => scanSource("const t = q(`SELECT to_regclass('a.b')`); if (!t) return { ok: false, reason: 'missing_table:a.b' };").bare, 0],
+    // The two sites #27875 / #28610 added: a money path returning `empty` and a gap reader returning "never synced" for an absent table.
+    ["PLANT abandonment-chargebacks silent `return empty` is undeclared", () => scanSource("const reg = await client.query(`SELECT to_regclass('driver_finance.settlement_lines') IS NOT NULL AS ok`);\n  if (!reg.rows[0]?.ok) return empty;\n  const grossRes = await client.query(`SELECT 1`);").bare, 1],
+    ["PLANT fuel-source-state absent table read as 0 rows is undeclared", () => scanSource("const exists = (await client.query(`SELECT to_regclass('fuel.loves_prices_daily') IS NOT NULL AS ok`)).rows[0]?.ok === true;\n  let rows = 0;\n  if (exists) { rows = 1; }\n  return { reason: fuelGapReason({ lovesRows: rows }), loves_rows: rows };").bare, 1],
+    ["REAL abandonment-chargebacks.service.ts declares its false branch", () => scanSource(fs.readFileSync(path.join(ROOT, "apps/backend/src/driver-finance/abandonment-chargebacks.service.ts"), "utf8")).bare, 0],
+    ["REAL fuel-source-state.ts declares its false branch", () => scanSource(fs.readFileSync(path.join(ROOT, "apps/backend/src/fuel/fuel-source-state.ts"), "utf8")).bare, 0],
   ];
   let bad = 0;
   for (const [name, run, want] of cases) {

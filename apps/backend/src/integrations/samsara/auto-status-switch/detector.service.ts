@@ -581,6 +581,7 @@ export async function recordPositionSnapshotsForCompany(client: DbClient, operat
         p.speed_mph::text
       FROM integrations.samsara_vehicle_positions p
       JOIN mdata.units u ON u.id = p.unit_uuid
+       AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = p.operating_company_id
       WHERE p.operating_company_id = $1::uuid
       ORDER BY p.unit_uuid
     `,

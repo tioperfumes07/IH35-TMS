@@ -40,7 +40,19 @@ const F = {
 
 export function problems(src) {
   const p = [];
-  const post = src.routes.slice(src.routes.indexOf('"/api/v1/driver-finance/settlement-creator/post"'), src.routes.indexOf("retry-after-commit"));
+  // LST-F11148: one handler per slice. #28788 put the post-as-signed route between /post and retry-after-commit, so the old
+  // slice read both. Each committed post answers ok = overallOk(stages); post-as-signed's dry-run / already-as-signed answers
+  // (no stages ran) may say ok: true, its committed answer may not.
+  const routeSlice = (marker) => {
+    const at = src.routes.indexOf(marker);
+    if (at < 0) return "";
+    const next = src.routes.indexOf("app.post(", at + marker.length);
+    return src.routes.slice(at, next < 0 ? src.routes.length : next);
+  };
+  const post = routeSlice('"/api/v1/driver-finance/settlement-creator/post"');
+  const asSigned = routeSlice('"/api/v1/driver-finance/settlement-creator/post-as-signed"');
+  if (asSigned && /send\(\{\s*ok: true, dry_run: false/.test(asSigned)) p.push("the post-as-signed route answers a literal ok: true on a committed post");
+  if (asSigned && !/ok: overallOk\(stages\), dry_run: false/.test(asSigned)) p.push("the post-as-signed committed answer must carry ok = overallOk(stages) with its stages");
   if (/reply\.code\(200\)\.send\(\{\s*ok: true/.test(post)) p.push("the post route still answers a literal ok: true");
   if (!/ok: overallOk\(stages\)/.test(post) || !/\bstages,/.test(post)) p.push("the post response must carry stages and ok = overallOk(stages)");
   if (/console\.warn\([^)]*settlement_creator_(faro|billing)/.test(src.routes)) p.push("an after-commit failure is only logged");
@@ -74,11 +86,16 @@ function selftest() {
   if (!problems(m("routes", "ok: overallOk(stages),", "ok: true,")).some((x) => /literal ok: true/.test(x))) bad.push("a literal ok: true passed");
   if (!problems(m("routes", "await recordAfterCommit(user.uuid, afterInput, after);", "")).some((x) => /stored/.test(x))) bad.push("an unstored failure passed");
   if (!problems(m("after", 'results[i]?.reason === "error"', "false")).some((x) => /billing/.test(x))) bad.push("a swallowed billing error passed");
-  if (!problems(m("drawer", 'data-testid="sc-post-stages"', 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a hidden result passed");
+  // sweepA — #27838 moved the stages panel onto BoardSection (testId="sc-post-stages"); the plant hides EITHER spelling, and
+  // a drawer that drops Retry is still caught.
+  if (!problems(m("drawer", /(?:data-testid|testId)="sc-post-stages"/g, 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a hidden result passed");
+  if (!problems(m("drawer", 'data-testid="sc-post-retry"', 'data-testid="x"')).some((x) => /drawer/.test(x))) bad.push("a drawer with no Retry passed");
   if (!problems(m("seed", "bookLoadOnClient(client as never, input, { source: \"historical_backfill\" })", "bookLoad(input)")).some((x) => /bookLoadOnClient/.test(x))) bad.push("a separate-transaction booking passed");
   if (!problems(m("svc", "s.created_at = now()", "true")).some((x) => /Option A/.test(x))) bad.push("adopting an earlier tour passed");
   if (bad.length) { console.error(`${LABEL} SELFTEST FAILED:\n  - ${bad.join("\n  - ")}`); process.exit(1); }
-  console.log(`${LABEL} SELFTEST OK — 7/7 (real tree passes; literal ok, unstored failure, swallowed billing error, hidden result, separate-transaction booking, earlier-tour adoption each caught)`);
+  if (!problems(m("routes", "ok: overallOk(stages), dry_run: false", "ok: true, dry_run: false")).some((x) => /post-as-signed route answers a literal ok/.test(x))) bad.push("a literal ok: true on the committed post-as-signed passed");
+  if (problems(m("routes", "/post-as-signed\", WRITE_RL", "/post-as-signed\", WRITE_RL")).length) bad.push("the real post-as-signed route is reported");
+  console.log(`${LABEL} SELFTEST OK — 9/9 (real tree passes; literal ok, unstored failure, swallowed billing error, hidden result, missing Retry, separate-transaction booking, earlier-tour adoption, post-as-signed committed literal ok each caught; post-as-signed dry-run ok allowed)`);
   process.exit(0);
 }
 if (process.argv.includes("--selftest")) selftest();

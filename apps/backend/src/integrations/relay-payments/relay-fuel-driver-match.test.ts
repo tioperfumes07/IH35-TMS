@@ -48,6 +48,30 @@ describe("resolveRelayDriverMatch — integration_id only (direct, then the E1 l
     expect(sql2).toMatch(/l\.voided_at IS NULL/);
   });
 
+  it("E1: a link match carries the link's evidence (Relay name, evidence, who confirmed / recorded it)", async () => {
+    const row = { id: "drv-s", active: true, link_id: "lnk-1", relay_name: "ANGEL SOSA", evidence: "fills 11-01..11-03 on unit 112",
+      confirmed_by: "Lead 11-03", created_by: "usr-1", voided_at: null, voided_by: null, void_reason: null };
+    const client = mockClient([{ rows: [] }, { rows: [row as never] }]);
+    const match = await resolveRelayDriverMatch(client, "opco", "8029341864741314");
+    expect(match).toEqual({ driver_id: "drv-s", unresolved_reason: null, link: {
+      link_id: "lnk-1", relay_name: "ANGEL SOSA", evidence: "fills 11-01..11-03 on unit 112", confirmed_by: "Lead 11-03",
+      created_by: "usr-1", voided_by: null, void_reason: null } });
+    const [sql2] = (client.query as ReturnType<typeof vi.fn>).mock.calls[1];
+    expect(sql2).toMatch(/d\.operating_company_id = l\.operating_company_id/);
+    expect(sql2).toMatch(/s\.operating_company_id = l\.operating_company_id/);
+  });
+
+  it("E1: a Relay id whose only link was voided is unresolved with a named reason and who voided it — never matched", async () => {
+    const row = { id: "drv-x", active: true, link_id: "lnk-9", relay_name: null, evidence: "e", confirmed_by: "Lead",
+      created_by: null, voided_at: "2026-11-05 10:00:00+00", voided_by: "usr-2", void_reason: "wrong driver" };
+    const client = mockClient([{ rows: [] }, { rows: [row as never] }]);
+    const match = await resolveRelayDriverMatch(client, "opco", "8029341864741314");
+    expect(match.driver_id).toBeNull();
+    expect(match.unresolved_reason).toBe("relay_link_voided");
+    expect(match.link?.voided_by).toBe("usr-2");
+    expect(match.link?.void_reason).toBe("wrong driver");
+  });
+
   it("E1: a link whose survivor is deactivated never matches (named reason)", async () => {
     const client = mockClient([{ rows: [] }, { rows: [{ id: "drv-gone", active: false } as never] }]);
     const match = await resolveRelayDriverMatch(client, "opco", "8029341864741314");

@@ -80,7 +80,7 @@ if (process.argv.includes("--selftest")) {
     ["203 label from load status", plant("board", "settlementLinkLabel({ number: r.settlement_display_id, status: r.settlement_status, is_open: r.settlement_is_open })", "settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status, is_presettlement: !!(r.settlement_id && !r.settlement_display_id) })")],
     ["203 helper returns dash", plant("board", "return lbl === DASH ? (s.status ? s.status.toUpperCase() : \"PENDING\") : lbl;", "return lbl;")],
     ["222 API no ledger fallback", plant("driftApi", ", NULLIF(btrim(gl.account_name), '')", "")],
-    ["222 home generic Account", plant("driftHome", /`Bank account \$\{String\(alert\.bank_account_id\)\.slice\(0, 8\)\}`;/, '"Account";')],
+    ["222 home generic Account", plant("driftHome", /entityLabel\(null, alert\.bank_account_id, "Bank account"\);/, '"Account";')],
     ["222 panel generic Account", plant("driftPanel", "label={driftAccountLabel(alert)}", 'label={alert.account_name ?? alert.institution_name ?? "Account"}')],
   ];
   let caught = 0;

@@ -20,9 +20,13 @@ export function driverAndShellIdsSql(driverParam: string, companyParam: string):
          AND shell.operating_company_id = ${companyParam}::uuid), ARRAY[]::uuid[]))`;
 }
 
-/** SQL: a driver id expression resolved to its survivor (merged shell → merged_into_driver_id; survivor → itself). */
-export function survivorDriverIdSql(driverIdExpr: string): string {
-  return `COALESCE((SELECT merge_src.merged_into_driver_id FROM mdata.drivers merge_src WHERE merge_src.id = ${driverIdExpr}), ${driverIdExpr})`;
+/**
+ * SQL: a driver id expression resolved to its survivor (merged shell → merged_into_driver_id; survivor → itself), in the
+ * company. Both merge writers (driver-merge.service.ts, driver-mapping.routes.ts) merge a shell only inside its own company,
+ * so the shell read is pinned to `companyExpr` — an id from another entity is never followed (CLS-JOIN-ENTITY-UNSCOPED).
+ */
+export function survivorDriverIdSql(driverIdExpr: string, companyExpr: string): string {
+  return `COALESCE((SELECT merge_src.merged_into_driver_id FROM mdata.drivers merge_src WHERE merge_src.id = ${driverIdExpr} AND merge_src.operating_company_id = ${companyExpr}), ${driverIdExpr})`;
 }
 
 /**
@@ -31,10 +35,11 @@ export function survivorDriverIdSql(driverIdExpr: string): string {
  * merge engine refuses a survivor that is itself merged; prod 11-03: 0 chained shells), so one hop is the survivor. An
  * unknown id comes back unchanged (the writer's own FK / mapping check reports it).
  */
-export async function resolveSurvivorDriverId(client: Queryable, driverId: string): Promise<string> {
+export async function resolveSurvivorDriverId(client: Queryable, driverId: string, operatingCompanyId: string): Promise<string> {
+  // CLS-JOIN-ENTITY-UNSCOPED: the shell is read in the writer's company only (merges never cross companies).
   const r = await client.query<{ id: string }>(
-    `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id FROM mdata.drivers d WHERE d.id = $1::uuid`,
-    [driverId]
+    `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id FROM mdata.drivers d WHERE d.id = $1::uuid AND d.operating_company_id = $2::uuid`,
+    [driverId, operatingCompanyId]
   );
   return r.rows[0]?.id ?? driverId;
 }

@@ -1041,8 +1041,9 @@ export async function updateDispatchLoad(
         );
         // Keep mdata.loads.trailer_type text in lockstep with the catalog code (same as ENG-22 ops repair).
         const eqType = (await client.query<{ equipment_type: string | null }>(
-          `SELECT equipment_type::text AS equipment_type FROM mdata.equipment WHERE id = $1::uuid LIMIT 1`,
-          [resolvedTrailerChoice.equipment_id]
+          `SELECT equipment_type::text AS equipment_type FROM mdata.equipment
+            WHERE id = $1::uuid AND COALESCE(currently_leased_to_company_id, owner_company_id) = $2::uuid LIMIT 1`,
+          [resolvedTrailerChoice.equipment_id, operatingCompanyId]
         )).rows[0]?.equipment_type;
         const code = equipmentTypeToLoadTrailerCode(eqType);
         if (code) {

@@ -1,6 +1,12 @@
 import { createContext, useContext, type ReactNode } from "react";
 import { useAuth } from "../../../auth/useAuth";
-import { DEFAULT_PLANNER_RANGE_DAYS, usePlannerRangeState, type PlannerRange, type PlannerRangeDays } from "./planner-range";
+import {
+  DEFAULT_PLANNER_RANGE_DAYS,
+  usePlannerRangeState,
+  type PlannerEntityFilterState,
+  type PlannerRange,
+  type PlannerRangeDays,
+} from "./planner-range";
 
 type PlannerRangeContextValue = {
   windowDays: PlannerRangeDays | null;
@@ -11,6 +17,9 @@ type PlannerRangeContextValue = {
   /** LEAD 443.251 item 4 — "Show days" toggles (0 = Sun … 6 = Sat); hidden days are not drawn. */
   hiddenWeekdays: number[];
   setHiddenWeekdays: (next: number[]) => void;
+  /** D3 — board Status / Driver entity filters shared across planner pages. */
+  entityFilters: PlannerEntityFilterState;
+  setEntityFilters: (next: PlannerEntityFilterState) => void;
   /** LEAD 443.251 item 6 — the signed-in user, so column widths persist per user. */
   storageScope: string;
 };

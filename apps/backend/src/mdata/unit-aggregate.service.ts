@@ -413,7 +413,7 @@ export async function buildUnitAggregate(
       SELECT d.id, d.first_name, d.last_name, d.phone, vda.started_at::text AS logged_in_at, vda.source
       FROM telematics.vehicle_driver_assignments vda
       -- Register row 167: a pairing recorded on a merged shell names the survivor.
-      JOIN mdata.drivers d ON d.id = ${survivorDriverIdSql("vda.driver_id")}
+      JOIN mdata.drivers d ON d.id = ${survivorDriverIdSql("vda.driver_id", "vda.operating_company_id")}
                           AND (d.operating_company_id = vda.operating_company_id OR EXISTS (
                             SELECT 1 FROM mdata.driver_company_authorizations aggregate_current_dca
                              WHERE aggregate_current_dca.driver_id = d.id

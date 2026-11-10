@@ -1184,6 +1184,29 @@
       ]
     },
     {
+      "id": "dispatch.panel.load_history_detail",
+      "tab": "Panels",
+      "sub": "Panel: Load history detail (timeline, money rollup, linked records for the selected load)",
+      "route_hint": "surface://components/dispatch/LoadHistoryDetailPanel.tsx",
+      "surface_kind": "panel",
+      "surface_path": "components/dispatch/LoadHistoryDetailPanel.tsx",
+      "required": [
+        "connectivity",
+        "load"
+      ]
+    },
+    {
+      "id": "dispatch.modal.owner_import",
+      "tab": "Modals",
+      "sub": "Modal: Owner import (pick file, preview plan, Post) — Load history and Faro purchase report",
+      "route_hint": "surface://components/imports/OwnerImportModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/imports/OwnerImportModal.tsx",
+      "required": [
+        "connectivity"
+      ]
+    },
+    {
       "id": "dispatch.panel.dispatch_load_costs",
       "tab": "Panels",
       "sub": "Panel: Dispatch Load Costs",

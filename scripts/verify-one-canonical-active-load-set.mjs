@@ -111,7 +111,9 @@ export function findViolations(relPath, src) {
     return { start, end };
   }
   function resolveAlias(statement, alias) {
-    const re = new RegExp(`\\b(?:FROM|JOIN)\\s+([a-z_][a-z0-9_.]*)\\s+(?:AS\\s+)?${alias}\\b`, "i");
+    // LST-F11147: an UPDATE's own alias binds too ("UPDATE driver_finance.driver_reimbursements r ... r.status <> 'paid'"
+    // is the reimbursement's status, not a load's). Without UPDATE the alias stayed unresolved and was counted as a load gate.
+    const re = new RegExp(`\\b(?:FROM|JOIN|UPDATE)\\s+([a-z_][a-z0-9_.]*)\\s+(?:AS\\s+)?${alias}\\b`, "i");
     const found = statement.match(re);
     return found ? found[1] : null;
   }
@@ -358,6 +360,21 @@ function selftest() {
     const dispatchQ = \`SELECT * FROM mdata.loads l WHERE ${DOLLAR}{canonicalDispatchWorkWhereClause("l", "$1::uuid")}\`;
   `;
   checks.push(["TRUCKLINE-16: file importing BOTH predicates -> RED, at least 1 violation", findViolations("dispatch/mixed.ts", mixedPredicatesSrc).length >= 1]);
+  // The shapes #28623 / #28383 / #28418 / #28757 shipped: an inline cancelled gate on a profitability read, and the Loads
+  // history "View all" status list. Planted inline -> RED; the same read through the canonical helper -> clean.
+  const profitInline = "const q = `SELECT l.id FROM mdata.loads l WHERE l.operating_company_id = $1 AND l.voided_at IS NULL\n  AND l.status::text <> 'cancelled'\n  AND l.created_at::date BETWEEN $2 AND $3`;";
+  checks.push(["PLANT profitability inline `l.status::text <> 'cancelled'` on mdata.loads -> RED", findViolations("reports/lane-profitability.service.ts", profitInline).length >= 1]);
+  checks.push(["the same read through canonicalNotCancelledLoadClause -> 0 violations", findViolations("reports/lane-profitability.service.ts", profitInline.replace("l.status::text <> 'cancelled'", "${canonicalNotCancelledLoadClause(\"l\")}")).length === 0]);
+  for (const rel of ["dispatch/load-profitability.service.ts", "reports/equipment-type-profitability.routes.ts", "reports/lane-profitability.service.ts", "reports/loads-history.service.ts"]) {
+    checks.push([`REAL ${rel} carries no inline load-status gate`, findViolations(rel, fs.readFileSync(path.join(SRC_DIR, rel), "utf8")).length === 0]);
+  }
+
+  // LST-F11147: an UPDATE's own alias. The reimbursement status on "UPDATE driver_finance.driver_reimbursements r" is NOT a
+  // load gate even though the statement also reads mdata.loads; "UPDATE mdata.loads l ... l.status <> 'paid'" still is.
+  const updReimb = "const q = `UPDATE driver_finance.driver_reimbursements r SET applied_to_settlement_id = NULL\n  WHERE r.voided_at IS NULL AND r.status <> 'paid'\n    AND r.load_id IN (SELECT id FROM mdata.loads WHERE load_number = ANY($3::text[]))`;";
+  checks.push(["UPDATE alias on driver_reimbursements (r.status <> 'paid') next to mdata.loads -> 0 violations", findViolations("driver-finance/x.ts", updReimb).length === 0]);
+  const updLoads = "const q = `UPDATE mdata.loads l SET updated_at = now()\n  WHERE l.status <> 'paid'\n    AND l.operating_company_id = $1`;";
+  checks.push(["PLANT UPDATE mdata.loads l ... l.status <> 'paid' -> RED", findViolations("driver-finance/x.ts", updLoads).length >= 1]);
 
   let bad = 0;
   for (const [name, ok] of checks) { if (!ok) bad++; console.log(`${ok ? "ok  " : "FAIL"}  ${name}`); }

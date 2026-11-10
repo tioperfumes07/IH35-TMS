@@ -22,11 +22,27 @@ export type RelayDriverUnresolvedReason =
   | "relay_integration_id_placeholder"
   | "no_active_driver_with_integration_id"
   | "integration_id_matches_multiple_drivers"
-  | "linked_driver_not_active";
+  | "linked_driver_not_active"
+  | "relay_link_voided";
+
+/**
+ * E1 link evidence (integrations.relay_driver_links): which link matched, the name Relay showed, the evidence, who confirmed
+ * it and who recorded it — carried into the "relay.fill_driver_matched" audit so a matched fill names the link it rode on.
+ * For a voided link (no live link left): who voided it and why, as the named unresolved reason's evidence.
+ */
+export type RelayDriverLinkEvidence = {
+  link_id: string;
+  relay_name: string | null;
+  evidence: string;
+  confirmed_by: string;
+  created_by: string | null;
+  voided_by: string | null;
+  void_reason: string | null;
+};
 
 export type RelayDriverMatch =
-  | { driver_id: string; unresolved_reason: null }
-  | { driver_id: null; unresolved_reason: RelayDriverUnresolvedReason };
+  | { driver_id: string; unresolved_reason: null; link?: RelayDriverLinkEvidence }
+  | { driver_id: null; unresolved_reason: RelayDriverUnresolvedReason; link?: RelayDriverLinkEvidence };
 
 /**
  * Resolve the driver for a Relay fuel txn by integration_id ONLY. Exact match on the value Relay sent (no
@@ -71,25 +87,46 @@ export async function resolveRelayDriverLink(
   operatingCompanyId: string,
   integrationId: string
 ): Promise<RelayDriverMatch> {
-  const res = await client.query<{ id: string; active: boolean }>(
+  type LinkRow = {
+    id: string; active: boolean; link_id?: string; relay_name?: string | null; evidence?: string; confirmed_by?: string;
+    created_by?: string | null; voided_at?: string | null; voided_by?: string | null; void_reason?: string | null;
+  };
+  // Live links first (l.voided_at IS NULL sorts true first); the newest voided link follows so a Relay id whose only link
+  // was voided gets a named reason (who voided it, why) instead of "no driver".
+  const res = await client.query<LinkRow>(
     `
       SELECT s.id::text AS id,
-             (s.merged_into_driver_id IS NULL AND s.deactivated_at IS NULL AND s.archived_at IS NULL) AS active
+             (s.merged_into_driver_id IS NULL AND s.deactivated_at IS NULL AND s.archived_at IS NULL) AS active,
+             l.id::text AS link_id, l.relay_name, l.evidence, l.confirmed_by, l.created_by::text AS created_by,
+             l.voided_at::text AS voided_at, l.voided_by::text AS voided_by, l.void_reason
       FROM integrations.relay_driver_links l
-      JOIN mdata.drivers d ON d.id = l.driver_id
-      JOIN mdata.drivers s ON s.id = COALESCE(d.merged_into_driver_id, d.id)
+      JOIN mdata.drivers d ON d.id = l.driver_id AND d.operating_company_id = l.operating_company_id
+      JOIN mdata.drivers s ON s.id = COALESCE(d.merged_into_driver_id, d.id) AND s.operating_company_id = l.operating_company_id
       WHERE l.operating_company_id = $1::uuid
         AND l.relay_integration_id = $2
-        AND l.voided_at IS NULL
+      ORDER BY (l.voided_at IS NULL) DESC, l.voided_at DESC
       LIMIT 2
     `,
     [operatingCompanyId, integrationId]
   );
-  if (res.rows.length === 0) return { driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" };
+  const evidenceOf = (r: LinkRow): RelayDriverLinkEvidence | undefined =>
+    r.link_id
+      ? {
+          link_id: r.link_id, relay_name: r.relay_name ?? null, evidence: r.evidence ?? "", confirmed_by: r.confirmed_by ?? "",
+          created_by: r.created_by ?? null, voided_by: r.voided_by ?? null, void_reason: r.void_reason ?? null,
+        }
+      : undefined;
+  const live = res.rows.filter((r) => r.voided_at == null);
+  if (live.length === 0) {
+    const voided = res.rows[0];
+    if (voided) return { driver_id: null, unresolved_reason: "relay_link_voided", link: evidenceOf(voided) };
+    return { driver_id: null, unresolved_reason: "no_active_driver_with_integration_id" };
+  }
   // relay_driver_links_live_key makes this unreachable; never pick one anyway.
-  if (res.rows.length > 1) return { driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" };
-  if (!res.rows[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active" };
-  return { driver_id: res.rows[0].id, unresolved_reason: null };
+  if (live.length > 1) return { driver_id: null, unresolved_reason: "integration_id_matches_multiple_drivers" };
+  const link = evidenceOf(live[0]);
+  if (!live[0].active) return { driver_id: null, unresolved_reason: "linked_driver_not_active", ...(link ? { link } : {}) };
+  return { driver_id: live[0].id, unresolved_reason: null, ...(link ? { link } : {}) };
 }
 
 /**

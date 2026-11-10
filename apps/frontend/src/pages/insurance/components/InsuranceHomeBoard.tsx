@@ -449,8 +449,10 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                     coverage: <span style={{ fontWeight: 700 }}>Total</span>,
                     premium: (
                       <span className="text-right tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                        {/* Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html */}
-                        {formatQuantityTable(annualPremiumCents / 100, 2)}
+                        {/* Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html. The sum opens the policies it totals. */}
+                        <Link to="/insurance/policies" style={{ color: V3.link }} data-testid="insurance-premium-total-link">
+                          {formatQuantityTable(annualPremiumCents / 100, 2)}
+                        </Link>
                       </span>
                     ),
                     share: (

@@ -101,7 +101,8 @@
     "title": "Despacho"
   },
   "drivers": {
-    "title": "Conductores"
+    "title": "Conductores",
+    "driver_label": "Conductor"
   },
   "maintenance": {
     "title": "Mantenimiento",

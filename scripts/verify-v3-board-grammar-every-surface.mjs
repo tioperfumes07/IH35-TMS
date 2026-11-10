@@ -382,10 +382,17 @@ function assertSettlementsHomeNoPanelExtract() {
     fail('chart footer must use board "weeks, not cancelled, not sample" grammar');
   }
   if (!/>Status</.test(panels) && !/Status<\/span>/.test(panels)) {
-    fail("Week-of table must have Status column (board ● Paid/Open)");
+    fail("Week-of table must have Status column (board ● Paid/Open/Closed)");
   }
-  if (!/function boardStatus/.test(panels) || !/label: "Paid"/.test(panels) || !/label: "Open"/.test(panels)) {
-    fail("Status must paint Paid/Open (board ● Paid / ● Open)");
+  // T4 — tour-closed unpaid rows paint Closed (not payment Open); Paid/Open remain.
+  if (
+    !/function weekOfBoardStatus/.test(panels) ||
+    !/label: "Paid"/.test(panels) ||
+    !/label: "Open"/.test(panels) ||
+    !/label: "Closed"/.test(panels) ||
+    !/settlementsWeekOfStatusLabel/.test(panels)
+  ) {
+    fail("Status must paint Paid/Open/Closed via weekOfBoardStatus (T4 tour-close + payment)");
   }
   if (!/<SettlementRefCell\b/.test(panels)) {
     fail("Loads column must mount SettlementRefCell (ALL-SEATS beside load)");

@@ -7,6 +7,7 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { useToast } from "../../../components/Toast";
 import { formatUsdCents } from "../../../lib/money";
 import { formatDateUS } from "../../../lib/formatDate";
+import { entityLabel } from "../../../lib/entity-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
 
 // GO-20 slice A (docs/lockdown/GO-20-EIGHT-FEATURES.txt) — "Banking gains a Drift panel at the
@@ -23,7 +24,7 @@ const DRIFT_KIND_LABEL: Record<DriftAlert["drift_kind"], string> = {
 // ROW 222 (D046) — the account's display name (API: COALESCE(display_name, account_name)), then institution,
 // then the mask; never the generic word "Account" for an alert that carries a bank_account_id.
 function driftAccountLabel(alert: DriftAlert): string {
-  return alert.account_name || alert.institution_name || (alert.account_mask ? `••${alert.account_mask}` : "") || `Bank account ${String(alert.bank_account_id).slice(0, 8)}`;
+  return alert.account_name || alert.institution_name || (alert.account_mask ? `••${alert.account_mask}` : "") || entityLabel(null, alert.bank_account_id, "Bank account");
 }
 
 function daysOpen(detectedAt: string): number {

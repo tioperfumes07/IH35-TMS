@@ -131,11 +131,10 @@ function analyze(src) {
   if (!manifest.includes('escrow_account: "/factoring/escrow-account"')) {
     e.push("FACTORING_TAB_PATH must include escrow_account → /factoring/escrow-account");
   }
-  if (!manifest.includes('return "submit_invoice"') && !/\/factoring"\) return "submit_invoice"/.test(manifest)) {
-    // default /factoring → submit_invoice
-    if (!/norm === "\/factoring"\) return "submit_invoice"/.test(manifest)) {
-      e.push('factoringTabFromPath("/factoring") must default to submit_invoice (not account_summary)');
-    }
+  // ROUND 8.5 FA1 (UI-F11125, #28755): Factoring home IS the Account Summary board; submit_invoice is a normal tab.
+  // (R315 originally defaulted /factoring to submit_invoice; the approved board route map superseded it.)
+  if (!/norm === "\/factoring"\) return "account_summary"/.test(manifest)) {
+    e.push('factoringTabFromPath("/factoring") must default to account_summary (Factoring home = Account Summary board, ROUND 8.5 FA1)');
   }
   if (!routes.includes('path="/factoring/escrow-account"') || !routes.includes('tabId="escrow_account"')) {
     e.push("routes/manifest.tsx must mount /factoring/escrow-account → escrow_account");
@@ -174,6 +173,7 @@ function selftest() {
     },
     { ...base, home: base.home.replace(/fmtCents\(row\.amount_cents\)/g, "fmtCurrency(row.amount_cents)") },
     { ...base, panel: "" },
+    { ...base, manifest: base.manifest.replace('if (norm === "/factoring") return "account_summary"', 'if (norm === "/factoring") return "submit_invoice"') },
     { ...base, manifest: base.manifest.replace('escrow_account: "/factoring/escrow-account"', "") },
   ];
   for (let i = 0; i < mutants.length; i++) {

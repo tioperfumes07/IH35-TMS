@@ -77,7 +77,10 @@ export function collectProblems(routesSrc, qboWriterExists) {
           `account for EVERY type (which blocks Bundle/Discount/Charge) or for none.`
       );
     }
-    if (!/!b\.default_income_account_id|default_income_account_id\s*==\s*null/.test(refine)) {
+    // sweepA (2026-11-10) — #27178 (443.236) added `const purchaseOnly = ... && !b.default_income_account_id` above the gate,
+    // so "the field is tested somewhere in superRefine" no longer proves the GATE tests it. The test must sit in the
+    // INCOME_ACCOUNT_REQUIRED_TYPES condition itself.
+    if (!/INCOME_ACCOUNT_REQUIRED_TYPES\.has\(b\.item_type\)\s*&&\s*(?:!b\.default_income_account_id|b\.default_income_account_id\s*==\s*null)/.test(refine)) {
       problems.push(`${ROUTES} superRefine does not actually test default_income_account_id.`);
     }
   }
@@ -122,7 +125,7 @@ if (process.argv.includes("--selftest")) {
       routes.replace(/, "NonInventory"\]\)/, "])"),
       qbo,
     ],
-    ["superRefine no longer tests the field", routes.replace(/!b\.default_income_account_id/, "false"), qbo],
+    ["superRefine no longer tests the field", routes.replace(/(INCOME_ACCOUNT_REQUIRED_TYPES\.has\(b\.item_type\) && )!b\.default_income_account_id/, "$1false"), qbo],
     [
       "QBO clone writer re-created (would bypass the requirement)",
       routes,

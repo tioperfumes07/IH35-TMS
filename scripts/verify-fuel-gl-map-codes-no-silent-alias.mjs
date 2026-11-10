@@ -27,6 +27,7 @@ const maybeRel = "apps/backend/src/accounting/fuel-posting/maybe-post-from-fuel-
 const coverageRel = "apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx";
 const plannerRel = "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx";
 const holdRel = "docs/blocks/HOLD-FUEL-GL-EXPENSE-MAP-CODES-2026-07-21.md";
+const REQUIRED = ["diesel", "def", "reefer", "oil", "misc"];
 
 /** ROUND 443.250 — Expense mapping tab V3 chrome (read-only coverage; no posting). */
 function assertFuelExpenseMapV3(coverageSrc, plannerSrc) {
@@ -51,6 +52,42 @@ function assertFuelExpenseMapV3(coverageSrc, plannerSrc) {
     findings.push(`${plannerRel}: expense_mapping tab must keep FuelGlMappingCoverage mount`);
   }
   return findings;
+}
+
+/**
+ * sweepA (2026-11-10) — ACCT-F11127 (#28722) added the Relay SERVICE kinds lumper / scales to FUEL_CATEGORY_CODES and moved
+ * the fuel-type resolve into a per-kind helper (resolveKindItem). The rule is unchanged: the five fuel codes stay first and
+ * in order; a code beyond them is accepted ONLY when it is a named non-fuel service item (NON_FUEL_COST_ITEM_NAME) whose
+ * POSTING_KIND_FUEL_TYPE entry is null — it can never alias to a fuel item; and the debit of a fuel kind is the fuel-type
+ * ITEM (resolveFuelItem over POSTING_KIND_FUEL_TYPE[kind]) for the poster's own fuelKind.
+ */
+export function posterVocabularyProblems(poster, itemRule, label = posterRel) {
+  const out = [];
+  const list = /FUEL_CATEGORY_CODES\s*=\s*\[([^\]]*)\]/.exec(poster);
+  const codes = list ? [...list[1].matchAll(/"([a-z_]+)"/g)].map((m) => m[1]) : [];
+  const serviceMap = /NON_FUEL_COST_ITEM_NAME[^=]*=\s*\{([^}]*)\}/.exec(itemRule);
+  const serviceKinds = new Set(serviceMap ? [...serviceMap[1].matchAll(/^\s*([a-z_]+)\s*:\s*"[^"]+"/gm)].map((m) => m[1]) : []);
+  if (codes.slice(0, REQUIRED.length).join("|") !== REQUIRED.join("|")) {
+    out.push(`${label} must keep FUEL_CATEGORY_CODES = diesel|def|reefer|oil|misc (exact order)`);
+  }
+  for (const extra of codes.slice(REQUIRED.length)) {
+    if (!serviceKinds.has(extra) || !new RegExp(`\\b${extra}:\\s*null`).test(itemRule)) {
+      out.push(`${label} FUEL_CATEGORY_CODES adds "${extra}", which is not a named non-fuel service item with POSTING_KIND_FUEL_TYPE.${extra} = null (a silent alias)`);
+    }
+  }
+  const call = /resolveFuelItem\(\s*client[^,]*,\s*input\.operating_company_id,\s*POSTING_KIND_FUEL_TYPE\[(\w+)\]/.exec(poster);
+  let debitOk = Boolean(call) && call[1] === "fuelKind";
+  if (call && !debitOk) {
+    // The helper shape: `const h = (kind: string) => { ...NON_FUEL_COST_ITEM_NAME[kind]... resolveFuelItem(..[kind]..) }`, called with fuelKind.
+    const window = poster.slice(Math.max(0, call.index - 600), call.index);
+    const heads = [...window.matchAll(/const (\w+) = \((\w+): string\) =>/g)];
+    const head = heads.length ? heads[heads.length - 1] : null;
+    const at = head ? Math.max(0, call.index - 600) + head.index : call.index;
+    debitOk = Boolean(head) && head[2] === call[1] && new RegExp(`await ${head[1]}\\(fuelKind\\)`).test(poster) &&
+      poster.slice(at, call.index).includes(`NON_FUEL_COST_ITEM_NAME[${call[1]}]`);
+  }
+  if (!debitOk) out.push(`${label} must resolve debit via resolveFuelItem(client, oc, POSTING_KIND_FUEL_TYPE[fuelKind])`);
+  return out;
 }
 
 /** ACCT-F5024 — fail if unit/equipment class lookups use the non-existent opco column. */
@@ -79,6 +116,25 @@ function assertFuelClassOwnerLeaseScope(posterSource, label = posterRel) {
 }
 
 function selftest() {
+  {
+    // sweepA plants — the vocabulary / debit rule.
+    const poster = fs.readFileSync(path.join(root, posterRel), "utf8");
+    const itemRule = fs.readFileSync(path.join(root, "apps/backend/src/accounting/fuel-posting/fuel-item-account.ts"), "utf8");
+    const real = posterVocabularyProblems(poster, itemRule, "real");
+    const plants = [
+      ["real tree", real.length === 0],
+      ["extra code with no service item (silent alias)", posterVocabularyProblems(poster.replace('"misc", "lumper"', '"misc", "fuel", "lumper"'), itemRule).length > 0],
+      ["service kind aliased to a fuel item", posterVocabularyProblems(poster, itemRule.replace("lumper: null", 'lumper: "diesel"')).length > 0],
+      ["fuel codes reordered", posterVocabularyProblems(poster.replace('"diesel", "def"', '"def", "diesel"'), itemRule).length > 0],
+      ["helper not called with the poster's fuelKind", posterVocabularyProblems(poster.replace("await resolveKindItem(fuelKind)", 'await resolveKindItem("diesel")'), itemRule).length > 0],
+      ["debit from the per-category map", posterVocabularyProblems(poster.replace(/resolveFuelItem\(client as never, input\.operating_company_id, POSTING_KIND_FUEL_TYPE\[kind\]/, "resolveAccountForCategory(client, input.operating_company_id, CAT[kind]"), itemRule).length > 0],
+    ];
+    const missed = plants.filter(([, ok]) => !ok).map(([n]) => n);
+    if (missed.length) {
+      console.error(`verify-fuel-gl-map-codes-no-silent-alias --selftest FAIL: ${missed.join("; ")}${real.length ? ` (${real.join("; ")})` : ""}`);
+      process.exit(1);
+    }
+  }
   const bad = `
     SELECT qbo_class_id FROM mdata.units WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1;
     SELECT qbo_class_id FROM mdata.equipment WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1;
@@ -158,7 +214,6 @@ if (process.argv.includes("--selftest")) {
   selftest();
 }
 
-const REQUIRED = ["diesel", "def", "reefer", "oil", "misc"];
 
 function read(rel) {
   const abs = path.join(root, rel);
@@ -176,16 +231,11 @@ const planner = read(plannerRel);
 const hold = read(holdRel);
 
 if (poster) {
-  if (!/FUEL_CATEGORY_CODES\s*=\s*\[\s*"diesel"\s*,\s*"def"\s*,\s*"reefer"\s*,\s*"oil"\s*,\s*"misc"\s*\]/.test(poster)) {
-    errors.push(`${posterRel} must keep FUEL_CATEGORY_CODES = diesel|def|reefer|oil|misc (exact order)`);
-  }
   // CC-2 2026-10-04: the debit account comes from the fuel-type ITEM (fuel-item-account.ts), the one rule the expense
   // document also uses — never the per-category map, whose DEF / reefer rows said 5000 while the items say 5010 / 5015.
-  if (!/resolveFuelItem\(\s*client[^,]*,\s*input\.operating_company_id,\s*POSTING_KIND_FUEL_TYPE\[fuelKind\]/.test(poster)) {
-    errors.push(`${posterRel} must resolve debit via resolveFuelItem(client, oc, POSTING_KIND_FUEL_TYPE[fuelKind])`);
-  }
   // No silent alias on the item side either: a kind without its own item (oil / misc) maps to null and REFUSES.
   const itemRule = read("apps/backend/src/accounting/fuel-posting/fuel-item-account.ts");
+  errors.push(...posterVocabularyProblems(poster, itemRule));
   if (!/oil:\s*null/.test(itemRule) || !/misc:\s*null/.test(itemRule) || !/def:\s*"def"/.test(itemRule) || !/reefer:\s*"reefer_diesel"/.test(itemRule)) {
     errors.push("fuel-item-account.ts POSTING_KIND_FUEL_TYPE must map def->def, reefer->reefer_diesel and oil/misc->null (refuse, never alias to diesel)");
   }

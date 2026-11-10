@@ -10,8 +10,8 @@ function verify(text) {
   const failures = [];
   const need = (condition, message) => { if (!condition) failures.push(message); };
   need(
-    /to=\{`\/maintenance\/work-orders\/new\?unit_id=\$\{encodeURIComponent\(unitId\)\}`\}[\s\S]{0,180}>\s*Create work order/.test(text),
-    "unit maintenance snapshot must drill directly into the mounted canonical work-order creator with unit_id",
+    /to=\{`\/maintenance\?create_wo=1&unit_id=\$\{encodeURIComponent\(unitId\)\}`\}[\s\S]{0,180}>\s*Create work order/.test(text),
+    "unit maintenance snapshot must drill directly into the canonical D24 Create WO modal deep link (?create_wo=1) with unit_id (LST-F11034, #28377)",
   );
   need(
     !/to=\{`\/maintenance\?unit=\$\{unitId\}`\}/.test(text),
@@ -29,11 +29,12 @@ if (failures.length) {
 if (process.argv.includes("--selftest")) {
   const mutations = [
     source.replace(
-      "/maintenance/work-orders/new?unit_id=${encodeURIComponent(unitId)}",
+      "/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}",
       "/maintenance?unit=${unitId}",
     ),
     source.replace("encodeURIComponent(unitId)", "unitId"),
-    source.replace("unit_id=", "equipment_id="),
+    source.replace("&unit_id=", "&equipment_id="),
+    source.replace("create_wo=1&", ""),
   ];
   for (const [index, mutation] of mutations.entries()) {
     if (mutation === source) {

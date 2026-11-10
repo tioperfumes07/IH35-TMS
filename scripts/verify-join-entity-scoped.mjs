@@ -391,6 +391,17 @@ function selftest({ skipTree = false } = {}) {
   if (auditSql(helperMount).length === 0) failures.push("case16 FAIL — a board unit gate without its lease-pair predicate still scoped UNIT_IN_SERVICE_SQL");
   HELPERS = savedHelpers;
 
+  // The merge-hop shape (#28622 driver-merge-resolution.ts, #27610 escrow holder): following merged_into_driver_id from a
+  // driver read by id alone crosses entities. Planted unscoped → caught; the real resolver file → clean.
+  const mergeHop = 'const q = `SELECT COALESCE(d.merged_into_driver_id, d.id)::text AS id FROM mdata.drivers d WHERE d.id = $1::uuid`;';
+  if (auditSql(mergeHop).length === 0) failures.push("case17 FAIL — an unscoped merge-hop read of mdata.drivers was NOT caught");
+  const mergeReal = readOrEmpty("apps/backend/src/mdata/driver-merge-resolution.ts");
+  if (!mergeReal || auditSql(mergeReal).length !== 0)
+    failures.push(`case18 FAIL — the real merge resolver reads mdata.drivers unscoped: ${auditSql(mergeReal).join(" | ")}`);
+  // The escrow holder join (LEFT JOIN by holder id alone) — planted → caught.
+  const escrowHolder = 'const q = `SELECT d.first_name FROM accounting.escrow_accounts ea LEFT JOIN mdata.drivers d ON ea.holder_type = \'driver\' AND d.id = ea.holder_id WHERE ea.operating_company_id = $1::uuid`;';
+  if (auditSql(escrowHolder).length === 0) failures.push("case19 FAIL — the unscoped escrow holder JOIN was NOT caught");
+
   if (!skipTree) {
     const tree = auditTree();
     if (tree.length !== 0) failures.push(`case8 FAIL — real tree flagged against baseline: ${tree.join(" | ")}`);

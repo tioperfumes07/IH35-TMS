@@ -1,4 +1,5 @@
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { notVoided } from "../accounting/live-document-predicates.sql.js";
 import { formatDate, formatDateTime, formatMoney, joinBrandAddrLines } from "../render/pdf-template.js";
 import {
   formatSettlementPeriodLines,
@@ -140,7 +141,7 @@ export async function buildDriverSettlementDocument(
             -- ACCT-F11098: a statement prints live lines only. Without this a voided true duplicate printed next to its
             -- original (and a reinstated line's void is its own audit history, not a second statement line).
             AND sl.is_active = true
-            AND sl.voided_at IS NULL
+            AND ${notVoided("sl")}
           ORDER BY sl.created_at ASC
         `,
         [input.settlementId, input.operatingCompanyId]
