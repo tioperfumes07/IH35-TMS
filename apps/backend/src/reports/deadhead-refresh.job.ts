@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { refreshDeadheadCache } from "./deadhead.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -42,7 +43,7 @@ export function initializeDeadheadRefreshCron(app: FastifyInstance) {
           // instances) needed four of the five pool slots. On the fork the pair completed alone but HUNG on the pool when other
           // engines in the same process held connections — the idle outer transaction is pure pool pressure.
           const companies = await withLuciaBypass((client) => client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`));
-          for (const company of companies.rows) {
+          for (const company of filterLiveEngineCompanyRows(companies.rows)) {
             assertTenantContext(company.id, "reports.deadhead_refresh_cron");
             await runDeadheadRefreshTick(company.id);
           }

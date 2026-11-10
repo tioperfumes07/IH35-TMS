@@ -23,6 +23,7 @@ import type { FastifyInstance } from "fastify";
 import { withLuciaBypass } from "../auth/db.js";
 import { dispatchReliabilityAlarm } from "../notifications/reliability-alarm.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 const INTERVAL_MS = 15 * 60 * 1000; // every 15 min
 const WINDOW_MIN = 15; // look-back window for "did events land?"
@@ -146,7 +147,7 @@ async function listOperatingCompanies(): Promise<string[]> {
     const res = await client.query<{ id: string }>(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`,
     );
-    return res.rows.map((r) => r.id);
+    return filterLiveEngineCompanies(res.rows.map((r) => r.id));
   });
 }
 

@@ -9,6 +9,7 @@ import {
   computeTodaysAttention,
 } from "../owner/todays-attention/aggregator.service.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "owner.todays_attention_worker";
 const DEFAULT_INTERVAL_MS = 15 * 60 * 1000;
@@ -26,7 +27,7 @@ async function tick(app: FastifyInstance) {
       `SELECT id::text FROM org.companies WHERE is_active = true LIMIT 200`
     );
 
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const ociId = String(row.id ?? "");
       if (!ociId) continue;
 

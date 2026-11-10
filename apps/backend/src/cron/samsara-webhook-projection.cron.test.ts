@@ -91,13 +91,13 @@ describe("samsara webhook projection cron", () => {
     const { initializeSamsaraWebhookProjectionCron } = await import("./samsara-webhook-projection.cron.js");
     clientQueryMock.mockImplementation(async (sql: string) => {
       if (sql.includes("FROM org.companies")) {
-        return { rows: [{ operating_company_id: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa" }] };
+        return { rows: [{ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" }] };
       }
       return { rows: [] };
     });
     initializeSamsaraWebhookProjectionCron(makeApp() as never);
     const tick = scheduleMock.mock.calls[0]?.[1] as (() => Promise<void>) | undefined;
     await expect(tick?.()).resolves.toBeUndefined();
-    expect(projectTickMock).toHaveBeenCalledWith(expect.any(Object), "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    expect(projectTickMock).toHaveBeenCalledWith(expect.any(Object), "5c854333-6ea5-4faa-af31-67cb272fef80");
   });
 });

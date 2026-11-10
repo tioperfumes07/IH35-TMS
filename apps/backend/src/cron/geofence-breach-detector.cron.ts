@@ -15,6 +15,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { detectGeofenceBreaches } from "../safety/geofence-breach-detector.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -325,7 +326,7 @@ export function initializeGeofenceBreachDetectorCron(app: FastifyInstance) {
             `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
           );
 
-          for (const company of companies.rows) {
+          for (const company of filterLiveEngineCompanyRows(companies.rows)) {
             assertTenantContext(company.id, "safety.geofence_breach_cron");
             const since = COMPANY_WATERMARKS.get(company.id) ?? new Date(Date.now() - 5 * 60 * 1000).toISOString();
             const until = new Date().toISOString();

@@ -44,6 +44,7 @@ import {
   isUsmcaOperatingCompany,
   RELAY_USMCA_DATA_FLOOR,
 } from "./relay-usmca-date-floor.js";
+import { filterLiveEngineCompanyRows } from "../../lib/live-engine-companies.js";
 
 const RELAY_SYNC_KIND = "relay_fuel_daily_pull";
 
@@ -200,7 +201,7 @@ async function listActiveCompanyIds(client: DbClient): Promise<{ id: string; cod
   const res = await client.query<{ id: string; code: string | null }>(
     `SELECT id::text AS id, code FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return res.rows.map((r) => ({ id: r.id, code: r.code }));
+  return filterLiveEngineCompanyRows(res.rows).map((r) => ({ id: r.id, code: r.code }));
 }
 
 /**

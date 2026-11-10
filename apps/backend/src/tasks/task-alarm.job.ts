@@ -9,6 +9,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { createNotification } from "../notifications/notification.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -102,7 +103,7 @@ export function initializeTaskAlarmCron(app: FastifyInstance) {
         async () => {
           await withLuciaBypass(async (client) => {
             const companies = await client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`);
-            for (const company of companies.rows) {
+            for (const company of filterLiveEngineCompanyRows(companies.rows)) {
               assertTenantContext(company.id, "tasks.alarm_cron");
               await runTaskAlarmTick(company.id);
             }

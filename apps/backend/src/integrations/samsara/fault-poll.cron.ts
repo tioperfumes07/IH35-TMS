@@ -36,6 +36,7 @@ import { SamsaraApiError, SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
 import { loadUnitIdBySamsaraVehicleId } from "./samsara-positions.service.js";
+import { filterLiveEngineCompanies } from "../../lib/live-engine-companies.js";
 
 const SAMSARA_FAULT_POLL_AUDIT_SOURCE = "SAMSARA-FAULT-POLL-CRON-1";
 
@@ -43,7 +44,7 @@ async function listActiveCompanyIds(client: PgClient): Promise<string[]> {
   const res = await client.query(
     `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return res.rows.map((r) => String(r.id));
+  return filterLiveEngineCompanies(res.rows.map((r) => String(r.id)));
 }
 
 /** Deterministic per (company, vehicle, day) -- repeated ticks the same day dedupe against the

@@ -41,6 +41,7 @@ import {
   FACTORING_PATH_LOAD_MDATA_STATUSES,
   isFactoringPathLoadStatus,
 } from "../dispatch/delivery-evidence-status.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 // Mirrors the established SYSTEM_ACTOR_USER_ID convention used by every other unattended cron in this
 // backend (depreciation-autopost.cron.ts, factoring-posting/default-interest.service.ts, etc.).
@@ -405,7 +406,7 @@ export function initializeFactoringPacketSweepCron(app: FastifyInstance) {
                 ORDER BY id
               `
             );
-            for (const company of companies.rows) {
+            for (const company of filterLiveEngineCompanyRows(companies.rows)) {
               assertTenantContext(company.id, "factoring.packet_sweep_cron");
               await sweepAndAssemblePackets(SYSTEM_ACTOR_ID, company.id);
             }

@@ -19,6 +19,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const CRON_NAME = "safety.driver_leave_balance_rollover";
 
@@ -34,7 +35,7 @@ export async function runDriverLeaveBalanceRolloverTick(targetYear = Number(comp
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
 
-    for (const company of companies.rows) {
+    for (const company of filterLiveEngineCompanyRows(companies.rows)) {
       assertTenantContext(String(company.id ?? ""), CRON_NAME);
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [company.id]);
 

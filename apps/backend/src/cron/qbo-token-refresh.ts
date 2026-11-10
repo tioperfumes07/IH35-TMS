@@ -6,6 +6,7 @@ import { sendEmail } from "../notifications/email.service.js";
 import { markRunnerFailed, markRunnerInitialized, markRunnerTick } from "../admin/runner-status.store.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 const disconnectAlertCooldownMs = 12 * 60 * 60 * 1000;
@@ -21,7 +22,7 @@ async function listActiveCompanyIds() {
         ORDER BY id
       `
     );
-    return res.rows.map((row) => row.id);
+    return filterLiveEngineCompanies(res.rows.map((row) => row.id));
   });
 }
 

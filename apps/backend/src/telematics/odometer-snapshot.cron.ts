@@ -32,6 +32,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[] }>;
@@ -46,7 +47,7 @@ async function listActiveCompanyIds(client: DbClient): Promise<string[]> {
   const res = await client.query<{ id: string }>(
     `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
   );
-  return res.rows.map((r) => r.id);
+  return filterLiveEngineCompanies(res.rows.map((r) => r.id));
 }
 
 async function snapshotOdometersForTenant(

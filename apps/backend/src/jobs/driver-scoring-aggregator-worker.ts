@@ -7,6 +7,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { aggregateForPeriod, previousWeekPeriod } from "../safety/driver-scoring/scoring.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -33,7 +34,7 @@ export async function runDriverScoringAggregatorTick(deps?: {
       `
     );
 
-    for (const { id } of companies.rows) {
+    for (const { id } of filterLiveEngineCompanyRows(companies.rows)) {
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
       const result = await aggregateForPeriod(client, id, period_start, period_end);
       rowsWritten += result.rows_written;
