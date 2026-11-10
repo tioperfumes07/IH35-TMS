@@ -45,7 +45,13 @@ export function findDefects(s) {
   if (!/appendCrudAudit\([^)]*"relay\.fill_driver_matched"/.test(s.rematch)) out.push("a matched header is not audited");
   const iStep = s.hook.indexOf('"relay.fill_driver_match"');
   if (iStep < 0 || iStep > s.hook.indexOf('"fuel.relay_fill_records"')) out.push("the ingest hook does not match drivers before recording Relay fills");
-  if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(s.hook)) out.push("the driver match touches companies other than USMCA (frozen)");
+  // sweepA (2026-11-10) — #28648 put the same USMCA filter on the other fuel ticks of this hook, so a file-wide match let
+  // them stand in for the driver-match tick (the "hook touches frozen companies" plant passed). The filter must sit in the
+  // tick that runs rematchRelayFuelDrivers.
+  const rematchAt = s.hook.indexOf("rematchRelayFuelDrivers(client");
+  const tickAt = rematchAt < 0 ? -1 : s.hook.lastIndexOf("wrapBackgroundJobTick(", rematchAt);
+  const driverTick = tickAt < 0 ? "" : s.hook.slice(tickAt, rematchAt);
+  if (!/\.filter\(\(id\) => isUsmcaOperatingCompany\(id\)\)/.test(driverTick)) out.push("the driver match touches companies other than USMCA (frozen)");
   if (!/!isUsmcaOperatingCompany\(operatingCompanyId\)/.test(s.route)) out.push("the rematch route can run over every company (frozen entities)");
   if (!/actor_user_id: actorUserId/.test(s.route)) out.push("the rematch route audits a person's run as the system");
   return out;
