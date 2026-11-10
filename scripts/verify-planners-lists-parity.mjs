@@ -119,8 +119,12 @@ for (const file of tsxFiles) {
     //        was also ticked). Still fails when a page offers no way to see inactive rows.
     const hasStatusShowFilter =
       /<(?:select|SelectCombobox)\b[\s\S]{0,800}?<option value="inactive">[\s\S]{0,200}?<option value="all">/.test(src);
+    // U12 (#28590): the status filter became a MultiSelectDropdown whose options include value "inactive" (and "active",
+    // so selecting both = all). Inactive rows stay reachable, so that is a valid toggle too.
+    const hasStatusMultiSelect =
+      /<MultiSelectDropdown\b/.test(src) && /\{\s*value:\s*"active"[^}]*\}\s*,\s*\{\s*value:\s*"inactive"/.test(src);
     const hasInactiveToggle =
-      (/showInactive|showVoided/.test(src) && /type="checkbox"/.test(src)) || hasStatusShowFilter;
+      (/showInactive|showVoided/.test(src) && /type="checkbox"/.test(src)) || hasStatusShowFilter || hasStatusMultiSelect;
     check(hasInactiveToggle, `${rel}: voided/inactive toggle (showInactive/showVoided + checkbox) present`);
   }
 
