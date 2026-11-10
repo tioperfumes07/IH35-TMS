@@ -81,6 +81,46 @@ function checkFindings() {
   if (!/COMPLETE-DESIGN-BUILD-LAW|board-viewport-single-row/.test(navCss)) {
     fails.push("A1: HoverDropdownNav.css must lock single-row menubar at board viewport");
   }
+  // ROUND 8.5 T1 — long Settlements tab labels must not wrap inside a menuitem (59px measured).
+  if (!/ROUND 8\.5 T1/.test(navCss) || !/white-space:\s*nowrap/.test(navCss) || !/flex-shrink:\s*0/.test(navCss)) {
+    fails.push("T1: HoverDropdownNav menuitems must nowrap + flex-shrink 0 (compact one-line strip)");
+  }
+
+  const fleetHealth = read("apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx");
+  if (!/filter === "moving"/.test(fleetHealth) || !/speed_mph/.test(fleetHealth)) {
+    fails.push("M1: FleetHealthLine must filter Moving via speed_mph > 3");
+  }
+  if (!/max-h-\[420px\]/.test(fleetHealth) || !/appearance=["']board["']/.test(fleetHealth)) {
+    fails.push("M3/M4: FleetHealthLine must use board table inside 420px scroll");
+  }
+  if (!/FleetTruck row=\{row\}/.test(fleetHealth) || !/flex min-w-0 items-center gap-2/.test(fleetHealth)) {
+    fails.push("M2: FleetHealthLine unit cell must be horizontal unit+truck");
+  }
+
+  const crumbs = read("apps/frontend/src/lib/structuralBreadcrumb.ts");
+  if (!/In Shop/.test(crumbs) || !/status["']\) === ["']in-shop/.test(crumbs)) {
+    fails.push("M5: structuralCrumbsForPath must label In Shop for fleet-table?status=in-shop");
+  }
+  const crumbUi = read("apps/frontend/src/components/shared/StructuralBreadcrumb.tsx");
+  if (!/structuralCrumbsForPath\(pathname,\s*search\)/.test(crumbUi)) {
+    fails.push("M5: StructuralBreadcrumb must pass search into structuralCrumbsForPath");
+  }
+
+  const diesel = read("apps/frontend/src/pages/fuel/components/FuelDieselByTruckPanel.tsx");
+  if (/appearance=["']board["']\s*</.test(diesel)) {
+    fails.push("F1: FuelDieselByTruckPanel must not break ParityTable generic (appearance before <Type>)");
+  }
+  if (!/ParityTable<DieselRow>/.test(diesel) || !/appearance=["']board["']/.test(diesel)) {
+    fails.push("F1/F2: FuelDieselByTruckPanel must keep ParityTable<DieselRow> appearance=board");
+  }
+  if (!/FleetTruck/.test(diesel)) {
+    fails.push("F1: FuelDieselByTruckPanel must render FleetTruck unit graphic");
+  }
+
+  const fuelPeriod = read("apps/frontend/src/pages/fuel/fuelBoardPeriod.ts");
+  if (!/fuelBoardPeriodOptions/.test(fuelPeriod) || !/toLocaleString\(/.test(fuelPeriod)) {
+    fails.push("F3: fuelBoardPeriod.ts must export fuelBoardPeriodOptions() with live month names");
+  }
 
   const parity = read("apps/frontend/src/components/parity/ParityTable.tsx");
   if (!/moneyNeverEllipsis|kind === "money" \?/.test(parity)) {

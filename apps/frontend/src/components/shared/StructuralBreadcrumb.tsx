@@ -10,9 +10,9 @@ import { Breadcrumb } from "./Breadcrumb";
  * claims the slot so this one steps aside (never two). Derived from the route only.
  */
 export function StructuralBreadcrumb() {
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const claimed = useBreadcrumbClaimed();
-  const items = structuralCrumbsForPath(pathname) ?? accountingFallbackCrumbs(pathname);
+  const items = structuralCrumbsForPath(pathname, search) ?? accountingFallbackCrumbs(pathname);
   if (claimed || !items || items.length === 0) return null;
   return (
     <div className="mb-2 shrink-0" data-testid="structural-breadcrumb" data-structural-breadcrumb="true">

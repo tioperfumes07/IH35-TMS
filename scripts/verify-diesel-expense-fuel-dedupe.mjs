@@ -15,7 +15,16 @@
 //                                both sides) matches a live fuel row anywhere in USMCA, where BOTH
 //                                copies post — the purchase is in the GL twice. A twin that exists
 //                                but does not post is a WARN (void the expense only after re-posting it).
-//   live_diesel_expenses         every live Diesel expense (no new ones may appear)
+//   diesel_expenses_off_fuel_source  ACCT-F11107 (2026-11-10) — a live Diesel expense that is NOT its fuel receipt's own
+//                                document: no source_fuel_transaction_id, a source row that is voided / archived / gone, or a
+//                                source row another live expense also claims. RULE REPLACED (old -> new -> why):
+//                                OLD: live_diesel_expenses counted EVERY live Diesel expense against a frozen ceiling ("no new
+//                                ones may appear"). NEW: only a Diesel expense off its own live fuel row counts. WHY: every
+//                                ingest writes Diesel documents (one per fuel row, fuel-expense-document.service.ts), so the
+//                                old count grew with normal business and was re-stamped by hand six times (172 -> 314); it
+//                                went red again on 2026-11-10 02:04Z (335 > 314) when the England WEX statement import wrote
+//                                44 documents, each on its own live fuel row. A count that grows with the business is not a
+//                                defect signal; a document with no receipt of its own is.
 //   duplicate_fill_pairs         LEAD 443.197 — the SAME PURCHASE recorded twice, caught by the fill itself, not by an
 //                                invoice string (a statement copy and the Creator receipt carry different references):
 //                                two live fuel rows of the same unit + product, company days at most 1 apart, gallons
@@ -47,7 +56,7 @@ const KNOWN_VOIDED_5782_IDS = [ // STALE-LITERAL-OK: known voided IDs for settle
   "fc1e34b9-98a2-49cc-bfcb-febf2b67f678",
   "0154cb7e-6b14-4d97-9ebc-8b19268ad124",
 ];
-const METRICS = ["doubled_with_live_fuel_twin", "live_diesel_expenses", "duplicate_fill_pairs"];
+const METRICS = ["doubled_with_live_fuel_twin", "diesel_expenses_off_fuel_source", "duplicate_fill_pairs"];
 
 // LEAD 443.197 — one fill, recorded twice. The SQL narrows to candidate pairs (same unit + product, company days <= 1
 // apart, gallons within 0.01); the pure predicate below decides — the same code the selftest plants against.
@@ -110,8 +119,23 @@ const DIESEL_SQL = `
   )
   SELECT tw.id, tw.total_amount_cents, tw.vendor_document_number, tw.source_settlement_ref,
          (coalesce(tw.twin_posts, false) AND ${LIVE_POSTING("expense", "tw.id::text")}) AS doubled,
-         (coalesce(tw.has_twin, false) AND NOT coalesce(tw.twin_posts, false)) AS twin_unposted
-    FROM tw`;
+         (coalesce(tw.has_twin, false) AND NOT coalesce(tw.twin_posts, false)) AS twin_unposted,
+         src.source_fuel_transaction_id::text AS source_fuel_id, src.source_live,
+         (SELECT count(*)::int FROM accounting.expenses o
+           WHERE o.operating_company_id = $1::uuid AND o.voided_at IS NULL
+             AND o.source_fuel_transaction_id = src.source_fuel_transaction_id) AS source_claims
+    FROM tw
+    JOIN LATERAL (
+      SELECT e.source_fuel_transaction_id,
+             EXISTS (SELECT 1 FROM fuel.fuel_transactions f
+                      WHERE f.id = e.source_fuel_transaction_id AND f.operating_company_id = $1::uuid
+                        AND f.voided_at IS NULL AND f.archived_at IS NULL) AS source_live
+        FROM accounting.expenses e WHERE e.id = tw.id) src ON true`;
+
+/** Pure: a live Diesel expense that is not its fuel receipt's own document (no live source row, or a shared one). */
+export function offFuelSource(r) {
+  return !r.source_fuel_id || r.source_live !== true || Number(r.source_claims) !== 1;
+}
 
 /** Pure: shrink-only ratchet — which metrics grew past the baseline (FAIL) and which shrank (tighten). */
 export function ratchet(current, baseline) {
@@ -155,7 +179,8 @@ async function live() {
     const rows = (await client.query(DIESEL_SQL, [USMCA_COMPANY_ID])).rows;
     const doubled = rows.filter((r) => r.doubled);
     const pairs = (await client.query(FILL_PAIR_SQL, [USMCA_COMPANY_ID])).rows.filter(isDuplicateFill);
-    const current = { doubled_with_live_fuel_twin: doubled.length, live_diesel_expenses: rows.length, duplicate_fill_pairs: pairs.length };
+    const offSource = rows.filter(offFuelSource);
+    const current = { doubled_with_live_fuel_twin: doubled.length, diesel_expenses_off_fuel_source: offSource.length, duplicate_fill_pairs: pairs.length };
     const usd = (list) => (list.reduce((a, r) => a + Number(r.total_amount_cents), 0) / 100).toFixed(2);
 
     const r8 = ratchet(current, baseline);
@@ -176,6 +201,13 @@ async function live() {
       console.error(`  a Diesel expense beside its fuel row posts the same purchase twice — void it through voidDocument({ type: 'expense' }):`);
       for (const r of doubled.slice(0, 20)) {
         console.error(`  ✗ ${r.id} inv=${r.vendor_document_number} $${(Number(r.total_amount_cents) / 100).toFixed(2)} settlement=${r.source_settlement_ref}`);
+      }
+    }
+
+    if (current.diesel_expenses_off_fuel_source > baseline.diesel_expenses_off_fuel_source) {
+      console.error(`  a live Diesel expense is not its fuel receipt's own document — no live source row, or a source another expense claims:`);
+      for (const r of offSource.slice(0, 20)) {
+        console.error(`  ✗ ${r.id} inv=${r.vendor_document_number} $${(Number(r.total_amount_cents) / 100).toFixed(2)} source=${r.source_fuel_id ?? "(none)"} live=${r.source_live} claims=${r.source_claims}`);
       }
     }
 
@@ -200,8 +232,8 @@ async function live() {
     if (failures > 0) process.exit(1);
     console.log(
       `${LABEL}: LIVE PASS — ${current.doubled_with_live_fuel_twin} doubled ($${usd(doubled)}) <= baseline ` +
-        `${baseline.doubled_with_live_fuel_twin}; ${current.live_diesel_expenses} live Diesel expenses ($${usd(rows)}) <= baseline ` +
-        `${baseline.live_diesel_expenses}; ${current.duplicate_fill_pairs} duplicate fill pairs <= baseline ${baseline.duplicate_fill_pairs}; ` +
+        `${baseline.doubled_with_live_fuel_twin}; ${rows.length} live Diesel expenses ($${usd(rows)}), ${current.diesel_expenses_off_fuel_source} off their own fuel row <= baseline ` +
+        `${baseline.diesel_expenses_off_fuel_source}; ${current.duplicate_fill_pairs} duplicate fill pairs <= baseline ${baseline.duplicate_fill_pairs}; ` +
         `2/2 settlement-5782 rows voided.`
     );
   } finally {
@@ -211,15 +243,20 @@ async function live() {
 }
 
 if (process.argv.includes("--selftest")) {
-  const base = { doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 0 };
+  const base = { doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 0 };
   // LEAD 443.197 plants — the 2026-10-17 Dreamline copy shape: statement copy (card net / gross) beside the Creator receipt.
   const copy = { a_unit: "u173", b_unit: "u173", a_type: "diesel", b_type: "diesel", a_day: "2026-08-26", b_day: "2026-08-26",
     a_gal: "101.999", b_gal: "102.000", a_total: "559.87", a_gross: null, b_total: "514.08", b_gross: "559.88" };
   const cases = [
-    ["at the baseline nothing grows", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base).grew.length === 0],
-    ["a new doubled purchase grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 3, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base).grew.includes("doubled_with_live_fuel_twin")],
-    ["a new Diesel expense grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 11, duplicate_fill_pairs: 0 }, base).grew.includes("live_diesel_expenses")],
-    ["a shrink is reported, not failed", (() => { const r = ratchet({ doubled_with_live_fuel_twin: 1, live_diesel_expenses: 10, duplicate_fill_pairs: 0 }, base); return r.grew.length === 0 && r.shrank.includes("doubled_with_live_fuel_twin"); })()],
+    ["at the baseline nothing grows", ratchet({ doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 0 }, base).grew.length === 0],
+    ["a new doubled purchase grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 3, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 0 }, base).grew.includes("doubled_with_live_fuel_twin")],
+    ["a Diesel expense off its fuel row grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: 1, duplicate_fill_pairs: 0 }, base).grew.includes("diesel_expenses_off_fuel_source")],
+    ["44 new Diesel documents, each on its own live fuel row, grow nothing (the 2026-11-10 WEX import)", ratchet({ doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: Array.from({ length: 44 }, (_, i) => ({ source_fuel_id: `f${i}`, source_live: true, source_claims: 1 })).filter(offFuelSource).length, duplicate_fill_pairs: 0 }, base).grew.length === 0],
+    ["PLANT: a Diesel expense with no fuel source is off its fuel row", offFuelSource({ source_fuel_id: null, source_live: false, source_claims: 0 })],
+    ["PLANT: a Diesel expense on a voided fuel row is off its fuel row", offFuelSource({ source_fuel_id: "f1", source_live: false, source_claims: 1 })],
+    ["PLANT: two live expenses on one fuel row are off their fuel row", offFuelSource({ source_fuel_id: "f1", source_live: true, source_claims: 2 })],
+    ["a Diesel expense on its own live fuel row is fine", !offFuelSource({ source_fuel_id: "f1", source_live: true, source_claims: 1 })],
+    ["a shrink is reported, not failed", (() => { const r = ratchet({ doubled_with_live_fuel_twin: 1, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 0 }, base); return r.grew.length === 0 && r.shrank.includes("doubled_with_live_fuel_twin"); })()],
     ["a correctly voided 5782 row passes", badlyVoided([{ id: "a", status: "void", void_reason: VOID_REASON_5782 }]).length === 0],
     ["a 5782 row un-voided fails", badlyVoided([{ id: "a", status: "posted", void_reason: VOID_REASON_5782 }]).length === 1],
     ["a 5782 row voided with another reason fails", badlyVoided([{ id: "a", status: "void", void_reason: "other" }]).length === 1],
@@ -232,7 +269,7 @@ if (process.argv.includes("--selftest")) {
     ["another truck is not the same fill", !isDuplicateFill({ ...copy, b_unit: "u171" })],
     ["another product is not the same fill", !isDuplicateFill({ ...copy, b_type: "def" })],
     ["amounts 6 cents apart are not the same fill", !isDuplicateFill({ ...copy, b_gross: "559.93", b_total: "514.08" })],
-    ["a new duplicate fill pair grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, live_diesel_expenses: 10, duplicate_fill_pairs: 1 }, base).grew.includes("duplicate_fill_pairs")],
+    ["a new duplicate fill pair grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 1 }, base).grew.includes("duplicate_fill_pairs")],
   ];
   for (const [n, p] of cases) console.log(`  ${p ? "✓" : "✗"} ${n}`);
   const bad = cases.filter(([, p]) => !p).length;
