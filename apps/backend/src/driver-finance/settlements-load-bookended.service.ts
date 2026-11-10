@@ -1190,7 +1190,7 @@ export async function pingSettlementOnLoadEvent(
       // SAVEPOINT so a failure cannot poison the outer txn (25P02); log — never silent bare catch.
       await client.query("SAVEPOINT refresh_open_tour_period_dates");
       try {
-        const settlRes = await client.query<{ status: string }>(`SELECT status FROM driver_finance.driver_settlements WHERE id = $1::uuid`, [settlementId]);
+        const settlRes = await client.query<{ status: string }>(`SELECT status FROM driver_finance.driver_settlements WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [settlementId, opts.operatingCompanyId]);
         if (settlRes.rows[0]?.status === "open") {
           await refreshOpenTourPeriodDates(client, { settlementId: String(settlementId), operatingCompanyId: opts.operatingCompanyId, actorUserId: opts.actorUserId ?? "" });
         }

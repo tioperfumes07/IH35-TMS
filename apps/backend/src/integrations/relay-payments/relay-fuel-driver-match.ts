@@ -76,8 +76,8 @@ export async function resolveRelayDriverLink(
       SELECT s.id::text AS id,
              (s.merged_into_driver_id IS NULL AND s.deactivated_at IS NULL AND s.archived_at IS NULL) AS active
       FROM integrations.relay_driver_links l
-      JOIN mdata.drivers d ON d.id = l.driver_id
-      JOIN mdata.drivers s ON s.id = COALESCE(d.merged_into_driver_id, d.id)
+      JOIN mdata.drivers d ON d.id = l.driver_id AND d.operating_company_id = l.operating_company_id
+      JOIN mdata.drivers s ON s.id = COALESCE(d.merged_into_driver_id, d.id) AND s.operating_company_id = l.operating_company_id
       WHERE l.operating_company_id = $1::uuid
         AND l.relay_integration_id = $2
         AND l.voided_at IS NULL

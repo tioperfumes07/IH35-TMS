@@ -72,7 +72,13 @@ function audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, unitsS
   if (!/enum\(\["7", "14", "15", "30"\]\)/.test(routesSrc) || !/Number\(v \?\? "15"\)/.test(routesSrc))
     f.push(`${ACTIVE_SET_ROUTES}: API must expose and default the owner-selected 15-day window`);
 
-  if (!/status === "Active"[\s\S]*withLuciaBypass\(\(client\) => getActiveDrivers\(client, scopedCompanyId, 15, 15\)\)/.test(driversSrc))
+  // #28503 (row 197) resolves the movement company in its own short withCurrentUser call (one pool checkout for the list), so
+  // the company identifier is no longer the list's `scopedCompanyId`. The RULE: a status=Active request reads the canonical
+  // 15/15 movement set through withLuciaBypass, for a company id resolved by resolveOperatingCompanyId for THIS user.
+  const activeRead = driversSrc.match(
+    /status === "Active"[\s\S]*?const (\w+) = await withCurrentUser\(authUser\.uuid, \(client\) =>\s*resolveOperatingCompanyId\(client, authUser\.uuid, operating_company_id\),?\s*\);[\s\S]*?withLuciaBypass\(\(client\) => getActiveDrivers\(client, (\w+), 15, 15\)\)/
+  );
+  if (!activeRead || activeRead[1] !== activeRead[2])
     f.push(`${DRIVERS_ROUTE}: status=Active list requests must refresh/read the canonical 15-day movement set`);
   if (!/values\.push\(movementActiveDriverIds \?\? \[\]\)[\s\S]*mdata\.drivers\.id = ANY\(\$\$\{values\.length\}::uuid\[\]\)/.test(driversSrc))
     f.push(`${DRIVERS_ROUTE}: active driver list must bind only the resolved movement UUIDs`);
@@ -133,11 +139,21 @@ function main() {
       }
     }
     const listMutations = [
-      driversSrc.replace("getActiveDrivers(client, scopedCompanyId, 15, 15)", "getActiveDrivers(client, scopedCompanyId, 7, 15)"),
+      driversSrc.replace(/getActiveDrivers\(client, (\w+), 15, 15\)/, "getActiveDrivers(client, $1, 7, 15)"),
       unitsSrc.replace("is_oos IS NOT TRUE", "is_oos IS TRUE"),
     ];
     if (audit(listMutations[0], ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) {
       console.error("SELFTEST FAIL: planted active-driver list mutation escaped"); process.exit(1);
+    }
+    // The movement set read for a company id that is NOT the one resolved for this user (e.g. the raw query param) → trips.
+    const wrongCompany = driversSrc.replace(/getActiveDrivers\(client, (\w+), 15, 15\)/, "getActiveDrivers(client, operating_company_id, 15, 15)");
+    // The movement set read without the bypass helper → trips.
+    const noBypass = driversSrc.replace(/withLuciaBypass\(\(client\) => getActiveDrivers\(/, "withCurrentUser(authUser.uuid, (client) => getActiveDrivers(");
+    for (const [name, m] of [["wrong-company", wrongCompany], ["no-bypass", noBypass]]) {
+      if (m === driversSrc) { console.error(`SELFTEST FAIL: ${name} plant did not change drivers.routes.ts`); process.exit(1); }
+      if (audit(m, ruleExists, activeSetSrc, querySrc, routesSrc, unitsSrc, positionsSrc, ingestionSrc, cronSources).length === 0) {
+        console.error(`SELFTEST FAIL: planted ${name} active-driver read escaped`); process.exit(1);
+      }
     }
     if (audit(driversSrc, ruleExists, activeSetSrc, querySrc, routesSrc, listMutations[1], positionsSrc, ingestionSrc, cronSources).length === 0) {
       console.error("SELFTEST FAIL: planted active-unit list mutation escaped"); process.exit(1);
