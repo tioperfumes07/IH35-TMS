@@ -2,6 +2,8 @@
 
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
+8.5a update: reproduced 3/34 Factoring failures, repaired source (embedded-section fallback, restore canonical reserve KPI panel, consolidate duplicate summary error messages). Original 34/34 now pass unchanged; adding route-authority regressions before shipping. M5 navigation now LIVE VERIFIED: Maintenance > In Shop breadcrumb, only In Shop aria-current=page, four bays. Full board acceptance still open.
+
 NEW BATCH SF1–SF2, CF1–CF6, R1–R5 in DESIGN-PARITY-VERIFY.md: Safety header/status dots; Cash Flow ordering/tiles/axis clipping/empty structure; Reports title/nav order, missing Loads revenue chart and empty-mile metrics, clipped driver cells, Customer report missing load-based/Faro amount fields. Preserve additive workflows and source real data. Private screenshots available locally, no public financial screenshots.
 
 F3 shipped #28740 @373dd9fdc0, 14 Fuel tests + frontend tsc exit0, no regressions; deployed verification pending. Syntax defects also fixed independently #28743/#28745. Codex takes ROUND 8.5a three Factoring tests next; do not duplicate. Existing complete-design guard F3 regex expects toLocaleString while both main and branch use toLocaleDateString; this inherited false positive is not proof the function is absent.
