@@ -66,7 +66,14 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
     {kpis.isError ? <p role="alert" className="text-xs text-slate-600">Safety summary unavailable. Open the source records or retry the page.</p> : null}
     <V3Panel title="Driver qualification matrix" viewAllLabel="View all active drivers →" onViewAll={() => setCohort("all")}
       footer="Dates indicate recorded expirations, not verified document completion. Missing information can be added in the driver record. This read-only view does not block dispatch, booking, settlement or pay. DQ-file completion is not supplied by the roster; review the source records.">
-      <ParityTable key={`${companyId}:${cohort}`} columns={columns} rows={(drivers ?? []).filter((driver) => inCohort(driver, cohort))} rowKey={(row) => row.id} loading={roster.isPending} />
+      <ParityTable
+        key={`${companyId}:${cohort}`}
+        appearance="board"
+        columns={columns}
+        rows={(drivers ?? []).filter((driver) => inCohort(driver, cohort))}
+        rowKey={(row) => row.id}
+        loading={roster.isPending}
+      />
     </V3Panel>
   </section>;
 }

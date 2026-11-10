@@ -92,12 +92,7 @@ export function CashFlowPage() {
         title="Cash Flow"
         subtitle="Forward-looking daily cash position — predicted income and expenses"
       />
-      <NavyPageSubNav
-        items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
-        activeId={activeTab}
-        onTabChange={(id) => setActiveTab(id as CashFlowTabId)}
-        itemIds={TABS.map((t) => t.id)}
-      />
+      {/* ROUND 8.5 CF1 — Related links ABOVE the tab strip (CashFlow-*.dc.html order). */}
       <nav
         aria-label="Cash flow related modules"
         className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs"
@@ -120,6 +115,12 @@ export function CashFlowPage() {
           Cash advances
         </Link>
       </nav>
+      <NavyPageSubNav
+        items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
+        activeId={activeTab}
+        onTabChange={(id) => setActiveTab(id as CashFlowTabId)}
+        itemIds={TABS.map((t) => t.id)}
+      />
       {activeTab === "home" && (
         <CashFlowHomeTab
           operatingCompanyId={selectedCompanyId}

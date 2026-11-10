@@ -142,7 +142,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   return (
     <div data-testid="party-board-vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, padding: "12px 20px 30px", minHeight: "100%" }}>
-      <PartyHomeHeader crumb={"Vendors"} title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
+      <PartyHomeHeader crumb="" title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
         createLabel={"+ Create Vendor"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
