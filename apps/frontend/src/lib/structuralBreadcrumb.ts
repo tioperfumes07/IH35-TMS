@@ -108,8 +108,9 @@ export function humanizeSegment(seg: string): string {
 /**
  * Route → Module › List › Record crumbs. Last crumb has no href.
  * Returns null when Shell must not render (Accounting / public / auth).
+ * `search` (e.g. `?status=in-shop`) relabels query-specific boards (ROUND 8.5 M5).
  */
-export function structuralCrumbsForPath(pathname: string): StructuralCrumb[] | null {
+export function structuralCrumbsForPath(pathname: string, search = ""): StructuralCrumb[] | null {
   const path = pathname.split("?")[0] || pathname;
   if (shouldSkip(path)) return null;
 
@@ -130,10 +131,14 @@ export function structuralCrumbsForPath(pathname: string): StructuralCrumb[] | n
   if (segs.length === 0) return [{ label: mod.label }];
 
   const items: StructuralCrumb[] = [{ label: mod.label, href: mod.home }];
+  const params = new URLSearchParams(search.startsWith("?") ? search.slice(1) : search);
+  const inShopFleetTable =
+    mod.prefix === "/maintenance" && segs[0] === "fleet-table" && params.get("status") === "in-shop";
 
   if (segs.length === 1) {
     // Module › List (or Module › Record when the only segment is an id)
-    items.push({ label: humanizeSegment(segs[0]!) });
+    // ROUND 8.5 M5 — board names In Shop, not Fleet Table, for ?status=in-shop.
+    items.push({ label: inShopFleetTable ? "In Shop" : humanizeSegment(segs[0]!) });
     return items;
   }
 
