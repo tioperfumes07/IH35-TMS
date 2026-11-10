@@ -13,6 +13,7 @@
  * any other uncaught background-job failure. This intentionally does NOT use wrapBackgroundJobTick,
  * which only logs and does not rethrow.
  */
+import { listUnpostedRelayServiceCodeCandidates } from "../../fuel/relay-service-code.js";
 import { hostname } from "node:os";
 import { recordBackfillWindow } from "./relay-fuel-backfill-runs.js";
 import type { FastifyInstance } from "fastify";
@@ -514,6 +515,20 @@ export async function runRelayFuelIngestTick(
           failures.push({ operating_company_id: operatingCompanyId, error: finishErr });
         }
       }
+    }
+  }
+
+  // ACCT-F11127 — Relay SERVICE codes (lumper / CAT scales) received but never posted go through the same one poster now.
+  for (const { id: serviceCompanyId } of companyIds) {
+    if (!isUsmcaOperatingCompany(serviceCompanyId)) continue;
+    if (opts?.operatingCompanyIds && !opts.operatingCompanyIds.includes(serviceCompanyId)) continue;
+    try {
+      const svc = await withLuciaBypass(async (client) => listUnpostedRelayServiceCodeCandidates(client as never, serviceCompanyId));
+      const queued = new Set(pendingGlPosts.map((c) => c.relay_fuel_transaction_id ?? c.fuel_transaction_id));
+      for (const c of svc) if (!queued.has(c.relay_fuel_transaction_id)) pendingGlPosts.push(c);
+      if (svc.length) app.log.info({ operating_company_id: serviceCompanyId, service_codes: svc.length }, "[RELAY_FUEL_INGEST_CRON] unposted Relay service codes queued");
+    } catch (err) {
+      failures.push({ operating_company_id: serviceCompanyId, error: err });
     }
   }
 

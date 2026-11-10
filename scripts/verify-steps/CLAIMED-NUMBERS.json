@@ -15650,6 +15650,11 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-faro-purchase-report-seed (ACCT-F11108)"
   },
+  "20037": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

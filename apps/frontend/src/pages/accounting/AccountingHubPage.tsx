@@ -628,16 +628,9 @@ export function AccountingHubPage() {
           </div>
         </BoardSection>
 
-        {/* LEAD 11-03 (Codex batch33/40 finding, AccountingHubPage lower grid): the fixed 1.2fr/1.2fr/1fr row squeezed
-            the money columns — receivables amounts truncated at 1280 and the three panels crushed at 768. Each panel
-            now keeps a readable minimum width and the row wraps instead of truncating money. */}
+        {/* Accounting.dc.html lower row: 1.2fr 1.2fr 1fr at board width. Stack below 1100px so money never truncates. */}
         <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(380px, 1fr))",
-            gap: 12,
-            alignItems: "start",
-          }}
+          className="grid grid-cols-1 items-start gap-3 min-[1100px]:grid-cols-[1.2fr_1.2fr_1fr]"
           data-testid="accounting-hub-lower-grid"
         >
           <BoardSection
@@ -686,7 +679,7 @@ export function AccountingHubPage() {
                         sortable: true,
                         kind: "money",
                         sortValue: (b) => b.amountCents,
-                        cellClass: "text-right tabular-nums",
+                        cellClass: "text-right tabular-nums whitespace-nowrap",
                         render: (b) => (arAgingQ.isLoading ? "…" : formatUsdCents(b.amountCents)),
                       },
                       {
@@ -695,7 +688,7 @@ export function AccountingHubPage() {
                         sortable: true,
                         kind: "number",
                         sortValue: (b) => b.amountCents,
-                        cellClass: "text-right tabular-nums",
+                        cellClass: "text-right tabular-nums whitespace-nowrap",
                         render: (b) => (arAgingQ.isLoading ? "…" : sharePct(b.amountCents, agingBuckets.totalAmt)),
                       },
                     ]}
