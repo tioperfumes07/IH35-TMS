@@ -29,7 +29,13 @@ export function problems({ seed, route, types }) {
     if (!/stops_order_invalid/.test(body)) p.push("a stop list that does not start with a pickup and end with a delivery is no longer refused");
     if (!/stop_city_state_required/.test(body)) p.push("a listed stop without its real city/state is no longer refused (SETL-F438)");
   }
-  if (!/stops: z\s*\.array\(/.test(route)) p.push("the route drops the draft's stop list (no stops schema)");
+  // LST-F11155: read the Creator DRAFT schema only (const draftSchema … first app.post). #28788's post-as-signed body has its
+  // own passthrough `stops: z.array(…)`, which satisfied a whole-file match even if the draft schema lost its stop list.
+  const ds = route.indexOf("const draftSchema = z.object(");
+  const de = ds < 0 ? -1 : route.indexOf("app.post(", ds);
+  const draftSchema = ds < 0 ? "" : route.slice(ds, de < 0 ? undefined : de);
+  if (!draftSchema) p.push("the route's Creator draftSchema was not found");
+  else if (!/stops: z\s*\.array\(/.test(draftSchema)) p.push("the route drops the draft's stop list (no stops schema)");
   if (!/stops\?: SettlementCreatorDraftStop\[\] \| null;/.test(types)) p.push("the draft load type has no stop list");
   return p;
 }
