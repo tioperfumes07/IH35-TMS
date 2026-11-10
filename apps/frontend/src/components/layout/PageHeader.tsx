@@ -84,10 +84,11 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
           */}
           <h1
             style={{
-              fontFamily: typography.fontSerif,
+              // ROUND 8.4 / 8.5 — approved V3 boards use Inter, not serif (Insurance.dc.html and siblings).
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               fontSize: typography.pageHeading,
               color: colors.pageHeading,
-              fontWeight: 600,
+              fontWeight: 700,
               whiteSpace: "nowrap",
               flexShrink: 0,
             }}
