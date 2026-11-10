@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~7:00 PM CT) — Fuel diesel Spend bar track off slate
+- **PRIOR:** #28817 Integrity Alerts Severity multi-select.
+- **THIS:** FuelDieselByTruckPanel Spend bar track bg-slate-100 → #EEF0F3 (same locked track as Fuel Home F1/F2). Engines unchanged. R4–R6 Cascade.
+- **NEXT:** residual boards/U12; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~6:55 PM CT) — Integrity Alerts Severity multi-select
 - **PRIOR:** #28816 F1/F2 Fuel Home diesel board engines.
 - **THIS:** IntegrityAlertsPage Severity SelectCombobox → MultiSelectDropdown (same U12 OR pattern as Status); API one-severity when 0/1, client filter when 2+. R4–R6 Cascade.
@@ -188,10 +193,5 @@
 - **PRIOR:** #28697 design-parity census.
 - **THIS:** Retune census (no false coming-soon/testid; ParityTable gear defaults; print hidePager exempt). emptyText — on Documents + 4 catalog lists. Baseline failing_routes 48→0.
 - **NEXT:** Accounting complete design build vs Accounting.dc.html; no match/Dreamline.
-
-## OUTBOX (11-09-2026 ~8:05 PM CT) — ROUND 8.4 design-parity census (PR 1)
-- **PRIOR:** #28693 System Program phase U12.
-- **THIS:** scripts/verify-design-parity-census.mjs + docs/design/DESIGN-PARITY-CENSUS.md + baseline ratchet (failing_routes may only go down). ROUND 8.4 UI-F11125 census floor before module builds.
-- **NEXT:** Accounting design build (highest money); lower census fails; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
