@@ -171,6 +171,26 @@ async function computeServiceQualitySubscore(
   const hasLoads = await tableExists(client, "mdata", "loads");
   if (!hasStopArrivals || !hasLoadStops || !hasLoads) return null;
 
+  // ACCT-F11126 — the arrival set below reads every load-stop fence event of the company (measured 11-10 on a prod fork:
+  // 64,574 fence events + 18,940 fences scanned, 1.85 s) and was run for every customer: 1,217 USMCA customers × ~10 s per
+  // customer ≈ 3.5 h, longer than the gap between deploys, so the worker never reached its success record (last success
+  // 2026-10-25). A customer with no live load stop that carries a schedule has no completed arrival — the result is the same
+  // null the query would return, without the scan.
+  const candidate = await client.query<{ n: number }>(
+    `
+      SELECT 1 AS n
+        FROM mdata.loads l
+        JOIN mdata.load_stops ls ON ls.load_id = l.id AND ls.soft_deleted_at IS NULL
+       WHERE l.operating_company_id = $1::uuid
+         AND l.customer_id = $2::uuid
+         AND l.soft_deleted_at IS NULL
+         AND COALESCE(ls.appointment_end_at, ls.scheduled_arrival_at, ls.appointment_start_at) IS NOT NULL
+       LIMIT 1
+    `,
+    [operatingCompanyId, customerUuid]
+  );
+  if (!candidate.rows[0]) return null;
+
   const res = await client.query<{ total_count: string; late_count: string }>(
     `
       WITH completed AS (
