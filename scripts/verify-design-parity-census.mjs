@@ -1,0 +1,478 @@
+#!/usr/bin/env node
+/**
+ * ROUND 8.4 / UI-F11125 — Design parity census (PR 1).
+ *
+ * For every route in apps/frontend/src/routes/manifest.tsx, record:
+ *   module · tab/subtab (path segments) · governing design source · static app-wide rule pass/fail.
+ *
+ * Writes docs/design/DESIGN-PARITY-CENSUS.md and ratchets scripts/design-parity-census-baseline.json
+ * (failing route count may only go down).
+ *
+ * Run:
+ *   node scripts/verify-design-parity-census.mjs
+ *   node scripts/verify-design-parity-census.mjs --write-census
+ *   node scripts/verify-design-parity-census.mjs --lower
+ *   node scripts/verify-design-parity-census.mjs --selftest
+ */
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const LABEL = "verify-design-parity-census";
+const MANIFEST = path.join(ROOT, "apps/frontend/src/routes/manifest.tsx");
+const CENSUS_MD = path.join(ROOT, "docs/design/DESIGN-PARITY-CENSUS.md");
+const BASELINE = path.join(ROOT, "scripts/design-parity-census-baseline.json");
+const V3_DIR = path.join(ROOT, "docs/design/v3");
+const BOARDS_DIR = path.join(ROOT, "docs/design/boards");
+const APPROVED_DIR = path.join(ROOT, "docs/design/approved-screens");
+const PAGES_DIR = path.join(ROOT, "apps/frontend/src/pages");
+
+/** Path-prefix → primary design source(s). First match wins (longest prefix preferred via sort). */
+const DESIGN_BY_PREFIX = [
+  ["/accounting/unexpected", "v3:Accounting-Unexpected.dc.html"],
+  ["/accounting", "v3:Accounting.dc.html + approved:03-accounting-dropdown.png + board:banking (money)"],
+  ["/banking", "v3:Banking.dc.html + approved:04-banking.png + board:banking"],
+  ["/settlements", "v3:Settlements*.dc.html + board:settlements"],
+  ["/driver-finance", "v3:Settlements*.dc.html + board:settlements"],
+  ["/drivers/settlements", "v3:Settlements*.dc.html"],
+  ["/drivers/pre-settlements", "v3:Settlements-PreSettlements.dc.html"],
+  ["/drivers/cash-advances", "v3:Settlements-CashAdvances.dc.html"],
+  ["/factoring", "v3:Factoring.dc.html"],
+  ["/customers", "v3:Customers.dc.html + board:driver-customers-vendors"],
+  ["/vendors", "v3:Vendors.dc.html + board:driver-customers-vendors"],
+  ["/maintenance", "v3:Maintenance-Home.dc.html + approved:02-maintenance.png + board:maintenance"],
+  ["/fuel", "v3:Fuel.dc.html + approved:05-fuel-planner.png + v3:Modal-FuelAssignment.dc.html"],
+  ["/dispatch/load-history", "v3:Dispatch-LoadHistory.dc.html"],
+  ["/dispatch", "approved:08-dispatch.png + v3:Dispatch-*.dc.html"],
+  ["/safety", "v3:Safety-DriverFiles.dc.html + approved:06-safety.png"],
+  ["/compliance", "approved:06-safety.png (app-wide + compliance)"],
+  ["/drivers", "v3:DriverProfile.dc.html + approved:07-drivers.png + board:driver-customers-vendors"],
+  ["/fleet", "board:maintenance (fleet table) + approved:02-maintenance.png"],
+  ["/insurance", "v3:Insurance.dc.html"],
+  ["/reports", "v3:Reports*.dc.html + approved:10-reports.png"],
+  ["/lists", "approved:09-lists-catalogs.png"],
+  ["/home", "approved:01-home.png"],
+  ["/cash-flow", "v3:CashFlow-*.dc.html"],
+  ["/legal", "v3:Legal.dc.html"],
+  ["/system", "app-wide rules only"],
+  ["/program", "app-wide rules only"],
+  ["/users", "app-wide rules only"],
+  ["/settings", "app-wide rules only"],
+  ["/portal", "approved:12-driver-app.png"],
+  ["/425c", "approved:11-form-425c.png"],
+  ["/form-425c", "approved:11-form-425c.png"],
+];
+
+const APP_WIDE_RULES = [
+  "coming_soon_stub",
+  "status_select_not_multiselect",
+  "missing_em_dash_empty",
+  "parity_table_without_export_or_gear",
+  "unresolved_page",
+];
+
+function read(p) {
+  return fs.readFileSync(p, "utf8");
+}
+
+function moduleOf(routePath) {
+  const parts = routePath.split("/").filter(Boolean);
+  if (!parts.length) return "root";
+  return parts[0];
+}
+
+function tabOf(routePath) {
+  const parts = routePath.split("/").filter(Boolean);
+  if (parts.length < 2) return "—";
+  return parts.slice(1).join("/") || "—";
+}
+
+function designSourceFor(routePath) {
+  const sorted = [...DESIGN_BY_PREFIX].sort((a, b) => b[0].length - a[0].length);
+  for (const [prefix, src] of sorted) {
+    if (routePath === prefix || routePath.startsWith(prefix + "/") || routePath.startsWith(prefix + "?")) {
+      return src;
+    }
+  }
+  return "app-wide rules only";
+}
+
+/** Absolute + nested relative paths → absolute where parent is known. */
+function extractRoutes(manifestSrc) {
+  const routes = [];
+  const pathRe = /path="([^"]+)"/g;
+  let m;
+  const stack = [];
+  // Approximate nesting by scanning line-by-line for Route open/close + path.
+  const lines = manifestSrc.split("\n");
+  for (const line of lines) {
+    const openCount = (line.match(/<Route\b/g) || []).length;
+    const selfClose = /\/>\s*$/.test(line) || /<\/Route>/.test(line);
+    const pathMatch = line.match(/path="([^"]+)"/);
+    if (pathMatch) {
+      const raw = pathMatch[1];
+      let abs;
+      if (raw.startsWith("/")) {
+        abs = raw;
+        stack.push(raw);
+      } else {
+        const parent = stack[stack.length - 1] || "";
+        abs = `${parent.replace(/\/$/, "")}/${raw}`.replace(/\/+/g, "/");
+        stack.push(abs);
+      }
+      routes.push(abs);
+      if (selfClose && openCount) stack.pop();
+    }
+    // Closing Route without path on same line — pop one level when </Route>
+    if (/<\/Route>/.test(line) && !pathMatch) {
+      stack.pop();
+    }
+  }
+  // Deduplicate, keep order
+  const seen = new Set();
+  const out = [];
+  for (const r of routes) {
+    if (seen.has(r)) continue;
+    seen.add(r);
+    out.push(r);
+  }
+  return out;
+}
+
+/** Build ComponentName → relative page import path from manifest lazy/static imports. */
+function buildImportMap(manifestSrc) {
+  const map = new Map();
+  const lazyRe =
+    /const\s+(\w+)\s*=\s*React\.lazy\(\(\)\s*=>\s*import\("(\.\.\/pages\/[^"]+)"/g;
+  let m;
+  while ((m = lazyRe.exec(manifestSrc))) {
+    map.set(m[1], m[2].replace(/^\.\.\//, "apps/frontend/src/").replace(/\.tsx$/, "") + ".tsx");
+  }
+  // Named then() default
+  const lazyThenRe =
+    /const\s+(\w+)\s*=\s*React\.lazy\(\(\)\s*=>\s*import\("(\.\.\/pages\/[^"]+)"\)\.then/g;
+  while ((m = lazyThenRe.exec(manifestSrc))) {
+    const file = m[2].replace(/^\.\.\//, "apps/frontend/src/") + (m[2].endsWith(".tsx") ? "" : ".tsx");
+    // import may omit .tsx and end without extension
+    const cleaned = file.replace(/\.tsx\.tsx$/, ".tsx");
+    map.set(m[1], cleaned.endsWith(".tsx") ? cleaned : cleaned + ".tsx");
+  }
+  const staticRe = /import\s+\{\s*([^}]+)\s*\}\s+from\s+"(\.\.\/pages\/[^"]+)"/g;
+  while ((m = staticRe.exec(manifestSrc))) {
+    const names = m[1].split(",").map((s) => s.trim().split(/\s+as\s+/).pop().trim());
+    const file = m[2].replace(/^\.\.\//, "apps/frontend/src/") + (m[2].endsWith(".tsx") ? "" : ".tsx");
+    for (const n of names) if (n) map.set(n, file);
+  }
+  return map;
+}
+
+/** Best-effort: find element={<Name} near a path= line in manifest. */
+function pageFileForRoute(manifestSrc, routePath, importMap) {
+  const escaped = routePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // Match path="route" then look ahead ~15 lines for a capitalised component
+  const re = new RegExp(`path="${escaped}"([\\s\\S]{0,800}?)(?:path=|</Route>|/>)`, "m");
+  const m = re.exec(manifestSrc);
+  if (!m) return null;
+  const chunk = m[1];
+  const comps = [...chunk.matchAll(/<([A-Z][A-Za-z0-9]+)/g)].map((x) => x[1]);
+  const skip = new Set([
+    "Route",
+    "ProtectedRoute",
+    "PortalRouteGuard",
+    "PortalLayout",
+    "Navigate",
+    "Suspense",
+    "Fragment",
+  ]);
+  for (const c of comps) {
+    if (skip.has(c)) continue;
+    if (importMap.has(c)) return importMap.get(c);
+  }
+  return null;
+}
+
+function scorePage(fileRel, src) {
+  const fails = [];
+  // Unresolved page is tracked but does NOT fail the route for the ratchet floor —
+  // ROUND 8.4 BUILD phase binds design files; census fails are rule hits on resolved sources.
+  if (!fileRel) {
+    return { fails: ["unresolved_page"], routeFail: false };
+  }
+  if (!src) {
+    return { fails: ["unresolved_page"], routeFail: false };
+  }
+  // App-wide rule: Coming-soon / placeholder stubs = FAIL (owner complete-build law).
+  if (/\bComing soon\b|\bComing-soon\b|\bunder construction\b|\bnot yet implemented\b/i.test(src)) {
+    fails.push("coming_soon_stub");
+  }
+  // U12 residual: Active/Inactive status still SelectCombobox on a list-ish page.
+  if (
+    /SelectCombobox/.test(src) &&
+    /<option value="(active|inactive|true|false)">\s*(Active|Inactive)/.test(src) &&
+    /ParityTable|filterBar|statusFilter|Show inactive/.test(src)
+  ) {
+    fails.push("status_select_not_multiselect");
+  }
+  // Lists/tables should render missing as em dash somewhere (house empty grammar).
+  if (/ParityTable/.test(src) && !src.includes("—") && !/emptyText|emptyState|need-company/.test(src)) {
+    fails.push("missing_em_dash_empty");
+  }
+  // ParityTable surfaces should expose export or column gear (design law #8).
+  if (
+    /<ParityTable\b/.test(src) &&
+    !/exportFilename|enableColumnResize|ColumnChooser|column chooser/i.test(src)
+  ) {
+    // ParityTable may default gear internally — only fail if suppress hints suggest stripped chrome
+    // and no export.
+    if (/suppressToolbarSearch/.test(src) && !/exportFilename/.test(src) && !/enableColumnResize/.test(src)) {
+      fails.push("parity_table_without_export_or_gear");
+    }
+  }
+  return { fails, routeFail: fails.length > 0 };
+}
+
+function inventoryDesignFiles() {
+  const v3 = fs.existsSync(V3_DIR)
+    ? fs.readdirSync(V3_DIR).filter((f) => f.endsWith(".dc.html")).sort()
+    : [];
+  const boards = fs.existsSync(BOARDS_DIR)
+    ? fs.readdirSync(BOARDS_DIR, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+    : [];
+  const approved = fs.existsSync(APPROVED_DIR)
+    ? fs.readdirSync(APPROVED_DIR).filter((f) => f.endsWith(".png")).sort()
+    : [];
+  return { v3, boards, approved };
+}
+
+export function runCensus({ writeCensus = false } = {}) {
+  const manifestSrc = read(MANIFEST);
+  const routes = extractRoutes(manifestSrc);
+  const importMap = buildImportMap(manifestSrc);
+  const designFiles = inventoryDesignFiles();
+
+  const rows = [];
+  let failingRoutes = 0;
+  const failRuleCounts = Object.fromEntries(APP_WIDE_RULES.map((r) => [r, 0]));
+  const byModule = new Map();
+
+  for (const route of routes) {
+    const mod = moduleOf(route);
+    const tab = tabOf(route);
+    const design = designSourceFor(route);
+    const pageRel = pageFileForRoute(manifestSrc, route, importMap);
+    let src = null;
+    if (pageRel) {
+      const abs = path.join(ROOT, pageRel);
+      if (fs.existsSync(abs)) src = read(abs);
+      else {
+        // try without forcing .tsx double
+        const alt = abs.replace(/\.tsx$/, "");
+        if (fs.existsSync(alt)) src = read(alt);
+      }
+    }
+    const scored = scorePage(pageRel, src);
+    const fails = scored.fails;
+    if (scored.routeFail) failingRoutes += 1;
+    for (const f of fails) if (f in failRuleCounts) failRuleCounts[f] += 1;
+
+    const row = {
+      route,
+      module: mod,
+      tab,
+      design,
+      page: pageRel || "—",
+      fails,
+      pass: !scored.routeFail,
+      unresolved: fails.includes("unresolved_page"),
+    };
+    rows.push(row);
+
+    if (!byModule.has(mod)) byModule.set(mod, { total: 0, failing: 0, unresolved: 0, routes: [] });
+    const bucket = byModule.get(mod);
+    bucket.total += 1;
+    if (scored.routeFail) bucket.failing += 1;
+    if (row.unresolved) bucket.unresolved += 1;
+    bucket.routes.push(row);
+  }
+
+  const summary = {
+    generated_at: new Date().toISOString(),
+    route_count: routes.length,
+    failing_routes: failingRoutes,
+    passing_routes: routes.length - failingRoutes,
+    fail_rule_counts: failRuleCounts,
+    design_inventory: {
+      v3_dc_html: designFiles.v3.length,
+      board_sets: designFiles.boards.length,
+      approved_screens: designFiles.approved.length,
+    },
+    unresolved_routes: rows.filter((r) => r.unresolved).length,
+    modules: [...byModule.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([name, b]) => ({
+        module: name,
+        total: b.total,
+        failing: b.failing,
+        unresolved: b.unresolved,
+        passing: b.total - b.failing,
+      })),
+  };
+
+  if (writeCensus) {
+    const md = renderCensusMd(summary, byModule, designFiles);
+    fs.mkdirSync(path.dirname(CENSUS_MD), { recursive: true });
+    fs.writeFileSync(CENSUS_MD, md);
+  }
+
+  return { summary, rows, byModule };
+}
+
+function renderCensusMd(summary, byModule, designFiles) {
+  const lines = [];
+  lines.push("# DESIGN-PARITY-CENSUS");
+  lines.push("");
+  lines.push(`Generated: ${summary.generated_at}`);
+  lines.push(`Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (${designFiles.v3.length}) · boards (${designFiles.boards.join(", ")}) · approved-screens (${designFiles.approved.length}).`);
+  lines.push("");
+  lines.push("## Totals");
+  lines.push("");
+  lines.push(`| Metric | Count |`);
+  lines.push(`|---|---:|`);
+  lines.push(`| Routes in manifest | ${summary.route_count} |`);
+  lines.push(`| Passing (static app-wide rules) | ${summary.passing_routes} |`);
+  lines.push(`| Failing (rule hits on resolved pages) | ${summary.failing_routes} |`);
+  lines.push(`| Unresolved page binding (informational) | ${summary.unresolved_routes} |`);
+  lines.push(`| v3 .dc.html designs | ${summary.design_inventory.v3_dc_html} |`);
+  lines.push(`| Board sets | ${summary.design_inventory.board_sets} |`);
+  lines.push(`| Approved screens | ${summary.design_inventory.approved_screens} |`);
+  lines.push("");
+  lines.push("## Fail rule hits");
+  lines.push("");
+  lines.push(`| Rule | Hits |`);
+  lines.push(`|---|---:|`);
+  for (const [k, v] of Object.entries(summary.fail_rule_counts)) {
+    lines.push(`| ${k} | ${v} |`);
+  }
+  lines.push("");
+  lines.push("## Per module");
+  lines.push("");
+  lines.push(`| Module | Routes | Passing | Failing | Unresolved |`);
+  lines.push(`|---|---:|---:|---:|---:|`);
+  for (const m of summary.modules) {
+    lines.push(`| ${m.module} | ${m.total} | ${m.passing} | ${m.failing} | ${m.unresolved} |`);
+  }
+  lines.push("");
+  lines.push("## Failing routes (static)");
+  lines.push("");
+  lines.push(`| Route | Module | Design source | Page | Fails |`);
+  lines.push(`|---|---|---|---|---|`);
+  for (const [, bucket] of [...byModule.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    for (const r of bucket.routes.filter((x) => !x.pass)) {
+      lines.push(
+        `| \`${r.route}\` | ${r.module} | ${r.design} | ${r.page} | ${r.fails.join(", ")} |`,
+      );
+    }
+  }
+  lines.push("");
+  lines.push("## Notes");
+  lines.push("");
+  lines.push("- A route PASSes this census when the static app-wide rules above hold on its resolved page source.");
+  lines.push("- Element-level FULL design coverage (every tab/KPI/column vs its .dc.html) is the BUILD phase (one PR per module); this census is the ratchet floor.");
+  lines.push("- `failing_routes` in scripts/design-parity-census-baseline.json may only go down (`--lower`).");
+  lines.push("");
+  return lines.join("\n");
+}
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE)) return null;
+  return JSON.parse(read(BASELINE));
+}
+
+function selftest() {
+  const sample = `
+    <Route path="/fuel" element={<FuelPlannerHomePage />} />
+    <Route path="/fuel/cards" element={<FuelCardsPage />} />
+    <Route path="/portal" element={<PortalLayout />}>
+      <Route path="dashboard" element={<PortalDashboardPage />} />
+    </Route>
+  `;
+  const routes = extractRoutes(sample);
+  if (!routes.includes("/fuel") || !routes.includes("/fuel/cards")) {
+    throw new Error(`selftest route extract missed fuel: ${routes.join(",")}`);
+  }
+  if (!routes.includes("/portal/dashboard")) {
+    throw new Error(`selftest nested portal path failed: ${routes.join(",")}`);
+  }
+  const fails = scorePage(
+    "x.tsx",
+    `export function X() { return <div>Coming soon</div>; }`,
+  );
+  if (!fails.fails.includes("coming_soon_stub") || !fails.routeFail) {
+    throw new Error("selftest coming_soon not detected");
+  }
+  const ok = scorePage("x.tsx", `export function X() { return <ParityTable exportFilename="a" emptyText="—" />; }`);
+  if (ok.fails.length || ok.routeFail) throw new Error(`selftest clean page failed: ${ok.fails}`);
+  const unresolved = scorePage(null, null);
+  if (!unresolved.fails.includes("unresolved_page") || unresolved.routeFail) {
+    throw new Error("selftest unresolved must not route-fail");
+  }
+  console.log(`${LABEL} selftest PASS`);
+}
+
+function main() {
+  const args = process.argv.slice(2);
+  if (args.includes("--selftest")) {
+    selftest();
+    return;
+  }
+  const writeCensus = args.includes("--write-census") || args.includes("--lower") || !args.length;
+  const { summary } = runCensus({ writeCensus: true });
+
+  let baseline = loadBaseline();
+  if (!baseline || args.includes("--lower")) {
+    if (baseline && summary.failing_routes > baseline.failing_routes) {
+      console.error(
+        `${LABEL} FAIL — --lower refused: failing_routes ${summary.failing_routes} > baseline ${baseline.failing_routes}`,
+      );
+      process.exit(1);
+    }
+    const next = {
+      failing_routes: summary.failing_routes,
+      route_count: summary.route_count,
+      fail_rule_counts: summary.fail_rule_counts,
+      updated_at: summary.generated_at,
+    };
+    fs.writeFileSync(BASELINE, JSON.stringify(next, null, 2) + "\n");
+    baseline = next;
+    console.log(`${LABEL}: wrote baseline failing_routes=${next.failing_routes}`);
+  }
+
+  if (summary.route_count < 600) {
+    console.error(`${LABEL} FAIL — expected ≥600 manifest routes, got ${summary.route_count}`);
+    process.exit(1);
+  }
+  if (summary.failing_routes > baseline.failing_routes) {
+    console.error(
+      `${LABEL} FAIL — failing_routes ${summary.failing_routes} > baseline ${baseline.failing_routes} (ratchet)`,
+    );
+    process.exit(1);
+  }
+  if (!fs.existsSync(CENSUS_MD)) {
+    console.error(`${LABEL} FAIL — missing ${path.relative(ROOT, CENSUS_MD)}`);
+    process.exit(1);
+  }
+
+  console.log(
+    `${LABEL} PASS — routes=${summary.route_count} failing=${summary.failing_routes} (baseline ${baseline.failing_routes}) · census → ${path.relative(ROOT, CENSUS_MD)}`,
+  );
+}
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  try {
+    main();
+  } catch (e) {
+    console.error(`${LABEL} FAIL — ${e.message}`);
+    process.exit(1);
+  }
+}

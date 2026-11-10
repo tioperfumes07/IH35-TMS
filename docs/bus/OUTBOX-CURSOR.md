@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~8:05 PM CT) — ROUND 8.4 design-parity census (PR 1)
+- **PRIOR:** #28693 System Program phase U12.
+- **THIS:** scripts/verify-design-parity-census.mjs + docs/design/DESIGN-PARITY-CENSUS.md + baseline ratchet (failing_routes may only go down). ROUND 8.4 UI-F11125 census floor before module builds.
+- **NEXT:** Accounting design build (highest money); lower census fails; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~8:25 PM CT) — U12 System Program phase MultiSelect
 - **PRIOR:** #28691 Legal contracts Template/Signer U12.
 - **THIS:** SystemModulePage Program Tracker phase progress SelectCombobox → MultiSelectDropdown (empty/both=all).
