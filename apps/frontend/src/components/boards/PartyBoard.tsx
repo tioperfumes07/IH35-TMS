@@ -174,7 +174,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
 
   return (
     <div data-testid={`party-board-${props.kind}`} style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, padding: "12px 20px 30px", minHeight: "100%" }}>
-      <PartyHomeHeader crumb={"Customers"} title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
+      <PartyHomeHeader crumb="" title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
         createLabel={"+ Create Customer"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>

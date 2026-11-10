@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~11:15 PM CT) — D5 test pin + CF1 Related-above-tabs + C1/SF1 chrome
+- **PRIOR:** #28757 D5 Load History lcr totals + Legal L1-L3 + census OVERHEAD DOOR.
+- **THIS:** loads-history-row78 test expects SUM(lcr.revenue_cents). CF1 Related links above Cash Flow tab strip. C1/V PartyHomeHeader empty crumb (StructuralBreadcrumb owns it). SF1 Driver Files compact header; SF2 qualification ParityTable appearance=board.
+- **NEXT:** CF2-CF6 / R1-R6 / V1-V2 / DP* / D1-D4 / T5-T6. No match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~11:05 PM CT) — D5 Load History SQL + Legal L1–L3 + census OVERHEAD DOOR
 - **PRIOR:** #28755 FactoringHome 36/36 FA1 section focus.
 - **THIS:** D5 loads-history totals use `lcr.revenue_cents` (loadCostRollupLateral alias), not `lc.lc_*` — fixes HTTP 500 missing FROM lc. Legal pipeline stage colored dots + Link (L1/L3); Matters empty keeps table headers (L2). Census scans ShopBayFloorSvg for OVERHEAD DOOR (failing_routes 2→0).
@@ -188,10 +193,5 @@
 - **PRIOR:** #28592 Cascade U12 handoff tip.
 - **THIS:** FraudAlertsListPage status pills → MultiSelectDropdown (default open; drilled scope empty=all; 0/1 API, 2+ client filter).
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~7:25 PM CT) — U12 Cursor wave tip; Cascade handoff Accounting lists
-- **PRIOR:** #28591 EDI U12.
-- **THIS:** Cursor U12 MultiSelect landed CardOverage/DriversTable/Fuel/Fleet/Maint/Safety/Dispatch/Termination/LoadCancel/LoadException/EDI. Residual Active-Inactive on pages/lists/accounting/** (AccountingCatalog/DetailTypes/VoidCancel) → Cascade seat surface; do not steal without SURFACE-BREACH-AUTHORIZED: Cascade.
-- **NEXT:** live DONE-LIVE walks; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

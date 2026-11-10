@@ -149,34 +149,63 @@ export function SafetyLayout() {
   return (
     <SafetyUiContext.Provider value={contextValue}>
       <div className="space-y-0">
-        <div className="flex items-end justify-between border-b border-gray-200 bg-white px-[22px] py-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs text-[#6B7280]">
-              <button
-                type="button"
-                aria-label="Back"
-                onClick={() => navigate(structuralParentHref(location.pathname))}
-                className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#1F2A44]"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Back</span>
-              </button>
-              <span>Modules</span>
-              <span>&gt;</span>
-              <Link to="/safety/home" className="hover:text-[#4B5563]">
-                Safety
-              </Link>
-              {activeTabId === "home" ? null : (
-                <>
+        {/* ROUND 8.5 SF1 — Driver Files board wants compact chrome under StructuralBreadcrumb
+            (no second Modules › Safety › … band pushing the matrix down). Other Safety tabs keep
+            the fuller header. */}
+        <div
+          className={`flex items-end justify-between border-b border-gray-200 bg-white px-[22px] ${
+            isDriverFilesBoard ? "py-2" : "py-3"
+          }`}
+          data-testid="safety-layout-header"
+          data-safety-driver-files-compact={isDriverFilesBoard ? "1" : "0"}
+        >
+          <div className={isDriverFilesBoard ? "space-y-0" : "space-y-1"}>
+            {isDriverFilesBoard ? (
+              <div className="flex items-baseline gap-2">
+                <button
+                  type="button"
+                  aria-label="Back"
+                  onClick={() => navigate(structuralParentHref(location.pathname))}
+                  className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-xs text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#1F2A44]"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5" />
+                  <span>Back</span>
+                </button>
+                <h2 className="text-page-title font-semibold text-[#0F1219]">Safety</h2>
+                <span className="text-xs text-[#6B7280]">Driver files · qualification matrix</span>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-2 text-xs text-[#6B7280]">
+                  <button
+                    type="button"
+                    aria-label="Back"
+                    onClick={() => navigate(structuralParentHref(location.pathname))}
+                    className="inline-flex items-center gap-1 rounded-sm px-1 py-0.5 text-[#6B7280] hover:bg-[#F7F8FA] hover:text-[#1F2A44]"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <span>Back</span>
+                  </button>
+                  <span>Modules</span>
                   <span>&gt;</span>
-                  <span>{activeMeta?.group.label ?? "Driver Files & Training"}</span>
-                </>
-              )}
-            </div>
-            <h2 className="text-page-title font-semibold text-[#0F1219]">Safety</h2>
+                  <Link to="/safety/home" className="hover:text-[#4B5563]">
+                    Safety
+                  </Link>
+                  {activeTabId === "home" ? null : (
+                    <>
+                      <span>&gt;</span>
+                      <span>{activeMeta?.group.label ?? "Driver Files & Training"}</span>
+                    </>
+                  )}
+                </div>
+                <h2 className="text-page-title font-semibold text-[#0F1219]">Safety</h2>
+              </>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="text-xs text-[#6B7280]">Compliance · inspections · discipline · liability · alerts</div>
+            {isDriverFilesBoard ? null : (
+              <div className="text-xs text-[#6B7280]">Compliance · inspections · discipline · liability · alerts</div>
+            )}
             <AnomalyAlertBadge operatingCompanyId={companyId} />
           </div>
         </div>
