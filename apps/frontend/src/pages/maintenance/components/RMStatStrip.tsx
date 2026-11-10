@@ -5,8 +5,8 @@ type Props = {
   kpis: MaintenanceKpis;
 };
 
-// R&M Status Board 2nd stat strip (rm-status-board.html) — 8 compact tiles, same labels and same
-// order as before. Severe/OOS turns red and Parts Low-Stock amber when > 0 (§7: red #A32D2D, amber
+// R&M Status Board 2nd stat strip (rm-status-board.html) — compact tiles, same labels and same
+// order as Maintenance-Home.dc.html. Severe/OOS turns red and Parts low-stock amber when > 0 (§7: red #A32D2D, amber
 // #854F0B), matching the preview's colored tiles.
 //
 // C8: each tile now drills to the list it counts, and an absent count renders "—" instead of a
@@ -30,16 +30,16 @@ export function RMStatStrip({ kpis }: Props) {
   // Home kanban column counts ~81px below this strip. Keep the four that are NOT column counts.
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="rm-status-stat-strip" data-c36-kpi="non-kanban">
-      <DrillKpiCard variant="board" label="PM Due Soon" value={count(k, "pm_due")} to="/maintenance/pm-schedule" />
-      <DrillKpiCard variant="board" label="Road Service" value={count(k, "road_service")} to="/maintenance/road-service" />
+      <DrillKpiCard variant="board" label="PM due soon" value={count(k, "pm_due")} to="/maintenance/pm-schedule" />
+      <DrillKpiCard variant="board" label="Road service" value={count(k, "road_service")} to="/maintenance/road-service" />
       <DrillKpiCard
         variant="board"
-        label="Parts Low-Stock"
+        label="Parts low-stock"
         value={partsLowStock}
         valueTone={partsLowStock ? "warning" : "default"}
         to="/maintenance/parts-inventory"
       />
-      <DrillKpiCard variant="board" label="MTD Cost" value={mtdCost} to="/maintenance/work-orders" />
+      <DrillKpiCard variant="board" label="MTD cost" value={mtdCost} to="/maintenance/work-orders" />
     </div>
   );
 }
