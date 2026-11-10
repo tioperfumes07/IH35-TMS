@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~5:40 PM CT) — CF4 AVP chart money-axis 11px
+- **PRIOR:** #28805 CF5 Rolling Ledger board anti-clip.
+- **THIS:** ActualVsProjected chart Y money labels 10→11 Inter (8.4a) with nowrap; left margin 96 retained. R4–R6 Cascade.
+- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~5:35 PM CT) — CF5 Rolling Ledger board tables anti-clip
 - **PRIOR:** #28804 Book Load dialog semantics.
 - **THIS:** RollingLedger ParityTables appearance=board; Party/Payee/Amount whitespace-nowrap so carried income/expense party+money stay readable. Engines unchanged. R4–R6 Cascade.
@@ -187,11 +192,6 @@
 ## OUTBOX (11-03-2026 ~8:50 PM CT) — U12 Maint Parts + OEM Parts MultiSelect
 - **PRIOR:** #28609 Locations + Maint services U12.
 - **THIS:** MaintenancePartsCatalog manufacturer/category + OemPartsCatalog brand/category → MultiSelectDropdown. Accounting lists still Cascade.
-- **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~8:45 PM CT) — U12 Locations + Maint services MultiSelect
-- **PRIOR:** #28608 Drivers Reference U12.
-- **THIS:** LocationsListPage Geocoded/Geofence/Source + MaintenanceServicesCatalog Applies-to → MultiSelectDropdown. Accounting lists still Cascade.
 - **NEXT:** live DONE-LIVE; Accounting lists → Cascade; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.

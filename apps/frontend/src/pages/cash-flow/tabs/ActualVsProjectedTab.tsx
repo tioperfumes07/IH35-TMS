@@ -520,7 +520,8 @@ export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { poi
           return (
             <g key={cents}>
               <line x1={left} x2={right} y1={y} y2={y} stroke={cents === 0 ? V3.slate : V3.chartGrid} />
-              <text x={left - 8} y={y + 4} textAnchor="end" fontFamily={V3.font} fontSize={10} fill={V3.muted}>
+              {/* CF4 / 8.4a — money axis 11px Inter, left=96 keeps labels readable (never ellipsis). */}
+              <text x={left - 8} y={y + 4} textAnchor="end" fontFamily={V3.font} fontSize={11} fill={V3.muted} style={{ whiteSpace: "nowrap" }}>
                 {label}
               </text>
             </g>
