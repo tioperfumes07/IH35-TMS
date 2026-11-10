@@ -184,7 +184,8 @@ export function FuelDieselByTruckPanel({
 
       <FuelBoardSection title="Diesel by truck" testId="fuel-diesel-by-truck-section">
         {aggQuery.isError ? <ListErrorBanner onRetry={() => void aggQuery.refetch()} /> : null}
-        <ParityTable appearance="board"<DieselRow>
+        <ParityTable<DieselRow>
+          appearance="board"
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}
