@@ -1,6 +1,6 @@
 {
  "date": "2026-11-10",
- "generated_at_iso": "2026-11-10T06:31:35.177Z",
+ "generated_at_iso": "2026-11-10T18:24:54.379Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -13738,6 +13738,42 @@
  ],
  "merged_prs": [
   {
+   "number": 28792,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-10T12:29:18Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 28790,
+   "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post until engine reds fixed",
+   "mergedAt": "2026-11-10T07:10:11Z",
+   "branch": "claude/bus-8.7-hold"
+  },
+  {
+   "number": 28789,
+   "title": "FIX: post-as-signed engine — 4 entity-unscoped reads (LST-F11144)",
+   "mergedAt": "2026-11-10T07:02:32Z",
+   "branch": "claude/fix-post-as-signed-entity-scope"
+  },
+  {
+   "number": 28788,
+   "title": "FIX: post a signed settlement exactly as signed — supersede open P-trips and wrong-numbered settlements (ACCT-F11141)",
+   "mergedAt": "2026-11-10T06:56:13Z",
+   "branch": "claude/acct-f11141-post-signed-as-signed"
+  },
+  {
+   "number": 28787,
+   "title": "FIX: main red — step 11186 Factoring testid pinned literal data-testid (LST-F11143)",
+   "mergedAt": "2026-11-10T06:54:01Z",
+   "branch": "claude/fix-11186-factoring-testid"
+  },
+  {
+   "number": 28784,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-10T06:32:20Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 28776,
    "title": "FINDING: LST-F11139 bus ROUND 8.9b — main chain red register (55 guards)",
    "mergedAt": "2026-11-10T06:04:36Z",
@@ -17300,46 +17336,16 @@
    "title": "FINDING: CRM detail + Dispatch need-company BoardSection shells",
    "mergedAt": "2026-11-02T22:58:53Z",
    "branch": "cursor/eng-build-shells18"
-  },
-  {
-   "number": 28173,
-   "title": "FINDING: Drivers module need-company BoardSection shells",
-   "mergedAt": "2026-11-02T22:55:24Z",
-   "branch": "cursor/eng-build-shells17"
-  },
-  {
-   "number": 28172,
-   "title": "FIX: main red locked-guards-heavy — wire 30 guards merged unwired 11-02 (step 18937; CC-1 lane — CC-1 merges)",
-   "mergedAt": "2026-11-02T22:55:07Z",
-   "branch": "claude/orphan-guards-batch-wire"
-  },
-  {
-   "number": 28171,
-   "title": "FIX: CodeQL js/redos (blocks every PR) — unambiguous arg list in expand-live-document-predicates (CC-1 lane)",
-   "mergedAt": "2026-11-02T22:54:50Z",
-   "branch": "claude/codeql-redos-expand-predicates"
-  },
-  {
-   "number": 28170,
-   "title": "BUS: 8 Lead pending rows DONE-LIVE with proof",
-   "mergedAt": "2026-11-02T22:54:36Z",
-   "branch": "claude/pending-lead-proofs"
-  },
-  {
-   "number": 28169,
-   "title": "FINDING: Codex Round 7 independent QA batch 23",
-   "mergedAt": "2026-11-02T22:55:20Z",
-   "branch": "codex/round7-independent-qa-batch23"
-  },
-  {
-   "number": 28168,
-   "title": "FINDING: Tasks module need-company BoardSection shells",
-   "mergedAt": "2026-11-02T22:53:06Z",
-   "branch": "cursor/eng-build-shells16"
   }
  ],
  "merged_pr_total": 3000,
  "hold_for_jorge": [
+  {
+   "number": 28790,
+   "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post until engine reds fixed",
+   "mergedAt": "2026-11-10T07:10:11Z",
+   "category": "HOLD"
+  },
   {
    "number": 27829,
    "title": "FINDING: owner no-HOLD ruling — hold-merge-gate retired as a required CI check",

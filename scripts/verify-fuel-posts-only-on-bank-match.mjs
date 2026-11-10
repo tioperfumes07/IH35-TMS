@@ -223,7 +223,17 @@ export function check(files) {
   const helperIsNotVoided = /export function notVoided\(alias\?: string\): string \{\s*return alias \? `\$\{sqlAlias\(alias\)\}\.voided_at IS NULL` : "voided_at IS NULL";/.test(pred);
   const liveRowPredicate = /WHERE ft\.operating_company_id = \$1::uuid AND ft\.relay_fuel_transaction_id = \$2::uuid AND (?:ft\.voided_at IS NULL|\$\{notVoided\("ft"\)\})/.exec(cr);
   const liveRowOk = Boolean(liveRowPredicate) && (!liveRowPredicate[0].includes("notVoided") || helperIsNotVoided);
-  if (!/if \(!rows && draft\.edit_void_repost\) \{/.test(cr) || !liveRowOk)
+  // sweepA (2026-11-10) — ENG-65 (#28457) widened the adopt from `if (!rows && draft.edit_void_repost)` to `if (!rows)`: a
+  // fill is recorded at receipt, so EVERY post (an Edit repost included) adopts the fill's live rows. The rule is the same —
+  // the Edit repost must adopt — so both gates are accepted, but only when the live-row adopt UPDATE is the gate's own body
+  // (within 1200 chars) and it runs BEFORE the fill writer. A gate that excludes the Edit repost, or an adopt that moved
+  // after writeRelayFillFuelRows, still fails.
+  const adoptGate = /if \(!rows(?: && draft\.edit_void_repost)?\) \{/.exec(cr);
+  const adoptAt = adoptGate ? adoptGate.index : -1;
+  const adoptBody = adoptAt < 0 ? "" : cr.slice(adoptAt, adoptAt + 1200);
+  const writerAt = cr.indexOf("await writeRelayFillFuelRows(", adoptAt < 0 ? 0 : adoptAt);
+  const adoptOk = adoptAt >= 0 && liveRowPredicate != null && adoptBody.includes(liveRowPredicate[0]) && writerAt > adoptAt + adoptBody.indexOf(liveRowPredicate[0]);
+  if (!adoptOk || !liveRowOk)
     problems.push(`${CREATOR}: an Edit repost does not adopt the Relay fill's live rows (it would write the fill twice) (443.215)`);
   // 9 (LEAD 443.133 A) — the linker pairs only Relay-card rows; the Relay fill poster refuses a fill that pairs with a row on
   // another rail (the same purchase may already be posted there — booking it again would double the fuel).
@@ -371,7 +381,8 @@ if (process.argv.includes("--selftest")) {
     ["creator asks but still posts (no adopt)", { ...real, [CREATOR]: real[CREATOR].replace("journalEntryIds.push(receiptPosted.journal_entry_id);\n        continue;", "journalEntryIds.push(receiptPosted.journal_entry_id);") }],
     ["creator relay document mints its own entry", { ...real, [CREATOR]: real[CREATOR].replace("journal_entry_id: fillPosted.journal_entry_id,", "journal_entry_id: null as never,") }],
     ["edit repost without correction revision", { ...real, [CREATOR]: real[CREATOR].replace("correction_revision: correctionRevision || null,", "") }],
-    ["edit repost writes the fill twice", { ...real, [CREATOR]: real[CREATOR].replace("if (!rows && draft.edit_void_repost) {", "if (false) {") }],
+    ["edit repost writes the fill twice", { ...real, [CREATOR]: real[CREATOR].replace(/if \(!rows(?: && draft\.edit_void_repost)?\) \{(?=\s*const existing)/, "if (false) {") }],
+    ["adopt gate excludes the Edit repost", { ...real, [CREATOR]: real[CREATOR].replace(/if \(!rows(?: && draft\.edit_void_repost)?\) \{(?=\s*const existing)/, "if (!rows && !draft.edit_void_repost) {") }],
     ["edit repost adopts voided rows (the live-row predicate dropped)", { ...real, [CREATOR]: real[CREATOR].replace(/AND \$\{notVoided\("ft"\)\}|AND ft\.voided_at IS NULL(?=\n\s*RETURNING ft\.id::text, ft\.fuel_type)/, "") }],
     ["notVoided helper drifted (no longer voided_at IS NULL)", { ...real, ["apps/backend/src/accounting/live-document-predicates.sql.ts"]: (real["apps/backend/src/accounting/live-document-predicates.sql.ts"] ?? "").replace("`${sqlAlias(alias)}.voided_at IS NULL`", "`${sqlAlias(alias)}.id IS NOT NULL`") }],
     ["revision helper hands back a reversed key", { ...real, [POSTER]: real[POSTER].replace('if (state.kind !== "reversed") return rev;', "return rev;") }],

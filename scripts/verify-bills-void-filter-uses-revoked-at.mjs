@@ -162,6 +162,17 @@ if (process.argv.includes("--selftest")) {
   const joined = "SELECT 1 FROM x JOIN accounting.bills AS bb ON bb.id=x.id WHERE bb.voided_at IS NULL";
   if (offendingFilters(joined).length !== 1) failures.push("a JOIN ... AS alias was NOT resolved");
 
+  // sweepA — the #28659 qbo-bill-payment-evidence shape: a LATERAL driver_bills d.voided_at (legit) next to a
+  // b.voided_at on accounting.bills with no revoked_at. The d. filter must not hide the b. defect.
+  const lateral =
+    "SELECT b.id FROM accounting.bills b LEFT JOIN LATERAL (SELECT d.id FROM driver_finance.driver_bills d " +
+    "WHERE d.accrued_bill_id = b.id AND d.voided_at IS NULL LIMIT 1) db ON true WHERE b.operating_company_id = $1 " +
+    "AND b.voided_at IS NULL AND b.status IN ('unpaid','partially_paid')";
+  if (offendingFilters(lateral).length !== 1) failures.push("the #28659 LATERAL-driver_bills shape (b.voided_at, no revoked_at) was NOT caught");
+  if (offendingFilters(lateral.replace("AND b.voided_at IS NULL", "AND b.voided_at IS NULL AND b.revoked_at IS NULL")).length !== 0) {
+    failures.push("the #28659 shape fixed with revoked_at was still flagged");
+  }
+
   if (collectProblems([{ file: "x.ts", src: bad }]).length !== 1) {
     failures.push("collectProblems did not surface the predicate");
   }
@@ -172,7 +183,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   console.log(
-    `${LABEL} SELFTEST OK — 8/8 (defect caught, both-column fix passes, other-table alias NOT flagged, per-statement alias binding, ` +
+    `${LABEL} SELFTEST OK — 10/10 (defect caught, #28659 LATERAL shape caught + fixed form passes, both-column fix passes, other-table alias NOT flagged, per-statement alias binding, ` +
       `expenses ignored, comment cannot fake a pass, JOIN/AS alias resolved, end-to-end)`
   );
   process.exit(0);
