@@ -1,3 +1,8 @@
+## OUTBOX (11-09-2026 ~9:35 PM CT) — ROUND 8.4 ShopBays.dc.html chrome on InShopBoard
+- **PRIOR:** #28712 TruckServiceMap on Vehicle Profile.
+- **THIS:** InShopBoard chrome matches ShopBays.dc.html (MAINTENANCE · SHOP FLOOR, Check a truck in, OVERHEAD DOOR, OPEN BAY, YARD LANE · NEXT IN, BY PM URGENCY). Census pins /maintenance + /maintenance/fleet-table shop labels.
+- **NEXT:** Accounting/Banking screenshots; Reports hub pins; no match/Dreamline.
+
 ## OUTBOX (11-09-2026 ~9:25 PM CT) — ROUND 8.4 TruckServiceMap on Vehicle Profile
 - **PRIOR:** #28710 Accounting AP Aging design fill.
 - **THIS:** Truck service map (TruckProfile.dc.html) on /fleet/units/:id — SERVICE MAP chrome, OK/DUE SOON/DEFECT/NO RECORD legend, silhouette hotspots, New work order. Systems from live PM/WO/faults/DOT only (no board sample tread/miles). Census pins route labels.
@@ -186,10 +191,5 @@
 ## OUTBOX (11-03-2026 ~6:20 PM CT) — ENG-34 wire batch70 static orphans 19871/73/75
 - **PRIOR:** #28577 bus-diet Cursor.
 - **THIS:** verify-steps 19871 (every-poster --selftest/static), 19873 (one-fuel-to-load-helper), 19875 (row-actions-clickable); removed from .guard-exempt. LIVE leftovers stay exempt (balanced-ledger / load-driven-miles / bus-diet global / match).
-- **NEXT:** live DONE-LIVE; no match/Dreamline.
-
-## OUTBOX (11-03-2026 ~6:10 PM CT) — bus-diet Cursor INBOX/OUTBOX
-- **PRIOR:** #28575 #241 DONE-LIVE.
-- **THIS:** Archived fat Cursor inbox/outbox under docs/bus/archive/*-pre-diet.md; hot OUTBOX 162≤200, INBOX 12≤40 (standing law kept). Other seats' bus files still over cap (not Cursor-owned).
 - **NEXT:** live DONE-LIVE; no match/Dreamline.
 
