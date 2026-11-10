@@ -15,6 +15,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
 import { collectSamsaraRemoteCounts } from "../integrations/samsara/remote-count-collector.js";
 import { collectSamsaraDriverMirror } from "../integrations/samsara/driver-mirror-collector.js";
+import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 const CRON_NAME = "samsara.remote_count_collector";
@@ -97,6 +98,7 @@ export async function runSamsaraRemoteCountCollectorTick(app: FastifyInstance): 
 
     for (const operatingCompanyId of activeTenantIds) {
       assertTenantContext(operatingCompanyId, CRON_NAME);
+      if (!isLiveEngineCompany(operatingCompanyId)) continue; // ACCT-F11124: USMCA only — frozen entities never run
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       const enabled = await isSamsaraEnabledForTenant(client, operatingCompanyId);
       if (!enabled) {

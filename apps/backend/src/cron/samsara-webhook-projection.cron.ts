@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { recordBackgroundJobDisabled, wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { projectSamsaraWebhookEventsForTenant } from "../integrations/samsara/webhook-projection.service.js";
+import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 const CRON_NAME = "samsara.webhook_projection_cron";
 let initialized = false;
@@ -38,6 +39,7 @@ export async function runSamsaraWebhookProjectionTick(): Promise<void> {
     const tenants = await listActiveTenantIds(client);
     for (const operatingCompanyId of tenants) {
       assertTenantContext(operatingCompanyId, CRON_NAME);
+      if (!isLiveEngineCompany(operatingCompanyId)) continue; // ACCT-F11124: USMCA only — frozen entities never run
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
       await projectSamsaraWebhookEventsForTenant(client, operatingCompanyId);
     }

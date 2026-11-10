@@ -54,7 +54,7 @@ describe("samsara.remote_count_collector cron", () => {
       await fn();
     });
     collectSamsaraRemoteCountsMock.mockResolvedValue({
-      operating_company_id: "11111111-1111-1111-1111-111111111111",
+      operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80",
       collection_run_id: "22222222-2222-2222-2222-222222222222",
       collected_count: 2,
       failed_entities: [],
@@ -81,14 +81,14 @@ describe("samsara.remote_count_collector cron", () => {
       if (sql.includes("FROM org.companies")) {
         return {
           rows: [
-            { operating_company_id: "11111111-1111-1111-1111-111111111111" },
+            { operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" },
             { operating_company_id: "22222222-2222-2222-2222-222222222222" },
           ],
         };
       }
       if (sql.includes("SELECT EXISTS")) {
         return {
-          rows: [{ is_enabled: values?.[0] === "11111111-1111-1111-1111-111111111111" }],
+          rows: [{ is_enabled: values?.[0] === "5c854333-6ea5-4faa-af31-67cb272fef80" }],
         };
       }
       return { rows: [] };
@@ -100,7 +100,7 @@ describe("samsara.remote_count_collector cron", () => {
 
     expect(collectSamsaraRemoteCountsMock).toHaveBeenCalledTimes(1);
     expect(collectSamsaraRemoteCountsMock).toHaveBeenCalledWith(
-      "11111111-1111-1111-1111-111111111111",
+      "5c854333-6ea5-4faa-af31-67cb272fef80",
       expect.objectContaining({ collectionRunId: expect.any(String) })
     );
     expect(clientQueryMock).toHaveBeenCalledWith(

@@ -23,6 +23,7 @@ import { assertTenantContext } from "../cron/_helpers/tenant-context-guard.js";
 import { recomputeActiveDriverSet } from "../integrations/samsara/active-driver-set/recompute.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "samsara.active_driver_set_recompute";
 const DEFAULT_INTERVAL = "*/15 * * * *"; // every 15 minutes
@@ -50,7 +51,7 @@ async function tick(app: FastifyInstance) {
       `
     );
 
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const ociId = String(row.id ?? "");
       if (!ociId) continue;
 

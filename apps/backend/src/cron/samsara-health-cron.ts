@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { runSamsaraHealthCheckForRow } from "../integrations/samsara/samsara.service.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
+import { isLiveEngineCompany } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 const CRON_NAME = "samsara.health_check_cron";
@@ -86,6 +87,7 @@ export function initializeSamsaraHealthCheckCron(app: FastifyInstance) {
             for (const operatingCompanyId of activeTenantIds) {
               try {
                 assertTenantContext(operatingCompanyId, CRON_NAME);
+                if (!isLiveEngineCompany(operatingCompanyId)) continue; // ACCT-F11124: USMCA only — frozen entities never run
               } catch (error) {
                 await appendCronAuditEvent(client, "cron_invalid_tenant_context", "warning", {
                   cron_name: CRON_NAME,

@@ -27,6 +27,7 @@ import { runFuelPurchasePush } from "./fuel-purchase-push.service.js";
 import { SamsaraClient } from "./samsara-client.js";
 import type { PgClient } from "./samsara.service.js";
 import { getSamsaraConfigForCompany } from "./samsara.service.js";
+import { filterLiveEngineCompanies } from "../../lib/live-engine-companies.js";
 
 const AUDIT_SOURCE = "SAMSARA-FUEL-PURCHASE-PUSH-CRON-1";
 
@@ -63,7 +64,7 @@ export async function runFuelPurchasePushCronTick(): Promise<void> {
     const res = await client.query(
       `SELECT id::text AS id FROM org.companies WHERE is_active = true AND deactivated_at IS NULL ORDER BY id`
     );
-    return res.rows.map((r: { id: string }) => String(r.id));
+    return filterLiveEngineCompanies(res.rows.map((r: { id: string }) => String(r.id)));
   });
 
   for (const operatingCompanyId of companyIds) {

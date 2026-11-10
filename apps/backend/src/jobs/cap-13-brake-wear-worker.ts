@@ -13,6 +13,7 @@ import {
   TRACTOR_BRAKE_POSITIONS,
   upsertProjection,
 } from "../integrations/samsara/cap-13-brake-wear/service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -55,7 +56,7 @@ export async function runCap13BrakeWearWorkerTick(deps?: {
       `
     );
 
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, CRON_NAME);

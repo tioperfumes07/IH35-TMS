@@ -6,6 +6,7 @@ import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs
 import { createNotification } from "../notifications/notification.service.js";
 import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 import { buildComplianceCredentials } from "./compliance-aggregate.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -147,7 +148,7 @@ export function initializeComplianceReminderCron(app: FastifyInstance) {
         async () => {
           await withLuciaBypass(async (client) => {
             const companies = await client.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE is_active = true`);
-            for (const company of companies.rows) {
+            for (const company of filterLiveEngineCompanyRows(companies.rows)) {
               assertTenantContext(company.id, "compliance.reminder_cron");
               await runComplianceReminderTick(company.id);
             }

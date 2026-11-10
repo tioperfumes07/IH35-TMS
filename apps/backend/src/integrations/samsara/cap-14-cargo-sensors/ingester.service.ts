@@ -13,6 +13,7 @@ import {
 export type { DbClient } from "./db-client.type.js";
 import type { DbClient } from "./db-client.type.js";
 import { listCargoIncidents, type CargoIncidentRow } from "./incident.service.js";
+import { filterLiveEngineCompanies } from "../../../lib/live-engine-companies.js";
 
 export type DoorStatus = "open" | "closed" | "unknown";
 
@@ -375,7 +376,7 @@ async function listActiveCompanyIds(client: DbClient): Promise<string[]> {
       ORDER BY id
     `
   );
-  return res.rows.map((row) => row.id);
+  return filterLiveEngineCompanies(res.rows.map((row) => row.id));
 }
 
 async function defaultCargoSensorProvider(): Promise<CargoSensorReadingInput[]> {

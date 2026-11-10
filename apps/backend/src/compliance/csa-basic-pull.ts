@@ -9,6 +9,7 @@ import {
   type CsaAlertStatus,
   type CsaBasicCategory,
 } from "./csa-basic-projection.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const FMCSA_SMS_MEASURE_URL = "https://csa.fmcsa.dot.gov/about/Measure";
 let cronInitialized = false;
@@ -161,7 +162,7 @@ async function listCompaniesForPull(client: DbClient, onlyCompanyId?: string): P
       `,
       [onlyCompanyId]
     );
-    return scoped.rows;
+    return filterLiveEngineCompanyRows(scoped.rows);
   }
   const all = await client.query<CompanyRow>(
     `
@@ -180,7 +181,7 @@ async function listCompaniesForPull(client: DbClient, onlyCompanyId?: string): P
       ORDER BY id
     `
   );
-  return all.rows;
+  return filterLiveEngineCompanyRows(all.rows);
 }
 
 export async function runCsaBasicPullTick(onlyCompanyId?: string) {

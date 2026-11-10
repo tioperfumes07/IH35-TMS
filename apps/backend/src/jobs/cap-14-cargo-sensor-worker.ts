@@ -8,6 +8,7 @@ import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { runCargoSensorIngestionTick } from "../integrations/samsara/cap-14-cargo-sensors/ingester.service.js";
 import { processOutOfRangeAlerts } from "../integrations/samsara/cap-14-cargo-sensors/threshold.service.js";
 import { processCargoSensorIncidents } from "../integrations/samsara/cap-14-cargo-sensors/incident.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 const WORKER_NAME = "dispatch.cap14_cargo_sensor_worker";
 const CRON_EXPRESSION = "*/5 * * * *";
@@ -27,7 +28,7 @@ export async function runCap14CargoSensorWorkerTick(): Promise<{
     const companies = await client.query<{ id: string }>(
       `SELECT id::text FROM org.companies WHERE is_active = true AND deactivated_at IS NULL`
     );
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const operatingCompanyId = String(row.id ?? "");
       if (!operatingCompanyId) continue;
       await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);

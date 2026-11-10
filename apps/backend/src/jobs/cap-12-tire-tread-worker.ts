@@ -13,6 +13,7 @@ import {
   projectReplacementFromMeasurements,
   upsertProjection,
 } from "../integrations/samsara/cap-12-tire-tread/projection.service.js";
+import { filterLiveEngineCompanyRows } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -55,7 +56,7 @@ export async function runCap12TireTreadWorkerTick(deps?: {
       `
     );
 
-    for (const row of companies.rows) {
+    for (const row of filterLiveEngineCompanyRows(companies.rows)) {
       const operatingCompanyId = String(row.operating_company_id ?? "");
       if (!operatingCompanyId) continue;
       assertTenantContext(operatingCompanyId, CRON_NAME);

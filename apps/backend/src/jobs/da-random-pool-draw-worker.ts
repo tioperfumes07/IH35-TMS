@@ -10,6 +10,7 @@ import cron from "node-cron";
 import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { drawRandomPool, listActiveEnrolledDrivers } from "../safety/drug-alcohol/random-pool.service.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 let initialized = false;
 
@@ -30,7 +31,7 @@ export async function listActiveCompanyIds(
       ORDER BY id
     `
   );
-  return res.rows.map((r) => r.id);
+  return filterLiveEngineCompanies(res.rows.map((r) => r.id));
 }
 
 export async function runDaRandomPoolDrawTick(deps?: {

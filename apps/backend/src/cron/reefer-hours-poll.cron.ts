@@ -13,6 +13,7 @@ import { ingestReeferHoursFromSamsaraForCompany } from "../maintenance/reefer-ho
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
 import { tryXactSingleFlight } from "../lib/single-flight.js";
+import { filterLiveEngineCompanies } from "../lib/live-engine-companies.js";
 
 // Block F — 15-minute poller that pulls reefer engine hours from Samsara for every
 // active tenant. The ingest itself (ingestReeferHoursFromSamsaraForCompany) already
@@ -49,7 +50,7 @@ async function listActiveTenantIds(client: DbClient): Promise<string[]> {
       ORDER BY id
     `
   );
-  return res.rows.map((row) => row.operating_company_id);
+  return filterLiveEngineCompanies(res.rows.map((row) => row.operating_company_id));
 }
 
 async function isSamsaraEnabledForTenant(client: DbClient, operatingCompanyId: string): Promise<boolean> {

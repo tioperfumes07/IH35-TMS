@@ -81,14 +81,14 @@ describe("samsara.health_check_cron tenant guard", () => {
       if (sql.includes("FROM org.companies")) {
         return {
           rows: [
-            { operating_company_id: "11111111-1111-1111-1111-111111111111" },
+            { operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" },
             { operating_company_id: "22222222-2222-2222-2222-222222222222" },
           ],
         };
       }
       if (sql.includes("SELECT EXISTS")) {
         return {
-          rows: [{ is_enabled: values?.[0] === "11111111-1111-1111-1111-111111111111" }],
+          rows: [{ is_enabled: values?.[0] === "5c854333-6ea5-4faa-af31-67cb272fef80" }],
         };
       }
       return { rows: [] };
@@ -101,8 +101,22 @@ describe("samsara.health_check_cron tenant guard", () => {
     expect(runSamsaraHealthCheckForRowMock).toHaveBeenCalledTimes(1);
     expect(runSamsaraHealthCheckForRowMock).toHaveBeenCalledWith(
       expect.objectContaining({ query: clientQueryMock }),
-      "11111111-1111-1111-1111-111111111111"
+      "5c854333-6ea5-4faa-af31-67cb272fef80"
     );
+    // ACCT-F11124: the second active company (a frozen entity) is never checked — not even for its Samsara flag.
+    expect(clientQueryMock).not.toHaveBeenCalledWith(expect.stringContaining("SELECT EXISTS"), ["22222222-2222-2222-2222-222222222222"]);
+  });
+
+  it("audits a disabled live tenant as skipped", async () => {
+    const { initializeSamsaraHealthCheckCron } = await import("./samsara-health-cron.js");
+    clientQueryMock.mockImplementation(async (sql: string) => {
+      if (sql.includes("FROM org.companies")) return { rows: [{ operating_company_id: "5c854333-6ea5-4faa-af31-67cb272fef80" }] };
+      if (sql.includes("SELECT EXISTS")) return { rows: [{ is_enabled: false }] };
+      return { rows: [] };
+    });
+    initializeSamsaraHealthCheckCron(makeApp() as never);
+    const tick = scheduleMock.mock.calls[0]?.[1] as (() => Promise<void>) | undefined;
+    await expect(tick?.()).resolves.toBeUndefined();
     expect(clientQueryMock).toHaveBeenCalledWith(
       expect.stringContaining("audit.append_event"),
       expect.arrayContaining(["cron_skipped_samsara_disabled"])
