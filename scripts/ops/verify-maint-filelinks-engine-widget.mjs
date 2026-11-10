@@ -66,7 +66,9 @@ if (!/MaintEnginesStatusWidget/.test(home)) fails.push(`${FILES.home}: must moun
 
 const widget = read(FILES.widget);
 if (!/domain === "Maintenance"/.test(widget)) fails.push(`${FILES.widget}: filter Maintenance domain`);
-if (!/data-testid="maint-engines-status-widget"/.test(widget)) {
+// 443.280 (#27381): the widget root is the shared <V3Panel testId="..."> (which emits data-testid); the old raw
+// <section data-testid> is also accepted. The test id must still be present on the widget root.
+if (!/data-testid="maint-engines-status-widget"/.test(widget) && !/<V3Panel\b[^>]*\btestId="maint-engines-status-widget"/.test(widget)) {
   fails.push(`${FILES.widget}: maint-engines-status-widget test id`);
 }
 

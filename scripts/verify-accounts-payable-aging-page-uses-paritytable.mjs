@@ -52,7 +52,9 @@ function assertMigrated(src) {
     );
   }
   for (const label of REQUIRED_LABELS) {
-    if (!src.includes(`label: "${label}"`)) {
+    // ROUND 8.4 (#28710): bucket ranges use the typographic en dash ("1–30"); the ASCII hyphen form is the same label.
+    const variants = [label, label.replace(/-/g, "\u2013")];
+    if (!variants.some((v) => src.includes(`label: "${v}"`))) {
       errors.push(`${PAGE}: missing ParityTable column label: "${label}"`);
     }
   }
@@ -101,8 +103,8 @@ function selftest() {
       { key: "vendor", label: "Vendor" },
       { key: "type", label: "Vendor type" },
       { key: "current", label: "Current" },
-      { key: "d1_30", label: "1-30" },
-      { key: "d31_60", label: "31-60" },
+      { key: "d1_30", label: "1\u201330" },
+      { key: "d31_60", label: "31\u201360" },
       { key: "d61_90", label: "61-90", cellClass: "text-right text-red-600" },
       { key: "d90_plus", label: "91+" },
       { key: "total", label: "Total" },
@@ -158,6 +160,12 @@ function selftest() {
   const goodErrors = assertMigrated(good);
   const goodWithPrintErrors = assertMigrated(goodWithPrintTemplate);
   const badErrors = assertMigrated(bad);
+  // A renamed bucket (neither "1-30" nor "1\u201330") must still be rejected.
+  const renamedBucket = assertMigrated(good.replace("1\u201330", "Past due"));
+  if (!renamedBucket.some((e) => e.includes('"1-30"'))) {
+    console.error(`${LABEL} --selftest FAIL renamed 1-30 bucket escaped:`, renamedBucket);
+    process.exit(1);
+  }
   if (goodErrors.length) {
     console.error(`${LABEL} --selftest FAIL good fixture:`, goodErrors);
     process.exit(1);
