@@ -77,6 +77,7 @@ async function loadAppSide(userId: string, operatingCompanyId: string, cutover: 
          ) db ON true
         WHERE b.operating_company_id = $1::uuid
           AND b.voided_at IS NULL
+          AND b.revoked_at IS NULL
           AND COALESCE(b.is_sample_data, false) = false
           AND b.status IN ('unpaid', 'partially_paid')
         ORDER BY b.bill_date, b.bill_number`,
