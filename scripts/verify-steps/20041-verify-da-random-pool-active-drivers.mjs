@@ -1,0 +1,1 @@
+export default { name: "verify:verify-da-random-pool-active-drivers", run(ctx) { ctx.run("node", ["scripts/verify-da-random-pool-active-drivers.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-da-random-pool-active-drivers.mjs"]); } };
