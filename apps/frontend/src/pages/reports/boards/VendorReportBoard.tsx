@@ -18,7 +18,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { companyToday } from "../../../lib/businessDate";
 import { formatCompanyName } from "../../../lib/formatCompanyName";
-import { formatDateUS } from "../../../lib/formatDate";
+import { mmmDd } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
@@ -104,10 +104,12 @@ export function VendorReportBoard() {
     { key: "share", label: "% of spend", sortable: true, sortValue: (r) => r.spend_cents, cellClass: "text-right", className: "text-right", render: (r) => pctLabel(pct(r.spend_cents, spend)) },
     { key: "open_bills_cents", label: "Open bills", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.open_bills_cents) },
     { key: "pays_through", label: "Pays through", sortable: true, render: (r) => r.pays_through ?? "—" },
-    { key: "last_paid", label: "Last", sortable: true, render: (r) => formatDateUS(r.last_paid) || "—" },
+    { key: "last_paid", label: "Last", sortable: true, render: (r) => mmmDd(r.last_paid) || "—" },
     {
       key: "expenses",
       label: "Transactions list",
+      sortable: true,
+      sortValue: (r) => r.txns,
       render: (r) => (
         <Link className="text-[#1D4ED8] hover:underline" to={`/vendors/${encodeURIComponent(r.id)}`}>
           Open vendor
@@ -151,6 +153,8 @@ export function VendorReportBoard() {
     {
       key: "lines",
       label: "Expenses",
+      sortable: true,
+      sortValue: (c) => c.spend_cents,
       render: (c) => (
         <Link className="text-[#1D4ED8] hover:underline" to={`/accounting/expenses?expense_account_id=${encodeURIComponent(c.account_id ?? "none")}&date_from=${board.data?.range_from ?? ""}`}>
           Open expenses
@@ -190,7 +194,7 @@ export function VendorReportBoard() {
     return {
       filename: `vendor-report-${view}`,
       header: ["Vendor", "Category", "Transactions", "Spend", "Open bills", "Last"],
-      body: list.map((r) => [name(r.name), r.saved_category ?? r.category ?? "", r.txns, r.spend_cents / 100, r.open_bills_cents / 100, formatDateUS(r.last_paid)]),
+      body: list.map((r) => [name(r.name), r.saved_category ?? r.category ?? "", r.txns, r.spend_cents / 100, r.open_bills_cents / 100, mmmDd(r.last_paid)]),
     };
   };
 
@@ -252,7 +256,7 @@ export function VendorReportBoard() {
           testId="vr-kpi-open-bills"
           label="Open vendor bills"
           value={ap.data ? money(apTotal) : "…"}
-          sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${formatDateUS(asOf)}`}
+          sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${mmmDd(asOf)}`}
           onClick={() => setView("open")}
         />
         <V3KpiTile
@@ -287,7 +291,7 @@ export function VendorReportBoard() {
       {view === "open" ? (
         <ParityTable
           rows={apRows}
-          title={`Open bills · as of ${formatDateUS(asOf)} · by due date`}
+          title={`Open bills · as of ${mmmDd(asOf)} · by due date`}
           columns={openColumns}
           rowKey={(r) => r.vendor_id}
           loading={ap.isPending}
