@@ -1,7 +1,7 @@
 import { resolveCompanyDirectCreditAccount, type CompanyDirectCredit } from "./company-direct-credit-account.js";
 export { resolveCompanyDirectCreditAccount, type CompanyDirectCredit } from "./company-direct-credit-account.js";
 import { withLuciaBypass } from "../../auth/db.js";
-import { POSTING_KIND_FUEL_TYPE, resolveFuelItem, resolveItemByName } from "./fuel-item-account.js";
+import { NON_FUEL_COST_ITEM_NAME, POSTING_KIND_FUEL_TYPE, resolveFuelItem, resolveItemByName } from "./fuel-item-account.js";
 import { resolveRoleAccount, resolveRoleAccountOptional } from "../coa-roles/resolver.service.js";
 
 /** RELAY-F442 / ROUND 192 — card fee posts on its own item, never folded into diesel/reefer/DEF. */
@@ -28,7 +28,8 @@ type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
 };
 
-export const FUEL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc"] as const;
+// ACCT-F11127: lumper / scales are Relay service codes posted through this poster on their own items (fuel-item-account.ts).
+export const FUEL_CATEGORY_CODES = ["diesel", "def", "reefer", "oil", "misc", "lumper", "scales"] as const;
 export type FuelCategoryCode = (typeof FUEL_CATEGORY_CODES)[number];
 export type FuelPostingPath = "driver_advance" | "company_direct";
 // R-30.1-A (A/P control contamination fix): card-settled fuel is the GL of record for its own
@@ -422,7 +423,14 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
   const idempotencyKey = buildFuelIdempotencyKey(input);
   // The cost account is the fuel-type ITEM's account — the same rule the expense document uses (fuel-item-account.ts),
   // never accounting.expense_category_account_map, whose DEF and reefer rows said 5000 while the items say 5010 / 5015.
-  const fuelItem = await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[fuelKind] ?? null);
+  // ACCT-F11127: a Relay service kind (lumper / scales) resolves its service item; a fuel kind its fuel-type item.
+  const resolveKindItem = (kind: string) => {
+    const serviceItem = NON_FUEL_COST_ITEM_NAME[kind];
+    return serviceItem
+      ? resolveItemByName(client as never, input.operating_company_id, serviceItem)
+      : resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[kind] ?? null);
+  };
+  const fuelItem = await resolveKindItem(fuelKind);
   if ("refused" in fuelItem) throw new Error(`fuel_posting_account_refused: ${fuelItem.refused}`);
   const expense = { account_id: fuelItem.expenseAccountId, item_id: fuelItem.itemId };
   // Debit legs: one per product line when the purchase is itemised, else the one fuel_kind leg. Each leg's account is its
@@ -448,7 +456,7 @@ export async function postFuelExpenseOnClient(client: DbClient, input: FuelPosti
     const kind = normalizeFuelKind(cl.fuel_kind);
     const cents = Math.round(Number(cl.amount_cents));
     if (!Number.isFinite(cents) || cents <= 0) throw new Error(`fuel_posting_cost_line_invalid: ${kind} ${cl.amount_cents}`);
-    const item = kind === fuelKind ? fuelItem : await resolveFuelItem(client as never, input.operating_company_id, POSTING_KIND_FUEL_TYPE[kind] ?? null);
+    const item = kind === fuelKind ? fuelItem : await resolveKindItem(kind);
     if ("refused" in item) throw new Error(`fuel_posting_account_refused: ${item.refused}`);
     debitLegs.push({ fuel_kind: kind, amount_cents: cents, account_id: item.expenseAccountId, item_id: item.itemId });
   }

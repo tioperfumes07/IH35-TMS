@@ -19,6 +19,7 @@ import { loadFuelTxnCreditSignals, resolveCompanyDirectCreditPreference } from "
 import { findPostedFuelEvent, postFuelExpenseOnClient, type FuelCategoryCode, type FuelPostingResult } from "../fuel-posting/poster.service.js";
 import { appendCrudAudit } from "../../audit/crud-audit.js";
 import { relayFuelPaidCents } from "../../integrations/relay-payments/relay-sender-fee-cents.js";
+import { relayServiceKindOf, relayServiceProductCents } from "../../fuel/relay-service-code.js";
 
 type DbClient = {
   query: <T = Record<string, unknown>>(sql: string, values?: unknown[]) => Promise<{ rows: T[]; rowCount?: number }>;
@@ -29,7 +30,7 @@ export class FuelMatchPostError extends Error {
     public code:
       | "fuel_fill_not_found" | "fuel_fill_missing_unit" | "fuel_fill_missing_load" | "fuel_fill_zero_amount"
       | "relay_fill_unknown_product" | "relay_fill_has_no_fuel_lines" | "relay_fill_lines_do_not_foot" | "relay_fill_document_refused"
-      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill" | "relay_fill_duplicate_purchase",
+      | "fuel_fill_document_refused" | "relay_fill_matches_other_rail_fill" | "relay_fill_duplicate_purchase" | "relay_service_code_has_fuel_line",
     message: string
   ) {
     super(message);
@@ -260,9 +261,13 @@ async function postRelayFuelFill(
     location_state: string | null;
     gallons: string | null;
     merchant_name: string | null;
+    fuel_code_type: string | null;
+    products: unknown;
   }>(
     `
       SELECT COALESCE(r.relay_created_at, r.created_at)::text AS transaction_at,
+             r.fuel_code_type::text AS fuel_code_type,
+             r.products AS products,
              ABS(COALESCE(r.total_amount_paid_cents, 0))::bigint::text AS amount_cents,
              r.transaction_id::text AS transaction_id,
              r.fees AS fees_json,
@@ -360,13 +365,28 @@ async function postRelayFuelFill(
     [input.fill_id]
   );
   const RELAY_KIND: Record<string, FuelCategoryCode> = { diesel: "diesel", def: "def", reefer: "reefer" };
-  const unknown = linesRes.rows.filter((l) => !RELAY_KIND[l.fuel_type]);
-  if (unknown.length) {
-    throw new FuelMatchPostError("relay_fill_unknown_product", `relay_fuel ${input.fill_id}: product line(s) ${unknown.map((l) => l.fuel_type).join(", ")} have no fuel item — refusing rather than posting them as diesel`);
+  // ACCT-F11127 (Lead ruling 11-09) — a Relay SERVICE code (lumper / CAT scale ticket) is an expense on its load on the
+  // service's own item, through this same poster, crediting the wallet. Its one amount is its 'other' line (CSV shape) or
+  // Relay's product price (API shape, no line). A service code that also carries a fuel line is refused by name.
+  const serviceKind = relayServiceKindOf({ fuel_code_type: row.fuel_code_type, products: row.products });
+  let costLines: Array<{ fuel_kind: FuelCategoryCode; amount_cents: number }>;
+  if (serviceKind) {
+    const fuelOnService = linesRes.rows.filter((l) => l.fuel_type !== "other" && Math.round(Number(l.cents ?? 0)) > 0);
+    if (fuelOnService.length) {
+      throw new FuelMatchPostError("relay_service_code_has_fuel_line", `relay_fuel ${input.fill_id}: a ${serviceKind} code carries fuel line(s) ${fuelOnService.map((l) => l.fuel_type).join(", ")} — refusing rather than splitting it by guess`);
+    }
+    const otherCents = linesRes.rows.filter((l) => l.fuel_type === "other").reduce((t, l) => t + Math.round(Number(l.cents ?? 0)), 0);
+    const cents = otherCents > 0 ? otherCents : (relayServiceProductCents(row.products) ?? 0);
+    costLines = cents > 0 ? [{ fuel_kind: serviceKind, amount_cents: cents }] : [];
+  } else {
+    const unknown = linesRes.rows.filter((l) => !RELAY_KIND[l.fuel_type]);
+    if (unknown.length) {
+      throw new FuelMatchPostError("relay_fill_unknown_product", `relay_fuel ${input.fill_id}: product line(s) ${unknown.map((l) => l.fuel_type).join(", ")} have no fuel item — refusing rather than posting them as diesel`);
+    }
+    costLines = linesRes.rows
+      .map((l) => ({ fuel_kind: RELAY_KIND[l.fuel_type]!, amount_cents: Math.round(Number(l.cents ?? 0)) }))
+      .filter((l) => l.amount_cents > 0);
   }
-  const costLines = linesRes.rows
-    .map((l) => ({ fuel_kind: RELAY_KIND[l.fuel_type]!, amount_cents: Math.round(Number(l.cents ?? 0)) }))
-    .filter((l) => l.amount_cents > 0);
   if (!costLines.length) {
     throw new FuelMatchPostError("relay_fill_has_no_fuel_lines", `relay_fuel ${input.fill_id}: no fuel product line (e.g. a scale ticket) — this is not a fuel posting; categorize the bank line instead`);
   }
@@ -404,8 +424,9 @@ async function postRelayFuelFill(
     // to carry them, so the poster stamps them (the document then takes the load-spine number).
     load_id: load?.load_id ?? null,
     trailer_id: load?.trailer_id ?? null,
-    ifta_state: row.location_state,
-    ifta_gallons: row.gallons != null ? Number(row.gallons) : null,
+    // A service code is not motor fuel: no IFTA state, no gallons.
+    ifta_state: serviceKind ? null : row.location_state,
+    ifta_gallons: serviceKind ? null : row.gallons != null ? Number(row.gallons) : null,
     company_direct_credit: "relay_fuel_wallet",
     memo: buildFuelTxnJeMemo({
       fuel_type: costLines.map((l) => l.fuel_kind).join("+"),
