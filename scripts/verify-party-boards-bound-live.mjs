@@ -110,7 +110,10 @@ try {
       })
     );
   }
-  const ci = (await c.query(`SELECT count(DISTINCT customer_id)::int wt, coalesce(sum(total_cents),0)::bigint b, coalesce(sum(amount_open_cents),0)::bigint o,
+  // "billed" in the engine = issuedInvoice() = status NOT IN ('draft','proforma'); proforma_cents is tracked separately.
+  const ci = (await c.query(`SELECT count(DISTINCT customer_id)::int wt,
+      coalesce(sum(total_cents) FILTER (WHERE status NOT IN ('draft', 'proforma')),0)::bigint b,
+      coalesce(sum(amount_open_cents),0)::bigint o,
       count(*) FILTER (WHERE amount_open_cents > 0)::int oi FROM accounting.invoices
      WHERE operating_company_id = $1 AND voided_at IS NULL AND status <> 'void' AND issue_date >= date_trunc('year', current_date)::date`, [USMCA])).rows[0];
   const cb = (await c.query(`SELECT count(*)::int n FROM mdata.customers WHERE operating_company_id = $1`, [USMCA])).rows[0];

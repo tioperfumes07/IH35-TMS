@@ -34,7 +34,7 @@ export function PerfumeReviewPanel() {
         storageKey="perfume-desk-review-v1"
         hidePager
         page={1}
-        pageSize={Math.max(1, q.data?.rows.length ?? PAGE)}
+        pageSize={Math.max(1, q.data?.rows?.length ?? PAGE)}
         emptyText="Nothing to review."
         columns={[
           { key: "vendor_name", label: "Vendor", sortable: true },

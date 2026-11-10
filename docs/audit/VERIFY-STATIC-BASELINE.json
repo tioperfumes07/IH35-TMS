@@ -317,7 +317,6 @@
     "verify-reports-scheduled-custom-raw-chrome-delete.mjs",
     "verify-reports-scheduled-status-datetime-chrome.mjs",
     "verify-reports-staged-filters-class.mjs",
-    "verify-requireauth-returns-reply.mjs",
     "verify-required-surface-inventory-complete.mjs",
     "verify-route-manifest-parity.mjs",
     "verify-runner-filters-entity-pickers.mjs",

@@ -70,6 +70,7 @@ function checkFile(filePath) {
     // Reverted — own guard (verify-accounting-existing-query-reverse-drills) requires original shape
     "CustomerDetail.tsx",
     // Pre-existing inline reason patterns on origin/main; follow-up to update their guards
+    "PerfumeListsPanel.tsx", // non-financial perfume void — stamps voided_at only, no GL/JE; isolated perfume.* schema
     "LoadCreateModal.tsx",
     "NeedsDeliveryAuthorizationPage.tsx",
     "BookLoadModalV4.tsx",

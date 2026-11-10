@@ -95,7 +95,7 @@ export async function listActiveEnrolledDrivers(
       -- must appear in select list". Reproduced verbatim against prod. Ordering by the output alias
       -- keeps the deterministic ordering the draw's auditability depends on.
       -- ACCT-F11128: the pool is ACTIVE drivers only — the same rule scheduleTest applies to every drawn driver. An
-      -- enrollment left active for a driver deactivated later (USMCA prod 11-10: 1 of 14, deactivated 09-07) put him in
+      -- enrollment left active for a driver deactivated later [USMCA prod 11-10: 1 of 14, deactivated 09-07] put him in
       -- the pool; the draw picked him, scheduleTest threw active_driver_not_in_operating_company and the whole draw
       -- rolled back. A driver who is not active is not a driver position (49 CFR 382.305) and is never drawn.
       SELECT DISTINCT e.driver_uuid::text AS driver_uuid
