@@ -1,3 +1,8 @@
+## OUTBOX (11-10-2026 ~6:55 PM CT) — Integrity Alerts Severity multi-select
+- **PRIOR:** #28816 F1/F2 Fuel Home diesel board engines.
+- **THIS:** IntegrityAlertsPage Severity SelectCombobox → MultiSelectDropdown (same U12 OR pattern as Status); API one-severity when 0/1, client filter when 2+. R4–R6 Cascade.
+- **NEXT:** residual boards/U12; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~6:45 PM CT) — F1/F2 Fuel Home diesel board engines
 - **PRIOR:** #28815 U12 Filings status tiles multi-select.
 - **THIS:** FuelHome Diesel by truck gets FleetTruck unit graphic + Spend bar (F1/F2), appearance=board, kind money + nowrap; $/gal uses formatUsdRateTable (same engines as FuelDieselByTruckPanel). R4–R6 Cascade.
@@ -188,10 +193,5 @@
 - **PRIOR:** #28693 System Program phase U12.
 - **THIS:** scripts/verify-design-parity-census.mjs + docs/design/DESIGN-PARITY-CENSUS.md + baseline ratchet (failing_routes may only go down). ROUND 8.4 UI-F11125 census floor before module builds.
 - **NEXT:** Accounting design build (highest money); lower census fails; no match/Dreamline.
-
-## OUTBOX (11-09-2026 ~8:25 PM CT) — U12 System Program phase MultiSelect
-- **PRIOR:** #28691 Legal contracts Template/Signer U12.
-- **THIS:** SystemModulePage Program Tracker phase progress SelectCombobox → MultiSelectDropdown (empty/both=all).
-- **NEXT:** live DONE-LIVE; design U12 residuals; no match/Dreamline.
 
 … older OUTBOX tips truncated for bus-diet cap.
