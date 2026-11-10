@@ -185,6 +185,8 @@ export default function LoadHistoryBoardPage() {
         key: "customer_name",
         label: "Customer",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.customer_id ? (
             <EntityLink kind="customer" id={r.customer_id} label={r.customer_name ? formatCompanyName(r.customer_name) : entityLabel(null, r.customer_id, "Customer")} />
@@ -192,20 +194,24 @@ export default function LoadHistoryBoardPage() {
             cellButton(r, "—")
           ),
       },
-      { key: "origin", label: "Origin", sortable: true, sortValue: (r) => place(r.origin_city, r.origin_state), render: (r) => cellButton(r, place(r.origin_city, r.origin_state)) },
-      { key: "pickup_date", label: "PU", sortable: true, render: (r) => cellButton(r, formatDateUS(r.pickup_date) || "—") },
+      { key: "origin", label: "Origin", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", sortValue: (r) => place(r.origin_city, r.origin_state), render: (r) => cellButton(r, place(r.origin_city, r.origin_state)) },
+      { key: "pickup_date", label: "PU", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", render: (r) => cellButton(r, formatDateUS(r.pickup_date) || "—") },
       {
         key: "destination",
         label: "Destination",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         sortValue: (r) => place(r.destination_city, r.destination_state),
         render: (r) => cellButton(r, place(r.destination_city, r.destination_state)),
       },
-      { key: "delivery_date", label: "DEL", sortable: true, render: (r) => cellButton(r, formatDateUS(r.delivery_date) || "—") },
+      { key: "delivery_date", label: "DEL", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", render: (r) => cellButton(r, formatDateUS(r.delivery_date) || "—") },
       {
         key: "driver_name",
         label: "Driver",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.driver_id ? (
             <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ? formatPersonName(r.driver_name) : entityLabel(null, r.driver_id, "Driver")} />
@@ -217,32 +223,37 @@ export default function LoadHistoryBoardPage() {
         key: "unit_number",
         label: "Truck",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         render: (r) => (r.unit_id ? <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} /> : cellButton(r, "—")),
       },
       {
         key: "miles_practical",
         label: "Loaded mi",
         sortable: true,
-        cellClass: "text-right",
-        className: "text-right",
+        kind: "number",
+        cellClass: "whitespace-nowrap text-right",
+        className: "whitespace-nowrap text-right",
         render: (r) => cellButton(r, r.miles_practical == null ? "—" : formatNumber(r.miles_practical)),
       },
       {
         key: "miles_deadhead",
         label: "Empty mi",
         sortable: true,
-        cellClass: "text-right",
-        className: "text-right",
+        kind: "number",
+        cellClass: "whitespace-nowrap text-right",
+        className: "whitespace-nowrap text-right",
         render: (r) => cellButton(r, r.miles_deadhead == null ? "—" : formatNumber(r.miles_deadhead)),
       },
-      { key: "revenue_cents", label: "Rate", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => cellButton(r, formatUsdCents(r.revenue_cents)) },
+      { key: "revenue_cents", label: "Rate", sortable: true, kind: "money", cellClass: "whitespace-nowrap text-right", className: "whitespace-nowrap text-right", render: (r) => cellButton(r, formatUsdCents(r.revenue_cents)) },
       {
         key: "rpm",
         label: "$/mi",
         sortable: true,
+        kind: "money",
         sortValue: (r) => ratePerMileCents(r.revenue_cents, r.miles_practical) ?? 0,
-        cellClass: "text-right",
-        className: "text-right",
+        cellClass: "whitespace-nowrap text-right",
+        className: "whitespace-nowrap text-right",
         render: (r) => {
           const c = ratePerMileCents(r.revenue_cents, r.miles_practical);
           return cellButton(r, c == null ? "—" : formatUsdCents(c));
@@ -252,6 +263,8 @@ export default function LoadHistoryBoardPage() {
         key: "invoice_number",
         label: "Invoice",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.invoice_id ? (
             <EntityLink kind="invoice" id={r.invoice_id} label={entityLabel(r.invoice_number, r.invoice_id, "Invoice")} />
@@ -259,11 +272,13 @@ export default function LoadHistoryBoardPage() {
             cellButton(r, <span className="text-[#6B7280]">not invoiced</span>)
           ),
       },
-      { key: "driver_pay_cents", label: "Driver pay", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => cellButton(r, formatUsdCents(r.driver_pay_cents)) },
+      { key: "driver_pay_cents", label: "Driver pay", sortable: true, kind: "money", cellClass: "whitespace-nowrap text-right", className: "whitespace-nowrap text-right", render: (r) => cellButton(r, formatUsdCents(r.driver_pay_cents)) },
       {
         key: "settlement_number",
         label: "Settlement",
         sortable: true,
+        className: "whitespace-nowrap text-left",
+        cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.settlement_id ? (
             <EntityLink kind="settlement" id={r.settlement_id} label={entityLabel(r.settlement_number, r.settlement_id, "Settlement")} />
