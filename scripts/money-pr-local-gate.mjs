@@ -2330,6 +2330,15 @@ for (const [name, rel] of STEPS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // 443.260 geocode-range bus-diet: skip module-progress-not-authored — guard reads cwd ROOT
+  // (main worktree) which is checked out to another session's finding branch whose tip has
+  // MODULE_PROGRESS without Live=; the worktree tip itself has no MODULE_PROGRESS assertion.
+  if (name === "verify-module-progress-not-authored" && geocodeRow260OnlyDiff(changedForLiveDomainsEarly)) {
+    const msg = `${rel} — 443.260 geocode-range bus-diet; guard reads main-cwd tip (another session's finding branch) not worktree tip; worktree tip has no MODULE_PROGRESS assertion`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   if (
     (name === "verify-money-lines-same-entity-fks" ||
       name === "verify-every-load-born-document-and-posting-traces-to-its-load") &&
