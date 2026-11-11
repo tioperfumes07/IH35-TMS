@@ -98,10 +98,11 @@ export type PlannerEntityStatus = "in-use" | "available" | "reserved" | "in-shop
 
 export type PlannerEntityFilterState = {
   status: PlannerEntityStatus[];
-  driverId: string;
+  /** U12 / R1 — multi-select; empty = all drivers. Match load if its driver is any selected id. */
+  driverIds: string[];
 };
 
-export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = { status: [], driverId: "" };
+export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = { status: [], driverIds: [] };
 
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));

@@ -1,12 +1,12 @@
 import { NavLink } from "react-router-dom";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import "./planner-design-tokens.css";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../../components/planner/UniversalFilterBar";
-import { EntityPicker } from "../../../components/EntityPicker";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
@@ -20,6 +20,8 @@ import {
 import { usePlannerRange } from "./PlannerRangeContext";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
+import { listAllDrivers } from "../../../api/mdata";
+import { formatPersonName } from "../../../lib/formatPersonName";
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -97,7 +99,7 @@ const PLANNER_STATUS_LABEL: Record<PlannerEntityStatus, string> = {
   "in-shop": "In Shop",
 };
 
-/** D3 + U12 — board entity-filter heading + Status multi-select / Driver picker (Dispatch-TruckPlanner.dc.html). */
+/** D3 + U12/R1 — board entity-filter heading + Status + Driver MultiSelectDropdown (Dispatch-TruckPlanner.dc.html). */
 function PlannerEntityFilters({
   value,
   onChange,
@@ -106,6 +108,19 @@ function PlannerEntityFilters({
   onChange: (next: PlannerEntityFilterState) => void;
 }) {
   const { selectedCompanyId: operatingCompanyId } = useCompanyContext();
+  const driversQuery = useQuery({
+    queryKey: ["planner-entity-filter-drivers", operatingCompanyId],
+    queryFn: () => listAllDrivers({ operating_company_id: operatingCompanyId as string, status: "Active" }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const driverOptions = useMemo(
+    () =>
+      (driversQuery.data?.drivers ?? []).map((d) => ({
+        value: String(d.id),
+        label: formatPersonName(`${d.first_name ?? ""} ${d.last_name ?? ""}`.trim()) || String(d.id),
+      })),
+    [driversQuery.data],
+  );
   return (
     <div className="space-y-1.5" data-testid="planner-entity-filters">
       <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
@@ -121,13 +136,15 @@ function PlannerEntityFilters({
           />
         </div>
         <div className="min-w-[180px] flex-1" data-testid="planner-filter-driver">
-          <EntityPicker
-            kind="driver"
-            operatingCompanyId={operatingCompanyId ?? ""}
-            value={value.driverId || null}
-            onChange={(id) => onChange({ ...value, driverId: id ?? "" })}
-            placeholder="All drivers"
-            allowClear
+          <MultiSelectDropdown
+            label="Driver"
+            options={driverOptions}
+            selected={value.driverIds}
+            onChange={(next) => onChange({ ...value, driverIds: next })}
+            allLabel="All drivers"
+            searchable
+            loading={driversQuery.isFetching}
+            data-testid="planner-filter-driver-multiselect"
           />
         </div>
       </div>
@@ -169,14 +186,14 @@ function PlannerFilterChips() {
           </button>
         </span>
       ) : null}
-      {entityFilters.driverId ? (
+      {entityFilters.driverIds.length > 0 ? (
         <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-driver">
-          Driver filtered
+          Driver: {entityFilters.driverIds.length} selected
           <button
             type="button"
             aria-label="Clear driver filter"
             className="text-gray-500 hover:text-gray-900"
-            onClick={() => setEntityFilters({ ...entityFilters, driverId: "" })}
+            onClick={() => setEntityFilters({ ...entityFilters, driverIds: [] })}
           >
             ×
           </button>

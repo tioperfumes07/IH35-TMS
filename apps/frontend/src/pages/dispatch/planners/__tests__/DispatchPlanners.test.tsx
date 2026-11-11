@@ -18,8 +18,8 @@ vi.mock("../../../../contexts/CompanyContext", () => ({
   }),
 }));
 
-vi.mock("../../../../components/EntityPicker", () => ({
-  EntityPicker: () => <div data-testid="planner-filter-driver-mock">All drivers</div>,
+vi.mock("../../../../api/mdata", () => ({
+  listAllDrivers: vi.fn().mockResolvedValue({ drivers: [], total: 0 }),
 }));
 
 const gridPayload: driverSchedulerApi.FleetScheduleResponse = {
