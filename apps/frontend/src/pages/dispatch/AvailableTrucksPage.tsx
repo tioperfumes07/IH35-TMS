@@ -304,7 +304,7 @@ export function AvailableTrucksPage() {
         onClose={() => setPreviewKind(null)}
         size="wide"
       >
-        <div className="space-y-3 text-sm" data-testid="capacity-preview">
+        <div className="space-y-3 text-xs" data-testid="capacity-preview">
           <div className="flex gap-2">
             {(["morning", "change"] as const).map((k) => (
               <button

@@ -26,6 +26,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { properPersonOrPlaceName } from "../../../lib/properDisplayText";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { getLoad, getDispatchLoadEditLock, updateDispatchLoadFull, type LoadDetail } from "../../../api/loads";
 import { buildEditPrefill, buildEditPatchBody, shouldApplyEditPrefill } from "./book-load-v4/editLoadMapping";
 import { buildTrailerChoice, TRAILER_CHOICE_REQUIRED_MESSAGE, type TrailerSource } from "./book-load-v4/trailerChoice";
@@ -96,8 +97,6 @@ import { NumberInput } from "../../../components/forms/NumberInput";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { CappedListNotice } from "../../../components/CappedListNotice";
 import { describeBookLoadValidationErrors } from "./book-load-v4/invalidSubmitDetails";
-import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
-
 type FormValues = BookLoadFormValues & {
   load_type: "broker" | "direct";
   catalog_load_type_id: string;
@@ -2365,11 +2364,11 @@ export function BookLoadModalV4({
                       data-testid={`book-load-rail-${sec.letter.toLowerCase()}`}
                       aria-current={active ? "true" : undefined}
                       onClick={() => jumpBookLoadSection(sec.id)}
-                      className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11.5px] font-semibold ${
+                      className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11px] font-semibold ${
                         active ? "border border-[#DDE1E7] bg-white" : "border border-transparent"
                       }`}
                     >
-                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-[10px] font-bold text-white">
+                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-[11px] font-bold text-white">
                         {sec.letter}
                       </span>
                       <span className="min-w-0 flex-1 leading-snug text-[#0F1219]">{sec.label}</span>
@@ -2664,35 +2663,37 @@ export function BookLoadModalV4({
                   >
                     <div className="grid grid-cols-2 items-end gap-2.5 py-1.5 sm:grid-cols-4">
                       <label className="min-w-0">
-                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Linehaul</span>
+                        <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-[#5B6576]">Linehaul</span>
                         <MoneyInput valueCents={form.watch("linehaul_cents")} onChangeCents={(c) => { form.setValue("linehaul_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("linehaul_cents"); }} className="w-full" ariaLabel="Linehaul" />
                         {form.formState.errors.linehaul_cents ? (
                           <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.linehaul_cents.message)}</p>
                         ) : null}
                       </label>
                       <label className="min-w-0">
-                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Fuel surcharge</span>
+                        <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-[#5B6576]">Fuel surcharge</span>
                         <MoneyInput valueCents={form.watch("fuel_surcharge_cents")} onChangeCents={(c) => { form.setValue("fuel_surcharge_cents", c ?? 0, { shouldDirty: true }); form.clearErrors("fuel_surcharge_cents"); }} className="w-full" ariaLabel="Fuel surcharge" />
                         {form.formState.errors.fuel_surcharge_cents ? (
                           <p className="mt-1 text-xs text-red-600">{String(form.formState.errors.fuel_surcharge_cents.message)}</p>
                         ) : null}
                       </label>
                       <div className="min-w-0">
-                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Accessorial</span>
-                        <div
-                          className={`flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-white px-2.5 text-[12.5px] font-medium tabular-nums text-[#111827] ${QBO_MONEY_CELL_CLASS}`}
-                          data-testid="book-load-accessorial-total"
-                        >
-                          {formatUsdCents(sumAccessorialCents(accessorialRows ?? []))}
+                        <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-[#5B6576]">Accessorial</span>
+                        <div className="flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-white px-2.5 text-xs font-medium text-[#111827]">
+                          <MoneyCell
+                            cents={sumAccessorialCents(accessorialRows ?? [])}
+                            drill={{ entity: { kind: "load", id: editLoadId } }}
+                            data-testid="book-load-accessorial-total"
+                          />
                         </div>
                       </div>
                       <div className="min-w-0">
-                        <span className="mb-1 block whitespace-nowrap text-[10.5px] font-semibold text-[#5B6576]">Total customer invoice</span>
-                        <div
-                          className={`flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-[#F7F8FA] px-2.5 text-[12.5px] font-semibold tabular-nums text-[#111827] ${QBO_MONEY_CELL_CLASS}`}
-                          data-testid="book-load-invoice-total"
-                        >
-                          {formatUsdCents(customerInvoiceTotal)}
+                        <span className="mb-1 block whitespace-nowrap text-xs font-semibold text-[#5B6576]">Total customer invoice</span>
+                        <div className="flex h-8 items-center justify-end rounded-md border border-[#DDE1E7] bg-[#F7F8FA] px-2.5 text-xs font-semibold text-[#111827]">
+                          <MoneyCell
+                            cents={customerInvoiceTotal}
+                            drill={{ entity: { kind: "load", id: editLoadId } }}
+                            data-testid="book-load-invoice-total"
+                          />
                         </div>
                       </div>
                     </div>
