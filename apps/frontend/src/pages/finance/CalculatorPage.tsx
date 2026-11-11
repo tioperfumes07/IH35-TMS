@@ -165,7 +165,7 @@ export function CalculatorPage() {
                 <dt>Payoff date</dt><dd className="text-right">{formatDateUS(s.payoff_date)}</dd>
               </dl>
               <div className="mt-3">
-                <ParityTable<CalcPreviewRow>
+                <ParityTable<CalcPreviewRow> appearance="board"
                   columns={AMORT_COLUMNS}
                   rows={s.amortization_preview}
                   rowKey={(r) => String(r.period)}

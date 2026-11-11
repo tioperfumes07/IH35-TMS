@@ -347,7 +347,7 @@ export function GeofencesPage() {
           />
         ) : (
           <div className="mt-2">
-            <ParityTable<Geofence>
+            <ParityTable<Geofence> appearance="board"
               columns={geofenceColumns}
               rows={displayGeofences}
               rowKey={(item) => item.id}
