@@ -114,7 +114,7 @@ export function ViolationsTab({ operatingCompanyId }: Props) {
         />
       ) : null}
 
-      <ParityTable<EldHosViolation>
+      <ParityTable<EldHosViolation> appearance="board"
         title="HOS violations"
         columns={columns}
         rows={rows}
