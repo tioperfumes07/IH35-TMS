@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave16
+- **PRIOR:** prior residual board wave.
+- **THIS:** ViolationsTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:55 PM CT) — Residual ParityTables appearance=board wave15 (AuditTrail+DocsHome)
 - **PRIOR:** #28852 wave14 Users.
 - **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
@@ -87,11 +92,6 @@
 - **PRIOR:** #28833 Shared/vehicle/trailer/fleet appearance=board.
 - **THIS:** R1 DispatchPlannersLayout driver MultiSelectDropdown + driverIds[]; TruckPlanner matches any selected. R2–R4 BookLoad follow in next ship. Cascade owns R5.
 - **NEXT:** R2–R4 BookLoad type/money. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~9:20 PM CT) — Shared/vehicle/trailer/fleet residual ParityTables appearance=board
-- **PRIOR:** #28832 Customers/Vendors/Inventory/DF/DriverProfile/Factoring appearance=board.
-- **THIS:** 33 ParityTables / 29 files (shared/assets/documents/catalogs/tasks/users/audit/allocation/forms/telematics/trailer-profile/vehicle-profile/FleetTable/home/ap/checks/insurance/fuel Import) appearance=board; generic `<ParityTable<T>>` kept intact (appearance after type args). Unowned only. Engines unchanged. R4–R6 Cascade.
-- **NEXT:** residual unowned boards; other seats own Accounting/Banking/Maint/Safety/Reports. No match/Dreamline.
 
 ## ARCHIVE
 Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet OUTBOX≤200).
