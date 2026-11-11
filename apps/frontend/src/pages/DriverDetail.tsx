@@ -2423,7 +2423,7 @@ export function DriverDetailPage() {
               onRetry={() => void historyQuery.refetch()}
             />
           ) : (
-            <ParityTable<DriverQualificationRateHistoryItem>
+            <ParityTable<DriverQualificationRateHistoryItem> appearance="board"
               title="Rate history — this pay line"
               columns={rateHistoryColumns}
               rows={selectedLineHistory}
