@@ -8,7 +8,7 @@ export function DriverInstructionsTextarea({ register }: Props) {
   return (
     <div className="space-y-1">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-700">Driver instructions</span>
+        <span className="text-section-header font-semibold uppercase tracking-wide text-gray-700">Driver instructions</span>
         <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">Visible to driver</span>
         <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">New</span>
       </div>

@@ -1,3 +1,23 @@
+## OUTBOX (11-11-2026 ~5:45 PM CT) — Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)
+- **PRIOR:** #28869 BookLoad helpers 103→82; #28867 T5; #28866 R2; #28864/#28865 owner FULL BOARD law to all seats.
+- **THIS:** LoadStopsRecordTab + LoadHistoryDetailPanel text-[11px]/text-[12px] → text-section-header/text-xs. Baseline 82→79.
+- **NEXT:** ROUND 8.12 Cursor boards live proof (screenshots + wiring tables). No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~5:35 PM CT) — BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)
+- **PRIOR:** #28867 Settlements T5 ReadyDots; #28866 R2; #28864 owner order.
+- **THIS:** BookLoadStops/Equipment/Customer + book-load-v4 helpers use text-section-header. Baseline banked 103→82. ROUND 8.12 continues.
+- **NEXT:** Cursor boards #12–21 / #4–8 / #32–42 under ROUND 8.12. No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~5:25 PM CT) — ROUND 8.12 progress + Settlements T5 ReadyDots follow ready_total
+- **PRIOR:** #28866 R2 raw_font_sizes 133→103; #28864 owner full-board order.
+- **THIS:** Settlements Open ReadyDots no longer hard-code 6 — dots = engine `ready_total` (— when unmeasured). Board order Settlement→Driver→Unit→Tour legs already live. ROUND 8.12 Cursor boards in progress: #12 TruckPlanner / #13 LoadHistory / #14–17 BookLoad coded pending live proof; #33 Open T5 readiness prose aligned.
+- **NEXT:** Continue Cursor 8.12 boards (#32–42 Settlements, #18 Factoring, #19 Fuel, #20 Insurance, #21 Legal, #4–8 Cash Flow). No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~5:15 PM CT) — ROUND 8.11 R2 FIXED: raw_font_sizes 133→103 (BookLoad + Planner semantic classes)
+- **PRIOR:** #28864 owner ALL-CODERS full-board order relayed.
+- **THIS:** BookLoadModalV4 + DispatchPlannersLayout `text-[11px]` → `text-section-header`. ui-design-system-ratchet PASS; baseline banked 129→103. ROUND 8.12 boards next. No match/Dreamline.
+- **NEXT:** ROUND 8.12 first Cursor board DONE (TruckPlanner / LoadHistory / BookLoad). Cascade R5 remains Cascade.
+
 ## OUTBOX (11-11-2026 ~5:00 PM CT) — OWNER ORDER relayed to ALL CODERS: full board-identical NOT shell
 - **PRIOR:** #28862 PostingGrid appearance=board; unowned pages/portal appearance sweep DONE.
 - **THIS:** Posted `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Owner verbatim: design changes pages/tabs/modules/subtabs — full complete build exactly as design, not shell, not over previous. Tipped INBOX Cursor/Cascade/Codex/CC-1/CC-2/CC-3.

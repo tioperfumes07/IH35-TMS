@@ -2020,7 +2020,7 @@ export function BookLoadModalV4({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3 text-[11px]" style={{ color: "#9AA6BA" }}>
+          <div className="flex items-center gap-3 text-section-header" style={{ color: "#9AA6BA" }}>
             <span>{headerTime}</span>
             <div
               className="inline-flex h-7 overflow-hidden rounded-sm border border-white/30 font-semibold"
@@ -2149,7 +2149,7 @@ export function BookLoadModalV4({
 
           {isEditMode ? (
             <div
-              className="mx-3 mt-2 border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]"
+              className="mx-3 mt-2 border-y border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-section-header text-[#4B5563]"
               data-testid="book-load-edit-honesty"
             >
               Editing persisted load details. Only fields you change are saved (partial PATCH — untouched
@@ -2198,7 +2198,7 @@ export function BookLoadModalV4({
               SB → the tour line AND Border crossing *. §7 navy family only. TR/SB auto-join the unit's tour
               (tour_id derived server-side). */}
           <div className="border-b border-[#E5E7EB] bg-white px-4 py-3" data-testid="trip-type-banner">
-            <span className="text-[11px] font-bold text-[#4B5563]">
+            <span className="text-section-header font-bold text-[#4B5563]">
               Trip type <span className="text-red-500">*</span>
             </span>
             <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Trip type">
@@ -2235,14 +2235,14 @@ export function BookLoadModalV4({
                       <span className="block text-xs font-semibold text-[#0F1219]">
                         {code} · {label}
                       </span>
-                      <span className="block truncate text-[11px] text-[#4B5563]">{desc}</span>
+                      <span className="block truncate text-section-header text-[#4B5563]">{desc}</span>
                     </span>
                   </button>
                 );
               })}
             </div>
             {form.formState.errors.trip_type ? (
-              <p className="mt-1 text-[11px] text-red-600">{String(form.formState.errors.trip_type.message)}</p>
+              <p className="mt-1 text-section-header text-red-600">{String(form.formState.errors.trip_type.message)}</p>
             ) : null}
             {watchedTripType === "TR" || watchedTripType === "SB" ? (
               <p
@@ -2364,11 +2364,11 @@ export function BookLoadModalV4({
                       data-testid={`book-load-rail-${sec.letter.toLowerCase()}`}
                       aria-current={active ? "true" : undefined}
                       onClick={() => jumpBookLoadSection(sec.id)}
-                      className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-[11px] font-semibold ${
+                      className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-section-header font-semibold ${
                         active ? "border border-[#DDE1E7] bg-white" : "border border-transparent"
                       }`}
                     >
-                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-[11px] font-bold text-white">
+                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-section-header font-bold text-white">
                         {sec.letter}
                       </span>
                       <span className="min-w-0 flex-1 leading-snug text-[#0F1219]">{sec.label}</span>
@@ -2407,7 +2407,7 @@ export function BookLoadModalV4({
                       Both share the ONE extraction path and fill the same editable draft. */}
                   {!editLoadId ? (
                     <div className="space-y-1">
-                      <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">Upload rate confirmation (auto-fills this load)</label>
+                      <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">Upload rate confirmation (auto-fills this load)</label>
                       <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill, _response, uploadedFile) => {
@@ -2455,7 +2455,7 @@ export function BookLoadModalV4({
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563] md:col-span-2">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563] md:col-span-2">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -2503,11 +2503,11 @@ export function BookLoadModalV4({
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
@@ -2528,9 +2528,9 @@ export function BookLoadModalV4({
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
                         Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
                         same row as Weight (v4 mockup + owner 2026-09-03). */}
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Broker / Direct
-                      <div className="mt-0.5 flex h-8 w-max shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white text-[11px]">
+                      <div className="mt-0.5 flex h-8 w-max shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white text-section-header">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
                           <input type="radio" value="broker" className="hidden" {...form.register("load_type")} />
                           Broker
@@ -2541,7 +2541,7 @@ export function BookLoadModalV4({
                         </label>
                       </div>
                     </label>
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Commodity
                       <div className="mt-0.5" data-testid="book-load-commodity-picker">
                         <ReferenceSelect
@@ -2571,7 +2571,7 @@ export function BookLoadModalV4({
                       </div>
                       <input type="hidden" {...form.register("commodity")} />
                     </label>
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Weight (lbs)
                       <NumberInput
                         value={form.watch("weight_lbs")}
@@ -2581,7 +2581,7 @@ export function BookLoadModalV4({
                         className="mt-0.5 w-full"
                       />
                     </label>
-                    <label className="text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
                       Pieces
                       <input
                         {...form.register("pieces")}
@@ -2594,7 +2594,7 @@ export function BookLoadModalV4({
                         the normal create path (owner 2026-09-03). Gate: editLoadId only. */}
                     {editLoadId ? (
                       <>
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
                           Historical driver import (inactive drivers only)
                           <input
                             {...form.register("historical_import_driver_id")}
@@ -2603,7 +2603,7 @@ export function BookLoadModalV4({
                             className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                           />
                         </label>
-                        <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
                           Historical import reason
                           <div className="mt-0.5">
                             <ReferenceSelect
@@ -2698,7 +2698,7 @@ export function BookLoadModalV4({
                       </div>
                     </div>
                     {extraRatesCents !== 0 ? (
-                      <p className="border-t border-[#ECEEF2] py-1.5 text-[11px] text-[#5B6576]" data-testid="book-load-extra-rates-note">
+                      <p className="border-t border-[#ECEEF2] py-1.5 text-section-header text-[#5B6576]" data-testid="book-load-extra-rates-note">
                         Per-stop extra rates {formatUsdCents(extraRatesCents)} included in invoice total
                       </p>
                     ) : null}
@@ -2744,7 +2744,7 @@ export function BookLoadModalV4({
                     if (stopsForExtraRates.length <= 2) return null;
                     return (
                       <div data-testid="section-a-extra-rates" className="space-y-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
+                        <p className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
                         {stopsForExtraRates.map((stopRow, i) => (
                           <div key={i} className="border-b border-gray-200 p-1">
                             <div className="text-xs font-semibold text-gray-600">
@@ -2766,14 +2766,14 @@ export function BookLoadModalV4({
                     if (withLumper.length === 0) return null;
                     return (
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
+                        <p className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
                         {lumperProvidersQuery.isError ? <ListErrorBanner message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()} /> : null}
                         {withLumper.map(({ s, i }) => (
                           <div key={i} className="grid grid-cols-1 items-end gap-2 border-b border-gray-200 p-1 md:grid-cols-4">
                             <div className="text-xs font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper paid by
                               <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-8 w-full text-xs">
                                 <option value="carrier">Carrier</option>
@@ -2783,7 +2783,7 @@ export function BookLoadModalV4({
                                 <option value="unknown">Unknown</option>
                               </SelectCombobox>
                             </label>
-                            <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
                               Lumper provider
                               <ReferenceSelect
                                 size="sm"
@@ -2798,7 +2798,7 @@ export function BookLoadModalV4({
                                 onOptionCreated={() => void lumperProvidersQuery.refetch()}
                               />
                             </label>
-                            <label className="flex items-center gap-2 text-[11px] text-gray-700">
+                            <label className="flex items-center gap-2 text-section-header text-gray-700">
                               <input type="checkbox" {...form.register(`stops.${i}.lumper_required`)} /> Lumper required
                             </label>
                           </div>
@@ -2812,7 +2812,7 @@ export function BookLoadModalV4({
                       categories, three accounts) and belongs in Load Costs, not one box at booking. Factoring
                       company stays. */}
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-500">
+                    <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
                       Factoring company
                       {/*
                         LST-PICKER-01 / CLS-SILENT-CAP: EntityPicker server-search + allowCreate →
@@ -2837,13 +2837,13 @@ export function BookLoadModalV4({
                     </label>
                   </div>
 
-                  <label className="flex items-center gap-2 text-[11px] text-gray-700">
+                  <label className="flex items-center gap-2 text-section-header text-gray-700">
                     <input type="checkbox" {...form.register("hazmat")} />
                     Hazmat
                   </label>
 
                   <label className="flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes">
-                    <span className="text-[11px] font-bold text-[#1F2733]">
+                    <span className="text-section-header font-bold text-[#1F2733]">
                       Special notes <span className="font-normal text-[#8A93A1]">optional</span>
                     </span>
                     <textarea
@@ -3143,7 +3143,7 @@ export function BookLoadModalV4({
                 <span className="blw-sec-meta">rate confirmation (OCR prefill)</span>
               </div>
               <div className="space-y-2 p-3">
-                <label className="text-[11px] font-semibold text-gray-600">Upload rate confirmation</label>
+                <label className="text-section-header font-semibold text-gray-600">Upload rate confirmation</label>
                 {!editLoadId ? (
                   <OcrDropZone
                     operatingCompanyId={operatingCompanyId}
@@ -3167,7 +3167,7 @@ export function BookLoadModalV4({
                     }}
                   />
                 ) : (
-                  <p className="text-[11px] text-gray-500">Rate-con extraction fills a new load — open Book Load to read a rate con into a fresh draft.</p>
+                  <p className="text-section-header text-gray-500">Rate-con extraction fills a new load — open Book Load to read a rate con into a fresh draft.</p>
                 )}
                 <p className="text-xs text-gray-500" data-testid="book-load-documents-honesty">
                   BOL, POD, and lumper receipts are captured on Load Detail → Documents / POD Review after booking — not on this Book Load form.

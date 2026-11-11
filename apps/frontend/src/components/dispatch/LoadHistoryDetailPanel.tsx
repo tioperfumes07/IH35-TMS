@@ -68,7 +68,7 @@ function Row({ label, children, testId }: { label: string; children: React.React
 function Section({ title, children, testId }: { title: string; children: React.ReactNode; testId: string }) {
   return (
     <section className="border-t border-[#E5E7EB] px-3 py-2" data-testid={testId}>
-      <h3 className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">{title}</h3>
+      <h3 className="mb-1 text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">{title}</h3>
       {children}
     </section>
   );

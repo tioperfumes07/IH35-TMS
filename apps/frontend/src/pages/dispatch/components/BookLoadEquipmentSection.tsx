@@ -313,7 +313,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
               )}
               </div>
               {!trailerChoiceComplete ? (
-                <p className="text-[11px] text-red-600" role="alert" data-testid="trailer-choice-required">{TRAILER_CHOICE_REQUIRED_MESSAGE}</p>
+                <p className="text-section-header text-red-600" role="alert" data-testid="trailer-choice-required">{TRAILER_CHOICE_REQUIRED_MESSAGE}</p>
               ) : null}
             </div>
           }
@@ -637,12 +637,12 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
       {/* RENDER-A-v2 §B: "Equipment & driver instructions" expander — equipment requirement chips + the
           driver-visible instructions, combined into one expander after the trailer panels. */}
       <details open data-testid="equipment-driver-instructions" className="rounded-sm border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#1F2A44]">
+        <summary className="cursor-pointer px-2 py-1 text-section-header font-semibold text-[#1F2A44]">
           Equipment &amp; driver instructions <span className="font-normal text-gray-400">requirements · visible to driver</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
           <div>
-            <div className="mb-1 text-[11px] font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
+            <div className="mb-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
             <div className="flex flex-wrap gap-1.5">
               {toggles.map((toggle) => (
                 <label key={toggle.field} className="cursor-pointer">
@@ -658,7 +658,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         </div>
       </details>
       <details open data-testid="expected-adjustments" className="rounded-sm border border-gray-200">
-        <summary className="cursor-pointer px-2 py-1 text-[11px] font-semibold text-[#1F2A44]">
+        <summary className="cursor-pointer px-2 py-1 text-section-header font-semibold text-[#1F2A44]">
           Expected adjustments <span className="font-normal text-gray-400">detention · late risk</span>
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
@@ -680,7 +680,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
 function Field({ label, input, hint, htmlFor }: { label: string; input: JSX.Element; hint?: string; htmlFor?: string }) {
   return (
     <div className="min-w-0 space-y-0.5">
-      <label htmlFor={htmlFor} className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
+      <label htmlFor={htmlFor} className="block whitespace-nowrap text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
       {hint ? <p className="mt-1 text-xs text-gray-600">{hint}</p> : null}
     </div>

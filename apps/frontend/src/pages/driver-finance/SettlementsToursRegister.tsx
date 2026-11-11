@@ -59,9 +59,16 @@ const tourLabel = (r: TourListRow) => {
   return r.is_open ? "—" : "No number";
 };
 
-/** ROUND 443.274-C — Ready = n/6 dots (board Settlements-Open Ready column). */
+/** T5 / ROUND 8.12 — Ready dots follow engine ready_total (never hard-code six). */
 function ReadyDots({ ok, total }: { ok: number; total: number }) {
-  const n = Math.max(0, total || 6);
+  const n = Math.max(0, Number.isFinite(total) ? total : 0);
+  if (n <= 0) {
+    return (
+      <span className="tabular-nums text-section-header text-[#6B7280]" data-testid="setl-tour-ready-dots" aria-label="Ready checks not measured">
+        —
+      </span>
+    );
+  }
   const passed = Math.max(0, Math.min(ok, n));
   return (
     <span
@@ -216,7 +223,7 @@ const TOUR_COLUMNS = (state: "open" | "closed", companyId: string, rows: readonl
   ...(state === "open" ? [
     { key: "ready_ok", label: "Checks passed", testId: "setl-tour-col-checks-passed", sortable: true, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => r.ready_ok } as ParityColumn<TourListRow>,
     { key: "ready_total", label: "Checks required", testId: "setl-tour-col-checks-required", sortable: true, sortValue: (r: TourListRow) => r.ready_total, render: (r: TourListRow) => r.ready_total } as ParityColumn<TourListRow>,
-    { key: "ready", label: "Ready", testId: "setl-tour-col-ready", sortable: true, minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <ReadyDots ok={r.ready_ok} total={r.ready_total || 6} /> } as ParityColumn<TourListRow>,
+    { key: "ready", label: "Ready", testId: "setl-tour-col-ready", sortable: true, minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.ready_ok, render: (r: TourListRow) => <ReadyDots ok={r.ready_ok} total={r.ready_total} /> } as ParityColumn<TourListRow>,
     { key: "close_blockers", label: "Waiting on", testId: "setl-tour-col-open-items", sortable: true, minWidth: 160, maxWidth: 280, sortValue: (r: TourListRow) => waitingOnReason(r), render: (r: TourListRow) => {
       const reason = waitingOnReason(r);
       return reason ? <span title={r.close_blockers.join("\n")} data-testid="setl-tour-first-blocker" className="block max-w-[260px] truncate text-left">{reason}</span> : DASH;
