@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~2:20 AM CT) — Low-guard residual ParityTables appearance=board waveN
+- **PRIOR:** prior low-guard board wave.
+- **THIS:** 7 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~2:15 AM CT) — Low-guard residual ParityTables appearance=board wave4
 - **PRIOR:** #28841 low-guard board wave3.
 - **THIS:** Samsara/QBO/vendor-mapping/form425c/tasks ParityTables appearance=board (≤35 guards). Engines unchanged. Cascade owns R5.
@@ -86,21 +91,6 @@
 ## OUTBOX (11-10-2026 ~7:10 PM CT) — Factoring Payments/Repurchase board tables
 - **PRIOR:** #28818 Fuel diesel Spend bar track off slate.
 - **THIS:** PaymentsToYouPanel (3) + RepurchaseDuePanel appearance=board. Engines unchanged. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~7:00 PM CT) — Fuel diesel Spend bar track off slate
-- **PRIOR:** #28817 Integrity Alerts Severity multi-select.
-- **THIS:** FuelDieselByTruckPanel Spend bar track bg-slate-100 → #EEF0F3. Engines unchanged. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:55 PM CT) — Integrity Alerts Severity multi-select
-- **PRIOR:** #28816 F1/F2 Fuel Home diesel board engines.
-- **THIS:** IntegrityAlertsPage Severity → MultiSelectDropdown (U12 OR). R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:45 PM CT) — F1/F2 Fuel Home diesel board engines
-- **PRIOR:** #28815 U12 Filings status tiles multi-select.
-- **THIS:** FuelHome Diesel FleetTruck + Spend bar + appearance=board. R4–R6 Cascade.
 - **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
 
 ## ARCHIVE

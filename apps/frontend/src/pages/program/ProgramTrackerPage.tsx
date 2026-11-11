@@ -178,7 +178,7 @@ function BlockTable({
     },
   ];
   return (
-    <ParityTable<TrackerBlockRow>
+    <ParityTable<TrackerBlockRow> appearance="board"
       title={title}
       storageKey={storageKey}
       rows={rows}
@@ -207,7 +207,7 @@ function CompletedSection({ rows, moved }: { rows: TrackerBlockRow[]; moved: Set
 
 function SequenceTable({ phases }: { phases: TrackerPhase[] }) {
   return (
-    <ParityTable<TrackerPhase>
+    <ParityTable<TrackerPhase> appearance="board"
       title="Build sequence"
       storageKey="ih35.program.tracker.sequence.v1"
       rows={phases}
@@ -249,7 +249,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
         <StatCard n={data.modules.length} label="Modules" />
       </div>
       <p className="text-[11px] text-[#6B7280]">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
-      <ParityTable<ProgramTracker["modules"][number]>
+      <ParityTable<ProgramTracker["modules"][number]> appearance="board"
         title="By module"
         storageKey="ih35.program.tracker.modules.v1"
         rows={data.modules}

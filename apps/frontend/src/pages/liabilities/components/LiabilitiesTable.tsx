@@ -154,7 +154,7 @@ export function LiabilitiesTable({ rows, onOpenDetail, onSendAck }: Props) {
   return (
     // 443.280 — Settlements › Liabilities + /liabilities: ParityTable in shared BoardSection.
     <BoardSection title="Liabilities" testId="liabilities-board-section">
-      <ParityTable
+      <ParityTable appearance="board"
         columns={columns}
         rows={rows}
         rowKey={(row) => String(row.id)}
