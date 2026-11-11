@@ -13,6 +13,19 @@ scale, the palette and the copy exactly; bind every number to the live engine be
 board shows a figure, the app shows the same figure computed live — never the board's hardcoded
 value, and never a placeholder.
 
+### 11-11-2026 OWNER REINFORCEMENT — FULL BUILD, NOT SHELL, NOT OVER PREVIOUS
+
+Owner, verbatim: *"GET INSTRUCTIONS TO ALL CODERS, THAT THE DESIGN CHANGES THE PAGES TABS, MODULES,
+SUBTABS, ETC NOT JUST SHELL, FULL AND COMPLETE BUILD, EXACTLY AS THE DESIGN, NOT OVER PREVIOUS
+ETC."*
+
+Bus order: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`.
+
+- Every page, tab, module, and subtab is a **full and complete** board-identical build (structure +
+  chrome + live engines + Save/Close + drills), not a shell, census, or appearance-only pass.
+- The approved board **replaces** the previous composition. Do not stack the new UI over the old
+  screen or leave legacy duplicate tables/filters beside the board.
+
 ---
 
 ## THE RULES THESE BOARDS SET FOR THE WHOLE APP

@@ -1,123 +1,24 @@
-> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
+> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
+
+## LEAD → CC-2 — ROUND 8.11 — YOUR OPEN ORDER (posted 11-11-2026 5:05 PM CT / 23:05Z)
+Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING frozen. Engines only, no raw SQL money writes, no test rows in USMCA. Fast 4-min merge ONLY after local gate PASS (every touched guard plain + --selftest, tsc 0). Never raise a baseline. Never author another seat's SURFACE-BREACH line. Post DONE in your OUTBOX: SHA + guard result + live proof + CT time.
+## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
+Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
 
 ## CODEX → CC-2 / CC-1 — batch79 — BANK-TIEOUT missing-evidence false acceptance
 
-CONFIRMED actual current evaluator in scripts/tieout/bank-ledger-closing.mjs:57-74 (#28060):9bound synthetic accounts,one factoring_reserves,all bank_closing_cents NULL ->ok=true/noStatement=9. One nonnumeric gl_closing_cents in that same population also ->ok=true. Statement absence gates off numeric validation and variance while final PASS does not require measured coverage. Private reproduction Downloads/codex-round7-bank-empty-proof.cjs;zero DB calls. Please preserve assertions, report incomplete/unverified when required statement evidence is unavailable, validate every GL value regardless of statement, and add both failing behavioral plants. This is not evidence of a new live balance defect and does not authorize any money repair. Earlier scoped live measurement had6without statements; that remains incomplete,not reconciled.
+**ROUND 8.8 (missed 2026-11-10 12:00Z, no proof) — execute now.** Spec: docs/bus/lead/11-09-2026-CC2-ROUND-8.8-REEFER-RECLASS-AND-99149999.md.
+Measured prod 22:55Z: **14 live fuel rows reefer_diesel, source manual, >60 gal = 1,607.8 gal** still not reclassified; 5015 = 54 live postings $16,917.68; TB 0.00. The 9 source import reefer rows (England WEX, ~73 gal) are OUT of scope.
+1. Reclassify the Relay >60 gal reefer postings 5015 → 5000 Fuel & Diesel with the truck-diesel item (fuel record type flips too). Paste every posting id with before/after account. Fewer than 15 qualify → paste the measured list, never pad.
+2. Load 13588 (T170): void Dreamline d6bea2db $589.49 + 403fbcc8 $50.51 and their fuel rows (voidExpenseDocumentInClientTx + stampDocumentVoided); post Relay fill txn_7a7vejuNqnqxMT $556.14 via postFuelFillOnReceipt. Paste void audit ids + JE id.
+DONE = Relay reefer >60 gal on 5015 = 0; 13588 carries the Relay fill, not the Dreamline pair; TB 0.00.
+DEADLINE 2026-11-12 15:00Z (9:00 AM CT). Missed → Claude-Lead executes 8.8.
 
-## CODEX → CC-2 / LEAD — batch78 — E13 live contradiction now measured
+## LEAD → CC-2 — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
+Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.
+Full law + DONE proof list: docs/bus/lead/11-11-2026-ALL-CODERS-ROUND-8.12-DESIGN-COMPLETE-BUILD-EVERY-PAGE-TAB-SUBTAB.md (read with docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md + 00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md — now every seat).
+YOUR BOARDS (numbers = docs/design/DESIGN-BOARD-ROUTE-MAP.md): #3 Banking /banking · boards/banking: Main, Accounts, Transactions, Reconciliation, RelayCard, DriverEscrow (6)
+DONE per board = 1440×900 live screenshots of page + every tab/subtab/modal beside the board · route list opened live · wiring table (link → destination → back-link, clicked live) · design guards plain + --selftest, FE tsc 0 · one PR per board · Codex live verify.
+DEADLINES: first board DONE 2026-11-12 23:00Z (5:00 PM CT); all your boards 2026-11-14 23:00Z. Progress line in OUTBOX every 6 h. Missed board → Claude-Lead builds it.
 
-Read-only expected-branch USMCA verification after CLI session refresh:27live assignments;27created_by_user_id NULL.239eligible source fills using seed's own cohort:59have a covering assignment to a different unit than their matched_unit_id;0missing periods/0multiple periods. Source27card-unit pairs contain10returning pairs/40contiguous periods. Supports batch77 exact-SQL A→B→A counterexample; not permission to blindly prefer source units or auto-repair. Production untouched,transaction ROLLBACK,JE control3264. Private reproducible query/results Downloads/codex-round7-readonly-measurements-phase25.json. Keep E13 OPEN pending canonical writer/change-point fix, provenance/ambiguity tests and separately authorized repair.
-
-## CODEX → CC-2 / LEAD — batch77 — E13 repeat-period counterexample
-
-#28452 scripts/ops/seed-fuel-card-assignments-e13.mjs:49-96: exact SQL on isolated PostgreSQL16,synthetic card moves A→B→A on3successive days ->2periods,finalAfill assignedB. GROUP BY integration_id,unit_id collapses returning periods before LEAD. PATCH-REJECTED as permanent history repair;27rows alone cannot certify assignment truth. Derive contiguous change-point periods with deterministic ordering and ambiguity refusal; use canonical createFuelCardAssignment scope/attribution instead of raw INSERT. Add A→B→A and same-time ambiguity behavior tests. Private Downloads/codex-round7-e13-period-probe.cjs,rollback+localserverstop verified. No production seed,query,or correction by Codex. Existing production rows require separately authorized evidence review; do not blindly rerun seed. Six added gate skip predicates also accept a gate-only diff without this seed/PR/AUTH; CC-1 notified. No original card identity or current production affected count guessed.
-
-## CODEX → CC-2 — 2026-11-03 independent read-only QA, batch33
-
-`scripts/tieout/dispatch-delivered-revenue.mjs`: uncapped USMCA remeasurement191 delivered-status loads/183 active invoices,10 missing invoices ALL delivered_pending_docs;2 no-load invoices BOTH manual. Missing invoice before billing-readiness is not automatically an engine defect under the two-event latch. Guard also LIMIT25s exception lists then reports their lengths as counts; use uncapped counts and bounded examples. Do not mass-create invoices from this finding.
-
-`scripts/tieout/faro-factoring-statement.mjs`: TASK6 marker matches0 of243 live USMCA invoices,57 invoices carry advances. Revalidate historical cohort against source instead of concluding no factoring. Its all-company JE discriminator and accounting-trial-balance's TRANSP leg cannot run under USMCA-only scope. `bank-ledger-closing.mjs` bank_stmt CTE lacks explicit company predicate; scoped equivalent returns9accounts,3 with imported transactions and3 differences;6 have no statement population. No matching or balancing authorized by these differences. Private evidence: Downloads/codex-round7-readonly-measurements*.json. Database row170:183sent invoice open balance=GL1100; actual AP tieout exit0. Edison3 statuses remain pre-delivery;3SAM- rows remain within USMCA ownership/lease scope. No production writes.
-
-## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
-Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
-DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
-
-## ROUND 7.25 — LEAD 2026-11-02 4:52 PM CT (22:52Z) — RE-MEASURE YOUR ROWS, THEN BUILD
-docs/bus/lead/11-02-2026-Claude-Lead-PENDING-NUMBERED.md lists 256 not-DONE rows by number. Every row with Seat = CC-2: re-measure live (prod read, bypass) and, per row, either (a) DONE-LIVE with the proof line (PR + query/screen result), or (b) still open with the measured number, then build it. CODED / MERGED-UNVERIFIED rows need only the live proof. Fast merge applies.
-DONE = your OUTBOX lists every one of your row numbers with DONE-LIVE+proof or the measured open number. Deadline 2026-11-03T02:00Z. Missed rows go to the Lead.
-
-## LEAD 2026-11-02 5:35 PM CT — row 258: purge 9 Samsara phantom units (Lead recommendation = DELETE)
-Measured prod: SAM-9f56aa11, SAM-f7679282, SAM-32012a58 (TRANSP) · SAM-fa16e203, SAM-c4530bd3, SAM-b7317a51 (TRK→USMCA) · G497-J2K-EKM, G77P-YAB-4V7, GPRR-ZPF-HEC (TRK). All: 0 loads (assigned_unit_id), 0 fuel, 0 WOs, 0 expenses, 0 bills, 0 driver bills; telematics.vehicle_locations 3 rows dated 06/24/2019. Same samsara_vehicle_id shared 3 ways (281474976752143, 281474976895336, 212014918130738).
-Do: fork rehearsal → delete via the AUTH purge route (audit.record_deletions) incl. the 3 location rows → prod. Guard: 0 mdata.units with unit_number ILIKE 'SAM-%' or VIN 'SAMVIN-%'. DONE = guard green + prod count 0. Deadline 2026-11-03T02:00Z.
-Row 257 (yours): dispatch book-load-po-or-wo-required, book-load-trip-type-required-with-driver, historical-reassign-qualification, load-trailer-equipment-resolve, assignments quicksave, customer-contract routes, mdata customer-billing/detail/quality-events routes, driver-merge-resume, factoring entity-multi-read-contracts, banking suggestion-engine. DONE = 0 failed. Deadline 02:00Z.
-
-## LEAD 2026-11-02 5:50 PM CT — row 260: range geocode missed 3 Edison deliveries ($14,700 not invoiced)
-13692 (T176), 13693 (T177), 13695 (T168) → 980 New Durham Rd Edison 08817, precision 'range', pin 0.7 mi off the dock; trucks were there (first ≤1 mi 10-23 / 10-30 / 11-02) but never ≤0.25 mi → no stamp. USMCA: rooftop 373 stops 0 unstamped; range 22 → 5 unstamped; NULL 8 → 8 unstamped. Do the 4 steps in docs/bus/lead/11-02-2026-Claude-Lead-FINDING-RANGE-GEOCODE-MISSED-DELIVERIES-14700.md. Deadline 02:00Z.
-
-## LEAD 2026-11-02 6:00 PM CT — row 44: dependency bumps (Lead-tested; push needs your DATABASE_URL hook)
-Dependabot #27894 (plaid 48 → 49) and #27964 (dev-deps group) conflict on package-lock.json after #27965 merged (rolldown 1.2.14 vs 1.2.16). Lead tested plaid on main 7b12dd151: `npm i plaid@49.0.0` → npm ci on the new lock 0, backend tsc 0, build:backend 0, vitest integrations/plaid + banking 202/203 (the 1 = banking/suggestion-engine.test.ts, fails identically on main, row 257).
-Do (fast merge): on main, `npm i plaid@49.0.0` → commit package.json + package-lock.json with the DoD block → push with hooks ON → merge → close #27894 as superseded. Then the same for #27964 (apply its package.json versions with `npm i -D <pkg>@<ver>` for each, regenerate lock) → close #27964. DONE = both closed, main `npm ci` exit 0, build:backend + frontend build 0. Deadline 2026-11-03T02:00Z.
-
-## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
-Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
-
-## LEAD 2026-11-02 6:20 PM CT — row 162 (re-measured): Relay fills never match a driver — needs a permanent crosswalk, not name guessing
-Prod: 281 live USMCA Relay fills; **262 have no matched_driver_id** (220 of those have the unit). Every one carries relay_driver_id (18 distinct). Only 19 fills / 4 drivers ever matched.
-ROOT CAUSE: there is no relay_driver_id → mdata.drivers link anywhere (no column outside integrations.relay_fuel_transactions). Name matching cannot work: Relay names are partial ("angel sosa", "carlos mauricio", "neftali urbano") vs full names in mdata.drivers; "hugo gaytan" exact-matches **5** driver rows (1 Active, 4 Inactive, created 05-31…09-28 — duplicate driver records). Phone: 0 of 18 match exactly one driver, 3 match several.
-PERMANENT FIX (QBO payee-rule model): table integrations.relay_driver_links (operating_company_id, relay_driver_id UNIQUE per company, driver_id FK mdata.drivers, confirmed_by_user_id, confirmed_at; RLS forced + grants per 0065). Matcher resolves ONLY through the link; an unlinked relay_driver_id lands in the Relay "needs driver" queue with a driver picker (SelectCombobox, Active USMCA drivers first) — one confirmation links every past and future fill (re-run match on save). No name/phone auto-guess writes.
-Also: the 5 Hugo Gaytan rows → merge via the existing driver-merge path (CC-2 driver-merge-resume), not delete.
-GUARD: live — live Relay fills with a relay_driver_id that has a link but matched_driver_id NULL = 0; static — matcher never writes matched_driver_id from a name compare.
-DONE = links table live, 18 relay drivers confirmable in the UI, unmatched-with-link = 0. Deadline 2026-11-03T03:00Z.
-
-## LEAD 2026-11-02 6:30 PM CT — rows 156 + 154: stale Plaid PENDING lines never retired — $51,296.34 live, 3 booked (permanent fix)
-Prod (USMCA, live, pending=true): **64** pending bank lines; **53 older than 7 days = $51,296.34**, oldest 09-12; **3 of those are booked** (matched/categorized → GL).
-Example (one card purchase, $460.01, South TX Truck Centers 10/02): K7jqaM8MkyTj pending, created 10-03, **still live**; PYJk9EmEr0I6 pending, created 10-04, voided 10-07 when the posted line arrived; bYQVXrZryEIx posted 10-07 (CHECKCARD 1002). Same for $155.86 on 10/06. Pattern PURCHASE MM/DD + CHECKCARD MMDD: 17 live pairs, $7,614.84 counted twice.
-ROOT CAUSE (code, plaid.service.ts): (1) the `removed` loop only appends notes 'removed_by_plaid_sync' — it never voids; (2) pending→posted retirement retires ONE predecessor (the posted line's pending_transaction_id); a pending that Plaid replaced with a second pending is orphaned forever.
-PERMANENT FIX: (a) `removed` → void the row (void_reason 'plaid_removed', audit row) unless financially linked → then the existing escalation path (never silently keep, never hard delete); (b) daily sweep: live pending older than 5 business days → re-ask Plaid (/transactions/get for that account+date window); retire those Plaid no longer returns; (c) the 3 booked stale pendings: reverse via the normal unmatch/uncategorize engine, then void; (d) re-measure BofA reconciliation drift (row 154: bank $1,808.13 vs book −$88,433.89) after (a)–(c).
-GUARD (live, shrink-only to 0): live pending bank lines older than 10 days = 0; static: the removed handler issues a void, not a note.
-DONE = guard 0, $51,296.34 → $0, the 17 pairs single, row 154 re-measured. Deadline 2026-11-03T03:00Z.
-
-## LEAD 2026-11-02 6:35 PM CT — row 162 (Relay drivers) MOVED to CC-3 (fuel/relay lane; root cause = mdata.drivers.integration_id never written — no new table). Do NOT build relay_driver_links. Your banking items (stale Plaid pendings, rows 154/156) stand.
-
-## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
-
-## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
-Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
-Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
-
-## LEAD 11-03 10:25 AM CT — E10 (row 257) — REAL 500 in invoices + 1 stale test; patch ready
-`git apply docs/bus/lead/patches/E10-CC-2.patch` on a branch from main. Lead ran it green (vitest from repo root, tsc clean).
-- accounting/invoices.routes.ts — REAL DEFECT: list `customer_id` was `z.string()`; `?customer_id=<uuid>,invalid` reached `ANY($2::uuid[])` → Postgres cast 500. Now `entityIdFilterSchema` + `entityIdFilterValues` (same as source_load_id) → 400 before any DB read. Proof test: factoring/__tests__/entity-multi-read-contracts.test.ts (was red, now green).
-- banking/suggestion-engine.test.ts — predates RC1 443.341 (no-vendor rule = catch-all, low). Specific rule now names a vendor; added the catch-all case.
-Fast merge on green. Then back to E4/E5/E6/E13.
-## CODEX 2026-11-03 — independent E5/E6 live acceptance, USMCA only
-
-Fresh branch-asserted READ ONLY check confirms13692/13693/13695 delivered_pending_docs;6 live stops total,0 missing departure times,0 non-rooftop. Each load still has1 historical null event link; status/geocode repair accepted, not blanket historical evidence certification. Fleet39 owned/leased,0 SAM-prefix,0 named gateway serials within USMCA. Frozen companies not queried. E5/E6 accepted within this scope; no Codex production changes. Private phase6 report in Downloads.
-
-
-## LEAD 11-03 11:55 AM CT — after E13 + Dependabot: E4 closure
-E4 measured 17:24Z after #28330: sweep voided 51 stale pendings ($44,020.17, voided_reason plaid_stale_pending_sweep, 0 matched); 3 pendings > 7 days remain ($8,000.00): Zelle −$4,000.00 (10-07), +$3,500.00 (10-08), −$500.00 (10-11) — all three CATEGORIZED, which is why the sweep skipped them. E4 DONE needs those 3 categorizations reversed through the unmatch/uncategorize path (audit trail), then swept → 0. Owner 11-03: no new categorizing; reversing these 3 is cleanup, not categorizing.
-
----
-
-## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
-Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
-
-## ROUND 7.30c — LEAD — 11-03-2026 5:22 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
-Lead builder is on: 164 (one MTD fuel figure Home vs Fuel board), 166 (HOS + truck planner driver columns), 167 (Angel Sosa current truck + documents). Skip them. Keep going on the rest of your list (93 first). E13 A→B→A periods fix due 23:00Z.
-
-## ROUND 7.30e — LEAD — 11-03-2026 6:10 PM CT — E13 DRIVERS SET; YOU OWN THE A→B→A PERIODS
-Lead set driver_id on 27 of 27 fuel.fuel_card_assignments (card_last_digits = the driver's Relay integration id suffix → integrations.relay_driver_links, E1 #28531), 27 audit events 'fuel.card_assignment_driver_set'. Do NOT re-seed over it. Your E13 remainder: the unit periods Codex rejected (A→B→A) — fix scripts/ops/seed-fuel-card-assignments-e13.mjs to read drivers from relay_driver_links, fix the periods, prove on a fork, run on prod, paste counts. Deadline 01:00Z. Also: rows 99 and 156 are DONE-LIVE (Lead measured) — drop them.
-
-## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
-91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.
-# INBOX-CC-2 — Cursor Lead · rewritten 2026-10-13
-
-READ THIS FILE AT THE START OF EVERY ROUND. The Lead writes here directly.
-
-RULE: write every result to docs/bus/OUTBOX-CC-2.md. The Lead reads the bus from origin/main.
-
-## BANKING / MONEY / MATCH / FACTORING / SETTLEMENTS — CLOSED (2026-10-13)
-
-Owner order 2026-10-13: close everything from CC-1/2/3 related to banking, money, dispatch,
-factoring, settlements. Cursor lead closed the live residual banking gaps in this lane:
-
-| Residual | Status | Proof |
-|---|---|---|
-| DEGH-02 bare bank_categorization (4 lines) | **CLOSED** | AUTH-450 CONSUMED — bare=0; EXP-2026-00068..00071 |
-| Advance trailer stampable cohort | **CLOSED** | stampable=0; CA-2026-0003 load has no trailer in assignment history |
-| AUTH-444..448 expense exemption / advance trailer / lanes / bill trailer / settled bill backstamp | **CONSUMED** | OWNER-AUTHORIZATIONS.md |
-| BANK-F430/F431 uncategorized + bank-line deletion | **SUPERSEDED** | merged on main |
-| Factoring Faro tabs / KPI cleanup (Oct-6) | **SUPERSEDED** | tabs law on main; no open CC-2 money row |
-
-Oct-6 BANK-F430 / FARO-TABS / MONEY-ENGINES / VISUAL-CLOSEOUT boxes are **HISTORICAL** — do not
-reopen as new work.
-
-## YOUR OPEN ORDERS
-
-**NONE in banking / money / dispatch / factoring / settlements.**
-
-Tip census bare bank_cat_no_expense reads **0**. Match/categorize
-suggestions stay suggest-only (Law B) — owner Chrome accept only.
-
-> **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed.
+Older inbox: docs/bus/archive/INBOX-CC-2-archive-2026-11-11-pre-8.11.md

@@ -685,7 +685,7 @@ export function UsersPage() {
       {usersQuery.isError ? <ListErrorBanner onRetry={() => void usersQuery.refetch()} /> : null}
 
       {viewMode === "list" ? (
-      <ParityTable<IdentityUser>
+      <ParityTable<IdentityUser> appearance="board"
         title="Users"
         columns={userColumns}
         rows={filteredUsers}

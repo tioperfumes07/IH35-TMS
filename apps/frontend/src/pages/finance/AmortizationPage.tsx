@@ -244,7 +244,7 @@ export function AmortizationPage() {
           <div className="min-w-0 border-t border-[#E5E7EB] lg:border-t-0">
             <div className="px-4 py-3">
               {schedule.length === 0 ? <p className="text-xs text-[#6B7280]">Select a loan to view its schedule.</p> : (
-                <ParityTable<AmortRow>
+                <ParityTable<AmortRow> appearance="board"
                   title="Amortization schedule"
                   columns={SCHEDULE_COLUMNS}
                   rows={schedule}

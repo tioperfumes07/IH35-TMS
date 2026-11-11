@@ -159,7 +159,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
         </div>
       ) : (
         <div className="mt-2">
-          <ParityTable
+          <ParityTable appearance="board"
             columns={buildColumns(operatingCompanyId)}
             rows={rows}
             rowKey={(row) => row.id}
@@ -190,7 +190,7 @@ export function UnitDriverHistoryStrip({ operatingCompanyId, unitId, driverId, d
         {overlapQuery.isError ? (
           <ListErrorState title="Couldn't load assignment overlaps" status={0} message={(overlapQuery.error as Error)?.message} onRetry={() => void overlapQuery.refetch()} />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={overlapColumns}
             rows={overlapQuery.data?.rows ?? []}
             rowKey={(row) => row.id}

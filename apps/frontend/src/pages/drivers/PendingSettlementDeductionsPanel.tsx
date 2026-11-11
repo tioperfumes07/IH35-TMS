@@ -208,7 +208,7 @@ export function PendingSettlementDeductionsPanel() {
           <p className="px-2 py-2 text-xs text-gray-500">No pending settlement deductions.</p>
         ) : null}
         {!query.isLoading && !query.isError && orderedRows.length > 0 ? (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Settlement deductions — pending"
             columns={deductionColumns}
             rows={orderedRows}

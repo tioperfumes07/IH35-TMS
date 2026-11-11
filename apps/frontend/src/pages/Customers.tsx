@@ -359,7 +359,7 @@ export function CustomerActivityFeed({
 
   return (
     <div className="space-y-2">
-      <ParityTable
+      <ParityTable appearance="board"
         title="Customer activity"
         rows={activityQuery.data?.events ?? []}
         columns={columns}
@@ -475,7 +475,7 @@ function CustomerFinancialActivityTab({
 
   return (
     <div className="space-y-2">
-      <ParityTable
+      <ParityTable appearance="board"
         title="Customer financial activity"
         rows={query.data?.rows ?? []}
         columns={columns}
@@ -1705,7 +1705,7 @@ export function CustomersPage() {
                     {customerTxnActivityQuery.isError ? (
                       <ListErrorState title="Couldn't load customer transactions" status={0} message={(customerTxnActivityQuery.error as Error)?.message} onRetry={() => void customerTxnActivityQuery.refetch()} />
                     ) : (
-                      <ParityTable
+                      <ParityTable appearance="board"
                         rows={customerTxnActivityRows}
                         columns={customerTransactionColumns}
                         rowKey={(r) => `${r.type}-${r.id}`}
@@ -1717,7 +1717,7 @@ export function CustomersPage() {
                       />
                     )}
                     <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</h4>
-                    <ParityTable
+                    <ParityTable appearance="board"
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
@@ -1810,7 +1810,7 @@ export function CustomersPage() {
                     {loadsQuery.isError ? (
                       <ListErrorState title="Couldn't load customer loads" status={0} message={(loadsQuery.error as Error)?.message} onRetry={() => void loadsQuery.refetch()} />
                     ) : (
-                      <ParityTable
+                      <ParityTable appearance="board"
                         rows={loadsQuery.data?.loads ?? []}
                         columns={loadColumns}
                         rowKey={(load) => load.id}
@@ -1868,7 +1868,7 @@ export function CustomersPage() {
                       onRetry={() => void recurringQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable
+                    <ParityTable appearance="board"
                       title="Recurring invoice templates"
                       rows={recurringQuery.data?.rows ?? []}
                       columns={recurringColumns}
@@ -1889,7 +1889,7 @@ export function CustomersPage() {
                       onRetry={() => void statementInvoicesQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable
+                    <ParityTable appearance="board"
                       title="Overdue open invoices"
                       titleInfo={
                         <InfoPopover label="About overdue invoices">
@@ -1925,7 +1925,7 @@ export function CustomersPage() {
                       onRetry={() => void loadsQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable
+                    <ParityTable appearance="board"
                       rows={loadsQuery.data?.loads ?? []}
                       columns={loadColumns}
                       rowKey={(load) => load.id}
@@ -1950,7 +1950,7 @@ export function CustomersPage() {
                       onRetry={() => void statementInvoicesQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable
+                    <ParityTable appearance="board"
                       title="Open invoices"
                       rows={(statementInvoicesQuery.data?.invoices ?? []).filter((inv) => {
                         if (isVoidInvoice(inv)) return false;

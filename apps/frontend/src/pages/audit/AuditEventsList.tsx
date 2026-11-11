@@ -167,7 +167,7 @@ export function AuditEventsList() {
         />
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Audit events"
             rows={rows}
             columns={columns}

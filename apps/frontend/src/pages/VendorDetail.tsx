@@ -975,7 +975,7 @@ export function VendorDetailPage() {
                 </button>
               </p>
             ) : (
-              <ParityTable<VendorBillPaymentListRow>
+              <ParityTable<VendorBillPaymentListRow> appearance="board"
                 title="Bill payments — this vendor"
                 rows={vendorPaymentsQuery.data?.payments ?? vendorPaymentsQuery.data?.rows ?? []}
                 rowKey={(p) => p.id}
@@ -1012,7 +1012,7 @@ export function VendorDetailPage() {
           </div>
           {billsQuery.isError ? <ListErrorBanner message="Could not load bills." onRetry={() => void billsQuery.refetch()} /> : null}
           {!billsQuery.isError ? (
-            <ParityTable<VendorBill>
+            <ParityTable<VendorBill> appearance="board"
               title="Bills — this vendor"
               rows={billsQuery.data?.rows ?? []}
               rowKey={(b) => b.id}
@@ -1050,7 +1050,7 @@ export function VendorDetailPage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             {vendorExpensesQuery.isError ? <ListErrorBanner message="Could not load expenses." onRetry={() => void vendorExpensesQuery.refetch()} /> : null}
             {!vendorExpensesQuery.isError ? (
-              <ParityTable<ExpenseListRow>
+              <ParityTable<ExpenseListRow> appearance="board"
                 title="Expenses — this vendor"
                 rows={vendorExpensesQuery.data ?? []}
                 rowKey={(e) => e.id}
@@ -1100,7 +1100,7 @@ export function VendorDetailPage() {
             </div>
             {vendorCreditsQuery.isError ? <ListErrorBanner message="Could not load vendor credits." onRetry={() => void vendorCreditsQuery.refetch()} /> : null}
             {!vendorCreditsQuery.isError ? (
-              <ParityTable
+              <ParityTable appearance="board"
                 rows={vendorCreditsQuery.data ?? []}
                 rowKey={(c) => c.id}
                 loading={vendorCreditsQuery.isLoading}
