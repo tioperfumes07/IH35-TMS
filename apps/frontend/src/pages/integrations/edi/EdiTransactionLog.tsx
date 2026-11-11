@@ -134,7 +134,7 @@ export function EdiTransactionLog() {
         ) : (
           <div className="grid gap-4 lg:grid-cols-2">
             <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-              <ParityTable
+              <ParityTable appearance="board"
                 title="EDI messages"
                 rows={messagesQuery.data ?? []}
                 columns={COLUMNS}

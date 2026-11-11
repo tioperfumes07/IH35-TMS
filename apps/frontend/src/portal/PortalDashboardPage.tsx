@@ -80,7 +80,7 @@ export function PortalDashboardPage() {
           onRetry={() => void loadsQuery.refetch()}
         />
       ) : (
-        <ParityTable<PortalLoadRow>
+        <ParityTable<PortalLoadRow> appearance="board"
           rows={loadsQuery.data ?? []}
           columns={COLUMNS}
           rowKey={(load) => load.id}

@@ -151,7 +151,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
             onRetry={() => void query.refetch()}
           />
         ) : null}
-        <ParityTable<TripProfitabilityRow>
+        <ParityTable<TripProfitabilityRow> appearance="board"
           columns={columns}
           rows={query.data?.rows ?? []}
           rowKey={(row) => row.settlement_id}

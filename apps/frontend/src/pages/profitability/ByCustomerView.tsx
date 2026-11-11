@@ -117,7 +117,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
             onRetry={() => void query.refetch()}
           />
         ) : null}
-        <ParityTable<CustomerProfitabilityRow>
+        <ParityTable<CustomerProfitabilityRow> appearance="board"
           columns={columns}
           rows={query.data?.by_customer ?? []}
           rowKey={(row) => row.customer_id}

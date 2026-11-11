@@ -112,7 +112,7 @@ export function ByTypeView({ filters }: ByTypeViewProps) {
             onRetry={() => void query.refetch()}
           />
         ) : null}
-        <ParityTable<EquipmentTypeProfitabilityRow>
+        <ParityTable<EquipmentTypeProfitabilityRow> appearance="board"
           columns={columns}
           rows={(query.data?.by_type ?? []).filter((row) => matchesEquipmentType(filters.equipmentType, row.equipment_code) || matchesEquipmentType(filters.equipmentType, row.equipment_label))}
           rowKey={(row) => row.equipment_code}

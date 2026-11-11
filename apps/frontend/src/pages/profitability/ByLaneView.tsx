@@ -122,7 +122,7 @@ export function ByLaneView({ filters }: ByLaneViewProps) {
             onRetry={() => void query.refetch()}
           />
         ) : null}
-        <ParityTable<LaneProfitabilityLane>
+        <ParityTable<LaneProfitabilityLane> appearance="board"
           columns={columns}
           rows={query.data?.lanes ?? []}
           rowKey={laneKey}
