@@ -82,5 +82,7 @@ export default {
     ctx.run("node", ["scripts/verify-settlement-creator-salaried-stray-bill-void.mjs"]);
     ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs", "--selftest"]);
     ctx.run("node", ["scripts/verify-settlement-creator-stop-add-carries-facility.mjs"]);
+    ctx.run("node", ["scripts/verify-salaried-settlement-no-at-number.mjs", "--selftest"]);
+    ctx.run("node", ["scripts/verify-salaried-settlement-no-at-number.mjs"]);
   },
 };

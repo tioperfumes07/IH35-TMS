@@ -1115,7 +1115,10 @@ export async function postSettlementCreatorInClientTx(
   } else {
     // Empty or AlwaysTrack digits → NEW AlwaysTrack settlement (source_document_ref).
     // Never attach to driver's existing open. Empty allocates under advisory lock.
-    let atRef: string;
+    // LST-F11161 — a SALARIED settlement with no AlwaysTrack document (blank Settlement No.) carries NO AlwaysTrack number:
+    // minting the next number stamped 5873 on Rafael's $0 salaried P-0159 (2026-11-11) — a number that belongs to the next
+    // real signed document. Salaried + blank = no number; the settlement keeps its P-number only.
+    let atRef: string | null;
     if (typedNo && isAlwaysTrackSettlementNumber(typedNo)) {
       const existing = await client.query<{ id: string; display_id: string }>(
         `
@@ -1153,8 +1156,9 @@ export async function postSettlementCreatorInClientTx(
       }
       atRef = typedNo;
     } else if (!typedNo) {
-      // Empty → always mint next AlwaysTrack number (never attach to driver's existing open).
-      atRef = await allocateNextSettlementSourceDocumentRef(client, draft.operating_company_id);
+      // Empty → mint the next AlwaysTrack number (never attach to driver's existing open) — except a salaried settlement,
+      // which has no AlwaysTrack document to number (LST-F11161).
+      atRef = draft.salaried === true ? null : await allocateNextSettlementSourceDocumentRef(client, draft.operating_company_id);
     } else {
       throw new SettlementCreatorError(
         "invalid_settlement_no",
@@ -1196,13 +1200,15 @@ export async function postSettlementCreatorInClientTx(
           WHERE id = $1::uuid`,
         [settlementId, draft.period_start, draft.period_end],
       );
-      const ref = await setSettlementSourceDocumentRef(client as never, {
-        operatingCompanyId: draft.operating_company_id,
-        settlementId,
-        sourceDocumentRef: atRef,
-        actorUserId,
-      });
-      if (!ref) throw new SettlementCreatorError("source_document_ref_set_failed", `Could not stamp ${atRef} on ${displayId}.`);
+      if (atRef !== null) {
+        const ref = await setSettlementSourceDocumentRef(client as never, {
+          operatingCompanyId: draft.operating_company_id,
+          settlementId,
+          sourceDocumentRef: atRef,
+          actorUserId,
+        });
+        if (!ref) throw new SettlementCreatorError("source_document_ref_set_failed", `Could not stamp ${atRef} on ${displayId}.`);
+      }
     } else {
       const bare = await createBareSettlementForDocument(client, {
         operating_company_id: draft.operating_company_id,
