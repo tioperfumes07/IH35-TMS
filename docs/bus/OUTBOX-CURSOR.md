@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:25 PM CT) — ROUND 8.12 progress + Settlements T5 ReadyDots follow ready_total
+- **PRIOR:** #28866 R2 raw_font_sizes 133→103; #28864 owner full-board order.
+- **THIS:** Settlements Open ReadyDots no longer hard-code 6 — dots = engine `ready_total` (— when unmeasured). Board order Settlement→Driver→Unit→Tour legs already live. ROUND 8.12 Cursor boards in progress: #12 TruckPlanner / #13 LoadHistory / #14–17 BookLoad coded pending live proof; #33 Open T5 readiness prose aligned.
+- **NEXT:** Continue Cursor 8.12 boards (#32–42 Settlements, #18 Factoring, #19 Fuel, #20 Insurance, #21 Legal, #4–8 Cash Flow). No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:15 PM CT) — ROUND 8.11 R2 FIXED: raw_font_sizes 133→103 (BookLoad + Planner semantic classes)
 - **PRIOR:** #28864 owner ALL-CODERS full-board order relayed.
 - **THIS:** BookLoadModalV4 + DispatchPlannersLayout `text-[11px]` → `text-section-header`. ui-design-system-ratchet PASS; baseline banked 129→103. ROUND 8.12 boards next. No match/Dreamline.
