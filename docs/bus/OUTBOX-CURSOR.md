@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:00 PM CT) — OWNER ORDER relayed to ALL CODERS: full board-identical NOT shell
+- **PRIOR:** #28862 PostingGrid appearance=board; unowned pages/portal appearance sweep DONE.
+- **THIS:** Posted `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Owner verbatim: design changes pages/tabs/modules/subtabs — full complete build exactly as design, not shell, not over previous. Tipped INBOX Cursor/Cascade/Codex/CC-1/CC-2/CC-3.
+- **NEXT:** Cursor continues owned dispatch + unowned board engines under this law. Cascade R5; CC-1/2/3/Codex on their seats. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:45 PM CT) — Residual ParityTables appearance=board wave24 (PostingGrid) + unowned pages DONE
 - **PRIOR:** #28861 CustomerDetail appearance=board.
 - **THIS:** PostingGrid appearance=board (unowned components/accounting). Unowned pages/portal ParityTable appearance sweep complete. Accounting/Banking/Maint/Safety/Reports page trees remain other-seat. Cascade owns R5.

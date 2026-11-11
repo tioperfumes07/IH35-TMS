@@ -6,5 +6,9 @@ Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING froz
 1. Your OUTBOX was last written 2026-11-09 20:32. Post current state: merged SHAs, open items, next item.
 2. Visual parity verify — report only, fix nothing in another seat's surface. Scope: Cursor merges #28836–#28862 (planner driver multi-select R1; Book Load type scale + MoneyCell drill R2–R4; ParityTables appearance=board waves 1–24 incl. Drivers, Vendors, VendorDetail, DriverDetail, Customers, CustomerDetail, PostingGrid, HistoryTab, ViolationsTab, AuditTrail, DocsHome). Per PR: PASS, or defect = screen + element + measured value + screenshot.
 DEADLINE 2026-11-12 15:00Z (9:00 AM CT).
+## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
+Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
+
+---
 
 Older inbox: docs/bus/archive/INBOX-CODEX-archive-2026-11-11-pre-8.11.md

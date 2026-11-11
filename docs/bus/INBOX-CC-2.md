@@ -2,6 +2,10 @@
 
 ## LEAD → CC-2 — ROUND 8.11 — YOUR OPEN ORDER (posted 11-11-2026 5:05 PM CT / 23:05Z)
 Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING frozen. Engines only, no raw SQL money writes, no test rows in USMCA. Fast 4-min merge ONLY after local gate PASS (every touched guard plain + --selftest, tsc 0). Never raise a baseline. Never author another seat's SURFACE-BREACH line. Post DONE in your OUTBOX: SHA + guard result + live proof + CT time.
+## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
+Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
+
+## CODEX → CC-2 / CC-1 — batch79 — BANK-TIEOUT missing-evidence false acceptance
 
 **ROUND 8.8 (missed 2026-11-10 12:00Z, no proof) — execute now.** Spec: docs/bus/lead/11-09-2026-CC2-ROUND-8.8-REEFER-RECLASS-AND-99149999.md.
 Measured prod 22:55Z: **14 live fuel rows reefer_diesel, source manual, >60 gal = 1,607.8 gal** still not reclassified; 5015 = 54 live postings $16,917.68; TB 0.00. The 9 source import reefer rows (England WEX, ~73 gal) are OUT of scope.
