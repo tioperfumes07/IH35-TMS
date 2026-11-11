@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave10
+- **PRIOR:** prior low-guard board wave.
+- **THIS:** 9 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~2:30 AM CT) — Low-guard residual ParityTables appearance=board wave9
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
@@ -86,11 +91,6 @@
 ## OUTBOX (11-10-2026 ~8:10 PM CT) — Legal/Maint/Insurance/Compliance/Safety board tables
 - **PRIOR:** #28824 Fuel+AVP appearance=board.
 - **THIS:** 125 ParityTables across Legal/Maintenance/Insurance/Compliance/Safety gain appearance=board (board anti-clip grammar). Engines unchanged. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~7:55 PM CT) — Fuel+AVP ParityTables appearance=board
-- **PRIOR:** #28823 Factoring residual appearance=board.
-- **THIS:** Fuel transactions/cards/fraud/overage/relay/questions + ActualVsProjected table appearance=board (13). Engines unchanged. R4–R6 Cascade.
 - **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
 
 ## ARCHIVE
