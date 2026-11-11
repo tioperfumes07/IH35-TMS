@@ -816,7 +816,7 @@ export function FinancialStatementsPage() {
             </div>
           ) : null}
           <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
-            <ParityTable
+            <ParityTable appearance="board"
               title="Trial balance"
               embedded
               columns={trialBalanceColumns(applied.start, applied.end, basis, showCodes)}
@@ -893,7 +893,7 @@ function StatementSection({
       <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
         <h2 className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
       </div>
-      <ParityTable
+      <ParityTable appearance="board"
         embedded
         columns={columns}
         rows={lines}
