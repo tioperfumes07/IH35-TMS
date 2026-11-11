@@ -146,7 +146,7 @@ export function TasksMinePage() {
       {query.isError ? (
         <ListErrorBanner onRetry={() => void query.refetch()} />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="My tasks"
           rows={visibleTasks}
           columns={columns}

@@ -303,7 +303,7 @@ export function HosTrackerSection({ operatingCompanyId }: { operatingCompanyId: 
             onRetry={() => void rosterQ.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Driver HOS roster — hours remaining"
             rows={filteredDrivers}
             columns={columns}

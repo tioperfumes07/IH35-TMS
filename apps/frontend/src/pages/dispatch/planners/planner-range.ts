@@ -93,12 +93,16 @@ function readHiddenWeekdays(): number[] {
 }
 
 /** D3 — board entity filters (STATUS · DRIVER · UNIT · CUSTOMER). Status/driver wired first; unit/customer stay additive later. */
+/** U12 — status is a multi-selector; empty array = all statuses. */
+export type PlannerEntityStatus = "in-use" | "available" | "reserved" | "in-shop";
+
 export type PlannerEntityFilterState = {
-  status: "" | "in-use" | "available" | "reserved" | "in-shop";
-  driverId: string;
+  status: PlannerEntityStatus[];
+  /** U12 / R1 — multi-select; empty = all drivers. Match load if its driver is any selected id. */
+  driverIds: string[];
 };
 
-export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = { status: "", driverId: "" };
+export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = { status: [], driverIds: [] };
 
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));

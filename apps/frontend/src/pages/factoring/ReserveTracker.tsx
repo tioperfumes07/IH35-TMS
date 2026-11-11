@@ -290,7 +290,7 @@ export function ReserveTracker() {
             onRetry={() => void fc60.refetch()}
           />
         ) : (
-          <ParityTable<FactoringReserveReleaseForecastPoint>
+          <ParityTable<FactoringReserveReleaseForecastPoint> appearance="board"
             columns={FORECAST_COLUMNS}
             rows={fc60.data?.schedule ?? []}
             rowKey={(row) => `${row.release_date}-${row.source_movement_count}`}
@@ -371,7 +371,7 @@ export function ReserveTracker() {
             />
           ) : (
             <>
-              <ParityTable<FactoringReserveBalanceHistoryEntry>
+              <ParityTable<FactoringReserveBalanceHistoryEntry> appearance="board"
                 title="Reserve movements — held and released"
                 columns={HISTORY_COLUMNS}
                 rows={historyQ.data?.movements ?? []}
@@ -426,7 +426,7 @@ export function ReserveTracker() {
         </BoardSection>
       ) : (chargebacksQ.data?.history ?? []).length > 0 ? (
         <BoardSection title="Chargeback + Fee History" testId="factoring-reserve-chargeback-history">
-          <ParityTable<FactoringChargebackFeeRow>
+          <ParityTable<FactoringChargebackFeeRow> appearance="board"
             title="Chargeback and fee history — latest 50"
             columns={CHARGEBACK_COLUMNS}
             rows={(chargebacksQ.data?.history ?? []).slice(0, 50)}

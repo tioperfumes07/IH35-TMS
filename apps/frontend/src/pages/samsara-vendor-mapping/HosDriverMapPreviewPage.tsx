@@ -176,7 +176,7 @@ export function HosDriverMapPreviewPage() {
           </div>
 
           {/* Driver map table */}
-          <ParityTable
+          <ParityTable appearance="board"
             title="Drivers — Samsara HOS match"
             columns={DRIVER_MAP_COLUMNS}
             rows={visibleRows}

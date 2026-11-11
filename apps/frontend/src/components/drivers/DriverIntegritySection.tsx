@@ -121,7 +121,7 @@ export function DriverIntegritySection({ driverId }: { driverId: string }) {
           <p className="mb-2 text-xs text-[#4B5563]" data-testid="driver-integrity-arithmetic">
             {profile.score.arithmetic}
           </p>
-          <ParityTable
+          <ParityTable appearance="board"
             rows={profile.components}
             columns={columns}
             rowKey={(row) => row.component}

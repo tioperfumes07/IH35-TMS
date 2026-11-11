@@ -235,7 +235,7 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
       {issuers.isError ? (
         <ListErrorBanner onRetry={() => void issuers.refetch()} message="Card issuers could not be loaded." />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           rows={issuers.data?.rows ?? []}
           columns={columns}
           loading={issuers.isPending}
@@ -430,7 +430,7 @@ export function FuelCardsPage() {
         {query.isError ? (
           <ListErrorBanner onRetry={() => void query.refetch()} message="Fuel card assignments could not be loaded." />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Fuel card assignments"
             rows={rows}
             columns={columns}

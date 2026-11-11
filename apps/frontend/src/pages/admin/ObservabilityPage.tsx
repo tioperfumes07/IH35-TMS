@@ -222,7 +222,7 @@ function HealthzChecksSection({ query }: { query: UseQueryResult<HealthzPayload,
 /** LEAD 443.181 — the app's one table. A health check is a live probe result, not a record: no row route. */
 function HealthzCheckTable({ title, storageKey, checks }: { title: string; storageKey: string; checks: HealthzCheck[] }) {
   return (
-    <ParityTable<HealthzCheck>
+    <ParityTable<HealthzCheck> appearance="board"
       title={title}
       tableTestId="healthz-check-table"
       storageKey={storageKey}

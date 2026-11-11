@@ -105,7 +105,7 @@ export function UnidentifiedTab({ operatingCompanyId }: Props) {
         />
       ) : null}
 
-      <ParityTable<FleetLocationHosRow>
+      <ParityTable<FleetLocationHosRow> appearance="board"
         title="Units — unidentified driving"
         columns={columns}
         rows={rows}

@@ -115,7 +115,7 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
         <div>IFTA filed: {String(compliance.ifta_current_quarter_filed ? "yes" : "no")}</div>
       </div>
       <div className="mt-3">
-        <ParityTable
+        <ParityTable appearance="board"
           rows={regulatoryRows}
           columns={REGULATORY_COLUMNS}
           rowKey={(row) => row.__rowKey}
@@ -127,7 +127,7 @@ export function ComplianceSection({ compliance }: { compliance: Record<string, u
       </div>
       {plateRows.length > 0 ? (
         <div className="mt-3">
-          <ParityTable
+          <ParityTable appearance="board"
             rows={plateRows}
             columns={PLATE_COLUMNS}
             rowKey={(row) => row.__rowKey}

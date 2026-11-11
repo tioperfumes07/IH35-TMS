@@ -177,7 +177,7 @@ export function HosHistorySection({ operatingCompanyId }: { operatingCompanyId: 
           </div>
         ) : (
           // COMP-F3538: always mount ParityTable (Search+Range+gear); raw HTML table had no surface bar.
-          <ParityTable<HosEventRow>
+          <ParityTable<HosEventRow> appearance="board"
             title="HOS events — this driver"
             columns={columns}
             rows={events}

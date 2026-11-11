@@ -166,7 +166,7 @@ export function FeedGateIntakePage() {
             title={`${GROUP_LABEL[g] ?? g} · ${checks.filter((c) => c.check_group === g && c.status === "fail").length} red`}
             testId={`feed-gate-checks-${g}-board-section`}
           >
-            <ParityTable<FeedCheck>
+            <ParityTable<FeedCheck> appearance="board"
               rows={checks.filter((c) => c.check_group === g)}
               rowKey={(c) => c.id}
               columns={checkColumns(intake?.feed_kind)}
@@ -233,7 +233,7 @@ export function FeedGatePage() {
       {error ? <div className="mb-2 rounded border border-red-600 bg-red-50 p-2 text-xs text-red-800" role="alert">{error}</div> : null}
       {/* 443.280 — intakes ParityTable in shared BoardSection (Settlements Feed Gate tab + /feed-gate). */}
       <BoardSection title="Feed intakes" testId="feed-gate-intakes-board-section">
-        <ParityTable<FeedIntake>
+        <ParityTable<FeedIntake> appearance="board"
           rows={rows}
           rowKey={(i) => i.id}
           loading={list.isLoading}

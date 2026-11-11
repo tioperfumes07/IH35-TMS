@@ -842,6 +842,8 @@ export type CustomerContact = {
   department: CustomerContactDepartment;
   is_primary: boolean;
   notes: string | null;
+  /** Capacity engine: receives the daily available-trucks email. */
+  receives_truck_offers: boolean;
   deactivated_at: string | null;
   created_at: string;
   updated_at: string;
@@ -1465,6 +1467,7 @@ export function createCustomerContact(
     department?: CustomerContactDepartment;
     is_primary?: boolean;
     notes?: string;
+    receives_truck_offers?: boolean;
   },
   operatingCompanyId: string
 ) {
@@ -1484,6 +1487,7 @@ export function updateCustomerContact(
     department: CustomerContactDepartment;
     is_primary: boolean;
     notes: string | null;
+    receives_truck_offers: boolean;
   }>,
   operatingCompanyId: string
 ) {

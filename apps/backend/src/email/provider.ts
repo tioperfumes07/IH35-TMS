@@ -18,6 +18,13 @@ export type SendEmailInput = {
   html: string;
   text?: string;
   attachments?: EmailAttachment[];
+  /** Reply-To address (e.g. the dispatch mailbox for truck offers). */
+  replyTo?: string;
+  /**
+   * Extra RFC 5322 headers (e.g. List-Unsubscribe / List-Unsubscribe-Post on offer emails). A provider that cannot carry
+   * them THROWS — a header that silently disappears (an unsubscribe the recipient never sees) is worse than a failed send.
+   */
+  headers?: Record<string, string>;
 };
 
 export type SendEmailResult = {

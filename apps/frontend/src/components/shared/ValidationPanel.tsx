@@ -176,7 +176,7 @@ export function ValidationPanel({
       {allowBlockOverride && result.blockers.length > 0 ? (
         // A blocker is a rule result, not a record: no row route. The Override cell is the shared OverrideButton
         // (row 28): Owner / Accountant confirm; everyone else picks a catalog reason. Nothing is typed.
-        <ParityTable<ValidationItem>
+        <ParityTable<ValidationItem> appearance="board"
           tableTestId="pre-dispatch-blocker-override-table"
           storageKey="ih35.dispatch.pre-dispatch-blockers.v1"
           rows={result.blockers}

@@ -333,7 +333,7 @@ export function VendorMappingResolutionPage() {
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
             <div className="overflow-x-auto p-2">
-              <ParityTable<UnmappedRow>
+              <ParityTable<UnmappedRow> appearance="board"
                 title="Unmapped drivers"
                 columns={unmappedColumns}
                 rows={unmappedRows}
@@ -349,7 +349,7 @@ export function VendorMappingResolutionPage() {
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
             <div className="overflow-x-auto p-2">
-              <ParityTable<DuplicateRow>
+              <ParityTable<DuplicateRow> appearance="board"
                 title="Duplicate driver mappings"
                 columns={duplicateColumns}
                 rows={duplicateRows}
@@ -365,7 +365,7 @@ export function VendorMappingResolutionPage() {
 
           <section className="rounded-sm border border-[#E5E7EB] bg-white">
             <div className="overflow-x-auto p-2">
-              <ParityTable<MismatchRow>
+              <ParityTable<MismatchRow> appearance="board"
                 title="Driver name mismatches"
                 columns={mismatchColumns}
                 rows={mismatchRows}

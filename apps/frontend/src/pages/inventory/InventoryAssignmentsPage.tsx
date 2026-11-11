@@ -184,7 +184,7 @@ export function InventoryAssignmentsPage() {
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3">
           <h3 className="text-xs font-semibold">Assignment trail</h3>
           {totalCount ? <p className="text-xs text-[#6B7280]" data-testid="inventory-assignments-range">{page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} assignments</p> : null}
-          <ParityTable<PartsAssignmentRow>
+          <ParityTable<PartsAssignmentRow> appearance="board"
             columns={columns}
             rows={rows}
             pageSize={PAGE_SIZE}

@@ -530,7 +530,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             onRetry={() => void settlementsQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={SETTLEMENT_COLUMNS}
             rows={lastFourSettlements}
             rowKey={(row) => row.id}
@@ -563,7 +563,7 @@ export function EarningsTab({ driverId, operatingCompanyId, onOpenOperationsView
             onRetry={() => void liabilitiesQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={LIABILITY_COLUMNS}
             rows={liabilities}
             rowKey={(row) => String(row.id)}

@@ -46,10 +46,29 @@ function inspect(service, poster, bills, settlementPoster, governance, dbTest, u
   ]) {
     if (!service.includes(token)) violations.push(`settlement reversal missing invariant: ${token}`);
   }
+  // LST-F11155: EVERY transition to 'reversed' must follow the whole-settlement proof, except a run that carries no money
+  // at all (ACCT-F11141, #28788: a salaried $0 run — P-0122 Rafael 13700 — with no A/P bill, no payment, no deduction JE).
+  // That early close is allowed ONLY inside the branch that first re-reads the ledger and finds zero live posting lines for
+  // the settlement (`if (!liveGl.rows[0]?.n) {`) after filtering the run's legs to the money-free ones (no_money). Any
+  // other early transition is still a violation — the first-occurrence check alone could not see a second site.
   const proofAt = service.indexOf("settlement_reversal_not_equal_and_opposite");
-  const stateAt = service.indexOf("SET status = 'reversed'");
-  if (proofAt < 0 || stateAt < 0 || stateAt < proofAt) {
+  const stateSites = [...service.matchAll(/SET status = 'reversed'/g)].map((m) => m.index);
+  if (proofAt < 0 || stateSites.length === 0) {
     violations.push("run state can transition before whole-settlement reconciliation");
+  } else {
+    for (const at of stateSites) {
+      if (at > proofAt) continue;
+      const before = service.slice(Math.max(0, at - 1600), at);
+      const zeroMoneyBranch =
+        /no_money/.test(before) &&
+        /glBills\.length === 0/.test(before) &&
+        /!run\.deduction_journal_entry_id/.test(before) &&
+        /if \(!liveGl\.rows\[0\]\?\.n\) \{[^}]*$/.test(before);
+      if (!zeroMoneyBranch) {
+        violations.push("run state can transition before whole-settlement reconciliation");
+        break;
+      }
+    }
   }
 
   for (const token of [
@@ -180,6 +199,36 @@ const goodFixture = {
     "PERIOD_LOCKED SET status = 'reversed' settlement_reversal_not_equal_and_opposite one transaction client currentBusinessDate WITH linked AS",
   governanceTest: "",
 };
+// LST-F11155 plants: an early 'reversed' with the zero-money proof passes; the same early transition without the live-GL
+// re-read is caught.
+const zeroMoneyEarly = `
+    const glBills = allGlBills.filter((b) => !b.no_money);
+    if (allGlBills.length > 0 && glBills.length === 0 && !run.deduction_journal_entry_id) {
+      const liveGl = await client.query(q);
+      if (!liveGl.rows[0]?.n) {
+        await client.query(\`UPDATE runs SET status = 'reversed' WHERE id = $1::uuid AND status = 'posted'\`);
+        return;
+      }
+    }
+`;
+{
+  const ok = { ...goodFixture, service: zeroMoneyEarly + goodFixture.service };
+  if (checkSettlementReversalFixture(ok).length) {
+    console.error(`${LABEL}: SELFTEST FAIL — the proven zero-money early close was flagged: ${checkSettlementReversalFixture(ok).join("; ")}`);
+    process.exit(1);
+  }
+  const unproven = { ...goodFixture, service: zeroMoneyEarly.replace("if (!liveGl.rows[0]?.n) {", "if (true) {") + goodFixture.service };
+  if (!checkSettlementReversalFixture(unproven).includes("run state can transition before whole-settlement reconciliation")) {
+    console.error(`${LABEL}: SELFTEST FAIL — an early 'reversed' without the zero-live-GL re-read was not caught`);
+    process.exit(1);
+  }
+  const plainEarly = { ...goodFixture, service: "SET status = 'reversed'\n" + goodFixture.service };
+  if (!checkSettlementReversalFixture(plainEarly).includes("run state can transition before whole-settlement reconciliation")) {
+    console.error(`${LABEL}: SELFTEST FAIL — a bare early 'reversed' ahead of the proof was not caught`);
+    process.exit(1);
+  }
+}
+
 const badFixture = {
   service: `
     reversePostedSourceTransaction(x).catch(() => undefined);

@@ -212,7 +212,7 @@ export function BatchWizard() {
               No paid-ready invoices available for a new batch.
             </div>
           ) : (
-            <ParityTable<FactoringBatchInvoice>
+            <ParityTable<FactoringBatchInvoice> appearance="board"
               title="Paid-ready invoices — eligible for a new batch"
               columns={candidateColumns}
               rows={candidatesQuery.data ?? []}

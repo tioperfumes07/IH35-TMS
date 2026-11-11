@@ -205,12 +205,16 @@ export function TruckPlanner() {
 
   const filteredTruckRows = useMemo(() => {
     return truckRows.filter((row) => {
-      if (entityFilters.driverId && row.driverId !== entityFilters.driverId) return false;
-      if (!entityFilters.status) return true;
-      if (entityFilters.status === "in-use") return row.status === "assigned";
-      if (entityFilters.status === "available") return row.status === "available";
-      if (entityFilters.status === "reserved") return row.status === "reserved-hold";
-      if (entityFilters.status === "in-shop") return row.status === "in-shop";
+      if (entityFilters.driverIds.length > 0 && (!row.driverId || !entityFilters.driverIds.includes(row.driverId))) return false;
+      // U12 — OR across selected status buckets; empty = all.
+      if (entityFilters.status.length === 0) return true;
+      return entityFilters.status.some((s) => {
+        if (s === "in-use") return row.status === "assigned";
+        if (s === "available") return row.status === "available";
+        if (s === "reserved") return row.status === "reserved-hold";
+        if (s === "in-shop") return row.status === "in-shop";
+        return false;
+      });
       return true;
     });
   }, [truckRows, entityFilters]);

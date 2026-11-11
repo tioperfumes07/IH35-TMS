@@ -830,7 +830,7 @@ export function ModuleMatrixSystemView() {
             vertical {VERTICAL_CERTIFY_COL_LABEL} · Certify = Miss C 0 + FW 1–12
           </span>
         </h2>
-        <ParityTable<LaunchLadderRow>
+        <ParityTable<LaunchLadderRow> appearance="board"
           storageKey="ih35.program.matrix.launch-ladder.v1"
           tableTestId="module-matrix-launch-ladder-table"
           rowTestId={(r) => `launch-ladder-row-${r.mod}`}
@@ -1013,7 +1013,7 @@ export function ModuleMatrixSystemView() {
         </span>
       </h2>
       <div className="scroll" data-testid="module-matrix-proof-strip">
-        <ParityTable<SystemModuleRow>
+        <ParityTable<SystemModuleRow> appearance="board"
           storageKey="ih35.program.matrix.proof-strip.v1"
           rowTestId={(row) => `proof-row-${row.module}`}
           rows={orderedRows.filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))}

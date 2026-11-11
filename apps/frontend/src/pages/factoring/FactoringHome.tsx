@@ -1295,7 +1295,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           ) : (
             <div className="overflow-x-auto">
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Funds due — by debtor"
                 columns={[
                   {
@@ -1400,7 +1400,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "total_fees", label: "Fees", sortable: true, render: (row) => fmtCurrency(row.total_fees) },
               ];
               return (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Debtor credit check — by debtor"
                   columns={debtorColumns}
                   rows={rows}
@@ -1454,7 +1454,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
               ];
               return (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Debtor receipts — payments received"
                   columns={receiptColumns}
                   rows={rows}
@@ -1519,7 +1519,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "factored_at", label: "Advanced Date", sortable: true, render: (row) => fmtDate(row.factored_at) },
               ];
               return (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Loan and save — by invoice"
                   columns={loanColumns}
                   rows={rows}
@@ -1567,7 +1567,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "notes", label: "Notes", sortable: true, sortValue: (row) => row.notes ?? "", render: (row) => row.notes || "—" },
               ];
               return (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Unapplied cash — customer payments"
                   columns={unappliedColumns}
                   rows={rows}
@@ -1702,7 +1702,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
 
                   <div className="mt-3 border-t border-gray-200 px-3.5 pb-2 pt-2">
                     <div className="overflow-x-auto">
-                      <ParityTable
+                      <ParityTable appearance="board"
                         title="Beginning and ending — balance sheet items"
                         columns={[
                           { key: "label", label: "Item" },
@@ -1813,7 +1813,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
               ];
               return (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Invoice status — by invoice"
                   columns={invoiceStatusColumns}
                   rows={rows}
@@ -1935,7 +1935,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 onRetry={() => void purchasesQuery.refetch()}
               />
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Escrow reserve — by purchase"
                 columns={[
                   {
@@ -2039,7 +2039,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 onRetry={() => void purchasesQuery.refetch()}
               />
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Cash reserve — by purchase"
                 columns={[
                   {
@@ -2172,7 +2172,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             ) : (
               <div className="overflow-x-auto">
                 {chargebacksOverpaymentsView === "summary" ? (
-                  <ParityTable
+                  <ParityTable appearance="board"
                     title="Chargebacks & overpayments — by customer"
                     columns={CHARGEBACKS_BY_CUSTOMER_COLUMNS(fmtCurrency)}
                     rows={chargebacksByCustomer}
@@ -2249,7 +2249,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           />
           {purchaseReportView === "summary" ? (
             <div className="overflow-x-auto" data-testid="factoring-purchase-report-summary">
-              <ParityTable<(typeof purchaseReportSummary)[number]>
+              <ParityTable<(typeof purchaseReportSummary)[number]> appearance="board"
                 columns={[
                   { key: "purchase_date", label: "Date", sortable: true, render: (row) => fmtDate(row.purchase_date) },
                   {
@@ -2284,7 +2284,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <ParityTable<FactoringPurchaseReportLine>
+              <ParityTable<FactoringPurchaseReportLine> appearance="board"
                 title="Purchase report — by invoice"
                 columns={[
                   {
@@ -2413,7 +2413,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               />
             ) : (
               <div className="overflow-x-auto">
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Fees paid — accrued on open invoices"
                   columns={[
                     {
@@ -2462,7 +2462,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             />
           ) : (
             <div className="overflow-x-auto">
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Fees paid — all fee records"
                 titleInfo={
                   <InfoPopover label="About fee descriptions" testId="factoring-fees-paid-all-fees-footnote">
@@ -2549,7 +2549,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             ) : (
               <div className="overflow-x-auto">
                 {agingView === "summary" ? (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Aging — by debtor"
                   columns={AGING_BY_DEBTOR_COLUMNS(fmtCurrency)}
                   rows={agingByDebtor}
@@ -2560,7 +2560,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   tableTestId="factoring-aging-by-debtor-table"
                 />
                 ) : (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Aging — by invoice"
                   columns={[
                     {
@@ -2754,7 +2754,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 onRetry={() => void feesQuery.refetch()}
               />
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Monthly fee summaries"
                 columns={MONTHLY_FEE_COLUMNS}
                 rows={feesQuery.data?.monthly_summary ?? []}
@@ -2883,7 +2883,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   onRetry={() => void settingsQuery.refetch()}
                 />
               ) : (
-                <ParityTable
+                <ParityTable appearance="board"
                   columns={STATEMENT_HISTORY_COLUMNS}
                   title="Statement history"
                   rows={settingsQuery.data?.statements ?? []}
@@ -3125,7 +3125,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 })()}
               </div>
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Faro statement lines — imported"
                 columns={FARO_IMPORT_COLUMNS}
                 rows={(faroImportsQuery.data?.rows ?? []).filter((r) => {
@@ -3411,7 +3411,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 onRetry={() => void vendorMergesQuery.refetch()}
               />
             ) : (
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Vendor merge history"
                 columns={VENDOR_MERGE_COLUMNS}
                 rows={vendorMergesQuery.data?.rows ?? []}

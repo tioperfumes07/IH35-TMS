@@ -113,7 +113,7 @@ export function EntityActivityFeed({
 
   return (
     <div className="space-y-2">
-      <ParityTable
+      <ParityTable appearance="board"
         rows={query.data?.events ?? []}
         columns={columns}
         rowKey={(event) => event.event_id}

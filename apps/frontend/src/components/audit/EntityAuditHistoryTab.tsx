@@ -296,7 +296,7 @@ export function EntityAuditHistoryTab({ operatingCompanyId, entityType, entityId
           />
         </>
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           rows={events}
           pageSize={pageSize}
           hidePager

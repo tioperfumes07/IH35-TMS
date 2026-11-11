@@ -10,7 +10,6 @@ import {
   updateIntegrityAlertRule,
 } from "../../api/safety";
 import { IntegrityAlertDetailDrawer } from "./components/IntegrityAlertDetailDrawer";
-import { SelectCombobox } from "../../components/Combobox";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -34,7 +33,7 @@ const INTEGRITY_TAB_IDS = new Set<string>(["inbox", "rules"]);
 
 const EMPTY_FILTERS = {
   category: "",
-  severity: "",
+  severity: [] as string[],
   status: [] as string[],
   driverId: "",
   unitId: "",
@@ -48,6 +47,13 @@ const STATUS_FILTER_OPTIONS = statusOptions({
   confirmed_action_taken: "Confirmed action taken",
   dismissed: "Dismissed",
 });
+
+/** U12-adjacent — severity filter is multi-select (same OR pattern as Status). */
+const SEVERITY_FILTER_OPTIONS = [
+  { value: "info", label: "Info" },
+  { value: "warning", label: "Warning" },
+  { value: "critical", label: "Critical" },
+];
 
 const EMPTY_RULE_DRAFT = {
   rule_code: "",
@@ -139,7 +145,7 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       "integrity-alerts",
       operatingCompanyId,
       applied.category,
-      applied.severity,
+      applied.severity.join(","),
       applied.status.join(","),
       applied.driverId,
       applied.unitId,
@@ -147,11 +153,12 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
       page,
     ],
     queryFn: async () => {
-      // U12: multi-select — API takes one resolution_status; 0/1 pass through; 2+ fetch unscoped then filter.
+      // U12: multi-select — API takes one resolution_status / severity; 0/1 pass through; 2+ fetch unscoped then filter.
       const resolution_status = applied.status.length === 1 ? applied.status[0] : undefined;
+      const severity = applied.severity.length === 1 ? applied.severity[0] : undefined;
       const result = await getIntegrityAlerts(operatingCompanyId, {
         alert_category: applied.category || undefined,
-        severity: applied.severity || undefined,
+        severity,
         resolution_status,
         subject_driver_id: applied.driverId || undefined,
         subject_unit_id: applied.unitId || undefined,
@@ -159,17 +166,30 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
         limit: pageSize,
         offset: (page - 1) * pageSize,
       });
-      if (applied.status.length <= 1) return result;
-      const integrity_alerts = (result.integrity_alerts ?? []).filter((row) =>
-        applied.status.includes((row.resolution_status ?? row.status ?? "") as string),
-      );
-      return { ...result, integrity_alerts, total_count: integrity_alerts.length };
+      let integrity_alerts = result.integrity_alerts ?? [];
+      if (applied.status.length > 1) {
+        integrity_alerts = integrity_alerts.filter((row) =>
+          applied.status.includes((row.resolution_status ?? row.status ?? "") as string),
+        );
+      }
+      if (applied.severity.length > 1) {
+        integrity_alerts = integrity_alerts.filter((row) =>
+          applied.severity.includes(String(row.severity ?? "")),
+        );
+      }
+      if (applied.status.length > 1 || applied.severity.length > 1) {
+        return { ...result, integrity_alerts, total_count: integrity_alerts.length };
+      }
+      return result;
     },
     enabled: Boolean(operatingCompanyId),
   });
   const totalCount = alertsQuery.isError ? 0 : alertsQuery.data?.total_count ?? 0;
   const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
-  useEffect(() => setPage(1), [operatingCompanyId, applied.category, applied.severity, applied.status, applied.driverId, applied.unitId, applied.vendorId]);
+  useEffect(
+    () => setPage(1),
+    [operatingCompanyId, applied.category, applied.severity, applied.status, applied.driverId, applied.unitId, applied.vendorId],
+  );
 
   const rulesQuery = useQuery({
     queryKey: ["safety", "integrity-alert-rules", operatingCompanyId],
@@ -385,16 +405,14 @@ export function IntegrityAlertsPage({ operatingCompanyId }: Props) {
                 className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
                 placeholder="Category"
               />
-              <SelectCombobox
-                value={draft.severity}
-                onChange={(event) => staged.setDraft((d) => ({ ...d, severity: event.target.value }))}
-                className="rounded-sm border border-gray-300 px-2 py-1 text-xs"
-              >
-                <option value="">All severities</option>
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
-              </SelectCombobox>
+              <MultiSelectDropdown
+                label="Severity"
+                options={SEVERITY_FILTER_OPTIONS}
+                selected={draft.severity}
+                onChange={(next) => staged.setDraft((d) => ({ ...d, severity: next }))}
+                allLabel="All severities"
+                data-testid="integrity-alerts-severity-filter"
+              />
               <MultiSelectDropdown
                 label="Status"
                 options={STATUS_FILTER_OPTIONS}

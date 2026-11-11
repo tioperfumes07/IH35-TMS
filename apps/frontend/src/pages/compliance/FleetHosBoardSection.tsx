@@ -337,7 +337,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Fleet HOS — live units"
           rows={liveRows}
           columns={FLEET_HOS_COLUMNS}
@@ -428,7 +428,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           </button>
           {showOffline ? (
             <div className="mt-2">
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Fleet HOS — offline or stale units"
                 rows={offlineRows}
                 columns={OFFLINE_FLEET_HOS_COLUMNS}

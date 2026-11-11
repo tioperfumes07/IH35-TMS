@@ -104,7 +104,7 @@ export function FaroCSVUploadWidget({
       </div>
 
       {preview.headers.length > 0 ? (
-        <ParityTable<IndexedPreviewRow>
+        <ParityTable<IndexedPreviewRow> appearance="board"
           columns={previewColumns}
           rows={previewRows}
           rowKey={(row) => String(row.previewIndex)}

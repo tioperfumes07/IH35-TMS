@@ -234,7 +234,7 @@ export function FuelQuestionsPanel({ operatingCompanyId, loadId }: Props) {
           <ListErrorBanner message={userFacingApiError(listQuery.error, "Could not load fuel questions")} />
         ) : null}
 
-        <ParityTable
+        <ParityTable appearance="board"
           rows={rows}
           columns={columns}
           rowKey={(r) => r.id}

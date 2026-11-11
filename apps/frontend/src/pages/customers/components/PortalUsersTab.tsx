@@ -107,7 +107,7 @@ export function PortalUsersTab({ customerId, operatingCompanyId }: Props) {
             onRetry={() => void usersQuery.refetch()}
           />
         ) : (
-          <ParityTable<PortalUserRow>
+          <ParityTable<PortalUserRow> appearance="board"
             rows={usersQuery.data ?? []}
             rowKey={(row) => row.id}
             loading={usersQuery.isPending}

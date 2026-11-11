@@ -64,7 +64,7 @@ export function TrainingRecordsSection({
       </div>
       <div className="mt-3">
         {unavailable ? <p className="mb-2 text-xs font-medium text-red-700">Training records could not be loaded.</p> : null}
-        <ParityTable<TrainingRecordRow>
+        <ParityTable<TrainingRecordRow> appearance="board"
           rows={rows}
           rowKey={(row) => row.__rowKey}
           emptyText="No training records."

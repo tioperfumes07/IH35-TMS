@@ -450,7 +450,7 @@ export function FinanceScenariosPage() {
           onRetry={() => void scenariosQuery.refetch()}
         />
       ) : (
-      <ParityTable<Scenario>
+      <ParityTable<Scenario> appearance="board"
         title="Finance scenarios"
         columns={columns}
         rows={scenarios}

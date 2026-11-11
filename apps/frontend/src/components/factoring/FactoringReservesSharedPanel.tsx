@@ -285,7 +285,7 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
         ) : !activeFactorId ? (
           <p className="text-xs text-[#6B7280]">No active factor — reserve ledger has nothing to scope to.</p>
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={movementColumns}
             rows={reserveHistoryQuery.data?.movements ?? []}
             rowKey={(row) => row.id}
@@ -315,7 +315,7 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
             onRetry={() => void loansQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={loanColumns}
             rows={activeLoans}
             rowKey={(row) => row.id}

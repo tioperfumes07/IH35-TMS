@@ -335,7 +335,7 @@ export function FaroReserveRegisterPanel({
           onRetry={() => void entries.refetch()}
         />
       ) : (
-        <ParityTable<FaroReserveEntry>
+        <ParityTable<FaroReserveEntry> appearance="board"
           columns={columns}
           rows={focusId ? [...rows].sort((a, b) => Number(b.id === focusId) - Number(a.id === focusId)) : rows}
           rowKey={(e) => e.id}

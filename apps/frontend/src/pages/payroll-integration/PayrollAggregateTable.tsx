@@ -56,7 +56,7 @@ type Props = { persons: PayrollPerson[] };
 
 export function PayrollAggregateTable({ persons }: Props) {
   return (
-    <ParityTable
+    <ParityTable appearance="board"
       title="Payroll — by person"
       columns={COLUMNS}
       rows={persons}

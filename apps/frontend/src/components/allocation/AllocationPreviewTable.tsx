@@ -25,7 +25,7 @@ export function AllocationPreviewTable({ rows, totalCents, isLoading }: Props) {
         </span>
       </div>
       {/* ACCT-F3584: embedded ParityTable owns Search+Range+gear inside the preview frame. */}
-      <ParityTable<AllocationPreviewRow>
+      <ParityTable<AllocationPreviewRow> appearance="board"
         embedded
         rows={rows}
         rowKey={(row) => row.asset_id}

@@ -451,7 +451,7 @@ export function ModuleCompletionPage() {
         </label>
       </CollapsedListFilters>
 
-      <ParityTable<ModuleRow>
+      <ParityTable<ModuleRow> appearance="board"
         title="Module completion — by module"
         columns={columns}
         rows={filteredRows}

@@ -287,7 +287,7 @@ export function AuditLogViewer() {
         />
       ) : (
         <div className="overflow-hidden rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Audit log entries"
             rows={rows}
             columns={COLUMNS}

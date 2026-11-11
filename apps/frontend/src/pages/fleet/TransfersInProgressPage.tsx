@@ -104,7 +104,7 @@ export function TransfersInProgressPage() {
           subtitle="Dropoff and pickup must both acknowledge"
           testId="transfers-in-progress-board"
         >
-          <ParityTable<TransferRow>
+          <ParityTable<TransferRow> appearance="board"
             columns={columns}
             rows={query.data ?? []}
             rowKey={(row) => row.id}

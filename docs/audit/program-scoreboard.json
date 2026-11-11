@@ -1,10 +1,10 @@
 {
-  "healthzSha": "caf3ce1",
-  "generated_at": "2026-11-10T20:24:22.601Z",
+  "healthzSha": "44ed3d6",
+  "generated_at": "2026-11-11T22:23:25.122Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "caf3ce1",
+    "deployedSha": "44ed3d6",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28793,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:26 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28793",
-      "sha": "caf3ce14d5",
-      "committedAtIso": "2026-11-10T12:26:08-06:00"
+      "mergedAtCt": "11/11/2026, 12:24 PM CT",
+      "url": "",
+      "sha": "44ed3d61b6",
+      "committedAtIso": "2026-11-11T18:24:25Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 12:24 PM CT",
+      "mergedAtCt": "11/11/2026, 10:24 AM CT",
       "url": "",
-      "sha": "0e15126292",
-      "committedAtIso": "2026-11-10T18:24:54Z"
+      "sha": "73ab1667cb",
+      "committedAtIso": "2026-11-11T16:24:33Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 10:24 AM CT",
+      "mergedAtCt": "11/11/2026, 08:24 AM CT",
       "url": "",
-      "sha": "1613c898a4",
-      "committedAtIso": "2026-11-10T16:24:15Z"
+      "sha": "963a78f441",
+      "committedAtIso": "2026-11-11T14:24:47Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 08:24 AM CT",
+      "mergedAtCt": "11/11/2026, 06:29 AM CT",
       "url": "",
-      "sha": "e4c17e477a",
-      "committedAtIso": "2026-11-10T14:24:24Z"
-    },
-    {
-      "number": 28792,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:29 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28792",
-      "sha": "a388e943ea",
-      "committedAtIso": "2026-11-10T12:29:17Z"
+      "sha": "ae872c954f",
+      "committedAtIso": "2026-11-11T12:29:23Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:28 AM CT",
+      "mergedAtCt": "11/11/2026, 04:23 AM CT",
       "url": "",
-      "sha": "384f152452",
-      "committedAtIso": "2026-11-10T12:28:27Z"
+      "sha": "1db5a08ed4",
+      "committedAtIso": "2026-11-11T10:23:34Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 04:23 AM CT",
+      "mergedAtCt": "11/11/2026, 02:26 AM CT",
       "url": "",
-      "sha": "c4b7ab4850",
-      "committedAtIso": "2026-11-10T10:23:57Z"
+      "sha": "6984ff0b84",
+      "committedAtIso": "2026-11-11T08:26:04Z"
     },
     {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 02:27 AM CT",
+      "mergedAtCt": "11/11/2026, 12:32 AM CT",
       "url": "",
-      "sha": "15c2ddad7a",
-      "committedAtIso": "2026-11-10T08:27:28Z"
+      "sha": "52ca4400a0",
+      "committedAtIso": "2026-11-11T06:32:38Z"
     },
     {
-      "number": 28790,
-      "title": "FINDING: LST-F11146 bus ROUND 8.7b — HOLD CC-1 prod post of 5853–5872 until the #28788 engine reds are fixed",
+      "number": 28840,
+      "title": "FINDING: Low-guard residual ParityTables appearance=board wave2 (13 tables)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 01:10 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28790",
-      "sha": "f736860ab1",
-      "committedAtIso": "2026-11-10T01:10:10-06:00"
+      "mergedAtCt": "11/11/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28840",
+      "sha": "51e48dd947",
+      "committedAtIso": "2026-11-11T01:21:50-05:00"
     },
     {
-      "number": 28789,
-      "title": "FIX: post-as-signed engine (#28788) — 4 entity-unscoped reads: truck lookup, two settlement-line→load hops, presettlement link (LST-F11144)",
+      "number": 28839,
+      "title": "FINDING: Low-guard residual ParityTables appearance=board (16 tables)",
       "state": "merged",
-      "mergedAtCt": "11/10/2026, 01:02 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28789",
-      "sha": "96c3f9dcde",
-      "committedAtIso": "2026-11-10T01:02:32-06:00"
+      "mergedAtCt": "11/11/2026, 12:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28839",
+      "sha": "e7806b221d",
+      "committedAtIso": "2026-11-11T01:20:40-05:00"
+    },
+    {
+      "number": 28838,
+      "title": "FINDING: ROUND 8.10 Cursor R1–R4 DONE tip (SHAs #28836/#28837)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28838",
+      "sha": "f4df4a26ee",
+      "committedAtIso": "2026-11-11T01:19:22-05:00"
     }
   ]
 }

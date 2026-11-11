@@ -251,7 +251,7 @@ export function UserActivityTab({ operatingCompanyId, userId }: UserActivityTabP
           onRetry={() => void auditQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           rows={events}
           columns={columns}
           rowKey={(row) => row.id}

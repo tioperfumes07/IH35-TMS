@@ -208,7 +208,7 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar, f
   );
 
   return (
-    <ParityTable<RecoursePipelineRow>
+    <ParityTable<RecoursePipelineRow> appearance="board"
       title="Recourse pipeline — factored invoices by recourse date"
       columns={columns}
       rows={rows}

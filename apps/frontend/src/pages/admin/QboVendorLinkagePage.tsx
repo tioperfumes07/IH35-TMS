@@ -212,7 +212,7 @@ export function QboVendorLinkagePage() {
             />
           ) : (
             <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
-              <ParityTable
+              <ParityTable appearance="board"
                 title="Drivers — QuickBooks vendor link"
                 rows={rows}
                 columns={driverColumns}
@@ -235,7 +235,7 @@ export function QboVendorLinkagePage() {
         />
       ) : (
         <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Units — QuickBooks class link"
             rows={unitRows}
             columns={unitColumns}

@@ -233,53 +233,53 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
       </div>
 
       <ProfileSection title={`Settlements (${p.settlements.value.length})`} testId="driver-profile-settlements" reason={p.settlements.empty_reason}>
-        {p.settlements.value.length ? <ParityTable columns={settlementCols} rows={p.settlements.value} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.id)} {...tbl} /> : null}
-        {lineRows.length ? <ParityTable columns={lineCols} rows={lineRows} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.settlement_id)} {...tbl} /> : null}
+        {p.settlements.value.length ? <ParityTable appearance="board" columns={settlementCols} rows={p.settlements.value} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.id)} {...tbl} /> : null}
+        {lineRows.length ? <ParityTable appearance="board" columns={lineCols} rows={lineRows} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.settlement_id)} {...tbl} /> : null}
       </ProfileSection>
 
       <div className="grid gap-2 lg:grid-cols-2">
         <ProfileSection title={`Advances (${p.advances.value.rows.length})`} testId="driver-profile-advances" reason={p.advances.empty_reason}>
-          {p.advances.value.rows.length ? <ParityTable columns={advCols} rows={p.advances.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("cash_advance", r.id)} {...tbl} /> : null}
+          {p.advances.value.rows.length ? <ParityTable appearance="board" columns={advCols} rows={p.advances.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("cash_advance", r.id)} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Escrow — ${formatUsdCents(p.escrow.value.balance_cents)}`} testId="driver-profile-escrow" reason={p.escrow.empty_reason}>
           <ProfileRows rows={p.escrow.value.accounts.map((a) => [`${a.purpose ?? "Escrow"} (${a.status ?? "—"})`, formatUsdCents(a.balance_cents)])} />
-          {p.escrow.value.postings.length ? <ParityTable columns={escCols} rows={p.escrow.value.postings} rowKey={(r) => r.id} onRowClick={(r) => go("journal_entry", r.linked_journal_entry_id)} {...tbl} /> : null}
+          {p.escrow.value.postings.length ? <ParityTable appearance="board" columns={escCols} rows={p.escrow.value.postings} rowKey={(r) => r.id} onRowClick={(r) => go("journal_entry", r.linked_journal_entry_id)} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Deductions — ${formatUsdCents(p.deductions.value.total_cents)}`} testId="driver-profile-deductions" reason={p.deductions.empty_reason}>
-          {p.deductions.value.rows.length ? <ParityTable columns={dedCols} rows={p.deductions.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.applied_to_settlement_id)} {...tbl} /> : null}
+          {p.deductions.value.rows.length ? <ParityTable appearance="board" columns={dedCols} rows={p.deductions.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("settlement", r.applied_to_settlement_id)} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Reimbursements — ${formatUsdCents(p.reimbursements.value.total_cents)}`} testId="driver-profile-reimbursements" reason={p.reimbursements.empty_reason}>
-          {p.reimbursements.value.rows.length ? <ParityTable columns={reimbCols} rows={p.reimbursements.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("driver_reimbursement", r.id)} {...tbl} /> : null}
+          {p.reimbursements.value.rows.length ? <ParityTable appearance="board" columns={reimbCols} rows={p.reimbursements.value.rows} rowKey={(r) => r.id} onRowClick={(r) => go("driver_reimbursement", r.id)} {...tbl} /> : null}
         </ProfileSection>
       </div>
 
       <ProfileSection title={`Loads run (${p.loads.value.length})`} testId="driver-profile-loads" reason={p.loads.empty_reason}>
-        {p.loads.value.length ? <ParityTable columns={loadCols} rows={p.loads.value} rowKey={(r) => r.id} onRowClick={(r) => go("load", r.id)} {...tbl} /> : null}
+        {p.loads.value.length ? <ParityTable appearance="board" columns={loadCols} rows={p.loads.value} rowKey={(r) => r.id} onRowClick={(r) => go("load", r.id)} {...tbl} /> : null}
       </ProfileSection>
 
       <ProfileSection title={`Fuel purchases (${p.fuel.value.length})`} testId="driver-profile-fuel" reason={p.fuel.empty_reason}>
-        {p.fuel.value.length ? <ParityTable columns={fuelCols} rows={p.fuel.value} rowKey={(r) => r.id} onRowClick={(r) => go("fuel_transaction", r.id)} {...tbl} /> : null}
+        {p.fuel.value.length ? <ParityTable appearance="board" columns={fuelCols} rows={p.fuel.value} rowKey={(r) => r.id} onRowClick={(r) => go("fuel_transaction", r.id)} {...tbl} /> : null}
       </ProfileSection>
 
       <ProfileSection title="Trucks & trailers" testId="driver-profile-equipment" reason={p.equipment.empty_reason}>
         <div className="grid gap-2 lg:grid-cols-2">
-          {p.equipment.value.units.length ? <ParityTable columns={unitCols} rows={p.equipment.value.units} rowKey={(r) => r.id} onRowClick={(r) => go("unit", r.unit_id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No truck assignment recorded.</p>}
-          {p.equipment.value.trailers.length ? <ParityTable columns={trailerCols} rows={p.equipment.value.trailers} rowKey={(r) => `${r.source}:${r.id}`} onRowClick={(r) => go("trailer", r.id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No trailer assigned or on a DVIR.</p>}
+          {p.equipment.value.units.length ? <ParityTable appearance="board" columns={unitCols} rows={p.equipment.value.units} rowKey={(r) => r.id} onRowClick={(r) => go("unit", r.unit_id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No truck assignment recorded.</p>}
+          {p.equipment.value.trailers.length ? <ParityTable appearance="board" columns={trailerCols} rows={p.equipment.value.trailers} rowKey={(r) => `${r.source}:${r.id}`} onRowClick={(r) => go("trailer", r.id)} {...tbl} /> : <p className="text-center text-[color:var(--ih-muted)]">No trailer assigned or on a DVIR.</p>}
         </div>
       </ProfileSection>
 
       <div className="grid gap-2 lg:grid-cols-2">
         <ProfileSection title={`Safety events (${p.safety.value.length})`} testId="driver-profile-safety" reason={p.safety.empty_reason}>
-          {p.safety.value.length ? <ParityTable columns={safetyCols} rows={p.safety.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
+          {p.safety.value.length ? <ParityTable appearance="board" columns={safetyCols} rows={p.safety.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Drug & alcohol (${p.drug_alcohol.value.length})`} testId="driver-profile-drug-alcohol" reason={p.drug_alcohol.empty_reason}>
-          {p.drug_alcohol.value.length ? <ParityTable columns={daCols} rows={p.drug_alcohol.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
+          {p.drug_alcohol.value.length ? <ParityTable appearance="board" columns={daCols} rows={p.drug_alcohol.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Insurance (${p.insurance.value.length})`} testId="driver-profile-insurance" reason={p.insurance.empty_reason}>
-          {p.insurance.value.length ? <ParityTable columns={insCols} rows={p.insurance.value} rowKey={(r) => r.id} onRowClick={(r) => go("insurance_policy", r.id)} {...tbl} /> : null}
+          {p.insurance.value.length ? <ParityTable appearance="board" columns={insCols} rows={p.insurance.value} rowKey={(r) => r.id} onRowClick={(r) => go("insurance_policy", r.id)} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title={`Documents (${p.documents.value.length})`} testId="driver-profile-documents" reason={p.documents.empty_reason}>
-          {p.documents.value.length ? <ParityTable columns={docCols} rows={p.documents.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
+          {p.documents.value.length ? <ParityTable appearance="board" columns={docCols} rows={p.documents.value} rowKey={(r) => `${r.source}:${r.id}`} {...tbl} /> : null}
         </ProfileSection>
         <ProfileSection title="Hours of service" testId="driver-profile-hos" reason={p.hos.empty_reason}>
           <ProfileRows rows={[
@@ -292,7 +292,7 @@ export function DriverWholeProfile(props: { operatingCompanyId: string; driverId
           ]} />
         </ProfileSection>
         <ProfileSection title="Samsara linkage" testId="driver-profile-samsara" reason={p.samsara.empty_reason}>
-          {p.samsara.value.links.length ? <ParityTable columns={samsaraCols} rows={p.samsara.value.links} rowKey={(r) => `${r.source}:${r.samsara_driver_id}`} {...tbl} /> : null}
+          {p.samsara.value.links.length ? <ParityTable appearance="board" columns={samsaraCols} rows={p.samsara.value.links} rowKey={(r) => `${r.source}:${r.samsara_driver_id}`} {...tbl} /> : null}
         </ProfileSection>
       </div>
     </div>

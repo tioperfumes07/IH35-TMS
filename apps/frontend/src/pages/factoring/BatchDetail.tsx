@@ -175,7 +175,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
       </BoardSection>
 
       <BoardSection title="Invoices in this batch" testId="factoring-batch-detail-invoices">
-        <ParityTable
+        <ParityTable appearance="board"
           title="Invoices in this batch"
           columns={INVOICE_COLUMNS}
           rows={detail.invoices}
@@ -195,7 +195,7 @@ export function BatchDetail({ batchId, companyId }: { batchId: string; companyId
             onRetry={() => void reserveMovementsQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Reserve movements — this batch"
             columns={RESERVE_COLUMNS}
             rows={reserveRows}

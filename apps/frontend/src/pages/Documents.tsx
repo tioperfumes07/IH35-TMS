@@ -238,7 +238,7 @@ export function DocumentsPage() {
           onRetry={filesErrorState.onRetry}
         />
       ) : (
-      <ParityTable<DocsFile>
+      <ParityTable<DocsFile> appearance="board"
         title="Document files"
         emptyText="No documents — upload or clear filters."
         storageKey="documents-library-files"

@@ -67,7 +67,7 @@ export function LegalPoliciesPage() {
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Policy templates"
             rows={rows}
             columns={columns}

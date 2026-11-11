@@ -382,7 +382,7 @@ export function GroupRollupTable({ rollups, liveOk }: { rollups: GroupRollup[]; 
         <span className="sub">same columns as module boards · Box 3/4 show fill · wire / live · cert</span>
       </h2>
       <div className="scroll scroll-groups overflow-x-auto">
-        <ParityTable<GroupRollup>
+        <ParityTable<GroupRollup> appearance="board"
           storageKey="ih35.program.matrix.group-rollups.v1"
           tableTestId="module-matrix-group-rollups"
           rows={rollups.slice().sort((a, b) => {

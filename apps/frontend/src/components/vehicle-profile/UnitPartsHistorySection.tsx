@@ -136,7 +136,7 @@ export function UnitPartsHistorySection({ unitId, companyId }: Props) {
               {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, totalCount)} of {totalCount} parts assignments
             </p>
           ) : null}
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="unit-parts-history"
             tableTestId="unit-parts-history-table"
             rowTestId={(row) => `unit-parts-row-${row.id}`}

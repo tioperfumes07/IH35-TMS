@@ -175,7 +175,7 @@ export function QBImportTab({
       </div>
 
       {parsed.length ? (
-        <ParityTable
+        <ParityTable appearance="board"
           title="QuickBooks rows to import — preview"
           columns={columns}
           rows={parsedRows}

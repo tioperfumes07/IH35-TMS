@@ -402,7 +402,7 @@ export function TypeCatalogAdmin() {
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable<InsuranceTypeCatalogEntry>
+          <ParityTable<InsuranceTypeCatalogEntry> appearance="board"
             title="Insurance types"
             columns={columns}
             rows={orderedRows}

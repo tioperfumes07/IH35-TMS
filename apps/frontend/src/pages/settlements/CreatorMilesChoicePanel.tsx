@@ -58,7 +58,7 @@ export function CreatorMilesChoicePanel({
         </div>
       ) : null}
       {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). One row per miles field. */}
-      <ParityTable<MilesFieldRow>
+      <ParityTable<MilesFieldRow> appearance="board"
         embedded
         rows={MILES_FIELDS.map((f) => ({ field: f }))}
         rowKey={(row) => row.field}

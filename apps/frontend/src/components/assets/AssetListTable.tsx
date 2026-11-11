@@ -81,7 +81,7 @@ export function AssetListTable({ rows, isLoading }: Props) {
         <h2 className="text-xs font-semibold text-gray-900">Asset register</h2>
       </header>
       <div className="p-2">
-        <ParityTable
+        <ParityTable appearance="board"
           rows={rows}
           columns={COLUMNS}
           rowKey={(row) => row.id}

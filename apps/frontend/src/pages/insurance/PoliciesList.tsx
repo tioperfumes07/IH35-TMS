@@ -260,7 +260,7 @@ export function PoliciesList() {
             onRetry={() => { void policiesQuery.refetch(); }}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Insurance policies"
             storageKey="insurance-policies"
             columns={columns}

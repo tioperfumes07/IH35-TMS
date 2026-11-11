@@ -55,6 +55,11 @@ function buildMime(input: SendEmailInput, from: string): string {
   if (input.cc?.length) headers.push(`Cc: ${input.cc.join(", ")}`);
   if (input.bcc?.length) headers.push(`Bcc: ${input.bcc.join(", ")}`);
   headers.push(`Subject: ${encodeHeader(input.subject)}`);
+  if (input.replyTo) headers.push(`Reply-To: ${input.replyTo}`);
+  for (const [k, v] of Object.entries(input.headers ?? {})) {
+    if (!/^[A-Za-z0-9-]+$/.test(k) || /[\r\n]/.test(v)) throw new Error(`google_provider_invalid_header:${k}`);
+    headers.push(`${k}: ${v}`);
+  }
   headers.push("MIME-Version: 1.0");
 
   if (!input.attachments?.length) {
