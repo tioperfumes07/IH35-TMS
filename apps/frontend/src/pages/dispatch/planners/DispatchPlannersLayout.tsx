@@ -123,7 +123,7 @@ function PlannerEntityFilters({
   );
   return (
     <div className="space-y-1.5" data-testid="planner-entity-filters">
-      <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
+      <div className="text-section-header font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
       <div className="flex flex-wrap items-center gap-2">
         <div className="min-w-[180px]" data-testid="planner-filter-status">
           <MultiSelectDropdown
