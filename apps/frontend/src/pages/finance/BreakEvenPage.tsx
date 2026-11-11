@@ -323,7 +323,7 @@ export function BreakEvenPage() {
             </div>
 
             {/* ACCT-F3576: embedded ParityTable owns Search+Range+gear; totals stay flat strips (no nested card). */}
-            <ParityTable<(typeof data.expense_lines)[number]>
+            <ParityTable<(typeof data.expense_lines)[number]> appearance="board"
               title="Expenses — by account"
               embedded
               rows={data.expense_lines}
