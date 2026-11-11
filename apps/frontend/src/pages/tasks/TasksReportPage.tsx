@@ -165,7 +165,7 @@ export function TasksReportPage() {
       </div>
 
       <div className="space-y-2">
-        <ParityTable
+        <ParityTable appearance="board"
           title="Tasks — by assignee"
           rows={byAssignee}
           columns={assigneeColumns}
