@@ -1,10 +1,10 @@
 {
-  "healthzSha": "51e48dd",
-  "generated_at": "2026-11-11T06:32:38.436Z",
+  "healthzSha": "52ca440",
+  "generated_at": "2026-11-11T08:26:03.937Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "51e48dd",
+    "deployedSha": "52ca440",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:32 AM CT",
+      "url": "",
+      "sha": "52ca4400a0",
+      "committedAtIso": "2026-11-11T06:32:38Z"
+    },
+    {
       "number": 28840,
       "title": "FINDING: Low-guard residual ParityTables appearance=board wave2 (13 tables)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "",
       "sha": "a94e5b9ee9",
       "committedAtIso": "2026-11-11T00:43:04Z"
-    },
-    {
-      "number": 28833,
-      "title": "FINDING: Shared/vehicle/trailer/fleet residual ParityTables appearance=board (33 tables)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:40 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28833",
-      "sha": "68b67306f7",
-      "committedAtIso": "2026-11-10T19:40:28-05:00"
     }
   ]
 }
