@@ -210,7 +210,7 @@ export function ActivityLogPage() {
         />
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Activity log"
             rows={rows}
             columns={COLUMNS}
