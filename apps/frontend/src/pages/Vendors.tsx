@@ -1074,7 +1074,7 @@ export function VendorsPage() {
                         Balance), sortable, exportable. The detailed Bills / Expenses breakdowns
                         below are preserved (§7, additive). */}
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Transactions</h4>
-                    <ParityTable
+                    <ParityTable appearance="board"
                       rows={vendorTransactions}
                       columns={vendorTransactionColumns}
                       rowKey={(r) => r.key}
@@ -1085,7 +1085,7 @@ export function VendorsPage() {
                       allowAllPageSize
                     />
                     <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Bills</h4>
-                    <ParityTable
+                    <ParityTable appearance="board"
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(bill) => bill.id}
@@ -1162,7 +1162,7 @@ export function VendorsPage() {
                     {expensesQuery.isError ? (
                       <ListErrorState title="Couldn't load vendor expenses" status={0} message={(expensesQuery.error as Error)?.message} onRetry={() => void expensesQuery.refetch()} />
                     ) : (
-                      <ParityTable
+                      <ParityTable appearance="board"
                         rows={expensesQuery.data?.rows ?? []}
                         columns={expenseColumns}
                         rowKey={(expense) => expense.id}
