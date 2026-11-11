@@ -1900,7 +1900,7 @@ export function CustomerDetailPage() {
               onRetry={() => void customerLoadsQuery.refetch()}
             />
           ) : (
-          <ParityTable<DispatchLoadRow>
+          <ParityTable<DispatchLoadRow> appearance="board"
             rows={customerLoads}
             rowKey={(load) => load.id}
             loading={customerLoadsListState.isLoading}
@@ -2065,7 +2065,7 @@ export function CustomerDetailPage() {
           {contactsQuery.isError ? (
             <ListErrorState title="Couldn't load customer contacts" status={0} message={contactsQuery.error instanceof Error ? contactsQuery.error.message : undefined} onRetry={() => void contactsQuery.refetch()} />
           ) : (
-          <ParityTable<CustomerContact>
+          <ParityTable<CustomerContact> appearance="board"
             rows={contacts}
             rowKey={(contact) => contact.id}
             loading={contactsListState.isLoading}
@@ -2268,7 +2268,7 @@ export function CustomerDetailPage() {
                 onRetry={() => void customerPaymentsQuery.refetch()}
               />
             ) : (
-              <ParityTable<CustomerPaymentListRow>
+              <ParityTable<CustomerPaymentListRow> appearance="board"
                 title="Payment history"
                 rows={customerPaymentsQuery.data?.rows ?? []}
                 rowKey={(p) => p.id}
@@ -2414,7 +2414,7 @@ export function CustomerDetailPage() {
                 onRetry={() => void recentInvoicesQuery.refetch()}
               />
             ) : (
-            <ParityTable<Invoice>
+            <ParityTable<Invoice> appearance="board"
               title="Recent invoices"
               rows={recentInvoices}
               rowKey={(invoice) => invoice.id}
@@ -2467,7 +2467,7 @@ export function CustomerDetailPage() {
           {lanesQuery.isError ? (
             <ListErrorState title="Couldn't load customer lanes" status={0} message={lanesQuery.error instanceof Error ? lanesQuery.error.message : undefined} onRetry={() => void lanesQuery.refetch()} />
           ) : (
-          <ParityTable<CustomerLane>
+          <ParityTable<CustomerLane> appearance="board"
             title="Customer lane pricing definitions"
             rows={customerLanes}
             rowKey={(lane) => lane.id}
