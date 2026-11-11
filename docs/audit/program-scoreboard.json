@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f3c1c87",
-  "generated_at": "2026-11-11T04:25:29.853Z",
+  "healthzSha": "51e48dd",
+  "generated_at": "2026-11-11T06:32:38.436Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f3c1c87",
+    "deployedSha": "51e48dd",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,60 @@
   },
   "recentActivity": [
     {
+      "number": 28840,
+      "title": "FINDING: Low-guard residual ParityTables appearance=board wave2 (13 tables)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:21 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28840",
+      "sha": "51e48dd947",
+      "committedAtIso": "2026-11-11T01:21:50-05:00"
+    },
+    {
+      "number": 28839,
+      "title": "FINDING: Low-guard residual ParityTables appearance=board (16 tables)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:20 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28839",
+      "sha": "e7806b221d",
+      "committedAtIso": "2026-11-11T01:20:40-05:00"
+    },
+    {
+      "number": 28838,
+      "title": "FINDING: ROUND 8.10 Cursor R1–R4 DONE tip (SHAs #28836/#28837)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:19 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28838",
+      "sha": "f4df4a26ee",
+      "committedAtIso": "2026-11-11T01:19:22-05:00"
+    },
+    {
+      "number": 28837,
+      "title": "FINDING: ROUND 8.10 Cursor R2–R4 BookLoad locked type scale + MoneyCell load drill",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:18 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28837",
+      "sha": "2ffddba89b",
+      "committedAtIso": "2026-11-11T01:18:42-05:00"
+    },
+    {
+      "number": 28836,
+      "title": "FINDING: ROUND 8.10 Cursor R1 planner driver MultiSelectDropdown + driverIds",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28836",
+      "sha": "c5c83d2955",
+      "committedAtIso": "2026-11-11T01:16:50-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 10:25 PM CT",
+      "url": "",
+      "sha": "849f9d0c0d",
+      "committedAtIso": "2026-11-11T04:25:29Z"
+    },
+    {
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
@@ -2157,60 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28833",
       "sha": "68b67306f7",
       "committedAtIso": "2026-11-10T19:40:28-05:00"
-    },
-    {
-      "number": 28832,
-      "title": "FINDING: Customers/Vendors/Inventory/DF/DriverProfile/Factoring residual ParityTables appearance=board (58 tables)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 06:21 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28832",
-      "sha": "250e5dbc3f",
-      "committedAtIso": "2026-11-10T19:21:34-05:00"
-    },
-    {
-      "number": 28831,
-      "title": "FINDING: Compliance ParityTables appearance=board",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28831",
-      "sha": "73e4d08bf4",
-      "committedAtIso": "2026-11-10T18:38:24-05:00"
-    },
-    {
-      "number": 28830,
-      "title": "FINDING: Insurance ParityTables appearance=board",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:34 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28830",
-      "sha": "0a01c97260",
-      "committedAtIso": "2026-11-10T18:34:32-05:00"
-    },
-    {
-      "number": 28829,
-      "title": "FINDING: Legal ParityTables appearance=board",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:31 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28829",
-      "sha": "e8d368b86d",
-      "committedAtIso": "2026-11-10T18:31:10-05:00"
-    },
-    {
-      "number": 28828,
-      "title": "FINDING: capacity engine UI — Dispatch › Available Trucks + contact 'Receives truck offers'",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:30 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28828",
-      "sha": "e52a671c60",
-      "committedAtIso": "2026-11-10T17:30:55-06:00"
-    },
-    {
-      "number": 28827,
-      "title": "FINDING: capacity engine backend — available trucks, truck-offer emails, load-board adapter",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:18 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28827",
-      "sha": "7f089c5c2e",
-      "committedAtIso": "2026-11-10T17:18:54-06:00"
     }
   ]
 }
