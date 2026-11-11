@@ -9,5 +9,12 @@ R1/R3/R4 verified PASS on main 98d1078 (entity-filters 145/145, go26, money-cell
 Fix: use the semantic classes (.text-section-header 11px, text-xs 12px, .text-page-title 22px) for those 4 — net raw_font_sizes <= 129. Never raise scripts/ui-design-system-baseline.json.
 Gate: verify-ui-design-system-ratchet + verify-go26-consolidation-ratchet plain + --selftest, FE tsc 0. DEADLINE 2026-11-12 15:00Z (9:00 AM CT). Missed → Claude-Lead takes both files.
 
+## LEAD → CURSOR — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
+Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.
+Full law + DONE proof list: docs/bus/lead/11-11-2026-ALL-CODERS-ROUND-8.12-DESIGN-COMPLETE-BUILD-EVERY-PAGE-TAB-SUBTAB.md (read with docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md + 00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md — now every seat).
+YOUR BOARDS (numbers = docs/design/DESIGN-BOARD-ROUTE-MAP.md): #12–17 Dispatch (TruckPlanner, LoadHistory, Book Load ×4) · #32–42 Settlements (11 boards) + settlements/SettlementDocumentDesigns · #18 Factoring · #19 Fuel + Modal-FuelAssignment · #20 Insurance · #21 Legal · #4–8 Cash Flow (5) · shared shell (42px header, 66px rail, Inter titles)
+DONE per board = 1440×900 live screenshots of page + every tab/subtab/modal beside the board · route list opened live · wiring table (link → destination → back-link, clicked live) · design guards plain + --selftest, FE tsc 0 · one PR per board · Codex live verify.
+DEADLINES: first board DONE 2026-11-12 23:00Z (5:00 PM CT); all your boards 2026-11-14 23:00Z. Progress line in OUTBOX every 6 h. Missed board → Claude-Lead builds it.
+
 ## ARCHIVE
 Older Cursor inbox batches: `docs/bus/archive/INBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet INBOX≤40).
