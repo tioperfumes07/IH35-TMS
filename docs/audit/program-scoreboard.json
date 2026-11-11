@@ -1,10 +1,10 @@
 {
-  "healthzSha": "250e5db",
-  "generated_at": "2026-11-11T00:43:04.591Z",
+  "healthzSha": "af78b68",
+  "generated_at": "2026-11-11T02:24:47.290Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "250e5db",
+    "deployedSha": "af78b68",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,24 @@
   },
   "recentActivity": [
     {
+      "number": 28835,
+      "title": "FINDING: LST-F11156 bus ROUND 8.10 — all coders: current measured state and per-seat orders (supersedes any off-bus instruction tonight)",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 08:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28835",
+      "sha": "af78b68415",
+      "committedAtIso": "2026-11-10T20:18:01-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 06:43 PM CT",
+      "url": "",
+      "sha": "a94e5b9ee9",
+      "committedAtIso": "2026-11-11T00:43:04Z"
+    },
+    {
       "number": 28833,
       "title": "FINDING: Shared/vehicle/trailer/fleet residual ParityTables appearance=board (33 tables)",
       "state": "merged",
@@ -2193,24 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28826",
       "sha": "6a445327cf",
       "committedAtIso": "2026-11-10T18:15:20-05:00"
-    },
-    {
-      "number": 28825,
-      "title": "FINDING: main FE tsc red — DispatchPlannersLayout reads CompanyContext.operatingCompanyId (no such field)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 04:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28825",
-      "sha": "97bbac02ef",
-      "committedAtIso": "2026-11-10T17:56:15-05:00"
-    },
-    {
-      "number": 28824,
-      "title": "FINDING: Fuel+AVP ParityTables appearance=board (13 tables)",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 04:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28824",
-      "sha": "6866f26961",
-      "committedAtIso": "2026-11-10T17:56:05-05:00"
     }
   ]
 }
