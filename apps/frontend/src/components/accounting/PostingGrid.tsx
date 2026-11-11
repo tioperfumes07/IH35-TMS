@@ -114,7 +114,7 @@ export function PostingGrid({ postings, storageKey }: { postings: PostingGridRow
 
   return (
     <div className="space-y-2" data-testid="posting-grid">
-      <ParityTable<PostingGridRow>
+      <ParityTable<PostingGridRow> appearance="board"
         storageKey={storageKey}
         columns={columns}
         rows={postings}
