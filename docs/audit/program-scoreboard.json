@@ -1,10 +1,10 @@
 {
-  "healthzSha": "af78b68",
-  "generated_at": "2026-11-11T02:24:47.290Z",
+  "healthzSha": "f3c1c87",
+  "generated_at": "2026-11-11T04:25:29.853Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "af78b68",
+    "deployedSha": "f3c1c87",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,15 @@
   },
   "recentActivity": [
     {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/10/2026, 08:24 PM CT",
+      "url": "",
+      "sha": "f3c1c8792f",
+      "committedAtIso": "2026-11-11T02:24:47Z"
+    },
+    {
       "number": 28835,
       "title": "FINDING: LST-F11156 bus ROUND 8.10 — all coders: current measured state and per-seat orders (supersedes any off-bus instruction tonight)",
       "state": "merged",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28827",
       "sha": "7f089c5c2e",
       "committedAtIso": "2026-11-10T17:18:54-06:00"
-    },
-    {
-      "number": 28826,
-      "title": "FINDING: capacity engine backend — available trucks, truck-offer emails (switch OFF), load-board adapter",
-      "state": "merged",
-      "mergedAtCt": "11/10/2026, 05:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28826",
-      "sha": "6a445327cf",
-      "committedAtIso": "2026-11-10T18:15:20-05:00"
     }
   ]
 }
