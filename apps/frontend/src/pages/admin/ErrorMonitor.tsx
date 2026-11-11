@@ -117,7 +117,7 @@ export function ErrorMonitorPage() {
         />
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Application errors"
             rows={rows}
             columns={COLUMNS}

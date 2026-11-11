@@ -134,7 +134,7 @@ export function EngineStatusBoardPage() {
       ) : null}
 
       {!q.isError ? (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Engines — status"
           rows={rows}
           columns={columns}

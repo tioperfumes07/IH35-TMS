@@ -98,7 +98,7 @@ export function BulkDemoPage() {
         </div>
       ) : null}
 
-      <ParityTable<DemoRow>
+      <ParityTable<DemoRow> appearance="board"
         key={tableResetKey}
         columns={COLUMNS}
         rows={ALL_ROWS}
