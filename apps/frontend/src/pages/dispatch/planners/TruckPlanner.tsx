@@ -205,7 +205,7 @@ export function TruckPlanner() {
 
   const filteredTruckRows = useMemo(() => {
     return truckRows.filter((row) => {
-      if (entityFilters.driverId && row.driverId !== entityFilters.driverId) return false;
+      if (entityFilters.driverIds.length > 0 && (!row.driverId || !entityFilters.driverIds.includes(row.driverId))) return false;
       // U12 — OR across selected status buckets; empty = all.
       if (entityFilters.status.length === 0) return true;
       return entityFilters.status.some((s) => {

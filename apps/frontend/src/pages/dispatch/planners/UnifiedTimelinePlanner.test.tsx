@@ -24,7 +24,7 @@ vi.mock("./PlannerRangeContext", () => ({
     range: { start: "2026-06-22", end: "2026-06-26" },
     days: ["2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26"],
     setRange: () => undefined,
-    entityFilters: { status: [], driverId: "" },
+    entityFilters: { status: [], driverIds: [] },
     setEntityFilters: () => undefined,
     hiddenWeekdays: [],
     setHiddenWeekdays: () => undefined,
