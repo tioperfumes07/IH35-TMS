@@ -221,7 +221,7 @@ export function NotificationPreferencesPage() {
         <section className="rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xs">
           <h2 className="text-xs font-semibold text-[#1F2A44]">By event type</h2>
           <div className="mt-3">
-            <ParityTable
+            <ParityTable appearance="board"
               rows={eventRows}
               columns={eventColumns}
               rowKey={(row) => row.event}

@@ -207,7 +207,7 @@ export function LaunchTogglesPage() {
         />
       ) : (
         <div className="overflow-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             title="Launch toggles — by company"
             rows={rows}
             columns={columns}

@@ -127,7 +127,7 @@ export function UnitTollTagsTab({ unitId, companyId }: UnitTollTagsTabProps) {
         </div>
       ) : (
         <div className="mt-2">
-          <ParityTable
+          <ParityTable appearance="board"
             columns={columns}
             rows={rows}
             rowKey={(row) => row.uuid}

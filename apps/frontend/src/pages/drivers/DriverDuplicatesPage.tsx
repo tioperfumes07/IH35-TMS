@@ -63,7 +63,7 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
     <section className="rounded border border-[#E5E7EB] bg-white p-3" data-testid={`dup-cluster-${cluster.survivor.id}`}>
       <div className="mb-2 text-xs text-[#4B5563]">Why these look like one person: {cluster.why.join(" · ")}</div>
       {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table). */}
-      <ParityTable<DuplicateDriver>
+      <ParityTable<DuplicateDriver> appearance="board"
         title="Driver profiles in this duplicate group"
         embedded
         rows={members}

@@ -116,7 +116,7 @@ export function RosterIntegrityPage() {
           {query.isError ? (
             <ListErrorState {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               title="Roster integrity findings"
               rows={query.data?.findings ?? []}
               columns={columns}

@@ -105,7 +105,7 @@ export function ScenarioLinesTable({ lines, operatingCompanyId, editable, invali
   );
 
   return (
-    <ParityTable<ForecastLine>
+    <ParityTable<ForecastLine> appearance="board"
       title="Scenario lines — forecast vs actual"
       columns={columns}
       rows={lines}

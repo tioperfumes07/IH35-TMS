@@ -56,7 +56,7 @@ export function MobileAuditReport() {
       </section>
 
       {/* LEAD 443.181 — the app's one table. An audit finding is a static-scan line, not a record: no row route. */}
-      <ParityTable<AuditIssue>
+      <ParityTable<AuditIssue> appearance="board"
         title="Flagged issues"
         tableTestId="mobile-audit-issues-table"
         storageKey="ih35.admin.mobile-audit-issues.v1"

@@ -132,7 +132,7 @@ export function WizardReclassifyPanel({
 
       {/* 443.99 — the shared ParityTable (was a hand-rolled HTML table): sortable headers, gear, export. */}
       {lines.length > 0 ? (
-        <ParityTable<ReclassifyLine>
+        <ParityTable<ReclassifyLine> appearance="board"
           title="Posted lines — reclassify"
           embedded
           rows={lines}
