@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave20 (VendorDetail)
+- **PRIOR:** prior residual board wave.
+- **THIS:** VendorDetail appearance=board (4 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave19 (Vendors)
 - **PRIOR:** prior residual board wave.
 - **THIS:** Vendors appearance=board (3 tables). Engines unchanged. Cascade owns R5.
@@ -86,11 +91,6 @@
 ## OUTBOX (11-11-2026 ~1:50 AM CT) — Low-guard residual ParityTables appearance=board wave2 (13 tables)
 - **PRIOR:** #28839 low-guard board tables (16).
 - **THIS:** 13 ParityTables / 11 files (samsara/edi/payroll/profitability/portal/admin/finance/fleet) appearance=board (≤39 guards). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~1:40 AM CT) — Low-guard residual ParityTables appearance=board (16 tables)
-- **PRIOR:** #28838 R1–R4 DONE tip.
-- **THIS:** 16 ParityTables / 15 files (feed-gate/admin/drivers/finance/program/fleet/settings/settlements/system/units) appearance=board — split ship ≤31 affected guards. Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE
