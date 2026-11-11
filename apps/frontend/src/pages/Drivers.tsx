@@ -787,7 +787,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
             />
           ) : null}
           {!teamsErrorState ? (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Driver teams"
             storageKey="drivers-teams-roster"
             toolbar={<Button size="sm" onClick={() => setTeamCreateOpen(true)}>+ Create Team</Button>}
@@ -866,7 +866,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onRetry={() => void driversQuery.refetch()}
                 />
               ) : (
-                <ParityTable
+                <ParityTable appearance="board"
                   rows={driversRowsFiltered}
                   title="Driver roster"
                   storageKey="drivers-roster"
@@ -974,7 +974,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   }}
                 />
               ) : (
-                <ParityTable
+                <ParityTable appearance="board"
                   title="Drivers with open cash advances or debts"
                   rows={debtAlertRows}
                   storageKey="drivers-cash-advances-debt-alert"
