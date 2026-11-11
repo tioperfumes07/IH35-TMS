@@ -260,7 +260,7 @@ export function DriverHubReportingPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
-            <ParityTable
+            <ParityTable appearance="board"
               title="Cash advance requests — by driver"
               rows={data.by_driver}
               columns={DRIVER_REPORTING_COLUMNS}
@@ -306,7 +306,7 @@ export function DriverHubReportingPage() {
           </div>
 
           <div className="rounded-sm border border-gray-200 bg-white p-2">
-            <ParityTable
+            <ParityTable appearance="board"
               title="Cash advance requests — by load"
               rows={data.by_load}
               columns={LOAD_REPORTING_COLUMNS}

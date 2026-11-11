@@ -792,7 +792,7 @@ export function ProgramBoardPage() {
             </span>
           </div>
 
-          <ParityTable<Row>
+          <ParityTable<Row> appearance="board"
             title="Work items"
             storageKey="ih35.program.board.work-items.v1"
             rows={activeRows}
@@ -854,7 +854,7 @@ export function ProgramBoardPage() {
               {(data?.merged_pr_total ?? 0) > (data?.merged_prs?.length ?? 0) ? " (most recent slice)" : ""}
             </span>
           </div>
-          <ParityTable<MergedPr>
+          <ParityTable<MergedPr> appearance="board"
             title="Merged PRs"
             storageKey="ih35.program.board.merged-prs.v1"
             rows={mergedFiltered}
@@ -897,7 +897,7 @@ export function ProgramBoardPage() {
           <p className="text-xs text-[#6B7280]">
             Merged but gated — typically behind a feature flag or awaiting deploy/ancestry. Not an owner merge-approval hold; flip flags or wait for deploy as applicable.
           </p>
-          <ParityTable<HoldItem>
+          <ParityTable<HoldItem> appearance="board"
             title="Held PRs"
             storageKey="ih35.program.board.held-prs.v1"
             rows={holdFiltered}
@@ -1068,7 +1068,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
       </div>
 
       <div>
-        <ParityTable<ProgramBoardAudit["by_module"][number]>
+        <ParityTable<ProgramBoardAudit["by_module"][number]> appearance="board"
           title="By module"
           storageKey="ih35.program.board.audit-by-module.v1"
           rows={audit.by_module}
@@ -1118,7 +1118,7 @@ function AuditTruthSection({ audit }: { audit: ProgramBoardAudit }) {
       ) : null}
 
       <div>
-        <ParityTable<ProgramBoardAudit["top_open_items"][number]>
+        <ParityTable<ProgramBoardAudit["top_open_items"][number]> appearance="board"
           title={`Top open items (${filteredOpenItems.length} of ${audit.top_open_items.length})`}
           filterBar={
             <div className="flex flex-wrap items-center gap-2">
