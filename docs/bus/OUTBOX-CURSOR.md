@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave14
+- **PRIOR:** prior low-guard board wave.
+- **THIS:** 1 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave13
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
@@ -87,11 +92,6 @@
 - **PRIOR:** #28831 Compliance ParityTables appearance=board.
 - **THIS:** 58 ParityTables / 32 files (customers/vendors/inventory/driver-finance/driver-profile/drivers/factoring components) appearance=board. Unowned only — Accounting=CC-1 Banking=CC-2 Maint=Codex Safety=CC-3 left alone. Engines unchanged. R4–R6 Cascade.
 - **NEXT:** residual unowned boards; Cascade owns R*; Codex/CC-3 own Maint/Safety. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~8:40 PM CT) — Compliance ParityTables appearance=board
-- **PRIOR:** #28830 Insurance ParityTables appearance=board.
-- **THIS:** Compliance Filings/HOS/Form2290/PropertyTax/RequiredDocuments appearance=board. Engines unchanged. R4–R6 Cascade.
-- **NEXT:** Maint/Safety board tables; Cascade owns R*. No match/Dreamline.
 
 ## ARCHIVE
 Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet OUTBOX≤200).
