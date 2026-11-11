@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~1:20 AM CT) — ROUND 8.10 Cursor R2–R4 BookLoad type + money drill
+- **PRIOR:** #28836 R1 planner driverIds MultiSelectDropdown.
+- **THIS:** R2/R3 BookLoad off-scale type → locked scale; AvailableTrucks text-sm→text-xs; R4 accessorial+invoice MoneyCell→load. Cascade owns R5.
+- **NEXT:** tip DONE SHA after merge. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~11:50 PM CT) — ROUND 8.10 Cursor R1 planner driver multi-select
 - **PRIOR:** #28833 Shared/vehicle/trailer/fleet appearance=board.
 - **THIS:** R1 DispatchPlannersLayout driver MultiSelectDropdown + driverIds[]; TruckPlanner matches any selected. R2–R4 BookLoad follow in next ship. Cascade owns R5.
