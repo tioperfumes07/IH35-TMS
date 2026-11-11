@@ -302,7 +302,7 @@ export function LoanWizardPage() {
                   </div>
                   <div>
                     <div className="mt-1">
-                      <ParityTable
+                      <ParityTable appearance="board"
                         title="Opening journal entry"
                         columns={OPENING_JE_COLUMNS}
                         rows={[
