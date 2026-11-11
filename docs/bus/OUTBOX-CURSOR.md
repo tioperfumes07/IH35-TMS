@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:35 PM CT) — Residual ParityTables appearance=board wave22 (Customers)
+- **PRIOR:** prior residual board wave.
+- **THIS:** Customers appearance=board (9 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining residuals / done. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave21 (DriverDetail)
 - **PRIOR:** prior residual board wave.
 - **THIS:** DriverDetail appearance=board (1 tables). Engines unchanged. Cascade owns R5.
@@ -86,11 +91,6 @@
 ## OUTBOX (11-11-2026 ~2:15 AM CT) — Low-guard residual ParityTables appearance=board wave4
 - **PRIOR:** #28841 low-guard board wave3.
 - **THIS:** Samsara/QBO/vendor-mapping/form425c/tasks ParityTables appearance=board (≤35 guards). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~2:00 AM CT) — Low-guard residual ParityTables appearance=board wave3 (8 tables)
-- **PRIOR:** #28840 low-guard board wave2.
-- **THIS:** 8 ParityTables / 7 files (qbo-sync/tasks/program/admin/drivers/eld) appearance=board (≤38 guards). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE
