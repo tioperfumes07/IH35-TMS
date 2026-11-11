@@ -5,6 +5,11 @@
 
 ## OUTBOX (11-11-2026 ~2:20 AM CT) — Low-guard residual ParityTables appearance=board waveN
 - **PRIOR:** prior low-guard board wave.
+- **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~2:20 AM CT) — Low-guard residual ParityTables appearance=board waveN
+- **PRIOR:** prior low-guard board wave.
 - **THIS:** 7 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
@@ -86,11 +91,6 @@
 ## OUTBOX (11-10-2026 ~7:30 PM CT) — Book Load D2 charges grid flatten nested box
 - **PRIOR:** #28820 Factoring+FuelIntegrity appearance=board.
 - **THIS:** BookLoadModalV4 D2 charges grid drops outer rounded+border frame (nested-box law); 4 charge engines retained. verify-no-nested-box + verify-factoring-nested-box-baseline PASS. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~7:20 PM CT) — Factoring+FuelIntegrity board ParityTables
-- **PRIOR:** #28819 Factoring Payments/Repurchase appearance=board.
-- **THIS:** FactoringHome (20) + SubmitToFactorTab (2) + FuelIntegrityPage (3) ParityTables appearance=board. Engines unchanged. R4–R6 Cascade.
 - **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
 
 ## ARCHIVE

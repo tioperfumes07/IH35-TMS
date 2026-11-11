@@ -292,7 +292,7 @@ export function WOTimeTrackingPanel({ workOrderId, operatingCompanyId, readOnly 
             onRetry={() => void entriesQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Time entries — this work order"
             storageKey="wo-time-tracking-entries"
             tableTestId="wo-time-tracking-entries-parity"
