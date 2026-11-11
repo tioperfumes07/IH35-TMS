@@ -247,9 +247,9 @@ function LoadShuttleLegsPanel({ loadId, operatingCompanyId }: { loadId: string; 
   if (!legs.length) return null;
   return (
     <section className="rounded-[4px] border border-[#E5E7EB] bg-white" data-testid="load-shuttle-legs">
-      <div className="border-b border-[#E5E7EB] px-3 py-2 text-[11px] font-bold uppercase text-[#4B5563]">Local yard shuttle</div>
+      <div className="border-b border-[#E5E7EB] px-3 py-2 text-section-header font-bold uppercase text-[#4B5563]">Local yard shuttle</div>
       {legs.map((leg) => (
-        <div key={leg.id} className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 text-[12px] text-gray-800">
+        <div key={leg.id} className="flex flex-wrap gap-x-4 gap-y-1 px-3 py-2 text-xs text-gray-800">
           <span>{[leg.from_city, leg.from_state].filter(Boolean).join(", ") || "Pickup"} → {leg.dropped_at_place}</span>
           <span>Truck: {leg.unit_number ?? (leg.candidate_unit_numbers?.length ? `one of ${leg.candidate_unit_numbers.join(", ")}` : "—")}</span>
           <span>Driver: {leg.driver_name ? formatPersonName(leg.driver_name) : "local driver"}</span>
