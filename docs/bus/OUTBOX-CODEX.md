@@ -1,4 +1,4 @@
-# CODEX — ROUND 8.5 / 8.10 — 2026-11-11
+# CODEX — ROUND 8.5 / 8.11 / 8.12 — 2026-11-11
 
 **INCOMPLETE: 0/45 boards have full element-by-element live acceptance.** Source/table appearance scans are not proof of full wiring. USMCA read-only; production data writes0. Existing workflows are preserved, not covered by replacement shells.
 
@@ -19,6 +19,8 @@
 
 ## Current measured release blocker
 
+Latest recheck after sync to main ede831d471: design-system guard still FAIL, raw_font_sizes129→133; bus-diet guard now PASS after Lead's inbox archives. The design guard's exit1 is not masked by the subsequent bus check's exit0. No push attempted. Owner full-build requirement delivered to Cursor on #28860 comment6809105017; driver eligibility finding delivered on #28836 comment6809050611.
+
 `verify-ui-design-system-ratchet` exits1 on branch and isolated clean main d726eac1a6: `raw_font_sizes:129→133 (+4)`. The previous eight off-scale sizes are fixed, not this raw-size growth. Full preflight did not start after failing prerequisite. No baseline increase or hook bypass. Cursor/Lead notified via private Lead channel `2026-11-11-CODEX-BOOKLOAD-RESIDUAL-GATE.md`.
 
 ## Live observations retained, not overclaimed
@@ -36,7 +38,9 @@ Exact remaining raw-size delta versus pre-#28796: BookLoadModalV4 26→29 (+3), 
 
 Independent source review found a new driver-picker eligibility regression and unwired shared planner filters; details and live Banking/Fuel measurements: [Cursor repair handoff](lead/11-11-2026-CODEX-ROUND85-CURSOR-REVERIFY-FUEL-PLANNERS.md). Focused9tests PASS does not cover those gaps. Banking money clipping now0; account truncation7 and Latest lines y981 remain.
 
-Re-measure typography gate, then required release0 → normal push hooksON → fast merge → deploy proof for CF3. Continue live verification of #28810–#28833 and U12 per ROUND8.10; no edits to another seat's surface. Full45 census/diffs and wiring proof unfinished.
+ROUND8.11 verification scope is now #28836–#28862. No edits to another seat's surface. ROUND8.12 own build scope: Maintenance Home/In-Shop, Fleet Health Line/TruckProfile, and nine maintenance board-set pages. Build from the board, remove duplicate old presentation from the route, preserve real engines, put tab/subtab state in URL, verify record forward/reverse links. Every board remains OPEN until its page/tabs/modals, route list, wiring table, guards/tests and live1440×900 proof pass. Full45 census/diffs and wiring proof unfinished.
+
+Next: re-measure typography gate, then required release0 → normal push hooksON → fast merge → deploy proof for pending bounded repair. Meanwhile map the eight TruckProfile systems to canonical read-only sources; current dynamic PM/WO/fault list is not the board's eight-system contract. Do not substitute specimen tread/pressure/brake states or generic healthy colors for unavailable live evidence.
 
 ## Archive
 
