@@ -290,7 +290,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             onRetry={() => void assignedQ.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={ASSIGNED_COLUMNS}
             rows={filteredAssignedRows}
             rowKey={(row) => row.id}
@@ -379,7 +379,7 @@ export function LoadHistoryTab({ driverId, operatingCompanyId }: Props) {
             />
           </div>
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             columns={HISTORY_COLUMNS}
             rows={historyRows}
             rowKey={(row) => row.id}

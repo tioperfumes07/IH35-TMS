@@ -132,7 +132,7 @@ export function SettlementsSection({
         </div>
       </div>
       <div className="mt-3">
-        <ParityTable
+        <ParityTable appearance="board"
           storageKey="driver-profile-settlements-weeks"
           tableTestId="driver-settlements-weeks"
           columns={columns}

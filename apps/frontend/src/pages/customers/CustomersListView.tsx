@@ -315,7 +315,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           onRetry={() => void atRiskQuery.refetch()}
         />
       ) : null}
-      <ParityTable<CustomerRow>
+      <ParityTable<CustomerRow> appearance="board"
         title="Customers"
         key={tableResetKey}
         rows={enrichedRows}

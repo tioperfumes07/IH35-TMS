@@ -231,7 +231,7 @@ export function FreeTimeDetentionEditor(props: {
         ) : null}
         {/* CUST-MONEY-F6985 — same stale-retained-data gate for the history table. */}
         {!historyQuery.isError && historyQuery.data ? (
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="customer-freetime-detention-history"
             tableTestId="customer-terms-history"
             columns={historyColumns}

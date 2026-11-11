@@ -191,7 +191,7 @@ export function CustomerContractsTab({ customerId, customerName, operatingCompan
           No contracts on file.{canWrite ? " Upload one above." : ""}
         </div>
       ) : (
-        <ParityTable<CustomerContract>
+        <ParityTable<CustomerContract> appearance="board"
           title="Contracts"
           storageKey="customer-contracts-files"
           tableTestId="customer-contracts-table"

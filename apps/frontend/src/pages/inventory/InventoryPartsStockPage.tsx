@@ -224,7 +224,7 @@ export function InventoryPartsStockPage() {
           onRetry={() => void partsQuery.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Parts in stock"
           columns={columns}
           rows={rows}

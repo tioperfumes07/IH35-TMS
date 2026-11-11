@@ -38,6 +38,6 @@ export function HistoricalSettlementAttributions({ rows }: { rows: HistoricalSet
       These round trips reference an original posted journal. This does not establish a bank payment.
       Unallocated amounts are unknown. Posting, payment and reopening require resolution of the original attribution.
     </p>
-    <ParityTable storageKey="historical-settlement-attributions" columns={columns} rows={rows} rowKey={row => row.id} hidePager pageSize={Math.max(1, rows.length)} />
+    <ParityTable appearance="board" storageKey="historical-settlement-attributions" columns={columns} rows={rows} rowKey={row => row.id} hidePager pageSize={Math.max(1, rows.length)} />
   </DataPanel>;
 }

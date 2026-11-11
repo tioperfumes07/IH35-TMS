@@ -207,7 +207,7 @@ export function InventoryPurchasesPage() {
       ) : (
         <div className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" data-testid="inventory-purchases-list">
           <h3 className="text-xs font-semibold">Purchase history ({activeRows.length})</h3>
-          <ParityTable<PartsPurchaseRow>
+          <ParityTable<PartsPurchaseRow> appearance="board"
             columns={columns}
             rows={visibleRows}
             rowKey={(row) => row.id}

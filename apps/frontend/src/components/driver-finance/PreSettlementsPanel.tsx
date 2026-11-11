@@ -280,7 +280,7 @@ export function PreSettlementsPanel({
           </p>
         ) : null}
         {!loading && !isError && rows.length > 0 ? (
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="pre-settlements-panel-v3-board-tours"
             columns={preSettlementColumns}
             rows={rows}

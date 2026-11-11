@@ -313,7 +313,7 @@ export function AuditHistoryTab({ driverId, operatingCompanyId }: Props) {
               No audit events for this driver.
             </p>
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               rows={events}
               columns={columns}
               rowKey={(row) => row.id}

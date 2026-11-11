@@ -115,7 +115,7 @@ export function LoadsSection({ driverId, operatingCompanyId }: Props) {
         </div>
       ) : (
         <div className="mt-3">
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="driver-profile-loads"
             tableTestId="driver-profile-loads-table"
             columns={LOAD_COLUMNS}
