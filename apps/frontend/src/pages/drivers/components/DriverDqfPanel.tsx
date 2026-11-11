@@ -217,7 +217,7 @@ export function DriverDqfPanel({ companyId, driverId, editable = true, focus = "
           onRetry={() => void itemsQ.refetch()}
         />
       ) : (
-        <ParityTable<DriverQualificationFileItem>
+        <ParityTable<DriverQualificationFileItem> appearance="board"
           title="Driver qualification file checklist"
           rows={visibleItems}
           rowKey={(item) => item.id}
