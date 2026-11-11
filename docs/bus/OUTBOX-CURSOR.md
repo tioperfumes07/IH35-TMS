@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:45 PM CT) — Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)
+- **PRIOR:** #28869 BookLoad helpers 103→82; #28867 T5; #28866 R2; #28864/#28865 owner FULL BOARD law to all seats.
+- **THIS:** LoadStopsRecordTab + LoadHistoryDetailPanel text-[11px]/text-[12px] → text-section-header/text-xs. Baseline 82→79.
+- **NEXT:** ROUND 8.12 Cursor boards live proof (screenshots + wiring tables). No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:35 PM CT) — BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)
 - **PRIOR:** #28867 Settlements T5 ReadyDots; #28866 R2; #28864 owner order.
 - **THIS:** BookLoadStops/Equipment/Customer + book-load-v4 helpers use text-section-header. Baseline banked 103→82. ROUND 8.12 continues.
