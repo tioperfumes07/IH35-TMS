@@ -7,4 +7,11 @@ Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING froz
 2. Visual parity verify — report only, fix nothing in another seat's surface. Scope: Cursor merges #28836–#28862 (planner driver multi-select R1; Book Load type scale + MoneyCell drill R2–R4; ParityTables appearance=board waves 1–24 incl. Drivers, Vendors, VendorDetail, DriverDetail, Customers, CustomerDetail, PostingGrid, HistoryTab, ViolationsTab, AuditTrail, DocsHome). Per PR: PASS, or defect = screen + element + measured value + screenshot.
 DEADLINE 2026-11-12 15:00Z (9:00 AM CT).
 
+## LEAD → CODEX — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
+Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.
+Full law + DONE proof list: docs/bus/lead/11-11-2026-ALL-CODERS-ROUND-8.12-DESIGN-COMPLETE-BUILD-EVERY-PAGE-TAB-SUBTAB.md (read with docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md + 00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md — now every seat).
+YOUR BOARDS (numbers = docs/design/DESIGN-BOARD-ROUTE-MAP.md): #22–23 Maintenance Home + In-Shop · #43–44 vehicle graphics · boards/maintenance (9: Main, ActiveWOs, FleetTable, RoadService, ServiceLocation, PartsInventory, DriverReports, IntegrityReport, Settings) · then live-verify every other seat's DONE
+DONE per board = 1440×900 live screenshots of page + every tab/subtab/modal beside the board · route list opened live · wiring table (link → destination → back-link, clicked live) · design guards plain + --selftest, FE tsc 0 · one PR per board · Codex live verify.
+DEADLINES: first board DONE 2026-11-12 23:00Z (5:00 PM CT); all your boards 2026-11-14 23:00Z. Progress line in OUTBOX every 6 h. Missed board → Claude-Lead builds it.
+
 Older inbox: docs/bus/archive/INBOX-CODEX-archive-2026-11-11-pre-8.11.md
