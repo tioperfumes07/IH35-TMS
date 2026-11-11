@@ -266,7 +266,7 @@ function ArInvoicesDrill({ operatingCompanyId, customer, asOfDate }: { operating
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Open invoices — this customer"
           columns={AR_DRILL_COLUMNS}
           rows={invoices}
@@ -299,7 +299,7 @@ function ApBillsDrill({ operatingCompanyId, vendor, asOfDate }: { operatingCompa
           onRetry={() => void query.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title="Open bills — this vendor"
           columns={AP_DRILL_COLUMNS}
           rows={bills}
@@ -560,7 +560,7 @@ export function ArApAgingPage() {
       ) : (
         <div className="space-y-2">
           {mode === "ar" ? (
-            <ParityTable
+            <ParityTable appearance="board"
               title="A/R aging — by customer"
               key={appliedAsOf}
               columns={AR_COLUMNS}
@@ -575,7 +575,7 @@ export function ArApAgingPage() {
               )}
             />
           ) : (
-            <ParityTable
+            <ParityTable appearance="board"
               title="A/P aging — by vendor"
               key={appliedAsOf}
               columns={AP_COLUMNS}
