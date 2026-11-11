@@ -248,7 +248,7 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
                 ? ` · report Grand Total ${formatUsdCents(wexPlan.report_control.grand_total_cents ?? 0)} / ${wexPlan.report_control.total_records ?? wexPlan.report_control.parsed_lines} records — the file foots`
                 : ""}
             </div>
-            <ParityTable appearance="board"<{ key: WexStatementOutcome; label: string; lines: number; cents: number }>
+            <ParityTable<{ key: WexStatementOutcome; label: string; lines: number; cents: number }> appearance="board"
               tableTestId="wex-statement-plan-table"
               appearance="board"
               hidePager

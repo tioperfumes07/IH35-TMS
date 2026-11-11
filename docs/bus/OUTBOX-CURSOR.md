@@ -1,6 +1,6 @@
 ## OUTBOX (11-10-2026 ~9:20 PM CT) — Shared/vehicle/trailer/fleet residual ParityTables appearance=board
 - **PRIOR:** #28832 Customers/Vendors/Inventory/DF/DriverProfile/Factoring appearance=board.
-- **THIS:** 33 ParityTables / 29 files (shared/assets/documents/catalogs/tasks/users/audit/allocation/forms/telematics/trailer-profile/vehicle-profile/FleetTable/home/ap/checks/insurance/fuel Import) appearance=board. Unowned only. Engines unchanged. R4–R6 Cascade.
+- **THIS:** 33 ParityTables / 29 files (shared/assets/documents/catalogs/tasks/users/audit/allocation/forms/telematics/trailer-profile/vehicle-profile/FleetTable/home/ap/checks/insurance/fuel Import) appearance=board; generic `<ParityTable<T>>` kept intact (appearance after type args). Unowned only. Engines unchanged. R4–R6 Cascade.
 - **NEXT:** residual unowned boards; other seats own Accounting/Banking/Maint/Safety/Reports. No match/Dreamline.
 
 ## OUTBOX (11-10-2026 ~9:00 PM CT) — Customers/Vendors/Inventory/DF/DriverProfile/Factoring residual board tables

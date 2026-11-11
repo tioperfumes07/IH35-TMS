@@ -571,7 +571,7 @@ export function PolicyCreateWizard({ open, operatingCompanyId, onClose, onCreate
               Bill schedule — {billPreview.length} monthly bills
             </p>
             <div className="max-h-48 overflow-y-auto">
-              <ParityTable appearance="board"<BillPreviewRow>
+              <ParityTable<BillPreviewRow> appearance="board"
                 columns={billPreviewColumns}
                 rows={billPreviewRows}
                 rowKey={(row) => String(row.bill_number)}

@@ -112,7 +112,7 @@ export function TasksTab({ operatingCompanyId, targetType, targetId, targetLabel
           </button>
         </div>
       ) : (
-        <ParityTable appearance="board"<Task>
+        <ParityTable<Task> appearance="board"
           columns={columns}
           rows={tasks}
           rowKey={(t) => t.task_id}

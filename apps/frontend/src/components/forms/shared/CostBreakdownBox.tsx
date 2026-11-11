@@ -159,7 +159,7 @@ export function CostBreakdownBox({
           </div>
           <div className="p-2">
             {/* ACCT-F3586: embedded ParityTable owns Search+Range+gear on Section A lines. */}
-            <ParityTable appearance="board"<(typeof sectionA.lines)[number]>
+            <ParityTable<(typeof sectionA.lines)[number]> appearance="board"
               embedded
               rows={sectionA.lines}
               rowKey={(line) => line.id}
