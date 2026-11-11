@@ -1974,17 +1974,8 @@
     "source": "GeoNames ZIP 53076 centroid"
    }
   },
-  "confirm_expense_loads": [
-   {
-    "expense_number": "13705-3"
-   },
-   {
-    "expense_number": "13705-4"
-   },
-   {
-    "expense_number": "13705-5"
-   }
-  ]
+  "confirm_expense_loads": [],
+  "confirm_expense_loads_note": "13705-3/4/5 removed 2026-11-11 by Claude-Lead: prod GPS puts all three fills on T163 (card T174); reclassified 2026-11-10 12:00Z to Vicente load 13711 (13711-8/9/10). Not printed on signed 5856 (Eduardo)."
  },
  {
   "num": 5857,
@@ -4734,14 +4725,8 @@
     "source": "GeoNames ZIP 76504 centroid"
    }
   },
-  "confirm_expense_loads": [
-   {
-    "expense_number": "13698-2"
-   },
-   {
-    "expense_number": "13698-3"
-   }
-  ]
+  "confirm_expense_loads": [],
+  "confirm_expense_loads_note": "13698-2/3 removed 2026-11-11 by Claude-Lead: prod GPS puts both fills on T163 (card T175); reclassified 2026-11-10 12:00Z to Vicente load 13711 (13711-6/7). Not printed on signed 5862 (Leonel)."
  },
  {
   "num": 5863,
@@ -7683,8 +7668,18 @@
    },
    {
     "expense_number": "13721-1"
+   },
+   {
+    "expense_number": "13730-2"
+   },
+   {
+    "expense_number": "13730-3"
+   },
+   {
+    "expense_number": "13730-4"
    }
-  ]
+  ],
+  "confirm_expense_loads_note": "13730-2/3/4 added 2026-11-11 by Claude-Lead: Mosheim TN 11-04 fills, GPS T164 (Carlos, load 13730; card T170), reclassified onto 13730 2026-11-10; owner rule (a)."
  },
  {
   "num": 5869,
