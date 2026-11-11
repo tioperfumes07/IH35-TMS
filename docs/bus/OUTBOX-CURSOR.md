@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~1:30 AM CT) — DONE ROUND 8.10 Cursor R1–R4
+- **PRIOR:** #28836 R1; #28837 R2–R4.
+- **THIS:** DONE. R1 SHA c5c83d2955 (#28836) entity-filters multi-select PASS. R2–R4 SHA 2ffddba89b (#28837) money-cells + go26 PASS; off_locked_scale_sizes 0. Cascade owns R5.
+- **NEXT:** residual Cursor boards / inbox. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~1:20 AM CT) — ROUND 8.10 Cursor R2–R4 BookLoad type + money drill
 - **PRIOR:** #28836 R1 planner driverIds MultiSelectDropdown.
 - **THIS:** R2/R3 BookLoad off-scale type → locked scale; AvailableTrucks text-sm→text-xs; R4 accessorial+invoice MoneyCell→load. Cascade owns R5.
