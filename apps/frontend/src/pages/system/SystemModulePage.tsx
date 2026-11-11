@@ -438,7 +438,7 @@ function QboReconTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Reconciled objects" sub="Per-object TMS vs QBO counts and balances (live).">
-        <ParityTable<ReconObject>
+        <ParityTable<ReconObject> appearance="board"
           columns={columns}
           rows={recon.data?.objects ?? []}
           rowKey={(row) => row.object}
@@ -528,7 +528,7 @@ function LedgerHealthTab({ data }: { data: SystemData }) {
       </Card>
 
       <Card title="Findings" full sub="Newest first, open first. Read-only.">
-        <ParityTable<LedgerHealthFinding>
+        <ParityTable<LedgerHealthFinding> appearance="board"
           columns={columns}
           rows={lh?.findings ?? []}
           rowKey={(row) => row.id}
@@ -969,7 +969,7 @@ function ProgramTab({ data }: { data: SystemData }) {
                 </div>
               </div>
             </CollapsedListFilters>
-            <ParityTable<TrackerPhase>
+            <ParityTable<TrackerPhase> appearance="board"
               title="Program phases"
               rows={phaseRows}
               rowKey={(p) => p.key}
@@ -1047,7 +1047,7 @@ function SoftwareTab({ data, qboAvailable }: { data: SystemData; qboAvailable: b
       </Card>
 
       <Card title="Service checks" sub="Deep health checks, live.">
-        <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }>
+        <ParityTable<{ name: string; ok: boolean; tier: "critical" | "warning" }> appearance="board"
             rows={visibleChecks}
             rowKey={(c) => c.name}
             loading={!h}
@@ -1126,7 +1126,7 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
             className="py-4"
           />
         ) : (
-        <ParityTable<{ number: number; title: string; mergedAt: string | null }>
+        <ParityTable<{ number: number; title: string; mergedAt: string | null }> appearance="board"
           title="Recently merged changes"
           rows={recentMerged.slice(0, 8)}
           rowKey={(p) => String(p.number)}
