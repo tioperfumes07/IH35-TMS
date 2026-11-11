@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave19 (Vendors)
+- **PRIOR:** prior residual board wave.
+- **THIS:** Vendors appearance=board (3 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave18
 - **PRIOR:** prior residual board wave.
 - **THIS:** Drivers.tsx appearance=board (3 tables). Engines unchanged. Cascade owns R5.
@@ -87,11 +92,6 @@
 - **PRIOR:** #28838 R1–R4 DONE tip.
 - **THIS:** 16 ParityTables / 15 files (feed-gate/admin/drivers/finance/program/fleet/settings/settlements/system/units) appearance=board — split ship ≤31 affected guards. Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~1:30 AM CT) — DONE ROUND 8.10 Cursor R1–R4
-- **PRIOR:** #28836 R1; #28837 R2–R4.
-- **THIS:** DONE. R1 SHA c5c83d2955 (#28836) entity-filters multi-select PASS. R2–R4 SHA 2ffddba89b (#28837) money-cells + go26 PASS; off_locked_scale_sizes 0. Cascade owns R5.
-- **NEXT:** residual Cursor boards / inbox. No match/Dreamline.
 
 ## ARCHIVE
 Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet OUTBOX≤200).
