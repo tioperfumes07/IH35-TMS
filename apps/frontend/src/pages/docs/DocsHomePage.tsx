@@ -426,7 +426,7 @@ export function DocsHomePage() {
             onRetry={() => void listQuery.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Documents"
             rows={rows}
             columns={columns}
