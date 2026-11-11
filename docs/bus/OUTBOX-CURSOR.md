@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:35 PM CT) — BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)
+- **PRIOR:** #28867 Settlements T5 ReadyDots; #28866 R2; #28864 owner order.
+- **THIS:** BookLoadStops/Equipment/Customer + book-load-v4 helpers use text-section-header. Baseline banked 103→82. ROUND 8.12 continues.
+- **NEXT:** Cursor boards #12–21 / #4–8 / #32–42 under ROUND 8.12. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:25 PM CT) — ROUND 8.12 progress + Settlements T5 ReadyDots follow ready_total
 - **PRIOR:** #28866 R2 raw_font_sizes 133→103; #28864 owner full-board order.
 - **THIS:** Settlements Open ReadyDots no longer hard-code 6 — dots = engine `ready_total` (— when unmeasured). Board order Settlement→Driver→Unit→Tour legs already live. ROUND 8.12 Cursor boards in progress: #12 TruckPlanner / #13 LoadHistory / #14–17 BookLoad coded pending live proof; #33 Open T5 readiness prose aligned.

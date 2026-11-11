@@ -40,7 +40,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
   );
 
   return (
-    <div className="rounded-sm border border-[#E5E7EB] bg-[#FEF3C7] px-3 py-2 text-[11px] text-[#1F2A44]">
+    <div className="rounded-sm border border-[#E5E7EB] bg-[#FEF3C7] px-3 py-2 text-section-header text-[#1F2A44]">
       <div className="mb-2 font-semibold uppercase tracking-wide">Expected adjustments</div>
       <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
         <div className="space-y-1 p-2">
@@ -89,7 +89,7 @@ export function ExpectedAdjustmentsCallout({ register, operatingCompanyId, watch
                 }}
               />
               {detentionReasonsQuery.isError ? (
-                <div className="bg-red-50 p-2 text-[11px] text-red-700" role="alert">
+                <div className="bg-red-50 p-2 text-section-header text-red-700" role="alert">
                   <div>Couldn't load detention reasons.</div>
                   <button
                     type="button"
