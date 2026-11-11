@@ -93,7 +93,7 @@ export function HistoryTab({ reports, loading, onOpen, onAmend, onPrint }: Props
   return (
     <div className="space-y-3 p-4">
       <div className="rounded-sm border bg-white">
-        <ParityTable
+        <ParityTable appearance="board"
           title="Form 425C filing history"
           rows={filtered}
           columns={columns}
