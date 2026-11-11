@@ -77,7 +77,7 @@ export function SettlementDisputeList({ driverId }: { driverId?: string } = {}) 
           Could not load settlement disputes. <button type="button" className="font-semibold underline" onClick={() => void refetch()}>Retry</button>
         </div>
       ) : null}
-      {!isError ? <ParityTable<SettlementDisputeRow>
+      {!isError ? <ParityTable<SettlementDisputeRow> appearance="board"
         title="Settlement disputes"
         storageKey="driver-settlement-disputes"
         emptyText={isSuccess ? "No settlement disputes found." : undefined}

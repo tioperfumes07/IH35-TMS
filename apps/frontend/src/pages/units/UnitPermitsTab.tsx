@@ -164,7 +164,7 @@ export function UnitPermitsTab({ unitId, companyId }: UnitPermitsTabProps) {
         </div>
       ) : (
         <div className="mt-2">
-          <ParityTable
+          <ParityTable appearance="board"
             columns={columns}
             rows={rows}
             rowKey={(permit) => permit.uuid}
