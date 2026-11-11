@@ -353,6 +353,17 @@ if (fs.existsSync(BOOKLADMODALV4)) {
   }
 }
 
+// GLB-05 batch82 (2026-11-10): AvailableTrucksPage.tsx used text-sm (14px, off locked scale) in
+// the capacity-preview container div — replaced with text-xs (12px). Lock the regression out.
+const AVAILABLETRUCKS = path.join(SRC, "pages/dispatch/AvailableTrucksPage.tsx");
+if (fs.existsSync(AVAILABLETRUCKS)) {
+  const atSource = fs.readFileSync(AVAILABLETRUCKS, "utf8");
+  if (atSource.includes("capacity-preview") && /data-testid="capacity-preview"[^>]*text-sm/.test(atSource)) {
+    console.error(`${LABEL}: FAIL — GLB-05 batch82 regression in AvailableTrucksPage.tsx: text-sm on capacity-preview must not reappear (fixed 2026-11-10; use text-xs)`);
+    process.exit(1);
+  }
+}
+
 console.log(`${LABEL}: PASS`);
 for (const b of better) console.log(`  improved  ${b}`);
 if (better.length) console.log(`  run with --lower to bank it into the baseline`);
