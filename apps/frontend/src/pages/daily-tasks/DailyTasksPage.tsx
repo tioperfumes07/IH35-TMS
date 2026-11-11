@@ -403,7 +403,7 @@ export function DailyTasksPage() {
           />
         </div>
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           title={VIEW_LABEL[view]}
           rows={activeRows}
           columns={columns}
