@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:15 PM CT) — ROUND 8.11 R2 FIXED: raw_font_sizes 133→103 (BookLoad + Planner semantic classes)
+- **PRIOR:** #28864 owner ALL-CODERS full-board order relayed.
+- **THIS:** BookLoadModalV4 + DispatchPlannersLayout `text-[11px]` → `text-section-header`. ui-design-system-ratchet PASS; baseline banked 129→103. ROUND 8.12 boards next. No match/Dreamline.
+- **NEXT:** ROUND 8.12 first Cursor board DONE (TruckPlanner / LoadHistory / BookLoad). Cascade R5 remains Cascade.
+
 ## OUTBOX (11-11-2026 ~5:00 PM CT) — OWNER ORDER relayed to ALL CODERS: full board-identical NOT shell
 - **PRIOR:** #28862 PostingGrid appearance=board; unowned pages/portal appearance sweep DONE.
 - **THIS:** Posted `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Owner verbatim: design changes pages/tabs/modules/subtabs — full complete build exactly as design, not shell, not over previous. Tipped INBOX Cursor/Cascade/Codex/CC-1/CC-2/CC-3.
