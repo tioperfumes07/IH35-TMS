@@ -351,7 +351,7 @@ export function QBOSyncStatusDashboardPage() {
       </div>
 
       <div className="grid gap-3 xl:grid-cols-[1fr_320px]">
-        <ParityTable
+        <ParityTable appearance="board"
           title="QuickBooks sync runs"
           rows={runs}
           columns={runColumns}

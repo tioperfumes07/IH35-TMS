@@ -237,7 +237,7 @@ export function SamsaraIntegrationPage() {
           </div>
         </div>
         {rosterQuery.isError ? <p className="text-xs text-red-700">Samsara roster could not be loaded.</p> : null}
-        <ParityTable columns={rosterColumns} rows={rosterQuery.data?.rows ?? []} rowKey={(row) => row.id}
+        <ParityTable appearance="board" columns={rosterColumns} rows={rosterQuery.data?.rows ?? []} rowKey={(row) => row.id}
           loading={rosterQuery.isLoading} emptyText={`No ${rosterStatus} Samsara drivers`} storageKey="integrations:samsara:driver-roster" />
       </section>
     </div>

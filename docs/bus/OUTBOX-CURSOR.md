@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~2:15 AM CT) — Low-guard residual ParityTables appearance=board wave4
+- **PRIOR:** #28841 low-guard board wave3.
+- **THIS:** Samsara/QBO/vendor-mapping/form425c/tasks ParityTables appearance=board (≤35 guards). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~2:00 AM CT) — Low-guard residual ParityTables appearance=board wave3 (8 tables)
 - **PRIOR:** #28840 low-guard board wave2.
 - **THIS:** 8 ParityTables / 7 files (qbo-sync/tasks/program/admin/drivers/eld) appearance=board (≤38 guards). Engines unchanged. Cascade owns R5.
@@ -52,6 +57,7 @@
 - **PRIOR:** #28824 Fuel+AVP appearance=board.
 - **THIS:** Legal module ParityTables appearance=board (matters/templates/contracts/alerts/policies/attorney). Engines unchanged. R4–R6 Cascade.
 - **NEXT:** Maint/Insurance/Compliance/Safety board tables; Cascade owns R*. No match/Dreamline.
+
 ## OUTBOX (11-10-2026 ~8:10 PM CT) — Legal/Maint/Insurance/Compliance/Safety board tables
 - **PRIOR:** #28824 Fuel+AVP appearance=board.
 - **THIS:** 125 ParityTables across Legal/Maintenance/Insurance/Compliance/Safety gain appearance=board (board anti-clip grammar). Engines unchanged. R4–R6 Cascade.
@@ -95,36 +101,6 @@
 ## OUTBOX (11-10-2026 ~6:45 PM CT) — F1/F2 Fuel Home diesel board engines
 - **PRIOR:** #28815 U12 Filings status tiles multi-select.
 - **THIS:** FuelHome Diesel FleetTruck + Spend bar + appearance=board. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:35 PM CT) — U12 Filings status tiles multi-select
-- **PRIOR:** #28813 U12 Truck Planner Status multi-select.
-- **THIS:** FilingsComplianceDueSection status tiles OR multi-select. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:25 PM CT) — U12 Truck Planner Status multi-select
-- **PRIOR:** #28811 U12 DVIR Defects triage Status multi-select.
-- **THIS:** PlannerEntityFilters Status → MultiSelectDropdown; entityFilters.status string[]. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:15 PM CT) — U12 DVIR Defects triage Status multi-select
-- **PRIOR:** #28810 U12 Road Service Status multi-select.
-- **THIS:** DefectsInboxPage Triage status → MultiSelectDropdown. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~6:05 PM CT) — U12 Road Service Status multi-select
-- **PRIOR:** #28809 U12 Truck Line Status multi-select.
-- **THIS:** RoadServiceList Status pills → MultiSelectDropdown. R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~5:55 PM CT) — U12 Truck Line Status multi-select
-- **PRIOR:** #28806 CF4 AVP money-axis 11px.
-- **THIS:** TruckLineBoard Status → MultiSelectDropdown (OR buckets via legBuckets). R4–R6 Cascade.
-- **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~5:40 PM CT) — CF4 AVP chart money-axis 11px
-- **PRIOR:** #28805 CF5 Rolling Ledger board anti-clip.
-- **THIS:** ActualVsProjected chart Y money labels 10→11 Inter with nowrap. R4–R6 Cascade.
 - **NEXT:** residual boards; Cascade owns R*. No match/Dreamline.
 
 ## ARCHIVE
