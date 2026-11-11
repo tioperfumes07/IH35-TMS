@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave17
+- **PRIOR:** prior residual board wave.
+- **THIS:** HistoryTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave16
 - **PRIOR:** prior residual board wave.
 - **THIS:** ViolationsTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
@@ -87,11 +92,6 @@
 - **PRIOR:** #28836 R1 planner driverIds MultiSelectDropdown.
 - **THIS:** R2/R3 BookLoad off-scale type → locked scale; AvailableTrucks text-sm→text-xs; R4 accessorial+invoice MoneyCell→load. Cascade owns R5.
 - **NEXT:** tip DONE SHA after merge. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~11:50 PM CT) — ROUND 8.10 Cursor R1 planner driver multi-select
-- **PRIOR:** #28833 Shared/vehicle/trailer/fleet appearance=board.
-- **THIS:** R1 DispatchPlannersLayout driver MultiSelectDropdown + driverIds[]; TruckPlanner matches any selected. R2–R4 BookLoad follow in next ship. Cascade owns R5.
-- **NEXT:** R2–R4 BookLoad type/money. No match/Dreamline.
 
 ## ARCHIVE
 Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet OUTBOX≤200).
