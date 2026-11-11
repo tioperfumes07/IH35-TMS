@@ -213,7 +213,7 @@ export function DriverPaymentMethodsCard({ driverId, companyId }: { driverId: st
             onRetry={() => void methodsQuery.refetch()}
           />
         ) : (
-          <ParityTable<DriverPaymentMethod>
+          <ParityTable<DriverPaymentMethod> appearance="board"
             columns={columns}
             rows={methods}
             rowKey={(m) => m.id}

@@ -172,7 +172,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
 
   return (
     <div className="space-y-2" data-vendors-list-view="true" data-bulk-selectable="true" data-entity-type="vendors">
-      <ParityTable<VendorRow>
+      <ParityTable<VendorRow> appearance="board"
         key={tableResetKey}
         rows={filteredRows}
         rowKey={(row) => row.id}

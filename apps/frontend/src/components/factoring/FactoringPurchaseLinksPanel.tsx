@@ -52,7 +52,7 @@ export function FactoringPurchaseLinksPanel({ companyId, filter, emptyText = "No
     );
   }
   return (
-    <ParityTable<PurchaseRow>
+    <ParityTable<PurchaseRow> appearance="board"
       tableTestId="factoring-purchase-links"
       rows={rows}
       rowKey={(p) => p.id}

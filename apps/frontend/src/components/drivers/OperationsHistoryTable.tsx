@@ -172,7 +172,7 @@ export function OperationsHistoryTable({ driverId, operatingCompanyId, subView, 
         />
       ) : (
         <div className="overflow-x-auto rounded-sm border border-gray-200 bg-white p-2">
-          <ParityTable
+          <ParityTable appearance="board"
             rows={keyedRows}
             columns={parityColumns}
             rowKey={(row) => String(row.__rowKey)}

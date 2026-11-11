@@ -194,7 +194,7 @@ export function DriverProfileStopsMilesSection({
           onRetry={() => void q.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           storageKey="driver-profile-stops-miles"
           tableTestId="driver-profile-stops-miles-table"
           columns={columns}

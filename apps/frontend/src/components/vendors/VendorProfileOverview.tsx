@@ -154,7 +154,7 @@ export function VendorProfileOverview(props: { operatingCompanyId: string; vendo
       </div>
 
       <ProfileSection title={`Open bills (${p.open_bills.value.length})`} testId="vendor-profile-open-bills" reason={p.open_bills.empty_reason}>
-        {p.open_bills.value.length ? <ParityTable columns={billCols} rows={p.open_bills.value} rowKey={(r) => r.id} onRowClick={(r) => go(navigate, "bill", r.id)} density="compact" suppressToolbarRange /> : null}
+        {p.open_bills.value.length ? <ParityTable appearance="board" columns={billCols} rows={p.open_bills.value} rowKey={(r) => r.id} onRowClick={(r) => go(navigate, "bill", r.id)} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 
       <ProfileSection title="Insurance & authority" testId="vendor-profile-insurance-authority" reason={p.insurance_authority.empty_reason}>
@@ -165,23 +165,23 @@ export function VendorProfileOverview(props: { operatingCompanyId: string; vendo
           ["Operating status", ia.authority.out_of_service ?? "—"],
           ["Verified", d(ia.authority.verified_at)],
         ]} />
-        {ia.policies.length ? <ParityTable columns={policyCols} rows={ia.policies} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
+        {ia.policies.length ? <ParityTable appearance="board" columns={policyCols} rows={ia.policies} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 
       <ProfileSection title={`Work orders (${p.work_orders.value.length})`} testId="vendor-profile-work-orders" reason={p.work_orders.empty_reason}>
-        {p.work_orders.value.length ? <ParityTable columns={woCols} rows={p.work_orders.value} rowKey={(r) => r.id} onRowClick={(r) => go(navigate, "work_order", r.id)} density="compact" suppressToolbarRange /> : null}
+        {p.work_orders.value.length ? <ParityTable appearance="board" columns={woCols} rows={p.work_orders.value} rowKey={(r) => r.id} onRowClick={(r) => go(navigate, "work_order", r.id)} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 
       <ProfileSection title={`Fuel — ${fu.txns_90d} purchases, ${formatQuantityTable(fu.gallons_90d)} gal in 90 days`} testId="vendor-profile-fuel" reason={p.fuel.empty_reason}>
-        {fu.recent.length ? <ParityTable columns={fuelCols} rows={fu.recent} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
+        {fu.recent.length ? <ParityTable appearance="board" columns={fuelCols} rows={fu.recent} rowKey={(r) => r.id} density="compact" suppressToolbarRange /> : null}
       </ProfileSection>
 
       <div className="grid gap-2 lg:grid-cols-2">
         <ProfileSection title={`Lanes & locations (${p.lanes.value.length})`} testId="vendor-profile-lanes" reason={p.lanes.empty_reason}>
-          {p.lanes.value.length ? <ParityTable columns={laneCols} rows={p.lanes.value} rowKey={(r) => `${r.source}:${r.id ?? ""}:${r.city ?? ""}:${r.state ?? ""}`} density="compact" suppressToolbarRange /> : null}
+          {p.lanes.value.length ? <ParityTable appearance="board" columns={laneCols} rows={p.lanes.value} rowKey={(r) => `${r.source}:${r.id ?? ""}:${r.city ?? ""}:${r.state ?? ""}`} density="compact" suppressToolbarRange /> : null}
         </ProfileSection>
         <ProfileSection title={`History (${p.history.value.length})`} testId="vendor-profile-history" reason={p.history.empty_reason}>
-          {p.history.value.length ? <ParityTable columns={histCols} rows={p.history.value} rowKey={(r) => `${r.kind}:${r.id}`} onRowClick={(r) => go(navigate, r.kind, r.id)} density="compact" suppressToolbarRange /> : null}
+          {p.history.value.length ? <ParityTable appearance="board" columns={histCols} rows={p.history.value} rowKey={(r) => `${r.kind}:${r.id}`} onRowClick={(r) => go(navigate, r.kind, r.id)} density="compact" suppressToolbarRange /> : null}
         </ProfileSection>
       </div>
     </div>

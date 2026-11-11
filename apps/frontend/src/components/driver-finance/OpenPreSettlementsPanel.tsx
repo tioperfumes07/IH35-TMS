@@ -147,7 +147,7 @@ export function OpenPreSettlementsPanel({ rows, loading = false, isError = false
         </p>
       ) : null}
       {!loading && !isError && rows.length > 0 ? (
-        <ParityTable storageKey="dispatch-open-pre-settlements" columns={columns} rows={rows} rowKey={(row) => row.settlement_id} rowTestId={() => "open-pre-settlement-row"} hidePager pageSize={Math.max(1, rows.length)} />
+        <ParityTable appearance="board" storageKey="dispatch-open-pre-settlements" columns={columns} rows={rows} rowKey={(row) => row.settlement_id} rowTestId={() => "open-pre-settlement-row"} hidePager pageSize={Math.max(1, rows.length)} />
       ) : null}
       {!loading && !isError && rows.length === 0 ? (
         <p className="px-2 py-2 text-xs text-gray-500" data-testid="dispatch-open-pre-settlements-honest-empty">

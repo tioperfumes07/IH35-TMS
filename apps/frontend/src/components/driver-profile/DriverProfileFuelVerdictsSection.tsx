@@ -107,7 +107,7 @@ export function DriverProfileFuelVerdictsSection({
         {q.isError ? (
           <ListErrorState title="Couldn't load fuel verdicts" status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="driver-profile-fuel-verdicts"
             tableTestId="driver-profile-fuel-verdicts-table"
             columns={columns}
