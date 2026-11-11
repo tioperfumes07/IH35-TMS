@@ -66,7 +66,7 @@ export function CollapsibleProfileCard({
         </div>
         <div className="flex items-center gap-2">
           {badge != null ? (
-            <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-[11px] font-semibold tabular-nums text-[#1F2A44]" data-testid={`collapsible-card-count-${cardId}`}>
+            <span className="rounded-full bg-[#F7F8FA] px-2 py-0.5 text-section-header font-semibold tabular-nums text-[#1F2A44]" data-testid={`collapsible-card-count-${cardId}`}>
               {badge}
             </span>
           ) : null}

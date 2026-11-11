@@ -25,12 +25,12 @@ export function InstallPWAPrompt() {
     <div className="rounded-sm border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
       <div className="flex items-start justify-between gap-2">
         <p>{t("driver.install_prompt")}</p>
-        <button type="button" className="shrink-0 rounded-sm border border-amber-300 px-2 py-0.5 text-[11px] font-semibold" onClick={() => setOpen(!open)}>
+        <button type="button" className="shrink-0 rounded-sm border border-amber-300 px-2 py-0.5 text-section-header font-semibold" onClick={() => setOpen(!open)}>
           {t("driver.install_button")}
         </button>
       </div>
       {open ? (
-        <ol className="mt-2 list-decimal space-y-1 pl-4 text-[11px]">
+        <ol className="mt-2 list-decimal space-y-1 pl-4 text-section-header">
           <li>Tap the Share button in Safari.</li>
           <li>Choose &quot;Add to Home Screen&quot;.</li>
           <li>Open IH35 from the home screen icon.</li>

@@ -155,11 +155,11 @@ export function DrillKpiCard({
       <div className={labelClass}>{label}</div>
       <div className={valueClass}>{displayValue}</div>
       {emptyExplain ? (
-        <div className="mt-0.5 text-[11px] leading-snug text-gray-500" data-kpi-empty-reason="true">
+        <div className="mt-0.5 text-section-header leading-snug text-gray-500" data-kpi-empty-reason="true">
           {emptyExplain}
         </div>
       ) : hint ? (
-        <div className="mt-0.5 text-[11px] leading-snug text-gray-500">{hint}</div>
+        <div className="mt-0.5 text-section-header leading-snug text-gray-500">{hint}</div>
       ) : null}
     </>
   );

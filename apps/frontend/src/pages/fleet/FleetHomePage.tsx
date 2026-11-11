@@ -403,7 +403,7 @@ function AttentionCard({
 }) {
   return (
     <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="fleet-attention-card">
-      <h2 className="mb-2 text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
+      <h2 className="mb-2 text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{title}</h2>
       {rows.length === 0 ? (
         <p className="text-xs text-[#6B7280]">{empty}</p>
       ) : (

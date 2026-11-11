@@ -517,7 +517,7 @@ export function Combobox({
             ) : null}
             {!loading && !listCapNotice && localBrowseTruncated ? (
               <div
-                className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-[11px] text-[#4B5563]"
+                className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-section-header text-[#4B5563]"
                 data-testid="combobox-truncated-notice"
               >
                 Showing first {MAX_VISIBLE_OPTIONS} — type to search the rest
@@ -545,7 +545,7 @@ export function Combobox({
                     }`}
                   >
                     <div>{option.label}</div>
-                    {option.sublabel ? <div className="text-[11px] text-gray-500">{option.sublabel}</div> : null}
+                    {option.sublabel ? <div className="text-section-header text-gray-500">{option.sublabel}</div> : null}
                   </button>
                 );
               })}
@@ -661,7 +661,7 @@ export function Combobox({
           </button>
         ) : null}
       </div>
-      {error ? <p className="mt-1 text-[11px] text-red-600">{error}</p> : null}
+      {error ? <p className="mt-1 text-section-header text-red-600">{error}</p> : null}
       {listbox}
     </div>
   );

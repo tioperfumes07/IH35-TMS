@@ -1655,7 +1655,7 @@ export function ParityTable<T>({
           hideRange={suppressToolbarRange}
           className="min-w-0 flex-1"
         />
-        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-[11px] text-gray-600">
+        <div className="flex min-w-0 max-w-full flex-wrap items-center gap-2 text-section-header text-gray-600">
           {selectable && selected.size > 0 ? (
             <div className="flex flex-wrap items-center gap-2">
               <span
@@ -1676,7 +1676,7 @@ export function ParityTable<T>({
               {pageOnlySelected ? (
                 <button
                   type="button"
-                  className="rounded-sm border border-[#6B7280] bg-[#F7F8FA] px-2 py-1 text-[11px] font-semibold text-[#0F1219]"
+                  className="rounded-sm border border-[#6B7280] bg-[#F7F8FA] px-2 py-1 text-section-header font-semibold text-[#0F1219]"
                   data-testid="parity-select-all-matching"
                   onClick={selectAllMatching}
                 >
@@ -1743,7 +1743,7 @@ export function ParityTable<T>({
               ? createPortal(
               <div ref={gearPanelRef} className="w-60 rounded-md border border-gray-200 bg-white p-2 shadow-lg" style={gearPanelStyle}>
                 <div className="mb-2">
-                  <label htmlFor="parity-gear-page-size" className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                  <label htmlFor="parity-gear-page-size" className="mb-1 block text-section-header font-semibold uppercase tracking-wide text-gray-500">
                     Rows per page
                   </label>
                   <select
@@ -1765,7 +1765,7 @@ export function ParityTable<T>({
                     ))}
                   </select>
                 </div>
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <div className="mb-1 text-section-header font-semibold uppercase tracking-wide text-gray-500">
                   Density
                 </div>
                 <div className="mb-2 flex flex-col gap-0.5">
@@ -1781,7 +1781,7 @@ export function ParityTable<T>({
                     </label>
                   ))}
                 </div>
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                <div className="mb-1 text-section-header font-semibold uppercase tracking-wide text-gray-500">
                   Columns
                 </div>
                 <div className="max-h-48 overflow-auto">
@@ -2046,13 +2046,13 @@ export function ParityTable<T>({
         <tbody>
           {loading ? (
             <tr>
-              <td colSpan={colSpan} className="px-2 py-3 text-center text-[11px] text-gray-500">
+              <td colSpan={colSpan} className="px-2 py-3 text-center text-section-header text-gray-500">
                 Loading…
               </td>
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-              <td colSpan={colSpan} className="px-2 py-3 text-center text-[11px] text-gray-500">
+              <td colSpan={colSpan} className="px-2 py-3 text-center text-section-header text-gray-500">
                 {emptyText}
               </td>
             </tr>
@@ -2140,7 +2140,7 @@ export function ParityTable<T>({
       {/* Advanced pager — hidePager (A3) suppresses the built-in chrome so an external pager can own the UI. */}
       {hidePager ? null : (
       <div
-        className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-2 py-1.5 text-[11px]"
+        className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-2 py-1.5 text-section-header"
         style={{ color: colors.mutedText }}
       >
         <div className="flex items-center gap-2">

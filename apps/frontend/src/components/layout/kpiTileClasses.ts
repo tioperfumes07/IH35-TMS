@@ -6,8 +6,8 @@
 export function kpiTileClasses(size: "sm" | "md" = "sm") {
   const compact = size === "sm";
   return {
-    shell: "block h-full w-full min-w-0 rounded-sm border px-2 py-1 text-center" + (compact ? " text-[11px]" : ""),
-    label: "text-[11px] uppercase tracking-wide text-gray-500",
+    shell: "block h-full w-full min-w-0 rounded-sm border px-2 py-1 text-center" + (compact ? " text-section-header" : ""),
+    label: "text-section-header uppercase tracking-wide text-gray-500",
     value: compact ? "font-semibold" : "mt-1 text-page-title font-semibold text-gray-900",
   };
 }

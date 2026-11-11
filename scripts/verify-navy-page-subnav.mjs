@@ -51,8 +51,10 @@ for (const error of responsiveNavigationErrors(component)) fail(error);
 if (!component.includes("bg-[#14314F]")) fail("NavyPageSubNav missing locked token: bg-[#14314F]");
 else pass("bg-[#14314F] present");
 
-if (!component.includes("text-[11px]")) fail("NavyPageSubNav missing locked token: text-[11px]");
-else pass("text-[11px] present");
+// ROUND 8.12 — locked 11px is .text-section-header (raw text-[11px] raises ui-design-system-ratchet).
+if (!component.includes("text-section-header") && !component.includes("text-[11px]")) {
+  fail("NavyPageSubNav missing locked 11px token: text-section-header (or legacy text-[11px])");
+} else pass("text-section-header (11px) present");
 
 if (!component.includes("text-white")) fail("NavyPageSubNav missing locked token: text-white");
 else pass("text-white present");

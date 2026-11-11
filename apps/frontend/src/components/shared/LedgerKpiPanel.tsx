@@ -251,7 +251,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
                 check the tile's headline against the sum of its parts without leaving the modal. */}
             {drillKpi?.buckets?.length ? (
               <div className="mb-3" data-testid={`${domain}-kpi-drill-breakdown`}>
-                <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Breakdown</div>
+                <div className="mb-1 text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">Breakdown</div>
                 <ParityTable<NonNullable<LedgerKpi["buckets"]>[number]> appearance="board"
                   storageKey={`${domain}-kpi-drill-buckets`}
                   tableTestId={`${domain}-kpi-drill-buckets`}

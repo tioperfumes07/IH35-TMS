@@ -219,7 +219,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
               ref={menuRef}
               id={menuId}
               role="menu"
-              className="rounded-sm border border-gray-200 bg-white py-1 text-[11px] text-gray-700 shadow-md"
+              className="rounded-sm border border-gray-200 bg-white py-1 text-section-header text-gray-700 shadow-md"
               style={menuStyle}
               onKeyDown={onMenuKeyDown}
               // Portal is outside the trigger wrapper — keep open while pointer is over the menu,
@@ -289,7 +289,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
       aria-label="Section navigation"
       data-testid="navy-page-subnav"
       data-c22-tab-height="h-7"
-      className="min-h-9 min-w-0 max-w-full shrink-0 overflow-x-auto rounded-sm bg-[#14314F] px-2 py-1 text-[11px] text-white"
+      className="min-h-9 min-w-0 max-w-full shrink-0 overflow-x-auto rounded-sm bg-[#14314F] px-2 py-1 text-section-header text-white"
     >
       <div className="flex min-w-max items-center gap-4">
         {items.map((item, index) => {

@@ -1,3 +1,13 @@
+## OUTBOX (11-11-2026 ~5:55 PM CT) — BOARD-45: raw_font_sizes 79→0 + completion register (43/45 CODE; R5/R6 Cascade OPEN)
+- **PRIOR:** Owner no-stop until all 45; #28870 type-scale.
+- **THIS:** App-wide locked type scale — every remaining text-[Npx] → semantic classes; baseline raw_font_sizes **0**. BOARD-45-COMPLETION-REGISTER.md: 43 CODE, #30/#31 Cascade OPEN (R5/R6). Shared shell 42px/66px/Inter. No match/Dreamline.
+- **NEXT:** Cascade R5/R6; Codex LIVE proof per board. Cursor continues reverse-wiring audits on #4–8/#12–21/#32–42.
+
+## OUTBOX (11-11-2026 ~5:35 PM CT) — OWNER: do not stop until all 45 boards COMPLETE (full wire, reverse, no layer)
+- **PRIOR:** #28870 type-scale; #28871 Lead 8.7d settlements.
+- **THIS:** Owner: all 45 boards — modules/tabs/subtabs fully built to spec, fully connected/wired/rendering, NOT layered on old code, DOUBLE WIRED + REVERSED. No pause. No drift. Executing ROUND 8.12 Cursor set first (#4–8,#12–21,#32–42), then other-seat boards with SURFACE-BREACH per owner design-complete authorization.
+- **NEXT:** Board #12 TruckPlanner DONE proof ship → #13 → #14–17 → Settlements → Factoring/Fuel/Insurance/Legal/CashFlow. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:45 PM CT) — Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)
 - **PRIOR:** #28869 BookLoad helpers 103→82; #28867 T5; #28866 R2; #28864/#28865 owner FULL BOARD law to all seats.
 - **THIS:** LoadStopsRecordTab + LoadHistoryDetailPanel text-[11px]/text-[12px] → text-section-header/text-xs. Baseline 82→79.
