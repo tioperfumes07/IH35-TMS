@@ -240,7 +240,7 @@ export function TrailerReeferSection({
       <div className="mt-4">
         <h3 className="text-xs font-semibold text-gray-700">Hours history</h3>
         <div className="mt-2">
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="trailer-reefer-hours-history"
             tableTestId="reefer-hours-history"
             columns={historyColumns}

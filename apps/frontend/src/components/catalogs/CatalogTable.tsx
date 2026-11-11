@@ -112,7 +112,7 @@ export function CatalogTable({
 
   return (
     <div className="space-y-2">
-      <ParityTable<CatalogRow>
+      <ParityTable appearance="board"<CatalogRow>
         key={tableResetKey}
         storageKey={`catalog-table-${catalogName}`}
         tableTestId="catalog-table"

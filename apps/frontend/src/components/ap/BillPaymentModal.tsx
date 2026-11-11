@@ -340,7 +340,7 @@ export function BillPaymentModal({ open, operatingCompanyId, vendorId, vendorNam
         </label>
 
         {/* ACCT-F3590: embedded ParityTable owns Search+Range+gear; selectable when manual apply. */}
-        <ParityTable<VendorBill>
+        <ParityTable appearance="board"<VendorBill>
           embedded
           rows={openBills}
           rowKey={(bill) => bill.id}

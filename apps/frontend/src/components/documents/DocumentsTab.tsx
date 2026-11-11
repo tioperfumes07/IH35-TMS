@@ -200,7 +200,7 @@ export function DocumentsTab({ entityType, entityId, entityName, operatingCompan
 
       {documentsError ? <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{documentsError}</div> : null}
 
-      <ParityTable<DocsFile>
+      <ParityTable appearance="board"<DocsFile>
         storageKey="entity-documents-tab"
         rows={filteredFiles}
         rowKey={(row) => row.id}

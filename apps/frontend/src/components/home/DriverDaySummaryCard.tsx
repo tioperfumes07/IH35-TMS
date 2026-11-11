@@ -131,7 +131,7 @@ export function DriverDaySummaryCard({ operatingCompanyId }: Props) {
             Search/Range/gear/Filter stay present when has_data=false. Honest empty copy
             stays in emptyText (neutral slate via ParityTable empty cell), never a red error.
           */}
-          <ParityTable
+          <ParityTable appearance="board"
             rows={filteredRows}
             columns={columns}
             rowKey={(row) => row.driver_id}

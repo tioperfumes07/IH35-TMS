@@ -91,7 +91,7 @@ export function DocumentsSection({
       </div>
       {photosSlot}
       <div className="mt-3">
-        <ParityTable
+        <ParityTable appearance="board"
           rows={documents}
           columns={columns}
           rowKey={(row) => row.file_id}

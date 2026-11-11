@@ -75,7 +75,7 @@ export function TaskLinkPicker({ operatingCompanyId, targetType, targetId, label
             <p className="text-xs text-gray-500">Loading open tasks…</p>
           ) : (
             /* TASK-F3582: embedded ParityTable owns Search+Range+gear inside the link-task modal. */
-            <ParityTable<Task>
+            <ParityTable appearance="board"<Task>
               embedded
               rows={openTasks}
               rowKey={(t) => t.task_id}

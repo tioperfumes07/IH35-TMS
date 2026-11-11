@@ -65,7 +65,7 @@ export function UnitMaintenanceHistorySection({ operatingCompanyId, unitId }: { 
   return (
     <section className="mt-3 overflow-hidden rounded-sm border border-gray-200 bg-white" data-testid="unit-maintenance-history">
       <div className="border-b border-gray-200 px-3 py-2"><h2 className="text-xs font-semibold text-gray-800">Maintenance History</h2></div>
-      <ParityTable storageKey="unit-maintenance-history" tableTestId="unit-maintenance-history-table" columns={buildColumns(operatingCompanyId)} rows={query.data?.rows ?? []} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No work orders are linked to this unit." initialPageSize={25} pageSizeOptions={[25, 50, 100]} />
+      <ParityTable appearance="board" storageKey="unit-maintenance-history" tableTestId="unit-maintenance-history-table" columns={buildColumns(operatingCompanyId)} rows={query.data?.rows ?? []} rowKey={(row) => row.id} loading={query.isLoading} emptyText="No work orders are linked to this unit." initialPageSize={25} pageSizeOptions={[25, 50, 100]} />
     </section>
   );
 }

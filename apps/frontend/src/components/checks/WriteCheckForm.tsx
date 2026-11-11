@@ -1354,7 +1354,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
             ) : null}
             {billsToPay.length > 0 ? (
               <div className="mb-2 border border-gray-200">
-                <ParityTable<VendorBill>
+                <ParityTable appearance="board"<VendorBill>
                   columns={billsToPayColumns}
                   rows={filteredBillsToPay}
                   rowKey={(b) => b.id}
@@ -1684,7 +1684,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           <>
         {/* Category details grid (spec step 3) -- always present; a check needs at least one line. */}
         <div className="rounded border border-gray-200">
-          <ParityTable<DraftLine>
+          <ParityTable appearance="board"<DraftLine>
             columns={categoryColumns}
             rows={categoryLines}
             rowKey={(line) => line.key}
@@ -1716,7 +1716,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
           </button>
         ) : (
           <div className="rounded border border-gray-200">
-            <ParityTable<DraftLine>
+            <ParityTable appearance="board"<DraftLine>
               columns={itemColumns}
               rows={itemLines}
               rowKey={(line) => line.key}

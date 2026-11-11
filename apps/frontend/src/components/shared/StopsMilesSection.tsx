@@ -140,7 +140,7 @@ export function StopsMilesSection({
           onRetry={() => void q.refetch()}
         />
       ) : (
-        <ParityTable
+        <ParityTable appearance="board"
           rows={rows}
           columns={columns}
           rowKey={(row) => `${row.unit_id}-${row.started_at}`}

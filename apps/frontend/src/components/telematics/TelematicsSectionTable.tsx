@@ -9,7 +9,7 @@ export function SectionTable({ ownerKey, section, rows }: { ownerKey: string; se
         {section.title} ({rows.length})
       </h4>
       <p className="text-xs text-[#4B5563]">{section.note}</p>
-      <ParityTable
+      <ParityTable appearance="board"
         rows={rows}
         columns={section.columns}
         rowKey={(row) => String(row.id ?? row.stop_id ?? `${row.started_at ?? row.read_at ?? ""}-${rows.indexOf(row)}`)}

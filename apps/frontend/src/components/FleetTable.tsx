@@ -529,7 +529,7 @@ export function FleetTable({
 
   return (
     <div className="space-y-2">
-      <ParityTable<FleetRow>
+      <ParityTable appearance="board"<FleetRow>
         tableTestId="fleet-table"
         rowTestId={(row) => `fleet-row-${row.id}`}
         storageKey={showMaintenanceColumns ? "fleet-roster-maint" : "fleet-roster"}
