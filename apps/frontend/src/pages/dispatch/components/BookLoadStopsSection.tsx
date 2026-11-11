@@ -126,8 +126,8 @@ export function BookLoadStopsSection({
           const isPickup = String(currentStops[index]?.stop_type ?? (index % 2 === 0 ? "pickup" : "delivery")) === "pickup";
           return (
             <div key={field.id} data-testid={`stop-card-${index}`} className="min-w-0 overflow-hidden rounded-sm border border-gray-200 bg-white">
-              <div className={`flex items-center gap-2 px-2 py-1 text-[11px] font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-[#E5E7EB] text-[#0F1219]"}`}>
-                <span className={`rounded-sm px-1.5 py-0.5 text-[11px] font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-[#4B5563] text-white"}`}>
+              <div className={`flex items-center gap-2 px-2 py-1 text-section-header font-bold tracking-[0.03em] ${isPickup ? "bg-[#1F2A44] text-white" : "bg-[#E5E7EB] text-[#0F1219]"}`}>
+                <span className={`rounded-sm px-1.5 py-0.5 text-section-header font-semibold uppercase ${isPickup ? "bg-white/20 text-white" : "bg-[#4B5563] text-white"}`}>
                   {isPickup ? "PICKUP" : "DELIVERY"}
                 </span>
                 <span>Stop {index + 1}</span>
@@ -412,7 +412,7 @@ export function BookLoadStopsSection({
 function Field({ label, input }: { label: string; input: JSX.Element }) {
   return (
     <div className="min-w-0 w-full space-y-0.5">
-      <label className="block whitespace-nowrap text-[11px] font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
+      <label className="block whitespace-nowrap text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
       {input}
     </div>
   );

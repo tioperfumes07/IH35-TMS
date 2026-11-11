@@ -93,7 +93,7 @@ export function BookLoadCustomerSection({
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
         <div className="space-y-1 md:col-span-2">
           <input type="hidden" {...register("customer_id", { required: "Select a customer from QuickBooks search results" })} />
-          <label className="text-[11px] font-semibold text-gray-600">Customer *</label>
+          <label className="text-section-header font-semibold text-gray-600">Customer *</label>
           {operatingCompanyId && setValue ? (
             <ReferenceSelect
               value={watch("customer_id") || null}
@@ -128,7 +128,7 @@ export function BookLoadCustomerSection({
           {/* GO-21 A2: an empty or short result must say why — never a silent short list. Distinct
               from the loading/error states above and the truncation notice below. */}
           {!customersQuery.isError && !customersQuery.isLoading && customerSearch.trim() && (customersQuery.data ?? []).length === 0 ? (
-            <p className="text-[11px] text-[#4B5563]" data-testid="book-load-customer-no-matches">
+            <p className="text-section-header text-[#4B5563]" data-testid="book-load-customer-no-matches">
               No customers match “{customerSearch.trim()}”. Check the spelling, or{" "}
               <span className="font-semibold">+ Add new</span> if this is a new customer.
             </p>
@@ -142,9 +142,9 @@ export function BookLoadCustomerSection({
             shown={customersQuery.data?.length ?? 0}
             limit={AUTOCOMPLETE_LIMIT}
             hint="Keep typing to narrow — this search covers every customer, not just what's shown."
-            className="text-[11px] text-[#4B5563]"
+            className="text-section-header text-[#4B5563]"
           />
-          {customerIdError ? <p className="text-[11px] text-red-600">{customerIdError}</p> : null}
+          {customerIdError ? <p className="text-section-header text-red-600">{customerIdError}</p> : null}
           {/* Exact Leaves book_load:customer — ReferenceSelect alone left selected UUID non-navigable */}
           {watch("customer_id") ? (
             <div
@@ -166,7 +166,7 @@ export function BookLoadCustomerSection({
         <Field label="Customer PO#" input={<input {...register("customer_po_number")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />} />
         {operatingCompanyId && setValue && getValues ? (
           <div className="md:col-span-2">
-            <label className="text-[11px] font-semibold text-gray-600">Customer reference lookup (appends to Special notes)</label>
+            <label className="text-section-header font-semibold text-gray-600">Customer reference lookup (appends to Special notes)</label>
             <div className="mt-1">
               <ReferenceSelect
                 value={null}
@@ -195,7 +195,7 @@ export function BookLoadCustomerSection({
         ) : null}
         <Field label="Commodity" input={<input {...register("commodity")} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />} />
         <Field label="Weight (lbs)" input={<input type="number" {...register("weight_lbs", { valueAsNumber: true })} className="h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />} />
-        <label className="flex items-center gap-2 text-[11px] font-semibold text-gray-700">
+        <label className="flex items-center gap-2 text-section-header font-semibold text-gray-700">
           <input type="checkbox" {...register("hazmat")} />
           Hazmat
         </label>
@@ -242,11 +242,11 @@ export function BookLoadCustomerSection({
       {showOptionalFields ? (
         <>
           <div className="mt-2">
-            <label className="text-[11px] font-semibold text-gray-600">Special notes</label>
+            <label className="text-section-header font-semibold text-gray-600">Special notes</label>
             <textarea {...register("notes")} rows={2} className="mt-1 w-full rounded-sm border border-gray-300 px-2 py-1 text-xs" />
           </div>
           <div className="mt-2">
-            <label className="text-[11px] font-semibold text-gray-600">
+            <label className="text-section-header font-semibold text-gray-600">
               Driver instructions
               <span className="ml-2 rounded-sm bg-[#E5E7EB] px-1.5 py-0.5 text-xs font-semibold text-[#1F2A44]">VISIBLE TO DRIVER</span>
             </label>
@@ -261,7 +261,7 @@ export function BookLoadCustomerSection({
 function Field({ label, input }: { label: string; input: JSX.Element }) {
   return (
     <div className="space-y-1">
-      <label className="text-[11px] font-semibold text-gray-600">{label}</label>
+      <label className="text-section-header font-semibold text-gray-600">{label}</label>
       {input}
     </div>
   );

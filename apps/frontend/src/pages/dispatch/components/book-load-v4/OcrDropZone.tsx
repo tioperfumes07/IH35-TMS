@@ -42,7 +42,7 @@ export function OcrDropZone({ operatingCompanyId, onPrefill }: Props) {
           onFile(e.dataTransfer.files?.[0]);
         }}
         onClick={() => inputRef.current?.click()}
-        className={`cursor-pointer rounded border border-dashed px-3 py-4 text-center text-[11px] ${
+        className={`cursor-pointer rounded border border-dashed px-3 py-4 text-center text-section-header ${
           busy
             ? "border-[#6B7280] bg-[#E5E7EB] text-[#4B5563]"
             : "border-[#E5E7EB] bg-[#F7F8FA] text-[#4B5563] hover:bg-[#E5E7EB]"
