@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~4:55 PM CT) — Residual ParityTables appearance=board wave15 (AuditTrail+DocsHome)
+- **PRIOR:** #28852 wave14 Users.
+- **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
+- **NEXT:** Violations/History then Customers/Vendors/Drivers residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave14
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 1 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
@@ -87,11 +92,6 @@
 - **PRIOR:** #28832 Customers/Vendors/Inventory/DF/DriverProfile/Factoring appearance=board.
 - **THIS:** 33 ParityTables / 29 files (shared/assets/documents/catalogs/tasks/users/audit/allocation/forms/telematics/trailer-profile/vehicle-profile/FleetTable/home/ap/checks/insurance/fuel Import) appearance=board; generic `<ParityTable<T>>` kept intact (appearance after type args). Unowned only. Engines unchanged. R4–R6 Cascade.
 - **NEXT:** residual unowned boards; other seats own Accounting/Banking/Maint/Safety/Reports. No match/Dreamline.
-
-## OUTBOX (11-10-2026 ~9:00 PM CT) — Customers/Vendors/Inventory/DF/DriverProfile/Factoring residual board tables
-- **PRIOR:** #28831 Compliance ParityTables appearance=board.
-- **THIS:** 58 ParityTables / 32 files (customers/vendors/inventory/driver-finance/driver-profile/drivers/factoring components) appearance=board. Unowned only — Accounting=CC-1 Banking=CC-2 Maint=Codex Safety=CC-3 left alone. Engines unchanged. R4–R6 Cascade.
-- **NEXT:** residual unowned boards; Cascade owns R*; Codex/CC-3 own Maint/Safety. No match/Dreamline.
 
 ## ARCHIVE
 Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet OUTBOX≤200).

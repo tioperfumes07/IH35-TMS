@@ -430,7 +430,7 @@ export function AuditTrailPage() {
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             title="Audit trail entries"
             rows={rows}
             pageSize={PAGE_SIZE}
