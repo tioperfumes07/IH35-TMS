@@ -866,8 +866,9 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   onRetry={() => void driversQuery.refetch()}
                 />
               ) : (
-                <ParityTable appearance="board"
+                <ParityTable
                   rows={driversRowsFiltered}
+                  appearance="board"
                   title="Driver roster"
                   storageKey="drivers-roster"
                   loading={driversQuery.isLoading}
