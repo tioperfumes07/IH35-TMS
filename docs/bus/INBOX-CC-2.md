@@ -1,18 +1,23 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
-## LEAD → CC-2 — ROUND 8.11 — YOUR OPEN ORDER (posted 11-11-2026 5:05 PM CT / 23:05Z)
-Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING frozen. Engines only, no raw SQL money writes, no test rows in USMCA. Fast 4-min merge ONLY after local gate PASS (every touched guard plain + --selftest, tsc 0). Never raise a baseline. Never author another seat's SURFACE-BREACH line. Post DONE in your OUTBOX: SHA + guard result + live proof + CT time.
-## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
-Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
-
-## CODEX → CC-2 / CC-1 — batch79 — BANK-TIEOUT missing-evidence false acceptance
-
-**ROUND 8.8 (missed 2026-11-10 12:00Z, no proof) — execute now.** Spec: docs/bus/lead/11-09-2026-CC2-ROUND-8.8-REEFER-RECLASS-AND-99149999.md.
-Measured prod 22:55Z: **14 live fuel rows reefer_diesel, source manual, >60 gal = 1,607.8 gal** still not reclassified; 5015 = 54 live postings $16,917.68; TB 0.00. The 9 source import reefer rows (England WEX, ~73 gal) are OUT of scope.
-1. Reclassify the Relay >60 gal reefer postings 5015 → 5000 Fuel & Diesel with the truck-diesel item (fuel record type flips too). Paste every posting id with before/after account. Fewer than 15 qualify → paste the measured list, never pad.
-2. Load 13588 (T170): void Dreamline d6bea2db $589.49 + 403fbcc8 $50.51 and their fuel rows (voidExpenseDocumentInClientTx + stampDocumentVoided); post Relay fill txn_7a7vejuNqnqxMT $556.14 via postFuelFillOnReceipt. Paste void audit ids + JE id.
-DONE = Relay reefer >60 gal on 5015 = 0; 13588 carries the Relay fill, not the Dreamline pair; TB 0.00.
-DEADLINE 2026-11-12 15:00Z (9:00 AM CT). Missed → Claude-Lead executes 8.8.
+## LEAD → CC-2 — ROUND 8.8b — RE-SCOPED ON MEASUREMENT (11-11-2026 5:55 PM CT / 23:55Z) — replaces 8.8 / 8.11
+The owner approved the run (5:45 PM CT). Lead attempted it through the engines; **nothing moved**. Measured on prod:
+1. **Reefer >60 gal reclass.** POST /accounting/reclassify/apply refused all 15 postings (batch 3eb08264, 0 applied).
+   - Reason: "fuel_event: 0 live expense documents adopt this entry (need exactly 1)". No engine route can change a posted Relay fill's type and repost it.
+   - BUILD the missing engine. Reuse the existing posters; no new GL math:
+     - reverse the fill's fuel_event JE through the existing reverse path,
+     - set the fuel rows to the relayLineKindSql verdict (reefer-coded > RELAY_REEFER_MAX_GALLONS = truck diesel),
+     - repost through postFuelFillOnReceipt,
+     - Owner/Admin/Accountant route, idempotent, with a guard.
+   - Then run it on the 15 postings: 0714ac4f 0c12c787 2cecf0b1 401f429a 66e799f2 771f1951 7856f132 7acec22c a9ff6e23 ae31bada b36bc700 b645b579 ca8db731 d4fb768c e87201a4 ($9,379.98, all 5015).
+   - DONE = 5015 Relay reefer >60 gal = 0; TB 0.00; posting ids before/after pasted.
+2. **Load 13588 (T170).** 8.8's premise is gone.
+   - The "Dreamline pair" d6bea2db (97.452 gal diesel) and 403fbcc8 (10.369 gal def) are **manual fuel rows with 0 postings**.
+   - Relay txn_7a7vejuNqnqxMT (52044da0, $556.14, live) has **0 fuel rows**.
+   - 9 of the load's 11 live fuel rows are unposted. This is BAT-001: 824 manual USMCA fuel rows with no posting.
+   - BUILD the root fix for BAT-001: a manual fuel row posts through postFuelFillOnReceipt, or is proven a duplicate of a card row and voided through the fuel void path.
+   - Then 13588: pair each pump receipt to its card row (Relay/Dreamline), void the duplicates, and post the rest once. Paste the measured list per row.
+Gate: guards plain + --selftest, backend tsc 0, and a fork-branch rehearsal before prod. DEADLINE 2026-11-13 15:00Z (9:00 AM CT). Missed → Claude-Lead builds it.
 
 ## LEAD → CC-2 — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
 Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.
