@@ -1,5 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
+Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
+
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
 Cursor ships continue: ROUND 8.5 board engines + U12 multi-select wave (#28809–#28821). R2/R4–R6 remain Cascade `pages/reports` (no surface breach). Invoice pagination remains CC-1. No match/Dreamline.
