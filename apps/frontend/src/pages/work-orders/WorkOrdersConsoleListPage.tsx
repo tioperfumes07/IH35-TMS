@@ -402,7 +402,7 @@ export function WorkOrdersConsoleListPage() {
   const renderListTable = () => (
     <div className="space-y-2" data-testid="work-orders-console-list">
       {filterBar}
-      <ParityTable<WoConsoleRow>
+      <ParityTable<WoConsoleRow> appearance="board"
         title="Work orders"
         columns={consoleColumns}
         rows={sortedRows}
