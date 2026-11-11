@@ -1,10 +1,10 @@
 {
-  "healthzSha": "73ab166",
-  "generated_at": "2026-11-11T18:24:25.884Z",
+  "healthzSha": "44ed3d6",
+  "generated_at": "2026-11-11T22:23:25.122Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "73ab166",
+    "deployedSha": "44ed3d6",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2126,6 +2126,15 @@
       "number": 0,
       "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
       "state": "merged",
+      "mergedAtCt": "11/11/2026, 12:24 PM CT",
+      "url": "",
+      "sha": "44ed3d61b6",
+      "committedAtIso": "2026-11-11T18:24:25Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
       "mergedAtCt": "11/11/2026, 10:24 AM CT",
       "url": "",
       "sha": "73ab1667cb",
@@ -2202,15 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28838",
       "sha": "f4df4a26ee",
       "committedAtIso": "2026-11-11T01:19:22-05:00"
-    },
-    {
-      "number": 28837,
-      "title": "FINDING: ROUND 8.10 Cursor R2–R4 BookLoad locked type scale + MoneyCell load drill",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28837",
-      "sha": "2ffddba89b",
-      "committedAtIso": "2026-11-11T01:18:42-05:00"
     }
   ]
 }
