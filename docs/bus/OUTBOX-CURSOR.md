@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~2:00 AM CT) — Low-guard residual ParityTables appearance=board wave3 (8 tables)
+- **PRIOR:** #28840 low-guard board wave2.
+- **THIS:** 8 ParityTables / 7 files (qbo-sync/tasks/program/admin/drivers/eld) appearance=board (≤38 guards). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~1:50 AM CT) — Low-guard residual ParityTables appearance=board wave2 (13 tables)
 - **PRIOR:** #28839 low-guard board tables (16).
 - **THIS:** 13 ParityTables / 11 files (samsara/edi/payroll/profitability/portal/admin/finance/fleet) appearance=board (≤39 guards). Engines unchanged. Cascade owns R5.

@@ -158,7 +158,7 @@ export function FeatureFlagsManager() {
             onRetry={() => void query.refetch()}
           />
         ) : (
-          <ParityTable
+          <ParityTable appearance="board"
             rows={rows}
             columns={columns}
             rowKey={(row) => row.flag_key}

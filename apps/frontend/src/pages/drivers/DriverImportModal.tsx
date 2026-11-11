@@ -212,7 +212,7 @@ export function DriverImportModal({ companyId, onClose, onImported }: Props) {
               ))}
             </div>
 
-            <ParityTable
+            <ParityTable appearance="board"
               title="Import preview — sample rows"
               storageKey="driver-import-preview"
               tableTestId="driver-import-preview-sample"

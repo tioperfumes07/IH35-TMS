@@ -115,7 +115,7 @@ export function ReconcilerExceptionsPage() {
       ) : null}
 
       <div id="reconciler-exception-queue" />
-      <ParityTable
+      <ParityTable appearance="board"
         title="Reconciler exceptions — open"
         rows={rows}
         columns={columns}

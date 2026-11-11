@@ -167,7 +167,7 @@ export function QboSyncDetailPage() {
           Showing {events.length} of about {totalEstimated} events
         </div>
 
-        <ParityTable
+        <ParityTable appearance="board"
           title="QuickBooks sync events"
           columns={columns}
           rows={events}
