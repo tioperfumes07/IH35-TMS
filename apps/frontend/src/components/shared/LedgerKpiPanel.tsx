@@ -252,7 +252,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             {drillKpi?.buckets?.length ? (
               <div className="mb-3" data-testid={`${domain}-kpi-drill-breakdown`}>
                 <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Breakdown</div>
-                <ParityTable<NonNullable<LedgerKpi["buckets"]>[number]>
+                <ParityTable<NonNullable<LedgerKpi["buckets"]>[number]> appearance="board"
                   storageKey={`${domain}-kpi-drill-buckets`}
                   tableTestId={`${domain}-kpi-drill-buckets`}
                   rows={drillKpi.buckets}
@@ -279,7 +279,7 @@ export function LedgerKpiPanel<K extends string>({ domain, title, companyId, fro
             {drill.isLoading ? <p>Loading rows…</p> : null}
             {drill.data && !drill.data.rows.length ? <p className="text-[#4B5563]">{drillKpi?.empty_reason ?? "No rows."}</p> : null}
             {cols.length ? (
-              <ParityTable<Record<string, unknown> & { __row: string }>
+              <ParityTable<Record<string, unknown> & { __row: string }> appearance="board"
                 storageKey={`${domain}-kpi-drill-rows`}
                 tableTestId={`${domain}-kpi-drill-rows`}
                 rows={drill.data!.rows.map((r, i) => ({ ...r, __row: String(i) }))}

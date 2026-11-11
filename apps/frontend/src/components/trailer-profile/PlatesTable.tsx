@@ -42,7 +42,7 @@ const COLUMNS: Array<ParityColumn<PlateRow>> = [
 export function PlatesTable({ plates }: { plates: Array<Record<string, unknown>> }) {
   return (
     <div className="mt-3" data-testid="tp-plates-table">
-      <ParityTable
+      <ParityTable appearance="board"
         rows={plates as PlateRow[]}
         columns={COLUMNS}
         rowKey={(row) => String(row.id)}

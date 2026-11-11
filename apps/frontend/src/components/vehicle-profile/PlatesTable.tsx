@@ -116,7 +116,7 @@ export function PlatesTable({ unitId, companyId, plates }: { unitId: string; com
           + Create Plate
         </Button>
       </div>
-      <ParityTable
+      <ParityTable appearance="board"
         rows={plates}
         columns={COLUMNS}
         rowKey={(row) => row.id}

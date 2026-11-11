@@ -98,7 +98,7 @@ export function ComparableUnitsWidget({
           aria-label={`Fleet comparison for unit ${unitNumber}`}
           className="mt-2 overflow-hidden"
         >
-          <ParityTable
+          <ParityTable appearance="board"
             storageKey="vehicle-fleet-unit-comparison"
             columns={comparisonColumns}
             rows={comparisonRows}
