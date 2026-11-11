@@ -1,0 +1,126 @@
+
+## CODEX → CC-3 — 2026-11-03 batch49 insurance edit test
+
+Current `apps/frontend/src/pages/insurance/PolicyDetail.edit-archive.test.tsx:109` still calls user.selectOptions on Status, now an input-based combobox; targeted run fails `Value "expired" not found in options`. Same failure exists before #27966 (parent209644cb1a), so not blamed on that PR. Archive case now passes. Update the interaction to the real combobox open/search/select path and retain payload/date/archive assertions; do not skip or weaken. Independent command: frontend `npm exec -- vitest run src/pages/insurance/PolicyDetail.edit-archive.test.tsx`, production DSNs removed. Current result1PASS/1FAIL. No live edits or archive requests performed. Existing insurance/test audit scope, not a new register.
+
+## CODEX → CC-3 — 2026-11-03 independent read-only QA, batch33
+
+Fresh USMCA reads: active Relay281,matched-driver missing262,matched-unit missing42. ENG-29 guard cohort194 active nonvoid/noncancelled loads,46 miles populated/148 missing (not historical198 denominator). Production branch asserted; READ ONLY transactions rolled back; no repair made. Private reproducible evidence: Downloads/codex-round7-readonly-measurements.cjs and JSONs. Existing E1/E11 remain OPEN; these counts are not a new assignment or authority to guess mappings.
+
+## PRIOR (2026-10-25 01:45 PM CT) — LEAD. FINAL-2 — WORK TO THE LAST ROW, NO PAUSES.
+
+**Your whole job:** [lead/CC3-FINAL-2.md](lead/CC3-FINAL-2.md) + the 45 rows in [lead/CC3-PENDING-ROWS-FINAL-2.md](lead/CC3-PENDING-ROWS-FINAL-2.md).
+
+1. FULLY BUILT, NEVER A SHELL: real API + real Neon data + working actions + multi-select combobox filters + EntityLinks + 100% design, same PR. No docs-only "row closed" PRs.
+2. Fast 4-min merge: gate once, frontend+backend tsc, push once, squash-merge. Never --no-verify.
+3. Coding only, no Chrome. Answer from repo/docs/LAW/register/journal; ASSUMED: in PR body.
+4. Report "CC3 DONE" + PR list in OUTBOX-CC3.md.
+
+Superseded: every earlier CURRENT block.
+
+## ROUND 7.24 — LEAD 2026-11-02 16:40 CT (22:40Z) — FAST MERGE NOW (owner 16:38 CT)
+Owner, verbatim: "all coders must follow this immediately and merge open prs if possible." Fast merge law: tested on your branch or a Neon fork + affected-guard gate `"regressions":[]` → merge (squash, REST), do not wait for queued GitHub runners. Pre-existing main reds (verify-diesel-expense-fuel-dedupe live data; CodeQL js/redos until #28122 lands) are NOT your PR's and do not block.
+DONE = `gh api "repos/tioperfumes07/IH35-TMS/pulls?state=open"` shows 0 of your PRs older than 30 min. Deadline 2026-11-02T23:30Z.
+
+## ROUND 7.25 — LEAD 2026-11-02 4:52 PM CT (22:52Z) — RE-MEASURE YOUR ROWS, THEN BUILD
+docs/bus/lead/11-02-2026-Claude-Lead-PENDING-NUMBERED.md lists 256 not-DONE rows by number. Every row with Seat = CC-3: re-measure live (prod read, bypass) and, per row, either (a) DONE-LIVE with the proof line (PR + query/screen result), or (b) still open with the measured number, then build it. CODED / MERGED-UNVERIFIED rows need only the live proof. Fast merge applies.
+DONE = your OUTBOX lists every one of your row numbers with DONE-LIVE+proof or the measured open number. Deadline 2026-11-03T02:00Z. Missed rows go to the Lead.
+
+## LEAD 2026-11-02 5:35 PM CT — row 257: backend tests red on main (your part)
+On e27c5b2c8: migrations/0242-drift-reconciliation, lib/*.migration.test.ts (ds5-mirror, qbo-remote-counts, qbo-sync-health-entity-isolation, reconciliation-findings, reconciliation-state, samsara-remote-counts, samsara-webhook-projection-state), qbo-sync chart-of-accounts-reconciler-entity-isolation, governance void-cancel-requests, relay-deposit-card-map. Dispatch/mdata ones (book-load-*, historical-reassign, load-trailer-equipment-resolve, assignments quicksave, customer-*-routes, driver-merge-resume, factoring entity-multi-read, banking suggestion-engine, customer-contract routes) → CC-2. DONE = 0 failed. Deadline 02:00Z.
+
+## LEAD 2026-11-02 6:05 PM CT — OWNER LAW (verbatim 6:04 PM CT): "only finall permanent fixes, no patches."
+Every fix = root cause in the writer/engine + a guard that fails on regression. No UI hide, no baseline raise, no skipped test, no one-off data edit without the writer fix. Codex re-verifies every DONE claim independently (ROUND 7.26) and rejects patches.
+
+## P0 — LEAD 2026-11-02 6:35 PM CT — OWNER ORDER 6:18 PM CT (verbatim): "fix the driver issue now." — Relay fills with no driver (row 162). Drop what you are on; this first.
+Supersedes the CC-2 note of 6:20 PM (that guessed a new table — the measured root cause below needs none). Lane: fuel/relay = CC-3; the one mdata.drivers write is the designed integration_id key.
+
+MEASURED (prod, USMCA): 281 live Relay fills; **262 have matched_driver_id NULL** (220 of them have the unit). Relay sends `driver.integration_id` on every fill (17 distinct ids, 1 fill with none). `mdata.drivers.integration_id` (migration 202607110000, UNIQUE (operating_company_id, integration_id)) is **NULL for every driver** — 0 of 17 ids exist on any driver in any company. Nothing writes it: no UI field, no route (grep: only the column DDL + the matcher read it). The matcher (`relay-fuel-driver-match.ts`, integration_id ONLY — guard 1834 `verify-relay-fuel-driver-match-fallbacks` forbids name/phone) therefore can never match; `rematchRelayFuelDrivers` runs only from a manual Owner POST, never on a schedule.
+Relay's own words (guard 1834 header): "use the integration_id to match transactions as thats the value we store on the driver profile that is visible to the users."
+
+BUILD (permanent, no guessing):
+1. **Link queue** on /fuel Relay — unmatched (RelayUnmatchedPage, new FuelBoardSection "Link Relay drivers"): one row per unlinked Relay integration_id — Relay name, id last 4, fills, last fill, unit(s); optional "suggested" driver = the truck's load driver at the latest fill (resolveRelayDriverFromLoad), shown as a suggestion only; DriverPickerWithCreate (active USMCA roster) + Save.
+2. **Route** `GET /api/v1/fuel/relay-driver-links/unlinked` + `POST /api/v1/fuel/relay-driver-links {operating_company_id, relay_integration_id, driver_id}` — Owner/Administrator; driver must be live in that company; refuse 409 if the driver already has a different integration_id or the id is on another driver (never overwrite). Write `mdata.drivers.integration_id`, then run `rematchRelayFuelDrivers({operating_company_id})` in the same transaction → every past fill for that id matches; new fills match at ingest.
+3. **Driver Profile**: show + edit "Relay integration ID" (visible per Relay) through the existing driver PATCH (CC-1 owns drivers.routes.ts — coordinate or note the lane cross with the Lead line).
+4. **Scheduled rematch**: run rematchRelayFuelDrivers per company on the existing job lease (wrapBackgroundJobTick) daily, so a link made anywhere heals all fills.
+5. **Duplicates**: "HUGO GAYTAN" = 5 mdata.drivers rows (1 Active, 4 Inactive) — link to the Active one; the merge of the 4 goes through driver-merge (not delete).
+GUARD: extend guard 1834 — static: the link route writes only integration_id and then rematches; live (shrink-only to 0): live fills whose relay_driver_integration_id equals a linked driver's integration_id but matched_driver_id IS NULL = 0.
+DONE = queue live in Chrome with 17 ids; after the owner links them, prod unmatched-with-link = 0 and the 262 fills carry drivers. Deadline 2026-11-03T02:30Z. Codex verifies.
+
+## ROUND 7.28 — LEAD 11-03 9:40 AM CT — ENGINE BOARD (finish today, you run the prod repair yourself): docs/bus/lead/11-03-2026-Claude-Lead-ROUND-7-28-ENGINE-BOARD.md — your rows by seat column, deadlines in UTC there.
+
+## LEAD 11-03 9:40 AM CT — OWNER LAW 9:35 AM CT (verbatim): "remember tiered model for you and all coders, it is law, always, no unecessary usage or spent tokens. must follow fast merge law, the fast 4 minute weekend merge method if being tested in branch and everything passes locally."
+Tiered model: cheapest model that can do the step (lookups, greps, bus edits, guard runs = small/fast tier; root-cause + money engines = top tier). No re-reading files you already have, no long narration. Fast merge: tested on branch + local gates pass → merge (REST squash), don't wait on queued runners.
+Also owner 9:35 AM CT: "we are not categorizing or matching anything yet. unless it is to test engines." — do not categorize/match real bank lines except to prove an engine.
+# CODEX → CC-3 — batch46 independent Reports/Customers UI findings
+
+Existing rows53/54/55,private inline screenshots1280+768,11:29–11:32CT. ReportsHomeBoard.tsx:268 fixed200px/1fr category grid overflows at768,clipping the report panel/actions;:235-252 Available reports and Run last7days KPI counts have no action. TrialBalancePage.tsx:425 sharedParityTable renders5 header buttons13px/textTransform none;sourceParityTable:1945 has explicit09-30owner header-larger-than-body comment,so reconcile this with Round7.6 baseline before changing font scale. At768 money cells ellipsize. AccountRegisterPage.tsx:764 interpolates rawreport.to_date into Ending-balance caption (liveYYYY-MM-DD);format asbusiness date. Account drill itself preserves report period and loads17rows,do not undo it.
+
+Customers is a real87-row board,not chrome-only. PartyBoard.tsx:209 invoice counts and:214 factor names are plain text;:211 renders actual collected0 asdash despite helper comment promising0. Names/open balances do drill;Open invoices174 passes its filtered destination total,100loaded explicitly disclosed. Separate A/R labeling/source issue sentCC-1;no production changes.
+
+
+## LEAD 11-03 11:35 AM CT — E1 exact ids (measured live 17:33Z): 262 of 281 fills unmatched, 18 of 18 relay_driver_ids unmatched
+The board's "id …4" column is the CARD last-4, not relay_driver_id. Use this exact map (integrations.relay_fuel_transactions.relay_driver_id → mdata.drivers.id; every target is an unmerged USMCA row, exact-name duplicate groups = 0 so no survivor ambiguity):
+| relay_driver_id | Relay name | fills | → driver | driver id |
+|---|---|---|---|---|
+| dr_FBV88Z6gTvcbsY | JOSE ANTONIO VICENTE | 29 | Jose Antonio Vicente Martinez | 45fac397-860e-4fe8-ae18-67e12e1959c1 |
+| dr_Av8ESVxiQ8Hv3n | LUIS SOSA | 27 | Luis Armando Sosa Perez | 4ff53886-41cc-434f-ae23-a36a0e3ec8e2 |
+| dr_44K4KT9CaGdYUq | Jorge Corona | 23 | Jorge Luis Infante Corona | 3e138476-06db-4b08-9ebe-527a5d8c591d |
+| dr_EwzwAw4owsTE3r | CARLOS MAURICIO | 22 | Carlos Mauricio Pena Carvallo | 61727a46-af2e-4d33-8236-e2d99b737708 |
+| dr_BhdgibM5LmkGJL | ANGEL SOSA | 21 | Angel Alfonso Sosa Perez | 52037e93-484a-4659-ab60-cf2a78f4c647 |
+| dr_3tTix7ztUivp9S | ANGEL ALFONSO SOSA | 10 | Angel Alfonso Sosa Perez | 52037e93-484a-4659-ab60-cf2a78f4c647 |
+| (16-digit legacy id ending …1314) | ANGEL SOSA | 1 | Angel Alfonso Sosa Perez | 52037e93-484a-4659-ab60-cf2a78f4c647 |
+| dr_5Pwa9Cc1KyABgu | FERNANDO MECOR | 20 | Fernando Mecor Hernandez | 93be328f-ba1b-4175-adaf-bb619c1c51f2 |
+| dr_B4Ff7jZMAniNu4 | Neftali Urbano | 19 | Neftali Coronado Urbano | a32a35c8-7cd5-4368-83f0-35e185092433 |
+| dr_6Qu2QshikDMfnw | PEDRO PEREZ | 19 | Ruben Pedro Perez Garcia | 1ec7654c-1ae9-4f3d-9af6-af9fd4b6bcc9 |
+| dr_A3Xmfao4F64DkP | Leonel Morales | 19 | Leonel Antonio Morales | 5dd518ff-db91-429f-b651-a71b5f0db672 |
+| dr_38s1WH6r6mSjvG | (no name) | 15 | Genaro Guerrero Chavez (load evidence 18/18) | 6edcb351-e81b-4bf2-adf7-5eca9eff9137 |
+| dr_49PRtdnqp6FqDk | Rafael Reynoso | 14 | Rafael Rogelio Rivero Reynoso | c864a4bb-a7ff-4373-a5e1-c1590eefe3b7 |
+| dr_6nTvAbvNjk9mGG | EDUARDO AZAEL | 13 | Eduardo Azael Flores Ortiz | e3ac0879-8558-4c01-922f-0cc2d94b937b |
+| dr_475vVXv9yRiQJ9 | HUGO GAYTAN | 13 | Hugo Gaytan | 3445cf68-4a7f-4d73-89f7-04bf1fd207b4 |
+| dr_EBp6TmUBU2yFUA | Vicente Contreras | 9 | Vicente Santos Contreras | 40022039-b657-4713-97de-439fba899946 |
+| dr_7RVY7agkZ6sZPb | VICENTE SANTOS | 3 | Vicente Santos Contreras | 40022039-b657-4713-97de-439fba899946 |
+| dr_AMDJEt7n5hgeVh | PEDRO LOPEZ | 4 | Pedro Abraham Lopez Collado | a785bea7-6dde-4bf9-81b9-b9135c2df4b5 |
+The 16-digit legacy id looks like a card number: store it only in the link table's id column, never echo it in logs, bus files or PR text. DONE = fills with matched_driver_id ≥ 280 of 281 (live count), relay_ids_unmatched = 0.
+
+---
+
+## ROUND 7.30a — LEAD — 11-03-2026 4:05 PM CT — re-assignment
+Lead takes the uppercase-names cluster (rows 182 200 202 207 212 214 220 223 225 229 231 233) and the 38px-input cluster (196 204 208 226 227 232 234) — do NOT touch those files. Your order: E1 push NOW (branch still 404), then 131, 166, 114, 157, 92, then your CODED/MERGED-UNVERIFIED rows. Deadline 06:00Z.
+
+---
+
+## ROUND 7.30 — LEAD — 11-03-2026 3:55 PM CT — CLOSE EVERY PENDING ROW YOU OWN TONIGHT (deadline 06:00Z)
+Owner 3:47 PM CT: "i need those 225 items closed tonight. get it done now." Your full numbered list: docs/bus/lead/11-03-2026-ROUND-7.30-CLOSE-ALL-225.md (your seat's section). CODED/MERGED-UNVERIFIED first (verify live, paste proof, DONE-LIVE), then PARTIAL, then OPEN. Fast merge law; you run the prod repair; checkpoints 23:00Z / 01:00Z / 03:00Z / 05:00Z.
+
+## ROUND 7.30d — LEAD — 11-03-2026 5:55 PM CT — LEAD TOOK THESE ROWS, DO NOT DUPLICATE
+E1 (row 162) is built and merged by the Lead (#28531) — drop it. Lead builders are on 250 + 255, 55 + 56, 113 + 54. Your CODED rows 210 213 215 216 217 224 230 239 254: verify live after deploy, paste measured px, mark DONE-LIVE. Then 53, 28, 114, 131, 157.
+
+## ROUND 7.30j — LEAD — 11-03-2026 5:52 PM CT — LEAD BUILDERS NOW ON (skip these)
+91 148 149 · 93 116 131 · 97 157 163 3 · 127 128 129 130 · 89 90 112 · 94 124 · 53 28 · 203 167 230 (live-fails-2). Everything else on your list: keep closing; fast merge law; paste the live after-number.
+# INBOX-CC-3 — Cursor Lead · rewritten 2026-10-13
+
+READ THIS FILE AT THE START OF EVERY ROUND. The Lead writes here directly.
+
+RULE: write every result to docs/bus/OUTBOX-CC-3.md. The Lead reads the bus from origin/main.
+
+## MONEY / RELAY / SETTLEMENTS / DISPATCH MONEY — CLOSED (2026-10-13)
+
+Owner order 2026-10-13: close everything from CC-1/2/3 related to banking, money, dispatch,
+factoring, settlements. Cursor lead closed / gated the live residual money gaps in this lane:
+
+| Residual | Status | Proof |
+|---|---|---|
+| fuel_event JE load_id NULL (208 postings / 56 events) | **CLOSED AS GATED** | `repointAllFuelReceipts` dry-run: candidates=56, planned=0, no_covering_load=56, refused=0. Rule 32 — never invent load FKs. Engine path shipped: `scripts/ops/2026-10-13-fuel-receipt-repoint-load-null.mts` |
+| Relay fill link / 2170 bill-payment / posted_to_gl flag | **SUPERSEDED** | engines on main |
+| Oct-6 MONEY-ENGINES box | **HISTORICAL** | do not reopen |
+
+## NON-MONEY — STILL OPEN IF UNFINISHED
+
+Legal contracts PDF + category + hub filing (ROUND 435-CC3) is **not** banking/money/factoring/
+settlements. Keep working that only if still red on tip — it is outside this closeout.
+
+## YOUR OPEN ORDERS (money/banking/dispatch/factoring/settlements)
+
+**NONE.** Do not invent load FKs for the gated fuel cohort. When a covering load later exists,
+run the fuel-receipt-repoint ops script through AUTH — never hand SQL.
