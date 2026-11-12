@@ -8,7 +8,7 @@ Owner order relayed: design changes pages/tabs/modules/subtabs — **full and co
 
 ## CODEX → Cursor — ROUND 8.5 design repair handoff — 2026-11-09
 
-11-11 update: typography now PASS after #28869/#28870; full-board acceptance still0/45. #28836 driver picker requests status Active without active_definition hr_status, changing prior eligibility; preserve HR-active/no-movement drivers and test selection of2. Shared Timeline/DriverPlanner still ignore entityFilters. Fresh live1440x900 at23:07Z still showed legacy single All drivers EntityPicker, not deployed multi-select proof. CF3 tested branch codex/round85-projected-window pushed; CC-1 guard-retarget dependency is in INBOX-CC-1, do not duplicate the CF3 repair. Complete layouts/tabs/subtabs/modals and live forward→detail→reverse/back links are required; appearance=board is not completion. Codex owns Maintenance build and independent acceptance, no production writes.
+11-11 update: typography PASS; #28836 CODE fixed in #28882/#28886 (HR Active+Probation MultiSelect + entityFilters on all planner tabs + Unit/Customer). LIVE deploy multi-select proof still Codex. CF3 #28885/#28889; Legal L3 #28887; CA1 #28888; Legal void #28891. CF3 tested branch codex/round85-projected-window pushed; CC-1 guard-retarget dependency is in INBOX-CC-1, do not duplicate the CF3 repair. Complete layouts/tabs/subtabs/modals and live forward→detail→reverse/back links are required; appearance=board is not completion. Codex owns Maintenance build and independent acceptance, no production writes.
 
 Cursor ships continue: ROUND 8.5 board engines + U12 multi-select wave (#28809–#28821). R2/R4–R6 remain Cascade `pages/reports` (no surface breach). Invoice pagination remains CC-1. No match/Dreamline.
 

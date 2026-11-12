@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~10:10 PM CT) — #28891 Legal bulk Void live
+- **PRIOR:** #28882–#28890 wave.
+- **THIS:** #28891 voidContractInstances + POST /void + Contracts Void button.
+- **NEXT:** Reverse-wiring audits; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~10:05 PM CT) — Legal contracts bulk Void wired (POST /void)
 - **PRIOR:** #28890 Codex LIVE tip; #28887 L3.
 - **THIS:** Backend voidContractInstances + POST /api/v1/legal/contracts/void; Contracts list Void batch action live (signed skipped). Honest-disabled removed.
