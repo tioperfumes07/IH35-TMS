@@ -1,7 +1,7 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per OPEN reconciler exception right now (entity / field / reason), a current-state worklist; the check's run date and time are shown in the popup header.
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, formatIsoDatesInText } from "../../lib/formatDate";
@@ -65,8 +65,11 @@ export function DriftAlertPopup() {
   const { selectedCompanyId } = useCompanyContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
   const companyId = selectedCompanyId ?? "";
+  // The TIO Perfumes desk (/perfume) is not a carrier page: a USMCA load worklist must never pop up over it.
+  const onPerfumeDesk = pathname === "/perfume" || pathname.startsWith("/perfume/");
 
   const q = useQuery({
     queryKey: ["drift-alert", "reconciler-exceptions", companyId],
@@ -88,7 +91,7 @@ export function DriftAlertPopup() {
     if (Date.now() >= readSnooze(companyId)) setOpen(true);
   }, [companyId, rows.length, q.dataUpdatedAt]);
 
-  if (!companyId || rows.length === 0) return null;
+  if (!companyId || rows.length === 0 || onPerfumeDesk) return null;
 
   const remindLater = () => {
     writeSnooze(companyId, Date.now() + DRIFT_CHECK_INTERVAL_MS);

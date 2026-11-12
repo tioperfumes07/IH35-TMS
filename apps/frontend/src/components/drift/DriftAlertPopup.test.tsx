@@ -21,13 +21,21 @@ function run(exceptions: ReturnType<typeof ex>[]): ReconcilerRun {
   return { operating_company_id: COMPANY, ran_at: "2026-10-24T20:00:00.000Z", exception_count: exceptions.length, errored_invariants: [],
     results: [{ invariant: "I9", title: "drift", status: "ok", exceptions }] };
 }
-function mount() {
+function mount(path = "/home") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={qc}><MemoryRouter><DriftAlertPopup /></MemoryRouter></QueryClientProvider>);
+  return render(<QueryClientProvider client={qc}><MemoryRouter initialEntries={[path]}><DriftAlertPopup /></MemoryRouter></QueryClientProvider>);
 }
 
 describe("DriftAlertPopup (LEAD 443.327)", () => {
   beforeEach(() => { fetchReconcilerExceptions.mockReset(); try { window.localStorage.clear(); } catch { /* none */ } });
+
+  it("never opens over the TIO Perfumes desk (/perfume is not a carrier page)", async () => {
+    fetchReconcilerExceptions.mockResolvedValue(run([ex("stop_no_date", "13700", "No appointment date or time on: Pickup Laredo.")]));
+    mount("/perfume");
+    await waitFor(() => expect(fetchReconcilerExceptions).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByTestId("drift-alert-popup")).toBeNull();
+  });
 
   it("checks every 30 minutes", () => {
     expect(DRIFT_CHECK_INTERVAL_MS).toBe(1_800_000);

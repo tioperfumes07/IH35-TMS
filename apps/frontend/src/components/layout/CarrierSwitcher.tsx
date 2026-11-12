@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -22,6 +23,34 @@ function visibleCompanies(companies: MyCompany[]): MyCompany[] {
 export function CarrierSwitcher() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  // The top bar's status strip is overflow-hidden (Topbar.tsx), which clipped this absolutely-positioned panel to the
+  // 26px strip — the company list and the TIO Perfumes entry were in the DOM but invisible. The panel is portaled to
+  // <body> and fixed under the trigger instead, and closes on an outside mousedown or Escape.
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const [panelPos, setPanelPos] = useState<{ top: number; right: number } | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = triggerRef.current?.getBoundingClientRect();
+      if (r) setPanelPos({ top: r.bottom + 4, right: Math.max(8, window.innerWidth - r.right) });
+    };
+    place();
+    const onDown = (e: MouseEvent) => {
+      const t = e.target as Node;
+      if (panelRef.current?.contains(t) || triggerRef.current?.contains(t)) return;
+      setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("resize", place);
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("resize", place);
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
   const [switchingCompanyId, setSwitchingCompanyId] = useState<string | null>(null);
   const { companies, selectedCompanyId, selectedCompany, setSelectedCompany, setDefaultCompanyForUser } =
     useCompanyContext();
@@ -65,6 +94,7 @@ export function CarrierSwitcher() {
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         type="button"
         className="inline-flex w-full min-w-0 max-w-[min(280px,100%)] items-center gap-1 rounded-sm border px-2 py-1 text-xs hover:bg-white/10"
         style={{ borderColor: "#2A3242", color: "#E5E7EB", backgroundColor: "#151A24" }}
@@ -77,8 +107,13 @@ export function CarrierSwitcher() {
         <ChevronDown className="h-3 w-3 shrink-0" />
       </button>
 
-      {open ? (
-        <div className="absolute right-0 z-30 mt-1 w-72 rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm">
+      {open && panelPos ? createPortal(
+        <div
+          ref={panelRef}
+          data-testid="carrier-switcher-panel"
+          className="fixed z-[1000] w-72 rounded-sm border border-gray-200 bg-white p-2 text-xs shadow-sm"
+          style={{ top: panelPos.top, right: panelPos.right }}
+        >
           <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Company context</div>
           <div className="space-y-1">
             {activeCompanies.map((company) => {
@@ -155,7 +190,8 @@ export function CarrierSwitcher() {
               </button>
             </div>
           ) : null}
-        </div>
+        </div>,
+        document.body,
       ) : null}
     </div>
   );
