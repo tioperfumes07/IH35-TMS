@@ -20,11 +20,14 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
-function money(cents: number) {
-  return formatUsdCents(cents);
+function settlementMoney(cents: number, settlementId: string) {
+  return (
+    <MoneyCell cents={Number(cents ?? 0)} drill={{ entity: { kind: "settlement", id: settlementId } }} />
+  );
 }
 
 function currentQuarterRange() {
@@ -112,7 +115,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.quick_pay_cents),
+      render: (row) => settlementMoney(row.quick_pay_cents, row.settlement_id),
     },
     {
       key: "revenue_cents",
@@ -120,7 +123,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.revenue_cents),
+      render: (row) => settlementMoney(row.revenue_cents, row.settlement_id),
     },
     {
       key: "driver_pay_cents",
@@ -128,7 +131,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.driver_pay_cents),
+      render: (row) => settlementMoney(row.driver_pay_cents, row.settlement_id),
     },
     {
       key: "additional_driver_pay_cents",
@@ -136,7 +139,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.additional_driver_pay_cents),
+      render: (row) => settlementMoney(row.additional_driver_pay_cents, row.settlement_id),
     },
     {
       key: "fuel_cents",
@@ -144,7 +147,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.fuel_cents),
+      render: (row) => settlementMoney(row.fuel_cents, row.settlement_id),
     },
     {
       key: "company_expenses_cents",
@@ -152,7 +155,7 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => money(row.company_expenses_cents),
+      render: (row) => settlementMoney(row.company_expenses_cents, row.settlement_id),
     },
     {
       key: "net_profit_cents",
@@ -160,7 +163,13 @@ export function TripProfitability() {
       sortable: true,
       className: "text-right",
       cellClass: "text-right",
-      render: (row) => <span className={marginClass(row.margin_pct)}>{money(row.net_profit_cents)}</span>,
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.net_profit_cents ?? 0)}
+          className={marginClass(row.margin_pct)}
+          drill={{ entity: { kind: "settlement", id: row.settlement_id } }}
+        />
+      ),
     },
     {
       key: "status",
@@ -257,12 +266,12 @@ export function TripProfitability() {
         <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
           {[
             { label: "Settlements", value: formatQuantityTable(t.settlement_count, 0) },
-            { label: "Revenue", value: money(t.revenue_cents) },
-            { label: "Quick pay", value: money(t.quick_pay_cents) },
-            { label: "Driver pay", value: money(t.driver_pay_cents + t.additional_driver_pay_cents) },
+            { label: "Revenue", value: formatUsdCents(t.revenue_cents) },
+            { label: "Quick pay", value: formatUsdCents(t.quick_pay_cents) },
+            { label: "Driver pay", value: formatUsdCents(t.driver_pay_cents + t.additional_driver_pay_cents) },
             {
               label: "Net profit",
-              value: money(t.net_profit_cents),
+              value: formatUsdCents(t.net_profit_cents),
               highlight: t.net_profit_cents < 0 ? "text-red-600" : "text-green-700",
             },
           ].map(({ label, value, highlight }) => (

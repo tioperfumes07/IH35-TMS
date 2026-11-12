@@ -8,6 +8,7 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
@@ -140,13 +141,22 @@ export function AtRiskQueuePage() {
         label: "Rate",
         sortable: true,
         className: "text-right",
-        render: (load) => (load.rate_total_cents == null ? "—" : moneyCents(load.rate_total_cents)),
+        render: (load) =>
+          load.rate_total_cents == null ? (
+            "—"
+          ) : (
+            <MoneyCell
+              cents={num(load.rate_total_cents)}
+              drill={{ entity: { kind: "load", id: load.id } }}
+            />
+          ),
       },
       {
         key: "rpm",
         label: "RPM",
         sortable: true,
         className: "text-right",
+        // RPM is a computed ratio — leave plain (no single transaction behind it).
         render: (load) => (load.rpm == null ? "—" : formatUsd(num(load.rpm))),
       },
       {
