@@ -186,12 +186,13 @@ describe("Reclassify engine — a fuel purchase's adopted entry (ROUND 290.1)", 
     source_transaction_line_id: null, document_number: null, posting_status: "posted", reversed_by_line_id: null, reversal_of_line_id: null,
     control_reason: null, already_reclassified: false,
   } as unknown as SelectedPosting;
-  const fake = (adoptRows: unknown[]) => {
+  const fake = (adoptRows: unknown[], rootRows: unknown[] = []) => {
     const calls: Array<{ sql: string; params: unknown[] }> = [];
     return {
       calls,
       client: { query: async (sql: string, params: unknown[] = []) => {
         calls.push({ sql, params });
+        if (/WITH RECURSIVE chain/.test(sql)) return { rows: rootRows, rowCount: rootRows.length };
         if (/FROM accounting\.expenses e\s+WHERE e\.operating_company_id = \$1::uuid AND e\.journal_entry_id = \$2::uuid/.test(sql)) return { rows: adoptRows, rowCount: adoptRows.length };
         return { rows: [], rowCount: 1 };
       } } as never,
@@ -202,9 +203,19 @@ describe("Reclassify engine — a fuel purchase's adopted entry (ROUND 290.1)", 
     const { calls, client } = fake([{ expense_id: "exp-1", line_id: "el-1", lines: "1" }]);
     const r = await rewriteDocumentLine(client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
     expect(r.updated).toBe(true);
-    expect(calls[0]!.params).toEqual(["co", "je-fuel", "fuel-1", 3071, "acc-5010", "acc-5000"]);
+    expect(calls[0]!.params).toEqual(["co", "je-fuel"]); // LST-F11163: walk the reclassification chain first
+    expect(calls[1]!.params).toEqual(["co", "je-fuel", "fuel-1", 3071, "acc-5010", "acc-5000"]);
     const upd = calls.find((c) => /UPDATE accounting\.expense_lines SET expense_account_uuid/.test(c.sql))!;
     expect(upd.params).toEqual(["el-1", "co", "acc-5010"]);
+  });
+
+  it("LST-F11163: a line on a reclassification entry finds the document of its ROOT entry (Relay fill through its fuel record)", async () => {
+    const { calls, client } = fake([{ expense_id: "exp-1", line_id: "el-1", lines: "1" }], [{ root_je: "je-original" }]);
+    const r = await rewriteDocumentLine(client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
+    expect(r.updated).toBe(true);
+    expect(calls[0]!.sql).toMatch(/accounting\.reclassify_batch_lines bl/);
+    expect(calls[1]!.params[1]).toBe("je-original");
+    expect(calls[1]!.sql).toMatch(/ft\.relay_fuel_transaction_id::text = \$3/);
   });
 
   it("refuses by name when no live expense, or more than one, adopts the entry — the ledger never moves alone", async () => {
