@@ -1,5 +1,5 @@
-## OUTBOX (11-11-2026 ~11:20 PM CT) — Settlement Document Designs route guard
-- **THIS:** verify-settlement-document-designs-route (+ step 20110) locks route/subnav/HTML/iframe back-link for #28895.
+## OUTBOX (11-11-2026 ~11:25 PM CT) — Document Designs locked in settlements-subnav guard
+- **THIS:** verify-settlements-subnav-stays-in-module requires Document Designs tab + route + page/iframe + HTML (#28895 ratchet; no new claim number).
 - **NEXT:** Continue reverse-wiring / go26 residuals; Codex LIVE. No match/Dreamline.
 
 ## OUTBOX (11-11-2026 ~11:05 PM CT) — go26 Cash Advances preview → ParityTable (−3 raw tables)

@@ -15700,26 +15700,6 @@
     "claimed_at": "2026-11-10",
     "purpose": "verify-settlements-tours-columns-visible (LST-F11136: Post and 5 shipped Settlements Tours columns stay visible by default)"
   },
-  "20085": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-capacity-engine-availability"
-  },
-  "20097": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-capacity-offers-email-controls"
-  },
-  "20109": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-10",
-    "purpose": "verify-capacity-load-board-posting"
-  },
-  "20110": {
-    "claimed_at": "2026-11-12",
-    "claimed_by": "cursor",
-    "purpose": "verify-settlement-document-designs-route"
-  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -17724,5 +17704,20 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1106
+  "total_claimed": 1106,
+  "20085": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-engine-availability"
+  },
+  "20097": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-offers-email-controls"
+  },
+  "20109": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-10",
+    "purpose": "verify-capacity-load-board-posting"
+  }
 }
