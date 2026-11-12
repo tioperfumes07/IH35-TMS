@@ -66,6 +66,14 @@ function assertLive(overrides = {}) {
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(grid)) problems.push("S28 grid not company-gated");
   if (!/<EntityLinkOrTombstone kind="driver" id=\{driverId\} name=\{name\} noun="Driver"/.test(grid)) problems.push("S28 grid missing canonical driver links");
   if (!/<EntityLinkOrTombstone kind="unit" id=\{unitId\} name=\{unit\} noun="Unit"/.test(grid)) problems.push("S28 grid missing canonical unit links");
+  // ROUND 8.12 reverse — Driver Planner list Driver/Unit/Load EntityLinkOrTombstone (grid already linked).
+  if (
+    !/kind="driver"[\s\S]{0,120}id=\{row\.driverId\}/.test(grid) ||
+    !/kind="unit"[\s\S]{0,80}id=\{row\.unitId\}/.test(grid) ||
+    !/kind="load"[\s\S]{0,80}id=\{row\.loadId\}/.test(grid)
+  ) {
+    problems.push("S28 DriverPlanner list must EntityLinkOrTombstone driver/unit/load");
+  }
 
   const loads = get(FILES.loads);
   if (!/data-testid="dispatch-loads-planner-need-company"|testId="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
@@ -98,6 +106,14 @@ function assertLive(overrides = {}) {
   const fallbackUnitLink = /const unitId = driver\.unit_id \?\?/.test(timeline) && /const unitNumber = driver\.unit_number \?\?/.test(timeline)
     && /<EntityLinkOrTombstone kind="unit" id=\{unitId \?\? undefined\} name=\{unitNumber\} noun="Unit"/.test(timeline);
   if (!directUnitLink && !fallbackUnitLink) problems.push("S30 driver rows missing canonical unit link or tombstone");
+  // ROUND 8.12 reverse — Timeline list Driver/Unit/Load EntityLinkOrTombstone (grid already linked).
+  if (
+    !/kind="driver"[\s\S]{0,120}id=\{row\.driverId\}/.test(timeline) ||
+    !/kind="unit"[\s\S]{0,80}id=\{row\.unitId\}/.test(timeline) ||
+    !/kind="load"[\s\S]{0,80}id=\{row\.loadId\}/.test(timeline)
+  ) {
+    problems.push("S30 Timeline list must EntityLinkOrTombstone driver/unit/load");
+  }
   if (!/PlannerAxisHead/.test(timeline)) problems.push("S30 timeline missing two-row PlannerAxisHead");
   if (!/timeline-util-/.test(timeline)) problems.push("S30 timeline missing util column");
   // DSP-F443355 (31d76a9364) moved planner row height from a `[&_.pg-r]:h-[34px]` class onto PlannerGrid's own rowPx
@@ -116,6 +132,10 @@ function assertLive(overrides = {}) {
   if (!/driverId:\s*dr\.driver_id \? String\(dr\.driver_id\) : null/.test(truck)) problems.push("S31 drops driver FK while shaping truck rows");
   if (!/<EntityLinkOrTombstone kind="unit" id=\{row\.unitId\} name=\{row\.unitNumber\} noun="Unit"/.test(truck)) problems.push("S31 missing canonical unit links");
   if (!/<EntityLinkOrTombstone kind="driver" id=\{row\.driverId\} name=\{row\.driverName\} noun="Driver"/.test(truck)) problems.push("S31 missing canonical driver links");
+  // ROUND 8.12 reverse — Truck list Current Load must EntityLinkOrTombstone (was raw Link).
+  if (!/kind="load"[\s\S]{0,80}id=\{row\.loadId\}/.test(truck)) {
+    problems.push("S31 TruckPlanner list must EntityLinkOrTombstone current load");
+  }
   if (!/PlannerAxisHead/.test(truck)) problems.push("S31 truck missing two-row PlannerAxisHead");
   if (!/PlannerAxisHead/.test(loads)) problems.push("S29 loads missing two-row PlannerAxisHead");
   if (!/PlannerAxisHead/.test(grid)) problems.push("S28 grid missing two-row PlannerAxisHead");
