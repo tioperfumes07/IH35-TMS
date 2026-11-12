@@ -8,6 +8,8 @@ Release exception: initial push lacked generated Husky wrappers and must not be 
 
 ## Reports depth — cash-basis navigation FAIL
 
+Insurance #28963 bounded identity route PASS, source-provenance/reverse FAIL: premium link opens matching policy, but loaded PolicyDetail.tsx has no read-only premium/effective/expiry/coverage detail summary. Back hardcodes Policies at344, not Home origin. Units assigned are real; empty payment/COI/claim populations cannot prove actions. Current Home subtitle/Today marker present. Cursor notified #28963 comment6815407472. No edit/archive/create submitted.
+
 Fuel #28964 full wiring FAIL on live deploy dep-dbqkis1e35nc73f5vbqg atc1b4872e68: spend links now exist, but open bare Fleet unit profile without selected Fuel period/source fill population; Back lands Fleet rather than Fuel. Other row gallons/rate/fills/loads remain plain cells. Require actual filtered-source drill and reverse origin, not arbitrary entity link. Cursor notified #28964. No production actions.
 
 Factoring full-board FAIL: approved summary is followed by legacy Account Summary/Fees Paid/Beginning-and-ending panels (FactoringHome.tsx1761–1882). PurchaseNetChart silently slices last16, has no purchase drill and lacks approved value axis. Public owning-seat handoff #28958 comment6815276433; screenshot private. Fee Amount forward drill reaches matching advance and its fee agrees (one sample PASS); detail Back goes `/home`, not Fees Paid. FactoringDetailPage.tsx215–217 hardcodes Accounting backHref despite Factoring alias route; origin absent from MoneyCell. Full reverse/navigation FAIL, no money mutations.
