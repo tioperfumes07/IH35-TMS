@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~4:00 AM CT) — TripProfitability + At-Risk MoneyCell wave
+- **THIS:** TripProfitability Quick Pay/Revenue/Driver Pay/Fuel/Company Expenses/Net → settlement MoneyCell · At-Risk Rate → load MoneyCell.
+- **Prior:** #28969–#28971 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~3:40 AM CT) — Legal/Dispatch MoneyCell residual wave
 - **THIS:** Legal home claimed vs reserve · Load History Rate/Driver pay · Factoring Queue Rate · Detention accrued + approval amounts → MoneyCell.
 - **Prior:** #28969/#28970 merged.
