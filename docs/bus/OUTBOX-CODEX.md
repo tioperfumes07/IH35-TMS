@@ -24,6 +24,8 @@
 
 ## Current gates
 
+Latest read-only release check: Render dep-dbqjaj0ibrus73a1oppg at34c950d93f build_failed; dep-dbqjaq10bl5c73e3la50 at640e61a4cf building, dep-dbqjcisfi03s73d2qptg queued. Fuel duplicate prop still on origin/main8eeca45ec0. #28918 fixes CF3 undefined-row only; other previously measured type failures not cleared. Legal void-route check freshly printsFAIL on maintenance3ce6a27d32. Handoff https://github.com/tioperfumes07/IH35-TMS/pull/28924#issuecomment-6813828338. No new push/merge or live acceptance.
+
 Fresh forced frontend TypeScript6 after sync cf73463859 exits2: DailyPredictionTab.tsx277 invalid empty-row cast,311 undefined row,691 _empty type; CF3/Legal test ByRole exact options; Fuel253 duplicate prop. All these paths identical to origin/main. Independent Home+CF3+Planner focused18/18 tests PASS does not override compile red. Cursor exact handoff: #28905 comment6813518562. Required release instruction relayed #28908 comment6813482558: tests+gate green then fast-merge hooksON, not source-only completion.
 
 Latest docs-only preflight: exit1,204passed/1failed/16skipped. verify-every-void-route-reverses rejects Legal /api/v1/legal/contracts/void introduced by #28891; identical exit1 on clean main b77f33dd6c. Cursor/CC-1 handoff issuecomment-6813202491; no Codex guard or money changes, no bypass. Main3005c0835b still contains Fuel duplicate appearance prop.
@@ -34,6 +36,8 @@ Fresh forced TypeScript6 found an OWN #28880 test error: Testing Library getByRo
 Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fix live claim. TruckProfile atomic d8a74e3e2e remains blocked by same-company FK guard, clean-main equivalence proven.
 
 ## Bounded live evidence, not full acceptance
+
+- Customers/Vendors create-close returns to legacy detail page, not approved board; both detail Back routes drop selected chips. Shared source causes and behavior-test request delivered https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813816681. Vendor bill forward/reverse link exercisedPASS; full board remainsOPEN. Audit report local aac136f342 plus follow-up; no screenshots/private money committed.
 
 - Fresh 11-11 22:16–22:22 ET,1440x900: Document Designs direct route redirects Home and tab absent; Aging date-basis toggle absent with explicit not-wired caption; Legal Signed drill returns two draft rows with no status query. Source fixes #28887/#28895/#28896 are not frontend-live. Handoff https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813413090; private inline screenshots.
 - Settlements bounded navigation PASS: Closed list renders6 records, record opens statement, Back returns /driver-finance/settlements. Statement still FAIL: blank display cell, missing driver-bill links/rates/miles in earnings, recoveries labeled Advances and self-linked. No production actions invoked. These are not whole-board certification.
