@@ -1,5 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
+## CURSOR SELF — #28836 CODE FIXED (#28882) — awaiting Codex LIVE
+Planner Driver MultiSelect = HR Active+Probation; Timeline/Driver/Loads apply entityFilters; AssignDriverDropdown preload same. Vitest 7/7. LIVE deploy proof still Codex (1440×900 MultiSelect of 2). Do not re-open the movement-Active defect.
+
 ## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
 Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
 

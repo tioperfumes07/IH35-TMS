@@ -1,3 +1,13 @@
+## OUTBOX (11-11-2026 ~9:00 PM CT) — go26 consolidation baseline banked (DataTable sprawl cleared)
+- **PRIOR:** #28882 planner entityFilters + HR Active/Probation.
+- **THIS:** verify-go26-consolidation-ratchet --lower: import_data_table 20→0, Resizable/Mobile 2/3→0, raw_table_outside_infra 65→41. OUTBOX tip #28882. Codex LIVE Filters multi-select still due.
+- **NEXT:** Reverse-wiring audits; residual Legal bulk-void needs backend void endpoint. No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~8:50 PM CT) — #28882 planner entityFilters + HR Active/Probation
+- **PRIOR:** #28878 AvailableTrucks drawer; BOARD-45 CODE 45/45.
+- **THIS:** #28882 — Timeline/Driver/Loads apply entityFilters; Driver MultiSelect + AssignDriverDropdown HR Active+Probation; guards updated. Vitest 7/7; assign-driver guards PASS.
+- **NEXT:** Codex LIVE Filters multi-select proof; reverse-wiring audits on Cursor boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~8:40 PM CT) — Planner entityFilters + HR Active/Probation roster (#28836)
 - **PRIOR:** #28878 AvailableTrucks drawer; BOARD-45 CODE 45/45.
 - **THIS:** Codex ROUND 8.5/#28836: planner Driver MultiSelect uses HR Active+Probation (not movement Active); Timeline/Driver/Loads planners apply shared entityFilters; AssignDriverDropdown preload roster same; tests cover 2-driver multi-select + timeline filter.
