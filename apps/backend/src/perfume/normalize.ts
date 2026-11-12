@@ -59,6 +59,13 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "MJ": "MARC JACOBS",
   "MARK JACOBS": "MARC JACOBS",
   "PH": "PARIS HILTON",
+  "PE": "PERRY ELLIS",
+  "PACO R": "PACO RABANNE",
+  "JC": "JUICY COUTURE",
+  "TOMFORD": "TOM FORD",
+  "HUGO B": "HUGO BOSS",
+  "S.F": "SALVATORE FERRAGAMO",
+  "S.FERRAGAMO": "SALVATORE FERRAGAMO",
   "CHRISTIAN DIOR": "DIOR",
   "CRISTIAN DIOR": "DIOR",
   "DIOR COSMETICA": "DIOR",
@@ -275,6 +282,10 @@ export function identify(input: IdentityInput): Identity {
   s = s.replace(/^\s*(?:MINIATURES?|MINIS?|VIALS?|SAMPLES?)\b\s*/, () => { leadMini = true; return " "; });
   // JIZAN: "AMOUAGE GUIDANCE (U) EDP 100 ml OM" — a 2-letter origin code after the bottle size is the country, not the name.
   s = s.replace(new RegExp(`(\\d\\s*(?:ML|OZ)\\b[^A-Z0-9]*(?:\\([A-Z]\\)\\s*)?)\\b(?:${Object.keys(ISO2_COUNTRY).join("|")})\\s*$`), "$1 ");
+  // Competitor lists glue the size to its neighbours ("3.4OZEDT", "BLACK2.7OZ", "3PCSET"): split them so the
+  // size, the type and the SET flag are each read (La Esperanza, audit 2026-11-12).
+  s = s.replace(/(\d)(OZ|ML)(?=[A-Z])/g, "$1$2 ").replace(/([A-Z])(?=\d+(?:\.\d+)?\s*(?:OZ|ML)\b)/g, "$1 ")
+    .replace(/(\d)\s*(PCS?)\s*(SET)\b/g, "$1$2 $3").replace(/(\d)(PCS?)(SET)\b/g, "$1$2 $3");
   // "STRONGER W YOU" / "W/YOU" means WITH YOU, not women.
   s = s.replace(/\bW\/?\s*(?=YOU\b)/g, "WITH ");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
