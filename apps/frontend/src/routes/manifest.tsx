@@ -6,6 +6,8 @@ const LoadBankingLinkagePage = React.lazy(() =>
   import("../pages/dispatch/LoadBankingLinkagePage").then((m) => ({ default: m.LoadBankingLinkagePage }))
 );
 const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPage"));
+// PERFUME-DESK — owner-only TIO Perfumes price desk (isolated perfume.* schema; no menu entry).
+const PerfumeDeskPage = React.lazy(() => import("../pages/perfume/PerfumeDeskPage"));
 // Row 78 — Dispatch › Load history list board (every load; the per-load change timeline stays at /dispatch/loads/:id/history).
 const LoadHistoryBoardPage = React.lazy(() => import("../pages/dispatch/LoadHistoryBoardPage"));
 import React from "react";
@@ -1149,6 +1151,15 @@ export const ROUTES = React.Children.toArray(
           element={
             <OwnerOnlyRoute>
               <SystemModulePage />
+            </OwnerOnlyRoute>
+          }
+        />
+        {/* PERFUME-DESK — TIO Perfumes price desk. Owner-only; reached from the company selector, never the menu. */}
+        <Route
+          path="/perfume"
+          element={
+            <OwnerOnlyRoute>
+              <PerfumeDeskPage />
             </OwnerOnlyRoute>
           }
         />

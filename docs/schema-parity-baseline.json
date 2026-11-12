@@ -4259,6 +4259,39 @@
       "uuid",
       "vehicle_id"
     ],
+    "dispatch.capacity_offer_sends": [
+      "contact_uuid",
+      "customer_id",
+      "email",
+      "email_queue_id",
+      "id",
+      "kind",
+      "operating_company_id",
+      "send_date",
+      "sent_at",
+      "units"
+    ],
+    "dispatch.capacity_offer_suppressions": [
+      "created_at",
+      "email_lower",
+      "operating_company_id",
+      "reason"
+    ],
+    "dispatch.capacity_settings": [
+      "operating_company_id",
+      "reply_to_email",
+      "send_truck_offers",
+      "updated_at",
+      "updated_by_user_id"
+    ],
+    "dispatch.capacity_unit_offers": [
+      "off_reason_code",
+      "offer_enabled",
+      "operating_company_id",
+      "unit_id",
+      "updated_at",
+      "updated_by_user_id"
+    ],
     "dispatch.cargo_sensor_incidents": [
       "breach_kind",
       "claim_incident_id",
@@ -4479,6 +4512,21 @@
       "previous_unit_id",
       "reason_code",
       "warnings_acknowledged"
+    ],
+    "dispatch.load_board_postings": [
+      "available_at",
+      "board",
+      "created_at",
+      "equipment",
+      "external_posting_id",
+      "id",
+      "last_error",
+      "operating_company_id",
+      "origin_city",
+      "origin_state",
+      "status",
+      "unit_id",
+      "updated_at"
     ],
     "dispatch.load_cancellations": [
       "approved_at",
@@ -5830,6 +5878,7 @@
       "created_at",
       "error_code",
       "error_message",
+      "headers",
       "id",
       "max_retries",
       "next_retry_at",
@@ -5837,6 +5886,7 @@
       "provider",
       "provider_message_id",
       "queued_by_user_id",
+      "reply_to",
       "retry_count",
       "sent_at",
       "status",
@@ -8636,6 +8686,7 @@
       "name",
       "notes",
       "phone",
+      "receives_truck_offers",
       "title",
       "updated_at",
       "updated_by_uuid",
@@ -10376,6 +10427,121 @@
       "taxes_employer_total_cents",
       "updated_at",
       "w2_payroll_total_cents"
+    ],
+    "perfume.brand_aliases": [
+      "alias",
+      "brand",
+      "created_at"
+    ],
+    "perfume.desk_users": [
+      "added_at",
+      "note",
+      "user_id"
+    ],
+    "perfume.item_aliases": [
+      "confirmed_at",
+      "confirmed_by",
+      "created_at",
+      "id",
+      "item_id",
+      "method",
+      "sku",
+      "text_key",
+      "vendor_id"
+    ],
+    "perfume.item_upcs": [
+      "created_at",
+      "first_seen_list_id",
+      "item_id",
+      "upc"
+    ],
+    "perfume.items": [
+      "brand",
+      "conc",
+      "created_at",
+      "created_by",
+      "display_name",
+      "flags",
+      "gender",
+      "id",
+      "identity_key",
+      "internal_code",
+      "loose_key",
+      "merged_into_id",
+      "name",
+      "size_ml",
+      "updated_at"
+    ],
+    "perfume.needs": [
+      "item_id",
+      "note",
+      "qty",
+      "updated_at"
+    ],
+    "perfume.price_list_rows": [
+      "brand",
+      "case_pack",
+      "created_at",
+      "description",
+      "id",
+      "identity_key",
+      "item_id",
+      "list_id",
+      "loose_key",
+      "match_method",
+      "match_status",
+      "price_cents",
+      "qty",
+      "raw",
+      "row_no",
+      "sheet",
+      "size_text",
+      "sku",
+      "suggestions",
+      "upc"
+    ],
+    "perfume.price_lists": [
+      "file_name",
+      "file_r2_key",
+      "file_sha256",
+      "id",
+      "imported_at",
+      "imported_by",
+      "is_current",
+      "label",
+      "list_date",
+      "price_total_file_cents",
+      "price_total_saved_cents",
+      "rows_read",
+      "rows_saved",
+      "rows_skipped",
+      "source_kind",
+      "vendor_id",
+      "void_reason",
+      "voided_at"
+    ],
+    "perfume.settings": [
+      "id",
+      "rules",
+      "updated_at",
+      "updated_by"
+    ],
+    "perfume.vendors": [
+      "archived_at",
+      "column_mapping",
+      "contact",
+      "created_at",
+      "created_by",
+      "cushion_hi_cents",
+      "cushion_lo_cents",
+      "earn_pct",
+      "freight_hi_cents",
+      "freight_lo_cents",
+      "id",
+      "kind",
+      "name",
+      "sells_by_box",
+      "updated_at"
     ],
     "preserve.dvir_submissions": [
       "certified",
