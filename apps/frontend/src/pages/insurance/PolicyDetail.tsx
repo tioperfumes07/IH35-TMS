@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   archiveInsurancePolicy,
   getInsurancePolicy,
@@ -32,6 +32,7 @@ import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { ConfirmModal } from "../../components/shared/ConfirmModal";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { SelectCombobox } from "../../components/Combobox";
+import { resolveBackHref } from "../../lib/returnContext";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
@@ -41,6 +42,14 @@ export function PolicyDetail() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.17 class R — Home/Fleet Covered drills attach `ret`; fallback is Insurance Home (not Policies-only).
+  const insuranceBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/insurance",
+  });
   const { policyId } = useParams<{ policyId: string }>();
   const companyId = selectedCompanyId ?? "";
 
@@ -289,7 +298,7 @@ export function PolicyDetail() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="policy-detail-page">
-        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <PageHeader backHref={insuranceBackHref} breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
         <BoardSection title="Policy" testId="policy-detail-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view policy details.</p>
         </BoardSection>
@@ -300,7 +309,7 @@ export function PolicyDetail() {
   if (!policyId) {
     return (
       <div className="space-y-3" data-testid="policy-detail-page">
-        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <PageHeader backHref={insuranceBackHref} breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
         <BoardSection title="Policy" testId="policy-detail-missing-id">
           <p className="px-3 py-2 text-xs text-red-700">Missing policy ID.</p>
         </BoardSection>
@@ -311,7 +320,7 @@ export function PolicyDetail() {
   if (policyQuery.isLoading) {
     return (
       <div className="space-y-3" data-testid="policy-detail-page">
-        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <PageHeader backHref={insuranceBackHref} breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
         <BoardSection title="Policy" testId="policy-detail-loading">
           <p className="px-3 py-2 text-xs text-[#6B7280]">Loading policy details...</p>
         </BoardSection>
@@ -322,7 +331,7 @@ export function PolicyDetail() {
   if (policyQuery.isError || !policyQuery.data) {
     return (
       <div className="space-y-3" data-testid="policy-detail-page">
-        <PageHeader backHref="/insurance/policies" breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
+        <PageHeader backHref={insuranceBackHref} breadcrumb={["Insurance", "Policies", "Policy"]} title="Policy" />
         <ListErrorState
           title="Couldn't load policy details"
           status={policyQuery.error instanceof ApiError ? policyQuery.error.status : 0}
@@ -362,7 +371,7 @@ export function PolicyDetail() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/insurance/policies"
+        backHref={insuranceBackHref}
         breadcrumb={["Insurance", "Policies", entityLabel(policy.policy_number, policy.id, "Policy")]}
         title={`Policy ${entityLabel(policy.policy_number, policy.id, "Policy")}`}
         subtitle={`${policy.insurer_name} · ${coverageTypeName} · ${policy.status}`}

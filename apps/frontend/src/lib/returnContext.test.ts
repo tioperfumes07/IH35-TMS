@@ -82,6 +82,19 @@ describe("returnContext (ROUND 8.17 class R)", () => {
     ).toBe("/fuel/by-truck?period=oct&q=unit-12");
   });
 
+  it("Insurance Home/Fleet Covered → policy Back restores origin", () => {
+    const origin = currentOriginHref("/insurance", "?tab=fleet-covered");
+    const policy = withReturnContext("/insurance/policies/pol-1", origin);
+    const params = new URLSearchParams(policy.slice(policy.indexOf("?") + 1));
+    expect(
+      resolveBackHref({
+        searchParams: params,
+        pathname: "/insurance/policies/pol-1",
+        fallback: "/insurance",
+      }),
+    ).toBe("/insurance?tab=fleet-covered");
+  });
+
   it("Factoring Fees tab → advance detail Back restores Fees origin", () => {
     const origin = currentOriginHref("/factoring/chargebacks-fees", "?q=faro");
     const advance = withReturnContext("/factoring/advances/adv-1", origin);

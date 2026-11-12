@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   listInsurancePolicies,
   listInsuranceTypeCatalog,
@@ -55,6 +56,7 @@ export function PoliciesList() {
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
   const vendorId = useSearchParams()[0].get("vendor_id") ?? undefined;
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
@@ -281,7 +283,9 @@ export function PoliciesList() {
             columns={columns}
             rows={rows}
             rowKey={(policy) => policy.id}
-            onRowClick={(policy) => navigate(`/insurance/policies/${policy.id}`)}
+            onRowClick={(policy) =>
+              navigate(withReturnContext(`/insurance/policies/${policy.id}`, currentOriginHref(pathname, search)))
+            }
             loading={listState.isLoading}
             emptyText="No insurance policies found for this entity yet."
             tableTestId="insurance-policies-table"
