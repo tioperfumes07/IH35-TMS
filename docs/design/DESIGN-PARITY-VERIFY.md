@@ -1,6 +1,56 @@
 # ROUND 8.5 — independent board parity verification
 
-## Active serial acceptance: Fuel (board 19), 11-12 15:32Z
+19:11Z #29088 bounded LIVE PASS: FE/BE `1758d493e72cf5fccb0e31e99b9d5c1901a688e8` confirmed via version/healthz, Render FE `dep-dbr0s417lnhs73egtskg` and BE `dep-dbr0s47prmrc73d8ap30` live. History without selected plan no longer renders all-dash planner strip; Amount opens exact transaction_id and one matching row. Reverse remains FAIL: ret encodes filtered origin but no in-app Back consumes it. Private1440x900 screenshot, no writes. Cursor comment6833347707; full board19 remains OPEN.
+
+19:09Z ROUND8.17: N4/7 canonical classification #29090 merged `b83663d2663`, hooks ON,16 focused tests,44 affected guards/no regressions. Independent deployment/consumer acceptance pending. Cursor #29086 By-truck forward source drill bounded PASS on FE928a0cb: count39→History39 retaining unit and October date bounds. History lacks origin ret/app Back; reverse criterion FAIL, board19 not certified. Comments6833268917/6833269460. #29088 History amount/planner-strip fix is newer than this bundle and is not yet scored live. Production writes zero.
+
+19:02Z deployed recheck FE/BE `9f75917d96461e4c66da0f5d59aee9b5e562f2b7`: Cursor #29082 fixes board35 primary statement identity (tile, H1 and linked company number agree), bounded PASS; private screenshot captured. Board2 now opens intended Banking transaction drawer, but Close → in-app Back returns Banking rather than Unexpected, so reverse-origin FAIL persists. Comments6833113179/6833067771. Full-board certification unchanged; no production writes.
+
+18:36Z ROUND8.17 Fuel bounded recheck: October Home → View all retains October dates and 13-truck cohort; previous-month enum `period=sep` is not September data. No-load October drill returns 0, November returns 6, matching their KPI counts; all six November Load cells blank. Fresh November page uses FE/BE `b6eb3a6d480cc0c86f514dc24c5a14404a72a5e4` verified by version/healthz. Remaining FAIL: By-truck Spend and History Amount still target fleet/units rather than Fuel transaction/receipt sources; several truck values remain plain text; History includes an all-dash planner strip. Cursor #29071 comments6832490692/6832509792. Rate/paging, full geometry and seven-point acceptance remain open. No production writes.
+
+18:28Z ROUND8.17: version/healthz identify FE+BE `a8d6ae8027f`; Render FE `dep-dbr03bmq1p3s73doh8s0`, BE `dep-dbr03bjbktic73cmnke0`. Closed register → statement → Back restores Closed tab and cohort (bounded PASS); loaded statement primary identity remains a dash (FAIL). Posted #29076 comment6832340439 and #29044. No new full certificates, no production writes. Earlier TS2339 deployment failure fixed by Cursor #29079; shared guard correction #29077 is merged, while the bank-register default-initializer guard retarget is separately tested with six failing plants.
+
+17:55Z ROUND8.17 recheck: deployed5694517 source drills do not certify board3. Money In now passes dates/type but incorrectly restricts categorized review state; clearedBankLine includes all real non-pending bank lines. Exact predicate mismatch posted on #29064 comment6831493321. Fuel unlinked6→6 is a bounded cohort PASS; null-load amount source, reverse control and canonical rate/paging remain open. No production writes. Current total remains0/45 fully certified.
+
+## ROUND 8.17 — current execution, 2026-11-12
+
+The two-seat plan supersedes serial Fuel-only certification below. Historical observations remain evidence, not current certificates. Codex builds reader fixes; Cursor owns UI consumers; the other seat must certify the deployed result. Production writes: zero.
+
+- N31: liability reader merged in #29050, `6470db6a3564adbafcf9e9a554118ac63c43fe3b`; eight focused tests and backend build pass. Original push lacked generated Husky wrappers; incident disclosed in PR comment6830044829. Restored wrappers and explicit full pre-push rerun exit0 (comment6830484220). This does not retroactively prove hooks executed on the original push. UI consumption and complete live acceptance remain UNVERIFIED.
+- N22/43/44: canonical current-odometer/PM adapter replaces duplicate fleet-health classification and guessed mileage rate. Eighteen tests, backend build and ten guard plants pass; release `gate_exit=0`,256 passed,2 accepted existing live findings,270 skipped. Missing-evidence `unknown` UI consumer requested from Cursor; not certified.
+- N32/34: opt-in statement membership separates financial statement state from operational trip closure. Seven tests and backend build pass; release exits1 (242 passed,1 failed,159 skipped) on the same30 inherited handwritten-JE findings as Fuel/TB. Cursor/CC-3 handoff comment6830684610. Source business number remains authoritative; no invented replacement identity.
+- N19/N26: Fuel and cash-basis Trial Balance fixes are committed and tested but not merged. Their gates refuse the same30 handwritten-JE findings reproduced on clean main. No production repair or guard bypass performed.
+- N3/4/7/8/18/24: exact consumer defects and existing canonical-reader contracts posted on #29044 for Cursor. No source-only pass is a board certificate.
+
+Current full-board certification count remains **0/45**. Skipped live checks are not passes.
+
+### V13 Load History — read-only negative control, 17:15Z
+
+`/dispatch/load-history?q=NO-SUCH-LOAD-817` displays zero rows and Totals(0), while Loads KPI/heading still say227 and outer paging says1–200 of227. Revenue and miles KPIs stay nonzero. KPI and search-table populations therefore diverge. Revenue, Loaded miles, Empty miles and Rate tiles are noninteractive containers rather than source drills. Screenshot captured privately in the task; no production screenshot or financial detail committed. Cursor handoff #29044 comment6830636452. FAIL, not certified; deployed SHA and complete1440×900 acceptance still pending.
+
+17:19Z cross-check after frontend `bf05f75` deployed: filtered Load History -> Customer -> Back restores the exact `?q=` URL (bounded PASS for shared return-context), but Search is empty and200 rows render instead of one. Page does not hydrate filters from its URL on Back/reload. Cursor comment6830740953. Do not revert the working shared helper; repair the page's URL-to-state contract. No production writes.
+
+### V14–17 and V36–42 — 17:20–17:34Z bounded live checks
+
+Chrome actual CSS1440x900, FEbf05f75. Approved PNGs and specification HTML compared; specimen historical amounts are not current expected totals. No production save, booking, payment, release, reverse or upload performed. All12 V boards have now been inspected to the bounded extent below, not fully certified.
+
+| Board | Result / measured defect | Cursor handoff comment on #29044 |
+|---|---|---|
+|14–16 Book Load|FAIL: center dialog1408px vs1260; Load#110x40 vs110x32; appointment110.4x40 vs150x32. Side A/B columns compress labels, clipped upload control and trip subtitles. Same presentation toggle/A–E rail present.|6830802208|
+|17 Trip type|Bounded PASS: NB requires port; TR shows tour relationship without port; SB combines tour/port. Unsaved local changes discarded. No transaction proof or full certificate.|Writer coverage below|
+|36 Pre-Settlements|FAIL: no Back/panel Filters; PENDING while actual P-number is known in close picker; bare load chips, extra toolbar/Close column, clipped nav.|6830879598|
+|37 Close|FAIL: uncomputed stored-net fallback displays zero alongside positive gross and zero shown deductions; identity PENDING; all KPI links same statement rather than breakdown.|6830930148|
+|38 Advances|FAIL: recovery target is load rather than tour; drawer raw historical_backfill enum and attribution HOLD. Header/nav/toolbars differ. Actual drawer opens without submission. Identity click resolves exact advance_id; initial generic-href claim withdrawn after exercise.|6831012820,6831132230|
+|39 Escrow|Driver and held links open driver register PASS; missing approved Filters/Back and duplicated toolbar/composition FAIL.|6831032455|
+|40 Escrow register|Resolved settlement source link opens exact statement and Back returns exact driver-register URL PASS. Initial generic-href finding was premature before async resolution and is withdrawn. KPI tiles noninteractive, date-only source labels, missing unit/filter composition FAIL.|6831041139,6831049018|
+|41 Deductions|FAIL: all four displayed category amounts zero while Total is positive. Independent header sum vs capped500 deductions, discarded other category. Schedule amount links driver rather than liability/JE. New deduction opens real pickers; blank Create disabled, closed without submit.|6831066333|
+|42 Company|FAIL: approved five-chip row/Creator missing; extra five inert technical KPIs and period columns. Negative search produces0 rows and0 table totals PASS, but summary stays full population without scope label.|6831082369|
+
+Safe writer review: seven existing files/38 tests PASS with database environment unset, source identical to mainbffa37656abad57ef181e168c79f4e7f97d002b3. Coverage is pure accessorial/posting math, source constraints, mocked recovery/tour/close cases. Positive booking tests that accept arbitrary downstream errors do not prove successful booking. No full transaction, rollback, persistence or ledger writer certification inferred. Screenshots remain private in task.
+
+Shipment blocker17:28Z: PM and register normal hooks-on pushes both stopped after6456 static checks because mainbf05f75 changed PageHeader but its navigate(-1) mutation no longer changes the fixture. Plain guard0, selftest1; source identical to main. Cursor6830911641; no hook bypass or guard weakening.
+
+## Historical serial acceptance: Fuel (board 19), 11-12 15:32Z — superseded by ROUND8.17
 
 Owner now requires one complete board certified before the next. Fuel is the proposed shared active target with Cursor (#29026 comments6827922989/6827965766); no acknowledgement yet. Reference `docs/design/v3/Fuel.dc.html` and `Fuel.png`. No production submissions. These are element-level results, **not a Fuel certificate**. Existing other-board findings remain open, not abandoned or certified.
 
