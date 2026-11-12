@@ -2,6 +2,14 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 — ROUND 8.18 ENG-25b ROW 301 DONE
+
+- **PR:** [#29049](https://github.com/tioperfumes07/IH35-TMS/pull/29049) · squash `7ac14fc6c2`
+- **FINDING:** ACCT-F3301 — ENG-25b ops script: USMCA fuel postings (5000/5005/5010) on non-USMCA loads → 8000 intercompany_ih35; --apply gated by AUTH-464
+- **GUARD:** money-pr-local-gate exit 0 · verify-verify-step-lane-band PASS (guard 18925 is CC-1/Lead to wire)
+- **ROWS CLOSED:** 116 (verify-resettlement-origin-load-dates --selftest 19/19 PASS), 117 (verify-entity-label-rejects-uuid-shaped-name --selftest PASS) — both MERGED-UNVERIFIED → DONE-LIVE on main selftest
+- **REMAINING:** AUTH-464 not on main — Lead issues AUTH-464 for apply run; dry-run count+$ to paste after DB run
+
 ## 2026-11-12 — ROUND 8.15b D047 D049 D055 DONE
 
 - **PR D047:** [#29037](https://github.com/tioperfumes07/IH35-TMS/pull/29037) · squash `32336a9d06`
