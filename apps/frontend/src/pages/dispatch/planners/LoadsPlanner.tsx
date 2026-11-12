@@ -28,8 +28,11 @@ const DASH = "—";
 type LoadListRow = {
   id: string;
   loadNumber: string;
+  driverId: string | null;
   driver: string;
+  unitId: string | null;
   unit: string;
+  customerId: string | null;
   customer: string;
   status: string;
   pickupDate: string;
@@ -166,8 +169,11 @@ export function LoadsPlanner() {
           const listRows: LoadListRow[] = filteredListLoads.map((load) => ({
             id: load.id,
             loadNumber: load.load_number,
+            driverId: load.assigned_primary_driver_id ? String(load.assigned_primary_driver_id) : null,
             driver: load.assigned_primary_driver_name ?? "—",
+            unitId: load.assigned_unit_id ? String(load.assigned_unit_id) : null,
             unit: load.assigned_unit_number ?? "—",
+            customerId: load.customer_id ? String(load.customer_id) : null,
             customer: load.customer_name ?? "—",
             // ROUND 20.6 L1 (owner-live 2026-09-12): raw enum values ("in_transit", "dispatched")
             // were shown to the user -- every other surface renders loadStatusLabel (lib/load-status.ts).
@@ -181,9 +187,39 @@ export function LoadsPlanner() {
           const columns: Array<ParityColumn<LoadListRow>> = [
             { key: "loadNumber", label: "Load #", sortable: true, render: (row) => <EntityLinkOrTombstone kind="load" id={row.id} name={row.loadNumber} noun="Load" /> },
             { key: "settlementReference", label: "Settlement / Presettlement", testId: "settlement-reference-column", render: (row) => <SettlementReferenceCell reference={settlementReferences.get(row.id)} /> },
-            { key: "driver", label: "Driver", sortable: true },
-            { key: "unit", label: "Unit", sortable: true },
-            { key: "customer", label: "Customer", sortable: true },
+            {
+              key: "driver",
+              label: "Driver",
+              sortable: true,
+              render: (row) =>
+                row.driverId ? (
+                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driver === "—" ? null : row.driver} noun="Driver" />
+                ) : (
+                  row.driver
+                ),
+            },
+            {
+              key: "unit",
+              label: "Unit",
+              sortable: true,
+              render: (row) =>
+                row.unitId ? (
+                  <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unit === "—" ? null : row.unit} noun="Unit" />
+                ) : (
+                  row.unit
+                ),
+            },
+            {
+              key: "customer",
+              label: "Customer",
+              sortable: true,
+              render: (row) =>
+                row.customerId ? (
+                  <EntityLinkOrTombstone kind="customer" id={row.customerId} name={row.customer === "—" ? null : row.customer} noun="Customer" />
+                ) : (
+                  row.customer
+                ),
+            },
             { key: "status", label: "Status", sortable: true },
             { key: "pickupDate", label: "Pickup Date", sortable: true },
             { key: "deliveryDate", label: "Delivery Date", sortable: true },

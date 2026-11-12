@@ -71,6 +71,14 @@ function assertLive(overrides = {}) {
   if (!/data-testid="dispatch-loads-planner-need-company"|testId="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 missing need-company");
   if (!/<BoardSection\b/.test(loads) || !/testId="dispatch-loads-planner-need-company"/.test(loads)) problems.push("S29 need-company must be BoardSection");
   if (!/data-testid="dispatch-loads-planner-honest-empty"/.test(loads)) problems.push("S29 missing honest empty");
+  // ROUND 8.12 reverse — list view Driver/Unit/Customer EntityLinkOrTombstone (timeline already linked).
+  if (
+    !/kind="driver"[\s\S]{0,80}id=\{row\.driverId\}/.test(loads) ||
+    !/kind="unit"[\s\S]{0,80}id=\{row\.unitId\}/.test(loads) ||
+    !/kind="customer"[\s\S]{0,80}id=\{row\.customerId\}/.test(loads)
+  ) {
+    problems.push("S29 LoadsPlanner list must EntityLinkOrTombstone driver/unit/customer");
+  }
   if (!/ListErrorBanner/.test(loads)) problems.push("S29 missing ListErrorBanner");
   if (!/enabled:\s*Boolean\(operatingCompanyId\)/.test(loads)) problems.push("S29 not company-gated");
   if (!/<EntityLinkOrTombstone kind="customer" id=\{load\.customer_id\} name=\{load\.customer_name\} noun="Customer"/.test(loads)) problems.push("S29 load rows missing canonical customer link or tombstone");
