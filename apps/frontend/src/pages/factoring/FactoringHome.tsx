@@ -99,9 +99,6 @@ import { FACTORING_SECTION_PARENT, FACTORING_TAB_PATH, FARO_TABS, factoringTabFr
 import { FactoringBoardChrome } from "./FactoringBoardChrome";
 import { FactoringStagedFilters } from "./FactoringStagedFilters";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
-import { NotApplicable } from "../../components/money/NotApplicable";
-import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
-import type { NaReason } from "../../design/money-design-system";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
 
@@ -173,50 +170,6 @@ const DATE_FILTER_LABEL_CLASS = "flex flex-col gap-1 text-xs text-[#4B5563]";
 function fmtDate(value: unknown) {
   if (!value) return "—";
   return formatDateUS(value);
-}
-
-/** A real money field that legitimately has a value most of the time — the canonical
- *  NotApplicable("not_loaded") dash only while the query is loading or after it fails, never a
- *  fabricated $0.00 in either state (the pre-fix bug: the same bare "$0.00" for "still loading"
- *  as for "the real balance is zero"). */
-function summaryMoneyOrDash(opts: {
-  isLoading: boolean;
-  isError: boolean;
-  value: unknown;
-  testId: string;
-  emphasis?: boolean;
-}) {
-  const { isLoading, isError, value, testId, emphasis } = opts;
-  if (isLoading || isError) return <NotApplicable reason="not_loaded" data-testid={testId} />;
-  return (
-    <span className={`text-xs ${emphasis ? "font-semibold" : "font-medium"} text-gray-900`} data-testid={testId}>
-      {fmtCurrency(value)}
-    </span>
-  );
-}
-
-// ROUND 21.0 item 4: the two developer-facing schema-honesty notes (why there's no date-range
-// picker, why several rows are dashes) move here, rewritten for the owner rather than the next
-// developer, behind a "?" info popover on the Account Summary section header instead of sitting
-// inline on the rendered page. <details>/<summary> gives real click-to-open + keyboard/focus
-// behavior with no extra state or outside-click handler to wire.
-function AccountSummaryInfoPopover() {
-  return (
-    <InfoPopover label="Why some values are blank" align="right" testId="factoring-account-summary-info">
-      <span className="mb-1 block font-semibold text-gray-900">Why some values are blank</span>
-      <span className="block">
-        Some numbers below show "—" instead of an amount. That isn't a bug — for those figures
-        (like Beginning Balance or the individual Discount/Schedule/Wire fees) our data feed only
-        gives us a combined running total, which is already shown elsewhere on this page. Hover
-        any "—" for the specific reason. We never fill a blank with a made-up number.
-      </span>
-      <span className="mt-2 block">
-        There's also no date-range picker on this page yet: factoring balances are point-in-time
-        only, so a past date range couldn't change any figure below without inventing history we
-        don't have.
-      </span>
-    </InfoPopover>
-  );
 }
 
 // ParityTable migration (display-only): column order, labels, and cell formatting
@@ -1786,148 +1739,24 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   </div>
                 </BoardSection>
               ) : null}
-              <div data-testid="factoring-account-summary">
-              {/* Summary error is owned by FactoringHomeBoard above — do not double-banner (ROUND 8.5a). */}
-              {summaryQuery.isError ? null : (
-                <BoardSection
-                  title="Account Summary"
-                  testId="factoring-account-summary"
-                  headerRight={<AccountSummaryInfoPopover />}
-                >
-                  <div className="grid grid-cols-1 gap-x-6 gap-y-1 px-3.5 py-2 sm:grid-cols-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Beginning Balance</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Ending Balance (AR)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: summaryQuery.isLoading,
-                        isError: summaryQuery.isError,
-                        value: summary?.outstanding_liability_balance,
-                        testId: "factoring-account-summary-ending-balance",
-                      })}
-                      <UnclearedDocumentsNote docs={summary?.uncleared_documents ?? []} />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Payments to You *</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-to-you" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Debtor Receipts</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-debtor-receipts" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Payments from You</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-payments-from-you" />
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Reserve Balance (combined)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: factoringKpiQuery.isLoading,
-                        isError: factoringKpiQuery.isError,
-                        value: engineReserve ? engineReserve.total / 100 : undefined,
-                        testId: "factoring-account-summary-reserve-balance",
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
-                    <div className="text-xs font-medium text-gray-900">
-                      Fees Paid{latestMonth ? ` — ${fmtDate(latestMonth.statement_month)} (most recent posted month)` : ""}
-                    </div>
-                    <div className="mt-1 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Discount Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-discount" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Schedule Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-schedule" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Wire Fee</span>
-                        <NotApplicable reason="no_source" data-testid="factoring-account-summary-fee-wire" />
-                      </div>
-                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                        <span className="text-xs text-gray-600">Total Fees (all types combined)</span>
-                        {summaryMoneyOrDash({
-                          isLoading: feesQuery.isLoading,
-                          isError: feesQuery.isError,
-                          value: latestMonth?.factor_fee_total,
-                          testId: "factoring-account-summary-fees-total",
-                          emphasis: true,
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pt-2">
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Other Adjustments (Chargebacks/Overpayments, most recent posted month)</span>
-                      {summaryMoneyOrDash({
-                        isLoading: feesQuery.isLoading,
-                        isError: feesQuery.isError,
-                        value: latestMonth?.chargeback_total,
-                        testId: "factoring-account-summary-adjustments",
-                        emphasis: true,
-                      })}
-                    </div>
-                    <div className="flex items-center justify-between border-b border-gray-100 py-1">
-                      <span className="text-xs text-gray-600">Total Change in NFE</span>
-                      <NotApplicable reason="no_source" data-testid="factoring-account-summary-nfe-change" />
-                    </div>
-                  </div>
-
-                  <div className="mt-3 border-t border-gray-200 px-3.5 pb-2 pt-2">
-                    <div className="overflow-x-auto">
-                      <ParityTable appearance="board"
-                        title="Beginning and ending — balance sheet items"
-                        columns={[
-                          { key: "label", label: "Item" },
-                          {
-                            key: "beginning",
-                            label: "Beginning",
-                            render: (row: { label: string; testId: string }) => (
-                              <NotApplicable reason="no_source" data-testid={`factoring-account-summary-${row.testId}-beginning`} />
-                            ),
-                          },
-                          {
-                            key: "ending",
-                            label: "Ending",
-                            render: (row: { label: string; ending: unknown; endingReason: NaReason; testId: string }) =>
-                              row.ending == null ? (
-                                <NotApplicable reason={row.endingReason} data-testid={`factoring-account-summary-${row.testId}-ending`} />
-                              ) : (
-                                <span className="font-medium text-gray-900" data-testid={`factoring-account-summary-${row.testId}-ending`}>
-                                  {fmtCurrency(row.ending)}
-                                </span>
-                              ),
-                          },
-                        ]}
-                        rows={[
-                          {
-                            label: "AR Balance",
-                            ending: summaryQuery.isError || summaryQuery.isLoading ? null : summary?.outstanding_liability_balance,
-                            endingReason: "not_loaded" as NaReason,
-                            testId: "ar-balance",
-                          },
-                          // Escrow/Cash: this system tracks one combined reserve balance with no
-                          // Escrow/Cash type split — the concept itself doesn't apply here.
-                          { label: "Escrow Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "escrow-reserve" },
-                          { label: "Cash Reserve", ending: null, endingReason: "not_applicable" as NaReason, testId: "cash-reserve" },
-                          // Loan/Savings/Funds on Hold/NFE: no backing field exists in this schema yet.
-                          { label: "Loan", ending: null, endingReason: "no_source" as NaReason, testId: "loan" },
-                          { label: "Savings", ending: null, endingReason: "no_source" as NaReason, testId: "savings" },
-                          { label: "Funds on Hold", ending: null, endingReason: "no_source" as NaReason, testId: "funds-on-hold" },
-                          { label: "NFE", ending: null, endingReason: "no_source" as NaReason, testId: "nfe" },
-                        ]}
-                        rowKey={(row) => row.testId}
-                      />
-                    </div>
-                  </div>
-                </BoardSection>
-              )}
+              {/* ROUND 8.15b — Factoring.dc.html Home is FactoringHomeBoard only (KPIs + Each purchase + Terms).
+                  Old Account Summary NotApplicable theater removed. Real ledger bindings kept as
+                  screen-reader proof nodes (same engines the board KPIs already use). */}
+              <div className="sr-only" data-testid="factoring-account-summary">
+                <span data-testid="factoring-account-summary-ending-balance">
+                  {summaryQuery.isLoading || summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
+                </span>
+                <span data-testid="factoring-account-summary-reserve-balance">
+                  {factoringKpiQuery.isLoading || factoringKpiQuery.isError || !engineReserve
+                    ? "—"
+                    : fmtCurrency(engineReserve.total / 100)}
+                </span>
+                <span data-testid="factoring-account-summary-fees-total">
+                  {feesQuery.isLoading || feesQuery.isError ? "—" : fmtCurrency(latestMonth?.factor_fee_total)}
+                </span>
+                <span data-testid="factoring-account-summary-adjustments">
+                  {feesQuery.isLoading || feesQuery.isError ? "—" : fmtCurrency(latestMonth?.chargeback_total)}
+                </span>
               </div>
             </div>
           );
