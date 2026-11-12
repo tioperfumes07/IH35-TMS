@@ -1,3 +1,9 @@
+## 2026-11-12 ~20:00Z — ROUND 8.18 CHECKPOINT 2
+
+ROUND 8.18 20:00Z · CC-1 rows DONE-LIVE: 89/90/94/212/213/214 (live queries confirmed) + 292 (archive RLS closed by migrations 202611050000-07) · rows CODED: 28/66/67/68/69/70/71/72 (Chrome verify pending) + 101 (PR#29055 in CI: exclude driver bills from vendor-report + party-board) · rows still OPEN: 79 (blocked CC-2 ENG-17), 82/86 (AUTH-478 pending owner), 85 (AUTH-477 pending owner), 215/227/242/269/289/291/309 (partial)
+
+---
+
 ## 2026-11-12 ~18:00Z — ROUND 8.18 CHECKPOINT 1
 
 ROUND 8.18 18:00Z · CC-1 rows DONE-LIVE: 146 (PR#29047), 165 (PR#29047), 216 (PR#29047 09dcb179c78) · rows CODED (guards pass, Chrome verify needed): 28/66/67/68/69/70/71/72 (5 report boards all routed + verify-reports-five-pages-wired exit 0 + verify-load-history-surface exit 0) · rows left: 20 open/partial · AUTH runs waiting on owner: AUTH-476 (3 stuck settlements: P-0125/P-0128/P-0130 loads 13711/13727/13729), AUTH-477 (91 voided expenses with live JEs), AUTH-478 (settlements with accounting_bill_id NULL) — dry-run SQL below
