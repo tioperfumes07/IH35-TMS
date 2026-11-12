@@ -1,10 +1,10 @@
 {
-  "healthzSha": "a305725",
-  "generated_at": "2026-11-12T12:30:24.967Z",
+  "healthzSha": "09ea559",
+  "generated_at": "2026-11-12T14:25:40.414Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "a305725",
+    "deployedSha": "09ea559",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,87 @@
   },
   "recentActivity": [
     {
+      "number": 29019,
+      "title": "FINDING: LST-F12011 MAIN-RED — regenerate stale USMCA-EXHAUSTIVE-BATTERY.md",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 08:14 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29019",
+      "sha": "09ea559399",
+      "committedAtIso": "2026-11-12T09:14:14-05:00"
+    },
+    {
+      "number": 29018,
+      "title": "FINDING: ACCT-F4431310-E2 — 9 voided headers carry live JEs; add stranded-JE repair engine + AUTH-477",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 07:17 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29018",
+      "sha": "ea1d6f2b3c",
+      "committedAtIso": "2026-11-12T07:17:20-06:00"
+    },
+    {
+      "number": 0,
+      "title": "Claude-3- FINDING: CC-3-ROUND-8.15-ROWS-122-141-145-150-155-157-163-109 LANE: NON-FINANCIAL — driver name casing DONE-LIVE on 7 screens + row 109 HOS/planner re-verified; register updated",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 07:12 AM CT",
+      "url": "",
+      "sha": "b960522ac9",
+      "committedAtIso": "2026-11-12T08:12:28-05:00"
+    },
+    {
+      "number": 29016,
+      "title": "FINDING: LST-F12010 bus tip — #29015 Settlements KPI href merged; board-column rebuild BLOCKED",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:53 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29016",
+      "sha": "0b3b275737",
+      "committedAtIso": "2026-11-12T07:53:41-05:00"
+    },
+    {
+      "number": 29015,
+      "title": "FINDING: ROUND-8.15 Settlements KPI href drills + MAIN-RED PerfumeListsPanel duplicate MoneyInput",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:50 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29015",
+      "sha": "819c9ca09d",
+      "committedAtIso": "2026-11-12T07:50:38-05:00"
+    },
+    {
+      "number": 29014,
+      "title": "FINDING: ACCT-F20261112-E1 — stuck settlements P-0125/P-0128/P-0130: postFinalLoadSettlementsGl never ran",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:45 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29014",
+      "sha": "ba0dce5555",
+      "committedAtIso": "2026-11-12T12:45:38Z"
+    },
+    {
+      "number": 0,
+      "title": "CC-2- CLAIM-RESERVE step 19915 — row-77 factoring invoice status parity guard",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:35 AM CT",
+      "url": "",
+      "sha": "6f6810e250",
+      "committedAtIso": "2026-11-12T07:35:36-05:00"
+    },
+    {
+      "number": 29012,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:30 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29012",
+      "sha": "b2f09eb5dc",
+      "committedAtIso": "2026-11-12T06:30:56-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:30 AM CT",
+      "url": "",
+      "sha": "790cf4bcb5",
+      "committedAtIso": "2026-11-12T12:30:25Z"
+    },
+    {
       "number": 29011,
       "title": "FINDING: ACCT-F20261112-E3E4E5 — three guard false-failures: alias-shadow truth SQL unsigned/unfiltered; salaried $0 closed week missing verdict; orphan-fk false-positives from capacity migration",
       "state": "merged",
@@ -2130,87 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29011",
       "sha": "a3057255a2",
       "committedAtIso": "2026-11-12T06:22:15-06:00"
-    },
-    {
-      "number": 29010,
-      "title": "FINDING: OPS-F12011 healthz background_jobs.stale — FMCSA quarterly draw freshness measured from the real draw, manual draw stamps the job",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 06:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29010",
-      "sha": "f62acbe94f",
-      "committedAtIso": "2026-11-12T06:21:53-06:00"
-    },
-    {
-      "number": 28834,
-      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 06:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28834",
-      "sha": "3776975a62",
-      "committedAtIso": "2026-11-12T06:21:31-06:00"
-    },
-    {
-      "number": 29009,
-      "title": "FINDING: LST-F12010 PERFUME-DESK — picture-reader MoneyInput + flatten nested box (main red)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 06:18 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29009",
-      "sha": "ab78c4f760",
-      "committedAtIso": "2026-11-12T06:18:52-06:00"
-    },
-    {
-      "number": 29008,
-      "title": "FINDING: LST-F12009 bus ROUND 8.15 — overhaul law: engine, forward route, reverse route, replace not layer, live proof",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:54 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29008",
-      "sha": "d099adc9a3",
-      "committedAtIso": "2026-11-12T05:54:19-06:00"
-    },
-    {
-      "number": 28984,
-      "title": "chore(deps): bump the production-dependencies group across 1 directory with 21 updates",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:23 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28984",
-      "sha": "92604c5bc2",
-      "committedAtIso": "2026-11-12T05:23:50-06:00"
-    },
-    {
-      "number": 29007,
-      "title": "FINDING: PROD-DOWN-DEPLOY-2026-11-12 — every backend deploy since 10:44Z crashes at boot: web-push 4.0.0 has no default export",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29007",
-      "sha": "e6ceece310",
-      "committedAtIso": "2026-11-12T05:21:28-06:00"
-    },
-    {
-      "number": 29006,
-      "title": "FINDING: LST-F12008 bus ROUND 8.14b — Mac restart re-brief, no Cascade seat, tsc -b rule",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:08 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29006",
-      "sha": "c5e4896458",
-      "committedAtIso": "2026-11-12T05:08:17-06:00"
-    },
-    {
-      "number": 29005,
-      "title": "FINDING: MAIN-RED-2026-11-12k — frontend build red: PerfumeListsPanel column used a width prop ParityColumn does not have (from #29003)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29005",
-      "sha": "8680a85eef",
-      "committedAtIso": "2026-11-12T05:07:22-06:00"
-    },
-    {
-      "number": 29004,
-      "title": "FINDING: LST-F12007 PERFUME-DESK — reader-not-configured message must not name the key env var (verify-ratecon-extract-guard)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 04:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29004",
-      "sha": "bcd34f04ff",
-      "committedAtIso": "2026-11-12T04:53:05-06:00"
     }
   ]
 }
