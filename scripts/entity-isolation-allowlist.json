@@ -1,6 +1,56 @@
 {
   "global": [
     {
+      "schema": "perfume",
+      "table": "brand_aliases",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "desk_users",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "item_aliases",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "item_upcs",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "items",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "needs",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "price_list_rows",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "price_lists",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "settings",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
+      "schema": "perfume",
+      "table": "vendors",
+      "reason": "TIO Perfumes (ScentsX LLC) price desk \u2014 owner order 2026-11-11 \"isolate in a hidden module ... we do not cross with USMCA data\": belongs to no carrier, so deliberately NO operating_company_id/FK to org.companies; walled instead by FORCE RLS perfume.is_owner() (Owner role AND listed in perfume.desk_users) and enforced by scripts/verify-perfume-desk-isolation.mjs (no carrier reference, Owner-only routes)"
+    },
+    {
       "schema": "insurance",
       "table": "type_catalog",
       "reason": "shared insurance claim/type reference catalog (45 rows); intentionally readable by all operating companies, no per-entity variation"
