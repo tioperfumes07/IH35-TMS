@@ -307,8 +307,23 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
     costs.push({ id: r.id, kind: r.kind, number: r.number ?? "—", load_id: r.load_id, load_number: r.load_number, date: r.date, vendor_name: r.vendor_name, category: r.category, amount_cents: n(r.amount_cents), posting_status: r.posting_status ?? "unposted", document_status: r.document_status ?? "unknown", has_account: Boolean(r.has_account), has_vendor: Boolean(r.has_vendor), receipt_count: n(r.receipt_count) });
   }
 
-  const linesRes = await client.query<{ id: string; line_type: string; description: string | null; amount: unknown; load_id: string | null; load_number: string | null; approval_status: string | null; posting_account_id: string | null; account_number: string | null; account_name: string | null; source_driver_bill_id: string | null }>(
-    `SELECT sl.id::text, sl.line_type, sl.description, sl.amount, sl.load_id::text, l.load_number, sl.approval_status, sl.posting_account_id::text, acc.account_number, acc.account_name, sl.source_driver_bill_id::text
+  const linesRes = await client.query<{
+    id: string;
+    line_type: string;
+    description: string | null;
+    amount: unknown;
+    load_id: string | null;
+    load_number: string | null;
+    approval_status: string | null;
+    posting_account_id: string | null;
+    account_number: string | null;
+    account_name: string | null;
+    source_driver_bill_id: string | null;
+    source_id: string | null;
+    source_reference_id: string | null;
+  }>(
+    `SELECT sl.id::text, sl.line_type, sl.description, sl.amount, sl.load_id::text, l.load_number, sl.approval_status, sl.posting_account_id::text, acc.account_number, acc.account_name, sl.source_driver_bill_id::text,
+            sl.source_id::text, sl.source_reference_id::text
        FROM driver_finance.settlement_lines sl
        LEFT JOIN mdata.loads l ON l.id = sl.load_id
        LEFT JOIN catalogs.accounts acc ON acc.id = sl.posting_account_id
@@ -392,7 +407,58 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
   if (closedAlready) hardBlockers.push(`tour already closed (${s.status}${s.trip_closed_at ? ` at ${s.trip_closed_at}` : ""})`);
 
   const escrow = linesRes.rows.filter((l) => l.line_type === "escrow_contribution").reduce((t, l) => t + Math.abs(n(l.amount)), 0);
-  const recoveries = linesRes.rows.filter((l) => ["deduction", "recovery", "advance_recovery", "fuel_overage", "damage_recovery"].includes(l.line_type)).reduce((t, l) => t + Math.abs(n(l.amount)), 0);
+  // Codex cert: "Advances recovered" must be advance_recovery lines / pay-run recoveries only —
+  // never admin-fee deductions / fuel_overage / damage lumped into recoveries_cents.
+  const advanceRecoveryLines = linesRes.rows.filter((l) => l.line_type === "advance_recovery");
+  let advanceRecoveries = advanceRecoveryLines.reduce((t, l) => t + Math.abs(n(l.amount)), 0);
+  const recoveries = linesRes.rows
+    .filter((l) => ["recovery", "fuel_overage", "damage_recovery"].includes(l.line_type))
+    .reduce((t, l) => t + Math.abs(n(l.amount)), 0);
+  const advanceSourceIds = new Set(
+    advanceRecoveryLines
+      .map((l) => l.source_id || l.source_reference_id)
+      .filter((id): id is string => Boolean(id)),
+  );
+  // Pay-run close recovers advances via JE + stamps driver_advances / audit — often without an
+  // advance_recovery settlement_line. Prefer stamped sources; never invent amounts.
+  const recoveredAdvancesRes = await client.query<{ id: string; amount: unknown }>(
+    `SELECT id::text, amount FROM driver_finance.driver_advances
+      WHERE operating_company_id = $1::uuid AND recovered_in_settlement_id = $2::uuid`,
+    [companyId, settlementId],
+  );
+  for (const a of recoveredAdvancesRes.rows) advanceSourceIds.add(a.id);
+  if (advanceRecoveries <= 0 && recoveredAdvancesRes.rows.length > 0) {
+    advanceRecoveries = recoveredAdvancesRes.rows.reduce((t, a) => t + Math.abs(n(a.amount)), 0);
+  }
+  if (advanceRecoveries <= 0 || advanceSourceIds.size === 0) {
+    const auditRes = await client.query<{
+      advance_recoveries_cents: unknown;
+      recovered_advance_ids: unknown;
+    }>(
+      `SELECT (payload->>'advance_recoveries_cents')::bigint AS advance_recoveries_cents,
+              payload->'recovered_advance_ids' AS recovered_advance_ids
+         FROM audit.audit_events
+        WHERE event_class = 'driver_finance.settlement.payrun_closed'
+          AND payload->>'operating_company_id' = $1
+          AND payload->>'resource_id' = $2
+        ORDER BY created_at DESC
+        LIMIT 1`,
+      [companyId, settlementId],
+    );
+    const auditRow = auditRes.rows[0];
+    if (auditRow) {
+      const auditCents = Number(auditRow.advance_recoveries_cents ?? 0);
+      if (advanceRecoveries <= 0 && Number.isFinite(auditCents) && auditCents > 0) {
+        advanceRecoveries = auditCents / 100;
+      }
+      const ids = Array.isArray(auditRow.recovered_advance_ids)
+        ? (auditRow.recovered_advance_ids as unknown[])
+        : [];
+      for (const id of ids) {
+        if (typeof id === "string" && id) advanceSourceIds.add(id);
+      }
+    }
+  }
   const cs = csRes.rows[0] ?? null;
   const inv = invRes.rows[0] ?? { factored: 0, face_cents: 0, advance_cents: 0 };
 
@@ -424,7 +490,10 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       lines: linesRes.rows.map((l) => ({ id: l.id, line_type: l.line_type, description: l.description, amount_cents: Math.round(n(l.amount) * 100), load_id: l.load_id, load_number: l.load_number, approval_status: l.approval_status, posting_account_id: l.posting_account_id, account_label: l.account_name ? `${l.account_number ? `${l.account_number} ` : ""}${l.account_name}` : null, source_driver_bill_id: l.source_driver_bill_id })),
       driver_bills: driverBills,
       gross_cents: Math.round(n(s.gross_pay) * 100), deductions_cents: Math.round(n(s.deductions_total) * 100), reimbursements_cents: Math.round(n(s.reimbursements_total) * 100), net_cents: Math.round(n(s.net_pay) * 100),
-      escrow_cents: Math.round(escrow * 100), recoveries_cents: Math.round(recoveries * 100),
+      escrow_cents: Math.round(escrow * 100),
+      recoveries_cents: Math.round(recoveries * 100),
+      advance_recoveries_cents: Math.round(advanceRecoveries * 100),
+      advance_source_ids: [...advanceSourceIds],
       pdf_path: `/api/v1/driver-finance/settlements/${s.id}/pdf`,
     },
     company_settlement: {

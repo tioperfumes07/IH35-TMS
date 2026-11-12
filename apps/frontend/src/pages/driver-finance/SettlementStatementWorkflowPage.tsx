@@ -81,7 +81,7 @@ import { getCompanySettlementReport } from "../../api/accounting";
 import { SettlementLoadsSection } from "./components/SettlementLoadsSection";
 import { CompanyWaterfallSection } from "./components/CompanyWaterfallSection";
 import { SettlementNumberBox } from "./components/SettlementNumberBox";
-import { buildSettlementLineViews } from "./settlementDetailLineMaps";
+import { buildSettlementLineViews, enrichSettlementPayRowsFromDriverBills } from "./settlementDetailLineMaps";
 
 export function SettlementStatementWorkflowPage() {
   const { selectedCompanyId } = useCompanyContext();
@@ -351,10 +351,17 @@ export function SettlementStatementWorkflowPage() {
 
   // buildSettlementLineViews segments lines by line_type: deadhead rows where
   // String(line.line_type) === "deadhead_pay" land in `deadhead`; all others in earnings/extra/etc.
-  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
-    () => buildSettlementLineViews(activeLines, settlementDisplayId),
-    [activeLines, settlementDisplayId]
-  );
+  // Codex cert: when the detail join left miles/rate/source_driver_bill blank, fill from the same
+  // tour-readout driver_bills (never invent — only stamped bill fields for this settlement's loads).
+  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(() => {
+    const views = buildSettlementLineViews(activeLines, settlementDisplayId);
+    const bills = readout?.driver_settlement?.driver_bills ?? [];
+    return {
+      ...views,
+      earnings: enrichSettlementPayRowsFromDriverBills(views.earnings, bills, "loaded"),
+      deadhead: enrichSettlementPayRowsFromDriverBills(views.deadhead, bills, "deadhead"),
+    };
+  }, [activeLines, settlementDisplayId, readout?.driver_settlement?.driver_bills]);
 
   const summary = useMemo(() => {
     const earningsTotal = earnings.reduce((sum, row) => sum + row.amount, 0);

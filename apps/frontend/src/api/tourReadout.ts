@@ -51,7 +51,12 @@ export type TourReadout = {
   soft_warnings: string[];
   driver_settlement?: {
     lines: SettlementLineRow[]; driver_bills: DriverBillRow[];
-    gross_cents: number; deductions_cents: number; reimbursements_cents: number; net_cents: number; escrow_cents: number; recoveries_cents: number; pdf_path: string;
+    gross_cents: number; deductions_cents: number; reimbursements_cents: number; net_cents: number; escrow_cents: number; recoveries_cents: number;
+    /** advance_recovery lines only (never admin-fee deductions). */
+    advance_recoveries_cents?: number;
+    /** Cash-advance ids recovered on this settlement (for EntityLink). */
+    advance_source_ids?: string[];
+    pdf_path: string;
   };
   company_settlement?: {
     id: string | null; display_id: string | null; status: string | null; closed_at: string | null;

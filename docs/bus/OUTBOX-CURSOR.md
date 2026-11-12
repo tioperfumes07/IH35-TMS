@@ -1,7 +1,7 @@
-## OUTBOX (11-12-2026 ~10:15 PM CT) — FE LIVE dep-dbqjngijnfac73bkhh9g · SHA 772f69a30f (#28941)
-- **LIVE:** Render `ih35-tms-web` deploy `dep-dbqjngijnfac73bkhh9g` status=live · commit `772f69a30f` (#28941 FE tsc unblock).
-- **CODE:** TruckPlanner comma · ImportFuelTransactionsModal appearance · CF3 ExpenseBoardRow · ByRole /^name$/.
-- **NEXT:** CF Home Net→RL forecast breakdown · Settlement statement blank driver/earnings/Advances recovered. Cascade Customers/Vendors Close/Back tipped; CC-1 void/FK tipped. No match/Dreamline.
+## OUTBOX (11-12-2026 ~11:25 PM CT) — Settlement Advances recovered + earnings enrich; FE LIVE after merge
+- **PRIOR LIVE:** `dep-dbqjngijnfac73bkhh9g` · SHA `772f69a30f` (#28941). #28944 CF Net drill merged. This PR: Advances recovered = advance_recovery/pay-run only + cash_advance link; earnings miles/rate/bill from readout bills.
+- **GATES:** verify-statement-advances-recovered-source (#20121) · net-pay triple · tsc -b --force · TourTabs 5/5.
+- **EXCEPTIONS:** closed unnumbered settlementNumber → "—" (law); Cascade Customers/Vendors Close/Back; CC-1 void/FK. No match/Dreamline.
 
 ## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
 - **SHIPS:** #28928 Legal Templates · #28930 Available Trucks Driver EntityLink (capacity driver_id) · #28911–#28929 reverse wave.
