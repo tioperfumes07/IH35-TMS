@@ -91,15 +91,60 @@ function tablesWithRls(sql) {
   const enabled = new Set();
   const rlsRe =
     /ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?([a-zA-Z0-9_.]+)\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY/gi;
-  let m;
-  while ((m = rlsRe.exec(clean)) !== null) {
-    const full = m[1].replace(/"/g, "").toLowerCase();
+  const add = (full) => {
     enabled.add(full);
     // Also add the bare table name so bare-vs-schema-qualified mismatches pass
     const bare = full.split(".").pop();
     if (bare) enabled.add(bare);
+  };
+  let m;
+  while ((m = rlsRe.exec(clean)) !== null) {
+    add(m[1].replace(/"/g, "").toLowerCase());
+  }
+  // A DO-block loop also enables RLS — the 0065 pattern several migrations use:
+  //   FOREACH t IN ARRAY ARRAY['a','b'] LOOP
+  //     EXECUTE format('ALTER TABLE dispatch.%I ENABLE ROW LEVEL SECURITY', t); …
+  //   END LOOP;
+  // Every name in the loop's array is enabled on the schema the format string names. Only a literal
+  // ENABLE statement inside the SAME loop body counts, so a loop that only grants does not pass.
+  const loopRe = /FOREACH\s+(\w+)\s+IN\s+ARRAY\s+ARRAY\s*\[([^\]]*)\]\s*LOOP([\s\S]*?)END\s+LOOP/gi;
+  while ((m = loopRe.exec(clean)) !== null) {
+    const names = [...m[2].matchAll(/'([a-zA-Z0-9_]+)'/g)].map((x) => x[1].toLowerCase());
+    const fmtRe = /format\(\s*'ALTER\s+TABLE\s+(?:IF\s+EXISTS\s+)?([a-zA-Z0-9_]+)\.%I\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY'\s*,\s*(\w+)\s*\)/gi;
+    let f;
+    while ((f = fmtRe.exec(m[3])) !== null) {
+      if (f[2].toLowerCase() !== m[1].toLowerCase()) continue;
+      for (const n of names) add(`${f[1].toLowerCase()}.${n}`);
+    }
   }
   return enabled;
+}
+
+function selftest() {
+  const cases = [
+    ["plain statement", "ALTER TABLE x.a ENABLE ROW LEVEL SECURITY;", ["x.a"], []],
+    ["FOREACH loop (capacity engine shape)",
+      "DO $$ DECLARE t text; BEGIN FOREACH t IN ARRAY ARRAY['capacity_settings','load_board_postings']\n LOOP\n" +
+      "EXECUTE format('ALTER TABLE dispatch.%I ENABLE ROW LEVEL SECURITY', t);\nEND LOOP; END $$;",
+      ["dispatch.capacity_settings", "dispatch.load_board_postings"], []],
+    ["loop that only grants does NOT count",
+      "DO $$ DECLARE t text; BEGIN FOREACH t IN ARRAY ARRAY['a1'] LOOP EXECUTE format('GRANT SELECT ON s.%I TO ih35_app', t); END LOOP; END $$;",
+      [], ["s.a1"]],
+    ["ENABLE on a different loop variable does NOT count",
+      "DO $$ DECLARE t text; u text; BEGIN FOREACH t IN ARRAY ARRAY['b1'] LOOP EXECUTE format('ALTER TABLE s.%I ENABLE ROW LEVEL SECURITY', u); END LOOP; END $$;",
+      [], ["s.b1"]],
+    ["commented-out loop does NOT count",
+      "-- FOREACH t IN ARRAY ARRAY['c1'] LOOP EXECUTE format('ALTER TABLE s.%I ENABLE ROW LEVEL SECURITY', t); END LOOP;",
+      [], ["s.c1"]],
+  ];
+  let bad = 0;
+  for (const [name, sql, mustHave, mustNot] of cases) {
+    const got = tablesWithRls(sql);
+    const ok = mustHave.every((t) => got.has(t)) && mustNot.every((t) => !got.has(t));
+    if (!ok) { bad++; console.error(`  FAIL: ${name} -> ${[...got].join(",")}`); }
+  }
+  if (bad) { console.error(`verify:rls-migration-scan SELFTEST FAILED — ${bad} of ${cases.length}`); process.exit(1); }
+  console.log(`verify:rls-migration-scan SELFTEST PASS — ${cases.length} cases`);
 }
 
 async function main() {
@@ -179,4 +224,5 @@ async function main() {
   );
 }
 
-main().catch((err) => fail(String(err?.message ?? err)));
+if (process.argv.includes("--selftest")) selftest();
+else main().catch((err) => fail(String(err?.message ?? err)));
