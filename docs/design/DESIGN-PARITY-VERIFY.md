@@ -1,5 +1,13 @@
 # ROUND 8.5 — independent board parity verification
 
+## Reports depth — cash-basis navigation FAIL
+
+Read-only live: Reports Home Cash selected → Trial balance opens `/reports/trial-balance?basis=cash`, but the loaded viewer selects Accrual, labels Accrual basis and queries that applied state. `TrialBalancePage.tsx:79–81` initializes applied from hard-coded accrual rather than URL. Required owning-seat repair: validate and initialize basis/date from URL, synchronize navigation, and rendered tests for cash/accrual deep links and reverse state. This is a control/query mismatch, not evidence of ledger corruption. ReportsHomeBoard.tsx:287–306 also has no drill action on Available reports or Run last 7 days counts. Screenshot private inline; Cursor notified #28941 comment6814901649. Reports and Trial Balance boards remain OPEN.
+
+## Party-board navigation #28946 — bounded LIVE PASS
+
+Deployed frontend6db89df6dc, authenticated USMCA at1440x900: Customers `?chip=factored` Create→Close and detail→Back both restore the approved board and exact chip. Vendors `?chip=open_bills` Create→Close and detail→Back likewise restore the approved board and exact chip. No creation form was submitted, no production data changed. These four navigation checks PASS; full-board layout, totals and remaining drills are not certified. Cursor notified in #28946 comment6814859528.
+
 ## Cash Flow Home #28944 acceptance — Net bounded PASS, Ending FAIL
 
 On deployed frontend16a767816b, in-app1440x900, Net opens Rolling Ledger with the correct week, scenario and component breakdown; displayed income minus expenses equals the clicked net. Ending second-week drill fails: banner says “Clicked Ending” but displays the weekly net, not the clicked cumulative ending balance. `CashFlowHomeTab.tsx:545–572` sends only `rl_net: bucket.net_cents` for both kinds; `RollingLedgerTab.tsx:1307` uses it for either label. Required fix: carry actual ending and opening/prior balance, show opening plus net equals ending, preserve component provenance. Required behavioral negative control: nonzero opening and cumulative second week so ending differs from net. Private screenshot captured, no production writes. Cursor notified on #28944; full Cash Flow remains OPEN.
@@ -11,6 +19,8 @@ Render confirms `dep-dbqjvqbhrras73a8a720` live at `16a767816be3d99067cfa7f0f2cc
 Whole statement remains OPEN: unnamed settlement display, PENDING labels, deduction fields/drills, company waterfall source split and all other previously documented acceptance remain unverified or failing. Closed-list membership versus underlying open/unpaid statement status needs semantic reconciliation, not a guessed data repair. No production write or reversal action invoked.
 
 ## Driver Profile depth verification — 11-11 late evening
+
+Further live failures on frontend16a767816b: Legal Matters tab duplicates the same Legal Matters section around Insurance Claims. `DriverProfilePage.tsx:1089–1093` mounts both the canonical component and `InsuranceLawsuitsReverseSection`, whose wrapper delegates to the same component/filter. Settlements overflow tab Period End displays raw YYYY-MM-DD; `components/driver-profile/SettlementsSection.tsx:57–59` renders String(week_ending), while Period Begin already uses formatDateUS. Load History mounts two Stops+miles grids (telematics and persisted events) without reconciling their differing populations; do not flatten or delete source records to hide this. Cursor/CC-3 received source-backed findings via #28941 comment6814762299. Reports & damage finishes loading with explicit no-linked-record states; this does not prove missing-population record actions.
 
 Audit History FAIL: a single driver tab mounts two separate audit readers and two complete filter/table toolbars. The first renders populated driver-related history; the second says “No audit events found for this record.” Source `DriverProfilePage.tsx:1117–1121` mounts `AuditHistoryTab` and `EntityAuditHistoryTab` together. The first reader intentionally includes driver-linked payload keys (`driver-events.service.ts:65–76`), so this is not evidence that its records are unrelated. Required repair: one comprehensible, canonical driver-history surface retaining both relevant event sets, explicit scope and deduplication; rendered test must reject duplicate toolbars and contradictory unqualified empty state. Do not drop valid events to match a screenshot.
 
