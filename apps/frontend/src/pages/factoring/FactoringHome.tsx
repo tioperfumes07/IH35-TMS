@@ -1637,7 +1637,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                         drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                       />
                     ) : (
-                      fmtCurrency(row.invoice_amount)
+                      <MoneyCell
+                        cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                        drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                      />
                     ),
                 },
                 {
@@ -2928,6 +2931,11 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
+                        ) : row.factoring_advance_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ) : (
                           fmtCurrency(row.invoice_amount)
                         ),
@@ -2941,6 +2949,11 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                           <MoneyCell
                             cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : row.factoring_advance_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
                           />
                         ) : (
                           fmtCurrency(row.invoice_amount)

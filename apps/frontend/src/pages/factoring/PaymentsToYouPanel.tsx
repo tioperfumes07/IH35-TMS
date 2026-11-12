@@ -608,25 +608,45 @@ function PurchaseDetailCard(props: {
                 key: "gross_cents",
                 label: "Gross",
                 cellClass: "text-right tabular-nums",
-                render: (line) => formatUsdCents(line.gross_cents),
+                render: (line) =>
+                  line.invoice_id ? (
+                    <MoneyCell cents={Number(line.gross_cents ?? 0)} drill={{ entity: { kind: "invoice", id: line.invoice_id } }} />
+                  ) : (
+                    <MoneyCell cents={Number(line.gross_cents ?? 0)} drill={{ entity: { kind: "factoring_purchase", id: detail.id } }} />
+                  ),
               },
               {
                 key: "escrow_reserve_cents",
                 label: "Escrow",
                 cellClass: "text-right tabular-nums",
-                render: (line) => formatUsdCents(line.escrow_reserve_cents),
+                render: (line) =>
+                  line.invoice_id ? (
+                    <MoneyCell cents={Number(line.escrow_reserve_cents ?? 0)} drill={{ entity: { kind: "invoice", id: line.invoice_id } }} />
+                  ) : (
+                    <MoneyCell cents={Number(line.escrow_reserve_cents ?? 0)} drill={{ entity: { kind: "factoring_purchase", id: detail.id } }} />
+                  ),
               },
               {
                 key: "cash_reserve_cents",
                 label: "Cash rsv",
                 cellClass: "text-right tabular-nums",
-                render: (line) => formatUsdCents(line.cash_reserve_cents),
+                render: (line) =>
+                  line.invoice_id ? (
+                    <MoneyCell cents={Number(line.cash_reserve_cents ?? 0)} drill={{ entity: { kind: "invoice", id: line.invoice_id } }} />
+                  ) : (
+                    <MoneyCell cents={Number(line.cash_reserve_cents ?? 0)} drill={{ entity: { kind: "factoring_purchase", id: detail.id } }} />
+                  ),
               },
               {
                 key: "fee_cents",
                 label: "Fee",
                 cellClass: "text-right tabular-nums",
-                render: (line) => formatUsdCents(line.fee_cents),
+                render: (line) =>
+                  line.invoice_id ? (
+                    <MoneyCell cents={Number(line.fee_cents ?? 0)} drill={{ entity: { kind: "invoice", id: line.invoice_id } }} />
+                  ) : (
+                    <MoneyCell cents={Number(line.fee_cents ?? 0)} drill={{ entity: { kind: "factoring_purchase", id: detail.id } }} />
+                  ),
               },
             ]}
             rows={detail.lines ?? []}

@@ -25,6 +25,7 @@ import { formatUsd, formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
@@ -35,10 +36,6 @@ import { SelectCombobox } from "../../components/Combobox";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
-
-function formatMoney(cents: number) {
-  return formatUsdCents(cents);
-}
 
 export function PolicyDetail() {
   const { selectedCompanyId } = useCompanyContext();
@@ -177,7 +174,17 @@ export function PolicyDetail() {
           );
         },
       },
-      { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (unit) => formatMoney(unit.insured_value_cents) },
+      {
+        key: "insured_value_cents",
+        label: "Insured Value",
+        sortable: true,
+        render: (unit) => {
+          const unitId = unit.unit_id ?? unit.asset_id;
+          return (
+            <MoneyCell cents={unit.insured_value_cents} drill={{ entity: { kind: "unit", id: unitId } }} />
+          );
+        },
+      },
       { key: "created_at", label: "Assigned", sortable: true, render: (unit) => formatDateUS(unit.created_at) },
     ],
     [],
@@ -218,7 +225,14 @@ export function PolicyDetail() {
         ),
       },
       { key: "status", label: "Status", sortable: true },
-      { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
+      {
+        key: "amount_claimed_cents",
+        label: "Claimed",
+        sortable: true,
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_claimed_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
+      },
     ],
     [],
   );

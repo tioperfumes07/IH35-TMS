@@ -25,11 +25,12 @@ import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { StatusBadge } from "../../../components/layout/StatusBadge";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
-import { formatQuantityTable, formatUsdCentsTable, formatNumberTable } from "../../../lib/money";
+import { formatQuantityTable, formatNumberTable } from "../../../lib/money";
 
 const LINK = "text-[#1F2A44] hover:underline";
 
@@ -94,7 +95,18 @@ export function FuelIntegrityPage() {
     {
       key: "total_cost_cents",
       label: "Cost",
-      render: (row) => <span className="tabular-nums">{formatUsdCentsTable(row.total_cost_cents)}</span>,
+      render: (row) =>
+        row.unit_id ? (
+          <MoneyCell
+            cents={Number(row.total_cost_cents ?? 0)}
+            drill={{ entity: { kind: "unit", id: row.unit_id } }}
+          />
+        ) : (
+          <MoneyCell
+            cents={Number(row.total_cost_cents ?? 0)}
+            drill={{ entity: { kind: "fuel_transaction", id: row.fuel_transaction_id } }}
+          />
+        ),
     },
     {
       key: "is_purchase",
