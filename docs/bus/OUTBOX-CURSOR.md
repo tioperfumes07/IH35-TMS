@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~12:35 AM CT) — progress: #28895–#28905 Cursor no-stop
+- **SHIPS:** #28895–#28898 Document Designs · #28896 Aging date-basis · #28897–#28902/#28905 go26 Cash Advances/LoadDetail/Statement/CF3 Parity · #28900/#28904 tips/register.
+- **NEXT:** CashFlowHomeTab matrix residual; reverse-wiring spot checks; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~12:25 AM CT) — CF3 Income/Expenses → ParityTable (go26 −1)
 - **THIS:** DailyPredictionTab Income+Expenses panels on ParityTable (group column + footers); archive Remove retargeted; go26 raw_table 36→35.
 - **NEXT:** CashFlowHomeTab matrix residual; Codex LIVE. No match/Dreamline.
@@ -177,11 +181,6 @@
 ## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave20 (VendorDetail)
 - **PRIOR:** prior residual board wave.
 - **THIS:** VendorDetail appearance=board (4 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave19 (Vendors)
-- **PRIOR:** prior residual board wave.
-- **THIS:** Vendors appearance=board (3 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
 
 ## ARCHIVE
