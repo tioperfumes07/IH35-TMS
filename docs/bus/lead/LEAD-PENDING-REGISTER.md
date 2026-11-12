@@ -43,10 +43,10 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 39 | B | Factoring | Factoring › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
-| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | OPEN |  |
-| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | PARTIAL |  |
-| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
-| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
+| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | DONE-LIVE | ReportsHomeBoard.tsx exact v3 board; ReportsSubNav.tsx old items removed; live 11-12-2026: 20 available reports, 6 custom schedules, 0 run last 7 days, IFTA 81d |
+| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | TrialBalanceBoard.tsx wraps TB viewer with 3 KPI tiles; live 11-12-2026: Grand Total Debits $2,018,053.38 = Credits $2,018,053.38, Balance Check: Balanced, 54 accounts |
+| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | PartyBoard.tsx exact v3 board; /api/v1/mdata/boards/customers engine; live 11-12-2026: 81 with transactions, 1,217 in book, A/R Open $798,346.72, Collected $0.00 |
+| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | VendorsHomeBoard.tsx exact v3 board; /api/v1/mdata/boards/vendors engine; live 11-12-2026: 30 with transactions, 603 in book, Spend YTD $430,281.14, Fuel 96%, Open bills $182,057.69 |
 | 44 | B | Settlements | Settlements › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
 | 45 | B | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
 | 46 | B | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |

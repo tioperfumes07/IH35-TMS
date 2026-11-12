@@ -1,7 +1,6 @@
 import type { ReportCategory } from "../../api/reports";
 import { REPORT_CATEGORY_FLYOUT_ITEMS } from "../../components/reports/CategoryHoverNav";
 import { phase6ReportHref } from "../../components/reports/phase6ReportLinks";
-import { REPORT_BOARDS } from "./boards/reportBoardCatalog";
 import { NavyPageSubNav, type NavyPageSubNavItem, type NavySubNavChild } from "../../components/layout/NavyPageSubNav";
 
 const CATEGORY_ORDER: ReportCategory[] = [
@@ -91,7 +90,6 @@ const AUDIT_REPORT_CHILDREN: NavySubNavChild[] = [
 
 export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
   { label: "Reports", to: "/reports" },
-  { label: "Profitability hub", to: "/profitability" },
   { label: "Category hub", to: "/reports/hub" },
   // Label navigates to hub; chevron lists every runner (nav-split — same class as Accounting).
   {
@@ -99,8 +97,6 @@ export const REPORTS_SUB_NAV_ITEMS: NavyPageSubNavItem[] = [
     to: "/reports/hub",
     children: flattenReportRunLinks(),
   },
-  // Rows 79-84 (11-03) — the five report boards, in the board order (V3-Reports-*.dc.html sub-nav).
-  ...REPORT_BOARDS.map((b) => ({ label: b.tab, to: b.href })),
   { label: "Cancellations", to: "/reports/cancellations" },
   { label: "Duplicate Masters", to: "/reports/duplicate-masters" },
   { label: "Driver Qualification File", to: "/reports/driver-qualification" },
