@@ -1,5 +1,11 @@
 # ROUND 8.5 — independent board parity verification
 
+## Safety Driver Files — calendar identity and reverse context FAIL (11-12)
+
+Board24 matrix has the approved seven columns and the CDL cohort narrows9 to5 rows (bounded PASS). A calendar expiry appears one day earlier than the same person's profile; DriverQualificationMatrix uses timestamp-oriented formatDateUS instead of the calendar-date formatter. CDL status opens generic Driver Profile rather than the Safety-file context, and Back goes to Drivers instead of restoring the Safety cohort. Required: shared calendar-only formatting tests (bare date and midnight-Z across CST/CDT), source-bound document drill and reverse origin/filter preservation. Cursor notified #28764 comment6821480320. No stored dates, driver records or documents changed; private screenshot not committed. This is not full-board acceptance.
+
+ROUND8.14 engine remeasurement: row81 existing merge writer and focused tests pass locally, but live branch verification returned401; no query followed that refusal. Row110 current UI does not reproduce the stale active-truck premise; do not assign a truck from ended history. Row112's original register wording is page0/database18, not independently confirmed inclusion of test rows. Each stays unverified until scoped live evidence is available.
+
 ## Banking Home — KPI drill population FAIL (11-12, deployed 52699ab7ba)
 
 Render dep-dbqp9vbrjlhs7386a100 live; Chrome reloaded at 1440x900. Clicking monthly Money In opens `/banking/transactions?types=money_in`. After loading, All transaction types remains selected, both date fields are blank, default For review is selected, and outgoing rows render. This does not explain the clicked monthly operating/cleared KPI. Source: BankingHomeBoard.tsx668/676 emits plural types without month/account/population; BankingHome.tsx141 consumes only singular type=uncategorized; BankingTransactionsDesignView.tsx681–701 initializes review/all/blank dates. Required shared URL/source contract and behavior tests covering both directions, period boundaries, accounts and pending/cleared states, with exact KPI/list tie-out and reverse origin. CC-1/Cursor notified #28998 comment6821420030. No Match/Add/Accept/Reject or other mutation used. Screenshot remains private. Board #3 stays OPEN.
