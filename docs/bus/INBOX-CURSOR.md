@@ -67,3 +67,6 @@ Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (fu
 
 ## ROUND 8.15b — 11-12-2026 8:12 AM CT — v3 boards built COMPLETELY (owner verbatim: "the new designs must be compeltely built use logic.")
 You are unblocked on Settlements Open/Closed + Fuel Home. Map every old element (board slot / logical home / removed duplicate) in the PR body, carry the OWNER-REMOVE line with that quote + 2026-11-12, regenerate additive-baseline, RE-POINT the 6 guards to the new places. CC-1 reviews the guard changes. Routes/sidebar/data/engines never removed.
+
+## ROUND 8.16 — 11-12-2026 9:36 AM CT — FULL BUILD, REPLACE/REMOVE OLD CODE ALLOWED, FAST 4-MIN MERGE, NO DRIFT
+Owner verbatim 9:29 AM CT: "fully and completely build engines and design, not shell, full build wiring etc, its ok to replace old code and remove etc. they cannot and you cannot drift or deviate." + 9:30: "all if tested locally and pass, must follow fastr merge law, the fast 4 minute wekend merge method." Local gate green → PR → merge in 4 min. Old code superseded by your full build is deleted in the same PR. No open PR older than 30 min. Read §ROUND 8.16.
