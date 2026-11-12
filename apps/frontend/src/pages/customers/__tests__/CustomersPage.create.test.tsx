@@ -34,6 +34,14 @@ vi.mock("../../../api/mdata", () => ({
   listCustomers: vi.fn().mockResolvedValue({ customers: [] }),
   listAllCustomers: vi.fn().mockResolvedValue({ customers: [], total: 0 }),
   getCustomerBillingSummary: vi.fn().mockResolvedValue({ aging_buckets: {} }),
+  getCustomerRosterCounts: vi.fn().mockResolvedValue({
+    with_transactions: 0,
+    open_balance: 0,
+    factored: 0,
+    all: 0,
+    possible_duplicates: 0,
+  }),
+  getCustomerFinanceRollup: vi.fn().mockResolvedValue([]),
   listAllAtRiskCustomerRelationshipScores: vi.fn().mockResolvedValue({ customers: [] }),
   listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
@@ -63,9 +71,12 @@ function wrap(ui: ReactElement, initialEntries: string[] = ["/customers"]) {
 }
 
 describe("CustomersPage create validation", () => {
-  it("opens the create drawer from ?create=1 (chrome Create → Customer)", async () => {
+  it("opens the create drawer from ?create=1 without legacy master-detail chrome", async () => {
     render(wrap(<CustomersPage />, ["/customers?create=1"]));
     expect(await screen.findByRole("heading", { name: /create customer/i })).toBeTruthy();
+    expect(screen.getByTestId("customers-create-only")).toBeTruthy();
+    expect(screen.queryByTestId("customers-master-detail-shell")).toBeNull();
+    expect(screen.queryByTestId("customers-home-kpi-strip")).toBeNull();
   });
 
   it("shows legal_name error on empty submit", async () => {
@@ -103,17 +114,14 @@ describe("CustomersPage create validation", () => {
         fieldErrors: { mc_number: "Already in use" },
       })
     );
-    render(wrap(<CustomersPage />));
-    await user.click(screen.getByRole("button", { name: /\+ Create Customer/i }));
+    render(wrap(<CustomersPage />, ["/customers?create=1"]));
     await screen.findByRole("heading", { name: /create customer/i });
-    await user.type(document.querySelector('[data-field="legal_name"]')!, "Acme Logistics");
-    // customer_type is now required client-side (D1-5) — select one so we reach the create request.
-    await user.selectOptions(document.querySelector('select[name="customer_type"]')!, "broker");
-    // CUSTOMER-EMAIL-REQUIRED: invoice-deliverable creates require email before the API call.
-    await user.type(document.querySelector('input[name="email"]')!, "billing@acme.test");
+    await user.type(screen.getByLabelText(/Customer display name/i), "Acme Logistics");
+    await user.click(screen.getByRole("combobox", { name: /Customer type/i }));
+    await user.click(await screen.findByRole("option", { name: /^Broker$/i }));
+    await user.type(screen.getByLabelText(/^Email/i), "billing@acme.test");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
     await waitFor(() => {
-      // The form error banner and the toast both carry role="alert"; assert one of them shows the message.
       const alerts = screen.getAllByRole("alert");
       expect(alerts.some((a) => /Could not save/i.test(a.textContent ?? ""))).toBe(true);
     });

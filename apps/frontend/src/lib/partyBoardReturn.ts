@@ -18,7 +18,7 @@ export function partyBoardReturnHref(kind: "customers" | "vendors", fallback = `
   return fallback;
 }
 
-/** Close Create: drop create + view=detail forced for the modal host, keep chip/range/etc. */
+/** Close Create: drop create (+ legacy view=detail if an old URL still has it); keep chip/range/etc. */
 export function clearPartyCreateParams(params: URLSearchParams): URLSearchParams {
   const next = new URLSearchParams(params);
   next.delete("create");
@@ -26,10 +26,14 @@ export function clearPartyCreateParams(params: URLSearchParams): URLSearchParams
   return next;
 }
 
-/** Open Create from the approved board: preserve chip/range; host Customers/Vendors page needs view=detail. */
+/**
+ * Open Create from the approved board: preserve chip/range.
+ * Do NOT stamp view=detail — that forced the legacy Customers/Vendors master-detail page
+ * under the drawer (board 9/10 FAIL). Create overlays the Regular board instead.
+ */
 export function partyCreateParams(params: URLSearchParams): URLSearchParams {
   const next = new URLSearchParams(params);
-  next.set("view", "detail");
+  next.delete("view");
   next.set("create", "1");
   return next;
 }
