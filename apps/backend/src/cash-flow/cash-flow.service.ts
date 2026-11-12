@@ -37,6 +37,7 @@ import {
 } from "./projected-cash-date.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
 import { readCardPayableBalances } from "./card-payables.js";
+import { classifyRollingLedgerRows, type CashFlowExpenseBucket } from "./rolling-ledger-classification.js";
 import {
   isFactoringPathLoadStatus,
   DELIVERY_EVIDENCE_MDATA_STATUSES,
@@ -858,6 +859,8 @@ export async function getActualVsProjected(
 export type RollingLedgerRowKind = "income" | "expense";
 
 export type RollingLedgerRow = {
+  /** Canonical display category; income has no expense category. */
+  expense_bucket?: CashFlowExpenseBucket | null;
   amount_known?: boolean;
   row_kind: RollingLedgerRowKind;
   /** Human label, e.g. "Bill", "Driver pay", "Driver bill", "Expense — unmatched", "Loan payment",
@@ -1718,7 +1721,7 @@ export async function getRollingLedgerRows(
     }
   }
 
-  return applyRowAdjustments(client, operatingCompanyId, rows, today);
+  return classifyRollingLedgerRows(await applyRowAdjustments(client, operatingCompanyId, rows, today));
 }
 
 /**
