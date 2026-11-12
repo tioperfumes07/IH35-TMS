@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useTranslation } from "react-i18next";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -37,7 +38,10 @@ type RegisterRow = {
   loadId: string | null;
   loadNumber: string | null;
   source: string;
+  /** Prefer EntityLink via settlementId / journalEntryId; href kept for unknown sources. */
   sourceHref: string | null;
+  settlementId: string | null;
+  journalEntryId: string | null;
   type: string;
   inAmt: number | null;
   outAmt: number | null;
@@ -187,6 +191,8 @@ export function EscrowRegisterPage() {
         loadNumber: null,
         source: "Opening balance (historical)",
         sourceHref: null,
+        settlementId: null,
+        journalEntryId: null,
         type: "Opening",
         inAmt: openingAmt >= 0 ? openingAmt : null,
         outAmt: openingAmt < 0 ? Math.abs(openingAmt) : null,
@@ -199,8 +205,8 @@ export function EscrowRegisterPage() {
       const isOut = typ === "release" || typ === "forfeiture" || amt < 0;
       const abs = Math.abs(amt);
       run += isOut ? -abs : abs;
-      // A uuid fragment is never a label (verify-no-uuid-label-rendering): the source names its kind + date; the link
-      // (sourceHref) still opens the exact settlement / journal entry.
+      // A uuid fragment is never a label (verify-no-uuid-label-rendering): the source names its kind + date; EntityLink
+      // opens the exact settlement / journal entry.
       // ACCT-F11093 (row 22): the load has its own linked column; the source names the document it came from + its date.
       const rowDate = docDate(t);
       const settLabel = t.settlement_id
@@ -219,6 +225,8 @@ export function EscrowRegisterPage() {
           : t.journal_entry_id
             ? `/accounting/journal-entries/${encodeURIComponent(t.journal_entry_id)}`
             : null,
+        settlementId: t.settlement_id ?? null,
+        journalEntryId: t.journal_entry_id ?? null,
         type: labelType(t.entry_type),
         inAmt: isOut ? null : abs,
         outAmt: isOut ? abs : null,
@@ -256,14 +264,13 @@ export function EscrowRegisterPage() {
         sortValue: (r) => r.loadNumber ?? "",
         render: (r) =>
           r.loadId ? (
-            <Link
-              to={`/dispatch/loads/${encodeURIComponent(r.loadId)}`}
-              className="underline"
-              style={{ color: V3.link }}
+            <EntityLink
+              kind="load"
+              id={r.loadId}
+              label={entityLabel(r.loadNumber, r.loadId, "Load")}
+              className="font-semibold underline"
               data-testid="escrow-register-load-link"
-            >
-              {r.loadNumber ?? "Load"}
-            </Link>
+            />
           ) : (
             ""
           ),
@@ -273,14 +280,38 @@ export function EscrowRegisterPage() {
         label: "Source",
         sortable: true,
         sortValue: (r) => r.source,
-        render: (r) =>
-          r.sourceHref ? (
-            <Link to={r.sourceHref} className="underline" style={{ color: V3.link }}>
-              {r.source}
-            </Link>
-          ) : (
-            r.source
-          ),
+        render: (r) => {
+          if (r.settlementId) {
+            return (
+              <EntityLink
+                kind="settlement"
+                id={r.settlementId}
+                label={r.source}
+                className="font-semibold underline"
+                data-testid="escrow-register-settlement-link"
+              />
+            );
+          }
+          if (r.journalEntryId) {
+            return (
+              <EntityLink
+                kind="journal_entry"
+                id={r.journalEntryId}
+                label={r.source}
+                className="font-semibold underline"
+                data-testid="escrow-register-je-link"
+              />
+            );
+          }
+          if (r.sourceHref) {
+            return (
+              <Link to={r.sourceHref} className="underline" style={{ color: V3.link }}>
+                {r.source}
+              </Link>
+            );
+          }
+          return r.source;
+        },
       },
       { key: "type", label: "Type", sortable: true },
       {

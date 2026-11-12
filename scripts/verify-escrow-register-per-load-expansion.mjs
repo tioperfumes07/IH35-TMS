@@ -48,9 +48,14 @@ const CHECKS = [
     pattern: /EscrowDriverTimelineRow[\s\S]{0,1600}load_id\?.*string[\s\S]{0,200}load_number\?.*string[\s\S]{0,200}load_date\?.*string/,
   },
   {
-    name: "frontend page: Load column links the load when load_id present",
+    name: "frontend page: Load column EntityLinks the load when load_id present",
     file: PAGE,
-    pattern: /loadNumber: t\.load_id \? \(t\.load_number[\s\S]{0,1500}to=\{`\/dispatch\/loads\/\$\{encodeURIComponent\(r\.loadId\)\}`\}/,
+    pattern: /loadNumber: t\.load_id \? \(t\.load_number[\s\S]{0,2000}kind=["']load["'][\s\S]{0,200}id=\{r\.loadId\}/,
+  },
+  {
+    name: "frontend page: Source EntityLinks settlement / journal_entry",
+    file: PAGE,
+    pattern: /kind=["']settlement["'][\s\S]{0,120}id=\{r\.settlementId\}[\s\S]{0,400}kind=["']journal_entry["'][\s\S]{0,120}id=\{r\.journalEntryId\}/,
   },
   {
     name: "frontend CSV money uses formatUsd (not toFixed)",
@@ -98,7 +103,9 @@ if (process.argv.includes("--selftest")) {
     `,
     [PAGE]: `
         loadNumber: t.load_id ? (t.load_number ?? null) : null,
-        render: (r) => r.loadId ? (<Link to={\`/dispatch/loads/\${encodeURIComponent(r.loadId)}\`}>{r.loadNumber}</Link>) : "—",
+        render: (r) => r.loadId ? (<EntityLink kind="load" id={r.loadId} label={r.loadNumber} />) : "—",
+        kind="settlement" id={r.settlementId}
+        kind="journal_entry" id={r.journalEntryId}
       formatUsd(r.balance)
     `,
   };
