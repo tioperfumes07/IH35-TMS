@@ -10,8 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityLink } from "../../components/shared/EntityLink";
-import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -190,13 +188,16 @@ export function SettlementsEscrowBoard() {
         label: "Driver",
         sortable: true,
         sortValue: (r) => r.driverName,
+        // Settlements-Escrow.dc.html: name opens the driver's escrow register (not the HR profile).
         render: (r) => (
-          <EntityLink
-            kind="driver"
-            id={r.holderId}
-            label={r.driverName}
+          <Link
+            to={settlementsEscrowRegisterHref(r.holderId)}
+            className="font-bold underline"
+            style={{ color: V3.link, textUnderlineOffset: 2 }}
             data-testid="settlements-escrow-driver-link"
-          />
+          >
+            {r.driverName}
+          </Link>
         ),
       },
       {
@@ -207,11 +208,14 @@ export function SettlementsEscrowBoard() {
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.heldCents,
         render: (r) => (
-          <MoneyCell
-            cents={r.heldCents}
-            format={(c) => formatUsdCents(c).replace(/^\$/, "")}
-            drill={{ entity: { kind: "driver", id: r.holderId } }}
-          />
+          <Link
+            to={settlementsEscrowRegisterHref(r.holderId)}
+            className="tabular-nums hover:underline"
+            style={{ color: V3.link }}
+            data-testid="settlements-escrow-held-link"
+          >
+            {formatUsdCents(r.heldCents).replace(/^\$/, "")}
+          </Link>
         ),
       },
       {
@@ -264,6 +268,7 @@ export function SettlementsEscrowBoard() {
           }
           sub="active bonds with a balance"
           testId="escrow-kpi-drivers-holding"
+          href="/driver-finance/escrow"
         />
         <V3KpiTile
           label="Total held"
@@ -271,18 +276,21 @@ export function SettlementsEscrowBoard() {
             escrowHomeKpis.totalHeldCents == null ? "—" : formatUsdCents(escrowHomeKpis.totalHeldCents)
           }
           testId="escrow-kpi-total-held"
+          href="/driver-finance/escrow"
         />
         <V3KpiTile
           label="Release window"
           value={`${formatQuantityTable(ESCROW_RELEASE_WINDOW_DAYS, 0)} days`}
           sub="after last settlement"
           testId="escrow-kpi-release-window"
+          href="/driver-finance/escrow"
         />
         <V3KpiTile
           label="Scheduled releases"
           value="—"
           sub="no schedule feed"
           testId="escrow-kpi-scheduled-releases"
+          href="/driver-finance/escrow"
         />
       </div>
 
