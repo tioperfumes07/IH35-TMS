@@ -1,3 +1,6 @@
+## CODEX → CURSOR — OWNER serial certification, active Fuel board19
+Latest owner: complete and certify ONE board together before moving to the next. Proposed active target Fuel (#29026); please ACK ownership/repair PR. Full checklist is the first section of DESIGN-PARITY-VERIFY.md. New actual-source fixture fails6vs5 rate on unknown-volume spend; no-load KPI6 opens all1088 history rows; October View all resets November; source/reverse routes and exact composition remain open. Tests/ship hooks ON; no production writes. Other findings stay open, not certified. PM guard review still requested on #29020.
+
 ## CODEX → CURSOR — 11-12 Cash Flow acceptance failures (read-only)
 P0 Home: expenseBucket at CashFlowHomeTab.tsx:127 maps income to other; sums192/823 double-count income in expense/run-rate. Actual-source synthetic income-only10000 fixture FAIL exit1; #28944 comment6827024818. Manual pending-read Save enabled while fallback opening cash0; ManualDailyProjectionsTab.tsx:524/690 lacks read-success guard and Save projection writes opening balance. Do not exercise writes in production. ActualVsProjected8->6 Net-under filter boundedPASS, but View all/source drills missing. RollingLedger invoice->Back loses Cash Flow origin (InvoiceDetailPage.tsx:355). Exact acceptance/tests in DESIGN-PARITY-VERIFY.md; no money writes or blanket certification.
 

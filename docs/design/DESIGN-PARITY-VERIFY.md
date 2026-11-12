@@ -1,5 +1,35 @@
 # ROUND 8.5 — independent board parity verification
 
+## Active serial acceptance: Fuel (board 19), 11-12 15:32Z
+
+Owner now requires one complete board certified before the next. Fuel is the proposed shared active target with Cursor (#29026 comments6827922989/6827965766); no acknowledgement yet. Reference `docs/design/v3/Fuel.dc.html` and `Fuel.png`. No production submissions. These are element-level results, **not a Fuel certificate**. Existing other-board findings remain open, not abandoned or certified.
+
+| Acceptance group | Result | Measured evidence / closure condition |
+|---|---|---|
+| Title and subtitle | PASS, bounded | Fuel and Fills/cards/attribution text present. |
+| Back and header geometry | FAIL | Board Back absent; subtitle below rather than alongside title; action styling/position differs. |
+| Import fills | PASS opening only | Real Import Fuel Transactions dialog opens and closes. No file uploaded; import persistence UNVERIFIED. |
+| Add fill | PASS opening only | Canonical Create Fuel Purchase dialog exposes date/calendar, entity pickers, amount, volume, type and receipt. Closed without submission. Writer behavior is not certified by opening a dialog. |
+| Approved seven-tab order | PARTIAL | Seven reference tabs present; additional Expense mapping and Related strip remain. Preserve real off-board functions in an approved action/detail home, not stacked chrome. |
+| Five KPI labels/order | PASS, bounded | Spend, gallons, average, no-load, questions render in reference order. |
+| Spend/fill count table arithmetic | PASS, bounded | October 13 rendered truck rows sum exactly to displayed spend and353 fills. This is screen arithmetic, not independent database completeness proof. |
+| Rate calculation shared with KPI | FAIL | Actual-source synthetic fixture: measured10000 cents/20 gallons plus2000 cents/null volume produces row rate6; canonical known-volume reader rate5. FuelHome per_gal uses all spend while fuel-period-spend SQL excludes unknown-volume spend from rate numerator. Preserve total spend; align rate population and test mixed/null/zero/all-unknown volume. |
+| No-load KPI source drill | FAIL | Click on6 current-period unassigned fills opens unfiltered history with1088 transactions, All loads/units/drivers, not the six-row source cohort. |
+| Spend/gallons/average drill scope | FAIL | All use bare `/fuel/history`, without period, product or originating board context. |
+| Questions | PARTIAL | Live count and questions route present; complete source tie-out/action workflow remains unverified. |
+| Period control | PASS, bounded | Current/prior month selection changes real rows and KPI values; current9 rows, prior13. |
+| View all preserves period | FAIL | October Home13 rows -> View all `/fuel/by-truck` resets November9 rows. |
+| Unit graphic / spend bar | PASS, bounded | Truck silhouette and proportional spend bars visibly present. |
+| Unit identity subtitle | FAIL | Approved make/model subtitle absent; do not invent metadata. |
+| Seven table columns | FAIL | Board Unit, Spend, $, Gallons, $/gal, Fills, Loads; live combines bar and dollars into Spend (six columns). |
+| Values and reverse drills | FAIL | Spend goes to bare Fleet unit rather than period fill source; gallons/rate/fill/load counts plain. Unit detail Back goes Fleet, losing Fuel context. |
+| Whole composition | FAIL | Extra search/Related strip, duplicate table heading/toolbar and pagination consume vertical space; screenshot1440x900 not identical to board. |
+| Footer attribution statement | PASS text only | Reference attribution text present. This does not prove attribution engine behavior. |
+| Loading/error/completeness | PARTIAL/FAIL | Visible pending indicator is honest; source aggregate silently breaks after offset50000 and paginates non-unique transaction_at order. Need stable complete read or explicit failure, not truncated success. Error/tenant-switch behavior still requires tests. |
+| Existing guard | PASS, limited | verify-fuel-home-dashboard-wired plain0 and all11 selftest plants pass. Its source markers do not detect the arithmetic, scope, return or geometry failures above. Extend existing behavioral coverage, no fake certificate. |
+
+Next handoff: Cursor owns Fuel implementation; Codex independently rechecks this same checklist after tested hooks-on merge and deployment. Remaining full certificate count stays0/45. Private screenshots and live amounts remain out of the public repository.
+
 ## Cash Flow depth acceptance — 11-12 deployed 3b58e6be276
 
 Read-only Chrome, USMCA, 1440x900. No Save, Pull, Create, Stop, Roll over or accounting mutation submitted. Full boards remain OPEN.
