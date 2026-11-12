@@ -119,3 +119,45 @@ export function buildSettlementLineViews(
 
   return { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq };
 }
+
+type DriverBillEnrich = {
+  id: string;
+  load_id: string;
+  load_number: string | null;
+  miles_basis: number | null;
+  rate_per_mile_cents: number | null;
+  miles_deadhead: number | null;
+  rate_empty_per_mile_cents: number | null;
+};
+
+/** Fill missing miles/rate/source_driver_bill from tour-readout driver_bills (never invent). */
+export function enrichSettlementPayRowsFromDriverBills<
+  T extends {
+    load_id: string | null;
+    source_driver_bill_id?: string | null;
+    source_label?: string | null;
+    miles?: number;
+    rate?: number;
+  },
+>(
+  rows: T[],
+  bills: DriverBillEnrich[],
+  leg: "loaded" | "deadhead",
+): T[] {
+  if (bills.length === 0) return rows;
+  return rows.map((row) => {
+    const bill =
+      (row.source_driver_bill_id ? bills.find((b) => b.id === row.source_driver_bill_id) : undefined) ??
+      (row.load_id ? bills.find((b) => b.load_id === row.load_id) : undefined);
+    if (!bill) return row;
+    const milesRaw = leg === "deadhead" ? bill.miles_deadhead : bill.miles_basis;
+    const rateRaw = leg === "deadhead" ? bill.rate_empty_per_mile_cents : bill.rate_per_mile_cents;
+    return {
+      ...row,
+      source_driver_bill_id: row.source_driver_bill_id ?? bill.id,
+      source_label: row.source_label ?? bill.load_number ?? null,
+      miles: row.miles ?? (milesRaw == null ? undefined : Number(milesRaw)),
+      rate: row.rate ?? (rateRaw == null ? undefined : Number(rateRaw) / 100),
+    };
+  });
+}

@@ -55,7 +55,10 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
   // $1,802.86 + $212.25 (reimbursements_cents) double-added. For an OPEN settlement `net` here
   // never included reimbursements, so it still needs the one addition below. `netTotal` is the
   // single, correct, once-added figure for both states.
-  const net = t.is_open ? gross - ds.escrow_cents - ds.recoveries_cents : ds.net_cents;
+  const advanceRecoveriesCents = ds.advance_recoveries_cents ?? 0;
+  const net = t.is_open
+    ? gross - ds.escrow_cents - ds.recoveries_cents - advanceRecoveriesCents
+    : ds.net_cents;
   const netTotal = t.is_open ? net + (ds.reimbursements_cents || 0) : net;
 
   // REG-024 (owner 2026-09-10: "render EXACTLY like the AlwaysTrack company/driver settlement PDFs").
@@ -131,6 +134,33 @@ export function TourSettlementTab({ loadId, settlementId, operatingCompanyId, cu
           <div className="ldt-row tot"><span>Gross</span><span className="ldt-m" data-testid="driver-gross">{money(gross, currencyCode)}</span></div>
           <div className="ldt-row"><span>Escrow contribution<span className="ldt-sub">$25 per load, capped at $2,500 on account</span></span><span className="ldt-m">−{money(ds.escrow_cents, currencyCode)}</span></div>
           <div className="ldt-row"><span>Recoveries (fuel overage / damage / fees)</span><span className="ldt-m">−{money(ds.recoveries_cents, currencyCode)}</span></div>
+          <div className="ldt-row" data-testid="driver-advances-recovered">
+            <span>Advances recovered</span>
+            <span className="ldt-m">
+              {advanceRecoveriesCents > 0 && (ds.advance_source_ids?.length ?? 0) === 1 ? (
+                <EntityLink
+                  kind="cash_advance"
+                  id={ds.advance_source_ids![0]!}
+                  label={`−${money(advanceRecoveriesCents, currencyCode)}`}
+                />
+              ) : (
+                <>−{money(advanceRecoveriesCents, currencyCode)}</>
+              )}
+            </span>
+          </div>
+          {(ds.advance_source_ids?.length ?? 0) > 1 ? (
+            <div className="ldt-row">
+              <span className="ldt-sub">Source advances</span>
+              <span>
+                {ds.advance_source_ids!.map((id, i) => (
+                  <span key={id}>
+                    <EntityLink kind="cash_advance" id={id} label={`Advance ${id.slice(0, 8)}`} />
+                    {i < ds.advance_source_ids!.length - 1 ? " · " : null}
+                  </span>
+                ))}
+              </span>
+            </div>
+          ) : null}
           {ds.reimbursements_cents ? <div className="ldt-row"><span>Reimbursements to the driver</span><span className="ldt-m">+{money(ds.reimbursements_cents, currencyCode)}</span></div> : null}
           <div className="ldt-row big"><span>Net pay · 5% floor respected</span><span className="ldt-m" data-testid="driver-net">{money(netTotal, currencyCode)}</span></div>
         </div>

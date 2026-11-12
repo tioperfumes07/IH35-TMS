@@ -33,7 +33,7 @@ import { getCompanySettlementReport } from "../../api/accounting";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { SettlementDocumentBody } from "./components/SettlementDocumentBody";
-import { buildSettlementLineViews } from "./settlementDetailLineMaps";
+import { buildSettlementLineViews, enrichSettlementPayRowsFromDriverBills } from "./settlementDetailLineMaps";
 import {
   reverseSettlement,
   unlockSettlement,
@@ -113,10 +113,15 @@ export function SettlementDetailPage() {
     [lines]
   );
 
-  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(
-    () => buildSettlementLineViews(activeLines, settlementDisplayId),
-    [activeLines, settlementDisplayId]
-  );
+  const { earnings, deadhead, extraWithSeq, reimbursementsWithSeq, deductionsWithSeq } = useMemo(() => {
+    const views = buildSettlementLineViews(activeLines, settlementDisplayId);
+    const bills = readout?.driver_settlement?.driver_bills ?? [];
+    return {
+      ...views,
+      earnings: enrichSettlementPayRowsFromDriverBills(views.earnings, bills, "loaded"),
+      deadhead: enrichSettlementPayRowsFromDriverBills(views.deadhead, bills, "deadhead"),
+    };
+  }, [activeLines, settlementDisplayId, readout?.driver_settlement?.driver_bills]);
 
   type LineSummaryRow = {
     id: string;

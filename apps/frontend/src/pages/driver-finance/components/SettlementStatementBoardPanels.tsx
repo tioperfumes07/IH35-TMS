@@ -109,7 +109,8 @@ export function SettlementStatementBoardPanels({
     revenueCents - costsCents - driverPayCents;
 
   const fuelFillCount = companyReport?.sections.fuel_purchases.rows.length ?? 0;
-  const recoveriesCents = readout?.driver_settlement?.recoveries_cents ?? 0;
+  const advanceRecoveriesCents = readout?.driver_settlement?.advance_recoveries_cents ?? 0;
+  const advanceSourceIds = readout?.driver_settlement?.advance_source_ids ?? [];
   const pdfPath = readout?.driver_settlement?.pdf_path?.trim() || "";
   const hasSignedPdf = Boolean(pdfPath) || Boolean(settlementDisplayId);
 
@@ -378,8 +379,28 @@ export function SettlementStatementBoardPanels({
           </div>
           <div style={kvRow}>
             <dt>Advances recovered</dt>
-            <dd>
-              <MoneyRowValue cents={recoveriesCents > 0 ? recoveriesCents : null} />
+            <dd data-testid="statement-board-advances-recovered">
+              {advanceRecoveriesCents > 0 || advanceSourceIds.length > 0 ? (
+                <span style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4 }}>
+                  <MoneyCell
+                    cents={advanceRecoveriesCents > 0 ? advanceRecoveriesCents : null}
+                    drill={
+                      advanceSourceIds.length === 1
+                        ? { entity: { kind: "cash_advance", id: advanceSourceIds[0] } }
+                        : advanceSourceIds.length === 0
+                          ? { none: "advance recovery amount with no source advance id stamped" }
+                          : { none: "multiple advances recovered — open each link below" }
+                    }
+                  />
+                  {advanceSourceIds.length > 1
+                    ? advanceSourceIds.map((id) => (
+                        <EntityLink key={id} kind="cash_advance" id={id} label={entityLabel(null, id, "Advance")} />
+                      ))
+                    : null}
+                </span>
+              ) : (
+                "—"
+              )}
             </dd>
           </div>
           <div style={kvRow}>

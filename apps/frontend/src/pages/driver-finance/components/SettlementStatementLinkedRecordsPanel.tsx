@@ -63,7 +63,10 @@ export function SettlementStatementLinkedRecordsPanel({
   onOpenFuelFills?: () => void;
 }) {
   const fuelFillCount = companyReport?.sections.fuel_purchases.rows.length ?? 0;
-  const recoveriesCents = readout?.driver_settlement?.recoveries_cents ?? 0;
+  // Codex cert: Advances recovered = advance_recovery / pay-run recoveries only — never lumped
+  // recoveries_cents (admin-fee deductions / fuel overage / damage).
+  const advanceRecoveriesCents = readout?.driver_settlement?.advance_recoveries_cents ?? 0;
+  const advanceSourceIds = readout?.driver_settlement?.advance_source_ids ?? [];
   const pdfPath = readout?.driver_settlement?.pdf_path?.trim() || "";
   const hasSignedPdf = Boolean(pdfPath) || Boolean(settlementDisplayId);
   const legs = readout?.legs ?? [];
@@ -115,14 +118,37 @@ export function SettlementStatementLinkedRecordsPanel({
     {
       id: "advances",
       record: L.rowAdvances,
-      link: (
-        <span style={{ display: "block", textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-          <MoneyCell
-            cents={recoveriesCents > 0 ? recoveriesCents : null}
-            drill={{ entity: { kind: "settlement", id: settlementId } }}
-          />
-        </span>
-      ),
+      link:
+        advanceRecoveriesCents > 0 || advanceSourceIds.length > 0 ? (
+          <span
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              gap: 4,
+              fontVariantNumeric: "tabular-nums",
+            }}
+            data-testid="statement-advances-recovered"
+          >
+            <MoneyCell
+              cents={advanceRecoveriesCents > 0 ? advanceRecoveriesCents : null}
+              drill={
+                advanceSourceIds.length === 1
+                  ? { entity: { kind: "cash_advance", id: advanceSourceIds[0] } }
+                  : advanceSourceIds.length === 0
+                    ? { none: "advance recovery amount with no source advance id stamped" }
+                    : { none: "multiple advances recovered — open each link below" }
+              }
+            />
+            {advanceSourceIds.length > 1
+              ? advanceSourceIds.map((id) => (
+                  <EntityLink key={id} kind="cash_advance" id={id} label={entityLabel(null, id, "Advance")} />
+                ))
+              : null}
+          </span>
+        ) : (
+          "—"
+        ),
     },
     {
       id: "bank",
