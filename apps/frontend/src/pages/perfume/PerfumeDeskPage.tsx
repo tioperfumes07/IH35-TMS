@@ -182,12 +182,19 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     <section className="space-y-2" aria-label={`${view} view`}>
       <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
       {/* TABLE_DATE_OMIT: price-grid rows are SKU×vendor cells; list date lives on the Lists tab, not the comparison grid. */}
+      {/* The table mounts only once the server has sent this view's columns: ParityTable reads the default
+          hidden set at mount, so mounting with no columns showed EVERY column (owner 2026-11-12: Trading still
+          showed every supplier's purchase columns). Keyed by view so each tab starts from its own defaults. */}
+      {cols.length === 0 ? (
+        <div className="text-xs text-gray-500" data-testid="perfume-grid-loading">{query.isError ? "Couldn't load the grid" : "Loading…"}</div>
+      ) : (
       <ParityTable<PerfumeGridRow>
+        key={view}
         columns={columns}
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
-        storageKey={`perfume-desk-${view}-v4`}
+        storageKey={`perfume-desk-${view}-v5`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}
@@ -279,6 +286,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
           </div>
         }
       />
+      )}
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
         <span>{total.toLocaleString()} {tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
         <span className="flex items-center gap-1">
