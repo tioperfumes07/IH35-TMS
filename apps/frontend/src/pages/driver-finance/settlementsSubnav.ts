@@ -29,6 +29,12 @@ export const SETTLEMENTS_SUBNAV: readonly SettlementsSubnavItem[] = [
   { label: "Batch Settlements", to: "/driver-finance/settlements/batch", match: "/driver-finance/settlements/batch" },
   { label: "Feed Gate", to: "/driver-finance/feed-gate", match: "/driver-finance/feed-gate" },
   { label: "Settlement Close", to: "/driver-finance/settlement-close", match: "/driver-finance/settlement-close" },
+  {
+    label: "Document Designs",
+    to: "/driver-finance/settlements/document-designs",
+    match: "/driver-finance/settlements/document-designs",
+    testId: "tab-settlement-document-designs",
+  },
   { label: "Cash Advance Requests", to: "/driver-finance/cash-advance-requests", match: "/driver-finance/cash-advance-requests" },
   { label: "Cash Advances", to: "/driver-finance/cash-advances", match: "/driver-finance/cash-advances" },
   { label: "Liabilities", to: "/driver-finance/liabilities", match: "/driver-finance/liabilities" },
