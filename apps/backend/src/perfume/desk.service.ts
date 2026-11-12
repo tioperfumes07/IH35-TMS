@@ -424,25 +424,29 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
-export async function reviewQueue(c: PoolClient, opts: { list_id?: string; limit: number; offset: number }) {
-  const where = opts.list_id ? `AND r.list_id = $3` : "";
-  const params: unknown[] = [opts.limit, opts.offset];
-  if (opts.list_id) params.push(opts.list_id);
+export async function reviewQueue(c: PoolClient, opts: { list_id?: string; q?: string; status?: "review" | "unmatched"; limit: number; offset: number }) {
+  // Filters (owner 2026-11-12: "1788 items, lets have the filters"): one vendor list, words in the vendor's line,
+  // and "has a suggestion" (review) vs "nothing close" (unmatched).
+  const cond: string[] = [];
+  const fp: unknown[] = [];
+  if (opts.list_id) { fp.push(opts.list_id); cond.push(`r.list_id = $${fp.length}`); }
+  if (opts.status) { fp.push(opts.status); cond.push(`r.match_status = $${fp.length}`); }
+  for (const w of (opts.q ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 6)) {
+    fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
+  }
+  const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
+  const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   const rows = await c.query(
-    `SELECT r.id, r.list_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions
-       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-      WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}
-      ORDER BY v.name, r.row_no LIMIT $1 OFFSET $2`, params);
-  const total = await c.query<{ n: number }>(
-    `SELECT count(*)::int AS n FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
-      WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${opts.list_id ? "AND r.list_id = $1" : ""}`,
-    opts.list_id ? [opts.list_id] : []);
+    `SELECT r.id, r.list_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
+       ${base} ORDER BY v.name, r.row_no LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`, [...fp, opts.limit, opts.offset]);
+  const total = await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
   // The vendor's line split into the owner's columns: brand (canonical — CK → CALVIN KLEIN), model, size, type,
   // gender, tester/set, country, pieces per box, the vendor's code — the same reading the import engine used.
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
   const out = rows.rows.map((r: Record<string, unknown>) => {
-    const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, brandAliases: aliases });
+    const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null, brandAliases: aliases });
     const tail = vendorLineTail(String(r.description ?? ""));
     return { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
       flags: id.flags.join(" "), category: categoryOf(id.gender, id.flags), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
@@ -455,14 +459,14 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; limit
  * the line's UPC to the item, and applies to every other unconfirmed line of that vendor with the same spelling or SKU.
  */
 export async function confirmRow(c: PoolClient, userId: string, rowId: string, target: { item_id?: string; create_new?: boolean }) {
-  const row = (await c.query<{ id: string; list_id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; identity_key: string; loose_key: string }>(
-    `SELECT r.id, r.list_id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.identity_key, r.loose_key
+  const row = (await c.query<{ id: string; list_id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; identity_key: string; loose_key: string; gender_override: string | null }>(
+    `SELECT r.id, r.list_id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.identity_key, r.loose_key, r.gender_override
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id WHERE r.id = $1`, [rowId])).rows[0];
   if (!row) throw new Error("row_not_found");
   let itemId = target.item_id ?? null;
   if (!itemId && target.create_new) {
     const ix = await loadIndex(c);
-    const m = matchLine(ix, row.vendor_id, { description: row.description, brand: row.brand, size_text: row.size_text }, { allowNewItem: false });
+    const m = matchLine(ix, row.vendor_id, { description: row.description, brand: row.brand, size_text: row.size_text, gender: row.gender_override }, { allowNewItem: false });
     const id = m.identity;
     if (!id.nameWords.length) throw new Error("item_needs_a_name");
     const ins = await c.query<{ id: string }>(
@@ -492,6 +496,66 @@ export async function confirmRow(c: PoolClient, userId: string, rowId: string, t
              OR ($5::text IS NOT NULL AND r.sku = $5))`,
     [itemId, row.vendor_id, rowId, textKey, row.sku]);
   return { item_id: itemId, rows_linked: applied.rowCount ?? 0 };
+}
+
+export type BulkAction =
+  | { action: "confirm_best"; row_ids: string[] }
+  | { action: "link_item"; row_ids: string[]; item_id: string }
+  | { action: "create_new"; row_ids: string[] }
+  | { action: "set_gender"; row_ids: string[]; gender: "M" | "W" | "U" };
+
+/**
+ * Owner 2026-11-12: "we need to have multiple selector to change gender or assign …". One action over many review
+ * lines, all-or-nothing in one transaction (the route's). confirm_best / link_item / create_new reuse confirmRow, so a
+ * bulk confirmation is exactly N single confirmations. set_gender stores the owner's gender on the line (the vendor's
+ * text is never edited) and re-runs the engine on it: a line the engine can now identify links by itself.
+ */
+export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
+  const out = { rows: b.row_ids.length, linked: 0, items_created: 0, now_matched: 0, skipped: [] as Array<{ row_id: string; reason: string }> };
+  if (b.action === "set_gender") {
+    await c.query(`UPDATE perfume.price_list_rows SET gender_override = $2 WHERE id = ANY($1::uuid[]) AND match_status <> 'matched'`, [b.row_ids, b.gender]);
+    const ix = await loadIndex(c);
+    const rows = await c.query<{ id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null }>(
+      `SELECT r.id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+        WHERE r.id = ANY($1::uuid[]) AND r.match_status <> 'matched'`, [b.row_ids]);
+    for (const r of rows.rows) {
+      const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: b.gender }, { allowNewItem: false });
+      if (m.itemId) {
+        await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = $3, match_status = 'matched', suggestions = '[]'::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
+          [r.id, m.itemId, m.method, m.identity.key, looseKey(m.identity)]);
+        out.now_matched++;
+      } else {
+        await c.query(`UPDATE perfume.price_list_rows SET match_status = $2, suggestions = $3::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
+          [r.id, m.status, JSON.stringify(m.suggestions), m.identity.key, looseKey(m.identity)]);
+      }
+    }
+    return out;
+  }
+  for (const id of b.row_ids) {
+    let target: { item_id?: string; create_new?: boolean };
+    if (b.action === "link_item") target = { item_id: b.item_id };
+    else if (b.action === "create_new") target = { create_new: true };
+    else {
+      const r = (await c.query<{ match_status: string; suggestions: Array<{ item_id: string }> }>(`SELECT match_status, suggestions FROM perfume.price_list_rows WHERE id = $1`, [id])).rows[0];
+      if (!r) { out.skipped.push({ row_id: id, reason: "row_not_found" }); continue; }
+      if (r.match_status === "matched") continue; // already linked by an earlier row's spelling
+      if (!r.suggestions?.[0]?.item_id) { out.skipped.push({ row_id: id, reason: "no_suggestion" }); continue; }
+      target = { item_id: r.suggestions[0].item_id };
+    }
+    const already = (await c.query<{ match_status: string }>(`SELECT match_status FROM perfume.price_list_rows WHERE id = $1`, [id])).rows[0];
+    if (!already) { out.skipped.push({ row_id: id, reason: "row_not_found" }); continue; }
+    if (already.match_status === "matched") continue;
+    try {
+      const r = await confirmRow(c, userId, id, target);
+      out.linked += r.rows_linked;
+      if (target.create_new) out.items_created++;
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      if (reason === "item_needs_a_name") { out.skipped.push({ row_id: id, reason }); continue; }
+      throw e;
+    }
+  }
+  return out;
 }
 
 export async function searchItems(c: PoolClient, q: string, limit = 25) {

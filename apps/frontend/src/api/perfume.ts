@@ -161,8 +161,21 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
-export const getPerfumeReview = (offset = 0, limit = 100, listId?: string | null) =>
-  apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?offset=${offset}&limit=${limit}${listId ? `&list_id=${encodeURIComponent(listId)}` : ""}`);
+export type PerfumeReviewFilter = { listId?: string | null; q?: string; status?: "review" | "unmatched" | null };
+export const getPerfumeReview = (offset = 0, limit = 100, f: PerfumeReviewFilter = {}) => {
+  const p = new URLSearchParams({ offset: String(offset), limit: String(limit) });
+  if (f.listId) p.set("list_id", f.listId);
+  if (f.q?.trim()) p.set("q", f.q.trim());
+  if (f.status) p.set("status", f.status);
+  return apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?${p.toString()}`);
+};
+export type PerfumeBulkAction =
+  | { action: "confirm_best"; row_ids: string[] }
+  | { action: "link_item"; row_ids: string[]; item_id: string }
+  | { action: "create_new"; row_ids: string[] }
+  | { action: "set_gender"; row_ids: string[]; gender: "M" | "W" | "U" };
+export type PerfumeBulkResult = { rows: number; linked: number; items_created: number; now_matched: number; skipped: Array<{ row_id: string; reason: string }> };
+export const bulkPerfumeReview = (b: PerfumeBulkAction) => apiRequest<PerfumeBulkResult>("/api/v1/perfume/rows/bulk", { method: "POST", body: b });
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
 export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);
