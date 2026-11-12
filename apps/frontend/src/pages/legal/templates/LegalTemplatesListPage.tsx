@@ -7,6 +7,8 @@ import { BackArrowHeader } from "../../../components/layout/BackArrowHeader";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import { LegalTemplateNewModal } from "./LegalTemplateNewModal";
@@ -85,7 +87,20 @@ export function LegalTemplatesListPage() {
     () => [
       { key: "template_code", label: "Code", sortable: true, render: (row) => <span className="font-mono text-xs">{row.template_code}</span> },
       { key: "version", label: "Version", sortable: true, render: (row) => formatQuantityTable(row.version, 0) },
-      { key: "display_name_en", label: "Display Name (EN)", sortable: true, render: (row) => row.display_name_en },
+      {
+        key: "display_name_en",
+        label: "Display Name (EN)",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="legal_template"
+            id={row.id}
+            label={entityLabel(row.display_name_en, row.id, "Template")}
+            data-testid={`legal-templates-row-${row.id}`}
+            onClick={(e) => e.stopPropagation()}
+          />
+        ),
+      },
       { key: "category", label: "Category", sortable: true, render: (row) => row.category },
       { key: "status", label: "Status", sortable: true, render: (row) => <span className={statusPillClass(row.status)}>{row.status}</span> },
       { key: "updated_at", label: "Updated", sortable: true, render: (row) => formatDateTimeUS(row.updated_at) },
