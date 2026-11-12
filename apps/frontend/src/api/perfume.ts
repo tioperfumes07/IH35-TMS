@@ -123,6 +123,15 @@ export const listPerfumeVendors = () => apiRequest<{ vendors: PerfumeVendor[] }>
 export const savePerfumeVendor = (v: Partial<PerfumeVendor> & { name: string; earn_pct?: number | null }) =>
   apiRequest<PerfumeVendor>("/api/v1/perfume/vendors", { method: "POST", body: v });
 export const listPerfumeLists = () => apiRequest<{ lists: PerfumeList[] }>("/api/v1/perfume/lists");
+/** One picture sent to the reader (already shrunk to JPEG in the browser). */
+export type PerfumePicture = { name: string; media_type: "image/jpeg" | "image/png" | "image/webp" | "image/gif"; data_base64: string };
+export type PerfumeExtractedLine = {
+  image: number; image_name: string; brand: string | null; description: string; size: string | null; type: string | null;
+  gender: string | null; price: string | null; qty: string | null; section: string | null; note: string | null;
+};
+/** Reads up to 6 pictures (offer photos / scanned list pages). Writes nothing — the owner approves the lines. */
+export const extractPerfumeLines = (images: PerfumePicture[]) =>
+  apiRequest<{ lines: PerfumeExtractedLine[]; model_id: string; images: number }>("/api/v1/perfume/extract", { method: "POST", body: { images } });
 export const previewPerfumeImport = (b: PerfumeImportBody) => apiRequest<PerfumeImportCheck>("/api/v1/perfume/lists/preview", { method: "POST", body: b });
 export const savePerfumeImport = (b: PerfumeImportBody) =>
   apiRequest<{ list_id: string; check: PerfumeImportCheck }>("/api/v1/perfume/lists", { method: "POST", body: b });

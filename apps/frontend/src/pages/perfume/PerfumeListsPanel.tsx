@@ -8,10 +8,13 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList,
+  extractPerfumeLines, listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList,
   type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
-import { extractRows, FIELDS, findHeaderRow, guessMapping, readAnyFile, type Mapping, type ReadFile } from "./perfumeFileReaders";
+import {
+  extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, pictureLinesToExtracted, readAnyFile, readPictureFiles,
+  type Mapping, type PictureLine, type ReadFile,
+} from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
 
@@ -162,7 +165,11 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [file, setFile] = useState<File | null>(null);
+  const [fileLabel, setFileLabel] = useState("");
   const [read, setRead] = useState<ReadFile | null>(null);
+  // Pictures (offer photos / scanned pages): Claude reads them, the owner fixes and approves every line.
+  const [lines, setLines] = useState<PictureLine[]>([]);
+  const [reading, setReading] = useState<{ done: number; total: number } | null>(null);
   const [sheetIx, setSheetIx] = useState(0);
   const [headerRow, setHeaderRow] = useState(0);
   const [map, setMap] = useState<Mapping>({});
@@ -175,13 +182,49 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
 
   const sheet = read?.sheets[sheetIx];
   const headers = useMemo(() => (sheet?.cells[headerRow] ?? []).map((h, i) => String(h ?? "").trim() || `Column ${i + 1}`), [sheet, headerRow]);
-  const extracted = useMemo(() => (sheet ? extractRows(sheet, headerRow, map) : null), [sheet, headerRow, map]);
+  const isPictures = read?.kind === "image";
+  const extracted = useMemo(
+    () => (isPictures ? (lines.length ? pictureLinesToExtracted(lines) : null) : sheet ? extractRows(sheet, headerRow, map) : null),
+    [isPictures, lines, sheet, headerRow, map],
+  );
+  const needPrice = lines.filter((l) => l.include && !(Number(l.price) > 0)).length;
 
-  const open = async (f: File) => {
-    setFile(f); setCheck(null);
-    setReplaces(!/arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement/i.test(f.name));
+  const readPictures = async () => {
+    const pics = read?.pictures ?? [];
+    if (!pics.length) return;
+    const BATCH = 4;
+    const all: PictureLine[] = [];
+    setLines([]); setCheck(null); setReading({ done: 0, total: pics.length });
     try {
+      for (let i = 0; i < pics.length; i += BATCH) {
+        const batch = pics.slice(i, i + BATCH);
+        const r = await extractPerfumeLines(batch);
+        for (const l of r.lines) all.push({ ...l, image: i + l.image, key: `${i + l.image}-${all.length}`, include: true });
+        setLines([...all]);
+        setReading({ done: Math.min(pics.length, i + BATCH), total: pics.length });
+      }
+      pushToast(`Read ${pics.length} picture(s): ${all.length} lines — check each one before saving`, "success");
+    } catch (e) {
+      pushToast(userFacingApiError(e, "The picture reader failed"), "error");
+    } finally {
+      setReading(null);
+    }
+  };
+  const editLine = (key: string, patch: Partial<PictureLine>) => { setCheck(null); setLines((ls) => ls.map((l) => (l.key === key ? { ...l, ...patch } : l))); };
+
+  const open = async (files: File[]) => {
+    const f = files[0];
+    if (!f) return;
+    setFile(f); setCheck(null); setLines([]);
+    setFileLabel(files.length > 1 ? `${files.length} pictures (${f.name} …)` : f.name);
+    setReplaces(files.length > 1 || isPictureFile(f) ? false : !/arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement/i.test(f.name));
+    try {
+      if (files.length > 1) {
+        setRead(await readPictureFiles(files));
+        return;
+      }
       const r = await readAnyFile(f);
+      if (r.kind === "image") { setRead(r); setReplaces(false); return; }
       const si = Math.max(0, r.sheets.findIndex((s) => s.cells.length > 1));
       const hr = findHeaderRow(r.sheets[si].cells);
       setRead(r); setSheetIx(si); setHeaderRow(hr);
@@ -192,7 +235,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   };
   const body = (): PerfumeImportBody | null => {
     if (!read || !extracted || !vendorId || !file) return null;
-    return { vendor_id: vendorId, list_date: listDate, file_name: file.name, source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows, replaces_current: replaces };
+    return { vendor_id: vendorId, list_date: listDate, file_name: (fileLabel || file.name).slice(0, 200), source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows, replaces_current: replaces };
   };
   const run = async (save: boolean) => {
     const b = body(); if (!b) return;
@@ -213,8 +256,9 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.lists.20", "Import a price list")}>
       <div className="text-section-header">{tr("perfume.lists.21", "Import a price list")}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
-        <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.22", "File (.xlsx · .xls · .csv · text PDF)")}
-          <input type="file" accept=".xlsx,.xls,.csv,.pdf" className="h-[40px] text-xs" onChange={(e) => { const f = e.target.files?.[0]; if (f) void open(f); }} />
+        <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.22", "File (.xlsx · .xls · .csv · PDF) or offer photos (pick several)")}
+          <input type="file" multiple accept=".xlsx,.xls,.csv,.pdf,image/*" className="h-[40px] text-xs" data-testid="perfume-import-file"
+            onChange={(e) => { const fs = Array.from(e.target.files ?? []); if (fs.length) void open(fs); }} />
         </label>
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.23", "Vendor")}
           <Combobox ariaLabel="Vendor" size="sm" value={vendorId} onChange={setVendorId} placeholder={tr("perfume.lists.24", "Pick vendor")}
@@ -228,13 +272,53 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
             <Combobox ariaLabel="Sheet" size="sm" value={String(sheetIx)} onChange={(v) => setSheetIx(Number(v ?? 0))} options={read.sheets.map((s, i) => ({ value: String(i), label: s.name }))} />
           </label>
         ) : null}
-        {read && read.kind !== "pdf_text" ? (
+        {read && read.kind !== "pdf_text" && read.kind !== "image" ? (
           <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.28", "Header row")}
             <input type="number" min={1} className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2" value={headerRow + 1} onChange={(e) => setHeaderRow(Math.max(0, Number(e.target.value) - 1))} />
           </label>
         ) : null}
       </div>
-      {read && read.kind !== "pdf_text" ? (
+      {isPictures ? (
+        <div className="space-y-2 rounded-sm border border-gray-200 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-picture-reader">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>
+              <b>{(read?.pictures?.length ?? 0).toLocaleString()}</b> {tr("perfume.lists.pic1", "picture(s) / scanned page(s) ready. Claude reads each one; you check every line before anything is saved.")}
+            </span>
+            <Button type="button" className="h-[34px] px-3 text-xs" disabled={Boolean(reading)} onClick={() => void readPictures()} data-testid="perfume-read-pictures">
+              {reading ? `${tr("perfume.lists.pic2", "Reading")} ${reading.done} / ${reading.total}…` : lines.length ? tr("perfume.lists.pic3", "Read again") : tr("perfume.lists.pic4", "Read with Claude")}
+            </Button>
+          </div>
+          {lines.length ? (
+            <>
+              <div>
+                {lines.length.toLocaleString()} {tr("perfume.lists.pic5", "lines read")} · {lines.filter((l) => l.include).length.toLocaleString()} {tr("perfume.lists.pic6", "approved")}
+                {needPrice ? <b className="text-red-700"> · {needPrice} {tr("perfume.lists.pic7", "approved line(s) have no price — type it or untick the line")}</b> : null}
+              </div>
+              <ParityTable<PictureLine>
+                rows={lines}
+                rowKey={(l) => l.key}
+                storageKey="perfume-desk-picture-lines-v1"
+                hidePager
+                columns={[
+                  { key: "include", label: "Use", width: 52, render: (l) => (
+                    <input type="checkbox" aria-label={`Use line ${l.description}`} checked={l.include} onChange={(e) => editLine(l.key, { include: e.target.checked })} />) },
+                  { key: "image_name", label: "Picture", sortable: true },
+                  { key: "brand", label: "Brand", sortable: true, render: (l) => (
+                    <input aria-label={tr("perfume.lists.pic9", "Brand")} className="h-[34px] w-[140px] rounded-sm border border-gray-300 px-2" value={l.brand ?? ""} onChange={(e) => editLine(l.key, { brand: e.target.value || null })} />) },
+                  { key: "description", label: "Description", sortable: true, render: (l) => (
+                    <input aria-label={tr("perfume.lists.pic10", "Description")} className="h-[34px] w-[300px] rounded-sm border border-gray-300 px-2" value={l.description} onChange={(e) => editLine(l.key, { description: e.target.value })} />) },
+                  { key: "section", label: "Section", sortable: true },
+                  { key: "price", label: "Price", sortable: true, cellClass: "text-right", render: (l) => (
+                    <input aria-label={tr("perfume.lists.pic11", "Price")} inputMode="decimal" className={`h-[34px] w-[96px] rounded-sm border px-2 text-right tabular-nums ${Number(l.price) > 0 ? "border-gray-300" : "border-red-400"}`}
+                      value={l.price ?? ""} onChange={(e) => editLine(l.key, { price: e.target.value.replace(/[^0-9.]/g, "") || null })} />) },
+                  { key: "note", label: "Reader note", sortable: true },
+                ]}
+              />
+            </>
+          ) : null}
+        </div>
+      ) : null}
+      {read && read.kind !== "pdf_text" && read.kind !== "image" ? (
         <div className="grid gap-2 text-xs sm:grid-cols-3 lg:grid-cols-6">
           {FIELDS.map(([f, label]) => (
             <label key={f} className="flex flex-col gap-1 text-gray-600">{label}
@@ -247,10 +331,10 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
       {extracted ? (
         <div className="space-y-2">
           <div className="text-xs text-gray-700">
-            {tr("perfume.lists.29", "Read from the file:")} <b>{extracted.rowsRead.toLocaleString()}</b> {tr("perfume.lists.30", "priced lines · price total")} <b>{money(extracted.fileTotalCents)}</b>
+            {isPictures ? tr("perfume.lists.pic8", "Approved from the pictures:") : tr("perfume.lists.29", "Read from the file:")} <b>{extracted.rowsRead.toLocaleString()}</b> {tr("perfume.lists.30", "priced lines · price total")} <b>{money(extracted.fileTotalCents)}</b>
             {extracted.sections ? ` · ${extracted.sections} section headers (WOMEN / MEN / SETS …) carried to the lines under them` : ""}
           </div>
-          <ParityTable
+          {isPictures ? null : <ParityTable
             rows={extracted.rows.slice(0, 8)}
             rowKey={(r) => String(r.row_no)}
             storageKey="perfume-desk-import-preview-v1"
@@ -260,7 +344,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
               { key: "description", label: "Description" }, { key: "section", label: "Section" },
               { key: "price", label: "Price", cellClass: "text-right tabular-nums", render: (r) => `$${r.price}` }, { key: "qty", label: "Qty" },
             ]}
-          />
+          />}
           <label className="flex items-start gap-2 text-xs text-gray-700">
             <input type="checkbox" className="mt-0.5" checked={replaces} onChange={(e) => setReplaces(e.target.checked)} data-testid="perfume-import-replaces" />
             <span>
@@ -268,8 +352,8 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
             </span>
           </label>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(false)}>{tr("perfume.lists.33", "Check before saving")}</Button>
-            <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(true)}>{tr("perfume.lists.34", "Save list")}</Button>
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length || needPrice > 0} onClick={() => void run(false)}>{tr("perfume.lists.33", "Check before saving")}</Button>
+            <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length || needPrice > 0} onClick={() => void run(true)}>{tr("perfume.lists.34", "Save list")}</Button>
           </div>
         </div>
       ) : null}

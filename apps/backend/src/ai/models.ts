@@ -22,6 +22,10 @@ export const RATECON_EXTRACTION_MODEL = CLAUDE_SONNET_5;
 /** Safety photo-comparison (safety/photo-comparison/anthropic-client.ts). Needs image/vision input. */
 export const SAFETY_VISION_MODEL = CLAUDE_SONNET_5;
 
+/** TIO Perfumes price desk — reads vendor offer photos and scanned price-list pages (perfume/extract.service.ts).
+ *  Needs image/vision input. */
+export const PERFUME_LIST_EXTRACTION_MODEL = CLAUDE_SONNET_5;
+
 /** Known-retired/superseded model IDs — kept for documentation. (The static guard's hard-fail regex only
  *  matches dated snapshots like claude-*-2025xxxx; claude-sonnet-4-6 is listed here as an intentional record
  *  of the 2026-07-04 404 supersession.) */
@@ -30,5 +34,5 @@ export const RETIRED_MODEL_IDS: readonly string[] = ["claude-sonnet-4-20250514",
 /** Every model ID the backend actively depends on. The lifecycle monitor checks each against the live
  *  GET /v1/models list and alerts if any is missing or marked deprecated (Anthropic gives 60 days' notice). */
 export const REGISTERED_MODEL_IDS: readonly string[] = Array.from(
-  new Set([RATECON_EXTRACTION_MODEL, SAFETY_VISION_MODEL]),
+  new Set([RATECON_EXTRACTION_MODEL, SAFETY_VISION_MODEL, PERFUME_LIST_EXTRACTION_MODEL]),
 );
