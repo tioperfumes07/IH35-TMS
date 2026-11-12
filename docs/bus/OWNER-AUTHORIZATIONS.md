@@ -8220,3 +8220,11 @@ scope: USMCA accounting.expenses — issue reversing JEs for 5 voided expense do
 action: POST /api/v1/accounting/expenses/stranded-je-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
 expires_at: 2026-11-19T00:00:00Z
 status: OPEN
+
+## AUTH-478
+issued_at: 2026-11-12T20:00:00Z
+issued_by: CC-1, SETL-HEADER-05 restamp — delegated by owner standing auth ("you have full permissions and authorization … we need to complete the full engines", AUTH-473 quotes, 2026-11-02 11:25 AM CT) + INBOX-CC-1 ROUND 8.14 rows 82/86 fix directive
+scope: USMCA driver_finance.driver_settlements — backfill accounting_bill_id / accounting_bill_payment_id on closed settlements where it is NULL but driver_settlement_gl_bills already carries the correct bill ids (settlements posted before SETL-HEADER-05 landed in the writer). Purely a linkage-signal write: no GL amounts, no bill status, no bill payment created or touched. COALESCE guard makes it idempotent. Targeted settlements: P-0069 (accounting_bill_id NULL, gl_bills has 839f5c4b), P-0113 (accounting_bill_id NULL, gl_bills has 65a1fc72 / 69715677). Plus any other pre-SETL-HEADER-05 closed settlements in USMCA. Guard: dry_run=true first, then confirm found count, then apply.
+action: POST /api/v1/driver-finance/settlements/header-backlink-restamp { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
+expires_at: 2026-11-19T00:00:00Z
+status: OPEN

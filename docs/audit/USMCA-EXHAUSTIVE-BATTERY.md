@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 373 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 374 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 292 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 257 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 995 | |
+| **TOTAL POST endpoints** | 996 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -414,6 +414,41 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/dispatch/truck-line/loads/:loadId/stops/:stopId/depart` | `apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts` | — | — | — |
 | create | `/api/v1/dispatch/validation/pre-dispatch` | `apps/backend/src/dispatch/validation/pre-dispatch.routes.ts` | — | — | — |
 
+### driver-finance — 30 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/driver-finance/batch-settlements` | `apps/backend/src/driver-finance/batch-settlements.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/cash-advance-requests` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/cash-advance-requests/:id/deny` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/driver-bills/:id/reprice-to-settlement-line` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-practical` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-salaried` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/drivers/:driverId/payment-methods` | `apps/backend/src/driver-finance/driver-payment-methods.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlement-creator/post-as-signed` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlement-creator/source-check` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlement-deductions` | `apps/backend/src/driver-finance/deductions.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlement-disputes` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlement-disputes/:id/disburse` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlement-disputes/:id/withdraw` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlement-lines/:id/unvoid` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlement-references` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlements` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/close-trip` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/header-backlink-restamp` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/stuck-close-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
+
 ### catalogs — 29 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -447,40 +482,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/void-cancel-reasons` | `apps/backend/src/catalogs/void-cancel-reasons.routes.ts` | — | — | — |
 | create | `/api/v1/catalogs/wo-cancellation-reasons` | `apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts` | — | — | — |
 | create | `/api/v1/catalogs/workflow-requests` | `apps/backend/src/catalogs/workflow-routes.ts` | — | — | — |
-
-### driver-finance — 29 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/driver-finance/batch-settlements` | `apps/backend/src/driver-finance/batch-settlements.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/cash-advance-requests` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/cash-advance-requests/:id/deny` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/driver-bills/:id/reprice-to-settlement-line` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-practical` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-salaried` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/drivers/:driverId/payment-methods` | `apps/backend/src/driver-finance/driver-payment-methods.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/escrow-separations` | `apps/backend/src/driver-finance/escrow-separation.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/escrow/:driverId/forfeit` | `apps/backend/src/driver-finance/escrow-forfeit.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/add-load` | `apps/backend/src/driver-finance/pre-settlement.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/close-tour` | `apps/backend/src/driver-finance/tour-readout.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/pre-settlements/:id/settle` | `apps/backend/src/driver-finance/pre-settlement.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/presettlement-suggestions/:id/confirm` | `apps/backend/src/dispatch/presettlement-link.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlement-creator/:settlementId/retry-after-commit` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlement-creator/post-as-signed` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlement-creator/source-check` | `apps/backend/src/driver-finance/settlement-creator.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlement-deductions` | `apps/backend/src/driver-finance/deductions.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlement-disputes` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlement-disputes/:id/disburse` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlement-disputes/:id/withdraw` | `apps/backend/src/driver-finance/settlement-dispute.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlement-lines/:id/unvoid` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlement-references` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlements` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/close-trip` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/pay-lines` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts` | — | — | — |
-| nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
-| create | `/api/v1/driver-finance/settlements/stuck-close-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
 
 ### legal — 22 create-surface(s)
 

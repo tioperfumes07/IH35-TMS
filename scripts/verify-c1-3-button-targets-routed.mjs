@@ -44,8 +44,8 @@ const CHECKS = [
   {
     name: "Fuel Home → Fraud Alerts",
     file: "apps/frontend/src/pages/fuel/FuelHome.tsx",
-    // 443.290: the 443.250 V3 board (#27267) made the KPI a V3KpiTile that navigates onClick — same target, either shape.
-    linkMustContainAny: ['to="/fuel/fraud-alerts"', 'onClick={() => navigate("/fuel/fraud-alerts")}'],
+    // ROUND 8.15b: FuelCard/Fraud KPIs may use href (V3KpiTile → Link to=) or onClick navigate.
+    linkMustContainAny: ['href="/fuel/fraud-alerts"', 'to="/fuel/fraud-alerts"', 'onClick={() => navigate("/fuel/fraud-alerts")}'],
     route: "/fuel/fraud-alerts",
   },
   {
@@ -112,6 +112,7 @@ function selftest() {
     // Poison 2 (443.290): strip both Fuel Home shapes (literal to= and the V3KpiTile navigate) — must fail.
     const fuelAbs = path.join(tmp, CHECKS[0].file);
     mkdirAndWrite(fuelAbs, readFileSync(path.join(ROOT, CHECKS[0].file), "utf8")
+      .replaceAll('href="/fuel/fraud-alerts"', 'href="/fuel/x"')
       .replaceAll('to="/fuel/fraud-alerts"', 'to="/fuel/x"')
       .replaceAll('navigate("/fuel/fraud-alerts")', 'navigate("/fuel/x")'));
     const poisonedFuel = runChecks(tmp);

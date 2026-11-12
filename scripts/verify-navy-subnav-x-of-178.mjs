@@ -44,7 +44,8 @@ const MODULE_COUNTS = {
   "legal":              { count: 7,  source: "apps/frontend/src/pages/legal/LegalModuleTabs.tsx" },
 
   // ReportsSubNav.tsx: top items + Run report children + Audit children
-  "reports":            { count: 30, source: "apps/frontend/src/pages/reports/ReportsSubNav.tsx" },
+  // v3 board rebuild: removed Profitability hub tab + 5 REPORT_BOARDS top-level tabs (8.15b OWNER-REMOVE)
+  "reports":            { count: 24, source: "apps/frontend/src/pages/reports/ReportsSubNav.tsx" },
 
   // ListsSubNav.tsx: top items + domain/safety/fleet/dispatch/maintenance children
   "lists":              { count: 14, source: "apps/frontend/src/pages/lists/ListsSubNav.tsx" },

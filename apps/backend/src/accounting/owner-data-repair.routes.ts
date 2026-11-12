@@ -16,6 +16,8 @@
  *        postFinalLoadSettlementsGl for loads 13711/13727/13729 whose trip_closed_at fired but GL post failed silently)
  *   POST /api/v1/accounting/expenses/stranded-je-repair                 AUTH-477 (CC-1 E2 2026-11-12: reverse JEs for 5 voided
  *        expense docs whose 'fuel_event' postings were left live before ACCT-F4431310; verify-void-is-whole 10→1)
+ *   POST /api/v1/driver-finance/settlements/header-backlink-restamp     AUTH-478 (CC-1 SETL-HEADER-05-RESTAMP 2026-11-12: backfill
+ *        accounting_bill_id on closed settlements posted before SETL-HEADER-05 landed; linkage-signal only, no GL/amounts)
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -29,6 +31,7 @@ import { repairStaleSettlementHeadersInClientTx, SettlementHeaderRepairRefused }
 import { alignExpenseFamiliesInClientTx, ExpenseFamilyAlignRefused } from "./expense-family-align-repair.service.js";
 import { repairStuckSettlementClose, StuckCloseRepairRefused } from "./settlement-stuck-close-repair.service.js";
 import { repairStrandedExpenseJes, StrandedJeRepairRefused } from "./expense-stranded-je-repair.service.js";
+import { restampSettlementHeaderBacklinks, BacklinkRestampRefused } from "../driver-finance/settlement-header-backlink-restamp.service.js";
 
 const body = z.object({
   operating_company_id: z.string().uuid(),
@@ -48,7 +51,7 @@ function ownerOnly(req: FastifyRequest, reply: FastifyReply) {
 
 function refused(reply: FastifyReply, e: unknown) {
   if (e instanceof OwnerAuthorizationError) return reply.code(409).send({ error: "owner_authorization_not_open", auth_id: e.authId, detail: e.reason });
-  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused || e instanceof ExpenseFamilyAlignRefused || e instanceof StuckCloseRepairRefused || e instanceof StrandedJeRepairRefused) {
+  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused || e instanceof ExpenseFamilyAlignRefused || e instanceof StuckCloseRepairRefused || e instanceof StrandedJeRepairRefused || e instanceof BacklinkRestampRefused) {
     return reply.code(409).send({ error: "repair_refused_rolled_back", detail: e.message });
   }
   throw e;
@@ -168,6 +171,28 @@ export async function registerOwnerDataRepairRoutes(app: FastifyInstance) {
           owner_auth_id: "AUTH-477", operating_company_id: b.operating_company_id,
           found_stranded: result.found_stranded, reversed: result.reversed, still_stranded: result.still_stranded,
         }, "info", "CC-1-E2-2026-11-12"), { actorUserId: user.uuid });
+      }
+      return result;
+    } catch (e) {
+      req.log.warn({ err: e, route: req.url }, "owner data repair refused or failed");
+      return refused(reply, e);
+    }
+  });
+  app.post("/api/v1/driver-finance/settlements/header-backlink-restamp", { config: { rateLimit: { max: 3, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = ownerOnly(req, reply);
+    if (!user) return reply;
+    const parsed = body.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    try {
+      if (!b.dry_run) assertOwnerAuthorizationOpen("AUTH-478");
+      const result = await restampSettlementHeaderBacklinks({ companyId: b.operating_company_id, actorUserId: user.uuid, dryRun: b.dry_run });
+      if (!b.dry_run) {
+        await withLuciaBypass((client) => appendCrudAudit(client as never, user.uuid, "driver_finance.settlement_header_backlink_restamp.run", {
+          owner_auth_id: "AUTH-478", operating_company_id: b.operating_company_id,
+          found: result.found, restamped: result.restamped,
+        }, "info", "CC-1-SETL-HEADER-05-RESTAMP-2026-11-12"), { actorUserId: user.uuid });
       }
       return result;
     } catch (e) {

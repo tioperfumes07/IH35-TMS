@@ -1,50 +1,64 @@
 #!/usr/bin/env node
-// verify-settlements-tours-columns-visible — LST-F11136.
-// #28767 default-hid 6 shipped columns on the Settlements Tours register (per-leg Load #,
-// Date started, Margin %, Checks passed, Checks required, Post). Post is the operator's
-// action to post a settlement; hiding it behind the column gear is a removal under the
-// ADDITIVE-ONLY LAW (docs/LAW.md L379). This guard fails if any of those columns, or the
-// per-leg tourLoadColumns spread, carries defaultHidden: true again.
+// verify-settlements-tours-columns-visible — ROUND 8.15b re-point.
+// Pins Settlements-Open|Closed.dc.html exact columns (not the pre-board layered extras).
+// OWNER-REMOVE 2026-11-12: Date started / Margin % / Checks passed|required / Post / per-leg Load #
+// moved off the list — Margin % → TourPreSettlementTab + TourLoadRows; Post → TourPreSettlementTab;
+// Tour legs EntityLinks cover per-leg loads; Ready replaces separate check-count columns.
 import fs from "node:fs";
 import path from "node:path";
 
 const FILE = "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx";
-const KEYS = ["started", "margin_pct", "ready_ok", "ready_total", "post"];
+const OPEN_KEYS = ["tour", "driver", "unit", "tour_legs", "origin_started", "origin_delivered", "revenue", "costs", "driver_pay", "margin", "miles_practical", "miles_real", "ready", "close_blockers"];
+const CLOSED_KEYS = ["tour", "driver", "unit", "tour_legs", "origin_started", "origin_delivered", "closed", "revenue", "costs", "driver_pay", "margin", "net", "company"];
+const REMOVED_FROM_LIST = ["started", "margin_pct", "ready_ok", "ready_total", "post"];
 
 export function check(src) {
   const errors = [];
-  for (const k of KEYS) {
-    // Each column is one source line (render bodies contain braces, so match the line, not the object).
-    const line = src.split("\n").find((l) => new RegExp(`\\bkey:\\s*"${k}"`).test(l));
-    if (!line) { errors.push(`column "${k}" not found`); continue; }
-    if (/defaultHidden:\s*true/.test(line)) errors.push(`column "${k}" is defaultHidden: true`);
+  for (const k of OPEN_KEYS) {
+    if (!new RegExp(`\\bkey:\\s*"${k}"`).test(src)) errors.push(`open board column "${k}" not found`);
   }
-  const spread = src.split("\n").find((l) => /\.\.\.tourLoadColumns\(/.test(l));
-  if (!spread) errors.push("tourLoadColumns spread not found");
-  else if (/defaultHidden:\s*true/.test(spread)) errors.push("per-leg Load # columns (tourLoadColumns) are defaultHidden: true");
+  for (const k of CLOSED_KEYS) {
+    if (!new RegExp(`\\bkey:\\s*"${k}"`).test(src)) errors.push(`closed board column "${k}" not found`);
+  }
+  for (const k of REMOVED_FROM_LIST) {
+    if (new RegExp(`\\bkey:\\s*"${k}"`).test(src)) errors.push(`layered column "${k}" must stay off Settlements-Open|Closed list (home: detail / TourPreSettlementTab / TourLoadRows)`);
+  }
+  if (/\.\.\.tourLoadColumns\(/.test(src)) errors.push("tourLoadColumns spread must not layer per-leg Load # columns on Open/Closed boards");
   return errors;
 }
 
 if (process.argv.includes("--selftest")) {
-  const good = `const c = [ ...tourLoadColumns("setl-tour-col", rows),
-  { key: "started", label: "Date started", sortable: true },
-  { key: "margin_pct", label: "Margin %" },
-  { key: "ready_ok", label: "Checks passed" },
-  { key: "ready_total", label: "Checks required" },
-  { key: "post", label: "Post", render: (r) => r } ];`;
-  const badPost = good.replace(`label: "Post",`, `label: "Post", defaultHidden: true,`);
-  const badLegs = good.replace(`...tourLoadColumns("setl-tour-col", rows),`, `...tourLoadColumns("setl-tour-col", rows).map((c) => ({ ...c, defaultHidden: true })),`);
-  const missing = good.replace(`{ key: "margin_pct", label: "Margin %" },`, "");
-  const ok = check(good).length === 0 && check(badPost).length === 1 && check(badLegs).length === 1 && check(missing).length === 1;
+  const good = `const c = [
+  { key: "tour", label: "Settlement" },
+  { key: "driver", label: "Driver" },
+  { key: "unit", label: "Unit" },
+  { key: "tour_legs", label: "Tour legs" },
+  { key: "origin_started", label: "PU date" },
+  { key: "origin_delivered", label: "DEL date" },
+  { key: "closed", label: "Ended" },
+  { key: "revenue", label: "Revenue" },
+  { key: "costs", label: "Costs" },
+  { key: "driver_pay", label: "Driver pay" },
+  { key: "margin", label: "Margin" },
+  { key: "miles_practical", label: "Practical mi" },
+  { key: "miles_real", label: "Real mi" },
+  { key: "ready", label: "Ready" },
+  { key: "close_blockers", label: "Waiting on" },
+  { key: "net", label: "Driver net" },
+  { key: "company", label: "Company settlement" },
+];`;
+  const badPost = `${good}\n{ key: "post", label: "Post" }`;
+  const badLegs = `${good}\n...tourLoadColumns("setl-tour-col", rows),`;
+  const ok = check(good).length === 0 && check(badPost).length === 1 && check(badLegs).length === 1;
   if (!ok) { console.error("verify-settlements-tours-columns-visible --selftest FAIL"); process.exit(1); }
-  console.log("verify-settlements-tours-columns-visible --selftest PASS — clean source passes; Post hidden, per-leg hidden, column dropped each FAIL");
+  console.log("verify-settlements-tours-columns-visible --selftest PASS — board columns required; layered post/tourLoadColumns FAIL");
   process.exit(0);
 }
 
 const src = fs.readFileSync(path.join(process.cwd(), FILE), "utf8");
 const errors = check(src);
 if (errors.length) {
-  console.error(`verify-settlements-tours-columns-visible: FAIL — ${FILE}\n  - ${errors.join("\n  - ")}\n  ADDITIVE-ONLY LAW (docs/LAW.md L379): shipped columns stay visible unless the owner writes OWNER-REMOVE.`);
+  console.error(`verify-settlements-tours-columns-visible: FAIL — ${FILE}\n  - ${errors.join("\n  - ")}\n  ROUND 8.15b: Settlements-Open|Closed.dc.html exact columns.`);
   process.exit(1);
 }
-console.log(`verify-settlements-tours-columns-visible: PASS — ${KEYS.length} columns + per-leg Load # visible by default`);
+console.log(`verify-settlements-tours-columns-visible: PASS — Open ${OPEN_KEYS.length} + Closed ${CLOSED_KEYS.length} board columns; layered extras absent`);

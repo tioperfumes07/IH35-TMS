@@ -93,7 +93,9 @@ export function check(src) {
     if (!src.links.includes(`"${b.id}": "${b.href}"`)) fails.push(`phase6ReportLinks must map ${b.id} → ${b.href}`);
   }
   if (!/REPORT_BOARDS/.test(src.home)) fails.push("Reports home board must list the catalog (REPORT_BOARDS)");
-  if (!/REPORT_BOARDS/.test(src.subnav)) fails.push("Reports sub-nav must list the catalog (REPORT_BOARDS)");
+  // v3 board (8.15b OWNER-REMOVE): REPORT_BOARDS removed from subnav; board ids now routed via
+  // PHASE_6_RUNNER_ITEMS + flattenReportRunLinks + phase6ReportLinks. Assert the new mechanism.
+  if (!/PHASE_6_RUNNER_ITEMS/.test(src.subnav)) fails.push("Reports sub-nav must route board ids via PHASE_6_RUNNER_ITEMS");
   for (const d of src.duplicatesPresent) fails.push(`replaced duplicate still present: ${d}`);
   for (const f of src.dupImporters) fails.push(`${f} still imports the removed LoadsReportPage`);
   return fails;
@@ -116,6 +118,7 @@ function selftest(src) {
     ["duplicate restored", { ...src, duplicatesPresent: [DUPLICATES[0]] }, "replaced duplicate still present"],
     ["duplicate re-imported", { ...src, dupImporters: [`${FE}/routes/manifest.tsx`] }, "still imports the removed LoadsReportPage"],
     ["home drops catalog", { ...src, home: src.home.replaceAll("REPORT_BOARDS", "X") }, "Reports home board must list the catalog"],
+    ["subnav drops PHASE_6_RUNNER_ITEMS", { ...src, subnav: src.subnav.replaceAll("PHASE_6_RUNNER_ITEMS", "X") }, "Reports sub-nav must route board ids via PHASE_6_RUNNER_ITEMS"],
   ];
   let ok = 0;
   for (const [name, planted, needle] of plants) {

@@ -10,7 +10,6 @@ import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
-import { RelayHistoryImport } from "./components/RelayHistoryImport";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -34,8 +33,8 @@ async function fetchFraudSummary(companyId: string): Promise<FraudSummary> {
   return apiRequest(`/api/v1/fuel/fraud-alerts/summary?operating_company_id=${encodeURIComponent(companyId)}`);
 }
 
+/** Off-board CAP-11 tile (RelatedModuleLinks / tests) — not on Fuel.dc.html Home. */
 export function FuelFraudAlertsKpiCard() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -65,7 +64,7 @@ export function FuelFraudAlertsKpiCard() {
       spark={<FuelFraudBadge hasOpenCritical={openCritical > 0} />}
       tone={openCritical > 0 ? "red" : "ink"}
       testId="fuel-fraud-alerts-kpi"
-      onClick={() => navigate("/fuel/fraud-alerts")}
+      href="/fuel/fraud-alerts"
     />
   );
 }
@@ -84,9 +83,8 @@ async function fetchOveragePending(companyId: string): Promise<OveragePendingSum
   return apiRequest(`/api/v1/fuel/card-overage-events?${params.toString()}`);
 }
 
-/** BANK-F10 — reachable from Fuel Home (does not add a Fuel sub-nav tab). */
+/** BANK-F10 — off-board queue tile (RelatedModuleLinks / tests); not on Fuel.dc.html Home. */
 export function FuelCardOverageKpiCard() {
-  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -113,7 +111,7 @@ export function FuelCardOverageKpiCard() {
       value={value}
       sub={sub}
       testId="fuel-card-overage-kpi"
-      onClick={() => navigate("/fuel/card-overage")}
+      href="/fuel/card-overage"
     />
   );
 }
@@ -287,14 +285,6 @@ export function FuelHomePage() {
         <ListErrorBanner message="Love's price sync status could not be loaded." onRetry={() => void lovesSyncQuery.refetch()} />
       ) : null}
 
-      <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8, maxWidth: 640 }}
-        data-testid="fuel-home-secondary-kpis"
-      >
-        <FuelFraudAlertsKpiCard />
-        <FuelCardOverageKpiCard />
-      </div>
-
       <MoneyListToolbar
         search={search}
         onSearchChange={setSearch}
@@ -341,12 +331,6 @@ export function FuelHomePage() {
             tableTestId="fuel-home-diesel-table"
           />
         )}
-      </FuelBoardSection>
-
-      <FuelBoardSection title="Relay history import" testId="fuel-home-relay-import">
-        <div className="p-3">
-          <RelayHistoryImport operatingCompanyId={companyId} />
-        </div>
       </FuelBoardSection>
     </div>
   );

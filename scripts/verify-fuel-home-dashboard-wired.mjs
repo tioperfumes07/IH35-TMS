@@ -71,8 +71,13 @@ export function computeFailures(source) {
   if (/<FuelKpiRow\b/.test(source)) {
     errors.push("FuelHome.tsx must not keep planner FuelKpiRow on Home after 443.280 board KPIs");
   }
-  if (!/FuelFraudAlertsKpiCard/.test(source) || !/RelayHistoryImport/.test(source)) {
-    errors.push("FuelHome.tsx must keep FuelFraudAlertsKpiCard + RelayHistoryImport (additive-only)");
+  // ROUND 8.15b — Fuel.dc.html Home is KPI strip + Diesel by truck only.
+  // Fraud/overage tiles stay exportable off-board; RelayHistoryImport home is relay_inbox.
+  if (/fuel-home-secondary-kpis/.test(source) || /fuel-home-relay-import/.test(source)) {
+    errors.push("FuelHome.tsx must not layer secondary fraud/overage KPIs or Relay import on Home (Fuel.dc.html)");
+  }
+  if (/RelayHistoryImport/.test(source)) {
+    errors.push("FuelHome.tsx must not mount RelayHistoryImport — home is FuelPlannerHome relay_inbox");
   }
   // ROUND 443.326 — full board: diesel ParityTable (not metric-as-rows / V3Panel stack).
   if (!/ParityTable/.test(source) || !/MoneyListToolbar/.test(source)) {
@@ -422,19 +427,18 @@ function selftest() {
     import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
     import { ParityTable } from "../../components/parity/ParityTable";
     import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-    import { RelayHistoryImport } from "./components/RelayHistoryImport";
     import { fetchDieselByTruckAggregate } from "./fuelDieselByTruck";
     export function FuelFraudAlertsKpiCard() {}
     export function FuelHomePage() {
       getFuelDashboard(id);
       fetchDieselByTruckAggregate(id);
-      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip companyId={companyId} period={period} /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")}>{dieselQuery.isError ? (<div data-testid="fuel-home-diesel-error"><ListErrorBanner message="Diesel by truck could not be loaded — this is not an empty period." onRetry={() => void dieselQuery.refetch()} /></div>) : (<ParityTable title="Diesel by truck" emptyText="No diesel spend for this period." />)}</FuelBoardSection><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <>{lovesSyncQuery.isError ? <ListErrorBanner onRetry={() => void lovesSyncQuery.refetch()} /> : null}<FuelBoardKpiStrip companyId={companyId} period={period} /><MoneyListToolbar /><FuelBoardSection title="Diesel by truck" onViewAll={() => navigate("/fuel/by-truck")}>{dieselQuery.isError ? (<div data-testid="fuel-home-diesel-error"><ListErrorBanner message="Diesel by truck could not be loaded — this is not an empty period." onRetry={() => void dieselQuery.refetch()} /></div>) : (<ParityTable title="Diesel by truck" emptyText="No diesel spend for this period." />)}</FuelBoardSection></>;
     }
   `;
   const bad = `
     export function FuelFraudAlertsKpiCard() {}
     export function FuelHomePage() {
-      return <><FuelFraudAlertsKpiCard /><RelayHistoryImport /></>;
+      return <><FuelFraudAlertsKpiCard /><div data-testid="fuel-home-secondary-kpis" /></>;
     }
   `;
   let ok = true;
@@ -464,7 +468,7 @@ function selftest() {
   }
   if (!ok) process.exit(1);
   const leftover = computeFailures(
-    `getFuelDashboard <FuelBoardKpiStrip period={period} /> FuelFraudAlertsKpiCard RelayHistoryImport MoneyListToolbar FuelBoardSection ParityTable Diesel by truck fetchDieselByTruckAggregate navigate("/fuel/by-truck") lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
+    `getFuelDashboard <FuelBoardKpiStrip period={period} /> MoneyListToolbar FuelBoardSection ParityTable Diesel by truck fetchDieselByTruckAggregate navigate("/fuel/by-truck") lovesSyncQuery.isError <ListErrorBanner lovesSyncQuery.refetch()\n<div className="text-[11px] text-[#8A92AB]">plant</div>`,
   );
   if (!leftover.some((e) => e.includes("leftover text-[11px]")) || !leftover.some((e) => e.includes("leftover off-scale muted"))) {
     console.error("SELFTEST FAIL — leftover plant escaped", leftover);

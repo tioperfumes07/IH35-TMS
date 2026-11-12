@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 — ROUND 8.15b ROWS 40-43 DONE-LIVE (REPLACE NOT LAYER)
+
+- **PR:** [#29027](https://github.com/tioperfumes07/IH35-TMS/pull/29027) · squash `a73d315a8768`
+- **ROWS CLOSED:** 40 (Reports Home sub-nav LAYERED→DONE) · 41 (Trial Balance PARTIAL→DONE) · 42 (Customers Home CHROME-ONLY→DONE) · 43 (Vendors Home CHROME-ONLY→DONE)
+- **FIX:** ReportsSubNav.tsx — removed "Profitability hub" tab + 5 REPORT_BOARDS spread (not on v3 board); verify-navy-subnav-x-of-178 count 30→24; additive-baseline regenerated under OWNER-REMOVE
+- **GUARD:** verify-navy-subnav-x-of-178 --selftest PASS · verify-reports-hub-connectivity PASS · verify-reports-qbo-chrome-leaves PASS · verify-cancellations-report-wired PASS · verify-lfi11-invoice-search PASS · verify-additive-only PASS (OWNER-REMOVE); gate exit 0
+- **LIVE PROOF:** /reports 20 available 6 schedules IFTA 81d · /reports/trial-balance $2,018,053.38 Balanced 54 accounts · /customers 81 A/R $798,346.72 · /vendors 30 Spend $430,281.14 Fuel 96% — ih35-tms-web.onrender.com 2026-11-12 09:46 AM CT
+- **REMAINING:** rows 80 100 109 still open
+
 ## 2026-10-25 — Lead 17 gated reds: ALL 17 GREEN
 
 - **SHAs:** `e13c5381de` · `239f13fac9` · `82e7b151e8` · `478307192e` · `fd6707d89d` · `4e7ccb872a`
