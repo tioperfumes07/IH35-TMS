@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~6:20 AM CT) — ROUND 8.14 row 53 Escrow + date rows CODED
+- **THIS:** Settlements Escrow driver name + Held → escrow register (board Settlements-Escrow.dc.html; was EntityLink profile). KPI href→/driver-finance/escrow. Register date rows 123/144/148/149/162 → CODED (formatDate.screens.test 5/5).
+- **STOP:** MoneyCell residual sweeps per ROUND 8.14 until board rows 39/44–46/49/53–56/8 close.
+- **NEXT:** Settlements Home/Open/Closed/Close + Factoring Home + Fuel boards. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~6:05 AM CT) — Close Arrival + Relay wallet drills
 - **THIS:** Settlement Close Arrival KPIs href→settlement · Relay wallet day fill/deposit fees + balance MoneyCell when one doc · Relay inbox by-card settled + KPIs → /fuel/inbox.
 - **Prior:** #28999 TripProfitability/KPI hrefs merged.

@@ -56,7 +56,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 50 | B | Settlements | Settlements › Company — board verdict REBUILT | Cursor | 443.280 | PARTIAL | #27354 e8a9f02b; duplicate rows still live |
 | 51 | B | Settlements | Settlements › Deductions — board verdict CHROME-ONLY | Cursor | 443.280 | MERGED-UNVERIFIED | #27355 / #27364; live 5:37 PM: by-type rows still "—" while total $470.00 |
 | 52 | B | Settlements | Settlements › Cash Advances — board verdict CHROME-ONLY | Cursor | 443.280 | MERGED-UNVERIFIED | #27358 eb08254d; live 5:38 PM page stuck "Loading…" |
-| 53 | B | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | Cursor | 443.280 | OPEN |  |
+| 53 | B | Settlements | Settlements › Escrow — board verdict CHROME-ONLY | Cursor | 443.280 | CODED | #29002 name→register per Settlements-Escrow.dc.html (remeasure engines live still Cascade) |
 | 54 | B | Settlements | Settlements › Escrow Register — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
 | 55 | B | Fuel | Fuel › Home — board verdict CHROME-ONLY | Cursor | 443.280 | OPEN |  |
 | 56 | B | Fuel | Fuel › 10 sub-tabs — board verdict CHROME-ONLY | Cursor | 443.280 | OPEN |  |
@@ -126,7 +126,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 120 | H | Fuel › Questions › Review | D001: Clicking Review throws undefined `load_number` in FuelAssignmentPopup; whole-app crash | CC-2 | 443.257-D | MERGED-UNVERIFIED | bf7dadd3 |
 | 121 | H | Home › Overview › Money tiles | D002: Currency values omit cents | Cursor | 443.257-D | CODED | 0512ef14cd (Cursor) D002 cents |
 | 122 | H | Home › Overview › Driver day summary | D003: Names render all-uppercase | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 123 | H | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 123 | H | Home › Overview › Weekly revenue | D004: Axis dates use DD/MM without year | Cursor | 443.257-D | CODED | formatDate.screens.test + WeeklyRevenueChart formatDate MM/DD/YYYY (remeasure 11-12) |
 | 124 | H | Home › Overview › Driver summary request | D005: `/api/v1/telematics/driver-day-summary` 5,071 ms | CC-2 | 443.257-D | OPEN | not re-verified since audit |
 | 125 | H | Settlements › Navigation › Drivers | D006: Link targets `/drivers` outside module | LEAD | 443.257-D | CODED | f3855c3116 #27485 (LEAD) guard verify-settlements-subnav-stays-in-module |
 | 126 | H | Settlements › Navigation › Profiles | D007: Link targets `/drivers/profiles` | Cursor | 443.257-D | CODED | 0512ef14cd 443.258-B (tab -> /driver-finance/…, route mounted) + Lead guard verify-settlements-subnav-stays-in-module |
@@ -147,12 +147,12 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 141 | H | Dispatch › Home › Return / idle / missing-bill tables | D022: Driver names all-uppercase | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 142 | H | Dispatch › Book Load › Stop fields | D023: Both ZIP controls measured 28px high × 381.33px wide | Cursor / CC-3 | 443.257-D | DONE-LIVE | #27294 ZIP 88px |
 | 143 | H | Dispatch › Book Load › Presentation | D024: Long A–E form; no Side panel / Center toggle or five-step flow present | Cursor / CC-3 | 443.257-D | DONE-LIVE | Side panel / Center toggle live 10-23 5:19 PM |
-| 144 | H | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 144 | H | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | 443.257-D | CODED | formatDateQboList MM/DD/YYYY pinned formatDate.screens.test (remeasure 11-12) |
 | 145 | H | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 146 | H | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | 443.257-D | OPEN | not re-verified since audit |
 | 147 | H | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 148 | H | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 149 | H | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 148 | H | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | 443.257-D | CODED | ReconcilerExceptionsPage formatDateUS (remeasure 11-12) |
+| 149 | H | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | 443.257-D | CODED | DriverSchedulerGridPage formatDateUS subtitle+grid (remeasure 11-12) |
 | 150 | H | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 151 | H | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 152 | H | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | 443.257-D | CODED | 864c4db7d8 #27491 (LEAD) maintenance money cents |
@@ -165,7 +165,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 159 | H | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
 | 160 | H | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
 | 161 | H | Cash Flow › Projected Auto › Seven-day outlook | D042: Currency abbreviated with k suffix and zero shown without cents | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D042 |
-| 162 | H | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | 443.257-D | OPEN | not re-verified since audit |
+| 162 | H | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | 443.257-D | CODED | CashFlowHome/Manual use formatDateUS (remeasure 11-12) |
 | 163 | H | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 164 | H | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D045 |
 | 165 | H | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | 443.257-D | OPEN | not re-verified since audit |
