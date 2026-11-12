@@ -82,6 +82,31 @@ Register: `docs/design/BOARD-45-COMPLETION-REGISTER.md` one line per board (# ·
 `ROUND 8.17 <Z> · classes R/L/S merged: <PR#s + SHAs> · boards CERTIFIED by Codex: <n>/45 <list> · FAIL left: <board: defect> · deployed FE/BE SHA <sha>`
 Missed checkpoint → Claude-Lead takes the board and records the miss.
 
+## FILE OWNERSHIP (who may edit what for ROUND 8.17)
+- **CODEX owns** the engines/readers behind the boards and their tests:
+  `apps/backend/src/accounting/trial-balance.*` · `apps/backend/src/accounting/cash-flow.*` · `apps/backend/src/cash-flow/**` (incl. `card-payables.ts`) · Fuel KPI/rate/paging readers under `apps/backend/src/fuel/**` · Factoring reserve/aging readers (`apps/backend/src/factoring/**`, `apps/backend/src/accounting/factoring-posting/reserve-tracker.service.ts`) · PM reader `apps/backend/src/maintenance/pm-current-odometer.ts` and the Maintenance/Fleet-health readers that consume it · settlements closed-membership / statement readers (read side only) · the ONE shared date formatter `apps/frontend/src/lib/formatDate.ts`.
+- **CURSOR owns** the board UI for all 45 boards: `apps/frontend/src/pages/**`, `apps/frontend/src/components/**` (everything except `lib/formatDate.ts`), the shared return-context helper it creates, the frontend router files, and the frontend tests for them.
+- **Crossing:** a UI change Codex needs → Cursor makes it; a reader change Cursor needs → Codex makes it. Ask on the PR, answer within 30 minutes. A file both must touch: whoever merges second merges main in and re-runs the gate — never revert the other seat's change.
+- **Not yours (either seat):** posting engine / GL posting math, migrations under `db/migrations/**`, `driver_finance` writers (CC-1), banking match engine (CC-2), perfume (Lead). If you need one of these, name it in your OUTBOX and stop that one item only; keep working the rest.
+
+## AUTHORIZATIONS (granted by this box)
+- Merge your own PRs on a green local gate under the fast 4-minute law (8.6/8.16); a red that is also on main, or the shared-DB deadlock flake, does not block.
+- Replace and DELETE superseded code on these boards — OWNER-REMOVE: "the new designs must be compeltely built use logic." 2026-11-12 and "its ok to replace old code and remove etc." 2026-11-12.
+- Re-point a guard to an element's NEW place (8.15b); CC-1 reviews on the PR within 30 min; a guard that pinned a pure duplicate is retired with the reason in the PR.
+- This box is the Lead's lane ruling for the files above: cite `ROUND 8.17` in the PR body.
+- **NOT authorized:** any production write in USMCA (saves, matches, voids, imports, payments, bookings, data edits), test/sample rows in any entity, a migration without an owner AUTH number, anything in TRANSPORTATION or TRUCKING, `--no-verify`.
+
+## ACCEPTANCE (a board is CERTIFIED only when ALL hold, checked by the OTHER seat)
+1. Deployed FE + BE SHA identified (healthz `git_sha`, `/version.json`) and it contains the fix.
+2. Every element of the approved v3 board present at 1440×900, with no legacy layer behind or below it.
+3. Every number equals its source query (paste the query result next to the screen value), and every number opens its source list/record.
+4. The forward route opens the right record; Back restores the origin board, tab, filters, period and cohort (verified in the URL).
+5. Filters: each filter and one combination narrow correctly, plus one negative control.
+6. Empty, loading and error states are honest; no "Not available" where data exists.
+7. Writer behaviour proved by tests that FAILED on the old code (RED pasted) — never by a production write.
+
+Where results go: the register line in `docs/design/BOARD-45-COMPLETION-REGISTER.md`; details in `docs/design/DESIGN-PARITY-VERIFY.md`; the checkpoint DONE line in your OUTBOX; defects as PR comments.
+
 ---
 
 ## CODEX BOX
@@ -120,3 +145,28 @@ Register: `docs/design/BOARD-45-COMPLETION-REGISTER.md` (# · board · CERTIFIED
 ## DONE LINE (OUTBOX-CODEX.md, at 18:00Z / 20:00Z / 22:00Z / 04:00Z)
 `ROUND 8.17 <Z> · N fixes merged: <board: PR# SHA> · V boards checked: <n>/12 · boards CERTIFIED (checked by Codex): <n>/45 · FAIL left: <board: defect> · deployed FE/BE SHA <sha>`
 Missed checkpoint → Claude-Lead takes the board and records the miss.
+
+## FILE OWNERSHIP (who may edit what for ROUND 8.17)
+- **CODEX owns** the engines/readers behind the boards and their tests:
+  `apps/backend/src/accounting/trial-balance.*` · `apps/backend/src/accounting/cash-flow.*` · `apps/backend/src/cash-flow/**` (incl. `card-payables.ts`) · Fuel KPI/rate/paging readers under `apps/backend/src/fuel/**` · Factoring reserve/aging readers (`apps/backend/src/factoring/**`, `apps/backend/src/accounting/factoring-posting/reserve-tracker.service.ts`) · PM reader `apps/backend/src/maintenance/pm-current-odometer.ts` and the Maintenance/Fleet-health readers that consume it · settlements closed-membership / statement readers (read side only) · the ONE shared date formatter `apps/frontend/src/lib/formatDate.ts`.
+- **CURSOR owns** the board UI for all 45 boards: `apps/frontend/src/pages/**`, `apps/frontend/src/components/**` (everything except `lib/formatDate.ts`), the shared return-context helper it creates, the frontend router files, and the frontend tests for them.
+- **Crossing:** a UI change Codex needs → Cursor makes it; a reader change Cursor needs → Codex makes it. Ask on the PR, answer within 30 minutes. A file both must touch: whoever merges second merges main in and re-runs the gate — never revert the other seat's change.
+- **Not yours (either seat):** posting engine / GL posting math, migrations under `db/migrations/**`, `driver_finance` writers (CC-1), banking match engine (CC-2), perfume (Lead). If you need one of these, name it in your OUTBOX and stop that one item only; keep working the rest.
+
+## AUTHORIZATIONS (granted by this box)
+- Merge your own PRs on a green local gate under the fast 4-minute law (8.6/8.16); a red that is also on main, or the shared-DB deadlock flake, does not block.
+- Replace and DELETE superseded code on these boards — OWNER-REMOVE: "the new designs must be compeltely built use logic." 2026-11-12 and "its ok to replace old code and remove etc." 2026-11-12.
+- Re-point a guard to an element's NEW place (8.15b); CC-1 reviews on the PR within 30 min; a guard that pinned a pure duplicate is retired with the reason in the PR.
+- This box is the Lead's lane ruling for the files above: cite `ROUND 8.17` in the PR body.
+- **NOT authorized:** any production write in USMCA (saves, matches, voids, imports, payments, bookings, data edits), test/sample rows in any entity, a migration without an owner AUTH number, anything in TRANSPORTATION or TRUCKING, `--no-verify`.
+
+## ACCEPTANCE (a board is CERTIFIED only when ALL hold, checked by the OTHER seat)
+1. Deployed FE + BE SHA identified (healthz `git_sha`, `/version.json`) and it contains the fix.
+2. Every element of the approved v3 board present at 1440×900, with no legacy layer behind or below it.
+3. Every number equals its source query (paste the query result next to the screen value), and every number opens its source list/record.
+4. The forward route opens the right record; Back restores the origin board, tab, filters, period and cohort (verified in the URL).
+5. Filters: each filter and one combination narrow correctly, plus one negative control.
+6. Empty, loading and error states are honest; no "Not available" where data exists.
+7. Writer behaviour proved by tests that FAILED on the old code (RED pasted) — never by a production write.
+
+Where results go: the register line in `docs/design/BOARD-45-COMPLETION-REGISTER.md`; details in `docs/design/DESIGN-PARITY-VERIFY.md`; the checkpoint DONE line in your OUTBOX; defects as PR comments.
