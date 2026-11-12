@@ -95,8 +95,12 @@ export function SettlementDetailPage() {
   );
 
   const paymentState = String(settlement.payment_state ?? "unpaid");
+  // ROUND 8.17 board 35 — blank identity is a defect; open/presettlement without AlwaysTrack → PENDING.
   const settlementDisplayId =
-    settlementNumber(settlement) ?? (settlement.is_presettlement === true ? "PENDING" : null);
+    settlementNumber(settlement) ??
+    (settlement.is_presettlement === true || String(settlement.status ?? "").toLowerCase() === "open" || String(settlement.status ?? "").toLowerCase() === "draft"
+      ? "PENDING"
+      : null);
   const companySettlementLabel = (() => {
     const t = String(readout?.company_settlement?.display_id ?? settlementDisplayId ?? "").trim();
     return t ? `Company settlement ${t}` : "Company settlement";

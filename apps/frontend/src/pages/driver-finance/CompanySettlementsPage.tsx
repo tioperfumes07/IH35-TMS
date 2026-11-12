@@ -94,8 +94,10 @@ export function CompanySettlementsPage() {
   const navigate = useNavigate();
   const [selected, setSelected] = useState<CompanySettlementListRow | null>(null);
   const [search, setSearch] = useState("");
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const deepLinkId = searchParams.get("id");
+  // ROUND 8.17 class S board 42 — KPI tiles filter the closed-tour table to their cohort.
+  const cohort = searchParams.get("cohort"); // with_company | not_opened | all (default)
 
   // Board grain = closed tours (Settlements-Company.dc.html).
   const toursQuery = useQuery({
@@ -116,21 +118,32 @@ export function CompanySettlementsPage() {
     [toursQuery.data?.rows]
   );
   const tourRows = useMemo(() => {
+    let rows = allTourRows;
+    if (cohort === "with_company") rows = rows.filter((r) => Boolean(r.company_settlement_id));
+    else if (cohort === "not_opened") rows = rows.filter((r) => !r.company_settlement_id);
     const q = search.trim().toLowerCase();
-    if (!q) return allTourRows;
-    return allTourRows.filter((r) => {
+    if (!q) return rows;
+    return rows.filter((r) => {
       const driver = formatDisplayName(r.driver_name ?? "").toLowerCase();
       const companyLabel = (r.company_settlement_display_id ?? "").toLowerCase();
       const driverSetl = driverSettlementLabel(r).toLowerCase();
       return driver.includes(q) || companyLabel.includes(q) || driverSetl.includes(q);
     });
-  }, [allTourRows, search]);
+  }, [allTourRows, cohort, search]);
   const periodRows = periodsQuery.data?.company_settlements ?? [];
 
   const withCompany = allTourRows.filter((r) => Boolean(r.company_settlement_id)).length;
   const notOpened = allTourRows.length - withCompany;
   const totalMargin = allTourRows.reduce((sum, r) => sum + r.margin_cents, 0);
   const netRevenue = allTourRows.reduce((sum, r) => sum + r.revenue_cents, 0);
+
+  const setCohort = (next: string | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (!next || next === "all") params.delete("cohort");
+    else params.set("cohort", next);
+    setSearchParams(params, { replace: true });
+    document.querySelector('[data-testid="company-settlements-list-panel"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     if (!deepLinkId || selected) return;
@@ -355,6 +368,7 @@ export function CompanySettlementsPage() {
             }
             sub="listTours closed"
             testId="company-settlements-kpi-total"
+            onClick={() => setCohort("all")}
           />
           <V3KpiTile
             label="With company settlement"
@@ -363,6 +377,7 @@ export function CompanySettlementsPage() {
             }
             sub="company_settlement_id set"
             testId="company-settlements-kpi-with-company"
+            onClick={() => setCohort("with_company")}
           />
           <V3KpiTile
             label="Not opened"
@@ -371,18 +386,21 @@ export function CompanySettlementsPage() {
             }
             sub="amber · no company settlement yet"
             testId="company-settlements-kpi-not-opened"
+            onClick={() => setCohort("not_opened")}
           />
           <V3KpiTile
             label="Total margin"
             value={toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatUsdCents(totalMargin)}
             sub="sum of tour margin"
             testId="company-settlements-kpi-margin"
+            onClick={() => setCohort("with_company")}
           />
           <V3KpiTile
             label="Net Revenue"
             value={toursQuery.isError ? "—" : toursQuery.isPending ? "…" : formatUsdCents(netRevenue)}
             sub="sum of tour revenue"
             testId="company-settlements-kpi-net-revenue"
+            onClick={() => setCohort("with_company")}
           />
         </div>
       }

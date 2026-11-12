@@ -89,7 +89,22 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const [createOpen, setCreateOpen] = useState(false);
   const [tab, setTab] = useState<FuelTabId>(initialTab);
   /** By-truck board: KPI strip + diesel roster share one Oct/Sep/YTD period (443.280). */
-  const [byTruckPeriod, setByTruckPeriod] = useState<FuelBoardPeriodId>("oct");
+  // ROUND 8.17 — Fuel Home View all carries ?period= so by-truck opens on the same month.
+  const periodFromUrl = searchParams.get("period");
+  const initialByTruckPeriod: FuelBoardPeriodId =
+    periodFromUrl === "oct" || periodFromUrl === "sep" || periodFromUrl === "ytd" ? periodFromUrl : "oct";
+  const [byTruckPeriod, setByTruckPeriodState] = useState<FuelBoardPeriodId>(initialByTruckPeriod);
+  const setByTruckPeriod = (next: FuelBoardPeriodId) => {
+    setByTruckPeriodState(next);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set("period", next);
+    setSearchParams(nextParams, { replace: true });
+  };
+  useEffect(() => {
+    if (periodFromUrl === "oct" || periodFromUrl === "sep" || periodFromUrl === "ytd") {
+      setByTruckPeriodState(periodFromUrl);
+    }
+  }, [periodFromUrl]);
   const activeRoutePageSize = 25;
   const [activeRoutePage, setActiveRoutePage] = useState(1);
   const [selectedActiveRouteId, setSelectedActiveRouteId] = useState<string | null>(null);

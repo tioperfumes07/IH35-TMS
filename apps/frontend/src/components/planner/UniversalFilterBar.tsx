@@ -53,6 +53,11 @@ interface UniversalFilterBarProps {
   presetKeys?: PeriodPreset[];
   /** LEAD 443.251 item 4 — page-specific controls rendered INSIDE the Filters popover. */
   extra?: ReactNode;
+  /** ROUND 8.17 class R — staged extras (entity filters) share Apply/Cancel with the date draft. */
+  extraDirty?: boolean;
+  onExtraApply?: () => void;
+  onExtraCancel?: () => void;
+  onExtraReset?: () => void;
 }
 
 function getPresetDates(preset: PeriodPreset): { from: string; to: string } {
@@ -202,7 +207,19 @@ const PRESET_LABELS: Record<PeriodPreset, string> = {
 // Pages that pass no presetKeys keep the list exactly as before (the three planner-only presets are opt-in).
 const DEFAULT_PRESET_KEYS = (Object.keys(PRESET_LABELS) as PeriodPreset[]).filter((k) => k !== "today" && k !== "next_7" && k !== "next_14");
 
-export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod = "this_month", defaultOpen = false, presetKeys = DEFAULT_PRESET_KEYS, extra }: UniversalFilterBarProps) {
+export function UniversalFilterBar({
+  value,
+  onChange,
+  summaryText,
+  defaultPeriod = "this_month",
+  defaultOpen = false,
+  presetKeys = DEFAULT_PRESET_KEYS,
+  extra,
+  extraDirty = false,
+  onExtraApply,
+  onExtraCancel,
+  onExtraReset,
+}: UniversalFilterBarProps) {
   const initialDates = getPresetDates(defaultPeriod);
   const staged = useStagedListFilters({
     applied: value,
@@ -227,12 +244,33 @@ export function UniversalFilterBar({ value, onChange, summaryText, defaultPeriod
   const handleFrom = (from: string) => staged.setDraft({ ...draft, period: "custom", from });
   const handleTo = (to: string) => staged.setDraft({ ...draft, period: "custom", to });
 
+  const handleApply = () => {
+    staged.apply();
+    onExtraApply?.();
+  };
+  const handleCancel = () => {
+    staged.cancel();
+    onExtraCancel?.();
+  };
+  const handleReset = () => {
+    staged.reset();
+    onExtraReset?.();
+  };
+
   return (
     <div
       className="flex items-center gap-2 border-b bg-gray-50 px-3 py-2"
       data-planner-filter-toolbar="collapsed"
     >
-      <CollapsedListFilters activeFilterCount={activeCount} testIdPrefix="planner" defaultOpen={defaultOpen} onApply={staged.apply} onReset={staged.reset} onCancel={staged.cancel} applyDisabled={!staged.dirty}>
+      <CollapsedListFilters
+        activeFilterCount={activeCount}
+        testIdPrefix="planner"
+        defaultOpen={defaultOpen}
+        onApply={handleApply}
+        onReset={handleReset}
+        onCancel={handleCancel}
+        applyDisabled={!staged.dirty && !extraDirty}
+      >
         <div className="space-y-1.5">
           <div className="text-xs font-semibold text-gray-600">
             Period <span className="font-normal text-gray-400">— currently {PRESET_LABELS[draft.period]}</span>

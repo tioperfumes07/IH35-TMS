@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
@@ -54,7 +55,9 @@ const tourLabel = (r: TourListRow) => {
   if (did && !/^S-\d{4}-\d+/i.test(did) && did.toLowerCase() !== "open" && did.toLowerCase() !== "pending") {
     return did;
   }
-  return r.is_open ? "—" : "No number";
+  // ROUND 8.17 residual — open/presettlement without a minted number reads PENDING (never a bare dash tile).
+  if (r.is_open || r.is_presettlement === true) return "PENDING";
+  return "No number";
 };
 
 /** T5 / ROUND 8.12 — Ready dots follow engine ready_total (never hard-code six). */
@@ -210,10 +213,55 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
   ...(state === "closed"
     ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => (r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH) } as ParityColumn<TourListRow>]
     : []),
-  { key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.revenue_cents, render: r => fmt(r.revenue_cents) },
-  { key: "costs", label: "Costs", testId: "setl-tour-col-costs", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.costs_cents, render: r => fmt(r.costs_cents) },
-  { key: "driver_pay", label: "Driver pay", testId: "setl-tour-col-driver-pay", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.driver_pay_cents, render: r => fmt(r.driver_pay_cents) },
-  { key: "margin", label: "Margin", testId: "setl-tour-col-margin", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums", minWidth: 100, maxWidth: 140, sortValue: r => r.margin_cents, render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}</span> },
+  {
+    key: "revenue",
+    label: "Revenue",
+    testId: "setl-tour-col-revenue",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-right tabular-nums",
+    minWidth: 100,
+    maxWidth: 140,
+    sortValue: (r) => r.revenue_cents,
+    // ROUND 8.17 class S — money opens the settlement statement source.
+    render: (r) => <MoneyCell cents={r.revenue_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+  },
+  {
+    key: "costs",
+    label: "Costs",
+    testId: "setl-tour-col-costs",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-right tabular-nums",
+    minWidth: 100,
+    maxWidth: 140,
+    sortValue: (r) => r.costs_cents,
+    render: (r) => <MoneyCell cents={r.costs_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+  },
+  {
+    key: "driver_pay",
+    label: "Driver pay",
+    testId: "setl-tour-col-driver-pay",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-right tabular-nums",
+    minWidth: 100,
+    maxWidth: 140,
+    sortValue: (r) => r.driver_pay_cents,
+    render: (r) => <MoneyCell cents={r.driver_pay_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+  },
+  {
+    key: "margin",
+    label: "Margin",
+    testId: "setl-tour-col-margin",
+    sortable: true,
+    cellClass: "whitespace-nowrap text-right tabular-nums",
+    minWidth: 100,
+    maxWidth: 140,
+    sortValue: (r) => r.margin_cents,
+    render: (r) => (
+      <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
+        <MoneyCell cents={r.margin_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
+      </span>
+    ),
+  },
   ...(state === "open"
     ? [
         { key: "miles_practical", label: "Practical mi", testId: "setl-tour-col-miles_practical", sortable: true, cellClass: "whitespace-nowrap tabular-nums", sortValue: (r: TourListRow) => r.miles_practical ?? -Infinity, render: (r: TourListRow) => (r.miles_practical == null ? DASH : formatQuantityTable(r.miles_practical, 0)) } as ParityColumn<TourListRow>,
@@ -240,7 +288,24 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
         } as ParityColumn<TourListRow>,
       ]
     : [
-        { key: "net", label: "Driver net", testId: "setl-tour-col-driver-net", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums font-bold", minWidth: 100, maxWidth: 140, sortValue: (r: TourListRow) => r.driver_net_cents ?? 0, render: (r: TourListRow) => (r.driver_net_cents == null ? DASH : <span className="font-bold tabular-nums">{fmt(r.driver_net_cents)}</span>) } as ParityColumn<TourListRow>,
+        {
+          key: "net",
+          label: "Driver net",
+          testId: "setl-tour-col-driver-net",
+          sortable: true,
+          cellClass: "whitespace-nowrap text-right tabular-nums font-bold",
+          minWidth: 100,
+          maxWidth: 140,
+          sortValue: (r: TourListRow) => r.driver_net_cents ?? 0,
+          render: (r: TourListRow) =>
+            r.driver_net_cents == null ? (
+              DASH
+            ) : (
+              <span className="font-bold tabular-nums">
+                <MoneyCell cents={r.driver_net_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
+              </span>
+            ),
+        } as ParityColumn<TourListRow>,
         { key: "company", label: "Company settlement", testId: "setl-tour-col-company", minWidth: 120, maxWidth: 160, cellClass: "whitespace-nowrap", render: (r: TourListRow) => <CompanySettlementCell row={r} /> } as ParityColumn<TourListRow>,
       ]),
 ];

@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T17:49Z) — ROUND 8.17 residual R+S shipping
+ROUND 8.17 residual · Board2 txn_id→Transactions · Board12 staged Apply/Cancel · Fuel View-all period · Company/Open/Closed money+KPI drills · card KPI cohorts · LIVE PROOF: UNVERIFIED: await deploy
+
 ## OUTBOX (2026-11-12T20:00Z) — ROUND 8.17 classes R+L+S merged
 ROUND 8.17 2026-11-12T20:00Z · classes R/L/S merged: R #29057 bf05f75b55a · L #29059 6c7776b7a1b · S #29064 7b6c27595ed · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex live recheck · deployed FE/BE SHA pending post-deploy
 
@@ -168,28 +171,3 @@ ROUND 8.17 2026-11-12T16:31Z · classes R/L/S merged: R in flight (returnContext
 
 ## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
 - **SHIPS:** #28953–#28962 · Policies insurer + Premium. **MERGED #28963.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
-- **SHIPS:** #28953–#28961 Debtor credit + Escrow/Cash reserve. **MERGED #28962 tip.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~1:20 AM CT) — Factoring Purchase Report + Escrow Held MoneyCells
-- **SHIPS:** #28953–#28958 · Purchase Report + Escrow Held MoneyCells. **MERGED #28960.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~1:05 AM CT) — Factoring Invoice Status + Aging + Fees history MoneyCells
-- **SHIPS:** #28953–#28956 · Invoice Status / Aging / Fees history MoneyCells. **MERGED #28958.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~12:50 AM CT) — Factoring Debtor Receipts / Loan-Save / Unapplied MoneyCells
-- **SHIPS:** #28953–#28955 · Debtor Receipts / Loan-Save / Unapplied → MoneyCell. **MERGED #28956.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~12:35 AM CT) — Factoring Funds Due + Fees MoneyCell drills
-- **SHIPS:** #28953 MoneyCell literals · #28954 Legal template EntityLinks · #28955 Factoring Funds Due + Fees-paid MoneyCells (merged).
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~12:20 AM CT) — Legal Attorney Review + Contracts template EntityLinks
-- **SHIPS:** #28953 Statement MoneyCell literal drills (merged). Legal Attorney Review Template column + Contracts list Template → `legal_template` EntityLink (parity with Policies/Templates list). **MERGED #28954.**
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE for BOARD-45. No match/Dreamline.
