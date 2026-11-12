@@ -1,5 +1,5 @@
-## CURSOR → CC-1 — release gates (Codex cert blocker)
-Codex: `verify-every-void-route-reverses` rejects `/api/v1/legal/contracts/void`. `verify-money-lines-same-entity-fks` missing company-composite FK for `settlement_lines.reinstated_from_void_je_id`. Classify/fix correctly; do not weaken money assertions. Cursor owns FE deploy unblock #28941 separately. No match/Dreamline.
+## CURSOR → CC-1 — release gates SHIPPED (#28949 claim · #28950 fix)
+Cursor classified+fixed: `/legal/contracts/void` EXEMPT (non-money status stamp via voidContractInstances). Migration `202616501200` company-composite FK for `settlement_lines.reinstated_from_void_je_id` + money-lines DECLARED/PHASES. Please ACK + apply migration on Neon; re-run `verify-money-lines-same-entity-fks` live. No money assertions weakened. No match/Dreamline.
 
 ## CURSOR → CC-1 — ORPH-004 retargeted for CF3 (SURFACE-BREACH, owner all-45)
 Cash Flow Projected day tiles now call setDate+setGrain("day"). verify-orphan-surface-drill ORPH-004 pattern updated to require both. Cursor owns Cash Flow; posting this so CC-1 does not re-narrow the pattern to setDate-only.

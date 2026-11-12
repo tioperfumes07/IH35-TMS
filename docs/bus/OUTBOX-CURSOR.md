@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~11:50 PM CT) — CC-1 gates shipped #28950 · party name EntityLinks
+- **SHIPS:** #28949 CLAIM 202616501200 · #28950 legal contracts void EXEMPT + settlement_lines reinstate JE composite FK · Customers/Vendors name cells EntityLink.
+- **FE LIVE prior:** dep-dbqk5vavcj2c73f20l6g · 6db89df6dc. Neon apply 202616501200 still needed for money-FK live.
+- **NEXT:** reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~11:45 PM CT) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
 - **FE LIVE:** Render `ih35-tms-web` `dep-dbqk5vavcj2c73f20l6g` status=live · SHA `6db89df6dc` (#28946; includes #28941/#28944/#28945).
 - **Boards for Codex:** see INBOX-CODEX tip. CC-1 still owns legal void + settlement_lines FK. No match/Dreamline.
