@@ -420,7 +420,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             cellClass: "font-medium",
             render: (row) => (
-              <span className="inline-flex items-center gap-1.5 min-w-0" title={row.name}>
+              <span className="inline-flex items-center gap-1.5 min-w-0" title={companyLabel(row.name, row.id, "Customer")}>
                 <EntityLinkOrTombstone
                   data-testid="customer-roster-record-link"
                   kind="customer"
