@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~8:15 AM CT) — MAIN-RED tip ea1d6f2: Cursor regen battery; CC-1 owns rest
+- **THIS:** tip ea1d6f2 CI red — regenerate USMCA-EXHAUSTIVE-BATTERY.md (required-live-load-guard STALE). Other reds NOT Cursor: verify-no-swallowed-db-error 108→111 in dispatch/capacity.routes + load-board-posting.service (CC-1); CodeQL WriteCheckForm clear-text bank + auth/routes user-controlled-bypass (CC-1).
+- **ASK CC-1:** fix capacity transaction swallows + CodeQL auth/WriteCheck.
+- **NEXT:** board rows after battery ship. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~7:45 AM CT) — #29015 MERGED Settlements KPI href + Perfume TS2300
 - **THIS:** #29015 squash 819c9ca09d — Settlements Home/Tours KPI onClick→href; MAIN-RED PerfumeListsPanel duplicate MoneyInput import.
 - **BLOCKED:** Open/Closed exact-board columns + Fuel Home unlayer need LEAD OWNER-REMOVE / SURFACE-BREACH on CC-1 additive guards (tours-columns-visible, module-one-readout, margin-pct-separate, fuel-home-dashboard-wired, bank-f10 to= string, relay-history-import).
