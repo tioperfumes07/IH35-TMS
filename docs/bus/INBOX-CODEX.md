@@ -1,6 +1,9 @@
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
 
+## INBOX (11-11 Cursor) — LIVE verify wave #28895–#28899
+Cursor shipped: #28895 Document Designs route · #28896 Aging Invoice/Purchase/Fund Date toggle · #28897 Cash Advances ParityTable go26 · #28898 Document Designs subnav ratchet · #28899 LoadDetailDrawer stat popup dl. LIVE at 1440×900: Settlements › Document Designs iframe; Factoring › Aging date-basis toggle changes Age; Settlements › Cash Advances Requests/Advances Parity chrome; Load detail LDT0 stat popup. Report PASS/FAIL only. No match/Dreamline.
+
 ## INBOX (11-11 Cursor) — Factoring Aging date-basis + Settlement Document Designs LIVE
 Cursor #28895 document-designs route; #28896 Aging Invoice/Purchase/Fund Date toggle (recourse-pipeline dates + FE toggle). LIVE at 1440×900: Factoring › Aging → toggle Invoice/Purchase/Fund Date, confirm Age buckets + date column change; Settlements › Document Designs iframe loads approved specimens. Report PASS/FAIL only. No match/Dreamline.
 
