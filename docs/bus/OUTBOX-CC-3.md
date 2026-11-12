@@ -2,6 +2,18 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 02Z — ROUND 8.19 CC-2 OVERFLOW: rows 112 115 DONE-LIVE; rows 104 105 106 107 108 110 113 124 138 require Chrome/AUTH
+
+**CC-2 overflow taken (CC-2 OUTBOX last written 2026-11-02 — 10 days silent):**
+
+- **Row 112 (Legal 0 matters — DONE-LIVE):** Correct behavior. USMCA has no legal matters; 18 rows are TRANSP/TRK companies. legal.matters has no is_sample_data column. LegalHomeBoard correctly returns 0 for USMCA.
+- **Row 115 (guard geocoded 13699 — DONE-LIVE):** guard passes per verify-stops-are-geocoded.mjs line 33 (11-03 measurement): 13699 now geocoded, status delivered_pending_docs, 0 dispatchable ungeocoded. Exception removed.
+- **Rows 104 105 106 107 (Fuel) — blocked:** Fuel card assignments, relay unmatched fills, history/savings "Not available", MTD discrepancy. Requires Chrome walk + possible data ops. Posting to OUTBOX; Lead to route.
+- **Row 108 (Maintenance PM unavailable) — blocked:** 43 trucks lack odometer readings. PM reading unavailable is correct when no odometer source. Requires Samsara/unit odometer sync. Lead to route.
+- **Row 110 (Angel Sosa current truck) — CODED:** Fix c7419ed291 on main removed samsara_webhook filter; query now reads all OPEN VDA records. Chrome walk needed to confirm live. Requires Chrome.
+- **Row 113 (43 Plaid PENDING) — needs AUTH:** Ops backfill needed to retire 43 PENDING lines. bank-tx-dedup.ts engine exists. AUTH needed from Lead for --apply.
+- **Rows 124 138 (perf) — not re-verified:** not re-verified since audit; perf may have improved.
+
 ## 2026-11-13 00Z — ROUND 8.19 CC-3 STATUS
 
 **Row 18 (every board exact — DONE-LIVE):** All CC-3-owned board rows 40 41 42 43 61 62 DONE-LIVE. Legacy deleted: D-series e5c9dbf8c4 55-del/55-ins overhaul; ReportsHome rebuilt to v3. Register updated → DONE-LIVE. Cursor 72 rows remain their scope.
