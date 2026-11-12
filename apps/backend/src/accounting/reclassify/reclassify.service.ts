@@ -678,6 +678,27 @@ export async function rewriteDocumentLine(
   // the adopting expense's line of this exact amount (the line already on the target account is preferred); anything
   // ambiguous or missing is refused by name, so the ledger never moves without its document.
   if (type === "fuel_event") {
+    // LST-F11163 — the document adopts the fill's ORIGINAL entry. Two shapes the lookup missed (prod 2026-11-11, the
+    // 15 Relay reefer lines of owner ruling 2026-11-09 all refused "0 live expense documents adopt this entry"):
+    //  (a) a RELAY fill: the posting's source is the Relay fill (integrations.relay_fuel_transactions.id), while its
+    //      document points at the fill's fuel record (fuel.fuel_transactions.relay_fuel_transaction_id = the fill) —
+    //      or at no record when it was adopted on receipt before any record existed (ENG-65);
+    //  (b) a line that already moved once lives on a RECLASSIFICATION entry; the document still adopts the root entry,
+    //      reached back through accounting.reclassify_batch_lines (reclass_journal_entry_id -> journal_entry_id).
+    const root = await client.query<{ root_je: string }>(
+      `WITH RECURSIVE chain(je, depth) AS (
+         SELECT $2::uuid, 0
+         UNION ALL
+         SELECT bl.journal_entry_id, c.depth + 1
+           FROM chain c
+           JOIN accounting.reclassify_batch_lines bl
+             ON bl.reclass_journal_entry_id = c.je AND bl.operating_company_id = $1::uuid AND bl.result = 'applied'
+          WHERE c.depth < 20 AND bl.journal_entry_id IS NOT NULL AND bl.journal_entry_id <> c.je
+       )
+       SELECT je::text AS root_je FROM chain ORDER BY depth DESC LIMIT 1`,
+      [companyId, p.journal_entry_id],
+    );
+    const adoptedEntryId = root.rows[0]?.root_je ?? p.journal_entry_id;
     const adopt = await client.query<{ expense_id: string; line_id: string | null; lines: string }>(
       `SELECT e.id::text AS expense_id,
               (SELECT el.id::text FROM accounting.expense_lines el
@@ -687,9 +708,15 @@ export async function rewriteDocumentLine(
               (SELECT count(*) FROM accounting.expense_lines el
                 WHERE el.expense_id = e.id AND el.operating_company_id = e.operating_company_id AND el.amount_cents = $4::bigint)::text AS lines
          FROM accounting.expenses e
-        WHERE e.operating_company_id = $1::uuid AND e.journal_entry_id = $2::uuid
-          AND e.source_fuel_transaction_id::text = $3 AND e.voided_at IS NULL`,
-      [companyId, p.journal_entry_id, p.source_transaction_id, p.amount_cents, target.account_id ?? p.account_id, p.account_id],
+        WHERE e.operating_company_id = $1::uuid AND e.journal_entry_id = $2::uuid AND e.voided_at IS NULL
+          AND (e.source_fuel_transaction_id::text = $3
+               OR EXISTS (SELECT 1 FROM fuel.fuel_transactions ft
+                           WHERE ft.id = e.source_fuel_transaction_id AND ft.operating_company_id = e.operating_company_id
+                             AND ft.relay_fuel_transaction_id::text = $3)
+               OR (e.source_fuel_transaction_id IS NULL
+                   AND EXISTS (SELECT 1 FROM integrations.relay_fuel_transactions r
+                                WHERE r.id::text = $3 AND r.operating_company_id = e.operating_company_id)))`,
+      [companyId, adoptedEntryId, p.source_transaction_id, p.amount_cents, target.account_id ?? p.account_id, p.account_id],
     );
     if (adopt.rows.length !== 1) {
       return { updated: false, note: `fuel_event: ${adopt.rows.length} live expense documents adopt this entry (need exactly 1); nothing moved` };
