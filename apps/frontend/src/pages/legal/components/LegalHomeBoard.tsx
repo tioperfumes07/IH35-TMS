@@ -160,7 +160,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
         stage: "Draft",
         count: drafts.length,
         oldest: oldestIso(drafts.map((c) => c.created_at)),
-        href: "/legal/contracts",
+        href: "/legal/contracts?status=draft",
         dot: PIPELINE_DOT.Draft!,
       },
       {
@@ -174,21 +174,21 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
         stage: "Out for signature",
         count: out.length,
         oldest: oldestIso(out.map((c) => c.sent_at ?? c.created_at)),
-        href: "/legal/contracts",
+        href: "/legal/contracts?status=sent&status=viewed",
         dot: PIPELINE_DOT["Out for signature"]!,
       },
       {
         stage: "Signed",
         count: signed.length,
         oldest: oldestIso(signed.map((c) => c.signed_at ?? c.created_at)),
-        href: "/legal/contracts",
+        href: "/legal/contracts?status=signed_electronically",
         dot: PIPELINE_DOT.Signed!,
       },
       {
         stage: "Voided",
         count: voided.length,
         oldest: oldestIso(voided.map((c) => c.voided_at ?? c.created_at)),
-        href: "/legal/contracts",
+        href: "/legal/contracts?status=voided",
         dot: PIPELINE_DOT.Voided!,
       },
     ];
