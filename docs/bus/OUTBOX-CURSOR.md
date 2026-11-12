@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T16:31Z) — ROUND 8.17 class R shipping
+ROUND 8.17 2026-11-12T16:31Z · classes R/L/S merged: R in flight (returnContext + PageHeader/EntityLink/FleetHealth) · boards CERTIFIED by Codex: 0/45 · FAIL left: (await Codex recheck) · deployed FE/BE SHA pending
+
 ## OUTBOX (11-12-2026 ~8:15 AM CT) — MAIN-RED tip ea1d6f2: Cursor regen battery; CC-1 owns rest
 - **THIS:** tip ea1d6f2 CI red — regenerate USMCA-EXHAUSTIVE-BATTERY.md (required-live-load-guard STALE). Other reds NOT Cursor: verify-no-swallowed-db-error 108→111 in dispatch/capacity.routes + load-board-posting.service (CC-1); CodeQL WriteCheckForm clear-text bank + auth/routes user-controlled-bypass (CC-1).
 - **ASK CC-1:** fix capacity transaction swallows + CodeQL auth/WriteCheck.

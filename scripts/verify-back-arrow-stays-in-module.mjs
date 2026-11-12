@@ -156,8 +156,10 @@ const headers = [
 ];
 for (const f of headers) {
   const src = strip(read(f));
-  if (!/inModuleBackHref/.test(src)) {
-    fails.push(`${f}: back writer must call inModuleBackHref`);
+  // ROUND 8.17 — PageHeader/BackButton use resolveBackHref (falls through to inModuleBackHref);
+  // BackArrowHeader may still call inModuleBackHref directly.
+  if (!/inModuleBackHref|resolveBackHref/.test(src)) {
+    fails.push(`${f}: back writer must call resolveBackHref or inModuleBackHref`);
   }
   if (/navigate\(\s*-1\s*\)|history\.back\s*\(/.test(src)) {
     fails.push(`${f}: history-back is forbidden`);

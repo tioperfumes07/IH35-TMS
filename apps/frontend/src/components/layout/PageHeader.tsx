@@ -1,9 +1,9 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { colors, typography } from "../../design/tokens";
 import { useClaimBreadcrumb } from "../../lib/breadcrumbOwner";
-import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type Props = {
   backHref?: string;
@@ -22,6 +22,7 @@ type Props = {
 export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, actions }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   useClaimBreadcrumb(Boolean(breadcrumb && breadcrumb.length > 0));
 
   return (
@@ -63,8 +64,15 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
                 onBack();
                 return;
               }
-              // ROUND 435-CUR — Up is the in-module structural parent. Never history, never another module.
-              navigate(inModuleBackHref(location.pathname, backHref));
+              // ROUND 8.17 class R — `ret` restores origin board (tab/filters/period/cohort), including
+              // cross-module (Cash Flow → Invoice). Without `ret`, stay in-module structural parent.
+              navigate(
+                resolveBackHref({
+                  searchParams,
+                  pathname: location.pathname,
+                  fallback: backHref,
+                }),
+              );
             }}
           >
               <ArrowLeft className="h-4 w-4" />

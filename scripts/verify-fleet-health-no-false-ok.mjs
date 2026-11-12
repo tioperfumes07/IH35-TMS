@@ -36,6 +36,10 @@ export function audit(s) {
   if (!/const PM_BASELINE_ABSENT_SQL = \(a: string\) =>\s*`\(\$\{a\}\.next_due_odometer IS NULL AND COALESCE\(\$\{a\}\.last_service_odometer, 0\) <= 1\)`/.test(s.route)) {
     f.push("R2: PM_BASELINE_ABSENT_SQL is not the twin of pmScheduleBaselineAbsentReason (no next-due AND last <= 1)");
   }
+  // ROUND 8.17 class R — PM leaf links carry return context; cohort filter `fh` lives in the URL.
+  if (!/withReturnContext|pmHref\(/.test(s.line) || !/searchParams\.get\("fh"\)/.test(s.line)) {
+    f.push(`${LABEL}: FleetHealthLine must put cohort in URL (fh) and wrap PM links with return context`);
+  }
   if (!/data-testid="fleet-health-no-last-pm">\{t\("maintenance\.fleetHealth\.noLastPm"\)\}</.test(s.line) || !/t\("maintenance\.fleetHealth\.odometerUnavailable"\)/.test(s.line)) {
     f.push("R3: the page does not say what is missing (no last PM vs odometer unavailable)");
   }

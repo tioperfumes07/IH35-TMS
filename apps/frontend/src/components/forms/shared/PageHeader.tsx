@@ -1,8 +1,8 @@
 import { ArrowLeft } from "lucide-react";
 import { Fragment, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useClaimBreadcrumb } from "../../../lib/breadcrumbOwner";
-import { inModuleBackHref } from "../../../lib/structuralBreadcrumb";
+import { resolveBackHref } from "../../../lib/returnContext";
 import "./PageHeader.css";
 
 export type BreadcrumbItem = { label: string; href?: string };
@@ -32,6 +32,7 @@ export type PageHeaderProps = {
 export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const showBreadcrumb = breadcrumb != null && breadcrumb.length > 1;
   useClaimBreadcrumb(showBreadcrumb);
 
@@ -59,8 +60,14 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
             aria-label="Back"
             data-testid="page-header-back"
             onClick={() => {
-              // ROUND 435-CUR — Up is the in-module structural parent. Never history, never another module.
-              navigate(inModuleBackHref(location.pathname, backHref));
+              // ROUND 8.17 class R — `ret` restores origin board; else in-module structural parent.
+              navigate(
+                resolveBackHref({
+                  searchParams,
+                  pathname: location.pathname,
+                  fallback: backHref,
+                }),
+              );
             }}
           >
               <ArrowLeft size={18} aria-hidden />

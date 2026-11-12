@@ -67,4 +67,16 @@ describe("layout PageHeader", () => {
     expect(navigateSpy).not.toHaveBeenCalledWith("/accounting");
     expect(navigateSpy).not.toHaveBeenCalledWith(-1);
   });
+
+  it("ROUND 8.17 class R — ret restores cross-module origin (Cash Flow → Invoice)", () => {
+    const origin = "/cash-flow?tab=rolling&rl_from=2026-11-03&scenario=base";
+    const ret = encodeURIComponent(origin);
+    render(
+      <MemoryRouter initialEntries={[`/accounting/invoices/abc?ret=${ret}`]}>
+        <PageHeader title="Invoice" backHref="/accounting/invoices" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByLabelText("Back"));
+    expect(navigateSpy).toHaveBeenCalledWith(origin);
+  });
 });

@@ -99,10 +99,11 @@ const SCREENS = [
       ["OCT-21 delivery", "r.delivery_date ? mmmDd(r.delivery_date)", "r.delivery_date ? String(r.delivery_date).slice(5, 10)"],
     ] },
   { row: 251, file: "pages/driver-finance/SettlementsToursRegister.tsx",
-    required: [/label=\{formatDateUS\(date\)\}/, /\{formatDateUS\(date\)\}<\/span>/, new RegExp(`r\\.trip_started_at \\? ${US}\\(r\\.trip_started_at\\)`)],
+    // ROUND 8.15b/8.17 — Open board dropped trip_started_at; PU/DEL use OriginDateCell + formatDateUS; Closed uses trip_closed_at + mmmDd.
+    required: [/label=\{formatDateUS\(date\)\}/, /\{formatDateUS\(date\)\}<\/span>/, new RegExp(`r\\.trip_closed_at \\? ${US}\\(r\\.trip_closed_at\\)`)],
     plants: [
       ["OCT-21 PU/DEL", "label={formatDateUS(date)}", "label={formatPlannerDayLabel(date)}"],
-      ["OCT-21 started", "r.trip_started_at ? mmmDd(r.trip_started_at)", "r.trip_started_at ? new Date(r.trip_started_at).toLocaleDateString(\"en-US\", { month: \"short\", day: \"2-digit\" })"],
+      ["OCT-21 closed", "r.trip_closed_at ? mmmDd(r.trip_closed_at)", "r.trip_closed_at ? new Date(r.trip_closed_at).toLocaleDateString(\"en-US\", { month: \"short\", day: \"2-digit\" })"],
     ] },
   { row: 253, file: "pages/accounting/EscrowPage.tsx",
     required: [/function dt\(value: string\) \{\s*return formatDateTimeUS\(value\)/],
