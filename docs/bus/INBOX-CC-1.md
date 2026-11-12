@@ -91,3 +91,6 @@ Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (fu
 
 ## ROUND 8.15b — 11-12-2026 8:12 AM CT — review Cursor guard re-points
 Owner ruled: v3 boards are built completely ("the new designs must be compeltely built use logic."). Cursor will re-point your 6 guards (tours-columns-visible, module-one-readout, margin-pct-separate, fuel-home-dashboard-wired, bank-f10, relay-history-import) to the elements NEW places on the Settlements Open/Closed + Fuel Home v3 boards. Review those guard diffs on Cursor PRs within 30 min; reject only if a function is lost (not a layout piece).
+
+## ROUND 8.16 — 11-12-2026 9:36 AM CT — FULL BUILD, REPLACE/REMOVE OLD CODE ALLOWED, FAST 4-MIN MERGE, NO DRIFT
+Owner verbatim 9:29 AM CT: "fully and completely build engines and design, not shell, full build wiring etc, its ok to replace old code and remove etc. they cannot and you cannot drift or deviate." + 9:30: "all if tested locally and pass, must follow fastr merge law, the fast 4 minute wekend merge method." Local gate green → PR → merge in 4 min. Old code superseded by your full build is deleted in the same PR. No open PR older than 30 min. Read §ROUND 8.16.

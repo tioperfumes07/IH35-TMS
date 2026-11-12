@@ -91,3 +91,17 @@ Ruling for those three pages (and every later v3 rebuild):
 4. The six guards are RE-POINTED, not deleted: each asserts the element's NEW place (board slot or new home). A guard that pinned a pure duplicate is retired with the map line as its reason. CC-1 reviews the re-pointed guards on the PR within 30 min; no silence-merge of a guard change.
 5. Routes, sidebar entries, data and engines are never removed by this ruling.
 Cursor: start now on Settlements Open/Closed, then Fuel Home. Deadline 23:00Z unchanged.
+
+## ROUND 8.16 — 11-12-2026 9:36 AM CT (15:36Z) — OWNER ORDER: full builds, replace/remove old code allowed, FAST 4-MINUTE MERGE, no drift
+Owner, verbatim:
+- 9:29 AM CT: "perfect, fix all, make sure all prs are merged immediately eventhoguh they are not yours, make sure all coders are instructed to fully and completely build engines and design, not shell, full build wiring etc, its ok to replace old code and remove etc. they cannot and you cannot drift or deviate."
+- 9:30 AM CT: "all if tested locally and pass, must follow fastr merge law, the fast 4 minute wekend merge method."
+
+Law for every seat from now (stacks on 8.14, 8.15, 8.15b):
+1. FULL BUILD ONLY. Engine (canonical writer/reader) + complete v3 design + full wiring forward AND reverse. A shell, a placeholder, a stacked section or a "coming soon" is NOT a row closed.
+2. REPLACE / REMOVE IS ALLOWED. Old code, old layout, old duplicate components that the full build supersedes are deleted in the same PR (map old → new in the PR body; routes/sidebar/data/engines keep working). Guards that pinned the old code are re-pointed in the same PR.
+3. FAST 4-MINUTE MERGE (Round 8.6 law). Local gate green (tsc -b for frontend, vitest of the touched module, the guard you touched + --selftest) → push → open PR → merge within 4 minutes. A CI red that is ALSO red on main or is a shared-DB flake (deadlock / ordering) does not block; say so in one PR comment and merge. A red your diff caused is fixed before anything else.
+4. EVERY OPEN PR GETS MERGED. A PR that is behind/conflicting is merged-from-main by its owner and merged; a PR whose change is already on main is closed with the SHA that superseded it. No PR sits open more than 30 minutes.
+5. NO DRIFT. Work only your 8.14 rows; no new side projects; DONE lines in the measured format (row · PR · merge SHA · guard + selftest · live query · CT time).
+CC-1 now: #28786 (280 behind, dirty) and #28673 (310 behind, dirty) — merge main in and merge, or close with the superseding SHA, by 16:15Z (10:15 AM CT).
+Deadline for all rows unchanged: 23:00Z (5:00 PM CT).
