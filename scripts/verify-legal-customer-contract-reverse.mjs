@@ -19,6 +19,8 @@ const checks = [
   ["lease", /getCustomerDetail\(id, operatingCompanyId\)/, "lease hydrates lessee customer"],
   ["lease", /signer_entity_id: lesseeCustomerId/, "lease forwards customer FK"],
   ["lease", /onSaved\(created\.id\)/, "lease returns persisted id"],
+  // ROUND 8.12 reverse — fleet picker Unit column EntityLink (ids already on LeaseToOwnFleetUnit).
+  ["lease", /key:\s*["']unit_number["'][\s\S]{0,200}?kind=["']unit["'][\s\S]{0,80}id=\{row\.id\}/, "lease fleet picker Unit EntityLink"],
   ["lease", /listCustomers\(|createKind=["']customer["']/, "lease must not keep capped listCustomers ReferenceSelect"],
   ["writer", /FROM mdata\.customers[\s\S]*id = \$1::uuid[\s\S]*operating_company_id = \$2::uuid[\s\S]*deactivated_at IS NULL/, "writer validates active customer ownership"],
   ["customer", /signer_type: "customer", signer_entity_id: customerId/, "customer reverse read filters canonical FK"],
