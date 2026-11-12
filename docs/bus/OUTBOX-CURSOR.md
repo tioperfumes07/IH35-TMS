@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~11:55 PM CT) — Statement Earnings panel → ParityTable (go26 −1)
+- **THIS:** SettlementStatementBoardPanels Earnings-by-load on ParityTable + Gross pay footer; go26 raw_table 37→36.
+- **NEXT:** Remaining statement key-value panels / DailyPrediction tables; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~11:45 PM CT) — tipped Codex LIVE #28895–#28899; continue
 - **SHIPS:** #28895–#28899 Document Designs + Aging date-basis + go26 Cash Advances/LoadDetail.
 - **NEXT:** Reverse-wiring / go26 residuals (DailyPrediction / Statement panels); Codex LIVE. No match/Dreamline.
