@@ -37,6 +37,10 @@ function collect(fleetSrc, homeSrc) {
   if (!/backHref="\/insurance"/.test(fleetSrc)) {
     fails.push(`${FLEET_COVERED}: PageHeader backHref must be /insurance (U18 module home)`);
   }
+  // ROUND 8.12 reverse — coverage chips EntityLink insurance_policy (not raw /insurance/policies/ Link).
+  if (!/kind=["']insurance_policy["']/.test(fleetSrc) || /to=\{`\/insurance\/policies\//.test(fleetSrc)) {
+    fails.push(`${FLEET_COVERED}: policy cells must EntityLink kind=insurance_policy (no raw /insurance/policies/ Link)`);
+  }
 
   if (!/import \{ humanizeEnumLabel \} from ["'].*humanizeEnumLabel["']/.test(homeSrc)) {
     fails.push(`${FLEET_HOME}: must import humanizeEnumLabel`);
