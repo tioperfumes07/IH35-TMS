@@ -2,15 +2,7 @@
 
 ## LEAD → CC-2 — ROUND 8.8b — RE-SCOPED ON MEASUREMENT (11-11-2026 5:55 PM CT / 23:55Z) — replaces 8.8 / 8.11
 The owner approved the run (5:45 PM CT). Lead attempted it through the engines; **nothing moved**. Measured on prod:
-1. **Reefer >60 gal reclass.** POST /accounting/reclassify/apply refused all 15 postings (batch 3eb08264, 0 applied).
-   - Reason: "fuel_event: 0 live expense documents adopt this entry (need exactly 1)". No engine route can change a posted Relay fill's type and repost it.
-   - BUILD the missing engine. Reuse the existing posters; no new GL math:
-     - reverse the fill's fuel_event JE through the existing reverse path,
-     - set the fuel rows to the relayLineKindSql verdict (reefer-coded > RELAY_REEFER_MAX_GALLONS = truck diesel),
-     - repost through postFuelFillOnReceipt,
-     - Owner/Admin/Accountant route, idempotent, with a guard.
-   - Then run it on the 15 postings: 0714ac4f 0c12c787 2cecf0b1 401f429a 66e799f2 771f1951 7856f132 7acec22c a9ff6e23 ae31bada b36bc700 b645b579 ca8db731 d4fb768c e87201a4 ($9,379.98, all 5015).
-   - DONE = 5015 Relay reefer >60 gal = 0; TB 0.00; posting ids before/after pasted.
+1. **Reefer >60 gal reclass — TAKEN BY LEAD (11-11-2026 9:35 PM CT).** The refusal was a lookup defect in the reclassify engine, not a missing engine: a Relay fill's document sits on its fuel record, and a moved line's document sits on its root entry. Fixed in #28879 (guard verify-reclassify-fuel-doc-follows-relay-and-chain). Lead applies the owner-approved reclass of the 15 lines after deploy. **Do not build the retype engine.**
 2. **Load 13588 (T170).** 8.8's premise is gone.
    - The "Dreamline pair" d6bea2db (97.452 gal diesel) and 403fbcc8 (10.369 gal def) are **manual fuel rows with 0 postings**.
    - Relay txn_7a7vejuNqnqxMT (52044da0, $556.14, live) has **0 fuel rows**.
