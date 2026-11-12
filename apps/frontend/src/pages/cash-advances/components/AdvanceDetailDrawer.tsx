@@ -91,16 +91,14 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
             bodyHtml: `
               <h1>Cash advance receipt</h1>
               <div class="meta">${id} · printed ${esc(formatDateTimeUS(new Date()))}</div>
-              <table>
-                <tbody>
-                  <tr><th>Advance</th><td>${id}</td></tr>
-                  <tr><th>Driver</th><td>${driver}</td></tr>
-                  <tr><th>Amount</th><td>${amount}</td></tr>
-                  <tr><th>Purpose</th><td>${purpose}</td></tr>
-                  <tr><th>Method</th><td>${method}</td></tr>
-                  <tr><th>Status</th><td>${esc(status)}</td></tr>
-                </tbody>
-              </table>
+              <dl>
+                <div><dt>Advance</dt><dd>${id}</dd></div>
+                <div><dt>Driver</dt><dd>${driver}</dd></div>
+                <div><dt>Amount</dt><dd>${amount}</dd></div>
+                <div><dt>Purpose</dt><dd>${purpose}</dd></div>
+                <div><dt>Method</dt><dd>${method}</dd></div>
+                <div><dt>Status</dt><dd>${esc(status)}</dd></div>
+              </dl>
             `,
           });
         }}

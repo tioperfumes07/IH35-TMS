@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave12
+- **PRIOR:** prior low-guard board wave.
+- **THIS:** 7 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
+- **NEXT:** next low-guard residual boards. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave11
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 2 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
