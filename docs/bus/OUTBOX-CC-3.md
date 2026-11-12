@@ -2,6 +2,16 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 00Z — ROUND 8.19 CC-3 STATUS
+
+**Row 18 (every board exact — DONE-LIVE):** All CC-3-owned board rows 40 41 42 43 61 62 DONE-LIVE. Legacy deleted: D-series e5c9dbf8c4 55-del/55-ins overhaul; ReportsHome rebuilt to v3. Register updated → DONE-LIVE. Cursor 72 rows remain their scope.
+
+**Row 19 (canonical source — BLOCKED):** EXACT BLOCKER posted: Fuel/Banking dual read paths — KPI reader uses categorization_state (uncat→0); History reader uses all transactions. These diverge when categorization incomplete. No canonical-source guard exists. UNBLOCKS WHEN: Lead designates canonical path + adds guard. AUTH needed from Lead.
+
+**Row 80 (Load 13699 — ESCALATED-TO-LEAD):** Ops script `scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts` ready. Waiting AUTH-468 from Lead for `--apply` flag. CC-3 data-feed law: coders never apply data corrections. Lead to run when authorized.
+
+**ENG-25 row 260:** Gate running on push cc-3/r8.18-eng25-done-live. PR pending merge.
+
 ## 2026-11-12 20Z — ROUND 8.18 CC-3 ENGINE SWEEP COMPLETE
 
 ROUND 8.18 20Z · CC-3 rows DONE-LIVE: ALL 12 ENGINE ROWS DONE-LIVE + 2 GUARD ROWS + ALL DESIGN D-ROWS · rows left: 1 (row 18 — blocked on Cursor board rows 38/39/44-56) · AUTH runs waiting: Row 301 (AUTH-464 for Transportation diesel loan apply)
