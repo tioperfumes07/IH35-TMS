@@ -878,24 +878,39 @@ export function SettlementCloseArrivalPage() {
             value={settlement ? "1" : String(openOptions.length || "—")}
             sub="with open pre-settlement"
             testId="settlement-close-kpi-open-drivers"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : "/driver-finance/settlements"}
           />
-          <V3KpiTile label="Gross" value={formatUsd(boardGrossDisplay)} testId="settlement-close-kpi-gross" />
+          <V3KpiTile
+            label="Gross"
+            value={formatUsd(boardGrossDisplay)}
+            testId="settlement-close-kpi-gross"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+          />
           <V3KpiTile
             label="Deductions"
             value={formatUsd(otherDeductionsTotal)}
             testId="settlement-close-kpi-deductions"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
           />
           <V3KpiTile
             label="Escrow"
             value={formatUsd(escrowContributionThisSettlement)}
             testId="settlement-close-kpi-escrow"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
           />
           <V3KpiTile
             label="Advances recovered"
             value={formatUsd(advanceRecoveryTotal)}
             testId="settlement-close-kpi-advances"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
           />
-          <V3KpiTile label="Net to driver" value={formatUsd(netPay)} tone="green" testId="settlement-close-kpi-net" />
+          <V3KpiTile
+            label="Net to driver"
+            value={formatUsd(netPay)}
+            tone="green"
+            testId="settlement-close-kpi-net"
+            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+          />
         </div>
       }
     >

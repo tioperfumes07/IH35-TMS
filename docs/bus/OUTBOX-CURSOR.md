@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~6:05 AM CT) — Close Arrival + Relay wallet drills
+- **THIS:** Settlement Close Arrival KPIs href→settlement · Relay wallet day fill/deposit fees + balance MoneyCell when one doc · Relay inbox by-card settled + KPIs → /fuel/inbox.
+- **Prior:** #28999 TripProfitability/KPI hrefs merged.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~5:55 AM CT) — TripProfitability + board KPI href drills
 - **THIS:** TripProfitability totals → V3KpiTile href company-settlements · Insurance/Fuel/Factoring/Savings KPIs use href (bookmarkable drills).
 - **Prior:** #28993–#28997 merged.

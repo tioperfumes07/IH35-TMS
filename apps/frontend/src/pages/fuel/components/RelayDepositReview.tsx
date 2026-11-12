@@ -3,6 +3,7 @@
  * getRelayDeposits engine unchanged. DISPLAY only — separates money funded INTO Relay by its funding card.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -166,7 +167,12 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         key: "settled_cents",
         label: "Settled amount",
         sortable: true,
-        render: (c) => <span className="tabular-nums">{formatUsdCents(c.settled_cents)}</span>,
+        // Card-roll aggregate — same inbox list owns the deposits behind the total.
+        render: (c) => (
+          <Link to="/fuel/inbox" className="tabular-nums text-[#1F2A44] hover:underline">
+            {formatUsdCents(c.settled_cents)}
+          </Link>
+        ),
       },
       {
         key: "action",
@@ -288,6 +294,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
             sub={`${formatQuantityTable(countFor(cls), 0)} deposit(s)`}
             tone={cls === "unclassified" && countFor(cls) > 0 ? "red" : "ink"}
             testId={`fuel-relay-inbox-kpi-${cls}`}
+            href={cls === "canceled" ? undefined : "/fuel/inbox"}
           />
         ))}
       </div>
