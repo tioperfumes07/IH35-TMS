@@ -441,7 +441,39 @@ export function PolicyDetail() {
             </Button>
           </div>
         </div>
-      ) : null}
+      ) : (
+        // ROUND 8.20 board 20 — read-only premium / effective / expiry / coverage summary (STATUS FAIL).
+        <div
+          className="grid gap-2 rounded-sm border border-gray-200 bg-white p-3 md:grid-cols-5"
+          data-testid="policy-detail-coverage-summary"
+        >
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Premium</div>
+            <div className="mt-1 text-sm font-semibold text-[#0F1219]">
+              <MoneyCell
+                cents={policy.total_premium_cents}
+                drill={{ entity: { kind: "insurance_policy", id: policy.id } }}
+              />
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Effective</div>
+            <div className="mt-1 text-sm text-[#0F1219]">{formatDateUS(policy.effective_date) || "—"}</div>
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Expiry</div>
+            <div className="mt-1 text-sm text-[#0F1219]">{formatDateUS(policy.expiry_date) || "—"}</div>
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Coverage</div>
+            <div className="mt-1 text-sm text-[#0F1219]">{coverageTypeName || "—"}</div>
+          </div>
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Status</div>
+            <div className="mt-1 text-sm capitalize text-[#0F1219]">{policy.status}</div>
+          </div>
+        </div>
+      )}
 
       <BoardSection title="Units Assigned" testId="policy-detail-units-board">
         <ParityTable appearance="board"
