@@ -1,5 +1,6 @@
 import { activeFactorId, factoringBookReserveCents, factoringReservePostings } from "./factoring-kpi.service.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
+import { resolveCanonicalActiveFactor } from "../home/factoring-balance-invoice-linkage.service.js";
 export type ReserveMovementDirection = "credit" | "debit";
 
 type Queryable = {
@@ -209,6 +210,18 @@ export async function listReserveMovementsForBatch(
 // read again. Shapes are unchanged so ReserveDashboard / ReserveTracker / FactorAdmin need no change.
 type EngineClient = Parameters<typeof factoringReservePostings>[0];
 
+/** Summary exposes a vendor identity; reserve lists expose the profile identity.
+ * Accept either only when the company-scoped canonical binding proves they are the same factor.
+ * Keep the established profile path and the one GL population; never guess by vendor name.
+ */
+async function isActiveReserveFactor(client: EngineClient, companyId: string, requestedId: string): Promise<boolean> {
+  const profileId = await activeFactorId(client, companyId);
+  if (!profileId) return false;
+  if (profileId === requestedId) return true;
+  const identity = await resolveCanonicalActiveFactor(client, companyId);
+  return identity.ok && identity.factorProfileId === profileId && identity.vendorId === requestedId;
+}
+
 export async function getFactorReserveBalances(
   tenantId: string,
   deps: { client: Queryable }
@@ -237,7 +250,7 @@ export async function getReserveBalanceHistory(
   const limit = Math.min(250, Math.max(1, Math.floor(deps.limit ?? 50)));
   const offset = Math.max(0, Math.floor(deps.offset ?? 0));
   const client = deps.client as unknown as EngineClient;
-  if ((await activeFactorId(client, tenantId)) !== factorId) return { movements: [], total: 0, limit, offset };
+  if (!(await isActiveReserveFactor(client, tenantId, factorId))) return { movements: [], total: 0, limit, offset };
   let running = 0;
   const all = (await factoringReservePostings(client, tenantId)).map((p) => {
     running += p.signed_cents;
@@ -270,7 +283,7 @@ export async function forecastReserveReleases(
 ): Promise<ReserveReleaseForecast> {
   const normalizedLookahead = Math.min(365, Math.max(1, Math.floor(lookaheadDays ?? 30)));
   const client = deps.client as unknown as EngineClient;
-  const isActive = (await activeFactorId(client, tenantId)) === factorId;
+  const isActive = await isActiveReserveFactor(client, tenantId, factorId);
   const postings = isActive ? await factoringReservePostings(client, tenantId) : [];
   const now = Date.now();
   const horizon = now + normalizedLookahead * 86_400_000;
