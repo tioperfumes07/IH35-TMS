@@ -76,29 +76,29 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 70 | C | Reports/Dispatch | Reports › Customer report (sales, open, aging, statement) | CC-1 | 443.281 | OPEN |  |
 | 71 | C | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) | CC-1 | 443.281 | OPEN |  |
 | 72 | C | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages | CC-1 | 443.281 | OPEN |  |
-| 73 | E | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | 443.279 | OPEN |  |
+| 73 | E | Driver pay | 3 delivered loads never accrued to A/P: 13663, 13687, 13688 ($2,056.34) | CC-1 | 443.279 | DONE-LIVE | CC-1 11-12 re-measure: 13663 2 driver_bills/3 AP bills, 13687 1/1, 13688 2/1; verify-driver-pay-accrual-sweep-wired PASS |
 | 74 | E | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 | CC-3 | 443.279 | MERGED-UNVERIFIED | #27360 528fd12c delivered only via final stop + history repair; 358b7c12 |
-| 75 | E | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | 443.278 | OPEN |  |
+| 75 | E | Settlements | Settlement load-cost totals 25-50% below recount; P-0119/P-0113 $0 costs; GPS real miles 4,855 vs 1,110 | CC-1 | 443.278 | DONE-LIVE | CC-1 11-12 re-measure: guard 18837 static PASS; P-0113 gross=$1,466.47 (closed), P-0119 gross=$492.80 (cancelled); $0 costs resolved |
 | 76 | E | Settlements | 0 of 85 closed settlements marked paid ($127,897.75) | CC-2 | 443.281 | OPEN |  |
 | 77 | E | A/R | 0 customer payments / Faro purchases applied: all $621,076.72 open incl. 57 advanced invoices | CC-2 | 443.279 | OPEN |  |
 | 78 | E | Banking | 1090 Undeposited $170,210.48 (33 Faro advances never deposited) -> GL bank -$88,433.89 | CC-2 | 443.277-A/279 | OPEN | -> ENG-17 (CC-2 443.323) |
 | 79 | E | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 | CC-1 | 443.277-B | OPEN | -> ENG-17 (CC-2 443.323) |
 | 80 | E | Dispatch | Load 13699 Bradley IL delivery stop city-only (no street/ZIP) | CC-3 | 443.278 | OPEN |  |
 | 81 | E | HOS | 222,587 duty events on merged driver shells | CC-2 | 443.278 | OPEN |  |
-| 82 | E | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | 443.279 | OPEN |  |
+| 82 | E | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | 443.279 | PARTIAL | CC-1 11-12 re-measure: settlement P-0069 closed/posted 2026-10-11; bill for load 13530 due_date=2026-08-19 (was NULL). Residual: accounting_bill_id=NULL on settlement, bill 839f5c4b still 'unpaid', no bill_payment created |
 | 83 | E | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | 443.260 | PARTIAL | afd3fd334e #27384 coded; prod 198/241 done TB 0; 43 left PAUSED (AUTH-453, owner renews) |
 | 84 | E | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | 443.260 | CODED | afd3fd334e #27384; prod AUTH-454 run done, TB 0 |
 | 85 | E | Vendors | All 30 vendors have no category | CC-1 | 443.281 | OPEN |  |
-| 86 | E | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | 443.281 | OPEN |  |
+| 86 | E | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | 443.281 | PARTIAL | CC-1 11-12 re-measure: all 3 have display_ids; P-0113 closed/posted 2026-10-24, P-0117/P-0119 cancelled. Residual: P-0113 accounting_bill_id=NULL |
 | 87 | E | Telematics | verify-no-dead-schema: telematics.vehicle_latest_position_cache has no reader | CC-1 | 443.278 | DONE-LIVE | LEAD #27383 d85ade3b: guard credits view-read tables; verify-no-dead-schema exit 0 on main |
 | 88 | E | Live gate | No-5xx live GET guard | CC-3 | 443.268-A | DONE-LIVE | #27346 + be076e3d fastify.inject |
 | 89 | F | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 | CC-1 | 443.281 | CODED | d86e35ce75 #27453 LEAD 443.283 opening cash = operating accounts $25,533.37 |
 | 90 | F | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 | CC-1 | 443.281 | CODED | d86e35ce75 #27453 LEAD 443.283 cards/Faro no longer counted as cash |
 | 91 | F | Cash Flow | Actual vs Projected: Actual income $0.00 every day 10-16..10-23 while BofA received deposits (Faro wire +$10,629.09 10-22) | CC-1 | 443.281 | DONE-LIVE | LEAD #27383 live: AvP Oct actual income $208,031.56 / expense $205,270.54 from operating bank; 283b is_credit form |
 | 92 | F | Cash Flow | Rolling Ledger lists Faro advances FAC-2026-00009… as income 49-74 days overdue (advance money already received = double count with 1090) | CC-1 | 443.281 | DONE-LIVE | LEAD #27383: rolling ledger factoring advances matched by bt.matched_factoring_advance_id; no double count |
-| 93 | F | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | 443.281 | OPEN |  |
+| 93 | F | Accounting | Open bills $126,443.92 / 179 vs A/P subledger $126,437.22 / 177 (diff $6.70, 2 bills) | CC-1 | 443.281 | PARTIAL | CC-1 11-12 re-measure: 239 bills/$169,801.55 (230 driver, 9 vendor); JE A/P (2000) balance $155,328.98; diff $14,472.57 = bill payments/settlement debits against AP; 0 unposted bills |
 | 94 | F | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) | CC-1 | 443.281 | CODED | eef797220e #27452 LEAD 443.285 Open invoices = issued only = GL A/R $621,076.72 |
-| 95 | F | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | 443.281 | OPEN |  |
+| 95 | F | Accounting | Cash pulse Oct: IN $0.00 / OUT $1,590.00 while Banking shows money in $216,532.56 / out $239,059.03 | CC-1 | 443.281 | DONE-LIVE | CC-1 11-12: engine fixed 10-23-2026 in cash-flow-bank-actuals.sql.ts, wired at cash-flow.service.ts:662. Oct 2026 live: $281,404.15 IN / $284,129.85 OUT (266 cleared txns) |
 | 96 | F | Accounting | QBO sync "Not connected" | OWNER | 443.281 | OPEN |  |
 | 97 | F | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | 443.281 | OPEN |  |
 | 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | CODED | 352d666b5b #27467 (LEAD) NUMERIC + one source |
