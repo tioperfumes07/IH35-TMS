@@ -242,3 +242,25 @@ describe("PERFUME-DESK identity — Marc Jacobs MTZ 11/10/2026 lines (owner 2026
     expect(a.nameText).toBe("PERFECT");
   });
 });
+
+describe("PERFUME-DESK identity — PCA 11/10/2026 puts the brand inside the line (owner 2026-11-12 Marc Jacobs)", () => {
+  const pca = (d: string, b = "Marc Jacobs") => identify({ description: d, brand: b });
+  it("a two-word brand inside the line leaves the name; the same bottle from MTZ and PCA is one key", () => {
+    const p = pca("DAISY EAU SO FRESH MARC JACOBS(W)EDT SP 4.2oz(LI FREE)");
+    expect(p.nameText).toBe("DAISY EAU SO FRESH");
+    const mtz = identify({ description: "MARC JACOBS DAISY EAU SO FRESH 4.2 EDT L  (102775) - France - 12pcs ByBox", brand: "MARC JACOBS" });
+    expect(p.key).toBe(mtz.key);
+    expect(pca("DAISY MARC JACOBS EVER SO FRESH(W)EDP SP 2.5oz(LI FREE)").nameText).toBe("DAISY EVER SO FRESH");
+    expect(pca("DAISY LOVE MARC JACOBS(W)EDT SP 3.4oz(LI FREE)").nameText).toBe("DAISY LOVE");
+    expect(pca("DAISY MARC JACOBS(W)(T)EDT SP 3.4oz(CAP&BOX)").flags).toContain("TESTER");
+    expect(pca("DAISY MARC JACOBS(W)(T)EDT SP 3.4oz(CAP&BOX)").nameText).toBe("DAISY");
+  });
+  it("the brand column's 'Mark Jacobs' typo is Marc Jacobs", () => {
+    const p = pca("DAISY LOVE MARC JACOBS EAU SO SWEET(W)EDT SP 3.4oz(LI FREE)", "Mark Jacobs");
+    expect(p.brand).toBe("MARC JACOBS");
+    expect(p.nameText).toBe("DAISY LOVE EAU SO SWEET");
+  });
+  it("a one-word brand inside a name stays — MISS DIOR is not MISS", () => {
+    expect(identify({ description: "MISS DIOR EDP 3.4 W", brand: "DIOR" }).nameText).toBe("MISS DIOR");
+  });
+});

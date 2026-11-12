@@ -54,6 +54,7 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "J.P.GAULTIER": "JEAN PAUL GAULTIER",
   "YSL": "YVES SAINT LAURENT",
   "MJ": "MARC JACOBS",
+  "MARK JACOBS": "MARC JACOBS",
   "PH": "PARIS HILTON",
   "CHRISTIAN DIOR": "DIOR",
   "CRISTIAN DIOR": "DIOR",
@@ -328,6 +329,17 @@ export function identify(input: IdentityInput): Identity {
     }
   }
   // A dash after a brand prefix ("GA-AQUA DE GIO") leaves the brand glued on; handled by punctuation step above.
+  // Some vendors put the brand INSIDE the line (PCA: "DAISY EAU SO FRESH MARC JACOBS(W)EDT SP 4.2oz"). A brand of two
+  // or more words is never part of a fragrance name, so its phrase leaves the name wherever it sits. A one-word brand
+  // stays where it is not leading: "MISS DIOR", "BOSS BOTTLED" name the fragrance with the brand word in them.
+  if (brand) {
+    const own = spellings.filter((sp) => sp.length >= 2 && canonicalBrand(sp.join(" "), aliases) === brand);
+    for (const sp of own) {
+      for (let i = 1; i + sp.length <= words.length; i++) {
+        if (sp.every((w, j) => words[i + j] === w) && words.length > sp.length) { words.splice(i, sp.length); i--; }
+      }
+    }
+  }
 
   // Gender words (W, L, WOMAN, LADIES, MUJER, DAMA, M, MEN, MAN, HOMBRE, CABALLERO, POUR HOMME …).
   // The FIRST name word is never read as gender: it names the fragrance ("MAN IN BLACK", "LADY MILLION").
