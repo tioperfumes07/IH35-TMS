@@ -14,6 +14,7 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { FuelBoardSection } from "../FuelBoardSection";
@@ -95,6 +96,19 @@ export function RelayWalletRollForwardPage() {
     const hit = [...days].reverse().find((d) => d[bucket].length > 0);
     if (hit) setOpen({ day: hit.day, bucket });
   };
+  const docAmount = (bucket: Bucket, d: RelayRollForwardDoc) =>
+    bucket === "deposits" ? (
+      <MoneyCell
+        cents={Number(d.cents ?? 0)}
+        drill={{ entity: { kind: "relay_topup", id: d.id } }}
+      />
+    ) : (
+      <MoneyCell
+        cents={Number(d.cents ?? 0)}
+        drill={{ entity: { kind: "fuel_transaction", id: d.id } }}
+      />
+    );
+
   const docColumns: ParityColumn<RelayRollForwardDoc>[] = open
     ? [
         {
@@ -103,7 +117,7 @@ export function RelayWalletRollForwardPage() {
           sortable: true,
           render: (d) => docRefLink(open.bucket, d),
         },
-        { key: "cents", label: "Amount", sortable: true, render: (d) => money(d.cents) },
+        { key: "cents", label: "Amount", sortable: true, render: (d) => docAmount(open.bucket, d) },
       ]
     : [
         { key: "ref", label: "Relay reference", sortable: true, render: (d) => d.ref },

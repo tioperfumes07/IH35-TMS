@@ -20,6 +20,7 @@ import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
 import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -50,7 +51,18 @@ function ExtractedSummary({ item }: { item: OcrIntakeQueueItem }) {
       <dt className="text-[#6B7280]">Delivery</dt>
       <dd>{formatDateUS(f.delivery_date) || "—"}</dd>
       <dt className="text-[#6B7280]">Rate</dt>
-      <dd>{f.rate_cents ? formatMoney(Number(f.rate_cents)) : "—"}</dd>
+      <dd>
+        {!f.rate_cents ? (
+          "—"
+        ) : item.converted_load_id ? (
+          <MoneyCell
+            cents={Number(f.rate_cents)}
+            drill={{ entity: { kind: "load", id: item.converted_load_id } }}
+          />
+        ) : (
+          formatMoney(Number(f.rate_cents))
+        )}
+      </dd>
       <dt className="text-[#6B7280]">Confidence</dt>
       <dd>{item.confidence_score != null ? `${Math.round(Number(item.confidence_score) * 100)}%` : "—"}</dd>
     </dl>

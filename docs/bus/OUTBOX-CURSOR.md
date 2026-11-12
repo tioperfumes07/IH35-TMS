@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~4:45 AM CT) — OCR Rate + Relay wallet doc MoneyCell wave
+- **THIS:** OCR extracted Rate → load MoneyCell when converted · Relay wallet document Amount → fuel_transaction / relay_topup.
+- **Prior:** #28969–#28975 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~4:30 AM CT) — Fuel Assignment + Relay Deposit MoneyCell wave
 - **THIS:** FuelAssignment popup amount → fuel_transaction · RelayDeposit Amount → bank_transaction / relay_topup.
 - **Prior:** #28969–#28974 merged (#28973 MAIN-RED unused helpers cleanup by other seat).
