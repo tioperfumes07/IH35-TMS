@@ -148,6 +148,9 @@ const EXEMPT_ROUTES = [
   // masked because reverseJournalEntryNoFlip lived in the same file for the (now-deleted) silent
   // session unmatch writer; unmatch now proxies unmatchBankTransaction in recon-worklist.service.
   { pattern: /\/banking\/reconciliation\/:sessionId\/void/, reason: "reconciliation session status void — no GL; money unmatch is unmatchBankTransaction" },
+  // Codex cert: /api/v1/legal/contracts/void stamps legal.contract_instances status=voided only
+  // (voidContractInstances — no amount, no JE). Signed instances are refused. Not a money void.
+  { pattern: /\/legal\/contracts\/void$/, reason: "legal contract instance status void — no GL; voidContractInstances stamps voided_at only; signed_cannot_void" },
 ];
 
 function fail(msg) {
@@ -273,6 +276,8 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   if (!matchExempt("/api/v1/daily-tasks/123/cancel")) fail("selftest: daily task cancel should be exempt");
   if (matchExempt("/api/v1/accounting/invoices/123/void")) fail("selftest: invoice void should NOT be exempt");
   if (matchExempt("/api/v1/accounting/bills/123/void")) fail("selftest: bill void should NOT be exempt");
+  if (!matchExempt("/api/v1/legal/contracts/void")) fail("selftest: legal contracts void should be exempt (non-money status stamp)");
+  if (matchExempt("/api/v1/legal/contracts/123/void-payment")) fail("selftest: hypothetical money-ish legal path must NOT match contracts/void exempt");
 
   // WRAPPER: voidBill wrapper should be detected
   if (!sourceHasReversalCall("await voidBill(opco, id, reason, uid);")) fail("selftest: voidBill wrapper should be detected");

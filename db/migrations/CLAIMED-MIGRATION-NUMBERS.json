@@ -1055,7 +1055,8 @@
     "202616460100",
     "202616470100",
     "202616480100",
-    "202616490100"
+    "202616490100",
+    "202616501200"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1116,5 +1117,10 @@
     "claimed_at": "2026-11-12",
     "claimed_by": "claude",
     "purpose": "PERFUME-DESK: owner-only hidden perfume price desk — new isolated schema perfume.* (items, UPCs, aliases, vendors, price lists, rows, matches); no carrier, USMCA or GL linkage"
+  },
+  "202616501200": {
+    "claimed_at": "2026-11-12",
+    "claimed_by": "cursor",
+    "purpose": "Codex cert / verify-money-lines-same-entity-fks: company-composite FK for driver_finance.settlement_lines.reinstated_from_void_je_id → accounting.journal_entries (operating_company_id, id)"
   }
 }
