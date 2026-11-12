@@ -8,7 +8,8 @@ import fs from "node:fs";
 import process from "node:process";
 
 const FILES = {
-  home: "apps/frontend/src/pages/fuel/FuelHome.tsx",
+  // ROUND 8.15b — Relay history import home is relay_inbox (FuelPlannerHome), not Fuel.dc.html Home.
+  home: "apps/frontend/src/pages/fuel/FuelPlannerHome.tsx",
   control: "apps/frontend/src/pages/fuel/components/RelayHistoryImport.tsx",
   api: "apps/frontend/src/api/relayDeposits.ts",
   route: "apps/backend/src/integrations/relay-payments/relay-fuel-backfill.routes.ts",
@@ -18,7 +19,7 @@ const FILES = {
 
 function inspect(parts) {
   const errors = [];
-  if (!parts.home.includes("<RelayHistoryImport operatingCompanyId={companyId} />")) errors.push("Fuel home does not forward selected company");
+  if (!parts.home.includes("<RelayHistoryImport operatingCompanyId={companyId} />")) errors.push("Fuel relay_inbox does not forward selected company to RelayHistoryImport");
   if (!/const request = \{\s*companyId: operatingCompanyId,\s*months,\s*generation: lifecycleGenerationRef\.current/.test(parts.control) || !parts.control.includes("runRelayFuelBackfill(request.companyId, request.months)")) errors.push("control does not snapshot and submit selected company/months");
   if (!/useEffect\(\(\) => \{\s*lifecycleGenerationRef\.current \+= 1;\s*setMonths\(24\);\s*setState\("idle"\);\s*setMsg\(""\);\s*\}, \[operatingCompanyId\]\)/.test(parts.control)) errors.push("company transition does not retire request and reset control");
   if ((parts.control.match(/request\.generation !== lifecycleGenerationRef\.current/g)?.length ?? 0) !== 2) errors.push("success and failure do not reject stale company generation");

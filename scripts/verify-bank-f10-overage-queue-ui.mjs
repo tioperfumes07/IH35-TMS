@@ -61,9 +61,16 @@ function collectProblemsFromSources(sources) {
   }
 
   if (home) {
-    // 443.290: the 443.250 V3 board (#27267) made the KPI a V3KpiTile that navigates onClick — same target, either shape.
-    if (!(home.includes('to="/fuel/card-overage"') || home.includes('onClick={() => navigate("/fuel/card-overage")}')) || !home.includes("FuelCardOverageKpiCard")) {
-      problems.push(`${FILES.home} must link Fuel Home KPI to /fuel/card-overage`);
+    // ROUND 8.15b: Fuel.dc.html Home has no overage tile; FuelCardOverageKpiCard keeps href/to/onClick → /fuel/card-overage off-board.
+    if (
+      !(
+        home.includes('href="/fuel/card-overage"') ||
+        home.includes('to="/fuel/card-overage"') ||
+        home.includes('onClick={() => navigate("/fuel/card-overage")}')
+      ) ||
+      !home.includes("FuelCardOverageKpiCard")
+    ) {
+      problems.push(`${FILES.home} must keep FuelCardOverageKpiCard linked to /fuel/card-overage (href|to|onClick)`);
     }
     // the tile renders String(pending) once loaded, "…" while loading and "—" on error — never a false 0.
     if (!home.includes("pendingLoaded = pendingQuery.data !== undefined")
@@ -138,7 +145,10 @@ function selftest() {
       name: "home link removed",
       sources: {
         [FILES.page]: realPage,
-        [FILES.home]: realHome.replaceAll('to="/fuel/card-overage"', 'to="/fuel/x"').replaceAll('navigate("/fuel/card-overage")', 'navigate("/fuel/x")'),
+        [FILES.home]: realHome
+          .replaceAll('href="/fuel/card-overage"', 'href="/fuel/x"')
+          .replaceAll('to="/fuel/card-overage"', 'to="/fuel/x"')
+          .replaceAll('navigate("/fuel/card-overage")', 'navigate("/fuel/x")'),
         [FILES.manifest]: realManifest,
         [FILES.bankingJson]: realBanking,
       },
