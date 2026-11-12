@@ -44,6 +44,13 @@ if (!/onError: \(_error, input\) => \{\s*\n\s*if \(input\.generation !== scopeGe
 if (!/resetMarkPaidMutation\(\)/.test(src)) {
   failures.push(`${filePath}: markPaidMutation is no longer reset on operatingCompanyId/policyId change`);
 }
+// ROUND 8.12 reverse — Policy column EntityLinks to insurance_policy (list joins policy_number).
+if (!/kind=["']insurance_policy["']/.test(src) || !/row\.policy_id/.test(src)) {
+  failures.push(`${filePath}: Payment Schedule must EntityLink Policy via row.policy_id`);
+}
+if (!/policy_number/.test(readFileSync("apps/backend/src/insurance/payment-schedule.routes.ts", "utf8"))) {
+  failures.push(`apps/backend/src/insurance/payment-schedule.routes.ts: list must join policy_number for Policy labels`);
+}
 
 if (failures.length > 0) {
   console.error("verify-insurance-payment-schedule-mark-paid-scope-snapshot: FAIL");

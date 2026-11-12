@@ -48,7 +48,8 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
   });
 }
 
-function selectColumns() {
+/** Columns for INSERT/PATCH RETURNING (no join — policy_number filled on list). */
+function returningColumns() {
   return `
     id::text,
     operating_company_id::text AS operating_company_id,
@@ -64,6 +65,23 @@ function selectColumns() {
   `;
 }
 
+function listSelectColumns() {
+  return `
+    ps.id::text,
+    ps.operating_company_id::text AS operating_company_id,
+    ps.policy_id::text,
+    p.policy_number::text AS policy_number,
+    ps.due_date::text,
+    ps.amount_cents::bigint,
+    ps.status,
+    ps.reminded_at::text,
+    ps.paid_at::text,
+    ps.late_fee_cents::bigint,
+    ps.created_at::text,
+    ps.updated_at::text
+  `;
+}
+
 export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstance) {
   app.get("/api/v1/insurance/payment-schedule", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     const user = authUser(req, reply);
@@ -74,21 +92,23 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
 
     const schedules = await withCompanyScope(user.uuid, parsed.data.operating_company_id, async (client) => {
       const values: unknown[] = [parsed.data.operating_company_id];
-      const filters = ["operating_company_id = $1::uuid"];
+      const filters = ["ps.operating_company_id = $1::uuid"];
       if (parsed.data.policy_id) {
         values.push(parsed.data.policy_id);
-        filters.push(`policy_id = $${values.length}::uuid`);
+        filters.push(`ps.policy_id = $${values.length}::uuid`);
       }
       if (parsed.data.status) {
         values.push(parsed.data.status);
-        filters.push(`status = $${values.length}`);
+        filters.push(`ps.status = $${values.length}`);
       }
       const result = await client.query(
         `
-          SELECT ${selectColumns()}
-          FROM insurance.payment_schedule
+          SELECT ${listSelectColumns()}
+          FROM insurance.payment_schedule ps
+          LEFT JOIN insurance.policy p
+            ON p.id = ps.policy_id AND p.operating_company_id = ps.operating_company_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY due_date ASC, created_at ASC
+          ORDER BY ps.due_date ASC, ps.created_at ASC
         `,
         values
       );
@@ -128,7 +148,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
             status
           )
           VALUES ($1::uuid, $2::uuid, $3::date, $4, $5)
-          RETURNING ${selectColumns()}
+          RETURNING ${returningColumns()}
         `,
         [
           parsed.data.operating_company_id,
@@ -165,7 +185,7 @@ export async function registerInsurancePaymentScheduleRoutes(app: FastifyInstanc
           WHERE id = $1::uuid
             AND operating_company_id = $2::uuid
             AND status <> 'paid'
-          RETURNING ${selectColumns()}
+          RETURNING ${returningColumns()}
         `,
         [params.data.id, query.data.operating_company_id]
       );

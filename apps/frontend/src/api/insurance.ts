@@ -194,6 +194,8 @@ export type InsurancePaymentSchedule = {
   id: string;
   operating_company_id: string;
   policy_id: string;
+  /** Present on list responses (joined from insurance.policy). */
+  policy_number?: string | null;
   due_date: string;
   amount_cents: number;
   status: PaymentScheduleStatus;
