@@ -11,6 +11,7 @@ import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -205,7 +206,13 @@ export function SettlementsEscrowBoard() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.heldCents,
-        render: (r) => formatUsdCents(r.heldCents).replace(/^\$/, ""),
+        render: (r) => (
+          <MoneyCell
+            cents={r.heldCents}
+            format={(c) => formatUsdCents(c).replace(/^\$/, "")}
+            drill={{ entity: { kind: "driver", id: r.holderId } }}
+          />
+        ),
       },
       {
         key: "progress",
