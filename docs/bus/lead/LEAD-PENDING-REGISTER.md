@@ -43,10 +43,10 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 39 | B | Factoring | Factoring › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
-| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | OPEN |  |
-| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | PARTIAL |  |
-| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
-| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
+| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: v3 board, no layered sections; fix on main (ReportsHomeBoard.tsx) |
+| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: Revenue $63,830 · COGS 9 rows · per-account drill-through links · section totals |
+| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: WITH TRANSACTIONS 91 · IN THE BOOK 1,217 · OPEN INVOICES 209 · BILLED $774,446.72 · A/R OPEN $796,346.72 |
+| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: WITH TRANSACTIONS 30 · IN THE BOOK 603 · SPEND YTD $430,291.14 · FUEL SHARE 96% |
 | 44 | B | Settlements | Settlements › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
 | 45 | B | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
 | 46 | B | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
@@ -64,8 +64,8 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 58 | B | Maintenance | Maintenance › Home — board verdict PARTIAL | LEAD | 443.280 | CODED | 893cc58eba #27375 + Home board: 4 tiles, fleet health line, PM countdown/engines/alerts/in-transit/severe, Arriving soon, At risk (all design sections; legacy strips gated to Settings / non-Home); 'PM reading unavailable' = row 108 (CC-2 odometer) |
 | 59 | B | Maintenance | Maintenance › In Shop — board verdict LAYERED | LEAD | 443.280 | CODED-QUEUED | LEAD branch in push queue |
 | 60 | B | Driver Profile | Driver Profile › Board — board verdict NOT STARTED | LEAD | 443.280 | CODED | 8027099748 #27357 board (4 panels) + 75f1ed41d2 443.280 board-only test; RE-INSPECT at end: owner saw old layout + ~15 s load at 5:38 PM (before 443.280); 'No current truck assignment' = row 110 (CC-2) |
-| 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 bars lane + $/mi; #27359 |
-| 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | MERGED-UNVERIFIED | 4ff9f272 1260/760, Load # right |
+| 61 | B | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: trucks listed with bars, T170 load 13735 Laredo→Medley $4,200 visible; fix 4ff9f272 #27359 |
+| 62 | B | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: modal max-w 1260px ✓; NB/TR/SB trip type; Load # preview "assigned on save"; fix 4ff9f272 #27359 |
 | 63 | B | Dispatch | Dispatch › Book Load trip types — board verdict REBUILT | CC-3 | 443.280 | DONE-LIVE |  |
 | 64 | B | Insurance | Insurance › Home — board verdict REBUILT | LEAD | 443.280 | CODED | d7e5e14e54 #27323 + 8cff827545 #27400; owner 10-24 3:47 PM: Lawsuits only in Legal — moved #27543 (443.332), Legal › Lawsuits = legal matters (443.334) |
 | 65 | B | Legal | Legal › Home — board verdict REBUILT | CURSOR | 443.280 | DONE-LIVE |  |
