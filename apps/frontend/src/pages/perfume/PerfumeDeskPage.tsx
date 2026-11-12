@@ -89,7 +89,7 @@ export default function PerfumeDeskPage() {
 /* ---------------- grid ---------------- */
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
-  buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price after cushion.",
+  buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "Your price at My margin % against each competitor's price, with how much to raise or lower.",
   all: "The whole item database.",
@@ -101,7 +101,7 @@ const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
-  // who is cheapest, then each supplier's list price and price after cushion. No cost / price / profit columns.
+  // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
   if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);

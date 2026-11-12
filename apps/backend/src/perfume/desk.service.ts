@@ -62,30 +62,33 @@ export function toCents(v: unknown): number | null {
 /* ---------------- vendors ---------------- */
 
 export type VendorRow = {
-  id: string; name: string; kind: "buy" | "sell" | "both" | "offer" | "inventory";
+  id: string; name: string; short_name: string | null; kind: "buy" | "sell" | "both" | "offer" | "inventory";
   cushion_lo_cents: number | null; cushion_hi_cents: number | null; freight_lo_cents: number | null; freight_hi_cents: number | null;
   earn_pct: string | null; sells_by_box: boolean; contact: string | null; column_mapping: Record<string, unknown>;
 };
 export async function listVendors(c: PoolClient): Promise<VendorRow[]> {
   return (await c.query<VendorRow>(
-    `SELECT id, name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping
+    `SELECT id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping
        FROM perfume.vendors WHERE archived_at IS NULL ORDER BY lower(name)`,
   )).rows;
 }
 export type VendorInput = Partial<Omit<VendorRow, "id" | "earn_pct">> & { id?: string; name: string; earn_pct?: number | null };
+/** The column header for a vendor: the owner's short name (PCA, MTZ, NAND, PPW …), else the full name. */
+export const vendorLabel = (v: Pick<VendorRow, "name" | "short_name">): string => (v.short_name?.trim() || v.name);
 export async function upsertVendor(c: PoolClient, userId: string, v: VendorInput): Promise<VendorRow> {
   const vals = [v.name.trim(), v.kind ?? "buy", v.cushion_lo_cents ?? null, v.cushion_hi_cents ?? null, v.freight_lo_cents ?? null,
-    v.freight_hi_cents ?? null, v.earn_pct ?? null, v.sells_by_box ?? false, v.contact ?? null, JSON.stringify(v.column_mapping ?? {})];
+    v.freight_hi_cents ?? null, v.earn_pct ?? null, v.sells_by_box ?? false, v.contact ?? null, JSON.stringify(v.column_mapping ?? {}),
+    v.short_name?.trim() ? v.short_name.trim().toUpperCase() : null];
   const r = v.id
     ? await c.query<VendorRow>(
       `UPDATE perfume.vendors SET name=$2, kind=$3, cushion_lo_cents=$4, cushion_hi_cents=$5, freight_lo_cents=$6, freight_hi_cents=$7,
-              earn_pct=$8, sells_by_box=$9, contact=$10, column_mapping=$11::jsonb, updated_at=now()
-        WHERE id=$1 RETURNING id, name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
+              earn_pct=$8, sells_by_box=$9, contact=$10, column_mapping=$11::jsonb, short_name=$12, updated_at=now()
+        WHERE id=$1 RETURNING id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
       [v.id, ...vals])
     : await c.query<VendorRow>(
-      `INSERT INTO perfume.vendors (name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct, sells_by_box, contact, column_mapping, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11)
-       RETURNING id, name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
+      `INSERT INTO perfume.vendors (name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct, sells_by_box, contact, column_mapping, short_name, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12)
+       RETURNING id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
       [...vals, userId]);
   if (!r.rows[0]) throw new Error("vendor_not_found");
   return r.rows[0];
@@ -199,7 +202,7 @@ function tally(check: ImportCheck, method: string | null, status: string) {
 }
 
 async function vendorById(c: PoolClient, id: string): Promise<VendorRow> {
-  const v = (await c.query<VendorRow>(`SELECT id, name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping FROM perfume.vendors WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
+  const v = (await c.query<VendorRow>(`SELECT id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping FROM perfume.vendors WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
   if (!v) throw new Error("vendor_not_found");
   return v;
 }
@@ -396,7 +399,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
 
 export async function listLists(c: PoolClient) {
   return (await c.query(
-    `SELECT l.id, l.vendor_id, v.name AS vendor_name, v.kind, l.list_date::text, l.label, l.file_name, l.source_kind, l.rows_read, l.rows_saved, l.rows_skipped,
+    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, v.kind, l.list_date::text, l.label, l.file_name, l.source_kind, l.rows_read, l.rows_saved, l.rows_skipped,
             l.price_total_file_cents::text, l.price_total_saved_cents::text, l.is_current, l.imported_at,
             (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.match_status = 'matched') AS matched,
             (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.match_status = 'review') AS review,
@@ -439,7 +442,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   const rows = await c.query(
-    `SELECT r.id, r.list_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
+    `SELECT r.id, r.list_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
        ${base} ORDER BY v.name, r.row_no LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`, [...fp, opts.limit, opts.offset]);
   const total = await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
   // The vendor's line split into the owner's columns: brand (canonical — CK → CALVIN KLEIN), model, size, type,
@@ -685,21 +688,21 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   // PURCHASE — one column per supplier: its price.
   // Owner 2026-11-12: "in purchase … I just need their list price and the price after the cushion."
   for (const v of buyV) {
-    cols.push({ key: `v:${v.id}:price`, label: "List price", group: v.name, kind: "money" });
-    cols.push({ key: `v:${v.id}:net`, label: "After cushion", group: v.name, kind: "money" });
+    cols.push({ key: `v:${v.id}:price`, label: "List price", group: vendorLabel(v), kind: "money" });
+    cols.push({ key: `v:${v.id}:net`, label: "Cushion", group: vendorLabel(v), kind: "money" });
   }
   // TRADING — two columns per supplier: their price, and their cost = (their price − cushion) less the % they earn.
   for (const v of buyV) {
     // Owner 2026-11-12: "the data from each vendor should only really be the price of the vendor's list, the approx
     // profit they earn and the price I approximately need to sell to them."
-    cols.push({ key: `t:${v.id}:list`, label: "Their list price", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:earn`, label: "They earn ≈", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:list`, label: "Their list price", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:earn`, label: "They earn ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
   }
   // WHOLESALE — one column per competitor: its selling price.
-  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their price", group: `Competitor · ${v.name}`, kind: "money" });
+  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their price", group: `Competitor · ${vendorLabel(v)}`, kind: "money" });
 
-  const vName = new Map(vendors.map((v) => [v.id, v.name]));
+  const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
   const rows: GridRow[] = [];
   for (const it of items.rows) {
     const offersMap = byItem.get(it.id) ?? new Map();
@@ -743,7 +746,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       const p = offersMap.get(v.id)?.price;
       if (p == null) continue;
       row[`s:${v.id}:price`] = p;
-      if (low == null || p < low) { low = p; lowAt = v.name; }
+      if (low == null || p < low) { low = p; lowAt = vendorLabel(v); }
     }
     row.low_sell = low;
     row.low_sell_vendor = lowAt;
@@ -772,7 +775,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       // What they make on it: their list price less the cushion they give, less what they pay (= what I sell at).
       row[`t:${v.id}:earn`] = Math.max(0, theirs - cushion) - theirCost;
       const mine = row.target_price_margin as number | undefined;
-      if (mine != null && mine <= theirCost) beats.push(v.name);
+      if (mine != null && mine <= theirCost) beats.push(vendorLabel(v));
     }
     row.trade_beats = beats.length ? beats.join(", ") : null;
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
@@ -930,7 +933,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
-    ["Purchase · After cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
+    ["Purchase · Cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
     ["Trading · They earn ≈", "(Their list price − their cushion) − Sell to them ≈ — what that supplier makes on it"],
     ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
     ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],

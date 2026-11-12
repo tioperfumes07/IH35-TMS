@@ -126,6 +126,9 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.12", "Name")}
             <input className="h-[40px] w-[260px] rounded-sm border border-gray-300 px-2" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={tr("perfume.lists.13", "Perfume Center of America (Kanak)")} />
           </label>
+          <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.13b", "Short name (column header)")}
+            <input data-testid="perfume-vendor-short-name" maxLength={12} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 uppercase" value={edit.short_name ?? ""} onChange={(e) => setEdit({ ...edit, short_name: e.target.value.toUpperCase() })} placeholder={tr("perfume.lists.13c", "PCA")} />
+          </label>
           <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14", "Kind")}
             <span className="flex gap-1">{KINDS.map(([k, l]) => (
               <button key={k} type="button" aria-pressed={edit.kind === k} onClick={() => setEdit({ ...edit, kind: k })}
@@ -150,6 +153,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
         onRowClick={(v) => setEdit({ ...v, earn: v.earn_pct ?? "" })}
         columns={[
           { key: "name", label: "Name", sortable: true },
+          { key: "short_name", label: "Short", sortable: true, render: (v) => v.short_name ?? "" },
           { key: "kind", label: "Kind", sortable: true, render: (v) => KINDS.find(([k]) => k === v.kind)?.[1] ?? v.kind },
           { key: "cushion_lo_cents", label: "Cushion", sortable: true, render: (v) => (v.cushion_lo_cents == null && v.cushion_hi_cents == null ? "rule default" : `${money(v.cushion_lo_cents)} – ${money(v.cushion_hi_cents)}`) },
           { key: "freight_lo_cents", label: "Freight / pc", sortable: true, render: (v) => (v.freight_lo_cents == null && v.freight_hi_cents == null ? "rule default" : `${money(v.freight_lo_cents)} – ${money(v.freight_hi_cents)}`) },
