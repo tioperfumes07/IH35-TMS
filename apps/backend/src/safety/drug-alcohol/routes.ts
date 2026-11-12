@@ -22,6 +22,7 @@ import {
   type TestType,
 } from "./program.service.js";
 import { bulkEnrollActiveDrivers, drawRandomPool, listDrawHistory } from "./random-pool.service.js";
+import { recordBackgroundJobRun } from "../../lib/background-jobs.js";
 
 import { queryBoolean } from "../../lib/query-boolean.js";
 // ─── Schemas ──────────────────────────────────────────────────────────────────
@@ -341,6 +342,8 @@ export async function registerDrugAlcoholProgramRoutes(app: FastifyInstance): Pr
       });
       return draw;
     });
+    // OPS-F12011: a manual quarterly draw is the same FMCSA event as the cron's — stamp the job row.
+    await recordBackgroundJobRun("safety.da_random_pool.quarterly_draw", true);
     return reply.code(201).send(result);
   });
 }

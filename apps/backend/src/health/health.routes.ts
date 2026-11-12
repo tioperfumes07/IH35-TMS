@@ -810,6 +810,27 @@ async function checkBackgroundJobStaleness(): Promise<void> {
       `SELECT job_name, last_successful_run_at FROM _system.background_jobs`
     );
 
+    // OPS-F12011 — the FMCSA §382.305 quarterly draw can be run by the cron OR by hand
+    // (POST /api/safety/drug-alcohol/random-pool/draw). The job row only moves on the cron, so a
+    // missed cron followed by a real manual draw (prod: cron failed 2026-10-01, Q4 draw made by hand
+    // 2026-11-09) left healthz red until the next quarter. The real evidence is the draw itself:
+    // freshness = the newer of the job stamp and the newest USMCA draw row.
+    const daDraw = await client.query<{ last_draw_at: string | null }>(
+      `SELECT max(created_at)::text AS last_draw_at
+         FROM safety.da_random_pool_draws
+        WHERE operating_company_id::text = $1::text`,
+      [USMCA_COMPANY_ID]
+    );
+    const lastDrawAt = daDraw.rows[0]?.last_draw_at ?? null;
+    if (lastDrawAt) {
+      for (const row of res.rows) {
+        if (row.job_name !== "safety.da_random_pool.quarterly_draw") continue;
+        if (!row.last_successful_run_at || Date.parse(lastDrawAt) > Date.parse(row.last_successful_run_at)) {
+          row.last_successful_run_at = lastDrawAt;
+        }
+      }
+    }
+
     // OPS-F65 — a job that has NEVER succeeded is a different condition from one that is merely
     // LATE, and collapsing both into one "stale_jobs" code is why eight never-succeeded jobs sat
     // unnoticed on prod (2026-08-01: the DOT random-pool draw, four QBO sync steps, the universal
