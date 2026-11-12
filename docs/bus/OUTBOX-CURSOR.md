@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
+- **SHIPS:** #28928 Legal Templates · #28930 Available Trucks Driver EntityLink (capacity driver_id) · #28911–#28929 reverse wave.
+- **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~3:30 AM CT) — high-water #28928; Legal Templates EntityLink
 - **SHIPS:** #28926 Policies Template · #28928 Templates Display Name EntityLink · #28911–#28927 reverse wave.
 - **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
