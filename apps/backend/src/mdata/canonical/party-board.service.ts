@@ -13,6 +13,8 @@ import { issuedInvoice, liveOpenInvoice } from "../../accounting/live-document-p
 import { readVendorSuggestedCategories } from "./vendor-suggested-category.js";
 import { relayFillPostedSql } from "../../fuel/relay-fill-posted.sql.js";
 import { LOADS_REPORT_SCOPE_SQL, scheduledStopDateSql } from "../../reports/loads-report.service.js";
+import { readCardPayableBalances } from "../../cash-flow/card-payables.js";
+import { companyBusinessDate } from "../../lib/company-business-date.js";
 
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type BoardRange = "ytd" | "12m" | "all";
@@ -257,12 +259,17 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange, 
   const spend = withTx.reduce((s, r) => s + r.spend_cents, 0);
   const top = withTx[0] ?? null;
   const openBillsCents = rows.reduce((s, r) => s + r.open_bills_cents, 0);
+  // Company liability now, not period/unit-filtered fuel spend. Return the
+  // canonical account IDs alongside the total so the board can drill to source.
+  const cardPayablesAsOf = companyBusinessDate();
+  const cardPayables = await readCardPayableBalances(client, oc, cardPayablesAsOf);
   return {
     range,
     kpis: {
       with_transactions: withTx.length, in_the_book: rows.length, spend_cents: spend,
       fuel_share_pct: n(fuel.total) ? Math.round((n(fuel.fuel) / n(fuel.total)) * 1000) / 10 : null,
       fuel_cents: n(fuel.fuel),
+      card_payables_cents: cardPayables.reduce((sum, row) => sum + row.balance_cents, 0),
       fuel_lines_total_cents: n(fuel.total),
       fuel_account_ids: fuelAccountIds,
       open_bills_cents: openBillsCents > 0 ? openBillsCents : null,
@@ -272,6 +279,8 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange, 
     },
     chips: { with_transactions: withTx.length, open_bills: rows.filter((r) => r.open_bills > 0).length, all: rows.length },
     range_from: rangeFrom,
+    card_payables: cardPayables,
+    card_payables_as_of: cardPayablesAsOf,
     by_category: byCategory,
     pays_through: paysThrough,
     open_bills_check: {

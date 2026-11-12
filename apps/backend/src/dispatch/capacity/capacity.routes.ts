@@ -98,9 +98,15 @@ export async function registerCapacityRoutes(app: FastifyInstance) {
       const plan = result.plan ?? [];
       let footerError: string | null = null;
       let footer: Awaited<ReturnType<typeof readCompanyFooter>> | null = null;
+      // The footer read runs inside the preview transaction: guard it with a SAVEPOINT so a failed read cannot poison
+      // the queries after it, and log what failed instead of swallowing it.
+      await client.query("SAVEPOINT capacity_footer");
       try {
         footer = await readCompanyFooter(client, companyId);
-      } catch {
+        await client.query("RELEASE SAVEPOINT capacity_footer");
+      } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT capacity_footer");
+        req.log.warn({ err, operating_company_id: companyId }, "capacity_preview_footer_unavailable");
         footerError = "The company's legal name or address is missing in Company settings — the email footer requires both.";
       }
       const recipientCount = (await listOfferRecipients(client, companyId)).length;

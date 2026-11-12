@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 — ROUND 8.15b D047 D049 D055 DONE
+
+- **PR D047:** [#29037](https://github.com/tioperfumes07/IH35-TMS/pull/29037) · squash `32336a9d06`
+- **FINDING:** ACCT-F3047 — FactorReserveCard customer name formatter (Faro fallback span)
+- **PR D049/D055:** [#29045](https://github.com/tioperfumes07/IH35-TMS/pull/29045) · squash `acd69928f4`
+- **FINDING:** ACCT-F3049 — DocsHomePage tombstone entityLabel→docsEntityLabel; CustomersListView linkLabel already companyLabel; entity-link-adoption baseline regenerated
+- **GUARD:** money-pr-local-gate exit 0 · verify-entity-link-adoption PASS · verify-invariant23 PASS
+- **REMAINING:** Live=UNVERIFIED — Chrome walk after deploy
+
 ## 2026-11-12 — ROWS 80 100 CLOSED
 
 - **ROW 80 (ESCALATED):** Load 13699 delivery stop — ops script `scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts` ready with AUTH-468; CC-3 cannot apply (data-feed law); Lead must run `--apply`

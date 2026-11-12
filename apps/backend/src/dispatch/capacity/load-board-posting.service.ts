@@ -98,6 +98,9 @@ export async function syncLoadBoardPostings(client: Queryable, operatingCompanyI
     let upserted = 0, withdrawn = 0, failed = 0;
     for (const d of upserts) {
       const prior = existing.find((e) => e.unit_id === d.unit_id) ?? null;
+      // One unit's failure must not poison the sync transaction: each write gets its own SAVEPOINT, and the catch
+      // rolls back to it before recording the failure (a bare catch leaves the transaction aborted → 25P02).
+      await client.query("SAVEPOINT lbp_item");
       try {
         const { externalId } = await provider.upsert(d, prior?.external_posting_id ?? null);
         await client.query(
@@ -110,7 +113,9 @@ export async function syncLoadBoardPostings(client: Queryable, operatingCompanyI
           [operatingCompanyId, d.unit_id, s.board, externalId, d.origin_city, d.origin_state, d.available_at, d.equipment]
         );
         upserted += 1;
+        await client.query("RELEASE SAVEPOINT lbp_item");
       } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT lbp_item");
         failed += 1;
         await client.query(
           `INSERT INTO dispatch.load_board_postings (operating_company_id, unit_id, board, status, last_error)
@@ -121,11 +126,14 @@ export async function syncLoadBoardPostings(client: Queryable, operatingCompanyI
       }
     }
     for (const e of withdraws) {
+      await client.query("SAVEPOINT lbp_item");
       try {
         if (e.external_posting_id) await provider.withdraw(e.external_posting_id);
         await client.query(`UPDATE dispatch.load_board_postings SET status = 'withdrawn', updated_at = now() WHERE id = $1::uuid`, [e.id]);
         withdrawn += 1;
+        await client.query("RELEASE SAVEPOINT lbp_item");
       } catch (err) {
+        await client.query("ROLLBACK TO SAVEPOINT lbp_item");
         failed += 1;
         await client.query(`UPDATE dispatch.load_board_postings SET last_error = $2, updated_at = now() WHERE id = $1::uuid`,
           [e.id, String((err as Error).message ?? err).slice(0, 500)]);

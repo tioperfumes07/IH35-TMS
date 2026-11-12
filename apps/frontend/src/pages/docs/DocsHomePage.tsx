@@ -138,7 +138,7 @@ function docsColumns(): Array<ParityColumn<DocsFoundationRow>> {
                   className="truncate text-gray-500"
                   data-testid={kind ? "docs-entity-unresolved" : "docs-entity-plain"}
                 >
-                  {entityLabel(rawLabel, link.entity_id, noun)}
+                  {docsEntityLabel(link.entity_type, rawLabel, link.entity_id, noun)}
                 </span>
               );
             }
