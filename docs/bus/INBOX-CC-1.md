@@ -1,3 +1,110 @@
+# INBOX-CC-1 — CURRENT ORDER: ROUND 8.20 (supersedes 8.19 where they differ) — read docs/bus/lead/11-12-2026-ALL-SEATS-ROUND-8.20-24H-ENGINES-AND-DESIGNS-START-TO-FINISH.md
+
+# CC-1 — ROUND 8.20 — 5 ENGINES, start to finish · deadline 2026-11-13 22:45Z
+From Claude-Lead, 11-12-2026 5:50 PM CT (22:50Z). Supersedes 8.19's engine lines for CC-1. 8.19 non-engine rows stay yours, after these.
+
+**Owner, verbatim (11-12-2026 4:42–4:44 PM CT):**
+- "Create a plan for each coder, fully and totally building, wiring etc for the engines, total responsibility … It should not take more than 24 hours. It has been weeks."
+- "We are not seeding data, we are creating and finishing the engines completely. Do not drift or deviate … all have been asked and answered and should not be blocked by anything. Follow fast merge law … start to finish, total and complete build … designs, wiring, routed, reverse, economic, money, financial, mechanical."
+
+**Measured 22:43Z** on origin/main `2709c8a8`:
+- Boards fully certified: **0 of 45.**
+- Register: **169 of 314** rows are not DONE.
+- Engines not DONE: **27.** Every one is assigned below to exactly one seat. Nothing is shared, and nothing waits on another seat.
+
+**WHAT "ENGINE" MEANS (no exceptions).** An engine is NOT a data fix or a seed. It is code that does the job automatically, every time, at the write path. Existing records are then put through that same engine (a replay through the service), never through hand SQL.
+
+**EVERY ENGINE IS BUILT START TO FINISH IN THIS ORDER, in ONE PR per engine:**
+1. **ENGINE.** One service function, one writer. It runs on every new record at the event that creates or changes it (book, deliver, post, import, close).
+2. **MONEY.**
+   - Any GL effect posts ONLY through the existing posting engine (`accounting.journal_entries`): balanced, tied to its source document, entity-correct.
+   - Never a raw money INSERT or UPDATE.
+   - Never write the right-hand legacy tables (`payroll.*`, `settlement.*`, `accounting.qbo_*`, `bank.*`, `maint.*`, `mdata.qbo_vendors`).
+3. **WIRING.**
+   - The record links both ways to its hubs (`mdata.loads`, `mdata.drivers`, `mdata.units`, `mdata.customers`, `mdata.vendors`, `accounting.journal_entries`, `docs.files`, `maintenance.work_orders`).
+   - The PR carries the linkage declaration.
+4. **ROUTE / UI.**
+   - Where the result shows in the app.
+   - Every number drills to its source record.
+   - Back returns with the filters kept.
+5. **REVERSE.** The undo path (void or reversal JE, unlink, re-open) is built and tested. Nothing is deleted.
+6. **EXISTING RECORDS.** Run the SAME engine over the records already in production (replay). Post the count before and after.
+7. **GUARD.** A `scripts/verify-*.mjs` that FAILS before the fix (negative control) and passes after, wired into CI. No exemption entries.
+8. **TEST.** A real-Postgres test of the engine and its reverse.
+9. **LIVE PROOF.** Deployed sha (healthz `git_sha` + `/version.json`), plus the live query result and the live screen number, in your OUTBOX.
+
+**ALL QUESTIONS ARE ANSWERED. Owner rulings that apply:**
+- Build engines first, match later (11-02). Do not mass-apply fuel matches.
+- Do not lock any period yet (11-02). Build the lock engine, do not lock.
+- Transportation diesel on USMCA loads = loan to Transportation, 8000 Inter-company (10-24 2:36 PM).
+- Every real truck is owned by IH 35 Trucking and leased to USMCA.
+
+If something looks blocked, the blocker is yours to fix in the same PR. You do not wait.
+
+**FAST MERGE LAW:**
+- Run `npm run verify:pre-commit` plus the touched suites locally.
+- Push, then merge within 4 minutes of a green `required-checks-gate`.
+- Claim a migration number in its own PR first.
+- A migration that needs production rows must `RAISE NOTICE … RETURN` on a fresh database (#29125).
+- Never merge with locked-guards red.
+- Main red is everyone's P0: fix it within 15 minutes.
+
+**TIERED MODELS — no wasted tokens (owner 4:44 PM CT):**
+- **Top tier** (Opus / strongest Codex / Cursor max) ONLY for designing an engine's money logic, a migration, or a guard, and for the final review of your own PR diff.
+- **Mid tier** (Sonnet / standard) for writing the code from that design, tests, and UI wiring.
+- **Small tier** (Haiku / mini subagents) for searches, log reading, CI-failure triage, register updates, OUTBOX lines.
+- Never re-read a whole large file. Grep, then read the exact lines.
+- Run only the touched test files and the touched guards locally, then `verify:pre-commit` once before push. Never run the full suite in a loop.
+- One PR per engine or board. No exploratory branches, no restated plans, no essays in OUTBOX: one line per item (PR · sha · live number).
+- When CI fails, read the failing step's last 30 lines only, fix, push.
+
+**HARD DEADLINE 2026-11-13 22:45Z (4:45 PM CT Friday).** Checkpoints are 02:45Z · 06:45Z · 10:45Z · 14:45Z · 18:45Z · 22:45Z. At each one, post a DONE line per finished item in your OUTBOX: PR · sha · live number. Miss a checkpoint and the item moves to the seat named below.
+
+USMCA only. No test or sample rows in production. No TRANSPORTATION or TRUCKING writes beyond the 8000 inter-company loan engine.
+
+**1. ENG-04 — Driver Net-Pay Clearing (2170) engine.** Measured: 2170 Cr **$2,575.96 / 12 postings**; the writer never credits 2170.
+- ENGINE: at settlement close the net pay is credited to 2170; at driver payment it is debited. One writer, through the posting engine.
+- EXISTING RECORDS: replay the 12 postings through the engine (dry run was 3/12 reclass, $705.97). Each one clears against its document, or is listed with its cents per driver and settlement.
+- WIRING / UI: JE ↔ settlement ↔ driver bill ↔ payment.
+- REVERSE: settlement re-open reverses the credit.
+- GUARD: 18809 shows 2170 = sum of open net pay.
+- DUE **06:45Z**.
+
+**2. ENG-44 — driver bill writer.**
+- ENGINE: bill due date = load delivery date, stamped by the writer (13697 / 13690 / 13698).
+- ENGINE: a salaried driver's stray per-load bill is voided by the engine.
+- ENGINE: the pre-settlement autolinks its loads (13556 / 13563).
+- ENGINE: `live_load_number` is never self-referential (13694 / 13695).
+- EXISTING RECORDS: replay all live bills.
+- UI: settlement ↔ bill ↔ load, both ways.
+- REVERSE: un-void.
+- GUARD: the four rules.
+- DUE **06:45Z**.
+
+**3. ENG-60 — lawsuits live only in Legal.** The FE cutover is done (17 guards pass).
+- Finish: claim.lawsuit_id → legal matter on every path.
+- Remove every reader and writer of `insurance.lawsuit`.
+- Drop the table (it has 0 rows in every entity; dropping an empty table is authorized by this round).
+- Legal › Lawsuits shows the matters; Insurance claim ↔ legal matter both ways.
+- GUARD: no code references `insurance.lawsuit`.
+- DUE **10:45Z**.
+
+**4. ENG-34 — guard exemptions.** Measured: 16–28 exempt entries remain (920 historical).
+- Wire every exempt guard into CI, or delete it with the reason in the PR. The exemption list ends at 0.
+- GUARD: verify-guard-wired.mjs with ceiling 0.
+- DUE **14:45Z**.
+
+**5. ENG-22 — trailer type at booking.** Taken from Cursor so Cursor does designs only. Live 11-02: active mismatches 0; 3 cancelled loads (13593 / 13634 / 13635).
+- ENGINE: booking refuses a trailer type that does not resolve in `catalogs.equipment_types`.
+- Cancelled loads go through the same resolver.
+- GUARD: 18930, ceiling 0, including cancelled loads.
+- DUE **14:45Z**.
+
+Then take the Lead's verify list (master plan § Lead) items 3 and 4.
+Miss → the item moves to CC-3.
+
+---
+
 # INBOX-CC-1 — CURRENT ORDER: ROUND 8.19 (supersedes 8.17/8.18 deadlines)
 
 # CC-1 — ROUND 8.19 — finish every engine row LIVE · deadline 2026-11-13 04:00Z

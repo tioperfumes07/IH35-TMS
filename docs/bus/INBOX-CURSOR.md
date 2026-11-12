@@ -1,3 +1,89 @@
+# INBOX-CURSOR — CURRENT ORDER: ROUND 8.20 (supersedes 8.19 where they differ) — read docs/bus/lead/11-12-2026-ALL-SEATS-ROUND-8.20-24H-ENGINES-AND-DESIGNS-START-TO-FINISH.md
+
+# CURSOR — ROUND 8.20 — DESIGNS: BUILD boards 1–23 start to finish + CERTIFY Codex's 24–45 · deadline 2026-11-13 22:45Z
+From Claude-Lead, 11-12-2026 5:50 PM CT (22:50Z). Engines are no longer yours (ENG-22 moved to CC-1). Designs only.
+
+**Owner, verbatim (11-12-2026 4:42–4:44 PM CT):**
+- "Create a plan for each coder, fully and totally building, wiring etc for the engines, total responsibility … It should not take more than 24 hours. It has been weeks."
+- "We are not seeding data, we are creating and finishing the engines completely. Do not drift or deviate … all have been asked and answered and should not be blocked by anything. Follow fast merge law … start to finish, total and complete build … designs, wiring, routed, reverse, economic, money, financial, mechanical."
+
+**Measured 22:43Z** on origin/main `2709c8a8`:
+- Boards fully certified: **0 of 45.**
+- Register: **169 of 314** rows are not DONE.
+- Engines not DONE: **27.** Every one is assigned below to exactly one seat. Nothing is shared, and nothing waits on another seat.
+
+**WHAT "ENGINE" MEANS (no exceptions).** An engine is NOT a data fix or a seed. It is code that does the job automatically, every time, at the write path. Existing records are then put through that same engine (a replay through the service), never through hand SQL.
+
+**EVERY ENGINE IS BUILT START TO FINISH IN THIS ORDER, in ONE PR per engine:**
+1. **ENGINE.** One service function, one writer. It runs on every new record at the event that creates or changes it (book, deliver, post, import, close).
+2. **MONEY.**
+   - Any GL effect posts ONLY through the existing posting engine (`accounting.journal_entries`): balanced, tied to its source document, entity-correct.
+   - Never a raw money INSERT or UPDATE.
+   - Never write the right-hand legacy tables (`payroll.*`, `settlement.*`, `accounting.qbo_*`, `bank.*`, `maint.*`, `mdata.qbo_vendors`).
+3. **WIRING.**
+   - The record links both ways to its hubs (`mdata.loads`, `mdata.drivers`, `mdata.units`, `mdata.customers`, `mdata.vendors`, `accounting.journal_entries`, `docs.files`, `maintenance.work_orders`).
+   - The PR carries the linkage declaration.
+4. **ROUTE / UI.**
+   - Where the result shows in the app.
+   - Every number drills to its source record.
+   - Back returns with the filters kept.
+5. **REVERSE.** The undo path (void or reversal JE, unlink, re-open) is built and tested. Nothing is deleted.
+6. **EXISTING RECORDS.** Run the SAME engine over the records already in production (replay). Post the count before and after.
+7. **GUARD.** A `scripts/verify-*.mjs` that FAILS before the fix (negative control) and passes after, wired into CI. No exemption entries.
+8. **TEST.** A real-Postgres test of the engine and its reverse.
+9. **LIVE PROOF.** Deployed sha (healthz `git_sha` + `/version.json`), plus the live query result and the live screen number, in your OUTBOX.
+
+**ALL QUESTIONS ARE ANSWERED. Owner rulings that apply:**
+- Build engines first, match later (11-02). Do not mass-apply fuel matches.
+- Do not lock any period yet (11-02). Build the lock engine, do not lock.
+- Transportation diesel on USMCA loads = loan to Transportation, 8000 Inter-company (10-24 2:36 PM).
+- Every real truck is owned by IH 35 Trucking and leased to USMCA.
+
+If something looks blocked, the blocker is yours to fix in the same PR. You do not wait.
+
+**FAST MERGE LAW:**
+- Run `npm run verify:pre-commit` plus the touched suites locally.
+- Push, then merge within 4 minutes of a green `required-checks-gate`.
+- Claim a migration number in its own PR first.
+- A migration that needs production rows must `RAISE NOTICE … RETURN` on a fresh database (#29125).
+- Never merge with locked-guards red.
+- Main red is everyone's P0: fix it within 15 minutes.
+
+**TIERED MODELS — no wasted tokens (owner 4:44 PM CT):**
+- **Top tier** (Opus / strongest Codex / Cursor max) ONLY for designing an engine's money logic, a migration, or a guard, and for the final review of your own PR diff.
+- **Mid tier** (Sonnet / standard) for writing the code from that design, tests, and UI wiring.
+- **Small tier** (Haiku / mini subagents) for searches, log reading, CI-failure triage, register updates, OUTBOX lines.
+- Never re-read a whole large file. Grep, then read the exact lines.
+- Run only the touched test files and the touched guards locally, then `verify:pre-commit` once before push. Never run the full suite in a loop.
+- One PR per engine or board. No exploratory branches, no restated plans, no essays in OUTBOX: one line per item (PR · sha · live number).
+- When CI fails, read the failing step's last 30 lines only, fix, push.
+
+**HARD DEADLINE 2026-11-13 22:45Z (4:45 PM CT Friday).** Checkpoints are 02:45Z · 06:45Z · 10:45Z · 14:45Z · 18:45Z · 22:45Z. At each one, post a DONE line per finished item in your OUTBOX: PR · sha · live number. Miss a checkpoint and the item moves to the seat named below.
+
+USMCA only. No test or sample rows in production. No TRANSPORTATION or TRUCKING writes beyond the 8000 inter-company loan engine.
+
+**YOU BUILD, one board per PR. Overhaul: the approved v3 design REPLACES the page, and the legacy component is deleted in the same PR:**
+1 Accounting · 2 Accounting–Unexpected · 3 Banking · 4 Cash Flow Home · 5 Projected · 6 Actual vs Projected · 7 Rolling Ledger · 8 Manual · 9 Customers · 10 Vendors · 11 Driver Profile · 12 Dispatch–Truck Planner · 13 Load History · 14 Book Load Modal · 15 Side Panel · 16 Specification · 17 Trip Type · 18 Factoring · 19 Fuel · 20 Insurance · 21 Legal · 22 Maintenance–Home · 23 Maintenance–In Shop.
+Your fix list = that board's "Missing, failing" column in `docs/design/BOARD-45-STATUS-2026-11-12.md`. Every listed defect is closed in the board's PR.
+
+**EACH BOARD, START TO FINISH:**
+1. **DESIGN.** Element census = the approved design at 1440×900: same sections, order, proportions and type scale. No legacy layer under or around it.
+2. **ROUTED.** Its own canonical route, breadcrumb and tab state in the URL. Deep links reload to the same state.
+3. **WIRED.** Every entity name is a link to its record (load, driver, unit, customer, vendor, invoice, bill, settlement, JE, document). That record links back.
+4. **REVERSE.** Back from any drill returns to this board with the filters, period, tab and selection kept. No dead ends.
+5. **MONEY.** Every amount is a MoneyCell that drills to its source document and JE. Totals = sum of rows. KPI = the same reader as the table. Accrual / cash basis respected.
+6. **FILTERS.** Every filter is multi-select where it filters entities. Every combination returns the right rows; View all restores.
+7. **STATES.** Empty / loading / error / keyboard / every action button works, or is absent.
+
+Then mark it **READY** in `docs/design/BOARD-45-COMPLETION-REGISTER.md` with PR # and deployed sha.
+
+**YOU CERTIFY** Codex's boards 24–45 as each turns READY: the same 7, live. Mark it CERTIFIED or write the failing line; no partial certificates.
+
+**Pace (READY count):** 02:45Z ≥4 · 06:45Z ≥8 · 10:45Z ≥12 · 14:45Z ≥16 · 18:45Z ≥20 · 22:45Z 23.
+Miss → the board moves to Codex, and the Lead certifies.
+
+---
+
 # INBOX-CURSOR — CURRENT ORDER: ROUND 8.19 (supersedes 8.17/8.18 deadlines)
 
 # CURSOR — ROUND 8.19 — 45 boards: FULL OVERHAUL, not shells · deadline 2026-11-13 04:00Z
