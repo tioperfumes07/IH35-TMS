@@ -98,7 +98,7 @@ if (process.argv.includes("--selftest")) {
     {
       name: "reintroduce navigate(-1) in forms/shared/PageHeader",
       target: "header1",
-      mutate: (t) => t.replace(/navigate\(\s*resolveBackHref\([\s\S]*?\)\s*\)/, "navigate(-1)"),
+      mutate: (t) => t.replace(/navigate\(\s*resolveBackHref\([\s\S]*?\)\s*,?\s*\)/, "navigate(-1)"),
     },
     {
       name: "returnContext drops inModuleBackHref fallback",
