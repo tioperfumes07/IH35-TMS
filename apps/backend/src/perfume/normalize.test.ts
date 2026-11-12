@@ -1,0 +1,96 @@
+import { describe, expect, it } from "vitest";
+import { identify, looseKey, normalizeUpc, ozToMl } from "./normalize.js";
+
+const loose = (d: string, brand?: string) => looseKey(identify({ description: d, brand }));
+
+describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
+  it("212 SEXY for women: L / W / WOMAN / LADIES / MUJER, 3.3 / 3.4 / 100ML are one bottle", () => {
+    const lines = [
+      "212 SEXY 3.4 EDP L  (100028) - Spain - 15pcs ByBox",   // Miami Trading Zone
+      "212 SEXY(W)EDP SP 3.4oz(NEW PACK)(ONLY USA)",         // Perfume Center of America
+      "CH 212 SEXY 3.4 EDP WOMAN",
+      "212 SEXY 3.4 EDP LADIES",
+      "212 SEXY 100ML EDP MUJER",
+      "212 SEXY 3.3 EDP W",
+      "212 SEXY W 3.4oz EDP",
+    ];
+    const keys = new Set(lines.map((l) => loose(l)));
+    expect([...keys]).toEqual(["212 SEXY|100|EDP|W|"]);
+  });
+
+  it("212 SEXY for men: M / MEN / MAN / HOMBRE are one bottle", () => {
+    const lines = ["212 SEXY MEN 3.4 EDT", "212 SEXY MAN 3.4 EDT", "212 SEXY HOMBRE 3.4 EDT", "212 SEXY M 3.4oz EDT",
+      "212 SEXY 3.4 EDT M  (100033) - Spain - 15pcs ByBox"];
+    expect([...new Set(lines.map((l) => loose(l)))]).toEqual(["212 SEXY|100|EDT|M|"]);
+  });
+
+  it("212 for men: M / MAN / MEN / HOMBRE / CABALLERO / (M) are one bottle", () => {
+    const lines = ["212 M 3.4oz EDT", "212 MAN 3.4 EDT", "212 MEN 3.4 EDT", "212 HOMBRE 3.4 EDT", "212 CABALLERO 3.4 EDT",
+      "212 (M) EDT SP 3.4oz(NEW PACK)(ONLY USA)(LI FREE)", "212 3.4 EDT M  (100033) - Spain"];
+    expect([...new Set(lines.map((l) => loose(l)))]).toEqual(["212|100|EDT|M|"]);
+  });
+
+  it("never merges different fragrances that share words", () => {
+    expect(loose("212 SEXY M 3.4oz EDT")).not.toBe(loose("212 M 3.4oz EDT"));
+    expect(loose("360 RED M 3.4oz EDT")).not.toBe(loose("360 M 3.4oz EDT"));
+    expect(loose("360 COLLECTION NOIR MEN 3.4OZ EDT")).not.toBe(loose("360 M 3.4oz EDT"));
+    expect(loose("212 SEXY W 3.4oz EDP")).not.toBe(loose("212 SEXY M 3.4oz EDP"));      // gender
+    expect(loose("212 VIP W 2.7oz EDP")).not.toBe(loose("212 VIP W 4.2oz EDP"));        // size
+    expect(loose("COOL WATER M 4.2 EDT")).not.toBe(loose("COOL WATER M 4.2 EDP"));      // type
+    expect(loose("212 (M)(T) EDT SP 3.4oz(CAP&BOX)")).not.toBe(loose("212 (M) EDT SP 3.4oz")); // tester
+  });
+
+  it("fragrance names that look like gender words stay in the name", () => {
+    expect(identify({ description: "BVLGARI MAN IN BLACK 3.4 PARFUM" }).nameText).toBe("MAN IN BLACK");
+    expect(identify({ description: "BURBERRY HER EDP 3.4oz", brand: "Burberry" }).nameText).toBe("HER");
+    expect(identify({ description: "LADY MILLION 2.7 EDP L" }).nameText).toBe("LADY MILLION");
+    expect(identify({ description: "ARMANI STRONGER W YOU INTENSELY" }).nameText).toBe("STRONGER WITH YOU INTENSELY");
+  });
+
+  it("brand short forms resolve and leave the name", () => {
+    const a = identify({ description: "CH 212 SEXY 3.4 EDP WOMAN" });
+    const b = identify({ description: "212 SEXY(W)EDP SP 3.4oz", brand: "Carolina Herrera" });
+    expect(a.brand).toBe("CAROLINA HERRERA");
+    expect(b.brand).toBe("CAROLINA HERRERA");
+    expect(a.key).toBe(b.key);
+    expect(identify({ description: "A.GRANDE CLOUD PINK W 3.4oz" }).brand).toBe("ARIANA GRANDE");
+    expect(identify({ description: "GA-AQUA DE GIO PROFUNDO" }).brand).toBe("GIORGIO ARMANI");
+  });
+
+  it("sizes: ounces to the real bottle", () => {
+    expect([3.3, 3.4, 1.7, 1.6, 6.7, 6.8, 4.2, 2.7, 1.0, 5.1].map(ozToMl)).toEqual([100, 100, 50, 50, 200, 200, 125, 80, 30, 150]);
+    expect(identify({ description: "FRAICHE 150ML" }).sizeMl).toBe(150);
+    expect(identify({ description: "COACH MINI W 4.5ML EDP" }).flags).toContain("MINI");
+    expect(identify({ description: "1881 CERRUTI 3.4 EDT M" }).nameWords[0]).toBe("1881");
+  });
+
+  it("separate gender / size columns outrank the text", () => {
+    const id = identify({ description: "ARMAF CONNOISSEUR EDP SP 3.4oz", gender: "Men  " });
+    expect(id.gender).toBe("M");
+  });
+
+  it("UPC: digits only, leading zeros and Excel number artifacts removed", () => {
+    expect(normalizeUpc("071249104590")).toBe("71249104590");
+    expect(normalizeUpc("8411061043868.0")).toBe("8411061043868");
+    expect(normalizeUpc("8.411061043868e+12")).toBe("8411061043868");
+    expect(normalizeUpc("I0100305")).toBe("");      // a PCA item number in the UPC column is not a UPC
+    expect(normalizeUpc("BSDKBD")).toBe("");
+  });
+
+  it("more owner words: DAMA / SENORA / MUJERES for women, HOMBRES / SENOR / VARON for men", () => {
+    expect(loose("212 SEXY DAMA 3.4 EDP")).toBe("212 SEXY|100|EDP|W|");
+    expect(loose("212 SEXY SEÑORA 3.4 EDP")).toBe("212 SEXY|100|EDP|W|");
+    expect(loose("212 HOMBRES 3.4 EDT")).toBe("212|100|EDT|M|");
+    expect(loose("212 VARON 3.4 EDT")).toBe("212|100|EDT|M|");
+  });
+
+  it("section headers: lines under WOMEN / MEN / SETS MEN inherit gender and set", () => {
+    expect(looseKey(identify({ description: "212 SEXY 3.4 EDP", section: "WOMEN" }))).toBe("212 SEXY|100|EDP|W|");
+    expect(looseKey(identify({ description: "212 SEXY 3.4 EDT", section: "MEN'S FRAGRANCES" }))).toBe("212 SEXY|100|EDT|M|");
+    const set = identify({ description: "212 VIP 3.4 EDT + 3.4 SHOWER GEL", section: "SETS MEN" });
+    expect(set.gender).toBe("M");
+    expect(set.flags).toContain("SET");
+    // the line's own gender beats the section
+    expect(identify({ description: "212 SEXY W 3.4 EDP", section: "MEN" }).gender).toBe("W");
+  });
+});

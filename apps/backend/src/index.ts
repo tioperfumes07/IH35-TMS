@@ -491,6 +491,7 @@ import { registerLegalContractRoutes } from "./legal/contracts.routes.js";
 import { registerLegalSignRoutes } from "./legal/sign.routes.js";
 import { registerLegalAttorneyReviewRoutes } from "./legal/attorney-review.routes.js";
 import { registerLegalMattersRoutes } from "./legal/matters.routes.js";
+import { registerPerfumeDeskRoutes } from "./perfume/desk.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { startLoadChangeBus, stopLoadChangeBus } from "./realtime/load-change-bus.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
@@ -1455,6 +1456,8 @@ async function main() {
   await registerLegalSignRoutes(app);
   await registerLegalAttorneyReviewRoutes(app);
   await registerLegalMattersRoutes(app);
+  // PERFUME-DESK — owner-only TIO Perfumes price desk (isolated schema perfume.*; no carrier data).
+  await registerPerfumeDeskRoutes(app);
   await registerDailyTasksRoutes(app);
   await app.register(taskRoutes, { prefix: "/api/v1/tasks" });
   await registerTelematicsHosRoutes(app);

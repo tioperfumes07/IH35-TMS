@@ -1,6 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { useToast } from "../Toast";
 import { switchIdentityCompany } from "../../api/identity";
@@ -24,7 +26,12 @@ export function CarrierSwitcher() {
   const { pushToast } = useToast();
 
   const activeCompanies = useMemo(() => visibleCompanies(companies), [companies]);
-  const showSwitcher = activeCompanies.length > 1;
+  const auth = useAuth();
+  const navigate = useNavigate();
+  // PERFUME-DESK: the Owner also sees "Other businesses → TIO Perfumes". It is NOT a carrier in
+  // org.companies (no carrier engine, cron or seeder ever runs against it); it opens the isolated price desk.
+  const isOwner = String(auth.user?.role ?? "") === "Owner";
+  const showSwitcher = activeCompanies.length > 1 || isOwner;
   const selectedLabel = selectedCompanySwitcherLabel(selectedCompany);
 
   const defaultCompanyId = useMemo(
@@ -125,6 +132,23 @@ export function CarrierSwitcher() {
               );
             })}
           </div>
+          {isOwner ? (
+            <div className="mt-2 border-t border-gray-200 pt-2">
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">Other businesses</div>
+              <button
+                type="button"
+                className="w-full rounded-sm p-2 text-left text-gray-700 hover:bg-gray-50"
+                data-testid="carrier-switcher-tio-perfumes"
+                onClick={() => {
+                  setOpen(false);
+                  navigate("/perfume");
+                }}
+              >
+                <div className="font-semibold text-gray-900">TIO Perfumes</div>
+                <div className="mt-1 text-xs text-gray-500">Price desk · separate from every carrier</div>
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

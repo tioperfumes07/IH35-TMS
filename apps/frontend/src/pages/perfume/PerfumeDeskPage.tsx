@@ -1,0 +1,250 @@
+/**
+ * PERFUME-DESK — TIO Perfumes price desk. Owner-only, hidden (no menu entry; reached from the company
+ * selector's "Other businesses → TIO Perfumes" or /perfume). Isolated: reads/writes perfume.* only.
+ */
+import { useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
+import { Button } from "../../components/Button";
+import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
+import {
+  downloadPerfumeExcel, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
+  type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
+} from "../../api/perfume";
+import logoUrl from "./tio-perfumes-logo.png";
+import { PerfumeListsPanel } from "./PerfumeListsPanel";
+import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
+
+type Tab = PerfumeGridView | "lists" | "review" | "rules";
+const TABS: Array<[Tab, string]> = [
+  ["buy", "Buy · compare vendors"], ["sell", "Sell to stores"], ["wholesale", "Wholesale"], ["all", "All items"],
+  ["lists", "Price lists & import"], ["review", "Review"], ["rules", "Rules"],
+];
+
+export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+const pct = (v: unknown) => (v == null || v === "" ? "—" : `${Number(v).toFixed(1)}%`);
+
+function TioLogo() {
+  return (
+    <span
+      role="img"
+      aria-label="TIO Perfumes"
+      className="inline-block h-[44px] w-[67px] shrink-0 text-[#4B5563]"
+      style={{ backgroundColor: "currentColor", WebkitMaskImage: `url(${logoUrl})`, maskImage: `url(${logoUrl})`, WebkitMaskSize: "contain", maskSize: "contain", WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat" }}
+    />
+  );
+}
+
+export default function PerfumeDeskPage() {
+  const [params, setParams] = useSearchParams();
+  const tab = (TABS.find(([k]) => k === params.get("tab"))?.[0] ?? "buy") as Tab;
+  const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1) });
+  return (
+    <div className="space-y-3 p-3" data-testid="perfume-desk">
+      <div className="flex flex-wrap items-center gap-3">
+        <TioLogo />
+        <div className="min-w-0">
+          <h1 className="text-page-title font-semibold text-[#1F2A44]">TIO Perfumes · Price desk</h1>
+          <div className="text-xs text-gray-500">ScentsX LLC dba TIO Perfumes · owner only · separate from every carrier · never posts to accounting</div>
+        </div>
+      </div>
+      <nav className="flex flex-wrap gap-1" aria-label="Price desk sections">
+        {TABS.map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setParams({ tab: k })}
+            aria-current={tab === k ? "page" : undefined}
+            className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+          >
+            {label}{k === "review" && review.data?.total ? ` (${review.data.total.toLocaleString()})` : ""}
+          </button>
+        ))}
+      </nav>
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} />}
+    </div>
+  );
+}
+
+/* ---------------- grid ---------------- */
+
+const VIEW_HELP: Record<PerfumeGridView, string> = {
+  buy: "Every item your vendors offer, side by side. The cheapest after cushion and freight wins and becomes your cost. Margin and markup are against the lowest Laredo list price.",
+  sell: "Items a Laredo store lists. The store's own cost is backed out of its list price at its %, closed to your rounding — that is the most it can pay you.",
+  wholesale: "Your price to customers at each target margin and markup over your landed cost, closed to your rounding.",
+  all: "The whole item database: every bottle, every UPC it carries, every vendor price.",
+};
+const PAGE = 200;
+
+/** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
+function defaultVisible(view: PerfumeGridView, key: string): boolean {
+  const item = ["code", "upc", "brand", "name", "size_ml", "conc", "gender", "flags"].includes(key);
+  if (view === "all") return item || ["upc_count", "n_vendors", "best_vendor", "landed_likely", "low_sell"].includes(key);
+  if (view === "buy") return item || /^v:.*:(price|landed)$/.test(key) || ["best_vendor", "saves_next", "landed_likely", "low_sell", "profit", "margin", "markup"].includes(key);
+  if (view === "sell") return item || /^s:.*:price$/.test(key) || ["landed_likely", "store_cost_margin", "store_cost_markup", "offer_store", "offer_profit", "offer_margin", "offer_markup"].includes(key);
+  return item || /^w:/.test(key) || ["landed_likely", "low_sell"].includes(key);
+}
+
+function GridPanel({ view }: { view: PerfumeGridView }) {
+  const { pushToast } = useToast();
+  const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const query = useQuery({
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, page],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, offset: (page - 1) * PAGE, limit: PAGE }),
+    placeholderData: (prev) => prev,
+  });
+  const cols = query.data?.cols ?? [];
+  const columns: Array<ParityColumn<PerfumeGridRow>> = useMemo(
+    () => cols.map((c) => ({
+      key: c.key,
+      label: c.label,
+      sortable: true,
+      defaultHidden: !defaultVisible(view, c.key),
+      kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
+      cellClass: c.kind === "text" ? undefined : "text-right tabular-nums",
+      sortValue: (r: PerfumeGridRow) => r[c.key] ?? null,
+      exportValue: (r: PerfumeGridRow) => r[c.key] ?? null,
+      render: (r: PerfumeGridRow) => {
+        const v = r[c.key];
+        if (c.kind === "money") return money(v);
+        if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-green-700" : ""}>{pct(v)}</span>;
+        if (c.key === "best_vendor" && r.tied) return <span title="Tied lowest price" className="rounded-sm bg-amber-100 px-1">{String(v)}</span>;
+        if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
+        return v == null || v === "" ? "—" : String(v);
+      },
+    })),
+    [cols, view],
+  );
+  const columnGroups = useMemo(() => {
+    const groups: Array<{ label: string; keys: string[] }> = [];
+    for (const c of cols) {
+      const g = groups.find((x) => x.label === c.group);
+      if (g) g.keys.push(c.key); else groups.push({ label: c.group, keys: [c.key] });
+    }
+    return groups;
+  }, [cols]);
+  const total = query.data?.total ?? 0;
+  const pages = Math.max(1, Math.ceil(total / PAGE));
+  return (
+    <section className="space-y-2" aria-label={`${view} view`}>
+      <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
+      <ParityTable<PerfumeGridRow>
+        columns={columns}
+        rows={query.data?.rows ?? []}
+        rowKey={(r) => String(r.id)}
+        loading={query.isLoading}
+        storageKey={`perfume-desk-${view}-v1`}
+        columnGroups={columnGroups}
+        sortKey={sort.key}
+        sortDirection={sort.dir}
+        sortMode="external"
+        onSortChange={(key, dir) => { setSort({ key, dir }); setPage(1); }}
+        page={1}
+        pageSize={Math.max(1, query.data?.rows.length ?? PAGE)}
+        hidePager
+        suppressToolbarSearch
+        stickyHeader
+        enableColumnReorder
+        emptyText={q ? "No items match the search." : "No items yet — import a price list."}
+        toolbar={
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="search"
+              value={q}
+              onChange={(e) => { setQ(e.target.value); setPage(1); }}
+              placeholder="Search code, UPC, SKU, brand, name"
+              aria-label="Search items"
+              className="h-[34px] w-[260px] max-w-full rounded-sm border border-gray-300 px-2 text-xs"
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-[34px] px-3 text-xs"
+              onClick={() => {
+                const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+              }}
+            >
+              Export to Excel
+            </Button>
+          </div>
+        }
+      />
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+        <span>{total.toLocaleString()} items · page {page} of {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
+        <span className="flex gap-1">
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(1)}>First</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(page + 1)}>Next</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(pages)}>Last</Button>
+        </span>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- rules ---------------- */
+
+const STEPS: Array<[PerfumeRules["round_step"], string]> = [["5", ".05"], ["10", ".10"], ["25", ".25"], ["50", ".50"], ["100", "1.00"], ["75", "ends in .75"]];
+const DIRS: Array<[PerfumeRules["round_dir"], string]> = [["up", "Up"], ["nearest", "Nearest"], ["down", "Down"]];
+
+function RulesPanel() {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const rules = useQuery({ queryKey: ["perfume", "rules"], queryFn: getPerfumeRules });
+  const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
+  const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
+  const [draft, setDraft] = useState<Partial<PerfumeRules>>({});
+  const r = { ...(rules.data ?? {}), ...draft } as PerfumeRules;
+  if (!rules.data) return <div className="text-xs text-gray-500">Loading rules…</div>;
+  const dollars = (k: keyof PerfumeRules) => (
+    <input type="number" step="0.05" min="0" aria-label={String(k)} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
+      value={((r[k] as number) / 100).toFixed(2)} onChange={(e) => setDraft({ ...draft, [k]: Math.round(Number(e.target.value) * 100) })} />
+  );
+  const percent = (k: "vendor_earn_pct" | "store_earn_pct") => (
+    <input type="number" step="0.5" min="0" max="99" aria-label={k} className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
+      value={r[k]} onChange={(e) => setDraft({ ...draft, [k]: Number(e.target.value) })} />
+  );
+  const save = async () => {
+    try { await putPerfumeRules(draft); setDraft({}); await qc.invalidateQueries({ queryKey: ["perfume"] }); pushToast("Rules saved — every view recomputed", "success"); }
+    catch (e) { pushToast(userFacingApiError(e, "Rules not saved"), "error"); }
+  };
+  const seg = <T extends string>(opts: Array<[T, string]>, value: T, set: (v: T) => void) => (
+    <span className="inline-flex flex-wrap gap-1">{opts.map(([v, l]) => (
+      <button key={v} type="button" onClick={() => set(v)} aria-pressed={value === v}
+        className={`h-[34px] rounded-sm border px-2 text-xs ${value === v ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white"}`}>{l}</button>
+    ))}</span>
+  );
+  return (
+    <section className="max-w-[960px] space-y-4 rounded-sm border border-gray-200 bg-white p-3" aria-label="Rules">
+      <div>
+        <div className="text-section-header">Closed numbers</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">Close to {seg(STEPS, r.round_step, (v) => setDraft({ ...draft, round_step: v }))} Direction {seg(DIRS, r.round_dir, (v) => setDraft({ ...draft, round_dir: v }))}</div>
+      </div>
+      <div>
+        <div className="text-section-header">Vendor cushion (default — each vendor can override in Price lists)</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">From {dollars("cushion_lo_cents")} to {dollars("cushion_hi_cents")}</div>
+      </div>
+      <div>
+        <div className="text-section-header">Freight per piece (default)</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">From {dollars("freight_lo_cents")} to {dollars("freight_hi_cents")}</div>
+      </div>
+      <div>
+        <div className="text-section-header">What they earn</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">Vendors {percent("vendor_earn_pct")}% · Laredo stores {percent("store_earn_pct")}% — every view shows both the margin and the markup reading</div>
+      </div>
+      <div className="flex gap-2">
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>Save</Button>
+        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>Cancel</Button>
+      </div>
+      <div className="text-xs text-gray-600">
+        {vendors.data?.vendors.length ?? 0} vendors · {lists.data?.lists.length ?? 0} price lists on file. My cost (likely) = vendor price − low cushion + high freight;
+        best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.
+      </div>
+    </section>
+  );
+}
