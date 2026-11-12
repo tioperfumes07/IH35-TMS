@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~1:10 AM CT) — high-water #28909; Cursor FE go26 raw tables cleared
+- **SHIPS THIS WAVE:** #28895–#28909 Document Designs, Aging date-basis, go26 Cash Advances/Statement/CF3/CF Home/Planner (raw_table 41→33), tips/register.
+- **NEXT:** Reverse-wiring spot checks; FinalizeBlock draft API still deferred; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~1:00 AM CT) — Planner calendar drops raw table (go26 −1)
 - **THIS:** PlannerCalendarPage week grid uses role=table divs (DnD cells intact); go26 raw_table 34→33.
 - **NEXT:** Reverse-wiring / residual Cursor boards; Codex LIVE. No match/Dreamline.
@@ -178,11 +182,6 @@
 ## OUTBOX (11-11-2026 ~5:35 PM CT) — Residual ParityTables appearance=board wave23 (CustomerDetail)
 - **PRIOR:** prior residual board wave.
 - **THIS:** CustomerDetail appearance=board (5 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining residuals / done. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:35 PM CT) — Residual ParityTables appearance=board wave22 (Customers)
-- **PRIOR:** prior residual board wave.
-- **THIS:** Customers appearance=board (9 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining residuals / done. No match/Dreamline.
 
 ## ARCHIVE
