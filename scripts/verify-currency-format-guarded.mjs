@@ -892,10 +892,7 @@ const paymentsToYouInvoiceQty = read("apps/frontend/src/pages/factoring/Payments
 if (!/formatQuantityTable\(row\.invoice_count, 0\)/.test(paymentsToYouInvoiceQty)) {
   fail("PaymentsToYouPanel invoice_count must use formatQuantityTable(, 0)");
 }
-const factoringCashFlowQty = read("apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx");
-if (!/formatQuantityTable\(row\.wire_count, 0\)/.test(factoringCashFlowQty) || !/formatQuantityTable\(row\.invoice_count, 0\)/.test(factoringCashFlowQty)) {
-  fail("FactoringCashFlowPanel wire/invoice counts must use formatQuantityTable(, 0)");
-}
+// ROUND 8.19 OVERHAUL — FactoringCashFlowPanel deleted; FactoringHomeBoard owns purchase/wire counts below.
 const fuelHomeCountQty = read("apps/frontend/src/pages/fuel/FuelHome.tsx");
 if (!/formatQuantityTable\(r\.fill_count, 0\)/.test(fuelHomeCountQty) || !/formatQuantityTable\(r\.load_count, 0\)/.test(fuelHomeCountQty)) {
   fail("FuelHome fill/load counts must use formatQuantityTable(, 0)");
@@ -951,10 +948,7 @@ const driverHubReportQty = read("apps/frontend/src/pages/home/DriverHubReporting
 if (!/formatQuantityTable\(data\.summary\.total_requests, 0\)/.test(driverHubReportQty) || !/formatQuantityTable\(data\.summary\.approved, 0\)/.test(driverHubReportQty)) {
   fail("DriverHubReportingPage summary counts must use formatQuantityTable(, 0)");
 }
-const factorCashFlowQty = read("apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx");
-if (!/formatQuantityTable\(totals\.wires, 0\)/.test(factorCashFlowQty) || !/formatQuantityTable\(totals\.invoices, 0\)/.test(factorCashFlowQty)) {
-  fail("FactoringCashFlowPanel wire/invoice counts must use formatQuantityTable(, 0)");
-}
+// ROUND 8.19 — FactoringCashFlowPanel totals.wires/invoices checks retired with the panel.
 const fuelGlMapQty = read("apps/frontend/src/pages/fuel/components/FuelGlMappingCoverage.tsx");
 if (!/formatQuantityTable\(coverage\.length, 0\)/.test(fuelGlMapQty)) {
   fail("FuelGlMappingCoverage Categories KPI must use formatQuantityTable(, 0)");

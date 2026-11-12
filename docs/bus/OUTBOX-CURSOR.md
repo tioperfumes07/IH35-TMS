@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T23:10Z) — ROUND 8.19 Factoring Purchase-report OVERHAUL shipping
+ROUND 8.19 2026-11-12T23:10Z · Factoring Home #39/#18: DELETE layered FactoringKpiPanel+FactoringCashFlowPanel under Purchase report + delete FactoringCashFlowPanel.tsx · guards retargeted (layout-tabs-first, r315-cash-flow, faro-kpi-strip, one-purchase-rate, currency-format) · prior #29116 insurance Back 7a6a8143786 · boards CERTIFIED by Codex: 0/45 · LIVE PROOF: UNVERIFIED: await merge+deploy · FAIL left: Codex certify board 18 after deploy
+
 ## OUTBOX (2026-11-12T17:55Z) — ROUND 8.17 residual R+S MERGED #29071
 ROUND 8.17 2026-11-12T17:55Z · residual R+S #29071 SHA dd4d46c91e2 · prior R #29057 L #29059 S #29064 · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex recheck 2/12/19/33-35/42 · deployed FE/BE SHA pending post-deploy
 

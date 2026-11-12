@@ -77,7 +77,6 @@ import { factorToProfileForm, profileFormToFactorPatch, rateToPctString, resolve
 import { SubmitToFactorTab } from "./SubmitToFactorTab";
 import { RepurchaseDuePanel } from "./RepurchaseDuePanel";
 import { PaymentsToYouPanel } from "./PaymentsToYouPanel";
-import { FactoringCashFlowPanel } from "./FactoringCashFlowPanel";
 import { FactoringHomeBoard } from "./components/FactoringHomeBoard";
 import { FactoringKpiPanel } from "../../components/factoring/FactoringKpiPanel";
 import { getFactoringKpis } from "../../api/factoring-kpis";
@@ -1045,10 +1044,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
 
       <DuplicateVendorsBanner companyId={companyId} />
 
-      {/* ROUND 443.280 — Factoring Home board is Account summary only (docs/design/v3/Factoring).
+      {/* ROUND 443.280 / 8.19 — Factoring Home board is Account summary only (docs/design/v3/Factoring).
           Prior always-on KPI strip + MoneyListToolbar + FactoringHomeBoard + Kpi/CashFlow panels
           above every Faro tab was LAYERED chrome; board replaces that body on Account summary.
-          FactoringKpiPanel + FactoringCashFlowPanel stay mounted on Purchase report (r315 / r326). */}
+          ROUND 8.19 OVERHAUL: DELETE FactoringKpiPanel + FactoringCashFlowPanel from Purchase report. */}
 
       {activeFactor && profileEditForm && (
             <Modal open={profileEditOpen} onClose={() => { setProfileEditOpen(false); setProfileEditForm(null); }} title="Edit Factoring Profile">
@@ -2382,19 +2381,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           needs a non-purchased invoice source (not invented here). */}
       {show("purchase_report") ? (
         <div className="space-y-3">
-        {/* ROUND 443.280 / FINAL-3 — r315/r326 panels on Purchase report as BoardSections (not always-on home chrome). */}
-        {companyId ? (
-          <BoardSection title="Factoring KPIs" testId="factoring-purchase-kpi-board-section">
-            <FactoringKpiPanel companyId={companyId} from={dateFromFromUrl || undefined} to={dateToFromUrl || undefined} />
-          </BoardSection>
-        ) : null}
-        <BoardSection title="Cash flow" testId="factoring-purchase-cashflow-board-section">
-          <FactoringCashFlowPanel
-            companyId={companyId}
-            dateFrom={dateFromFromUrl || undefined}
-            dateTo={dateToFromUrl || undefined}
-          />
-        </BoardSection>
+        {/* ROUND 8.19 OVERHAUL — DELETE layered FactoringKpiPanel + FactoringCashFlowPanel under Purchase report.
+            Factoring.dc.html Home owns KPIs on FactoringHomeBoard; Purchase report is the purchase-lines board only. */}
         <BoardSection
           title={`Purchase report — ${purchaseReportView === "summary" ? "by purchase" : "by invoice"}`}
           testId="factoring-purchase-report"

@@ -26,7 +26,7 @@ const LABEL = "verify-faro-kpi-strip";
 export const FILES = {
   manifest: "apps/frontend/src/router/route-manifest.ts",
   home: "apps/frontend/src/pages/factoring/FactoringHome.tsx",
-  cashFlow: "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx",
+  // ROUND 8.19 OVERHAUL — FactoringCashFlowPanel deleted (layered Purchase-report chrome).
   reserves: "apps/frontend/src/components/factoring/FactoringReservesSharedPanel.tsx",
   ledgerPanel: "apps/frontend/src/components/shared/LedgerKpiPanel.tsx",
   server: "apps/backend/src/factoring/factoring-kpi.service.ts",
@@ -107,10 +107,9 @@ export function analyze(files) {
     for (const t of tabs) if (!OWNER_TEN.includes(t)) problems.push(`factoring tab "${t}" is not one of the owner's ten`);
   }
 
-  // 2 + 3 + 4. tiles on the one Factoring screen
+  // 2 + 3 + 4. tiles on the one Factoring screen (CashFlowPanel retired ROUND 8.19)
   const client = [
     ...drillCards(files.home).map((c) => ({ ...c, file: FILES.home })),
-    ...drillCards(files.cashFlow).map((c) => ({ ...c, file: FILES.cashFlow })),
     ...reservesFactoringHostCards(files.reserves).map((c) => ({ ...c, file: FILES.reserves })),
   ];
   const server = serverLabels(files.server);
@@ -174,11 +173,14 @@ function selftest() {
   const cases = [
     ["an eleventh tab", mut("manifest", (s) => s.replace(/(export const FARO_TABS\b[\s\S]*?)(\n\];?)/, '$1\n  { id: "extra", label: "Extra" },$2'))],
     ["a renamed tab", mut("manifest", (s) => s.replace('label: "Reserve"', 'label: "Reserves"'))],
-    ["a duplicate label", mut("cashFlow", (s) => s.replace('label="Posted wires"', 'label="Net cash received"'))],
-    ["a duplicate value", mut("cashFlow", (s) => s.replace('value={formatQuantityTable(totals.wires, 0)}', 'value={formatQuantityTable(totals.invoices, 0)}'))],
+    ["a duplicate label", mut("home", (s) => s.replace('label="Escrow rate"', 'label="Total reserve"'))],
+    ["a duplicate value", mut("home", (s) => s.replace(
+      'value={recourseQuery.isError ? null : String((recourseQuery.data?.invoices ?? []).length)}',
+      'value={engineMoney(engine?.total)}',
+    ))],
     ["a client reserve balance tile", mut("home", (s) => s.replace('value={recourseQuery.isError ? null : String((recourseQuery.data?.invoices ?? []).length)}', 'value={engineReserve?.escrow}'))],
     ["a hint", mut("home", (s) => s.replace('label="Active advances"', 'label="Active advances"\n              hint="12 advances"'))],
-    ["a second tile size", mut("cashFlow", (s) => s.replace('size="md"', 'size="sm"'))],
+    ["a second tile size", mut("home", (s) => s.replace('size="md"', 'size="sm"'))],
     ["a sentence in the ledger tile", mut("ledgerPanel", (s) => s.replace(/(<div className=\{TILE\.label\}>\{k\.primary_label \?\? k\.label\}<\/div>)/, '$1\n            <div>{k.empty_reason ?? ""}</div>'))],
     ["escrow back on the factoring host", mut("reserves", (s) => s.replace('{host === "banking" ? (', '{host !== "nobody" ? ('))],
   ];

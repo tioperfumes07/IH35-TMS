@@ -764,7 +764,6 @@ const LIVE_DOMAIN_GUARDS = [
       "apps/backend/src/factoring/purchase-candidates.service.ts",
       "apps/backend/src/factoring/purchase.service.ts",
       "apps/backend/src/factoring/factor.service.ts",
-      "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx",
       "scripts/verify-one-purchase-rate-resolver.mjs",
     ],
   ],

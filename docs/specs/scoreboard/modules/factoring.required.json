@@ -605,12 +605,12 @@
       ]
     },
     {
-      "id": "factoring.panel.factoring_cash_flow",
+      "id": "factoring.panel.factoring_home_board_purchases",
       "tab": "Panels",
-      "sub": "Panel: Factoring Cash Flow",
-      "route_hint": "surface://pages/factoring/FactoringCashFlowPanel.tsx",
+      "sub": "Panel: Factoring Home purchase chart (ROUND 8.19 OVERHAUL replaces CashFlowPanel)",
+      "route_hint": "surface://pages/factoring/components/FactoringHomeBoard.tsx",
       "surface_kind": "panel",
-      "surface_path": "pages/factoring/FactoringCashFlowPanel.tsx",
+      "surface_path": "pages/factoring/components/FactoringHomeBoard.tsx",
       "required": [
         "connectivity",
         "qbo_chrome"
