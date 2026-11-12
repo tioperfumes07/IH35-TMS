@@ -61,3 +61,19 @@ The Mac restarted at ~10:54Z (uptime 9 min at 11:03Z); sessions were relaunched 
 - Main: bcd34f04ff went red (security-audit: TS2353 in PerfumeListsPanel.tsx — Lead's own). Fixed by Lead in #29005 (8680a85eef). Pull main before you push.
 - There is NO Cascade seat. Its verification row is Claude-Lead's.
 - Every frontend push: run `npx tsc -b` in apps/frontend (the build), not only `tsc -p` — that gap is what broke main this morning.
+
+## ROUND 8.15 — 11-12-2026 6:58 AM CT (12:58Z) — OVERHAUL LAW: full wiring, reverse-routed, replace — never layer
+Owner order 2026-11-12 5:40 AM CT (verbatim):
+> "make sure all coders code correctly build engines complete designs, fully and completely not just shell, remember this is practically an overhaul. so full wiring, reverse routed etc. not on top of previous design."
+
+Measured 11:41Z: main 92604c5bc2 = prod (healthz git_sha, version.json) · main checks green · CC-1 on E3 alias-shadow guard · CC-2 introspecting schema for rows 76–78 · CC-3 committing CSA unavailable≠failure · CODEX last merge 05:09Z (6h32m idle) · CURSOR last merge 10:47Z (#29002, idle since the restart).
+
+Every PR from now on closes a row only if ALL FIVE hold (put the five lines in the PR body):
+1. **ENGINE** — the number comes from the canonical engine/reader (write left: driver_finance, mdata.qbo_*, banking, maintenance, mdata.vendors; never the right-hand tables). Name the function.
+2. **FORWARD ROUTE** — every number, row and chip on the screen opens its source record (load, bill, JE, bank line, settlement, unit, driver). Name the href for each column.
+3. **REVERSE ROUTE** — the source record links back to every screen/total that uses it (bill → load → settlement → JE → bank match, and back). A one-way drill is half-wired = not done. List the back-links added.
+4. **REPLACE, NOT LAYER** — the touched page is rebuilt to its board in `docs/design/v3/` (name the board file). The old layout, old strip, old card is removed in the same PR. A new section stacked on an old page = LAYERED = not done.
+5. **LIVE PROOF** — after deploy: the live query (USMCA, `SET LOCAL app.bypass_rls='lucia'`) and the screen number match to the cent; click-through from the number to the record and back, pasted.
+
+Deadline unchanged: 23:00Z (5:00 PM CT). Lead re-measures each DONE line against these five; any missing line → row back to OPEN and the seat's next row is taken by Lead.
+CODEX and CURSOR: resume now on your 8.14 rows under this law.

@@ -44,3 +44,6 @@ Owner, 5:02 PM CT: when you test locally and everything passes, you MUST merge u
 
 ## ARCHIVE
 Older Cursor inbox batches: `docs/bus/archive/INBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet INBOX≤40).
+
+## ROUND 8.15 — 11-12-2026 6:58 AM CT — OVERHAUL LAW (read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md §ROUND 8.15)
+Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (function name) · FORWARD ROUTE (href per number) · REVERSE ROUTE (back-links from the source record) · REPLACE NOT LAYER (v3 board file; old layout removed in the same PR) · LIVE PROOF (query = screen to the cent, click there and back). Deadline 23:00Z.
