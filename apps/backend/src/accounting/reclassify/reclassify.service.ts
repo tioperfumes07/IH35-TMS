@@ -571,6 +571,7 @@ export function classifySelection(
     // LEAD 443.192 — a fuel receipt (fuel_event) carries its load on the RECEIPT (its fuel rows + the expense document that
     // adopted its entry), not on a line: it moves to another load whole, and on its own (never with an account / class /
     // location / entity change in the same batch — those follow the adopting expense line, one amount at a time).
+    const fuelByItem = p.source_transaction_type === "fuel_event" && !!target.to_item_id && !target.to_load_id;
     if (p.source_transaction_type === "fuel_event" && target.to_load_id && !target.to_item_id) {
       if (target.to_account_id || target.to_class_id || target.to_location_id || target.to_entity_uuid) {
         refused.push({ posting: p, why: "a fuel receipt moves to another load on its own — apply the load move and the account / class / location / entity change as two batches" });
@@ -578,7 +579,13 @@ export function classifySelection(
       }
     } else
     // U24 — an item or load lives on a document LINE: only expense and bill lines carry both.
-    if ((target.to_item_id || target.to_load_id) && p.source_transaction_type !== "expense" && p.source_transaction_type !== "bill") {
+    // LST-F11165 — a fuel purchase's ITEM lives on the line of the expense document that adopted its entry, and
+    // rewriteDocumentLine already rewrites exactly that line (then syncReeferFuelForExpenseLine flips the fuel record's type
+    // and IFTA category with the item). So by-item applies to a fuel_event line too; by-load on a fuel receipt stays the
+    // whole-receipt move above. Without this the owner ruling 2026-11-09 (Relay reefer > 60 gal is truck diesel: item
+    // Fuel-Reefer-Diesel -> Fuel-Truck Diesel, 5015 -> 5000) could not be applied — the account alone is refused because the
+    // line's item defaults to 5015 (line_account_differs_from_item).
+    if (!fuelByItem && (target.to_item_id || target.to_load_id) && p.source_transaction_type !== "expense" && p.source_transaction_type !== "bill") {
       refused.push({ posting: p, why: `${p.source_transaction_type ?? "journal entry"} lines carry no item / load to move — by item and by load apply to expense and bill lines` });
       continue;
     }
@@ -735,10 +742,16 @@ export async function rewriteDocumentLine(
     } else {
       const table = type === "expense" ? "accounting.expense_lines" : "accounting.bill_lines";
       const live = type === "bill" ? " AND voided_at IS NULL" : "";
+      // LST-F11165 — the item and its account change in ONE statement. The BEFORE UPDATE categorization trigger
+      // (202615620900, line_account_differs_from_item) checks each row write: writing the item first and the account in a
+      // second UPDATE left an in-between row (new item, old account) the trigger refuses, so no by-item move whose item
+      // carries a different account could ever apply. The account write below then finds the line already on it.
+      const accountCol = type === "expense" ? "expense_account_uuid" : "account_id";
       const r = await client.query(
-        `UPDATE ${table} SET item_id = COALESCE($3::uuid, item_id), load_id = COALESCE($4::uuid, load_id)
+        `UPDATE ${table} SET item_id = COALESCE($3::uuid, item_id), load_id = COALESCE($4::uuid, load_id),
+                ${accountCol} = CASE WHEN $3::uuid IS NOT NULL THEN COALESCE($5::uuid, ${accountCol}) ELSE ${accountCol} END
           WHERE id = $1::uuid AND operating_company_id = $2::uuid${live}`,
-        [p.source_transaction_line_id, companyId, target.item_id ?? null, target.load_id ?? null],
+        [p.source_transaction_line_id, companyId, target.item_id ?? null, target.load_id ?? null, target.account_id ?? null],
       );
       if ((r.rowCount ?? 0) === 0) notes.push(`${type} line not found; item / load not moved`);
       // U25 — Diesel <-> Reefer Diesel: the fuel transaction's category (IFTA in / out), the gallons and the trailer follow

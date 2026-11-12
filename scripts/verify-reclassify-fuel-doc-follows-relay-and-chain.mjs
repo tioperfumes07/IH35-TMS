@@ -18,6 +18,7 @@
  *  3. A document matches the fill by its record id, OR by a fuel record whose relay_fuel_transaction_id is the fill,
  *     OR (Relay fill only) by having no record at all.
  *  4. "need exactly 1" stays — an ambiguous or missing document still refuses by name; nothing moves without it.
+ *  5. LST-F11165: a fuel_event line moves by ITEM, and the item and its account are written in ONE statement.
  * Self-test: node scripts/verify-reclassify-fuel-doc-follows-relay-and-chain.mjs --selftest
  */
 /** MATRIX-BUILT-OPTIONAL — static invariant guard; no surface wiring leaf to register. */
@@ -44,6 +45,13 @@ export function check(src) {
     out.push("a Relay fill's record-less document (adopted on receipt) is not matched");
   if (!/adopt\.rows\.length !== 1/.test(branch) || !/need exactly 1/.test(branch))
     out.push("the exactly-one-document refusal was weakened");
+  // LST-F11165 — a fuel_event line moves by item (the item lives on its adopting expense line) …
+  if (!/const fuelByItem = p\.source_transaction_type === "fuel_event" && !!target\.to_item_id && !target\.to_load_id;/.test(src) ||
+      !/if \(!fuelByItem && \(target\.to_item_id \|\| target\.to_load_id\)/.test(src))
+    out.push("a fuel_event line cannot move by item (LST-F11165)");
+  // … and the item and its account are written in ONE statement (the categorization trigger checks every row write).
+  if (!/\$\{accountCol\} = CASE WHEN \$3::uuid IS NOT NULL THEN COALESCE\(\$5::uuid, \$\{accountCol\}\)/.test(src))
+    out.push("the item and its account are not written in one statement (line_account_differs_from_item in between)");
   return out;
 }
 
@@ -57,6 +65,8 @@ function selftest() {
     ["no relay record match", src.replace("AND ft.relay_fuel_transaction_id::text = $3)", "AND ft.id::text = $3)"), "through its fuel record"],
     ["no record-less match", src.replace("OR (e.source_fuel_transaction_id IS NULL", "OR (false"), "record-less document"],
     ["exactly-one weakened", src.replace("if (adopt.rows.length !== 1) {", "if (adopt.rows.length === 0) {"), "exactly-one-document"],
+    ["fuel by item refused", src.replace("if (!fuelByItem && (target.to_item_id || target.to_load_id)", "if ((target.to_item_id || target.to_load_id)"), "cannot move by item"],
+    ["item then account", src.replace("${accountCol} = CASE WHEN $3::uuid IS NOT NULL THEN COALESCE($5::uuid, ${accountCol}) ELSE ${accountCol} END", "${accountCol} = ${accountCol}"), "one statement"],
   ];
   for (const [name, planted, needle] of plants) {
     if (planted === src) throw new Error(`plant "${name}" did not apply`);

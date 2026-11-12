@@ -249,6 +249,25 @@ describe("Reclassify engine — by item / by load (U24)", () => {
     expect(refused.map((r) => r.posting.posting_id)).toEqual(["i1"]);
   });
 
+  it("LST-F11165: a fuel_event line moves by ITEM (its adopting expense line carries the item); by load stays the whole-receipt move", () => {
+    const { eligible, refused } = classifySelection(
+      [line({ posting_id: "f1", source_transaction_type: "fuel_event", item_id: null })],
+      { to_item_id: ITEM_REEFER },
+    );
+    expect(eligible.map((p) => p.posting_id)).toEqual(["f1"]);
+    expect(refused).toEqual([]);
+  });
+
+  it("LST-F11165: the item and its account are written in ONE statement (the categorization trigger checks every row write)", async () => {
+    const calls: Array<{ sql: string; params: unknown[] }> = [];
+    const client = { query: async (sql: string, params: unknown[] = []) => { calls.push({ sql, params }); return { rows: [], rowCount: 1 }; } } as never;
+    await rewriteDocumentLine(client, "co", line({ posting_id: "e9", source_transaction_type: "expense", source_transaction_id: "exp-9", source_transaction_line_id: "el-9" }),
+      { account_id: "acc-5000", class_id: null, location_id: null, entity_uuid: null, entity_type: null, item_id: ITEM_REEFER, load_id: null });
+    const upd = calls.find((c) => /UPDATE accounting\.expense_lines SET item_id/.test(c.sql))!;
+    expect(upd.sql).toMatch(/expense_account_uuid = CASE WHEN \$3::uuid IS NOT NULL THEN COALESCE\(\$5::uuid, expense_account_uuid\)/);
+    expect(upd.params).toEqual(["el-9", "co", ITEM_REEFER, null, "acc-5000"]);
+  });
+
   it("a line already on the target item and load is refused as no change", () => {
     const { refused } = classifySelection([line({ posting_id: "e1", source_transaction_type: "expense" })], { to_item_id: ITEM_DIESEL, to_load_id: LOAD_A });
     expect(refused[0]?.why).toMatch(/already carries/);
