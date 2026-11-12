@@ -144,6 +144,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
   return (
     <section className="space-y-2" aria-label={`${view} view`}>
       <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
+      {/* TABLE_DATE_OMIT: price-grid rows are SKU×vendor cells; list date lives on the Lists tab, not the comparison grid. */}
       <ParityTable<PerfumeGridRow>
         columns={columns}
         rows={query.data?.rows ?? []}

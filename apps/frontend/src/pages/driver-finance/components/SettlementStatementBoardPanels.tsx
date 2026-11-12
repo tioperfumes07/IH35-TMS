@@ -168,6 +168,7 @@ export function SettlementStatementBoardPanels({
       style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10, marginBottom: 12 }}
     >
       <BoardSection title="Earnings — by load" testId="settlement-statement-panel-earnings">
+        {/* TABLE_DATE_OMIT: settlement statement panels inherit the settlement period; earnings/deduction rows are load lines without a separate event date. */}
         <ParityTable
           appearance="board"
           title="Earnings — by load"

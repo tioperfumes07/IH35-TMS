@@ -26,6 +26,7 @@ export function PerfumeReviewPanel() {
       <div className="text-xs text-gray-600">
         {total.toLocaleString()} {tr("perfume.review.2", "lines need you. A line links to an item only when you confirm it — then every future list from that vendor with the same spelling or SKU links by itself. Nothing here counts in any price until confirmed.")}
       </div>
+      {/* TABLE_DATE_OMIT: review queue is unresolved import lines waiting for owner confirm — no per-row event date. */}
       <ParityTable<PerfumeReviewRow>
         rows={q.data?.rows ?? []}
         rowKey={(r) => r.id}
