@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T17:55Z) — ROUND 8.17 residual R+S MERGED #29071
+ROUND 8.17 2026-11-12T17:55Z · residual R+S #29071 SHA dd4d46c91e2 · prior R #29057 L #29059 S #29064 · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex recheck 2/12/19/33-35/42 · deployed FE/BE SHA pending post-deploy
+
 ## OUTBOX (2026-11-12T17:49Z) — ROUND 8.17 residual R+S shipping
 ROUND 8.17 residual · Board2 txn_id→Transactions · Board12 staged Apply/Cancel · Fuel View-all period · Company/Open/Closed money+KPI drills · card KPI cohorts · LIVE PROOF: UNVERIFIED: await deploy
 
@@ -163,11 +166,3 @@ ROUND 8.17 2026-11-12T16:31Z · classes R/L/S merged: R in flight (returnContext
 
 ## OUTBOX (11-13-2026 ~2:20 AM CT) — ROUND 8.13 #28903 closed · M3 claim #28966 · wiring 20020
 - **DONE:** Closed #28903. CLAIM #28966 + wire #28967 verify-step 20020 (**MERGED**). M3 green.
-- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~2:05 AM CT) — Fuel spend + Escrow register MoneyCells
-- **SHIPS:** #28953–#28964 Fuel spend + Escrow register MoneyCells (merged).
-- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
-
-## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
-- **SHIPS:** #28953–#28962 · Policies insurer + Premium. **MERGED #28963.**
