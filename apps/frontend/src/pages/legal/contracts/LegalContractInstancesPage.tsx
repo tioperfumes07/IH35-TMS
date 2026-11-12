@@ -228,6 +228,33 @@ export function LegalContractInstancesPage() {
     onError: (error) => pushToast(userFacingApiError(error, "Failed to send reminder"), "error"),
   });
 
+  const voidMutation = useMutation({
+    mutationFn: async (selectedRows: LegalContractSummary[]) => {
+      return legalContractsApi.voidMany(
+        operatingCompanyId,
+        selectedRows.map((r) => r.id),
+        "Bulk void from Contracts list",
+      );
+    },
+    onSuccess: async (result) => {
+      const skippedSigned = result.skipped.filter((s) => s.reason === "signed_cannot_void").length;
+      if (result.voided.length && !skippedSigned) {
+        pushToast(`Voided ${result.voided.length} contract${result.voided.length === 1 ? "" : "s"}.`, "success");
+      } else if (result.voided.length && skippedSigned) {
+        pushToast(
+          `Voided ${result.voided.length}; skipped ${skippedSigned} signed (executed signatures cannot bulk-void).`,
+          "info",
+        );
+      } else if (skippedSigned) {
+        pushToast("Signed contracts cannot be bulk-voided.", "error");
+      } else {
+        pushToast("No contracts voided.", "info");
+      }
+      await refresh();
+    },
+    onError: (error) => pushToast(userFacingApiError(error, "Failed to void contracts"), "error"),
+  });
+
   // ROUND 435 — open the contract's FILED PDF (docs.files). A contract with none is filed now, by the person opening it.
   const openFiledPdf = async (row: LegalContractSummary) => {
     // Open the tab inside the click (popup blockers allow it), then point it at the file once the URL exists. Not
@@ -393,7 +420,14 @@ export function LegalContractInstancesPage() {
                   >
                     Send Reminder
                   </Button>
-                  <Button size="sm" variant="secondary" disabled title="Bulk void not yet wired to a backend endpoint">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={selected.length === 0}
+                    loading={voidMutation.isPending}
+                    onClick={() => voidMutation.mutate(selected)}
+                    data-testid="legal-contracts-bulk-void"
+                  >
                     Void
                   </Button>
                   <Button

@@ -1101,6 +1101,75 @@ export async function getContractInstanceForRender(
   return res.rows[0] ?? null;
 }
 
+/**
+ * ROUND 8.12 — office bulk/single void. Marks draft/sent/viewed (and already-voided idempotent)
+ * as voided. Signed contracts refuse — voiding an executed signature needs a dedicated legal path.
+ */
+export async function voidContractInstances(
+  client: QueryableClient,
+  args: {
+    operatingCompanyId: string;
+    contractInstanceIds: string[];
+    reason?: string | null;
+  } & AuditMeta
+): Promise<{ voided: string[]; skipped: Array<{ id: string; reason: string }> }> {
+  const ids = [...new Set(args.contractInstanceIds.map((id) => String(id)).filter(Boolean))];
+  if (!ids.length) return { voided: [], skipped: [] };
+  const voided: string[] = [];
+  const skipped: Array<{ id: string; reason: string }> = [];
+  for (const id of ids) {
+    const rowRes = await client.query(
+      `
+        SELECT id::text, status::text, voided_at, template_id::text
+        FROM legal.contract_instances
+        WHERE operating_company_id = $1::uuid AND id = $2::uuid
+        LIMIT 1
+      `,
+      [args.operatingCompanyId, id]
+    );
+    const row = rowRes.rows[0] as
+      | { id: string; status: string; voided_at: string | null; template_id: string | null }
+      | undefined;
+    if (!row) {
+      skipped.push({ id, reason: "not_found" });
+      continue;
+    }
+    if (row.voided_at || row.status === "voided") {
+      voided.push(id); // idempotent
+      continue;
+    }
+    if (row.status === "signed_electronically") {
+      skipped.push({ id, reason: "signed_cannot_void" });
+      continue;
+    }
+    await client.query(
+      `
+        UPDATE legal.contract_instances
+        SET status = 'voided',
+            voided_at = now(),
+            updated_by_user_id = $3::uuid
+        WHERE id = $1::uuid
+          AND operating_company_id = $2::uuid
+          AND voided_at IS NULL
+      `,
+      [id, args.operatingCompanyId, args.actorUserId ?? null]
+    );
+    await appendContractAuditLog(client, {
+      operatingCompanyId: args.operatingCompanyId,
+      contractTemplateId: row.template_id,
+      contractInstanceId: id,
+      eventType: "contract_voided",
+      eventPayload: { reason: args.reason ?? null, prior_status: row.status },
+      actorUserId: args.actorUserId ?? null,
+      actorName: args.actorName ?? null,
+      ipAddress: args.ipAddress ?? null,
+      userAgent: args.userAgent ?? null,
+    });
+    voided.push(id);
+  }
+  return { voided, skipped };
+}
+
 export const contractSchemas = {
   contractCreateSchema,
   tokenSendSchema,

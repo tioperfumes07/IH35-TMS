@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~10:05 PM CT) — Legal contracts bulk Void wired (POST /void)
+- **PRIOR:** #28890 Codex LIVE tip; #28887 L3.
+- **THIS:** Backend voidContractInstances + POST /api/v1/legal/contracts/void; Contracts list Void batch action live (signed skipped). Honest-disabled removed.
+- **NEXT:** Codex LIVE Void; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:55 PM CT) — progress: #28882–#28889 Cursor no-stop wave
 - **SHIPS:** #28882 planner HR filters; #28883 go26; #28885 CF3 grain; #28886 Unit/Customer; #28887 Legal L3; #28888 CA1 timestamps; #28889 CF3 rangeFrom window.
 - **NEXT:** Continue reverse-wiring / residual Cursor boards; tipped Codex for LIVE. No match/Dreamline.
