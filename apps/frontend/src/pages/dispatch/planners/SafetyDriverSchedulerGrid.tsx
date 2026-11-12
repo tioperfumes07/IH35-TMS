@@ -36,8 +36,10 @@ type SafetyDriverSchedulerGridProps = {
 type DriverListRow = {
   driverId: string;
   driverName: string;
+  unitId: string | null;
   unit: string;
   hosStatus: string;
+  loadId: string | null;
   currentLoad: string;
   nextAvailable: string;
   activeLoadCount: number;
@@ -157,18 +159,22 @@ export function SafetyDriverSchedulerGrid({
     const listRows: DriverListRow[] = drivers.map((dr) => {
       const driverId = String(dr.driver_id);
       const name = String(dr.driver_name ?? "");
+      const unitId = dr.unit_id ? String(dr.unit_id) : null;
       const unit = dr.unit_number ? String(dr.unit_number) : "—";
       const bars = loadBarsByDriver.get(driverId) ?? [];
       const dwells = dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`);
       const hosStatus = dwells.length > 0 ? "On Leave" : bars.length > 0 ? "In Use" : unit !== "—" ? "Available" : "—";
-      const currentLoad = bars.length > 0 ? bars[0].label : "—";
+      const firstBar = bars[0];
+      const currentLoad = firstBar ? firstBar.label : "—";
       const nextAvailable = dwells.length > 0 ? String(dwells[0]?.startYmd ?? "—") : "—";
       const lastDispatchActivityAt = dr.last_dispatch_activity_at ? String(dr.last_dispatch_activity_at) : null;
       return {
         driverId,
         driverName: name ? formatPersonName(name) : "—",
+        unitId,
         unit,
         hosStatus,
+        loadId: firstBar?.loadId ?? null,
         currentLoad,
         nextAvailable,
         activeLoadCount: bars.length,
@@ -177,7 +183,14 @@ export function SafetyDriverSchedulerGrid({
     });
 
     const columns: Array<ParityColumn<DriverListRow>> = [
-      { key: "driverName", label: "Driver Name", sortable: true },
+      {
+        key: "driverName",
+        label: "Driver Name",
+        sortable: true,
+        render: (row) => (
+          <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName === "—" ? null : row.driverName} noun="Driver" />
+        ),
+      },
       {
         key: "safetyProfile",
         label: "Safety",
@@ -185,9 +198,29 @@ export function SafetyDriverSchedulerGrid({
         render: (row) => <EntityLink kind="driver_safety_profile" id={row.driverId} label="Safety profile" />,
         exportValue: (row) => row.driverId,
       },
-      { key: "unit", label: "Unit", sortable: true },
+      {
+        key: "unit",
+        label: "Unit",
+        sortable: true,
+        render: (row) =>
+          row.unitId ? (
+            <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unit === "—" ? null : row.unit} noun="Unit" />
+          ) : (
+            row.unit
+          ),
+      },
       { key: "hosStatus", label: "HOS Status", sortable: true },
-      { key: "currentLoad", label: "Current Load", sortable: true },
+      {
+        key: "currentLoad",
+        label: "Current Load",
+        sortable: true,
+        render: (row) =>
+          row.loadId ? (
+            <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
+          ) : (
+            row.currentLoad
+          ),
+      },
       { key: "nextAvailable", label: "Next Available", sortable: true },
       { key: "activeLoadCount", label: "# Active Loads", sortable: true },
       {

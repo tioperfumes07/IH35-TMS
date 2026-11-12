@@ -27,9 +27,11 @@ void PlannerAxisHead;
 type TimelineListRow = {
   driverId: string;
   driverName: string;
+  unitId: string | null;
   unit: string;
   hosStatus: string;
   leaveStatus: string;
+  loadId: string | null;
   currentLoad: string;
   loadCount: number;
 };
@@ -357,34 +359,73 @@ export function UnifiedTimelinePlanner() {
               driver.hos_status === "warning_1hr" ? "Warning 1hr" :
               driver.hos_status === "warning_15min" ? "Warning 15min" :
               driver.hos_status === "violation" ? "Violation" : "—";
+            const fallback = unitByDriverId.get(driver.id);
+            const unitId = driver.unit_id ?? fallback?.unitId ?? null;
+            const unitNumber = driver.unit_number ?? fallback?.unitNumber ?? null;
+            const first = sorted[0];
             return {
               driverId: driver.id,
-              driverName: entityLabel(driver.name, driver.id, "Driver"),
-              unit: driver.unit_number ?? "—",
+              driverName: entityLabel(formatPersonName(driver.name), driver.id, "Driver"),
+              unitId: unitId ? String(unitId) : null,
+              unit: unitNumber ?? "—",
               hosStatus: hosLabel,
               leaveStatus: leaveStatusForDriver(driver.id),
-              currentLoad: sorted.length > 0 ? sorted[0].load_number : "—",
+              loadId: first?.id ?? null,
+              currentLoad: first?.load_number ?? "—",
               loadCount: sorted.length,
             };
           });
           // LEAD 443.206 D4 — the Unassigned row in the list view too.
           if (unassignedLoads.length) {
+            const firstUnassigned = unassignedLoads[0]!;
             listRows.push({
               driverId: "unassigned-loads",
               driverName: "Unassigned",
+              unitId: null,
               unit: "—",
               hosStatus: "—",
               leaveStatus: "—",
-              currentLoad: unassignedLoads[0]!.load_number,
+              loadId: firstUnassigned.id,
+              currentLoad: firstUnassigned.load_number,
               loadCount: unassignedLoads.length,
             });
           }
           const columns: Array<ParityColumn<TimelineListRow>> = [
-            { key: "driverName", label: "Driver Name", sortable: true },
-            { key: "unit", label: "Unit", sortable: true },
+            {
+              key: "driverName",
+              label: "Driver Name",
+              sortable: true,
+              render: (row) =>
+                row.driverId === "unassigned-loads" ? (
+                  row.driverName
+                ) : (
+                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName === "—" ? null : row.driverName} noun="Driver" />
+                ),
+            },
+            {
+              key: "unit",
+              label: "Unit",
+              sortable: true,
+              render: (row) =>
+                row.unitId ? (
+                  <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unit === "—" ? null : row.unit} noun="Unit" />
+                ) : (
+                  row.unit
+                ),
+            },
             { key: "hosStatus", label: "HOS Status", sortable: true },
             { key: "leaveStatus", label: "Leave Status", sortable: true, render: (row) => <StatusPill status={row.leaveStatus} /> },
-            { key: "currentLoad", label: "Current Load", sortable: true },
+            {
+              key: "currentLoad",
+              label: "Current Load",
+              sortable: true,
+              render: (row) =>
+                row.loadId ? (
+                  <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
+                ) : (
+                  row.currentLoad
+                ),
+            },
             { key: "loadCount", label: "Load Count", sortable: true },
           ];
           return (

@@ -307,7 +307,12 @@ export function TruckPlanner() {
             { key: "driver", label: "Driver", sortable: true,
               render: (row) => row.driverId ? <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driver} noun="Driver" /> : row.driver },
             { key: "currentLoad", label: "Current Load", sortable: true,
-              render: (row) => row.loadId ? <Link className="underline" to={`/dispatch/loads/${encodeURIComponent(row.loadId)}`}>{row.currentLoad}</Link> : row.currentLoad },
+              render: (row) =>
+                row.loadId ? (
+                  <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
+                ) : (
+                  row.currentLoad
+                ), }
             { key: "status", label: "Status", sortable: true },
             { key: "nextAvailable", label: "Next Available", sortable: true },
           ];
