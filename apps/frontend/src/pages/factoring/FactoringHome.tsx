@@ -1936,10 +1936,74 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   )
                 },
                 { key: "delivery_date", label: "Delivery Date", sortable: true, render: (row) => fmtDate(row.delivery_date) },
-                { key: "total_cents", label: "Original Invoice Amount", sortable: true, render: (row) => fmtCents(row.total_cents) },
-                { key: "advance_amount_cents", label: "Advance", sortable: true, render: (row) => row.advance_amount_cents != null ? fmtCents(row.advance_amount_cents) : "—" },
-                { key: "reserve_amount_cents", label: "Reserve", sortable: true, render: (row) => row.reserve_amount_cents != null ? fmtCents(row.reserve_amount_cents) : "—" },
-                { key: "factor_fee_cents", label: "Fees", sortable: true, render: (row) => row.factor_fee_cents != null ? fmtCents(row.factor_fee_cents) : "—" },
+                {
+                  key: "total_cents",
+                  label: "Original Invoice Amount",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.total_cents ?? 0)}
+                      drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                    />
+                  ),
+                },
+                {
+                  key: "advance_amount_cents",
+                  label: "Advance",
+                  sortable: true,
+                  render: (row) =>
+                    row.advance_amount_cents == null ? (
+                      "—"
+                    ) : row.factoring_advance_id ? (
+                      <MoneyCell
+                        cents={Number(row.advance_amount_cents)}
+                        drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                      />
+                    ) : (
+                      <MoneyCell
+                        cents={Number(row.advance_amount_cents)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ),
+                },
+                {
+                  key: "reserve_amount_cents",
+                  label: "Reserve",
+                  sortable: true,
+                  render: (row) =>
+                    row.reserve_amount_cents == null ? (
+                      "—"
+                    ) : row.factoring_advance_id ? (
+                      <MoneyCell
+                        cents={Number(row.reserve_amount_cents)}
+                        drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                      />
+                    ) : (
+                      <MoneyCell
+                        cents={Number(row.reserve_amount_cents)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ),
+                },
+                {
+                  key: "factor_fee_cents",
+                  label: "Fees",
+                  sortable: true,
+                  render: (row) =>
+                    row.factor_fee_cents == null ? (
+                      "—"
+                    ) : row.factoring_advance_id ? (
+                      <MoneyCell
+                        cents={Number(row.factor_fee_cents)}
+                        drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                      />
+                    ) : (
+                      <MoneyCell
+                        cents={Number(row.factor_fee_cents)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ),
+                },
                 { key: "invoice_display_id", label: "Invoice", render: (row) => (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_display_id, row.invoice_id, "Invoice")} />
                 ) },
@@ -2728,7 +2792,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   { key: "po_ref", label: "PO/Ref", render: () => "—" },
                   { key: "statement_reference", label: "Other Ref", render: (row: ChargebackFeeRow) => row.statement_reference ?? "—" },
                   { key: "created_at", label: "Date", render: (row: ChargebackFeeRow) => fmtDate(row.created_at) },
-                  { key: "factor_fee_amount", label: "Amount", cellClass: "text-right", render: (row: ChargebackFeeRow) => fmtCurrency(row.factor_fee_amount) },
+                  {
+                    key: "factor_fee_amount",
+                    label: "Amount",
+                    cellClass: "text-right",
+                    render: (row: ChargebackFeeRow) =>
+                      row.factoring_advance_id ? (
+                        <MoneyCell
+                          cents={Math.round(Number(row.factor_fee_amount ?? 0) * 100)}
+                          drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                        />
+                      ) : (
+                        fmtCurrency(row.factor_fee_amount)
+                      ),
+                  },
                   { key: "fee_description", label: "Fee Description", render: () => "Factor Fee" },
                 ]}
                 rows={feesQuery.data?.history ?? []}
@@ -2880,11 +2957,85 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
                     { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => formatQuantityTable(row.age, 0) },
-                    { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b31_60", label: "31-60", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "31-60" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b61_90", label: "61-90", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "61-90" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "b90_plus", label: "90+", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "90+" ? fmtCurrency(row.invoice_amount) : "—") },
-                    { key: "balance", label: "Balance", sortable: true, cellClass: "text-right font-semibold", render: (row: (typeof agingRows)[number]) => fmtCurrency(row.invoice_amount) },
+                    {
+                      key: "b0_30",
+                      label: "0-30",
+                      cellClass: "text-right",
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.bucket !== "0-30" ? (
+                          "—"
+                        ) : row.invoice_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : (
+                          fmtCurrency(row.invoice_amount)
+                        ),
+                    },
+                    {
+                      key: "b31_60",
+                      label: "31-60",
+                      cellClass: "text-right",
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.bucket !== "31-60" ? (
+                          "—"
+                        ) : row.invoice_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : (
+                          fmtCurrency(row.invoice_amount)
+                        ),
+                    },
+                    {
+                      key: "b61_90",
+                      label: "61-90",
+                      cellClass: "text-right",
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.bucket !== "61-90" ? (
+                          "—"
+                        ) : row.invoice_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : (
+                          fmtCurrency(row.invoice_amount)
+                        ),
+                    },
+                    {
+                      key: "b90_plus",
+                      label: "90+",
+                      cellClass: "text-right",
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.bucket !== "90+" ? (
+                          "—"
+                        ) : row.invoice_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : (
+                          fmtCurrency(row.invoice_amount)
+                        ),
+                    },
+                    {
+                      key: "balance",
+                      label: "Balance",
+                      sortable: true,
+                      cellClass: "text-right font-semibold",
+                      render: (row: (typeof agingRows)[number]) =>
+                        row.invoice_id ? (
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                          />
+                        ) : (
+                          fmtCurrency(row.invoice_amount)
+                        ),
+                    },
                     { key: "purchased", label: "Purchase", render: () => "Y" },
                   ]}
                   rows={agingRows}

@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~1:05 AM CT) — Factoring Invoice Status + Aging + Fees history MoneyCells
+- **SHIPS:** #28953–#28956 · Invoice Status amount/advance/reserve/fees · Aging bucket+balance · Fees-paid history amount → MoneyCell.
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~12:50 AM CT) — Factoring Debtor Receipts / Loan-Save / Unapplied MoneyCells
-- **SHIPS:** #28953–#28955 · Debtor Receipts payment/applied/unapplied · Loan/Save invoice/advance/reserve · Unapplied Cash amounts → MoneyCell (payment / invoice / factoring_advance).
+- **SHIPS:** #28953–#28955 · Debtor Receipts / Loan-Save / Unapplied → MoneyCell. **MERGED #28956.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~12:35 AM CT) — Factoring Funds Due + Fees MoneyCell drills
