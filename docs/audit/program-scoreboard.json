@@ -1,10 +1,10 @@
 {
-  "healthzSha": "b189e20",
-  "generated_at": "2026-11-12T06:33:26.074Z",
+  "healthzSha": "336fb60",
+  "generated_at": "2026-11-12T08:26:54.118Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "b189e20",
+    "deployedSha": "336fb60",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,42 @@
   },
   "recentActivity": [
     {
+      "number": 28987,
+      "title": "FINDING: MAIN-RED-2026-11-12f — date-column missing count 123→127 (DailyPrediction + settlement/perfume)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 02:03 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28987",
+      "sha": "336fb6079a",
+      "committedAtIso": "2026-11-12T03:03:57-05:00"
+    },
+    {
+      "number": 28986,
+      "title": "FINDING: MAIN-RED-2026-11-12e — capacity unsubscribe opco allowlist + perfume desk gate cleanup",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 01:27 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28986",
+      "sha": "84056eccac",
+      "committedAtIso": "2026-11-12T02:27:08-05:00"
+    },
+    {
+      "number": 28985,
+      "title": "FINDING: LST-F12003 PERFUME-DESK — company selector panel was clipped invisible by the top bar; USMCA drift popup covered the perfume desk",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 12:36 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28985",
+      "sha": "c35b83f554",
+      "committedAtIso": "2026-11-12T00:36:07-06:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 12:33 AM CT",
+      "url": "",
+      "sha": "b99c3086a7",
+      "committedAtIso": "2026-11-12T06:33:26Z"
+    },
+    {
       "number": 28948,
       "title": "FINDING: LST-F12003 PERFUME-DESK — owner-only hidden TIO Perfumes price desk (isolated perfume.* schema)",
       "state": "merged",
@@ -2175,42 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28978",
       "sha": "18661910c4",
       "committedAtIso": "2026-11-12T00:54:06-05:00"
-    },
-    {
-      "number": 28977,
-      "title": "FINDING: MAIN-RED-2026-11-12b — Factoring Queue showed Mexico (MXN) load rates as US dollars after #28971",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 11:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28977",
-      "sha": "53fa6dbbe1",
-      "committedAtIso": "2026-11-11T23:53:01-06:00"
-    },
-    {
-      "number": 28976,
-      "title": "FINDING: OCR Rate + Relay wallet doc MoneyCell residual reverse-wiring",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 11:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28976",
-      "sha": "c7767fd840",
-      "committedAtIso": "2026-11-12T00:52:39-05:00"
-    },
-    {
-      "number": 28975,
-      "title": "FINDING: Fuel Assignment + Relay Deposit MoneyCell residual reverse-wiring",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 11:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28975",
-      "sha": "ce2c3ea7c1",
-      "committedAtIso": "2026-11-12T00:48:09-05:00"
-    },
-    {
-      "number": 28974,
-      "title": "FINDING: Cash Flow Rolling/DailyPrediction MoneyCell residual reverse-wiring",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 11:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28974",
-      "sha": "91b8984ca6",
-      "committedAtIso": "2026-11-12T00:43:16-05:00"
     }
   ]
 }
