@@ -4,7 +4,7 @@
  * Finalize / payment / interactive deductions live on SettlementStatementWorkflowPage
  * (`?settlement_id=&workflow=1`). JE opens /accounting/proof-trail/settlement/:id.
  */
-import { settlementNumber } from "../../lib/settlementNumber";
+import { statementIdentity } from "./statementIdentity";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams, useNavigate } from "react-router-dom";
@@ -95,12 +95,11 @@ export function SettlementDetailPage() {
   );
 
   const paymentState = String(settlement.payment_state ?? "unpaid");
-  // ROUND 8.17 board 35 — blank identity is a defect; open/presettlement without AlwaysTrack → PENDING.
-  const settlementDisplayId =
-    settlementNumber(settlement) ??
-    (settlement.is_presettlement === true || String(settlement.status ?? "").toLowerCase() === "open" || String(settlement.status ?? "").toLowerCase() === "draft"
-      ? "PENDING"
-      : null);
+  // ROUND 8.17 board 35 — header uses driver AlwaysTrack, else linked company AlwaysTrack, else PENDING.
+  const settlementDisplayId = statementIdentity({
+    settlement,
+    companyDisplayId: readout?.company_settlement?.display_id,
+  });
   const companySettlementLabel = (() => {
     const t = String(readout?.company_settlement?.display_id ?? settlementDisplayId ?? "").trim();
     return t ? `Company settlement ${t}` : "Company settlement";
