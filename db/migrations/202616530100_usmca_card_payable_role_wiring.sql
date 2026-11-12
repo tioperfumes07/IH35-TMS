@@ -39,14 +39,20 @@ BEGIN
     FROM catalogs.accounts
    WHERE operating_company_id = v_opco AND account_number = '2510' AND deactivated_at IS NULL;
   IF v_2510 IS NULL THEN
-    RAISE EXCEPTION 'USMCA account 2510 (Dreamline Diesel Card Payable) not found';
+    -- A database built from source (CI, DR restore, fresh branch) has no USMCA chart of accounts rows, so
+    -- there is nothing to bind; on production 2510/2520 exist and the roles were bound 2026-11-12 22:24Z.
+    RAISE NOTICE 'USMCA account 2510 (Dreamline Diesel Card Payable) not present — role binding skipped (fresh database)';
+    RETURN;
   END IF;
 
   SELECT id INTO v_2520
     FROM catalogs.accounts
    WHERE operating_company_id = v_opco AND account_number = '2520' AND deactivated_at IS NULL;
   IF v_2520 IS NULL THEN
-    RAISE EXCEPTION 'USMCA account 2520 (WEX Fleet Card) not found';
+    -- A database built from source (CI, DR restore, fresh branch) has no USMCA chart of accounts rows, so
+    -- there is nothing to bind; on production 2510/2520 exist and the roles were bound 2026-11-12 22:24Z.
+    RAISE NOTICE 'USMCA account 2520 (WEX Fleet Card) not present — role binding skipped (fresh database)';
+    RETURN;
   END IF;
 
   -- fuel_card_payable_dreamline → 2510
