@@ -19,7 +19,6 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
-import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
@@ -50,10 +49,6 @@ function claimStatusVariant(status: InsuranceClaimStatus): "neutral" | "warn" | 
   if (status === "investigating") return "warn";
   if (status === "denied") return "crit";
   return "neutral";
-}
-
-function formatMoney(cents: number): string {
-  return formatUsdCents(cents);
 }
 
 const CLAIM_FAULT_LABELS: Record<string, string> = {

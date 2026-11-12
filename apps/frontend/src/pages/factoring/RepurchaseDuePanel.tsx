@@ -20,7 +20,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
 
