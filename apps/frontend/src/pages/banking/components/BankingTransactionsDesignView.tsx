@@ -2,7 +2,7 @@ import { AccountRegisterPage } from "../../accounting/AccountRegisterPage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
 import {
   categorizeBankTransaction,
@@ -685,35 +685,54 @@ export function BankingTransactionsDesignView({
   // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
   // previously only reachable by manually expanding the row.
   const matchPaneRef = useRef<HTMLDivElement | null>(null);
-  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>(initialReviewTab ?? "for_review");
+  // ROUND 8.20 board 3 — URL is source of truth for Money In/Out KPI cohort (types/review/dates).
+  // Parent props can lag one paint after navigate; reading searchParams closes blank-dates / All-types FAIL.
+  const [searchParams] = useSearchParams();
+  const urlType = searchParams.get("type");
+  const urlTypes = searchParams.get("types");
+  const urlReview = searchParams.get("review");
+  const urlDateFrom = searchParams.get("date_from");
+  const urlDateTo = searchParams.get("date_to");
+  const cohortType =
+    urlType === "uncategorized"
+      ? "uncategorized"
+      : urlTypes
+        ? urlTypes.split(",")[0] ?? null
+        : initialTransactionType && initialTransactionType !== "all"
+          ? initialTransactionType
+          : null;
+  const cohortReview: ReviewTabId | null =
+    urlReview === "for_review" || urlReview === "categorized" || urlReview === "excluded"
+      ? urlReview
+      : urlType === "uncategorized"
+        ? "for_review"
+        : initialReviewTab ?? null;
+  const cohortDateFrom = urlDateFrom ?? initialDateFrom ?? "";
+  const cohortDateTo = urlDateTo ?? initialDateTo ?? "";
+
+  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>(cohortReview ?? "for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   // B.2 — multi-select: an empty array means "All transaction types" (no filter, same meaning the
   // single-select's "all" id used to carry). Selecting any type removes the implicit "all".
   const [selectedTransactionTypes, setSelectedTransactionTypes] = useState<string[]>(
-    initialTransactionType && initialTransactionType !== "all" ? [initialTransactionType] : []
+    cohortType ? [cohortType] : []
   );
-  // Deep-link / KPI filter must apply after mount — BankingHome sets initialTransactionType via
-  // ?type=uncategorized (and similar). Without this sync, the first paint sticks on "all".
   useEffect(() => {
-    if (initialTransactionType && initialTransactionType !== "all") {
-      setSelectedTransactionTypes([initialTransactionType]);
-    } else {
-      // U26 — the deep-link pre-filter going back to "all" clears it (it used to be ignored, so it stuck).
-      setSelectedTransactionTypes([]);
-    }
-  }, [initialTransactionType]);
+    if (cohortType) setSelectedTransactionTypes([cohortType]);
+    else setSelectedTransactionTypes([]);
+  }, [cohortType]);
   useEffect(() => {
-    if (initialReviewTab) setActiveReviewTab(initialReviewTab);
-  }, [initialReviewTab]);
+    if (cohortReview) setActiveReviewTab(cohortReview);
+  }, [cohortReview]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
-  const [dateFrom, setDateFrom] = useState(initialDateFrom ?? "");
-  const [dateTo, setDateTo] = useState(initialDateTo ?? "");
+  const [dateFrom, setDateFrom] = useState(cohortDateFrom);
+  const [dateTo, setDateTo] = useState(cohortDateTo);
   useEffect(() => {
-    if (initialDateFrom != null) setDateFrom(initialDateFrom);
-    if (initialDateTo != null) setDateTo(initialDateTo);
-  }, [initialDateFrom, initialDateTo]);
+    setDateFrom(cohortDateFrom);
+    setDateTo(cohortDateTo);
+  }, [cohortDateFrom, cohortDateTo]);
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});

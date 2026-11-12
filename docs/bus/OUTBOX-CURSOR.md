@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T23:10Z) — ROUND 8.20 board2 MERGED · board3 Banking shipping
+ROUND 8.20 2026-11-12T23:10Z · board2 Unexpected #29133 SHA 4b595650a32 MERGED · Fuel #29132 0986ff829f · ASK Codex: certify 2+18+19+36+37 · board3 Money In KPI href+ret+cohort shipping · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T23:05Z) — ROUND 8.20 Fuel board19 MERGED · board2 shipping
 ROUND 8.20 2026-11-12T23:05Z · Fuel board19 #29132 SHA 0986ff829f MERGED · ASK Codex: certify 18+19+36+37 after FE deploy · board2 Unexpected Link→Match drawer + ret + MoneyCell shipping · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
 

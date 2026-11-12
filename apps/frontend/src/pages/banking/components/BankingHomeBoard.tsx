@@ -9,7 +9,8 @@
  */
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getBankingTiles,
   getDriftAlerts,
@@ -246,9 +247,24 @@ function LinkedToCell({
 
 export function BankingHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
   const today = companyToday();
   const bounds = monthBoundsIso(today);
   const monthLabel = MONTH_SHORT[Number(today.slice(5, 7)) - 1] ?? "Month";
+  // ROUND 8.20 board 3 — Money In/Out KPI population as bookmarkable href + ret (URL is source of truth).
+  const moneyInHref = withReturnContext(
+    `${BANKING_TAB_PATH.transactions}?types=money_in&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+    originHref,
+  );
+  const moneyOutHref = withReturnContext(
+    `${BANKING_TAB_PATH.transactions}?types=money_out&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+    originHref,
+  );
+  const reviewHref = withReturnContext(
+    `${BANKING_TAB_PATH.transactions}?type=uncategorized&review=for_review`,
+    originHref,
+  );
 
   const moneyMapQuery = useQuery({
     queryKey: ["banking", "money-map", companyId, bounds.start, today],
@@ -665,12 +681,8 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-in"
-          // ROUND 8.17 class S — keep the KPI population: month dates + money_in + categorized (cleared), never For review / all types.
-          onClick={() =>
-            navigate(
-              `${BANKING_TAB_PATH.transactions}?types=money_in&review=categorized&date_from=${bounds.start}&date_to=${today}`,
-            )
-          }
+          // ROUND 8.20 board 3 — month dates + money_in + categorized (cleared); never For review / all types.
+          href={moneyInHref}
         />
         <V3KpiTile
           label={`Money out · ${monthLabel}`}
@@ -678,11 +690,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-out"
-          onClick={() =>
-            navigate(
-              `${BANKING_TAB_PATH.transactions}?types=money_out&review=categorized&date_from=${bounds.start}&date_to=${today}`,
-            )
-          }
+          href={moneyOutHref}
         />
         <V3KpiTile
           label="Lines to review"
@@ -690,7 +698,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub={`${kpiSplit.opPending} operating · ${kpiSplit.relayPending} Relay`}
           tone={kpiSplit.pendingTotal > 0 ? "amber" : "green"}
           testId="banking-kpi-lines-to-review"
-          onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized&review=for_review`)}
+          href={reviewHref}
         />
         <V3KpiTile
           label="Drift alerts"
@@ -698,7 +706,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="bank vs book"
           tone={driftCount > 0 ? "red" : "ink"}
           testId="banking-kpi-drift-alerts"
-          onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
+          href={BANKING_TAB_PATH.reconciliation}
         />
       </div>
 
