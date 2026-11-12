@@ -300,7 +300,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
                 storageKey="perfume-desk-picture-lines-v1"
                 hidePager
                 columns={[
-                  { key: "include", label: "Use", width: 52, render: (l) => (
+                  { key: "include", label: "Use", render: (l) => (
                     <input type="checkbox" aria-label={`Use line ${l.description}`} checked={l.include} onChange={(e) => editLine(l.key, { include: e.target.checked })} />) },
                   { key: "image_name", label: "Picture", sortable: true },
                   { key: "brand", label: "Brand", sortable: true, render: (l) => (
