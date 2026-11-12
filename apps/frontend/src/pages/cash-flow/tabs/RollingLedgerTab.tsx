@@ -17,6 +17,7 @@ import { formatDateUS, formatIsoDatesInText } from "../../../lib/formatDate";
 import { ledgerPartyLabel } from "../ledgerPartyLabel";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { EntityLink, resolveEntityRoute, type EntityKind } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { Combobox } from "../../../components/Combobox";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -39,6 +40,28 @@ export function ledgerEntityKind(
 ): EntityKind | null {
   if (row && isFuelForecastRow(row)) return null;
   return kind === "card_payable" || kind === "relay_topup" || kind === "fuel_forecast" ? null : (kind as EntityKind);
+}
+
+function ledgerAmountCell(row: RollingLedgerRow) {
+  if (row.amount_known === false) return "Awaiting short miles";
+  const kind = ledgerEntityKind(row.document_kind, row);
+  if (kind && row.document_id) {
+    return (
+      <MoneyCell
+        cents={Number(row.amount_cents ?? 0)}
+        drill={{ entity: { kind, id: row.document_id } }}
+      />
+    );
+  }
+  if (row.load_id) {
+    return (
+      <MoneyCell
+        cents={Number(row.amount_cents ?? 0)}
+        drill={{ entity: { kind: "load", id: row.load_id } }}
+      />
+    );
+  }
+  return formatCents(row.amount_cents);
 }
 /** Forecast provenance: 4-wk fuel avg → Fuel History (contributing source), never a fake expense. */
 export function ledgerDocLabel(row: RollingLedgerRow) {
@@ -1037,8 +1060,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       className: "whitespace-nowrap text-right",
       cellClass: "whitespace-nowrap text-right font-mono font-medium",
       kind: "money",
-      render: (row) =>
-        row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents),
+      render: (row) => ledgerAmountCell(row),
     },
   ];
 
@@ -1106,7 +1128,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       className: "whitespace-nowrap text-right",
       cellClass: "whitespace-nowrap text-right font-mono font-medium",
       kind: "money",
-      render: (row) => (isBoardEmptyRow(row) ? null : row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents)),
+      render: (row) => (isBoardEmptyRow(row) ? null : ledgerAmountCell(row)),
     },
     {
       key: "days",

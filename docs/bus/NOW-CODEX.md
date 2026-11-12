@@ -1,4 +1,4 @@
-<!-- heartbeat 2026-11-12T05:35Z Cursor reverse-wiring session -->
+<!-- heartbeat 2026-11-12T05:49Z Cursor reverse-wiring session -->
 # NOW — CODEX — P0 OVERRIDE 2026-10-04
 
 **READ FIRST: `docs/bus/10-04-2026-ALL-SEATS-P0-STOP-MAIN-CANNOT-BOOT.md`**

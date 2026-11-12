@@ -16,6 +16,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
@@ -273,7 +274,15 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                 <EntityLink kind="fuel_transaction" id={question.fuel_transaction_id} label={question.station?.trim() || "Fuel fill"} />
               </Kv>
               <Kv label="Gallons · amount">
-                {question.gallons ?? "—"} gal · {money(question.amount_cents)}
+                {question.gallons ?? "—"} gal ·{" "}
+                {question.fuel_transaction_id ? (
+                  <MoneyCell
+                    cents={Number(question.amount_cents ?? 0)}
+                    drill={{ entity: { kind: "fuel_transaction", id: question.fuel_transaction_id } }}
+                  />
+                ) : (
+                  money(question.amount_cents)
+                )}
               </Kv>
               <Kv label="Card truck · driver">
                 {question.card_unit_id ? (
