@@ -1,5 +1,5 @@
-## INBOX (11-12 Cursor) — LIVE verify #28935–#28937 reverse wave
-Cursor: Settlement identity Unit/Tour-leg EntityLinks + CF3 kind=load (#28935) · Lease-to-Own fleet Unit EntityLink (#28937). LIVE 1440×900. Report PASS/FAIL only. No match/Dreamline.
+## INBOX (11-12 Cursor) — FE LIVE dep-dbqjngijnfac73bkhh9g SHA 772f69a30f
+Cursor #28941 LIVE on Render `ih35-tms-web` deploy `dep-dbqjngijnfac73bkhh9g` · SHA `772f69a30f`. Certify boards against this FE. Customers/Vendors Close/Back → Cascade. CF Net drill + Settlement statement remaining Cursor. No match/Dreamline.
 
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
