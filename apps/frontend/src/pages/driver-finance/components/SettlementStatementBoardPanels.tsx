@@ -28,33 +28,6 @@ export type StatementEarningsRow = {
   amount: number;
 };
 
-const th: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 700,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  fontFamily: V3.font,
-};
-
-const td: CSSProperties = {
-  textAlign: "left",
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  fontSize: V3_TABLE.fontPx,
-  color: V3.ink,
-  fontFamily: V3.font,
-  whiteSpace: "nowrap",
-};
-
-const tdRight: CSSProperties = { ...td, textAlign: "right", fontVariantNumeric: "tabular-nums" };
-const thRight: CSSProperties = { ...th, textAlign: "right" };
-
 function laneLabel(row: StatementEarningsRow): string {
   const o = [row.origin_city, row.origin_state].filter(Boolean).join(", ");
   const d = [row.dest_city, row.dest_state].filter(Boolean).join(", ");
@@ -146,19 +119,20 @@ export function SettlementStatementBoardPanels({
   const signedMinusDollars = (c: number) => (c > 0 ? `−${formatUsd(c / 100)}` : formatUsd(0));
   const signedPlusDollars = (c: number) => (c > 0 ? `+${formatUsd(c / 100)}` : formatUsd(0));
 
-  function MoneyTd({
+
+  function MoneyRowValue({
     cents,
-    style,
     format,
     loadId,
+    style,
   }: {
     cents: number | null | undefined;
-    style?: CSSProperties;
     format?: (c: number) => string;
     loadId?: string | null;
+    style?: CSSProperties;
   }) {
     return (
-      <td style={{ ...tdRight, ...style }}>
+      <span style={style}>
         {loadId ? (
           <MoneyCell
             cents={cents}
@@ -172,10 +146,20 @@ export function SettlementStatementBoardPanels({
             drill={{ entity: { kind: "settlement", id: settlementId } }}
           />
         )}
-      </td>
+      </span>
     );
   }
 
+  const kvRow: CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: `${V3_TABLE.rowPadY}px 12px`,
+    borderBottom: `1px solid ${V3.borderSoft}`,
+    fontSize: V3_TABLE.fontPx,
+    color: V3.ink,
+    fontFamily: V3.font,
+  };
   return (
     <div
       data-testid="settlements-statement-v3-panel"
@@ -259,36 +243,34 @@ export function SettlementStatementBoardPanels({
       </BoardSection>
 
       <BoardSection title="Deductions · reimbursements · net" testId="settlement-statement-panel-deductions">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={th}>Item</th>
-              <th style={thRight}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={td}>Deductions (escrow, advances, fines)</td>
-              <MoneyTd
+        <dl data-testid="settlement-statement-deductions-kv">
+          <div style={kvRow}>
+            <dt>Deductions (escrow, advances, fines)</dt>
+            <dd>
+              <MoneyRowValue
                 cents={Math.round(deductionTotalDollars * 100)}
                 format={signedMinusDollars}
                 style={{ color: deductionTotalDollars > 0 ? V3.red : V3.ink }}
               />
-            </tr>
-            <tr>
-              <td style={td}>Reimbursements (tolls, scales)</td>
-              <MoneyTd
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Reimbursements (tolls, scales)</dt>
+            <dd>
+              <MoneyRowValue
                 cents={Math.round(reimbursementTotalDollars * 100)}
                 format={signedPlusDollars}
                 style={{ color: reimbursementTotalDollars > 0 ? V3.green : V3.ink }}
               />
-            </tr>
-            <tr>
-              <td style={{ ...td, fontWeight: 700, borderBottom: "none" }}>Driver net</td>
-              <MoneyTd cents={driverNetCents} style={{ fontWeight: 700, borderBottom: "none" }} />
-            </tr>
-          </tbody>
-        </table>
+            </dd>
+          </div>
+          <div style={{ ...kvRow, fontWeight: 700, borderBottom: "none" }}>
+            <dt>Driver net</dt>
+            <dd>
+              <MoneyRowValue cents={driverNetCents} style={{ fontWeight: 700 }} />
+            </dd>
+          </div>
+        </dl>
       </BoardSection>
 
       <BoardSection
@@ -296,40 +278,40 @@ export function SettlementStatementBoardPanels({
         testId="settlement-statement-panel-company"
         footer="Revenue − costs − driver pay = margin. Same tour, same loads."
       >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={th}>Line</th>
-              <th style={thRight}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={td}>Revenue</td>
-              <MoneyTd cents={revenueCents} />
-            </tr>
-            <tr>
-              <td style={td}>Costs (fuel, tolls, other)</td>
-              <MoneyTd
+        <dl data-testid="settlement-statement-company-kv">
+          <div style={kvRow}>
+            <dt>Revenue</dt>
+            <dd>
+              <MoneyRowValue cents={revenueCents} />
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Costs (fuel, tolls, other)</dt>
+            <dd>
+              <MoneyRowValue
                 cents={costsCents}
                 format={signedMinusCents}
                 style={{ color: costsCents > 0 ? V3.red : V3.ink }}
               />
-            </tr>
-            <tr>
-              <td style={td}>Driver pay</td>
-              <MoneyTd
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Driver pay</dt>
+            <dd>
+              <MoneyRowValue
                 cents={driverPayCents}
                 format={signedMinusCents}
                 style={{ color: driverPayCents > 0 ? V3.red : V3.ink }}
               />
-            </tr>
-            <tr>
-              <td style={{ ...td, fontWeight: 700, borderBottom: "none" }}>Margin</td>
-              <MoneyTd cents={marginCents} style={{ fontWeight: 700, borderBottom: "none" }} />
-            </tr>
-          </tbody>
-        </table>
+            </dd>
+          </div>
+          <div style={{ ...kvRow, fontWeight: 700, borderBottom: "none" }}>
+            <dt>Margin</dt>
+            <dd>
+              <MoneyRowValue cents={marginCents} style={{ fontWeight: 700 }} />
+            </dd>
+          </div>
+        </dl>
       </BoardSection>
 
       <BoardSection
@@ -337,95 +319,44 @@ export function SettlementStatementBoardPanels({
         testId="settlement-statement-panel-linked"
         footer="Every link opens its record and comes back here (two-way)."
       >
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={th}>Record</th>
-              <th style={th}>Link</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style={td}>Loads</td>
-              <td style={{ ...td, whiteSpace: "normal" }}>
-                {legs.length === 0 ? (
-                  "—"
-                ) : (
-                  <span style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-                    {legs.map((leg, i) => (
-                      <span key={leg.load_id}>
-                        <EntityLink
-                          kind="load"
-                          id={leg.load_id}
-                          label={entityLabel(leg.load_number, leg.load_id, "Load")}
-                        />
-                        {i < legs.length - 1 ? <span style={{ color: V3.muted }}> · </span> : null}
-                      </span>
-                    ))}
-                  </span>
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td style={td}>Fuel fills on this tour</td>
-              <td style={td}>
-                {fuelFillCount > 0 ? (
-                  <LinkCell>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (onOpenFuelFills) {
-                          onOpenFuelFills();
-                          return;
-                        }
-                        document
-                          .querySelector("[data-testid='fuel-purchases-section'], #settlement-statement-fuel")
-                          ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                      }}
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        color: V3.link,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        fontFamily: V3.font,
-                        fontSize: V3_TABLE.fontPx,
-                      }}
-                    >
-                      {fuelFillCount} fill{fuelFillCount === 1 ? "" : "s"} →
-                    </button>
-                  </LinkCell>
-                ) : (
-                  "—"
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td style={td}>Advances recovered</td>
-              <MoneyTd cents={recoveriesCents > 0 ? recoveriesCents : null} />
-            </tr>
-            <tr>
-              <td style={td}>Bank payment</td>
-              <td style={td}>
-                {matchedBankTransactionId ? (
-                  <EntityLink
-                    kind="bank_transaction"
-                    id={matchedBankTransactionId}
-                    label="Bank line →"
-                  />
-                ) : (
-                  "—"
-                )}
-              </td>
-            </tr>
-            <tr>
-              <td style={td}>Journal entry</td>
-              <td style={td}>
+        <dl data-testid="settlement-statement-linked-kv">
+          <div style={{ ...kvRow, alignItems: "flex-start" }}>
+            <dt>Loads</dt>
+            <dd style={{ whiteSpace: "normal", textAlign: "right" }}>
+              {legs.length === 0 ? (
+                "—"
+              ) : (
+                <span style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "flex-end" }}>
+                  {legs.map((leg, i) => (
+                    <span key={leg.load_id}>
+                      <EntityLink
+                        kind="load"
+                        id={leg.load_id}
+                        label={entityLabel(leg.load_number, leg.load_id, "Load")}
+                      />
+                      {i < legs.length - 1 ? <span style={{ color: V3.muted }}> · </span> : null}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Fuel fills on this tour</dt>
+            <dd>
+              {fuelFillCount > 0 ? (
                 <LinkCell>
                   <button
                     type="button"
-                    onClick={onOpenJournalEntry}
+                    onClick={() => {
+                      if (onOpenFuelFills) {
+                        onOpenFuelFills();
+                        return;
+                      }
+                      document
+                        .querySelector("[data-testid='fuel-purchases-section'], #settlement-statement-fuel")
+                        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }}
                     style={{
                       background: "none",
                       border: "none",
@@ -437,45 +368,86 @@ export function SettlementStatementBoardPanels({
                       fontSize: V3_TABLE.fontPx,
                     }}
                   >
-                    JE →
+                    {fuelFillCount} fill{fuelFillCount === 1 ? "" : "s"} →
                   </button>
                 </LinkCell>
-              </td>
-            </tr>
-            <tr>
-              <td style={{ ...td, borderBottom: "none" }}>Signed document</td>
-              <td style={{ ...td, borderBottom: "none" }}>
-                {hasSignedPdf ? (
-                  <LinkCell>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        openCanonicalDocument(
-                          pdfPath ||
-                            `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}.html?operating_company_id=${encodeURIComponent(companyId)}`
-                        )
-                      }
-                      style={{
-                        background: "none",
-                        border: "none",
-                        padding: 0,
-                        color: V3.link,
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        fontFamily: V3.font,
-                        fontSize: V3_TABLE.fontPx,
-                      }}
-                    >
-                      {settlementDisplayId ? `${settlementDisplayId}.pdf →` : "Statement PDF →"}
-                    </button>
-                  </LinkCell>
-                ) : (
-                  "—"
-                )}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Advances recovered</dt>
+            <dd>
+              <MoneyRowValue cents={recoveriesCents > 0 ? recoveriesCents : null} />
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Bank payment</dt>
+            <dd>
+              {matchedBankTransactionId ? (
+                <EntityLink kind="bank_transaction" id={matchedBankTransactionId} label="Bank line →" />
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+          <div style={kvRow}>
+            <dt>Journal entry</dt>
+            <dd>
+              <LinkCell>
+                <button
+                  type="button"
+                  onClick={onOpenJournalEntry}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    color: V3.link,
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    fontFamily: V3.font,
+                    fontSize: V3_TABLE.fontPx,
+                  }}
+                >
+                  JE →
+                </button>
+              </LinkCell>
+            </dd>
+          </div>
+          <div style={{ ...kvRow, borderBottom: "none" }}>
+            <dt>Signed document</dt>
+            <dd>
+              {hasSignedPdf ? (
+                <LinkCell>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      openCanonicalDocument(
+                        pdfPath ||
+                          `/api/v1/driver-finance/settlements/${encodeURIComponent(settlementId)}.html?operating_company_id=${encodeURIComponent(companyId)}`
+                      )
+                    }
+                    style={{
+                      background: "none",
+                      border: "none",
+                      padding: 0,
+                      color: V3.link,
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontFamily: V3.font,
+                      fontSize: V3_TABLE.fontPx,
+                    }}
+                  >
+                    {settlementDisplayId ? `${settlementDisplayId}.pdf →` : "Statement PDF →"}
+                  </button>
+                </LinkCell>
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+        </dl>
       </BoardSection>
     </div>
   );

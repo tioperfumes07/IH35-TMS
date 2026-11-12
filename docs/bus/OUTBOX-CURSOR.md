@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~12:05 AM CT) — Statement KV panels → dl (go26 −1 file)
+- **THIS:** SettlementStatementBoardPanels deductions/company/linked key-value panels are dl rows (no raw table); go26 raw_table files 37→36.
+- **NEXT:** DailyPredictionTab / CashFlowHome matrices; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~11:55 PM CT) — Statement Earnings panel → ParityTable (go26 −1)
 - **THIS:** SettlementStatementBoardPanels Earnings-by-load on ParityTable + Gross pay footer; go26 raw_table 37→36.
 - **NEXT:** Remaining statement key-value panels / DailyPrediction tables; Codex LIVE. No match/Dreamline.
@@ -180,11 +184,6 @@
 ## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave17
 - **PRIOR:** prior residual board wave.
 - **THIS:** HistoryTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave16
-- **PRIOR:** prior residual board wave.
-- **THIS:** ViolationsTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
 
 ## ARCHIVE
