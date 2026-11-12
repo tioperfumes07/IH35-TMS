@@ -1055,9 +1055,11 @@
     "202616460100",
     "202616470100",
     "202616480100",
+    "202616480200",
     "202616490100",
     "202616490900",
-    "202616501200"
+    "202616501200",
+    "202616510100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1122,7 +1124,7 @@
   "202616490900": {
     "claimed_at": "2026-11-11",
     "claimed_by": "claude",
-    "purpose": "dispatch capacity audit triggers — audit.tg_audit_row() on 5 dispatch.capacity_* tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_postings); additive guard fix for verify-dispatch-tables-audited-and-rls-forced"
+    "purpose": "dispatch capacity audit triggers \u2014 audit.tg_audit_row() on 5 dispatch.capacity_* tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_postings); additive guard fix for verify-dispatch-tables-audited-and-rls-forced"
   },
   "202616501200": {
     "claimed_at": "2026-11-12",
@@ -1131,7 +1133,12 @@
   },
   "202616510100": {
     "claimed_at": "2026-11-12",
-    "claimed_by": "claude",
+    "claimed_by": "CC-1",
     "purpose": "ACCT-F11152 batch82: settlement_lines composite same-entity FK (reinstated_je) \u2014 renumbered from 202616490100 (collision with PERFUME-DESK migration already on main)"
+  },
+  "202616480200": {
+    "claimed_at": "2026-11-12",
+    "claimed_by": "CC-1",
+    "purpose": "ACCT-F11152 batch82: dispatch capacity audit triggers backfill \u2014 audit.tg_audit_row() on dispatch.capacity_* tables (D3 standing order backfill); held migration DO NOT RUN ON PROD"
   }
 }

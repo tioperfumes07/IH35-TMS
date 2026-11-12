@@ -1,3 +1,4 @@
+-- *** DO NOT RUN ON PROD. Held migration — audit triggers for capacity/load-board tables (D3 backfill). ***
 -- dispatch D3 follow-up (2026-11-10, CC-1): 5 capacity / load-board tables were added after
 -- 202615330929 ran and therefore never received the audit.tg_audit_row trigger required by
 -- the dispatch D3 standing order. RLS + FORCE are already applied.

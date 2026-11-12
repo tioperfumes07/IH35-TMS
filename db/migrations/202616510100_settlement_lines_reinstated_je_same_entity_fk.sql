@@ -1,3 +1,4 @@
+-- *** DO NOT RUN ON PROD. Held migration — apply after verify-money-lines-same-entity-fks clears on prod. ***
 -- ACCT-F11152 follow-up (batch82 2026-11-10): settlement_lines.reinstated_from_void_je_id was added
 -- in 202616390100 with a single-column FK to accounting.journal_entries(id) but WITHOUT the matching
 -- composite same-entity FK (operating_company_id, reinstated_from_void_je_id) → journal_entries.
