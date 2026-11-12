@@ -173,8 +173,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const [archiveError, setArchiveError] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
-  const windowFrom = useMemo(() => date, [date]);
-  const windowTo = useMemo(() => addDaysIso(date, 13), [date]);
+  const rangeFrom = grain === "week" ? mondayOf(date) : date;
+  const rangeTo = grain === "week" ? addDaysIso(rangeFrom, 6) : date;
+  // The query must include the whole displayed week, even when selected midweek.
+  const windowFrom = rangeFrom;
+  const windowTo = addDaysIso(windowFrom, 13);
   const queryKey = ["cash-flow-projected-ledger", operatingCompanyId, windowFrom, windowTo];
 
   const { data, isLoading, isError } = useQuery<RollingLedgerResult>({
@@ -242,9 +245,6 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     mutation.mutate({ label: trimLabel, amount_cents: parsedCents });
   }, [addLabel, addAmount, adjustmentReady, mutation]);
 
-  const rangeFrom = grain === "week" ? mondayOf(date) : date;
-  const rangeTo = grain === "week" ? addDaysIso(rangeFrom, 6) : date;
-
   const totals = useMemo(() => {
     if (!data) return { income: 0, expenses: 0, net: 0, closing: null as number | null };
     return dayTotals(data.days, rangeFrom, rangeTo);
@@ -285,7 +285,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     if (!data) return [] as RollingLedgerDay[];
     const out: RollingLedgerDay[] = [];
     for (let i = 0; i < 7; i++) {
-      const d = addDaysIso(date, i);
+      const d = addDaysIso(rangeFrom, i);
       out.push(
         data.days.find((x) => x.date === d) ?? {
           date: d,
@@ -299,7 +299,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       );
     }
     return out;
-  }, [data, date]);
+  }, [data, rangeFrom]);
 
   const unknownAmountCount = expenseRows.filter((r) => r.amount_known === false).length;
   const netPositive = totals.net >= 0;
