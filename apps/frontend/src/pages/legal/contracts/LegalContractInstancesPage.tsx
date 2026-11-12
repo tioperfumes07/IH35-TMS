@@ -81,10 +81,23 @@ export function LegalContractInstancesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigateModal = (changes: Record<string, string> = {}) => {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      for (const key of ["openCreate", "openSend", "openLeaseToOwn", "openTruckLease"]) next.delete(key);
+      for (const [key, value] of Object.entries(changes)) next.set(key, value);
+      return next;
+    });
+  };
   const [search, setSearch] = useState("");
   const signerTypeParam = searchParams.get("signer_type") as LegalContractSummary["signer_type"] | null;
   const signerEntityIdParam = searchParams.get("signer_entity_id") ?? undefined;
-  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  // URL is the applied source of truth for stage drills, refresh and browser history.
+  // Keep invalid values for the API to reject rather than silently broadening a scoped link.
+  const statusFilter = useMemo(() => Array.from(new Set(
+    searchParams.getAll("status").flatMap((value) => value.split(","))
+      .map((value) => value.trim()).filter(Boolean),
+  )), [searchParams]);
   // U12: Template + Signer type MultiSelect (empty = all).
   const [templateFilter, setTemplateFilter] = useState<string[]>([]);
   const [signerTypeFilter, setSignerTypeFilter] = useState<string[]>([]);
@@ -100,7 +113,12 @@ export function LegalContractInstancesPage() {
       dateTo: "",
     },
     onApply: (next) => {
-      setStatusFilter(next.statusFilter);
+      setSearchParams((current) => {
+        const params = new URLSearchParams(current);
+        params.delete("status");
+        next.statusFilter.forEach((status) => params.append("status", status));
+        return params;
+      });
       setTemplateFilter(next.templateFilter);
       setSignerTypeFilter(next.signerTypeFilter);
       setDateFrom(next.dateFrom);
@@ -311,8 +329,8 @@ export function LegalContractInstancesPage() {
         subtitle="Instance tracking and signer workflows"
         actions={
           <div className="flex gap-2">
-            <Button onClick={() => setSearchParams({ openCreate: "1" })}>+ Create</Button>
-            <Button variant="secondary" onClick={() => setSearchParams({ openSend: "1" })}>
+            <Button onClick={() => navigateModal({ openCreate: "1" })}>+ Create</Button>
+            <Button variant="secondary" onClick={() => navigateModal({ openSend: "1" })}>
               Manual send
             </Button>
             <Button
@@ -323,12 +341,12 @@ export function LegalContractInstancesPage() {
               Seed library
             </Button>
             {leaseToOwnEnabled && (
-              <Button variant="secondary" onClick={() => setSearchParams({ openLeaseToOwn: "1" })}>
+              <Button variant="secondary" onClick={() => navigateModal({ openLeaseToOwn: "1" })}>
                 + Lease-to-Own
               </Button>
             )}
             {leaseToOwnEnabled && (
-              <Button variant="secondary" onClick={() => setSearchParams({ openTruckLease: "1" })}>
+              <Button variant="secondary" onClick={() => navigateModal({ openTruckLease: "1" })}>
                 + Truck Lease
               </Button>
             )}
@@ -571,41 +589,41 @@ export function LegalContractInstancesPage() {
       <UnifiedContractCreatorModal
         open={openCreate}
         operatingCompanyId={operatingCompanyId}
-        onClose={() => setSearchParams({})}
+        onClose={() => navigateModal()}
         onSaved={async (contractId) => {
           await refresh();
           setActiveDetailId(contractId);
-          setSearchParams({ contract_id: contractId });
+          navigateModal({ contract_id: contractId });
         }}
       />
       <SendContractModal
         open={openSend}
         operatingCompanyId={operatingCompanyId}
-        onClose={() => setSearchParams({})}
+        onClose={() => navigateModal()}
         onSent={async (contractId) => {
           await refresh();
           setActiveDetailId(contractId);
-          setSearchParams({ contract_id: contractId });
+          navigateModal({ contract_id: contractId });
         }}
       />
       <LeaseToOwnCreatorModal
         open={openLeaseToOwn}
         operatingCompanyId={operatingCompanyId}
-        onClose={() => setSearchParams({})}
+        onClose={() => navigateModal()}
         onSaved={async (contractId) => {
           await refresh();
           setActiveDetailId(contractId);
-          setSearchParams({ contract_id: contractId });
+          navigateModal({ contract_id: contractId });
         }}
       />
       <TruckLeaseCreatorModal
         open={openTruckLease}
         operatingCompanyId={operatingCompanyId}
-        onClose={() => setSearchParams({})}
+        onClose={() => navigateModal()}
         onSaved={(contractId) => {
           void refresh();
           setActiveDetailId(contractId);
-          setSearchParams({ contract_id: contractId });
+          navigateModal({ contract_id: contractId });
         }}
       />
     </div>

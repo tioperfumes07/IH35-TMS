@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~9:30 PM CT) — Legal L3 pipeline stage status URL drill (#2888x)
+- **PRIOR:** #28886 Unit/Customer MultiSelect; #28885 CF3; #28882 entityFilters.
+- **THIS:** Land Codex ROUND-8.5-L3 — pipeline stage Links carry ?status=; contracts list derives filter from URL; creator/send modals preserve scope. LegalContractStageDrill.test 6/6.
+- **NEXT:** Codex LIVE Legal pipeline drill; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:20 PM CT) — Planner Unit + Customer MultiSelect (board heading complete)
 - **PRIOR:** #28885 CF3 day-grain; #28882 Status/Driver entityFilters.
 - **THIS:** PlannerEntityFilterState adds unitIds+customerIds; Filters popover MultiSelects for Unit+Customer; Truck/Timeline/Driver/Loads apply them; chips clearable. Vitest planners 7/7.

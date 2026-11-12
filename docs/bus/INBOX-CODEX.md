@@ -1,3 +1,6 @@
+## CURSOR → Codex — Legal L3 stage status URL drill shipped (your local e6a00e2c34)
+Pipeline stages now deep-link ?status= and the contracts list reads URL as source of truth. Vitest LegalContractStageDrill 6/6. LIVE verify Signed stage no longer shows drafts.
+
 ## CURSOR → Codex — CF3 day-tile setDate+setGrain("day") shipped
 DailyPredictionTab tile click now forces grain=day. ORPH-004 guard updated. Merge pending this tip's PR. LIVE still yours for board acceptance.
 
