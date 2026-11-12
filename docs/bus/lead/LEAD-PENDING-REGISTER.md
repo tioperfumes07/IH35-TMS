@@ -83,7 +83,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 77 | E | A/R | 0 customer payments / Faro purchases applied: all $621,076.72 open incl. 57 advanced invoices | CC-2 | 443.279 | OPEN |  |
 | 78 | E | Banking | 1090 Undeposited $170,210.48 (33 Faro advances never deposited) -> GL bank -$88,433.89 | CC-2 | 443.277-A/279 | OPEN | -> ENG-17 (CC-2 443.323) |
 | 79 | E | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 | CC-1 | 443.277-B | OPEN | -> ENG-17 (CC-2 443.323) |
-| 80 | E | Dispatch | Load 13699 Bradley IL delivery stop city-only (no street/ZIP) | CC-3 | 443.278 | OPEN |  |
+| 80 | E | Dispatch | Load 13699 Bradley IL delivery stop city-only (no street/ZIP) | CC-3 | 443.278 | ESCALATED-TO-LEAD | ops script ready: scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts; needs AUTH-468 --apply by Lead (CC-3 data-feed law: coders never apply data corrections) |
 | 81 | E | HOS | 222,587 duty events on merged driver shells | CC-2 | 443.278 | OPEN |  |
 | 82 | E | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | 443.279 | PARTIAL | CC-1 11-12 re-measure: settlement P-0069 closed/posted 2026-10-11; bill for load 13530 due_date=2026-08-19 (was NULL). Residual: accounting_bill_id=NULL on settlement, bill 839f5c4b still 'unpaid', no bill_payment created |
 | 83 | E | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | 443.260 | PARTIAL | afd3fd334e #27384 coded; prod 198/241 done TB 0; 43 left PAUSED (AUTH-453, owner renews) |
@@ -103,7 +103,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 97 | F | Banking | Reconciliation drift: BofA bank $1,808.13 vs book -$88,433.89 (diff $90,242.02); Relay Fuel Wallet listed twice | CC-2 | 443.281 | OPEN |  |
 | 98 | F | Factoring | KPI renders raw "175650.000000000000" and "170210.480000000000"; True cost 0.00% with fees $2,634.76 | Cursor | 443.281 | CODED | 352d666b5b #27467 (LEAD) NUMERIC + one source |
 | 99 | F | Unexpected | Possible duplicates 0 while bank lines repeat (460.01 on 10-03 and 10-05; 155.86 twice on 10-07) | CC-2 | 443.281 | OPEN |  |
-| 100 | F | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | 443.281 | OPEN |  |
+| 100 | F | Customers | 201 possible duplicate customers flagged; billed shows $624,076.72 (incl. proforma) | CC-3 | 443.281 | DONE-LIVE | Chrome walk 2026-11-12: /customers?chip=duplicates shows 64 pairs (count reduced from 201 as owner resolves); panel loads with match scores + Review merge; billed KPI = $774,446.72 issued only (proforma separate). Engine correct — data quality, not code defect. |
 | 101 | F | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 | CC-1 | 443.281 | OPEN |  |
 | 102 | F | Settlements | Home "Week of Oct 18" lists closed settlements (P-0108 etc.) with status Open; "Settlement (Closed)" toggle empty; Drivers w/ debt 0 | Cursor | 443.281 | CODED | efd2c13dc2 #27477 (Cursor) Week-of on trip_closed_at |
 | 103 | F | Settlements | Company Settlements shows 0 / Loading for ~6 s before data (87 closed, 6 not opened) | Cursor | 443.281 | CODED-QUEUED | 443.320 25c5d51d8f: list in one query, parity 81/81, 120 s -> 0.15 s |
