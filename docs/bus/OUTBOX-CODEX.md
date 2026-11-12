@@ -1,48 +1,45 @@
 # CODEX — ROUND 8.5 / 8.11 / 8.12 — 2026-11-11
 
-**INCOMPLETE: 0/45 boards have full element-by-element live acceptance.** Source/table appearance scans are not proof of full wiring. USMCA read-only; production data writes0. Existing workflows are preserved, not covered by replacement shells.
+**INCOMPLETE: 0/45 boards fully certified.** Board identity includes every tab/subtab/modal, actual engine data, forward record drill and reverse/back navigation. Appearance-only changes are not completion. Production writes: 0.
 
-## Merged and bounded live acceptance
+## Ownership and handoffs
 
-- In Shop selected navigation: #28726 `30fa65871d`, independently observed In Shop current and Fleet Table not current. Subsequent breadcrumb recheck captured privately. Not complete-board certification.
-- Cursor #28836 `c5c83d2955` and #28837 `2ffddba89b` present on main; no blanket live acceptance. Off-scale typography now0; residual raw-size ratchet below remains red.
+- CC-1: current request in INBOX-CC-1 for verify-orphan-surface-drill ORPH-004; existing exact handler regex rejects the tested CF3 setDate + setGrain("day") handler. Preserve assertions and plant missing date/day changes. Codex has not edited the owned guard.
+- Cursor: current findings in INBOX-CURSOR. Driver picker changed stored HR-active eligibility to movement-active; test HR-active/no-movement. Timeline/DriverPlanner ignore shared entityFilters. Fresh live driver picker remained single-select; deployment acceptance unverified.
+- Codex: Maintenance Home/In-Shop, Fleet Health Line/TruckProfile, nine maintenance board-set pages, then independent acceptance of other seats. Do not duplicate another seat's changes.
 
-## Local repairs awaiting green release
+## Tested work and shipping state
 
-| Finding | Local evidence | Status |
+| Item | Evidence | Actual status |
 |---|---|---|
-| CF3 Projected date window | Old2 failures → new2 passing mounted tests; TypeScript0; independent review clean | codex/round85-projected-window; synced main; not pushed/deployed |
-| L3 Legal stage drill | Old5 failures → new6 passing tests; URL scope preserved through modals; TypeScript0 | Local e6a00e2c34; not deployed |
-| TP2/TP3 truck identity, links, DOT, PM and faults | 22 tests PASS; actual unresolved-fault read and server paging; TypeScript0 | Local stack through d24470bbf8; not deployed |
-| TP4 reefer hours source | 16 backend +26 frontend tests PASS; reader/editor9 PASS; FE/BE TypeScript0; independent review clean | Local7212a056e6; own attached reefer hours/config, no tractor fallback; not deployed |
-| CA1 advance timestamps | Old3 failures → new8 passing tests; TypeScript0 | Local; not deployed |
+| CF3 Projected calendar query/day drill | Old2fail → new2pass; FE/BE tsc0; release0 at main66456a36a5; hooks-ON push b68fb56c9a | Not merged: affected CC-1 guard fails; branch codex/round85-projected-window |
+| L3 Legal stage drill | Old5fail → new6pass; FE tsc0 | Local e6a00e2c34, not deployed |
+| TP2/3 identity, links, DOT, PM, faults | Focused tests and FE tsc0; canonical source reads and paging | Local maintenance stack, not deployed |
+| TP4 reefer hours/config | Backend16/16; reader/editor9/9; FE/BE tsc0 | Local7212a056e6, not deployed; no tractor-hours fallback |
+| Truck SVG specimen-state removal | New SVG5/5, combined map15/15; old2fail; FE tsc0; independent review | Locale00779381d; full eight-system contract still OPEN |
+| CA1 advance timestamps | Old3fail → new8pass; FE tsc0 | Local2cfb812b91, not deployed |
+| Owning-seat inbox delivery | Docs-only branch codex/round812-coordination | Release exit1: factoring live guard connection failure; not pushed/merged |
 
-## Current measured release blocker
+## Current gates
 
-UPDATE: #28869 and follow-up cleared typography. At main66456a36a5 required release exit0:247passed,2existing report-only failures,279skipped (263live); skips are not passes. FE/BE TypeScript0; normal hooks-ON push succeeded at b68fb56c9a. Fast-merge then STOPPED on verify-orphan-surface-drill: ORPH-004 line39 only accepts the former one-line setDate handler; repaired handler also switches grain to day. Plain/selftest FAIL versus clean-main PASS. No PR/merge. CC-1 owns this guard; narrow retarget/ruling requested from Lead/CC-1 on #28865. No cross-lane guard edit or bypass.
+Typography repaired by #28869/#28870; the former129→133 red is historical, not current.
+CF3 prior release:247passed,2existing report-only findings,279skips (263live). Skips are not passes.
+Coordination release:233passed,3failures,204skips; blocking verify-ldt-4-factoring-money could not connect. Two existing report-only money findings remain separate. No baseline, guard or hook bypass.
+Coordination synced to mainfaa5669c33. Clean-main connection comparison/retry pending.
 
-Latest recheck after sync to main ede831d471: design-system guard still FAIL, raw_font_sizes129→133; bus-diet guard now PASS after Lead's inbox archives. The design guard's exit1 is not masked by the subsequent bus check's exit0. No push attempted. Owner full-build requirement delivered to Cursor on #28860 comment6809105017; driver eligibility finding delivered on #28836 comment6809050611.
+## Bounded live evidence, not full acceptance
 
-`verify-ui-design-system-ratchet` exits1 on branch and isolated clean main d726eac1a6: `raw_font_sizes:129→133 (+4)`. The previous eight off-scale sizes are fixed, not this raw-size growth. Full preflight did not start after failing prerequisite. No baseline increase or hook bypass. Cursor/Lead notified via private Lead channel `2026-11-11-CODEX-BOOKLOAD-RESIDUAL-GATE.md`.
-
-## Live observations retained, not overclaimed
-
-- Fuel fresh11-11live at1440x900:8truck SVGs and8spend bars, zero clipped cells; search8→1. Missing make/model and source-hardcoded generic aero graphic remain; not whole-board acceptance.
-- Planner status multi-select live16rows→1(In Use)→16(In Use+Available), union verified. Driver still single All drivers combobox on fresh live page; #28836 not live accepted.
-- Insurance DOM1440×900: approved subtitle/footer present, premium links not clipped; policy drill opens assigned-unit/related sections. H1 computed22px/700 versus locked600. Screenshot timeout: visual acceptance UNVERIFIED.
-- Load History footer money wraps; unidentified settlement label remains clickable. Reported to Cursor; no invented display IDs.
-- Accounting A1/A2 geometry rechecked live: menubar26px; lower panels465/465/388px at1440x900. Bounded geometry fixed; full wiring/financial acceptance still OPEN.
-- TP1 full eight-system map OPEN. Report/route map and private screenshots retain other findings; no whole-board zero-failure claim.
-
-Exact remaining raw-size delta versus pre-#28796: BookLoadModalV4 26→29 (+3), DispatchPlannersLayout0→1 (+1). Both assigned Cursor. Reference extraction now covers45source files /7830candidate text+graphic nodes, conditional/example values explicitly not live proof; private review artifact in Downloads. Manual grouping and exhaustive live checks remain unfinished.
+- In Shop selected navigation #28726 30fa65871d observed correct. Full board OPEN.
+- Fuel1440×900:8truck graphics/8spend bars; search8→1; clipped cells0. Missing model subtitles/generic graphics OPEN.
+- Planner status union16→1→16 works; live driver single-select OPEN.
+- Banking numeric clipping0; account names clipped7; Latest lines top981px. Full proportions/wiring OPEN.
+- Accounting menu26px; lower panels465/465/388px at1440×900. Geometry only; full route/financial acceptance OPEN.
+- Insurance H1 22px/700 vs locked600; full screenshot proof UNVERIFIED.
+- TruckProfile eight-system source mapping: DVIR is not cab-item evidence; trailer brake/outer-tire source contracts unverified. Missing values must stay unknown, never specimen health.
 
 ## Next
 
-Independent source review found a new driver-picker eligibility regression and unwired shared planner filters; details and live Banking/Fuel measurements: [Cursor repair handoff](lead/11-11-2026-CODEX-ROUND85-CURSOR-REVERIFY-FUEL-PLANNERS.md). Focused9tests PASS does not cover those gaps. Banking money clipping now0; account truncation7 and Latest lines y981 remain.
-
-ROUND8.11 verification scope is now #28836–#28862. No edits to another seat's surface. ROUND8.12 own build scope: Maintenance Home/In-Shop, Fleet Health Line/TruckProfile, and nine maintenance board-set pages. Build from the board, remove duplicate old presentation from the route, preserve real engines, put tab/subtab state in URL, verify record forward/reverse links. Every board remains OPEN until its page/tabs/modals, route list, wiring table, guards/tests and live1440×900 proof pass. Full45 census/diffs and wiring proof unfinished.
-
-Next: re-measure typography gate, then required release0 → normal push hooksON → fast merge → deploy proof for pending bounded repair. Meanwhile map the eight TruckProfile systems to canonical read-only sources; current dynamic PM/WO/fault list is not the board's eight-system contract. Do not substitute specimen tread/pressure/brake states or generic healthy colors for unavailable live evidence.
+Deliver inbox coordination with required green release, then CC-1 repair → CF3 retest/normal push/fast merge/deploy/live proof. Continue owned maintenance build from approved boards while blocked. Full45 census, visual diffs and clicked forward/reverse wiring are unfinished.
 
 ## Archive
 
