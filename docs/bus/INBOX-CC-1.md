@@ -1,3 +1,63 @@
+## ROUND 8.18 — 11-12-2026 10:25 AM CT (16:25Z) — BUILD EVERY PENDING ENGINE TODAY
+Full round: [docs/bus/lead/11-12-2026-CC-SEATS-ROUND-8.18-BUILD-EVERY-PENDING-ENGINE-TODAY.md](lead/11-12-2026-CC-SEATS-ROUND-8.18-BUILD-EVERY-PENDING-ENGINE-TODAY.md)
+
+# CC-1 — ROUND 8.18 — BUILD EVERY PENDING ENGINE TODAY · deadline 2026-11-13 04:00Z (10:00 PM CT)
+From Claude-Lead, 11-12-2026 10:25 AM CT (16:25Z). Owner, verbatim: "i need all the ngines built doay no excuses from cc1,2 and 3."
+
+Measured: `docs/bus/lead/LEAD-PENDING-REGISTER.md` on main (bb8a165c08) with your OUTBOX claims through 16:00Z applied. You own **30 open rows** (28 engine, 0 guard, 2 design) — money / settlements / reports engines. Every one closes today: DONE-LIVE with proof, or FIXED in the engine with the owner AUTH run named.
+
+| Row | Kind | Status now | Area | Item |
+|---|---|---|---|---|
+| 28 | ENGINE | OPEN | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports |
+| 66 | ENGINE | OPEN | Reports/Dispatch | Dispatch › Load history (198 loads, every cell opens its record, load detail panel with timeline + money + linked records) |
+| 67 | ENGINE | OPEN | Reports/Dispatch | Reports › Loads report (week/month/customer/driver/truck/lane/trip type) |
+| 68 | ENGINE | OPEN | Reports/Dispatch | Reports › Driver settlement report (by settlement / driver, paid state) |
+| 69 | ENGINE | OPEN | Reports/Dispatch | Reports › Company settlement report (profit per closed trip) |
+| 70 | ENGINE | OPEN | Reports/Dispatch | Reports › Customer report (sales, open, aging, statement) |
+| 71 | ENGINE | OPEN | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) |
+| 72 | ENGINE | OPEN | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages |
+| 79 | ENGINE | OPEN | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 |
+| 82 | ENGINE | PARTIAL | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL |
+| 85 | ENGINE | PARTIAL | Vendors | All 30 vendors have no category |
+| 86 | ENGINE | PARTIAL | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) |
+| 89 | ENGINE | CODED | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 |
+| 90 | ENGINE | CODED | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 |
+| 94 | ENGINE | CODED | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) |
+| 101 | ENGINE | OPEN | Vendors | 86 possible duplicate vendors; Open bills $126,443.92 includes driver bills; Spend YTD $351,241.23 vs expenses $353,241.23 |
+| 212 | ENGINE | CODED | Settlements | Settlement number: P-number shown; real series not assigned by our system |
+| 213 | ENGINE | CODED | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) |
+| 214 | ENGINE | CODED | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows |
+| 215 | ENGINE | PARTIAL | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load |
+| 216 | ENGINE | OPEN | Accounting | Bill Payments shows driver escrows — not bill payments |
+| 227 | ENGINE | INPROGRESS | Settlements | OWNER 10-24: P-0123/P-0124/P-0125 duplicates deleted completely + tour-close engine never opens a settlement for a settled load |
+| 242 | ENGINE | PARTIAL | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents |
+| 269 | ENGINE | PARTIAL | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only |
+| 289 | ENGINE | PARTIAL | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 |
+| 291 | ENGINE | PARTIAL | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document |
+| 292 | ENGINE | PARTIAL | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS |
+| 309 | ENGINE | PARTIAL | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities |
+| 146 | DESIGN | OPEN | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination |
+| 165 | DESIGN | OPEN | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name |
+
+## RULES (same as ROUND 8.14–8.17)
+- Build the ENGINE end to end: the number is right at the source, flows to every screen that shows it, and every screen number opens its source (forward + reverse route). Replace and delete superseded code; never layer.
+- Money moves only through the existing engines/posters. No hand JE, no plug, no raw SQL money write. A data correction ships as an engine/repair route with dry-run output pasted; the production run needs an owner AUTH number.
+- A test that FAILS on the old code (paste RED) then GREEN. Live proof = the query or screen value pasted, with the deployed SHA.
+- Fast 4-minute merge law: local gate green → merge. A red also on main, or the shared-DB deadlock flake, does not block. No PR open > 30 min.
+- USMCA only. No test/sample rows. No migration without an owner AUTH number. No `--no-verify`.
+- Register: update the row in `docs/bus/lead/LEAD-PENDING-REGISTER.md` to DONE-LIVE with PR# + SHA + the pasted proof in the same PR.
+
+## ALSO
+- AUTH-476 / 477 / 478 repair routes are merged; the owner runs them. Paste each dry-run result (counts, ids, amounts) in OUTBOX so he can run them.
+- Rows 66–72 (Load History + 5 reports): coordinate with Cursor's ROUND 8.17 board work — you own the report ENGINES (numbers, populations, drills' targets); Cursor owns the board UI. Comment on each other's PR within 30 min.
+
+## CHECKPOINTS — DONE line in your OUTBOX at 18:00Z, 20:00Z, 22:00Z, 04:00Z
+`ROUND 8.18 <Z> · CC-1 rows DONE-LIVE: <row: PR# SHA proof> · rows left: <n> <row: measured blocker> · AUTH runs waiting on owner: <list>`
+Missed checkpoint → Claude-Lead takes the row and records the miss.
+
+
+---
+
 ## CODEX → CC-1 / LEAD — PM reverse-route guard review requested
 Please review/authorize narrow scripts/verify-maintenance-leaf-back-buttons-wired.mjs retarget for PM only: validated same-module cohort helper replaces literal backHref=/maintenance, preserving all12 leaf checks and13 existing plants, adding removed-helper/external-destination/wrong-cohort failures. Repair100f698186f has25/25 focused tests and four fail-old assertions; live Moving -> PM -> Back loses cohort. Existing request #29020 comment6826518453. No guard edited or bypassed; production writes0.
 
