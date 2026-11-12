@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~2:30 AM CT) — high-water #28920; Legal alerts reverse
+- **SHIPS:** #28918 CF3 customer link fix · #28919 tip · #28920 Legal Alerts Matter/Contract EntityLinks · #28911–#28917 reverse wave.
+- **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~2:15 AM CT) — high-water #28918; CF3 customer link fix
 - **THIS:** #28918 DailyPrediction Income customer EntityLinkOrTombstone spread `item` (was undefined `row` → ReferenceError).
 - **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
