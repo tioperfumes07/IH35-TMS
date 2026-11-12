@@ -148,6 +148,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange, 
                 count(*) FILTER (WHERE b.amount_cents - coalesce(b.paid_cents, 0) > 0)::int AS open_bills
            FROM accounting.bills b
           WHERE b.operating_company_id = $1::uuid AND b.voided_at IS NULL AND b.revoked_at IS NULL AND b.status <> 'void'
+            AND (b.bill_category IS NULL OR b.bill_category <> 'driver')
           GROUP BY 1)
        SELECT v.id, v.vendor_name AS name, v.deactivated_at, coalesce(cat.category, v.vendor_category, v.vendor_type::text) AS category,
               -- Rows 83 (Reports › Vendor report): the SAVED category (null = not set — the board greys the read-from-account
