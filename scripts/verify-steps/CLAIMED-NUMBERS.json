@@ -17724,5 +17724,10 @@
     "claimed_by": "claude",
     "claimed_at": "2026-11-12",
     "purpose": "verify-perfume-desk-isolation (PERFUME-DESK: perfume.* stays isolated — no carrier/USMCA/GL reference, Owner-only routes, no DELETE grants on price data)"
+  },
+  "20020": {
+    "claimed_by": "cursor",
+    "claimed_at": "2026-11-12",
+    "purpose": "verify-statement-advances-recovered-source"
   }
 }
