@@ -82,6 +82,19 @@ describe("returnContext (ROUND 8.17 class R)", () => {
     ).toBe("/fuel/by-truck?period=oct&q=unit-12");
   });
 
+  it("Factoring Fees tab → advance detail Back restores Fees origin", () => {
+    const origin = currentOriginHref("/factoring/chargebacks-fees", "?q=faro");
+    const advance = withReturnContext("/factoring/advances/adv-1", origin);
+    const params = new URLSearchParams(advance.slice(advance.indexOf("?") + 1));
+    expect(
+      resolveBackHref({
+        searchParams: params,
+        pathname: "/factoring/advances/adv-1",
+        fallback: "/factoring",
+      }),
+    ).toBe("/factoring/chargebacks-fees?q=faro");
+  });
+
   it("Fuel History transaction_id drill keeps History filters in ret for Back", () => {
     const historyOrigin = currentOriginHref(
       "/fuel/history",

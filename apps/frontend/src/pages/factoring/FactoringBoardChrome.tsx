@@ -1,7 +1,9 @@
 import { useMemo, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { BackButton } from "../../components/shared/BackButton";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type SubNavItem = { label: string; to: string };
 
@@ -20,7 +22,7 @@ function activeHrefFor(pathname: string, search: string, items: SubNavItem[]): s
 /**
  * ROUND 443.326 — Factoring module chrome matching FuelPlannerBoardChrome /
  * SettlementsSubNavWrapper: breadcrumb + title + HoverDropdownNav.
- * Replaces legacy module header + navy tab strip extract theater.
+ * ROUND 8.17 — BackButton + breadcrumb consume `ret` (fee→advance reverse restore).
  */
 export function FactoringBoardChrome({
   title,
@@ -36,7 +38,13 @@ export function FactoringBoardChrome({
   nav?: ReactNode;
 }) {
   const { pathname, search } = useLocation();
-  const breadcrumb = [{ label: "Factoring", href: "/factoring" }, { label: title }];
+  const [searchParams] = useSearchParams();
+  const structuralParent = "/factoring";
+  const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
+  const showBack = pathname !== "/factoring" || resolvedBack !== structuralParent;
+  const breadcrumb = showBack
+    ? [{ label: "Factoring", href: resolvedBack }, { label: title }]
+    : [{ label: title }];
 
   const navItems = useMemo<NavItem[]>(
     () => subnavItems.map((item) => ({ label: item.label, href: item.to })),
@@ -51,6 +59,11 @@ export function FactoringBoardChrome({
     <div className="space-y-3" data-factoring-board-chrome="1" data-testid="factoring-board-chrome">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
+          {showBack ? (
+            <div data-testid="factoring-board-back">
+              <BackButton fallbackTo={structuralParent} />
+            </div>
+          ) : null}
           <div data-testid="factoring-breadcrumb">
             <Breadcrumb items={breadcrumb} />
           </div>
