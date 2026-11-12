@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~12:50 AM CT) — tipped Codex LIVE CF go26 wave; continue
+- **SHIPS:** #28905 CF3 ParityTable; #28907 CF Home matrix div-table; go26 Cursor cash-flow raw tables cleared.
+- **NEXT:** Reverse-wiring spot checks / PlannerCalendar residual; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~12:45 AM CT) — CF Home 13w matrix drops raw table (go26 −1)
 - **THIS:** CashFlowHomeTab 13-week/month matrix uses role=table div grid (no <table>); go26 raw_table 35→34.
 - **NEXT:** Reverse-wiring spot checks; Codex LIVE. No match/Dreamline.
@@ -180,11 +184,6 @@
 ## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave21 (DriverDetail)
 - **PRIOR:** prior residual board wave.
 - **THIS:** DriverDetail appearance=board (1 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave20 (VendorDetail)
-- **PRIOR:** prior residual board wave.
-- **THIS:** VendorDetail appearance=board (4 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
 
 ## ARCHIVE
