@@ -7,9 +7,10 @@
  * board does not show (search, category tokens, column chooser, per-vendor open-bills column) lives on the
  * master-detail directory, reached by "View all →" (?view=detail) — never on or under this board.
  */
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { rememberPartyBoardReturn } from "../../lib/partyBoardReturn";
 import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 import { ApiError, apiRequest } from "../../api/client";
 import { V3 } from "../../design/v3-tokens";
@@ -65,6 +66,10 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
       else params.set("chip", next);
       return params;
     }, { replace: true });
+  // Codex cert: detail Back must restore this board's chip (EntityLink drops query).
+  useEffect(() => {
+    rememberPartyBoardReturn("vendors", `${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
   const exportRef = useRef<() => void>(() => undefined);
   const q = useQuery({
     queryKey: ["party-board", "vendors", props.operatingCompanyId, "ytd"],

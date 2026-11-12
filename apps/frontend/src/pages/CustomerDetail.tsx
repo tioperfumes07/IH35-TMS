@@ -11,6 +11,7 @@ import { CustomerLateArrivalCard } from "../components/customers/CustomerLateArr
 import { CustomerLocationsSection } from "../components/customers/CustomerLocationsSection";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
+import { partyBoardReturnHref } from "../lib/partyBoardReturn";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -1042,7 +1043,7 @@ export function CustomerDetailPage() {
     return (
       <div className="space-y-3">
         <div className="text-xs text-red-600">Customer not found.</div>
-        <Button variant="secondary" onClick={() => navigate("/customers")}>
+        <Button variant="secondary" onClick={() => navigate(partyBoardReturnHref("customers"))}>
           Back to Customers
         </Button>
       </div>
@@ -1071,9 +1072,9 @@ export function CustomerDetailPage() {
     <div className="space-y-3">
       <PageHeader
         title={customer.name}
-        backHref="/customers"
+        backHref={partyBoardReturnHref("customers")}
         breadcrumb={[
-          { label: "Customers", href: "/customers" },
+          { label: "Customers", href: partyBoardReturnHref("customers") },
           { label: customer.name },
         ]}
         subtitle={customer.customer_code ?? "No code"}

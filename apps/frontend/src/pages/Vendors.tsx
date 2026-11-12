@@ -9,6 +9,7 @@ import { listBills, listVendorBalances, listExpenses, type ExpenseListRow } from
 import { listAllVendors, listVendorPaymentMethods, getVendorRollups, getVendorRosterCounts, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
 import { formatQuantityTable, formatUsdCents } from "../lib/money";
+import { clearPartyCreateParams } from "../lib/partyBoardReturn";
 import { Button } from "../components/Button";
 import { ListErrorState } from "../components/ListErrorState";
 import { ActionButton } from "../components/shared/ActionButton";
@@ -241,7 +242,9 @@ export function VendorsPage() {
   };
   const closeCreate = () => {
     if (searchParams.get("create") !== "1") return;
-    const next = new URLSearchParams(searchParams);
+    // Codex cert: clear create + view=detail so Close returns to the approved board with chip/range.
+    // verify-modal-close-retracts-url: keep next.delete("create") literal in this file.
+    const next = clearPartyCreateParams(searchParams);
     next.delete("create");
     setSearchParams(next, { replace: true });
   };
