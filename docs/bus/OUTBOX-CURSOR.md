@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T20:00Z) — ROUND 8.17 classes R+L+S merged
+ROUND 8.17 2026-11-12T20:00Z · classes R/L/S merged: R #29057 bf05f75b55a · L #29059 6c7776b7a1b · S #29064 7b6c27595ed · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex live recheck · deployed FE/BE SHA pending post-deploy
+
 ## OUTBOX (2026-11-12T17:28Z) — ROUND 8.17 class L merged · class S shipping
 ROUND 8.17 2026-11-12T17:28Z · classes R/L/S merged: R #29057 bf05f75b55a · L #29059 6c7776b7a1b · S in flight · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex recheck · deployed FE/BE SHA pending
 
@@ -190,6 +193,3 @@ ROUND 8.17 2026-11-12T16:31Z · classes R/L/S merged: R in flight (returnContext
 ## OUTBOX (11-13-2026 ~12:20 AM CT) — Legal Attorney Review + Contracts template EntityLinks
 - **SHIPS:** #28953 Statement MoneyCell literal drills (merged). Legal Attorney Review Template column + Contracts list Template → `legal_template` EntityLink (parity with Policies/Templates list). **MERGED #28954.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE for BOARD-45. No match/Dreamline.
-
-
-> **Standing law:** bus diet — older OUTBOX tips archived by truncation ROUND 8.17.

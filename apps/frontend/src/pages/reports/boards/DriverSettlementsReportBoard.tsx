@@ -332,11 +332,52 @@ export function DriverSettlementsReportBoard() {
       ) : null}
 
       <ReportKpiGrid>
-        <V3KpiTile testId="dsr-kpi-settlements" label="Settlements" value={query.data ? String(totals.settlements) : "…"} sub={`${totals.drivers} drivers · cancelled excluded`} />
-        <V3KpiTile testId="dsr-kpi-gross" label="Gross pay" value={query.data ? money(totals.gross) : "…"} />
-        <V3KpiTile testId="dsr-kpi-deductions" label="Deductions" value={query.data ? money(-totals.deductions) : "…"} sub="escrow · advances · fees" tone="red" />
-        <V3KpiTile testId="dsr-kpi-reimb" label="Reimbursements" value={query.data ? money(totals.reimb) : "…"} />
-        <V3KpiTile testId="dsr-kpi-net" label="Net pay" value={query.data ? money(totals.net) : "…"} />
+        {/* ROUND 8.17 class S — every KPI opens the report table / filtered cohort (not a dead tile). */}
+        <V3KpiTile
+          testId="dsr-kpi-settlements"
+          label="Settlements"
+          value={query.data ? String(totals.settlements) : "…"}
+          sub={`${totals.drivers} drivers · cancelled excluded`}
+          onClick={() => {
+            setDrill(null);
+            setBy("settlement");
+            document.querySelector('[data-testid="dsr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+        <V3KpiTile
+          testId="dsr-kpi-gross"
+          label="Gross pay"
+          value={query.data ? money(totals.gross) : "…"}
+          onClick={() => {
+            setDrill(null);
+            setBy("settlement");
+            document.querySelector('[data-testid="dsr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
+        <V3KpiTile
+          testId="dsr-kpi-deductions"
+          label="Deductions"
+          value={query.data ? money(-totals.deductions) : "…"}
+          sub="escrow · advances · fees"
+          tone="red"
+          href="/driver-finance/settlements?tab=deductions"
+        />
+        <V3KpiTile
+          testId="dsr-kpi-reimb"
+          label="Reimbursements"
+          value={query.data ? money(totals.reimb) : "…"}
+          href="/driver-finance/settlements?tab=payments"
+        />
+        <V3KpiTile
+          testId="dsr-kpi-net"
+          label="Net pay"
+          value={query.data ? money(totals.net) : "…"}
+          onClick={() => {
+            setDrill(null);
+            setBy("settlement");
+            document.querySelector('[data-testid="dsr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
+        />
         <V3KpiTile
           testId="dsr-kpi-closed-unpaid"
           label="Closed, not marked paid"
@@ -370,6 +411,7 @@ export function DriverSettlementsReportBoard() {
           rowKey={(r) => r.settlement_id}
           loading={query.isPending}
           storageKey="driver-settlements-report-board"
+          tableTestId="dsr-table"
           emptyText="No settlements match these filters."
           exportFilename="driver-settlement-report"
           exportExcel
@@ -391,6 +433,7 @@ export function DriverSettlementsReportBoard() {
           rowKey={(g) => g.key}
           loading={query.isPending}
           storageKey={`driver-settlements-report-board-${by}`}
+          tableTestId="dsr-table"
           emptyText="No settlements match these filters."
           exportFilename={`driver-settlement-report-by-${by}`}
           exportExcel
