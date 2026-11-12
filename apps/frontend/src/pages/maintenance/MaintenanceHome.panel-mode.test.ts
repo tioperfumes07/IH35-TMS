@@ -7,6 +7,19 @@ import { maintenanceTabFromPath } from "../../router/route-manifest";
 const source = ts.createSourceFile("MaintenanceHome.tsx", sourceText, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 
 describe("Maintenance Home board/workflow isolation", () => {
+  it("queries and renders recent activity only on Home, never under a sibling board", () => {
+    let recent: ts.VariableDeclaration | undefined;
+    let activity: ts.JsxExpression | undefined;
+    function visit(node: ts.Node) {
+      if (ts.isVariableDeclaration(node) && node.name.getText(source) === "recentQuery") recent = node;
+      if (ts.isJsxExpression(node) && node.expression?.getText(source).includes("<RecentActivityRow")) activity = node;
+      ts.forEachChild(node, visit);
+    }
+    visit(source);
+    expect(recent?.getText(source)).toMatch(/enabled: Boolean\(companyId\)[^\n]*&& isHomeTab/);
+    expect(activity?.expression?.getText(source)).toMatch(/^isHomeTab && !isInShopBoard &&/);
+    expect(sourceText).toContain('const isHomeTab = tab === "rm_status_board"');
+  });
   it("mounts no legacy workflow beneath the Home board, even collapsed", () => {
     let board: ts.ConditionalExpression | undefined;
     function visit(node: ts.Node) {
