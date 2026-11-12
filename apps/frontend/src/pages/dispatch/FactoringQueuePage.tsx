@@ -25,7 +25,7 @@ import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
@@ -348,15 +348,21 @@ export function FactoringQueuePage() {
             <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">Reserve Balance</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* views.factoring_summary normalizes signed ledger cents to DOLLARS.
-                  Format directly as dollars; do NOT divide by 100. Must match FactoringHome.tsx. */}
-              {formatUsd(summaryQ.data.reserve_balance || 0)}
+                  Convert back to cents for MoneyCell; do NOT divide by 100. Must match FactoringHome.tsx. */}
+              <MoneyCell
+                cents={Math.round(Number(summaryQ.data.reserve_balance || 0) * 100)}
+                drill={{ entity: { kind: "vendor", id: summaryQ.data.active_factor_id } }}
+              />
             </div>
           </div>
           <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
             <div className="text-section-header font-semibold uppercase tracking-wide text-gray-500">MTD Advances</div>
             <div className="mt-1 font-semibold text-gray-900">
               {/* mtd_advanced_total is also DOLLARS (0124 sums factoring_advances.advance_amount — no _cents). */}
-              {formatUsd(summaryQ.data.mtd_advanced_total || 0)}{" "}
+              <MoneyCell
+                cents={Math.round(Number(summaryQ.data.mtd_advanced_total || 0) * 100)}
+                drill={{ entity: { kind: "vendor", id: summaryQ.data.active_factor_id } }}
+              />{" "}
               <span className="text-xs text-gray-500">({summaryQ.data.mtd_advances_count} batch)</span>
             </div>
           </div>
