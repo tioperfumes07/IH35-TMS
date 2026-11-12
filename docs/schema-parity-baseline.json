@@ -10483,6 +10483,7 @@
       "case_pack",
       "created_at",
       "description",
+      "gender_override",
       "id",
       "identity_key",
       "item_id",
