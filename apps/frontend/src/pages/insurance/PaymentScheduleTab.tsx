@@ -17,6 +17,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
   operatingCompanyId?: string;
@@ -120,6 +122,20 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
 
   const columns = useMemo<ParityColumn<InsurancePaymentSchedule>[]>(
     () => [
+      {
+        key: "policy_id",
+        label: "Policy",
+        sortable: true,
+        sortValue: (row) => row.policy_id,
+        render: (row) => (
+          <EntityLink
+            kind="insurance_policy"
+            id={row.policy_id}
+            label={entityLabel(row.policy_number, row.policy_id, "Policy")}
+            data-testid={`insurance-payment-schedule-policy-${row.id}`}
+          />
+        ),
+      },
       { key: "due_date", label: "Due Date", sortable: true, render: (row) => <span className="text-gray-800">{formatDateUS(row.due_date)}</span> },
       { key: "amount_cents", label: "Amount", sortable: true, render: (row) => formatMoney(row.amount_cents) },
       { key: "late_fee_cents", label: "Late Fee", sortable: true, render: (row) => formatMoney(row.late_fee_cents) },
