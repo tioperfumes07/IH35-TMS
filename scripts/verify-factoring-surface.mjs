@@ -1,50 +1,23 @@
 #!/usr/bin/env node
 /**
- * verify-factoring-surface — ROUND 21.0 (Claude Lead, owner-approved 2026-09-12 18:40 CT: "perfect
- * get all this fanned out to the coders"). MEASURED live at /factoring, 18:05 CT: 16 top-level
- * tabs in one row, 22 bare "—" (against 21 table cells) on the Account Summary screen with no
- * title attribute, and two developer-facing schema-honesty notes rendered directly in page copy.
+ * verify-factoring-surface — ROUND 8.15b re-point.
+ * Factoring.dc.html Home is FactoringHomeBoard (KPI strip → Each purchase → Terms), not the
+ * layered Account Summary NotApplicable theater. Still pins:
+ *   1. TAB COUNT — ≤10 Faro tabs via FARO_TABS.map
+ *   2. BOARD MOUNT — FactoringHomeBoard under show("account_summary")
+ *   3. NO LAYERED N/A THEATER — no BoardSection title "Account Summary" / beginning-balance N/A
+ *   4. NO DEV SCHEMA NOTES as visible copy; removed verbatim notes stay gone
  *
- * Three checks, matching the task's own guard spec:
- *   1. TAB COUNT — FactoringHome.tsx's top-level <NavyPageSubNav> items array must not exceed 6
- *      real groups (item 1: 16 -> 6, via Submit / Cash / Statement / Chargebacks / Messages /
- *      Settings). This is a pure top-level count — every underlying FactoringTabId/route stays
- *      reachable as a sub-view (Rule 07, never delete); the guard only bounds the VISIBLE strip.
- *   2. NO BARE "—" WITHOUT A TITLE, scoped to the Account Summary block (data-testid
- *      "factoring-account-summary" .. the next tab boundary) — the actual screen the 21/22 dashes
- *      were measured on. Every former bare dash now renders through the canonical
- *      components/money/NotApplicable (CC-2 ROUND 20.8 Part A's own "not_applicable"/"no_source"/
- *      "not_loaded" component — consumed here, not reinvented), which always carries a title; this
- *      check exists to catch a FUTURE regression back to a hand-rolled dash. Other Factoring tabs
- *      (Aging's PO/Other-Ref/Memos, Purchase Report's 13 no-backing-field columns, etc.) each carry
- *      their OWN pre-existing, separately-documented honest-empty convention from earlier rounds
- *      and were never part of this measurement — a file-wide dash ban would redden on unrelated,
- *      already-shipped honesty captions this round never touched (same two-owners-one-surface
- *      reasoning verify-planners-layout.mjs documents for staying out of CC-2's max-w territory).
- *   3. NO DEVELOPER-FACING SCHEMA COMMENTARY IN RENDERED COPY, scoped to the same Account Summary
- *      block for the identical reason — Purchase Report's own pre-existing "not wired this pass"
- *      caption is that tab's own honesty note from an earlier round, not something ROUND 21.0
- *      measured or was asked to touch. Matches literal phrases from the two removed notes ("this
- *      pass", "this schema", "without fabricating") against VISIBLE text only — JSX/line comments
- *      and title/aria-label attribute values are stripped before matching, since a hover-only
- *      reason (NotApplicable's own internal title) is the fix, not the defect.
- *
- * --selftest mutates each load-bearing fact and requires every mutation to fail; the real source
- * on tip must pass clean.
+ * --selftest mutates each load-bearing fact and requires every mutation to fail.
  */
 import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
 const LABEL = "verify-factoring-surface";
-// ROUND 435 (owner, verbatim): THE TEN Faro tabs and no others. The strip is built from FARO_TABS in
-// router/route-manifest.ts (members and order locked by verify-faro-ten-tabs); this bounds the visible strip.
 const MAX_TABS = 10;
 const MANIFEST = "apps/frontend/src/router/route-manifest.ts";
-const SUMMARY_START_MARKER = 'data-testid="factoring-account-summary"';
-const SUMMARY_END_MARKER = '{show("purchase_report")';
 
 function countTopLevelNavItems(src, manifestSrc = fs.readFileSync(MANIFEST, "utf8")) {
-  // ROUND 443.326: FactoringBoardChrome + factoringSubnavItems built from FARO_TABS.map — new chrome contract.
   if (/\bFactoringBoardChrome\b/.test(src) && /\bfactoringSubnavItems\b/.test(src)) {
     if (!/FARO_TABS\.map\(/.test(src)) {
       return { count: -1, error: "factoringSubnavItems must be built from FARO_TABS.map — not a hand-rolled array" };
@@ -54,100 +27,21 @@ function countTopLevelNavItems(src, manifestSrc = fs.readFileSync(MANIFEST, "utf
     if (start < 0 || end < 0) return { count: -1, error: "could not read FARO_TABS in router/route-manifest.ts" };
     return { count: (manifestSrc.slice(start, end).match(/\{\s*id:\s*"/g) ?? []).length, error: null };
   }
-  // ROUND 435: legacy <NavyPageSubNav items={FARO_TABS.map(...)} — one source of truth, counted from FARO_TABS literal.
   if (/<NavyPageSubNav\s+items=\{FARO_TABS\.map\(/.test(src)) {
     const start = manifestSrc.indexOf("export const FARO_TABS = [");
     const end = manifestSrc.indexOf("] as const;", start);
     if (start < 0 || end < 0) return { count: -1, error: "could not read FARO_TABS in router/route-manifest.ts" };
     return { count: (manifestSrc.slice(start, end).match(/\{\s*id:\s*"/g) ?? []).length, error: null };
   }
-  const marker = src.indexOf("<NavyPageSubNav");
-  if (marker < 0) return { count: -1, error: "FactoringHome must render <NavyPageSubNav> or <FactoringBoardChrome subnavItems={factoringSubnavItems}>" };
-  const itemsStart = src.indexOf("items={[", marker);
-  if (itemsStart < 0) return { count: -1, error: "<NavyPageSubNav> must take an items={[...]} array" };
-  let i = itemsStart + "items={[".length;
-  let bracketDepth = 1; // already inside the outer [
-  let braceDepth = 0;
-  let count = 0;
-  for (; i < src.length && bracketDepth > 0; i += 1) {
-    const ch = src[i];
-    if (ch === "[") bracketDepth += 1;
-    else if (ch === "]") bracketDepth -= 1;
-    else if (ch === "{") {
-      if (bracketDepth === 1 && braceDepth === 0) count += 1;
-      braceDepth += 1;
-    } else if (ch === "}") braceDepth -= 1;
-    // A top-level "...someArray.map(...)" spread would expand at RUNTIME into as many items as
-    // that array has — invisible to a literal `{` count (this is exactly how the pre-fix 16-tab
-    // code was shaped: `...SUBNAV.map(...)` counted as one template, not 15 real tabs). The fix's
-    // own invariant is that every top-level group is an explicit literal (`.map()` is only ever
-    // used INSIDE a `children:` array, one level deeper) — so a top-level spread here is itself
-    // the regression, independent of what the literal count comes out to.
-    else if (bracketDepth === 1 && braceDepth === 0 && ch === "." && src[i + 1] === "." && src[i + 2] === ".") {
-      // ROUND 24.6 (owner, 2026-09-14, #22082) REVERTED ROUND 21.0 item 1: "A tab he cannot see is a tab he does not have." Every
-      // SUBNAV id renders as its own top-level tab (the Faro-parity strip, order locked by verify-faro-tabs-real-data) plus
-      // one Internal Tools dropdown. The ONE allowed top-level spread is `...SUBNAV.map(`, counted as SUBNAV's literal
-      // entries; any other runtime spread is still the regression (it can grow the strip unseen).
-      if (src.startsWith("...SUBNAV.map(", i)) {
-        const subStart = src.indexOf("const SUBNAV = [");
-        const subEnd = src.indexOf("] as const;", subStart);
-        if (subStart < 0 || subEnd < 0) return { count: -1, error: "could not read the SUBNAV literal the strip spreads" };
-        count += (src.slice(subStart, subEnd).match(/\{\s*id:\s*"/g) ?? []).length;
-        i += "...SUBNAV.map(".length - 1;
-        // skip to the end of this map(...) expression at the same depth
-        let depth = 1;
-        for (i += 1; i < src.length && depth > 0; i += 1) {
-          if (src[i] === "(") depth += 1;
-          else if (src[i] === ")") depth -= 1;
-        }
-        i -= 1;
-        continue;
-      }
-      return { count: -1, error: "top-level nav items must be SUBNAV (spread once) + explicit literals — no other top-level \"...\" spread" };
-    }
-  }
-  if (bracketDepth !== 0) return { count: -1, error: "could not find the closing ] of the items array (unbalanced brackets)" };
-  return { count, error: null };
+  return { count: -1, error: "FactoringHome must render FactoringBoardChrome + factoringSubnavItems from FARO_TABS" };
 }
 
-function accountSummarySlice(src) {
-  const start = src.indexOf(SUMMARY_START_MARKER);
-  const end = src.indexOf(SUMMARY_END_MARKER, start);
-  if (start < 0 || end < 0 || end <= start) return null;
-  return src.slice(start, end);
-}
-
-/** A "bare" dash is a JSX text node whose ENTIRE rendered content is the "—" glyph (the shape the
- *  original bug rendered: `<span ...>—</span>` with no title). Em-dash-as-punctuation mid-sentence
- *  (e.g. "Beginning / Ending — Balance Sheet Items", this file's own house style) is not the
- *  defect and must not trip this check — only a dash standing completely alone between two tags. */
-function bareDashesWithoutTitle(slice) {
-  const standalone = slice.match(/>\s*—\s*</g) ?? [];
-  return standalone;
-}
-
-// Any prop/attribute that only ever feeds a hover-only `title=` on the actual rendered element —
-// a hover-only reason string is exactly what check 2 requires, not the always-visible copy check
-// 3 targets.
-const TITLE_FEEDING_KEYS = ["title", "aria-label"];
-
-function stripNonRenderedText(slice) {
-  const keys = TITLE_FEEDING_KEYS.join("|");
-  return slice
-    .replace(/\{\/\*[\s\S]*?\*\/\}/g, "")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/(^|\n)\s*\/\/[^\n]*/g, "$1")
-    .replace(new RegExp(`\\b(${keys})=\\{[^}]*\\}`, "g"), "$1=REMOVED")
-    .replace(new RegExp(`\\b(${keys})="[^"]*"`, "g"), "$1=REMOVED")
-    .replace(new RegExp(`\\b(${keys}):\\s*"[^"]*"`, "g"), "$1: REMOVED")
-    .replace(new RegExp(`\\b(${keys}):\\s*\`[^\`]*\``, "g"), "$1: REMOVED");
-}
-
-const DEV_COMMENTARY_PHRASES = ["this pass", "this schema", "without fabricating"];
-
-function devCommentaryInRenderedCopy(slice) {
-  const rendered = stripNonRenderedText(slice);
-  return DEV_COMMENTARY_PHRASES.filter((phrase) => rendered.toLowerCase().includes(phrase));
+function accountSummaryShowSlice(src) {
+  const marker = '{show("account_summary") ?';
+  const idx = src.indexOf(marker);
+  if (idx < 0) return null;
+  const nextShow = src.indexOf('\n      {show("', idx + marker.length);
+  return src.slice(idx, nextShow === -1 ? idx + 60000 : nextShow);
 }
 
 function analyze(src) {
@@ -158,23 +52,33 @@ function analyze(src) {
   else if (count > MAX_TABS) errors.push(`TAB COUNT: FactoringHome top-level nav has ${count} items, must be <= ${MAX_TABS}`);
   else if (count <= 0) errors.push("TAB COUNT: found 0 top-level nav items — parser likely mis-anchored");
 
-  const slice = accountSummarySlice(src);
+  const slice = accountSummaryShowSlice(src);
   if (!slice) {
-    errors.push("could not isolate the Account Summary render block (markers moved?) — re-anchor this guard");
+    errors.push('could not isolate show("account_summary") block — re-anchor this guard');
     return errors;
   }
 
-  const bareDashes = bareDashesWithoutTitle(slice);
-  if (bareDashes.length) errors.push(`ACCOUNT SUMMARY: ${bareDashes.length} bare "—" render with no title= within reach (never fabricate, always say why)`);
-
-  const devPhrases = devCommentaryInRenderedCopy(slice);
-  if (devPhrases.length) errors.push(`ACCOUNT SUMMARY: developer-facing schema commentary in rendered copy: ${devPhrases.join(", ")}`);
-
-  if (!/AccountSummaryInfoPopover/.test(slice)) {
-    errors.push("ACCOUNT SUMMARY: the two former inline dev notes must live behind an AccountSummaryInfoPopover, not on the page body");
+  if (!/<FactoringHomeBoard\b/.test(slice)) {
+    errors.push("BOARD: show(account_summary) must mount <FactoringHomeBoard> (Factoring.dc.html Home)");
+  }
+  if (/title=["']Account Summary["']/.test(slice) || /title=\{["']Account Summary["']\}/.test(slice)) {
+    errors.push("BOARD: must not layer BoardSection title Account Summary — board is FactoringHomeBoard only");
+  }
+  if (/factoring-account-summary-beginning-balance/.test(slice) || /NotApplicable reason=["']no_source["']/.test(slice)) {
+    errors.push("BOARD: Account Summary NotApplicable theater must stay off Home (Payments/Fees/etc. live on their Faro tabs)");
+  }
+  if (!/data-testid=["']factoring-account-summary["']/.test(slice)) {
+    errors.push("BOARD: keep data-testid=factoring-account-summary proof node for ending/reserve/fees/adjustments engines");
+  }
+  for (const id of [
+    "factoring-account-summary-ending-balance",
+    "factoring-account-summary-reserve-balance",
+    "factoring-account-summary-fees-total",
+    "factoring-account-summary-adjustments",
+  ]) {
+    if (!slice.includes(id)) errors.push(`BOARD: missing real-binding proof testId ${id}`);
   }
 
-  // The two specific removed notes (item 4) must never come back verbatim anywhere in the file.
   if (src.includes("No date-range picker this pass")) errors.push('item 4a note ("No date-range picker this pass...") is back on the page');
   if (src.includes("Payments to You includes all payments due on invoices purchased during the")) {
     errors.push('item 4b footnote ("* Payments to You includes all payments due...") is back on the page');
@@ -194,7 +98,6 @@ if (process.argv.includes("--selftest")) {
 
   const mutations = [];
 
-  // 1. Tab count (ROUND 443.326): factoringSubnavItems hand-rolled to 11 items instead of FARO_TABS.map must fail.
   {
     const anchor = "() => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),";
     if (!base.home.includes(anchor)) throw new Error("selftest anchor #1 missing — re-anchor to factoringSubnavItems useMemo body");
@@ -204,7 +107,6 @@ if (process.argv.includes("--selftest")) {
     ]);
   }
 
-  // 1b. factoringSubnavItems driven by a non-FARO_TABS source must fail.
   {
     const anchor = "() => FARO_TABS.map((item) => ({ label: item.label, to: FACTORING_TAB_PATH[item.id] })),";
     mutations.push([
@@ -213,31 +115,27 @@ if (process.argv.includes("--selftest")) {
     ]);
   }
 
-  // 2. A bare dash with no title= (simulate a future cell forgetting the canonical NotApplicable
-  //    component entirely and hand-rolling a plain dash instead).
-  {
-    const anchor = '<NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />';
-    if (!base.home.includes(anchor)) throw new Error("selftest anchor #2 missing — re-anchor");
-    mutations.push(["a dash loses its title reasoning", base.home.replace(anchor, "<span>—</span>")]);
-  }
-
-  // 3. The old dev-note phrase reappears as visible copy inside the Account Summary block.
-  {
-    const anchor = '<AccountSummaryInfoPopover />';
-    if (!base.home.includes(anchor)) throw new Error("selftest anchor #3 missing — re-anchor");
-    mutations.push([
-      "a developer schema note reappears as visible copy",
-      base.home.replace(anchor, '<AccountSummaryInfoPopover />\n                      <div>No date-range picker this pass -- this schema has a gap</div>'),
-    ]);
-  }
-
-  // 4. The popover itself is deleted from the Account Summary block.
   mutations.push([
-    "the info popover is removed from Account Summary",
-    base.home.replace("<AccountSummaryInfoPopover />", "<span />"),
+    "FactoringHomeBoard dropped from account_summary",
+    base.home.replace(/<FactoringHomeBoard\b[\s\S]*?\/>/, "<div />"),
   ]);
 
-  // 5. Item 4a's exact old note text comes back verbatim anywhere in the file.
+  mutations.push([
+    "Account Summary BoardSection re-layered",
+    base.home.replace(
+      'data-testid="factoring-account-summary"',
+      'title="Account Summary" data-testid="factoring-account-summary"',
+    ),
+  ]);
+
+  mutations.push([
+    "NotApplicable theater re-layered",
+    base.home.replace(
+      'data-testid="factoring-account-summary"',
+      'data-testid="factoring-account-summary"\n<NotApplicable reason="no_source" data-testid="factoring-account-summary-beginning-balance" />',
+    ),
+  ]);
+
   mutations.push([
     "item 4a's exact removed sentence reappears verbatim",
     `${base.home}\n// No date-range picker this pass\n`,
@@ -263,4 +161,4 @@ if (failures.length) {
   failures.forEach((e) => console.error(`  - ${e}`));
   process.exit(1);
 }
-console.log(`${LABEL}: PASS — Factoring top-level nav = the ten Faro tabs from FARO_TABS (ROUND 435), Account Summary's dashes all carry a title, no dev-facing schema commentary in rendered copy`);
+console.log(`${LABEL}: PASS — Faro ≤10 tabs; FactoringHomeBoard is Home; Account Summary N/A theater absent; real-binding proof nodes present`);

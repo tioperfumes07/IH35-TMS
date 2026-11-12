@@ -238,11 +238,13 @@ export function checkFeesPaidReal(src) {
     failures.push(`${HOME}: could not find a dedicated Fees Paid ("tab === \"fees_paid\" ?") block.`);
     return failures;
   }
-  const section = src.slice(idx, idx + 8000);
+  // ROUND 8.15b: Fees Paid section exceeds a fixed 8000-char window; slice to next show("…").
+  const nextShow = src.indexOf('\n      {show("', idx + marker.length);
+  const section = src.slice(idx, nextShow === -1 ? src.length : nextShow);
   const requiredRealBindings = [
     { pattern: /feesPaidOpenInvoiceRows/, label: "Open Invoices view bound to feesPaidOpenInvoiceRows (agingRows + accrued fees)" },
     { pattern: /accrued_fees/, label: "Accrued Fees column bound to the real per-invoice accrued_fees field" },
-    { pattern: /feesQuery\.data\?\.history/, label: "All Fees view bound to feesQuery.data.history" },
+    { pattern: /feesQuery\.data(?:\?\.|\.)history/, label: "All Fees view bound to feesQuery.data.history" },
     { pattern: /row\.factor_fee_amount/, label: "All Fees Amount column bound to row.factor_fee_amount" },
   ];
   for (const { pattern, label } of requiredRealBindings) {

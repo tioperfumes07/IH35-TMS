@@ -161,7 +161,7 @@ function analyze(src) {
     ["Security Reserve (Faro statement:", "factoring-escrow-account-summary"],
     ["Cash Reserve", "factoring-cash-reserve-summary"],
     ["Chargebacks & Overpayments", "factoring-chargebacks-overpayments-summary"],
-    ["Account Summary", "factoring-account-summary"],
+    // ROUND 8.15b — Account Summary BoardSection removed; Home = FactoringHomeBoard (asserted above).
     ["Purchase report —", "factoring-purchase-report"],
     ["Fees Paid", "factoring-fees-paid"],
     ["Aging Report — as of", "factoring-aging-summary"],
