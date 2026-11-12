@@ -1,3 +1,16 @@
+## 2026-11-13 ~04:30Z — ROUND 8.18 POST-04Z CORRECTION
+
+Rows 269/291 completed AFTER the 04Z checkpoint was written. Corrected final state:
+- DONE-LIVE: 89/90/94/101/212/213/214/215/227/269/291/292 (12 rows, not 10)
+- 04Z checkpoint incorrectly listed 269/291 as "BLOCKED — data sweep (Lead)"; register correct (PR#29070 `5984ba2f27`)
+
+Row 269 (ENG-34): guard-exempt.json 918→18 entries; all 18 REQUIRES_LIVE_DB or specifically justified; verify-guard-wired 6440 fully-wired + 17 exempt; PR#29070.
+Row 291 (ENG-46): bill_payments_no_spine=0; ad02cc37 noncash escrow P-0117 OK; insurance.lawsuit COUNT(*)=0; PR#29070.
+
+No code change. Register (LEAD-PENDING-REGISTER.md rows 269/291) is authoritative.
+
+---
+
 ## 2026-11-13 ~04:00Z — ROUND 8.18 FINAL CHECKPOINT (CC-1 DONE)
 
 ROUND 8.18 04:00Z FINAL · CC-1 all buildable rows DONE · Summary:
