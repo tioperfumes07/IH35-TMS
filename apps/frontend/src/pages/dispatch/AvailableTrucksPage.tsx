@@ -18,6 +18,7 @@ import { OverrideButton } from "../../components/override/OverrideButton";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
 /**
@@ -125,7 +126,17 @@ export function AvailableTrucksPage() {
       className: "font-medium",
       render: (r) => <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} data-testid={`capacity-unit-${r.unit_number}`} />,
     },
-    { key: "driver_name", label: "Driver", sortable: true, render: (r) => r.driver_name ?? <span className="text-[#6B7280]">—</span> },
+    {
+      key: "driver_name",
+      label: "Driver",
+      sortable: true,
+      render: (r) =>
+        r.driver_id ? (
+          <EntityLink kind="driver" id={r.driver_id} label={entityLabel(r.driver_name, r.driver_id, "Driver")} data-testid={`capacity-driver-${r.unit_number}`} />
+        ) : (
+          <span className="text-[#6B7280]">{r.driver_name ?? "—"}</span>
+        ),
+    },
     {
       key: "equipment",
       label: "Equipment",

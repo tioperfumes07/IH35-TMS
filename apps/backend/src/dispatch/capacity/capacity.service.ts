@@ -21,6 +21,7 @@ export type CapacitySource = "actual" | "appointment" | "scheduled" | "gps";
 export type CapacityRow = {
   unit_id: string;
   unit_number: string;
+  driver_id: string | null;
   driver_name: string | null;
   equipment: string | null;
   equipment_source: "next_load" | "last_load" | null;
@@ -43,6 +44,7 @@ export type CapacityRawRow = {
   unit_id: string; unit_number: string;
   load_id: string | null; load_number: string | null; open_load_count: string | number | null;
   load_trailer_type: string | null; last_trailer_type: string | null;
+  driver_id: string | null;
   driver_name: string | null;
   stop_city: string | null; stop_state: string | null;
   stop_actual_departure_at: string | null; stop_appointment_end_at: string | null; stop_scheduled_arrival_at: string | null;
@@ -55,6 +57,7 @@ export const CAPACITY_SQL = `
   SELECT u.id::text AS unit_id, u.unit_number,
          chain.load_id, chain.load_number, chain.open_load_count,
          chain.trailer_type AS load_trailer_type, prev.trailer_type AS last_trailer_type,
+         d.id::text AS driver_id,
          NULLIF(initcap(lower(CONCAT_WS(' ', d.first_name, d.last_name))), '') AS driver_name,
          COALESCE(NULLIF(fs.city, ''), loc.city) AS stop_city, COALESCE(NULLIF(fs.state, ''), loc.state) AS stop_state,
          fs.actual_departure_at::text AS stop_actual_departure_at,
@@ -155,6 +158,7 @@ export function toCapacityRow(r: CapacityRawRow, now: Date = new Date()): Capaci
   return {
     unit_id: r.unit_id,
     unit_number: r.unit_number,
+    driver_id: r.driver_id,
     driver_name: r.driver_name,
     equipment,
     equipment_source: equipmentSource,

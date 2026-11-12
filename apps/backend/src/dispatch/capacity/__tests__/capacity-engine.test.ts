@@ -23,6 +23,7 @@ function raw(over: Partial<CapacityRawRow> = {}): CapacityRawRow {
     unit_id: "11111111-1111-4111-8111-111111111111", unit_number: "T152",
     load_id: null, load_number: null, open_load_count: 0,
     load_trailer_type: null, last_trailer_type: "refrigerated_van",
+    driver_id: null,
     driver_name: "Juan Perez",
     stop_city: null, stop_state: null,
     stop_actual_departure_at: null, stop_appointment_end_at: null, stop_scheduled_arrival_at: null,
@@ -82,7 +83,7 @@ describe("capacity engine — where and when each truck is free", () => {
 
 function cap(over: Partial<CapacityRow>): CapacityRow {
   return {
-    unit_id: "u1", unit_number: "T100", driver_name: null, equipment: "Reefer", equipment_source: "last_load",
+    unit_id: "u1", unit_number: "T100", driver_id: null, driver_name: null, equipment: "Reefer", equipment_source: "last_load",
     available_city: "Laredo", available_state: "TX", available_at: "2026-11-10T16:00:00Z", source: "gps", reason: null,
     last_load_id: null, last_load_number: null, open_load_count: 0, offer_enabled: true, off_reason_code: null, offerable: true,
     ...over,
