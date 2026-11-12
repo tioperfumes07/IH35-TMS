@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
@@ -35,6 +36,31 @@ const ADVANCE = {
 };
 
 describe("AdvanceDetailDrawer — C6/B8 DocumentsTab wiring", () => {
+  it.each([
+    ["2026-11-10T01:30:00Z", "11/09/2026, 7:30 PM"],
+    ["2026-07-10T01:30:00Z", "07/09/2026, 8:30 PM"],
+    [null, "—"],
+    ["invalid-timestamp", "—"],
+  ])("formats each timeline instant in Central time (%s)", (timestamp, expected) => {
+    render(
+      <MemoryRouter>
+        <ToastProvider>
+          <AdvanceDetailDrawer
+            open
+            operatingCompanyId="0c000000-0000-4000-8000-000000000001"
+            advance={{ ...ADVANCE, created_at: timestamp, approved_at: timestamp, disbursed_at: timestamp }}
+            onClose={() => {}}
+            onUpdated={() => {}}
+            onMarkDisbursed={() => {}}
+          />
+        </ToastProvider>
+      </MemoryRouter>
+    );
+    for (const label of ["Created", "Approved", "Disbursed"]) {
+      expect(screen.getByText(`${label}: ${expected}`)).toBeInTheDocument();
+    }
+  });
+
   it("renders DocumentsTab scoped to this cash advance", () => {
     render(
       <MemoryRouter>
