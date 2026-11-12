@@ -309,6 +309,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
       },
       {
+        key: "due_date",
+        label: "Due",
+        sortable: true,
+        render: (item) => (item.due_date ? formatDateUS(item.due_date) : "—"),
+      },
+      {
         key: "customer",
         label: "Customer",
         render: (item) => {
@@ -397,6 +403,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         key: "group",
         label: "Priority",
         render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
+      },
+      {
+        key: "due_date",
+        label: "Due",
+        sortable: true,
+        render: (item) => (item._empty || !item.due_date ? "—" : formatDateUS(item.due_date)),
       },
       {
         key: "payee",
