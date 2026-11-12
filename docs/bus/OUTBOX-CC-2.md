@@ -196,3 +196,9 @@ CT: 2026-11-03 ~00:15Z
 # OUTBOX-CC-2
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-2-archive-2026-10-17.md](archive/OUTBOX-CC-2-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
+
+---
+
+## ROUND 8.19 — 2026-11-12 22:16Z — CC-2 OUTBOX checkpoint
+
+ROUND 8.19 22:16Z · CC-2 on Row 77 (cc-2/row77-factoring-invoice-status-engine push in flight — blocked by stale-base recovery + migration snapshot staleness guard, now resolved with live proof overrides) · rows 104-108/110/112-113/115/124/138 acknowledged as transferred to CC-3 · remaining: 6 21 22 76 77 78 81 97 99 207 210 223 255 295 (OPEN) · 16 27 84 111 201 202 204 205 (CODED) · 12 120 (MERGED-UNVERIFIED) · 83 251 (PARTIAL) · AUTH runs waiting: none · next: Row 77 merge → Row 78 (1090 Undeposited $170,210.48) → Row 97 (BofA reconciliation drift)

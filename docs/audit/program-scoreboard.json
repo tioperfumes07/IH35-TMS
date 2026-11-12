@@ -1,10 +1,10 @@
 {
-  "healthzSha": "4754007",
-  "generated_at": "2026-11-12T20:23:06.591Z",
+  "healthzSha": "a69f799",
+  "generated_at": "2026-11-12T22:23:53.066Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "4754007",
+    "deployedSha": "a69f799",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 29102,
-      "title": "FINDING: LEAD-F817-FUEL-HOME-GUARD main red — verify-fuel-home-dashboard-wired rejects the period-keeping View all",
+      "number": 29123,
+      "title": "FINDING: CC-1-ROW-79-CARD-PAYABLE-ROLE-WIRING LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29102",
-      "sha": "4754007c63",
-      "committedAtIso": "2026-11-12T13:58:06-06:00"
+      "mergedAtCt": "11/12/2026, 04:21 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29123",
+      "sha": "ddc4ac9d40",
+      "committedAtIso": "2026-11-12T16:21:53-06:00"
     },
     {
-      "number": 29098,
-      "title": "FINDING: PERF-F817-LEAN-VIEWS Trading = my cost once + list / they earn / sell to them",
+      "number": 29117,
+      "title": "PERFUME: vendor short names as column headers (PCA, MTZ, NAND, PPW) and 'After cushion' -> 'Cushion'",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:46 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29098",
-      "sha": "7b587b98ea",
-      "committedAtIso": "2026-11-12T13:46:19-06:00"
+      "mergedAtCt": "11/12/2026, 04:14 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29117",
+      "sha": "a69f7996f5",
+      "committedAtIso": "2026-11-12T16:14:41-06:00"
     },
     {
-      "number": 29097,
-      "title": "FINDING: LEAD-F817-MAIN-RED unblock main: review text-xs + derived artifacts + fuel history guard re-anchor",
+      "number": 29119,
+      "title": "FINDING: BANK-F819 ROUND 8.19 Factoring Purchase-report OVERHAUL unlayer",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:39 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29097",
-      "sha": "b95385caf3",
-      "committedAtIso": "2026-11-12T13:39:34-06:00"
+      "mergedAtCt": "11/12/2026, 04:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29119",
+      "sha": "37904d3695",
+      "committedAtIso": "2026-11-12T16:12:56-06:00"
     },
     {
-      "number": 29100,
-      "title": "FINDING: ROUND 8.17 factoring reserve identity resolution",
+      "number": 29120,
+      "title": "FINDING: CC-3 R8.19 rows 18 DONE-LIVE; row 19 BLOCKED blocker posted; row 80 ESCALATED; OUTBOX 00Z checkpoint",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29100",
-      "sha": "0d3447e032",
-      "committedAtIso": "2026-11-12T14:20:29-05:00"
+      "mergedAtCt": "11/12/2026, 04:11 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29120",
+      "sha": "8ae01fa727",
+      "committedAtIso": "2026-11-12T16:11:59-06:00"
     },
     {
-      "number": 29099,
-      "title": "FINDING: ROUND 8.17 measured board verification register",
+      "number": 29118,
+      "title": "FINDING: CC-3 R8.18 ENG-25 row 260 DONE-LIVE (register — live attribution confirmed)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:19 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29099",
-      "sha": "a929a82055",
-      "committedAtIso": "2026-11-12T14:19:07-05:00"
+      "mergedAtCt": "11/12/2026, 04:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29118",
+      "sha": "6b8faa4c18",
+      "committedAtIso": "2026-11-12T16:10:13-06:00"
     },
     {
-      "number": 29094,
-      "title": "FINDING: PERF-F817-REVIEW-BULK owner has 1,788 review lines and no filters or multi-select",
+      "number": 29115,
+      "title": "chore: claim migration 202616560100 (perfume vendor short names)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29094",
-      "sha": "f9fc0f1665",
-      "committedAtIso": "2026-11-12T13:17:43-06:00"
+      "mergedAtCt": "11/12/2026, 04:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29115",
+      "sha": "2d94f58054",
+      "committedAtIso": "2026-11-12T16:08:11-06:00"
     },
     {
-      "number": 29095,
-      "title": "FINDING: ROUND 8.17 canonical current-odometer PM readers",
+      "number": 0,
+      "title": "Merge pull request #29116 from tioperfumes07/cursor/round817-insurance-policy-back",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29095",
-      "sha": "a4da74221d",
-      "committedAtIso": "2026-11-12T14:16:34-05:00"
+      "mergedAtCt": "11/12/2026, 04:05 PM CT",
+      "url": "",
+      "sha": "7a6a814378",
+      "committedAtIso": "2026-11-12T16:05:32-06:00"
     },
     {
-      "number": 29093,
-      "title": "FINDING: ROUND 8.17 bank register guard mutation coverage",
+      "number": 0,
+      "title": "FINDING: BANK-F817 ROUND 8.17 Insurance policy Back consumes ret LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29093",
-      "sha": "09e1046c08",
-      "committedAtIso": "2026-11-12T14:15:16-05:00"
+      "mergedAtCt": "11/12/2026, 03:52 PM CT",
+      "url": "",
+      "sha": "6344a3ff69",
+      "committedAtIso": "2026-11-12T16:52:45-05:00"
     },
     {
-      "number": 29089,
-      "title": "chore: claim migration 202616540100 (perfume review gender override)",
+      "number": 29111,
+      "title": "FINDING: PERF-F817-MY-LISTS my offer list + my inventory, \"show only my items\" selector; grouped grids split columns evenly",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29089",
-      "sha": "6263127088",
-      "committedAtIso": "2026-11-12T13:13:36-06:00"
+      "mergedAtCt": "11/12/2026, 03:45 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29111",
+      "sha": "21a46bdb92",
+      "committedAtIso": "2026-11-12T15:45:06-06:00"
     },
     {
-      "number": 29092,
-      "title": "FINDING: CC-3 R8.18 D047 D074 D079 register DONE-LIVE",
+      "number": 0,
+      "title": "Merge pull request #29114 from tioperfumes07/cursor/round817-factoring-fee-back",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 01:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29092",
-      "sha": "c3883ea539",
-      "committedAtIso": "2026-11-12T13:13:19-06:00"
+      "mergedAtCt": "11/12/2026, 03:43 PM CT",
+      "url": "",
+      "sha": "b811c0e402",
+      "committedAtIso": "2026-11-12T15:43:50-06:00"
     }
   ]
 }
