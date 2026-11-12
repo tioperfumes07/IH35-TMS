@@ -76,6 +76,12 @@ export type FactoringRecourseInvoice = {
   advance_amount: number;
   reserve_amount: number;
   factored_at: string;
+  /** accounting.invoices.issue_date — Aging "Invoice Date" basis (nullable when unlinked). */
+  invoice_date?: string | null;
+  /** accounting.factoring_advances.faro_purchase_date — Aging "Purchase Date" basis. */
+  purchase_date?: string | null;
+  /** accounting.factoring_advances.advanced_at — Aging "Fund Date" basis. */
+  fund_date?: string | null;
   recourse_expiry_date: string;
   days_until_recourse_expiry: number;
   /** LINK-F5180: real FK, resolved via the same accounting.invoices join that resolves customer_id. */
