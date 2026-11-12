@@ -245,6 +245,9 @@
       "route_hint": "/dispatch?view=truck-line",
       "surface_kind": "leaf",
       "surface_path": "pages/dispatch/TruckLineBoard.tsx",
+      "owned_surface_paths": [
+        "pages/dispatch/AvailableTrucksPage.tsx"
+      ],
       "required": [
         "driver",
         "unit",

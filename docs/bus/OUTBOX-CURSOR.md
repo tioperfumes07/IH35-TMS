@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~6:30 PM CT) — AvailableTrucks ParityDrawer surface-bar mapped (home.truck_line)
+- **PRIOR:** #28877 Codex LIVE tip; #28876 R5/R6; 45/45 CODE.
+- **THIS:** Map AvailableTrucksPage ParityDrawer → home.truck_line owned_surface_paths. Guard PASS.
+- **NEXT:** Codex LIVE proofs; residual Legal bulk-void honest-disabled (no backend). No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~6:20 PM CT) — BOARD-45 source CODE 45/45; tipped Codex for LIVE proof
 - **PRIOR:** #28876 R5/R6; #28875 raw_font_sizes 0.
 - **THIS:** Register 45/45 CODE. Tipped INBOX-CODEX for ROUND 8.12 LIVE screenshots + wiring tables. Cursor continues reverse-link audits on owned boards.
