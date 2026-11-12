@@ -206,6 +206,19 @@ export function TruckPlanner() {
   const filteredTruckRows = useMemo(() => {
     return truckRows.filter((row) => {
       if (entityFilters.driverIds.length > 0 && (!row.driverId || !entityFilters.driverIds.includes(row.driverId))) return false;
+      if (entityFilters.unitIds.length > 0 && !entityFilters.unitIds.includes(row.unitId)) return false;
+      // Customer filter: keep units that have a load for any selected customer in the planner window.
+      if (entityFilters.customerIds.length > 0) {
+        const loads = loadsQuery.data ?? [];
+        const selected = new Set(entityFilters.customerIds);
+        const hasCustomerLoad = loads.some(
+          (l) =>
+            l.assigned_unit_id === row.unitId &&
+            l.customer_id != null &&
+            selected.has(String(l.customer_id)),
+        );
+        if (!hasCustomerLoad) return false;
+      }
       // U12 — OR across selected status buckets; empty = all.
       if (entityFilters.status.length === 0) return true;
       return entityFilters.status.some((s) => {
@@ -215,9 +228,8 @@ export function TruckPlanner() {
         if (s === "in-shop") return row.status === "in-shop";
         return false;
       });
-      return true;
     });
-  }, [truckRows, entityFilters]);
+  }, [truckRows, entityFilters, loadsQuery.data]);
 
   const loadBarsByUnit = useMemo(() => {
     const loads = loadsQuery.data ?? [];

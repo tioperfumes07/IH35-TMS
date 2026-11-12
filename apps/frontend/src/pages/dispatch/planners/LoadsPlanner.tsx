@@ -89,30 +89,20 @@ export function LoadsPlanner() {
   // screens read, batched for the whole visible list in one request.
   const costRollups = useLoadCostRollups(operatingCompanyId, (listLoadsQuery.data ?? []).map((load) => load.id));
 
-  const rows = useMemo(() => {
-    const all = loadsQuery.data ?? [];
-    // ROUND 8.12 — shared entity filters apply on Loads (Codex: was ignored).
-    return all.filter((load) => {
-      if (entityFilters.driverIds.length > 0) {
-        const did = load.driver_id ? String(load.driver_id) : "";
-        if (!did || !entityFilters.driverIds.includes(did)) return false;
-      }
-      if (entityFilters.status.length === 0) return true;
-      const assigned = Boolean(load.driver_id);
-      return entityFilters.status.some((s) => {
-        if (s === "in-use") return assigned;
-        if (s === "available") return !assigned;
-        return false;
-      });
-    });
-  }, [loadsQuery.data, entityFilters]);
-
   const filteredListLoads = useMemo(() => {
     const all = listLoadsQuery.data ?? [];
     return all.filter((load) => {
       if (entityFilters.driverIds.length > 0) {
         const did = load.assigned_primary_driver_id ? String(load.assigned_primary_driver_id) : "";
         if (!did || !entityFilters.driverIds.includes(did)) return false;
+      }
+      if (entityFilters.customerIds.length > 0) {
+        const cid = load.customer_id ? String(load.customer_id) : "";
+        if (!cid || !entityFilters.customerIds.includes(cid)) return false;
+      }
+      if (entityFilters.unitIds.length > 0) {
+        const uid = load.assigned_unit_id ? String(load.assigned_unit_id) : "";
+        if (!uid || !entityFilters.unitIds.includes(uid)) return false;
       }
       if (entityFilters.status.length === 0) return true;
       const assigned = Boolean(load.assigned_primary_driver_id);
@@ -123,6 +113,32 @@ export function LoadsPlanner() {
       });
     });
   }, [listLoadsQuery.data, entityFilters]);
+
+  const rows = useMemo(() => {
+    const all = loadsQuery.data ?? [];
+    // ROUND 8.12 — shared entity filters apply on Loads (Codex: was ignored).
+    // Week-events lack unit_id — when unitIds are set, intersect with filtered list-load ids.
+    const unitScopedIds =
+      entityFilters.unitIds.length > 0 ? new Set(filteredListLoads.map((l) => l.id)) : null;
+    return all.filter((load) => {
+      if (unitScopedIds && !unitScopedIds.has(load.id)) return false;
+      if (entityFilters.driverIds.length > 0) {
+        const did = load.driver_id ? String(load.driver_id) : "";
+        if (!did || !entityFilters.driverIds.includes(did)) return false;
+      }
+      if (entityFilters.customerIds.length > 0) {
+        const cid = load.customer_id ? String(load.customer_id) : "";
+        if (!cid || !entityFilters.customerIds.includes(cid)) return false;
+      }
+      if (entityFilters.status.length === 0) return true;
+      const assigned = Boolean(load.driver_id);
+      return entityFilters.status.some((s) => {
+        if (s === "in-use") return assigned;
+        if (s === "available") return !assigned;
+        return false;
+      });
+    });
+  }, [loadsQuery.data, entityFilters, filteredListLoads]);
 
   if (!operatingCompanyId) {
     return (

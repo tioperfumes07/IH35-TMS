@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~9:20 PM CT) — Planner Unit + Customer MultiSelect (board heading complete)
+- **PRIOR:** #28885 CF3 day-grain; #28882 Status/Driver entityFilters.
+- **THIS:** PlannerEntityFilterState adds unitIds+customerIds; Filters popover MultiSelects for Unit+Customer; Truck/Timeline/Driver/Loads apply them; chips clearable. Vitest planners 7/7.
+- **NEXT:** Codex LIVE Filters proof (4 MultiSelects); reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:10 PM CT) — CF3 day-tile click sets grain=day (#ORPH-004)
 - **PRIOR:** #28883 go26 bank; #28882 planner entityFilters.
 - **THIS:** DailyPredictionTab 7-day tile onClick now setDate+setGrain("day"); verify-orphan-surface-drill ORPH-004 pattern updated (SURFACE-BREACH — Cash Flow Cursor-owned; guard was CC-1 orphan set). Tip INBOX-CC-1.
