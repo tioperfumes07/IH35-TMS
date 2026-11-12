@@ -179,6 +179,11 @@ export type PerfumeBulkAction =
   | { action: "create_new"; row_ids: string[] }
   | { action: "set_gender"; row_ids: string[]; gender: "M" | "W" | "U" };
 export type PerfumeBulkResult = { rows: number; linked: number; items_created: number; now_matched: number; skipped: Array<{ row_id: string; reason: string }> };
+/** Owner 11-12: one spelling per brand — respelled twins merge into the canonical item. Idempotent. */
+export const canonicalizePerfumeBrands = () =>
+  apiRequest<{ checked: number; renamed: number; merged: number; brands: Record<string, string> }>("/api/v1/perfume/items/canonicalize-brands", { method: "POST", body: {} });
+/** Re-runs the matching engine over every line still in Review (new suggestions, new links). */
+export const rematchPerfumeReview = () => apiRequest<Record<string, number>>("/api/v1/perfume/review/rematch", { method: "POST", body: {} });
 export const bulkPerfumeReview = (b: PerfumeBulkAction) => apiRequest<PerfumeBulkResult>("/api/v1/perfume/rows/bulk", { method: "POST", body: b });
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });

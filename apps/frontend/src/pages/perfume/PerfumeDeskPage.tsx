@@ -15,6 +15,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
   type PerfumeFacetKey, type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
+  canonicalizePerfumeBrands, rematchPerfumeReview,
 } from "../../api/perfume";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
@@ -340,6 +341,37 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
   );
 }
 
+/* ---------------- match clean-up ---------------- */
+
+/** Owner 2026-11-12 ("perfumes completely done"): one click merges brands spelled two ways, then re-runs Review. */
+function MatchCleanup() {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const run = async () => {
+    setBusy(true);
+    try {
+      const c = await canonicalizePerfumeBrands();
+      const r = await rematchPerfumeReview();
+      const parts = Object.entries(r).map(([k, v]) => `${k.replace(/_/g, " ")} ${v}`).join(" · ");
+      setResult(`${c.checked.toLocaleString()} items checked · ${c.renamed} renamed · ${c.merged} merged · ${Object.keys(c.brands).length} brand spellings · Review: ${parts}`);
+      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      pushToast("Brands cleaned and Review re-run", "success");
+    } catch (e) { pushToast(userFacingApiError(e, "Clean-up did not run"), "error"); }
+    finally { setBusy(false); }
+  };
+  return (
+    <div data-testid="perfume-match-cleanup">
+      <div className="text-section-header">{tr("perfume.desk.38", "Match clean-up")}</div>
+      <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void run()}>{busy ? tr("perfume.desk.40", "Running…") : tr("perfume.desk.39", "Merge brand spellings + re-run Review")}</Button>
+        <span className="text-gray-600">{result ?? tr("perfume.desk.41", "One spelling per brand (CALVIN → CALVIN KLEIN, NARCISO R → NARCISO RODRIGUEZ …); the same bottle under two spellings becomes one item. Safe to run again.")}</span>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- rules ---------------- */
 
 const STEPS: Array<[PerfumeRules["round_step"], string]> = [["5", ".05"], ["10", ".10"], ["25", ".25"], ["50", ".50"], ["100", "1.00"], ["75", "ends in .75"]];
@@ -402,6 +434,7 @@ function RulesPanel() {
           <span className="text-gray-600">{tr("perfume.desk.37", "— the Competition tab takes the cheapest supplier's list price less this as each competitor's cost")}</span>
         </div>
       </div>
+      <MatchCleanup />
       <div className="flex gap-2">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>{tr("perfume.desk.30", "Save")}</Button>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>{tr("perfume.desk.31", "Cancel")}</Button>
