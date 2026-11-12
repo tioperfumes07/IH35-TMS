@@ -1,5 +1,7 @@
 # CODEX — ROUND 8.5 / 8.11 / 8.12 — 2026-11-11
 
+ROUND 8.17 21:10Z (20Z checkpoint missed, not backdated) · N fixes merged:4/7:#29090 b83663d2663;18:#29100 0d3447e0328;22/43/44:#29095 a4da74221de;31:#29050 6470db6a356 · V checked12/12 bounded · CERTIFIED0/45 · FE/BE72b9a27cc20 deployed. PM39 fleet/96 schedule rows resolve with explicit unknown; full source tie-out blocked Neon API401. Fuel Back#29096 OPEN; Fuel/TB/statement read-only gate classification still refused, CC-1/Lead requested. N3 cleared-versus-categorized/account-scope defect and N24 wrong date consumer posted Cursor6836019202/6835965107. Hooks ON, no production writes.
+
 ROUND8.17 19:11Z · Cursor #29088 LIVE on FE/BE1758d493e72, Render FEdep-dbr0s417lnhs73egtskg/BEdep-dbr0s47prmrc73d8ap30. Fuel History Amount→one transaction and empty planner-strip removal bounded PASS; reverse ret has no Back control, FAIL posted6833347707. Full certificates0/45; no production writes.
 
 ROUND 8.17 19:09Z · N4/7 classification MERGED #29090 b83663d2663043fc564da28d26fb5ff0396920f2 after normal hooks-on push and44 affected guards/no regressions. Cursor cross-check requested6833268917; deployment/consumer acceptance UNVERIFIED. By-truck #29086 forward fill count39→History39 bounded PASS on FE928a0cb; origin ret/Back missing, full Fuel remains FAIL (6833269460). PM normal push gate0/builds0, static sweep running; Bank normal retry after bounded readonly connectivity PASS. No production writes, CERTIFIED0/45.

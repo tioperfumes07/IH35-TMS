@@ -76,7 +76,7 @@ export function PerfumeReviewPanel() {
         rowKey={(r) => r.id}
         rowClassName={(r) => (vendorStarts.has(r.id) ? "border-t-2 border-t-slate-500" : "")}
         loading={q.isLoading}
-        storageKey="perfume-desk-review-v2"
+        storageKey="perfume-desk-review-v3"
         selectable
         selectedKeys={selected}
         onSelectionChange={setSelected}
@@ -100,8 +100,12 @@ export function PerfumeReviewPanel() {
           { key: "case_pack", label: "Case pack", sortable: true, defaultHidden: true, kind: "number", render: (r) => (r.case_pack == null ? "—" : String(r.case_pack)) },
           { key: "description", label: "Their line", sortable: true, allowWrap: true, minWidth: 220 },
           { key: "price_cents", label: "Price", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.price_cents) },
-          { key: "suggestions", label: "Best suggestion", allowWrap: true, minWidth: 280, sortValue: (r) => r.suggestions[0]?.score ?? 0,
-            render: (r) => (r.suggestions[0] ? <span>{r.suggestions[0].display_name} <span className="text-gray-500">({Math.round(r.suggestions[0].score * 100)}{tr("perfume.review.3", "% alike ·")} {r.suggestions[0].why})</span></span> : <span className="text-gray-500">{tr("perfume.review.4", "No close item")}</span>) },
+          // Owner 2026-11-12: "the percentage in likeness should be in its own column."
+          { key: "suggestions", label: "Best suggestion", allowWrap: true, minWidth: 260, sortValue: (r) => r.suggestions[0]?.display_name ?? "",
+            render: (r) => (r.suggestions[0] ? r.suggestions[0].display_name : <span className="text-gray-500">{tr("perfume.review.4", "No close item")}</span>) },
+          { key: "alike", label: "% alike", kind: "number", sortable: true, sortValue: (r) => r.suggestions[0]?.score ?? 0, cellClass: "text-right tabular-nums",
+            render: (r) => (r.suggestions[0] ? `${Math.round(r.suggestions[0].score * 100)}%` : "—") },
+          { key: "differs", label: "Differs by", allowWrap: true, minWidth: 160, render: (r) => r.suggestions[0]?.why || "—" },
         ]}
         rowActions={(r) => <ConfirmControls row={r} />}
         rowActionsWidth={420}
@@ -154,7 +158,7 @@ function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void 
         {tr("perfume.review.bulkConfirm", "Confirm best suggestion")}
       </Button>
       <span className="w-[240px]">
-        <Combobox ariaLabel="Link selected to item" size="sm" value={item} onChange={setItem} onSearch={setSearch} options={options} placeholder={tr("perfume.review.bulkSearch", "Search one item for all")} />
+        <Combobox ariaLabel="Link selected to item" size="sm" allowClear clearCommittedOnEdit value={item} onChange={setItem} onSearch={setSearch} options={options} placeholder={tr("perfume.review.bulkSearch", "Search one item for all")} />
       </span>
       <Button type="button" variant="secondary" className="h-[30px] px-2 text-xs" disabled={busy || !item}
         onClick={() => item && void run({ action: "link_item", row_ids: selected, item_id: item }, "Linked to item")}>
@@ -169,29 +173,41 @@ function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void 
 }
 
 function ConfirmControls({ row }: { row: PerfumeReviewRow }) {
+  // Owner 2026-11-12: "if I want to select the recommendation it does not let me confirm, I must type in the box
+  // again … I selected an item and then I want to delete and it won't let me … make this child easy."
+  // The best suggestion is one click; the box starts on it, can be cleared, and searches any words in any order.
   const qc = useQueryClient();
   const { pushToast } = useToast();
-  const [pick, setPick] = useState<string | null>(null);
+  const best = row.suggestions[0] ?? null;
+  const [pick, setPick] = useState<string | null>(best?.item_id ?? null);
   const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
   const hits = useQuery({ queryKey: ["perfume", "items", search], queryFn: () => searchPerfumeItems(search), enabled: search.trim().length >= 2 });
   const options = [
     ...row.suggestions.map((s) => ({ value: s.item_id, label: s.display_name, sublabel: `${Math.round(s.score * 100)}% alike` })),
     ...(hits.data?.items ?? []).filter((h) => !row.suggestions.some((s) => s.item_id === h.id)).map((h) => ({ value: h.id, label: h.display_name, sublabel: h.upcs?.join(" ") ?? "" })),
   ];
   const go = async (target: { item_id: string } | { create_new: true }) => {
+    setBusy(true);
     try {
       const r = await confirmPerfumeRow(row.id, target);
       await qc.invalidateQueries({ queryKey: ["perfume"] });
       pushToast(`Linked ${r.rows_linked} line${r.rows_linked === 1 ? "" : "s"}`, "success");
-    } catch (e) { pushToast(userFacingApiError(e, "Not linked"), "error"); }
+    } catch (e) { pushToast(userFacingApiError(e, "Not linked"), "error"); } finally { setBusy(false); }
   };
   return (
     <span className="flex items-center gap-1">
+      {best ? (
+        <Button type="button" className="h-[34px] px-2 text-xs" disabled={busy} data-testid="perfume-review-use-suggestion"
+          onClick={() => void go({ item_id: best.item_id })}>{tr("perfume.review.useSuggestion", "✓ Use suggestion")}</Button>
+      ) : null}
       <span className="w-[240px]">
-        <Combobox ariaLabel="Item" size="sm" value={pick} onChange={setPick} onSearch={setSearch} options={options} placeholder={tr("perfume.review.9", "Pick or search the item")} />
+        <Combobox ariaLabel="Item" size="sm" value={pick} onChange={setPick} onSearch={setSearch} options={options}
+          allowClear clearCommittedOnEdit placeholder={tr("perfume.review.9", "Or search another item")} />
       </span>
-      <Button type="button" className="h-[34px] px-2 text-xs" disabled={!pick} onClick={() => pick && void go({ item_id: pick })}>{tr("perfume.review.10", "Confirm")}</Button>
-      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => void go({ create_new: true })}>{tr("perfume.review.11", "New item")}</Button>
+      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" disabled={busy || !pick}
+        onClick={() => pick && void go({ item_id: pick })}>{tr("perfume.review.10", "Confirm")}</Button>
+      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" disabled={busy} onClick={() => void go({ create_new: true })}>{tr("perfume.review.11", "New item")}</Button>
     </span>
   );
 }

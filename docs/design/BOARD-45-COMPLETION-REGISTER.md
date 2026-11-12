@@ -2,6 +2,18 @@
 
 ## ROUND 8.17 verification overlay — 2026-11-12
 
+21:10Z checkpoint (20:00Z deadline missed; not backdated): FE version.json and BE healthz both identify `72b9a27cc202d09b1847098527afeb61e5c6f99c`. This contains N4/7 #29090 `b83663d2663`, N22/43/44 #29095 `a4da74221de`, N18 #29100 `0d3447e0328`, and N31 #29050 `6470db6a356`. Merged/deployed is not independent certification. V boards checked 12/12 bounded; full CERTIFIED 0/45; production writes 0.
+
+| # | Current measured result | Remaining acceptance |
+|---|---|---|
+| 19 | Reloaded transaction drill resolves one row on deployed tip | No application Back despite ret; #29096 still open; GET ordering gate blocked |
+| 22/43/44 | Home resolves 39 fleet rows; PM schedules resolve 96 rows, displayed missing baselines show unknown rather than current | Full current-odometer source tie-out and other-seat cross-check pending; no full certificate |
+| 24 | Shared date unit suite 15/15 PASS; calendar formatter exists | Matrix expiry still calls timestamp formatter at DriverQualificationMatrix.tsx:53; Cursor notified |
+| 3 | Source discrepancy independently located | Cleared is not categorized; drill drops operating-account cohort. Cursor notified with negative control |
+| 26/32/34/35 | Prepared read-only fixes retained | Money gate classifies entire reader directories as writers; CC-1/Lead review pending, no bypass |
+
+Neon branch-identity API401 prevents fresh source SQL verification; no query run after refusal. Public handoffs: #29044 comments6835933579/6835965107/6836019202, #29095 comment6835987841, #29096 comment6836020529.
+
 19:11Z board19 #29088 on FE/BE1758d493e72: Amount→one source transaction and conditional planner strip bounded PASS; ret present but no in-app Back, so reverse FAIL. Render FEdep-dbr0s417lnhs73egtskg/BEdep-dbr0s47prmrc73d8ap30 live. Cursor6833347707; no full certificate.
 
 19:09Z: N4/7 classification merged #29090 `b83663d2663` (16 tests, normal hooks,44 affected guards/no regressions); independent deployed cross-check requested, not certified. Board19 By-truck #29086 count39 opens39 source rows with unit/date bounds on FE928a0cb (bounded PASS); no origin ret/app Back on History (FAIL). Cursor comments6833268917/6833269460. PM normal push static sweep remains running. Production writes zero.

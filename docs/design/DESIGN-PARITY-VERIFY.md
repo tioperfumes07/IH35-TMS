@@ -1,5 +1,15 @@
 # ROUND 8.5 — independent board parity verification
 
+## ROUND 8.17 — 21:10Z measured update
+
+Deployed FE/BE `72b9a27cc202d09b1847098527afeb61e5c6f99c` contains PM #29095 and reserve #29100 plus Cash Flow #29090. USMCA read-only browser: Maintenance Home resolves39 rows with explicit missing-baseline labels; PM schedules resolve96 rows with displayed unknown states. Bounded rendering PASS, not independent source-number certification. Fuel transaction_id still resolves exactly one row, but its ret has no application Back; #29096 remains OPEN. No production writes.
+
+N3 source root cause: `money-map.routes.ts` tx_stats uses `clearedBankLine`, which excludes pending-feed rows but includes uncategorized cleared rows. `BankingHomeBoard.tsx:668–671` sends `review=categorized`, incorrectly narrowing that population; its KPI also excludes Relay accounts at290–304 while the drill omits account scope. Required negative control includes cleared/uncategorized income, excludes Relay/pending/inactive accounts. Do not alter accounting populations to fit the wrong drill. Cursor comment6836019202.
+
+N24 source root cause remains consumer choice: shared `formatCalendarDateUS` already preserves literal dates, but `DriverQualificationMatrix.tsx:53` uses timestamp `formatDateUS`. Existing formatter tests15/15 PASS from frontend workspace; initial wrong-cwd invocation found no tests and was not a pass. Cursor requested CST/CDT midnight-Z and bare-date UI cases (6835965107). Do not globally reinterpret actual timestamps as calendar dates.
+
+Fresh SQL tie-out is UNVERIFIED because branch-identity assertion returns Neon API401. Installed CLI2.26.6 has no `profile list` command; no credentials changed and no query bypass. Three read-only release branches remain blocked by unchanged gate writer-prefix classification. Full certificates remain0/45. The20Z checkpoint was missed and this update is not backdated.
+
 19:11Z #29088 bounded LIVE PASS: FE/BE `1758d493e72cf5fccb0e31e99b9d5c1901a688e8` confirmed via version/healthz, Render FE `dep-dbr0s417lnhs73egtskg` and BE `dep-dbr0s47prmrc73d8ap30` live. History without selected plan no longer renders all-dash planner strip; Amount opens exact transaction_id and one matching row. Reverse remains FAIL: ret encodes filtered origin but no in-app Back consumes it. Private1440x900 screenshot, no writes. Cursor comment6833347707; full board19 remains OPEN.
 
 19:09Z ROUND8.17: N4/7 canonical classification #29090 merged `b83663d2663`, hooks ON,16 focused tests,44 affected guards/no regressions. Independent deployment/consumer acceptance pending. Cursor #29086 By-truck forward source drill bounded PASS on FE928a0cb: count39→History39 retaining unit and October date bounds. History lacks origin ret/app Back; reverse criterion FAIL, board19 not certified. Comments6833268917/6833269460. #29088 History amount/planner-strip fix is newer than this bundle and is not yet scored live. Production writes zero.
