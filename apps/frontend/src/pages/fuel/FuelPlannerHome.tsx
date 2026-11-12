@@ -50,6 +50,7 @@ import { CreateFuelTransactionModal } from "./components/CreateFuelTransactionMo
 import { FuelQuestionsPanel } from "./components/FuelQuestionsPanel";
 import { FuelQuestionsBadge } from "./components/FuelQuestionsBadge";
 import { RelayDepositReview } from "./components/RelayDepositReview";
+import { RelayHistoryImport } from "./components/RelayHistoryImport";
 import { RouteDiagramSvg } from "./components/RouteDiagramSvg";
 import { SavingsPanel } from "./components/SavingsPanel";
 import { StopReasoningTable } from "./components/StopReasoningTable";
@@ -475,6 +476,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           {/* Keep the locked "Relay inbox" named section (verify-architectural-design), then the review queue. */}
           <h3 className="text-xs font-semibold text-gray-900">Relay inbox</h3>
           <RelayDepositReview companyId={companyId} />
+          <FuelBoardSection title="Relay history import" testId="fuel-relay-history-import">
+            <div className="p-3">
+              <RelayHistoryImport operatingCompanyId={companyId} />
+            </div>
+          </FuelBoardSection>
         </div>
       ) : null}
 

@@ -38,17 +38,16 @@ function analyze(src) {
   const { setl, board, tab } = src;
   const errors = [];
 
-  // 1. Settlements register — split, old combined render gone.
+  // 1. Settlements Open/Closed list (ROUND 8.15b) — board has Margin $ only; Margin % home is
+  // TourPreSettlementTab + TourLoadRows (not re-layered on SettlementsToursRegister).
   if (/\{fmt\(r\.margin_cents\)\}\{r\.margin_pct == null/.test(setl)) {
     errors.push("SettlementsToursRegister still combines margin $ and % in one cell (fmt(margin){margin_pct…}) — split them");
   }
-  if (!/testId:\s*"setl-tour-col-margin-pct"/.test(setl)) errors.push('SettlementsToursRegister must add a separate "Margin %" column (testId setl-tour-col-margin-pct)');
-  if (!/key:\s*"margin_pct"[\s\S]{0,240}?label:\s*"Margin %"/.test(setl)) errors.push('SettlementsToursRegister "Margin %" column must carry key margin_pct + label "Margin %"');
-  if (
-    !/key:\s*"margin_pct"[\s\S]{0,360}?r\.margin_pct\.toFixed\(1\)\}%/.test(setl) &&
-    !/key:\s*"margin_pct"[\s\S]{0,360}?formatQuantityTable\(r\.margin_pct,\s*1\)\}%/.test(setl)
-  ) {
-    errors.push('SettlementsToursRegister "Margin %" column must render margin % via toFixed(1) or formatQuantityTable(..., 1)');
+  if (/testId:\s*"setl-tour-col-margin-pct"/.test(setl) || /key:\s*"margin_pct"[\s\S]{0,80}?label:\s*"Margin %"/.test(setl)) {
+    errors.push('SettlementsToursRegister must not layer "Margin %" — home is TourPreSettlementTab / TourLoadRows (Settlements-Open|Closed.dc.html)');
+  }
+  if (!/testId:\s*"setl-tour-col-margin"/.test(setl) || !/label:\s*"Margin"/.test(setl)) {
+    errors.push('SettlementsToursRegister must keep board Margin ($) column (testId setl-tour-col-margin)');
   }
 
   // 2. Load-Costs register (TOUR_LOAD_COLUMNS, TourLoadRows.tsx) — same split, field load_margin_pct.
@@ -93,9 +92,8 @@ if (process.argv.includes("--selftest")) {
   }
   const mutations = [
     ["setl recombines margin", withField("setl", (s) => s.replace(/render: r => <span className=\{r\.margin_cents < 0 \? "text-\[#991B1B\]" : undefined\}>\{fmt\(r\.margin_cents\)\}<\/span> \},/, 'render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },'))],
-    ["setl drops pct testId", withField("setl", (s) => s.replace(/setl-tour-col-margin-pct/g, "gone"))],
-    ["setl drops pct label", withField("setl", (s) => s.replace(/label: "Margin %"/g, 'label: "X"'))],
-    ["setl drops pct render", withField("setl", (s) => s.replace(/r\.margin_pct\.toFixed\(1\)\}%/g, '"x"}').replace(/formatQuantityTable\(r\.margin_pct,\s*1\)\}%/g, '"x"}'))],
+    ["setl re-layers Margin % column", withField("setl", (s) => s + '\n{ key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct" }\n')],
+    ["setl drops Margin $ column", withField("setl", (s) => s.replace(/setl-tour-col-margin/g, "gone").replace(/label: "Margin"/g, 'label: "X"'))],
     ["board drops pct testId", withField("board", (s) => s.replace(/tour-col-margin-pct/g, "gone"))],
     ["board drops pct key", withField("board", (s) => s.replace(/key: "tour_margin_pct"/g, 'key: "gone"'))],
     ["board drops pct render", withField("board", (s) => s.replace(/r\.load_margin_pct\.toFixed\(1\)\}%/g, '"x"}').replace(/formatQuantityTable\(r\.load_margin_pct,\s*1\)\}%/g, '"x"}'))],

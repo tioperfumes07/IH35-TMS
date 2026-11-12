@@ -10,11 +10,15 @@
 //
 // --selftest mutates each load-bearing fact and requires each mutation to FAIL; the real sources pass.
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const REG = "apps/frontend/src/pages/driver-finance/SettlementsToursRegister.tsx";
 const PAGE = "apps/frontend/src/pages/driver-finance/SettlementsPage.tsx";
 const BOARD = "apps/frontend/src/pages/driver-finance/SettlementsHomeBoardPanels.tsx";
 const HELPERS = "apps/frontend/src/pages/driver-finance/settlementsHomeBoardHelpers.ts";
+const TAB = "apps/frontend/src/components/dispatch/TourPreSettlementTab.tsx";
 
 function analyze(reg, page, board, helpers) {
   const home = `${page}\n${board}\n${helpers}`;
@@ -46,18 +50,14 @@ function analyze(reg, page, board, helpers) {
   if (!/settlements\?settlement_id=/.test(reg))
     errors.push("register Tour link does not route to ?settlement_id= (detail view would break)");
 
-  // 5b) SETL-POST (owner 2026-09-09, "the pre-settlement should be verified and click post … we are
-  // missing that button, and that pre-settlement turns to a settlement"): the OPEN pre-settlement
-  // register carries a row-level Verify & Post action that reuses the SAME close-tour endpoint
-  // (open→closed), gated on the readout's can_close — never a new money path.
-  if (!/import\s*\{[^}]*\bcloseTour\b[^}]*\bgetTourReadout\b[^}]*\}\s*from\s*["'][^"']*api\/tourReadout["']/.test(reg))
-    errors.push("register does not import closeTour + getTourReadout (Verify & Post must reuse the existing close-tour endpoint)");
-  if (!/key:\s*"post"/.test(reg) || !/<PostTourAction\b/.test(reg))
-    errors.push("register open view lacks the Post column / PostTourAction (owner's missing 'verify then post' button)");
-  if (!/disabled=\{!row\.can_close/.test(reg))
-    errors.push("Verify & Post is not gated on row.can_close — a not-ready pre-settlement could post");
-  if (!/closeTour\(row\.settlement_id,\s*companyId\)/.test(reg))
-    errors.push("PostTourAction does not call closeTour(row.settlement_id, companyId) — must reuse the existing endpoint, not a new money path");
+  // 5b) SETL-POST ROUND 8.15b re-point — Verify & Post lives on TourPreSettlementTab (detail),
+  // not an Open-list Post column (Settlements-Open.dc.html has Ready + Waiting on only).
+  // Same closeTour endpoint; never a new money path.
+  const tab = fs.readFileSync(path.resolve(ROOT, TAB), "utf8");
+  if (!/closeTour\(/.test(tab))
+    errors.push("TourPreSettlementTab must call closeTour — Verify & Post home after 8.15b");
+  if (/key:\s*"post"/.test(reg) || /<PostTourAction\b/.test(reg))
+    errors.push("SettlementsToursRegister must not layer a Post column — Verify & Post is on TourPreSettlementTab");
 
   // 6) 443.280-A — register mounts as own Open/Closed tabs (not under the home board).
   if (!/import\s*\{[^}]*\bSettlementsToursRegister\b[^}]*\}\s*from\s*["']\.\/SettlementsToursRegister["']/.test(page))
@@ -192,9 +192,7 @@ if (process.argv.includes("--selftest")) {
     ["page drops open tab", [reg, page.replace(/tabParam === "open"/g, 'tabParam === "gone_open"'), board, helpers]],
     ["page drops closed tab", [reg, page.replace(/tabParam === "closed"/g, 'tabParam === "gone_closed"'), board, helpers]],
     ["page restores view toggle under home", [reg, page + '\n<div data-testid="settlements-view-toggle" />\n', board, helpers]],
-    ["post action removed", [reg.replace(/<PostTourAction[^>]*\/>/, "null"), page, board, helpers]],
-    ["post ungated (can_close bypassed)", [reg.replace("disabled={!row.can_close", "disabled={false && !row.can_close"), page, board, helpers]],
-    ["post no longer reuses close-tour endpoint", [reg.replace("closeTour(row.settlement_id, companyId)", "Promise.resolve({})"), page, board, helpers]],
+    ["post column re-layered on list", [reg + '\n{ key: "post", label: "Post", render: () => <PostTourAction /> }\n', page, board, helpers]],
     ["page leftover slate-500", [reg, page + '\n<DataPanel accentColor="#64748b">plant</DataPanel>\n', board, helpers]],
     ["page leftover slate class", [reg, page + '\n<label className="text-xs text-slate-600">plant</label>\n', board, helpers]],
     ["restore forbidden V3Panel", [reg.replace(/testId=["']settlements-tours-v3-panel["']/, 'testId="settlements-tours-v3-panel"\nimport { V3Panel } from "../../components/v3/V3Panel"'), page, board, helpers]],

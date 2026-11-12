@@ -18,6 +18,7 @@
     "Attorney Review",
     "Audit Trail",
     "Audit log",
+    "Available Trucks",
     "Awaiting BOL for invoice",
     "BANKING",
     "Border Crossing",
@@ -106,6 +107,7 @@
     "Planner Calendar",
     "Policies",
     "Profiles",
+    "Profitability hub",
     "Projections",
     "Purchase History",
     "QBO Vendor Linkage",
@@ -137,7 +139,7 @@
     "Users",
     "VENDORS"
   ],
-  "route_path_count": 677,
+  "route_path_count": 687,
   "dispatch_board_column_keys": [
     "cargo_temp",
     "commodity",
