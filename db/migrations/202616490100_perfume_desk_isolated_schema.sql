@@ -170,17 +170,60 @@ CREATE TABLE IF NOT EXISTS perfume.settings (
 
 -- Owner-only on every table. No DELETE grant anywhere: lists are voided, items merged, never deleted —
 -- except needs (a shopping list line is removed when bought) and brand_aliases (a wrong short form).
-DO $$
-DECLARE t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['vendors','items','item_upcs','brand_aliases','price_lists','price_list_rows','item_aliases','needs','settings'] LOOP
-    EXECUTE format('ALTER TABLE perfume.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE perfume.%I FORCE ROW LEVEL SECURITY', t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON perfume.%I', t || '_owner_only', t);
-    EXECUTE format('CREATE POLICY %I ON perfume.%I USING (perfume.is_owner()) WITH CHECK (perfume.is_owner())', t || '_owner_only', t);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE ON perfume.%I TO ih35_app', t);
-  END LOOP;
-END $$;
+-- One explicit block per table (no dynamic SQL) so every guard can read each grant and policy.
+ALTER TABLE perfume.vendors ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.vendors FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS vendors_owner_only ON perfume.vendors;
+CREATE POLICY vendors_owner_only ON perfume.vendors USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.vendors TO ih35_app;
+
+ALTER TABLE perfume.items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.items FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS items_owner_only ON perfume.items;
+CREATE POLICY items_owner_only ON perfume.items USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.items TO ih35_app;
+
+ALTER TABLE perfume.item_upcs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.item_upcs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS item_upcs_owner_only ON perfume.item_upcs;
+CREATE POLICY item_upcs_owner_only ON perfume.item_upcs USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.item_upcs TO ih35_app;
+
+ALTER TABLE perfume.brand_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.brand_aliases FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS brand_aliases_owner_only ON perfume.brand_aliases;
+CREATE POLICY brand_aliases_owner_only ON perfume.brand_aliases USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.brand_aliases TO ih35_app;
+
+ALTER TABLE perfume.price_lists ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.price_lists FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS price_lists_owner_only ON perfume.price_lists;
+CREATE POLICY price_lists_owner_only ON perfume.price_lists USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.price_lists TO ih35_app;
+
+ALTER TABLE perfume.price_list_rows ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.price_list_rows FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS price_list_rows_owner_only ON perfume.price_list_rows;
+CREATE POLICY price_list_rows_owner_only ON perfume.price_list_rows USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.price_list_rows TO ih35_app;
+
+ALTER TABLE perfume.item_aliases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.item_aliases FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS item_aliases_owner_only ON perfume.item_aliases;
+CREATE POLICY item_aliases_owner_only ON perfume.item_aliases USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.item_aliases TO ih35_app;
+
+ALTER TABLE perfume.needs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.needs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS needs_owner_only ON perfume.needs;
+CREATE POLICY needs_owner_only ON perfume.needs USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.needs TO ih35_app;
+
+ALTER TABLE perfume.settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.settings FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS settings_owner_only ON perfume.settings;
+CREATE POLICY settings_owner_only ON perfume.settings USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.settings TO ih35_app;
 GRANT DELETE ON perfume.needs, perfume.brand_aliases TO ih35_app;
 GRANT EXECUTE ON FUNCTION perfume.is_owner() TO ih35_app;
 
