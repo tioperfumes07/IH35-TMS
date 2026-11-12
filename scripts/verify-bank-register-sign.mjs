@@ -38,9 +38,36 @@ if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
 }
 // Owner banned the All review tab (confusing vs For review / Categorized / Excluded).
 // Default is For review; Categorized holds the statement-walk categorized rows.
-if (!/\{ id: "for_review", label: "For review" \}/.test(viewSrc) ||
-    !/\{ id: "categorized", label: "Categorized" \}/.test(viewSrc) ||
-    !/useState<ReviewTabId>\((?:initialReviewTab \?\? )?"for_review"\)/.test(viewSrc)) {
+function hasReviewContract(source) {
+  const tabs = source.match(/export const BANKING_REVIEW_TABS\s*=\s*\[([\s\S]*?)\]\s*as const/)?.[1] ?? "";
+  // ROUND 8.17: a validated URL cohort may initialize the tab; absent a cohort,
+  // the default remains For review. Do not require the retired literal-only initializer.
+  return /\{ id: "for_review", label: "For review" \}/.test(tabs) &&
+    /\{ id: "categorized", label: "Categorized" \}/.test(tabs) &&
+    /\{ id: "excluded", label: "Excluded" \}/.test(tabs) &&
+    [...tabs.matchAll(/\bid:\s*"([^"]+)"/g)].map((m) => m[1]).join(",") === "for_review,categorized,excluded" &&
+    /useState<ReviewTabId>\(\s*(?:initialReviewTab\s*\?\?\s*)?"for_review"\s*\)/.test(source);
+}
+if (process.argv.includes("--selftest")) {
+  if (!hasReviewContract(viewSrc)) fail("selftest clean source must satisfy review contract");
+  const initializer = /useState<ReviewTabId>\(\s*(?:initialReviewTab\s*\?\?\s*)?"for_review"\s*\)/;
+  const plants = [
+    ["wrong fallback", viewSrc.replace(initializer, 'useState<ReviewTabId>(initialReviewTab ?? "categorized")')],
+    ["missing fallback", viewSrc.replace(initializer, "useState<ReviewTabId>(initialReviewTab)")],
+    ["missing For review", viewSrc.replace('{ id: "for_review", label: "For review" }', '{ id: "wrong", label: "For review" }')],
+    ["missing Categorized", viewSrc.replace('{ id: "categorized", label: "Categorized" }', '{ id: "wrong", label: "Categorized" }')],
+    ["missing Excluded", viewSrc.replace('{ id: "excluded", label: "Excluded" }', '{ id: "wrong", label: "Excluded" }')],
+    ["forbidden All review tab", viewSrc.replace('export const BANKING_REVIEW_TABS = [', 'export const BANKING_REVIEW_TABS = [{ id: "all", label: "All" },')],
+  ];
+  for (const [name, source] of plants) {
+    if (source === viewSrc) fail(`selftest ${name}: inert mutation`);
+    if (hasReviewContract(source)) fail(`selftest ${name}: planted defect escaped`);
+  }
+  const oldLiteral = viewSrc.replace(initializer, 'useState<ReviewTabId>("for_review")');
+  if (!hasReviewContract(oldLiteral)) fail("selftest literal default must remain supported");
+  console.log(`verify-bank-register-sign selftest PASS: ${plants.length} failing plants plus current/literal positive controls`);
+}
+if (!hasReviewContract(viewSrc)) {
   fail("register review tabs must be For review / Categorized / Excluded with default for_review (All review tab banned)");
 }
 if (!/key: "date"[\s\S]{0,220}cellClass: "whitespace-nowrap"/.test(viewSrc)) {
