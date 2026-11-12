@@ -4,31 +4,39 @@
 
 ## Ownership and handoffs
 
-- CC-1: current request in INBOX-CC-1 for verify-orphan-surface-drill ORPH-004; existing exact handler regex rejects the tested CF3 setDate + setGrain("day") handler. Preserve assertions and plant missing date/day changes. Codex has not edited the owned guard.
-- Cursor: current findings in INBOX-CURSOR. Driver picker changed stored HR-active eligibility to movement-active; test HR-active/no-movement. Timeline/DriverPlanner ignore shared entityFilters. Fresh live driver picker remained single-select; deployment acceptance unverified.
+- CC-1/Lead: TruckProfile release fails verify-money-lines-same-entity-fks on settlement_lines.reinstated_from_void_je_id; identical exit1 on clean main d26dc52604. No Codex schema/guard edits. PM Schedule canonical-reader ownership question pending.
+- Cursor: planner/CF3/L3/CA1 source repairs merged #28882/#28885–#28889; independent focused19/19 PASS. Fuel duplicate appearance prop blocks frontend build; exact request now INBOX-CURSOR. Source fixes are not deployed acceptance.
 - Codex: Maintenance Home/In-Shop, Fleet Health Line/TruckProfile, nine maintenance board-set pages, then independent acceptance of other seats. Do not duplicate another seat's changes.
 
 ## Tested work and shipping state
 
 | Item | Evidence | Actual status |
 |---|---|---|
-| CF3 Projected calendar query/day drill | Old2fail → new2pass; FE/BE tsc0; release0 at main66456a36a5; hooks-ON push b68fb56c9a | Not merged: affected CC-1 guard fails; branch codex/round85-projected-window |
-| L3 Legal stage drill | Old5fail → new6pass; FE tsc0 | Local e6a00e2c34, not deployed |
+| CF3 Projected calendar query/day drill | Independent2/2 PASS after Cursor repair | Superseded by #28885/#28889; local branch not re-shipped; LIVE pending |
+| L3 Legal stage drill | Independent6/6 PASS | Superseded by #28887; LIVE pending |
 | TP2/3 identity, links, DOT, PM, faults | Focused tests and FE tsc0; canonical source reads and paging | Local maintenance stack, not deployed |
 | TP4 reefer hours/config | Backend16/16; reader/editor9/9; FE/BE tsc0 | Local7212a056e6, not deployed; no tractor-hours fallback |
 | Truck SVG specimen-state removal | New SVG5/5, combined map15/15; old2fail; FE tsc0; independent review | Locale00779381d; full eight-system contract still OPEN |
-| CA1 advance timestamps | Old3fail → new8pass; FE tsc0 | Local2cfb812b91, not deployed |
-| Owning-seat inbox delivery | Docs-only branch codex/round812-coordination | Release exit1: factoring live guard connection failure; not pushed/merged |
+| CA1 advance timestamps | Independent8/8 PASS | Superseded by #28888; LIVE pending |
+| Owning-seat inbox delivery | Release0, normal hooks-ON push,14affected guards/no regression | #28874 MERGED56e5061b11 |
+| Home canonical navigation | Old3FAIL/new4PASS; required release0, normal hooks-ON push,53affected guards/no regressions | #28880 MERGEDea9a8286a6; not live |
+| Home-only activity / navigation-test typing correction | Old isolation1FAIL/6PASS → combined11/11; no-legacy/recovery/pager guards PASS | Local e9c920a982, not shipped; forced tsc reports only inherited Fuel duplicate prop |
 
 ## Current gates
 
+Fresh forced frontend TypeScript6 after sync cf73463859 exits2: DailyPredictionTab.tsx277 invalid empty-row cast,311 undefined row,691 _empty type; CF3/Legal test ByRole exact options; Fuel253 duplicate prop. All these paths identical to origin/main. Independent Home+CF3+Planner focused18/18 tests PASS does not override compile red. Cursor exact handoff: #28905 comment6813518562. Required release instruction relayed #28908 comment6813482558: tests+gate green then fast-merge hooksON, not source-only completion.
+
+Latest docs-only preflight: exit1,204passed/1failed/16skipped. verify-every-void-route-reverses rejects Legal /api/v1/legal/contracts/void introduced by #28891; identical exit1 on clean main b77f33dd6c. Cursor/CC-1 handoff issuecomment-6813202491; no Codex guard or money changes, no bypass. Main3005c0835b still contains Fuel duplicate appearance prop.
+
 Typography repaired by #28869/#28870; the former129→133 red is historical, not current.
-CF3 prior release:247passed,2existing report-only findings,279skips (263live). Skips are not passes.
-Coordination release:233passed,3failures,204skips; blocking verify-ldt-4-factoring-money could not connect. Two existing report-only money findings remain separate. No baseline, guard or hook bypass.
-Coordination synced to mainfaa5669c33. Clean-main connection comparison/retry pending.
+Coordination and Home navigation release:246passed,2existing report-only findings,280skips (264live), gate_exit0. Skips are not passes. No baseline/guard/hook bypass.
+Fresh forced TypeScript6 found an OWN #28880 test error: Testing Library getByRole has no exact option. Corrected in e9c920a982; prior incremental tsc0 withdrawn as proof for that test. Forced build now fails only Fuel TS17001. No new release until full build clears.
+Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fix live claim. TruckProfile atomic d8a74e3e2e remains blocked by same-company FK guard, clean-main equivalence proven.
 
 ## Bounded live evidence, not full acceptance
 
+- Fresh 11-11 22:16–22:22 ET,1440x900: Document Designs direct route redirects Home and tab absent; Aging date-basis toggle absent with explicit not-wired caption; Legal Signed drill returns two draft rows with no status query. Source fixes #28887/#28895/#28896 are not frontend-live. Handoff https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813413090; private inline screenshots.
+- Settlements bounded navigation PASS: Closed list renders6 records, record opens statement, Back returns /driver-finance/settlements. Statement still FAIL: blank display cell, missing driver-bill links/rates/miles in earnings, recoveries labeled Advances and self-linked. No production actions invoked. These are not whole-board certification.
 - In Shop selected navigation #28726 30fa65871d observed correct. Full board OPEN.
 - Fuel1440×900:8truck graphics/8spend bars; search8→1; clipped cells0. Missing model subtitles/generic graphics OPEN.
 - Planner status union16→1→16 works; live driver single-select OPEN.
@@ -36,10 +44,12 @@ Coordination synced to mainfaa5669c33. Clean-main connection comparison/retry pe
 - Accounting menu26px; lower panels465/465/388px at1440×900. Geometry only; full route/financial acceptance OPEN.
 - Insurance H1 22px/700 vs locked600; full screenshot proof UNVERIFIED.
 - TruckProfile eight-system source mapping: DVIR is not cab-item evidence; trailer brake/outer-tire source contracts unverified. Missing values must stay unknown, never specimen health.
+- Active WOs live1440x900:3tables including2 unrelated Home histories; approved5status columns and exact table order absent. Parts Inventory also layers both Home histories and lacks board Category/Bin/Reorder at/Unit cost/Value composition. Empty populations do not prove record drills. Isolation repair local, full boards OPEN.
+- Maintenance Settings live1440x900 shows four legacy configuration groups plus two Home histories, not the approved PM catalog / Service Task catalog / Feeds / Odometer / Alerts composition. Source MaintenanceSettingsPage.tsx confirms four-field settings form. No Save invoked; full board OPEN, not an appearance-only repair.
 
 ## Next
 
-Deliver inbox coordination with required green release, then CC-1 repair → CF3 retest/normal push/fast merge/deploy/live proof. Continue owned maintenance build from approved boards while blocked. Full45 census, visual diffs and clicked forward/reverse wiring are unfinished.
+Cursor Fuel compile fix → full forced build/release for owned isolation + test correction → hooks-ON push/fast merge → deployed Home proof. Continue owned board build; verify Cursor wave after deploy. Full45 census, visual diffs and clicked forward/reverse wiring remain unfinished. No production data changes.
 
 ## Archive
 

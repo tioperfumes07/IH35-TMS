@@ -1,5 +1,25 @@
 # ROUND 8.5 — independent board parity verification
 
+## Fresh verification — 2026-11-11 22:16–22:22 ET
+
+### Cash Flow continuation — 22:40 ET
+
+Cash Flow Home net matrix drill opens the selected week in Rolling Ledger and Home navigation returns correctly: bounded navigation PASS. Full amount-drill FAIL: Home includes run-rate forecast components, while the destination displays due documents and no bridge from the clicked forecast net. This is a missing explanatory/source drill, not proof of a wrong posted ledger. Preserve scenario, bucket, opening cash and forecast assumptions in the drill before certification. Source `CashFlowHomeTab.tsx:546,631`; [Cursor handoff](https://github.com/tioperfumes07/IH35-TMS/pull/28907#issuecomment-6813717730). Private screenshot, no production mutation.
+
+Read-only USMCA Chrome, actual CSS viewport1440x900. No saves, voids, payments, imports or production data changes. Screenshots retained privately in the audit chat; no personal or financial screenshots committed.
+
+| Surface / check | Result | Evidence and limit |
+|---|---|---|
+| Settlements home → Closed records | PASS, bounded | Six records render; not proof of all balances or full board parity |
+| Closed record → statement → Back | PASS, bounded | Statement loads; Driver Settlements Back returns to /driver-finance/settlements |
+| Settlement statement identity / earnings drill | FAIL | Driver settlement header shows blank display; loaded/empty earnings rows show blank driver-bill links, mileage and rates. Source contracts need investigation; not authority to alter money |
+| Statement linked Advances recovered | FAIL | Label uses general recoveries_cents, including an observed admin-fee deduction, and MoneyCell self-links to the statement rather than the source advance; SettlementStatementLinkedRecordsPanel.tsx:67,119–127 |
+| Document Designs (#28895) | NOT LIVE | Direct route redirects Home; absent from rendered Settlements navigation. Static specimen iframe is a reference surface, not evidence that generated production statements match designs |
+| Factoring Aging date basis (#28896) | NOT LIVE | Invoice/Purchase/Fund Date control absent; deployed page explicitly says toggle not wired |
+| Legal Signed stage (#28887) | FAIL LIVE / repair pending deployment | Signed links to unfiltered /legal/contracts and renders two draft rows |
+
+Cursor handoff: [fresh live evidence](https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813413090), [Legal reproduction](https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813435683). Current source merges are not frontend deployment proof. No complete board certification is implied by the bounded navigation passes above.
+
 ## Status — 2026-11-09, first live batch
 
 **NOT COMPLETE. No board is certified exact or fully wired.** Three home boards have initial live visual evidence; remaining boards and exhaustive element counts are UNVERIFIED. A static label census is not visual or functional acceptance.
