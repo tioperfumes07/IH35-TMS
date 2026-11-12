@@ -1,5 +1,36 @@
 # ROUND 8.5 — independent board parity verification
 
+## Certification coverage correction — Maintenance Settings and census floor
+
+### PM engine finding — source reproduction, no production mutation
+
+Fresh live forward/reverse test: PM list → unit profile works. Unit profile → Open PM schedules preserves `unit_id` in URL but returns96 schedules across multiple units: FAIL. Root cause `PmSchedulePage.tsx:74–75` omits unit from both query key and API call, although the existing API already accepts unit_id. Codex local repair adds both; a rendered route-change test fails old1/3 and passes new3/3, including first unit → second unit → all units with an infinitely fresh cache. Combined owned maintenance tests14/14 PASS. Repair is not deployed or certified live.
+
+Live unit profile also says no PM schedule while its service history reports skipped-no-baseline PM events; its service-map SVG still carries specimen identity. The latter has an existing local TruckProfile repair, not a new duplicate assignment. Do not equate missing baseline with missing schedule or current maintenance. Production writes remain0.
+
+PM Due opens96rows; Create PM Schedule opens the canonical dialog, required-unit Create is disabled, Cancel returns to the same route without a write (bounded PASS). PM type options are Oil/Tires/DOT inspection/Brake/Transmission/Coolant/Other; not proof of approved interval-catalog wiring. Settings still has two unrelated Home history panels in a fresh1440x900 screenshot.
+
+`apps/backend/src/maintenance/pm-schedule.routes.ts:58–63,108–112` classifies missing readings as current and passes last_service_odometer as the nowOdometer input. Actual extracted classifier reproduced locally, exit1: synthetic nextDue125000/lastService100000 → current, nextDue125000/current126000 → overdue; null/null → current. No DB connection or fixture write. This is source-behavior evidence, not a measured count of wrong live schedules. Days/hours have no separate classification in this route. CC-1 must reconcile this reader with the canonical PM engine; the UI must not fabricate status or patch production rows. Process-global env thresholds35–39 do not substantiate the company-configurable caption. PM status acceptance remains FAIL/OPEN.
+
+Fresh source audit: origin/main `81e7dab2c2`; local Maintenance stack `3ce6a27d32`. The design census plain command and selftest both exit0, reporting689 routes and0 failing. This is **not** exhaustive certification: `verify-design-parity-census.mjs:496,499` deliberately returns `routeFail:false` for unresolved page bindings, and line632 counts passing as total minus failures. Do not translate that result into every tab being built or verified. No guard or baseline was weakened or edited.
+
+Maintenance Settings approved source: `docs/design/boards/maintenance/Settings.dc.html`. Current `MaintenanceSettingsPage.tsx` mounts PM Intervals / Vendor Defaults / Bay Assignments / Notifications instead. The following is a source-backed missing-element census, supplementing the earlier live finding, not a new certification register:
+
+| Approved element | Current implementation | Acceptance needed |
+|---|---|---|
+| PM catalog panel and Add interval | Single default-days input | Canonical interval list and existing create/edit workflow, not copied specimen intervals |
+| PM columns Code / Service / Basis / Interval / Warn at / Applies to / Est. cost | No PM catalog table | Seven named columns in order, real values and linked sources; unknown remains unknown |
+| Service task catalog | Absent from Settings | Existing `maintenanceServiceTasksCatalogClient` and canonical list workflow; complete pagination, no silent cap |
+| Feeds this module depends on | Absent | Canonical feed/job state and last-run evidence; never hard-code the board's sample states |
+| Odometer Daily snapshot selector | Absent | Persisted scheduling contract and effective schedule, not a decorative selector |
+| Record a gap row checkbox | Absent | Persisted engine setting plus behavior test |
+| Allow manual odometer from Driver Reports checkbox | Absent | Persisted permission/engine contract plus behavior test |
+| Alerts: PM due soon / overdue escalation | Absent | Canonical thresholds, units, edit/save/read-back tests |
+| Alerts: fault severity / shop duration / untouched report duration | Absent | Canonical rules and actual consumers, not UI-only fields |
+| Approved two-column panel composition | Four-group legacy form | Replace composition, preserve reachable existing settings without duplicate legacy panels |
+
+API evidence: `api/maintenance.ts:408–435` and backend `maintenance/settings.routes.ts:13–18,100–140` expose only the four legacy settings plus two counts; those endpoints do not establish the approved odometer/alert controls. Service tasks already have an existing client at `api/catalogs-maintenance.ts:84` and a canonical list page; do not duplicate that engine. PM/feeds/threshold canonical ownership must be resolved from existing services before wiring. No production reads or writes were needed for this finding. Settings remains OPEN; all45 remain uncertified until complete per-board evidence is supplied.
+
 ## Fresh verification — 2026-11-11 22:16–22:22 ET
 
 ### Insurance continuation — bounded read-only certification

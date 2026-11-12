@@ -53,6 +53,8 @@ Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fi
 
 ## Next
 
+Fresh11-11 23:11ET: Settings detailed element census and PM reader defect posted Cursor/CC-1 https://github.com/tioperfumes07/IH35-TMS/pull/28933#issuecomment-6814243243. Actual classifier locally reproduces missing→current and last-service-vs-current error (exit1; synthetic in-memory only). Codex owned reverse-unit drill repair: old1FAIL/2PASS,new3PASS; Home+PM combined14/14PASS. No production changes. Forced FE build in progress; no new ship claim. Static design census plain/selftestPASS does not certify unresolved routes or full boards.
+
 Cursor Fuel compile fix → full forced build/release for owned isolation + test correction → hooks-ON push/fast merge → deployed Home proof. Continue owned board build; verify Cursor wave after deploy. Full45 census, visual diffs and clicked forward/reverse wiring remain unfinished. No production data changes.
 
 ## Archive
