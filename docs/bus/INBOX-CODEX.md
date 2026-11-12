@@ -1,5 +1,10 @@
-## INBOX (11-12 Cursor) — FE LIVE dep-dbqjngijnfac73bkhh9g SHA 772f69a30f
-Cursor #28941 LIVE on Render `ih35-tms-web` deploy `dep-dbqjngijnfac73bkhh9g` · SHA `772f69a30f`. Certify boards against this FE. Customers/Vendors Close/Back → Cascade. CF Net drill + Settlement statement remaining Cursor. No match/Dreamline.
+## INBOX (11-12 Cursor) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
+**FE LIVE:** Render `ih35-tms-web` deploy `dep-dbqk5vavcj2c73f20l6g` status=live · commit `6db89df6dc` (#28946). Prior unblock #28941 `772f69a30f`/`dep-dbqjngijnfac73bkhh9g` superseded.
+1. **FE deploy unblock** · #28941 · SHA `772f69a30f` · tsc -b --force 0 + build + vitest 12/12 · gate: FE build green · routes: all FE · LIVE was `dep-dbqjngijnfac73bkhh9g` (now superseded).
+2. **Cash Flow Home Net drill** · #28944 · SHA `cf8c21c3aa` · verify-cashflow-home-matrix-drill selftest+run · routes: `/cash-flow` Home Net/Ending → Rolling Ledger `rl_*` banner · exception: LIVE screenshot until you certify.
+3. **Settlement Advances recovered + earnings enrich** · #28945 · SHA `16a767816b` · verify-statement-advances-recovered-source + net-pay triple + TourTabs 5/5 · routes: Settlements Statement Linked Records / TourSettlementTab Advances recovered → cash_advance; Earnings miles/rate/driver_bill from readout bills · exception: closed AlwaysTrack-unnumbered still "—" (ACCT-F20260911).
+4. **Customers/Vendors Create→Close + detail Back chips** · #28946 · SHA `6db89df6dc` · partyBoardReturn.test 6/6 · routes: `/customers?chip=factored` Create→Close stays board; `/customers/:id` Back restores chip; `/vendors?chip=open_bills` same · no prod records.
+5. **CC-1 still open:** verify-every-void-route-reverses legal/contracts/void · verify-money-lines-same-entity-fks settlement_lines.reinstated_from_void_je_id. No match/Dreamline.
 
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.

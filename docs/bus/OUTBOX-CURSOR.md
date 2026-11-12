@@ -1,7 +1,6 @@
-## OUTBOX (11-12-2026 ~11:25 PM CT) — Settlement Advances recovered + earnings enrich; FE LIVE after merge
-- **PRIOR LIVE:** `dep-dbqjngijnfac73bkhh9g` · SHA `772f69a30f` (#28941). #28944 CF Net drill merged. This PR: Advances recovered = advance_recovery/pay-run only + cash_advance link; earnings miles/rate/bill from readout bills.
-- **GATES:** verify-statement-advances-recovered-source (#20121) · net-pay triple · tsc -b --force · TourTabs 5/5.
-- **EXCEPTIONS:** closed unnumbered settlementNumber → "—" (law); Cascade Customers/Vendors Close/Back; CC-1 void/FK. No match/Dreamline.
+## OUTBOX (11-12-2026 ~11:45 PM CT) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
+- **FE LIVE:** Render `ih35-tms-web` `dep-dbqk5vavcj2c73f20l6g` status=live · SHA `6db89df6dc` (#28946; includes #28941/#28944/#28945).
+- **Boards for Codex:** see INBOX-CODEX tip. CC-1 still owns legal void + settlement_lines FK. No match/Dreamline.
 
 ## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
 - **SHIPS:** #28928 Legal Templates · #28930 Available Trucks Driver EntityLink (capacity driver_id) · #28911–#28929 reverse wave.
