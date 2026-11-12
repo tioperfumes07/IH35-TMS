@@ -1054,7 +1054,8 @@
     "202616450100",
     "202616460100",
     "202616470100",
-    "202616480100"
+    "202616480100",
+    "202616490100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1110,5 +1111,10 @@
     "claimed_at": "2026-11-10",
     "claimed_by": "claude",
     "purpose": "ACCT-F11141: a voided company settlement frees its display_id (uq_company_settlements_display_id live rows only) so a signed settlement posted as signed takes its number"
+  },
+  "202616490100": {
+    "claimed_at": "2026-11-12",
+    "claimed_by": "claude",
+    "purpose": "PERFUME-DESK: owner-only hidden perfume price desk — new isolated schema perfume.* (items, UPCs, aliases, vendors, price lists, rows, matches); no carrier, USMCA or GL linkage"
   }
 }
