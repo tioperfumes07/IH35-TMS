@@ -122,12 +122,22 @@ export function similarity(a: string, b: string): number {
   return inter / (A.size + B.size - inter || 1);
 }
 
+/** The flags that make a different PRODUCT (not just a different condition such as DAMAGED / UNBOXED). */
+const KIND_FLAGS = ["SET", "TESTER", "MINI", "BODY", "OIL", "VARIOUS", "REFILL"];
+export function productKind(flags: readonly string[]): string {
+  return KIND_FLAGS.filter((f) => flags.includes(f)).join("+");
+}
+
 export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
   const out: Suggestion[] = [];
   for (const it of ix.items.values()) {
     if (id.sizeMl != null && it.sizeMl != null && Math.abs(id.sizeMl - it.sizeMl) > 0.5) continue;
     if (id.gender && it.gender && id.gender !== it.gender) continue;
     if (id.brand && it.brand && id.brand !== it.brand) continue;
+    // A set is never suggested for a single bottle (or the reverse), nor a tester for a boxed bottle, a mini for a
+    // full bottle, a body product for a fragrance (owner 2026-11-12: "it is not separating sets" — ARMANI CODE 4.2
+    // EDP was offered "ARMANI CODE 125 ml SET").
+    if (productKind(id.flags) !== productKind(it.flags)) continue;
     const score = similarity(id.nameText, it.name);
     if (score < 0.3) continue;
     const why: string[] = [];

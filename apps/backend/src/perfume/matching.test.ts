@@ -120,3 +120,15 @@ describe("PERFUME-DESK name match for lines without a barcode (5b)", () => {
     expect(m.method).not.toBe("name");
   });
 });
+
+describe("PERFUME-DESK suggestions never cross product kinds (owner 2026-11-12)", () => {
+  it("a single bottle is never offered a SET, a tester or a mini", () => {
+    const ix = seed([
+      { upc: "3614273000001", brand: "Giorgio Armani", description: "ARMANI CODE (M) EDT SP 4.2oz + 0.5 PARFUM SP SET" },
+      { upc: "3614273000002", brand: "Giorgio Armani", description: "ARMANI CODE (M) EDT SP 4.2oz TESTER" },
+    ]);
+    const m = matchLine(ix, "esp", { description: "ARMANI CODE M 4.2 EDP" }, { allowNewItem: false });
+    expect(m.itemId).toBeNull();
+    expect(m.suggestions.map((s) => s.display_name).filter((n) => /SET|TESTER/.test(n))).toEqual([]);
+  });
+});

@@ -559,15 +559,48 @@ export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
   return out;
 }
 
+/**
+ * Re-runs the engine on every line still waiting in Review (current lists): a line the engine can now identify
+ * links by itself, and every other line gets fresh suggestions under today's rules. Run after the engine
+ * improves or new lists bring new items. The vendor's text and the owner's gender corrections are kept.
+ */
+export async function rematchReview(c: PoolClient) {
+  const ix = await loadIndex(c);
+  const rows = await c.query<{ id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
+    `SELECT r.id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.gender_override
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+      WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL`);
+  const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0 };
+  for (const r of rows.rows) {
+    const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
+    if (m.itemId) {
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = $3, match_status = 'matched', suggestions = '[]'::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
+        [r.id, m.itemId, m.method, m.identity.key, looseKey(m.identity)]);
+      out.now_matched++;
+    } else {
+      await c.query(`UPDATE perfume.price_list_rows SET match_status = $2, suggestions = $3::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
+        [r.id, m.status, JSON.stringify(m.suggestions), m.identity.key, looseKey(m.identity)]);
+      if (m.status === "review") out.review++; else out.unmatched++;
+    }
+  }
+  return out;
+}
+
 export async function searchItems(c: PoolClient, q: string, limit = 25) {
   const s = q.trim();
   if (!s) return [];
+  // Every word must appear somewhere in the item's name, in any order (owner 2026-11-12: "when searching for an
+  // item it is not working" — "armani code" did not find "GIORGIO ARMANI · ARMANI CODE · …"). A digits-only
+  // word also matches a UPC; the internal code still matches exactly.
+  const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
   return (await c.query(
     `SELECT i.id, i.display_name, i.internal_code, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i
-      WHERE i.merged_into_id IS NULL AND (i.display_name ILIKE '%' || $1 || '%' OR i.internal_code = $1
-            OR EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = ltrim(regexp_replace($1,'\\D','','g'),'0')))
-      ORDER BY similarity(i.display_name, $1) DESC LIMIT $2`, [s, limit])).rows;
+      WHERE i.merged_into_id IS NULL
+        AND (i.internal_code = $1
+             OR EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = ltrim(regexp_replace($1,'\\D','','g'),'0'))
+             OR (cardinality($2::text[]) > 0 AND NOT EXISTS (SELECT 1 FROM unnest($2::text[]) w WHERE upper(i.display_name) NOT LIKE '%' || w || '%')))
+      ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit])).rows;
 }
 
 export async function setInternalCode(c: PoolClient, itemId: string, code: string | null) {
