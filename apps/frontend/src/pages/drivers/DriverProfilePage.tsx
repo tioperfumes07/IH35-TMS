@@ -229,7 +229,7 @@ function DriverRelayIntegrationIdField({
   return (
     <section className="rounded border border-[#E5E7EB] bg-white px-3.5 py-3" data-testid="dp-relay-integration-id">
       <div className="mb-1 flex items-center justify-between">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-[#4B5563]">{t("drivers.relay_id.label", "Relay card ID")}</span>
+        <span className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{t("drivers.relay_id.label", "Relay card ID")}</span>
         {!editing && (
           <button
             className="text-xs font-semibold text-[#1F2A44] hover:underline"

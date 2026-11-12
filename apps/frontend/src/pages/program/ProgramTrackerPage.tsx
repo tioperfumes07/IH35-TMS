@@ -64,7 +64,7 @@ function StatCard({ n, label }: { n: string | number; label: string }) {
   return (
     <div className="min-w-[140px] flex-1 rounded-sm border border-gray-200 bg-white px-4 py-3">
       <div className="text-page-title font-semibold tabular-nums text-[#0F1219]">{n}</div>
-      <div className="mt-0.5 text-[11px] uppercase tracking-wide text-[#6B7280]">{label}</div>
+      <div className="mt-0.5 text-section-header uppercase tracking-wide text-[#6B7280]">{label}</div>
     </div>
   );
 }
@@ -248,7 +248,7 @@ function ByModuleView({ data, moved }: { data: ProgramTracker; moved: Set<string
         <StatCard n={totals.not_built} label="Not built" />
         <StatCard n={data.modules.length} label="Modules" />
       </div>
-      <p className="text-[11px] text-[#6B7280]">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
+      <p className="text-section-header text-[#6B7280]">Each block counted once, by module (from its file paths); reconciles to the registered total. Computed live from the registry.</p>
       <ParityTable<ProgramTracker["modules"][number]> appearance="board"
         title="By module"
         storageKey="ih35.program.tracker.modules.v1"
@@ -303,7 +303,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
   ];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-[#4B5563]">
+      <div className="flex flex-wrap items-center gap-2 text-section-header text-[#4B5563]">
         <span className="inline-flex items-center gap-1 rounded-sm border border-gray-300 bg-white px-2 py-1">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-[#334155]" /> Registered count live · loaded {relTime(data.generated_at)}
         </span>
@@ -326,7 +326,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
         ).length;
         if (legacyGated <= 0) return null;
         return (
-          <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] px-3 py-2 text-[11px] text-[#4B5563]" data-testid="tracker-legacy-gated-disclosure">
+          <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] px-3 py-2 text-section-header text-[#4B5563]" data-testid="tracker-legacy-gated-disclosure">
             {legacyGated} open row{legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
             The tag is retained as source history; no owner approval is required and these rows remain actionable.
           </div>
@@ -337,7 +337,7 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
           2026-07-01, side-by-side with the full view. Undated blocks are surfaced, never guessed in. */}
       {data.since_jul1 ? (
         <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] p-3">
-          <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+          <div className="mb-2 flex items-center gap-2 text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">
             Since Jul 1 <span className="font-normal normal-case text-[#6B7280]">(blocks created on/after {data.since_jul1.since} · {data.since_jul1.total} of {data.registered_total} · {data.since_jul1.undated} undated)</span>
           </div>
           <div className="flex flex-wrap gap-3">
@@ -373,11 +373,11 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
       )}
 
       {data.view_counts.not_counted > 0 ? (
-        <div className="text-[11px] text-[#6B7280]">
+        <div className="text-section-header text-[#6B7280]">
           Not counted: {data.view_counts.not_counted} superseded/duplicate block(s) — excluded from the pending / in-progress / completed totals (honest, §0).
         </div>
       ) : null}
-      <div className="text-[11px] text-[#6B7280]">
+      <div className="text-section-header text-[#6B7280]">
         The headline <b>Registered</b> count is computed live at request time from the deployed
         <span className="font-mono"> .block-ready</span> registry — <b>unique block_id, with duplicate / superseded /
         stale files excluded</b> (a CI guard keeps every active block_id unique), so it is never inflated by the raw

@@ -146,7 +146,7 @@ export function DateTimePicker({
    *    trigger, so no ancestor overflow or stacking context can reach it. It flips above the field
    *    when there is not enough room below, and clamps to the viewport so it is never off-screen.
    * 2. THE MONTH WAS UNREADABLE. The popover was w-56 (224px); after 16px padding, two 32px arrows
-   *    and a 64px year box, the month <select> had roughly 50px at text-[11px] — "September"
+   *    and a 64px year box, the month <select> had roughly 50px at text-section-header — "September"
    *    truncated to a few characters. The popover is now w-72 with a real minimum width on the
    *    month and QBO-legible type.
    *
@@ -350,7 +350,7 @@ export function DateTimePicker({
             <div className="flex min-w-0 flex-1 items-center gap-1">
               <select
                 aria-label="Month"
-                className="min-w-0 flex-1 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                className="min-w-0 flex-1 rounded-sm border border-gray-200 px-1 py-0.5 text-section-header"
                 value={viewM}
                 onChange={(e) => setViewM(Number(e.target.value))}
               >
@@ -362,7 +362,7 @@ export function DateTimePicker({
               </select>
               <select
                 aria-label="Year"
-                className="w-16 rounded-sm border border-gray-200 px-1 py-0.5 text-[11px]"
+                className="w-16 rounded-sm border border-gray-200 px-1 py-0.5 text-section-header"
                 value={viewY}
                 onChange={(e) => setViewY(Number(e.target.value))}
               >
@@ -416,7 +416,7 @@ export function DateTimePicker({
             )}
           </div>
           <div className="mt-2 flex items-center gap-2 border-t border-gray-200 pt-2">
-            <label className="text-[11px] font-semibold uppercase text-gray-500" htmlFor={id ? `${id}-time` : undefined}>
+            <label className="text-section-header font-semibold uppercase text-gray-500" htmlFor={id ? `${id}-time` : undefined}>
               Time
             </label>
             <input

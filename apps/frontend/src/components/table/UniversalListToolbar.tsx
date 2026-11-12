@@ -207,7 +207,7 @@ export function UniversalListToolbar({
         </Button>
         {open ? (
           <div className="absolute left-0 z-30 mt-1 w-[min(520px,90vw)] space-y-3 rounded-sm border border-gray-200 bg-white p-3 shadow-lg">
-            <label className="block text-[11px] font-semibold text-gray-600">
+            <label className="block text-section-header font-semibold text-gray-600">
               Date or amount field
               <SelectCombobox
                 aria-label="Range field"
@@ -225,7 +225,7 @@ export function UniversalListToolbar({
             {selected ? (
               <div className="space-y-2">
                 {selected.kind === "date" ? (
-                  <label className="block text-[11px] font-semibold text-gray-600">
+                  <label className="block text-section-header font-semibold text-gray-600">
                     Date range (QBO)
                     <SelectCombobox
                       aria-label="QBO date range preset"
@@ -246,7 +246,7 @@ export function UniversalListToolbar({
                   </label>
                 ) : null}
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <label className="text-[11px] font-semibold text-gray-600">From
+                  <label className="text-section-header font-semibold text-gray-600">From
                     {selected.kind === "date" ? (
                       <DatePicker value={draft?.from ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, from: value } : current)} className="mt-1" />
                     ) : selected.kind === "amount" ? (
@@ -255,7 +255,7 @@ export function UniversalListToolbar({
                       <input type="number" aria-label="Range from number" value={draft?.from ?? ""} onChange={(event) => setDraft((current) => current ? { ...current, from: event.target.value } : current)} className={`mt-1 ${FILTER_CONTROL_SIZE_CLASS} w-full rounded-sm border border-gray-300 px-2`} />
                     )}
                   </label>
-                  <label className="text-[11px] font-semibold text-gray-600">To
+                  <label className="text-section-header font-semibold text-gray-600">To
                     {selected.kind === "date" ? (
                       <DatePicker value={draft?.to ?? ""} onChange={(value) => setDraft((current) => current ? { ...current, to: value } : current)} className="mt-1" />
                     ) : selected.kind === "amount" ? (
@@ -284,7 +284,7 @@ export function UniversalListToolbar({
         ) : null}
       </div>
       )}
-      <span className="text-[11px] text-gray-500">{resultCount === totalCount ? `${totalCount}` : `${resultCount} of ${totalCount}`} rows</span>
+      <span className="text-section-header text-gray-500">{resultCount === totalCount ? `${totalCount}` : `${resultCount} of ${totalCount}`} rows</span>
     </div>
   );
 }

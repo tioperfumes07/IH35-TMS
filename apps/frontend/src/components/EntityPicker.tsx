@@ -312,7 +312,7 @@ export function EntityPicker({
         shown={rosterShown}
         limit={rosterLimit}
         hint={`Type to search for a ${config.label} that is not listed.`}
-        className="m-0 text-[11px] text-[#4B5563]"
+        className="m-0 text-section-header text-[#4B5563]"
       />
     ) : null;
 
@@ -341,13 +341,13 @@ export function EntityPicker({
           listCapNotice={serverCapNotice}
         />
         {heldStaleMessage ? (
-          <p className="text-[11px] font-medium text-[#0F1219]" data-testid="entity-picker-held-merged" role="status">
+          <p className="text-section-header font-medium text-[#0F1219]" data-testid="entity-picker-held-merged" role="status">
             {heldStaleMessage}
           </p>
         ) : null}
         {crossEntityVin ? (
           <p
-            className="text-[11px] font-medium text-[#1F2A44]"
+            className="text-section-header font-medium text-[#1F2A44]"
             data-testid="entity-picker-vin-exists"
             role="status"
           >
@@ -357,7 +357,7 @@ export function EntityPicker({
           </p>
         ) : inScopeVinUnit ? (
           <p
-            className="text-[11px] font-medium text-[#1F2A44]"
+            className="text-section-header font-medium text-[#1F2A44]"
             data-testid="entity-picker-vin-in-scope"
             role="status"
           >

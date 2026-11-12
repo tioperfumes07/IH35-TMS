@@ -99,7 +99,7 @@ describe("Sidebar", () => {
     );
     const homeLink = screen.getByRole("link", { name: /HOME/i });
     const homeLabel = within(homeLink).getByText("HOME");
-    expect(homeLabel.className).toContain("text-[10px]");
+    expect(homeLabel.className).toContain("text-section-header");
     expect(homeLabel.className).toContain("uppercase");
     expect(window.getComputedStyle(homeLabel).fontWeight).toBe("600");
   });

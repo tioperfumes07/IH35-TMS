@@ -237,13 +237,13 @@ export function DataTable<T>({
             </tr>
           ) : loading ? (
             <tr>
-                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
+                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-section-header text-gray-500">
                 Loading...
               </td>
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-[11px] text-gray-500">
+                  <td colSpan={visibleColumns.length} className="px-2 py-3 text-center text-section-header text-gray-500">
                 {emptyText}
               </td>
             </tr>
@@ -276,7 +276,7 @@ export function DataTable<T>({
           )}
         </tbody>
       </table>
-      {!hidePager ? <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-[11px] text-gray-600" style={{ color: colors.mutedText }}>
+      {!hidePager ? <div className="flex items-center justify-between border-t border-gray-200 px-2 py-1.5 text-section-header text-gray-600" style={{ color: colors.mutedText }}>
         <div className="flex items-center gap-2">
           <span>
             {inError
@@ -286,11 +286,11 @@ export function DataTable<T>({
                 : `${offset + 1}-${Math.min(offset + effectivePageSize, footerRowsLength)} of ${footerRowsLength}`}
           </span>
           {/* Universal rows-per-page selector (10/25/50/100/All) — persists per-surface when tableKey is set. */}
-          <label className="flex items-center gap-1 text-[11px] text-gray-500">
+          <label className="flex items-center gap-1 text-section-header text-gray-500">
             Rows
             <SelectCombobox
               aria-label="Rows per page"
-              className="h-6 bg-white text-[11px]"
+              className="h-6 bg-white text-section-header"
               value={String(selectedPageSize)}
               onChange={(e) => setSelectedPageSize(Number(e.target.value))}
             >

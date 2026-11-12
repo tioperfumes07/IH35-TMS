@@ -37,7 +37,7 @@ function StatusPill({ status }: { status: string }) {
   const st = statusStyle(status);
   return (
     <span
-      className="inline-block rounded-sm px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide"
+      className="inline-block rounded-sm px-2 py-0.5 text-section-header font-semibold uppercase tracking-wide"
       style={{ backgroundColor: st.bg, color: st.fg }}
       title={(status || "").toUpperCase().includes("GATED") ? "Historical GATED tag; no owner approval required" : undefined}
     >
@@ -56,14 +56,14 @@ function BlockRow({ b }: { b: ReconBlock }) {
         <div className="truncate text-xs font-medium text-[#1F2A44]" title={b.name || b.id}>
           {b.name || b.id}
         </div>
-        <div className="truncate text-[11px] text-[#6B7280]">
+        <div className="truncate text-section-header text-[#6B7280]">
           {b.id}
           {b.source ? ` · ${b.source}` : ""}
           {b.tier ? ` · ${b.tier}` : ""}
           {b.fin ? " · financial" : ""}
         </div>
       </div>
-      <div className="w-24 shrink-0 text-right text-[11px] text-[#6B7280]">
+      <div className="w-24 shrink-0 text-right text-section-header text-[#6B7280]">
         {b.pr ? (
           <a
             href={`https://github.com/tioperfumes07/IH35-TMS/pull/${b.pr}`}
@@ -104,7 +104,7 @@ function CountChip({ label, value, bg, fg }: { label: string; value: number; bg:
       <div className="text-page-title font-semibold tabular-nums" style={{ color: fg }}>
         {value}
       </div>
-      <div className="text-[11px] uppercase tracking-wide" style={{ color: fg, opacity: 0.85, backgroundColor: "transparent" }}>
+      <div className="text-section-header uppercase tracking-wide" style={{ color: fg, opacity: 0.85, backgroundColor: "transparent" }}>
         <span style={{ backgroundColor: bg }} className="rounded-sm px-1 py-0.5">
           {label}
         </span>
@@ -166,13 +166,13 @@ export function FinalAdditionsPage() {
               <CountChip label="Done" value={counts.done} bg="#DCFCE7" fg="#166534" />
             </div>
             {counts.legacyGated > 0 ? (
-              <div className="mt-2 text-[11px] text-[#4B5563]">
+              <div className="mt-2 text-section-header text-[#4B5563]">
                 {counts.legacyGated} pending row{counts.legacyGated === 1 ? " carries" : "s carry"} a historical GATED tag.
                 The tag is retained as source history; no owner approval is required and these rows remain actionable.
               </div>
             ) : null}
             {data.live?.snapshot_age_days != null ? (
-              <div className="mt-2 text-[11px] text-[#6B7280]">
+              <div className="mt-2 text-section-header text-[#6B7280]">
                 Snapshot {data.live.snapshot_age_days === 0 ? "current" : `${data.live.snapshot_age_days} day(s) old`}
                 {data.data_as_of_ct ? ` · data as of ${data.data_as_of_ct}` : ""} — re-run reconcile to advance.
               </div>
@@ -181,7 +181,7 @@ export function FinalAdditionsPage() {
 
           <div className="rounded border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+              <span className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">
                 Remaining to build ({remaining.length})
               </span>
             </div>
@@ -194,11 +194,11 @@ export function FinalAdditionsPage() {
 
           <div className="rounded border border-gray-200 bg-white">
             <div className="flex items-center justify-between border-b border-gray-100 px-3 py-1.5">
-              <span className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
+              <span className="text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">
                 Shipped — kept for the record ({counts.done})
               </span>
               {done.length > RECENT_DONE_LIMIT ? (
-                <span className="text-[11px] text-[#6B7280]">showing {RECENT_DONE_LIMIT} most recent</span>
+                <span className="text-section-header text-[#6B7280]">showing {RECENT_DONE_LIMIT} most recent</span>
               ) : null}
             </div>
             {done.slice(0, RECENT_DONE_LIMIT).map((b) => (
