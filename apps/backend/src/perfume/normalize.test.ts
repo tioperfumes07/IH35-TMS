@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { identify, looseKey, normalizeUpc, ozToMl } from "./normalize.js";
+import { identify, looseKey, normalizeUpc, ozToMl, vendorLineTail } from "./normalize.js";
 
 const loose = (d: string, brand?: string) => looseKey(identify({ description: d, brand }));
 
@@ -135,5 +135,23 @@ describe("PERFUME-DESK identity — same word, different spelling (owner 2026-11
   });
   it("different fragrances stay different (CK ONE vs CK ONE SHOCK)", () => {
     expect(loose("CK ONE 3.4 EDT U")).not.toBe(loose("CK ONE SHOCK 3.4 EDT M"));
+  });
+});
+
+describe("PERFUME-DESK vendor line ending → code / country / case pack (owner 2026-11-12)", () => {
+  it("MTZ: code, country, pieces per box", () => {
+    expect(vendorLineTail("CK FREE 1.7 EDT M (101079) - France - 24pcs ByBox")).toEqual({ code: "101079", country: "France", casePack: 24 });
+    expect(vendorLineTail("FRAGRANCE WORLD TROPICAL KISS 2.7 EDP L (130957) - United Arab Emir. - 36pcs ByBox"))
+      .toEqual({ code: "130957", country: "United Arab Emirates", casePack: 36 });
+    expect(vendorLineTail("GIVENCHY HOMME 3.4 EDT M (101798) - France - France - 24pcs ByBox")).toEqual({ code: "101798", country: "France", casePack: 24 });
+    expect(vendorLineTail("389 BOADICEA - United Kingdom - 6pcs ByBox")).toEqual({ code: null, country: "United Kingdom", casePack: 6 });
+  });
+  it("a hyphen inside a name is never read as an ending", () => {
+    expect(vendorLineTail("GA-AQUA DE GIO 3.4 EDT M")).toEqual({ code: null, country: null, casePack: null });
+    expect(vendorLineTail("212 SEXY(W)EDP SP 3.4oz(NEW PACK)(ONLY USA)")).toEqual({ code: null, country: null, casePack: null });
+  });
+  it("CK FREE → brand CALVIN KLEIN, model FREE, 50 ml EDT M", () => {
+    const id = identify({ description: "CK FREE 1.7 EDT M (101079) - France - 24pcs ByBox" });
+    expect([id.brand, id.nameText, id.sizeMl, id.conc, id.gender]).toEqual(["CALVIN KLEIN", "FREE", 50, "EDT", "M"]);
   });
 });
