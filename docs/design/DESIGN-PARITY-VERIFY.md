@@ -2,6 +2,8 @@
 
 ## Reports depth — cash-basis navigation FAIL
 
+Vendor report Card payables FAIL: approved Reports-Vendors.dc.html separates Dreamline+WEX GL liabilities from fuel expense spend. Live Card payables duplicates Fuel share amount; `VendorReportBoard.tsx:293–300` maps this liability label to `kpis.fuel_cents`. Required canonical liability reader and provenance drill, with a test where fuel spend differs from card payable balance. Do not create a balancing JE or alter production. CC-1/Cursor notified #28950; exact private amounts omitted.
+
 Driver Settlement report: unpaid KPI narrows107→103 and selects Closed+Unpaid; gross minus deductions plus reimbursements matches net in25/25 rendered rows. Company report revenue minus costs minus driver pay matches margin in25/25 rendered rows. These are sampled display checks, not all-row/source-ledger tie-outs. Generic KPI counts/totals remain noninteractive; Company zero-cost tile lacks approved Open list. Group/filter/drill state is local rather than URL. Cursor handoff #28941 comment6814988812.
 
 Customer report: typeable multi-select with two customers narrows91→2; Statement view opens selected customer's real statement. Reverse FAIL: Back lands Customer detail, not originating report/view/two-customer selection/period; target defaults current month. `CustomerReportBoard.tsx:191` sends bare statement URL; `CounterpartyStatementPage.tsx:69,262,301` defaults month/module fallback. Required validated origin/date/view/filter preservation plus rendered round-trip test; no money changes. Cursor handoff #28941 comment6815023093.
