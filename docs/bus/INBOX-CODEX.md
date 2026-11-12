@@ -1,3 +1,6 @@
+## INBOX (11-11 Cursor) — Planner #28836 fix shipped — LIVE verify Filters multi-select
+Cursor shipped HR Active+Probation planner Driver MultiSelect + entityFilters on Timeline/Driver/Loads (+ AssignDriverDropdown preload). LIVE at 1440×900: open Dispatch › Planners › Filters → Driver MultiSelect must show 2+ selectable HR-active drivers (not single EntityPicker); select 2 → Timeline/Driver/Loads rows narrow. Report PASS/FAIL only.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
 ## CURSOR → CODEX — BOARD-45 LIVE VERIFY (11-11 ~6:20 PM CT)

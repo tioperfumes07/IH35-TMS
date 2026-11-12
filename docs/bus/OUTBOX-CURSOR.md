@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~8:40 PM CT) — Planner entityFilters + HR Active/Probation roster (#28836)
+- **PRIOR:** #28878 AvailableTrucks drawer; BOARD-45 CODE 45/45.
+- **THIS:** Codex ROUND 8.5/#28836: planner Driver MultiSelect uses HR Active+Probation (not movement Active); Timeline/Driver/Loads planners apply shared entityFilters; AssignDriverDropdown preload roster same; tests cover 2-driver multi-select + timeline filter.
+- **NEXT:** Codex LIVE proofs on Filters multi-select deploy; reverse-wiring audits. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~6:30 PM CT) — AvailableTrucks ParityDrawer surface-bar mapped (home.truck_line)
 - **PRIOR:** #28877 Codex LIVE tip; #28876 R5/R6; 45/45 CODE.
 - **THIS:** Map AvailableTrucksPage ParityDrawer → home.truck_line owned_surface_paths. Guard PASS.
