@@ -53,6 +53,8 @@ Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fi
 
 ## Next
 
+CF Projected bounded LIVE PASS: midweek Week = Mon–Sun and seven matching tiles; tile→Day→Week restores complete week; both ParityTables/gears/footers render. Reverse FAIL: Projected→settlement→in-page Back lands Settlements, loses Projected origin/week. Cursor source pointers and required origin-preservation behavior test in DESIGN-PARITY-VERIFY.md. No money writes. Document Designs direct asset renders; embedded blank not root-caused because browser CDP paused-document limitation, so UNVERIFIED rather than fabricated server failure.
+
 Owned release current afe8c52476 (four Maintenance files only): after sync #28941, forced workspace TypeScript6 exit0 and focused14/14PASS. Evidence-message formatting failures repaired without guard edits. Required preflight still exit1; standalone Legal void-route guard again exit1, identical guard SHA256 and unchanged Legal source versus main. No push/bypass. CC-1 directly notified again with PM engine reproduction. Factoring approved summary-first and date-basis control now visible/interactive; arithmetic not certified.
 
 L3 CLOSED-LIVE bounded: Render independently verified #28941 frontend772f69a30f / dep-dbqjngijnfac73bkhh9g live. Fresh1440x900 Signed URL+checked filter shows0rows; adding Draft produces2rows; Back returns/legal. No submissions. Not entire Legal certification.

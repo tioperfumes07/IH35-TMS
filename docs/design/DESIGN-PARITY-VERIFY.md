@@ -1,5 +1,13 @@
 # ROUND 8.5 — independent board parity verification
 
+## Projected cash-flow repair verification — 11-11 23:24 ET
+
+Fresh deployed Chrome, CSS1440x900: Week from a midweek selection shows Monday–Sunday heading and exactly seven matching date tiles. Clicking Thursday forces Day and its single-day result; switching back to Week restores the entire Monday–Sunday interval. Income and Expenses now render ParityTable with gear, sortable headers and total footers. These bounded repaired controls PASS live; no claim of independent ledger tie-out or whole-board certification. Screenshot stays private inline.
+
+Forward projection settlement link opens a real statement, but its in-page Driver Settlements Back returns the settlement landing page, not the originating Projected tab/week. Reverse origin/state preservation FAIL. Source: `DailyPredictionTab.tsx:824–830` passes a settlement link without origin context; `SettlementStatementPage.tsx` uses the module fallback. No financial action invoked. Existing statement blank display, missing bill/rate/mileage earnings wiring and recoveries-label finding remain open.
+
+Document Designs route now exists and the referenced static HTML renders directly. Embedded iframe stayed blank in this controlled session; CDP inspection itself refused while a document response was paused. Therefore embedded rendering is UNVERIFIED (possible tooling limitation), not a proved server/CSP root cause. Static specimen availability is not live settlement-engine certification.
+
 ## Deployed repair acceptance — Legal L3, 11-11 23:15 ET
 
 Factoring follow-up on the same deployed frontend: account-summary begins with the five approved KPI tiles and purchase/terms panels (FA1 ordering gap no longer observed). Aging now exposes Invoice Date/Purchase Date/Fund Date; clicking Invoice then Purchase changes selected state, explanatory caption and date-column header.17rows render. This closes the missing-selector observation only; independent date-source/aging arithmetic and every drill remain UNVERIFIED. No import, terms edit, submission, or money action invoked. CSS1440x900 and private screenshot captured. Whole Factoring board remains OPEN.
