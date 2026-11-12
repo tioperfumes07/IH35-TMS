@@ -30,13 +30,21 @@ export function FinalizeBlock({ checked, pendingAcks, staleDebt, onCheckedChange
           </span>
         </label>
         <div className="flex gap-2">
-          {/* Draft persistence has no backend endpoint yet — honestly disabled instead of firing a fake success toast. */}
+          {/* Save Draft persists the debt-summary acknowledgment via PATCH …/acknowledge (same as the checkbox). */}
           <Button
             size="sm"
             variant="secondary"
             onClick={onSaveDraft}
-            disabled
-            title="Draft persistence not yet available"
+            disabled={pendingAcks || !checked || staleDebt}
+            title={
+              pendingAcks
+                ? "Cannot save draft while pending acknowledgments exist"
+                : !checked
+                ? "Acknowledge debt summary to save draft"
+                : staleDebt
+                ? "Debt summary stale. Refresh required."
+                : "Save debt-summary acknowledgment"
+            }
           >
             Save Draft
           </Button>

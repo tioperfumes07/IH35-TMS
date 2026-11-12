@@ -1042,7 +1042,17 @@ export function SettlementStatementWorkflowPage() {
                   .then(() => pushToast("Debt summary acknowledged", "success"))
                   .catch(() => pushToast("Failed to acknowledge settlement", "error"));
               }}
-              onSaveDraft={() => pushToast("Draft persistence is not available yet", "info")}
+              onSaveDraft={() => {
+                if (!companyId || !ackChecked) return;
+                void acknowledgeSettlement(settlementId, companyId)
+                  .then(() => {
+                    pushToast("Draft saved — debt summary acknowledgment recorded", "success");
+                    void refreshSettlementViews();
+                  })
+                  .catch((error) =>
+                    pushToast(userFacingApiError(error, "Could not save draft acknowledgment"), "error"),
+                  );
+              }}
               onFinalize={() => {
                 if (!companyId) return;
                 void finalizeSettlement(settlementId, companyId)

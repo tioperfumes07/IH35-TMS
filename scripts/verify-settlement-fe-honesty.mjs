@@ -158,8 +158,20 @@ export function run(overrides = {}) {
     errors
   );
   assert(
-    finalize.includes("Draft persistence not yet available") && /disabled/.test(finalize),
-    "FinalizeBlock Save Draft must stay honestly disabled (no draft API)",
+    finalize.includes("Save Draft") &&
+      finalize.includes("onClick={onSaveDraft}") &&
+      finalize.includes("pendingAcks || !checked || staleDebt") &&
+      finalize.includes("Save debt-summary acknowledgment"),
+    "FinalizeBlock Save Draft must gate on checked + pendingAcks + staleDebt and persist acknowledgment",
+    errors
+  );
+
+  const workflow = read("apps/frontend/src/pages/driver-finance/SettlementStatementWorkflowPage.tsx");
+  assert(
+    workflow.includes("onSaveDraft={() => {") &&
+      workflow.includes("acknowledgeSettlement(settlementId, companyId)") &&
+      workflow.includes("Draft saved — debt summary acknowledgment recorded"),
+    "Workflow Save Draft must call acknowledgeSettlement (PATCH …/acknowledge)",
     errors
   );
 
