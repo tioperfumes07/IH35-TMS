@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~10:15 PM CT) — #28891–#28892 void + bus diet
+- **THIS:** #28891 Legal bulk Void; #28892 OUTBOX diet to 200 + clear stale #28836 inbox. Wave #28882–#28892 complete CODE.
+- **NEXT:** Codex LIVE; residual reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~10:10 PM CT) — #28891 Legal bulk Void live
 - **PRIOR:** #28882–#28890 wave.
 - **THIS:** #28891 voidContractInstances + POST /void + Contracts Void button.
@@ -181,20 +185,5 @@
 - **THIS:** 9 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
-## OUTBOX (11-11-2026 ~2:30 AM CT) — Low-guard residual ParityTables appearance=board wave9
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~2:30 AM CT) — Low-guard residual ParityTables appearance=board wave8
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~2:20 AM CT) — Low-guard residual ParityTables appearance=board waveN
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
 ## ARCHIVE
-Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.
+Older tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.

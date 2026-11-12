@@ -57,4 +57,6 @@ Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 comp
 
 **LIVE column:** all boards remain UNVERIFIED live until Codex posts 1440×900 screenshot + wiring-table proof per ROUND 8.12 DONE list. Code status above is source-measured, not live acceptance.
 
+
+**Cursor wave 11-11 ~10PM CT:** #28882–#28892 — planner Filters HR+Unit/Customer + entityFilters; CF3 grain+rangeFrom; Legal L3 status URL + bulk Void; CA1 timestamps; go26 bank; bus diet. LIVE still Codex for all 45.
 **OPEN:** LIVE Codex proof for all 45 (screenshots + wiring tables). Source CODE = 45/45 after R5/R6.
