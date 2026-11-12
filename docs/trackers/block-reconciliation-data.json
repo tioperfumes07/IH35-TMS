@@ -1,6 +1,6 @@
 {
  "date": "2026-11-12",
- "generated_at_iso": "2026-11-12T10:30:57.876Z",
+ "generated_at_iso": "2026-11-12T12:30:09.572Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -3320,7 +3320,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "Create NavyPageSubNav as the software-wide navy banner standard. Swap SettlementsPage onto it. Lock approved tokens in C",
    "registered_on": null,
-   "pr": 28904
+   "pr": 29000
   },
   {
    "id": "DEVIN-A-R205-B2",
@@ -3331,7 +3331,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "B2: session-middleware IH35_TEST_AUTH_BYPASS NODE_ENV gate + boot assertion + freshness check GR-1 baseline filter fix",
    "registered_on": null,
-   "pr": 25931
+   "pr": null
   },
   {
    "id": "DISP-FACTORING-PACKET",
@@ -13738,6 +13738,84 @@
  ],
  "merged_prs": [
   {
+   "number": 29011,
+   "title": "Claude-1-ACCT-F20261112-E3E4E5 guard fixes: alias-shadow truth SQL, salaried $0 closed week, orphan-fk capacity migration",
+   "mergedAt": "2026-11-12T12:22:15Z",
+   "branch": "cc-1/e3-e4-e5-guard-fixes"
+  },
+  {
+   "number": 29010,
+   "title": "FINDING: OPS-F12011 healthz stale — FMCSA quarterly draw freshness from the real draw",
+   "mergedAt": "2026-11-12T12:21:54Z",
+   "branch": "lead/da-draw-health"
+  },
+  {
+   "number": 29009,
+   "title": "FINDING: LST-F12010 PERFUME-DESK — picture-reader MoneyInput + flatten nested box (main red)",
+   "mergedAt": "2026-11-12T12:18:53Z",
+   "branch": "lead/perfume-moneyinput"
+  },
+  {
+   "number": 29008,
+   "title": "FINDING: LST-F12009 bus ROUND 8.15 — overhaul law",
+   "mergedAt": "2026-11-12T11:54:20Z",
+   "branch": "lead/round-8.15"
+  },
+  {
+   "number": 29007,
+   "title": "FINDING: PROD DEPLOY DOWN — web-push 4 has no default export; backend crashes at boot since 10:44Z",
+   "mergedAt": "2026-11-12T11:21:29Z",
+   "branch": "claude/main-red-web-push-v4"
+  },
+  {
+   "number": 29006,
+   "title": "FINDING: bus ROUND 8.14b — Mac restart re-brief, no Cascade seat",
+   "mergedAt": "2026-11-12T11:08:18Z",
+   "branch": "claude/bus-round-8.14b"
+  },
+  {
+   "number": 29005,
+   "title": "FINDING: MAIN-RED — PerfumeListsPanel width prop breaks frontend tsc -b",
+   "mergedAt": "2026-11-12T11:07:23Z",
+   "branch": "claude/main-red-perfume-width"
+  },
+  {
+   "number": 29004,
+   "title": "FINDING: PERFUME-DESK — reader message must not name the key env var (ratecon-extract-guard)",
+   "mergedAt": "2026-11-12T10:53:05Z",
+   "branch": "claude/perfume-reader-guard-fix"
+  },
+  {
+   "number": 29003,
+   "title": "FINDING: PERFUME-DESK — read offer photos + scanned PDFs (Claude vision), owner approves every line",
+   "mergedAt": "2026-11-12T10:51:46Z",
+   "branch": "claude/perfume-photo-reader"
+  },
+  {
+   "number": 29002,
+   "title": "FINDING: ROUND-8.14 row 53 Escrow name→register + date rows CODED",
+   "mergedAt": "2026-11-12T10:47:38Z",
+   "branch": "cursor/reverse-continue"
+  },
+  {
+   "number": 29001,
+   "title": "FINDING: ROUND-8.13 Close Arrival + Relay wallet reverse drills",
+   "mergedAt": "2026-11-12T10:45:21Z",
+   "branch": "cursor/reverse-continue"
+  },
+  {
+   "number": 29000,
+   "title": "FINDING: bus ROUND 8.14 — engines not shells, designs exactly as the board",
+   "mergedAt": "2026-11-12T10:44:51Z",
+   "branch": "claude/bus-round-8.14"
+  },
+  {
+   "number": 28999,
+   "title": "FINDING: ROUND-8.13 TripProfitability + board KPI href drills",
+   "mergedAt": "2026-11-12T10:40:08Z",
+   "branch": "cursor/reverse-continue"
+  },
+  {
    "number": 28998,
    "title": "Claude-1-fix(accounting): ACCT-F11152 — has-transactions predicate scopes EXISTS subqueries by operating_company_id",
    "mergedAt": "2026-11-12T10:29:15Z",
@@ -13814,6 +13892,18 @@
    "title": "FINDING: company selector panel clipped by the top bar (TIO Perfumes entry invisible); drift popup off /perfume",
    "mergedAt": "2026-11-12T06:36:08Z",
    "branch": "claude/carrier-switcher-dropdown-clipped"
+  },
+  {
+   "number": 28984,
+   "title": "chore(deps): bump the production-dependencies group across 1 directory with 21 updates",
+   "mergedAt": "2026-11-12T11:23:50Z",
+   "branch": "dependabot/npm_and_yarn/production-dependencies-c761ad36f3"
+  },
+  {
+   "number": 28983,
+   "title": "chore(deps): bump the development-dependencies group across 1 directory with 11 updates",
+   "mergedAt": "2026-11-12T10:50:52Z",
+   "branch": "dependabot/npm_and_yarn/development-dependencies-8e1763d3bf"
   },
   {
    "number": 28982,
@@ -14696,6 +14786,12 @@
    "title": "FINDING: LST-F11156 bus ROUND 8.10 — all coders: current measured state and per-seat orders (supersedes any off-bus instruction tonight)",
    "mergedAt": "2026-11-11T02:18:02Z",
    "branch": "claude/bus-8.10"
+  },
+  {
+   "number": 28834,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-12T12:21:32Z",
+   "branch": "chore/tracker-artifacts-sync"
   },
   {
    "number": 28833,
@@ -15668,6 +15764,18 @@
    "title": "BUS: ROUND 8.1-8.3 instructions to CC-1, CC-2, CC-3 (11-09 18:50 CT)",
    "mergedAt": "2026-11-10T00:46:45Z",
    "branch": "claude/bus-1109-round8"
+  },
+  {
+   "number": 28668,
+   "title": "chore(deps): bump web-push from 3.6.7 to 4.0.0",
+   "mergedAt": "2026-11-12T10:46:59Z",
+   "branch": "dependabot/npm_and_yarn/web-push-4.0.0"
+  },
+  {
+   "number": 28664,
+   "title": "chore(ci): bump github/codeql-action from 4.39.1 to 4.39.3",
+   "mergedAt": "2026-11-12T10:43:12Z",
+   "branch": "dependabot/github_actions/github/codeql-action-4.39.3"
   },
   {
    "number": 28663,
@@ -17228,114 +17336,6 @@
    "title": "FORMAT: fleet/dispatch/RL/settlement counts house quantity + CASH-T03 AdjustPopover",
    "mergedAt": "2026-11-03T19:33:16Z",
    "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28403,
-   "title": "FINDING: Codex conditional hook regression and responsive audit",
-   "mergedAt": "2026-11-03T19:30:21Z",
-   "branch": "codex/round7-independent-qa-batch61"
-  },
-  {
-   "number": 28402,
-   "title": "FORMAT: lease/map/roundtrip count badges house quantity",
-   "mergedAt": "2026-11-03T19:28:22Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28401,
-   "title": "FINDING: Codex profitability correction and journal overlap retests",
-   "mergedAt": "2026-11-03T19:27:25Z",
-   "branch": "codex/round7-independent-qa-batch60"
-  },
-  {
-   "number": 28400,
-   "title": "FORMAT: in-transit reverse and settlement footer counts house quantity",
-   "mergedAt": "2026-11-03T18:50:11Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28399,
-   "title": "Claude-1- FINDING: N/A LANE: NON-FINANCIAL — P0 ODO-GUARD freshness guard ages on created_at",
-   "mergedAt": "2026-11-03T19:03:36Z",
-   "branch": "cc-1/odo-guard-freshness-created-at"
-  },
-  {
-   "number": 28398,
-   "title": "FIX: equipment filter delegates lane/customer/load to ByType population",
-   "mergedAt": "2026-11-03T18:44:50Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28397,
-   "title": "FORMAT: border crossing and timeline unassigned counts house quantity",
-   "mergedAt": "2026-11-03T18:42:57Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28396,
-   "title": "FINDING: Codex correction and full escrow display sample retests",
-   "mergedAt": "2026-11-03T18:42:34Z",
-   "branch": "codex/round7-independent-qa-batch59"
-  },
-  {
-   "number": 28395,
-   "title": "FIX: profitability equipment exact aliases + bills CTE plants",
-   "mergedAt": "2026-11-03T18:41:12Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28394,
-   "title": "FIX: Users person labels + ELD cert/settings honest unavailable",
-   "mergedAt": "2026-11-03T18:39:24Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28393,
-   "title": "FINDING: Codex profitability filter patch and alias collision audit",
-   "mergedAt": "2026-11-03T18:38:44Z",
-   "branch": "codex/round7-independent-qa-batch58"
-  },
-  {
-   "number": 28392,
-   "title": "FIX: exclude void/voided driver bills from customer/lane profitability",
-   "mergedAt": "2026-11-03T18:36:54Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28391,
-   "title": "BUS: Codex items 3/4 done by Lead",
-   "mergedAt": "2026-11-03T18:36:31Z",
-   "branch": "lead/codex-items-taken"
-  },
-  {
-   "number": 28390,
-   "title": "FINDING: Codex profitability repair read-only proof and guard gap",
-   "mergedAt": "2026-11-03T18:35:41Z",
-   "branch": "codex/round7-independent-qa-batch57"
-  },
-  {
-   "number": 28389,
-   "title": "FIX: mount Profitability hub and wire equipmentType filter",
-   "mergedAt": "2026-11-03T18:35:13Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28388,
-   "title": "FINDING: ACCT-F11037 Customers collected $0.00 not dash",
-   "mergedAt": "2026-11-03T18:34:41Z",
-   "branch": "lead/partyboard-zero"
-  },
-  {
-   "number": 28387,
-   "title": "FINDING: Codex Docs Users and historical ELD audit",
-   "mergedAt": "2026-11-03T18:32:50Z",
-   "branch": "codex/round7-independent-qa-batch56"
-  },
-  {
-   "number": 28386,
-   "title": "FINDING: ACCT-F11036 Account Register ending-balance caption house date",
-   "mergedAt": "2026-11-03T18:31:14Z",
-   "branch": "lead/acct-register-caption"
   }
  ],
  "merged_pr_total": 3000,
