@@ -2,7 +2,7 @@ import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { DateTimePicker } from "../../components/forms/DateTimePicker";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import {
   getFactoringAdvance,
   getFactoringAdvancePacket,
@@ -33,6 +33,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 import { formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -59,6 +60,14 @@ type ActionKind = "advance" | "reserve_held" | "release" | "recourse" | "void";
 export function FactoringDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.17 class R — fee/Fees-tab drills attach `ret`; Back must restore Fees origin, not Home.
+  const factoringBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/factoring",
+  });
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -214,9 +223,9 @@ export function FactoringDetailPage() {
       ) : null}
       <PageHeader
         title={entityLabel(detail.display_id, detail.id, "Advance")}
-        backHref="/accounting/factoring"
+        backHref={factoringBackHref}
         breadcrumb={[
-          { label: "Factoring", href: "/factoring" },
+          { label: "Factoring", href: factoringBackHref },
           { label: entityLabel(detail.display_id, detail.id, "Advance") },
         ]}
         subtitle={`Factor: ${detail.factoring_company_name}`}
