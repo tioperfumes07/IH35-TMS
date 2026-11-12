@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -394,9 +395,8 @@ function RulesPanel() {
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" data-testid="perfume-comp-tiers">
           {(r.competitor_cushion_tiers ?? []).map((t, i) => (
             <span key={i} className="inline-flex items-center gap-1">{t.over_cents === 0 ? tr("perfume.desk.35", "Any price") : `${tr("perfume.desk.36", "Over")} ${money(t.over_cents)}`}:
-              <input type="number" step="0.05" min="0" aria-label={`cushion tier ${i + 1}`} className="h-[40px] w-[96px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
-                value={(t.cushion_cents / 100).toFixed(2)}
-                onChange={(e) => setDraft({ ...draft, competitor_cushion_tiers: (r.competitor_cushion_tiers ?? []).map((x, j) => (j === i ? { ...x, cushion_cents: Math.round(Number(e.target.value) * 100) } : x)) })} />
+              <MoneyInput className="w-[96px]" ariaLabel={`cushion tier ${i + 1}`} valueCents={t.cushion_cents}
+                onChangeCents={(c) => setDraft({ ...draft, competitor_cushion_tiers: (r.competitor_cushion_tiers ?? []).map((x, j) => (j === i ? { ...x, cushion_cents: c ?? 0 } : x)) })} />
             </span>
           ))}
           <span className="text-gray-600">{tr("perfume.desk.37", "— the Competition tab takes the cheapest supplier's list price less this as each competitor's cost")}</span>
