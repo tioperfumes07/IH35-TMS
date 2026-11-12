@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~12:50 AM CT) — Factoring Debtor Receipts / Loan-Save / Unapplied MoneyCells
+- **SHIPS:** #28953–#28955 · Debtor Receipts payment/applied/unapplied · Loan/Save invoice/advance/reserve · Unapplied Cash amounts → MoneyCell (payment / invoice / factoring_advance).
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~12:35 AM CT) — Factoring Funds Due + Fees MoneyCell drills
-- **SHIPS:** #28953 MoneyCell literals · #28954 Legal template EntityLinks · Factoring Funds Due invoice/advance amounts + Fees-paid Amount/Balance/Accrued → MoneyCell (invoice / factoring_advance).
+- **SHIPS:** #28953 MoneyCell literals · #28954 Legal template EntityLinks · #28955 Factoring Funds Due + Fees-paid MoneyCells (merged).
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~12:20 AM CT) — Legal Attorney Review + Contracts template EntityLinks

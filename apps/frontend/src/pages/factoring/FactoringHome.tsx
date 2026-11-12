@@ -1485,9 +1485,45 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "advance_display_id", label: "Advance", render: (row) => row.factoring_advance_id ? (
                   <EntityLink kind="factoring_advance" id={row.factoring_advance_id} label={row.advance_display_id ?? "—"} />
                 ) : "—" },
-                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCents(row.amount_cents) },
-                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCents(row.amount_applied_cents) },
-                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCents(row.amount_unapplied_cents) },
+                {
+                  key: "amount_cents",
+                  label: "Payment Amount",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.amount_cents ?? 0)}
+                      drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                    />
+                  ),
+                },
+                {
+                  key: "amount_applied_cents",
+                  label: "Applied",
+                  sortable: true,
+                  render: (row) =>
+                    row.invoice_id ? (
+                      <MoneyCell
+                        cents={Number(row.amount_applied_cents ?? 0)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ) : (
+                      <MoneyCell
+                        cents={Number(row.amount_applied_cents ?? 0)}
+                        drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                      />
+                    ),
+                },
+                {
+                  key: "amount_unapplied_cents",
+                  label: "Unapplied",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.amount_unapplied_cents ?? 0)}
+                      drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                    />
+                  ),
+                },
                 { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
               ];
               return (
@@ -1550,9 +1586,42 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "invoice_id", label: "Invoice", render: (row) => row.invoice_id ? (
                   <EntityLink kind="invoice" id={row.invoice_id} label={entityLabel(row.invoice_reference, row.invoice_id, "Invoice")} />
                 ) : "—" },
-                { key: "invoice_amount", label: "Original Invoice", sortable: true, render: (row) => fmtCurrency(row.invoice_amount) },
-                { key: "advance_amount", label: "Loan (Advance)", sortable: true, render: (row) => fmtCurrency(row.advance_amount) },
-                { key: "reserve_amount", label: "Reserve (Savings)", sortable: true, render: (row) => fmtCurrency(row.reserve_amount) },
+                {
+                  key: "invoice_amount",
+                  label: "Original Invoice",
+                  sortable: true,
+                  render: (row) =>
+                    row.invoice_id ? (
+                      <MoneyCell
+                        cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ) : (
+                      fmtCurrency(row.invoice_amount)
+                    ),
+                },
+                {
+                  key: "advance_amount",
+                  label: "Loan (Advance)",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Math.round(Number(row.advance_amount ?? 0) * 100)}
+                      drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                    />
+                  ),
+                },
+                {
+                  key: "reserve_amount",
+                  label: "Reserve (Savings)",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Math.round(Number(row.reserve_amount ?? 0) * 100)}
+                      drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                    />
+                  ),
+                },
                 { key: "factored_at", label: "Advanced Date", sortable: true, render: (row) => fmtDate(row.factored_at) },
               ];
               return (
@@ -1597,9 +1666,39 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "customer_name", label: "Customer", render: (row) => row.customer_id ? (
                   <EntityLink kind="customer" id={row.customer_id} label={companyLabel(row.customer_name, row.customer_id, "Customer")} />
                 ) : "—" },
-                { key: "amount_cents", label: "Payment Amount", sortable: true, render: (row) => fmtCents(row.amount_cents) },
-                { key: "amount_applied_cents", label: "Applied", sortable: true, render: (row) => fmtCents(row.amount_applied_cents) },
-                { key: "amount_unapplied_cents", label: "Unapplied", sortable: true, render: (row) => fmtCents(row.amount_unapplied_cents) },
+                {
+                  key: "amount_cents",
+                  label: "Payment Amount",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.amount_cents ?? 0)}
+                      drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                    />
+                  ),
+                },
+                {
+                  key: "amount_applied_cents",
+                  label: "Applied",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.amount_applied_cents ?? 0)}
+                      drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                    />
+                  ),
+                },
+                {
+                  key: "amount_unapplied_cents",
+                  label: "Unapplied",
+                  sortable: true,
+                  render: (row) => (
+                    <MoneyCell
+                      cents={Number(row.amount_unapplied_cents ?? 0)}
+                      drill={{ entity: { kind: "payment", id: row.payment_id } }}
+                    />
+                  ),
+                },
                 { key: "payment_reference", label: "Reference", sortable: true, sortValue: (row) => row.payment_reference ?? "", render: (row) => row.payment_reference || "—" },
                 { key: "notes", label: "Notes", sortable: true, sortValue: (row) => row.notes ?? "", render: (row) => row.notes || "—" },
               ];
