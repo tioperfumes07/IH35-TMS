@@ -18,6 +18,8 @@ import { entityLabel } from "../../../lib/entity-label";
 import { ledgerPartyLabel } from "../ledgerPartyLabel";
 import { companyLabel } from "../../../lib/formatCompanyName";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
+import { ledgerEntityKind } from "./RollingLedgerTab";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -364,7 +366,26 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         key: "amount",
         label: "Amount",
         cellClass: "text-right font-semibold",
-        render: (item) => formatCents(item.amount_cents),
+        render: (item) => {
+          const kind = ledgerEntityKind(item.document_kind, item);
+          if (kind && item.document_id) {
+            return (
+              <MoneyCell
+                cents={Number(item.amount_cents ?? 0)}
+                drill={{ entity: { kind, id: item.document_id } }}
+              />
+            );
+          }
+          if (item.load_id) {
+            return (
+              <MoneyCell
+                cents={Number(item.amount_cents ?? 0)}
+                drill={{ entity: { kind: "load", id: item.load_id } }}
+              />
+            );
+          }
+          return formatCents(item.amount_cents);
+        },
       },
     ],
     [],
@@ -451,8 +472,28 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         key: "amount",
         label: "Amount",
         cellClass: "text-right font-semibold",
-        render: (item) =>
-          item._empty ? "—" : item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents),
+        render: (item) => {
+          if (item._empty) return "—";
+          if (item.amount_known === false) return "Awaiting short miles";
+          const kind = ledgerEntityKind(item.document_kind, item);
+          if (kind && item.document_id) {
+            return (
+              <MoneyCell
+                cents={Number(item.amount_cents ?? 0)}
+                drill={{ entity: { kind, id: item.document_id } }}
+              />
+            );
+          }
+          if (item.load_id) {
+            return (
+              <MoneyCell
+                cents={Number(item.amount_cents ?? 0)}
+                drill={{ entity: { kind: "load", id: item.load_id } }}
+              />
+            );
+          }
+          return formatCents(item.amount_cents);
+        },
       },
     ],
     [archiveMutation],
