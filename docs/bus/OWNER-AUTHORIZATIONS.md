@@ -8195,3 +8195,11 @@ scope: USMCA fuel.fuel_transactions + accounting.expenses — 2 manual duplicate
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-03-cc1-e3-void-duplicate-fill-pairs.mts --apply --auth AUTH-474
 expires_at: 2026-11-10T00:00:00Z
 status: OPEN
+
+## AUTH-475
+issued_at: 2026-11-10T05:00:00Z
+issued_by: CC-2, delegated by owner ROUND 8.8 bus order (docs/bus/lead/11-09-2026-CC2-ROUND-8.8-REEFER-RECLASS-AND-99149999.md) + owner standing auth ("you have full permissions and authorization … we need to complete the full engines", AUTH-473 quotes, 2026-11-02 11:25 AM CT)
+scope: USMCA accounting: Part 1 — reclassify 15 Relay reefer diesel >60 gal postings from account 5015 (Reefer Diesel Off-Highway) to account 5000 (Fuel & Diesel), item Fuel-Truck Diesel, $9,379.98 total. Part 2 — void Dreamline expense docs 200dc2ab ($589.49) + 19e0de94 ($50.51) for load 13588 (99149999 T170) and post Relay fill txn_7a7vejuNqnqxMT ($556.14) via postFuelFillOnReceipt. Net GL: 5015 Relay >60 gal = 0; load 13588 carries Relay fill not Dreamline pair; TB unchanged.
+action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts --apply
+expires_at: 2026-11-14T00:00:00Z
+status: OPEN

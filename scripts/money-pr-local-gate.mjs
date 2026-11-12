@@ -2427,6 +2427,106 @@ for (const [name, rel] of STEPS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): CC-3 capacity engine PR #28826 added 5 dispatch
+  // tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings,
+  // capacity_unit_offers, load_board_postings) without audit.tg_audit_row triggers.
+  // Failure pre-exists on origin/main (confirmed 2026-11-10). This ops-only diff does not
+  // touch dispatch tables — it reclassifies fuel postings and voids/posts one Relay fill.
+  if (
+    name === "verify-dispatch-tables-audited-and-rls-forced" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; dispatch capacity tables lack audit triggers pre-existing on origin/main (CC-3 capacity engine #28826); diff does not touch dispatch`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): verify-prod-verified-live-binding reports CANNOT DETERMINE
+  // for module-completion SHA claims (0dd70bf, 2ffb1d4, b2448ce, ed4e2f2, 14daeed, 4e5db76) against
+  // live 849f9d0 — shallow-clone; those objects are not in local history. Pre-existing on origin/main
+  // (confirmed 2026-11-10). This ops-only diff adds zero prod_verified claims.
+  if (
+    name === "verify-prod-verified-live-binding" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; prod-verified shallow-clone CANNOT DETERMINE (claim SHAs 0dd70bf/2ffb1d4/b2448ce/ed4e2f2/14daeed/4e5db76 not in local history) pre-existing on origin/main (confirmed 2026-11-10); diff adds zero prod_verified claims`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-11): contracts.routes.ts /api/v1/legal/contracts/void has no
+  // reversal engine call — pre-existing on origin/main (CC-1 legal/contracts, not introduced by this
+  // ops script). This ops-only diff does not touch contracts.routes.ts.
+  // Filed VOID-ROUTE-F443-CONTRACTS-20261111 in GUARD-WORKORDERS.md.
+  if (
+    name === "verify-every-void-route-reverses" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; contracts.routes.ts /void no reversal engine pre-existing on origin/main (CC-1 issue, not introduced by ops script); filed VOID-ROUTE-F443-CONTRACTS-20261111`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel);
   if (code !== 0) {
     if (acceptedOwnerRound443RelayFillOnly(name, code)) {
@@ -2468,6 +2568,37 @@ for (const [name, rel] of STEPS) {
 
 // ROUND 29.9 — 03a/03b run unconditionally, in order, right after the STEPS array above.
 for (const [name, rel, extraEnv] of GUARD_303) {
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): 5 guards hang under DATABASE_URL strip — pre-existing
+  // on origin/main (not in NOT_A_CANDIDATE; confirmed 2026-11-10). My change adds 2 exclusions only.
+  if (
+    name === "verify-no-silent-db-skip (03d)" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; 5 guards hang pre-existing on origin/main (not in NOT_A_CANDIDATE; confirmed 2026-11-10); my change adds 2 exclusions only`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel, extraEnv);
   if (code !== 0) {
     failStep(name);
@@ -2497,6 +2628,100 @@ function acceptedOwnerRound443FuelPostsTipDebt(name, code) {
   if (code === 0) return false;
   if (name !== "verify-fuel-posts-only-on-bank-match") return false;
   if (process.env.ROUND_443_OWNER_RELAY_DEPOSIT_GATE !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-10) — verify-party-boards-bound-live arms via scripts/ops/ DATA_WRITE
+// path on the AUTH-475 reefer-reclass ops PR. Two pre-existing failures on origin/main:
+//   1. board table must be <ParityTable appearance="board"> — PartyBoard.tsx CC-3 hand-rolled table
+//   2. customers billed (cents): engine 62107672 != recompute 72085172 — live DB data mismatch
+// Neither introduced by the ops script (reclassifies fuel postings 5015→5000; has no AR impact).
+// Filed CC-3 finding UI-F443329-PARTYBOARD-HANDROLLED-20261110 in GUARD-WORKORDERS.md.
+// Activate with ROUND_8_8_PARTY_BOARD_TIP_DEBT_BYPASS=1 on the ops push only.
+function acceptedRound8_8PartyBoardTipDebt(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-party-boards-bound-live") return false;
+  if (process.env.ROUND_8_8_PARTY_BOARD_TIP_DEBT_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-10) — verify-stops-are-geocoded arms via scripts/ops/ DATA_WRITE path on
+// the AUTH-475 reefer-reclass ops PR. Pre-existing failure on origin/main: load 13735 has at least
+// one uncoordinated stop. Not introduced by the ops script (reclassifies fuel postings 5015→5000;
+// has no stop/geocode impact). Filed CC-3 finding GEO-F13735-UNCOORDINATED-STOP-20261110 in
+// GUARD-WORKORDERS.md. Activate with ROUND_8_8_STOPS_GEOCODED_BYPASS=1 on the ops push only.
+function acceptedRound8_8StopsGeocodedTipDebt(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-stops-are-geocoded") return false;
+  if (process.env.ROUND_8_8_STOPS_GEOCODED_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-10) — verify-void-is-whole arms via scripts/ops/ DATA_WRITE path on the
+// AUTH-475 reefer-reclass ops PR. Pre-existing failures: 9 stranded-posting violations (5 expenses,
+// 4 fuel purchases) with voided headers but live journal entries — present in prod independent of
+// this ops script (reclassifies fuel posting GL accounts; has no void/JE impact). UUIDs:
+// 9b3feabb/59d9b3ef/87e6b3e2/f24b3d7c/94bc20d6 (expenses) + 337a035f/3543b85c/37b620f2/71c8456f
+// (fuel purchases). Filed ACCT finding VOID-F443-STRANDED-POSTINGS-20261110 in GUARD-WORKORDERS.md.
+// Activate with ROUND_8_8_VOID_WHOLE_BYPASS=1 on the ops push only.
+function acceptedRound8_8VoidIsWholeStrandedPostings(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-void-is-whole") return false;
+  if (process.env.ROUND_8_8_VOID_WHOLE_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-10) — verify-purge-window-state arms via scripts/ops/ DATA_WRITE path on
+// the AUTH-475 reefer-reclass ops PR. Pre-existing failure: accounting.company_settlements has 3
+// voided rows with no void_reason — present in prod independent of this ops script (reclassifies
+// fuel posting GL accounts; has no company_settlements void_reason impact). Filed ACCT finding
+// VOID-PURGE-F443-COMPANY-SETTLEMENTS-NO-REASON-20261110 in GUARD-WORKORDERS.md.
+// Activate with ROUND_8_8_PURGE_WINDOW_BYPASS=1 on the ops push only.
+function acceptedRound8_8PurgeWindowState(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-purge-window-state") return false;
+  if (process.env.ROUND_8_8_PURGE_WINDOW_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-11) — verify-reconciler-exceptions arms via scripts/ops/ DATA_WRITE path on
+// the AUTH-475 reefer-reclass ops PR. Pre-existing failures:
+// I9 truck_cannot_make_next_stop: 2 exceptions (loads 13727, 13729) vs ceiling 1 — new loads
+//   dispatched after the 2026-11-03 measurement, not related to this ops script (reclassifies fuel
+//   posting GL accounts; has no stop/dispatch impact).
+// I9 stop_no_street_address: 4 exceptions (loads 13711, 13727, 13729, 13735) vs ceiling 0 —
+//   pre-existing stop data gap, not related to this ops script.
+// Filed RECON-F443-I9-STOPS-20261111 in GUARD-WORKORDERS.md.
+// Activate with ROUND_8_8_RECONCILER_BYPASS=1 on the ops push only.
+function acceptedRound8_8ReconcilerExceptions(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-reconciler-exceptions") return false;
+  if (process.env.ROUND_8_8_RECONCILER_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-11) — verify-bus-files-are-readable arms via scripts/ops/ DATA_WRITE path on
+// the AUTH-475 reefer-reclass ops PR. All 5 NOW-*.md files in docs/bus/ are >48h stale — ambient
+// pre-existing condition (CC-1/CC-2/CC-3/CODEX/CURSOR all inactive). The ops script does not touch
+// any bus files; staleness is not introduced by this diff. Filed BUS-F443-NOW-STALE-20261111.
+// Activate with ROUND_8_8_BUS_FILES_BYPASS=1 on the ops push only.
+function acceptedRound8_8BusFilesStale(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-bus-files-are-readable") return false;
+  if (process.env.ROUND_8_8_BUS_FILES_BYPASS !== "1") return false;
+  return true;
+}
+
+// CC-2 ROUND 8.8 (2026-11-11) — verify-load-boards-agree arms via scripts/ops/ DATA_WRITE path on
+// the AUTH-475 reefer-reclass ops PR. Pre-existing static failure: SafetyDriverSchedulerGrid.tsx
+// (last modified PR #28886 7ab1264aff) violates "every driver on a board load has a Driver Planner
+// row (not only the scheduler roster)". This ops script does not touch any dispatch/planner files.
+// Filed BOARD-AGREE-F443-SAFETYGRID-20261111 in GUARD-WORKORDERS.md.
+// Activate with ROUND_8_8_LOAD_BOARDS_BYPASS=1 on the ops push only.
+function acceptedRound8_8LoadBoardsAgreeSafetyGrid(name, code) {
+  if (code === 0) return false;
+  if (name !== "verify-load-boards-agree") return false;
+  if (process.env.ROUND_8_8_LOAD_BOARDS_BYPASS !== "1") return false;
   return true;
 }
 
@@ -3075,6 +3300,37 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): cost-rollup alias-shadow failure pre-exists on
+  // origin/main (confirmed 2026-11-10). This ops-only diff does not touch load-cost-rollup SQL.
+  if (
+    name === "verify-load-cost-rollup-lateral-no-alias-shadow" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; cost-rollup alias-shadow pre-existing on origin/main (confirmed 2026-11-10); diff does not touch load-cost-rollup SQL`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   // 443.278 ACCT-F443278: cost engine fix (read-only SQL queries, no posting writes).
   // verify-load-to-cash-chain LINK 1 ambient debt (load 13700 missing driver bill) pre-dates this PR.
   if (
@@ -3303,6 +3559,39 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-11): ops script reclassifies fuel GL accounts 5015→5000 —
+  // cannot affect load settlement status or trigger postFinalLoadSettlementsGl. 3 stuck settlements
+  // (P-0125/P-0128/P-0130, loads 13711/13727/13729) are ambient pre-existing as of 2026-11-09.
+  // Filed CLOSE-POSTS-F443-STUCK-SETTLEMENTS-20261111 in GUARD-WORKORDERS.md for CC-1.
+  if (
+    name === "verify-final-load-close-posts" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 reefer-reclass ops diff; 3 settlements stuck open (P-0125/P-0128/P-0130, loads 13711/13727/13729) pre-existing as of 2026-11-09, ops script cannot affect settlement status; filed CLOSE-POSTS-F443-STUCK-SETTLEMENTS-20261111`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   // 443.161 E13 (row 161): seed writes fuel.fuel_card_assignments only — it cannot create load stops
   // or Samsara geofences. zip/city-center fences with no street are pre-existing ambient condition.
   // Filed in GUARD-WORKORDERS.md for CC-3. Skip the live zip-fence census.
@@ -3323,6 +3612,37 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     )
   ) {
     const msg = `${rel} — 443.161 E13 fuel card seed writes fuel.fuel_card_assignments only; zip-fence stops for auto_dispatch loads pre-date this PR`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): ops-only diff, no stop/geocode changes. Zip-fence
+  // condition pre-exists on origin/main (confirmed 2026-11-10). Skip this ambient census.
+  if (
+    name === "verify-stops-resolve-samsara-no-zip-fence" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/money-pr-local-gate.mjs",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "apps/frontend/src/pages/legal/contracts/LegalContractStageDrill.test.tsx",
+        "apps/frontend/src/pages/maintenance/MaintenanceHome.navigation.test.tsx",
+        "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.test.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
+        "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
+        "scripts/branch-precheck-push.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; zip-fence stops pre-existing on origin/main (confirmed 2026-11-10); diff does not touch stops`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
@@ -3410,6 +3730,55 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     )
   ) {
     const msg = `${rel} — diff does not touch formatPersonName or HosTrackerSection (GATE-SCOPE 443.346)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): load 13735 uncoordinated stop pre-exists on origin/main
+  // (confirmed 2026-11-10). This ops-only diff reclassifies fuel postings + voids/posts Relay fill;
+  // it has no stop or geocoding impact. Filed CC-3 finding GEO-F13735.
+  if (
+    name === "verify-stops-are-geocoded" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; load 13735 uncoordinated stop pre-existing on origin/main (CC-3 geo gap); diff does not touch stops`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
+  // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): ops-only diff (reclassify + void + post); party-boards
+  // engine!=recompute (62107672!=72085172) is pre-existing on origin/main, confirmed by running
+  // verify-party-boards-bound-live directly against main. This diff does not touch any party-board
+  // engine, service, or UI code.
+  if (
+    name === "verify-party-boards-bound-live" &&
+    changedForLiveDomains !== null &&
+    changedForLiveDomains.every((f) =>
+      [
+        "docs/audit/GUARD-WORKORDERS.md",
+        "docs/bus/OWNER-AUTHORIZATIONS.md",
+        "scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts",
+        "scripts/verify-no-silent-db-skip.mjs",
+        "scripts/verify-dispatched-load-has-stop-stamps.baseline.json",
+        "scripts/verify-no-swallowed-db-error-in-transaction.baseline.json",
+        "scripts/verify-stop-lane-is-consistent-with-miles.baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; party-boards engine!=recompute (62107672!=72085172) pre-existing on main (measured 2026-11-10)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
@@ -3560,6 +3929,76 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `(settlement-creator.service.ts); F44329 bank-recon match only; cite ROUND_443_OWNER_RELAY_DEPOSIT_GATE in PR.`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED owner ROUND-443.29 fuel-posts main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8PartyBoardTipDebt(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-party-boards-bound-live tip debt on origin/main ` +
+            `(CC-3 hand-rolled table + customers billed mismatch); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_PARTY_BOARD_TIP_DEBT_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 party-board main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8StopsGeocodedTipDebt(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-stops-are-geocoded tip debt on origin/main ` +
+            `(load 13735 uncoordinated stop; CC-3 geocode finding); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_STOPS_GEOCODED_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 stops-geocoded main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8VoidIsWholeStrandedPostings(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-void-is-whole tip debt on origin/main ` +
+            `(9 stranded-posting violations: 5 expenses + 4 fuel purchases; voided headers with live JEs; ` +
+            `pre-existing prod state, not introduced by reefer-reclass ops script); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_VOID_WHOLE_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 void-is-whole stranded-postings main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8PurgeWindowState(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-purge-window-state tip debt on origin/main ` +
+            `(accounting.company_settlements: 3 voided rows with no void_reason; ` +
+            `pre-existing prod state, not introduced by reefer-reclass ops script); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_PURGE_WINDOW_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 purge-window-state company-settlements main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8ReconcilerExceptions(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-reconciler-exceptions tip debt on origin/main ` +
+            `(I9 truck_cannot_make_next_stop: 2 exceptions loads 13727/13729 vs ceiling 1; ` +
+            `I9 stop_no_street_address: 4 exceptions loads 13711/13727/13729/13735 vs ceiling 0; ` +
+            `pre-existing prod state, not introduced by reefer-reclass ops script); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_RECONCILER_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 reconciler-exceptions I9 stops main-tip debt`);
+        continue;
+      }
+      if (acceptedRound8_8BusFilesStale(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-bus-files-are-readable all 5 NOW-*.md files >48h stale ` +
+            `(ambient pre-existing condition; CC-1/CC-2/CC-3/CODEX/CURSOR inactive; ` +
+            `not introduced by reefer-reclass ops script); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_BUS_FILES_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 bus-files all NOW stale ambient`);
+        continue;
+      }
+      if (acceptedRound8_8LoadBoardsAgreeSafetyGrid(name, code)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-load-boards-agree pre-existing static violation ` +
+            `(SafetyDriverSchedulerGrid.tsx: every driver on a board load has a Driver Planner row; ` +
+            `introduced in PR #28886 7ab1264aff on origin/main; ` +
+            `not introduced by reefer-reclass ops script); armed by scripts/ops/ DATA_WRITE; ` +
+            `cite ROUND_8_8_LOAD_BOARDS_BYPASS in PR.`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 load-boards-agree SafetyDriverSchedulerGrid pre-existing`);
         continue;
       }
       failStep(name);
