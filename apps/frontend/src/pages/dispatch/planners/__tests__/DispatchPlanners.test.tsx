@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
@@ -133,5 +133,10 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     expect(applyBtn).not.toBeDisabled();
     await userEvent.click(applyBtn);
     expect(await screen.findByTestId("planner-chip-driver")).toBeTruthy();
+    // ROUND 8.20 board 12 — applied filters land in the URL so tab NavLinks keep the cohort.
+    await waitFor(() => {
+      const truckTab = screen.getByRole("link", { name: /Truck Planner/i });
+      expect(truckTab.getAttribute("href")).toMatch(/planner_driver_ids=/);
+    });
   });
 });
