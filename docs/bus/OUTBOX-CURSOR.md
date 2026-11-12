@@ -1,5 +1,5 @@
-## OUTBOX (11-12-2026 ~5:05 AM CT) — high-water #28937; Lease-to-Own Unit EntityLink
-- **SHIPS:** #28935 settlement identity + CF3 Load nav · #28936 tip · #28937 Lease-to-Own fleet picker Unit EntityLink.
+## OUTBOX (11-12-2026 ~5:25 AM CT) — high-water #28939; Fuel Assignment Driver EntityLink
+- **SHIPS:** #28937 Lease-to-Own Unit · #28939 Fuel Assignment candidate Driver EntityLink (driver_id enrich) · #28932–#28938 reverse wave.
 - **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
 
 ## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
