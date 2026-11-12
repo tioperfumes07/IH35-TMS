@@ -7,6 +7,8 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 
@@ -29,7 +31,19 @@ export function LegalPoliciesPage() {
 
   const columns = useMemo<ParityColumn<LegalTemplateSummary>[]>(
     () => [
-      { key: "display_name_en", label: "Template", sortable: true, render: (row) => row.display_name_en },
+      {
+        key: "display_name_en",
+        label: "Template",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="legal_template"
+            id={row.id}
+            label={entityLabel(row.display_name_en, row.id, "Template")}
+            data-testid={`legal-policies-template-${row.id}`}
+          />
+        ),
+      },
       { key: "template_code", label: "Code", sortable: true, render: (row) => row.template_code },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status },
       {

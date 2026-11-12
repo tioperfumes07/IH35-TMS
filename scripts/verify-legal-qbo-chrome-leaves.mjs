@@ -51,9 +51,9 @@ const CHECKS = [
     pattern: /CollapsedListFilters[\s\S]*<ParityTable/,
   },
   {
-    name: "policies: LegalPoliciesPage is a real ParityTable, not a raw <table>",
+    name: "policies: LegalPoliciesPage is a real ParityTable with legal_template EntityLink",
     file: "apps/frontend/src/pages/legal/LegalPoliciesPage.tsx",
-    pattern: /<ParityTable\b/,
+    pattern: /kind=["']legal_template["'][\s\S]*<ParityTable\b|<ParityTable\b[\s\S]*kind=["']legal_template["']/,
   },
   {
     name: "matters.create: LegalMatterFormFields uses real DatePicker/MoneyInput/EntityPicker chrome",
