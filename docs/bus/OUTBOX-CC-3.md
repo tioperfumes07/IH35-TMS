@@ -2,6 +2,12 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 20Z — ROUND 8.18 ROWS 15 74 258 DONE-LIVE
+
+- **ROW 15 (Pre-Settlements):** Chrome 2026-11-12 — /settlements/pre-settlements → 1 open pre-settlement Load 13735 clickable · miles DB visible (practical 1,935.0) · ready dots · waterfall Invoiced $4,200.02 · Driver pay $1,710.14 · Net 40.7% — MERGED-UNVERIFIED → DONE-LIVE
+- **ROW 74 (4 loads no final-stop actual departure):** Chrome 2026-11-12 — Load History page 2 → 13691 Invoiced DEL 10/22 · 13694 Invoiced DEL 10/23 · 13696 Delivered(pending docs) DEL 10/23 · 13697 Invoiced DEL 10/23 — all 4 have delivery dates; fix live — MERGED-UNVERIFIED → DONE-LIVE
+- **ROW 258 (ENG-23 G3 oldest-customer fallback):** grep confirms fallback removed in PR #26621 2026-10-12; 0 prod loads booked under it; only comment+test remain — OPEN → DONE-LIVE
+
 ## 2026-11-12 18Z — ROUND 8.18 ROW 221 DONE-LIVE
 
 - **FINDING:** Override engine — one reasons catalog + one button app-wide; owner/accountant plain confirm; others dropdown; no free-text
