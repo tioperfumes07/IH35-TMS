@@ -10,6 +10,7 @@ import {
 } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
@@ -239,13 +240,17 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "amount_claimed_cents",
         label: "Claimed",
         sortable: true,
-        render: (claim) => formatMoney(claim.amount_claimed_cents),
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_claimed_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
       },
       {
         key: "amount_paid_cents",
         label: "Paid",
         sortable: true,
-        render: (claim) => formatMoney(claim.amount_paid_cents),
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_paid_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
       },
       // Slice-2 economics on the grid. Without these the wizard collected fault / responsibility /
       // deductible / recovery rail and no list ever showed them back — the write-only half of the
@@ -268,7 +273,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "deductible_cents",
         label: "Deductible",
         sortable: true,
-        render: (claim) => (claim.deductible_cents ? formatMoney(claim.deductible_cents) : "—"),
+        render: (claim) =>
+          claim.deductible_cents ? (
+            <MoneyCell cents={claim.deductible_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "recovery_rail",

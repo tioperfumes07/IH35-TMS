@@ -10,6 +10,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -218,7 +219,12 @@ export function CompanySettlementsPage() {
         cellClass: QBO_MONEY_CELL_CLASS,
         minWidth: 100,
         sortValue: (r) => r.revenue_cents,
-        render: (r) => formatUsdCents(r.revenue_cents),
+        render: (r) =>
+          r.company_settlement_id ? (
+            <MoneyCell cents={r.revenue_cents} drill={{ entity: { kind: "company_settlement", id: r.company_settlement_id } }} />
+          ) : (
+            formatUsdCents(r.revenue_cents)
+          ),
         exportValue: (r) => formatUsdCents(r.revenue_cents),
       },
       {
@@ -229,7 +235,12 @@ export function CompanySettlementsPage() {
         cellClass: QBO_MONEY_CELL_CLASS,
         minWidth: 100,
         sortValue: (r) => r.costs_cents,
-        render: (r) => formatUsdCents(r.costs_cents),
+        render: (r) =>
+          r.company_settlement_id ? (
+            <MoneyCell cents={r.costs_cents} drill={{ entity: { kind: "company_settlement", id: r.company_settlement_id } }} />
+          ) : (
+            formatUsdCents(r.costs_cents)
+          ),
         exportValue: (r) => formatUsdCents(r.costs_cents),
       },
       {
@@ -240,7 +251,14 @@ export function CompanySettlementsPage() {
         cellClass: QBO_MONEY_CELL_CLASS,
         minWidth: 100,
         sortValue: (r) => r.driver_pay_cents,
-        render: (r) => formatUsdCents(r.driver_pay_cents),
+        render: (r) =>
+          r.company_settlement_id ? (
+            <MoneyCell cents={r.driver_pay_cents} drill={{ entity: { kind: "company_settlement", id: r.company_settlement_id } }} />
+          ) : r.driver_id ? (
+            <MoneyCell cents={r.driver_pay_cents} drill={{ entity: { kind: "driver", id: r.driver_id } }} />
+          ) : (
+            formatUsdCents(r.driver_pay_cents)
+          ),
         exportValue: (r) => formatUsdCents(r.driver_pay_cents),
       },
       {
@@ -251,11 +269,16 @@ export function CompanySettlementsPage() {
         cellClass: QBO_MONEY_CELL_CLASS,
         minWidth: 100,
         sortValue: (r) => r.margin_cents,
-        render: (r) => (
-          <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
-            {formatUsdCents(r.margin_cents)}
-          </span>
-        ),
+        render: (r) =>
+          r.company_settlement_id ? (
+            <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
+              <MoneyCell cents={r.margin_cents} drill={{ entity: { kind: "company_settlement", id: r.company_settlement_id } }} />
+            </span>
+          ) : (
+            <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
+              {formatUsdCents(r.margin_cents)}
+            </span>
+          ),
         exportValue: (r) => formatUsdCents(r.margin_cents),
       },
       {

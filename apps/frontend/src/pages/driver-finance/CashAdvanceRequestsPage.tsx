@@ -10,6 +10,7 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { Modal } from "../../components/Modal";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useStagedListFilters } from "../../components/table";
@@ -220,7 +221,12 @@ export function CashAdvanceRequestsPage() {
         key: "requested_amount_cents",
         label: "Amount",
         sortable: true,
-        render: (row) => formatUsdFromCents(row.requested_amount_cents),
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.requested_amount_cents ?? 0)}
+            drill={{ entity: { kind: "cash_advance_request", id: String(row.id ?? "") } }}
+          />
+        ),
       },
       {
         key: "policy",

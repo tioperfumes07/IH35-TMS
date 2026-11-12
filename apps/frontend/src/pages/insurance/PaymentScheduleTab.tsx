@@ -18,6 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
@@ -137,8 +138,22 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
         ),
       },
       { key: "due_date", label: "Due Date", sortable: true, render: (row) => <span className="text-gray-800">{formatDateUS(row.due_date)}</span> },
-      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => formatMoney(row.amount_cents) },
-      { key: "late_fee_cents", label: "Late Fee", sortable: true, render: (row) => formatMoney(row.late_fee_cents) },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (row) => (
+          <MoneyCell cents={row.amount_cents} drill={{ entity: { kind: "insurance_policy", id: row.policy_id } }} />
+        ),
+      },
+      {
+        key: "late_fee_cents",
+        label: "Late Fee",
+        sortable: true,
+        render: (row) => (
+          <MoneyCell cents={row.late_fee_cents} drill={{ entity: { kind: "insurance_policy", id: row.policy_id } }} />
+        ),
+      },
       { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge variant={statusBadgeVariant(row.status)}>{statusLabel(row.status)}</StatusBadge> },
     ],
     [],

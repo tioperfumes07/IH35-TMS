@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useUrlSort } from "../../../hooks/useUrlSort";
@@ -156,7 +157,13 @@ export function SettlementsTable({
         label: "Gross",
         sortable: true,
         sortValue: (row) => Number(row.gross_pay ?? 0),
-        render: (row) => formatUsdTable(row.gross_pay),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.gross_pay ?? 0) * 100)}
+            format={(c) => formatUsdTable(c / 100)}
+            drill={{ entity: { kind: "settlement", id: row.id } }}
+          />
+        ),
       },
       {
         key: "deductions",
@@ -166,7 +173,13 @@ export function SettlementsTable({
         label: "Deductions",
         sortable: true,
         sortValue: (row) => Number(row.deductions_total ?? 0),
-        render: (row) => formatUsdTable(row.deductions_total),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.deductions_total ?? 0) * 100)}
+            format={(c) => formatUsdTable(c / 100)}
+            drill={{ entity: { kind: "settlement", id: row.id } }}
+          />
+        ),
       },
       {
         key: "net_pay",
@@ -176,7 +189,13 @@ export function SettlementsTable({
         sortable: true,
         sortValue: (row) => Number(row.net_pay ?? 0),
         cellClass: `${QBO_MONEY_CELL_CLASS} font-semibold text-[#1F2A44]`,
-        render: (row) => formatUsdTable(row.net_pay),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.net_pay ?? 0) * 100)}
+            format={(c) => formatUsdTable(c / 100)}
+            drill={{ entity: { kind: "settlement", id: row.id } }}
+          />
+        ),
       },
       {
         key: "status",
