@@ -117,3 +117,23 @@ describe("PERFUME-DESK identity — real MTZ 11/10/2026 lines (prod import 2026-
     expect(id.flags).not.toContain("SET");
   });
 });
+
+describe("PERFUME-DESK identity — same word, different spelling (owner 2026-11-12)", () => {
+  it("CK ONE = CK 1", () => {
+    expect(loose("CK ONE 3.4 EDT U")).toBe(loose("CK 1 3.4 EDT U"));
+    expect(loose("CK ONE 200ML EDT UNISEX")).toBe(loose("CK 1 6.7 EDT U"));
+  });
+  it("CK B = CK BE = CK BEE", () => {
+    const k = new Set(["CK B 6.7 EDT U", "CK BE 6.7 EDT U", "CK BEE 200ML EDT UNISEX"].map((l) => loose(l)));
+    expect(k.size).toBe(1);
+  });
+  it("ONE MILLION = 1 MILLION, and the vendor's own words are what is shown", () => {
+    const a = identify({ description: "ONE MILLION 3.4 EDT M", brand: "PACO RABANNE" });
+    const b = identify({ description: "1 MILLION 3.4 EDT M", brand: "PACO RABANNE" });
+    expect(a.key).toBe(b.key);
+    expect(a.nameText).toBe("ONE MILLION");
+  });
+  it("different fragrances stay different (CK ONE vs CK ONE SHOCK)", () => {
+    expect(loose("CK ONE 3.4 EDT U")).not.toBe(loose("CK ONE SHOCK 3.4 EDT M"));
+  });
+});

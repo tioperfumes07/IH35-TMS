@@ -103,6 +103,17 @@ const GENDER_WORDS: Record<string, Gender> = {
   // HER / HIM are NOT gender words: "BURBERRY HER", "GUCCI GUILTY POUR HIM" are fragrance names.
 };
 
+/**
+ * Name words vendors spell more than one way — each maps to ONE spelling for the identity key, so
+ * "CK ONE" = "CK 1", "CK B" = "CK BE" = "CK BEE", "ONE MILLION" = "1 MILLION". Display keeps the vendor's words.
+ */
+export const SAME_NAME_WORD: Record<string, string> = {
+  ONE: "1", TWO: "2", THREE: "3", FOUR: "4", FIVE: "5", SIX: "6", SEVEN: "7", EIGHT: "8", NINE: "9", TEN: "10",
+  ELEVEN: "11", TWELVE: "12", TWENTY: "20", HUNDRED: "100",
+  FIRST: "1ST", SECOND: "2ND", THIRD: "3RD",
+  B: "BE", BEE: "BE",
+};
+
 /** Words that never help name a fragrance. POUR/HOMME/FEMME are kept as gender, not name. */
 const NOISE = new Set([
   "SP", "SPR", "SPRAY", "VAPO", "VAPORISATEUR", "NATURAL", "NAT", "FOR", "THE", "BY", "DE", "DI", "LA", "LE",
@@ -306,12 +317,15 @@ export function identify(input: IdentityInput): Identity {
   if (!gender) gender = sec.gender;
   for (const f of sec.flags) flags.add(f);
 
-  const nameWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  const shownWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
+  // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
+  const nameWords = shownWords.map((w) => SAME_NAME_WORD[w] ?? w);
   if (sizeMl != null && sizeMl <= 15 && !flags.has("SET")) flags.add("MINI");
 
   const flagList = [...flags].sort();
   // A brand-only product ("4711 EAU DE COLOGNE") has no name words: it is shown and matched by its brand.
-  const nameText = nameWords.length ? nameWords.join(" ") : brand;
+  const nameText = shownWords.length ? shownWords.join(" ") : brand;
   const key = [brand || "?", nameWords.join(" "), sizeMl ?? "?", conc || "?", gender || "?", flagList.join("+")].join("|");
   return { brand, nameWords, sizeMl, conc, gender, flags: flagList, key, nameText };
 }
