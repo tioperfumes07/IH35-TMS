@@ -103,6 +103,17 @@ const GENDER_WORDS: Record<string, Gender> = {
   // HER / HIM are NOT gender words: "BURBERRY HER", "GUCCI GUILTY POUR HIM" are fragrance names.
 };
 
+/**
+ * Name words vendors spell more than one way — each maps to ONE spelling for the identity key, so
+ * "CK ONE" = "CK 1", "CK B" = "CK BE" = "CK BEE", "ONE MILLION" = "1 MILLION". Display keeps the vendor's words.
+ */
+export const SAME_NAME_WORD: Record<string, string> = {
+  ONE: "1", TWO: "2", THREE: "3", FOUR: "4", FIVE: "5", SIX: "6", SEVEN: "7", EIGHT: "8", NINE: "9", TEN: "10",
+  ELEVEN: "11", TWELVE: "12", TWENTY: "20", HUNDRED: "100",
+  FIRST: "1ST", SECOND: "2ND", THIRD: "3RD",
+  B: "BE", BEE: "BE",
+};
+
 /** Words that never help name a fragrance. POUR/HOMME/FEMME are kept as gender, not name. */
 const NOISE = new Set([
   "SP", "SPR", "SPRAY", "VAPO", "VAPORISATEUR", "NATURAL", "NAT", "FOR", "THE", "BY", "DE", "DI", "LA", "LE",
@@ -241,6 +252,10 @@ export function identify(input: IdentityInput): Identity {
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);
+  // A set names its main bottle first; the extra pieces follow a "+" ("100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML").
+  // The item is the main bottle's name/size/type — the pieces after the first "+ <size>" are not the name.
+  const plus = s.search(/\+\s*\d/);
+  if (plus > 0) { flags.add("SET"); s = s.slice(0, plus); }
 
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
   let gender: Gender = "";
@@ -263,7 +278,7 @@ export function identify(input: IdentityInput): Identity {
   for (const re of pc.remove) s = s.replace(re, " ");
 
   // Punctuation → spaces, but keep "&" and "'" inside brand words, and dots inside abbreviations like A.GRANDE.
-  s = s.replace(/[^A-Z0-9&'. ]+/g, " ").replace(/(?<![A-Z])\.|\.(?![A-Z0-9])/g, " ");
+  s = s.replace(/[^A-Z0-9&'.% ]+/g, " ").replace(/(?<!\d)%/g, " ").replace(/(?<![A-Z])\.|\.(?![A-Z0-9])/g, " ");
   let words = cleanSpaces(s).split(" ").filter(Boolean);
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
@@ -293,6 +308,8 @@ export function identify(input: IdentityInput): Identity {
     if (kept.length > 0 && (w === "HOMME" || w === "FEMME")) { textGender = w === "HOMME" ? "M" : "W"; continue; }
     const g = GENDER_WORDS[w];
     if (g && kept.length > 0) { textGender = g; continue; }
+    // A lone gender letter with nothing after it is the gender, never a name ("4711 3.4 EDC U": brand-only item).
+    if (g && w.length === 1 && i === words.length - 1) { textGender = g; continue; }
     kept.push(w);
   }
   if (!gender) gender = textGender;
@@ -300,11 +317,15 @@ export function identify(input: IdentityInput): Identity {
   if (!gender) gender = sec.gender;
   for (const f of sec.flags) flags.add(f);
 
-  const nameWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  const shownWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
+  // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
+  const nameWords = shownWords.map((w) => SAME_NAME_WORD[w] ?? w);
   if (sizeMl != null && sizeMl <= 15 && !flags.has("SET")) flags.add("MINI");
 
   const flagList = [...flags].sort();
-  const nameText = nameWords.join(" ");
+  // A brand-only product ("4711 EAU DE COLOGNE") has no name words: it is shown and matched by its brand.
+  const nameText = shownWords.length ? shownWords.join(" ") : brand;
   const key = [brand || "?", nameWords.join(" "), sizeMl ?? "?", conc || "?", gender || "?", flagList.join("+")].join("|");
   return { brand, nameWords, sizeMl, conc, gender, flags: flagList, key, nameText };
 }

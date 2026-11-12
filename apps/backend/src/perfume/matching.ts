@@ -125,7 +125,8 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
     const c = ix.byLoose.get(looseKey(identity)) ?? [];
     if (c.length === 1) return done(c[0], "loose_key");
   }
-  const strongIdentity = identity.brand !== "" && identity.nameWords.length > 0 && identity.sizeMl != null;
+  // A brand-only bottle ("4711 3.4 EDC U") is a strong identity only when the vendor also gives its barcode.
+  const strongIdentity = identity.brand !== "" && identity.sizeMl != null && (identity.nameWords.length > 0 || upc !== "");
   if (opts.allowNewItem && strongIdentity && (upc || sku) && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }

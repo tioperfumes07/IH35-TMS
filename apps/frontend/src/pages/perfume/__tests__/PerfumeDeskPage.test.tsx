@@ -115,6 +115,12 @@ describe("PERFUME-DESK file reader", () => {
     expect(out.rows[0].upc).toBe("8411061043868");
   });
 
+  it("maps the real MTZ header: Avail = qty, Full Box Qty = box qty (never qty)", () => {
+    const header = ["DESCRIPTION", "UPC", "PRICE", "Avail", "ORDER", "TOTAL", "TYPE", "BRAND", "Full Box Qty"];
+    const map = guessMapping(header);
+    expect(map).toMatchObject({ desc: 0, upc: 1, price: 2, qty: 3, brand: 7, case_pack: 8 });
+  });
+
   it("PDF lines: two-column pairs, and a price with no name is kept (real LISTA N 5 line), never dropped", () => {
     expect(pdfLinePairs("CK DEFY M 3.4oz $41.00 CURVE WAVE M 4.2oz EDT $11.00")).toEqual([["CK DEFY M 3.4oz", "41.00"], ["CURVE WAVE M 4.2oz EDT", "11.00"]]);
     expect(pdfLinePairs("$41.00")).toEqual([[PDF_NO_NAME, "41.00"]]);

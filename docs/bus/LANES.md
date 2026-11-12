@@ -201,6 +201,9 @@ TABLES: none. Cursor is measurement, preview and guards. Every money write goes 
 docs/bus/**
 .github/workflows/**
 claude/**                 (Lead rounds, registers and rulings -- the project-doc mirror; had no owner, so every Lead push failed this guard as UNASSIGNED, 2026-09-29)
+apps/backend/src/perfume/**          (TIO Perfumes price desk -- owner-assigned to Claude-Lead 2026-11-11; isolated perfume.* schema, never carrier data)
+apps/frontend/src/pages/perfume/**   (TIO Perfumes price desk UI -- same ruling)
+apps/frontend/src/api/perfume.ts     (TIO Perfumes desk API client -- same ruling)
 TABLES: none. The Lead owns no module code and no tables. Anything else the Lead touches is a lane
         cross and needs a written ruling, same as every other seat.
 

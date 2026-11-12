@@ -80,6 +80,9 @@ export type PerfumeImportCheck = {
   review: number;
   unmatched: number;
   items_created: number;
+  /** Items a newer list re-identified (old rule name corrected) or merged into the item that already had that identity. */
+  items_renamed?: number;
+  items_merged?: number;
 };
 export type PerfumeList = {
   id: string;

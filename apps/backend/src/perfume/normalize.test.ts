@@ -94,3 +94,46 @@ describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
     expect(identify({ description: "212 SEXY W 3.4 EDP", section: "MEN" }).gender).toBe("W");
   });
 });
+
+describe("PERFUME-DESK identity — real MTZ 11/10/2026 lines (prod import 2026-11-12)", () => {
+  it("brand-only bottle: '4711 3.4 EDC U' is gender U, named by its brand — never the name 'U'", () => {
+    const id = identify({ description: "4711 3.4 EDC U  (130562) - Germany - 30pcs ByBox", brand: "4711" });
+    expect(id.gender).toBe("U");
+    expect(id.nameWords).toEqual([]);
+    expect(id.nameText).toBe("4711");
+    expect(id.sizeMl).toBe(100);
+    expect(id.conc).toBe("EDC");
+  });
+  it("a set is its main bottle: '100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML' → 100% PASSION 100ml EDT M SET", () => {
+    const id = identify({ description: "ABERCROMBIE 100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML  (136339) - USA - 6pcs ByBox", brand: "ABERCROMBIE" });
+    expect(id.nameText).toBe("100% PASSION");
+    expect(id.sizeMl).toBe(100);
+    expect(id.conc).toBe("EDT");
+    expect(id.gender).toBe("M");
+    expect(id.flags).toContain("SET");
+  });
+  it("a name with a plus that is not followed by a size keeps it out of the set rule", () => {
+    const id = identify({ description: "CK ONE SHOCK 3.4 EDT M" });
+    expect(id.flags).not.toContain("SET");
+  });
+});
+
+describe("PERFUME-DESK identity — same word, different spelling (owner 2026-11-12)", () => {
+  it("CK ONE = CK 1", () => {
+    expect(loose("CK ONE 3.4 EDT U")).toBe(loose("CK 1 3.4 EDT U"));
+    expect(loose("CK ONE 200ML EDT UNISEX")).toBe(loose("CK 1 6.7 EDT U"));
+  });
+  it("CK B = CK BE = CK BEE", () => {
+    const k = new Set(["CK B 6.7 EDT U", "CK BE 6.7 EDT U", "CK BEE 200ML EDT UNISEX"].map((l) => loose(l)));
+    expect(k.size).toBe(1);
+  });
+  it("ONE MILLION = 1 MILLION, and the vendor's own words are what is shown", () => {
+    const a = identify({ description: "ONE MILLION 3.4 EDT M", brand: "PACO RABANNE" });
+    const b = identify({ description: "1 MILLION 3.4 EDT M", brand: "PACO RABANNE" });
+    expect(a.key).toBe(b.key);
+    expect(a.nameText).toBe("ONE MILLION");
+  });
+  it("different fragrances stay different (CK ONE vs CK ONE SHOCK)", () => {
+    expect(loose("CK ONE 3.4 EDT U")).not.toBe(loose("CK ONE SHOCK 3.4 EDT M"));
+  });
+});

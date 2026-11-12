@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
-import { looseKey, normalizeUpc } from "./normalize.js";
+import { looseKey, normalizeUpc, type Identity } from "./normalize.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
 /* ---------------- rules ---------------- */
@@ -132,7 +132,7 @@ export type ImportIn = {
 export type ImportCheck = {
   rows_read: number; rows_saved: number; rows_skipped: number;
   price_total_file_cents: number; price_total_saved_cents: number; totals_match: boolean;
-  by_method: Record<string, number>; review: number; unmatched: number; items_created: number;
+  by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number;
 };
 
 function intOrNull(v: unknown): number | null {
@@ -146,7 +146,13 @@ function prepare(body: ImportIn) {
   for (const r of body.rows) {
     const cents = toCents(r.price);
     const hasItem = Boolean(String(r.description ?? "").trim() || normalizeUpc(r.upc) || String(r.sku ?? "").trim());
-    if (cents != null && cents > 0 && hasItem) saved.push({ ...r, description: String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? ""), price_cents: cents });
+    if (cents == null || cents <= 0 || !hasItem) continue;
+    const description = String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? "");
+    // The vendor's own item code, when the list has no SKU column but prints it in the line: MTZ writes
+    // "JO MALONE ENGLISH PEAR & FREESIA 1.0 EDC L UNBOXED  (137792) - France". Without it a no-barcode
+    // tester/unboxed line can never become an item, and the same line next week can never re-link by SKU.
+    const sku = String(r.sku ?? "").trim() || (description.match(/\((\d{5,8})\)/)?.[1] ?? "");
+    saved.push({ ...r, sku: sku || null, description, price_cents: cents });
   }
   const total = saved.reduce((t, r) => t + r.price_cents, 0);
   return { saved, total };
@@ -178,7 +184,7 @@ function baseCheck(body: ImportIn, savedCount: number, savedTotal: number): Impo
     rows_read: body.rows_read, rows_saved: savedCount, rows_skipped: body.rows_read - savedCount,
     price_total_file_cents: body.file_price_total_cents, price_total_saved_cents: savedTotal,
     totals_match: body.file_price_total_cents === savedTotal && body.rows_read >= savedCount,
-    by_method: {}, review: 0, unmatched: 0, items_created: 0,
+    by_method: {}, review: 0, unmatched: 0, items_created: 0, items_renamed: 0, items_merged: 0,
   };
 }
 function tally(check: ImportCheck, method: string | null, status: string) {
@@ -225,6 +231,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const newItems: Array<{ tmp: string; brand: string; name: string; size_ml: number | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }> = [];
   const newUpcs = new Map<string, string>();              // upc → item (tmp or real)
   const newSkus = new Map<string, string>();              // sku → item (tmp or real)
+  const lineIds: Array<{ itemId: string | null; method: string | null; identity: Identity }> = [];
   for (const r of saved) {
     const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
     let itemId = m.itemId;
@@ -237,6 +244,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
         identityKey: id.key, looseKey: looseKey(id), displayName: displayNameOf(id) });
     }
     tally(check, m.method, m.status);
+    lineIds.push({ itemId, method: m.method, identity: m.identity });
     const strong = itemId && m.method && m.method !== "loose_key";
     if (strong && m.upc && !ix.byUpc.has(m.upc)) { ix.byUpc.set(m.upc, itemId!); newUpcs.set(m.upc, itemId!); }
     const sku = String(r.sku ?? "").trim();
@@ -248,10 +256,46 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
       match_status: itemId ? "matched" : m.status, suggestions: m.suggestions,
     });
   }
+  // Pass 1b — HEAL. An item this list reaches by UPC or vendor SKU, that nobody confirmed by hand and that has no
+  // internal code, takes the identity this (newer) list reads for it: identity rules improve, and the item must
+  // not keep a name an older rule gave it ("4711 · U"). If another live item already holds that identity, the
+  // two are the same bottle and the stale one is MERGED into it (merged_into_id; UPCs, aliases, rows repointed).
+  const real = new Map<string, string>();
+  const protectedIds = new Set((await c.query<{ id: string }>(
+    `SELECT item_id AS id FROM perfume.item_aliases WHERE method = 'confirmed'
+     UNION SELECT id FROM perfume.items WHERE internal_code IS NOT NULL AND merged_into_id IS NULL`)).rows.map((r) => r.id));
+  const heals = new Map<string, Identity>();
+  for (const l of lineIds) {
+    if (!l.itemId || l.itemId.startsWith("tmp:") || (l.method !== "upc" && l.method !== "sku")) continue;
+    if (protectedIds.has(l.itemId) || heals.has(l.itemId)) continue;
+    const cur = ix.items.get(l.itemId);
+    if (cur && cur.identityKey !== l.identity.key) heals.set(l.itemId, l.identity);
+  }
+  const mergedTo = new Map<string, string>();
+  for (const [itemId, id] of heals) {
+    const holder = (await c.query<{ id: string }>(
+      `SELECT id FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL AND id <> $2 LIMIT 1`, [id.key, itemId])).rows[0]?.id;
+    if (holder) {
+      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      mergedTo.set(itemId, holder);
+      check.items_merged += 1;
+    } else {
+      await c.query(
+        `UPDATE perfume.items SET brand = $2, name = $3, size_ml = $4, conc = $5, gender = $6, flags = $7, identity_key = $8,
+                loose_key = $9, display_name = $10, updated_at = now() WHERE id = $1`,
+        [itemId, id.brand, id.nameText, id.sizeMl, id.conc, id.gender, id.flags, id.key, looseKey(id), displayNameOf(id)]);
+      check.items_renamed += 1;
+    }
+    // A line of this same file that would have created that identity as a NEW item is the healed item instead.
+    const dup = newItems.findIndex((n) => n.identity_key === id.key);
+    if (dup >= 0) { real.set(newItems[dup].tmp, mergedTo.get(itemId) ?? itemId); newItems.splice(dup, 1); }
+  }
   check.items_created = newItems.length;
 
   // Pass 2 — write in batches. Temporary ids become real ids.
-  const real = new Map<string, string>();
   for (let i = 0; i < newItems.length; i += 500) {
     const batch = newItems.slice(i, i + 500);
     const ins = await c.query<{ id: string; identity_key: string }>(
@@ -267,7 +311,10 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
       real.set(it.tmp, id);
     }
   }
-  const resolve = (v: string | null) => (v && v.startsWith("tmp:") ? real.get(v) ?? null : v);
+  const resolve = (v: string | null) => {
+    const r = v && v.startsWith("tmp:") ? real.get(v) ?? null : v;
+    return r && mergedTo.has(r) ? mergedTo.get(r)! : r;
+  };
   for (const o of out) o.item_id = resolve(o.item_id);
   const upcRows = [...newUpcs].map(([upc, item]) => ({ upc, item_id: resolve(item) }));
   for (let i = 0; i < upcRows.length; i += 1000) {
