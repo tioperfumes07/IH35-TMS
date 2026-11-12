@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterFacets, gridFacets, sortRows, splitPicks, type GridRow } from "./desk.service.js";
+import { filterFacets, gridFacets, sortRows, splitPicks, targetPctOf, type GridRow } from "./desk.service.js";
 
 const rows: GridRow[] = [
   { id: "1", brand: "CALVIN KLEIN", name: "ONE", size_ml: 200, gender: "U", category: "Unisex", display_name: "CALVIN KLEIN ONE 200" },
@@ -28,5 +28,16 @@ describe("perfume grid facets", () => {
   });
   it("breaks every sort tie by brand, then name, then size", () => {
     expect(sortRows(rows, "gender", "asc").map((r) => r.id)).toEqual(["4", "3", "1", "2", "5"]);
+  });
+});
+
+describe("perfume grid typed margin", () => {
+  const rules = { wholesale_targets_pct: [11, 12.5, 15] } as unknown as Parameters<typeof targetPctOf>[0];
+  it("uses the margin typed on the grid, else the first saved target, and stays in 0–95", () => {
+    expect(targetPctOf(rules, 18)).toBe(18);
+    expect(targetPctOf(rules, null)).toBe(11);
+    expect(targetPctOf(rules, undefined)).toBe(11);
+    expect(targetPctOf({ wholesale_targets_pct: [] } as unknown as typeof rules, null)).toBe(12);
+    expect(targetPctOf(rules, 120)).toBe(95);
   });
 });

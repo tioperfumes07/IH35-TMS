@@ -21,7 +21,7 @@ const GRID = {
   cols: [
     { key: "brand", label: "Brand", group: "Item", kind: "text" },
     { key: "name", label: "Name", group: "Item", kind: "text" },
-    { key: "landed_likely", label: "My cost (likely)", group: "Purchase", kind: "money" },
+    { key: "landed_likely", label: "My cost", group: "Purchase", kind: "money" },
     { key: "margin", label: "Margin %", group: "Laredo", kind: "pct" },
   ],
   rows: [{ id: "i1", brand: "CAROLINA HERRERA", name: "212 SEXY", landed_likely: 5420, margin: 13.6, n_vendors: 2 }],

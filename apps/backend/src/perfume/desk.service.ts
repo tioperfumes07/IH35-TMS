@@ -472,8 +472,15 @@ export type GridCol = { key: string; label: string; group: string; kind: ColKind
 export type GridView = "buy" | "sell" | "wholesale" | "all";
 export type GridRow = Record<string, string | number | null>;
 
-export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[] }> {
+/** The margin the owner types on the grid; when none is typed, the first saved wholesale target. */
+export function targetPctOf(rules: DeskRules, typed: number | null | undefined): number {
+  const t = typed ?? rules.wholesale_targets_pct[0] ?? 12;
+  return Math.min(95, Math.max(0, t));
+}
+
+export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null } = {}): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number }> {
   const rules = await getRules(c);
+  const target = targetPctOf(rules, opts.targetPct);
   const vendors = await listVendors(c);
   const buyV = vendors.filter((v) => v.kind !== "sell");
   const sellV = vendors.filter((v) => v.kind !== "buy");
@@ -512,7 +519,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
   ];
   for (const v of buyV) {
     cols.push({ key: `v:${v.id}:price`, label: "Price", group: v.name, kind: "money" });
-    cols.push({ key: `v:${v.id}:landed`, label: "Landed likely", group: v.name, kind: "money" });
+    cols.push({ key: `v:${v.id}:landed`, label: "My cost", group: v.name, kind: "money" });
     cols.push({ key: `v:${v.id}:rank`, label: "Rank", group: v.name, kind: "int" });
     cols.push({ key: `v:${v.id}:qty`, label: "Qty", group: v.name, kind: "int" });
   }
@@ -523,7 +530,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "best_price", label: "Vendor price", group: "Purchase", kind: "money" },
     { key: "cushion", label: "Cushion", group: "Purchase", kind: "money" },
     { key: "freight", label: "Freight / pc", group: "Purchase", kind: "money" },
-    { key: "landed_likely", label: "My cost (likely)", group: "Purchase", kind: "money" },
+    { key: "landed_likely", label: "My cost", group: "Purchase", kind: "money" },
     { key: "landed_best", label: "My cost (best case)", group: "Purchase", kind: "money" },
     { key: "saves_next", label: "Saves vs next", group: "Purchase", kind: "money" },
     { key: "vendor_cost", label: "Vendor's est. cost", group: "Purchase", kind: "money" },
@@ -543,10 +550,14 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "offer_margin", label: "My margin %", group: "Sell to stores", kind: "pct" },
     { key: "offer_markup", label: "My markup %", group: "Sell to stores", kind: "pct" },
   );
-  for (const t of rules.wholesale_targets_pct) {
-    cols.push({ key: `w:${t}:margin`, label: `Price @${t}% margin`, group: "Wholesale", kind: "money" });
-    cols.push({ key: `w:${t}:markup`, label: `Price @${t}% markup`, group: "Wholesale", kind: "money" });
-  }
+  // ONE set of target columns, driven by the margin the owner types on the grid (replaces the fixed 11 / 12.5 / 15 pairs).
+  cols.push(
+    { key: "target_price_margin", label: `Sell at ${target}% margin`, group: "My target", kind: "money" },
+    { key: "target_price_markup", label: `Sell at ${target}% markup`, group: "My target", kind: "money" },
+    { key: "target_profit", label: `Profit at ${target}% margin`, group: "My target", kind: "money" },
+    { key: "target_max_cost", label: `Most I can pay for ${target}% vs Laredo low`, group: "My target", kind: "money" },
+    { key: "target_vs_low", label: `Laredo low − my ${target}% price`, group: "My target", kind: "money" },
+  );
 
   const vName = new Map(vendors.map((v) => [v.id, v.name]));
   const rows: GridRow[] = [];
@@ -610,13 +621,16 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
       row.offer_margin = round1(marginPct(row.offer_store as number, cost));
       row.offer_markup = round1(markupPct(row.offer_store as number, cost));
     }
-    if (cost != null) for (const t of rules.wholesale_targets_pct) {
-      row[`w:${t}:margin`] = close(priceFromCost(cost, t, "margin"));
-      row[`w:${t}:markup`] = close(priceFromCost(cost, t, "markup"));
+    if (cost != null) {
+      row.target_price_margin = close(priceFromCost(cost, target, "margin"));
+      row.target_price_markup = close(priceFromCost(cost, target, "markup"));
+      row.target_profit = (row.target_price_margin as number) - cost;
+      if (low != null) row.target_vs_low = low - (row.target_price_margin as number);
     }
+    if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     rows.push(row);
   }
-  return { cols, rows, rules, vendors };
+  return { cols, rows, rules, vendors, target_pct: target };
 }
 
 function round1(v: number | null): number | null {
@@ -737,12 +751,17 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
   const how = wb.addWorksheet("How computed");
   for (const line of [
-    ["My cost (likely)", "Vendor price − low cushion + high freight (the safe number)"],
+    ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
     ["My cost (best case)", "Vendor price − high cushion + low freight"],
     ["Margin %", "(Lowest Laredo list price − my cost) ÷ list price"],
     ["Markup %", "(Lowest Laredo list price − my cost) ÷ my cost"],
     ["Store's cost @ margin", `List price × (1 − ${rules.store_earn_pct}%)`],
     ["Store's cost @ markup", `List price ÷ (1 + ${rules.store_earn_pct}%)`],
+    ["Sell at X% margin", "My cost ÷ (1 − X%) — X is the margin typed on the grid"],
+    ["Sell at X% markup", "My cost × (1 + X%)"],
+    ["Profit at X% margin", "Sell at X% margin − my cost"],
+    ["Most I can pay for X%", "Lowest Laredo list price × (1 − X%) — buy at or under this to still earn X% at Laredo's low price"],
+    ["Laredo low − my X% price", "Positive = my X% price is under the lowest Laredo price"],
     ["Closed numbers", `Every computed price rounds ${rules.round_dir} to ${rules.round_step === "75" ? "a price ending in .75" : `$${(Number(rules.round_step) / 100).toFixed(2)}`}`],
     ["Default cushion", `$${(rules.cushion_lo_cents / 100).toFixed(2)} – $${(rules.cushion_hi_cents / 100).toFixed(2)} (each vendor can override)`],
     ["Default freight", `$${(rules.freight_lo_cents / 100).toFixed(2)} – $${(rules.freight_hi_cents / 100).toFixed(2)} per piece`],

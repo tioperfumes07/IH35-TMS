@@ -40,6 +40,8 @@ export type PerfumeGrid = {
   rules: PerfumeRules;
   vendors: PerfumeVendor[];
   /** Type (category), gender and brand options with counts for the current view, search and other picks. */
+  /** The margin the "My target" columns were computed at. */
+  target_pct?: number;
   facets?: Record<PerfumeFacetKey, Array<{ value: string; count: number }>>;
   measured_at: string;
 };
@@ -163,10 +165,11 @@ export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItem
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[] }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; target_pct?: number | null }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
   for (const k of ["category", "gender", "brand"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
+  if (p.target_pct != null) s.set("target_pct", String(p.target_pct));
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);
