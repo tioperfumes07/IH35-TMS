@@ -83,7 +83,6 @@ import { KpiStrip } from "../../components/layout/KpiStrip";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { EldEditHistoryTimeline } from "../../components/safety/EldEditHistoryTimeline";
-import { AuditHistoryTab } from "../../components/drivers/AuditHistoryTab";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { colors } from "../../design/tokens";
@@ -697,11 +696,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 <DriverAssignmentHistorySection companyId={companyId} driverId={id} />
               </div>
             ) : null}
-            {companyId ? (
-              <div className="mt-3">
-                <DriverProfileStopsMilesSection companyId={companyId} driverId={id} />
-              </div>
-            ) : null}
+            {/* ROUND 8.17 class L — one Stops+miles grid lives on the Loads tab only. */}
           </div>
           <div data-testid="dp-section-integrity" className="mt-3">
             <DriverIntegritySection driverId={id} />
@@ -829,14 +824,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               />
             </div>
             <DriverReportsReverseSection operatingCompanyId={companyId} driverId={id} />
-            <div data-testid="dp-section-legal-matters">
-              <LegalMattersReverseSection
-                operatingCompanyId={companyId}
-                filter={{ related_driver_id: id }}
-                contextLabel="this driver"
-                data-testid="driver-profile-legal-matters"
-              />
-            </div>
+            {/* ROUND 8.17 class L — Legal Matters + Audit History live on their named tabs only (no Overview duplicates). */}
             <div data-testid="dp-section-insurance-claims">
               <InsuranceClaimsReverseSection
                 operatingCompanyId={companyId}
@@ -866,10 +854,6 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             <div className={`${MASTER_DETAIL.surfaceClass} p-3`} data-testid="dp-section-communications">
               <DriverCommunicationsTab driverId={id} operatingCompanyId={companyId} />
             </div>
-            <section data-testid="dp-section-activity" className={`${MASTER_DETAIL.surfaceClass} p-3`}>
-              <h2 className="mb-3 text-xs font-semibold text-[#0F1219]">Audit History</h2>
-              <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
-            </section>
           </div>
         </div>
         </section>
@@ -1116,7 +1100,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Audit history" ? (
         <div className="space-y-3" data-testid="dp-tab-audit-history">
-          {companyId ? <AuditHistoryTab driverId={id} operatingCompanyId={companyId} /> : null}
+          {/* ROUND 8.17 class L — one audit reader (entity timeline); drop legacy AuditHistoryTab duplicate. */}
           <EntityAuditHistoryTab operatingCompanyId={companyId} entityType="driver" entityId={id} />
         </div>
       ) : null}

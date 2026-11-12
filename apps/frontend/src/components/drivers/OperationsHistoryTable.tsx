@@ -6,6 +6,7 @@ import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import type { EntityKind } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
+import { formatCalendarDateUS } from "../../lib/formatDate";
 
 export type OperationsColumn = {
   key: string;
@@ -27,6 +28,8 @@ export type OperationsColumn = {
    * — never set this on a free-text or already-human column.
    */
   enumLabel?: boolean;
+  /** ROUND 8.17 class L — period-end / calendar dates through shared US formatter (never raw ISO). */
+  calendarDate?: boolean;
 };
 
 type OperationsRow = Record<string, unknown>;
@@ -101,6 +104,11 @@ function renderCell(row: OperationsRow, column: OperationsColumn) {
     const value = row[column.key];
     if (value === null || value === undefined || value === "") return "—";
     return humanizeEnumLabel(value);
+  }
+  if (column.calendarDate) {
+    const value = row[column.key];
+    if (value === null || value === undefined || value === "") return "—";
+    return formatCalendarDateUS(value) || "—";
   }
   return formatCell(row[column.key]);
 }

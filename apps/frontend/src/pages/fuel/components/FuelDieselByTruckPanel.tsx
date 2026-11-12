@@ -1,6 +1,7 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per TRUCK aggregated over the period chosen in the panel's Oct / Sep / YTD period control — the period is the filter, not a column.
 /**
- * ROUND 443.326 — KPI period via MoneyListToolbar + ParityTable + FuelBoardSection (no V3Panel).
+ * ROUND 443.326 / 8.17 class L — KPI period via MoneyListToolbar + ParityTable + FuelBoardSection.
+ * Seven Fuel.dc.html columns: graphic · Unit(+make/model) · Spend · $ · Gallons · $/gal · Fills · Loads.
  */
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -14,6 +15,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
+import { listMaintenanceVehicles } from "../../../api/maintenance";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 import { FuelBoardSection } from "../FuelBoardSection";
@@ -59,6 +61,20 @@ export function FuelDieselByTruckPanel({
     queryFn: () => fetchDieselByTruckAggregate(companyId, range.from, range.to),
     enabled: Boolean(companyId),
   });
+  const vehiclesQuery = useQuery({
+    queryKey: ["fuel", "board", "diesel-vehicle-identity", companyId],
+    queryFn: () => listMaintenanceVehicles(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const makeModelByUnitId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of vehiclesQuery.data?.rows ?? []) {
+      const identity = [v.make, v.model].filter(Boolean).join(" ").trim();
+      if (identity) map.set(v.id, identity);
+    }
+    return map;
+  }, [vehiclesQuery.data?.rows]);
 
   const rows: DieselRow[] = useMemo(() => {
     const base = (aggQuery.data?.rows ?? []).map((r) => ({
@@ -71,59 +87,82 @@ export function FuelDieselByTruckPanel({
       load_count: r.load_count,
     }));
     const q = search.trim().toLowerCase();
-    const filtered = q ? base.filter((r) => r.unit_number.toLowerCase().includes(q)) : base;
+    const filtered = q
+      ? base.filter((r) => {
+          const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) ?? "" : "";
+          return r.unit_number.toLowerCase().includes(q) || identity.toLowerCase().includes(q);
+        })
+      : base;
     return maxRows != null ? filtered.slice(0, maxRows) : filtered;
-  }, [aggQuery.data?.rows, maxRows, search]);
+  }, [aggQuery.data?.rows, makeModelByUnitId, maxRows, search]);
 
   const columns = useMemo<Array<ParityColumn<DieselRow>>>(
     () => [
       {
+        key: "graphic",
+        label: "",
+        sortable: false,
+        minWidth: 96,
+        maxWidth: 110,
+        render: () => <FleetTruck row={{ state: "ok", body_style: "aero" }} />,
+      },
+      {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        minWidth: 220,
+        minWidth: 140,
         sortValue: (r) => r.unit_number,
-        render: (r) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <FleetTruck row={{ state: "ok", body_style: "aero" }} />
-            <div className="min-w-0">
+        render: (r) => {
+          const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) : undefined;
+          return (
+            <div className="min-w-0" data-testid="fuel-diesel-unit-identity">
               {r.unit_id ? (
                 <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#1F2A44]" />
               ) : (
                 <span className="font-semibold">{r.unit_number}</span>
               )}
+              <div className="truncate text-xs text-[#5B6576]">{identity || "—"}</div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
-        key: "spend_cents",
+        key: "spend_bar",
         label: "Spend",
         sortable: true,
         minWidth: 160,
-        className: QBO_MONEY_CELL_CLASS,
         sortValue: (r) => r.spend_cents,
         render: (r) => {
           const max = Math.max(1, ...rows.map((x) => x.spend_cents));
           const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
           return (
-            <div className="flex min-w-0 items-center gap-2" data-testid="fuel-diesel-spend-bar">
-              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
-                <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
+            <div className="flex min-w-0 items-center" data-testid="fuel-diesel-spend-bar">
+              <div className="h-1.5 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
+                <div className="h-1.5 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
-              {r.unit_id ? (
-                <MoneyCell
-                  cents={r.spend_cents}
-                  format={(c) => formatMoneyCents(c)}
-                  drill={{ entity: { kind: "unit", id: r.unit_id } }}
-                  className="shrink-0"
-                />
-              ) : (
-                <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
-              )}
             </div>
           );
         },
+      },
+      {
+        key: "spend_cents",
+        label: "$",
+        sortable: true,
+        minWidth: 88,
+        className: QBO_MONEY_CELL_CLASS,
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.spend_cents,
+        render: (r) =>
+          r.unit_id ? (
+            <MoneyCell
+              cents={r.spend_cents}
+              format={(c) => formatMoneyCents(c)}
+              drill={{ entity: { kind: "unit", id: r.unit_id } }}
+              className="shrink-0"
+            />
+          ) : (
+            <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+          ),
       },
       {
         key: "gallons",
@@ -162,7 +201,7 @@ export function FuelDieselByTruckPanel({
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [rows],
+    [makeModelByUnitId, rows],
   );
 
   return (
@@ -172,7 +211,7 @@ export function FuelDieselByTruckPanel({
         onSearchChange={setSearch}
         searchPlaceholder="Search unit…"
         onClearAll={() => setSearch("")}
-        activeFilterCount={0}
+        activeFilterCount={search.trim() ? 1 : 0}
         testIdPrefix="fuel-diesel-by-truck"
       >
         <V3Segmented

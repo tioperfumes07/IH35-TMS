@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
+import { listMaintenanceVehicles } from "../../api/maintenance";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { FuelFraudBadge } from "../../components/fuel/FuelFraudBadge";
@@ -150,6 +151,21 @@ export function FuelHomePage() {
     queryFn: () => fetchDieselByTruckAggregate(companyId, range.from, range.to),
     enabled: Boolean(companyId),
   });
+  // ROUND 8.17 class L — make/model identity under Unit (Fuel.dc.html "Mack Anthem" subtitle).
+  const vehiclesQuery = useQuery({
+    queryKey: ["fuel", "board", "diesel-vehicle-identity", companyId],
+    queryFn: () => listMaintenanceVehicles(companyId),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const makeModelByUnitId = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const v of vehiclesQuery.data?.rows ?? []) {
+      const identity = [v.make, v.model].filter(Boolean).join(" ").trim();
+      if (identity) map.set(v.id, identity);
+    }
+    return map;
+  }, [vehiclesQuery.data?.rows]);
 
   const dieselRows = useMemo((): DieselBoardRow[] => {
     const rows = (dieselQuery.data?.rows ?? []).map((r) => ({
@@ -158,22 +174,33 @@ export function FuelHomePage() {
     }));
     const q = search.trim().toLowerCase();
     if (!q) return rows;
-    return rows.filter((r) => r.unit_number.toLowerCase().includes(q));
-  }, [dieselQuery.data?.rows, search]);
+    return rows.filter((r) => {
+      const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) ?? "" : "";
+      return r.unit_number.toLowerCase().includes(q) || identity.toLowerCase().includes(q);
+    });
+  }, [dieselQuery.data?.rows, makeModelByUnitId, search]);
 
-  // F1/F2 — same Unit graphic + Spend bar engines as FuelDieselByTruckPanel (board-identical home).
+  // Fuel.dc.html seven columns: (graphic) · Unit · Spend · $ · Gallons · $/gal · Fills · Loads.
   const dieselColumns = useMemo<ParityColumn<DieselBoardRow>[]>(
     () => [
+      {
+        key: "graphic",
+        label: "",
+        sortable: false,
+        minWidth: 96,
+        maxWidth: 110,
+        render: () => <FleetTruck row={{ state: "ok", body_style: "aero" }} />,
+      },
       {
         key: "unit_number",
         label: "Unit",
         sortable: true,
-        minWidth: 220,
+        minWidth: 140,
         sortValue: (r) => r.unit_number,
-        render: (r) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <FleetTruck row={{ state: "ok", body_style: "aero" }} />
-            <div className="min-w-0">
+        render: (r) => {
+          const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) : undefined;
+          return (
+            <div className="min-w-0" data-testid="fuel-home-diesel-unit-identity">
               {r.unit_id ? (
                 <EntityLink
                   kind="unit"
@@ -184,39 +211,49 @@ export function FuelHomePage() {
               ) : (
                 <span className="font-semibold">{r.unit_number || "—"}</span>
               )}
+              <div className="truncate text-xs text-[#5B6576]">{identity || "—"}</div>
             </div>
-          </div>
-        ),
+          );
+        },
       },
       {
-        key: "spend_cents",
+        key: "spend_bar",
         label: "Spend",
         sortable: true,
-        kind: "money",
         minWidth: 160,
-        className: QBO_MONEY_CELL_CLASS,
         sortValue: (r) => r.spend_cents,
         render: (r) => {
           const max = Math.max(1, ...dieselRows.map((x) => x.spend_cents));
           const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
           return (
-            <div className="flex min-w-0 items-center gap-2" data-testid="fuel-home-diesel-spend-bar">
-              <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
-                <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
+            <div className="flex min-w-0 items-center" data-testid="fuel-home-diesel-spend-bar">
+              <div className="h-1.5 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
+                <div className="h-1.5 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
-              {r.unit_id ? (
-                <MoneyCell
-                  cents={r.spend_cents}
-                  format={(c) => formatMoneyCents(c)}
-                  drill={{ entity: { kind: "unit", id: r.unit_id } }}
-                  className="shrink-0"
-                />
-              ) : (
-                <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
-              )}
             </div>
           );
         },
+      },
+      {
+        key: "spend_cents",
+        label: "$",
+        sortable: true,
+        kind: "money",
+        minWidth: 88,
+        className: QBO_MONEY_CELL_CLASS,
+        cellClass: "text-right tabular-nums",
+        sortValue: (r) => r.spend_cents,
+        render: (r) =>
+          r.unit_id ? (
+            <MoneyCell
+              cents={r.spend_cents}
+              format={(c) => formatMoneyCents(c)}
+              drill={{ entity: { kind: "unit", id: r.unit_id } }}
+              className="shrink-0"
+            />
+          ) : (
+            <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+          ),
       },
       {
         key: "gallons",
@@ -255,7 +292,7 @@ export function FuelHomePage() {
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [dieselRows],
+    [dieselRows, makeModelByUnitId],
   );
 
   if (!companyId) {
