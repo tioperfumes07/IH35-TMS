@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~11:45 PM CT) — tipped Codex LIVE #28895–#28899; continue
+- **SHIPS:** #28895–#28899 Document Designs + Aging date-basis + go26 Cash Advances/LoadDetail.
+- **NEXT:** Reverse-wiring / go26 residuals (DailyPrediction / Statement panels); Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~11:35 PM CT) — go26 LoadDetailDrawer stat popup dl (−1)
 - **THIS:** LoadDetailDrawer LDT0 stat popup raw table → dl rows; go26 raw_table 38→37 banked.
 - **NEXT:** Continue go26 Cursor residuals / reverse-wiring. No match/Dreamline.
@@ -178,11 +182,6 @@
 - **PRIOR:** prior residual board wave.
 - **THIS:** ViolationsTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:55 PM CT) — Residual ParityTables appearance=board wave15 (AuditTrail+DocsHome)
-- **PRIOR:** #28852 wave14 Users.
-- **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
-- **NEXT:** Violations/History then Customers/Vendors/Drivers residuals. No match/Dreamline.
 
 ## ARCHIVE
 Older tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.

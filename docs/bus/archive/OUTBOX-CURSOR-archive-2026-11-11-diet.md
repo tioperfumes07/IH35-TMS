@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~4:55 PM CT) — Residual ParityTables appearance=board wave15 (AuditTrail+DocsHome)
+- **PRIOR:** #28852 wave14 Users.
+- **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
+- **NEXT:** Violations/History then Customers/Vendors/Drivers residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave14
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 1 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
