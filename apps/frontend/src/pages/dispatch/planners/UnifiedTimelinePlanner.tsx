@@ -151,6 +151,16 @@ export function UnifiedTimelinePlanner() {
       const selected = new Set(entityFilters.driverIds);
       list = list.filter((d) => selected.has(d.id));
     }
+    if (entityFilters.unitIds.length > 0) {
+      const selected = new Set(entityFilters.unitIds);
+      list = list.filter((d) => d.unit_id != null && selected.has(String(d.unit_id)));
+    }
+    if (entityFilters.customerIds.length > 0) {
+      const selected = new Set(entityFilters.customerIds);
+      list = list.filter((d) =>
+        (loadsByDriver.get(d.id) ?? []).some((l) => l.customer_id != null && selected.has(String(l.customer_id))),
+      );
+    }
     if (entityFilters.status.length > 0) {
       // Map board Status chips onto driver timeline: in-use = has a load; available = idle + not on leave.
       // reserved / in-shop have no driver-timeline equivalent — they do not match any row.

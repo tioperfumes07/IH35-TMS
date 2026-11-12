@@ -27,6 +27,23 @@ vi.mock("../../../../api/mdata", () => ({
     ],
     total: 3,
   }),
+  listAllUnits: vi.fn().mockResolvedValue({
+    units: [
+      { id: "u-101", unit_number: "101" },
+      { id: "u-202", unit_number: "202" },
+    ],
+    total: 2,
+  }),
+}));
+
+vi.mock("../../../../api/catalog-customers", () => ({
+  listAllCustomers: vi.fn().mockResolvedValue({
+    customers: [
+      { id: "c-acme", name: "ACME Freight" },
+      { id: "c-beta", name: "Beta Shipper" },
+    ],
+    total: 2,
+  }),
 }));
 
 const gridPayload: driverSchedulerApi.FleetScheduleResponse = {

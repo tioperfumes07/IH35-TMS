@@ -20,7 +20,8 @@ import {
 import { usePlannerRange } from "./PlannerRangeContext";
 import { companyToday } from "../../../lib/businessDate";
 import { formatDateUS } from "../../../lib/formatDate";
-import { listAllDrivers } from "../../../api/mdata";
+import { listAllCustomers } from "../../../api/catalog-customers";
+import { listAllDrivers, listAllUnits } from "../../../api/mdata";
 import { formatPersonName } from "../../../lib/formatPersonName";
 
 const TABS = [
@@ -132,6 +133,36 @@ function PlannerEntityFilters({
       })),
     [driversQuery.data],
   );
+  const unitsQuery = useQuery({
+    queryKey: ["planner-entity-filter-units", operatingCompanyId],
+    // Power units for Truck Planner — omit type so Tractor + Truck both appear (board Unit filter).
+    queryFn: () => listAllUnits({ operating_company_id: operatingCompanyId as string }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const unitOptions = useMemo(
+    () =>
+      (unitsQuery.data?.units ?? []).map((raw) => {
+        const u = raw as { id?: string; unit_number?: string | null };
+        return {
+          value: String(u.id ?? ""),
+          label: String(u.unit_number ?? u.id ?? ""),
+        };
+      }).filter((o) => o.value),
+    [unitsQuery.data],
+  );
+  const customersQuery = useQuery({
+    queryKey: ["planner-entity-filter-customers", operatingCompanyId],
+    queryFn: () => listAllCustomers({ operating_company_id: operatingCompanyId as string }),
+    enabled: Boolean(operatingCompanyId),
+  });
+  const customerOptions = useMemo(
+    () =>
+      (customersQuery.data?.customers ?? []).map((c) => ({
+        value: String(c.id),
+        label: String(c.name ?? c.id),
+      })),
+    [customersQuery.data],
+  );
   return (
     <div className="space-y-1.5" data-testid="planner-entity-filters">
       <div className="text-section-header font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
@@ -156,6 +187,30 @@ function PlannerEntityFilters({
             searchable
             loading={driversQuery.isFetching}
             data-testid="planner-filter-driver-multiselect"
+          />
+        </div>
+        <div className="min-w-[180px] flex-1" data-testid="planner-filter-unit">
+          <MultiSelectDropdown
+            label="Unit"
+            options={unitOptions}
+            selected={value.unitIds}
+            onChange={(next) => onChange({ ...value, unitIds: next })}
+            allLabel="All units"
+            searchable
+            loading={unitsQuery.isFetching}
+            data-testid="planner-filter-unit-multiselect"
+          />
+        </div>
+        <div className="min-w-[180px] flex-1" data-testid="planner-filter-customer">
+          <MultiSelectDropdown
+            label="Customer"
+            options={customerOptions}
+            selected={value.customerIds}
+            onChange={(next) => onChange({ ...value, customerIds: next })}
+            allLabel="All customers"
+            searchable
+            loading={customersQuery.isFetching}
+            data-testid="planner-filter-customer-multiselect"
           />
         </div>
       </div>
@@ -205,6 +260,32 @@ function PlannerFilterChips() {
             aria-label="Clear driver filter"
             className="text-gray-500 hover:text-gray-900"
             onClick={() => setEntityFilters({ ...entityFilters, driverIds: [] })}
+          >
+            ×
+          </button>
+        </span>
+      ) : null}
+      {entityFilters.unitIds.length > 0 ? (
+        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-unit">
+          Unit: {entityFilters.unitIds.length} selected
+          <button
+            type="button"
+            aria-label="Clear unit filter"
+            className="text-gray-500 hover:text-gray-900"
+            onClick={() => setEntityFilters({ ...entityFilters, unitIds: [] })}
+          >
+            ×
+          </button>
+        </span>
+      ) : null}
+      {entityFilters.customerIds.length > 0 ? (
+        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-customer">
+          Customer: {entityFilters.customerIds.length} selected
+          <button
+            type="button"
+            aria-label="Clear customer filter"
+            className="text-gray-500 hover:text-gray-900"
+            onClick={() => setEntityFilters({ ...entityFilters, customerIds: [] })}
           >
             ×
           </button>

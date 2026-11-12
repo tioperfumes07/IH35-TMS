@@ -125,6 +125,20 @@ export function SafetyDriverSchedulerGrid({
   const drivers = driversRaw.filter((dr) => {
     const driverId = String(dr.driver_id);
     if (entityFilters.driverIds.length > 0 && !entityFilters.driverIds.includes(driverId)) return false;
+    if (entityFilters.unitIds.length > 0) {
+      const unitId = dr.unit_id ? String(dr.unit_id) : "";
+      if (!unitId || !entityFilters.unitIds.includes(unitId)) return false;
+    }
+    if (entityFilters.customerIds.length > 0) {
+      const selected = new Set(entityFilters.customerIds);
+      const hasCustomer = (loadsQuery.data ?? []).some(
+        (l) =>
+          String(l.assigned_primary_driver_id ?? "") === driverId &&
+          l.customer_id != null &&
+          selected.has(String(l.customer_id)),
+      );
+      if (!hasCustomer) return false;
+    }
     if (entityFilters.status.length === 0) return true;
     const bars = loadBarsByDriver.get(driverId) ?? [];
     const dwells = dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`);
