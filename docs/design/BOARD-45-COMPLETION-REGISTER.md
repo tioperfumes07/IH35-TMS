@@ -36,8 +36,8 @@ Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 comp
 | 27 | Reports-Loads | Cascade | CODE | R3 Empty mi KPI/cols + revenue-by-week |
 | 28 | Reports-DriverSettlements | Cascade | CODE | column order match |
 | 29 | Reports-CompanySettlements | Cascade | CODE | route bound |
-| 30 | Reports-Customers | Cascade | OPEN | R5 load metrics vs invoice metrics — Cascade seat |
-| 31 | Reports-Vendors | Cascade | OPEN | R6 truck filter / card payables — Cascade seat |
+| 30 | Reports-Customers | Cascade | CODE | R5 Loads + Avg / load from party-board loads CTE (real-loads scope) |
+| 31 | Reports-Vendors | Cascade | CODE | R6 Truck multi-select + Card payables KPI (fuel_cents); 1099 remains a View |
 | 32 | Settlements | Cursor | CODE | home board panels T1–T4 |
 | 33 | Settlements-Open | Cursor | CODE | T5 column order; ReadyDots = ready_total |
 | 34 | Settlements-Closed | Cursor | CODE | T6 order; load EntityLinks |
@@ -57,4 +57,4 @@ Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 comp
 
 **LIVE column:** all boards remain UNVERIFIED live until Codex posts 1440×900 screenshot + wiring-table proof per ROUND 8.12 DONE list. Code status above is source-measured, not live acceptance.
 
-**OPEN for Cascade (no Cursor surface breach on R5/R6 data semantics):** #30 Reports-Customers, #31 Reports-Vendors.
+**OPEN:** LIVE Codex proof for all 45 (screenshots + wiring tables). Source CODE = 45/45 after R5/R6.

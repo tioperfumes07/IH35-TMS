@@ -1,10 +1,10 @@
 {
-  "healthzSha": "f1641b3",
-  "generated_at": "2026-11-12T00:43:55.572Z",
+  "healthzSha": "56e5061",
+  "generated_at": "2026-11-12T02:27:07.288Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "f1641b3",
+    "deployedSha": "56e5061",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,33 @@
   },
   "recentActivity": [
     {
+      "number": 28875,
+      "title": "FINDING: BOARD-45 type-scale lock — raw_font_sizes 79→0 + completion register (43/45 CODE)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 08:22 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28875",
+      "sha": "76dc9d2b43",
+      "committedAtIso": "2026-11-11T21:22:29-05:00"
+    },
+    {
+      "number": 28874,
+      "title": "Cursor- FINDING: ROUND8.12 deliver owning-seat design dependencies and current Codex status",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 08:20 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28874",
+      "sha": "56e5061b11",
+      "committedAtIso": "2026-11-11T21:20:42-05:00"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 06:43 PM CT",
+      "url": "",
+      "sha": "faa5669c33",
+      "committedAtIso": "2026-11-12T00:43:55Z"
+    },
+    {
       "number": 28873,
       "title": "FINDING: LST-F11162 bus ROUND 8.8b — CC-2 fuel round re-scoped on prod measurement: the reclassify engine cannot move Relay fuel_event lines; the 13588 premise is gone (BAT-001 root)",
       "state": "merged",
@@ -2184,33 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28867",
       "sha": "6f29ca1603",
       "committedAtIso": "2026-11-11T18:03:39-05:00"
-    },
-    {
-      "number": 28866,
-      "title": "FIX: ROUND 8.11 R2 — BookLoad/Planner text-[11px] → text-section-header (raw_font_sizes 133→103)",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28866",
-      "sha": "6e122ee8ca",
-      "committedAtIso": "2026-11-11T18:01:32-05:00"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: Owner order ALL CODERS — full board-identical (not shell, not over previous)",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 04:59 PM CT",
-      "url": "",
-      "sha": "ede831d471",
-      "committedAtIso": "2026-11-11T17:59:46-05:00"
-    },
-    {
-      "number": 28865,
-      "title": "FINDING: LST-F11158 bus ROUND 8.12 — design complete build for every page, module, tab, subtab and modal, exactly as the design, wired both ways — delivered to all six INBOXes",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 04:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28865",
-      "sha": "0ea2b95957",
-      "committedAtIso": "2026-11-11T16:58:48-06:00"
     }
   ]
 }

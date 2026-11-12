@@ -81,7 +81,10 @@ export function CustomerReportBoard() {
         .filter((r) => !factored.length || factored.includes(r.factored != null ? "factored" : "not_factored")),
     [board.data?.rows, ids.join(","), factored]
   );
-  const billedRows = useMemo(() => rows.filter((r) => r.invoices > 0).sort((a, b) => b.billed_cents - a.billed_cents), [rows]);
+  const billedRows = useMemo(
+    () => rows.filter((r) => r.invoices > 0 || (r.loads ?? 0) > 0).sort((a, b) => b.billed_cents - a.billed_cents),
+    [rows],
+  );
   const openRows = useMemo(() => rows.filter((r) => r.open_cents > 0).sort((a, b) => b.open_cents - a.open_cents), [rows]);
   const agingRows = useMemo(() => (aging.data?.rows ?? []).filter((r) => !ids.length || ids.includes(r.customer_id)), [aging.data?.rows, ids.join(",")]);
 
@@ -99,25 +102,37 @@ export function CustomerReportBoard() {
 
   const customerCell = (r: { id: string; name: string }) => <EntityLink kind="customer" id={r.id} label={name(r.name)} />;
 
+  // R5 / V3-Reports-Customers: Customer · Loads · Billed · % · Avg / load · Open · Past due · Factored · Last invoice
+  // Invoices/Collected remain in Open balances + gear (additive); board overview uses Loads.
   const salesColumns: ParityColumn<CustomerBoardReportRow>[] = [
     { key: "name", label: "Customer", sortable: true, render: customerCell },
-    { key: "invoices", label: "Invoices", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.invoices) },
+    {
+      key: "loads",
+      label: "Loads",
+      sortable: true,
+      cellClass: "text-right",
+      className: "text-right",
+      sortValue: (r) => r.loads ?? 0,
+      render: (r) => String(r.loads ?? 0),
+    },
     { key: "billed_cents", label: "Billed", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.billed_cents) },
     { key: "share", label: "% of sales", sortable: true, sortValue: (r) => r.billed_cents, cellClass: "text-right", className: "text-right", render: (r) => pctLabel(pct(r.billed_cents, billed)) },
     {
       key: "avg",
-      label: "Avg / invoice",
+      label: "Avg / load",
       sortable: true,
-      sortValue: (r) => (r.invoices ? r.billed_cents / r.invoices : 0),
+      sortValue: (r) => (r.loads ? r.billed_cents / r.loads : 0),
       cellClass: "text-right",
       className: "text-right",
-      render: (r) => (r.invoices ? money(Math.round(r.billed_cents / r.invoices)) : "—"),
+      render: (r) => (r.loads ? money(Math.round(r.billed_cents / r.loads)) : "—"),
     },
-    { key: "collected_cents", label: "Collected", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.collected_cents) },
     { key: "open_cents", label: "Open", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.open_cents) },
     { key: "past_due", label: "Past due", sortable: true, sortValue: pastDue, cellClass: "text-right", className: "text-right", render: (r) => (pastDue(r) ? money(pastDue(r)) : "—") },
     { key: "factored", label: "Factored", sortable: true, render: (r) => r.factored ?? "—" },
     { key: "last_invoice", label: "Last invoice", sortable: true, render: (r) => mmmDd(r.last_invoice) || "—" },
+    // Additive gear columns (board overview uses Loads; invoice counts stay reachable).
+    { key: "invoices", label: "Invoices", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.invoices) },
+    { key: "collected_cents", label: "Collected", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.collected_cents) },
   ];
 
   const openColumns: ParityColumn<CustomerBoardReportRow>[] = [
