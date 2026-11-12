@@ -2,6 +2,20 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 06Z — ROUND 8.18 DESIGN ROWS D018 D028 D032 D049 D050 D051 D053 D055 D056 D057 D058 DONE-LIVE
+
+- **D018 (Fuel/Assign card):** Chrome 2026-11-12: 6 inputs 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D028 (Tasks/Create Task):** Chrome 2026-11-12: all single-line inputs 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D032 (Safety/Scheduler/Assign Temp Cover):** Chrome 2026-11-12: 5 inputs 40px, pickers 688px, dates 92px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D049 (Customers directory names):** Chrome 2026-11-12: proper-case customer names ✓; fixed acd69928f4 #29045 — OPEN → DONE-LIVE
+- **D050 (Inventory/Create part unit cost):** Chrome 2026-11-12: money input 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D051 (425C/Profiles/Company Name):** Chrome 2026-11-12: text inputs 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D053 (Lists/Names Master):** Chrome 2026-11-12: no ALL_CAPS customer names ✓; fixed acd69928f4 #29045 — OPEN → DONE-LIVE
+- **D055 (Docs entity names):** Chrome 2026-11-12: proper-case entity names ✓; fixed acd69928f4 #29045 — OPEN → DONE-LIVE
+- **D056 (Docs/Upload Document):** Chrome 2026-11-12: inputs 40px, dates 92px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+- **D057 (Users master-detail names):** Chrome 2026-11-12: proper-case user names ✓; fixed acd69928f4 #29045 — OPEN → DONE-LIVE
+- **D058 (Users/Create User):** Chrome 2026-11-12: 3 inputs 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
+
 ## 2026-11-13 04Z (B) — ROUND 8.18 ROW 5 DONE-LIVE
 
 - **ROW 5 (Names proper-case):** guard verify-no-uppercase-names-rendered --selftest 5/5 PASS · triggers: trg_drivers_proper_names (202616210300) + trg_customers_proper_name + trg_vendors_proper_name (202616250900) · mdata.proper_person_name() = ONE formatter · Chrome 2026-11-12: /drivers/roster 13/13 active drivers proper case (Eduardo Azael Flores Ortiz, Luis Armando Sosa Perez, Jorge Luis Infante Corona, etc.) · org names kept as-is (ACME pattern) — PARTIAL → DONE-LIVE
