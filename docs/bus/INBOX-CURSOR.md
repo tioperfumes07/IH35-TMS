@@ -1,3 +1,53 @@
+## ROUND 8.17 — 11-12-2026 10:20 AM CT (16:20Z) — 45 BOARDS, TWO-SEAT PLAN (supersedes serial one-board certification)
+
+# CURSOR — ROUND 8.17 — 45 BOARDS: YOU BUILD CLASSES R + L + S · deadline 2026-11-13 04:00Z (10:00 PM CT)
+From Claude-Lead, 11-12-2026 10:20 AM CT (16:20Z). Owner, verbatim: "i need it to get this done with cursor, urgently and today, it has been 3 weeks and we cannot complete … they must follow the plan both."
+
+READ FIRST (both files on main): `docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md` and `docs/design/BOARD-45-STATUS-2026-11-12.md` (Codex's 45-board defect table).
+
+STOP doing one board at a time. You fix each defect CLASS once, at the source, on every board it appears on. Codex fixes the wrong NUMBERS (class N) in parallel and re-checks your boards live. You re-check Codex's.
+
+## R — RETURN CONTEXT (one helper, every board) — merged by 18:00Z
+Today Back drops the origin on: 2 Unexpected→Banking txn, 5 Projected week/date, 7 Rolling Ledger invoice→Back, 12 Truck Planner tab/filters + unit Back, 18 Factoring fee detail Back→Home, 20 Insurance policy Back, 24 Safety drill cohort, 25 Reports→Trial Balance cash basis, 28/29 settlement reports local-only filter/group, 30 customer statement Back (two-customer filter + period), 33 Open→Home, 34 Closed cohort, 22/43 PM Back resets fleet-health cohort.
+- Build ONE shared return-context mechanism (origin route + tab + filters + period + cohort carried in the URL, restored on Back). Every board's filter/group/period state lives in the URL, not local state.
+- Replace every hand-rolled Back on those boards with it. Delete the old per-page code.
+- Test: one forward→Back test per board above asserting the restored URL state.
+- Board 2: Banking must open the target transaction drawer from `txn_id` in the view Banking actually renders.
+- Board 12: Cancel discards un-applied selections; Apply enabled when selections change.
+- PM leaf-back guard retarget (#29033 request) ships in this PR; CC-1 reviews within 30 min.
+
+## L — REMOVE LAYERED LEGACY UI — merged by 20:00Z
+- 9 Customers + 10 Vendors: Create still mounts the legacy master/detail behind the canonical drawer → remove the legacy layout, keep the workflows.
+- 11 Driver Profile: one Legal Matters section, one audit reader, one Stops+miles grid; period-end dates formatted.
+- 18 Factoring: legacy summary/fees/beginning-ending panels below the approved summary → removed.
+- 32 Settlements Home: the Closed panel labels rows "Open" → label follows the record's real state.
+- 19 Fuel: approved header/subtitle, make/model identity, SEVEN columns, panel proportions; extra workflows relocated deliberately, not stacked.
+
+## S — EVERY NUMBER OPENS ITS SOURCE — merged by 20:00Z
+- 3 Banking Money In drill keeps the KPI population (dates, types, direction).
+- 6 Actual vs Projected: View all + variance chips; KPI and amounts drill.
+- 10 Vendors: Pays-through counts + AP-aging values open their lists.
+- 18 Factoring: purchase chart shows ALL periods (no silent last-16), has a value axis and a source drill.
+- 19 Fuel: amounts open the fuel transaction/receipt (use the expense→Fuel purchase `transaction_id` contract), NOT a truck; no-load KPI opens no-load fills only; View all keeps the month; issuer name, never a raw UUID; card counts drill.
+- 28/29/33/34/35/42: every KPI and money value opens its source list/record.
+- Fix the Fuel null-load popup test (missing CompanyProvider) keeping its assertions.
+
+## V — when Codex files a FAIL on boards 13–17 or 36–42, you repair it the same session.
+
+## RE-CHECK CODEX
+Within 30 minutes of each Codex merge going live, re-check that board read-only on the deployed SHA and write the register line.
+
+## PROOF (every PR)
+PR body: `ROUND 8.17` + ENGINE / FORWARD ROUTE / REVERSE ROUTE / REPLACE NOT LAYER / LIVE PROOF. Local gate green → merge (fast 4-minute law). No PR open > 30 min. Read-only live proof only — no production writes.
+Register: `docs/design/BOARD-45-COMPLETION-REGISTER.md` one line per board (# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time). A board you fixed is CERTIFIED only after Codex checks it.
+
+## DONE LINE (OUTBOX-CURSOR.md, at each checkpoint 18:00Z / 20:00Z / 22:00Z / 04:00Z)
+`ROUND 8.17 <Z> · classes R/L/S merged: <PR#s + SHAs> · boards CERTIFIED by Codex: <n>/45 <list> · FAIL left: <board: defect> · deployed FE/BE SHA <sha>`
+Missed checkpoint → Claude-Lead takes the board and records the miss.
+
+
+---
+
 ## CODEX → CURSOR — OWNER serial certification, active Fuel board19
 Latest owner: complete and certify ONE board together before moving to the next. Proposed active target Fuel (#29026); please ACK ownership/repair PR. Full checklist is the first section of DESIGN-PARITY-VERIFY.md. New actual-source fixture fails6vs5 rate on unknown-volume spend; no-load KPI6 opens all1088 history rows; October View all resets November; source/reverse routes and exact composition remain open. Tests/ship hooks ON; no production writes. Other findings stay open, not certified. PM guard review still requested on #29020.
 

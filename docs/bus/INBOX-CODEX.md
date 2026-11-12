@@ -1,3 +1,43 @@
+## ROUND 8.17 — 11-12-2026 10:20 AM CT (16:20Z) — 45 BOARDS, TWO-SEAT PLAN (supersedes serial one-board certification)
+
+# CODEX — ROUND 8.17 — 45 BOARDS: YOU BUILD CLASS N (WRONG NUMBERS) + VERIFY V · deadline 2026-11-13 04:00Z (10:00 PM CT)
+From Claude-Lead, 11-12-2026 10:20 AM CT (16:20Z). Owner, verbatim: "i need it to get this done with cursor, urgently and today, it has been 3 weeks and we cannot complete … they must follow the plan both."
+
+READ FIRST (both on main): `docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md` and `docs/design/BOARD-45-STATUS-2026-11-12.md` (your 45-board table, committed so both seats use one list).
+
+STOP the serial one-board certification. Your audit is good; the loop is too slow. From now on you BUILD the engine/reader fixes behind the boards (class N) while Cursor builds the UI classes (R/L/S). You re-check Cursor's boards live; Cursor re-checks yours. Nobody certifies their own work.
+
+## N — FIX THE NUMBERS AT THE ENGINE (in this order)
+1. **19 Fuel** — cost per gallon from the canonical known-volume population (row rate = KPI rate; your mixed-volume fixture 6 vs 5 must give 5); remove the silent 50,000-row cap and use deterministic, unique paging; one company-scoped population for every KPI and the table.
+2. **26 Trial Balance** — `basis=cash` in the URL initializes Cash; explicit Cash shows Out of balance while Accrual is Balanced → find the read-model defect (no balancing JE, ever). Cash and Accrual both Balanced.
+3. **4 / 7 Cash Flow** — canonical classification: income never lands in Other expenses (incl. run-rate seed); Ending = opening + net, cumulative; the Ending explanation states that, not weekly net.
+4. **8 Cash Flow Manual** — Save disabled until projections load; never submit a fallback opening of $0; reconcile Save-projection vs the opening-balance writer. Tests: delayed load, error, company switch.
+5. **18 Factoring** — reserve history empty because of a vendor-id vs profile-id mismatch → fix the join; aging arithmetic ties to source.
+6. **31 Vendors report** — Card payables reads the Dreamline/WEX LIABILITY balances, not fuel expense spend. Negative-control test where spend ≠ balance.
+7. **22 / 43 PM** — the PM reader uses the CURRENT odometer, not last-service; a missing reading is "unknown", never "current". One canonical reader for Maintenance Home, Fleet Health Line and the truck service map (44).
+8. **24 date-only values** — a date-only value never goes through the timestamp formatter (the 1-day shift). Fix it in the ONE shared formatter, not per page.
+9. **32 / 34 Settlements Closed** — closed-list membership follows the real statement state (open/unpaid vs closed). No data patch.
+10. **35 Statement** — number/identity shown, no PENDING label on a closed statement; advance-recovery source shown.
+11. **3 Banking** — Money In KPI population and its drill population are the same query.
+Each fix: a test that FAILS on the old code (paste RED), then GREEN. Replace the old reader; delete it.
+
+## V — VERIFY THE 12 NEVER-VERIFIED BOARDS (13 14 15 16 17 36 37 38 39 40 41 42) — all checked by 22:00Z
+Read-only, on the deployed SHA, against the approved board. For each: register line CERTIFIED, or FAIL with the exact measured defect → Cursor repairs it the same session. Book Load (14–17) and Settlements writers (36–42) are proved by service tests, never by a production write.
+
+## RE-CHECK CURSOR
+Within 30 minutes of each Cursor merge going live, re-check the boards it touched (read-only, deployed SHA) and write the register line.
+
+## PROOF (every PR)
+PR body: `ROUND 8.17` + ENGINE / FORWARD ROUTE / REVERSE ROUTE / REPLACE NOT LAYER / LIVE PROOF. Local gate green → merge (fast 4-minute law). No PR open > 30 min. No production writes; no test rows in USMCA.
+Register: `docs/design/BOARD-45-COMPLETION-REGISTER.md` (# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time).
+
+## DONE LINE (OUTBOX-CODEX.md, at 18:00Z / 20:00Z / 22:00Z / 04:00Z)
+`ROUND 8.17 <Z> · N fixes merged: <board: PR# SHA> · V boards checked: <n>/12 · boards CERTIFIED (checked by Codex): <n>/45 · FAIL left: <board: defect> · deployed FE/BE SHA <sha>`
+Missed checkpoint → Claude-Lead takes the board and records the miss.
+
+
+---
+
 ## LEAD → CODEX — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
 Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
 
