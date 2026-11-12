@@ -41,3 +41,23 @@ describe("perfume grid typed margin", () => {
     expect(targetPctOf(rules, 120)).toBe(95);
   });
 });
+
+describe("perfume grid vendor + size filters", () => {
+  const vr: GridRow[] = [
+    { id: "a", brand: "X", name: "A", size_ml: 100, carried_by: "Miami Trading Zone (MTZ)\nJIZAN (Dubai export)" },
+    { id: "b", brand: "X", name: "B", size_ml: 50, carried_by: "Perfume Center of America (Kanak)" },
+    { id: "c", brand: "X", name: "C", size_ml: null, carried_by: "" },
+  ];
+  it("keeps items carried by ANY picked vendor; counts each vendor once per item", () => {
+    expect(filterFacets(vr, { category: [], gender: [], brand: [], vendor: ["JIZAN (Dubai export)"] }).map((r) => r.id)).toEqual(["a"]);
+    expect(filterFacets(vr, { category: [], gender: [], brand: [], vendor: ["JIZAN (Dubai export)", "Perfume Center of America (Kanak)"] }).map((r) => r.id)).toEqual(["a", "b"]);
+    const f = gridFacets(vr, { category: [], gender: [], brand: [] });
+    expect(f.vendor).toEqual([
+      { value: "JIZAN (Dubai export)", count: 1 }, { value: "Miami Trading Zone (MTZ)", count: 1 },
+      { value: "Perfume Center of America (Kanak)", count: 1 }, { value: "—", count: 1 }]);
+  });
+  it("filters by size, blank size is '—'", () => {
+    expect(filterFacets(vr, { category: [], gender: [], brand: [], size: ["50"] }).map((r) => r.id)).toEqual(["b"]);
+    expect(gridFacets(vr, { category: [], gender: [], brand: [] }).size).toEqual([{ value: "50", count: 1 }, { value: "100", count: 1 }, { value: "—", count: 1 }]);
+  });
+});

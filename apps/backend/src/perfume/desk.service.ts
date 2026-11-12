@@ -628,6 +628,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       if (low != null) row.target_vs_low = low - (row.target_price_margin as number);
     }
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
+    // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
+    row.carried_by = vendors.filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
   return { cols, rows, rules, vendors, target_pct: target };
@@ -652,33 +654,40 @@ export function searchRows(rows: GridRow[], q: string): GridRow[] {
     || (digits.length >= 6 && String(r.upcs ?? "").includes(digits)));
 }
 
-export type FacetPicks = { category: string[]; gender: string[]; brand: string[] };
+export type FacetPicks = { category: string[]; gender: string[]; brand: string[]; size?: string[]; vendor?: string[] };
+const FACET_KEYS = ["category", "gender", "brand", "size", "vendor"] as const;
+type FacetKey = (typeof FACET_KEYS)[number];
 
 export function splitPicks(v: string): string[] {
   return [...new Set(v.split(",").map((x) => x.trim()).filter(Boolean))];
 }
 
-const facetValue = (r: GridRow, k: keyof FacetPicks): string => String(r[k] ?? "").trim() || "—";
+/** A row's values for one facet. Vendor is many-valued: every vendor that prices the item. */
+function facetValues(r: GridRow, k: FacetKey): string[] {
+  if (k === "vendor") { const v = String(r.carried_by ?? ""); return v ? v.split("\n") : ["—"]; }
+  if (k === "size") return [r.size_ml == null || r.size_ml === "" ? "—" : String(r.size_ml)];
+  return [String(r[k] ?? "").trim() || "—"];
+}
 
-/** Keeps rows whose type (category), gender and brand are each in the picks; an empty pick list means all. */
+/** Keeps rows whose type, gender, brand, size and vendor each match the picks; an empty pick list means all.
+ *  Vendor: the item is carried by ANY picked vendor. */
 export function filterFacets(rows: GridRow[], picks: FacetPicks): GridRow[] {
-  const keys = (Object.keys(picks) as Array<keyof FacetPicks>).filter((k) => picks[k].length > 0);
-  if (keys.length === 0) return rows;
-  const sets = keys.map((k) => [k, new Set(picks[k])] as const);
-  return rows.filter((r) => sets.every(([k, set]) => set.has(facetValue(r, k))));
+  const sets = FACET_KEYS.filter((k) => (picks[k] ?? []).length > 0).map((k) => [k, new Set(picks[k])] as const);
+  if (sets.length === 0) return rows;
+  return rows.filter((r) => sets.every(([k, set]) => facetValues(r, k).some((v) => set.has(v))));
 }
 
 export type GridFacet = { value: string; count: number };
 
 /** Each facet's options with counts, measured against the other two facets' picks (so the counts always add up to
  *  what the grid would show), sorted A→Z with "—" (blank) last. */
-export function gridFacets(rows: GridRow[], picks: FacetPicks): Record<keyof FacetPicks, GridFacet[]> {
-  const out = {} as Record<keyof FacetPicks, GridFacet[]>;
-  for (const k of ["category", "gender", "brand"] as const) {
+export function gridFacets(rows: GridRow[], picks: FacetPicks): Record<FacetKey, GridFacet[]> {
+  const out = {} as Record<FacetKey, GridFacet[]>;
+  for (const k of FACET_KEYS) {
     const scoped = filterFacets(rows, { ...picks, [k]: [] });
     const counts = new Map<string, number>();
-    for (const r of scoped) { const v = facetValue(r, k); counts.set(v, (counts.get(v) ?? 0) + 1); }
-    for (const v of picks[k]) if (!counts.has(v)) counts.set(v, 0);
+    for (const r of scoped) for (const v of facetValues(r, k)) counts.set(v, (counts.get(v) ?? 0) + 1);
+    for (const v of picks[k] ?? []) if (!counts.has(v)) counts.set(v, 0);
     out[k] = [...counts].map(([value, count]) => ({ value, count }))
       .sort((a, b) => (a.value === "—" ? 1 : b.value === "—" ? -1 : a.value.localeCompare(b.value, "en", { numeric: true })));
   }

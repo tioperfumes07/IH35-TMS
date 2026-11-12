@@ -8,6 +8,7 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
@@ -90,6 +91,7 @@ const VIEW_HELP: Record<PerfumeGridView, string> = {
   all: "The whole item database: every bottle, every UPC it carries, every vendor price.",
 };
 const PAGE = 200;
+const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
@@ -104,7 +106,10 @@ const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
   { key: "category", label: "Type", all: "All types" },
   { key: "gender", label: "Gender", all: "All genders" },
   { key: "brand", label: "Brand", all: "All brands" },
+  { key: "size", label: "Size ml", all: "All sizes" },
+  { key: "vendor", label: "Vendor", all: "All vendors" },
 ];
+const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [] };
 
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
@@ -112,8 +117,9 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
-  const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>({ category: [], gender: [], brand: [] });
+  const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE);
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
   const [target, setTarget] = useState<number | null>(null);
   const [targetDraft, setTargetDraft] = useState("");
@@ -123,8 +129,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     if (t !== target) { setTarget(t); setPage(1); }
   };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, page],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, offset: (page - 1) * PAGE, limit: PAGE }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, page, pageSize],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
@@ -158,7 +164,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     return groups;
   }, [cols]);
   const total = query.data?.total ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <section className="space-y-2" aria-label={`${view} view`}>
       <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
@@ -175,12 +181,12 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         sortMode="external"
         onSortChange={(key, dir) => { setSort({ key, dir }); setPage(1); }}
         page={1}
-        pageSize={Math.max(1, query.data?.rows?.length ?? PAGE)}
+        pageSize={Math.max(1, query.data?.rows?.length ?? pageSize)}
         hidePager
         suppressToolbarSearch
         stickyHeader
         enableColumnReorder
-        emptyText={q || picks.category.length || picks.gender.length || picks.brand.length ? "No items match the search and filters." : "No items yet — import a price list."}
+        emptyText={q || Object.values(picks).some((p) => p.length > 0) ? "No items match the search and filters." : "No items yet — import a price list."}
         toolbar={
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -215,14 +221,14 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
                 label={f.label}
                 allLabel={f.all}
                 data-testid={`perfume-filter-${f.key}`}
-                searchable={f.key === "brand"}
+                searchable={f.key === "brand" || f.key === "vendor" || f.key === "size"}
                 options={(query.data?.facets?.[f.key] ?? []).map((o) => ({ value: o.value, label: `${f.key === "gender" ? GENDER_WORD[o.value] ?? o.value : o.value} (${o.count.toLocaleString()})` }))}
                 selected={picks[f.key]}
                 onChange={(next) => { setPicks((p) => ({ ...p, [f.key]: next })); setPage(1); }}
               />
             ))}
-            {(picks.category.length || picks.gender.length || picks.brand.length) ? (
-              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks({ category: [], gender: [], brand: [] }); setPage(1); }}>
+            {Object.values(picks).some((p) => p.length > 0) ? (
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks(NO_PICKS); setPage(1); }}>
                 {tr("perfume.desk.filters.clear", "Clear filters")}
               </Button>
             ) : null}
@@ -242,7 +248,19 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
       />
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
         <span>{total.toLocaleString()} {tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
-        <span className="flex gap-1">
+        <span className="flex items-center gap-1">
+          <label className="flex items-center gap-1">
+            {tr("perfume.desk.pagesize", "Rows per page")}
+            <SelectCombobox
+              value={String(pageSize)}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              aria-label={tr("perfume.desk.pagesize.aria", "Rows per page")}
+              data-testid="perfume-page-size"
+              className="h-[34px] w-[84px] text-xs"
+            >
+              {PAGE_SIZES.map((n) => <option key={n} value={String(n)}>{n}</option>)}
+            </SelectCombobox>
+          </label>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(1)}>{tr("perfume.desk.11", "First")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(page - 1)}>{tr("perfume.desk.12", "Previous")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(page + 1)}>{tr("perfume.desk.13", "Next")}</Button>

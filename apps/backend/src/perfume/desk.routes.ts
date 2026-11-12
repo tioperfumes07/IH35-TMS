@@ -102,6 +102,8 @@ const gridQuery = z.object({
   category: z.string().max(400).default(""),
   gender: z.string().max(200).default(""),
   brand: z.string().max(4000).default(""),
+  size: z.string().max(1000).default(""),
+  vendor: z.string().max(4000).default(""),
   // The margin the owner types on the grid; drives the "My target" columns.
   target_pct: z.coerce.number().min(0).max(95).optional(),
   offset: z.coerce.number().int().min(0).default(0),
@@ -233,7 +235,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct }));
     const viewRows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
-    const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand) };
+    const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
     let rows = filterFacets(viewRows, picks);
     if (q.data.sort) {
       if (!g.cols.some((c) => c.key === q.data.sort)) return reply.code(400).send({ error: "unknown_sort_column" });
@@ -246,7 +248,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct }));
     let rows = filterFacets(searchRows(filterView(g.rows, q.data.view as GridView), q.data.q),
-      { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand) });
+      { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     if (q.data.sort && g.cols.some((c) => c.key === q.data.sort)) rows = sortRows(rows, q.data.sort, q.data.dir);
     const want = q.data.cols ? q.data.cols.split(",") : null;
     const cols = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
