@@ -14,6 +14,8 @@
  *        differences left on a load their receipt no longer belongs to follow the receipt through THE family engine)
  *   POST /api/v1/driver-finance/settlements/stuck-close-repair          AUTH-476 (CC-1 E1 2026-11-12: re-trigger
  *        postFinalLoadSettlementsGl for loads 13711/13727/13729 whose trip_closed_at fired but GL post failed silently)
+ *   POST /api/v1/accounting/expenses/stranded-je-repair                 AUTH-477 (CC-1 E2 2026-11-12: reverse JEs for 5 voided
+ *        expense docs whose 'fuel_event' postings were left live before ACCT-F4431310; verify-void-is-whole 10→1)
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -26,6 +28,7 @@ import { CardCreditRepairRefused, runStatementCardCreditRepair, type RunInTx } f
 import { repairStaleSettlementHeadersInClientTx, SettlementHeaderRepairRefused } from "../driver-finance/settlement-header-repair.service.js";
 import { alignExpenseFamiliesInClientTx, ExpenseFamilyAlignRefused } from "./expense-family-align-repair.service.js";
 import { repairStuckSettlementClose, StuckCloseRepairRefused } from "./settlement-stuck-close-repair.service.js";
+import { repairStrandedExpenseJes, StrandedJeRepairRefused } from "./expense-stranded-je-repair.service.js";
 
 const body = z.object({
   operating_company_id: z.string().uuid(),
@@ -45,7 +48,7 @@ function ownerOnly(req: FastifyRequest, reply: FastifyReply) {
 
 function refused(reply: FastifyReply, e: unknown) {
   if (e instanceof OwnerAuthorizationError) return reply.code(409).send({ error: "owner_authorization_not_open", auth_id: e.authId, detail: e.reason });
-  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused || e instanceof ExpenseFamilyAlignRefused || e instanceof StuckCloseRepairRefused) {
+  if (e instanceof CardCreditRepairRefused || e instanceof SettlementHeaderRepairRefused || e instanceof ExpenseFamilyAlignRefused || e instanceof StuckCloseRepairRefused || e instanceof StrandedJeRepairRefused) {
     return reply.code(409).send({ error: "repair_refused_rolled_back", detail: e.message });
   }
   throw e;
@@ -143,6 +146,28 @@ export async function registerOwnerDataRepairRoutes(app: FastifyInstance) {
           owner_auth_id: "AUTH-476", operating_company_id: b.operating_company_id,
           found: result.found, retried: result.retried, posted: result.posted, still_open: result.still_open,
         }, "info", "CC-1-E1-2026-11-12"), { actorUserId: user.uuid });
+      }
+      return result;
+    } catch (e) {
+      req.log.warn({ err: e, route: req.url }, "owner data repair refused or failed");
+      return refused(reply, e);
+    }
+  });
+  app.post("/api/v1/accounting/expenses/stranded-je-repair", { config: { rateLimit: { max: 3, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const user = ownerOnly(req, reply);
+    if (!user) return reply;
+    const parsed = body.safeParse(req.body ?? {});
+    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
+    const b = parsed.data;
+    await assertCompanyMembership(user.uuid, b.operating_company_id);
+    try {
+      if (!b.dry_run) assertOwnerAuthorizationOpen("AUTH-477");
+      const result = await repairStrandedExpenseJes({ companyId: b.operating_company_id, actorUserId: user.uuid, dryRun: b.dry_run });
+      if (!b.dry_run) {
+        await withLuciaBypass((client) => appendCrudAudit(client as never, user.uuid, "accounting.expense_stranded_je_repair.run", {
+          owner_auth_id: "AUTH-477", operating_company_id: b.operating_company_id,
+          found_stranded: result.found_stranded, reversed: result.reversed, still_stranded: result.still_stranded,
+        }, "info", "CC-1-E2-2026-11-12"), { actorUserId: user.uuid });
       }
       return result;
     } catch (e) {
