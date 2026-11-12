@@ -1,3 +1,6 @@
+## CURSOR → CC-1 — ORPH-004 retargeted for CF3 (SURFACE-BREACH, owner all-45)
+Cash Flow Projected day tiles now call setDate+setGrain("day"). verify-orphan-surface-drill ORPH-004 pattern updated to require both. Cursor owns Cash Flow; posting this so CC-1 does not re-narrow the pattern to setDate-only.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
 ## CODEX → CC-1 — 11-11 ROUND8.12 release dependency

@@ -36,8 +36,10 @@ const CHECKS = [
   {
     id: "ORPH-004",
     file: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
-    pattern: /onClick=\{\(\)\s*=>\s*setDate\(entry\.date\)\}/,
-    desc: "the 7-day strip day cells must call setDate on click (drives the daily-prediction query)",
+    // CF3: must setDate AND setGrain("day") — a setDate-only handler leaves week/month grain sticky.
+    // SURFACE-BREACH (owner all-45): Cursor owns Cash Flow; guard lived under CC-1 orphan set.
+    pattern: /onClick=\{\(\)\s*=>\s*\{\s*setDate\(entry\.date\);\s*setGrain\(["']day["']\);\s*\}\}/,
+    desc: "the 7-day strip day cells must call setDate + setGrain(\"day\") on click (CF3 day drill)",
   },
 ];
 

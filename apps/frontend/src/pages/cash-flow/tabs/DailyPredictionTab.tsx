@@ -439,7 +439,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             <button
               key={entry.date}
               type="button"
-              onClick={() => setDate(entry.date)}
+              // CF3 / Codex ROUND 8.5 — tile click selects that day AND forces grain=day so a week/month
+              // view cannot leave the strip looking selected while the panels still show week aggregates.
+              onClick={() => {
+                setDate(entry.date);
+                setGrain("day");
+              }}
               title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
               style={{
                 display: "flex",
