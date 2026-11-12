@@ -574,7 +574,11 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     { key: "target_action", label: "Raise / lower", group: "Mine", kind: "text" },
   ];
   // PURCHASE — one column per supplier: its price.
-  for (const v of buyV) cols.push({ key: `v:${v.id}:price`, label: "Price", group: v.name, kind: "money" });
+  // Owner 2026-11-12: "in purchase … I just need their list price and the price after the cushion."
+  for (const v of buyV) {
+    cols.push({ key: `v:${v.id}:price`, label: "List price", group: v.name, kind: "money" });
+    cols.push({ key: `v:${v.id}:net`, label: "After cushion", group: v.name, kind: "money" });
+  }
   // TRADING — two columns per supplier: their price, and their cost = (their price − cushion) less the % they earn.
   for (const v of buyV) {
     // Owner 2026-11-12: "the data from each vendor should only really be the price of the vendor's list, the approx
@@ -603,6 +607,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     const ranked = rankOffers(offers);
     for (const o of ranked) {
       row[`v:${o.vendorId}:price`] = o.listedCents;
+      row[`v:${o.vendorId}:net`] = Math.max(0, o.listedCents - o.cushionLoCents);
     }
     const best = ranked[0];
     if (best) {
@@ -796,6 +801,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
+    ["Purchase · After cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
     ["Trading · They earn ≈", "(Their list price − their cushion) − Sell to them ≈ — what that supplier makes on it"],
     ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
     ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],

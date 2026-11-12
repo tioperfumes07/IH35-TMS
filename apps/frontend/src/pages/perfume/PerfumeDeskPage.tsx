@@ -77,6 +77,10 @@ export default function PerfumeDeskPage() {
           </button>
         ))}
       </nav>
+      {/* Owner 2026-11-12: "each tab should have its header so I can make sure I am in the correct one." */}
+      <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
+        {TABS.find(([k]) => k === tab)?.[1]}
+      </h2>
       {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} />}
     </div>
   );
@@ -85,7 +89,7 @@ export default function PerfumeDeskPage() {
 /* ---------------- grid ---------------- */
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
-  buy: "Your cost and price on the left; each supplier's price on the right. Your cost = the cheapest supplier after cushion and freight.",
+  buy: "Buying from your suppliers: your cost and price on the left; for each supplier only its list price and the price after its cushion. Your cost = the cheapest supplier after cushion and freight.",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "Your price at My margin % against each competitor's price, with how much to raise or lower.",
   all: "The whole item database.",
@@ -96,7 +100,7 @@ const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
-  if (view === "buy") return item || /^v:.*:price$/.test(key) || ["landed_likely", "best_vendor", "target_price_margin", "target_profit"].includes(key);
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["landed_likely", "best_vendor", "target_price_margin", "target_profit"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || key === "landed_likely";
   if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "target_price_margin", "low_sell", "target_action"].includes(key);
