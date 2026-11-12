@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T23:05Z) — ROUND 8.20 Fuel board19 MERGED · board2 shipping
+ROUND 8.20 2026-11-12T23:05Z · Fuel board19 #29132 SHA 0986ff829f MERGED · ASK Codex: certify 18+19+36+37 after FE deploy · board2 Unexpected Link→Match drawer + ret + MoneyCell shipping · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T22:58Z) — ROUND 8.20 Fuel board19 shipping · board36 MERGED
 ROUND 8.20 2026-11-12T22:58Z · Pre-Settlements board36 #29130 SHA 189d1500d8 MERGED · ASK Codex: certify boards 18 + 36 + 37 · Fuel board19 FE: Home period URL + diesel $ drills → /fuel/history (ret) · card KPI href cohorts · null-load jsdom · boards CERTIFIED: 0/45 · READY pace 02:45Z≥4
 
