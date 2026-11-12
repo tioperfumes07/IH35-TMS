@@ -96,6 +96,18 @@ export function collectProblems(sources) {
   ) {
     problems.push(`${FILES.popup}: Proposed Settlement must EntityLink via proposed_settlement_id`);
   }
+  // Candidate Settlement column EntityLinks when load.settlement_id is live (BE loadWindowLabel).
+  if (
+    !/const load = c\.load/.test(sources.popup) ||
+    !/load\.settlement_id/.test(sources.popup) ||
+    !/fuel-assignment-candidate-settlement-/.test(sources.popup) ||
+    !/kind=["']settlement["']/.test(sources.popup)
+  ) {
+    problems.push(`${FILES.popup}: candidate Settlement column must EntityLink via load.settlement_id`);
+  }
+  if (!/settlement_id: string \| null/.test(sources.service) || !/AS settlement_id/.test(sources.service)) {
+    problems.push(`${FILES.service}: FuelCandidateLoad must select settlement_id for candidate reverse links`);
+  }
   for (const mode of ["confirm", "pick", "keep"]) {
     if (!new RegExp(`fuel-assignment-mode-${mode}`).test(popup)) {
       problems.push(`${FILES.popup}: missing mode button ${mode}`);

@@ -143,7 +143,24 @@ function candidateColumns(
       label: "Settlement",
       sortable: true,
       sortValue: (c) => c.load?.settlement_ref ?? "",
-      render: (c) => c.load?.settlement_ref ?? "—",
+      render: (c) => {
+        // Local binding — keep c.load.<field> reads out of this column so the null-load
+        // guard in verify-fuel-assignment-popup stays scoped to the Load-at-fill ternary.
+        const load = c.load;
+        if (!load) return "—";
+        if (load.settlement_id) {
+          return (
+            <EntityLink
+              kind="settlement"
+              id={load.settlement_id}
+              label={entityLabel(load.settlement_ref, load.settlement_id, "Settlement")}
+              onClick={stop}
+              data-testid={`fuel-assignment-candidate-settlement-${c.unit_id}`}
+            />
+          );
+        }
+        return load.settlement_ref ?? "—";
+      },
     },
     {
       key: "route",
