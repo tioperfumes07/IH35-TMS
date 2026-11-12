@@ -1,5 +1,15 @@
 # ROUND 8.5 — independent board parity verification
 
+## Cash Flow Home #28944 acceptance — Net bounded PASS, Ending FAIL
+
+On deployed frontend16a767816b, in-app1440x900, Net opens Rolling Ledger with the correct week, scenario and component breakdown; displayed income minus expenses equals the clicked net. Ending second-week drill fails: banner says “Clicked Ending” but displays the weekly net, not the clicked cumulative ending balance. `CashFlowHomeTab.tsx:545–572` sends only `rl_net: bucket.net_cents` for both kinds; `RollingLedgerTab.tsx:1307` uses it for either label. Required fix: carry actual ending and opening/prior balance, show opening plus net equals ending, preserve component provenance. Required behavioral negative control: nonzero opening and cumulative second week so ending differs from net. Private screenshot captured, no production writes. Cursor notified on #28944; full Cash Flow remains OPEN.
+
+## Settlement repair bounded recheck — frontend #28945 live
+
+Render confirms `dep-dbqjvqbhrras73a8a720` live at `16a767816be3d99067cfa7f0f2cc85cf126f58ef`, finished2026-11-12T04:31:13Z. Chrome disconnected; authenticated in-app browser recovered read-only verification with1440x900 override. Statement earnings now renders miles/rate and a real driver-bill link. Clicking the bill and its settlement link returns to the identical statement UUID: bounded forward/reverse PASS. The inspected escrow-only statement does not label its deduction as Advances recovered. Positive nonzero advance recovery still needs separate evidence; no blanket pass for the advance reader.
+
+Whole statement remains OPEN: unnamed settlement display, PENDING labels, deduction fields/drills, company waterfall source split and all other previously documented acceptance remain unverified or failing. Closed-list membership versus underlying open/unpaid statement status needs semantic reconciliation, not a guessed data repair. No production write or reversal action invoked.
+
 ## Driver Profile depth verification — 11-11 late evening
 
 Audit History FAIL: a single driver tab mounts two separate audit readers and two complete filter/table toolbars. The first renders populated driver-related history; the second says “No audit events found for this record.” Source `DriverProfilePage.tsx:1117–1121` mounts `AuditHistoryTab` and `EntityAuditHistoryTab` together. The first reader intentionally includes driver-linked payload keys (`driver-events.service.ts:65–76`), so this is not evidence that its records are unrelated. Required repair: one comprehensible, canonical driver-history surface retaining both relevant event sets, explicit scope and deduplication; rendered test must reject duplicate toolbars and contradictory unqualified empty state. Do not drop valid events to match a screenshot.
