@@ -42,6 +42,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useListState } from "../../components/list-state";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
@@ -122,14 +123,39 @@ const CHARGEBACK_COLUMNS: Array<ParityColumn<FactoringChargebackFeeRow>> = [
     sortable: true,
     className: "text-right",
     cellClass: "text-right text-red-700",
-    render: (row) => (row.chargeback_amount > 0 ? fmtM(row.chargeback_amount) : "—"),
+    render: (row) =>
+      row.chargeback_amount > 0 ? (
+        row.invoice_id ? (
+          <MoneyCell
+            cents={Math.round(Number(row.chargeback_amount) * 100)}
+            className="text-red-700"
+            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+          />
+        ) : (
+          <MoneyCell
+            cents={Math.round(Number(row.chargeback_amount) * 100)}
+            className="text-red-700"
+            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+          />
+        )
+      ) : (
+        "—"
+      ),
   },
   {
     key: "factor_fee_amount",
     label: "Fee",
     sortable: true,
     className: "text-right",
-    render: (row) => (row.factor_fee_amount > 0 ? fmtM(row.factor_fee_amount) : "—"),
+    render: (row) =>
+      row.factor_fee_amount > 0 ? (
+        <MoneyCell
+          cents={Math.round(Number(row.factor_fee_amount) * 100)}
+          drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+        />
+      ) : (
+        "—"
+      ),
   },
 ];
 

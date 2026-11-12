@@ -8,6 +8,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
 import { titleize } from "../../lib/titleize";
 import { formatDateUS } from "../../lib/formatDate";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 
@@ -104,7 +105,9 @@ const INVOICE_COLUMNS: Array<ParityColumn<FactoringBatchInvoice>> = [
     sortable: true,
     className: "text-right",
     sortValue: (row) => row.total_cents,
-    render: (row) => asMoney(row.total_cents),
+    render: (row) => (
+      <MoneyCell cents={Number(row.total_cents ?? 0)} drill={{ entity: { kind: "invoice", id: row.id } }} />
+    ),
   },
   {
     key: "status",

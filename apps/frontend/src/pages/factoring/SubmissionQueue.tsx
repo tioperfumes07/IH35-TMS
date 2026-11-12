@@ -15,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatCalendarDateUS } from "../../lib/formatDate";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { BoardSection } from "../../components/v3/BoardSection";
 
@@ -195,16 +196,25 @@ export function SubmissionQueue() {
         key: "total_cents",
         label: "Amount",
         sortable: true,
-        render: (item) => <span className="tabular-nums">{asMoney(item.total_cents)}</span>,
+        render: (item) => (
+          <MoneyCell
+            cents={Number(item.total_cents ?? 0)}
+            drill={{ entity: { kind: "invoice", id: item.invoice_id } }}
+          />
+        ),
       },
       {
         key: "expected_reserve_cents",
         label: "Expected Reserve",
-        render: (item) => (
-          <span className="tabular-nums text-[#4B5563]">
-            {item.expected_reserve_cents != null ? asMoney(item.expected_reserve_cents) : "—"}
-          </span>
-        ),
+        render: (item) =>
+          item.expected_reserve_cents == null ? (
+            "—"
+          ) : (
+            <MoneyCell
+              cents={Number(item.expected_reserve_cents)}
+              drill={{ entity: { kind: "invoice", id: item.invoice_id } }}
+            />
+          ),
       },
       {
         key: "factor_name",
