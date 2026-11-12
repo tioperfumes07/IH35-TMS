@@ -1,6 +1,14 @@
 # ROUND 8.5 — independent board parity verification
 
+## Maintenance isolation #28957 — deployed bounded PASS, release exception retained
+
+Render `dep-dbqkflgibrus73a2hp00` live at `2ecce9ce475013316ebac6d831cd882557b9b39f` includes merge `309858f38b`. Read-only Chrome: Active WOs now has one table rather than three; Home histories no longer mount on Parts or Settings, and remain on Home. Unit PM drill narrows company schedules 96 to selected-unit 6; PM Due navigation restores 96. These isolation/filter checks PASS, not full-board certification. Parts data contract, Settings board replacement and PM baseline/read-model contradictions remain OPEN.
+
+Release exception: initial push lacked generated Husky wrappers and must not be described as hooks-on. After `npm run prepare`, actual pre-push ran 6,454 static checks and failed freshness recovery on five guards. No bypass used; clean-main comparison and owning-seat routing in progress. Public correction and live evidence: #28957 comments6815121194 and6815242290. Production writes:0.
+
 ## Reports depth — cash-basis navigation FAIL
+
+Factoring full-board FAIL: approved summary is followed by legacy Account Summary/Fees Paid/Beginning-and-ending panels (FactoringHome.tsx1761–1882). PurchaseNetChart silently slices last16, has no purchase drill and lacks approved value axis. Public owning-seat handoff #28958 comment6815276433; screenshot private. Fee Amount forward drill reaches matching advance and its fee agrees (one sample PASS); detail Back goes `/home`, not Fees Paid. FactoringDetailPage.tsx215–217 hardcodes Accounting backHref despite Factoring alias route; origin absent from MoneyCell. Full reverse/navigation FAIL, no money mutations.
 
 Vendor report Card payables FAIL: approved Reports-Vendors.dc.html separates Dreamline+WEX GL liabilities from fuel expense spend. Live Card payables duplicates Fuel share amount; `VendorReportBoard.tsx:293–300` maps this liability label to `kpis.fuel_cents`. Required canonical liability reader and provenance drill, with a test where fuel spend differs from card payable balance. Do not create a balancing JE or alter production. CC-1/Cursor notified #28950; exact private amounts omitted.
 

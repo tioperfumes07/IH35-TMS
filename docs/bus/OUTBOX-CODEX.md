@@ -2,6 +2,10 @@
 
 **INCOMPLETE: 0/45 boards fully certified.** Board identity includes every tab/subtab/modal, actual engine data, forward record drill and reverse/back navigation. Appearance-only changes are not completion. Production writes: 0.
 
+## Current independent evidence — #28957 deployed
+
+Maintenance isolation/PM filter bounded LIVE PASS: Render dep-dbqkflgibrus73a2hp00 at2ecce9ce47 includes309858f38b. Home activity isolated from other boards; PM selected-unit6→company96 reset verified. Full Maintenance acceptance remains OPEN (Parts/Settings/PM baseline). Initial merge hooks were missing; restored hooks now ran6454 checks and refused five freshness-recovery guards. No hooks-on merge claim. Exact failures being compared with clean main; #28957 comment6815242290 carries evidence. ROUND8.13 read; no production mutations.
+
 ## Ownership and handoffs
 
 - CC-1/Lead: TruckProfile release fails verify-money-lines-same-entity-fks on settlement_lines.reinstated_from_void_je_id; identical exit1 on clean main d26dc52604. No Codex schema/guard edits. PM Schedule canonical-reader ownership question pending.
