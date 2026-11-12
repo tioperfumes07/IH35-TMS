@@ -1,8 +1,9 @@
 import { useToast } from "../../components/Toast";
-import { formatQuantityTable, formatUsdCents, formatUsdCentsTable } from "../../lib/money";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { useBulkPermission } from "../../hooks/useBulkPermission";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
@@ -48,11 +49,6 @@ type Props = {
   // 432-CUR #1 — FuelPlannerHome owns MoneyListToolbar search; ParityTable native search must stay off.
   suppressToolbarSearch?: boolean;
 };
-
-// QBO money (lib/money). A missing amount is "—", never "$0.00".
-function money(cents: number | null | undefined) {
-  return formatUsdCentsTable(cents);
-}
 
 function csvEscape(value: string): string {
   if (value.includes(",") || value.includes('"') || value.includes("\n")) {
@@ -216,7 +212,17 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
           ),
         },
         { key: "gallons", label: "Gallons", sortable: true, render: (row) => row.gallons == null ? "—" : formatQuantityTable(row.gallons, 2) },
-        { key: "amount_cents", label: "Amount", sortable: true, render: (row) => money(row.amount_cents) },
+        {
+          key: "amount_cents",
+          label: "Amount",
+          sortable: true,
+          render: (row) =>
+            row.unit_id ? (
+              <MoneyCell cents={Number(row.amount_cents ?? 0)} drill={{ entity: { kind: "unit", id: row.unit_id } }} />
+            ) : (
+              <MoneyCell cents={Number(row.amount_cents ?? 0)} drill={{ entity: { kind: "fuel_transaction", id: row.id } }} />
+            ),
+        },
         {
           key: "expense_number",
           label: "Expense",

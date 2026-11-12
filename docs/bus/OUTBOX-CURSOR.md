@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~3:20 AM CT) — Fuel/Insurance/Legal/Aging MoneyCell residual wave
+- **THIS:** Aging bucket fallbacks → advance · Equipment loan principal/outstanding → equipment_loan · FuelTransactions Amount · CardOverage overage/total · FleetCovered insured/premium · Insurance home policy premium · PolicyDetail lawsuit demand · Legal matter claimed/seek/reserve.
+- **Prior:** #28969 Factoring/Insurance/Fuel residual (merged).
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~2:55 AM CT) — Factoring/Insurance/Fuel MoneyCell residual wave
 - **THIS:** SubmitToFactor total/open → invoice · RepurchaseDue Face → purchase · RecoursePipeline invoice/advance/reserve → advance · Chargebacks chargeback/fee · Faro1090 net → purchase · PaymentsToYou detail lines → invoice · PolicyDetail insured value + claimed · FuelIntegrity cost → unit/fuel_transaction · FactoringHome Loan-Save + Fees-open fallbacks.
 - **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.

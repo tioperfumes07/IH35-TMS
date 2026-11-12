@@ -3200,7 +3200,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
                         ) : (
-                          fmtCurrency(row.invoice_amount)
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ),
                     },
                     {
@@ -3216,7 +3219,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
                         ) : (
-                          fmtCurrency(row.invoice_amount)
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ),
                     },
                     {
@@ -3232,7 +3238,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
                         ) : (
-                          fmtCurrency(row.invoice_amount)
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ),
                     },
                     {
@@ -3248,7 +3257,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
                         ) : (
-                          fmtCurrency(row.invoice_amount)
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ),
                     },
                     {
@@ -3263,7 +3275,10 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                             drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
                           />
                         ) : (
-                          fmtCurrency(row.invoice_amount)
+                          <MoneyCell
+                            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+                            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+                          />
                         ),
                     },
                     { key: "purchased", label: "Purchase", render: () => "Y" },
@@ -3910,13 +3925,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     <div>
                       <EntityLink kind="unit" id={row.equipment_id} label={entityLabel(row.equipment_number, row.equipment_id, "Equipment")} className="font-semibold" />{" "}
                       · <EntityLink kind="vendor" id={row.lender_vendor_id} label={entityLabel(row.lender_vendor_name, row.lender_vendor_id, "Vendor")} /> ·{" "}
-                      Principal {fmtCurrency(Number(row.principal_cents ?? 0) / 100)}
+                      Principal{" "}
+                      <MoneyCell
+                        cents={Number(row.principal_cents ?? 0)}
+                        drill={{ entity: { kind: "equipment_loan", id: String(row.id) } }}
+                      />
                       {/* LIABILITY column-wave: outstanding_balance_cents = principal minus
                           payments actually applied to principal — the current loan liability,
                           distinct from the static origination principal shown above. */}
                       {" · "}Outstanding{" "}
                       <span className="font-semibold">
-                        {fmtCurrency(Number(row.outstanding_balance_cents ?? row.principal_cents ?? 0) / 100)}
+                        <MoneyCell
+                          cents={Number(row.outstanding_balance_cents ?? row.principal_cents ?? 0)}
+                          drill={{ entity: { kind: "equipment_loan", id: String(row.id) } }}
+                        />
                       </span>
                     </div>
                     <div className="flex items-center gap-2">

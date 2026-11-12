@@ -15,6 +15,7 @@ import { PageHeader } from "../../../components/layout/PageHeader";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
@@ -22,7 +23,6 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { formatDateUS, formatDateTimeUS } from "../../../lib/formatDate";
 import { companyWallClockToIso } from "../../../lib/businessDate";
 import { DateTimePicker } from "../../../components/forms/DateTimePicker";
-import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { resolveApiUrl } from "../../../api/client";
 import {
   formStateToUpdatePayload,
@@ -451,9 +451,39 @@ export function LegalMatterDetailPage() {
                     "—"
                   )}
                 </div>
-                <div><strong>Amount claimed against us:</strong> {matter?.amount_claimed_against_us != null ? formatUsd(matter.amount_claimed_against_us as string | number) : "—"}</div>
-                <div><strong>Amount we seek:</strong> {matter?.amount_we_seek != null ? formatUsd(matter.amount_we_seek as string | number) : "—"}</div>
-                <div><strong>Financial reserve:</strong> {matter?.financial_reserve_cents != null ? formatUsdCents(matter.financial_reserve_cents as number) : "—"}</div>
+                <div>
+                  <strong>Amount claimed against us:</strong>{" "}
+                  {matter?.amount_claimed_against_us != null && matter?.id ? (
+                    <MoneyCell
+                      cents={Math.round(Number(matter.amount_claimed_against_us) * 100)}
+                      drill={{ entity: { kind: "matter", id: String(matter.id) } }}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Amount we seek:</strong>{" "}
+                  {matter?.amount_we_seek != null && matter?.id ? (
+                    <MoneyCell
+                      cents={Math.round(Number(matter.amount_we_seek) * 100)}
+                      drill={{ entity: { kind: "matter", id: String(matter.id) } }}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </div>
+                <div>
+                  <strong>Financial reserve:</strong>{" "}
+                  {matter?.financial_reserve_cents != null && matter?.id ? (
+                    <MoneyCell
+                      cents={Number(matter.financial_reserve_cents)}
+                      drill={{ entity: { kind: "matter", id: String(matter.id) } }}
+                    />
+                  ) : (
+                    "—"
+                  )}
+                </div>
                 <div><strong>Next hearing date:</strong> {matter?.next_hearing_date ? formatDateUS(matter.next_hearing_date) : "—"}</div>
                 <div><strong>Statute of limitations:</strong> {matter?.statute_of_limitations_at ? formatDateUS(matter.statute_of_limitations_at) : "—"}</div>
                 <div><strong>Closed at:</strong> {matter?.closed_at ? formatDateTimeUS(matter.closed_at as string) : "—"}</div>
