@@ -47,3 +47,6 @@ Older Cursor inbox batches: `docs/bus/archive/INBOX-CURSOR-archive-2026-11-03-pr
 
 ## ROUND 8.15 — 11-12-2026 6:58 AM CT — OVERHAUL LAW (read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md §ROUND 8.15)
 Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (function name) · FORWARD ROUTE (href per number) · REVERSE ROUTE (back-links from the source record) · REPLACE NOT LAYER (v3 board file; old layout removed in the same PR) · LIVE PROOF (query = screen to the cent, click there and back). Deadline 23:00Z.
+
+## ROUND 8.15b — 11-12-2026 8:12 AM CT — v3 boards built COMPLETELY (owner verbatim: "the new designs must be compeltely built use logic.")
+You are unblocked on Settlements Open/Closed + Fuel Home. Map every old element (board slot / logical home / removed duplicate) in the PR body, carry the OWNER-REMOVE line with that quote + 2026-11-12, regenerate additive-baseline, RE-POINT the 6 guards to the new places. CC-1 reviews the guard changes. Routes/sidebar/data/engines never removed.

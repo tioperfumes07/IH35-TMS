@@ -82,3 +82,6 @@ Owner, 5:02 PM CT: when you test locally and everything passes, you MUST merge u
 
 ## ROUND 8.15 — 11-12-2026 6:58 AM CT — OVERHAUL LAW (read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md §ROUND 8.15)
 Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (function name) · FORWARD ROUTE (href per number) · REVERSE ROUTE (back-links from the source record) · REPLACE NOT LAYER (v3 board file; old layout removed in the same PR) · LIVE PROOF (query = screen to the cent, click there and back). Deadline 23:00Z.
+
+## ROUND 8.15b — 11-12-2026 8:12 AM CT — review Cursor guard re-points
+Owner ruled: v3 boards are built completely ("the new designs must be compeltely built use logic."). Cursor will re-point your 6 guards (tours-columns-visible, module-one-readout, margin-pct-separate, fuel-home-dashboard-wired, bank-f10, relay-history-import) to the elements NEW places on the Settlements Open/Closed + Fuel Home v3 boards. Review those guard diffs on Cursor PRs within 30 min; reject only if a function is lost (not a layout piece).
