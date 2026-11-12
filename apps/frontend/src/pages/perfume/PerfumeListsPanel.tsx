@@ -280,7 +280,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
         ) : null}
       </div>
       {isPictures ? (
-        <div className="space-y-2 rounded-sm border border-gray-200 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-picture-reader">
+        <div className="space-y-2 border-t border-gray-200 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-picture-reader">
           <div className="flex flex-wrap items-center gap-2">
             <span>
               <b>{(read?.pictures?.length ?? 0).toLocaleString()}</b> {tr("perfume.lists.pic1", "picture(s) / scanned page(s) ready. Claude reads each one; you check every line before anything is saved.")}
@@ -310,10 +310,8 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
                     <input aria-label={tr("perfume.lists.pic10", "Description")} className="h-[34px] w-[300px] rounded-sm border border-gray-300 px-2" value={l.description} onChange={(e) => editLine(l.key, { description: e.target.value })} />) },
                   { key: "section", label: "Section", sortable: true },
                   { key: "price", label: "Price", sortable: true, cellClass: "text-right", render: (l) => (
-                    <div className={`w-[110px] rounded-sm ${Number(l.price) > 0 ? "" : "ring-1 ring-red-400"}`}>
-                      <MoneyInput ariaLabel={tr("perfume.lists.pic11", "Price")} valueCents={priceToCents(l.price ?? "")}
-                        onChangeCents={(c) => editLine(l.key, { price: c == null || c <= 0 ? null : (c / 100).toFixed(2) })} />
-                    </div>) },
+                    <MoneyInput className="w-[110px]" ariaLabel={tr("perfume.lists.pic11", "Price")} valueCents={priceToCents(l.price ?? "")}
+                      onChangeCents={(c) => editLine(l.key, { price: c == null || c <= 0 ? null : (c / 100).toFixed(2) })} />) },
                   { key: "note", label: "Reader note", sortable: true },
                 ]}
               />
