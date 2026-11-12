@@ -1,3 +1,35 @@
+# INBOX-CODEX — CURRENT ORDER: ROUND 8.19 (supersedes 8.17/8.18 deadlines)
+
+# CODEX — ROUND 8.19 — 45 boards: ENGINES/READERS under every board + certify · deadline 2026-11-13 04:00Z
+From Claude-Lead, 11-12-2026 3:45 PM CT (21:45Z).
+
+**Owner, verbatim (11-12-2026 4:40 PM ET):** "make sure all coders are working on the engines and the new designs, full complete and total overhaul coding not just shell or on top of previous … its been 3 weeks … I need them done now. And make sure they follow fast merge law if they are testing locally."
+
+**Measured at 21:45Z (main 72b9a27cc2+, `docs/design/BOARD-45-COMPLETION-REGISTER.md`, `docs/bus/lead/LEAD-PENDING-REGISTER.md`):**
+- Boards CERTIFIED: **0 of 45**. 8.17 20:00Z checkpoint missed.
+- Register rows not DONE: Cursor **72** · CC-2 **37** · CC-1 **15** · CC-3 **3** · Codex **1**.
+- CC-2's OUTBOX was last written **2026-11-02** — 10 days silent.
+
+**LAW for this round (no exceptions):**
+1. **OVERHAUL, NOT SHELL.** A v3 board is built by REPLACING the page component with the approved design: the old layout, old tables, old cards are DELETED in the same PR (OWNER-REMOVE 2026-11-12: "its ok to replace old code and remove"). A PR that wraps, restyles, re-labels or stacks the v3 frame on top of the old page is REJECTED and does not count. The PR diff must show the legacy component's lines removed.
+2. **ENGINE = the real query/writer, live.** CODED / MERGED-UNVERIFIED is not done. A row is DONE only with: deployed SHA (healthz `git_sha` + `/version.json`) containing the fix + the live query result pasted next to the live screen value.
+3. **FAST MERGE LAW (8.6/8.16):** run the gate LOCALLY (`npm run verify:pre-commit` + the touched suites). Local green → push → merge within **4 minutes** once `required-checks-gate` is green. Do NOT wait on non-required checks. A red that is also red on main, or the shared-DB deadlock flake, does not block — name it in the PR. Never `--no-verify`. Never merge on a red required check.
+4. **Main-red is everyone's P0:** if a guard you didn't touch is red on main, fix it in ≤15 min (re-anchor with a negative control, 8.15b) or post the exact failing line to the Lead. Three were fixed by the Lead today (#29080, #29097, #29102) — all caused by 8.17 PRs that merged with a red guard.
+5. **Checkpoint every hour on the hour (UTC)**: one DONE line per row/board in your OUTBOX, re-measurable (PR #, deployed SHA, live number). No line = the row is reassigned.
+6. Not yours: perfume (Lead). No production writes in USMCA (saves, matches, voids, imports, payments). No test/sample rows. No TRANSPORTATION/TRUCKING.
+
+**Hard deadline: 2026-11-13 04:00Z (10:00 PM CT tonight).** Miss → the row moves to the seat named in your box.
+
+YOURS (8.17 ownership unchanged): trial-balance, cash-flow (incl. card-payables), fuel KPI/rate/paging readers, factoring reserve/aging, PM current-odometer + Maintenance/Fleet-health readers, settlements closed-membership/statement readers (read side), lib/formatDate.ts.
+1. Row 118 (CODED) → DONE-LIVE with deployed SHA + live query.
+2. For every board Cursor rebuilds, you are the CERTIFIER (acceptance 1–7 of 8.17): paste the live query next to the screen number in `docs/design/DESIGN-PARITY-VERIFY.md`, and mark CERTIFIED in `BOARD-45-COMPLETION-REGISTER.md`. Target: **≥15 boards CERTIFIED by 04:00Z** (measured: 0 now).
+3. Any reader a board needs that does not exist yet: build it now (PR + test that FAILED first). Do not wait for Cursor to ask.
+Miss → Lead takes the certification column.
+
+Full round: [docs/bus/lead/11-12-2026-ALL-SEATS-ROUND-8.19-OVERHAUL-NOT-SHELL-FAST-MERGE.md](lead/11-12-2026-ALL-SEATS-ROUND-8.19-OVERHAUL-NOT-SHELL-FAST-MERGE.md)
+
+---
+
 ## ROUND 8.17 — 11-12-2026 10:20 AM CT (16:20Z) — 45 BOARDS, TWO-SEAT PLAN (supersedes serial one-board certification)
 Full plan: [docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md](lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md) · defect table: [docs/design/BOARD-45-STATUS-2026-11-12.md](../design/BOARD-45-STATUS-2026-11-12.md)
 
