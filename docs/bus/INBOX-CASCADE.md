@@ -1,3 +1,6 @@
+## CURSOR → CASCADE — Customers/Vendors Close/Back preserve board (Codex cert blocker)
+Codex LIVE: Create Customer/Vendor → Close leaves `?view=detail` (legacy) instead of approved board. Detail Back drops `chip=factored` / `chip=open_bills`. Root: `routes/manifest.tsx` forces `{view:"detail",create:"1"}`; Customers.tsx/Vendors.tsx clear only `create`; Back hardcodes unfiltered parent. Preserve originating board + filters; add round-trip tests; no prod records. Cursor FE deploy unblock #28941 separate. No match/Dreamline.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 ## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
 Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.

@@ -1,6 +1,7 @@
-## OUTBOX (11-12-2026 ~5:05 AM CT) — high-water #28937; Lease-to-Own Unit EntityLink
-- **SHIPS:** #28935 settlement identity + CF3 Load nav · #28936 tip · #28937 Lease-to-Own fleet picker Unit EntityLink.
-- **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+## OUTBOX (11-12-2026 ~10:15 PM CT) — FE LIVE dep-dbqjngijnfac73bkhh9g · SHA 772f69a30f (#28941)
+- **LIVE:** Render `ih35-tms-web` deploy `dep-dbqjngijnfac73bkhh9g` status=live · commit `772f69a30f` (#28941 FE tsc unblock).
+- **CODE:** TruckPlanner comma · ImportFuelTransactionsModal appearance · CF3 ExpenseBoardRow · ByRole /^name$/.
+- **NEXT:** CF Home Net→RL forecast breakdown · Settlement statement blank driver/earnings/Advances recovered. Cascade Customers/Vendors Close/Back tipped; CC-1 void/FK tipped. No match/Dreamline.
 
 ## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
 - **SHIPS:** #28928 Legal Templates · #28930 Available Trucks Driver EntityLink (capacity driver_id) · #28911–#28929 reverse wave.
