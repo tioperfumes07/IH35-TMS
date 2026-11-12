@@ -8,9 +8,8 @@ import { EntityLinkOrTombstone } from "../components/shared/EntityLinkOrTombston
 import { EntityLink } from "../components/shared/EntityLink";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatQuantityTable, formatUsdCents } from "../lib/money";
-import { customerIsSelectable } from "../lib/customer-selectable";
 import { clearPartyCreateParams } from "../lib/partyBoardReturn";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllInvoices, listAllCustomerInvoices, type Invoice } from "../api/accounting";
 import { getCustomerActivity, type CustomerActivityRow } from "../api/customers";
@@ -18,19 +17,11 @@ import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
 import { listAllDispatchLoads, type DispatchLoad } from "../api/dispatch";
 import { listAllAccountingRecurringTemplates } from "../api/accountingRecurringTemplate";
 import { companyToday, addDaysIso } from "../lib/businessDate";
-import { ApiError, apiRequest } from "../api/client";
+import { apiRequest } from "../api/client";
 import { invoiceOpenCentsForDisplay, invoiceTotalCentsForAggregate, isVoidInvoice } from "./accounting/InvoicesListPage";
-import { createCustomer, getCustomerBillingSummary, getCustomerRosterCounts, listAllCustomers, listPaymentTermOptions, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
+import { getCustomerBillingSummary, getCustomerRosterCounts, listAllCustomers, getCustomerFinanceRollup, type Customer, type CustomerBillingSummary, type CustomerFinanceRollup } from "../api/mdata";
 import { V3KpiTile } from "../components/v3/V3KpiTile";
-import {
-  CustomerProfileForm,
-  emptyCustomerProfileValues,
-  profileValuesToCreatePayload,
-  validateCustomerProfileForCreate,
-  type CustomerProfileFormValues,
-} from "../components/customers/CustomerProfileForm";
 import { Button } from "../components/Button";
-import { ActionButton } from "../components/shared/ActionButton";
 import { ToolbarSegmentControl } from "../components/layout/ToolbarSegmentControl";
 import { SegmentedControl } from "../components/SegmentedControl";
 import { MasterDetailShell } from "../components/layout/MasterDetailShell";
@@ -59,11 +50,10 @@ const CREDIT_STATUS_FILTER_OPTIONS = statusOptions({
 });
 import { CustomersBoardChrome } from "./customers/CustomersBoardChrome";
 import { CustomersDetailTabNav } from "./customers/CustomersDetailTabNav";
-import { Modal } from "../components/Modal";
-import { useToast } from "../components/Toast";
 import { useCompanyContext } from "../contexts/CompanyContext";
 import { displayEntityNotes } from "../lib/qboArchiveNotes";
 import { CustomerCOITab } from "./customers/CustomerCOITab";
+import { CustomerCreateModal } from "../components/customers/CustomerCreateModal";
 import { CustomerEditDrawer } from "../components/customers/CustomerEditDrawer";
 import { CustomerListSidebar } from "./customers/CustomerListSidebar";
 import { CustomersListView } from "./customers/CustomersListView";
@@ -78,7 +68,6 @@ import { useListPageSizePref } from "../hooks/useListPageSizePref";
 import { useUrlSort } from "../hooks/useUrlSort";
 import { formatDateTimeUS, formatDateQboList, mmmDd, formatCalendarDateUS } from "../lib/formatDate";
 import { customerStatusLabel, customerTypeLabel } from "../lib/customerStatusLabel";
-import { userFacingApiError } from "../lib/api-error-message";
 import { listSpineEvents, type SpineEvent } from "../api/audit";
 import { getArAgingReport, getCustomerProfitability, getDuplicateMasters, type ARAgingRow } from "../api/reports";
 import { UnclearedDocumentsNote, type UnclearedDocumentNote } from "../components/accounting/UnclearedDocumentsNote";
@@ -542,8 +531,6 @@ function CustomerTabUnknownState({ label }: { label: string }) {
 
 export function CustomersPage() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { pushToast } = useToast();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qboAvailable = selectedCompany?.code === "TRANSP";
@@ -656,72 +643,10 @@ export function CustomersPage() {
     next.delete("create");
     setSearchParams(next, { replace: true });
   };
-  const [createValues, setCreateValues] = useState<CustomerProfileFormValues>(emptyCustomerProfileValues);
   // CUR-2: Edit opens the profile form in the right-side ParityDrawer (QBO-style), not the full page.
   const [editDrawerCustomer, setEditDrawerCustomer] = useState<Customer | null>(null);
-  const [createFormError, setCreateFormError] = useState("");
-  const [createFieldErrors, setCreateFieldErrors] = useState<{ legal_name?: string; mc_number?: string; customer_type?: string; email?: string }>({});
   // CLOSURE-31: default to the prior "master-detail" design; "list" is opt-in only.
   const { viewMode, setViewMode, viewModeSaveError, retryViewModeSave } = useViewModePref("customers", "master-detail");
-
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      const check = validateCustomerProfileForCreate(createValues);
-      if (!check.ok) {
-        const error = new Error(check.message);
-        (error as Error & { code?: string }).code = check.code;
-        throw error;
-      }
-      // CUSTOMER-EMAIL-REQUIRED: email is required for invoice deliverability.
-      if (!createValues.email.trim()) {
-        const error = new Error("Email is required.");
-        (error as Error & { code?: string }).code = "email_required";
-        throw error;
-      }
-      return createCustomer(profileValuesToCreatePayload(createValues, companyId));
-    },
-    onSuccess: async (customer) => {
-      await queryClient.invalidateQueries({ queryKey: ["customers", "page", companyId] });
-      closeCreate();
-      setCreateValues(emptyCustomerProfileValues());
-      setCreateFormError("");
-      setCreateFieldErrors({});
-      pushToast("Customer created.", "success");
-      if (customer?.id) navigate(`/customers/${customer.id}`);
-    },
-    onError: (error) => {
-      setCreateFormError("");
-      setCreateFieldErrors({});
-      // SILENT-VALIDATION-OFFSCREEN: this form scrolls long. An inline field error near the top
-      // is invisible if the user clicked Save from further down, and looks like a dead button
-      // with no feedback at all. Every required-field code also pushes a toast (same as the
-      // catch-all below) so the user always gets a signal, regardless of scroll position.
-      if ((error as Error & { code?: string }).code === "legal_name_required") {
-        setCreateFieldErrors({ legal_name: "Legal name is required" });
-        pushToast("Legal name is required", "error");
-        return;
-      }
-      if ((error as Error & { code?: string }).code === "customer_type_required") {
-        setCreateFieldErrors({ customer_type: "Customer type is required" });
-        pushToast("Customer type is required", "error");
-        return;
-      }
-      if ((error as Error & { code?: string }).code === "email_required") {
-        setCreateFieldErrors({ email: "Email is required" });
-        pushToast("Email is required", "error");
-        return;
-      }
-      const err = error as ApiError;
-      if (err instanceof ApiError && err.status === 409) {
-        setCreateFormError("Could not save customer.");
-        setCreateFieldErrors({ mc_number: "Already in use" });
-        pushToast("Could not save customer: duplicate customer record.", "error");
-        return;
-      }
-      setCreateFormError("Could not save customer.");
-      pushToast(userFacingApiError(error, "Could not save customer."), "error");
-    },
-  });
 
   // C-31 — always fetch the A-21 with-transactions set (default tab + its count). Never invent a
   // client-side "has money" filter; the predicate lives in has-transactions-predicate.ts only.
@@ -763,13 +688,6 @@ export function CustomersPage() {
   const customersRoster = useHasTransactions
     ? (withTxnCustomersQuery.data?.customers ?? [])
     : (customersQuery.data?.customers ?? []);
-  // Create-form parents must see every active customer, not only those with transactions.
-  const parentCustomersQuery = useQuery({
-    queryKey: ["customers", "parents", companyId],
-    queryFn: () => listAllCustomers({ operating_company_id: companyId, active_company_only: true }),
-    enabled: Boolean(companyId) && createOpen,
-  });
-  const parentCustomersRoster = parentCustomersQuery.data?.customers ?? customersQuery.data?.customers ?? [];
   // ACCT-F5790 — inactive rows need an explicit status=inactive fetch (RLS hides them otherwise).
   const inactiveCustomersQuery = useQuery({
     queryKey: ["customers", "inactive", companyId],
@@ -785,14 +703,6 @@ export function CustomersPage() {
   const fullCustomersRoster = useMemo(
     () => (useHasTransactions ? customersRoster : [...customersRoster, ...inactiveCustomersRoster]),
     [useHasTransactions, customersRoster, inactiveCustomersRoster]
-  );
-  // D1-4: eligible parents for the create form = active, TOP-LEVEL customers (never a sub-customer).
-  const parentCustomerOptions = useMemo(
-    () =>
-      parentCustomersRoster
-        .filter((c) => !c.parent_customer_id && customerIsSelectable(c))
-        .map((c) => ({ id: c.id, name: c.name, customer_code: c.customer_code })),
-    [parentCustomersRoster]
   );
   const allInvoicesQuery = useQuery({
     queryKey: ["accounting", "invoices", "all", "open", companyId],
@@ -815,11 +725,6 @@ export function CustomersPage() {
     }
     return map;
   }, [arAgingUnclearedQuery.data?.rows]);
-  const paymentTermsQuery = useQuery({
-    queryKey: ["payment-term-options", companyId],
-    queryFn: () => listPaymentTermOptions(companyId).then((r) => r.payment_terms),
-    enabled: createOpen && Boolean(companyId),
-  });
   // LIST-EMPTY-1: shared list-state status — children render "No customers found."
   // only once this settles, never during the roster fetch.
   // ACCT-F5790 — combined with inactiveCustomersQuery so the empty-state gate also waits for the
@@ -983,7 +888,7 @@ export function CustomersPage() {
     for (const cents of openByCustomerId.values()) arOpenCents += cents;
     const collectedCents = customerBoardYtdQuery.isError
       ? null
-      : (customerBoardYtdQuery.data?.kpis.collected_cents ?? null);
+      : (customerBoardYtdQuery.data?.kpis?.collected_cents ?? null);
     // V3: past-due % from AR aging buckets (1–30 + 31–60 + 61–90 + 91+) / total_open.
     let pastDueCents = 0;
     let totalAgingCents = 0;
@@ -1010,7 +915,7 @@ export function CustomersPage() {
     openByCustomerId,
     customerTabCounts.with_transactions,
     customerTabCounts.all,
-    customerBoardYtdQuery.data?.kpis.collected_cents,
+    customerBoardYtdQuery.data?.kpis?.collected_cents,
     customerBoardYtdQuery.isError,
     arAgingUnclearedQuery.data?.rows,
   ]);
@@ -1348,6 +1253,21 @@ export function CustomersPage() {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId, rosterType, rosterCreditStatus]);
 
+  // ROUND 8.20 board 9 — Create must not mount legacy chrome/KPI/master-detail under the drawer.
+  // Canonical form lives in CustomerCreateModal (also hosted on PartyBoard when create=1 alone).
+  if (createOpen) {
+    return (
+      <div
+        className={MASTER_DETAIL.pageShellClass}
+        data-testid="customers-create-only"
+        data-c05-min-scroll="customers"
+        data-c06-page="customers"
+      >
+        <CustomerCreateModal open onClose={closeCreate} operatingCompanyId={companyId} />
+      </div>
+    );
+  }
+
   // CUST-F6058: both roster reads feed the same list. A failed inactive-roster GET used to
   // fall through because this branch only inspected customersQuery, so Inactive/All looked
   // legitimately empty after a 500. Keep the two reads recoverable as one roster operation.
@@ -1539,15 +1459,7 @@ export function CustomersPage() {
       >
         {null}
       </MoneyListToolbar>
-      {/* ROUND 8.17 class L — Create drawer must not layer legacy list/master-detail behind it. */}
-      {createOpen ? (
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-[#F7F8FA] px-3.5 py-8 text-center text-xs text-gray-600"
-          data-testid="customers-create-workspace"
-        >
-          Create customer — complete the drawer. The roster stays behind until you Cancel or Save.
-        </div>
-      ) : viewMode === "list" ? (
+      {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12): "List view" used to ALSO mount the master-detail rolodex sidebar's own
         // hand-rolled, non-ParityTable list (own Name/Open Balance/Status/Quality columns, own pagination)
@@ -2005,69 +1917,6 @@ export function CustomersPage() {
         }
       />
       )}
-      <Modal variant="drawer" open={createOpen} onClose={closeCreate} title="Create Customer" modalKind="customer-create" sizePreset="xl">
-        <form
-          className="space-y-3"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setCreateFormError("");
-            setCreateFieldErrors({});
-            createMutation.mutate();
-          }}
-        >
-          {createFormError ? (
-            <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
-              {createFormError}
-            </div>
-          ) : null}
-          {createFieldErrors.legal_name ? (
-            <span id="legal_name-error" className="block text-xs text-red-700">
-              {createFieldErrors.legal_name}
-            </span>
-          ) : null}
-          {createFieldErrors.customer_type ? (
-            <span id="customer_type-error" className="block text-xs text-red-700">
-              {createFieldErrors.customer_type}
-            </span>
-          ) : null}
-          {createFieldErrors.email ? (
-            <span id="email-error" className="block text-xs text-red-700">
-              {createFieldErrors.email}
-            </span>
-          ) : null}
-          {paymentTermsQuery.isError ? (
-            <ListErrorState
-              title="Couldn't load payment terms"
-              status={0}
-              message={(paymentTermsQuery.error as Error)?.message}
-              onRetry={() => void paymentTermsQuery.refetch()}
-            />
-          ) : null}
-          <CustomerProfileForm
-            values={createValues}
-            onPatch={(patch) => setCreateValues((current) => ({ ...current, ...patch }))}
-            operatingCompanyId={companyId}
-            mode="create"
-            paymentTermOptions={paymentTermsQuery.data ?? []}
-            onPaymentTermCreated={() => void paymentTermsQuery.refetch()}
-            parentCustomerOptions={parentCustomerOptions}
-            onParentCustomerCreated={() => void customersQuery.refetch()}
-          />
-          {createFieldErrors.mc_number ? (
-            <span id="mc_number-error" className="block text-xs text-red-700">
-              {createFieldErrors.mc_number}
-            </span>
-          ) : null}
-          <div className="flex justify-end gap-2 border-t border-gray-200 pt-3">
-            <ActionButton type="button" onClick={closeCreate}>
-              Cancel
-            </ActionButton>
-            <ActionButton type="submit" disabled={createMutation.isPending || paymentTermsQuery.isError || !companyId}>
-              {createMutation.isPending ? "Saving..." : "Save"}
-            </ActionButton>
-          </div>
-        </form>
-      </Modal>
       {/* CUR-2: Edit-in-side-drawer (QBO style). Full-page /customers/:id stays reachable by URL. */}
       <CustomerEditDrawer
         open={Boolean(editDrawerCustomer)}

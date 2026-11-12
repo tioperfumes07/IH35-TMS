@@ -17,6 +17,7 @@ import { CappedListNotice } from "../../CappedListNotice";
 import { ListErrorState } from "../../ListErrorState";
 import { useToast } from "../../Toast";
 import type { InlineCreateResult } from "../InlineCreateDrawer";
+import { ApiError } from "../../../api/client";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { customerIsSelectable } from "../../../lib/customer-selectable";
 
@@ -40,7 +41,8 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
     ...emptyCustomerProfileValues(),
     customer_type: fixedCustomerType ?? "",
   }));
-  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"legal_name" | "customer_type" | "email", string>>>({});
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"legal_name" | "customer_type" | "email" | "mc_number", string>>>({});
+  const [formError, setFormError] = useState("");
 
   const customersQuery = useQuery({
     queryKey: ["customers", "inline-create-parents", operatingCompanyId],
@@ -88,6 +90,8 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
       // is invisible if the user clicked Save from further down, and looks like a dead button
       // with no feedback at all. Every required-field code also pushes a toast (same as the
       // catch-all below) so the user always gets a signal, regardless of scroll position.
+      setFormError("");
+      setFieldErrors({});
       const code = (error as Error & { code?: string }).code;
       if (code === "legal_name_required") {
         setFieldErrors({ legal_name: "Legal name is required" });
@@ -104,6 +108,13 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
         pushToast("Email is required", "error");
         return;
       }
+      if (error instanceof ApiError && error.status === 409) {
+        setFormError("Could not save customer.");
+        setFieldErrors({ mc_number: "Already in use" });
+        pushToast("Could not save customer: duplicate customer record.", "error");
+        return;
+      }
+      setFormError("Could not save customer.");
       pushToast(userFacingApiError(error, "Could not save customer."), "error");
     },
   });
@@ -116,18 +127,27 @@ export function NewCustomerDrawerForm({ operatingCompanyId, onCreated, onClose, 
         // INLINE-CREATE-NESTED-FORM: portal un-nests DOM; stopPropagation un-nests React tree.
         event.preventDefault();
         event.stopPropagation();
+        setFormError("");
         setFieldErrors({});
         createMutation.mutate();
       }}
     >
+      {formError ? (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-2 py-1 text-xs text-red-700">
+          {formError}
+        </div>
+      ) : null}
       {fieldErrors.legal_name ? (
-        <span className="block text-xs text-red-700">{fieldErrors.legal_name}</span>
+        <span id="legal_name-error" className="block text-xs text-red-700">{fieldErrors.legal_name}</span>
       ) : null}
       {fieldErrors.customer_type ? (
-        <span className="block text-xs text-red-700">{fieldErrors.customer_type}</span>
+        <span id="customer_type-error" className="block text-xs text-red-700">{fieldErrors.customer_type}</span>
       ) : null}
       {fieldErrors.email ? (
-        <span className="block text-xs text-red-700">{fieldErrors.email}</span>
+        <span id="email-error" className="block text-xs text-red-700">{fieldErrors.email}</span>
+      ) : null}
+      {fieldErrors.mc_number ? (
+        <span id="mc_number-error" className="block text-xs text-red-700">{fieldErrors.mc_number}</span>
       ) : null}
       {paymentTermsQuery.isError ? (
         <ListErrorState

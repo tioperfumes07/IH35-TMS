@@ -65,7 +65,8 @@ const EXACT_ROUTES = new Map([
 ]);
 
 const CHECKS = [
-  { name: "list.view_master_detail / list.create: Customers.tsx real Modal variant=drawer create + ActionButton", file: "apps/frontend/src/pages/Customers.tsx", pattern: /<Modal variant="drawer" open=\{createOpen\}[\s\S]*title="Create Customer"/ },
+  { name: "list.view_master_detail / list.create: Customers.tsx hosts CustomerCreateModal (canonical drawer)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /CustomerCreateModal open onClose=\{closeCreate\}| <CustomerCreateModal open/ },
+  { name: "list.create canonical drawer: CustomerCreateModal Modal variant=drawer title Create Customer", file: "apps/frontend/src/components/customers/CustomerCreateModal.tsx", pattern: /<Modal[\s\S]*variant="drawer"[\s\S]*title="Create Customer"[\s\S]*modalKind="customer-create"/ },
   { name: "list.create door: + Create Customer writes ?create=1 (same proven drawer as Topbar / deep-link)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /const openCreate = \(\) => \{[\s\S]*next\.set\("create", "1"\)[\s\S]*data-testid="customers-create-open"[\s\S]*onClick=\{openCreate\}/ },
   { name: "list.create open is URL-only (CUSTOMER-CREATE-DEAD-CLICK — no dual useState first-click drop)", file: "apps/frontend/src/pages/Customers.tsx", pattern: /const createOpen = searchParams\.get\("create"\) === "1"/ },
   { name: "scenario.customer hop lands on the create drawer, not a second dead + Create click", file: "apps/frontend/src/pages/program/scenario-tracker/registry.ts", pattern: /key: "scenario.customer"[\s\S]{0,500}href: "\/customers\?create=1"/ },

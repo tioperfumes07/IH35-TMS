@@ -706,6 +706,20 @@ export function VendorsPage() {
     setSidebarPage(1);
   }, [search, sortByName, sidebarPageSize, companyId, rosterCategory]);
 
+  // ROUND 8.20 board 10 — Create must not mount legacy chrome/KPI/master-detail under the drawer.
+  if (createOpen) {
+    return (
+      <div
+        className={MASTER_DETAIL.pageShellClass}
+        data-testid="vendors-create-only"
+        data-c05-min-scroll="vendors"
+        data-c06-page="vendors"
+      >
+        <VendorCreateModal open onClose={closeCreate} operatingCompanyId={companyId} />
+      </div>
+    );
+  }
+
   // AUTO-13: honest error state instead of a blank list when the vendors fetch 500s.
   // LST-F9104: also surface inactiveVendorsQuery errors — a failed inactive fetch silently showed
   // "No vendors found." on the Inactive tab instead of an error message (silent no-op).
@@ -909,15 +923,7 @@ export function VendorsPage() {
       >
         {null}
       </MoneyListToolbar>
-      {/* ROUND 8.17 class L — Create drawer must not layer legacy list/master-detail behind it. */}
-      {createOpen ? (
-        <div
-          className="rounded-sm border border-dashed border-gray-300 bg-[#F7F8FA] px-3.5 py-8 text-center text-xs text-gray-600"
-          data-testid="vendors-create-workspace"
-        >
-          Create vendor — complete the drawer. The roster stays behind until you Cancel or Save.
-        </div>
-      ) : viewMode === "list" ? (
+      {viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12) -- same defect as Customers.tsx's identical pattern: "List view" also mounted
         // the master-detail rolodex sidebar's own hand-rolled, non-ParityTable list right next to
@@ -1229,7 +1235,6 @@ export function VendorsPage() {
         }
       />
       )}
-      <VendorCreateModal open={createOpen} onClose={closeCreate} operatingCompanyId={companyId} />
       {/* CUR-2: Edit-in-side-drawer (QBO style). Full-page /vendors/:id stays reachable by URL. */}
       <VendorEditDrawer
         open={Boolean(editVendorId)}

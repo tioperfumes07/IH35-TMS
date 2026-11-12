@@ -11,11 +11,11 @@ describe("partyBoardReturn", () => {
     sessionStorage.clear();
   });
 
-  it("Create from board preserves chip and stamps view+create", () => {
-    const next = partyCreateParams(new URLSearchParams("chip=factored&range=ytd"));
+  it("Create from board preserves chip and stamps create only (no legacy view=detail)", () => {
+    const next = partyCreateParams(new URLSearchParams("chip=factored&range=ytd&view=detail"));
     expect(next.get("chip")).toBe("factored");
     expect(next.get("range")).toBe("ytd");
-    expect(next.get("view")).toBe("detail");
+    expect(next.get("view")).toBeNull();
     expect(next.get("create")).toBe("1");
   });
 

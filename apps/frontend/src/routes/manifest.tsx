@@ -48,10 +48,11 @@ function DriverHubRoute() {
 function PartyListRoute({ kind, children }: { kind: PartyKind; children: ReactNode }) {
   const { selectedCompanyId } = useCompanyContext();
   const [params, setParams] = useSearchParams();
-  // Codex cert: create alone must not wipe board chips — view=detail hosts the create modal on the
-  // legacy page, but chip/range stay on the URL. create is NOT a detailActive key by itself after
-  // close (close clears create+view); while create=1, view=detail is also set by onCreate.
-  const detailActive = params.get("view") === "detail" || ["customer", "vendor", "tab", "listTab", "category"].some((k) => params.has(k));
+  // ROUND 8.20 boards 9/10: create=1 overlays the approved Regular board. Do NOT force view=detail
+  // (that mounted legacy Customers/Vendors master-detail under the drawer). chip/range stay on URL.
+  const createOpen = params.get("create") === "1";
+  const detailActive =
+    params.get("view") === "detail" || ["customer", "vendor", "tab", "listTab", "category"].some((k) => params.has(k));
   const setDetail = (on: boolean) =>
     setParams(
       (prev) => {
@@ -72,10 +73,20 @@ function PartyListRoute({ kind, children }: { kind: PartyKind; children: ReactNo
       detail={children}
       detailActive={detailActive}
       setDetail={setDetail}
+      createOpen={createOpen}
+      onCloseCreate={() =>
+        setParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("create");
+          // Drop leftover view=detail from pre-8.20 create URLs so Close returns to Regular board.
+          next.delete("view");
+          return next;
+        }, { replace: true })
+      }
       onCreate={() =>
         setParams((prev) => {
           const next = new URLSearchParams(prev);
-          next.set("view", "detail");
+          next.delete("view");
           next.set("create", "1");
           return next;
         })
