@@ -7,7 +7,7 @@ const requireAuthState = { allowed: true };
 const queryMock = vi.fn(async (sql: string, values?: unknown[]) => {
   if (sql.includes("SET LOCAL app.operating_company_id")) return { rows: [] };
 
-  if (sql.includes("FROM insurance.payment_schedule") && sql.includes("ORDER BY due_date ASC")) {
+  if (sql.includes("FROM insurance.payment_schedule") && sql.includes("ORDER BY ps.due_date ASC")) {
     return {
       rows: [
         {
