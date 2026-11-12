@@ -32,6 +32,8 @@ export type FuelCandidateTruck = {
   distance_m: number | null;
   minutes_off: number | null;
   distance_mi: number | null;
+  /** Telematics assignment driver at the fill moment (EntityLink FK). */
+  driver_id: string | null;
   samsara_driver: string | null;
   odometer: number | null;
   /** LEAD 443.258-A: ALWAYS present — the truck's load at the pump moment, or null when it had none. Never omitted. */
@@ -81,6 +83,7 @@ export function normalizeCandidate(raw: unknown): FuelCandidateTruck {
     distance_m: distanceM,
     minutes_off: num(c.minutes_off ?? c.gps_minutes_off),
     distance_mi: num(c.distance_mi ?? c.gps_distance_mi) ?? (distanceM != null ? Math.round((distanceM / 1609.344) * 100) / 100 : null),
+    driver_id: str(c.driver_id),
     samsara_driver: str(c.samsara_driver),
     odometer: num(c.odometer),
     load,
@@ -255,11 +258,13 @@ async function enrichCandidate(
   moment: string | null
 ): Promise<FuelCandidateTruck> {
   let samsara: string | null = null;
+  let driverId: string | null = null;
   let odo: number | null = null;
   if (moment) {
     const drv = (
-      await client.query<{ name: string | null }>(
-        `SELECT nullif(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS name
+      await client.query<{ driver_id: string | null; name: string | null }>(
+        `SELECT d.id::text AS driver_id,
+                nullif(trim(concat_ws(' ', d.first_name, d.last_name)), '') AS name
            FROM telematics.vehicle_driver_assignments vda
            JOIN mdata.drivers d ON d.id = vda.driver_id
           WHERE vda.unit_id = $1::uuid
@@ -271,6 +276,7 @@ async function enrichCandidate(
       )
     ).rows[0];
     samsara = drv?.name ?? null;
+    driverId = drv?.driver_id ?? null;
     const od = (
       await client.query<{ odo: string | null }>(
         // E9: the column is odometer_mi (202606211400_vehicle_location_odometer.sql); the meters column the old read named never existed, so every
@@ -304,6 +310,7 @@ async function enrichCandidate(
     distance_m: c.distance_m,
     minutes_off: c.minutes_off,
     distance_mi: c.distance_m != null ? Math.round((c.distance_m / 1609.344) * 100) / 100 : null,
+    driver_id: driverId,
     samsara_driver: samsara,
     odometer: odo,
     load,

@@ -105,7 +105,12 @@ function candidateColumns(
       label: "Driver",
       sortable: true,
       sortValue: (c) => c.samsara_driver ?? "",
-      render: (c) => c.samsara_driver ?? "—",
+      render: (c) =>
+        c.driver_id ? (
+          <EntityLink kind="driver" id={c.driver_id} label={entityLabel(c.samsara_driver, c.driver_id, "Driver")} onClick={stop} />
+        ) : (
+          c.samsara_driver ?? "—"
+        ),
     },
     {
       key: "odometer",
