@@ -103,7 +103,12 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   // V2 — board overview omits Suggested category (300px expander); keep it on vendor detail via View all.
   const cols: Array<PartyCol<VendorRow>> = [
-    { key: "name", label: "Vendor", sort: (r) => r.name, cell: (r) => r.name },
+    {
+      key: "name",
+      label: "Vendor",
+      sort: (r) => r.name,
+      cell: (r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} />,
+    },
     { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
     {
       key: "txns", label: "Transactions", num: true, width: 100, sort: (r) => r.txns,
