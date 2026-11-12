@@ -1,7 +1,9 @@
 import { useMemo, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { BackButton } from "../../components/shared/BackButton";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type SubNavItem = { label: string; to: string };
 
@@ -20,6 +22,7 @@ function activeHrefFor(pathname: string, search: string, items: SubNavItem[]): s
 /**
  * ROUND 443.326 — Fuel module chrome matching SettlementsSubNavWrapper:
  * breadcrumb + title + HoverDropdownNav. Replaces PageHeader + NavyPageSubNav extract theater.
+ * ROUND 8.17 — BackButton + breadcrumb Fuel link consume `ret` (History reverse from By-truck).
  */
 export function FuelPlannerBoardChrome({
   title,
@@ -35,9 +38,14 @@ export function FuelPlannerBoardChrome({
   subnavItems: SubNavItem[];
 }) {
   const { pathname, search } = useLocation();
+  const [searchParams] = useSearchParams();
+  const structuralParent = backHref ?? "/fuel";
+  const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
+  // Show Back on History / By-truck / non-home tabs, and whenever `ret` restores a drill origin.
+  const showBack = pathname !== "/fuel" || resolvedBack !== structuralParent;
   const breadcrumb =
-    backHref && pathname !== backHref
-      ? [{ label: "Fuel", href: backHref }, { label: title }]
+    showBack
+      ? [{ label: "Fuel", href: resolvedBack }, { label: title }]
       : [{ label: title }];
 
   const navItems = useMemo<NavItem[]>(
@@ -53,6 +61,11 @@ export function FuelPlannerBoardChrome({
     <div className="space-y-3" data-fuel-board-chrome="1" data-testid="fuel-board-chrome">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
+          {showBack ? (
+            <div data-testid="fuel-board-back">
+              <BackButton fallbackTo={structuralParent} />
+            </div>
+          ) : null}
           <div data-testid="fuel-breadcrumb">
             <Breadcrumb items={breadcrumb} />
           </div>

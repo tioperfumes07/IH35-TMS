@@ -3,8 +3,8 @@
  * ROUND 443.326 / 8.17 class L — KPI period via MoneyListToolbar + ParityTable + FuelBoardSection.
  * Seven Fuel.dc.html columns: graphic · Unit(+make/model) · Spend · $ · Gallons · $/gal · Fills · Loads.
  */
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useCallback, useMemo, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -14,6 +14,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatMoneyCents } from "../../../lib/formatMoney";
 import { formatQuantityTable, formatUsdRateTable } from "../../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../../design/qbo-parity";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { listMaintenanceVehicles } from "../../../api/maintenance";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
@@ -53,8 +54,23 @@ export function FuelDieselByTruckPanel({
     if (onPeriodChange) onPeriodChange(next);
     else setPeriodLocal(next);
   };
-  const [search, setSearch] = useState("");
+  // ROUND 8.17 — typed search lives in `?q=` so Back/`ret` restores the cohort after unmount.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") ?? "";
+  const setSearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value.trim()) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const range = fuelBoardPeriodRange(period);
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
 
   const aggQuery = useQuery({
     queryKey: ["fuel", "board", "diesel-by-truck", companyId, range.from, range.to],
@@ -97,11 +113,16 @@ export function FuelDieselByTruckPanel({
     return maxRows != null ? filtered.slice(0, maxRows) : filtered;
   }, [aggQuery.data?.rows, makeModelByUnitId, maxRows, search]);
 
-  // ROUND 8.17 class S — same contract as Fuel Home: period fuel transactions for this unit (never unit profile).
-  const historyHref = (unitId: string | null) =>
-    unitId
-      ? `/fuel/history?unit_id=${encodeURIComponent(unitId)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
-      : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+  // ROUND 8.17 class S — period fuel txs for this unit + `ret` so History Back restores By-truck/Home.
+  const historyHref = useCallback(
+    (unitId: string | null) => {
+      const target = unitId
+        ? `/fuel/history?unit_id=${encodeURIComponent(unitId)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
+        : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+      return withReturnContext(target, originHref);
+    },
+    [originHref, range.from, range.to],
+  );
 
   const columns = useMemo<Array<ParityColumn<DieselRow>>>(
     () => [
@@ -231,7 +252,7 @@ export function FuelDieselByTruckPanel({
         ),
       },
     ],
-    [makeModelByUnitId, range.from, range.to, rows],
+    [historyHref, makeModelByUnitId, range.from, range.to, rows],
   );
 
   return (

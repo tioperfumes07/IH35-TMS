@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "react-router-dom";
 import { countOpenFuelAssignmentQuestions } from "../../../api/fuelAssignmentQuestions";
 import { getFuelSpendSummary } from "../../../api/fuelPlanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { formatQuantityTable, formatUsd, formatUsdRateTable } from "../../../lib/money";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { fetchDieselByTruckAggregate } from "../fuelDieselByTruck";
 import { fuelBoardPeriodRange, type FuelBoardPeriodId } from "../fuelBoardPeriod";
 
@@ -12,7 +14,17 @@ type Props = {
 };
 
 export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
   const range = fuelBoardPeriodRange(period);
+  const historyPeriod = withReturnContext(
+    `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`,
+    originHref,
+  );
+  const historyUnlinked = withReturnContext(
+    `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}&unlinked=1`,
+    originHref,
+  );
   const aggQuery = useQuery({
     queryKey: ["fuel", "board", "diesel-agg", companyId, range.from, range.to],
     queryFn: () => fetchDieselByTruckAggregate(companyId, range.from, range.to),
@@ -66,21 +78,21 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         value={spendValue}
         sub={spendSub}
         testId="fuel-board-kpi-diesel-spend"
-        href={`/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`}
+        href={historyPeriod}
       />
       <V3KpiTile
         label="Gallons"
         value={gallonsValue}
         sub=""
         testId="fuel-board-kpi-gallons"
-        href={`/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`}
+        href={historyPeriod}
       />
       <V3KpiTile
         label="Avg $/gal"
         value={avgValue}
         sub=""
         testId="fuel-board-kpi-avg-gal"
-        href={`/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`}
+        href={historyPeriod}
       />
       <V3KpiTile
         label="Fills without a load"
@@ -89,14 +101,14 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         tone={noLoadTone as "green" | "ink"}
         testId="fuel-board-kpi-no-load"
         // ROUND 8.17 class S — no-load opens the period's unlinked fills only (never all history).
-        href={`/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}&unlinked=1`}
+        href={historyUnlinked}
       />
       <V3KpiTile
         label="Open questions"
         value={openValue}
         sub="attribution pop-up"
         testId="fuel-board-kpi-open-questions"
-        href="/fuel/questions"
+        href={withReturnContext("/fuel/questions", originHref)}
       />
     </div>
   );

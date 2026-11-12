@@ -118,7 +118,19 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
     { value: "with_je", label: "Has JE" },
   ] as const;
   const [showFilter, setShowFilter] = useState<string[]>([]);
-  const [historySearch, setHistorySearch] = useState("");
+  // ROUND 8.17 — History typed search in `?q=` so transaction_id drill + Back restores cohort.
+  const historySearch = searchParams.get("q") ?? "";
+  const setHistorySearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value.trim()) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const includeVoidedFuel = showFilter.includes("voided");
   useEffect(() => {
     actionGenerationRef.current += 1;
