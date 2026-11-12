@@ -55,8 +55,8 @@ const tourLabel = (r: TourListRow) => {
   if (did && !/^S-\d{4}-\d+/i.test(did) && did.toLowerCase() !== "open" && did.toLowerCase() !== "pending") {
     return did;
   }
-  // ROUND 8.17 residual — open/presettlement without a minted number reads PENDING (never a bare dash tile).
-  if (r.is_open || r.is_presettlement === true) return "PENDING";
+  // ROUND 8.17 residual — TourListRow has is_open (not is_presettlement); open + no AlwaysTrack → PENDING.
+  if (r.is_open) return "PENDING";
   return "No number";
 };
 
