@@ -64,7 +64,9 @@ export function assertFactoringHome(src) {
   //    tile is templated (`key={bucket}`), so match by its sibling markers
   //    (Total Records / Total Balance) plus a scan of the whole Aging block
   //    for any remaining `rounded-sm border border-gray-200 p-2 text-center`.
-  const agingBlockMatch = /Aging Report — as of[\s\S]{0,2000}?factoring-aging-total-balance/.exec(src);
+  // Window 2000→4500 (2026-11-11): Aging header now carries Invoice/Purchase/Fund Date toggle
+  // beside Summary/Detail before the summary strip — same tiles, more header chrome to scan past.
+  const agingBlockMatch = /Aging Report — as of[\s\S]{0,4500}?factoring-aging-total-balance/.exec(src);
   if (!agingBlockMatch) {
     errors.push("Aging Report block not found by anchor text — structure changed, guard needs updating.");
   } else {
