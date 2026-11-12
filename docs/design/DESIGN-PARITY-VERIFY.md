@@ -2,6 +2,12 @@
 
 ## Fresh verification — 2026-11-11 22:16–22:22 ET
 
+### Certification pass — Maintenance In Shop / ShopBays, 22:53 ET
+
+Measured CSS1440x900. PASS controls: In Shop URL retains `status=in-shop`; selected navigation visible; four bay articles render; no Home recent-history panels on In Shop; Check a truck in opens `/maintenance/arriving-soon`; In Shop link returns to all four bays. The arrival page has an explicit empty queue; no check-in, bay move, work-order create or other write was invoked. Occupied-bay status/progress/release and source correctness remain UNVERIFIED against real populated records; empty UI is not evidence that the backend population is truly zero. Full boards23/45 remain OPEN, not certified. Arrival page still mounts Home history panels; owned isolation repair remains local pending release gates. Screenshot private in audit chat.
+
+Certification dispatch delivered to Cursor/Lead with required per-board proof fields: https://github.com/tioperfumes07/IH35-TMS/pull/28932#issuecomment-6813891026. CC-1 coder directly notified for Legal void-route and same-company FK gates. Frontend #28924 deploy failed; #28929 building/#28932 queued at last check, so no new deployed acceptance.
+
 ### Customers continuation — read-only 1440x900
 
 Bounded PASS: nine overview column labels/order, six KPI labels, five chips, Factored chip reduces91→38 records, customer detail and canonical create form open. FAIL C-return: detail Back drops `chip=factored` and returns91 records (`CustomerDetail.tsx:1045`). FAIL C-create-return: opening then closing Create Customer leaves `/customers?view=detail` and the legacy master-detail page instead of the originating approved board. `routes/manifest.tsx:53` sets detail+create; `Customers.tsx:650` clears only create; `PartyBoard.tsx:232` retains legacy page. Preserve originating board/query state and add behavioral round-trip tests. No form fields typed, no Save, no production mutation. Full customer subtabs and financial correctness remain UNVERIFIED.
