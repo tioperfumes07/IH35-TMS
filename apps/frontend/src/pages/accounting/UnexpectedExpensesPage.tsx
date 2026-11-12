@@ -1,21 +1,23 @@
 /**
- * ROUND 443.267 / 443.280 — Accounting › Unexpected expenses (board-faithful, BoardSection).
- * Board: 10-22-2026-LEAD-MOD-DESIGN-V3-Accounting-Unexpected.dc.html
+ * ROUND 443.267 / 443.280 / 8.20 — Accounting › Unexpected expenses (board-faithful, BoardSection).
+ * Board: docs/design/v3/Accounting-Unexpected.dc.html
  * Live pending bank debit candidates (shop / tire / tow / fine / lumper / medical).
- * Link → Banking For-review with txn_id. No mock rows.
+ * Link → Banking Transactions Match drawer with txn_id + ret. No mock rows.
  */
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getUnexpectedExpenses, type UnexpectedCandidate } from "../../api/unexpectedExpenses";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 function mmDd(iso: string): string {
   const [, m, d] = iso.split("-");
@@ -29,8 +31,6 @@ function formatPlainDollars(cents: number): string {
   });
 }
 
-
-
 function PayeeCell({ row }: { row: UnexpectedCandidate }) {
   if (row.vendor_id) {
     return <EntityLink kind="vendor" id={row.vendor_id} label={row.payee_display} />;
@@ -38,17 +38,12 @@ function PayeeCell({ row }: { row: UnexpectedCandidate }) {
   return <span>{row.payee_display}</span>;
 }
 
-function TruckWoCell({ row }: { row: UnexpectedCandidate }) {
-  if (row.work_order_id && row.work_order_display_id) {
-    return <EntityLink kind="work_order" id={row.work_order_id} label={row.work_order_display_id} />;
-  }
-  if (row.unit_id && row.unit_number) {
-    return <EntityLink kind="unit" id={row.unit_id} label={row.unit_number} />;
-  }
+/** Accounting-Unexpected.dc.html — always-visible Link → Banking Match drawer (never Truck/WO substitute). */
+function LinkCell({ row, originHref }: { row: UnexpectedCandidate; originHref: string }) {
+  const target = `/banking/transactions?txn_id=${encodeURIComponent(row.id)}&review=for_review`;
   return (
     <Link
-      // ROUND 8.17 class R residual — Banking opens the transaction drawer on the Transactions tab, not Home.
-      to={`/banking/transactions?txn_id=${encodeURIComponent(row.id)}`}
+      to={withReturnContext(target, originHref)}
       style={{ color: V3.link, fontWeight: 500, textDecoration: "none" }}
       data-testid={`unexpected-link-${row.id}`}
     >
@@ -91,6 +86,8 @@ export function UnexpectedExpensesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
 
   const query = useQuery({
     queryKey: ["accounting", "unexpected-expenses", companyId],
@@ -109,7 +106,9 @@ export function UnexpectedExpensesPage() {
     return kpis.duplicate_amounts_cents.map((c) => `$${formatPlainDollars(c)}`).join(" - ");
   }, [kpis]);
 
-  const goBanking = () => navigate("/banking?type=uncategorized");
+  // ROUND 8.20 board 2 — View all opens Banking Transactions for-review (not Home accounts).
+  const goBanking = () =>
+    navigate(withReturnContext("/banking/transactions?type=uncategorized&review=for_review", originHref));
 
   if (!companyId) {
     return (
@@ -124,17 +123,13 @@ export function UnexpectedExpensesPage() {
   return (
     <AccountingSubNavWrapper
       title="Unexpected expenses"
-      subtitle="Bills, expenses, invoices, settlements & transaction review"
-      crumbs={[]}
+      subtitle="Pending bank debits that look like shop / tire / tow / fine / lumper / medical — confirm each line."
     >
       <div
-        style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: V3.font }}
+        className="space-y-3"
         data-testid="unexpected-expenses-page"
+        style={{ fontFamily: V3.font }}
       >
-        {!companyId ? (
-          <p style={{ fontSize: 12, color: V3.red }}>Select an operating company.</p>
-        ) : null}
-
         {query.isError ? (
           <p style={{ fontSize: 12, color: V3.red }} data-testid="unexpected-error">
             Could not load unexpected expenses.
@@ -152,9 +147,7 @@ export function UnexpectedExpensesPage() {
           <V3KpiTile
             label={`${report?.month_label ?? "Month"} so far`}
             value={
-              query.isLoading || !kpis
-                ? "—"
-                : formatUsdCents(kpis.month_total_cents)
+              query.isLoading || !kpis ? "—" : formatUsdCents(kpis.month_total_cents)
             }
             sub={kpis?.month_sub ?? (query.isLoading ? "Loading…" : "0 shop / tire bank lines")}
             testId="unexpected-kpi-month"
@@ -212,18 +205,54 @@ export function UnexpectedExpensesPage() {
               rowTestId={(row) => `unexpected-row-${row.id}`}
               emptyText="No unexpected bank lines this month."
               columns={[
-                { key: "transaction_date", label: "Date", sortable: true, sortValue: (row) => row.transaction_date, render: (row) => mmDd(row.transaction_date) },
+                {
+                  key: "transaction_date",
+                  label: "Date",
+                  sortable: true,
+                  sortValue: (row) => row.transaction_date,
+                  render: (row) => mmDd(row.transaction_date),
+                },
                 { key: "payee", label: "Payee", sortable: false, render: (row) => <PayeeCell row={row} /> },
-                { key: "kind_label", label: "Kind", sortable: true, sortValue: (row) => row.kind_label, render: (row) => row.kind_label },
-                { key: "amount_cents", label: "Amount", sortable: true, kind: "money", sortValue: (row) => row.amount_cents, render: (row) => formatPlainDollars(row.amount_cents) },
+                {
+                  key: "kind_label",
+                  label: "Kind",
+                  sortable: true,
+                  sortValue: (row) => row.kind_label,
+                  render: (row) => row.kind_label,
+                },
+                {
+                  key: "amount_cents",
+                  label: "Amount",
+                  sortable: true,
+                  kind: "money",
+                  sortValue: (row) => row.amount_cents,
+                  // ROUND 8.20 board 2 — amount opens the bank transaction (Match drawer via EntityLink).
+                  render: (row) => (
+                    <MoneyCell
+                      cents={row.amount_cents}
+                      drill={{ entity: { kind: "bank_transaction", id: row.id } }}
+                    />
+                  ),
+                },
                 { key: "flag", label: "Flag", sortable: false, render: (row) => <FlagCell flag={row.flag} /> },
-                { key: "truck_wo", label: "Truck / WO", sortable: false, render: (row) => <TruckWoCell row={row} /> },
+                {
+                  key: "link",
+                  label: "",
+                  sortable: false,
+                  render: (row) => <LinkCell row={row} originHref={originHref} />,
+                },
               ]}
               footerCells={
                 candidates.length > 0
                   ? {
-                      transaction_date: <span className="font-semibold" data-testid="unexpected-total-row">Total</span>,
-                      amount_cents: <span className="font-semibold">{formatPlainDollars(kpis?.month_total_cents ?? 0)}</span>,
+                      transaction_date: (
+                        <span className="font-semibold" data-testid="unexpected-total-row">
+                          Total
+                        </span>
+                      ),
+                      amount_cents: (
+                        <span className="font-semibold">{formatPlainDollars(kpis?.month_total_cents ?? 0)}</span>
+                      ),
                     }
                   : undefined
               }
@@ -254,7 +283,14 @@ export function UnexpectedExpensesPage() {
               rowTestId={(row) => `unexpected-kind-${row.kind}`}
               columns={[
                 { key: "label", label: "Kind", sortable: true, sortValue: (row) => row.label, render: (row) => row.label },
-                { key: "amount_cents", label: "Amount", sortable: true, kind: "money", sortValue: (row) => row.amount_cents ?? -1, render: (row) => (row.amount_cents == null ? "—" : formatPlainDollars(row.amount_cents)) },
+                {
+                  key: "amount_cents",
+                  label: "Amount",
+                  sortable: true,
+                  kind: "money",
+                  sortValue: (row) => row.amount_cents ?? -1,
+                  render: (row) => (row.amount_cents == null ? "—" : formatPlainDollars(row.amount_cents)),
+                },
               ]}
             />
           </BoardSection>

@@ -719,8 +719,15 @@ export function BankingTransactionsDesignView({
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});
   const [printExportMenuOpen, setPrintExportMenuOpen] = useState(false);
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
+  // HELD financial-actions wiring (banking Categorize panel): the transaction whose reconcile Match
+  // drawer is currently open — declared before the deep-link effect so ?txn_id= can open it.
+  const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
   useEffect(() => {
-    if (highlightTransactionId) setExpandedTxId(highlightTransactionId);
+    if (!highlightTransactionId) return;
+    // ROUND 8.20 board 2 — Unexpected Link → Banking must expand the row AND open the Match drawer
+    // (STATUS FAIL: txn_id landed on Banking with no target transaction drawer).
+    setExpandedTxId(highlightTransactionId);
+    setMatchDrawerTxId(highlightTransactionId);
   }, [highlightTransactionId]);
   const [actionMenuTxId, setActionMenuTxId] = useState<string | null>(null);
   // B.1 — bulk match suggestions (exact cents, +-5d, expense/bill) keyed by bank_transaction_id.
@@ -739,10 +746,8 @@ export function BankingTransactionsDesignView({
   const [currentPage, setCurrentPage] = useState(1);
   // BANK-SPLIT-1 — the transaction currently open in the Split-transaction popup (real, persisted; HELD).
   const [splitTx, setSplitTx] = useState<PlaidBankTransaction | null>(null);
-  // HELD financial-actions wiring (banking Categorize panel): the transaction whose reconcile Match
-  // drawer / Transfer modal / CC Payment modal is currently open. Reuses the EXISTING, already-gated
-  // posters (acceptBankReconMatch, createTransfer, recordCcPayment) — no new GL math.
-  const [matchDrawerTxId, setMatchDrawerTxId] = useState<string | null>(null);
+  // MatchDrawer state lives above with the ?txn_id= deep-link effect. Transfer / CC / Loan modals below
+  // reuse the EXISTING, already-gated posters (acceptBankReconMatch, createTransfer, recordCcPayment).
   // ROUND 16.18 (owner, 2026-09-06 23:0xZ): "in match candidats and wanting to mtach there is no
   // match button there" — the inline candidates register (buildMatchCandidateColumns) had zero
   // action column; confirming a match required opening the separate MatchDrawer. This wires the
