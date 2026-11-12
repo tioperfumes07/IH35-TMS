@@ -266,6 +266,8 @@ export function getFuelTransactions(
     vendor_id?: string;
     from?: string;
     to?: string;
+    /** G18 worklist — fills with load_id IS NULL (no-load KPI / backlog). */
+    unlinked?: boolean;
     /** R-102-B item 5 — default false (hide voided), matching every sibling family. */
     include_voided?: boolean;
   } = {}
@@ -281,6 +283,7 @@ export function getFuelTransactions(
   if (params.vendor_id) search.set("vendor_id", params.vendor_id);
   if (params.from) search.set("from", params.from);
   if (params.to) search.set("to", params.to);
+  if (params.unlinked) search.set("unlinked", "true");
   if (params.include_voided) search.set("include_voided", "true");
   return apiRequest<FuelTransactionListResponse>(`/api/v1/fuel/transactions?${search.toString()}`);
 }

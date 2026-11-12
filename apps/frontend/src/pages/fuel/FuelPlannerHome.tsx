@@ -125,6 +125,10 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   // ACCT-F5725: accounting fuel_event source ids are canonical fuel_transactions.id values.
   // Keep this exact-id deep link independent from the operator's staged entity filters.
   const deepLinkTransactionId = searchParams.get("transaction_id") ?? undefined;
+  // ROUND 8.17 class S — KPI drills carry period + unlinked (no-load) cohort in the URL.
+  const deepLinkFrom = searchParams.get("from") ?? undefined;
+  const deepLinkTo = searchParams.get("to") ?? undefined;
+  const deepLinkUnlinked = searchParams.get("unlinked") === "1" || searchParams.get("unlinked") === "true";
   const [driverPickerId, setDriverPickerId] = useState("");
   const [unitPickerId, setUnitPickerId] = useState("");
   const [loadPickerId, setLoadPickerId] = useState("");
@@ -283,6 +287,9 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       effectiveTrailerId,
       deepLinkVendorId,
       deepLinkTransactionId,
+      deepLinkFrom,
+      deepLinkTo,
+      deepLinkUnlinked,
       fuelHistoryPage,
       includeVoidedFuel,
     ],
@@ -296,6 +303,9 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         trailer_id: effectiveTrailerId,
         vendor_id: deepLinkVendorId,
         transaction_id: deepLinkTransactionId,
+        from: deepLinkFrom,
+        to: deepLinkTo,
+        unlinked: deepLinkUnlinked,
         include_voided: includeVoidedFuel,
       }),
     enabled: Boolean(companyId) && tab === "history",
@@ -305,7 +315,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const fuelHistoryPageCount = Math.max(1, Math.ceil(fuelHistoryTotal / fuelHistoryPageSize));
   useEffect(() => {
     setFuelHistoryPage(1);
-  }, [companyId, effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId, deepLinkVendorId, deepLinkTransactionId]);
+  }, [companyId, effectiveDriverId, effectiveUnitId, effectiveLoadId, effectiveTrailerId, deepLinkVendorId, deepLinkTransactionId, deepLinkFrom, deepLinkTo, deepLinkUnlinked]);
   useEffect(() => {
     if (fuelHistoryPage > fuelHistoryPageCount) setFuelHistoryPage(fuelHistoryPageCount);
   }, [fuelHistoryPage, fuelHistoryPageCount]);

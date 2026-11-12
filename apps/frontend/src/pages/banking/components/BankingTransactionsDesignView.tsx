@@ -104,6 +104,10 @@ type Props = {
   // Banking Home "Uncategorized" KPI tile — can land on this tab pre-filtered instead of losing the
   // filter on tab switch. Defaults to "all" (unfiltered), matching prior behavior.
   initialTransactionType?: string;
+  /** ROUND 8.17 class S — Money In/Out KPI cohort dates + review bucket. */
+  initialDateFrom?: string;
+  initialDateTo?: string;
+  initialReviewTab?: "for_review" | "categorized" | "excluded";
   /** Deep-link from EntityLink bank_transaction — expand the matching row when present in the loaded page. */
   highlightTransactionId?: string | null;
 };
@@ -666,6 +670,9 @@ export function BankingTransactionsDesignView({
   onManageConnections,
   onDataChanged,
   initialTransactionType,
+  initialDateFrom,
+  initialDateTo,
+  initialReviewTab,
   highlightTransactionId,
 }: Props) {
   const { pushToast } = useToast();
@@ -678,7 +685,7 @@ export function BankingTransactionsDesignView({
   // matchCandidatesQuery runs) and scrolls this pane into view, surfacing the ranked candidates that were
   // previously only reachable by manually expanding the row.
   const matchPaneRef = useRef<HTMLDivElement | null>(null);
-  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>("for_review");
+  const [activeReviewTab, setActiveReviewTab] = useState<ReviewTabId>(initialReviewTab ?? "for_review");
   const [descriptionFilter, setDescriptionFilter] = useState("");
   const [amountFilter, setAmountFilter] = useState<AmountFilter>("all");
   // B.2 — multi-select: an empty array means "All transaction types" (no filter, same meaning the
@@ -696,10 +703,17 @@ export function BankingTransactionsDesignView({
       setSelectedTransactionTypes([]);
     }
   }, [initialTransactionType]);
+  useEffect(() => {
+    if (initialReviewTab) setActiveReviewTab(initialReviewTab);
+  }, [initialReviewTab]);
   const [categorizeBy, setCategorizeBy] = useState<CategorizeBy>("category");
   const [showDateFilterMenu, setShowDateFilterMenu] = useState(false);
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
+  const [dateFrom, setDateFrom] = useState(initialDateFrom ?? "");
+  const [dateTo, setDateTo] = useState(initialDateTo ?? "");
+  useEffect(() => {
+    if (initialDateFrom != null) setDateFrom(initialDateFrom);
+    if (initialDateTo != null) setDateTo(initialDateTo);
+  }, [initialDateFrom, initialDateTo]);
   const [collapsedAllGroupings, setCollapsedAllGroupings] = useState(false);
   const [printDialogOpen, setPrintDialogOpen] = useState(false);
   const [collapsedMonths, setCollapsedMonths] = useState<Record<string, boolean>>({});

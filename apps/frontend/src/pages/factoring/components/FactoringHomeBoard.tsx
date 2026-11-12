@@ -155,11 +155,12 @@ function modeWireFeeCents(purchases: FactoringPurchaseListRow[]): number | null 
 }
 
 function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[] }) {
+  const navigate = useNavigate();
+  // ROUND 8.17 class S — ALL posted periods (no silent last-16), value axis, bar → purchase source.
   const bars = useMemo(() => {
     const rows = [...purchases]
       .filter((p) => p.status === "posted")
-      .sort((a, b) => String(a.wire_date ?? a.purchase_date).localeCompare(String(b.wire_date ?? b.purchase_date)))
-      .slice(-16);
+      .sort((a, b) => String(a.wire_date ?? a.purchase_date).localeCompare(String(b.wire_date ?? b.purchase_date)));
     return rows.map((p) => {
       const net = cents(p.net_to_company_cents);
       const kept =
@@ -176,6 +177,7 @@ function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[]
 
   const max = Math.max(1, ...bars.map((b) => b.total));
   const chartH = 160;
+  const axisTicks = [0, 0.5, 1].map((f) => Math.round(max * f));
 
   if (bars.length === 0) {
     return (
@@ -187,32 +189,69 @@ function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[]
 
   return (
     <div data-testid="factoring-home-purchase-chart" style={{ padding: "8px 4px 4px" }}>
-      <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: chartH, borderBottom: `1px solid ${V3.border}` }}>
-        {bars.map((b) => {
-          const netH = Math.max(2, Math.round((b.net / max) * (chartH - 24)));
-          const keptH = Math.max(b.kept > 0 ? 2 : 0, Math.round((b.kept / max) * (chartH - 24)));
-          return (
-            <div
-              key={b.id}
-              title={`${b.label}: net ${formatUsdCents(b.net)} · kept ${formatUsdCents(b.kept)}`}
-              style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", gap: 0 }}
-            >
-              <div style={{ width: "70%", maxWidth: 28, display: "flex", flexDirection: "column-reverse" }}>
-                <div style={{ height: netH, background: V3.shell, borderRadius: "2px 2px 0 0" }} />
-                {keptH > 0 ? (
-                  <div style={{ height: keptH, background: V3.red, borderRadius: "2px 2px 0 0", marginBottom: 1, opacity: 0.7 }} />
-                ) : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-        {bars.map((b) => (
-          <div key={`lbl-${b.id}`} style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 10, color: V3.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            {b.label}
+      <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
+        <div
+          data-testid="factoring-home-purchase-chart-axis"
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            width: 56,
+            height: chartH,
+            fontSize: 10,
+            color: V3.muted,
+            fontVariantNumeric: "tabular-nums",
+          }}
+        >
+          {[...axisTicks].reverse().map((t) => (
+            <span key={t}>{formatUsdCents(t)}</span>
+          ))}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "flex-end", gap: 6, height: chartH, borderBottom: `1px solid ${V3.border}` }}>
+            {bars.map((b) => {
+              const netH = Math.max(2, Math.round((b.net / max) * (chartH - 24)));
+              const keptH = Math.max(b.kept > 0 ? 2 : 0, Math.round((b.kept / max) * (chartH - 24)));
+              return (
+                <button
+                  type="button"
+                  key={b.id}
+                  title={`${b.label}: net ${formatUsdCents(b.net)} · kept ${formatUsdCents(b.kept)} — open purchase`}
+                  data-testid={`factoring-home-purchase-bar-${b.id}`}
+                  onClick={() => navigate(`${FACTORING_TAB_PATH.purchase_report}?purchase_id=${encodeURIComponent(b.id)}`)}
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "flex-end",
+                    gap: 0,
+                    padding: 0,
+                    border: 0,
+                    background: "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  <div style={{ width: "70%", maxWidth: 28, display: "flex", flexDirection: "column-reverse" }}>
+                    <div style={{ height: netH, background: V3.shell, borderRadius: "2px 2px 0 0" }} />
+                    {keptH > 0 ? (
+                      <div style={{ height: keptH, background: V3.red, borderRadius: "2px 2px 0 0", marginBottom: 1, opacity: 0.7 }} />
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
           </div>
-        ))}
+          <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+            {bars.map((b) => (
+              <div key={`lbl-${b.id}`} style={{ flex: 1, minWidth: 0, textAlign: "center", fontSize: 10, color: V3.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {b.label}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       <div style={{ display: "flex", gap: 14, marginTop: 10, fontSize: 11, color: V3.muted }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
@@ -223,6 +262,7 @@ function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[]
           <span style={{ width: 10, height: 10, background: V3.red, borderRadius: 1, opacity: 0.7 }} />
           fee + reserve + wire
         </span>
+        <span data-testid="factoring-home-purchase-chart-count">{bars.length} purchase day(s)</span>
       </div>
     </div>
   );
