@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { countOpenFuelAssignmentQuestions } from "../../../api/fuelAssignmentQuestions";
 import { getFuelSpendSummary } from "../../../api/fuelPlanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -13,7 +12,6 @@ type Props = {
 };
 
 export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
-  const navigate = useNavigate();
   const range = fuelBoardPeriodRange(period);
   const aggQuery = useQuery({
     queryKey: ["fuel", "board", "diesel-agg", companyId, range.from, range.to],
@@ -68,21 +66,21 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         value={spendValue}
         sub={spendSub}
         testId="fuel-board-kpi-diesel-spend"
-        onClick={() => navigate("/fuel/history")}
+        href="/fuel/history"
       />
       <V3KpiTile
         label="Gallons"
         value={gallonsValue}
         sub=""
         testId="fuel-board-kpi-gallons"
-        onClick={() => navigate("/fuel/history")}
+        href="/fuel/history"
       />
       <V3KpiTile
         label="Avg $/gal"
         value={avgValue}
         sub=""
         testId="fuel-board-kpi-avg-gal"
-        onClick={() => navigate("/fuel/history")}
+        href="/fuel/history"
       />
       <V3KpiTile
         label="Fills without a load"
@@ -90,14 +88,14 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         sub={noLoadSub}
         tone={noLoadTone as "green" | "ink"}
         testId="fuel-board-kpi-no-load"
-        onClick={() => navigate("/fuel/history")}
+        href="/fuel/history"
       />
       <V3KpiTile
         label="Open questions"
         value={openValue}
         sub="attribution pop-up"
         testId="fuel-board-kpi-open-questions"
-        onClick={() => navigate("/fuel/questions")}
+        href="/fuel/questions"
       />
     </div>
   );

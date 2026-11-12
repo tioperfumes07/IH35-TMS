@@ -56,12 +56,14 @@ export function SavingsPanel({
           sub="planner compliance savings"
           tone={sourceAvailable && fleetSavings != null && fleetSavings > 0 ? "green" : "ink"}
           testId="fuel-savings-kpi-fleet"
+          href="/fuel"
         />
         <V3KpiTile
           label="Driver savings YTD"
           value={kpiMoney(sourceAvailable, driverSavings)}
           sub="top driver YTD"
           testId="fuel-savings-kpi-driver"
+          href="/fuel"
         />
         <V3KpiTile
           label="Lost savings YTD"
@@ -69,12 +71,14 @@ export function SavingsPanel({
           sub="from non-compliance"
           tone={sourceAvailable && lostSavings != null && lostSavings > 0 ? "red" : "ink"}
           testId="fuel-savings-kpi-lost"
+          href="/fuel"
         />
         <V3KpiTile
           label="Highest saver"
           value={sourceAvailable && topDriverName ? topDriverName : "—"}
           sub={highestSub}
           testId="fuel-savings-kpi-highest"
+          href="/fuel"
         />
       </div>
       {!sourceAvailable ? (
