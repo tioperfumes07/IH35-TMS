@@ -16,6 +16,7 @@ import {
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
+import { tr } from "./perfumeI18n";
 
 type Tab = PerfumeGridView | "lists" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
@@ -30,7 +31,7 @@ function TioLogo() {
   return (
     <span
       role="img"
-      aria-label="TIO Perfumes"
+      aria-label={tr("perfume.desk.1", "TIO Perfumes")}
       className="inline-block h-[44px] w-[67px] shrink-0 text-[#4B5563]"
       style={{ backgroundColor: "currentColor", WebkitMaskImage: `url(${logoUrl})`, maskImage: `url(${logoUrl})`, WebkitMaskSize: "contain", maskSize: "contain", WebkitMaskRepeat: "no-repeat", maskRepeat: "no-repeat" }}
     />
@@ -57,11 +58,11 @@ export default function PerfumeDeskPage() {
       <div className="flex flex-wrap items-center gap-3">
         <TioLogo />
         <div className="min-w-0">
-          <h1 className="text-page-title font-semibold text-[#1F2A44]">TIO Perfumes · Price desk</h1>
-          <div className="text-xs text-gray-500">ScentsX LLC dba TIO Perfumes · owner only · separate from every carrier · never posts to accounting</div>
+          <h1 className="text-page-title font-semibold text-[#1F2A44]">{tr("perfume.desk.2", "TIO Perfumes · Price desk")}</h1>
+          <div className="text-xs text-gray-500">{tr("perfume.desk.3", "ScentsX LLC dba TIO Perfumes · owner only · separate from every carrier · never posts to accounting")}</div>
         </div>
       </div>
-      <nav className="flex flex-wrap gap-1" aria-label="Price desk sections">
+      <nav className="flex flex-wrap gap-1" aria-label={tr("perfume.desk.4", "Price desk sections")}>
         {TABS.map(([k, label]) => (
           <button
             key={k}
@@ -123,7 +124,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         const v = r[c.key];
         if (c.kind === "money") return money(v);
         if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-green-700" : ""}>{pct(v)}</span>;
-        if (c.key === "best_vendor" && r.tied) return <span title="Tied lowest price" className="rounded-sm bg-amber-100 px-1">{String(v)}</span>;
+        if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-amber-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
         return v == null || v === "" ? "—" : String(v);
       },
@@ -167,8 +168,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
               type="search"
               value={q}
               onChange={(e) => { setQ(e.target.value); setPage(1); }}
-              placeholder="Search code, UPC, SKU, brand, name"
-              aria-label="Search items"
+              placeholder={tr("perfume.desk.6", "Search code, UPC, SKU, brand, name")}
+              aria-label={tr("perfume.desk.7", "Search items")}
               className="h-[34px] w-[260px] max-w-full rounded-sm border border-gray-300 px-2 text-xs"
             />
             <Button
@@ -180,18 +181,18 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
                 downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
-              Export to Excel
+              {tr("perfume.desk.8", "Export to Excel")}
             </Button>
           </div>
         }
       />
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-        <span>{total.toLocaleString()} items · page {page} of {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
+        <span>{total.toLocaleString()} {tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
         <span className="flex gap-1">
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(1)}>First</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(page + 1)}>Next</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(pages)}>Last</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(1)}>{tr("perfume.desk.11", "First")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(page - 1)}>{tr("perfume.desk.12", "Previous")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(page + 1)}>{tr("perfume.desk.13", "Next")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(pages)}>{tr("perfume.desk.14", "Last")}</Button>
         </span>
       </div>
     </section>
@@ -211,7 +212,7 @@ function RulesPanel() {
   const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
   const [draft, setDraft] = useState<Partial<PerfumeRules>>({});
   const r = { ...(rules.data ?? {}), ...draft } as PerfumeRules;
-  if (!rules.data) return <div className="text-xs text-gray-500">Loading rules…</div>;
+  if (!rules.data) return <div className="text-xs text-gray-500">{tr("perfume.desk.15", "Loading rules…")}</div>;
   const dollars = (k: keyof PerfumeRules) => (
     <input type="number" step="0.05" min="0" aria-label={String(k)} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
       value={((r[k] as number) / 100).toFixed(2)} onChange={(e) => setDraft({ ...draft, [k]: Math.round(Number(e.target.value) * 100) })} />
@@ -231,30 +232,29 @@ function RulesPanel() {
     ))}</span>
   );
   return (
-    <section className="max-w-[960px] space-y-4 rounded-sm border border-gray-200 bg-white p-3" aria-label="Rules">
+    <section className="max-w-[960px] space-y-4 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.desk.16", "Rules")}>
       <div>
-        <div className="text-section-header">Closed numbers</div>
-        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">Close to {seg(STEPS, r.round_step, (v) => setDraft({ ...draft, round_step: v }))} Direction {seg(DIRS, r.round_dir, (v) => setDraft({ ...draft, round_dir: v }))}</div>
+        <div className="text-section-header">{tr("perfume.desk.17", "Closed numbers")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.18", "Close to")} {seg(STEPS, r.round_step, (v) => setDraft({ ...draft, round_step: v }))} {tr("perfume.desk.19", "Direction")} {seg(DIRS, r.round_dir, (v) => setDraft({ ...draft, round_dir: v }))}</div>
       </div>
       <div>
-        <div className="text-section-header">Vendor cushion (default — each vendor can override in Price lists)</div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">From {dollars("cushion_lo_cents")} to {dollars("cushion_hi_cents")}</div>
+        <div className="text-section-header">{tr("perfume.desk.20", "Vendor cushion (default — each vendor can override in Price lists)")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.21", "From")} {dollars("cushion_lo_cents")} {tr("perfume.desk.22", "to")} {dollars("cushion_hi_cents")}</div>
       </div>
       <div>
-        <div className="text-section-header">Freight per piece (default)</div>
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">From {dollars("freight_lo_cents")} to {dollars("freight_hi_cents")}</div>
+        <div className="text-section-header">{tr("perfume.desk.23", "Freight per piece (default)")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.24", "From")} {dollars("freight_lo_cents")} {tr("perfume.desk.25", "to")} {dollars("freight_hi_cents")}</div>
       </div>
       <div>
-        <div className="text-section-header">What they earn</div>
-        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">Vendors {percent("vendor_earn_pct")}% · Laredo stores {percent("store_earn_pct")}% — every view shows both the margin and the markup reading</div>
+        <div className="text-section-header">{tr("perfume.desk.26", "What they earn")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.27", "Vendors")} {percent("vendor_earn_pct")}{tr("perfume.desk.28", "% · Laredo stores")} {percent("store_earn_pct")}{tr("perfume.desk.29", "% — every view shows both the margin and the markup reading")}</div>
       </div>
       <div className="flex gap-2">
-        <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>Save</Button>
-        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>Cancel</Button>
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>{tr("perfume.desk.30", "Save")}</Button>
+        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>{tr("perfume.desk.31", "Cancel")}</Button>
       </div>
       <div className="text-xs text-gray-600">
-        {vendors.data?.vendors.length ?? 0} vendors · {lists.data?.lists.length ?? 0} price lists on file. My cost (likely) = vendor price − low cushion + high freight;
-        best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.
+        {vendors.data?.vendors.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost (likely) = vendor price − low cushion + high freight; best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
       </div>
     </section>
   );

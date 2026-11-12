@@ -94,15 +94,6 @@ CREATE INDEX IF NOT EXISTS items_loose_key ON perfume.items (loose_key) WHERE me
 CREATE INDEX IF NOT EXISTS items_name_trgm ON perfume.items USING gin (name gin_trgm_ops);
 CREATE UNIQUE INDEX IF NOT EXISTS items_internal_code_uq ON perfume.items (internal_code) WHERE internal_code IS NOT NULL AND merged_into_id IS NULL;
 
--- Many UPCs per item. A UPC belongs to exactly one item.
-CREATE TABLE IF NOT EXISTS perfume.item_upcs (
-  upc text PRIMARY KEY CHECK (upc ~ '^[1-9][0-9]{7,13}$'),
-  item_id uuid NOT NULL REFERENCES perfume.items(id),
-  first_seen_list_id uuid,
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS item_upcs_item ON perfume.item_upcs (item_id);
-
 -- Brand short forms the owner teaches the desk ("CH" → "CAROLINA HERRERA").
 CREATE TABLE IF NOT EXISTS perfume.brand_aliases (
   alias text PRIMARY KEY,
@@ -134,6 +125,15 @@ CREATE TABLE IF NOT EXISTS perfume.price_lists (
   CONSTRAINT price_lists_void_needs_reason CHECK (voided_at IS NULL OR (void_reason IS NOT NULL AND btrim(void_reason) <> ''))
 );
 CREATE INDEX IF NOT EXISTS price_lists_vendor_current ON perfume.price_lists (vendor_id, list_date DESC) WHERE voided_at IS NULL;
+
+-- Many UPCs per item. A UPC belongs to exactly one item.
+CREATE TABLE IF NOT EXISTS perfume.item_upcs (
+  upc text PRIMARY KEY CHECK (upc ~ '^[1-9][0-9]{7,13}$'),
+  item_id uuid NOT NULL REFERENCES perfume.items(id),
+  first_seen_list_id uuid REFERENCES perfume.price_lists(id),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS item_upcs_item ON perfume.item_upcs (item_id);
 
 -- Every priced line, as read, with where it came from and what it matched.
 CREATE TABLE IF NOT EXISTS perfume.price_list_rows (

@@ -1,5 +1,6 @@
 /** PERFUME-DESK — vendors, price lists, and the import engine with its to-the-cent import check. */
 import { useMemo, useState } from "react";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
@@ -11,6 +12,8 @@ import {
   type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
 import { extractRows, FIELDS, findHeaderRow, guessMapping, readAnyFile, type Mapping, type ReadFile } from "./perfumeFileReaders";
+import { tr } from "./perfumeI18n";
+import { ListErrorState } from "../../components/ListErrorState";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "I buy from them"], ["sell", "Laredo store I sell against"], ["both", "Both"]];
@@ -18,12 +21,17 @@ const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "I buy from them"], [
 export function PerfumeListsPanel() {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
   const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
+  // An outage must never look like "no vendors / no lists".
+  const failed = vendors.isError ? vendors : lists.isError ? lists : null;
+  if (failed) {
+    return <ListErrorState title={tr("perfume.lists.loadError", "Couldn't load vendors and price lists")} status={0} message={(failed.error as Error)?.message} onRetry={() => { void vendors.refetch(); void lists.refetch(); }} />;
+  }
   return (
     <div className="space-y-4">
       <ImportCard vendors={vendors.data?.vendors ?? []} />
       <VendorsCard vendors={vendors.data?.vendors ?? []} />
-      <section className="space-y-1" aria-label="Price lists on file">
-        <div className="text-section-header">Price lists on file</div>
+      <section className="space-y-1" aria-label={tr("perfume.lists.1", "Price lists on file")}>
+        <div className="text-section-header">{tr("perfume.lists.2", "Price lists on file")}</div>
         <ParityTable<PerfumeList>
           rows={lists.data?.lists ?? []}
           rowKey={(l) => l.id}
@@ -67,15 +75,15 @@ function VoidListButton({ list }: { list: PerfumeList }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [reason, setReason] = useState<string | null>(null);
-  if (reason == null) return <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => setReason("")}>Void</Button>;
+  if (reason == null) return <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => setReason("")}>{tr("perfume.lists.3", "Void")}</Button>;
   return (
     <span className="flex items-center gap-1">
-      <input aria-label="Reason" placeholder="Reason" value={reason} onChange={(e) => setReason(e.target.value)} className="h-[34px] w-[160px] rounded-sm border border-gray-300 px-2 text-xs" />
+      <input aria-label={tr("perfume.lists.4", "Reason")} placeholder={tr("perfume.lists.5", "Reason")} value={reason} onChange={(e) => setReason(e.target.value)} className="h-[34px] w-[160px] rounded-sm border border-gray-300 px-2 text-xs" />
       <Button type="button" className="h-[34px] px-2 text-xs" disabled={reason.trim().length < 3} onClick={async () => {
         try { await voidPerfumeList(list.id, reason.trim()); await qc.invalidateQueries({ queryKey: ["perfume"] }); pushToast("List voided", "success"); }
         catch (e) { pushToast(userFacingApiError(e, "Not voided"), "error"); }
-      }}>Save</Button>
-      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => setReason(null)}>Close</Button>
+      }}>{tr("perfume.lists.6", "Save")}</Button>
+      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => setReason(null)}>{tr("perfume.lists.7", "Close")}</Button>
     </span>
   );
 }
@@ -88,7 +96,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const [edit, setEdit] = useState<Partial<PerfumeVendor> & { earn?: string } | null>(null);
   const cents = (k: "cushion_lo_cents" | "cushion_hi_cents" | "freight_lo_cents" | "freight_hi_cents", label: string) => (
     <label className="flex flex-col gap-1 text-xs text-gray-600">{label}
-      <input type="number" step="0.05" min="0" placeholder="rule default" className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 tabular-nums"
+      <input type="number" step="0.05" min="0" placeholder={tr("perfume.lists.8", "rule default")} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 tabular-nums"
         value={edit?.[k] == null ? "" : ((edit[k] as number) / 100).toFixed(2)}
         onChange={(e) => setEdit({ ...edit, [k]: e.target.value === "" ? null : Math.round(Number(e.target.value) * 100) })} />
     </label>
@@ -103,17 +111,17 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
     } catch (e) { pushToast(userFacingApiError(e, "Vendor not saved"), "error"); }
   };
   return (
-    <section className="space-y-1" aria-label="Vendors">
+    <section className="space-y-1" aria-label={tr("perfume.lists.9", "Vendors")}>
       <div className="flex items-center justify-between">
-        <div className="text-section-header">Vendors & Laredo stores</div>
-        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ kind: "buy" })}>Add vendor</Button>
+        <div className="text-section-header">{tr("perfume.lists.10", "Vendors & Laredo stores")}</div>
+        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ kind: "buy" })}>{tr("perfume.lists.11", "Add vendor")}</Button>
       </div>
       {edit ? (
         <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white p-2">
-          <label className="flex flex-col gap-1 text-xs text-gray-600">Name
-            <input className="h-[40px] w-[260px] rounded-sm border border-gray-300 px-2" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder="Perfume Center of America (Kanak)" />
+          <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.12", "Name")}
+            <input className="h-[40px] w-[260px] rounded-sm border border-gray-300 px-2" value={edit.name ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={tr("perfume.lists.13", "Perfume Center of America (Kanak)")} />
           </label>
-          <span className="flex flex-col gap-1 text-xs text-gray-600">Kind
+          <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14", "Kind")}
             <span className="flex gap-1">{KINDS.map(([k, l]) => (
               <button key={k} type="button" aria-pressed={edit.kind === k} onClick={() => setEdit({ ...edit, kind: k })}
                 className={`h-[40px] rounded-sm border px-2 ${edit.kind === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white"}`}>{l}</button>
@@ -121,12 +129,12 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           </span>
           {cents("cushion_lo_cents", "Cushion from $")}{cents("cushion_hi_cents", "to $")}
           {cents("freight_lo_cents", "Freight from $")}{cents("freight_hi_cents", "to $")}
-          <label className="flex flex-col gap-1 text-xs text-gray-600">Earns %
-            <input type="number" step="0.5" min="0" max="99" placeholder="rule default" className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2" value={edit.earn ?? (edit.earn_pct ?? "")} onChange={(e) => setEdit({ ...edit, earn: e.target.value })} />
+          <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.15", "Earns %")}
+            <input type="number" step="0.5" min="0" max="99" placeholder={tr("perfume.lists.16", "rule default")} className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2" value={edit.earn ?? (edit.earn_pct ?? "")} onChange={(e) => setEdit({ ...edit, earn: e.target.value })} />
           </label>
-          <label className="flex items-center gap-1 text-xs text-gray-600"><input type="checkbox" checked={Boolean(edit.sells_by_box)} onChange={(e) => setEdit({ ...edit, sells_by_box: e.target.checked })} />Sells by full box only</label>
-          <Button type="button" className="h-[34px] px-3 text-xs" disabled={!edit.name?.trim()} onClick={() => void save()}>Save</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setEdit(null)}>Close</Button>
+          <label className="flex items-center gap-1 text-xs text-gray-600"><input type="checkbox" checked={Boolean(edit.sells_by_box)} onChange={(e) => setEdit({ ...edit, sells_by_box: e.target.checked })} />{tr("perfume.lists.17", "Sells by full box only")}</label>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={!edit.name?.trim()} onClick={() => void save()}>{tr("perfume.lists.18", "Save")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setEdit(null)}>{tr("perfume.lists.19", "Close")}</Button>
         </div>
       ) : null}
       <ParityTable<PerfumeVendor>
@@ -202,26 +210,26 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const fieldOptions = [{ value: "", label: "— none —" }, ...headers.map((h, i) => ({ value: String(i), label: h }))];
 
   return (
-    <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label="Import a price list">
-      <div className="text-section-header">Import a price list</div>
+    <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.lists.20", "Import a price list")}>
+      <div className="text-section-header">{tr("perfume.lists.21", "Import a price list")}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
-        <label className="flex flex-col gap-1 text-gray-600">File (.xlsx · .xls · .csv · text PDF)
+        <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.22", "File (.xlsx · .xls · .csv · text PDF)")}
           <input type="file" accept=".xlsx,.xls,.csv,.pdf" className="h-[40px] text-xs" onChange={(e) => { const f = e.target.files?.[0]; if (f) void open(f); }} />
         </label>
-        <label className="flex flex-col gap-1 text-gray-600">Vendor
-          <Combobox ariaLabel="Vendor" size="sm" value={vendorId} onChange={setVendorId} placeholder="Pick vendor"
+        <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.23", "Vendor")}
+          <Combobox ariaLabel="Vendor" size="sm" value={vendorId} onChange={setVendorId} placeholder={tr("perfume.lists.24", "Pick vendor")}
             options={vendors.map((v) => ({ value: v.id, label: v.name, sublabel: KINDS.find(([k]) => k === v.kind)?.[1] }))} />
         </label>
-        <label className="flex flex-col gap-1 text-gray-600">List date
-          <input type="date" className="h-[40px] w-[132px] rounded-sm border border-gray-300 px-2" value={listDate} onChange={(e) => setListDate(e.target.value)} />
+        <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.25", "List date")}
+          <DatePicker value={listDate} onChange={(v) => setListDate(v || listDate)} aria-label={tr("perfume.lists.26", "List date")} data-testid="perfume-import-list-date" className="w-[150px]" />
         </label>
         {read && read.sheets.length > 1 ? (
-          <label className="flex flex-col gap-1 text-gray-600">Sheet
+          <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.27", "Sheet")}
             <Combobox ariaLabel="Sheet" size="sm" value={String(sheetIx)} onChange={(v) => setSheetIx(Number(v ?? 0))} options={read.sheets.map((s, i) => ({ value: String(i), label: s.name }))} />
           </label>
         ) : null}
         {read && read.kind !== "pdf_text" ? (
-          <label className="flex flex-col gap-1 text-gray-600">Header row
+          <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.28", "Header row")}
             <input type="number" min={1} className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2" value={headerRow + 1} onChange={(e) => setHeaderRow(Math.max(0, Number(e.target.value) - 1))} />
           </label>
         ) : null}
@@ -239,7 +247,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
       {extracted ? (
         <div className="space-y-2">
           <div className="text-xs text-gray-700">
-            Read from the file: <b>{extracted.rowsRead.toLocaleString()}</b> priced lines · price total <b>{money(extracted.fileTotalCents)}</b>
+            {tr("perfume.lists.29", "Read from the file:")} <b>{extracted.rowsRead.toLocaleString()}</b> {tr("perfume.lists.30", "priced lines · price total")} <b>{money(extracted.fileTotalCents)}</b>
             {extracted.sections ? ` · ${extracted.sections} section headers (WOMEN / MEN / SETS …) carried to the lines under them` : ""}
           </div>
           <ParityTable
@@ -256,13 +264,12 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <label className="flex items-start gap-2 text-xs text-gray-700">
             <input type="checkbox" className="mt-0.5" checked={replaces} onChange={(e) => setReplaces(e.target.checked)} data-testid="perfume-import-replaces" />
             <span>
-              <b>This is the vendor&apos;s full price list</b> — it replaces their current list in the grid.
-              Untick for new arrivals / specials: the file is added and their current list stays in the grid (the newest list wins when both carry an item).
+              <b>{tr("perfume.lists.31", "This is the vendor's full price list")}</b> {tr("perfume.lists.32", "— it replaces their current list in the grid. Untick for new arrivals / specials: the file is added and their current list stays in the grid (the newest list wins when both carry an item).")}
             </span>
           </label>
           <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(false)}>Check before saving</Button>
-            <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(true)}>Save list</Button>
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(false)}>{tr("perfume.lists.33", "Check before saving")}</Button>
+            <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(true)}>{tr("perfume.lists.34", "Save list")}</Button>
           </div>
         </div>
       ) : null}
@@ -277,11 +284,10 @@ function ImportCheckBox({ check }: { check: PerfumeImportCheck }) {
   return (
     <div className={`rounded-sm border p-2 text-xs ${ok ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50"}`} role="status">
       <div className="font-semibold">{ok ? "Import check passed — totals match to the cent" : "Import check FAILED — nothing was saved"}</div>
-      <div>Lines read {check.rows_read.toLocaleString()} · saved {check.rows_saved.toLocaleString()} · skipped {check.rows_skipped.toLocaleString()}</div>
-      <div>File price total {money(check.price_total_file_cents)} · saved price total {money(check.price_total_saved_cents)}</div>
+      <div>{tr("perfume.lists.35", "Lines read")} {check.rows_read.toLocaleString()} {tr("perfume.lists.36", "· saved")} {check.rows_saved.toLocaleString()} {tr("perfume.lists.37", "· skipped")} {check.rows_skipped.toLocaleString()}</div>
+      <div>{tr("perfume.lists.38", "File price total")} {money(check.price_total_file_cents)} {tr("perfume.lists.39", "· saved price total")} {money(check.price_total_saved_cents)}</div>
       <div>
-        Linked by UPC {m.upc ?? 0} · by SKU {m.sku ?? 0} · by your confirmed spelling {m.alias ?? 0} · by identity {(m.key ?? 0) + (m.loose_key ?? 0)} ·
-        new items {check.items_created} · to review {check.review} · no match {check.unmatched}
+        {tr("perfume.lists.40", "Linked by UPC")} {m.upc ?? 0} {tr("perfume.lists.41", "· by SKU")} {m.sku ?? 0} {tr("perfume.lists.42", "· by your confirmed spelling")} {m.alias ?? 0} {tr("perfume.lists.43", "· by identity")} {(m.key ?? 0) + (m.loose_key ?? 0)} {tr("perfume.lists.44", "· new items")} {check.items_created} {tr("perfume.lists.45", "· to review")} {check.review} {tr("perfume.lists.46", "· no match")} {check.unmatched}
       </div>
     </div>
   );

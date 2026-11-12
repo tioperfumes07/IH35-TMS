@@ -48,6 +48,10 @@ const ALLOWLIST = new Set([
   "apps/backend/src/maintenance/unit-maintenance-history.routes.ts",
   "apps/backend/src/banking/categorization.routes.ts",
   "apps/backend/src/reports/exception-queue.routes.ts",
+  // perfume/desk.routes.ts GET /grid: `rows` is the FULL filtered+sorted item set built in memory (buildGrid →
+  // filterView → searchRows → sortRows); the page is rows.slice(offset, offset+limit) AFTER the total is taken, so
+  // rows.length is the real count, never a page size. No SQL LIMIT exists for COUNT(*) OVER () to see past.
+  "apps/backend/src/perfume/desk.routes.ts",
 ]);
 
 function isKpiRowsLengthViolation(line) {
