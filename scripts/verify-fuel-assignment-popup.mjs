@@ -108,6 +108,14 @@ export function collectProblems(sources) {
   if (!/settlement_id: string \| null/.test(sources.service) || !/AS settlement_id/.test(sources.service)) {
     problems.push(`${FILES.service}: FuelCandidateLoad must select settlement_id for candidate reverse links`);
   }
+  // ROUND 8.12 reverse — candidate Driver EntityLink from telematics assignment driver_id.
+  if (
+    !/driver_id: string \| null/.test(sources.service) ||
+    !/d\.id::text AS driver_id/.test(sources.service) ||
+    !/kind=["']driver["'][\s\S]{0,80}id=\{c\.driver_id\}/.test(sources.popup)
+  ) {
+    problems.push(`${FILES.popup}: candidate Driver column must EntityLink via driver_id (BE enrich)`);
+  }
   for (const mode of ["confirm", "pick", "keep"]) {
     if (!new RegExp(`fuel-assignment-mode-${mode}`).test(popup)) {
       problems.push(`${FILES.popup}: missing mode button ${mode}`);

@@ -18,6 +18,8 @@ export type FuelCandidateTruck = {
   distance_m: number | null;
   minutes_off: number | null;
   distance_mi: number | null;
+  /** Telematics assignment driver at the fill moment (EntityLink FK). */
+  driver_id?: string | null;
   samsara_driver: string | null;
   odometer: number | null;
   /** 443.258-A: null when the truck had no load at the pump moment (never omitted by the API). */
