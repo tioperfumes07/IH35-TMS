@@ -71,8 +71,8 @@ export function PmSchedulePage() {
   const createIntentCompanyRef = useRef<string | null>(null);
 
   const listQ = useQuery({
-    queryKey: ["maintenance", "pm-schedule", companyId],
-    queryFn: () => listMaintenancePmSchedules(companyId),
+    queryKey: ["maintenance", "pm-schedule", companyId, requestedUnitId],
+    queryFn: () => listMaintenancePmSchedules(companyId, { unit_id: requestedUnitId || undefined }),
     enabled: Boolean(companyId),
   });
 

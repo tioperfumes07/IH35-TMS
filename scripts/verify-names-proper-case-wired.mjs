@@ -35,7 +35,7 @@ export const SURFACES = [
   ["223", FE("pages/factoring/SubmitToFactorTab.tsx"), 'label={companyLabel(r.customer_name, r.customer_id, "Customer")}', "label={r.customer_name}"],
   ["223", FE("pages/factoring/FactoringHome.tsx"), 'label={companyLabel(row.customer_name, row.customer_id, "Customer")}', "label={row.customer_name}"],
   ["225", FE("pages/customers/CustomerListSidebar.tsx"), 'className="single-line-name">{formatCompanyName(customer.name)}</span>', 'className="single-line-name">{customer.name}</span>'],
-  ["225", FE("components/boards/PartyBoard.tsx"), 'cell: (r) => formatCompanyName(r.name) },', "cell: (r) => r.name },"],
+  ["225", FE("components/boards/PartyBoard.tsx"), "label={formatCompanyName(r.name)}", "label={r.name}"],
   ["225", FE("pages/Customers.tsx"), "{formatCompanyName(selectedCustomer.name)}</h2>", "{selectedCustomer.name}</h2>"],
   ["225", FE("pages/customers/CustomersListView.tsx"), 'linkLabel={companyLabel(row.name, row.id, "Customer")}', "linkLabel={row.name}"],
   ["229", FE("pages/lists/names/NamesMasterHub.tsx"), "const label = namesMasterLabel(row, noun);", "const label = entityLabel(row.display_name, row.entity_id, noun);"],

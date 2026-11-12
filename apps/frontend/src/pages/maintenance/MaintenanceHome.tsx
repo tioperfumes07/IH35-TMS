@@ -279,7 +279,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       recent_offset: recentWoPage * activityPageSize,
       completed_offset: completedWoPage * activityPageSize,
     }),
-    enabled: Boolean(companyId) && !isInShopBoard,
+    enabled: Boolean(companyId) && !isInShopBoard && isHomeTab,
   });
   useEffect(() => { setRecentWoPage(0); setCompletedWoPage(0); }, [companyId]);
   const workOrdersQuery = useQuery({
@@ -792,7 +792,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "settings" ? <MaintenanceSettingsPage operatingCompanyId={companyId} /> : null}
 
-      {!isInShopBoard && (recentQuery.isError ? (
+      {isHomeTab && !isInShopBoard && (recentQuery.isError ? (
         <ListErrorState
           title="Couldn't load recent maintenance activity"
           status={0}

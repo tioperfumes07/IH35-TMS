@@ -1,3 +1,37 @@
+## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
+- **SHIPS:** #28953–#28960 · Debtor credit-check totals → customer · Escrow Account + Cash Reserve purchase name+amounts → factoring_purchase.
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~1:20 AM CT) — Factoring Purchase Report + Escrow Held MoneyCells
+- **SHIPS:** #28953–#28958 · Purchase Report + Escrow Held MoneyCells. **MERGED #28960.**
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~1:05 AM CT) — Factoring Invoice Status + Aging + Fees history MoneyCells
+- **SHIPS:** #28953–#28956 · Invoice Status / Aging / Fees history MoneyCells. **MERGED #28958.**
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~12:50 AM CT) — Factoring Debtor Receipts / Loan-Save / Unapplied MoneyCells
+- **SHIPS:** #28953–#28955 · Debtor Receipts / Loan-Save / Unapplied → MoneyCell. **MERGED #28956.**
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~12:35 AM CT) — Factoring Funds Due + Fees MoneyCell drills
+- **SHIPS:** #28953 MoneyCell literals · #28954 Legal template EntityLinks · #28955 Factoring Funds Due + Fees-paid MoneyCells (merged).
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~12:20 AM CT) — Legal Attorney Review + Contracts template EntityLinks
+- **SHIPS:** #28953 Statement MoneyCell literal drills (merged). Legal Attorney Review Template column + Contracts list Template → `legal_template` EntityLink (parity with Policies/Templates list). **MERGED #28954.**
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE for BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~12:05 AM CT) — Statement MoneyCell literal drills (advances + earnings)
+- **THIS:** SettlementStatementBoardPanels + LinkedRecordsPanel — MoneyCell drill is a literal `{ entity }` at each call site (verify-money-cells-click-through). Advances recovered: single source → cash_advance MoneyCell; multi → tabular total + cash_advance EntityLinks (no settlement self-drill; verify-statement-advances-recovered-source). Earnings amount branches load vs settlement MoneyCell. **MERGED #28953.**
+- **Guards:** money-cells + advances-recovered-source plain+selftest PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring / ROUND 8.12 board proof continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-12-2026 ~11:50 PM CT) — CC-1 gates shipped #28950 · party name EntityLinks
+- **SHIPS:** #28949 CLAIM 202616501200 · #28950 legal contracts void EXEMPT + settlement_lines reinstate JE composite FK · Customers/Vendors name cells EntityLink.
+- **FE LIVE prior:** dep-dbqk5vavcj2c73f20l6g · 6db89df6dc. Neon apply 202616501200 still needed for money-FK live.
+- **NEXT:** reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~11:45 PM CT) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
 - **FE LIVE:** Render `ih35-tms-web` `dep-dbqk5vavcj2c73f20l6g` status=live · SHA `6db89df6dc` (#28946; includes #28941/#28944/#28945).
 - **Boards for Codex:** see INBOX-CODEX tip. CC-1 still owns legal void + settlement_lines FK. No match/Dreamline.

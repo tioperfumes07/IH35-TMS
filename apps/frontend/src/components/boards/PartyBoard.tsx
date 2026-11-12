@@ -119,7 +119,13 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
   const bucketsShown = AGING.filter((a) => rows.some((r) => r.aging[a.key] > 0));
 
   const cols: Array<PartyCol<CustomerRow>> = [
-    { key: "name", label: "Customer", sort: (r) => r.name, cell: (r) => formatCompanyName(r.name) },
+    {
+      key: "name",
+      label: "Customer",
+      sort: (r) => r.name,
+      // Codex cert residual: Customer column must EntityLink (renderFirst also links).
+      cell: (r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} />,
+    },
     {
       key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices,
       cell: (r) => (r.invoices ? <NumLink to={`/accounting/invoices?customer_id=${r.id}`}>{int(r.invoices)}</NumLink> : <span>—</span>),

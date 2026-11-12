@@ -250,7 +250,6 @@ export function ImportFuelTransactionsModal({ open, operatingCompanyId, onClose,
             </div>
             <ParityTable<{ key: WexStatementOutcome; label: string; lines: number; cents: number }>
               tableTestId="wex-statement-plan-table"
-              appearance="board"
               hidePager
               density="compact"
               suppressToolbarSearch

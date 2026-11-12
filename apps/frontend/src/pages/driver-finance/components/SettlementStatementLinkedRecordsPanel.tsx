@@ -8,6 +8,7 @@ import { ParityTable } from "../../../components/parity/ParityTable";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { entityLabel } from "../../../lib/entity-label";
+import { formatUsdCents } from "../../../lib/money";
 import { openCanonicalDocument } from "../../../lib/openPrintableDocument";
 
 const L = {
@@ -130,21 +131,29 @@ export function SettlementStatementLinkedRecordsPanel({
             }}
             data-testid="statement-advances-recovered"
           >
-            <MoneyCell
-              cents={advanceRecoveriesCents > 0 ? advanceRecoveriesCents : null}
-              drill={
-                advanceSourceIds.length === 1
-                  ? { entity: { kind: "cash_advance", id: advanceSourceIds[0] } }
-                  : advanceSourceIds.length === 0
-                    ? { none: "advance recovery amount with no source advance id stamped" }
-                    : { none: "multiple advances recovered — open each link below" }
-              }
-            />
-            {advanceSourceIds.length > 1
-              ? advanceSourceIds.map((id) => (
+            {advanceSourceIds.length === 1 ? (
+              <MoneyCell
+                cents={advanceRecoveriesCents > 0 ? advanceRecoveriesCents : null}
+                drill={{ entity: { kind: "cash_advance", id: advanceSourceIds[0] } }}
+              />
+            ) : advanceSourceIds.length > 1 ? (
+              <>
+                {/* Total is the sum of the cash-advance links below — each opens its source. */}
+                <span style={{ fontVariantNumeric: "tabular-nums" }}>
+                  {advanceRecoveriesCents > 0 ? formatUsdCents(advanceRecoveriesCents) : "—"}
+                </span>
+                {advanceSourceIds.map((id) => (
                   <EntityLink key={id} kind="cash_advance" id={id} label={entityLabel(null, id, "Advance")} />
-                ))
-              : null}
+                ))}
+              </>
+            ) : (
+              <span
+                style={{ fontVariantNumeric: "tabular-nums" }}
+                title="Advance recovery amount with no source advance id stamped"
+              >
+                {advanceRecoveriesCents > 0 ? formatUsdCents(advanceRecoveriesCents) : "—"}
+              </span>
+            )}
           </span>
         ) : (
           "—"

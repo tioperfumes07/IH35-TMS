@@ -282,7 +282,18 @@ export function LegalContractInstancesPage() {
         sortValue: (row) => row.display_name_en ?? row.template_code ?? "",
         render: (row) => (
           <>
-            <div className="font-medium">{row.display_name_en ?? row.template_code}</div>
+            <div className="font-medium">
+              {row.template_id ? (
+                <EntityLink
+                  kind="legal_template"
+                  id={row.template_id}
+                  label={entityLabel(row.display_name_en ?? row.template_code, row.template_id, "Template")}
+                  data-testid={`legal-contract-list-template-${row.id}`}
+                />
+              ) : (
+                row.display_name_en ?? row.template_code ?? "—"
+              )}
+            </div>
             <div className="text-xs text-gray-500">
               {row.template_code} · v{formatQuantityTable(row.template_version, 0)}
             </div>

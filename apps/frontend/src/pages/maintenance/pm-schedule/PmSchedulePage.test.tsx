@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MemoryRouter } from "react-router-dom";
+import { Link, MemoryRouter } from "react-router-dom";
 import { PmSchedulePage } from "./PmSchedulePage";
-import { createMaintenancePmSchedule } from "../../../api/maintenance";
+import { createMaintenancePmSchedule, listMaintenancePmSchedules } from "../../../api/maintenance";
 
 vi.mock("../../../api/maintenance", () => ({
   listMaintenancePmSchedules: vi.fn().mockResolvedValue({ rows: [] }),
@@ -41,5 +41,23 @@ describe("Fleet Health start PM clock", () => {
       operating_company_id: "company-test", unit_id: "unit-test", pm_type: "oil",
       interval_kind: "miles", interval_value: 10000, last_service_odometer: 0,
     }));
+  });
+});
+
+describe("PM schedule reverse unit drill", () => {
+  beforeEach(() => { vi.mocked(listMaintenancePmSchedules).mockClear(); });
+
+  it("scopes the reader to the linked unit and refetches when the URL changes", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    render(<QueryClientProvider client={client}><MemoryRouter initialEntries={["/maintenance/pm-schedule?unit_id=unit-first"]}>
+      <Link to="/maintenance/pm-schedule?unit_id=unit-second">Second unit</Link>
+      <Link to="/maintenance/pm-schedule">All units</Link>
+      <PmSchedulePage />
+    </MemoryRouter></QueryClientProvider>);
+    await waitFor(() => expect(listMaintenancePmSchedules).toHaveBeenLastCalledWith("company-test", { unit_id: "unit-first" }));
+    await userEvent.click(screen.getByRole("link", { name: "Second unit" }));
+    await waitFor(() => expect(listMaintenancePmSchedules).toHaveBeenLastCalledWith("company-test", { unit_id: "unit-second" }));
+    await userEvent.click(screen.getByRole("link", { name: "All units" }));
+    await waitFor(() => expect(listMaintenancePmSchedules).toHaveBeenLastCalledWith("company-test", { unit_id: undefined }));
   });
 });

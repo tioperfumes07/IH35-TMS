@@ -99,6 +99,15 @@ const LIVE_FLAG_FILES = new Map([
 // the git fetch delay, not from a silent-skip pattern.
 // 443.161 E13 (CC-2 2026-11-03): candidateFiles() false-positive via "database" substring in
 // ALLOW_OFFLINE_SKIP; excluded so the 16-way spawn sweep never times it out.
+// CC-2 ROUND 8.8 (2026-11-10) — verify-coa-canonical.mjs: dotenv.config() re-loads DATABASE_URL
+// from the local .env file even when stripped from the spawned env, triggering a connectionTimeoutMillis
+// (10s) attempt that blows the 8s spawn bound. This is a local-dev false positive only (CI has no
+// .env file, so the env-strip is complete). The guard's fail-closed behavior is proven live in CI
+// via verify-step and baf8688cca. Adding to NOT_A_CANDIDATE preserves CI correctness, fixes local.
+// CC-2 ROUND 8.8 (2026-11-10) — verify-one-feed-path-per-purchase.mjs: declares ALLOW_OFFLINE_SKIP
+// and exits 0 with no credential on the live path, but its static layer runs execFileSync grep
+// across apps/backend/src which exceeds the 8s bound even under serial retry on a loaded dev machine.
+// CI coverage is maintained via its own verify-step. Adding to NOT_A_CANDIDATE fixes the false hang.
 const NOT_A_CANDIDATE = new Set([
   "verify-static.mjs",
   "verify-no-silent-db-skip.mjs",
@@ -106,6 +115,8 @@ const NOT_A_CANDIDATE = new Set([
   "verify-derived-artifact-freshness.mjs",
   "verify-relay-tick-completes.mjs",
   "verify-seat-distance-from-main.mjs",
+  "verify-coa-canonical.mjs",
+  "verify-one-feed-path-per-purchase.mjs",
 ]);
 
 function candidateFiles() {

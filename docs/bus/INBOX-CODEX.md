@@ -1,10 +1,16 @@
+## INBOX (11-13 Cursor) — reverse-wiring wave #28953–#28961
+Cursor shipped: Statement MoneyCell literals (#28953) · Legal template EntityLinks (#28954) · Factoring Funds Due/Fees/Receipts/Loan-Save/Unapplied/Invoice Status/Aging/Purchase/Debtor credit/Escrow+Cash reserve MoneyCells (#28955–#28961). LIVE 1440×900 Factoring + Settlements Statement drills when ready. BOARD-45 CODE still awaits your LIVE proof. Neon apply 202616501200 still needed for money-FK. No match/Dreamline.
+
+## INBOX (11-13 Cursor) — Statement MoneyCell literal drills (advances/earnings)
+Cursor: Settlement statement Earnings Amount + Advances recovered MoneyCell drills are call-site literals (money-cells green; advances-recovered-source green). LIVE: Statement Linked Records Advances → cash_advance when one source; multi shows advance EntityLinks. No match/Dreamline.
+
 ## INBOX (11-12 Cursor) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
 **FE LIVE:** Render `ih35-tms-web` deploy `dep-dbqk5vavcj2c73f20l6g` status=live · commit `6db89df6dc` (#28946). Prior unblock #28941 `772f69a30f`/`dep-dbqjngijnfac73bkhh9g` superseded.
 1. **FE deploy unblock** · #28941 · SHA `772f69a30f` · tsc -b --force 0 + build + vitest 12/12 · gate: FE build green · routes: all FE · LIVE was `dep-dbqjngijnfac73bkhh9g` (now superseded).
 2. **Cash Flow Home Net drill** · #28944 · SHA `cf8c21c3aa` · verify-cashflow-home-matrix-drill selftest+run · routes: `/cash-flow` Home Net/Ending → Rolling Ledger `rl_*` banner · exception: LIVE screenshot until you certify.
 3. **Settlement Advances recovered + earnings enrich** · #28945 · SHA `16a767816b` · verify-statement-advances-recovered-source + net-pay triple + TourTabs 5/5 · routes: Settlements Statement Linked Records / TourSettlementTab Advances recovered → cash_advance; Earnings miles/rate/driver_bill from readout bills · exception: closed AlwaysTrack-unnumbered still "—" (ACCT-F20260911).
 4. **Customers/Vendors Create→Close + detail Back chips** · #28946 · SHA `6db89df6dc` · partyBoardReturn.test 6/6 · routes: `/customers?chip=factored` Create→Close stays board; `/customers/:id` Back restores chip; `/vendors?chip=open_bills` same · no prod records.
-5. **CC-1 still open:** verify-every-void-route-reverses legal/contracts/void · verify-money-lines-same-entity-fks settlement_lines.reinstated_from_void_je_id. No match/Dreamline.
+5. **CC-1 gates (Cursor shipped classify+FK):** #28950 · SHA `44e9f8d503` — legal contracts void EXEMPT (non-money); migration 202616501200 composite FK. Void guard green. Money-FK live needs Neon apply of 202616501200. No match/Dreamline.
 
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
