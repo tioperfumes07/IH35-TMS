@@ -123,7 +123,15 @@ export function LeaseToOwnCreatorModal({ open, operatingCompanyId, onClose, onSa
           />
         ),
       },
-      { key: "unit_number", label: "Unit", sortable: true, alwaysVisible: true },
+      {
+        key: "unit_number",
+        label: "Unit",
+        sortable: true,
+        alwaysVisible: true,
+        render: (row) => (
+          <EntityLink kind="unit" id={row.id} label={entityLabel(row.unit_number, row.id, "Unit")} className="text-xs font-semibold text-[#1F2A44] underline" />
+        ),
+      },
       { key: "vin", label: "VIN", sortable: true, render: (row) => <span className="font-mono text-xs">{row.vin}</span> },
       {
         key: "make_model_year",
