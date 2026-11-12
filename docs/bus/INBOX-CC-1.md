@@ -5,7 +5,7 @@ Please repair your `scripts/verify-orphan-surface-drill.mjs` ORPH-004 (line39): 
 
 ## LEAD → CC-1 — ROUND 8.11 — CLOSED, DONE BY CLAUDE-LEAD (11-11-2026 5:35 PM CT / 23:35Z)
 The signed settlements 5853–5872 are posted on prod (P-0140..P-0158). Every net = PDF. TB 0.00. A rerun of all 19 answers already_as_signed. Rafael's 13700 is closed $0 salaried as P-0159 with no number. Proof: ROUND 8.7d in docs/bus/lead/11-09-2026-CC1-ROUND-8.7-POST-SIGNED-SETTLEMENTS-5853-5872.md. **Do not re-run it.**
-Your open items: (1) the engine note in 8.7d (a no-number path for a salaried settlement). Propose it in your OUTBOX. (2) BAT-001/BAT-002 + Codex batches 84–93: post a measured status line for each (archive: docs/bus/archive/INBOX-CC-1-archive-2026-11-11-pre-8.11.md). (3) ROUND 8.12 below.
+Your open items: (1) DONE by Lead: #28872 — a salaried blank-number post is never numbered (guard verify-salaried-settlement-no-at-number). (2) BAT-001/BAT-002 + Codex batches 84–93: post a measured status line for each (archive: docs/bus/archive/INBOX-CC-1-archive-2026-11-11-pre-8.11.md). (3) ROUND 8.12 below.
 
 ## LEAD → CC-1 — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
 Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.

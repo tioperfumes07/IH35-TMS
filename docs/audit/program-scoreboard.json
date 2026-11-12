@@ -1,10 +1,10 @@
 {
-  "healthzSha": "44ed3d6",
-  "generated_at": "2026-11-11T22:23:25.122Z",
+  "healthzSha": "f1641b3",
+  "generated_at": "2026-11-12T00:43:55.572Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "44ed3d6",
+    "deployedSha": "f1641b3",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28873,
+      "title": "FINDING: LST-F11162 bus ROUND 8.8b — CC-2 fuel round re-scoped on prod measurement: the reclassify engine cannot move Relay fuel_event lines; the 13588 premise is gone (BAT-001 root)",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:24 PM CT",
-      "url": "",
-      "sha": "44ed3d61b6",
-      "committedAtIso": "2026-11-11T18:24:25Z"
+      "mergedAtCt": "11/11/2026, 05:41 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28873",
+      "sha": "f1641b3687",
+      "committedAtIso": "2026-11-11T17:41:09-06:00"
+    },
+    {
+      "number": 28872,
+      "title": "FIX: a salaried Settlement Creator post with a blank Settlement No. no longer mints the next AlwaysTrack number (stamped 5873 on Rafael's $0 P-0159) (LST-F11161)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:38 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28872",
+      "sha": "328a0c749f",
+      "committedAtIso": "2026-11-11T17:38:30-06:00"
+    },
+    {
+      "number": 28871,
+      "title": "FINDING: LST-F11160 ROUND 8.7d — signed settlements 5853–5872 posted on prod by Claude-Lead (net = PDF, TB 0, rerun already_as_signed); Rafael 13700 closed $0 salaried with no number; payload corrected to prod evidence",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:25 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28871",
+      "sha": "1c423f2830",
+      "committedAtIso": "2026-11-11T17:25:43-06:00"
+    },
+    {
+      "number": 28870,
+      "title": "FIX: Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28870",
+      "sha": "66456a36a5",
+      "committedAtIso": "2026-11-11T18:05:55-05:00"
+    },
+    {
+      "number": 28869,
+      "title": "FIX: BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28869",
+      "sha": "815a9b66e6",
+      "committedAtIso": "2026-11-11T18:04:43-05:00"
+    },
+    {
+      "number": 28868,
+      "title": "FINDING: LST-F11159 bus ROUND 8.12a — owner law repeated into all six INBOXes: fast 4-minute merge after local PASS; complete every engine in your surface",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28868",
+      "sha": "4a312438cb",
+      "committedAtIso": "2026-11-11T17:04:38-06:00"
+    },
+    {
+      "number": 28867,
+      "title": "FIX: ROUND 8.12 Settlements T5 — ReadyDots use engine ready_total (no hard-coded six)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:03 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28867",
+      "sha": "6f29ca1603",
+      "committedAtIso": "2026-11-11T18:03:39-05:00"
+    },
+    {
+      "number": 28866,
+      "title": "FIX: ROUND 8.11 R2 — BookLoad/Planner text-[11px] → text-section-header (raw_font_sizes 133→103)",
+      "state": "merged",
+      "mergedAtCt": "11/11/2026, 05:01 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28866",
+      "sha": "6e122ee8ca",
+      "committedAtIso": "2026-11-11T18:01:32-05:00"
     },
     {
       "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "title": "FINDING: Owner order ALL CODERS — full board-identical (not shell, not over previous)",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 10:24 AM CT",
+      "mergedAtCt": "11/11/2026, 04:59 PM CT",
       "url": "",
-      "sha": "73ab1667cb",
-      "committedAtIso": "2026-11-11T16:24:33Z"
+      "sha": "ede831d471",
+      "committedAtIso": "2026-11-11T17:59:46-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28865,
+      "title": "FINDING: LST-F11158 bus ROUND 8.12 — design complete build for every page, module, tab, subtab and modal, exactly as the design, wired both ways — delivered to all six INBOXes",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 08:24 AM CT",
-      "url": "",
-      "sha": "963a78f441",
-      "committedAtIso": "2026-11-11T14:24:47Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 06:29 AM CT",
-      "url": "",
-      "sha": "ae872c954f",
-      "committedAtIso": "2026-11-11T12:29:23Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 04:23 AM CT",
-      "url": "",
-      "sha": "1db5a08ed4",
-      "committedAtIso": "2026-11-11T10:23:34Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 02:26 AM CT",
-      "url": "",
-      "sha": "6984ff0b84",
-      "committedAtIso": "2026-11-11T08:26:04Z"
-    },
-    {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:32 AM CT",
-      "url": "",
-      "sha": "52ca4400a0",
-      "committedAtIso": "2026-11-11T06:32:38Z"
-    },
-    {
-      "number": 28840,
-      "title": "FINDING: Low-guard residual ParityTables appearance=board wave2 (13 tables)",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:21 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28840",
-      "sha": "51e48dd947",
-      "committedAtIso": "2026-11-11T01:21:50-05:00"
-    },
-    {
-      "number": 28839,
-      "title": "FINDING: Low-guard residual ParityTables appearance=board (16 tables)",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:20 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28839",
-      "sha": "e7806b221d",
-      "committedAtIso": "2026-11-11T01:20:40-05:00"
-    },
-    {
-      "number": 28838,
-      "title": "FINDING: ROUND 8.10 Cursor R1–R4 DONE tip (SHAs #28836/#28837)",
-      "state": "merged",
-      "mergedAtCt": "11/11/2026, 12:19 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28838",
-      "sha": "f4df4a26ee",
-      "committedAtIso": "2026-11-11T01:19:22-05:00"
+      "mergedAtCt": "11/11/2026, 04:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28865",
+      "sha": "0ea2b95957",
+      "committedAtIso": "2026-11-11T16:58:48-06:00"
     }
   ]
 }

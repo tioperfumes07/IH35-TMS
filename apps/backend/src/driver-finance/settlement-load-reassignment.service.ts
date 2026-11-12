@@ -65,7 +65,9 @@ export type CreateBareSettlementInput = {
   driver_id: string;
   period_start: string; // YYYY-MM-DD, the tour's own start date -- never invented
   period_end: string; // YYYY-MM-DD, the tour's own close date
-  source_document_ref: string; // the real AlwaysTrack signed number, e.g. "5786"
+  // The real AlwaysTrack signed number, e.g. "5786". NULL only for a salaried settlement with no AlwaysTrack document
+  // (LST-F11161) — the settlement then keeps its P-number and nothing is stamped.
+  source_document_ref: string | null;
   actor_user_id: string;
   is_sample_data: boolean;
   // BRANCH-REHEARSAL FINDING (this session): driver_finance.driver_settlements has
@@ -104,7 +106,7 @@ export async function createBareSettlementForDocument(
   );
   const settlementId = insertRes.rows[0]!.id;
 
-  const refResult = await setSettlementSourceDocumentRef(client, {
+  const refResult = input.source_document_ref === null ? true : await setSettlementSourceDocumentRef(client, {
     operatingCompanyId: input.operating_company_id,
     settlementId,
     sourceDocumentRef: input.source_document_ref,
