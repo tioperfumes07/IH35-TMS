@@ -62,4 +62,35 @@ describe("MaintenanceSettingsPage", () => {
       })
     );
   });
+
+  it("cannot submit defaults while the persisted settings are still loading", async () => {
+    getMaintenanceSettings.mockReturnValue(new Promise(() => {}));
+    renderPage();
+
+    await screen.findByTestId("maintenance-settings-loading");
+    expect(screen.queryByTestId("maintenance-settings-pm-interval")).not.toBeInTheDocument();
+    expect(screen.queryByText("Maintenance vendors available")).not.toBeInTheDocument();
+    const save = screen.getByTestId("maintenance-settings-save");
+    expect(save).toBeDisabled();
+    fireEvent.submit(screen.getByTestId("maintenance-settings-page"));
+    expect(updateMaintenanceSettings).not.toHaveBeenCalled();
+  });
+
+  it("blocks direct form submission after a failed settings read", async () => {
+    getMaintenanceSettings.mockRejectedValue(new Error("Settings unavailable"));
+    renderPage();
+    await screen.findByText("Couldn't load maintenance settings");
+    fireEvent.submit(screen.getByTestId("maintenance-settings-page"));
+    expect(updateMaintenanceSettings).not.toHaveBeenCalled();
+  });
+
+  it("preserves the existing submit path after a successful empty read", async () => {
+    getMaintenanceSettings.mockResolvedValue(null);
+    renderPage();
+    await screen.findByText(/No maintenance settings row yet/);
+    expect(screen.getByTestId("maintenance-settings-save")).toBeEnabled();
+    fireEvent.click(screen.getByTestId("maintenance-settings-save"));
+    await waitFor(() => expect(updateMaintenanceSettings).toHaveBeenCalledTimes(1));
+    expect(updateMaintenanceSettings.mock.calls[0][0]).toBe(COMPANY);
+  });
 });

@@ -63,6 +63,9 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
 
   const saveSettings = () => {
     if (settingsQuery.isError) return;
+    // A pending/disabled read is not an empty settings record. Never persist the
+    // initial form defaults until this company's read has completed successfully.
+    if (!operatingCompanyId || !settingsQuery.isSuccess || saveMutation.isPending) return;
     saveMutation.mutate({
       companyId: operatingCompanyId,
       generation: saveGenerationRef.current,
@@ -98,6 +101,7 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
         </p>
       ) : null}
       {!settingsQuery.isError ? <>
+      {settingsQuery.isSuccess ? (
       <section className="overflow-hidden rounded-sm border border-[#E5E7EB] bg-white">
         <div className="border-b border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2">
           <h2 className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Maintenance settings</h2>
@@ -174,12 +178,13 @@ export function MaintenanceSettingsPage({ operatingCompanyId }: Props) {
           </div>
         </div>
       </section>
+      ) : null}
 
       <div className="flex items-center justify-end gap-2">
         {saveMutation.isError ? (
           <span className="text-xs text-red-600">Save failed — settings store may not be provisioned yet.</span>
         ) : null}
-        <Button type="submit" loading={saveMutation.isPending} data-testid="maintenance-settings-save">
+        <Button type="submit" disabled={!operatingCompanyId || !settingsQuery.isSuccess} loading={saveMutation.isPending} data-testid="maintenance-settings-save">
           Save
         </Button>
       </div>
