@@ -474,7 +474,7 @@ export async function setInternalCode(c: PoolClient, itemId: string, code: strin
 
 export type ColKind = "text" | "money" | "pct" | "int";
 export type GridCol = { key: string; label: string; group: string; kind: ColKind };
-export type GridView = "buy" | "sell" | "wholesale" | "all";
+export type GridView = "buy" | "trade" | "wholesale" | "all";
 export type GridRow = Record<string, string | number | null>;
 
 /** The margin the owner types on the grid; when none is typed, the first saved wholesale target. */
@@ -483,9 +483,17 @@ export function targetPctOf(rules: DeskRules, typed: number | null | undefined):
   return Math.min(95, Math.max(0, t));
 }
 
-export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null } = {}): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number }> {
+/** The % the owner believes his vendors earn; typed on the Trading tab, else the saved rule. */
+export function earnPctOf(rules: DeskRules, typed: number | null | undefined): number {
+  const t = typed ?? rules.vendor_earn_pct;
+  return Math.min(95, Math.max(0, t));
+}
+
+export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number }> {
   const rules = await getRules(c);
   const target = targetPctOf(rules, opts.targetPct);
+  // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.
+  const earnTyped = opts.earnPct == null ? null : earnPctOf(rules, opts.earnPct);
   const vendors = await listVendors(c);
   const buyV = vendors.filter((v) => v.kind !== "sell");
   const sellV = vendors.filter((v) => v.kind !== "buy");
@@ -541,27 +549,37 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     { key: "vendor_cost", label: "Vendor's est. cost", group: "Purchase", kind: "money" },
     { key: "case_pack", label: "Box qty", group: "Purchase", kind: "int" },
   );
-  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "List price", group: v.name, kind: "money" });
+  // TRADING — I also SELL to the vendors I buy from. Their own list price less the % they earn is what they pay;
+  // against my cost from the OTHER vendors that is my profit on the trade (owner 2026-11-12).
+  for (const v of buyV) {
+    cols.push({ key: `t:${v.id}:list`, label: "Their price", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:offer`, label: "My offer to them", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:cost`, label: "My cost (other vendors)", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:profit`, label: "My profit", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:margin`, label: "My margin %", group: `Trade · ${v.name}`, kind: "pct" });
+  }
   cols.push(
-    { key: "low_sell", label: "Lowest list price", group: "Laredo", kind: "money" },
-    { key: "low_sell_vendor", label: "Lowest at", group: "Laredo", kind: "text" },
-    { key: "profit", label: "Profit / pc", group: "Laredo", kind: "money" },
-    { key: "margin", label: "Margin %", group: "Laredo", kind: "pct" },
-    { key: "markup", label: "Markup %", group: "Laredo", kind: "pct" },
-    { key: "store_cost_margin", label: `Store's cost @${rules.store_earn_pct}% margin`, group: "Sell to stores", kind: "money" },
-    { key: "store_cost_markup", label: `Store's cost @${rules.store_earn_pct}% markup`, group: "Sell to stores", kind: "money" },
-    { key: "offer_store", label: "My offer to store", group: "Sell to stores", kind: "money" },
-    { key: "offer_profit", label: "My profit", group: "Sell to stores", kind: "money" },
-    { key: "offer_margin", label: "My margin %", group: "Sell to stores", kind: "pct" },
-    { key: "offer_markup", label: "My markup %", group: "Sell to stores", kind: "pct" },
+    { key: "trade_best_vendor", label: "Best vendor to sell to", group: "Trading", kind: "text" },
+    { key: "trade_best_offer", label: "Offer", group: "Trading", kind: "money" },
+    { key: "trade_best_profit", label: "Profit / pc", group: "Trading", kind: "money" },
+  );
+  // WHOLESALE — my competitors' selling prices next to my price.
+  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their selling price", group: `Competitor · ${v.name}`, kind: "money" });
+  cols.push(
+    { key: "low_sell", label: "Lowest competitor price", group: "Competition", kind: "money" },
+    { key: "low_sell_vendor", label: "Lowest at", group: "Competition", kind: "text" },
+    { key: "profit", label: "Profit / pc at their price", group: "Competition", kind: "money" },
+    { key: "margin", label: "Margin % at their price", group: "Competition", kind: "pct" },
+    { key: "markup", label: "Markup % at their price", group: "Competition", kind: "pct" },
   );
   // ONE set of target columns, driven by the margin the owner types on the grid (replaces the fixed 11 / 12.5 / 15 pairs).
   cols.push(
     { key: "target_price_margin", label: `Sell at ${target}% margin`, group: "My target", kind: "money" },
     { key: "target_price_markup", label: `Sell at ${target}% markup`, group: "My target", kind: "money" },
     { key: "target_profit", label: `Profit at ${target}% margin`, group: "My target", kind: "money" },
-    { key: "target_max_cost", label: `Most I can pay for ${target}% vs Laredo low`, group: "My target", kind: "money" },
-    { key: "target_vs_low", label: `Laredo low − my ${target}% price`, group: "My target", kind: "money" },
+    { key: "target_max_cost", label: `Most I can pay for ${target}% vs lowest competitor`, group: "My target", kind: "money" },
+    { key: "target_vs_low", label: `Lowest competitor − my ${target}% price`, group: "My target", kind: "money" },
+    { key: "target_action", label: "Raise / lower", group: "My target", kind: "text" },
   );
 
   const vName = new Map(vendors.map((v) => [v.id, v.name]));
@@ -619,25 +637,50 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       row.profit = cost == null ? null : low - cost;
       row.margin = round1(marginPct(low, cost));
       row.markup = round1(markupPct(low, cost));
-      row.store_cost_margin = close(costFromPrice(low, rules.store_earn_pct, "margin"));
-      row.store_cost_markup = close(costFromPrice(low, rules.store_earn_pct, "markup"));
-      row.offer_store = row.store_cost_margin;
-      row.offer_profit = cost == null ? null : (row.offer_store as number) - cost;
-      row.offer_margin = round1(marginPct(row.offer_store as number, cost));
-      row.offer_markup = round1(markupPct(row.offer_store as number, cost));
     }
     if (cost != null) {
       row.target_price_margin = close(priceFromCost(cost, target, "margin"));
       row.target_price_markup = close(priceFromCost(cost, target, "markup"));
       row.target_profit = (row.target_price_margin as number) - cost;
-      if (low != null) row.target_vs_low = low - (row.target_price_margin as number);
+      if (low != null) {
+        const gap = low - (row.target_price_margin as number);
+        row.target_vs_low = gap;
+        row.target_action = wholesaleAction(gap);
+      }
     }
+    // TRADING: for each vendor I buy from, what I can offer them and what I make, buying from the cheapest OTHER vendor.
+    let tBest: { name: string; offer: number; profit: number } | null = null;
+    for (const v of buyV) {
+      const theirs = offersMap.get(v.id)?.price;
+      if (theirs == null) continue;
+      const earn = earnTyped ?? (v.earn_pct == null ? rules.vendor_earn_pct : Number(v.earn_pct));
+      const offer = close(costFromPrice(theirs, earn, "margin"))!;
+      row[`t:${v.id}:list`] = theirs;
+      row[`t:${v.id}:offer`] = offer;
+      const others = ranked.filter((o) => o.vendorId !== v.id);
+      const oc = others.length ? others[0].likelyCents : null;
+      row[`t:${v.id}:cost`] = oc;
+      if (oc != null) {
+        row[`t:${v.id}:profit`] = offer - oc;
+        row[`t:${v.id}:margin`] = round1(marginPct(offer, oc));
+        if (!tBest || offer - oc > tBest.profit) tBest = { name: v.name, offer, profit: offer - oc };
+      }
+    }
+    if (tBest) { row.trade_best_vendor = tBest.name; row.trade_best_offer = tBest.offer; row.trade_best_profit = tBest.profit; }
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
     row.carried_by = vendors.filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  return { cols, rows, rules, vendors, target_pct: target };
+  return { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct };
+}
+
+/** Wholesale: positive gap = my price is under the lowest competitor (room to raise); negative = I am over it. */
+export function wholesaleAction(gapCents: number): string {
+  const d = (Math.abs(gapCents) / 100).toFixed(2);
+  if (gapCents > 0) return `Under by $${d} — can raise`;
+  if (gapCents < 0) return `Over by $${d} — lower to compete`;
+  return "Same as lowest competitor";
 }
 
 function round1(v: number | null): number | null {
@@ -646,8 +689,8 @@ function round1(v: number | null): number | null {
 
 export function filterView(rows: GridRow[], view: GridView): GridRow[] {
   if (view === "buy") return rows.filter((r) => (r.n_vendors as number) > 0);
-  if (view === "sell") return rows.filter((r) => r.low_sell != null);
-  if (view === "wholesale") return rows.filter((r) => r.landed_likely != null);
+  if (view === "trade") return rows.filter((r) => r.trade_best_vendor != null);
+  if (view === "wholesale") return rows.filter((r) => r.landed_likely != null && r.low_sell != null);
   return rows;
 }
 
@@ -769,8 +812,11 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     ["My cost (best case)", "Vendor price − high cushion + low freight"],
     ["Margin %", "(Lowest Laredo list price − my cost) ÷ list price"],
     ["Markup %", "(Lowest Laredo list price − my cost) ÷ my cost"],
-    ["Store's cost @ margin", `List price × (1 − ${rules.store_earn_pct}%)`],
-    ["Store's cost @ markup", `List price ÷ (1 + ${rules.store_earn_pct}%)`],
+    ["Trading · My offer to them", "Their own price × (1 − the % they earn), closed — what that vendor pays me"],
+    ["Trading · My cost (other vendors)", "My cost buying the same bottle from the cheapest OTHER vendor"],
+    ["Trading · My profit", "My offer to them − my cost (other vendors)"],
+    ["Wholesale · Lowest competitor price", "The lowest selling price among my wholesale competitors' lists"],
+    ["Wholesale · Raise / lower", "Lowest competitor − my price at X%: positive = room to raise, negative = lower to compete"],
     ["Sell at X% margin", "My cost ÷ (1 − X%) — X is the margin typed on the grid"],
     ["Sell at X% markup", "My cost × (1 + X%)"],
     ["Profit at X% margin", "Sell at X% margin − my cost"],

@@ -77,7 +77,7 @@ describe("PERFUME-DESK page", () => {
   });
 
   it("every tab renders without crashing", async () => {
-    for (const tab of ["sell", "wholesale", "all", "lists", "review", "rules"]) {
+    for (const tab of ["trade", "wholesale", "all", "lists", "review", "rules"]) {
       const { unmount } = renderPage(`/perfume?tab=${tab}`);
       await waitFor(() => expect(screen.getByTestId("perfume-desk")).toBeTruthy());
       unmount();

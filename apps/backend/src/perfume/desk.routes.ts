@@ -94,7 +94,7 @@ const importSchema = z.object({
   replaces_current: z.boolean().optional(),
 });
 const gridQuery = z.object({
-  view: z.enum(["buy", "sell", "wholesale", "all"]).default("buy"),
+  view: z.enum(["buy", "trade", "wholesale", "all"]).default("buy"),
   sort: z.string().max(120).optional(),
   dir: z.enum(["asc", "desc"]).default("asc"),
   q: z.string().max(200).default(""),
@@ -106,6 +106,8 @@ const gridQuery = z.object({
   vendor: z.string().max(4000).default(""),
   // The margin the owner types on the grid; drives the "My target" columns.
   target_pct: z.coerce.number().min(0).max(95).optional(),
+  // The % the owner believes his vendors earn — the Trading tab's box.
+  earn_pct: z.coerce.number().min(0).max(95).optional(),
   offset: z.coerce.number().int().min(0).default(0),
   limit: z.coerce.number().int().min(1).max(1000).default(200),
 });
@@ -233,7 +235,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   app.get("/api/v1/perfume/grid", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
-    const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct }));
+    const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     const viewRows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
     const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
     let rows = filterFacets(viewRows, picks);
@@ -241,12 +243,12 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       if (!g.cols.some((c) => c.key === q.data.sort)) return reply.code(400).send({ error: "unknown_sort_column" });
       rows = sortRows(rows, q.data.sort, q.data.dir);
     }
-    return { cols: g.cols, total: rows.length, rows: rows.slice(q.data.offset, q.data.offset + q.data.limit), facets: gridFacets(viewRows, picks), rules: g.rules, vendors: g.vendors, target_pct: g.target_pct, measured_at: new Date().toISOString() };
+    return { cols: g.cols, total: rows.length, rows: rows.slice(q.data.offset, q.data.offset + q.data.limit), facets: gridFacets(viewRows, picks), rules: g.rules, vendors: g.vendors, target_pct: g.target_pct, earn_pct: g.earn_pct, measured_at: new Date().toISOString() };
   });
   app.get("/api/v1/perfume/export.xlsx", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
-    const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct }));
+    const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     let rows = filterFacets(searchRows(filterView(g.rows, q.data.view as GridView), q.data.q),
       { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     if (q.data.sort && g.cols.some((c) => c.key === q.data.sort)) rows = sortRows(rows, q.data.sort, q.data.dir);
