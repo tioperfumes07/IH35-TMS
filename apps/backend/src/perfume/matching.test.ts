@@ -132,3 +132,34 @@ describe("PERFUME-DESK suggestions never cross product kinds (owner 2026-11-12)"
     expect(m.suggestions.map((s) => s.display_name).filter((n) => /SET|TESTER/.test(n))).toEqual([]);
   });
 });
+
+describe("PERFUME-DESK suggestions across a brand the item master spells another way (owner 2026-11-12: 'perfumes completely done')", () => {
+  /** Real dirty items on file (read live 11-12): Pink Sugar under AQUOLINA, Narciso as "NARCISO R", brand repeated in the name. */
+  function dirty(): MatchIndex {
+    const ix = emptyIndex();
+    const add = (id: string, brand: string, name: string, sizeMl: number, conc: string, gender: string) =>
+      addItem(ix, { id, brand, name, sizeMl, conc, gender, flags: [], identityKey: `${id}-k`, looseKey: `${id}-l`, displayName: `${brand} · ${name} · ${sizeMl} ml · ${conc}` });
+    add("aq-pink", "AQUOLINA", "PINK SUGAR AQUOLINA", 100, "EDT", "W");
+    add("nr-vet", "NARCISO R", "NR VETIVER MUSC HIM", 100, "EDT", "");
+    add("pe-18", "PERRY ELLIS", "PERRY ELLIS18", 100, "EDT", "M");
+    add("prada-x", "PRADA", "LUNA ROSSA", 100, "EDT", "M");
+    return ix;
+  }
+  const esp = (description: string) => matchLine(dirty(), "esp", { description }, { allowNewItem: false });
+
+  it("PINK SUGAR line is offered the AQUOLINA item (never auto-linked)", () => {
+    const m = esp("PINK SUGAR W 3.4oz EDT");
+    expect(m.itemId).toBeNull();
+    expect(m.suggestions[0]?.item_id).toBe("aq-pink");
+  });
+  it("NARCISO RDZ VETIVER MUSC is offered NARCISO R · NR VETIVER MUSC HIM", () => {
+    expect(esp("NARCISO RDZ VETIVER MUSC M EDT 3.4oz").suggestions.map((s) => s.item_id)).toContain("nr-vet");
+  });
+  it("an item name that repeats its brand still pairs on the fragrance words (PERRY ELLIS 18)", () => {
+    expect(esp("PERRY ELLIS 18 M 3.4oz EDT").suggestions[0]?.item_id).toBe("pe-18");
+  });
+  it("a different-brand bottle sharing no fragrance word is never offered", () => {
+    expect(esp("PRADA L'HOMME 3.4oZ EDT").suggestions.map((s) => s.item_id)).not.toContain("aq-pink");
+    expect(esp("PINK SUGAR W 3.4oz EDT").suggestions.map((s) => s.item_id)).not.toContain("prada-x");
+  });
+});
