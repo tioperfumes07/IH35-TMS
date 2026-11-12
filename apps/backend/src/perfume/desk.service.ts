@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
-import { looseKey, normalizeUpc, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
 /* ---------------- rules ---------------- */
@@ -151,8 +151,10 @@ function prepare(body: ImportIn) {
     // The vendor's own item code, when the list has no SKU column but prints it in the line: MTZ writes
     // "JO MALONE ENGLISH PEAR & FREESIA 1.0 EDC L UNBOXED  (137792) - France". Without it a no-barcode
     // tester/unboxed line can never become an item, and the same line next week can never re-link by SKU.
-    const sku = String(r.sku ?? "").trim() || (description.match(/\((\d{5,8})\)/)?.[1] ?? "");
-    saved.push({ ...r, sku: sku || null, description, price_cents: cents });
+    const tail = vendorLineTail(description);
+    const sku = String(r.sku ?? "").trim() || (tail.code ?? "");
+    const casePack = r.case_pack == null || String(r.case_pack).trim() === "" ? tail.casePack : r.case_pack;
+    saved.push({ ...r, sku: sku || null, case_pack: casePack, description, price_cents: cents });
   }
   const total = saved.reduce((t, r) => t + r.price_cents, 0);
   return { saved, total };
@@ -383,7 +385,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; limit
   const params: unknown[] = [opts.limit, opts.offset];
   if (opts.list_id) params.push(opts.list_id);
   const rows = await c.query(
-    `SELECT r.id, r.list_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.price_cents, r.match_status, r.suggestions
+    `SELECT r.id, r.list_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}
       ORDER BY v.name, r.row_no LIMIT $1 OFFSET $2`, params);
@@ -391,7 +393,17 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; limit
     `SELECT count(*)::int AS n FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${opts.list_id ? "AND r.list_id = $1" : ""}`,
     opts.list_id ? [opts.list_id] : []);
-  return { rows: rows.rows, total: total.rows[0].n };
+  // The vendor's line split into the owner's columns: brand (canonical — CK → CALVIN KLEIN), model, size, type,
+  // gender, tester/set, country, pieces per box, the vendor's code — the same reading the import engine used.
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
+  const out = rows.rows.map((r: Record<string, unknown>) => {
+    const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, brandAliases: aliases });
+    const tail = vendorLineTail(String(r.description ?? ""));
+    return { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
+      flags: id.flags.join(" "), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
+  });
+  return { rows: out, total: total.rows[0].n };
 }
 
 /**
@@ -465,10 +477,10 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
   const vendors = await listVendors(c);
   const buyV = vendors.filter((v) => v.kind !== "sell");
   const sellV = vendors.filter((v) => v.kind !== "buy");
-  const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null }>(
+  const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null; description: string }>(
     // A vendor can have several current lists (full list + new arrivals). For each item the vendor's NEWEST
     // current list that carries it sets the price (list date, then import time); within that list, the lowest line.
-    `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku
+    `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku, r.description
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.item_id IS NOT NULL AND l.is_current AND l.voided_at IS NULL
       ORDER BY r.item_id, l.vendor_id, l.list_date DESC, l.imported_at DESC, r.price_cents ASC`);
@@ -476,10 +488,10 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
-  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null }>>();
+  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null }>>();
   for (const p of prices.rows) {
     const m = byItem.get(p.item_id) ?? new Map();
-    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku });
+    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country });
     byItem.set(p.item_id, m);
   }
   const close = (v: number | null) => (v == null ? null : closeCents(v, rules.round_step, rules.round_dir));
@@ -495,6 +507,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "conc", label: "Type", group: "Item", kind: "text" },
     { key: "gender", label: "Gender", group: "Item", kind: "text" },
     { key: "flags", label: "Tester / set", group: "Item", kind: "text" },
+    { key: "country", label: "Country", group: "Item", kind: "text" },
   ];
   for (const v of buyV) {
     cols.push({ key: `v:${v.id}:price`, label: "Price", group: v.name, kind: "money" });
@@ -571,6 +584,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
       row.vendor_cost = close(costFromPrice(best.listedCents - best.cushionHiCents, ve.earn_pct == null ? rules.vendor_earn_pct : Number(ve.earn_pct), "markup"));
       row.case_pack = offersMap.get(best.vendorId)!.case_pack;
       row.sku = offersMap.get(best.vendorId)!.sku;
+      row.country = offersMap.get(best.vendorId)!.country;
     } else {
       row.n_vendors = 0;
     }

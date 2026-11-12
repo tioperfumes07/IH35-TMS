@@ -114,6 +114,15 @@ export type PerfumeReviewRow = {
   sku: string | null;
   brand: string | null;
   description: string;
+  /** The vendor line split into columns by the server's identity engine (brand canonical: CK → CALVIN KLEIN). */
+  brand_name?: string | null;
+  model?: string | null;
+  size_ml?: number | null;
+  conc?: string | null;
+  gender?: string | null;
+  flags?: string;
+  country?: string | null;
+  case_pack?: number | null;
   price_cents: number;
   match_status: "review" | "unmatched";
   suggestions: PerfumeSuggestion[];

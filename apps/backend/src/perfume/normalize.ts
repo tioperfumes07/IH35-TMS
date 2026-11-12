@@ -117,7 +117,7 @@ export const SAME_NAME_WORD: Record<string, string> = {
 /** Words that never help name a fragrance. POUR/HOMME/FEMME are kept as gender, not name. */
 const NOISE = new Set([
   "SP", "SPR", "SPRAY", "VAPO", "VAPORISATEUR", "NATURAL", "NAT", "FOR", "THE", "BY", "DE", "DI", "LA", "LE",
-  "EAU", "TOILETTE", "COLOGNE", "PARFUM", "PERFUME", "FRAGRANCE", "NEW", "PACK", "ONLY", "USA", "LI", "FREE",
+  "EAU", "TOILETTE", "COLOGNE", "PARFUM", "PERFUME", "FRAGRANCE", "NEW", "PACK", "ONLY", "USA", "LI",
   "BOX", "BOXED", "BYBOX", "PCS", "PC", "OZ", "ML", "FL", "&", "AND", "Y", "EN", "POUR", "HOMME", "TST", "TSTR",
   "SPL", "VIAL", "CAP", "NO",
 ]);
@@ -346,4 +346,29 @@ export function normalizeUpc(v: unknown): string {
   const d = s.replace(/\D/g, "");
   if (d.length < 8 || d.length > 14) return "";
   return d.replace(/^0+/, "");
+}
+
+/* ---------------- vendor line ending ---------------- */
+
+const COUNTRY_FIX: Record<string, string> = {
+  "UNITED ARAB EMIR": "United Arab Emirates", "UNITED ARAB EMIR.": "United Arab Emirates", UAE: "United Arab Emirates",
+  USA: "USA", "U.S.A.": "USA", UK: "United Kingdom",
+};
+
+/**
+ * The part a vendor prints after the product: MTZ "CK FREE 1.7 EDT M  (101079) - France - 24pcs ByBox",
+ * "GIVENCHY HOMME 3.4 EDT M (101798) - France - France - 24pcs ByBox", "389 BOADICEA - United Kingdom - 6pcs ByBox".
+ * → the vendor's own code, the country of origin, and pieces per box. Only read when the line really ends that way
+ * (a " - " segment with "pcs"), so a fragrance name with a hyphen is never cut.
+ */
+export function vendorLineTail(description: string | null | undefined): { code: string | null; country: string | null; casePack: number | null } {
+  const s = String(description ?? "").trim();
+  const segs = s.split(/\s+-\s+/);
+  const last = segs[segs.length - 1] ?? "";
+  const pcs = last.match(/(\d+)\s*pcs?\b/i);
+  const code = segs[0]?.match(/\(\s*(\d{4,})\s*\)\s*$/)?.[1] ?? s.match(/\(\s*(\d{5,8})\s*\)/)?.[1] ?? null;
+  if (segs.length < 2 || !pcs) return { code, country: null, casePack: null };
+  const raw = segs.slice(1, -1).map((x) => x.trim()).find((x) => /^[A-Za-z][A-Za-z .'&]*$/.test(x)) ?? null;
+  const country = raw ? (COUNTRY_FIX[raw.toUpperCase()] ?? raw.replace(/\s+/g, " ")) : null;
+  return { code, country, casePack: Number(pcs[1]) };
 }
