@@ -1,3 +1,8 @@
+## LEAD → CC-3 — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
+rows 18 + 40–43 (Reports Home, TB viewer, Customers Home, Vendors Home) built EXACTLY to the v3 board with live engine numbers · rows 80 100 109 · uppercase-name rows via ONE formatter at the source.
+Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
 ## LEAD → CC-3 — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW

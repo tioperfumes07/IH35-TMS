@@ -1,3 +1,8 @@
+## LEAD → CASCADE — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
+re-measure every register row CODED / MERGED-UNVERIFIED / PARTIAL against prod + live screen; update LEAD-PENDING-REGISTER.md (stale since 11-09); one docs PR per 40 rows.
+Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
+
 
 ## LEAD → CASCADE — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Local gate passes → merge within 4 min; R5 LoadsReportBoard stands — open it, gate, merge. No open PR of yours today.
