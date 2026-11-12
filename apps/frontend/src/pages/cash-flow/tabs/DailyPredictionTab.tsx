@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, type CSSProperties } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
@@ -18,7 +18,8 @@ import { entityLabel } from "../../../lib/entity-label";
 import { ledgerPartyLabel } from "../ledgerPartyLabel";
 import { companyLabel } from "../../../lib/formatCompanyName";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 
@@ -141,28 +142,6 @@ function openingForSelection(data: RollingLedgerResult, from: string): number | 
   return data.opening_cash_cents;
 }
 
-const thStyle: CSSProperties = {
-  textAlign: "left",
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.headerBg,
-  whiteSpace: "nowrap",
-  fontFamily: V3.font,
-};
-
-const tdStyle: CSSProperties = {
-  textAlign: "left",
-  padding: `${V3_TABLE.rowPadY}px 12px`,
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  fontSize: V3_TABLE.fontPx,
-  whiteSpace: "nowrap",
-  color: V3.ink,
-  fontFamily: V3.font,
-};
-
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
   const [date, setDate] = useState<string>(todayIso());
@@ -280,6 +259,188 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       rows: expenseRows.filter((r) => expenseGroupKey(r) === key),
     }));
   }, [expenseRows]);
+
+  const incomeFlatRows = useMemo(
+    () =>
+      incomeGroups.flatMap(([group, rows]) =>
+        rows.map((row) => ({ ...row, _group: group })),
+      ),
+    [incomeGroups],
+  );
+
+  const expenseFlatRows = useMemo(
+    () =>
+      expenseGroups.flatMap(({ key, rows }, idx) => {
+        const title = expenseGroupTitle(key, idx);
+        if (rows.length === 0) {
+          return [
+            {
+              document_kind: "empty",
+              document_id: `empty-${key}`,
+              due_date: "",
+              amount_cents: 0,
+              row_kind: "expense" as const,
+              type: "",
+              counterparty: emptyExpenseHint(key),
+              _group: title,
+              _empty: true,
+            } as RollingLedgerRow & { _group: string; _empty?: boolean },
+          ];
+        }
+        return rows.map((row) => ({ ...row, _group: title }));
+      }),
+    [expenseGroups],
+  );
+
+  const incomeColumns = useMemo<ParityColumn<RollingLedgerRow & { _group: string }>[]>(
+    () => [
+      {
+        key: "group",
+        label: "Group",
+        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
+      },
+      {
+        key: "customer",
+        label: "Customer",
+        render: (item) => {
+          const customerName = item.customer_name ?? item.counterparty;
+          return item.customer_id ? (
+            <EntityLinkOrTombstone
+              kind="customer"
+              id={item.customer_id}
+              name={ledgerPartyLabel({ ...row, counterparty: customerName })}
+              noun="Customer"
+              className="font-medium"
+              data-testid="cash-flow-predicted-customer-link"
+            />
+          ) : (
+            <span data-testid="cash-flow-predicted-customer-link">
+              {companyLabel(item.customer_name, null, "Customer")}
+            </span>
+          );
+        },
+      },
+      {
+        key: "type",
+        label: "Type",
+        render: (item) =>
+          item.document_kind === "load" || /load/i.test(item.type)
+            ? "Load · not invoiced"
+            : item.type || item.document_kind,
+      },
+      {
+        key: "load",
+        label: "Load",
+        render: (item) => (
+          <EntityLinkOrTombstone
+            kind={item.load_id ? "load" : "invoice"}
+            id={item.load_id ?? item.document_id}
+            name={item.load_number ?? item.document_label}
+            noun={item.load_id ? "Load" : "Invoice"}
+            className="font-medium"
+            data-testid="cash-flow-predicted-load-link"
+          />
+        ),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        cellClass: "text-right font-semibold",
+        render: (item) => formatCents(item.amount_cents),
+      },
+    ],
+    [],
+  );
+
+  const expenseColumns = useMemo<
+    ParityColumn<RollingLedgerRow & { _group: string; _empty?: boolean }>[]
+  >(
+    () => [
+      {
+        key: "group",
+        label: "Priority",
+        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
+      },
+      {
+        key: "payee",
+        label: "Payee",
+        render: (item) => {
+          if (item._empty) return <span style={{ color: V3.mutedSoft }}>{item.counterparty}</span>;
+          const payeeNoun =
+            item.document_kind === "driver_bill" || item.document_kind === "settlement" || /driver/i.test(item.type)
+              ? "Driver"
+              : "Payee";
+          return (
+            <span data-testid="cash-flow-projected-expense-payee">
+              {entityLabel(ledgerPartyLabel(item) || item.counterparty, null, payeeNoun)}
+            </span>
+          );
+        },
+      },
+      {
+        key: "doc",
+        label: "Load / doc",
+        render: (item) => {
+          if (item._empty) return "—";
+          const link = item.load_id ? (
+            <EntityLinkOrTombstone
+              kind="load"
+              id={item.load_id}
+              name={item.load_number ?? item.document_label}
+              noun="Load"
+              data-testid="cash-flow-predicted-expense-load-link"
+            />
+          ) : item.document_kind === "settlement" || item.document_kind === "driver_bill" ? (
+            <EntityLinkOrTombstone
+              kind="settlement"
+              id={item.document_id}
+              name={item.document_label}
+              noun="Settlement"
+              data-testid="cash-flow-predicted-expense-settlement-link"
+            />
+          ) : item.document_kind === "bill" ? (
+            <EntityLinkOrTombstone
+              kind="bill"
+              id={item.document_id}
+              name={item.document_label}
+              noun="Bill"
+              data-testid="cash-flow-predicted-expense-bill-link"
+            />
+          ) : (
+            <span>{formatIsoDatesInText(item.document_label)}</span>
+          );
+          return (
+            <span className="inline-flex flex-wrap items-center gap-2">
+              {link}
+              {item.adjustment_id ? (
+                <button
+                  type="button"
+                  className="shrink-0 text-xs underline disabled:opacity-50"
+                  style={{ color: V3.muted }}
+                  disabled={archiveMutation.isPending}
+                  onClick={() => {
+                    setArchiveError(null);
+                    archiveMutation.mutate(item.adjustment_id!);
+                  }}
+                  data-testid="cash-flow-adjustment-remove"
+                >
+                  Remove
+                </button>
+              ) : null}
+            </span>
+          );
+        },
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        cellClass: "text-right font-semibold",
+        render: (item) =>
+          item._empty ? "—" : item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents),
+      },
+    ],
+    [archiveMutation],
+  );
 
   const sevenDays = useMemo(() => {
     if (!data) return [] as RollingLedgerDay[];
@@ -492,46 +653,24 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 <div key={i} className="h-[32px] animate-pulse rounded-sm" style={{ background: V3.headerBg }} />
               ))}
             </div>
-          ) : incomeRows.length === 0 ? (
-            <p style={{ padding: 16, fontSize: 12, color: V3.muted }}>No income due for this {grain}.</p>
           ) : (
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={thStyle}>Customer</th>
-                    <th style={thStyle}>Type</th>
-                    <th style={thStyle}>Load</th>
-                    <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {incomeGroups.map(([group, rows]) => {
-                    const groupTotal = rows.reduce((s, r) => s + r.amount_cents, 0);
-                    return (
-                      <IncomeGroupRows key={group} group={group} rows={rows} groupTotal={groupTotal} />
-                    );
-                  })}
-                  <tr>
-                    <td colSpan={3} style={{ ...tdStyle, fontWeight: 700, background: V3.headerBg, borderTop: `1px solid ${V3.border}` }}>
-                      Total income
-                    </td>
-                    <td
-                      className="n"
-                      style={{
-                        ...tdStyle,
-                        textAlign: "right",
-                        fontWeight: 700,
-                        background: V3.headerBg,
-                        borderTop: `1px solid ${V3.border}`,
-                      }}
-                    >
-                      {formatCents(totals.income)}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
+            <ParityTable
+              appearance="board"
+              title="Income"
+              columns={incomeColumns}
+              rows={incomeFlatRows}
+              rowKey={(row) => `${row.document_kind}-${row.document_id}-${row.due_date}`}
+              loading={isLoading}
+              emptyText={`No income due for this ${grain}.`}
+              storageKey="cash-flow-projected-income"
+              tableTestId="cash-flow-projected-income-table"
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                customer: "Total income",
+                amount: formatCents(totals.income),
+              }}
+            />
           )}
         </BoardSection>
 
@@ -542,61 +681,28 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
           onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
           testId="cash-flow-projected-expense-panel"
         >
-          {isLoading ? (
-            <div className="space-y-2 p-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-[32px] animate-pulse rounded-sm" style={{ background: V3.headerBg }} />
-              ))}
-            </div>
-          ) : (
-            <>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <th style={thStyle}>Payee</th>
-                      <th style={thStyle}>Load / doc</th>
-                      <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {expenseGroups.map(({ key, rows }, idx) => {
-                      const groupTotal = rows.reduce((s, r) => s + r.amount_cents, 0);
-                      return (
-                        <ExpenseGroupRows
-                          key={key}
-                          title={expenseGroupTitle(key, idx)}
-                          hint={emptyExpenseHint(key)}
-                          rows={rows}
-                          groupTotal={groupTotal}
-                          archivePending={archiveMutation.isPending}
-                          onArchiveClick={(item) => {
-                            setArchiveError(null);
-                            archiveMutation.mutate(item.adjustment_id!);
-                          }}
-                        />
-                      );
-                    })}
-                    <tr>
-                      <td colSpan={2} style={{ ...tdStyle, fontWeight: 700, background: V3.headerBg, borderTop: `1px solid ${V3.border}` }}>
-                        Total expenses
-                      </td>
-                      <td
-                        className="n"
-                        style={{
-                          ...tdStyle,
-                          textAlign: "right",
-                          fontWeight: 700,
-                          background: V3.headerBg,
-                          borderTop: `1px solid ${V3.border}`,
-                        }}
-                      >
-                        {formatCents(totals.expenses)}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+          <>
+            <ParityTable
+              appearance="board"
+              title="Expenses"
+              columns={expenseColumns}
+              rows={expenseFlatRows}
+              rowKey={(row) =>
+                row._empty
+                  ? `empty-${row.document_id}`
+                  : `${row.document_kind}-${row.document_id}-${row.due_date}-${row.adjustment_id ?? ""}`
+              }
+              loading={isLoading}
+              emptyText="No expenses in this window."
+              storageKey="cash-flow-projected-expenses"
+              tableTestId="cash-flow-projected-expense-table"
+              suppressToolbarSearch
+              suppressToolbarRange
+              footerCells={{
+                payee: "Total expenses",
+                amount: formatCents(totals.expenses),
+              }}
+            />
 
               {archiveError ? (
                 <p
@@ -654,7 +760,6 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                 )}
               </div>
             </>
-          )}
         </BoardSection>
       </div>
 
@@ -681,185 +786,5 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         </span>
       </div>
     </div>
-  );
-}
-
-function IncomeGroupRows({
-  group,
-  rows,
-  groupTotal,
-}: {
-  group: string;
-  rows: RollingLedgerRow[];
-  groupTotal: number;
-}) {
-  return (
-    <>
-      <tr>
-        <td
-          colSpan={3}
-          style={{
-            ...tdStyle,
-            background: V3.band,
-            fontWeight: 700,
-            fontSize: 11,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-          }}
-        >
-          {group}
-        </td>
-        <td className="n" style={{ ...tdStyle, background: V3.band, fontWeight: 700, textAlign: "right" }}>
-          {formatCents(groupTotal)}
-        </td>
-      </tr>
-      {rows.map((item) => {
-        // customer_name rides the ledger row (same string as counterparty for single-customer income).
-        const customerName = item.customer_name ?? item.counterparty;
-        const typeLabel =
-          item.document_kind === "load" || /load/i.test(item.type)
-            ? "Load · not invoiced"
-            : item.type || item.document_kind;
-        return (
-          <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
-            <td style={tdStyle}>
-              {item.customer_id ? (
-                <EntityLinkOrTombstone
-                  kind="customer"
-                  id={item.customer_id}
-                  name={ledgerPartyLabel({ ...item, counterparty: customerName })}
-                  noun="Customer"
-                  className="font-medium"
-                  data-testid="cash-flow-predicted-customer-link"
-                />
-              ) : (
-                <span data-testid="cash-flow-predicted-customer-link">
-                  {companyLabel(item.customer_name, null, "Customer")}
-                </span>
-              )}
-            </td>
-            <td style={tdStyle}>{typeLabel}</td>
-            <td style={tdStyle}>
-              <EntityLinkOrTombstone
-                kind={item.load_id ? "load" : "invoice"}
-                id={item.load_id ?? item.document_id}
-                name={item.load_number ?? item.document_label}
-                noun={item.load_id ? "Load" : "Invoice"}
-                className="font-medium"
-                data-testid="cash-flow-predicted-load-link"
-              />
-            </td>
-            <td className="n" style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>
-              {formatCents(item.amount_cents)}
-            </td>
-          </tr>
-        );
-      })}
-    </>
-  );
-}
-
-function ExpenseGroupRows({
-  title,
-  hint,
-  rows,
-  groupTotal,
-  archivePending,
-  onArchiveClick,
-}: {
-  title: string;
-  hint: string;
-  rows: RollingLedgerRow[];
-  groupTotal: number;
-  archivePending: boolean;
-  onArchiveClick: (item: RollingLedgerRow) => void;
-}) {
-  return (
-    <>
-      <tr>
-        <td
-          colSpan={2}
-          style={{
-            ...tdStyle,
-            background: V3.band,
-            fontWeight: 700,
-            fontSize: 11,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-          }}
-        >
-          {title}
-        </td>
-        <td className="n" style={{ ...tdStyle, background: V3.band, fontWeight: 700, textAlign: "right" }}>
-          {formatCents(groupTotal)}
-        </td>
-      </tr>
-      {rows.length === 0 ? (
-        <tr>
-          <td colSpan={3} style={{ ...tdStyle, color: V3.mutedSoft }}>
-            {hint}
-          </td>
-        </tr>
-      ) : (
-        rows.map((item) => {
-          // D073 — driver bills / settlements are people: proper-case via formatPersonName (never ALL CAPS).
-          const payeeNoun =
-            item.document_kind === "driver_bill" || item.document_kind === "settlement" || /driver/i.test(item.type)
-              ? "Driver"
-              : "Payee";
-          return (
-          <tr key={`${item.document_kind}-${item.document_id}-${item.due_date}`}>
-            <td style={tdStyle}>
-              <span data-testid="cash-flow-projected-expense-payee">{entityLabel(ledgerPartyLabel(item) || item.counterparty, null, payeeNoun)}</span>
-            </td>
-            <td style={tdStyle}>
-              {item.load_id ? (
-                <EntityLinkOrTombstone
-                  kind="load"
-                  id={item.load_id}
-                  name={item.load_number ?? item.document_label}
-                  noun="Load"
-                  data-testid="cash-flow-predicted-expense-load-link"
-                />
-              ) : item.document_kind === "settlement" || item.document_kind === "driver_bill" ? (
-                <EntityLinkOrTombstone
-                  kind="settlement"
-                  id={item.document_id}
-                  name={item.document_label}
-                  noun="Settlement"
-                  data-testid="cash-flow-predicted-expense-settlement-link"
-                />
-              ) : item.document_kind === "bill" ? (
-                <EntityLinkOrTombstone
-                  kind="bill"
-                  id={item.document_id}
-                  name={item.document_label}
-                  noun="Bill"
-                  data-testid="cash-flow-predicted-expense-bill-link"
-                />
-              ) : (
-                <span>{formatIsoDatesInText(item.document_label)}</span>
-              )}
-              {item.adjustment_id ? (
-                <button
-                  type="button"
-                  className="ml-3 shrink-0 text-xs underline disabled:opacity-50"
-                  style={{ color: V3.muted }}
-                  disabled={archivePending}
-                  onClick={() => onArchiveClick(item)}
-                  data-testid="cash-flow-adjustment-remove"
-                >
-                  Remove
-                </button>
-              ) : null}
-            </td>
-            <td className="n" style={{ ...tdStyle, textAlign: "right", fontWeight: 600 }}>
-              {item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents)}
-            </td>
-          </tr>
-          );
-        })
-      )}
-    </>
   );
 }

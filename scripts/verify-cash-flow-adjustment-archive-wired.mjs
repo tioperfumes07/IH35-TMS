@@ -69,7 +69,10 @@ export function checkCashFlowAdjustmentArchiveWired(serviceSrc, routesSrc, apiSr
   const mutIdx = tabSrc.indexOf("const archiveMutation = useMutation");
   const mutCallIdx = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveCashFlowAdjustment(", mutIdx);
   const btnIdx = mutIdx === -1 ? -1 : tabSrc.indexOf('data-testid="cash-flow-adjustment-remove"', mutIdx);
-  const onClickIdx = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveMutation.mutate(item.adjustment_id", mutIdx);
+  // Accept item.adjustment_id (legacy ExpenseGroupRows) or row.adjustment_id (ParityTable column).
+  const onClickItem = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveMutation.mutate(item.adjustment_id", mutIdx);
+  const onClickRow = mutIdx === -1 ? -1 : tabSrc.indexOf("archiveMutation.mutate(row.adjustment_id", mutIdx);
+  const onClickIdx = onClickItem !== -1 ? onClickItem : onClickRow;
   const mutBlock = mutIdx === -1 ? "" : tabSrc.slice(mutIdx, mutIdx + 500);
   const hasOnError = /onError\s*:/.test(mutBlock);
   const errIdx = tabSrc.indexOf('data-testid="cash-flow-adjustment-archive-error"');
