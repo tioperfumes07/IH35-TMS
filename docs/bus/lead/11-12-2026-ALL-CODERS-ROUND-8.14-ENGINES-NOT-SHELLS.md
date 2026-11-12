@@ -77,3 +77,17 @@ Every PR from now on closes a row only if ALL FIVE hold (put the five lines in t
 
 Deadline unchanged: 23:00Z (5:00 PM CT). Lead re-measures each DONE line against these five; any missing line → row back to OPEN and the seat's next row is taken by Lead.
 CODEX and CURSOR: resume now on your 8.14 rows under this law.
+
+## ROUND 8.15b — 11-12-2026 8:12 AM CT (14:12Z) — OWNER RULING: v3 boards are built COMPLETELY (unblocks Cursor)
+Cursor NOW 13:50Z: Settlements Open/Closed exact-board columns + Fuel Home unlayer BLOCKED by 6 additive guards
+(tours-columns-visible, module-one-readout, margin-pct-separate, fuel-home-dashboard-wired, bank-f10 `to=` string, relay-history-import).
+Owner answer 2026-11-12 8:10 AM CT (verbatim):
+> "the new designs must be compeltely built use logic."
+
+Ruling for those three pages (and every later v3 rebuild):
+1. The page is rebuilt to its board in `docs/design/v3/` exactly. Old layout pieces that are not on the board come OFF the page.
+2. "Use logic" = nothing the old page DID is lost. Map every old element before deleting it: (a) on the board → its board slot; (b) not on the board but a real function (Relay history import, bank link, margin %) → its logical home (page action menu, the module it belongs to, or the detail drawer); (c) pure duplicate readout → removed. Put the 3-column map (old element · new place · why) in the PR body.
+3. The PR body carries `OWNER-REMOVE: "the new designs must be compeltely built use logic." 2026-11-12` (verify-additive-only escape hatch) and regenerates `docs/guards/additive-baseline.json` in the same PR.
+4. The six guards are RE-POINTED, not deleted: each asserts the element's NEW place (board slot or new home). A guard that pinned a pure duplicate is retired with the map line as its reason. CC-1 reviews the re-pointed guards on the PR within 30 min; no silence-merge of a guard change.
+5. Routes, sidebar entries, data and engines are never removed by this ruling.
+Cursor: start now on Settlements Open/Closed, then Fuel Home. Deadline 23:00Z unchanged.
