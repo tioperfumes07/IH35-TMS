@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~3:00 AM CT) — MAIN-RED factoring KPI sizing guard retarget
+- **THIS:** 11206-verify-factoring-kpi-profile-sizing now asserts FactoringHomeBoard KPI gap-2 + board-main responsive grid + CollapsedListFilters (ROUND 8.5 FA1 retired overview-row/kpi-col/profile-col).
+- **LIVE FAIL (ops/CC):** load-to-cash LINK1 load 13700; settlement-linkage orphans. CodeQL WriteCheckForm + auth.routes pre-existing.
+- **NEXT:** reverse-wiring resume after green. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~2:00 AM CT) — MAIN-RED date-column 123→127
 - **THIS:** DailyPrediction Due columns; SettlementStatementBoardPanels + PerfumeDesk/Review TABLE_DATE_OMIT.
 - **LIVE FAIL (ops/CC):** load-to-cash LINK1 load 13700; settlement-linkage orphans. CodeQL WriteCheckForm/auth.routes pre-existing.
