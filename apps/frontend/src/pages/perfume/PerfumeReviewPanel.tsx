@@ -48,7 +48,7 @@ export function PerfumeReviewPanel() {
         </label>
         <label className="w-[260px] max-w-full text-xs text-gray-700">
           {tr("perfume.review.searchLabel", "Words in their line, UPC or code")}
-          <input type="search" className="mt-0.5 h-[34px] w-full rounded border border-gray-300 px-2 text-sm" value={text}
+          <input type="search" className="mt-0.5 h-[34px] w-full rounded border border-gray-300 px-2 text-xs" value={text}
             data-testid="perfume-review-search" placeholder={tr("perfume.review.searchPh", "e.g. ARMAF CLUB")}
             onChange={(e) => { setText(e.target.value); reset(); }} />
         </label>
