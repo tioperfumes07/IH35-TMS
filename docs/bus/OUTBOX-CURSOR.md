@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~7:45 AM CT) — #29015 MERGED Settlements KPI href + Perfume TS2300
+- **THIS:** #29015 squash 819c9ca09d — Settlements Home/Tours KPI onClick→href; MAIN-RED PerfumeListsPanel duplicate MoneyInput import.
+- **BLOCKED:** Open/Closed exact-board columns + Fuel Home unlayer need LEAD OWNER-REMOVE / SURFACE-BREACH on CC-1 additive guards (tours-columns-visible, module-one-readout, margin-pct-separate, fuel-home-dashboard-wired, bank-f10 to= string, relay-history-import).
+- **NEXT:** Factoring Home #39 or Settlements Close #49 if ungated. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~7:20 AM CT) — ROUND 8.15 KPI href + Perfume MoneyInput; board-column rebuild BLOCKED
 - **THIS:** Settlements Home/Tours + Fuel fraud/overage KPI onClick→href. PerfumeListsPanel Price→MoneyInput (MAIN-RED money-input gate).
 - **BLOCKED:** Open/Closed exact-board column strip + Fuel Home unlayer fail CC-1 additive guards (verify-settlements-tours-columns-visible / module-one-readout / margin-pct-separate / fuel-home-dashboard-wired / bank-f10 / relay-history-import). Need LEAD OWNER-REMOVE or SURFACE-BREACH to retarget those guards to Settlements-Open|Closed.dc.html + Fuel.dc.html.
