@@ -19,6 +19,7 @@ import {
   formatWeekOfTitle,
   settlementPaymentLabel,
   settlementsDerivedReimb,
+  settlementsRowTourClosed,
   settlementsWeekLoadsLabel,
   settlementsWeekOfStatusLabel,
   type SettlementsWeekBucket,
@@ -106,7 +107,8 @@ export function weekOfBoardStatus(s: SettlementListRow): { label: "Paid" | "Open
   if (pay === "Held") return { label: "Held", color: V3.red };
   const phase = settlementsWeekOfStatusLabel(s);
   if (phase === "Cancelled") return { label: "Cancelled", color: V3.muted };
-  if (phase === "Closed") return { label: "Closed", color: V3.shell };
+  // ROUND 8.17 class L — Closed panel never paints "Open"; tour-closed / terminal rows label Closed.
+  if (phase === "Closed" || settlementsRowTourClosed(s)) return { label: "Closed", color: V3.shell };
   return { label: "Open", color: V3.link };
 }
 

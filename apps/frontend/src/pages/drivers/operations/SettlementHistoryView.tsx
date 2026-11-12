@@ -14,8 +14,8 @@ export function SettlementHistoryView({ driverId, operatingCompanyId }: Props) {
         { key: "settlement_number", label: "Settlement #", entityKind: "settlement", idKey: "uuid" },
         // COL-06: period_start is already on the row (settlement-history.service.ts already
         // selects it) -- just never rendered here, leaving Period Begin blank.
-        { key: "period_start", label: "Period Begin" },
-        { key: "period_end", label: "Period End" },
+        { key: "period_start", label: "Period Begin", calendarDate: true },
+        { key: "period_end", label: "Period End", calendarDate: true },
         { key: "total_amount", label: "Total" },
         { key: "status", label: "Status" },
       ]}

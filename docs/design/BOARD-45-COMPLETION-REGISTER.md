@@ -69,7 +69,13 @@ Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · 
 
 | # | Board | Status | Notes |
 |---|---|---|---|
-| 7 | Cash Flow — Rolling Ledger | FAIL pending Codex | Class R: EntityLink+PageHeader `ret` restores CF origin (await deploy recheck) |
-| 22/43 | Maintenance / Fleet Health → PM | FAIL pending Codex | Class R: `fh` cohort in URL + PM links wrap `ret` |
-| * | All EntityLink detail Back | FAIL pending Codex | Shared `returnContext` / PageHeader / BackButton |
+| 7 | Cash Flow — Rolling Ledger | FAIL pending Codex | Class R #29057 bf05f75b55a: EntityLink+PageHeader `ret` restores CF origin |
+| 22/43 | Maintenance / Fleet Health → PM | FAIL pending Codex | Class R #29057: `fh` cohort in URL + PM links wrap `ret` |
+| * | All EntityLink detail Back | FAIL pending Codex | Shared `returnContext` / PageHeader / BackButton · PR #29057 |
+| 9 | Customers | FAIL pending Codex | Class L: Create hides legacy master/detail behind drawer |
+| 10 | Vendors | FAIL pending Codex | Class L: Create hides legacy master/detail behind drawer |
+| 11 | Driver Profile | FAIL pending Codex | Class L: one Legal / one audit / one Stops+miles; period dates formatted |
+| 18 | Factoring | FAIL pending Codex | Class R ret + Class L account-summary board-only (prior 8.15b) |
+| 19 | Fuel | FAIL pending Codex | Class L: seven columns + make/model identity (Fuel.dc.html) |
+| 32 | Settlements Home | FAIL pending Codex | Class L: Closed panel never labels tour-closed rows Open |
 

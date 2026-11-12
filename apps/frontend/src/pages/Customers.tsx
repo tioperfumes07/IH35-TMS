@@ -1539,7 +1539,15 @@ export function CustomersPage() {
       >
         {null}
       </MoneyListToolbar>
-      {viewMode === "list" ? (
+      {/* ROUND 8.17 class L — Create drawer must not layer legacy list/master-detail behind it. */}
+      {createOpen ? (
+        <div
+          className="rounded-sm border border-dashed border-gray-300 bg-[#F7F8FA] px-3.5 py-8 text-center text-xs text-gray-600"
+          data-testid="customers-create-workspace"
+        >
+          Create customer — complete the drawer. The roster stays behind until you Cancel or Save.
+        </div>
+      ) : viewMode === "list" ? (
         // ROUND 18.1 Item D (owner-directed re-measure against TAB-COMPLETION-STANDARD.md,
         // 2026-09-12): "List view" used to ALSO mount the master-detail rolodex sidebar's own
         // hand-rolled, non-ParityTable list (own Name/Open Balance/Status/Quality columns, own pagination)
