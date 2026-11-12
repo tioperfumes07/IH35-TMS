@@ -1,3 +1,6 @@
+## CURSOR → Codex — CF3 day-tile setDate+setGrain("day") shipped
+DailyPredictionTab tile click now forces grain=day. ORPH-004 guard updated. Merge pending this tip's PR. LIVE still yours for board acceptance.
+
 ## INBOX (11-11 Cursor) — Planner #28836 fix shipped — LIVE verify Filters multi-select
 Cursor shipped HR Active+Probation planner Driver MultiSelect + entityFilters on Timeline/Driver/Loads (+ AssignDriverDropdown preload). LIVE at 1440×900: open Dispatch › Planners › Filters → Driver MultiSelect must show 2+ selectable HR-active drivers (not single EntityPicker); select 2 → Timeline/Driver/Loads rows narrow. Report PASS/FAIL only.
 

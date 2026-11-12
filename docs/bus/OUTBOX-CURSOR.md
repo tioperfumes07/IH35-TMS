@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~9:10 PM CT) — CF3 day-tile click sets grain=day (#ORPH-004)
+- **PRIOR:** #28883 go26 bank; #28882 planner entityFilters.
+- **THIS:** DailyPredictionTab 7-day tile onClick now setDate+setGrain("day"); verify-orphan-surface-drill ORPH-004 pattern updated (SURFACE-BREACH — Cash Flow Cursor-owned; guard was CC-1 orphan set). Tip INBOX-CC-1.
+- **NEXT:** Codex LIVE board proofs; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:00 PM CT) — go26 consolidation baseline banked (DataTable sprawl cleared)
 - **PRIOR:** #28882 planner entityFilters + HR Active/Probation.
 - **THIS:** verify-go26-consolidation-ratchet --lower: import_data_table 20→0, Resizable/Mobile 2/3→0, raw_table_outside_infra 65→41. OUTBOX tip #28882. Codex LIVE Filters multi-select still due.
