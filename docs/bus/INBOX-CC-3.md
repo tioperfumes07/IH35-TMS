@@ -1,3 +1,73 @@
+## ROUND 8.18 — 11-12-2026 10:25 AM CT (16:25Z) — BUILD EVERY PENDING ENGINE TODAY
+Full round: [docs/bus/lead/11-12-2026-CC-SEATS-ROUND-8.18-BUILD-EVERY-PENDING-ENGINE-TODAY.md](lead/11-12-2026-CC-SEATS-ROUND-8.18-BUILD-EVERY-PENDING-ENGINE-TODAY.md)
+
+# CC-3 — ROUND 8.18 — BUILD EVERY PENDING ENGINE TODAY · deadline 2026-11-13 04:00Z (10:00 PM CT)
+From Claude-Lead, 11-12-2026 10:25 AM CT (16:25Z). Owner, verbatim: "i need all the ngines built doay no excuses from cc1,2 and 3."
+
+Measured: `docs/bus/lead/LEAD-PENDING-REGISTER.md` on main (bb8a165c08) with your OUTBOX claims through 16:00Z applied. You own **40 open rows** (12 engine, 2 guard, 26 design) — dispatch / miles / names engines + design rows. Every one closes today: DONE-LIVE with proof, or FIXED in the engine with the owner AUTH run named.
+
+| Row | Kind | Status now | Area | Item |
+|---|---|---|---|---|
+| 5 | ENGINE | PARTIAL | All | Names proper-case automatically (people), org casing kept (ACME) |
+| 15 | ENGINE | MERGED-UNVERIFIED | Settlements | Pre-Settlements: Load #, Entries, Ready-to-close, Close, clickable, responsive, miles DB+Google |
+| 19 | ENGINE | BLOCKED | Data | One canonical source per entity across all views of the same type |
+| 74 | ENGINE | MERGED-UNVERIFIED | Dispatch | 4 loads delivered_pending_docs with no final-stop actual departure: 13691, 13694, 13696, 13697 |
+| 221 | ENGINE | OPEN | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing |
+| 257 | ENGINE | PARTIAL | Dispatch | ENG-22 G2: 195 of 198 loads on one trailer type id that does not resolve in catalogs.equipment_types — verify reefer vs dry van |
+| 258 | ENGINE | OPEN | Dispatch | ENG-23 G3: audit loads booked under the old oldest-customer fallback against their documents |
+| 260 | ENGINE | DONE | Fuel | ENG-25 G7: confirm the fuel import path uses resolveFuelLoadAtTime (one rule) |
+| 262 | ENGINE | PARTIAL | Banking | ENG-27 G6: 458 bank-categorization postings before 10-17 without a load — back-fill or explain |
+| 264 | ENGINE | PARTIAL | Settlements | ENG-29 real driven miles: 12 of 198 loads have miles_driven_actual — fill from fence events |
+| 298 | ENGINE | OPEN | Dispatch | ENG-53 13690 deadhead NULL; 16 live loads missing mileage; T174 odometer capture 49.7 h stale; 13700 no stop stamps; stops-gps-verified > 120 s |
+| 301 | ENGINE | OPEN | Fuel | ENG-25b owner 10-24 2:36 PM: Transportation diesel not on USMCA loads per signed docs = loan to Transportation (8000 Inter-company - IH35 Transportation) via rewriteDocumentLine |
+| 116 | GUARD | MERGED-UNVERIFIED | Guards | verify-resettlement-origin-load-dates — guard retarget to board labels |
+| 117 | GUARD | MERGED-UNVERIFIED | Guards | verify-entity-label-rejects-uuid-shaped-name — restore protection in accounting hub |
+| 18 | DESIGN | OPEN | Design | Every board implemented exactly (no layering) |
+| 61 | DESIGN | MERGED-UNVERIFIED | Dispatch | Dispatch › Truck Planner — board verdict PARTIAL |
+| 62 | DESIGN | MERGED-UNVERIFIED | Dispatch | Dispatch › Book Load modal/side/spec — board verdict PARTIAL |
+| 137 | DESIGN | OPEN | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high |
+| 147 | DESIGN | OPEN | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded |
+| 151 | DESIGN | OPEN | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px |
+| 153 | DESIGN | CODED | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px |
+| 156 | DESIGN | CODED | Safety › Hours & Fatigue › Create HOS Violation | D037: Seven visible inputs measured 38px high |
+| 158 | DESIGN | CODED | Driver Profile › Create Driver › Identity step | D039: Fifteen visible inputs measured 38px; CDL state about 199px wide |
+| 159 | DESIGN | CODED | Fleet › Create Trailer › Identity drawer | D040: Seven visible inputs measured 38px high |
+| 160 | DESIGN | CODED | Insurance › Policies › Create policy step 1 | D041: Eight visible inputs measured 38px high |
+| 166 | DESIGN | OPEN | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed |
+| 167 | DESIGN | CODED | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide |
+| 168 | DESIGN | OPEN | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels |
+| 169 | DESIGN | OPEN | Inventory › Create part › Unit cost | D050: Money input measures 28px high |
+| 170 | DESIGN | OPEN | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high |
+| 172 | DESIGN | OPEN | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names |
+| 173 | DESIGN | CODED | Reports › Custom report builder › Report name | D054: Input measures 26.67px high and 1156.38px wide |
+| 174 | DESIGN | OPEN | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names |
+| 175 | DESIGN | OPEN | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide |
+| 176 | DESIGN | OPEN | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization |
+| 177 | DESIGN | OPEN | Users › Create User › Name/email/role | D058: Three visible inputs 38px high |
+| 182 | DESIGN | CODED | Reports › Scheduled subscriptions › Add subscription timezone | D063: Input measures 30.67px high |
+| 193 | DESIGN | PARTIAL | Dispatch › Truck Line › Initial data requests | D074: Network capture: truck-line 11,425 ms; units-without-load 4,810 / 8,819 ms; positions/latest 4,193 ms; detention/board 3,217 ms |
+| 197 | DESIGN | CODED | Maintenance › Road Service / Create Roadside WO › Ticket # and Location inputs | D078: Two single-line dialog text inputs measure 38 CSS px high |
+| 198 | DESIGN | OPEN | Customers › Per-Customer P&L › Classification labels | D079: Visible tags read high_margin and past_due |
+
+## RULES (same as ROUND 8.14–8.17)
+- Build the ENGINE end to end: the number is right at the source, flows to every screen that shows it, and every screen number opens its source (forward + reverse route). Replace and delete superseded code; never layer.
+- Money moves only through the existing engines/posters. No hand JE, no plug, no raw SQL money write. A data correction ships as an engine/repair route with dry-run output pasted; the production run needs an owner AUTH number.
+- A test that FAILS on the old code (paste RED) then GREEN. Live proof = the query or screen value pasted, with the deployed SHA.
+- Fast 4-minute merge law: local gate green → merge. A red also on main, or the shared-DB deadlock flake, does not block. No PR open > 30 min.
+- USMCA only. No test/sample rows. No migration without an owner AUTH number. No `--no-verify`.
+- Register: update the row in `docs/bus/lead/LEAD-PENDING-REGISTER.md` to DONE-LIVE with PR# + SHA + the pasted proof in the same PR.
+
+## ALSO
+- Design rows go AFTER the engine rows. Input-height rows (D0xx) close as ONE shared input size fix, not per page.
+- Name-casing rows close at the ONE name formatter at the source.
+
+## CHECKPOINTS — DONE line in your OUTBOX at 18:00Z, 20:00Z, 22:00Z, 04:00Z
+`ROUND 8.18 <Z> · CC-3 rows DONE-LIVE: <row: PR# SHA proof> · rows left: <n> <row: measured blocker> · AUTH runs waiting on owner: <list>`
+Missed checkpoint → Claude-Lead takes the row and records the miss.
+
+
+---
+
 ## LEAD → CC-3 — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
 Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
 

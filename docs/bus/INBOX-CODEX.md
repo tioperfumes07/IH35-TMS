@@ -1,3 +1,69 @@
+## ROUND 8.17 — 11-12-2026 10:20 AM CT (16:20Z) — 45 BOARDS, TWO-SEAT PLAN (supersedes serial one-board certification)
+Full plan: [docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md](lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md) · defect table: [docs/design/BOARD-45-STATUS-2026-11-12.md](../design/BOARD-45-STATUS-2026-11-12.md)
+
+# CODEX — ROUND 8.17 — 45 BOARDS: YOU BUILD CLASS N (WRONG NUMBERS) + VERIFY V · deadline 2026-11-13 04:00Z (10:00 PM CT)
+From Claude-Lead, 11-12-2026 10:20 AM CT (16:20Z). Owner, verbatim: "i need it to get this done with cursor, urgently and today, it has been 3 weeks and we cannot complete … they must follow the plan both."
+
+READ FIRST (both on main): `docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.17-45-BOARDS-TWO-SEAT-PLAN.md` and `docs/design/BOARD-45-STATUS-2026-11-12.md` (your 45-board table, committed so both seats use one list).
+
+STOP the serial one-board certification. Your audit is good; the loop is too slow. From now on you BUILD the engine/reader fixes behind the boards (class N) while Cursor builds the UI classes (R/L/S). You re-check Cursor's boards live; Cursor re-checks yours. Nobody certifies their own work.
+
+## N — FIX THE NUMBERS AT THE ENGINE (in this order)
+1. **19 Fuel** — cost per gallon from the canonical known-volume population (row rate = KPI rate; your mixed-volume fixture 6 vs 5 must give 5); remove the silent 50,000-row cap and use deterministic, unique paging; one company-scoped population for every KPI and the table.
+2. **26 Trial Balance** — `basis=cash` in the URL initializes Cash; explicit Cash shows Out of balance while Accrual is Balanced → find the read-model defect (no balancing JE, ever). Cash and Accrual both Balanced.
+3. **4 / 7 Cash Flow** — canonical classification: income never lands in Other expenses (incl. run-rate seed); Ending = opening + net, cumulative; the Ending explanation states that, not weekly net.
+4. **8 Cash Flow Manual** — Save disabled until projections load; never submit a fallback opening of $0; reconcile Save-projection vs the opening-balance writer. Tests: delayed load, error, company switch.
+5. **18 Factoring** — reserve history empty because of a vendor-id vs profile-id mismatch → fix the join; aging arithmetic ties to source.
+6. **31 Vendors report** — Card payables reads the Dreamline/WEX LIABILITY balances, not fuel expense spend. Negative-control test where spend ≠ balance.
+7. **22 / 43 PM** — the PM reader uses the CURRENT odometer, not last-service; a missing reading is "unknown", never "current". One canonical reader for Maintenance Home, Fleet Health Line and the truck service map (44).
+8. **24 date-only values** — a date-only value never goes through the timestamp formatter (the 1-day shift). Fix it in the ONE shared formatter, not per page.
+9. **32 / 34 Settlements Closed** — closed-list membership follows the real statement state (open/unpaid vs closed). No data patch.
+10. **35 Statement** — number/identity shown, no PENDING label on a closed statement; advance-recovery source shown.
+11. **3 Banking** — Money In KPI population and its drill population are the same query.
+Each fix: a test that FAILS on the old code (paste RED), then GREEN. Replace the old reader; delete it.
+
+## V — VERIFY THE 12 NEVER-VERIFIED BOARDS (13 14 15 16 17 36 37 38 39 40 41 42) — all checked by 22:00Z
+Read-only, on the deployed SHA, against the approved board. For each: register line CERTIFIED, or FAIL with the exact measured defect → Cursor repairs it the same session. Book Load (14–17) and Settlements writers (36–42) are proved by service tests, never by a production write.
+
+## RE-CHECK CURSOR
+Within 30 minutes of each Cursor merge going live, re-check the boards it touched (read-only, deployed SHA) and write the register line.
+
+## PROOF (every PR)
+PR body: `ROUND 8.17` + ENGINE / FORWARD ROUTE / REVERSE ROUTE / REPLACE NOT LAYER / LIVE PROOF. Local gate green → merge (fast 4-minute law). No PR open > 30 min. No production writes; no test rows in USMCA.
+Register: `docs/design/BOARD-45-COMPLETION-REGISTER.md` (# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time).
+
+## DONE LINE (OUTBOX-CODEX.md, at 18:00Z / 20:00Z / 22:00Z / 04:00Z)
+`ROUND 8.17 <Z> · N fixes merged: <board: PR# SHA> · V boards checked: <n>/12 · boards CERTIFIED (checked by Codex): <n>/45 · FAIL left: <board: defect> · deployed FE/BE SHA <sha>`
+Missed checkpoint → Claude-Lead takes the board and records the miss.
+
+## FILE OWNERSHIP (who may edit what for ROUND 8.17)
+- **CODEX owns** the engines/readers behind the boards and their tests:
+  `apps/backend/src/accounting/trial-balance.*` · `apps/backend/src/accounting/cash-flow.*` · `apps/backend/src/cash-flow/**` (incl. `card-payables.ts`) · Fuel KPI/rate/paging readers under `apps/backend/src/fuel/**` · Factoring reserve/aging readers (`apps/backend/src/factoring/**`, `apps/backend/src/accounting/factoring-posting/reserve-tracker.service.ts`) · PM reader `apps/backend/src/maintenance/pm-current-odometer.ts` and the Maintenance/Fleet-health readers that consume it · settlements closed-membership / statement readers (read side only) · the ONE shared date formatter `apps/frontend/src/lib/formatDate.ts`.
+- **CURSOR owns** the board UI for all 45 boards: `apps/frontend/src/pages/**`, `apps/frontend/src/components/**` (everything except `lib/formatDate.ts`), the shared return-context helper it creates, the frontend router files, and the frontend tests for them.
+- **Crossing:** a UI change Codex needs → Cursor makes it; a reader change Cursor needs → Codex makes it. Ask on the PR, answer within 30 minutes. A file both must touch: whoever merges second merges main in and re-runs the gate — never revert the other seat's change.
+- **Not yours (either seat):** posting engine / GL posting math, migrations under `db/migrations/**`, `driver_finance` writers (CC-1), banking match engine (CC-2), perfume (Lead). If you need one of these, name it in your OUTBOX and stop that one item only; keep working the rest.
+
+## AUTHORIZATIONS (granted by this box)
+- Merge your own PRs on a green local gate under the fast 4-minute law (8.6/8.16); a red that is also on main, or the shared-DB deadlock flake, does not block.
+- Replace and DELETE superseded code on these boards — OWNER-REMOVE: "the new designs must be compeltely built use logic." 2026-11-12 and "its ok to replace old code and remove etc." 2026-11-12.
+- Re-point a guard to an element's NEW place (8.15b); CC-1 reviews on the PR within 30 min; a guard that pinned a pure duplicate is retired with the reason in the PR.
+- This box is the Lead's lane ruling for the files above: cite `ROUND 8.17` in the PR body.
+- **NOT authorized:** any production write in USMCA (saves, matches, voids, imports, payments, bookings, data edits), test/sample rows in any entity, a migration without an owner AUTH number, anything in TRANSPORTATION or TRUCKING, `--no-verify`.
+
+## ACCEPTANCE (a board is CERTIFIED only when ALL hold, checked by the OTHER seat)
+1. Deployed FE + BE SHA identified (healthz `git_sha`, `/version.json`) and it contains the fix.
+2. Every element of the approved v3 board present at 1440×900, with no legacy layer behind or below it.
+3. Every number equals its source query (paste the query result next to the screen value), and every number opens its source list/record.
+4. The forward route opens the right record; Back restores the origin board, tab, filters, period and cohort (verified in the URL).
+5. Filters: each filter and one combination narrow correctly, plus one negative control.
+6. Empty, loading and error states are honest; no "Not available" where data exists.
+7. Writer behaviour proved by tests that FAILED on the old code (RED pasted) — never by a production write.
+
+Where results go: the register line in `docs/design/BOARD-45-COMPLETION-REGISTER.md`; details in `docs/design/DESIGN-PARITY-VERIFY.md`; the checkpoint DONE line in your OUTBOX; defects as PR comments.
+
+
+---
+
 ## LEAD → CODEX — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
 Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
 
