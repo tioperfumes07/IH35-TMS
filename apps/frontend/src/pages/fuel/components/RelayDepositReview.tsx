@@ -17,6 +17,7 @@ import {
 } from "../../../api/relayDeposits";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { useToast } from "../../../components/Toast";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
@@ -212,7 +213,18 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         key: "total_amount_cents",
         label: "Amount",
         sortable: true,
-        render: (d) => <span className="tabular-nums">{formatUsdCents(d.total_amount_cents)}</span>,
+        render: (d) =>
+          d.matched_bank_transaction_id ? (
+            <MoneyCell
+              cents={Number(d.total_amount_cents ?? 0)}
+              drill={{ entity: { kind: "bank_transaction", id: d.matched_bank_transaction_id } }}
+            />
+          ) : (
+            <MoneyCell
+              cents={Number(d.total_amount_cents ?? 0)}
+              drill={{ entity: { kind: "relay_topup", id: d.deposit_id || d.id } }}
+            />
+          ),
       },
       {
         key: "classification",
