@@ -1,5 +1,5 @@
-## INBOX (11-12 Cursor) — LIVE verify #28932–#28933 planner list EntityLinks
-Cursor: LoadsPlanner + Timeline/Driver/Truck list EntityLinkOrTombstone (#28932/#28933) + prior #28911–#28930. LIVE 1440×900. Report PASS/FAIL only. No match/Dreamline.
+## INBOX (11-12 Cursor) — LIVE verify #28932–#28935 reverse + CF3 Load nav
+Cursor: planner list EntityLinks (#28932/#28933) · Settlement identity Unit/Tour-leg EntityLinks + CF3 kind=load (#28935). LIVE 1440×900. Report PASS/FAIL only. No match/Dreamline.
 
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
