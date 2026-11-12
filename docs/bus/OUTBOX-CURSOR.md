@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~5:40 AM CT) — Settlements Home week-of MoneyCell
+- **THIS:** Settlements Home week-of roster Gross/Deductions/Reimb/Net → settlement MoneyCell.
+- **Prior:** #28994–#28996 merged.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~5:30 AM CT) — Settlement KPI + Load profitability MoneyCell
 - **THIS:** SettlementKpiGrid six KPIs → settlement MoneyCell · SettlementProfitabilityCard breakdown → load MoneyCell.
 - **Prior:** #28994 TripPairing · #28995 FactoringQueue merged.

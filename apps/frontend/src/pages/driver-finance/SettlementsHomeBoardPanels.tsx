@@ -5,6 +5,7 @@
 import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
@@ -12,7 +13,7 @@ import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { companyToday } from "../../lib/businessDate";
-import { formatQuantityTable, formatUsd } from "../../lib/money";
+import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import {
   formatSettlementsUsd,
   formatWeekOfTitle,
@@ -110,6 +111,7 @@ export function weekOfBoardStatus(s: SettlementListRow): { label: "Paid" | "Open
 }
 
 const money = (n: number) => formatUsd(n);
+const dollarsToCents = (n: number) => Math.round(Number(n || 0) * 100);
 
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {
@@ -403,10 +405,28 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                         <EntityLink kind="settlement" id={s.id} label="PENDING" />
                       )}
                     </span>
-                    <span>{money(Number(s.gross_pay ?? 0))}</span>
-                    <span>{money(Number(s.deductions_total ?? 0))}</span>
-                    <span>{money(settlementsDerivedReimb(s))}</span>
-                    <span style={{ fontWeight: 700 }}>{money(Number(s.net_pay ?? 0))}</span>
+                    <MoneyCell
+                      cents={dollarsToCents(Number(s.gross_pay ?? 0))}
+                      format={formatUsdCents}
+                      drill={{ entity: { kind: "settlement", id: s.id } }}
+                    />
+                    <MoneyCell
+                      cents={dollarsToCents(Number(s.deductions_total ?? 0))}
+                      format={formatUsdCents}
+                      drill={{ entity: { kind: "settlement", id: s.id } }}
+                    />
+                    <MoneyCell
+                      cents={dollarsToCents(settlementsDerivedReimb(s))}
+                      format={formatUsdCents}
+                      drill={{ entity: { kind: "settlement", id: s.id } }}
+                    />
+                    <span style={{ fontWeight: 700 }}>
+                      <MoneyCell
+                        cents={dollarsToCents(Number(s.net_pay ?? 0))}
+                        format={formatUsdCents}
+                        drill={{ entity: { kind: "settlement", id: s.id } }}
+                      />
+                    </span>
                     <span
                       data-testid={`settlements-home-week-of-status-${s.id}`}
                       style={{
