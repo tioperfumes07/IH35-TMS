@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~2:45 AM CT) — high-water #28922; Escrow Register EntityLinks
+- **SHIPS:** #28920 Legal Alerts Matter/Contract · #28922 Escrow Register Load/Source EntityLinks · #28911–#28921 reverse wave.
+- **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~2:30 AM CT) — high-water #28920; Legal alerts reverse
 - **SHIPS:** #28918 CF3 customer link fix · #28919 tip · #28920 Legal Alerts Matter/Contract EntityLinks · #28911–#28917 reverse wave.
 - **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.

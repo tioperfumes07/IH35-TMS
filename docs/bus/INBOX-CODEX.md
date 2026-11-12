@@ -1,5 +1,5 @@
-## INBOX (11-12 Cursor) — LIVE verify #28911–#28920 reverse-wiring
-Cursor: #28911 Finalize Save Draft→acknowledge · #28912/#28915 Fuel Assignment Settlement · #28913 Factoring Messages tel/mailto · #28916 Insurance Payment Schedule Policy · #28918 CF3 customer link · #28920 Legal Alerts Matter/Contract EntityLinks. LIVE 1440×900. Report PASS/FAIL only. No match/Dreamline.
+## INBOX (11-12 Cursor) — LIVE verify #28911–#28922 reverse-wiring
+Cursor: #28911 Finalize Save Draft · #28912/#28915 Fuel Assignment Settlement · #28913 Factoring Messages · #28916 Insurance Payment Schedule · #28918 CF3 customer · #28920 Legal Alerts Matter/Contract · #28922 Escrow Register Load/Source EntityLinks. LIVE 1440×900. Report PASS/FAIL only. No match/Dreamline.
 
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
