@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { entityLabel } from "../../lib/entity-label";
 import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFleetCoveredUnit } from "../../api/insurance";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -22,7 +22,16 @@ function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType)
   const coverage = row.coverages.find((item) => item.coverage_type === type);
   if (!coverage) return <span className="inline-flex rounded-sm border border-red-300 bg-red-50 px-1.5 py-0.5 text-xs font-semibold text-red-800">MISSING</span>;
   const expiry = formatCalendarDateUS(coverage.expiry_date) || "—";
-  return <Link className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline" to={`/insurance/policies/${coverage.policy_id}`}>{coverage.policy_number} · {expiry}</Link>;
+  const policyLabel = `${entityLabel(coverage.policy_number, coverage.policy_id, "Policy")} · ${expiry}`;
+  return (
+    <EntityLink
+      kind="insurance_policy"
+      id={coverage.policy_id}
+      label={policyLabel}
+      className="inline-flex rounded-sm border border-gray-400 bg-white px-1.5 py-0.5 text-xs font-semibold text-gray-800 underline"
+      data-testid={`fleet-covered-policy-${type}-${row.unit_id ?? row.equipment_id ?? "x"}`}
+    />
+  );
 }
 
 export function FleetCoveredPage() {
