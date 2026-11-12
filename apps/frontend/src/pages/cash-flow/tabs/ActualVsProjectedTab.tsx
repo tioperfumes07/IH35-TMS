@@ -707,6 +707,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-income"
+                href={`#cash-flow-avp-table`}
               />
             );
           })()}
@@ -738,6 +739,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-expense"
+                href={`#cash-flow-avp-table`}
               />
             );
           })()}
@@ -763,6 +765,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-net"
+                href={`#cash-flow-avp-table`}
               />
             );
           })()}
@@ -772,6 +775,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             sub={shortRangeLabel(applied.from, applied.to)}
             tone="muted"
             testId="cash-flow-avp-v3-kpi-days"
+            href={`#cash-flow-avp-table`}
           />
         </div>
       )}
@@ -779,6 +783,10 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       {!isLoading && chartPoints.length > 0 && (
         <BoardSection
           title="Cumulative — projected vs actual"
+          onViewAll={() => {
+            const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
+            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
           headerRight={
             <V3Segmented
               value={chartGrain}

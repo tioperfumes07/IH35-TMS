@@ -182,6 +182,7 @@ jobs:
             scripts/verify-disbursement-never-credits-receipt-clearing.mjs \
             scripts/verify-yard-location-and-fence.mjs \
             scripts/verify-vendor-balances-equals-ap-control.mjs \
+            scripts/verify-vendor-report-excludes-driver-bills.mjs \
             scripts/verify-document-links-enforced-at-db.mjs \
             scripts/verify-event-log-spine.mjs \
             scripts/verify-faro-default-interest-accrues-from-day-35.mjs \

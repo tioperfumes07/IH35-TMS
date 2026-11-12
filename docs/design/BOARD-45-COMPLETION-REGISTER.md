@@ -72,10 +72,14 @@ Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · 
 | 7 | Cash Flow — Rolling Ledger | FAIL pending Codex | Class R #29057 bf05f75b55a: EntityLink+PageHeader `ret` restores CF origin |
 | 22/43 | Maintenance / Fleet Health → PM | FAIL pending Codex | Class R #29057: `fh` cohort in URL + PM links wrap `ret` |
 | * | All EntityLink detail Back | FAIL pending Codex | Shared `returnContext` / PageHeader / BackButton · PR #29057 |
-| 9 | Customers | FAIL pending Codex | Class L: Create hides legacy master/detail behind drawer |
-| 10 | Vendors | FAIL pending Codex | Class L: Create hides legacy master/detail behind drawer |
+| 9 | Customers | FAIL pending Codex | Class L #29059 6c7776b7a1b: Create hides legacy master/detail behind drawer |
+| 10 | Vendors | FAIL pending Codex | Class L #29059 6c7776b7a1b: Create hides legacy master/detail behind drawer |
 | 11 | Driver Profile | FAIL pending Codex | Class L: one Legal / one audit / one Stops+miles; period dates formatted |
 | 18 | Factoring | FAIL pending Codex | Class R ret + Class L account-summary board-only (prior 8.15b) |
 | 19 | Fuel | FAIL pending Codex | Class L: seven columns + make/model identity (Fuel.dc.html) |
+| 3 | Banking | FAIL pending Codex | Class S #29064: Money In/Out cohort dates+types+categorized |
+| 6 | Cash Flow — Actual vs Projected | FAIL pending Codex | Class S #29064: KPI/View all → table source |
+| 10 | Vendors | FAIL pending Codex | Class L #29059 + Class S #29064 Pays-through counts drill |
+| 19 | Fuel | FAIL pending Codex | Class L seven cols + Class S #29064 period/unlinked/$→history |
 | 32 | Settlements Home | FAIL pending Codex | Class L: Closed panel never labels tour-closed rows Open |
 

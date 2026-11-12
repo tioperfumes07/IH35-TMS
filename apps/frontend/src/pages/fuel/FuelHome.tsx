@@ -14,7 +14,6 @@ import { FuelBoardKpiStrip } from "./components/FuelBoardKpiStrip";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { EntityLink } from "../../components/shared/EntityLink";
-import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatMoneyCents } from "../../lib/formatMoney";
 import { formatQuantityTable, formatUsdRateTable } from "../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
@@ -243,17 +242,17 @@ export function FuelHomePage() {
         className: QBO_MONEY_CELL_CLASS,
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.spend_cents,
-        render: (r) =>
-          r.unit_id ? (
-            <MoneyCell
-              cents={r.spend_cents}
-              format={(c) => formatMoneyCents(c)}
-              drill={{ entity: { kind: "unit", id: r.unit_id } }}
-              className="shrink-0"
-            />
-          ) : (
-            <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
-          ),
+        // ROUND 8.17 class S — $ opens the period's fuel transactions for this unit (not the unit profile).
+        render: (r) => {
+          const href = r.unit_id
+            ? `/fuel/history?unit_id=${encodeURIComponent(r.unit_id)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
+            : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+          return (
+            <a href={href} className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-amount-drill">
+              {formatMoneyCents(r.spend_cents)}
+            </a>
+          );
+        },
       },
       {
         key: "gallons",
@@ -292,7 +291,7 @@ export function FuelHomePage() {
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [dieselRows, makeModelByUnitId],
+    [dieselRows, makeModelByUnitId, range.from, range.to],
   );
 
   if (!companyId) {

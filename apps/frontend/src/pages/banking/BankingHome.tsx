@@ -127,19 +127,40 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // Uncategorized KPI tile → Transactions tab pre-filtered. Reset to "all" whenever the Transactions tab
   // is reached any other way (top tab bar) so the filter only sticks when it came from the tile.
   const [transactionsInitialFilter, setTransactionsInitialFilter] = useState<string>("all");
+  const [transactionsInitialDateFrom, setTransactionsInitialDateFrom] = useState<string>("");
+  const [transactionsInitialDateTo, setTransactionsInitialDateTo] = useState<string>("");
+  const [transactionsInitialReview, setTransactionsInitialReview] = useState<"for_review" | "categorized" | "excluded" | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     const tab = bankingTabFromPath(location.pathname) as BankingTabId;
     setActiveTab(tab);
     // U26 (owner): leaving Transactions clears the KPI tile's pre-filter, so coming back by the sub-nav shows every line
     // (it used to stay on "Uncategorized" forever once the tile had been clicked).
-    if (tab !== "transactions") setTransactionsInitialFilter("all");
+    if (tab !== "transactions") {
+      setTransactionsInitialFilter("all");
+      setTransactionsInitialDateFrom("");
+      setTransactionsInitialDateTo("");
+      setTransactionsInitialReview(undefined);
+    }
   }, [location.pathname]);
 
-  // Legacy /banking/uncategorized alias lands here via manifest redirect (?type=uncategorized).
+  // Legacy /banking/uncategorized alias + ROUND 8.17 class S Money In/Out cohort (?types=&date_from=&date_to=&review=).
   useEffect(() => {
-    if (searchParams.get("type") === "uncategorized") {
-      setTransactionsInitialFilter("uncategorized");
+    const type = searchParams.get("type");
+    const types = searchParams.get("types");
+    if (type === "uncategorized") setTransactionsInitialFilter("uncategorized");
+    else if (types) setTransactionsInitialFilter(types.split(",")[0] ?? "all");
+    const from = searchParams.get("date_from") ?? "";
+    const to = searchParams.get("date_to") ?? "";
+    setTransactionsInitialDateFrom(from);
+    setTransactionsInitialDateTo(to);
+    const review = searchParams.get("review");
+    if (review === "for_review" || review === "categorized" || review === "excluded") {
+      setTransactionsInitialReview(review);
+    } else if (type === "uncategorized") {
+      setTransactionsInitialReview("for_review");
     }
   }, [searchParams]);
 
@@ -796,6 +817,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             onReorderAccount={handleReorderAccount}
             onManageConnections={() => navigate(BANKING_TAB_PATH.plaid_connections)}
             initialTransactionType={transactionsInitialFilter}
+            initialDateFrom={transactionsInitialDateFrom || undefined}
+            initialDateTo={transactionsInitialDateTo || undefined}
+            initialReviewTab={transactionsInitialReview}
             highlightTransactionId={deepLinkTxnId}
             onDataChanged={() => {
               void queryClient.invalidateQueries({ queryKey: ["banking"] });

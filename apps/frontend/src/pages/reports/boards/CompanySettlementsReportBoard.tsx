@@ -325,16 +325,40 @@ export function CompanySettlementsReportBoard() {
       ) : null}
 
       <ReportKpiGrid>
-        <V3KpiTile testId="csr-kpi-trips" label="Closed trips" value={query.data ? String(totals.trips) : "…"} sub={`${totals.withCompany} with a company settlement`} />
-        <V3KpiTile testId="csr-kpi-revenue" label="Revenue" value={query.data ? money(totals.revenue) : "…"} />
-        <V3KpiTile testId="csr-kpi-costs" label="Costs" value={query.data ? money(totals.costs) : "…"} sub="fuel · tolls · maintenance on load" />
-        <V3KpiTile testId="csr-kpi-driver-pay" label="Driver pay" value={query.data ? money(totals.driverPay) : "…"} />
+        {/* ROUND 8.17 class S — KPI tiles open the report table / settlements source. */}
+        <V3KpiTile
+          testId="csr-kpi-trips"
+          label="Closed trips"
+          value={query.data ? String(totals.trips) : "…"}
+          sub={`${totals.withCompany} with a company settlement`}
+          href="/driver-finance/settlements?tab=closed"
+        />
+        <V3KpiTile
+          testId="csr-kpi-revenue"
+          label="Revenue"
+          value={query.data ? money(totals.revenue) : "…"}
+          onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
+        />
+        <V3KpiTile
+          testId="csr-kpi-costs"
+          label="Costs"
+          value={query.data ? money(totals.costs) : "…"}
+          sub="fuel · tolls · maintenance on load"
+          href="/accounting/expenses"
+        />
+        <V3KpiTile
+          testId="csr-kpi-driver-pay"
+          label="Driver pay"
+          value={query.data ? money(totals.driverPay) : "…"}
+          href="/driver-finance/settlements?tab=payments"
+        />
         <V3KpiTile
           testId="csr-kpi-margin"
           label="Margin"
           value={query.data ? money(totals.margin) : "…"}
           sub={`${pctLabel(pct(totals.margin, totals.revenue))} of revenue`}
           tone={totals.margin < 0 ? "red" : "green"}
+          onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
           testId="csr-kpi-zero-cost"
@@ -342,7 +366,7 @@ export function CompanySettlementsReportBoard() {
           value={query.data ? String(totals.zeroCost.length) : "…"}
           sub="no fuel or expense linked"
           tone={totals.zeroCost.length ? "amber" : "muted"}
-          noDrill="the trips are listed in the Measured line below"
+          onClick={() => document.querySelector('[data-testid="csr-measured"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
       </ReportKpiGrid>
 
@@ -365,6 +389,7 @@ export function CompanySettlementsReportBoard() {
           rowKey={(t) => t.settlement_id}
           loading={query.isPending}
           storageKey="company-settlements-report-board"
+          tableTestId="csr-table"
           emptyText="No closed trips match these filters."
           exportFilename="company-settlement-report"
           exportExcel
@@ -386,6 +411,7 @@ export function CompanySettlementsReportBoard() {
           rowKey={(g) => g.key}
           loading={query.isPending}
           storageKey={`company-settlements-report-board-${by}`}
+          tableTestId="csr-table"
           emptyText="No closed trips match these filters."
           exportFilename={`company-settlement-report-by-${by}`}
           exportExcel
@@ -402,12 +428,14 @@ export function CompanySettlementsReportBoard() {
       )}
 
       {query.data ? (
-        <ReportMeasuredNote>
-          {totals.zeroCost.length
-            ? `${totals.zeroCost.map((t) => t.display_id ?? t.settlement_id).join(", ")} show $0 costs, so their margins are overstated until their fuel and expenses are linked. `
-            : "Every closed trip in range carries costs. "}
-          {totals.trips - totals.withCompany} closed trips have no company settlement opened. Each trip opens its company settlement; each leg opens the load.
-        </ReportMeasuredNote>
+        <div data-testid="csr-measured">
+          <ReportMeasuredNote>
+            {totals.zeroCost.length
+              ? `${totals.zeroCost.map((t) => t.display_id ?? t.settlement_id).join(", ")} show $0 costs, so their margins are overstated until their fuel and expenses are linked. `
+              : "Every closed trip in range carries costs. "}
+            {totals.trips - totals.withCompany} closed trips have no company settlement opened. Each trip opens its company settlement; each leg opens the load.
+          </ReportMeasuredNote>
+        </div>
       ) : null}
     </ReportBoardShell>
   );
