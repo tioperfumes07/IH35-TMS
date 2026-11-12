@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
-import { BUILTIN_BRAND_ALIASES, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
 /* ---------------- rules ---------------- */
@@ -104,6 +104,46 @@ export async function upsertVendor(c: PoolClient, userId: string, v: VendorInput
       [...vals, userId]);
   if (!r.rows[0]) throw new Error("vendor_not_found");
   return r.rows[0];
+}
+
+/* ---------------- brand canon ---------------- */
+
+/**
+ * Owner 2026-11-12 ("perfumes completely done"): the item master spells some brands two ways (CALVIN / CALVIN KLEIN,
+ * NARCISO / NARCISO R / NARCISO RODRIGUEZ, STERLING / STERLING PARFUMS …), so the same bottle can sit twice and a
+ * line under one spelling never meets the item under the other. Every live item takes its canonical brand; when
+ * an item with that canonical identity already exists, the two are the same bottle and the respelled one is MERGED
+ * into it — UPCs, aliases and price-list rows repointed — exactly as an import's heal does. Idempotent.
+ */
+export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: number; renamed: number; merged: number; brands: Record<string, string> }> {
+  const aliases = Object.fromEntries((await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`)).rows.map((r) => [r.alias, r.brand]));
+  const items = (await c.query<{ id: string; brand: string; identity_key: string; display_name: string }>(
+    `SELECT id, brand, identity_key, display_name FROM perfume.items WHERE merged_into_id IS NULL AND brand <> '' ORDER BY created_at, id`)).rows;
+  let renamed = 0, merged = 0;
+  const brands: Record<string, string> = {};
+  for (const it of items) {
+    const canon = canonicalBrand(it.brand, aliases);
+    if (!canon || canon === it.brand) continue;
+    brands[it.brand] = canon;
+    const parts = it.identity_key.split("|");
+    if (parts[0] !== it.brand) continue; // a key written under another rule — left to the next import's heal
+    parts[0] = canon;
+    const key = parts.join("|");
+    const display = it.display_name.startsWith(`${it.brand} · `) ? `${canon} · ${it.display_name.slice(it.brand.length + 3)}` : it.display_name;
+    const holder = (await c.query<{ id: string }>(
+      `SELECT id FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL AND id <> $2 LIMIT 1`, [key, it.id])).rows[0]?.id;
+    if (holder) {
+      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [it.id, holder]);
+      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [it.id, holder]);
+      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [it.id, holder]);
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [it.id, holder]);
+      merged++;
+    } else {
+      await c.query(`UPDATE perfume.items SET brand = $2, identity_key = $3, display_name = $4, updated_at = now() WHERE id = $1`, [it.id, canon, key, display]);
+      renamed++;
+    }
+  }
+  return { checked: items.length, renamed, merged, brands };
 }
 
 /* ---------------- index ---------------- */

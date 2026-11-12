@@ -128,19 +128,60 @@ export function productKind(flags: readonly string[]): string {
   return KIND_FLAGS.filter((f) => flags.includes(f)).join("+");
 }
 
+/** Words that say nothing about WHICH fragrance it is (never enough on their own to pair two brands). */
+const GENERIC_WORDS = new Set(["EDT", "EDP", "EDC", "PARFUM", "PERFUME", "COLOGNE", "SPRAY", "SP", "MEN", "WOMEN", "MAN", "WOMAN",
+  "HOMME", "FEMME", "POUR", "FOR", "HIM", "HER", "THE", "DE", "LA", "LE", "OZ", "ML", "M", "W", "U", "EAU", "TOILETTE", "NEW"]);
+// "PERRY ELLIS18" → PERRY ELLIS 18: a word glued to a number is two words.
+const wordsOf = (s: string): string[] => s.toUpperCase().replace(/[^A-Z0-9 ]+/g, " ").replace(/([A-Z])(\d)/g, "$1 $2").replace(/(\d)([A-Z])/g, "$1 $2").split(/\s+/).filter((w) => w.length > 1 && !GENERIC_WORDS.has(w));
+const itemCache = new WeakMap<IndexItem, { full: Set<string>; words: Set<string>; stripped: string }>();
+function itemFacts(it: IndexItem) {
+  let f = itemCache.get(it);
+  if (!f) {
+    const brandWords = new Set(wordsOf(it.brand));
+    // Some item names repeat their brand ("PERRY ELLIS · PERRY ELLIS18", "NARCISO R · NR VETIVER MUSC HIM").
+    const stripped = wordsOf(it.name).filter((w) => !brandWords.has(w)).join(" ");
+    f = { full: trigrams(`${it.brand} ${it.name}`), words: new Set(wordsOf(`${it.brand} ${it.name}`)), stripped };
+    itemCache.set(it, f);
+  }
+  return f;
+}
+function similaritySets(A: Set<string>, B: Set<string>): number {
+  let inter = 0;
+  for (const x of A) if (B.has(x)) inter++;
+  return inter / (A.size + B.size - inter || 1);
+}
+
 export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
   const out: Suggestion[] = [];
+  // The line's own fragrance words (brand words removed) — a different-brand candidate must share one of them.
+  const lineBrandWords = new Set(wordsOf(id.brand));
+  const lineNameWords = wordsOf(id.nameText).filter((w) => !lineBrandWords.has(w));
+  const lineFull = trigrams(`${id.brand} ${id.nameText}`);
   for (const it of ix.items.values()) {
     if (id.sizeMl != null && it.sizeMl != null && Math.abs(id.sizeMl - it.sizeMl) > 0.5) continue;
     if (id.gender && it.gender && id.gender !== it.gender) continue;
-    if (id.brand && it.brand && id.brand !== it.brand) continue;
     // A set is never suggested for a single bottle (or the reverse), nor a tester for a boxed bottle, a mini for a
     // full bottle, a body product for a fragrance (owner 2026-11-12: "it is not separating sets" — ARMANI CODE 4.2
     // EDP was offered "ARMANI CODE 125 ml SET").
     if (productKind(id.flags) !== productKind(it.flags)) continue;
-    const score = similarity(id.nameText, it.name);
-    if (score < 0.3) continue;
+    const sameBrand = !id.brand || !it.brand || id.brand === it.brand;
+    let score: number;
+    if (sameBrand) {
+      const f = itemFacts(it);
+      score = Math.max(similarity(id.nameText, it.name), f.stripped ? similarity(id.nameText, f.stripped) : 0);
+      if (score < 0.3) continue;
+    } else {
+      // The item master spells some brands two ways (PINK SUGAR under AQUOLINA, NARCISO vs NARCISO R): a line
+      // whose brand matches nothing still gets the bottle it names — compare brand + name together, require a
+      // shared fragrance word, and rank it below same-brand candidates. Never auto-linked (review only).
+      if (!lineNameWords.length) continue;
+      const f = itemFacts(it);
+      if (!lineNameWords.some((w) => f.words.has(w))) continue;
+      score = similaritySets(lineFull, f.full) * 0.9;
+      if (score < 0.35) continue;
+    }
     const why: string[] = [];
+    if (!sameBrand) why.push(`brand ${id.brand} vs ${it.brand}`);
     if (id.conc !== it.conc) why.push(`type ${id.conc || "?"} vs ${it.conc || "?"}`);
     if (id.flags.join() !== it.flags.join()) why.push(`flags ${id.flags.join("+") || "none"} vs ${it.flags.join("+") || "none"}`);
     if (!id.brand) why.push("line has no brand");
