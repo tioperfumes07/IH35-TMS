@@ -1,3 +1,8 @@
+## OUTBOX (11-13-2026 ~12:05 AM CT) — Statement MoneyCell literal drills (advances + earnings)
+- **THIS:** SettlementStatementBoardPanels + LinkedRecordsPanel — MoneyCell drill is a literal `{ entity }` at each call site (verify-money-cells-click-through). Advances recovered: single source → cash_advance MoneyCell; multi → tabular total + cash_advance EntityLinks (no settlement self-drill; verify-statement-advances-recovered-source). Earnings amount branches load vs settlement MoneyCell.
+- **Guards:** money-cells + advances-recovered-source plain+selftest PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring / ROUND 8.12 board proof continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~11:50 PM CT) — CC-1 gates shipped #28950 · party name EntityLinks
 - **SHIPS:** #28949 CLAIM 202616501200 · #28950 legal contracts void EXEMPT + settlement_lines reinstate JE composite FK · Customers/Vendors name cells EntityLink.
 - **FE LIVE prior:** dep-dbqk5vavcj2c73f20l6g · 6db89df6dc. Neon apply 202616501200 still needed for money-FK live.
