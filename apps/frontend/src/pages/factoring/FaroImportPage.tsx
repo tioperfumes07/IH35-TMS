@@ -12,7 +12,8 @@ import { apiRequest } from "../../api/client";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { formatUsdCents, formatQuantityTable } from "../../lib/money";
+import { MoneyCell } from "../../components/shared/MoneyCell";
+import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 
 type PreviewLine = {
   invoice_number: string;
@@ -79,25 +80,45 @@ const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
     key: "gross_amount_cents",
     label: "Gross",
     sortable: true,
-    render: (row) => formatUsdCents(row.gross_amount_cents),
+    render: (row) =>
+      row.invoice_id ? (
+        <MoneyCell cents={Number(row.gross_amount_cents ?? 0)} drill={{ entity: { kind: "invoice", id: row.invoice_id } }} />
+      ) : (
+        formatUsdCents(row.gross_amount_cents)
+      ),
   },
   {
     key: "advance_amount_cents",
     label: "Advance",
     sortable: true,
-    render: (row) => formatUsdCents(row.advance_amount_cents),
+    render: (row) =>
+      row.invoice_id ? (
+        <MoneyCell cents={Number(row.advance_amount_cents ?? 0)} drill={{ entity: { kind: "invoice", id: row.invoice_id } }} />
+      ) : (
+        formatUsdCents(row.advance_amount_cents)
+      ),
   },
   {
     key: "reserve_amount_cents",
     label: "Reserve",
     sortable: true,
-    render: (row) => formatUsdCents(row.reserve_amount_cents),
+    render: (row) =>
+      row.invoice_id ? (
+        <MoneyCell cents={Number(row.reserve_amount_cents ?? 0)} drill={{ entity: { kind: "invoice", id: row.invoice_id } }} />
+      ) : (
+        formatUsdCents(row.reserve_amount_cents)
+      ),
   },
   {
     key: "net_amount_cents",
     label: "Net",
     sortable: true,
-    render: (row) => formatUsdCents(row.net_amount_cents),
+    render: (row) =>
+      row.invoice_id ? (
+        <MoneyCell cents={Number(row.net_amount_cents ?? 0)} drill={{ entity: { kind: "invoice", id: row.invoice_id } }} />
+      ) : (
+        formatUsdCents(row.net_amount_cents)
+      ),
   },
 ];
 

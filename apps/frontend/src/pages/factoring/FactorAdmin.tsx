@@ -28,11 +28,11 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useTranslation } from "../../hooks/useTranslation";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { formatUsdCents } from "../../lib/money";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { DeactivateFactorConfirmModal } from "../../components/factoring/DeactivateFactorConfirmModal";
 import { entityLabel } from "../../lib/entity-label";
@@ -72,7 +72,14 @@ const FACTOR_COLUMNS: Array<ParityColumn<Factor>> = [
     sortable: true,
     sortValue: (factor) => factor.reserve_balance_cents ?? 0,
     render: (factor) =>
-      factor.reserve_balance_cents != null ? formatUsdCents(factor.reserve_balance_cents) : "—",
+      factor.reserve_balance_cents != null ? (
+        <MoneyCell
+          cents={Number(factor.reserve_balance_cents)}
+          drill={{ entity: { kind: "factor", id: factor.id } }}
+        />
+      ) : (
+        "—"
+      ),
   },
   { key: "recourse_days", label: "Recourse Days", sortable: true },
   { key: "active", label: "Active", sortable: true, render: (factor) => (factor.active ? "Yes" : "No"), sortValue: (factor) => (factor.active ? 1 : 0) },

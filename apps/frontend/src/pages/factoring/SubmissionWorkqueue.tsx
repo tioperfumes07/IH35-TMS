@@ -3,16 +3,13 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listWorkqueue, type WorkqueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatQuantityTable, formatUsdCents } from "../../lib/money";
-
-function asMoney(cents: number) {
-  return formatUsdCents(cents);
-}
+import { formatQuantityTable } from "../../lib/money";
 
 const STATUS_LABEL: Record<string, string> = {
   submitted: "Submitted",
@@ -115,32 +112,44 @@ export function SubmissionWorkqueue() {
         key: "total_cents",
         label: "Linehaul",
         sortable: true,
-        render: (item) => <span className="tabular-nums">{asMoney(item.total_cents)}</span>,
+        render: (item) => (
+          <MoneyCell cents={Number(item.total_cents ?? 0)} drill={{ entity: { kind: "invoice", id: item.invoice_id } }} />
+        ),
       },
       {
         key: "advance_cents",
         label: "Advance",
         sortable: true,
-        render: (item) => <span className="tabular-nums">{asMoney(item.advance_cents)}</span>,
+        render: (item) => (
+          <MoneyCell cents={Number(item.advance_cents ?? 0)} drill={{ entity: { kind: "invoice", id: item.invoice_id } }} />
+        ),
       },
       {
         key: "reserve_cents",
         label: "Reserve",
         sortable: true,
-        render: (item) => <span className="tabular-nums">{asMoney(item.reserve_cents)}</span>,
+        render: (item) => (
+          <MoneyCell cents={Number(item.reserve_cents ?? 0)} drill={{ entity: { kind: "invoice", id: item.invoice_id } }} />
+        ),
       },
       {
         key: "fee_cents",
         label: "Fee",
         sortable: true,
-        render: (item) => <span className="tabular-nums">{asMoney(item.fee_cents)}</span>,
+        render: (item) => (
+          <MoneyCell cents={Number(item.fee_cents ?? 0)} drill={{ entity: { kind: "invoice", id: item.invoice_id } }} />
+        ),
       },
       {
         key: "chargeback_cents",
         label: "Chargeback",
         render: (item) =>
           item.chargeback_cents > 0 ? (
-            <span className="tabular-nums text-red-600">{asMoney(item.chargeback_cents)}</span>
+            <MoneyCell
+              cents={Number(item.chargeback_cents ?? 0)}
+              className="text-red-600"
+              drill={{ entity: { kind: "invoice", id: item.invoice_id } }}
+            />
           ) : (
             <span className="text-[#6B7280]">—</span>
           ),
