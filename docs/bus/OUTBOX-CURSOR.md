@@ -1,3 +1,9 @@
+## OUTBOX (11-12-2026 ~5:10 AM CT) — TripPairing Revenue MoneyCell + go26 bank
+- **THIS:** Trip Pairing Board Revenue → load MoneyCell (first tour leg). Banked go26 raw_table_outside_infra 33→32. #28993 MAIN-RED scorer mock merged (5712d7d46b).
+- **ROUND 8.13:** #28903 already CLOSED; M3 advances-recovered verify-step 20020 already on main.
+- **LIVE FAIL (ops/CC):** load-to-cash LINK1 load 13700 no driver_bills.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~4:10 AM CT) — MAIN-RED scorer test mock + LIVE 13700 tip
 - **THIS:** scorer.test.ts mock matches `FROM mdata.loads` (alias `l` after #28991).
 - **LIVE FAIL (ops/CC):** verify-load-to-cash-chain LINK1 load 13700 still has no driver_bills row.
