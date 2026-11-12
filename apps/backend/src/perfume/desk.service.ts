@@ -132,7 +132,7 @@ export type ImportIn = {
 export type ImportCheck = {
   rows_read: number; rows_saved: number; rows_skipped: number;
   price_total_file_cents: number; price_total_saved_cents: number; totals_match: boolean;
-  by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number; upcs_on_two_products: number;
+  by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number; upcs_on_two_products: number; upc_name_conflicts: number;
 };
 
 function intOrNull(v: unknown): number | null {
@@ -169,9 +169,14 @@ export async function previewImport(c: PoolClient, body: ImportIn): Promise<Impo
   let created = 0;
   const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
   check.upcs_on_two_products = sharedUpcs.size;
+  const foreignItems = await itemsCreatedByOtherVendors(c, vendor.id, null);
   for (const r0 of saved) {
     const r = sharedUpcs.has(normalizeUpc(r0.upc)) ? { ...r0, upc: null } : r0;
-    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    let m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    if (m.method === "upc" && m.itemId && foreignItems.has(m.itemId) && upcNameConflict(ix.items.get(m.itemId)?.identityKey, m.identity)) {
+      check.upc_name_conflicts += 1;
+      m = matchLine(ix, vendor.id, { ...r, upc: null }, { allowNewItem: vendor.kind !== "sell" });
+    }
     tally(check, m.method, m.status);
     if (m.method === "new_item") {
       created++;
@@ -189,7 +194,7 @@ function baseCheck(body: ImportIn, savedCount: number, savedTotal: number): Impo
     rows_read: body.rows_read, rows_saved: savedCount, rows_skipped: body.rows_read - savedCount,
     price_total_file_cents: body.file_price_total_cents, price_total_saved_cents: savedTotal,
     totals_match: body.file_price_total_cents === savedTotal && body.rows_read >= savedCount,
-    by_method: {}, review: 0, unmatched: 0, items_created: 0, items_renamed: 0, items_merged: 0, upcs_on_two_products: 0,
+    by_method: {}, review: 0, unmatched: 0, items_created: 0, items_renamed: 0, items_merged: 0, upcs_on_two_products: 0, upc_name_conflicts: 0,
   };
 }
 function tally(check: ImportCheck, method: string | null, status: string) {
@@ -209,6 +214,28 @@ export class ImportCheckFailed extends Error {
 }
 
 /** Saves a list. Refuses (writes nothing) when the file total and the saved total differ by even one cent. */
+/** Items whose earliest priced line came from ANOTHER vendor (that vendor created them), excluding the list being saved.
+ *  An item no line has priced yet belongs to no vendor and is not in this set. */
+export async function itemsCreatedByOtherVendors(c: PoolClient, vendorId: string, excludeListId: string | null): Promise<Set<string>> {
+  const r = await c.query<{ item_id: string }>(
+    `SELECT item_id FROM (
+       SELECT DISTINCT ON (r.item_id) r.item_id, l.vendor_id
+         FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+        WHERE r.item_id IS NOT NULL AND ($2::uuid IS NULL OR l.id <> $2::uuid)
+        ORDER BY r.item_id, l.imported_at, r.created_at) first
+      WHERE vendor_id <> $1`, [vendorId, excludeListId]);
+  return new Set(r.rows.map((x) => x.item_id));
+}
+
+/** True when a UPC-linked item's name and the line's name share fewer than half their words (Jaccard < 0.5). */
+export function upcNameConflict(itemKey: string | undefined, line: Identity): boolean {
+  const a = new Set(String(itemKey ?? "").split("|")[1]?.split(" ").filter(Boolean) ?? []);
+  const b = new Set(line.nameWords);
+  if (!a.size || !b.size) return false;
+  const inter = [...a].filter((w) => b.has(w)).length;
+  return inter / new Set([...a, ...b]).size < 0.5;
+}
+
 /** UPCs that one file prints on two products with different identities (different name, size, type …). */
 export function ambiguousUpcs(rows: Array<{ upc?: unknown; description: string; brand?: string | null; size_text?: string | null; gender?: string | null; type?: string | null; section?: string | null }>, aliases: Record<string, string>): Set<string> {
   const keys = new Map<string, Set<string>>();
@@ -258,10 +285,19 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   // vendor error: for those lines the UPC is not trusted — each line matches by its own name (audit 2026-11-12).
   const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
   check.upcs_on_two_products = sharedUpcs.size;
+  // Items ANOTHER vendor's lines created (their earliest priced line): this vendor's list never re-reads (heals) them — a list with no gender/type column (Lux America)
+  // must not strip what MTZ read (audit 2026-11-12: 124 items degraded by the Lux import).
+  const foreignItems = await itemsCreatedByOtherVendors(c, vendor.id, listId);
   for (const r0 of saved) {
     const shared = sharedUpcs.has(normalizeUpc(r0.upc));
     const r = shared ? { ...r0, upc: null } : r0;
-    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    let m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    // A UPC that lands on ANOTHER vendor's item whose name does not agree with this line is a vendor data error
+    // (Lux "KISMET ANGEL" = MTZ "KISMET MAGIC" UPC): the UPC is not trusted; the line matches by its own name.
+    if (m.method === "upc" && m.itemId && foreignItems.has(m.itemId) && upcNameConflict(ix.items.get(m.itemId)?.identityKey, m.identity)) {
+      check.upc_name_conflicts += 1;
+      m = matchLine(ix, vendor.id, { ...r, upc: null }, { allowNewItem: vendor.kind !== "sell" });
+    }
     let itemId = m.itemId;
     if (m.method === "new_item") {
       const id = m.identity;
@@ -295,7 +331,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const heals = new Map<string, Identity>();
   for (const l of lineIds) {
     if (!l.itemId || l.itemId.startsWith("tmp:") || (l.method !== "upc" && l.method !== "sku")) continue;
-    if (protectedIds.has(l.itemId) || heals.has(l.itemId)) continue;
+    if (protectedIds.has(l.itemId) || heals.has(l.itemId) || foreignItems.has(l.itemId)) continue;
     const cur = ix.items.get(l.itemId);
     if (cur && cur.identityKey !== l.identity.key) heals.set(l.itemId, l.identity);
   }
