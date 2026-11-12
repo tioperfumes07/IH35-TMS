@@ -26,6 +26,9 @@ export type Identity = {
   flags: string[];          // TESTER, SET, MINI, REFILL, DAMAGED, UNBOXED — sorted
   key: string;              // strict identity key used for automatic links
   nameText: string;         // nameWords joined — what fuzzy suggestions compare
+  /** A "+" set's other pieces, normalized ("34SG34BL"); "" for a single bottle. Part of the identity: two sets
+   *  with the same main bottle and different contents are different products (audit 2026-11-12, Moonlight). */
+  contents?: string;
 };
 
 /* ---------------- brands ---------------- */
@@ -280,7 +283,12 @@ export function identify(input: IdentityInput): Identity {
   // A set names its main bottle first; the extra pieces follow a "+" ("100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML").
   // The item is the main bottle's name/size/type — the pieces after the first "+ <size>" are not the name.
   const plus = s.search(/\+\s*\d/);
-  if (plus > 0) { flags.add("SET"); s = s.slice(0, plus); }
+  let contents = "";
+  if (plus > 0) {
+    flags.add("SET");
+    contents = s.slice(plus).replace(/\([^)]*\)?/g, " ").replace(/\s-\s.*$/, "").toUpperCase().replace(/[^A-Z0-9+]/g, "").replace(/^\++|\++$/g, "");
+    s = s.slice(0, plus);
+  }
 
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
   let gender: Gender = "";
@@ -296,6 +304,9 @@ export function identify(input: IdentityInput): Identity {
   const paren = s.match(/\((M|W|U|L)[*.]?\)/);
   if (!gender && paren) gender = GENDER_WORDS[paren[1]];
   s = s.replace(/\([^)]*\)/g, " ");
+  // A description the vendor cut off inside a parenthesis ("…3PC SET(3.3oz EDT SP, 3.3 Body Cream, 3") leaves an
+  // unclosed "(…" — its contents are never the name (audit 2026-11-12, PCA Carven).
+  s = s.replace(/\([^)]*$/, " ");
 
   // Size: own column first, else in the text.
   const sizeFromCol = input.size ? parseSize(String(input.size)).ml : null;
@@ -361,11 +372,14 @@ export function identify(input: IdentityInput): Identity {
   if (!gender) gender = sec.gender;
   for (const f of sec.flags) flags.add(f);
 
-  const keyWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  // COLOGNE names the fragrance when the line already gives its own type ("ETERNITY COLOGNE (M) EDT" ≠ "ETERNITY EDT",
+  // audit 2026-11-12); only on a line with no other type is it the type itself.
+  const noise = (w: string) => NOISE.has(w) && !(w === "COLOGNE" && conc !== "" && conc !== "EDC");
+  const keyWords = kept.filter((w, i) => !(noise(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
   // What the owner sees keeps a name's own EAU ("DAISY EAU SO FRESH", "CHANCE EAU TENDRE"); the concentration
   // phrases (EAU DE PARFUM / TOILETTE / COLOGNE) were already removed above. The KEY still drops it, so a vendor
   // that writes "DAISY SO FRESH" is the same bottle.
-  const shownWords = kept.filter((w, i) => (w === "EAU" || !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w)))) && w !== ".");
+  const shownWords = kept.filter((w, i) => (w === "EAU" || !(noise(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w)))) && w !== ".");
   // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
   // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
   const nameWords = keyWords.map((w) => SAME_NAME_WORD[w] ?? w);
@@ -375,7 +389,7 @@ export function identify(input: IdentityInput): Identity {
   // A brand-only product ("4711 EAU DE COLOGNE") has no name words: it is shown and matched by its brand.
   const nameText = shownWords.length ? shownWords.join(" ") : brand;
   const key = [brand || "?", nameWords.join(" "), sizeMl ?? "?", conc || "?", gender || "?", flagList.join("+")].join("|");
-  return { brand, nameWords, sizeMl, conc, gender, flags: flagList, key, nameText };
+  return { brand, nameWords, sizeMl, conc, gender, flags: flagList, key: contents ? `${key}|${contents}` : key, nameText, contents };
 }
 
 /**
@@ -383,7 +397,8 @@ export function identify(input: IdentityInput): Identity {
  * Two lines with the same loose key are the same bottle only if neither side names a DIFFERENT brand.
  */
 export function looseKey(id: Identity): string {
-  return [id.nameWords.join(" "), id.sizeMl ?? "?", id.conc || "?", id.gender || "?", id.flags.join("+")].join("|");
+  const k = [id.nameWords.join(" "), id.sizeMl ?? "?", id.conc || "?", id.gender || "?", id.flags.join("+")].join("|");
+  return id.contents ? `${k}|${id.contents}` : k;
 }
 
 /** Normalized UPC: digits only, leading zeros dropped, at least 8 digits; anything else is not a UPC. */
@@ -421,7 +436,9 @@ export function vendorLineTail(description: string | null | undefined): { code: 
   const s = String(description ?? "").trim();
   const segs = s.split(/\s+-\s+/);
   const last = segs[segs.length - 1] ?? "";
-  const pcs = last.match(/(\d+)\s*pcs?\b/i);
+  // The box count is ONLY a line that ENDS in the MTZ form "- 12pcs ByBox" (or "- 12pcs"). A "- 2 Pc 11.8oz Hand
+  // Lotion" inside a description is the pieces of a set, never a box (PCA row 1481, audit 2026-11-12).
+  const pcs = last.match(/^(\d+)\s*pcs?(?:\s*by\s*box)?\s*$/i);
   const code = segs[0]?.match(/\(\s*(\d{4,})\s*\)\s*$/)?.[1] ?? s.match(/\(\s*(\d{5,8})\s*\)/)?.[1] ?? null;
   if (segs.length < 2 || !pcs) {
     // JIZAN: origin code right after the size ("... 100 ml OM", "... 100 ml (D) OM").

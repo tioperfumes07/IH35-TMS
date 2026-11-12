@@ -69,3 +69,16 @@ describe("perfume wholesale raise / lower", () => {
     expect(wholesaleAction(0)).toBe("Same as lowest competitor");
   });
 });
+
+describe("perfume import — a UPC printed on two different products", () => {
+  it("is found and not trusted; the same product printed twice is fine", async () => {
+    const { ambiguousUpcs } = await import("./desk.service.js");
+    const rows = [
+      { upc: "6291106816235", description: "AL HARAMAIN AMBER(M)12ML CONCENTRATED PERFUME OIL", brand: "Al Haramain" },
+      { upc: "6291106816235", description: "AL HARAMAIN BAHR(M)12ML CONCENTRATED PERFUME OIL", brand: "Al Haramain" },
+      { upc: "8411061067918", description: "CAROLINA HERRERA CH(W)(T)EDT SP 3.4oz(CAP,BOX)", brand: "Carolina Herrera" },
+      { upc: "8411061067918", description: "CAROLINA HERRERA CH(W)(T)EDT SP 3.4oz(CAP,BOX)(ONLY USA)(LI FREE)", brand: "Carolina Herrera" },
+    ];
+    expect([...ambiguousUpcs(rows, {})]).toEqual(["6291106816235"]);
+  });
+});
