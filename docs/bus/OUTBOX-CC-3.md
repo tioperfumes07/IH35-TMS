@@ -2,6 +2,11 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 — ROWS 80 100 CLOSED
+
+- **ROW 80 (ESCALATED):** Load 13699 delivery stop — ops script `scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts` ready with AUTH-468; CC-3 cannot apply (data-feed law); Lead must run `--apply`
+- **ROW 100 (DONE-LIVE):** /customers?chip=duplicates — 64 pairs live (down from 201 as owner resolves); panel loads with match scores + Review merge; billed KPI $774,446.72 issued only; engine correct — Chrome walk 2026-11-12 11:15 AM CT
+
 ## 2026-11-12 — ROUND 8.15b ROWS 40-43 DONE-LIVE (REPLACE NOT LAYER)
 
 - **PR:** [#29027](https://github.com/tioperfumes07/IH35-TMS/pull/29027) · squash `a73d315a8768`
