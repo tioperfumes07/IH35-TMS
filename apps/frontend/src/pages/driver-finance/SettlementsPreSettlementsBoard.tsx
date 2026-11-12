@@ -5,7 +5,7 @@
  * Does NOT mount DriversPage. Open rows from listTours(state=open).
  */
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   getOpenDriverBills,
@@ -54,7 +54,21 @@ export function SettlementsPreSettlementsBoard() {
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
+  // ROUND 8.19 board 36 — Filters + ?q= cohort (Back/`ret` restores search).
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") ?? "";
+  const setSearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value.trim()) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
+  const [filtersOpen, setFiltersOpen] = useState(Boolean(search.trim()));
 
   const openToursQuery = useQuery({
     queryKey: ["settlements-module", "tours", "open", companyId, "presettle-board"],
@@ -223,17 +237,23 @@ export function SettlementsPreSettlementsBoard() {
         />
       </div>
 
-      <MoneyListToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder={S443326.preSettlements.searchPlaceholder}
-        searchTestId="settlements-presettle-search-input"
-        onClearAll={() => setSearch("")}
-        activeFilterCount={0}
-        testIdPrefix="settlements-presettle"
+      <div
+        id="settlements-presettle-filters"
+        hidden={!filtersOpen && !search.trim()}
+        data-testid="settlements-presettle-filters-panel"
       >
-        {null}
-      </MoneyListToolbar>
+        <MoneyListToolbar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder={S443326.preSettlements.searchPlaceholder}
+          searchTestId="settlements-presettle-search-input"
+          onClearAll={() => setSearch("")}
+          activeFilterCount={search.trim() ? 1 : 0}
+          testIdPrefix="settlements-presettle"
+        >
+          {null}
+        </MoneyListToolbar>
+      </div>
 
       {!companyId ? (
         <p className="text-xs text-red-600">{S443326.preSettlements.selectCompany}</p>
@@ -249,6 +269,32 @@ export function SettlementsPreSettlementsBoard() {
           subtitle={S443326.preSettlements.openPanelSubtitle}
           testId="pre-settlements-v3-panel"
           onViewAll={() => navigate("/driver-finance/settlements")}
+          headerRight={
+            <button
+              type="button"
+              data-testid="pre-settlements-filters-toggle"
+              onClick={() => {
+                setFiltersOpen((v) => !v);
+                queueMicrotask(() =>
+                  document.querySelector<HTMLInputElement>('[data-testid="settlements-presettle-search-input"]')?.focus(),
+                );
+              }}
+              style={{
+                height: 28,
+                padding: "0 12px",
+                display: "inline-flex",
+                alignItems: "center",
+                borderRadius: 2,
+                font: `600 12px ${V3.font}`,
+                background: V3.surface,
+                color: V3.ink,
+                border: `1px solid ${V3.border}`,
+                cursor: "pointer",
+              }}
+            >
+              Filters {filtersOpen || search.trim() ? "▴" : "▾"}
+            </button>
+          }
         >
           <div data-settlements-presettle-v3-panel="1">
             {openToursQuery.isError ? (
