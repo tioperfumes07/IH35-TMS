@@ -14,6 +14,8 @@ import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { SelectCombobox } from "../../../components/Combobox";
 import { ParityTable } from "../../../components/parity/ParityTable";
+import { EntityLink } from "../../../components/shared/EntityLink";
+import { entityLabel } from "../../../lib/entity-label";
 import {
   applyUniversalDatePreset,
   QBO_DATE_PRESETS,
@@ -191,6 +193,40 @@ export function LegalDeadlineAlertsPage() {
                 ),
               },
               {
+                key: "matter_id",
+                label: "Matter",
+                sortable: true,
+                sortValue: (a) => a.matter_number ?? a.matter_id ?? "",
+                render: (a) =>
+                  a.matter_id ? (
+                    <EntityLink
+                      kind="matter"
+                      id={a.matter_id}
+                      label={entityLabel(a.matter_number, a.matter_id, "Matter")}
+                      data-testid={`legal-alert-matter-${a.alert_id}`}
+                    />
+                  ) : (
+                    "—"
+                  ),
+              },
+              {
+                key: "contract_instance_id",
+                label: "Contract",
+                sortable: true,
+                sortValue: (a) => a.contract_instance_id ?? "",
+                render: (a) =>
+                  a.contract_instance_id ? (
+                    <EntityLink
+                      kind="legal_contract"
+                      id={a.contract_instance_id}
+                      label={entityLabel(null, a.contract_instance_id, "Contract")}
+                      data-testid={`legal-alert-contract-${a.alert_id}`}
+                    />
+                  ) : (
+                    "—"
+                  ),
+              },
+              {
                 key: "due_at",
                 label: "Due",
                 sortable: true,
@@ -205,7 +241,7 @@ export function LegalDeadlineAlertsPage() {
                 label: "Link",
                 sortable: false,
                 render: (a) => (
-                  <Link to={a.href} className="text-xs text-[#14314F] underline">
+                  <Link to={a.href} className="text-xs text-[#14314F] underline" data-testid={`legal-alert-open-${a.alert_id}`}>
                     Open
                   </Link>
                 ),

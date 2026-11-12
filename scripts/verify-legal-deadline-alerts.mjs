@@ -53,6 +53,13 @@ if (!problems.length) {
     problems.push("need-company empty must be BoardSection (legal-deadline-alerts-need-company)");
   }
   if (!/path="\/legal\/alerts"/.test(manifest)) problems.push("manifest missing /legal/alerts route");
+  // ROUND 8.12 reverse — Matter / Contract EntityLinks when alert carries those FKs.
+  if (!/kind=["']matter["']/.test(page) || !/a\.matter_id/.test(page)) {
+    problems.push("alerts table must EntityLink Matter via a.matter_id");
+  }
+  if (!/kind=["']legal_contract["']/.test(page) || !/a\.contract_instance_id/.test(page)) {
+    problems.push("alerts table must EntityLink Contract via a.contract_instance_id");
+  }
 }
 
 if (problems.length) {
