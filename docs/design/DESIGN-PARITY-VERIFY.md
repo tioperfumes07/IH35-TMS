@@ -2,6 +2,10 @@
 
 ## Reports depth — cash-basis navigation FAIL
 
+Driver Settlement report: unpaid KPI narrows107→103 and selects Closed+Unpaid; gross minus deductions plus reimbursements matches net in25/25 rendered rows. Company report revenue minus costs minus driver pay matches margin in25/25 rendered rows. These are sampled display checks, not all-row/source-ledger tie-outs. Generic KPI counts/totals remain noninteractive; Company zero-cost tile lacks approved Open list. Group/filter/drill state is local rather than URL. Cursor handoff #28941 comment6814988812.
+
+Customer report: typeable multi-select with two customers narrows91→2; Statement view opens selected customer's real statement. Reverse FAIL: Back lands Customer detail, not originating report/view/two-customer selection/period; target defaults current month. `CustomerReportBoard.tsx:191` sends bare statement URL; `CounterpartyStatementPage.tsx:69,262,301` defaults month/module fallback. Required validated origin/date/view/filter preservation plus rendered round-trip test; no money changes. Cursor handoff #28941 comment6815023093.
+
 Additional read-only finding: manually selecting Cash and Apply completes with an Out of balance result, whereas Accrual displays Balanced. This requires CC-1 independent cash-read-model reconciliation; it is NOT proof of corrupted posted ledger and no balancing entry is authorized. Private amounts are not committed. CC-1 notified #28950 comment6814925656.
 
 Reports-Loads chart FAIL: board explicitly requires revenue-bar drill; live role=img has no interactive descendants and `LoadsReportBoard.tsx:573–584` renders plain div bars without handlers. Week table label does narrow to detail rows, bounded PASS, but drill/group live only in component state rather than URL. Cursor notified #28941 comment6814947418: keyboard-accessible bar drill, same filtered population, route/reverse preservation and rendered tests required. Preserve additive Fuel/Margin columns.
