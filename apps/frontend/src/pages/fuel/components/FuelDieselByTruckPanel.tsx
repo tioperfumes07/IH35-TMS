@@ -8,7 +8,6 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
-import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
@@ -96,6 +95,12 @@ export function FuelDieselByTruckPanel({
     return maxRows != null ? filtered.slice(0, maxRows) : filtered;
   }, [aggQuery.data?.rows, makeModelByUnitId, maxRows, search]);
 
+  // ROUND 8.17 class S — same contract as Fuel Home: period fuel transactions for this unit (never unit profile).
+  const historyHref = (unitId: string | null) =>
+    unitId
+      ? `/fuel/history?unit_id=${encodeURIComponent(unitId)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
+      : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+
   const columns = useMemo<Array<ParityColumn<DieselRow>>>(
     () => [
       {
@@ -136,11 +141,16 @@ export function FuelDieselByTruckPanel({
           const max = Math.max(1, ...rows.map((x) => x.spend_cents));
           const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
           return (
-            <div className="flex min-w-0 items-center" data-testid="fuel-diesel-spend-bar">
+            <Link
+              to={historyHref(r.unit_id)}
+              className="flex min-w-0 items-center"
+              data-testid="fuel-diesel-spend-bar"
+              aria-label={`Open fuel history for ${r.unit_number}`}
+            >
               <div className="h-1.5 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
                 <div className="h-1.5 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
-            </div>
+            </Link>
           );
         },
       },
@@ -152,17 +162,15 @@ export function FuelDieselByTruckPanel({
         className: QBO_MONEY_CELL_CLASS,
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.spend_cents,
-        render: (r) =>
-          r.unit_id ? (
-            <MoneyCell
-              cents={r.spend_cents}
-              format={(c) => formatMoneyCents(c)}
-              drill={{ entity: { kind: "unit", id: r.unit_id } }}
-              className="shrink-0"
-            />
-          ) : (
-            <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
-          ),
+        render: (r) => (
+          <Link
+            to={historyHref(r.unit_id)}
+            className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline"
+            data-testid="fuel-diesel-amount-drill"
+          >
+            {formatMoneyCents(r.spend_cents)}
+          </Link>
+        ),
       },
       {
         key: "gallons",
@@ -171,7 +179,11 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.gallons,
-        render: (r) => formatQuantityTable(r.gallons, 1),
+        render: (r) => (
+          <Link to={historyHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-diesel-gallons-drill">
+            {formatQuantityTable(r.gallons, 1)}
+          </Link>
+        ),
       },
       {
         key: "per_gal",
@@ -180,7 +192,14 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
-        render: (r) => (r.gallons > 0 ? formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3) : "—"),
+        render: (r) =>
+          r.gallons > 0 ? (
+            <Link to={historyHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-diesel-rate-drill">
+              {formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3)}
+            </Link>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "fill_count",
@@ -189,7 +208,11 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.fill_count,
-        render: (r) => formatQuantityTable(r.fill_count, 0),
+        render: (r) => (
+          <Link to={historyHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-diesel-fills-drill">
+            {formatQuantityTable(r.fill_count, 0)}
+          </Link>
+        ),
       },
       {
         key: "load_count",
@@ -198,10 +221,14 @@ export function FuelDieselByTruckPanel({
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.load_count,
-        render: (r) => formatQuantityTable(r.load_count, 0),
+        render: (r) => (
+          <Link to={historyHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-diesel-loads-drill">
+            {formatQuantityTable(r.load_count, 0)}
+          </Link>
+        ),
       },
     ],
-    [makeModelByUnitId, rows],
+    [makeModelByUnitId, range.from, range.to, rows],
   );
 
   return (
