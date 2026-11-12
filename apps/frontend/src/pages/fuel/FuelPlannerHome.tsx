@@ -476,11 +476,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
           {/* Keep the locked "Relay inbox" named section (verify-architectural-design), then the review queue. */}
           <h3 className="text-xs font-semibold text-gray-900">Relay inbox</h3>
           <RelayDepositReview companyId={companyId} />
-          <FuelBoardSection title="Relay history import" testId="fuel-relay-history-import">
-            <div className="p-3">
-              <RelayHistoryImport operatingCompanyId={companyId} />
-            </div>
-          </FuelBoardSection>
+          {/* ROUND 8.15b — RelayHistoryImport home is relay_inbox (was layered on Fuel.dc.html Home).
+              No new section title string — i18n shrink-only; control carries its own chrome. */}
+          <div className="p-3" data-testid="fuel-relay-history-import">
+            <RelayHistoryImport operatingCompanyId={companyId} />
+          </div>
         </div>
       ) : null}
 
