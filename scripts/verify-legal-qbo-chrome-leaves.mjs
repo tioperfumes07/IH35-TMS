@@ -46,9 +46,9 @@ const CHECKS = [
     pattern: /<ParityDrawer[\s\S]*DatePicker[\s\S]*EntityPicker/,
   },
   {
-    name: "templates.list: LegalTemplatesListPage CollapsedListFilters + real ParityTable",
+    name: "templates.list: LegalTemplatesListPage CollapsedListFilters + ParityTable + legal_template EntityLink",
     file: "apps/frontend/src/pages/legal/templates/LegalTemplatesListPage.tsx",
-    pattern: /CollapsedListFilters[\s\S]*<ParityTable/,
+    pattern: /kind=["']legal_template["'][\s\S]*<ParityTable[\s\S]*CollapsedListFilters/,
   },
   {
     name: "policies: LegalPoliciesPage is a real ParityTable with legal_template EntityLink",
