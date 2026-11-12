@@ -1,6 +1,6 @@
-<!-- heartbeat 2026-11-12T13:25Z Cursor ROUND 8.15 -->
-# NOW — CURSOR — ROUND 8.15 KPI href ship; board-column rebuild BLOCKED on CC-1 additive guards
+<!-- heartbeat 2026-11-12T13:50Z Cursor ROUND 8.15 -->
+# NOW — CURSOR — #29015 merged; next Factoring Home / Close; board columns BLOCKED on LEAD
 
-**ACTIVE:** Settlements/Fuel KPI href drills + Perfume MoneyInput. Tip LEAD: OWNER-REMOVE / guard retarget for Open|Closed + Fuel.dc.html exact columns (verify-settlements-tours-columns-visible, module-one-readout, margin-pct, fuel-home-dashboard-wired).
+**ACTIVE:** #29015 Settlements KPI href + Perfume TS2300. LEAD needed for OWNER-REMOVE on Open|Closed+Fuel additive guards. Next: Factoring Home #39 or Settlements Close #49.
 
 **EXTERNAL:** load 13700 CC-1 E4. Neon 202616501200. Codex LIVE. No match/Dreamline.
