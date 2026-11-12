@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~12:20 AM CT) — Legal Attorney Review + Contracts template EntityLinks
+- **SHIPS:** #28953 Statement MoneyCell literal drills (merged). Legal Attorney Review Template column + Contracts list Template → `legal_template` EntityLink (parity with Policies/Templates list).
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE for BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~12:05 AM CT) — Statement MoneyCell literal drills (advances + earnings)
-- **THIS:** SettlementStatementBoardPanels + LinkedRecordsPanel — MoneyCell drill is a literal `{ entity }` at each call site (verify-money-cells-click-through). Advances recovered: single source → cash_advance MoneyCell; multi → tabular total + cash_advance EntityLinks (no settlement self-drill; verify-statement-advances-recovered-source). Earnings amount branches load vs settlement MoneyCell.
+- **THIS:** SettlementStatementBoardPanels + LinkedRecordsPanel — MoneyCell drill is a literal `{ entity }` at each call site (verify-money-cells-click-through). Advances recovered: single source → cash_advance MoneyCell; multi → tabular total + cash_advance EntityLinks (no settlement self-drill; verify-statement-advances-recovered-source). Earnings amount branches load vs settlement MoneyCell. **MERGED #28953.**
 - **Guards:** money-cells + advances-recovered-source plain+selftest PASS; declared no-drill stays 35.
 - **NEXT:** reverse-wiring / ROUND 8.12 board proof continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
 
