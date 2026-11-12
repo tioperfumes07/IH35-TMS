@@ -1,5 +1,6 @@
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { notVoided } from "../accounting/live-document-predicates.sql.js";
+import { ledgerPostingCountsSql } from "../accounting/ledger-membership.js";
 import { logger } from "../observability/structured-logger.js";
 
 /**
@@ -44,10 +45,14 @@ export async function readCardPayableBalances(
           JOIN accounting.journal_entry_postings jep ON jep.account_id = ca.id AND jep.operating_company_id = $1::uuid
           JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
            AND je.operating_company_id = $1::uuid AND ${notVoided("je")}
+          LEFT JOIN accounting.posting_batches pb ON pb.id = jep.posting_batch_id
+           AND pb.operating_company_id = jep.operating_company_id
          WHERE ca.operating_company_id = $1::uuid AND ca.id = $2::uuid AND ca.deactivated_at IS NULL
+           AND ${ledgerPostingCountsSql({ p: "jep", je: "je", pb: "pb" })}
+           AND je.entry_date <= $3::date
          GROUP BY ca.id, ca.account_name
         `,
-        [operatingCompanyId, accountId]
+        [operatingCompanyId, accountId, today]
       );
       for (const r of res.rows) {
         const cents = Number(r.balance_cents ?? 0);
@@ -59,6 +64,8 @@ export async function readCardPayableBalances(
         role,
         error_stack: err instanceof Error ? err.stack : String(err),
       });
+      // A missing issuer balance is unavailable, never a valid zero or partial total.
+      throw err;
     }
   }
   return out;
