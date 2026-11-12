@@ -12,7 +12,6 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
-import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -43,10 +42,6 @@ function statusBadgeVariant(status: PaymentScheduleStatus): "neutral" | "warn" |
 
 function statusLabel(status: PaymentScheduleStatus): string {
   return status.replace(/_/g, " ");
-}
-
-function formatMoney(cents: number): string {
-  return formatUsdCents(cents);
 }
 
 function canMarkPaid(schedule: InsurancePaymentSchedule): boolean {
