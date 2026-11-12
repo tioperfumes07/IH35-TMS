@@ -36,6 +36,29 @@ export function check(subnavSrc, files, manifestSrc = fs.readFileSync(MANIFEST, 
   if (!/!underSettlements\s*\?\s*\(\s*<div\s+data-testid="drivers-unified-subnav"/.test(driversSrc)) {
     v.push(`${DRIVERS}: must suppress drivers-unified-subnav when underSettlements (testid must sit in the gated branch)`);
   }
+  // ROUND 8.12 / #28895 — Settlement Document Designs board stays on Settlements subnav + route.
+  if (!/Document Designs/.test(subnavSrc) || !/\/driver-finance\/settlements\/document-designs/.test(subnavSrc)) {
+    v.push(`${SUBNAV}: Document Designs tab required at /driver-finance/settlements/document-designs`);
+  }
+  if (!manifestSrc.includes('path="/driver-finance/settlements/document-designs"')) {
+    v.push(`${MANIFEST}: Document Designs route /driver-finance/settlements/document-designs must be mounted`);
+  }
+  const designsPage = "apps/frontend/src/pages/driver-finance/SettlementDocumentDesignsPage.tsx";
+  const designsHtml = "apps/frontend/public/design/settlement-document-designs.html";
+  if (!fs.existsSync(designsPage)) v.push(`${designsPage}: missing Settlement Document Designs page`);
+  else {
+    const pageSrc = fs.readFileSync(designsPage, "utf8");
+    if (!/settlement-document-designs-page/.test(pageSrc)) {
+      v.push(`${designsPage}: must expose data-testid="settlement-document-designs-page"`);
+    }
+    if (!/\/design\/settlement-document-designs\.html/.test(pageSrc)) {
+      v.push(`${designsPage}: iframe must load /design/settlement-document-designs.html`);
+    }
+    if (!/backTo="\/driver-finance\/settlements"/.test(pageSrc)) {
+      v.push(`${designsPage}: SettlementsModuleShell backTo must return to settlements home`);
+    }
+  }
+  if (!fs.existsSync(designsHtml)) v.push(`${designsHtml}: approved print-specimen HTML missing`);
   return v;
 }
 const walk = (d, a = []) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p, a); else if (/\.tsx?$/.test(e.name) && !/\.test\./.test(e.name)) a.push([p, fs.readFileSync(p, "utf8")]); } return a; };

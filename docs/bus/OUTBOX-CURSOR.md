@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~11:25 PM CT) — Document Designs locked in settlements-subnav guard
+- **THIS:** verify-settlements-subnav-stays-in-module requires Document Designs tab + route + page/iframe + HTML (#28895 ratchet; no new claim number).
+- **NEXT:** Continue reverse-wiring / go26 residuals; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~11:05 PM CT) — go26 Cash Advances preview → ParityTable (−3 raw tables)
 - **THIS:** CashAdvancesKpiRow Requests/Advances previews on ParityTable; AdvanceDetail print receipt uses dl; TripPairing comment false-positive cleared. go26 raw_table 41→38 banked.
 - **NEXT:** Continue go26 Cursor residuals / reverse-wiring; Codex LIVE #28895/#28896. No match/Dreamline.
@@ -179,11 +183,6 @@
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave14
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 1 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave13
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE
