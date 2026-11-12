@@ -77,8 +77,10 @@ export function findDefects(src) {
   if (!/COALESCE\(epl\.document_date, ep\.document_date, je\.entry_date\)::text AS document_date/.test(tl)) out.push("register read model does not return the document date");
   if (/filters\.push\(`ep\.posted_at [<>]=/.test(tl)) out.push("register period filter reads posted_at, not the document date");
 
-  // Screen: linked Load column + document date.
-  if (!/to=\{`\/dispatch\/loads\/\$\{encodeURIComponent\(r\.loadId\)\}`\}/.test(page)) out.push("register screen has no linked Load column");
+  // Screen: linked Load column + document date (EntityLink preferred over raw /dispatch/loads href).
+  if (!/kind=["']load["'][\s\S]{0,80}id=\{r\.loadId\}/.test(page) && !/to=\{`\/dispatch\/loads\/\$\{encodeURIComponent\(r\.loadId\)\}`\}/.test(page)) {
+    out.push("register screen has no linked Load column");
+  }
   if (/date: t\.created_at/.test(page)) out.push("register screen dates a row by created_at (posted_at), not its document date");
   if (!/date: rowDate,/.test(page)) out.push("register screen row date is not the document date");
   return out;
@@ -108,7 +110,7 @@ if (process.argv.includes("--selftest")) {
     ["read model back to settlement_lines guess", plant("route", "LEFT JOIN accounting.escrow_posting_loads epl", "LEFT JOIN driver_finance.settlement_lines epl ON epl.line_type = 'escrow_contribution'")],
     ["read model has no document date", plant("route", "COALESCE(epl.document_date, ep.document_date, je.entry_date)::text AS document_date", "ep.posted_at::text AS document_date")],
     ["screen dated by posted_at", plant("page", "date: rowDate,", "date: t.created_at,")],
-    ["screen load not linked", plant("page", "to={`/dispatch/loads/${encodeURIComponent(r.loadId)}`}", "to={`/x`}")],
+    ["screen load not linked", plant("page", 'kind="load"', 'kind="customer"')],
     ["split table not append-only", plant("migration", "escrow_posting_loads is append-only", "noop")],
   ];
   let caught = 0;
