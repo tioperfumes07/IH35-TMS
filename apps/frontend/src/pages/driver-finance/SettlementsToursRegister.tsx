@@ -331,6 +331,16 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
     params.delete("tour_state");
     setSearchParams(params, { replace: true });
   };
+  // ROUND 8.17 residual board 33/34 — Open/Closed must live in the URL so EntityLink `ret`
+  // restores the cohort (Back must not land Settlements Home).
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "open" || tab === "closed") return;
+    const params = new URLSearchParams(searchParams);
+    params.set("tab", state);
+    params.delete("tour_state");
+    setSearchParams(params, { replace: true });
+  }, [searchParams, setSearchParams, state]);
   const openQ = useQuery({ queryKey: ["settlements-module", "tours", "open", companyId], queryFn: () => listTours(companyId, "open"), enabled: Boolean(companyId) });
   const closedQ = useQuery({ queryKey: ["settlements-module", "tours", "closed", companyId], queryFn: () => listTours(companyId, "closed"), enabled: Boolean(companyId) });
   const activeQ = state === "open" ? openQ : closedQ;
