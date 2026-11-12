@@ -11,6 +11,7 @@ import { legalContractsApi, type LegalContractSummary } from "../../../api/legal
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { legalTemplatesApi } from "../../../api/legal-templates";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -18,9 +19,8 @@ import { V3 } from "../../../design/v3-tokens";
 import { formatDateUS } from "../../../lib/formatDate";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { userFacingApiError } from "../../../lib/api-error-message";
-import { formatUsdCents } from "../../../utils/qboFormat";
-import { formatUsd } from "../../../lib/money";
 import { ParityTable } from "../../../components/parity/ParityTable";
+import type { ReactNode } from "react";
 
 const MS_DAY = 24 * 60 * 60 * 1000;
 
@@ -66,18 +66,31 @@ function nextMatterDate(m: LegalMatterRow): string | null {
   return null;
 }
 
-function claimedVsReserve(m: LegalMatterRow): string {
+function claimedVsReserve(m: LegalMatterRow): ReactNode {
   // Engine: amount_claimed_against_us = dollars (numeric); financial_reserve_cents = cents.
   const claimed = m.amount_claimed_against_us;
   const reserve = m.financial_reserve_cents;
-  if (claimed == null && reserve == null) return "—";
-  const claimedDisplay =
-    claimed == null || claimed === ""
-      ? "—"
-      : formatUsd(Number(claimed));
-  const reserveStr =
-    reserve == null || reserve === "" ? "—" : formatUsdCents(Number(reserve));
-  return `${claimedDisplay} vs ${reserveStr}`;
+  const matterId = String(m.id ?? "");
+  if ((claimed == null || claimed === "") && (reserve == null || reserve === "")) return "—";
+  if (!matterId) return "—";
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      {claimed != null && claimed !== "" ? (
+        <MoneyCell
+          cents={Math.round(Number(claimed) * 100)}
+          drill={{ entity: { kind: "matter", id: matterId } }}
+        />
+      ) : (
+        "—"
+      )}
+      <span>vs</span>
+      {reserve != null && reserve !== "" ? (
+        <MoneyCell cents={Number(reserve)} drill={{ entity: { kind: "matter", id: matterId } }} />
+      ) : (
+        "—"
+      )}
+    </span>
+  );
 }
 
 type PipelineRow = {

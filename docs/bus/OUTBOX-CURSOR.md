@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~3:40 AM CT) — Legal/Dispatch MoneyCell residual wave
+- **THIS:** Legal home claimed vs reserve · Load History Rate/Driver pay · Factoring Queue Rate · Detention accrued + approval amounts → MoneyCell.
+- **Prior:** #28969/#28970 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~3:20 AM CT) — Fuel/Insurance/Legal/Aging MoneyCell residual wave
 - **THIS:** Aging bucket fallbacks → advance · Equipment loan principal/outstanding → equipment_loan · FuelTransactions Amount · CardOverage overage/total · FleetCovered insured/premium · Insurance home policy premium · PolicyDetail lawsuit demand · Legal matter claimed/seek/reserve.
 - **Prior:** #28969 Factoring/Insurance/Fuel residual (merged).
