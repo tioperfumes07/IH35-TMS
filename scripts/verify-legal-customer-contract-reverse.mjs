@@ -25,7 +25,8 @@ const checks = [
   ["customer", /kind="legal_contract"[\s\S]{0,80}id=\{contract\.id\}/, "customer reverse row drills to selected contract"],
   ["customer", /Couldn't load this customer's legal contracts[\s\S]*legalContractsQuery\.refetch\(\)/, "customer reverse failure is retryable"],
   ["contracts", /LEFT JOIN docs\.files f ON f\.id = c\.file_id\s+AND f\.operating_company_id = c\.operating_company_id\s+AND f\.deleted_at IS NULL/g, "both customer contract reads scope file metadata to contract company"],
-  ["page", /onSaved=\{async \(contractId\)[\s\S]*setSearchParams\(\{ contract_id: contractId \}\)/, "lease R=W selects persisted detail"],
+  // ROUND 8.5 L3 — navigateModal preserves stage/signer query scope while selecting the new contract.
+  ["page", /onSaved=\{async \(contractId\)[\s\S]*navigateModal\(\{\s*contract_id:\s*contractId\s*\}\)/, "lease R=W selects persisted detail"],
 ];
 
 // Positive checks that must MATCH; the lease "must not keep" row is inverted.
