@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFactoringSummary } from "../../api/factoring";
 import { apiRequest } from "../../api/client";
@@ -24,7 +25,7 @@ import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
-import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 
 const EMPTY_FILTERS = {
@@ -61,13 +62,6 @@ type QueueResponse = {
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
-const fmtM = (cents: number, currency = "USD") => {
-  if (currency === "MXN") {
-    // House quantity + currency code (never browser Intl money for Cursor surfaces).
-    return `MXN ${formatQuantityTable((Number(cents) || 0) / 100, 2)}`;
-  }
-  return formatUsdCents(cents);
-};
 const fmtD = (v: string | null | undefined) => {
   if (!v) return "—";
   return formatDateUS(v) || "—";
@@ -248,7 +242,12 @@ export function FactoringQueuePage() {
         key: "rate_total_cents",
         label: "Rate",
         sortable: true,
-        render: (row) => fmtM(row.rate_total_cents, row.currency_code),
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.rate_total_cents ?? 0)}
+            drill={{ entity: { kind: "load", id: row.load_id } }}
+          />
+        ),
       },
       {
         key: "packet_stage",

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useEffect, useMemo, useState } from "react";
 import {
   approveDetentionRequest,
@@ -20,7 +21,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { StatusBadge } from "../../components/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { formatQuantityTable } from "../../lib/money";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { useToast } from "../../components/Toast";
@@ -31,10 +32,6 @@ import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } fro
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { SelectCombobox } from "../../components/Combobox";
-
-function formatMoney(cents: number): string {
-  return formatUsdCents(Math.max(0, cents));
-}
 
 function formatElapsed(startedAt: string, nowMs: number): string {
   const start = new Date(startedAt).getTime();
@@ -141,7 +138,12 @@ function DetentionApprovalQueue({
                 )}
               </span>
               <span className="min-w-[6rem] text-center">{stopLabel}</span>
-              <span className="min-w-[4rem] text-center">{formatMoney(Number(row.amount_cents ?? 0))}</span>
+              <span className="min-w-[4rem] text-center">
+                <MoneyCell
+                  cents={Number(row.amount_cents ?? 0)}
+                  drill={{ entity: { kind: "load", id: row.load_id } }}
+                />
+              </span>
               <label className="flex items-center gap-1">
                 <span className="text-section-header font-bold uppercase text-[#4B5563]">Method</span>
                 <SelectCombobox
@@ -381,7 +383,12 @@ export function DetentionBoardPage() {
       label: "Estimated / unbilled",
       sortable: true,
       cellClass: "tabular-nums font-medium",
-      render: (event) => formatMoney(Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0)),
+      render: (event) => (
+        <MoneyCell
+          cents={Number(event.live_accrued_amount_cents ?? event.accrued_amount_cents ?? 0)}
+          drill={{ entity: { kind: "load", id: event.load_id } }}
+        />
+      ),
     },
     {
       key: "operational_state",
