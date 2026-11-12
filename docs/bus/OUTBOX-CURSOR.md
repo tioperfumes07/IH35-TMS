@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~6:15 PM CT) — BOARD-45 R5/R6: Customers Loads/Avg·load + Vendors Truck/Card payables (45/45 CODE)
+- **PRIOR:** #28875 raw_font_sizes→0 + register 43/45.
+- **THIS:** party-board customer loads CTE; Vendor Truck unit_id filter + Card payables KPI. Register 45/45 CODE. LIVE proofs remain Codex.
+- **NEXT:** Codex LIVE verify; Cursor reverse-wiring audits. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:55 PM CT) — BOARD-45: raw_font_sizes 79→0 + completion register (43/45 CODE; R5/R6 Cascade OPEN)
 - **PRIOR:** Owner no-stop until all 45; #28870 type-scale.
 - **THIS:** App-wide locked type scale — every remaining text-[Npx] → semantic classes; baseline raw_font_sizes **0**. BOARD-45-COMPLETION-REGISTER.md: 43 CODE, #30/#31 Cascade OPEN (R5/R6). Shared shell 42px/66px/Inter. No match/Dreamline.

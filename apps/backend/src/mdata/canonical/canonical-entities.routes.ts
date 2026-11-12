@@ -82,13 +82,24 @@ export async function registerCanonicalEntityRoutes(app: FastifyInstance) {
   app.get("/api/v1/mdata/boards/:kind", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
     if (!requireAuth(req, reply)) return reply;
     const p = z.object({ kind: kindSchema }).safeParse(req.params ?? {});
-    const qy = z.object({ operating_company_id: z.string().uuid(), range: z.enum(["ytd", "12m", "all"]).default("ytd") }).safeParse(req.query ?? {});
+    const qy = z
+      .object({
+        operating_company_id: z.string().uuid(),
+        range: z.enum(["ytd", "12m", "all"]).default("ytd"),
+        // R6 — Truck multi-select on Vendors report board (comma-separated unit ids).
+        unit_id: z.string().optional(),
+      })
+      .safeParse(req.query ?? {});
     if (!p.success || !qy.success) return reply.code(400).send({ error: "validation_error" });
     await assertCompanyMembership(req.user!.uuid, qy.data.operating_company_id);
+    const unitIds = (qy.data.unit_id ?? "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => /^[0-9a-f-]{36}$/i.test(s));
     return withCompanyScope<unknown>(req.user!.uuid, qy.data.operating_company_id, (client) =>
       p.data.kind === "customers"
         ? readCustomerBoard(client, qy.data.operating_company_id, qy.data.range)
-        : readVendorBoard(client, qy.data.operating_company_id, qy.data.range));
+        : readVendorBoard(client, qy.data.operating_company_id, qy.data.range, unitIds));
   });
 
   // ROUND 326 item 3 — the whole driver in one read: seventeen blocks, each a value or a named empty reason.

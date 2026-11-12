@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getApAgingReport, getVendorBoardReport, type APAgingRow, type PartyBoardRange, type VendorBoardReportRow } from "../../../api/reports";
+import { listAllUnits } from "../../../api/mdata";
 import { EntityMultiSelect, entityFilterIds } from "../../../components/EntityMultiSelect";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -49,11 +50,30 @@ export function VendorReportBoard() {
   const [view, setView] = useState<View>("spend");
   const [vendorIds, setVendorIds] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
+  const [unitIds, setUnitIds] = useState<string[]>([]);
   const asOf = companyToday();
 
+  const unitsQ = useQuery({
+    queryKey: ["vendor-report-units", companyId],
+    queryFn: () => listAllUnits({ operating_company_id: companyId }),
+    enabled: Boolean(companyId),
+    staleTime: 60_000,
+  });
+  const unitOptions = useMemo(
+    () =>
+      (unitsQ.data?.units ?? [])
+        .map((u) => {
+          const row = u as { id?: string; unit_number?: string | null };
+          return { value: String(row.id ?? ""), label: String(row.unit_number ?? row.id ?? "") };
+        })
+        .filter((o) => o.value)
+        .sort((a, b) => a.label.localeCompare(b.label)),
+    [unitsQ.data],
+  );
+
   const board = useQuery({
-    queryKey: ["reports", "vendor-board", companyId, range],
-    queryFn: () => getVendorBoardReport(companyId, range),
+    queryKey: ["reports", "vendor-board", companyId, range, unitIds.join(",")],
+    queryFn: () => getVendorBoardReport(companyId, range, { unitIds }),
     enabled: Boolean(companyId),
     retry: false,
   });
@@ -227,6 +247,17 @@ export function VendorReportBoard() {
           allLabel="All categories"
           data-testid="vendor-report-category-filter"
         />
+        {/* R6 — board Truck ▾ multi-select; filters expense spend to selected units. */}
+        <div className="min-w-[160px]" data-testid="vendor-report-truck-filter">
+          <MultiSelectDropdown
+            label="Truck"
+            options={unitOptions}
+            selected={unitIds}
+            onChange={setUnitIds}
+            allLabel="All trucks"
+            data-testid="vendor-report-truck-multiselect"
+          />
+        </div>
         <label className="flex flex-col gap-1">
           <span className="font-semibold text-[#4B5563]">View</span>
           <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="vendor-report-view" />
@@ -259,13 +290,17 @@ export function VendorReportBoard() {
           sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${mmmDd(asOf)}`}
           onClick={() => setView("open")}
         />
+        {/* R6 — Card payables = fuel-account expense cents (board); 1099 stays as a View. */}
         <V3KpiTile
-          testId="vr-kpi-1099"
-          label="Vendors flagged 1099"
-          value={board.data ? String(rows1099.length) : "…"}
-          sub={`${savedCategoryCount} of ${rows.length} vendors have a saved category`}
-          tone={rows1099.length ? "ink" : "amber"}
-          onClick={() => setView("1099")}
+          testId="vr-kpi-card-payables"
+          label="Card payables"
+          value={board.data ? money(board.data.kpis.fuel_cents ?? 0) : "…"}
+          sub={
+            board.data?.kpis.fuel_share_pct != null
+              ? `${pctLabel(board.data.kpis.fuel_share_pct)} of spend · ${rows1099.length} vendors flagged 1099`
+              : `${rows1099.length} vendors flagged 1099`
+          }
+          onClick={() => setView("category")}
         />
       </ReportKpiGrid>
 

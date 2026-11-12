@@ -1707,6 +1707,8 @@ export type CustomerBoardReportRow = {
   status: string;
   factored: string | null;
   invoices: number;
+  /** R5 — real loads in range (Loads report scope); Avg / load = billed / loads. */
+  loads: number;
   billed_cents: number;
   collected_cents: number;
   open_cents: number;
@@ -1769,6 +1771,11 @@ export type VendorBoardReport = {
 };
 
 /** GET /api/v1/mdata/boards/vendors — the canonical Vendors board engine (party-board.service.ts, expenses + bills). */
-export function getVendorBoardReport(companyId: string, range: PartyBoardRange): Promise<VendorBoardReport> {
-  return apiRequest<VendorBoardReport>(withCompany(`/api/v1/mdata/boards/vendors?range=${range}`, companyId));
+export function getVendorBoardReport(
+  companyId: string,
+  range: PartyBoardRange,
+  opts?: { unitIds?: string[] },
+): Promise<VendorBoardReport> {
+  const unitQs = opts?.unitIds?.length ? `&unit_id=${opts.unitIds.map(encodeURIComponent).join(",")}` : "";
+  return apiRequest<VendorBoardReport>(withCompany(`/api/v1/mdata/boards/vendors?range=${range}${unitQs}`, companyId));
 }
