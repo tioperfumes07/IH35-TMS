@@ -155,3 +155,38 @@ describe("PERFUME-DESK vendor line ending → code / country / case pack (owner 
     expect([id.brand, id.nameText, id.sizeMl, id.conc, id.gender]).toEqual(["CALVIN KLEIN", "FREE", 50, "EDT", "M"]);
   });
 });
+
+describe("PERFUME-DESK real lists 2026-11-12: JIZAN, Perfumes Plus (ALL BRANDS), Nandansons, Lux America, Darielle", () => {
+  it("JIZAN: origin code after the size is the country, never the name", () => {
+    const id = identify({ description: "AMOUAGE GUIDANCE (U) EDP 100 ml OM", brand: "AMOUAGE" });
+    expect([id.brand, id.nameText, id.sizeMl, id.conc, id.gender]).toEqual(["AMOUAGE", "GUIDANCE", 100, "EDP", "U"]);
+    expect(vendorLineTail("AMOUAGE GUIDANCE (U) EDP 100 ml OM").country).toBe("Oman");
+    expect(vendorLineTail("BVLGARI MAN WOOD ESSENCE (M) PARFUM 60 ml IT").country).toBe("Italy");
+  });
+  it("JIZAN: TESTER is a flag, not part of the name; VICTORIA'S = VICTORIAS", () => {
+    const t = identify({ description: "RALPH LAUREN POLO RED (M) TESTER W/CAP PARFUM 125 ml FR", brand: "RALPH LAUREN" });
+    expect(t.nameText).toBe("POLO RED");
+    expect(t.flags).toContain("TESTER");
+    const v = identify({ description: "VICTORIA'S SECRET TEASE CANDY NOIR (W) EDP 50 ml US", brand: "VICTORIA'S SECRET" });
+    expect(v.nameText).toBe("TEASE CANDY NOIR");
+  });
+  it("Perfumes Plus: L- / M- / MS- prefixes (with or without a space) and the trailing item number", () => {
+    const a = identify({ description: "L-360 SEXY 3.3 EDP SPR - 13878" });
+    expect([a.nameText, a.gender, a.sizeMl]).toEqual(["360 SEXY", "W", 100]);
+    const b = identify({ description: "L- SARAH.J PARKER COVET 3.4 EDP SPR - 13827" });
+    expect(b.nameWords).not.toContain("13827");
+    const c = identify({ description: "MS-LATTAFA PRIDE PISA 3.4+20ML/6.7 PERFUMED EDP SPR  -  313244" });
+    expect([c.gender, c.flags.includes("SET")]).toEqual(["M", true]);
+    expect(vendorLineTail("L-360 SEXY 3.3 EDP SPR - 13878").code).toBe("13878");
+  });
+  it("Nandansons: the Item Type column carries gender + tester/set", () => {
+    const t = identify({ description: "212 SEXY TESTER 3.4 EAU DE PARFUM SPRAY FOR WOMEN", brand: "CAROLINA HERRERA", gender: "W-TSTR" });
+    expect([t.gender, t.flags.includes("TESTER"), t.nameText]).toEqual(["W", true, "212 SEXY"]);
+    const s = identify({ description: "360 3 PCS SET FOR MEN: 3.4 EAU DE TOILETTE SPRAY + 0.25 EAU DE TOILETTE SPRAY + 3 OZ SHOWER GEL", brand: "PERRY ELLIS", gender: "M-SET" });
+    expect([s.gender, s.flags.includes("SET")]).toEqual(["M", true]);
+  });
+  it("Darielle: Product Line ADP = ACQUA DI PARMA; Lux: AL HAMBRA = ALHAMBRA", () => {
+    expect(identify({ description: "Colonia Pura EDC 100ml", brand: "ADP" }).brand).toBe("ACQUA DI PARMA");
+    expect(identify({ description: "AL HAMBRA ANARCH 100ML EDP SPRAY" }).brand).toBe("ALHAMBRA");
+  });
+});

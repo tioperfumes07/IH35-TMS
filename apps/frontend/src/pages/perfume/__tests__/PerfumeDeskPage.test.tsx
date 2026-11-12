@@ -128,3 +128,18 @@ describe("PERFUME-DESK file reader", () => {
     expect(pdfLinePairs("WOMEN")).toEqual([]);
   });
 });
+
+describe("PERFUME-DESK header mapping — real lists 2026-11-12", () => {
+  it("Perfumes Plus: WHS is the price (MSRP is not)", () => {
+    expect(guessMapping(["ITEM#", "UPC", "ITEM DESCRIPTION", "WHS", "MSRP", "QTY", "TOTAL"])).toMatchObject({ sku: 0, upc: 1, desc: 2, price: 3, qty: 5 });
+  });
+  it("Nandansons: Special = price, Item Type = gender", () => {
+    expect(guessMapping(["UPC", "Brand", "Item Type", "SKU-11/7/26", "Name", "Special", "Quantity"])).toMatchObject({ upc: 0, brand: 1, gender: 2, sku: 3, desc: 4, price: 5, qty: 6 });
+  });
+  it("Darielle: Product Line = brand", () => {
+    expect(guessMapping(["Item ID", "UPC Code", "Description", "Product Line", "QTY", "Price", "Order"])).toMatchObject({ upc: 1, desc: 2, brand: 3, qty: 4, price: 5 });
+  });
+  it("JIZAN: BARCODE / ITEM CODE / PRICE USD", () => {
+    expect(guessMapping(["ITEM CODE", "BARCODE", "BRAND", "ITEM DESCRIPTION", "TYPE", "NICHE", "QTY", "PRICE USD"])).toMatchObject({ sku: 0, upc: 1, brand: 2, desc: 3, qty: 6, price: 7 });
+  });
+});

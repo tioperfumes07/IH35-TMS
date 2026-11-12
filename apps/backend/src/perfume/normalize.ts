@@ -45,6 +45,8 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "AG": "ARIANA GRANDE",
   "B.S": "BRITNEY SPEARS",
   "CK": "CALVIN KLEIN",
+  "ADP": "ACQUA DI PARMA",
+  "AL HAMBRA": "ALHAMBRA",
   "D&G": "DOLCE & GABBANA",
   "DG": "DOLCE & GABBANA",
   "DOLCE AND GABBANA": "DOLCE & GABBANA",
@@ -119,7 +121,7 @@ const NOISE = new Set([
   "SP", "SPR", "SPRAY", "VAPO", "VAPORISATEUR", "NATURAL", "NAT", "FOR", "THE", "BY", "DE", "DI", "LA", "LE",
   "EAU", "TOILETTE", "COLOGNE", "PARFUM", "PERFUME", "FRAGRANCE", "NEW", "PACK", "ONLY", "USA", "LI",
   "BOX", "BOXED", "BYBOX", "PCS", "PC", "OZ", "ML", "FL", "&", "AND", "Y", "EN", "POUR", "HOMME", "TST", "TSTR",
-  "SPL", "VIAL", "CAP", "NO",
+  "SPL", "VIAL", "CAP", "NO", "TESTER", "TESTERS",
 ]);
 /** NOISE words that ARE part of a name when they lead it (e.g. "LA BOMBA", "LE MALE", "EAU SO FRESH"). */
 const KEEP_WHEN_FIRST = new Set(["LA", "LE", "EAU", "THE", "Y"]);
@@ -247,6 +249,17 @@ export function identify(input: IdentityInput): Identity {
 
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
   s = s.replace(/\(\s*\d{4,}\s*\).*$/, " ");
+  // Perfumes Plus: "L- SARAH.J PARKER COVET 3.4 EDP SPR - 13827" — a leading "L-/W-/M-/U-" is the gender and the
+  // trailing " - 13827" is the vendor's item number, never part of the name.
+  let leadGender: Gender = "";
+  // Prefix codes: L-, M-, W-, U- (gender), MS-/LS- (set), MT-/LT- (tester) — with or without a space after the dash.
+  let leadFlag = "";
+  s = s.replace(/^\s*(L|W|M|U)(S|T)?\s*-\s*/, (_m, g: string, f?: string) => {
+    leadGender = GENDER_WORDS[g]; leadFlag = f === "S" ? "SET" : f === "T" ? "TESTER" : ""; return " ";
+  });
+  s = s.replace(/\s+-\s*\d{3,8}\s*$/, " ");
+  // JIZAN: "AMOUAGE GUIDANCE (U) EDP 100 ml OM" — a 2-letter origin code after the bottle size is the country, not the name.
+  s = s.replace(new RegExp(`(\\d\\s*(?:ML|OZ)\\b[^A-Z0-9]*(?:\\([A-Z]\\)\\s*)?)\\b(?:${Object.keys(ISO2_COUNTRY).join("|")})\\s*$`), "$1 ");
   // "STRONGER W YOU" / "W/YOU" means WITH YOU, not women.
   s = s.replace(/\bW\/?\s*(?=YOU\b)/g, "WITH ");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
@@ -260,7 +273,13 @@ export function identify(input: IdentityInput): Identity {
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
   let gender: Gender = "";
   const gcol = cleanSpaces(stripAccents(String(input.gender ?? "")).toUpperCase());
-  if (gcol) gender = GENDER_WORDS[gcol] ?? GENDER_WORDS[gcol.split(" ")[0]] ?? "";
+  // A gender column can carry flags too: Nandansons "Item Type" = M, W, W-TSTR, M-SET.
+  const gtok = gcol.split(/[^A-Z]+/).filter(Boolean);
+  if (gcol) gender = GENDER_WORDS[gcol] ?? GENDER_WORDS[gtok[0] ?? ""] ?? "";
+  if (gtok.some((t) => t === "TSTR" || t === "TST" || t === "TESTER")) flags.add("TESTER");
+  if (gtok.includes("SET")) flags.add("SET");
+  if (!gender && leadGender) gender = leadGender;
+  if (leadFlag) flags.add(leadFlag);
   const paren = s.match(/\((M|W|U|L)[*.]?\)/);
   if (!gender && paren) gender = GENDER_WORDS[paren[1]];
   s = s.replace(/\([^)]*\)/g, " ");
@@ -279,7 +298,8 @@ export function identify(input: IdentityInput): Identity {
 
   // Punctuation → spaces, but keep "&" and "'" inside brand words, and dots inside abbreviations like A.GRANDE.
   s = s.replace(/[^A-Z0-9&'.% ]+/g, " ").replace(/(?<!\d)%/g, " ").replace(/(?<![A-Z])\.|\.(?![A-Z0-9])/g, " ");
-  let words = cleanSpaces(s).split(" ").filter(Boolean);
+  // "VICTORIA'S SECRET" = "VICTORIAS SECRET": an apostrophe never separates two spellings of one word.
+  let words = cleanSpaces(s.replace(/'/g, "")).split(" ").filter(Boolean);
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
   let brand = canonicalBrand(input.brand ?? "", aliases);
@@ -350,6 +370,14 @@ export function normalizeUpc(v: unknown): string {
 
 /* ---------------- vendor line ending ---------------- */
 
+/** 2-letter origin codes vendors print after the bottle size (JIZAN "... 100 ml OM"). */
+export const ISO2_COUNTRY: Record<string, string> = {
+  OM: "Oman", US: "USA", FR: "France", AE: "United Arab Emirates", ES: "Spain", IT: "Italy", GB: "United Kingdom",
+  UK: "United Kingdom", DE: "Germany", CN: "China", CH: "Switzerland", IN: "India", PL: "Poland", BR: "Brazil",
+  NL: "Netherlands", JP: "Japan", KR: "South Korea", MX: "Mexico", CA: "Canada", TR: "Turkey", SA: "Saudi Arabia",
+  BE: "Belgium", AT: "Austria", IE: "Ireland", MC: "Monaco", PT: "Portugal", GR: "Greece", BG: "Bulgaria", CZ: "Czechia",
+};
+
 const COUNTRY_FIX: Record<string, string> = {
   "UNITED ARAB EMIR": "United Arab Emirates", "UNITED ARAB EMIR.": "United Arab Emirates", UAE: "United Arab Emirates",
   USA: "USA", "U.S.A.": "USA", UK: "United Kingdom",
@@ -367,7 +395,12 @@ export function vendorLineTail(description: string | null | undefined): { code: 
   const last = segs[segs.length - 1] ?? "";
   const pcs = last.match(/(\d+)\s*pcs?\b/i);
   const code = segs[0]?.match(/\(\s*(\d{4,})\s*\)\s*$/)?.[1] ?? s.match(/\(\s*(\d{5,8})\s*\)/)?.[1] ?? null;
-  if (segs.length < 2 || !pcs) return { code, country: null, casePack: null };
+  if (segs.length < 2 || !pcs) {
+    // JIZAN: origin code right after the size ("... 100 ml OM", "... 100 ml (D) OM").
+    const iso = s.match(/\d\s*(?:ml|oz)\b[^A-Za-z0-9]*(?:\([A-Za-z]\)\s*)?\b([A-Z]{2})\s*$/i)?.[1]?.toUpperCase();
+    const itemNo = s.match(/\s-\s*(\d{3,8})\s*$/)?.[1] ?? null;
+    return { code: code ?? itemNo, country: iso && ISO2_COUNTRY[iso] ? ISO2_COUNTRY[iso] : null, casePack: null };
+  }
   const raw = segs.slice(1, -1).map((x) => x.trim()).find((x) => /^[A-Za-z][A-Za-z .'&]*$/.test(x)) ?? null;
   const country = raw ? (COUNTRY_FIX[raw.toUpperCase()] ?? raw.replace(/\s+/g, " ")) : null;
   return { code, country, casePack: Number(pcs[1]) };
