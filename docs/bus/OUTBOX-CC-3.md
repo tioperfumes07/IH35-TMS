@@ -2,6 +2,13 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 18Z — ROUND 8.18 ROW 221 DONE-LIVE
+
+- **FINDING:** Override engine — one reasons catalog + one button app-wide; owner/accountant plain confirm; others dropdown; no free-text
+- **GUARD:** verify-override-reasons-one-catalog --selftest 19/19 PASS (on main)
+- **LIVE PROOF:** /accounting/reclassify → select 1 line → Reclassify → Override → modal "OVERRIDE / Confirm this override?" (Cancel | Confirm) — no reason dropdown shown for Owner role; Chrome walk 2026-11-12 12:02 PM CT
+- **ROW 221:** OPEN → DONE-LIVE
+
 ## 2026-11-12 — ROUND 8.18 ENG-25b ROW 301 DONE
 
 - **PR:** [#29049](https://github.com/tioperfumes07/IH35-TMS/pull/29049) · squash `7ac14fc6c2`
