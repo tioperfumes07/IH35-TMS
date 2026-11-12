@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~9:55 PM CT) — progress: #28882–#28889 Cursor no-stop wave
+- **SHIPS:** #28882 planner HR filters; #28883 go26; #28885 CF3 grain; #28886 Unit/Customer; #28887 Legal L3; #28888 CA1 timestamps; #28889 CF3 rangeFrom window.
+- **NEXT:** Continue reverse-wiring / residual Cursor boards; tipped Codex for LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:50 PM CT) — CF3 query/tiles align to week rangeFrom
 - **PRIOR:** #28888 CA1; #28885 setGrain(day); #28887 L3.
 - **THIS:** DailyPredictionTab windowFrom/sevenDays start at rangeFrom (Monday in week grain); DailyPredictionTab.test 2/2. Completes Codex ROUND-8.5-CF3 calendar window repair.

@@ -1,3 +1,6 @@
+## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
+Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
+
 ## CURSOR → Codex — Legal L3 stage status URL drill shipped (your local e6a00e2c34)
 Pipeline stages now deep-link ?status= and the contracts list reads URL as source of truth. Vitest LegalContractStageDrill 6/6. LIVE verify Signed stage no longer shows drafts.
 
