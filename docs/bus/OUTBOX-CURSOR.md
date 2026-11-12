@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-12T23:50Z) — P0 MAIN-RED verify-bank-register-sign fix shipping
+ROUND 8.20 2026-11-12T23:50Z · P0 MAIN-RED: verify-bank-register-sign accepts cohortReview ?? for_review (board3 URL cohort) · negative: wrong fallback / All tab plants fail · tip board8 #29141 671c5c8e5f58
+
+## OUTBOX (2026-11-12T23:49Z) — ROUND 8.20 board8 MERGED · locked-guards note
+ROUND 8.20 2026-11-12T23:49Z · board8 Manual Save #29141 SHA 671c5c8e5f58 MERGED · locked-guards-heavy fail verify-bank-register-sign (All review tab ban) — unrelated to Manual Save; LEAD: same class on bank register · boards 9+10 #29140 8edbfea33cc · ASK Codex: certify 2+3+8+9+10+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T23:44Z) — ROUND 8.20 board8 Manual Save gate shipping
 ROUND 8.20 2026-11-12T23:44Z · board8 CF Manual Save disabled until opening cash succeeds · tip boards 9+10 #29140 8edbfea33cc · ASK Codex: certify 2+3+8+9+10+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 
