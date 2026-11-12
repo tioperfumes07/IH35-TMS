@@ -65,9 +65,19 @@ export function AssignDriverDropdown({
   // Pre-create fallback: source the roster from the load-independent driver list. HOS/proximity fields are not
   // available without a load, so they are reported as unknown rather than invented — `hos_safe: true` here
   // would fake a safety clearance this endpoint cannot give, and the caller already re-checks HOS on select.
+  // Codex ROUND 8.5 / #28836: never use movement-derived status=Active alone — drops HR-Active /
+  // Probation drivers with no recent movement. Match Book Load EntityPicker (FAIL-CA1).
   const rosterQ = useQuery({
-    queryKey: ["dispatch", "available-drivers", "preload-roster", operatingCompanyId],
-    queryFn: () => listAllDrivers({ operating_company_id: operatingCompanyId, status: "Active" }),
+    queryKey: ["dispatch", "available-drivers", "preload-roster", operatingCompanyId, "hr-active-or-probation"],
+    queryFn: async () => {
+      const res = await listAllDrivers({ operating_company_id: operatingCompanyId });
+      const drivers = (res.drivers ?? []).filter((d) => {
+        if (d.deactivated_at != null) return false;
+        if ((d as { merged_into_driver_id?: string | null }).merged_into_driver_id) return false;
+        return ["Active", "Probation"].includes(String((d as { status?: string | null }).status ?? ""));
+      });
+      return { drivers, total: drivers.length };
+    },
     enabled: Boolean(!loadId && operatingCompanyId && driversOverride == null),
   });
 

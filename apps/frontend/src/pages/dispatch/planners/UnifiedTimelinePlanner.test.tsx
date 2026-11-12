@@ -18,17 +18,19 @@ vi.mock("../components/BookLoadModalV4", () => ({
   ),
 }));
 
+const plannerRangeMock = {
+  range: { start: "2026-06-22", end: "2026-06-26" },
+  days: ["2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26"],
+  setRange: () => undefined,
+  entityFilters: { status: [] as string[], driverIds: [] as string[] },
+  setEntityFilters: () => undefined,
+  hiddenWeekdays: [] as number[],
+  setHiddenWeekdays: () => undefined,
+};
+
 // Deterministic range so the test doesn't depend on "today".
 vi.mock("./PlannerRangeContext", () => ({
-  usePlannerRange: () => ({
-    range: { start: "2026-06-22", end: "2026-06-26" },
-    days: ["2026-06-22", "2026-06-23", "2026-06-24", "2026-06-25", "2026-06-26"],
-    setRange: () => undefined,
-    entityFilters: { status: [], driverIds: [] },
-    setEntityFilters: () => undefined,
-    hiddenWeekdays: [],
-    setHiddenWeekdays: () => undefined,
-  }),
+  usePlannerRange: () => plannerRangeMock,
   useOptionalPlannerRange: () => null,
 }));
 
@@ -43,6 +45,7 @@ function wrap(ui: ReactNode) {
 
 describe("UnifiedTimelinePlanner (Phase 1)", () => {
   beforeEach(() => {
+    plannerRangeMock.entityFilters = { status: [], driverIds: [] };
     vi.spyOn(dispatchApi, "getDispatchPlannerWeek").mockResolvedValue({
       week_start: "2026-06-22",
       week_end: "2026-06-29",
@@ -93,5 +96,14 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     wrap(<UnifiedTimelinePlanner />);
     fireEvent.click(await screen.findByTestId("timeline-book-d3"));
     expect(screen.getByTestId("book-load-prefill").textContent).toBe("unit-103|d3");
+  });
+
+  // ROUND 8.12 / Codex #28836 — entityFilters.driverIds must narrow Timeline rows (was ignored).
+  it("filters timeline rows to the two selected driverIds", async () => {
+    plannerRangeMock.entityFilters = { status: [], driverIds: ["d1", "d3"] };
+    wrap(<UnifiedTimelinePlanner />);
+    expect(await screen.findByText("Jane Driver")).toBeTruthy();
+    expect(screen.getByText("Free Agent")).toBeTruthy();
+    expect(screen.queryByText("On Leave Guy")).toBeNull();
   });
 });

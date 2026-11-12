@@ -69,7 +69,7 @@ async function fetchLoadsForRange(operatingCompanyId: string, rangeStart: string
 export function LoadsPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days, setRange } = usePlannerRange();
+  const { range, days, setRange, entityFilters } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   const loadsQuery = useQuery({
@@ -89,7 +89,40 @@ export function LoadsPlanner() {
   // screens read, batched for the whole visible list in one request.
   const costRollups = useLoadCostRollups(operatingCompanyId, (listLoadsQuery.data ?? []).map((load) => load.id));
 
-  const rows = useMemo(() => loadsQuery.data ?? [], [loadsQuery.data]);
+  const rows = useMemo(() => {
+    const all = loadsQuery.data ?? [];
+    // ROUND 8.12 — shared entity filters apply on Loads (Codex: was ignored).
+    return all.filter((load) => {
+      if (entityFilters.driverIds.length > 0) {
+        const did = load.driver_id ? String(load.driver_id) : "";
+        if (!did || !entityFilters.driverIds.includes(did)) return false;
+      }
+      if (entityFilters.status.length === 0) return true;
+      const assigned = Boolean(load.driver_id);
+      return entityFilters.status.some((s) => {
+        if (s === "in-use") return assigned;
+        if (s === "available") return !assigned;
+        return false;
+      });
+    });
+  }, [loadsQuery.data, entityFilters]);
+
+  const filteredListLoads = useMemo(() => {
+    const all = listLoadsQuery.data ?? [];
+    return all.filter((load) => {
+      if (entityFilters.driverIds.length > 0) {
+        const did = load.assigned_primary_driver_id ? String(load.assigned_primary_driver_id) : "";
+        if (!did || !entityFilters.driverIds.includes(did)) return false;
+      }
+      if (entityFilters.status.length === 0) return true;
+      const assigned = Boolean(load.assigned_primary_driver_id);
+      return entityFilters.status.some((s) => {
+        if (s === "in-use") return assigned;
+        if (s === "available") return !assigned;
+        return false;
+      });
+    });
+  }, [listLoadsQuery.data, entityFilters]);
 
   if (!operatingCompanyId) {
     return (
@@ -114,7 +147,7 @@ export function LoadsPlanner() {
 
       {!loadsQuery.isLoading && !loadsQuery.isError && viewMode === "list" ? (
         (() => {
-          const listRows: LoadListRow[] = (listLoadsQuery.data ?? []).map((load) => ({
+          const listRows: LoadListRow[] = filteredListLoads.map((load) => ({
             id: load.id,
             loadNumber: load.load_number,
             driver: load.assigned_primary_driver_name ?? "—",

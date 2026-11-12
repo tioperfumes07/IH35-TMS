@@ -11,8 +11,8 @@ import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTo
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
-import type { PlannerRange } from "./planner-range";
-import { listPlannerDays, widenPlannerRange } from "./planner-range";
+import type { PlannerEntityFilterState, PlannerRange } from "./planner-range";
+import { EMPTY_PLANNER_ENTITY_FILTERS, listPlannerDays, widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { dwellsFromDayMap, PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, usePlannerLoads } from "./planner-bars";
@@ -29,6 +29,8 @@ type SafetyDriverSchedulerGridProps = {
   testId?: string;
   viewMode?: PlannerViewMode;
   onExpandRange?: (range: PlannerRange) => void;
+  /** ROUND 8.12 — shared Filters popover entity filters (Codex: DriverPlanner ignored these). */
+  entityFilters?: PlannerEntityFilterState;
 };
 
 type DriverListRow = {
@@ -59,7 +61,15 @@ export function formatLastDispatchActivity(iso: string | null | undefined): stri
   return `${mm}/${dd}/${dt.getFullYear()} ${hh}:${min}`;
 }
 
-export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = "safety-driver-scheduler-grid", viewMode = "grid", onExpandRange, days: visibleDays }: SafetyDriverSchedulerGridProps) {
+export function SafetyDriverSchedulerGrid({
+  operatingCompanyId,
+  range,
+  testId = "safety-driver-scheduler-grid",
+  viewMode = "grid",
+  onExpandRange,
+  days: visibleDays,
+  entityFilters = EMPTY_PLANNER_ENTITY_FILTERS,
+}: SafetyDriverSchedulerGridProps) {
   // LEAD 443.251 item 5: the planner passes only the days the operator chose to show.
   const days = useMemo(() => visibleDays ?? listPlannerDays(range), [visibleDays, range.start, range.end]);
 
@@ -110,7 +120,24 @@ export function SafetyDriverSchedulerGrid({ operatingCompanyId, range, testId = 
       last_dispatch_activity_at: null,
     } as (typeof query.data.drivers)[number]);
   }
-  const drivers = [...(query.data.drivers ?? []), ...loadDrivers.values()];
+  const driversRaw = [...(query.data.drivers ?? []), ...loadDrivers.values()];
+  // ROUND 8.12 — apply shared entity filters (Codex: DriverPlanner ignored these).
+  const drivers = driversRaw.filter((dr) => {
+    const driverId = String(dr.driver_id);
+    if (entityFilters.driverIds.length > 0 && !entityFilters.driverIds.includes(driverId)) return false;
+    if (entityFilters.status.length === 0) return true;
+    const bars = loadBarsByDriver.get(driverId) ?? [];
+    const dwells = dwellsFromDayMap(days, (d) => cellByDriverDay.get(`${driverId}|${d}`), `leave-${driverId}`);
+    const onLeave = dwells.length > 0;
+    const inUse = bars.length > 0;
+    const available = !onLeave && !inUse;
+    return entityFilters.status.some((s) => {
+      if (s === "in-use") return inUse;
+      if (s === "available") return available;
+      // reserved / in-shop are truck statuses — no driver-scheduler equivalent.
+      return false;
+    });
+  });
 
   if (viewMode === "list") {
     const listRows: DriverListRow[] = drivers.map((dr) => {

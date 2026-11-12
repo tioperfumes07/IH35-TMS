@@ -101,7 +101,7 @@ function StatusPill({ status }: { status: string }) {
 export function UnifiedTimelinePlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, days, setRange } = usePlannerRange();
+  const { range, days, setRange, entityFilters } = usePlannerRange();
   const [bookUnitId, setBookUnitId] = useState<string | null>(null);
   const [bookOpen, setBookOpen] = useState(false);
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
@@ -135,15 +135,6 @@ export function UnifiedTimelinePlanner() {
     queryFn: () => driverSchedulerOfficeApi.getGrid(operatingCompanyId, range.start, range.end),
   });
 
-  const drivers = useMemo(() => {
-    const list = [...(timelineQuery.data?.drivers ?? [])];
-    list.sort((a, b) => {
-      const ao = a.hos_status === "violation" ? 1 : 0;
-      const bo = b.hos_status === "violation" ? 1 : 0;
-      return ao - bo;
-    });
-    return list;
-  }, [timelineQuery.data]);
   const loadsByDriver = useMemo(() => {
     const m = new Map<string, PlannerLoadEvent[]>();
     for (const load of timelineQuery.data?.loads ?? []) {
@@ -153,6 +144,35 @@ export function UnifiedTimelinePlanner() {
     return m;
   }, [timelineQuery.data]);
   const leaveByCell = useMemo(() => parseLeaveCells(leaveQuery.data?.leave_day_cells), [leaveQuery.data]);
+  const drivers = useMemo(() => {
+    let list = [...(timelineQuery.data?.drivers ?? [])];
+    // ROUND 8.12 — shared entity filters apply on Timeline (Codex: was ignored).
+    if (entityFilters.driverIds.length > 0) {
+      const selected = new Set(entityFilters.driverIds);
+      list = list.filter((d) => selected.has(d.id));
+    }
+    if (entityFilters.status.length > 0) {
+      // Map board Status chips onto driver timeline: in-use = has a load; available = idle + not on leave.
+      // reserved / in-shop have no driver-timeline equivalent — they do not match any row.
+      const leaveIds = new Set<string>();
+      for (const key of leaveByCell.keys()) leaveIds.add(key.split("|")[0]);
+      list = list.filter((d) => {
+        const hasLoad = (loadsByDriver.get(d.id) ?? []).length > 0;
+        const onLeave = leaveIds.has(d.id);
+        return entityFilters.status.some((s) => {
+          if (s === "in-use") return hasLoad;
+          if (s === "available") return !hasLoad && !onLeave;
+          return false;
+        });
+      });
+    }
+    list.sort((a, b) => {
+      const ao = a.hos_status === "violation" ? 1 : 0;
+      const bo = b.hos_status === "violation" ? 1 : 0;
+      return ao - bo;
+    });
+    return list;
+  }, [timelineQuery.data, entityFilters, leaveByCell, loadsByDriver]);
   // ROUND 20.6 T2 (owner-live 2026-09-12): getDispatchPlannerWeek's own driver rows never carry
   // unit_number/unit_id (confirmed live -- every row read "—"), so the column the "Driver / Unit"
   // header promises had nothing to show. driverSchedulerOfficeApi.getGrid() (already fetched above,

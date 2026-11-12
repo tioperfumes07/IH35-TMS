@@ -9,7 +9,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 export function DriverPlanner() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
-  const { range, setRange, days } = usePlannerRange();
+  const { range, setRange, days, entityFilters } = usePlannerRange();
   const [viewMode, setViewMode] = useState<PlannerViewMode>("grid");
 
   if (!operatingCompanyId) {
@@ -38,7 +38,15 @@ export function DriverPlanner() {
         </div>
         <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
       </div>
-      <SafetyDriverSchedulerGrid operatingCompanyId={operatingCompanyId} range={range} days={days} testId="dispatch-driver-planner-grid" viewMode={viewMode} onExpandRange={setRange} />
+      <SafetyDriverSchedulerGrid
+        operatingCompanyId={operatingCompanyId}
+        range={range}
+        days={days}
+        testId="dispatch-driver-planner-grid"
+        viewMode={viewMode}
+        onExpandRange={setRange}
+        entityFilters={entityFilters}
+      />
     </div>
   );
 }

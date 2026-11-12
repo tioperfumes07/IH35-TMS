@@ -19,7 +19,14 @@ vi.mock("../../../../contexts/CompanyContext", () => ({
 }));
 
 vi.mock("../../../../api/mdata", () => ({
-  listAllDrivers: vi.fn().mockResolvedValue({ drivers: [], total: 0 }),
+  listAllDrivers: vi.fn().mockResolvedValue({
+    drivers: [
+      { id: "drv-a", first_name: "Ana", last_name: "Active", status: "Active", deactivated_at: null },
+      { id: "drv-p", first_name: "Pat", last_name: "Probation", status: "Probation", deactivated_at: null },
+      { id: "drv-m", first_name: "Mo", last_name: "MovementOnly", status: "Inactive", deactivated_at: null },
+    ],
+    total: 3,
+  }),
 }));
 
 const gridPayload: driverSchedulerApi.FleetScheduleResponse = {
@@ -87,5 +94,22 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     await userEvent.click(within(bar).getByRole("button", { name: "7d" }));
     expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
     expect(driverSchedulerApi.driverSchedulerOfficeApi.getGrid).toHaveBeenCalled();
+  });
+
+  // ROUND 8.12 / Codex #28836 — MultiSelect of 2 HR-Active/Probation drivers (not movement-only).
+  it("lets the operator multi-select two drivers from the HR roster", async () => {
+    wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
+    await screen.findByTestId("dispatch-driver-planner-grid");
+    await userEvent.click(screen.getByTestId("planner-filters-toggle"));
+    const driverFilter = await screen.findByTestId("planner-filter-driver-multiselect");
+    await userEvent.click(within(driverFilter).getByRole("button", { name: /All drivers/i }));
+    // Active + Probation present; Inactive/movement-only excluded.
+    const ana = await screen.findByRole("button", { name: /Ana Active/i });
+    const pat = screen.getByRole("button", { name: /Pat Probation/i });
+    expect(screen.queryByRole("button", { name: /Mo MovementOnly/i })).toBeNull();
+    await userEvent.click(ana);
+    await userEvent.click(pat);
+    expect(within(driverFilter).getByRole("button", { name: /Driver \(2\)/i })).toBeTruthy();
+    expect(await screen.findByTestId("planner-chip-driver")).toBeTruthy();
   });
 });

@@ -108,9 +108,20 @@ function PlannerEntityFilters({
   onChange: (next: PlannerEntityFilterState) => void;
 }) {
   const { selectedCompanyId: operatingCompanyId } = useCompanyContext();
+  // Codex ROUND 8.5 / #28836: never pass movement-derived status=Active alone — that drops
+  // HR-Active drivers with no recent movement. Match Book Load EntityPicker: unscoped roster
+  // read, then keep Active+Probation (FAIL-CA1) and live rows only.
   const driversQuery = useQuery({
-    queryKey: ["planner-entity-filter-drivers", operatingCompanyId],
-    queryFn: () => listAllDrivers({ operating_company_id: operatingCompanyId as string, status: "Active" }),
+    queryKey: ["planner-entity-filter-drivers", operatingCompanyId, "hr-active-or-probation"],
+    queryFn: async () => {
+      const res = await listAllDrivers({ operating_company_id: operatingCompanyId as string });
+      const drivers = (res.drivers ?? []).filter((d) => {
+        if (d.deactivated_at != null) return false;
+        if ((d as { merged_into_driver_id?: string | null }).merged_into_driver_id) return false;
+        return ["Active", "Probation"].includes(String((d as { status?: string | null }).status ?? ""));
+      });
+      return { drivers, total: drivers.length };
+    },
     enabled: Boolean(operatingCompanyId),
   });
   const driverOptions = useMemo(
