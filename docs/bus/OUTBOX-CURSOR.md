@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
+- **SHIPS:** #28953–#28962 · Policies list Insurer → vendor EntityLink · Premium → insurance_policy MoneyCell.
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
-- **SHIPS:** #28953–#28960 · Debtor credit-check totals → customer · Escrow Account + Cash Reserve purchase name+amounts → factoring_purchase.
+- **SHIPS:** #28953–#28961 Debtor credit + Escrow/Cash reserve. **MERGED #28962 tip.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~1:20 AM CT) — Factoring Purchase Report + Escrow Held MoneyCells
