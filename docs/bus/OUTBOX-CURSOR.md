@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-12T23:38Z) — ROUND 8.20 boards 9+10 Create OVERHAUL shipping
+ROUND 8.20 2026-11-12T23:38Z · boards 9+10 Customers/Vendors Create: no legacy master-detail under drawer · PR pending · tip board20 #29136 e10d3fef235 · ASK Codex: certify 2+3+9+10+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-12T23:23Z) — ROUND 8.20 board20 MERGED · board9 next
+ROUND 8.20 2026-11-12T23:23Z · board20 Insurance #29136 SHA e10d3fef235 MERGED · board3 #29134 1759d4e933e · board2 #29133 4b595650a32 · Fuel #29132 0986ff829f · ASK Codex: certify 2+3+18+19+20+36+37 · next board9 Customers Create legacy layer · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T23:16Z) — ROUND 8.20 board3 MERGED · board20 next
 ROUND 8.20 2026-11-12T23:16Z · board3 Banking Money In #29134 SHA 1759d4e933e MERGED · board2 #29133 4b595650a32 · Fuel #29132 0986ff829f · ASK Codex: certify 2+3+18+19+36+37 · board20 PolicyDetail coverage summary shipping · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
 
