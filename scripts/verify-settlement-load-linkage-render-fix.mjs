@@ -36,8 +36,9 @@
 // (Settlement/Tour → Load → Driver) now lives — correctly and un-regressed — in TourLoadRows.tsx as
 // key:"tour" → key:"load_number" → key:"driver" (auditTourLoadRowsOrderSource below). This is a
 // pure re-point to the true current surface, NOT a weakening: the same ordering is still asserted.
-// SettlementsToursRegister.tsx STILL uses ...tourLoadColumns("setl-tour-col") (TourLegsCell.tsx),
-// so its check keeps using auditColumnOrderSource() unchanged.
+// ROUND 8.15b (OWNER-REMOVE 2026-11-12 / #29026): SettlementsToursRegister dropped
+// ...tourLoadColumns() — board order is Settlement → Driver → Unit → Tour legs (TourLegsCell
+// EntityLinks). Per-leg Load # columns live on TourLoadRows / gear surfaces, not Open/Closed.
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -108,20 +109,24 @@ export function auditPreSettlementPanelSource(src) {
   return failures;
 }
 
-/** Pure: do the two Tour register column arrays render Load immediately after Settlement? */
+/** Pure: Settlements Open/Closed board order (ROUND 8.15b) — Settlement → Driver → Unit → Tour legs. */
 export function auditColumnOrderSource(src, label) {
   const failures = [];
-  // ROUND 8.5 T5/T6: Settlements Open/Closed overview is Settlement → Driver → Unit → Tour legs.
-  // Per-leg Load # columns remain via ...tourLoadColumns (defaultHidden), after Tour legs.
+  // ROUND 8.15b: exact Settlements-Open|Closed.dc.html — no layered ...tourLoadColumns on the list.
   const tourIdx = src.indexOf('key: "tour"');
   const driverIdx = src.indexOf('key: "driver"');
   const unitIdx = src.indexOf('key: "unit"');
   const tourLegsIdx = src.indexOf('label: "Tour legs"');
-  const loadColsIdx = src.indexOf("...tourLoadColumns(");
-  if (tourIdx === -1 || driverIdx === -1 || unitIdx === -1 || tourLegsIdx === -1 || loadColsIdx === -1) {
-    failures.push(`${label}: could not locate tour/driver/unit/Tour legs/tourLoadColumns column definitions`);
-  } else if (!(tourIdx < driverIdx && driverIdx < unitIdx && unitIdx < tourLegsIdx && tourLegsIdx < loadColsIdx)) {
-    failures.push(`${label}: board order must be Settlement → Driver → Unit → Tour legs → (secondary) tourLoadColumns`);
+  if (tourIdx === -1 || driverIdx === -1 || unitIdx === -1 || tourLegsIdx === -1) {
+    failures.push(`${label}: could not locate tour/driver/unit/Tour legs column definitions`);
+  } else if (!(tourIdx < driverIdx && driverIdx < unitIdx && unitIdx < tourLegsIdx)) {
+    failures.push(`${label}: board order must be Settlement → Driver → Unit → Tour legs`);
+  }
+  if (/\.\.\.tourLoadColumns\(/.test(src)) {
+    failures.push(`${label}: must not layer ...tourLoadColumns on Open/Closed (per-leg home: TourLoadRows / Tour legs EntityLinks)`);
+  }
+  if (!/<TourLegsCell\b/.test(src)) {
+    failures.push(`${label}: Tour legs must render via <TourLegsCell> (all-leg EntityLinks)`);
   }
   return failures;
 }
@@ -181,11 +186,13 @@ function selftest() {
     throw new Error("live leftover tokens present on PreSettlementPanel");
   }
 
-  // T5/T6 board: Settlement → Driver → Unit → Tour legs → secondary tourLoadColumns.
-  const badOrder = `{ key: "tour", label: "x" },\n...tourLoadColumns("p"),\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },`;
-  assert.ok(auditColumnOrderSource(badOrder, "test").length >= 1, "tourLoadColumns-before-Driver ordering must be caught");
-  const goodOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },\n...tourLoadColumns("p"),`;
-  assert.ok(auditColumnOrderSource(goodOrder, "test").length === 0, "T5/T6 Settlement→Driver→Unit→Tour legs ordering must pass");
+  // ROUND 8.15b board: Settlement → Driver → Unit → Tour legs (+ TourLegsCell; no tourLoadColumns).
+  const badOrder = `{ key: "tour", label: "x" },\n{ key: "unit", label: "z" },\n{ key: "driver", label: "y" },\n{ key: "tour_legs", label: "Tour legs" },\n<TourLegsCell legs={r.legs} />`;
+  assert.ok(auditColumnOrderSource(badOrder, "test").length >= 1, "Driver-after-Unit ordering must be caught");
+  const layeredOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },\n...tourLoadColumns("p"),\n<TourLegsCell legs={r.legs} />`;
+  assert.ok(auditColumnOrderSource(layeredOrder, "test").length >= 1, "re-layered tourLoadColumns must be caught");
+  const goodOrder = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "unit", label: "z" },\n{ key: "tour_legs", label: "Tour legs" },\n<TourLegsCell legs={r.legs} />`;
+  assert.ok(auditColumnOrderSource(goodOrder, "test").length === 0, "8.15b Settlement→Driver→Unit→Tour legs ordering must pass: " + JSON.stringify(auditColumnOrderSource(goodOrder, "test")));
 
   const badRows = `{ key: "tour", label: "x" },\n{ key: "driver", label: "y" },\n{ key: "load_number", label: "z" },`;
   assert.ok(auditTourLoadRowsOrderSource(badRows).length >= 1, "TourLoadRows Load-after-Driver ordering must be caught");
