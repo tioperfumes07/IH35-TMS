@@ -128,7 +128,9 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // A brand-only bottle ("4711 3.4 EDC U") is a strong identity only when the vendor also gives its barcode.
   // With its barcode a line is a strong identity even when the vendor prints no known brand (Lux America
   // "AL HAMBRA ANARCH 100ML EDP"); without a barcode it needs brand + name + size.
-  const strongIdentity = identity.sizeMl != null && (identity.brand !== "" || upc !== "") && (identity.nameWords.length > 0 || upc !== "");
+  // A non-fragrance item (blotter, bag, cosmetic) has no bottle size; with its barcode it is still an item.
+  const sizeOk = identity.sizeMl != null || (upc !== "" && (identity.flags.includes("VARIOUS") || identity.flags.includes("BODY")));
+  const strongIdentity = sizeOk && (identity.brand !== "" || upc !== "") && (identity.nameWords.length > 0 || upc !== "");
   if (opts.allowNewItem && strongIdentity && (upc || sku) && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }

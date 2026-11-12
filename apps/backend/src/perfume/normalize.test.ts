@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { identify, looseKey, normalizeUpc, ozToMl, vendorLineTail } from "./normalize.js";
+import { categoryOf, identify, looseKey, normalizeUpc, ozToMl, vendorLineTail } from "./normalize.js";
 
 const loose = (d: string, brand?: string) => looseKey(identify({ description: d, brand }));
 
@@ -188,5 +188,26 @@ describe("PERFUME-DESK real lists 2026-11-12: JIZAN, Perfumes Plus (ALL BRANDS),
   it("Darielle: Product Line ADP = ACQUA DI PARMA; Lux: AL HAMBRA = ALHAMBRA", () => {
     expect(identify({ description: "Colonia Pura EDC 100ml", brand: "ADP" }).brand).toBe("ACQUA DI PARMA");
     expect(identify({ description: "AL HAMBRA ANARCH 100ML EDP SPRAY" }).brand).toBe("ALHAMBRA");
+  });
+});
+
+describe("PERFUME-DESK category (owner 2026-11-12): Women / Men / Set / Tester / Cosmetics / Various", () => {
+  const cat = (d: string, extra: Partial<Parameters<typeof identify>[0]> = {}) => { const id = identify({ description: d, ...extra }); return categoryOf(id.gender, id.flags); };
+  it("fragrances follow gender, then set / tester", () => {
+    expect(cat("212 SEXY 3.4 EDP L", { brand: "CAROLINA HERRERA" })).toBe("Women");
+    expect(cat("212 3.4 EDT M", { brand: "CAROLINA HERRERA" })).toBe("Men");
+    expect(cat("212 SEXY TESTER 3.4 EAU DE PARFUM SPRAY FOR WOMEN", { brand: "CAROLINA HERRERA", gender: "W-TSTR" })).toBe("Tester Women");
+    expect(cat("MS-LATTAFA PRIDE PISA 3.4+20ML/6.7 PERFUMED EDP SPR - 313244")).toBe("Set Men");
+    expect(cat("CK ONE 3.4 EDT U")).toBe("Unisex");
+  });
+  it("cosmetics and various", () => {
+    expect(cat("RED DOOR 6.8 BODY LOTION", { brand: "ELIZABETH ARDEN" })).toBe("Cosmetics");
+    expect(cat("PERFUME BLOTTERS 100 PCS")).toBe("Various");
+    expect(cat("VERSACE BACKPACK BLACK", { brand: "VERSACE" })).toBe("Various");
+  });
+  it("a barcode bag with no bottle size still becomes an item", async () => {
+    const { matchLine, emptyIndex } = await import("./matching.js");
+    const m = matchLine(emptyIndex(), "v", { upc: "8011003999999", brand: "VERSACE", description: "VERSACE BACKPACK BLACK" }, { allowNewItem: true });
+    expect(m.method).toBe("new_item");
   });
 });

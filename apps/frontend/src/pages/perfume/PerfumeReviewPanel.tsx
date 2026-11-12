@@ -46,6 +46,7 @@ export function PerfumeReviewPanel() {
           { key: "size_ml", label: "Size ml", sortable: true, kind: "number", render: (r) => (r.size_ml == null ? "—" : String(r.size_ml)) },
           { key: "conc", label: "Type", sortable: true, render: (r) => r.conc || "—" },
           { key: "gender", label: "Gender", sortable: true, render: (r) => r.gender || "—" },
+          { key: "category", label: "Category", sortable: true, render: (r) => r.category || "—" },
           { key: "flags", label: "Tester / set", sortable: true, render: (r) => r.flags || "—" },
           { key: "country", label: "Country", sortable: true, render: (r) => r.country ?? "—" },
           { key: "case_pack", label: "Case pack", sortable: true, kind: "number", render: (r) => (r.case_pack == null ? "—" : String(r.case_pack)) },

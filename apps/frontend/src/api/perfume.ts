@@ -121,6 +121,8 @@ export type PerfumeReviewRow = {
   conc?: string | null;
   gender?: string | null;
   flags?: string;
+  /** Women / Men / Unisex / Set … / Tester … / Cosmetics / Various — from gender + flags (server). */
+  category?: string;
   country?: string | null;
   case_pack?: number | null;
   price_cents: number;

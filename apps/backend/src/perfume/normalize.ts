@@ -187,7 +187,9 @@ function parseConc(s: string): { conc: Conc; remove: RegExp[] } {
 
 const FLAG_RULES: Array<[RegExp, string]> = [
   [/\bTESTERS?\b|\bTSTR?\b|\(T\)/, "TESTER"],
-  [/\bLOTION\b|\bSHOWER GEL\b|\bBATH\b|\bDEO(DORANT)?\b|\bAFTER ?SHAVE\b|\bBALM\b|\bBODY SPRAY\b|\bBODY CREAM\b|\bHAIR\b/, "BODY"],
+  [/\bLOTION\b|\bSHOWER GEL\b|\bBATH\b|\bDEO(DORANT)?\b|\bAFTER ?SHAVE\b|\bBALM\b|\bBODY SPRAY\b|\bBODY CREAM\b|\bHAIR\b|\bCREAM\b|\bSOAP\b|\bSHAMPOO\b|\bLIPSTICK\b|\bLIP GLOSS\b|\bMASCARA\b|\bEYELINER\b|\bFOUNDATION\b|\bMAKE ?UP\b|\bNAIL POLISH\b|\bSKIN ?CARE\b|\bSERUM\b|\bPOWDER\b|\bBLUSH\b|\bSCRUB\b/, "BODY"],
+  // Not a fragrance and not a cosmetic: blotters, bags, backpacks and other store/gift items ("various").
+  [/\bBLOTTERS?\b|\bBAGS?\b|\bBACKPACKS?\b|\bPOUCH(ES)?\b|\bTOTES?\b|\bKEY ?CHAINS?\b|\bUMBRELLAS?\b|\bWALLETS?\b|\bDISPLAYS?\b|\bPOSTERS?\b|\bMIRRORS?\b|\bCANDLES?\b|\bTOWELS?\b|\bCASES?\b|\bGIFT BOX(ES)?\b|\bSTRIPS?\b/, "VARIOUS"],
   [/\bCONCENTRATED\b|\bPERFUME OIL\b|\bATTAR\b/, "OIL"],
   [/\b\d+\s*PCS?\b\s*SET\b|\bGIFT SET\b|\bSET\b|\b\d\s*PC\b/, "SET"],
   [/\bMINI\b|\bMINIATURE\b/, "MINI"],
@@ -404,4 +406,19 @@ export function vendorLineTail(description: string | null | undefined): { code: 
   const raw = segs.slice(1, -1).map((x) => x.trim()).find((x) => /^[A-Za-z][A-Za-z .'&]*$/.test(x)) ?? null;
   const country = raw ? (COUNTRY_FIX[raw.toUpperCase()] ?? raw.replace(/\s+/g, " ")) : null;
   return { code, country, casePack: Number(pcs[1]) };
+}
+
+/**
+ * The owner's category for an item (owner 2026-11-12): Women, Men, Unisex, Set Women, Set Men, Set Unisex,
+ * Tester Women, Tester Men, Tester Unisex, Cosmetics (lotion, gel, deodorant, cream, makeup …), Various
+ * (blotters, bags, backpacks …). Fragrance categories follow the gender; a missing gender says "Unknown".
+ */
+export function categoryOf(gender: string | null | undefined, flags: readonly string[] | string | null | undefined): string {
+  const f = new Set(Array.isArray(flags) ? flags : String(flags ?? "").split(/[\s,+]+/).filter(Boolean));
+  if (f.has("VARIOUS")) return "Various";
+  if (f.has("BODY")) return "Cosmetics";
+  const g = gender === "W" ? "Women" : gender === "M" ? "Men" : gender === "U" ? "Unisex" : "Unknown";
+  if (f.has("SET")) return `Set ${g}`;
+  if (f.has("TESTER")) return `Tester ${g}`;
+  return g;
 }
