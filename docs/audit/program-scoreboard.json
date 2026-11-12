@@ -1,6 +1,6 @@
 {
   "healthzSha": "91ea9e3",
-  "generated_at": "2026-11-12T16:26:07.918Z",
+  "generated_at": "2026-11-12T18:25:39.988Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 29044,
-      "title": "FINDING: LEAD-ROUND-8.17 — 45 boards two-seat plan (Cursor R/L/S, Codex N+V) LANE: NON-FINANCIAL",
+      "number": 29079,
+      "title": "FINDING: BANK-F817 ROUND 8.17 TourListRow PENDING uses is_open (FE TS2339)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 10:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29044",
-      "sha": "9df4a9f052",
-      "committedAtIso": "2026-11-12T10:22:43-06:00"
+      "mergedAtCt": "11/12/2026, 12:12 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29079",
+      "sha": "a8d6ae8027",
+      "committedAtIso": "2026-11-12T12:12:59-06:00"
     },
     {
-      "number": 29045,
-      "title": "FINDING: ACCT-F3049 D049 D055 customer name formatter tombstone and tooltip",
+      "number": 29078,
+      "title": "Claude-3- CC-3 R8.18 Rows 257 262 264 298 5 DONE-LIVE (guards + live proof)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 10:22 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29045",
-      "sha": "acd69928f4",
-      "committedAtIso": "2026-11-12T11:22:25-05:00"
+      "mergedAtCt": "11/12/2026, 12:10 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29078",
+      "sha": "a6cdd02d1a",
+      "committedAtIso": "2026-11-12T12:10:06-06:00"
     },
     {
-      "number": 29043,
-      "title": "FINDING: ROUND-8.15b Factoring Home — Factoring.dc.html board only (drop Account Summary N/A theater)",
+      "number": 29077,
+      "title": "FINDING: ACCT-F817-BACK-GUARD ROUND 8.17 repair inert selftest",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 10:12 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29043",
-      "sha": "91ea9e38e3",
-      "committedAtIso": "2026-11-12T11:12:28-05:00"
+      "mergedAtCt": "11/12/2026, 12:05 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29077",
+      "sha": "7f56b73810",
+      "committedAtIso": "2026-11-12T13:05:01-05:00"
     },
     {
-      "number": 29042,
-      "title": "FINDING: LST-F12017 PERFUME-DESK — Category column: Women / Men / Unisex / Set … / Tester … / Cosmetics / Various",
+      "number": 29076,
+      "title": "FINDING: BANK-F817 ROUND 8.17 Open/Closed tab always in URL for ret Back",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 10:07 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29042",
-      "sha": "bb8a165c08",
-      "committedAtIso": "2026-11-12T10:07:28-06:00"
+      "mergedAtCt": "11/12/2026, 12:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29076",
+      "sha": "8c9c66cb42",
+      "committedAtIso": "2026-11-12T12:04:22-06:00"
     },
     {
-      "number": 29041,
-      "title": "FINDING: ROUND-8.15b-FOLLOW — re-point settlement-load-linkage guard off tourLoadColumns",
+      "number": 29074,
+      "title": "FINDING: LST-F12027 PERFUME-DESK — another vendor's list never renames an item; cross-vendor UPC name conflict not trusted LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:53 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29041",
-      "sha": "40138f8658",
-      "committedAtIso": "2026-11-12T10:53:21-05:00"
+      "mergedAtCt": "11/12/2026, 12:04 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29074",
+      "sha": "9844cb4aa2",
+      "committedAtIso": "2026-11-12T12:04:01-06:00"
     },
     {
-      "number": 29040,
-      "title": "FINDING: LST-F12016 PERFUME-DESK — reader + identity for JIZAN, Perfumes Plus (ALL BRANDS), Nandansons, Lux America, Darielle lists",
+      "number": 29075,
+      "title": "FINDING: ROUND 8.17 Cursor INBOX bus-diet ≤40 (archive pre-diet)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:50 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29040",
-      "sha": "189e8816fa",
-      "committedAtIso": "2026-11-12T09:50:09-06:00"
+      "mergedAtCt": "11/12/2026, 12:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29075",
+      "sha": "f2f4f4004b",
+      "committedAtIso": "2026-11-12T12:00:52-06:00"
     },
     {
-      "number": 29039,
-      "title": "FINDING: CC-1-ROUND-8.14-CLOSE — row 93 DONE-LIVE + OUTBOX 8.14 close LANE: NON-FINANCIAL",
+      "number": 29073,
+      "title": "FINDING: ROUND 8.17 residual #29071 OUTBOX tip SHA dd4d46c91e2",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:45 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29039",
-      "sha": "94bf42f866",
-      "committedAtIso": "2026-11-12T09:45:45-06:00"
+      "mergedAtCt": "11/12/2026, 11:58 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29073",
+      "sha": "842cc730fd",
+      "committedAtIso": "2026-11-12T11:58:04-06:00"
     },
     {
-      "number": 29038,
-      "title": "FINDING: Codex Fuel single-board certification checklist and failing cases",
+      "number": 29071,
+      "title": "FINDING: BANK-F817 ROUND 8.17 residual Class R+S boards 2 12 19 33 34 35 42",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:44 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29038",
-      "sha": "89f4c68579",
-      "committedAtIso": "2026-11-12T10:44:08-05:00"
+      "mergedAtCt": "11/12/2026, 11:54 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29071",
+      "sha": "dd4d46c91e",
+      "committedAtIso": "2026-11-12T11:54:59-06:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: ACCT-F3047 — FactorReserveCard customer name formatter LANE: NON-FINANCIAL",
+      "number": 29070,
+      "title": "FINDING: CC-1-ROUND818-ROWS-269-291-DONE-LIVE LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:43 AM CT",
-      "url": "",
-      "sha": "32336a9d06",
-      "committedAtIso": "2026-11-12T10:43:02-05:00"
+      "mergedAtCt": "11/12/2026, 11:49 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29070",
+      "sha": "5984ba2f27",
+      "committedAtIso": "2026-11-12T11:49:01-06:00"
     },
     {
-      "number": 29036,
-      "title": "FINDING: LST-F12015 PERFUME-DESK — vendor lines split into Brand / Model / Size / Type / Gender / Country / Case pack / Vendor code; \"CK FREE\" kept its model",
+      "number": 29068,
+      "title": "FINDING: LST-F12026 PERFUME-DESK AUDIT — 5 reader/match defects fixed: box count from \"2 Pc\" set text, COLOGNE dropped from names, different \"+\" sets merged, cut-off \"(…\" junk in names, one UPC on two products trusted LANE: NON-FINANCIAL",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 09:39 AM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29036",
-      "sha": "3e3937a407",
-      "committedAtIso": "2026-11-12T09:39:34-06:00"
+      "mergedAtCt": "11/12/2026, 11:48 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29068",
+      "sha": "403bddd2ce",
+      "committedAtIso": "2026-11-12T11:48:31-06:00"
     }
   ]
 }
