@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { filterFacets, gridFacets, sortRows, splitPicks, targetPctOf, type GridRow } from "./desk.service.js";
+import { filterFacets, gridFacets, sortRows, splitPicks, targetPctOf, wholesaleAction, type GridRow } from "./desk.service.js";
 
 const rows: GridRow[] = [
   { id: "1", brand: "CALVIN KLEIN", name: "ONE", size_ml: 200, gender: "U", category: "Unisex", display_name: "CALVIN KLEIN ONE 200" },
@@ -59,5 +59,13 @@ describe("perfume grid vendor + size filters", () => {
   it("filters by size, blank size is '—'", () => {
     expect(filterFacets(vr, { category: [], gender: [], brand: [], size: ["50"] }).map((r) => r.id)).toEqual(["b"]);
     expect(gridFacets(vr, { category: [], gender: [], brand: [] }).size).toEqual([{ value: "50", count: 1 }, { value: "100", count: 1 }, { value: "—", count: 1 }]);
+  });
+});
+
+describe("perfume wholesale raise / lower", () => {
+  it("says how far under or over the lowest competitor my price is", () => {
+    expect(wholesaleAction(150)).toBe("Under by $1.50 — can raise");
+    expect(wholesaleAction(-75)).toBe("Over by $0.75 — lower to compete");
+    expect(wholesaleAction(0)).toBe("Same as lowest competitor");
   });
 });

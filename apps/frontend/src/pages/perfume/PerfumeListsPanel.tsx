@@ -20,7 +20,7 @@ import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "I buy from them"], ["sell", "Laredo store I sell against"], ["both", "Both"]];
+const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both"]];
 
 export function PerfumeListsPanel() {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
@@ -265,6 +265,23 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <Combobox ariaLabel="Vendor" size="sm" value={vendorId} onChange={setVendorId} placeholder={tr("perfume.lists.24", "Pick vendor")}
             options={vendors.map((v) => ({ value: v.id, label: v.name, sublabel: KINDS.find(([k]) => k === v.kind)?.[1] }))} />
         </label>
+        {vendorId ? (() => {
+          const v = vendors.find((x) => x.id === vendorId);
+          if (!v) return null;
+          return (
+            <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.role", "This list is from")}
+              <Combobox ariaLabel="This list is from" size="sm" value={v.kind}
+                onChange={(k) => {
+                  if (!k || k === v.kind) return;
+                  void savePerfumeVendor({ ...v, kind: k as PerfumeVendorKind, earn_pct: v.earn_pct == null ? null : Number(v.earn_pct) })
+                    .then(() => qc.invalidateQueries({ queryKey: ["perfume"] }))
+                    .then(() => pushToast(`${v.name}: ${KINDS.find(([kk]) => kk === k)?.[1]}`, "success"))
+                    .catch((e) => pushToast(userFacingApiError(e, "Not changed"), "error"));
+                }}
+                options={KINDS.map(([k, l]) => ({ value: k, label: l }))} />
+            </label>
+          );
+        })() : null}
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.25", "List date")}
           <DatePicker value={listDate} onChange={(v) => setListDate(v || listDate)} aria-label={tr("perfume.lists.26", "List date")} data-testid="perfume-import-list-date" className="w-[150px]" />
         </label>

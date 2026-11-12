@@ -22,7 +22,7 @@ import { tr } from "./perfumeI18n";
 
 type Tab = PerfumeGridView | "lists" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
-  ["buy", "Buy · compare vendors"], ["sell", "Sell to stores"], ["wholesale", "Wholesale"], ["all", "All items"],
+  ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["all", "All items"],
   ["lists", "Price lists & import"], ["review", "Review"], ["rules", "Rules"],
 ];
 
@@ -85,9 +85,9 @@ export default function PerfumeDeskPage() {
 /* ---------------- grid ---------------- */
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
-  buy: "Every item your vendors offer, side by side. The cheapest after cushion and freight wins and becomes your cost. Margin and markup are against the lowest Laredo list price.",
-  sell: "Items a Laredo store lists. The store's own cost is backed out of its list price at its %, closed to your rounding — that is the most it can pay you.",
-  wholesale: "Your price to customers at the margin you type (My margin %) over your landed cost, closed to your rounding.",
+  buy: "Every supplier's price side by side. The cheapest after cushion and freight wins and becomes your cost — pick who to buy from.",
+  trade: "Selling to your own suppliers: their price less the % you believe they earn (Their earn %) is what you can offer them; against your cost from the OTHER suppliers that is your profit.",
+  wholesale: "Your wholesale competition: their selling price next to your price at My margin %. Under = room to raise; over = lower to compete.",
   all: "The whole item database: every bottle, every UPC it carries, every vendor price.",
 };
 const PAGE = 200;
@@ -97,9 +97,9 @@ const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["code", "upc", "brand", "name", "size_ml", "conc", "gender", "flags"].includes(key);
   if (view === "all") return item || ["upc_count", "n_vendors", "best_vendor", "landed_likely", "low_sell"].includes(key);
-  if (view === "buy") return item || /^v:.*:price$/.test(key) || ["best_vendor", "saves_next", "landed_likely", "low_sell", "profit", "margin", "markup", "target_price_margin", "target_max_cost"].includes(key);
-  if (view === "sell") return item || /^s:.*:price$/.test(key) || ["landed_likely", "store_cost_margin", "store_cost_markup", "offer_store", "offer_profit", "offer_margin", "offer_markup"].includes(key);
-  return item || /^target_/.test(key) || ["landed_likely", "low_sell"].includes(key);
+  if (view === "buy") return item || /^v:.*:price$/.test(key) || ["best_vendor", "saves_next", "landed_likely", "target_price_margin", "target_max_cost"].includes(key);
+  if (view === "trade") return item || /^t:.*:(offer|profit)$/.test(key) || ["landed_likely", "trade_best_vendor", "trade_best_offer", "trade_best_profit"].includes(key);
+  return item || /^s:.*:price$/.test(key) || ["landed_likely", "target_price_margin", "low_sell", "target_vs_low", "target_action", "margin"].includes(key);
 }
 
 const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
@@ -123,14 +123,22 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
   const [target, setTarget] = useState<number | null>(null);
   const [targetDraft, setTargetDraft] = useState("");
+  // Trading: the % the owner believes his suppliers earn — their price less this is what he can offer them.
+  const [earn, setEarn] = useState<number | null>(null);
+  const [earnDraft, setEarnDraft] = useState("");
+  const applyEarn = () => {
+    const t = earnDraft.trim() === "" ? null : Number(earnDraft);
+    if (t != null && !(Number.isFinite(t) && t >= 0 && t <= 95)) { pushToast(tr("perfume.desk.earn.bad", "Earn % must be between 0 and 95%."), "error"); return; }
+    if (t !== earn) { setEarn(t); setPage(1); }
+  };
   const applyTarget = () => {
     const t = targetDraft.trim() === "" ? null : Number(targetDraft);
     if (t != null && !(Number.isFinite(t) && t >= 0 && t <= 95)) { pushToast(tr("perfume.desk.target.bad", "Margin must be between 0 and 95%."), "error"); return; }
     if (t !== target) { setTarget(t); setPage(1); }
   };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, page, pageSize],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
@@ -215,6 +223,26 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
                 className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
               />
             </label>
+            {view === "trade" ? (
+              <label className="flex items-center gap-1 text-xs text-gray-700">
+                {tr("perfume.desk.earn.label", "Their earn %")}
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="95"
+                  inputMode="decimal"
+                  data-testid="perfume-earn-pct"
+                  value={earnDraft}
+                  placeholder={query.data?.earn_pct != null ? String(query.data.earn_pct) : ""}
+                  onChange={(e) => setEarnDraft(e.target.value)}
+                  onBlur={applyEarn}
+                  onKeyDown={(e) => { if (e.key === "Enter") applyEarn(); }}
+                  aria-label={tr("perfume.desk.earn.aria", "Percent your suppliers earn, for the Trading offer")}
+                  className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
+                />
+              </label>
+            ) : null}
             {FACETS.map((f) => (
               <MultiSelectDropdown
                 key={f.key}
@@ -238,7 +266,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}
@@ -319,7 +347,7 @@ function RulesPanel() {
       </div>
       <div>
         <div className="text-section-header">{tr("perfume.desk.26", "What they earn")}</div>
-        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.27", "Vendors")} {percent("vendor_earn_pct")}{tr("perfume.desk.28", "% · Laredo stores")} {percent("store_earn_pct")}{tr("perfume.desk.29", "% — every view shows both the margin and the markup reading")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.27", "My suppliers earn")} {percent("vendor_earn_pct")}{tr("perfume.desk.29", "% on their price — the Trading tab offers them their price less this (change it there for one look, or here to keep it)")}</div>
       </div>
       <div className="flex gap-2">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>{tr("perfume.desk.30", "Save")}</Button>
