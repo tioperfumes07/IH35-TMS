@@ -1,5 +1,9 @@
 # ROUND 8.5 — independent board parity verification
 
+## Deployed repair acceptance — Legal L3, 11-11 23:15 ET
+
+Render independently confirms frontend `dep-dbqjngijnfac73bkhh9g` status=live at `772f69a30f48f35a5627e027c0a20d7d3c7ce125` (#28941), finished2026-11-12T04:10:51Z. Fresh Chrome1440x900: Legal Signed pipeline link opens `status=signed_electronically`, Signed checkbox alone is checked, and zero contract rows render. Selecting Draft as a second status and applying yields two draft rows and both repeated status query parameters. Back returns `/legal`. L3 wrong-stage drill CLOSED-LIVE (bounded), including multi-select mechanics and negative control; no contract writes/voids/sends. Full Legal board/modals/financial correctness remain OPEN. Screenshots private inline, no identities or financial records committed.
+
 ## Certification coverage correction — Maintenance Settings and census floor
 
 ### PM engine finding — source reproduction, no production mutation
