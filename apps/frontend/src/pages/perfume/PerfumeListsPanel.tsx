@@ -12,11 +12,12 @@ import {
   type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
 import {
-  extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, pictureLinesToExtracted, readAnyFile, readPictureFiles,
+  extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, pictureLinesToExtracted, priceToCents, readAnyFile, readPictureFiles,
   type Mapping, type PictureLine, type ReadFile,
 } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "I buy from them"], ["sell", "Laredo store I sell against"], ["both", "Both"]];
@@ -309,8 +310,10 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
                     <input aria-label={tr("perfume.lists.pic10", "Description")} className="h-[34px] w-[300px] rounded-sm border border-gray-300 px-2" value={l.description} onChange={(e) => editLine(l.key, { description: e.target.value })} />) },
                   { key: "section", label: "Section", sortable: true },
                   { key: "price", label: "Price", sortable: true, cellClass: "text-right", render: (l) => (
-                    <input aria-label={tr("perfume.lists.pic11", "Price")} inputMode="decimal" className={`h-[34px] w-[96px] rounded-sm border px-2 text-right tabular-nums ${Number(l.price) > 0 ? "border-gray-300" : "border-red-400"}`}
-                      value={l.price ?? ""} onChange={(e) => editLine(l.key, { price: e.target.value.replace(/[^0-9.]/g, "") || null })} />) },
+                    <div className={`w-[110px] rounded-sm ${Number(l.price) > 0 ? "" : "ring-1 ring-red-400"}`}>
+                      <MoneyInput ariaLabel={tr("perfume.lists.pic11", "Price")} valueCents={priceToCents(l.price ?? "")}
+                        onChangeCents={(c) => editLine(l.key, { price: c == null || c <= 0 ? null : (c / 100).toFixed(2) })} />
+                    </div>) },
                   { key: "note", label: "Reader note", sortable: true },
                 ]}
               />
