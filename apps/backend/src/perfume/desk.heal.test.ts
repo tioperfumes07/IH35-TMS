@@ -67,6 +67,17 @@ describeIntegration("perfume import heals stale auto-identified items (real Post
     expect(rows.map((r) => r.item_id)).toEqual([stale1, holder]);
   });
 
+  it("a no-barcode MTZ line takes the vendor code printed in its description as its SKU and becomes an item", async () => {
+    const vendor = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('HEAL TEST VENDOR 3', 'buy') RETURNING id`)).rows[0].id;
+    const { list_id, check } = await importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: vendor, list_date: "2026-11-10", file_name: "sku.xlsx", source_kind: "xlsx", rows_read: 1, file_price_total_cents: 1500,
+      rows: [{ row_no: 1, brand: "ARABIYAT", description: "ARABIYAT SUGAR COOKIE DOUGH 3.4 EDP L TST  (139920) - United Arab Emir", price: "15.00" }],
+    });
+    expect(check.items_created).toBe(1);
+    const row = (await db.query(`SELECT sku, match_status, match_method FROM perfume.price_list_rows WHERE list_id = $1`, [list_id])).rows[0];
+    expect(row).toEqual({ sku: "139920", match_status: "matched", match_method: "new_item" });
+  });
+
   it("an item confirmed by hand is never renamed by an import", async () => {
     const vendor = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('HEAL TEST VENDOR 2', 'buy') RETURNING id`)).rows[0].id;
     const item = (await db.query<{ id: string }>(

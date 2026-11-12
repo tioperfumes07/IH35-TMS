@@ -66,3 +66,21 @@ describe("PERFUME-DESK matching", () => {
     expect(k("212 SEXY 100ML EDP MUJER", "CH")).toBe(k("212 SEXY(W)EDP SP 3.4oz", "Carolina Herrera"));
   });
 });
+
+describe("PERFUME-DESK matching — real MTZ 11/10/2026 lines (LST-F12013)", () => {
+  it("a brand-only bottle WITH its barcode becomes an item ('4711 3.4 EDC U')", () => {
+    const m = matchLine(emptyIndex(), "mtz", { upc: "4011700748945", brand: "4711", description: "4711 3.4 EDC U  (130562) - Germany - 30pcs ByBox" }, { allowNewItem: true });
+    expect(m.method).toBe("new_item");
+    expect(m.identity.nameText).toBe("4711");
+  });
+  it("a brand-only line with NO barcode is never created by itself (DIOR HOMME COLOGNE rule stays)", () => {
+    const m = matchLine(emptyIndex(), "mtz", { brand: "4711", description: "4711 3.4 EDC U", sku: "130562" }, { allowNewItem: true });
+    expect(m.method).not.toBe("new_item");
+  });
+  it("a no-barcode tester with the vendor's own code becomes its own item, flagged TESTER", () => {
+    const m = matchLine(emptyIndex(), "mtz", { brand: "ARABIYAT", sku: "139920", description: "ARABIYAT SUGAR COOKIE DOUGH 3.4 EDP L TST  (139920) - United Arab Emir" }, { allowNewItem: true });
+    expect(m.method).toBe("new_item");
+    expect(m.identity.flags).toContain("TESTER");
+  });
+});
+

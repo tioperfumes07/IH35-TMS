@@ -146,7 +146,13 @@ function prepare(body: ImportIn) {
   for (const r of body.rows) {
     const cents = toCents(r.price);
     const hasItem = Boolean(String(r.description ?? "").trim() || normalizeUpc(r.upc) || String(r.sku ?? "").trim());
-    if (cents != null && cents > 0 && hasItem) saved.push({ ...r, description: String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? ""), price_cents: cents });
+    if (cents == null || cents <= 0 || !hasItem) continue;
+    const description = String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? "");
+    // The vendor's own item code, when the list has no SKU column but prints it in the line: MTZ writes
+    // "JO MALONE ENGLISH PEAR & FREESIA 1.0 EDC L UNBOXED  (137792) - France". Without it a no-barcode
+    // tester/unboxed line can never become an item, and the same line next week can never re-link by SKU.
+    const sku = String(r.sku ?? "").trim() || (description.match(/\((\d{5,8})\)/)?.[1] ?? "");
+    saved.push({ ...r, sku: sku || null, description, price_cents: cents });
   }
   const total = saved.reduce((t, r) => t + r.price_cents, 0);
   return { saved, total };
