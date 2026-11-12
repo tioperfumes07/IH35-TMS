@@ -91,3 +91,40 @@ describeIntegration("perfume import heals stale auto-identified items (real Post
     expect((await db.query(`SELECT name FROM perfume.items WHERE id = $1`, [item])).rows[0].name).toBe("MY NAME");
   });
 });
+
+describeIntegration("a full list replaces the vendor's older lists (real Postgres, rolled back)", () => {
+  let db: pg.Client;
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    db = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL!));
+    await db.connect();
+    await db.query("BEGIN");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+  });
+  afterAll(async () => {
+    await db?.query("ROLLBACK").catch(() => {});
+    await db?.end().catch(() => {});
+  });
+
+  it("voids the old full list and the add-on list; an add-on list alone voids nothing", async () => {
+    const vendor = (await db.query<{ id: string }>(
+      `INSERT INTO perfume.vendors (name, kind) VALUES ('REPLACE TEST VENDOR', 'buy') RETURNING id`)).rows[0].id;
+    const line = (n: number, price: string) => ({ row_no: n, upc: `99887766554${n}`, brand: "4711", description: `4711 ORIGINAL ${n} 3.4 EDC U`, price });
+    const imp = (file: string, date: string, full: boolean) => importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: vendor, list_date: date, file_name: file, source_kind: "xlsx", rows_read: 1, file_price_total_cents: 1000,
+      replaces_current: full, rows: [line(1, "10.00")],
+    });
+    const old = await imp("old.xlsx", "2026-11-01", true);
+    const addon = await imp("arrivals.xlsx", "2026-11-05", false);
+    const state = async () => (await db.query<{ id: string; is_current: boolean; voided: boolean; void_reason: string | null }>(
+      `SELECT id, is_current, voided_at IS NOT NULL AS voided, void_reason FROM perfume.price_lists WHERE vendor_id = $1 ORDER BY imported_at`, [vendor])).rows;
+    let s = await state();
+    expect(s.map((r) => [r.is_current, r.voided])).toEqual([[true, false], [true, false]]);
+    const fresh = await imp("new.xlsx", "2026-11-10", true);
+    s = await state();
+    const byId = new Map(s.map((r) => [r.id, r]));
+    expect(byId.get(old.list_id)).toMatchObject({ is_current: false, voided: true, void_reason: "Replaced by new.xlsx (2026-11-10)" });
+    expect(byId.get(addon.list_id)).toMatchObject({ is_current: false, voided: true });
+    expect(byId.get(fresh.list_id)).toMatchObject({ is_current: true, voided: false });
+  });
+});
