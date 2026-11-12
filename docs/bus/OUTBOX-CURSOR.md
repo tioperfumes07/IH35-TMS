@@ -1,5 +1,5 @@
-## OUTBOX (11-12-2026 ~4:45 AM CT) — high-water #28935; settlement identity + CF3 Load nav
-- **SHIPS:** #28932–#28934 planner list EntityLinks · #28935 Settlement identity Unit/Tour-leg EntityLinks + CF3 literal kind=load (canonical-load-nav green).
+## OUTBOX (11-12-2026 ~5:05 AM CT) — high-water #28937; Lease-to-Own Unit EntityLink
+- **SHIPS:** #28935 settlement identity + CF3 Load nav · #28936 tip · #28937 Lease-to-Own fleet picker Unit EntityLink.
 - **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
 
 ## OUTBOX (11-12-2026 ~3:45 AM CT) — high-water #28930; Available Trucks Driver EntityLink
