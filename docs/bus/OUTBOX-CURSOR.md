@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~12:45 AM CT) — CF Home 13w matrix drops raw table (go26 −1)
+- **THIS:** CashFlowHomeTab 13-week/month matrix uses role=table div grid (no <table>); go26 raw_table 35→34.
+- **NEXT:** Reverse-wiring spot checks; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~12:35 AM CT) — progress: #28895–#28905 Cursor no-stop
 - **SHIPS:** #28895–#28898 Document Designs · #28896 Aging date-basis · #28897–#28902/#28905 go26 Cash Advances/LoadDetail/Statement/CF3 Parity · #28900/#28904 tips/register.
 - **NEXT:** CashFlowHomeTab matrix residual; reverse-wiring spot checks; Codex LIVE. No match/Dreamline.

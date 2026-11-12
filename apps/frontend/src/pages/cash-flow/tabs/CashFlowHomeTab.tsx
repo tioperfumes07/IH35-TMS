@@ -502,17 +502,21 @@ function Cell({
   };
   if (onClick) {
     return (
-      <td style={{ padding: 0, borderBottom: `1px solid ${V3.borderSoft}` }} data-testid={testId}>
+      <div
+        role="cell"
+        style={{ padding: 0, borderBottom: `1px solid ${V3.borderSoft}`, display: "table-cell" }}
+        data-testid={testId}
+      >
         <button type="button" onClick={onClick} style={style} title="Open rolling ledger">
           {text}
         </button>
-      </td>
+      </div>
     );
   }
   return (
-    <td style={style} data-testid={testId}>
+    <div role="cell" style={{ ...style, display: "table-cell" }} data-testid={testId}>
       {text}
-    </td>
+    </div>
   );
 }
 
@@ -633,10 +637,18 @@ function ThirteenWeekTable({
     rowKey: MatrixRowKey,
     opts?: { grey?: (w: WeekBucket | MonthBucket) => boolean; bold?: boolean; of?: number; tone?: boolean },
   ) => (
-    <tr>
-      <td style={{ ...tdLabel, fontWeight: opts?.bold ? 700 : 400, color: opts?.grey?.(columns[0]) ? V3.mutedSoft : V3.ink }}>
+    <div role="row" style={{ display: "table-row" }}>
+      <div
+        role="cell"
+        style={{
+          ...tdLabel,
+          display: "table-cell",
+          fontWeight: opts?.bold ? 700 : 400,
+          color: opts?.grey?.(columns[0]) ? V3.mutedSoft : V3.ink,
+        }}
+      >
         {label}
-      </td>
+      </div>
       {columns.map((w) => {
         const cents = pick(w);
         const cellKey = "weekStart" in w ? w.weekStart : w.monthStart;
@@ -654,38 +666,49 @@ function ThirteenWeekTable({
           />
         );
       })}
-    </tr>
+    </div>
+  );
+
+  const groupRow = (label: string) => (
+    <div role="row" style={{ display: "table-row" }}>
+      <div role="cell" style={{ ...group, display: "table-cell" }}>
+        {label}
+      </div>
+      {columns.map((w) => (
+        <div
+          role="cell"
+          key={"weekStart" in w ? w.weekStart : w.monthStart}
+          style={{ ...group, display: "table-cell" }}
+        />
+      ))}
+    </div>
   );
 
   return (
     <div style={{ overflowX: "auto" }} data-testid="cash-flow-home-13w-table">
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={{ ...th, textAlign: "left" }} />
+      <div role="table" style={{ width: "100%", display: "table", borderCollapse: "collapse" }}>
+        <div role="rowgroup" style={{ display: "table-header-group" }}>
+          <div role="row" style={{ display: "table-row" }}>
+            <div role="columnheader" style={{ ...th, textAlign: "left", display: "table-cell" }} />
             {columns.map((w) => (
-              <th key={"weekStart" in w ? w.weekStart : w.monthStart} style={th}>
+              <div
+                role="columnheader"
+                key={"weekStart" in w ? w.weekStart : w.monthStart}
+                style={{ ...th, display: "table-cell" }}
+              >
                 {w.label}
-              </th>
+              </div>
             ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td colSpan={columns.length + 1} style={group}>
-              Receipts
-            </td>
-          </tr>
+          </div>
+        </div>
+        <div role="rowgroup" style={{ display: "table-row-group" }}>
+          {groupRow("Receipts")}
           {row("Customer invoices due", (w) => w.invoice_cents, "invoice")}
           {row(<span style={{ color: V3.mutedSoft }}>Run-rate top-up</span>, (w) => w.topup_cents, "topup", {
             grey: (w) => w.topup_run_rate || w.topup_cents > 0,
           })}
           {row(<b>Total receipts</b>, (w) => w.income_cents, "income_total", { bold: true })}
-          <tr>
-            <td colSpan={columns.length + 1} style={group}>
-              Disbursements
-            </td>
-          </tr>
+          {groupRow("Disbursements")}
           {row("Finance & lease payments", (w) => w.finance_cents, "finance", { of: totalExpense })}
           {row("Driver pay (run-rate)", (w) => w.driver_cents, "driver", {
             of: totalExpense,
@@ -701,15 +724,11 @@ function ThirteenWeekTable({
             grey: (w) => w.other_run_rate,
           })}
           {row(<b>Total disbursements</b>, (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
-          <tr>
-            <td colSpan={columns.length + 1} style={group}>
-              Position
-            </td>
-          </tr>
+          {groupRow("Position")}
           {row(<b>Net cash flow</b>, (w) => w.net_cents, "net", { bold: true, tone: true })}
           {row(<b>Ending balance</b>, (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
-        </tbody>
-      </table>
+        </div>
+      </div>
     </div>
   );
 }
