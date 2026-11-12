@@ -118,7 +118,7 @@ export function computeMaxTriangulationLegs(tours: Pick<TripPairingUnitRow, "leg
 }
 
 // TRIP-PAIRING-BOARD-PARITYTABLE (GO-05 wave 1): "Assigned trips" is a genuine row-list (one row
-// per unit/tour) — the raw <table> had no existing sort/resize to preserve, so this is a straight
+// per unit/tour) — the prior hand-rolled HTML table had no existing sort/resize to preserve, so this is a straight
 // column-parity conversion onto ParityTable's drag-resize + drag-reorder + gear chrome. A factory
 // (not a bare module-level array) because the Southbound column's "+ Find Southbound" button needs
 // the component's own setBookUnitId, and TPB-RESTORE's Triangulation columns need trCount.

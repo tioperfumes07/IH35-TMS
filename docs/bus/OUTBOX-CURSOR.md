@@ -1,3 +1,11 @@
+## OUTBOX (11-11-2026 ~11:05 PM CT) — go26 Cash Advances preview → ParityTable (−3 raw tables)
+- **THIS:** CashAdvancesKpiRow Requests/Advances previews on ParityTable; AdvanceDetail print receipt uses dl; TripPairing comment false-positive cleared. go26 raw_table 41→38 banked.
+- **NEXT:** Continue go26 Cursor residuals / reverse-wiring; Codex LIVE #28895/#28896. No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~10:50 PM CT) — #28895–#28896 shipped; continue reverse-wiring
+- **SHIPS:** #28895 Settlement Document Designs route; #28896 Factoring Aging Invoice/Purchase/Fund Date toggle + guard retarget.
+- **NEXT:** Reverse-wiring spot checks / residual Cursor boards; tipped Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~10:40 PM CT) — Factoring Aging Invoice/Purchase/Fund Date toggle
 - **THIS:** recourse-pipeline returns invoice_date + purchase_date + fund_date; Aging toggle ages buckets/Inv column by selected basis (fallback factored_at). Vitest agingDateBasis 3/3.
 - **NEXT:** Codex LIVE Aging toggle; reverse-wiring. No match/Dreamline.
@@ -176,11 +184,6 @@
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave13
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 4 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave12
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 7 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE

@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -95,29 +97,6 @@ function policyLabel(row: Record<string, unknown>): string {
   return "Within policy";
 }
 
-const thStyle = {
-  textAlign: "left" as const,
-  fontSize: 11,
-  fontWeight: 700,
-  color: V3.muted,
-  padding: "7px 12px",
-  borderBottom: `1px solid ${V3.border}`,
-  background: V3.page,
-  whiteSpace: "nowrap" as const,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase" as const,
-};
-
-const tdStyle = {
-  padding: "7px 12px",
-  borderBottom: `1px solid ${V3.borderSoft}`,
-  fontSize: 12,
-  color: V3.ink,
-  whiteSpace: "nowrap" as const,
-  fontFamily: V3.font,
-  fontVariantNumeric: "tabular-nums" as const,
-};
-
 const REQUESTS_PATH = "/driver-finance/cash-advance-requests";
 const PREVIEW = 8;
 
@@ -140,6 +119,156 @@ export function CashAdvancesKpiRow({
   const recovered = money(amount(kpis, "recovered_this_period"));
   const previewRequests = requestRows.slice(0, PREVIEW);
   const previewAdvances = advanceRows.slice(0, PREVIEW);
+
+  const requestColumns = useMemo<ParityColumn<Record<string, unknown>>[]>(
+    () => [
+      {
+        key: "driver",
+        label: "Driver",
+        render: (row) => {
+          const name = formatDisplayName(row.driver_name ? String(row.driver_name) : null);
+          return (
+            <EntityLink
+              kind="driver"
+              id={row.driver_id ? String(row.driver_id) : null}
+              label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
+            />
+          );
+        },
+      },
+      {
+        key: "asked",
+        label: "Asked",
+        render: (row) => formatAsked(row.submitted_at),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        cellClass: "text-right",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <MoneyCell
+              cents={amountOrNull(row.requested_amount_cents)}
+              drill={{ entity: { kind: "cash_advance_request", id } }}
+            />
+          );
+        },
+      },
+      {
+        key: "policy",
+        label: "Policy",
+        render: (row) => policyLabel(row),
+      },
+      {
+        key: "action",
+        label: "Action",
+        render: () => (
+          <button
+            type="button"
+            onClick={() => navigate(REQUESTS_PATH)}
+            className="bg-transparent p-0 text-xs font-semibold underline"
+            style={{ color: V3.link, fontFamily: V3.font }}
+          >
+            Review
+          </button>
+        ),
+      },
+    ],
+    [navigate],
+  );
+
+  const advanceColumns = useMemo<ParityColumn<Record<string, unknown>>[]>(
+    () => [
+      {
+        key: "advance",
+        label: "Advance",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <EntityLink
+              kind="cash_advance"
+              id={id}
+              label={entityLabel(row.display_id != null ? String(row.display_id) : null, id, "Advance")}
+              onClick={(event) => event.stopPropagation()}
+            />
+          );
+        },
+      },
+      {
+        key: "driver",
+        label: "Driver",
+        render: (row) => {
+          const name = formatDisplayName(row.driver_full_name ? String(row.driver_full_name) : null);
+          return (
+            <EntityLink
+              kind="driver"
+              id={row.driver_id ? String(row.driver_id) : null}
+              label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
+              onClick={(event) => event.stopPropagation()}
+            />
+          );
+        },
+      },
+      {
+        key: "paid",
+        label: "Paid",
+        render: (row) => formatPaid(row.disbursed_at ?? row.created_at),
+      },
+      {
+        key: "method",
+        label: "Method",
+        render: (row) => labelMethod(row.disbursement_method),
+      },
+      {
+        key: "amount",
+        label: "Amount",
+        cellClass: "text-right",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <MoneyCell
+              cents={centsFromDollars(row.amount)}
+              format={(c) => formatUsdTable(c / 100)}
+              drill={{ entity: { kind: "cash_advance", id } }}
+            />
+          );
+        },
+      },
+      {
+        key: "outstanding",
+        label: "Outstanding",
+        cellClass: "text-right",
+        render: (row) => {
+          const id = String(row.id ?? "");
+          return (
+            <MoneyCell
+              cents={centsFromDollars(row.outstanding_balance)}
+              format={(c) => formatUsdTable(c / 100)}
+              drill={{ entity: { kind: "cash_advance", id } }}
+            />
+          );
+        },
+      },
+      {
+        key: "recover_on",
+        label: "Recover on",
+        render: (row) => {
+          const loadLabel = row.load_display_id != null ? String(row.load_display_id) : null;
+          if (!(row.load_id || loadLabel)) return "—";
+          return (
+            <EntityLink
+              kind="load"
+              id={row.load_id ? String(row.load_id) : null}
+              label={entityLabel(loadLabel, row.load_id ? String(row.load_id) : null, "Load")}
+              onClick={(event) => event.stopPropagation()}
+            />
+          );
+        },
+      },
+    ],
+    [],
+  );
 
   return (
     <div className="space-y-3" data-testid="settlements-cash-advances-v3-chrome">
@@ -190,85 +319,26 @@ export function CashAdvancesKpiRow({
           testId="settlements-cash-advances-requests-panel"
           onViewAll={() => navigate(REQUESTS_PATH)}
         >
-          <div style={{ overflowX: "auto" }} data-testid="settlements-cash-advances-requests-body">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Driver</th>
-                  <th style={thStyle}>Asked</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                  <th style={thStyle}>Policy</th>
-                  <th style={thStyle}>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {requestsFailed ? (
-                  <tr>
-                    <td colSpan={5} style={{ ...tdStyle, color: V3.muted }}>
-                      Requests failed to load — open View all to retry.
-                    </td>
-                  </tr>
-                ) : requestsLoading ? (
-                  <tr>
-                    <td colSpan={5} style={{ ...tdStyle, color: V3.muted }}>
-                      Loading…
-                    </td>
-                  </tr>
-                ) : previewRequests.length === 0 ? (
-                  <tr data-testid="settlements-cash-advances-requests-empty">
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>No requests waiting</td>
-                  </tr>
-                ) : (
-                  previewRequests.map((row) => {
-                    const id = String(row.id ?? "");
-                    const name = formatDisplayName(row.driver_name ? String(row.driver_name) : null);
-                    const cents = amountOrNull(row.requested_amount_cents);
-                    return (
-                      <tr key={id || String(row.display_id)} data-testid={`settlements-cash-advances-request-${id}`}>
-                        <td style={tdStyle}>
-                          <EntityLink
-                            kind="driver"
-                            id={row.driver_id ? String(row.driver_id) : null}
-                            label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
-                          />
-                        </td>
-                        <td style={tdStyle}>{formatAsked(row.submitted_at)}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>
-                          <MoneyCell
-                            cents={cents}
-                            drill={{ entity: { kind: "cash_advance_request", id } }}
-                          />
-                        </td>
-                        <td style={tdStyle}>{policyLabel(row)}</td>
-                        <td style={tdStyle}>
-                          <button
-                            type="button"
-                            onClick={() => navigate(REQUESTS_PATH)}
-                            style={{
-                              fontSize: 12,
-                              fontWeight: 600,
-                              color: V3.link,
-                              background: "transparent",
-                              border: "none",
-                              cursor: "pointer",
-                              padding: 0,
-                              fontFamily: V3.font,
-                              textDecoration: "underline",
-                            }}
-                          >
-                            Review
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+          <div data-testid="settlements-cash-advances-requests-body">
+            {requestsFailed ? (
+              <p className="px-3 py-2 text-xs" style={{ color: V3.muted }}>
+                Requests failed to load — open View all to retry.
+              </p>
+            ) : (
+              <ParityTable
+                appearance="board"
+                title="Requests preview"
+                columns={requestColumns}
+                rows={previewRequests}
+                rowKey={(row) => String(row.id ?? row.display_id ?? "")}
+                loading={requestsLoading}
+                emptyText="No requests waiting"
+                storageKey="settlements-cash-advances-requests-preview"
+                tableTestId="settlements-cash-advances-requests-table"
+                suppressToolbarSearch
+                suppressToolbarRange
+              />
+            )}
           </div>
         </BoardSection>
 
@@ -278,110 +348,27 @@ export function CashAdvancesKpiRow({
           onViewAll={() => navigate(root)}
           footer="Each advance links to its bank line (Zelle) and to the tour that recovers it."
         >
-          <div style={{ overflowX: "auto" }} data-testid="settlements-cash-advances-advances-body">
-            <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font }}>
-              <thead>
-                <tr>
-                  <th style={thStyle}>Advance</th>
-                  <th style={thStyle}>Driver</th>
-                  <th style={thStyle}>Paid</th>
-                  <th style={thStyle}>Method</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                  <th style={{ ...thStyle, textAlign: "right" }}>Outstanding</th>
-                  <th style={thStyle}>Recover on</th>
-                </tr>
-              </thead>
-              <tbody>
-                {advancesFailed ? (
-                  <tr>
-                    <td colSpan={7} style={{ ...tdStyle, color: V3.muted }}>
-                      Advances failed to load — retry from the roster below.
-                    </td>
-                  </tr>
-                ) : advancesLoading ? (
-                  <tr>
-                    <td colSpan={7} style={{ ...tdStyle, color: V3.muted }}>
-                      Loading…
-                    </td>
-                  </tr>
-                ) : previewAdvances.length === 0 ? (
-                  <tr data-testid="settlements-cash-advances-advances-empty">
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, textAlign: "right", color: V3.muted }}>—</td>
-                    <td style={{ ...tdStyle, color: V3.muted }}>—</td>
-                  </tr>
-                ) : (
-                  previewAdvances.map((row) => {
-                    const id = String(row.id ?? "");
-                    const name = formatDisplayName(
-                      row.driver_full_name ? String(row.driver_full_name) : null,
-                    );
-                    const loadLabel = row.load_display_id != null ? String(row.load_display_id) : null;
-                    return (
-                      <tr
-                        key={id}
-                        data-testid={`settlements-cash-advances-advance-${id}`}
-                        style={{ cursor: onOpenAdvance ? "pointer" : undefined }}
-                        onClick={() => onOpenAdvance?.(row)}
-                      >
-                        <td style={tdStyle}>
-                          <EntityLink
-                            kind="cash_advance"
-                            id={id}
-                            label={entityLabel(
-                              row.display_id != null ? String(row.display_id) : null,
-                              id,
-                              "Advance",
-                            )}
-                            onClick={(event) => event.stopPropagation()}
-                          />
-                        </td>
-                        <td style={tdStyle}>
-                          <EntityLink
-                            kind="driver"
-                            id={row.driver_id ? String(row.driver_id) : null}
-                            label={entityLabel(name || null, row.driver_id ? String(row.driver_id) : null, "Driver")}
-                            onClick={(event) => event.stopPropagation()}
-                          />
-                        </td>
-                        <td style={tdStyle}>{formatPaid(row.disbursed_at ?? row.created_at)}</td>
-                        <td style={tdStyle}>{labelMethod(row.disbursement_method)}</td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>
-                          <MoneyCell
-                            cents={centsFromDollars(row.amount)}
-                            format={(c) => formatUsdTable(c / 100)}
-                            drill={{ entity: { kind: "cash_advance", id } }}
-                          />
-                        </td>
-                        <td style={{ ...tdStyle, textAlign: "right" }}>
-                          <MoneyCell
-                            cents={centsFromDollars(row.outstanding_balance)}
-                            format={(c) => formatUsdTable(c / 100)}
-                            drill={{ entity: { kind: "cash_advance", id } }}
-                          />
-                        </td>
-                        <td style={tdStyle}>
-                          {row.load_id || loadLabel ? (
-                            <EntityLink
-                              kind="load"
-                              id={row.load_id ? String(row.load_id) : null}
-                              label={entityLabel(loadLabel, row.load_id ? String(row.load_id) : null, "Load")}
-                              onClick={(event) => event.stopPropagation()}
-                            />
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+          <div data-testid="settlements-cash-advances-advances-body">
+            {advancesFailed ? (
+              <p className="px-3 py-2 text-xs" style={{ color: V3.muted }}>
+                Advances failed to load — retry from the roster below.
+              </p>
+            ) : (
+              <ParityTable
+                appearance="board"
+                title="Advances preview"
+                columns={advanceColumns}
+                rows={previewAdvances}
+                rowKey={(row) => String(row.id ?? "")}
+                loading={advancesLoading}
+                emptyText="—"
+                storageKey="settlements-cash-advances-advances-preview"
+                tableTestId="settlements-cash-advances-advances-table"
+                suppressToolbarSearch
+                suppressToolbarRange
+                onRowClick={onOpenAdvance ? (row) => onOpenAdvance(row) : undefined}
+              />
+            )}
           </div>
         </BoardSection>
       </div>
