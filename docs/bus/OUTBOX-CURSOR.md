@@ -1,5 +1,10 @@
+## OUTBOX (11-13-2026 ~2:20 AM CT) — ROUND 8.13 #28903 closed · M3 claim #28966 · wiring 20020
+- **DONE:** Closed #28903 (CONFLICTING; BOARD-45 register already has #28895–#28902 wave on main). CLAIM-RESERVE #28966 verify-step 20020. Wiring `20020-verify-statement-advances-recovered-source.mjs` next (orphan → CI).
+- **Guards:** verify-statement-advances-recovered-source plain+selftest OK; verify-guard-wired PASS with step file present.
+- **NEXT:** merge M3 wire; reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~2:05 AM CT) — Fuel spend + Escrow register MoneyCells
-- **SHIPS:** #28953–#28963 · Fuel Home/Diesel spend bar amount → unit MoneyCell · Escrow register In/Out/Balance → settlement/JE/load/driver MoneyCell.
+- **SHIPS:** #28953–#28964 Fuel spend + Escrow register MoneyCells (merged).
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
