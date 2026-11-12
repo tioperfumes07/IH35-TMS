@@ -19,6 +19,8 @@ export type FuelCandidateLoad = {
   load_id: string | null;
   load_number: string | null;
   settlement_ref: string | null;
+  /** Live driver_settlements.id for EntityLink (null when no non-voided presettlement link). */
+  settlement_id: string | null;
   pickup: string | null;
   delivery: string | null;
   route: string | null;
@@ -51,10 +53,26 @@ export function normalizeCandidate(raw: unknown): FuelCandidateTruck {
   if (nested && typeof nested === "object") {
     const l = nested as Record<string, unknown>;
     load = l.load_id || l.load_number
-      ? { load_id: str(l.load_id), load_number: str(l.load_number), settlement_ref: str(l.settlement_ref), pickup: str(l.pickup), delivery: str(l.delivery), route: str(l.route) }
+      ? {
+          load_id: str(l.load_id),
+          load_number: str(l.load_number),
+          settlement_ref: str(l.settlement_ref),
+          settlement_id: str(l.settlement_id),
+          pickup: str(l.pickup),
+          delivery: str(l.delivery),
+          route: str(l.route),
+        }
       : null;
   } else if (c.load_id || c.load_number) {
-    load = { load_id: str(c.load_id), load_number: str(c.load_number), settlement_ref: str(c.settlement_ref), pickup: null, delivery: null, route: str(c.route) };
+    load = {
+      load_id: str(c.load_id),
+      load_number: str(c.load_number),
+      settlement_ref: str(c.settlement_ref),
+      settlement_id: str(c.settlement_id),
+      pickup: null,
+      delivery: null,
+      route: str(c.route),
+    };
   }
   const distanceM = num(c.distance_m);
   return {
@@ -167,12 +185,21 @@ export const PROPOSED_SETTLEMENT_LIVE_SQL = `COALESCE((SELECT COALESCE(ds.source
 
 async function loadWindowLabel(client: DbClient, companyId: string, loadId: string | null): Promise<FuelCandidateLoad> {
   if (!loadId) {
-    return { load_id: null, load_number: null, settlement_ref: null, pickup: null, delivery: null, route: null };
+    return {
+      load_id: null,
+      load_number: null,
+      settlement_ref: null,
+      settlement_id: null,
+      pickup: null,
+      delivery: null,
+      route: null,
+    };
   }
   const row = (
     await client.query<{
       load_number: string | null;
       settlement_ref: string | null;
+      settlement_id: string | null;
       pickup: string | null;
       delivery: string | null;
       route: string | null;
@@ -184,6 +211,10 @@ async function loadWindowLabel(client: DbClient, companyId: string, loadId: stri
                  FROM driver_finance.driver_settlements ds
                 WHERE ds.id = l.presettlement_link_id AND ds.operating_company_id = l.operating_company_id
                   AND ds.voided_at IS NULL) AS settlement_ref,
+              (SELECT ds.id::text
+                 FROM driver_finance.driver_settlements ds
+                WHERE ds.id = l.presettlement_link_id AND ds.operating_company_id = l.operating_company_id
+                  AND ds.voided_at IS NULL) AS settlement_id,
               (SELECT concat_ws(', ', nullif(s.city,''), nullif(s.state,''))
                  FROM mdata.load_stops s
                 WHERE s.load_id = l.id AND s.stop_type::text = 'pickup' AND s.soft_deleted_at IS NULL
@@ -210,6 +241,7 @@ async function loadWindowLabel(client: DbClient, companyId: string, loadId: stri
     load_id: loadId,
     load_number: row?.load_number ?? null,
     settlement_ref: row?.settlement_ref ?? null,
+    settlement_id: row?.settlement_id ?? null,
     pickup: row?.pickup ?? null,
     delivery: row?.delivery ?? null,
     route: row?.route ?? null,

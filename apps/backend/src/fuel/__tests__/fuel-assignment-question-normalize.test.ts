@@ -15,7 +15,15 @@ describe("fuel question evidence normalization (443.258-A)", () => {
   it("maps the stored flat shape to a load object", () => {
     // normalizeQuestionRow<T> is typed as T (the stored shape); read its candidates as the normalized type it returns.
     const row = normalizeQuestionRow(prodFlat) as unknown as { evidence: { candidates: FuelCandidateTruck[] } };
-    expect(row.evidence.candidates[0].load).toEqual({ load_id: null, load_number: "13689", settlement_ref: null, pickup: null, delivery: null, route: null });
+    expect(row.evidence.candidates[0].load).toEqual({
+      load_id: null,
+      load_number: "13689",
+      settlement_ref: null,
+      settlement_id: null,
+      pickup: null,
+      delivery: null,
+      route: null,
+    });
     expect(row.evidence.candidates[0]).toHaveProperty("load");
   });
   it("a candidate with no load at all gets load: null — never an omitted key", () => {

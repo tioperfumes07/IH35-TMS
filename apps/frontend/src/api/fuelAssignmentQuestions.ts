@@ -5,6 +5,8 @@ export type FuelCandidateLoad = {
   load_id: string | null;
   load_number: string | null;
   settlement_ref: string | null;
+  /** Live settlement UUID when the load has a non-voided presettlement link. */
+  settlement_id?: string | null;
   pickup: string | null;
   delivery: string | null;
   route: string | null;
