@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
+- **SHIPS:** #28953–#28960 · Debtor credit-check totals → customer · Escrow Account + Cash Reserve purchase name+amounts → factoring_purchase.
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~1:20 AM CT) — Factoring Purchase Report + Escrow Held MoneyCells
-- **SHIPS:** #28953–#28958 · Purchase Report summary/detail money → factoring_purchase/invoice · Settlements Escrow Held → driver MoneyCell.
+- **SHIPS:** #28953–#28958 · Purchase Report + Escrow Held MoneyCells. **MERGED #28960.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~1:05 AM CT) — Factoring Invoice Status + Aging + Fees history MoneyCells
