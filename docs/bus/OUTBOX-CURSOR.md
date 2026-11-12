@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T17:28Z) — ROUND 8.17 class L merged · class S shipping
+ROUND 8.17 2026-11-12T17:28Z · classes R/L/S merged: R #29057 bf05f75b55a · L #29059 6c7776b7a1b · S in flight · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex recheck · deployed FE/BE SHA pending
+
 ## OUTBOX (2026-11-12T18:00Z) — ROUND 8.17 class R DONE
 ROUND 8.17 2026-11-12T18:00Z · classes R/L/S merged: R #29057 SHA bf05f75b55a · L in flight · S pending · boards CERTIFIED by Codex: 0/45 · FAIL left: await Codex recheck 2 5 7 12 18 20 24 25 28 29 30 33 34 22/43 · deployed FE/BE SHA pending post-deploy
 

@@ -665,7 +665,12 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-in"
-          onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?types=money_in`)}
+          // ROUND 8.17 class S — keep the KPI population: month dates + money_in + categorized (cleared), never For review / all types.
+          onClick={() =>
+            navigate(
+              `${BANKING_TAB_PATH.transactions}?types=money_in&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+            )
+          }
         />
         <V3KpiTile
           label={`Money out · ${monthLabel}`}
@@ -673,7 +678,11 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-out"
-          onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?types=money_out`)}
+          onClick={() =>
+            navigate(
+              `${BANKING_TAB_PATH.transactions}?types=money_out&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+            )
+          }
         />
         <V3KpiTile
           label="Lines to review"
@@ -681,7 +690,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub={`${kpiSplit.opPending} operating · ${kpiSplit.relayPending} Relay`}
           tone={kpiSplit.pendingTotal > 0 ? "amber" : "green"}
           testId="banking-kpi-lines-to-review"
-          onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}
+          onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized&review=for_review`)}
         />
         <V3KpiTile
           label="Drift alerts"

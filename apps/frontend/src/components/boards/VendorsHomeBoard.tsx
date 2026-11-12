@@ -127,8 +127,33 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   const paysRows: PaysRow[] = b ? b.pays_through.map((p) => ({ ...p, id: p.account_id ?? "none" })) : [];
   const paysCols: Array<PartyCol<PaysRow>> = [
-    { key: "account", label: "Account", sort: (r) => r.account_name, cell: (r) => r.account_name },
-    { key: "vendors", label: "Vendors", num: true, width: 90, sort: (r) => r.vendors, cell: (r) => <span>{int(r.vendors)}</span> },
+    {
+      key: "account",
+      label: "Account",
+      sort: (r) => r.account_name,
+      cell: (r) =>
+        r.account_id ? (
+          <EntityLink kind="account" id={r.account_id} label={r.account_name} />
+        ) : (
+          <span>{r.account_name}</span>
+        ),
+    },
+    // ROUND 8.17 class S — Pays-through vendor counts open the expense cohort paid through that account.
+    {
+      key: "vendors",
+      label: "Vendors",
+      num: true,
+      width: 90,
+      sort: (r) => r.vendors,
+      cell: (r) =>
+        r.vendors ? (
+          <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>
+            {int(r.vendors)}
+          </NumLink>
+        ) : (
+          <span>{int(r.vendors)}</span>
+        ),
+    },
     {
       key: "spend", label: "Spend", num: true, width: 130, sort: (r) => r.spend_cents,
             // The vendor expenses paid through this account (or with none recorded) since the board's first day — that list's

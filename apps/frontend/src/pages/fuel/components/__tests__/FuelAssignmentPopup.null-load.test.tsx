@@ -11,6 +11,11 @@ vi.mock("../../../../api/fuelAssignmentQuestions", async (orig) => ({
   answerFuelAssignmentQuestion: vi.fn(),
 }));
 vi.mock("../../../../components/Toast", () => ({ useToast: () => ({ pushToast: vi.fn() }) }));
+// ROUND 8.17 class S — VoidReasonModal (and related) need CompanyProvider; mock the hook so the
+// null-load render reaches its assertions instead of throwing before paint.
+vi.mock("../../../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "co-1" }),
+}));
 
 import { FuelAssignmentPopup } from "../FuelAssignmentPopup";
 import type { FuelAssignmentQuestion } from "../../../../api/fuelAssignmentQuestions";
