@@ -10,6 +10,7 @@ import { getReserveByCustomer, getReserveByInvoice, type ReserveByCustomerRow, t
 import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
+import { formatCompanyName } from "../../lib/formatCompanyName";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Modal } from "../../components/Modal";
@@ -31,7 +32,7 @@ const columns: Array<ParityColumn<ReserveByCustomerRow>> = [
       row.customer_id ? (
         <EntityLink kind="customer" id={row.customer_id} label={entityLabel(row.customer_name, row.customer_id, "Customer")} />
       ) : (
-        <span className="text-[#4B5563]">{row.customer_name}</span>
+        <span className="text-[#4B5563]">{formatCompanyName(row.customer_name)}</span>
       ),
   },
   { key: "invoices_purchased", label: "Invoices purchased", kind: "number", sortable: true, render: (row) => String(row.invoices_purchased) },
