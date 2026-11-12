@@ -149,7 +149,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 143 | H | Dispatch › Book Load › Presentation | D024: Long A–E form; no Side panel / Center toggle or five-step flow present | Cursor / CC-3 | 443.257-D | DONE-LIVE | Side panel / Center toggle live 10-23 5:19 PM |
 | 144 | H | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | 443.257-D | CODED | formatDateQboList MM/DD/YYYY pinned formatDate.screens.test (remeasure 11-12) |
 | 145 | H | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | 443.257-D | DONE-LIVE | formatPersonName via entityLabel("Driver") — Chrome walk 2026-11-12 load costs proper case |
-| 146 | H | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | 443.257-D | OPEN | not re-verified since audit |
+| 146 | H | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | 443.257-D | DONE-LIVE | 83b8272f1b1 — settlementLabel is_presettlement flag; verify-dispatch-missing-is-em-dash LIVE PASS |
 | 147 | H | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 148 | H | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | 443.257-D | CODED | ReconcilerExceptionsPage formatDateUS (remeasure 11-12) |
 | 149 | H | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | 443.257-D | CODED | DriverSchedulerGridPage formatDateUS subtitle+grid (remeasure 11-12) |
@@ -168,7 +168,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 162 | H | Cash Flow › Projected / Rolling / Manual › Date labels and cells | D043: Day labels and invoice/due cells omit year and use month names | Cursor | 443.257-D | CODED | CashFlowHome/Manual use formatDateUS (remeasure 11-12) |
 | 163 | H | Accounting › Home › Settlement / transaction links | D044: Driver/vendor names still all-uppercase | CC-3 | 443.257-D | DONE-LIVE | formatPersonName via entityLabel("Driver") — Chrome walk 2026-11-12 accounting hub proper case |
 | 164 | H | Banking › Home › Drift alert as-of | D045: Raw ISO timestamp rendered, including T and Z | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D045 |
-| 165 | H | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | 443.257-D | OPEN | not re-verified since audit |
+| 165 | H | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | 443.257-D | DONE-LIVE | 83b8272f1b1 — DriftAlertsPanel uses account display_name from drift alert payload |
 | 166 | H | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 167 | H | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
 | 168 | H | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | 443.257-D | OPEN | not re-verified since audit |
@@ -219,7 +219,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 213 | A | Settlements | Tour dates wrong (P-0114 10/20→10/20; real 10/16→10/23) | CC-1 | 443.292-B | CODED | 7349992008 443.292-B tour period dates in Central time (CC-1) |
 | 214 | A | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | 443.292-C | CODED | 7349992008 443.292-C Settlement + Payment status columns (CC-1) |
 | 215 | A | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | 443.292-D | PARTIAL | 22dfcaadd7 #27472 coded; prod escrow_ledger 0 of 58 with load -> ENG-03 |
-| 216 | A | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | 443.292-E | OPEN | CC-1 #27478 blocked by ENG-01 (ledger ratchet) |
+| 216 | A | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | 443.292-E | DONE-LIVE | #27478 0a9c1af1 — settlement_deduction_noncash IS NOT TRUE + apBillPaymentOnlySql all 3 readers; verify-bill-payments-list-excludes-deductions LIVE PASS |
 | 217 | A | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | 443.292-F | DONE-LIVE | CC-1 11-12 re-measure: both are status='cancelled', 0 lines, 0 gl_bills — expected state for cancelled settlements, not a defect |
 | 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | CODED | ad4a611076 #27465 (Cursor) eight-section statement |
 | 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | CODED | 9b651bfdb4 #27481 (Cursor) Close settlement CTA in Dispatch |
