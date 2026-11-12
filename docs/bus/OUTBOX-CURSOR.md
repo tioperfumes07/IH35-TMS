@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~2:15 AM CT) — high-water #28918; CF3 customer link fix
+- **THIS:** #28918 DailyPrediction Income customer EntityLinkOrTombstone spread `item` (was undefined `row` → ReferenceError).
+- **NEXT:** Reverse-wiring continue; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~2:00 AM CT) — high-water #28916; reverse-wiring continue
 - **SHIPS:** #28915 Fuel Assignment candidate Settlement EntityLink (settlement_id) · #28916 Insurance Payment Schedule Policy EntityLink + policy_number join · prior #28911–#28914.
 - **NEXT:** Reverse-wiring spot checks continue; Map/DAT360 honest-gated; Legal signed bulk-void stays skipped. Codex LIVE. No match/Dreamline.
