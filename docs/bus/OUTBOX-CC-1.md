@@ -1,3 +1,33 @@
+## 2026-11-12 ~16:30Z — CC-1 ROUND 8.14 CLOSE — E1-E5 + ROWS 73/75/82/86/93/95 DONE
+
+All CC-1 8.14 engines built, merged, guards pass. Owner AUTH-runs pending for rows 82/86.
+
+| Item | Row | Status | PR / SHA | Evidence |
+|------|-----|--------|----------|----------|
+| E1 stuck-close P-0125/0128/0130 | 73 | DONE-LIVE | #29014 `ba0dce5555c` | stuck-close-repair engine + AUTH-476 route |
+| E2 stranded JEs 9 voided headers | — | DONE | #29018 `ea1d6f2b3c2` | stranded-je-repair engine + AUTH-477 route |
+| E3 load-cost-rollup alias-shadow | — | DONE | #29011 `a3057255a2e` | guard truth SQL fixed (unsigned sum, void filter, driver exclusion) → 0 mismatches |
+| E4 load 13700 salaried LINK1 | — | DONE | #29011 `a3057255a2e` | salaried $0 closed week path added to verify-load-to-cash-chain |
+| E5 capacity orphan FKs | — | DONE | #29011 `a3057255a2e` | migration 202616520100 adds FK; guard non-fk-columns updated |
+| Row 73 driver-pay accrual | 73 | DONE-LIVE | #29025 `36ec8c4d071` | 13663 2/3, 13687 1/1, 13688 2/1; guard exit 0 |
+| Row 75 settlement cost totals | 75 | DONE-LIVE | #29025 `36ec8c4d071` | guard 18837 PASS; P-0113/0119 gross correct |
+| Row 82 P-0069 unpaid bill backlink | 82 | PARTIAL | #29028 `e67e0475402` | backlink-restamp engine merged; owner must run AUTH-478 |
+| Row 86 P-0113 accounting_bill_id NULL | 86 | PARTIAL | #29028 `e67e0475402` | same AUTH-478 run fixes both |
+| Row 93 open bills vs AP subledger | 93 | DONE-LIVE | `verify-ap-control-ties-subledger` | LIVE PASS variance=0 ($162,057.59 tied) — diff explained by applied payments |
+| Row 95 cash pulse Oct $0 | 95 | DONE-LIVE | #29025 `36ec8c4d071` | cash-flow-bank-actuals.sql.ts wired; Oct $281,404.15 IN / $284,129.85 OUT |
+
+**Owner must run (engines merged, routes live):**
+- AUTH-476: `POST /api/v1/driver-finance/settlements/stuck-close-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` — closes P-0125/P-0128/P-0130
+- AUTH-477: `POST /api/v1/accounting/expenses/stranded-je-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` — reverses 9 stranded JEs; verify-void-is-whole 10→1
+- AUTH-478: `POST /api/v1/driver-finance/settlements/header-backlink-restamp { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` — backfills accounting_bill_id on P-0069/P-0113 (rows 82/86)
+
+**Stale PRs closed:**
+- #28786 → superseded by #28779/#28782/#28794/#28797 on main
+- #28673 → superseded by #28754 (`b3367a6eb3b`) on main
+
+**P0 guard repoint:**
+- #29033 `1815f991cdd` — verify-load-costs-settlement-legs-columns re-pointed to v3 board; selftest 22/22 PASS
+
 ## 2026-10-25 ~23:59Z — CC1 DONE — ALL 20 FINAL-2 ROWS MERGED
 
 verify-static: exit 0. All 20 rows from CC1-PENDING-ROWS-FINAL-2.md are on origin/main.
