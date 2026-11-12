@@ -297,17 +297,17 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "group",
         label: "Group",
-        render: (row) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{row._group}</span>,
+        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
       },
       {
         key: "customer",
         label: "Customer",
-        render: (row) => {
-          const customerName = row.customer_name ?? row.counterparty;
-          return row.customer_id ? (
+        render: (item) => {
+          const customerName = item.customer_name ?? item.counterparty;
+          return item.customer_id ? (
             <EntityLinkOrTombstone
               kind="customer"
-              id={row.customer_id}
+              id={item.customer_id}
               name={ledgerPartyLabel({ ...row, counterparty: customerName })}
               noun="Customer"
               className="font-medium"
@@ -315,7 +315,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             />
           ) : (
             <span data-testid="cash-flow-predicted-customer-link">
-              {companyLabel(row.customer_name, null, "Customer")}
+              {companyLabel(item.customer_name, null, "Customer")}
             </span>
           );
         },
@@ -323,20 +323,20 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "type",
         label: "Type",
-        render: (row) =>
-          row.document_kind === "load" || /load/i.test(row.type)
+        render: (item) =>
+          item.document_kind === "load" || /load/i.test(item.type)
             ? "Load · not invoiced"
-            : row.type || row.document_kind,
+            : item.type || item.document_kind,
       },
       {
         key: "load",
         label: "Load",
-        render: (row) => (
+        render: (item) => (
           <EntityLinkOrTombstone
-            kind={row.load_id ? "load" : "invoice"}
-            id={row.load_id ?? row.document_id}
-            name={row.load_number ?? row.document_label}
-            noun={row.load_id ? "Load" : "Invoice"}
+            kind={item.load_id ? "load" : "invoice"}
+            id={item.load_id ?? item.document_id}
+            name={item.load_number ?? item.document_label}
+            noun={item.load_id ? "Load" : "Invoice"}
             className="font-medium"
             data-testid="cash-flow-predicted-load-link"
           />
@@ -346,7 +346,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         key: "amount",
         label: "Amount",
         cellClass: "text-right font-semibold",
-        render: (row) => formatCents(row.amount_cents),
+        render: (item) => formatCents(item.amount_cents),
       },
     ],
     [],
@@ -359,20 +359,20 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "group",
         label: "Priority",
-        render: (row) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{row._group}</span>,
+        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
       },
       {
         key: "payee",
         label: "Payee",
-        render: (row) => {
-          if (row._empty) return <span style={{ color: V3.mutedSoft }}>{row.counterparty}</span>;
+        render: (item) => {
+          if (item._empty) return <span style={{ color: V3.mutedSoft }}>{item.counterparty}</span>;
           const payeeNoun =
-            row.document_kind === "driver_bill" || row.document_kind === "settlement" || /driver/i.test(row.type)
+            item.document_kind === "driver_bill" || item.document_kind === "settlement" || /driver/i.test(item.type)
               ? "Driver"
               : "Payee";
           return (
             <span data-testid="cash-flow-projected-expense-payee">
-              {entityLabel(ledgerPartyLabel(row) || row.counterparty, null, payeeNoun)}
+              {entityLabel(ledgerPartyLabel(item) || item.counterparty, null, payeeNoun)}
             </span>
           );
         },
@@ -380,39 +380,39 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "doc",
         label: "Load / doc",
-        render: (row) => {
-          if (row._empty) return "—";
-          const link = row.load_id ? (
+        render: (item) => {
+          if (item._empty) return "—";
+          const link = item.load_id ? (
             <EntityLinkOrTombstone
               kind="load"
-              id={row.load_id}
-              name={row.load_number ?? row.document_label}
+              id={item.load_id}
+              name={item.load_number ?? item.document_label}
               noun="Load"
               data-testid="cash-flow-predicted-expense-load-link"
             />
-          ) : row.document_kind === "settlement" || row.document_kind === "driver_bill" ? (
+          ) : item.document_kind === "settlement" || item.document_kind === "driver_bill" ? (
             <EntityLinkOrTombstone
               kind="settlement"
-              id={row.document_id}
-              name={row.document_label}
+              id={item.document_id}
+              name={item.document_label}
               noun="Settlement"
               data-testid="cash-flow-predicted-expense-settlement-link"
             />
-          ) : row.document_kind === "bill" ? (
+          ) : item.document_kind === "bill" ? (
             <EntityLinkOrTombstone
               kind="bill"
-              id={row.document_id}
-              name={row.document_label}
+              id={item.document_id}
+              name={item.document_label}
               noun="Bill"
               data-testid="cash-flow-predicted-expense-bill-link"
             />
           ) : (
-            <span>{formatIsoDatesInText(row.document_label)}</span>
+            <span>{formatIsoDatesInText(item.document_label)}</span>
           );
           return (
             <span className="inline-flex flex-wrap items-center gap-2">
               {link}
-              {row.adjustment_id ? (
+              {item.adjustment_id ? (
                 <button
                   type="button"
                   className="shrink-0 text-xs underline disabled:opacity-50"
@@ -420,7 +420,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
                   disabled={archiveMutation.isPending}
                   onClick={() => {
                     setArchiveError(null);
-                    archiveMutation.mutate(row.adjustment_id!);
+                    archiveMutation.mutate(item.adjustment_id!);
                   }}
                   data-testid="cash-flow-adjustment-remove"
                 >
@@ -435,8 +435,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         key: "amount",
         label: "Amount",
         cellClass: "text-right font-semibold",
-        render: (row) =>
-          row._empty ? "—" : row.amount_known === false ? "Awaiting short miles" : formatCents(row.amount_cents),
+        render: (item) =>
+          item._empty ? "—" : item.amount_known === false ? "Awaiting short miles" : formatCents(item.amount_cents),
       },
     ],
     [archiveMutation],
