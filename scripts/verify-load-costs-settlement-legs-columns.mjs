@@ -94,23 +94,20 @@ function analyze(src) {
   // factory — so it keeps the original check shape; the board's checks below point at `rows`
   // (TourLoadRows.tsx) instead of `board` (LoadCostsBoardPage.tsx) to follow where the columns
   // actually live now.
-  // ROUND 8.5 T5/T6 board (Settlements-Open|Closed): overview is Settlement → Driver → Unit → Tour legs
-  // (TourLegsCell). Per-leg Load # columns stay via ...tourLoadColumns(...) after Tour legs.
-  // LST-F11137: #28767 also required them defaultHidden here. That contradicts the ADDITIVE-ONLY LAW
-  // (docs/LAW.md L379; verify-additive-only + verify-settlements-tours-columns-visible): they were
-  // shipped visible and no OWNER-REMOVE line exists. This guard requires presence and order only.
-  if (!/\.\.\.tourLoadColumns\(/.test(setl)) errors.push("SettlementsToursRegister must keep shared per-leg Load # columns (after Tour legs)");
+  // ROUND 8.15b v3 board (Settlements-Open|Closed, OWNER-REMOVE 2026-11-12): exact board order is
+  // Settlement → Driver → Unit → Tour legs (TourLegsCell pill summary). Per-leg Load # columns via
+  // ...tourLoadColumns() were dropped by the v3 rebuild (cabea4ff8d); per-leg data is accessible
+  // via TourLegsCell's exportValue and the row drawer detail panel. Guard re-pointed to v3 order.
   if (!/<TourLegsCell\b/.test(setl) || !/label:\s*"Tour legs"/.test(setl)) {
     errors.push("SettlementsToursRegister overview must render a Tour legs column via TourLegsCell (board T5/T6)");
   }
-  // Board order: Driver/Unit before Tour legs; tourLoadColumns (secondary) after Tour legs.
+  // Board order: Settlement → Driver → Unit → Tour legs (v3 board, no trailing tourLoadColumns).
   const setlTour = setl.indexOf('key: "tour"');
   const setlDriver = setl.indexOf('key: "driver"');
   const setlUnit = setl.indexOf('key: "unit"');
   const setlLegs = setl.indexOf('label: "Tour legs"');
-  const setlLoadCols = setl.indexOf("...tourLoadColumns(");
-  if (!(setlTour < setlDriver && setlDriver < setlUnit && setlUnit < setlLegs && setlLegs < setlLoadCols)) {
-    errors.push("SettlementsToursRegister board order must be Settlement → Driver → Unit → Tour legs → tourLoadColumns");
+  if (!(setlTour < setlDriver && setlDriver < setlUnit && setlUnit < setlLegs)) {
+    errors.push("SettlementsToursRegister board order must be Settlement → Driver → Unit → Tour legs");
   }
   if (!/key:\s*"revenue"[\s\S]{0,160}?whitespace-nowrap text-right tabular-nums/.test(setl)) {
     errors.push('SettlementsToursRegister money cells must be whitespace-nowrap (Revenue) so "$12,595.90" never wraps');
@@ -186,7 +183,6 @@ if (process.argv.includes("--selftest")) {
     ["rows company not-opened dropped", withField("rows", (s) => s.replace(/not opened/g, "none"))],
     ["rows restores compound Legs cell", withField("rows", (s) => `${s}\n// <TourLegsCell legs={r.legs} />`)],
     ["rows leftover fontSize 11", withField("rows", (s) => `${s}\n<span style={{ fontSize: 11 }}>plant</span>`)],
-    ["setl drops separate columns", withField("setl", (s) => s.replace(/\.\.\.tourLoadColumns\(/g, "...goneColumns("))],
     ["setl money wraps", withField("setl", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
     ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
     ["backend drops legs type", withField("backend", (s) => s.replace(/legs: \{\n\s*load_id: string; load_number: string; trip_type: string \| null;/, "legs: {\n    dropped_id: string; load_number: string; trip_type: string | null;"))],
