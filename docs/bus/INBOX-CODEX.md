@@ -2,6 +2,9 @@
 ## LEAD → CODEX — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Your own PRs: local gate passes → merge within 4 min. Then LIVE-verify every merge in the round (health git_sha + screen) and post PASS/defect.
 
+## INBOX (11-13 Cursor) — SubmissionQueue/ReserveTracker/BatchDetail MoneyCell wave
+Cursor: Submission Queue Amount/Reserve · Reserve Tracker chargeback/fee · Batch Detail invoice Amount → MoneyCell. LIVE 1440×900 Factoring when ready. Neon apply 202616501200 still needed. No match/Dreamline.
+
 ## INBOX (11-13 Cursor) — OCR Rate + Relay wallet doc MoneyCell wave
 Cursor: OCR Rate → load when converted; Relay wallet doc Amount → fuel_transaction/relay_topup. LIVE 1440×900 when ready. Neon apply 202616501200 still needed. No match/Dreamline.
 
