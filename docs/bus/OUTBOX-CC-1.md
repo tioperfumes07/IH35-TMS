@@ -1,3 +1,15 @@
+## 2026-11-12 ~18:00Z — ROUND 8.18 CHECKPOINT 1
+
+ROUND 8.18 18:00Z · CC-1 rows DONE-LIVE: 146 (PR#29047), 165 (PR#29047), 216 (PR#29047 09dcb179c78) · rows CODED (guards pass, Chrome verify needed): 28/66/67/68/69/70/71/72 (5 report boards all routed + verify-reports-five-pages-wired exit 0 + verify-load-history-surface exit 0) · rows left: 20 open/partial · AUTH runs waiting on owner: AUTH-476 (3 stuck settlements: P-0125/P-0128/P-0130 loads 13711/13727/13729), AUTH-477 (91 voided expenses with live JEs), AUTH-478 (settlements with accounting_bill_id NULL) — dry-run SQL below
+
+**AUTH-476 dry-run result** (3 stuck settlements, trip_closed_at 2026-11-10 — query runs on accounting.company_settlements scoped to USMCA):
+- P-0125 / load 13711 (trip_closed 2026-11-10) — STATUS: open, accounting_bill_id NULL
+- P-0128 / load 13727 (trip_closed 2026-11-10) — STATUS: open, accounting_bill_id NULL
+- P-0130 / load 13729 (trip_closed 2026-11-10) — STATUS: open, accounting_bill_id NULL
+Owner: run `node scripts/repair-stuck-settlements.mjs --company-id 5c854333-6ea5-4faa-af31-67cb272fef80 --ids P-0125,P-0128,P-0130 --auth AUTH-476` to close these.
+
+---
+
 ## 2026-11-12 ~16:30Z — CC-1 ROUND 8.14 CLOSE — E1-E5 + ROWS 73/75/82/86/93/95 DONE
 
 All CC-1 8.14 engines built, merged, guards pass. Owner AUTH-runs pending for rows 82/86.
