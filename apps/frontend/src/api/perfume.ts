@@ -161,8 +161,8 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
-export const getPerfumeReview = (offset = 0, limit = 100) =>
-  apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?offset=${offset}&limit=${limit}`);
+export const getPerfumeReview = (offset = 0, limit = 100, listId?: string | null) =>
+  apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?offset=${offset}&limit=${limit}${listId ? `&list_id=${encodeURIComponent(listId)}` : ""}`);
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
 export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);

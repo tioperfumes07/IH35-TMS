@@ -6,7 +6,7 @@ import { Combobox } from "../../components/Combobox";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { confirmPerfumeRow, getPerfumeReview, searchPerfumeItems, type PerfumeReviewRow } from "../../api/perfume";
+import { confirmPerfumeRow, getPerfumeReview, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
 
@@ -15,7 +15,12 @@ const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFrac
 
 export function PerfumeReviewPanel() {
   const [page, setPage] = useState(1);
-  const q = useQuery({ queryKey: ["perfume", "review", page], queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE), placeholderData: (p) => p });
+  // Owner 2026-11-12: "where do I review the Esperanza items?" — review one vendor's list at a time.
+  const [listId, setListId] = useState<string | null>(null);
+  const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
+  const listOptions = (lists.data?.lists ?? []).filter((l) => l.is_current)
+    .map((l) => ({ value: l.id, label: `${l.vendor_name} · ${String(l.list_date).slice(0, 10)}`, sublabel: l.file_name }));
+  const q = useQuery({ queryKey: ["perfume", "review", page, listId], queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, listId), placeholderData: (p) => p });
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   if (q.isError) {
@@ -23,6 +28,20 @@ export function PerfumeReviewPanel() {
   }
   return (
     <section className="space-y-2" aria-label={tr("perfume.review.1", "Review")}>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="w-[360px] max-w-full text-xs text-gray-700">
+          {tr("perfume.review.listFilter", "Vendor list")}
+          <Combobox
+            ariaLabel={tr("perfume.review.listFilter", "Vendor list")}
+            allowClear
+            value={listId}
+            onChange={(v) => { setListId((v as string | null) || null); setPage(1); }}
+            options={listOptions}
+            placeholder={tr("perfume.review.allLists", "All vendors")}
+            dataTestId="perfume-review-list-filter"
+          />
+        </label>
+      </div>
       <div className="text-xs text-gray-600">
         {total.toLocaleString()} {tr("perfume.review.2", "lines need you. A line links to an item only when you confirm it — then every future list from that vendor with the same spelling or SKU links by itself. Nothing here counts in any price until confirmed.")}
       </div>
