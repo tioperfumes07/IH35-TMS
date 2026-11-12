@@ -106,7 +106,7 @@ describe("ACCT-F11129 — company batch scorer", () => {
       query: async (sql: string) => {
         calls.push(sql);
         if (sql.includes("information_schema.tables")) return { rows: [{ "?column?": 1 }], rowCount: 1 };
-        if (sql.includes("FROM mdata.loads\n")) return { rows: [{ customer_id: "c1", loads_30d: "3", loads_90d: "9", revenue_30: "300000", miles_30: "1000", revenue_180: "1800000", miles_180: "6000" }] };
+        if (sql.includes("FROM mdata.loads")) return { rows: [{ customer_id: "c1", loads_30d: "3", loads_90d: "9", revenue_30: "300000", miles_30: "1000", revenue_180: "1800000", miles_180: "6000" }] };
         if (sql.includes("FROM accounting.invoices i")) return { rows: [{ customer_id: "c1", weighted_days: "3000", open_cents: "100" }] };
         if (sql.includes("WITH completed AS")) return { rows: [{ customer_id: "c1", total_count: "4", late_count: "1" }] };
         if (sql.includes("customer_quality_events")) return { rows: [{ customer_id: "c1", complaint_count: "2" }] };

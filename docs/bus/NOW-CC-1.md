@@ -1,4 +1,4 @@
-<!-- heartbeat 2026-11-12T09:44Z Cursor MAIN-RED session -->
+<!-- heartbeat 2026-11-12T10:07Z Cursor MAIN-RED session -->
 # NOW — CC-1 — ROUND 443 (2026-10-10) — READ FIRST
 
 **READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute every block headed CC-1, top to bottom; later blocks override earlier ones.**
