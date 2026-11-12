@@ -111,6 +111,7 @@ const EXEMPT_ROUTES = [
   { pattern: /\/catalogs\/.*cancellation-reasons/, reason: "catalog CRUD" },
   { pattern: /\/catalogs\/void-cancel-reasons/, reason: "catalog CRUD" },
   { pattern: /\/fleet\/roster-integrity\/:id\/void/, reason: "roster data-quality finding (fleet.roster_findings: no amount, no ledger); void-not-delete with reason — the route file became scannable when it left roster-integrity.service.ts (CC-2 2026-10-04)" },
+  { pattern: /\/perfume\/lists\/:id\/void/, reason: "perfume desk vendor-list void — isolated perfume.* schema, no TMS ledger/JE (MAIN-RED-2026-11-12e)" },
   { pattern: /\/fuel\/card-assignments\/:id\/void/, reason: "E-22 card -> truck registry (master data, no amount, no ledger); void-not-delete with reason" },
   { pattern: /\/catalogs\/payment-methods\/.*\/void/, reason: "catalog config void" },
   { pattern: /\/mdata\/vendors\/.*\/payment-methods\/.*\/void/, reason: "vendor payment method config" },

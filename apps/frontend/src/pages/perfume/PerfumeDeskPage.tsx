@@ -123,8 +123,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
       render: (r: PerfumeGridRow) => {
         const v = r[c.key];
         if (c.kind === "money") return money(v);
-        if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-green-700" : ""}>{pct(v)}</span>;
-        if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-amber-100 px-1">{String(v)}</span>;
+        if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-slate-700 font-semibold" : ""}>{pct(v)}</span>;
+        if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
         return v == null || v === "" ? "—" : String(v);
       },

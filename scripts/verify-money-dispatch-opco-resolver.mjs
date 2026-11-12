@@ -77,6 +77,11 @@ const SYSTEM_DERIVED_ALLOWLIST = [
     fragment: '"/api/v1/dispatch/intransit-issues", { config',
     reason: "driver PWA: assignment.operating_company_id comes from an assignmentRes query joining mdata.loads to mdata.drivers ON d.identity_user_id = $1::uuid (the authenticated user) AND d.id IN (l.assigned_primary_driver_id, l.assigned_secondary_driver_id) — the load's own row via a driver-assignment-gated JOIN, never a client-supplied value (the route's own comment already states this: 'Derive it from the assigned load, never a mutable/default company selection').",
   },
+  {
+    file: "dispatch/capacity/capacity.routes.ts",
+    fragment: '/api/v1/public/capacity/unsubscribe',
+    reason: "public capacity unsubscribe: opco + email come from verifyUnsubscribeToken(HMAC) on the signed link — never a client-supplied operating_company_id body/query field. No session membership check is possible (no auth). Lucia bypass + set_config scopes the write to the token's company only.",
+  },
 ];
 
 function listRouteFiles() {
