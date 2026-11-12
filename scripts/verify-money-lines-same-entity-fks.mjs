@@ -24,7 +24,10 @@ export const PHASES = [
     tables: ["accounting.invoice_lines", "accounting.bill_lines", "accounting.expense_lines", "accounting.payment_applications", "accounting.transaction_source_links"],
   },
   {
-    migrations: ["202615330904_block_phase2_driver_finance_same_entity_fks.sql"],
+    migrations: [
+      "202615330904_block_phase2_driver_finance_same_entity_fks.sql",
+      "202616501200_settlement_lines_reinstated_from_void_je_same_entity_fk.sql",
+    ],
     tables: ["driver_finance.settlement_lines", "driver_finance.escrow_balances", "driver_finance.driver_advance_accounts"],
   },
   {
@@ -98,7 +101,9 @@ export const DECLARED = [
   "bill_lines_parent_line_same_entity_fkey", "expense_lines_parent_line_same_entity_fkey", "expense_lines_work_order_same_entity_fkey",
   "settlement_lines_settlement_same_entity_fkey", "settlement_lines_team_same_entity_fkey", "settlement_lines_driver_bill_same_entity_fkey",
   "settlement_lines_deduction_policy_same_entity_fkey", "settlement_lines_load_same_entity_fkey", "settlement_lines_disputed_by_same_entity_fkey",
-  "settlement_lines_split_partner_same_entity_fkey", "settlement_lines_void_reversal_je_same_entity_fkey", "escrow_balances_driver_same_entity_fkey",
+  "settlement_lines_split_partner_same_entity_fkey", "settlement_lines_void_reversal_je_same_entity_fkey",
+  "settlement_lines_reinstated_from_void_je_same_entity_fkey",
+  "escrow_balances_driver_same_entity_fkey",
   "escrow_balances_last_settlement_same_entity_fkey", "driver_advance_accounts_driver_same_entity_fkey", "driver_advance_accounts_account_same_entity_fkey",
   "loads_primary_driver_same_entity_fkey", "loads_secondary_driver_same_entity_fkey", "loads_accepted_by_driver_same_entity_fkey",
   "loads_split_primary_driver_same_entity_fkey", "loads_split_secondary_driver_same_entity_fkey", "loads_instructions_file_same_entity_fkey",
