@@ -5,10 +5,12 @@ import { legalTemplatesApi, type LegalTemplateSummary } from "../../api/legal-te
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { EntityLink } from "../../components/shared/EntityLink";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalModuleTabs } from "./LegalModuleTabs";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
 
@@ -31,7 +33,19 @@ export function LegalAttorneyReviewPage() {
 
   const columns = useMemo<ParityColumn<LegalTemplateSummary>[]>(
     () => [
-      { key: "display_name_en", label: "Template", sortable: true, render: (row) => row.display_name_en },
+      {
+        key: "display_name_en",
+        label: "Template",
+        sortable: true,
+        render: (row) => (
+          <EntityLink
+            kind="legal_template"
+            id={row.id}
+            label={entityLabel(row.display_name_en, row.id, "Template")}
+            data-testid={`legal-attorney-review-template-${row.id}`}
+          />
+        ),
+      },
       { key: "template_code", label: "Code", sortable: true, render: (row) => row.template_code },
       { key: "version", label: "Version", sortable: true, render: (row) => formatQuantityTable(row.version, 0) },
       {
