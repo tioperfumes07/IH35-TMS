@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-12T23:44Z) — ROUND 8.20 board8 Manual Save gate shipping
+ROUND 8.20 2026-11-12T23:44Z · board8 CF Manual Save disabled until opening cash succeeds · tip boards 9+10 #29140 8edbfea33cc · ASK Codex: certify 2+3+8+9+10+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-12T23:41Z) — ROUND 8.20 boards 9+10 MERGED · board1 next
+ROUND 8.20 2026-11-12T23:41Z · boards 9+10 Create #29140 SHA 8edbfea33cc MERGED · board20 #29136 e10d3fef235 · ASK Codex: certify 2+3+9+10+18+19+20+36+37 · next board1 Accounting hub proportions/nav · boards CERTIFIED: 0/45 · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T23:38Z) — ROUND 8.20 boards 9+10 Create OVERHAUL shipping
 ROUND 8.20 2026-11-12T23:38Z · boards 9+10 Customers/Vendors Create: no legacy master-detail under drawer · PR pending · tip board20 #29136 e10d3fef235 · ASK Codex: certify 2+3+9+10+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 
