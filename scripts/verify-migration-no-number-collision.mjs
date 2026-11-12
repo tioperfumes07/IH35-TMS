@@ -273,6 +273,12 @@ const KNOWN_COLLISIONS = new Map(Object.entries({
     "202614570000_factoring_advance_status_matches_voided_at.sql",
     "202614570000_fix_driver_samsara_accounts_rls_empty_uuid_cast.sql"
   ],
+  // ACCEPTED 2026-11-12 by Lead: both applied on prod (18:49:22Z perfume, 22:24:25Z USMCA card-payable
+  // roles), independent objects; renaming an applied migration is forbidden. See verify-migration-filenames.
+  "202616530100": [
+    "202616530100_perfume_match_method_name.sql",
+    "202616530100_usmca_card_payable_role_wiring.sql"
+  ],
 }));
 
 /** PURE: group migration filenames by numeric prefix; any group > 1 is a collision. */
