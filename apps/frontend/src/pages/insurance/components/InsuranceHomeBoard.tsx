@@ -15,6 +15,7 @@ import {
 } from "../../../api/insurance";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ApiError } from "../../../api/client";
@@ -374,7 +375,10 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                           textAlign: "right",
                         }}
                       >
-                        {formatUsdCents(Number(p.total_premium_cents ?? 0))}
+                        <MoneyCell
+                          cents={Number(p.total_premium_cents ?? 0)}
+                          drill={{ entity: { kind: "insurance_policy", id: p.id } }}
+                        />
                       </div>
                     </div>
                   );

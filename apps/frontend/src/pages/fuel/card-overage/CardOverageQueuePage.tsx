@@ -16,6 +16,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { CollapsedListFilters, MoneyListToolbar, useStagedListFilters } from "../../../components/table";
 import { ExemptOverageModal, type ExemptOverageInput } from "./ExemptOverageModal";
 import { VoidOverageModal } from "./VoidOverageModal";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
@@ -289,14 +290,30 @@ export function CardOverageQueuePage() {
         label: "Overage",
         sortable: true,
         cellClass: "text-right",
-        render: (row) => money(row.overage_cents),
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.overage_cents ?? 0)}
+            drill={{ entity: { kind: "fuel_card_overage_event", id: row.id } }}
+          />
+        ),
       },
       {
         key: "total_cents",
         label: "Txn total",
         sortable: true,
         cellClass: "text-right",
-        render: (row) => money(row.total_cents),
+        render: (row) =>
+          row.fuel_transaction_id ? (
+            <MoneyCell
+              cents={Number(row.total_cents ?? 0)}
+              drill={{ entity: { kind: "fuel_transaction", id: row.fuel_transaction_id } }}
+            />
+          ) : (
+            <MoneyCell
+              cents={Number(row.total_cents ?? 0)}
+              drill={{ entity: { kind: "fuel_card_overage_event", id: row.id } }}
+            />
+          ),
       },
       { key: "status", label: "Status", sortable: true, render: (row) => row.status },
       {

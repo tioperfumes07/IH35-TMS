@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { getInsuranceFleetCovered, type InsuranceCoverageType, type InsuranceFleetCoveredUnit } from "../../api/insurance";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -72,8 +73,57 @@ export function FleetCoveredPage() {
     { key: "auto_liability", label: "Auto Liability", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "auto_liability")?.policy_number ?? "", render: (row) => policyCell(row, "auto_liability") },
     { key: "physical_damage", label: "Physical Damage", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "physical_damage")?.policy_number ?? "", render: (row) => policyCell(row, "physical_damage") },
     { key: "cargo", label: "Cargo", sortable: true, sortValue: (row) => row.coverages.find((c) => c.coverage_type === "cargo")?.policy_number ?? "", render: (row) => policyCell(row, "cargo") },
-    { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (row) => row.coverages.length > 0 && row.insured_value_cents == null ? <span className="font-semibold text-red-700">DATA GAP</span> : formatMoney(row.insured_value_cents), exportValue: (row) => formatMoney(row.insured_value_cents) },
-    { key: "premium_per_month_cents", label: "Premium/mo", sortable: true, render: (row) => <>{formatMoney(row.premium_per_month_cents)}<span className="block text-xs text-[#6B7280]">{[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}</span></>, exportValue: (row) => formatMoney(row.premium_per_month_cents) },
+    {
+      key: "insured_value_cents",
+      label: "Insured Value",
+      sortable: true,
+      render: (row) => {
+        if (row.coverages.length > 0 && row.insured_value_cents == null) {
+          return <span className="font-semibold text-red-700">DATA GAP</span>;
+        }
+        if (row.insured_value_cents == null) return "—";
+        const unitId = row.unit_id;
+        return unitId ? (
+          <MoneyCell cents={row.insured_value_cents} drill={{ entity: { kind: "unit", id: unitId } }} />
+        ) : row.coverages[0]?.policy_id ? (
+          <MoneyCell
+            cents={row.insured_value_cents}
+            drill={{ entity: { kind: "insurance_policy", id: row.coverages[0].policy_id } }}
+          />
+        ) : (
+          formatMoney(row.insured_value_cents)
+        );
+      },
+      exportValue: (row) => formatMoney(row.insured_value_cents),
+    },
+    {
+      key: "premium_per_month_cents",
+      label: "Premium/mo",
+      sortable: true,
+      render: (row) => {
+        const policyId = row.coverages[0]?.policy_id;
+        const amount =
+          policyId != null ? (
+            <MoneyCell
+              cents={row.premium_per_month_cents}
+              drill={{ entity: { kind: "insurance_policy", id: policyId } }}
+            />
+          ) : row.unit_id ? (
+            <MoneyCell cents={row.premium_per_month_cents} drill={{ entity: { kind: "unit", id: row.unit_id } }} />
+          ) : (
+            formatMoney(row.premium_per_month_cents)
+          );
+        return (
+          <>
+            {amount}
+            <span className="block text-xs text-[#6B7280]">
+              {[...new Set(row.coverages.map((c) => c.allocation_method))].map(label).join(", ") || "—"}
+            </span>
+          </>
+        );
+      },
+      exportValue: (row) => formatMoney(row.premium_per_month_cents),
+    },
     { key: "cost_per_thousand", label: "Cost/mo per $1,000", sortable: true, sortValue: (row) => row.insured_value_cents ? row.premium_per_month_cents / row.insured_value_cents : null, render: (row) => row.insured_value_cents ? formatMoney(Math.round(row.premium_per_month_cents * 100000 / row.insured_value_cents)) : "—" },
     { key: "deductible", label: "Deductible", render: () => "NOT STORED" },
     { key: "covered_since", label: "Covered Since", sortable: true, render: (row) => formatDateUS(row.covered_since) || "—" },

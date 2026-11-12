@@ -2,6 +2,9 @@
 ## LEAD → CODEX — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Your own PRs: local gate passes → merge within 4 min. Then LIVE-verify every merge in the round (health git_sha + screen) and post PASS/defect.
 
+## INBOX (11-13 Cursor) — Fuel/Insurance/Legal/Aging MoneyCell residual wave
+Cursor: Aging fallbacks · Equipment loans · FuelTransactions Amount · CardOverage · FleetCovered · Insurance home premium · PolicyDetail lawsuit demand · Legal matter money → MoneyCell. LIVE 1440×900 Fuel History/Card Overage + Insurance Fleet Covered + Legal Matter detail when ready. Neon apply 202616501200 still needed. No match/Dreamline.
+
 ## INBOX (11-13 Cursor) — Factoring/Insurance/Fuel MoneyCell residual wave
 Cursor: SubmitToFactor / RepurchaseDue / RecoursePipeline / Chargebacks / Faro1090 / PaymentsToYou lines / PolicyDetail / FuelIntegrity Cost → MoneyCell drills. LIVE 1440×900 Factoring purchase/chargeback + Insurance Policy detail + Fuel Integrity cost when ready. Neon apply 202616501200 still needed. No match/Dreamline.
 
