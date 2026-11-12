@@ -1,3 +1,8 @@
+## OUTBOX (11-13-2026 ~2:55 AM CT) — Factoring/Insurance/Fuel MoneyCell residual wave
+- **THIS:** SubmitToFactor total/open → invoice · RepurchaseDue Face → purchase · RecoursePipeline invoice/advance/reserve → advance · Chargebacks chargeback/fee · Faro1090 net → purchase · PaymentsToYou detail lines → invoice · PolicyDetail insured value + claimed · FuelIntegrity cost → unit/fuel_transaction · FactoringHome Loan-Save + Fees-open fallbacks.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~2:35 AM CT) — Settlements/Insurance/Factoring MoneyCell wave
 - **SHIPS:** ROUND 8.13 #28903 closed · M3 #28966/#28967 (verify-step 20020) · Cash Advance amount · SettlementsTable gross/ded/net · Company Settlements money · Claims claimed/paid/deductible · Payment Schedule amount/late fee · Payments to You wire amounts → MoneyCell.
 - **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.

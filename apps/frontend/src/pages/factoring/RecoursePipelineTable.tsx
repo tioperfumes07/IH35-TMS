@@ -3,6 +3,7 @@ import { visibleDocumentLabel } from "../../lib/entity-label";
 import { useMemo, type ReactNode } from "react";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useToast } from "../../components/Toast";
 import type { LoadCostRollupFields } from "../../api/factoring";
 import { buildLoadCostColumns, centsFromWire } from "./loadCostColumnManifest";
@@ -163,19 +164,34 @@ export function RecoursePipelineTable({ rows, fmtCurrency, fmtDate, filterBar, f
         label: "Invoice Amount",
         sortable: true,
         cellClass: "text-right",
-        render: (row) => fmtCurrency(row.invoice_amount),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.invoice_amount ?? 0) * 100)}
+            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+          />
+        ),
       },
       {
         key: "advance_amount",
         label: "Advance",
         sortable: true,
-        render: (row) => fmtCurrency(row.advance_amount),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.advance_amount ?? 0) * 100)}
+            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+          />
+        ),
       },
       {
         key: "reserve_amount",
         label: "Reserve",
         sortable: true,
-        render: (row) => fmtCurrency(row.reserve_amount),
+        render: (row) => (
+          <MoneyCell
+            cents={Math.round(Number(row.reserve_amount ?? 0) * 100)}
+            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+          />
+        ),
       },
       // NEW-21: pulled out of the shared Load-Costs manifest's own fixed position (after
       // Settlement #, before Advanced/Due) and placed here instead, immediately after Reserve —

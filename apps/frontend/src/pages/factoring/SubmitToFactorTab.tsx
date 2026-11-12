@@ -37,6 +37,7 @@ import { InfoPopover } from "../../components/shared/InfoPopover";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { CollapsedListFilters } from "../../components/table/CollapsedListFilters";
@@ -695,8 +696,24 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
     },
     { key: "pickup_at", label: "PU date", sortable: true, render: (r) => dateCell(r.pickup_at) },
     { key: "delivery_at", label: "DEL date", sortable: true, render: (r) => dateCell(r.delivery_at) },
-    { key: "total_cents", label: "Total", sortable: true, kind: "money", render: (r) => formatUsdCents(r.total_cents) },
-    { key: "open_cents", label: "Open", sortable: true, kind: "money", render: (r) => formatUsdCents(r.open_cents) },
+    {
+      key: "total_cents",
+      label: "Total",
+      sortable: true,
+      kind: "money",
+      render: (r) => (
+        <MoneyCell cents={Number(r.total_cents ?? 0)} drill={{ entity: { kind: "invoice", id: r.invoice_id } }} />
+      ),
+    },
+    {
+      key: "open_cents",
+      label: "Open",
+      sortable: true,
+      kind: "money",
+      render: (r) => (
+        <MoneyCell cents={Number(r.open_cents ?? 0)} drill={{ entity: { kind: "invoice", id: r.invoice_id } }} />
+      ),
+    },
     {
       key: "expected_escrow_reserve_cents",
       label: "Escrow reserve",
