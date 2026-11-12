@@ -331,16 +331,27 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "load",
         label: "Load",
-        render: (item) => (
-          <EntityLinkOrTombstone
-            kind={item.load_id ? "load" : "invoice"}
-            id={item.load_id ?? item.document_id}
-            name={item.load_number ?? item.document_label}
-            noun={item.load_id ? "Load" : "Invoice"}
-            className="font-medium"
-            data-testid="cash-flow-predicted-load-link"
-          />
-        ),
+        render: (item) =>
+          // verify-canonical-load-nav requires a literal kind="load" in the column object (ternary kind= fails the scan).
+          item.load_id ? (
+            <EntityLinkOrTombstone
+              kind="load"
+              id={item.load_id}
+              name={item.load_number ?? item.document_label}
+              noun="Load"
+              className="font-medium"
+              data-testid="cash-flow-predicted-load-link"
+            />
+          ) : (
+            <EntityLinkOrTombstone
+              kind="invoice"
+              id={item.document_id}
+              name={item.load_number ?? item.document_label}
+              noun="Invoice"
+              className="font-medium"
+              data-testid="cash-flow-predicted-load-link"
+            />
+          ),
       },
       {
         key: "amount",
