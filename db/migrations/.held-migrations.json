@@ -1179,6 +1179,19 @@
       "block": "ROUND-326-COMPLETE-DELETE",
       "added_at": "2026-10-02",
       "superseded_by": "202615290200_purge_route.sql"
+    },
+    {
+      "file": "202616510100_settlement_lines_reinstated_je_same_entity_fk.sql",
+      "reason": "[SUPERSEDED — ACCT-F11152 batch82 2026-11-11] settlement_lines composite same-entity FK migration. Superseded by 202616501200_settlement_lines_reinstated_from_void_je_same_entity_fk.sql which was merged to main and applied to prod while cc-1/batch82-has-transactions-opco-scope was open. Never to be applied on prod.",
+      "block": "ACCT-F11152-batch82",
+      "added_at": "2026-11-11",
+      "superseded_by": "202616501200_settlement_lines_reinstated_from_void_je_same_entity_fk.sql"
+    },
+    {
+      "file": "202616480200_dispatch_capacity_load_board_audit_triggers.sql",
+      "reason": "[HELD — ACCT-F11152 batch82 2026-11-11] Dispatch D3 audit triggers for 5 capacity tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_requests). These triggers ARE needed on prod but were merged to the cc-1/batch82 branch before 202616501200 deployed, causing the verify-no-migration-is-neither-applied-nor-held guard to classify them as NEITHER. Owner must apply this migration on a Neon branch after batch82 merges. The verify-dispatch-tables-audited-and-rls-forced guard handles the interim state (PENDING DEPLOY 202616480200).",
+      "block": "ACCT-F11152-batch82",
+      "added_at": "2026-11-11"
     }
   ]
 }
