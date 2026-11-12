@@ -29,6 +29,10 @@ export function PerfumeReviewPanel() {
     queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status }), placeholderData: (p) => p });
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
+  // Owner 2026-11-12: "in all the tabs differentiate between vendors the lines" — a heavy rule above the first
+  // line of each vendor on the page.
+  const vendorStarts = new Set<string>();
+  (q.data?.rows ?? []).forEach((r, i, all) => { if (i > 0 && all[i - 1].vendor_name !== r.vendor_name) vendorStarts.add(r.id); });
   if (q.isError) {
     return <ListErrorState title={tr("perfume.review.loadError", "Couldn't load the review lines")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   }
@@ -70,6 +74,7 @@ export function PerfumeReviewPanel() {
       <ParityTable<PerfumeReviewRow>
         rows={q.data?.rows ?? []}
         rowKey={(r) => r.id}
+        rowClassName={(r) => (vendorStarts.has(r.id) ? "border-t-2 border-t-slate-500" : "")}
         loading={q.isLoading}
         storageKey="perfume-desk-review-v3"
         selectable

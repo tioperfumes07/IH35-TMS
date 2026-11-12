@@ -59,12 +59,16 @@ describe("PERFUME-DESK page", () => {
   it("opens on Buy: money as dollars, and only the Buy columns are shown once the server's columns arrive", async () => {
     renderPage();
     expect(await screen.findByText("TIO Perfumes · Price desk")).toBeTruthy();
-    expect(await screen.findByText("$54.20")).toBeTruthy();
-    expect(screen.getByText("$61.50")).toBeTruthy();
+    expect(await screen.findByText("$61.50")).toBeTruthy();
+    // Purchase shows no cost columns (owner 2026-11-12: "I don't have costs, so there should be no costs").
+    expect(screen.queryByText("$54.20")).toBeNull();
     // Owner 2026-11-12: a column outside the view's defaults stays hidden (it used to show because the table
     // read its default-hidden set before the server sent the columns).
     expect(screen.queryByText("13.6%")).toBeNull();
     expect(screen.getByTestId("perfume-tab-header").textContent).toBe("Purchase · compare vendors");
+    // Owner 2026-11-12: a rule separates each vendor's columns from the next.
+    const vendorHead = screen.getAllByRole("columnheader").find((th) => th.textContent?.includes("List price"));
+    expect(vendorHead?.className).toContain("border-l-2");
     expect(screen.getByText(/Review \(3\)/)).toBeTruthy();
     const gridCall = vi.mocked(clientApi.apiRequest).mock.calls.find(([p]) => String(p).startsWith("/api/v1/perfume/grid"));
     expect(String(gridCall?.[0])).toContain("view=buy");

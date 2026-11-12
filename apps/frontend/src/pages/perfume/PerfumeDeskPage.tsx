@@ -89,7 +89,7 @@ export default function PerfumeDeskPage() {
 /* ---------------- grid ---------------- */
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
-  buy: "Buying from your suppliers: your cost and price on the left; for each supplier only its list price and the price after its cushion. Your cost = the cheapest supplier after cushion and freight.",
+  buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price after cushion.",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "Your price at My margin % against each competitor's price, with how much to raise or lower.",
   all: "The whole item database.",
@@ -100,7 +100,9 @@ const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
-  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["landed_likely", "best_vendor", "target_price_margin", "target_profit"].includes(key);
+  // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
+  // who is cheapest, then each supplier's list price and price after cushion. No cost / price / profit columns.
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || key === "best_vendor";
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || key === "landed_likely";
   if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "target_price_margin", "low_sell", "target_action"].includes(key);
@@ -147,6 +149,18 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
+  // Owner 2026-11-12: "so I don't confuse between vendors have a line noting difference." A heavy left rule on the
+  // first shown column of every group (Mine, each supplier, each competitor) — header and every row.
+  const groupStart = useMemo(() => {
+    const seen = new Set<string>();
+    const starts = new Set<string>();
+    for (const c of cols) {
+      if (seen.has(c.group) || !defaultVisible(view, c.key)) continue;
+      seen.add(c.group);
+      if (c.group !== "Item") starts.add(c.key);
+    }
+    return starts;
+  }, [cols, view]);
   const columns: Array<ParityColumn<PerfumeGridRow>> = useMemo(
     () => cols.map((c) => ({
       key: c.key,
@@ -154,7 +168,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
       sortable: true,
       defaultHidden: !defaultVisible(view, c.key),
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
-      cellClass: c.kind === "text" ? undefined : "text-right tabular-nums",
+      cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
+      className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
       sortValue: (r: PerfumeGridRow) => r[c.key] ?? null,
       exportValue: (r: PerfumeGridRow) => r[c.key] ?? null,
       render: (r: PerfumeGridRow) => {
@@ -166,7 +181,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view],
+    [cols, view, groupStart],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
@@ -194,7 +209,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
-        storageKey={`perfume-desk-${view}-v5`}
+        storageKey={`perfume-desk-${view}-v6`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}
