@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~12:15 AM CT) — BOARD-45 register wave note #28895–#28902
+- **THIS:** BOARD-45 register notes Document Designs mount + go26/Aging/Document Designs wave.
+- **NEXT:** DailyPredictionTab raw tables; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~12:05 AM CT) — Statement KV panels → dl (go26 −1 file)
 - **THIS:** SettlementStatementBoardPanels deductions/company/linked key-value panels are dl rows (no raw table); go26 raw_table files 37→36.
 - **NEXT:** DailyPredictionTab / CashFlowHome matrices; Codex LIVE. No match/Dreamline.
@@ -179,11 +183,6 @@
 ## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave18
 - **PRIOR:** prior residual board wave.
 - **THIS:** Drivers.tsx appearance=board (3 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave17
-- **PRIOR:** prior residual board wave.
-- **THIS:** HistoryTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
 - **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
 
 ## ARCHIVE
