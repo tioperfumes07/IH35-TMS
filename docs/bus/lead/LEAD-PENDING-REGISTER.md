@@ -140,7 +140,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 134 | H | Settlements › List › Driver names | D015: All-uppercase names displayed | CC-1 / Cursor | 443.257-D | DONE-LIVE | settlements home proper case 10-23 5:12 PM |
 | 135 | H | Fuel › Questions › Table | D016: No column chooser in rendered DOM | Cursor | 443.257-D | MERGED-UNVERIFIED | 0512ef14 |
 | 136 | H | Fuel › Questions › Table headers | D017: Headers have no sorting controls | Cursor | 443.257-D | MERGED-UNVERIFIED | 0512ef14 |
-| 137 | H | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 137 | H | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: 6 inputs 40px; fixed e5c9dbf8c4 #27697 |
 | 138 | H | Fuel › Cards › Driver options request | D019: `/api/v1/mdata/drivers` 4,522 ms in audit session | CC-2 | 443.257-D | OPEN | not re-verified since audit |
 | 139 | H | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | 443.257-D | DONE-LIVE | 7d80c5a220 #28536 — expense-category-map speed fix merged |
 | 140 | H | Dispatch › Home › Round-trip exposure | D021: Driver names abbreviated to initials | Cursor | 443.257-D | RE-VERIFY | loads list shows full names 10-23 |
@@ -150,11 +150,11 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 144 | H | Dispatch › Load Costs › Pickup / delivery cells | D025: Dates display M/D/YY | Cursor | 443.257-D | CODED | formatDateQboList MM/DD/YYYY pinned formatDate.screens.test (remeasure 11-12) |
 | 145 | H | Dispatch › Load Costs › Driver names | D026: All-uppercase names | CC-3 | 443.257-D | DONE-LIVE | formatPersonName via entityLabel("Driver") — Chrome walk 2026-11-12 load costs proper case |
 | 146 | H | Dispatch › Load Costs › Settlement/Tour link | D027: Several links have only an em dash as label despite a settlement destination | CC-1 | 443.257-D | DONE-LIVE | 83b8272f1b1 — settlementLabel is_presettlement flag; verify-dispatch-missing-is-em-dash LIVE PASS |
-| 147 | H | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 147 | H | Tasks › Create Task › Inputs | D028: Eleven single-line inputs measured 38px high; textarea excluded | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: all single-line inputs 40px; fixed e5c9dbf8c4 #27697 |
 | 148 | H | Tasks › Exceptions › Since column | D029: ISO YYYY-MM-DD rendered | Cursor | 443.257-D | CODED | ReconcilerExceptionsPage formatDateUS (remeasure 11-12) |
 | 149 | H | Driver Hub › Driver Scheduler › Date range | D030: Subtitle uses YYYY-MM-DD; grid uses MON-DD | Cursor | 443.257-D | CODED | DriverSchedulerGridPage formatDateUS subtitle+grid (remeasure 11-12) |
 | 150 | H | Driver Hub › Driver Scheduler › Driver cells | D031: All-uppercase and inconsistent surname casing | CC-3 | 443.257-D | DONE-LIVE | formatPersonName via entityLabel("Driver") — Chrome walk 2026-11-12 13 drivers proper case |
-| 151 | H | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 151 | H | Driver Hub › Driver Scheduler › Assign Temp Cover | D032: Five single-line inputs measured 38px high; pickers about 2,477px wide and dates about 1,203px | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: 5 inputs 40px, pickers 688px, dates 92px; fixed e5c9dbf8c4 #27697 |
 | 152 | H | Maintenance › Home / Fleet Table › Money tiles | D033: MTD Cost, Open $ and severe-repair total omit cents | LEAD | 443.257-D | CODED | 864c4db7d8 #27491 (LEAD) maintenance money cents |
 | 153 | H | Maintenance › Create Work Order › Drawer inputs | D034: Visible single-line inputs measured 38px; customer picker about 2,408px wide, open-date input about 766px | CC-3 | 443.257-D | CODED | 0425324966 #27490 (CC-3) shared 32px field size |
 | 154 | H | Maintenance › Active WOs › Table headers | D035: Load, Driver, Vendor, Bill, JE and Timing headers have no sorting button, unlike adjacent headers | LEAD | 443.257-D | CODED | ac09dabb4a #27483 (LEAD) every WO column sorts |
@@ -171,16 +171,16 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 165 | H | Banking › Home › Drift account label | D046: Several alerts show only generic Account rather than the account display name | CC-1 | 443.257-D | DONE-LIVE | 83b8272f1b1 — DriftAlertsPanel uses account display_name from drift alert payload |
 | 166 | H | Factoring › Home › Ready-to-factor customers | D047: All-uppercase customer names displayed | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 167 | H | Customers › Create Customer › Billing address | D048: State and ZIP each measure 38px high and 209.33px wide | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
-| 168 | H | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 169 | H | Inventory › Create part › Unit cost | D050: Money input measures 28px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 170 | H | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 168 | H | Customers › Directory › Customer display names | D049: Mixed uppercase and proper-case customer labels | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: proper-case customer names; fixed acd69928f4 #29045 |
+| 169 | H | Inventory › Create part › Unit cost | D050: Money input measures 28px high | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: money input 40px; fixed e5c9dbf8c4 #27697 |
+| 170 | H | 425C › Profiles & Defaults › Company Name | D051: Input measures 30.67px high | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: text inputs 40px; fixed e5c9dbf8c4 #27697 |
 | 171 | H | 425C › History › Filed timestamp | D052: Month/day rendered without zero padding | Cursor | 443.257-D | OPEN | not re-verified since audit |
-| 172 | H | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 172 | H | Lists › Names Master › Name column | D053: Mixed uppercase and proper-case customer names | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: no ALL_CAPS customer names; fixed acd69928f4 #29045 |
 | 173 | H | Reports › Custom report builder › Report name | D054: Input measures 26.67px high and 1156.38px wide | CC-3 | 443.257-D | CODED | 81abbcd74e #27488 (CC-3) |
-| 174 | H | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 175 | H | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 176 | H | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | 443.257-D | OPEN | not re-verified since audit |
-| 177 | H | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
+| 174 | H | Docs › All Entities › Entity names | D055: Mixed uppercase and proper-case driver names | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: proper-case entity names; fixed acd69928f4 #29045 |
+| 175 | H | Docs › Upload Document › Category/entity/date inputs | D056: Four visible inputs 38px; date fields about 1201px wide | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: inputs 40px, dates 92px; fixed e5c9dbf8c4 #27697 |
+| 176 | H | Users › Master-detail › User labels | D057: Repeated generic User labels and mixed name capitalization | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: proper-case user names; fixed acd69928f4 #29045 |
+| 177 | H | Users › Create User › Name/email/role | D058: Three visible inputs 38px high | CC-3 | 443.257-D | DONE-LIVE | Chrome 2026-11-12: 3 inputs 40px; fixed e5c9dbf8c4 #27697 |
 | 178 | H | Program › Scenario tracker › Certification timestamp | D059: Raw database timestamp with fractional seconds and +00 timezone | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D059 |
 | 179 | H | System › Transaction Health › Generated/document dates | D060: Month-name timestamps instead of MM/DD/YYYY | Cursor | 443.257-D | CODED | f0ea811efe (Cursor) D060 |
 | 180 | H | System › Transaction Health › Journal-entry and bill-payment labels | D061: Raw UUIDs are visible display labels | Cursor | 443.257-D | CODED-QUEUED | LEAD branch in push queue |
