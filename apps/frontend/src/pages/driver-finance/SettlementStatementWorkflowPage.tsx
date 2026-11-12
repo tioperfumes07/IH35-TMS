@@ -801,6 +801,7 @@ export function SettlementStatementWorkflowPage() {
           companyReport.sections values once loaded; falls back to the tour-scoped readout fields only
           while companyReport hasn't loaded yet, same fallback shape CompanyWaterfallSection uses. */}
       <SettlementKpiGrid
+        settlementId={settlementId}
         revenueCents={companyReport ? companyReport.sections.revenue.invoiced_cents : (readout?.company_settlement?.revenue_cents ?? 0)}
         revenueSub={`${readout?.legs.length ?? 0} load${(readout?.legs.length ?? 0) === 1 ? "" : "s"}`}
         driverPayCents={readout?.driver_settlement?.gross_cents ?? Math.round((summary.earningsTotal + summary.deadheadTotal) * 100)}

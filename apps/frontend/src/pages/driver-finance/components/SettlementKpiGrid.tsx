@@ -1,3 +1,4 @@
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatUsdCents } from "../../../lib/money";
 
 /**
@@ -11,9 +12,12 @@ import { formatUsdCents } from "../../../lib/money";
  * --kpi-bg #F4F7FA, --th-rule #C7D2DC border, radius 4px, tabular-nums 20px/600 values, 11px/700
  * uppercase #4B5563 labels, 11px muted sub) — only the six labels/values changed, per this round's
  * explicit instruction. Inline-styled (not Tailwind) so a static guard can assert computed styles.
+ *
+ * ROUND 8.13 — each KPI figure is a MoneyCell → this settlement (literal entity drill).
  */
 
 export type SettlementKpiGridProps = {
+  settlementId: string;
   revenueCents: number;
   revenueSub: string;
   driverPayCents: number;
@@ -27,7 +31,21 @@ export type SettlementKpiGridProps = {
   companyMarginSub: string;
 };
 
-function SettlementTile({ label, value, sub, negative }: { label: string; value: string; sub: string; negative?: boolean }) {
+function SettlementTile({
+  label,
+  cents,
+  settlementId,
+  sub,
+  negative,
+  prefix = "",
+}: {
+  label: string;
+  cents: number;
+  settlementId: string;
+  sub: string;
+  negative?: boolean;
+  prefix?: string;
+}) {
   return (
     <div
       style={{
@@ -46,7 +64,12 @@ function SettlementTile({ label, value, sub, negative }: { label: string; value:
         {label}
       </div>
       <div style={{ fontSize: 20, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: negative ? "#B91C1C" : "#111827" }}>
-        {value}
+        {prefix}
+        <MoneyCell
+          cents={cents}
+          format={formatUsdCents}
+          drill={{ entity: { kind: "settlement", id: settlementId } }}
+        />
       </div>
       <div style={{ fontSize: 11, color: "#6B7280" }}>{sub}</div>
     </div>
@@ -55,6 +78,7 @@ function SettlementTile({ label, value, sub, negative }: { label: string; value:
 
 export function SettlementKpiGrid(props: SettlementKpiGridProps) {
   const {
+    settlementId,
     revenueCents,
     revenueSub,
     driverPayCents,
@@ -73,21 +97,30 @@ export function SettlementKpiGrid(props: SettlementKpiGridProps) {
       data-testid="settlement-kpi-grid"
       style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8, margin: "10px 0 14px" }}
     >
-      <SettlementTile label="Revenue" value={formatUsdCents(revenueCents)} sub={revenueSub} />
-      <SettlementTile label="Driver pay" value={formatUsdCents(driverPayCents)} sub={driverPaySub} />
+      <SettlementTile label="Revenue" cents={revenueCents} settlementId={settlementId} sub={revenueSub} />
+      <SettlementTile label="Driver pay" cents={driverPayCents} settlementId={settlementId} sub={driverPaySub} />
       <SettlementTile
         label="Reimbursements"
-        value={formatUsdCents(reimbursementCents)}
+        cents={reimbursementCents}
+        settlementId={settlementId}
         sub={`${reimbursementLines} ${reimbursementLines === 1 ? "line" : "lines"}`}
       />
       <SettlementTile
         label="Deductions"
-        value={deductionCents > 0 ? `−${formatUsdCents(deductionCents)}` : formatUsdCents(0)}
+        cents={deductionCents > 0 ? deductionCents : 0}
+        settlementId={settlementId}
         sub={deductionBreakdown || "0 lines"}
         negative={deductionCents > 0}
+        prefix={deductionCents > 0 ? "−" : ""}
       />
-      <SettlementTile label="Net pay" value={formatUsdCents(netPayCents)} sub="Driver take-home this period" />
-      <SettlementTile label="Company margin" value={formatUsdCents(companyMarginCents)} sub={companyMarginSub} negative={companyMarginCents < 0} />
+      <SettlementTile label="Net pay" cents={netPayCents} settlementId={settlementId} sub="Driver take-home this period" />
+      <SettlementTile
+        label="Company margin"
+        cents={companyMarginCents}
+        settlementId={settlementId}
+        sub={companyMarginSub}
+        negative={companyMarginCents < 0}
+      />
     </div>
   );
 }
