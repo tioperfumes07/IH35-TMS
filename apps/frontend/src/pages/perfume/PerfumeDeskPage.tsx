@@ -46,7 +46,7 @@ export default function PerfumeDeskPage() {
   if (!allowed) {
     return (
       <div className="p-3" data-testid="perfume-desk-locked">
-        <div className="text-sm text-gray-700">
+        <div className="text-xs text-gray-700">
           {access.isLoading ? "Checking access…" : access.isError ? `Could not check access: ${(access.error as Error).message}` : "The TIO Perfumes price desk is not open for this login."}
         </div>
       </div>
