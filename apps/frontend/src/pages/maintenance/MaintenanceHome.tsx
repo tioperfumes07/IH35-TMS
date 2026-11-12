@@ -111,7 +111,9 @@ export function maintenancePrimarySubNavItems(): Array<{ label: string; to: stri
   return SUBNAV.map((item) => ({
     label: item.label,
     to:
-      item.id === "in_shop"
+      item.id === "rm_status_board"
+        ? "/maintenance"
+        : item.id === "in_shop"
         ? "/maintenance/fleet-table?status=in-shop"
         : item.id === "cost_per_mile"
           ? "/reports/maintenance-cost-per-unit"
