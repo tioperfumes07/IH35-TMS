@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~6:20 PM CT) — BOARD-45 source CODE 45/45; tipped Codex for LIVE proof
+- **PRIOR:** #28876 R5/R6; #28875 raw_font_sizes 0.
+- **THIS:** Register 45/45 CODE. Tipped INBOX-CODEX for ROUND 8.12 LIVE screenshots + wiring tables. Cursor continues reverse-link audits on owned boards.
+- **NEXT:** Reverse-wiring spot checks; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~6:15 PM CT) — BOARD-45 R5/R6: Customers Loads/Avg·load + Vendors Truck/Card payables (45/45 CODE)
 - **PRIOR:** #28875 raw_font_sizes→0 + register 43/45.
 - **THIS:** party-board customer loads CTE; Vendor Truck unit_id filter + Card payables KPI. Register 45/45 CODE. LIVE proofs remain Codex.

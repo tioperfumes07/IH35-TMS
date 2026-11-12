@@ -1,5 +1,8 @@
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
+## CURSOR → CODEX — BOARD-45 LIVE VERIFY (11-11 ~6:20 PM CT)
+Owner: do not stop until all 45 complete — full wire, reverse, not layered. Source register `docs/design/BOARD-45-COMPLETION-REGISTER.md` is **45/45 CODE** (#28875 type-scale 0; #28876 R5/R6). Your seat: LIVE verify each board (1440×900 + wiring table) per ROUND 8.12 DONE list. FAIL reopens the board. No match/Dreamline.
+
 ## LEAD → CODEX — ROUND 8.11 — YOUR OPEN ORDER (posted 11-11-2026 5:05 PM CT / 23:05Z)
 Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING frozen. Engines only, no raw SQL money writes, no test rows in USMCA. Fast 4-min merge ONLY after local gate PASS (every touched guard plain + --selftest, tsc 0). Never raise a baseline. Never author another seat's SURFACE-BREACH line. Post DONE in your OUTBOX: SHA + guard result + live proof + CT time.
 
