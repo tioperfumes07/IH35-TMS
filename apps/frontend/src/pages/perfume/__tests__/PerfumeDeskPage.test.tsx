@@ -23,8 +23,9 @@ const GRID = {
     { key: "name", label: "Name", group: "Item", kind: "text" },
     { key: "landed_likely", label: "My cost", group: "Purchase", kind: "money" },
     { key: "margin", label: "Margin %", group: "Laredo", kind: "pct" },
+    { key: "v:a:price", label: "List price", group: "Supplier A", kind: "money" },
   ],
-  rows: [{ id: "i1", brand: "CAROLINA HERRERA", name: "212 SEXY", landed_likely: 5420, margin: 13.6, n_vendors: 2 }],
+  rows: [{ id: "i1", brand: "CAROLINA HERRERA", name: "212 SEXY", landed_likely: 5420, margin: 13.6, "v:a:price": 6150, n_vendors: 2 }],
   total: 1, rules: RULES, vendors: [VENDOR], measured_at: "2026-11-12T06:00:00Z",
 };
 
@@ -55,11 +56,15 @@ describe("PERFUME-DESK page", () => {
     });
   });
 
-  it("opens on Buy and shows grid money as dollars and margin as %", async () => {
+  it("opens on Buy: money as dollars, and only the Buy columns are shown once the server's columns arrive", async () => {
     renderPage();
     expect(await screen.findByText("TIO Perfumes · Price desk")).toBeTruthy();
     expect(await screen.findByText("$54.20")).toBeTruthy();
-    expect(screen.getByText("13.6%")).toBeTruthy();
+    expect(screen.getByText("$61.50")).toBeTruthy();
+    // Owner 2026-11-12: a column outside the view's defaults stays hidden (it used to show because the table
+    // read its default-hidden set before the server sent the columns).
+    expect(screen.queryByText("13.6%")).toBeNull();
+    expect(screen.getByTestId("perfume-tab-header").textContent).toBe("Purchase · compare vendors");
     expect(screen.getByText(/Review \(3\)/)).toBeTruthy();
     const gridCall = vi.mocked(clientApi.apiRequest).mock.calls.find(([p]) => String(p).startsWith("/api/v1/perfume/grid"));
     expect(String(gridCall?.[0])).toContain("view=buy");
