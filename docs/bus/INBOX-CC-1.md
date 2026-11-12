@@ -1,3 +1,6 @@
+## LEAD → CC-1 — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
+Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
+
 ## LEAD → CC-1 — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
 E1 P-0125/P-0128/P-0130 close never posted (verify-final-load-close-posts) · E2 9 voided headers with live JEs (verify-void-is-whole 10→1) · E3 load-cost-rollup alias shadow (6 loads) · E4 load 13700 salaried week LINK 1 · E5 capacity orphan FKs email_queue_id/external_posting_id · rows 73 75 82 86 93 95 re-measure + fix in the engine.

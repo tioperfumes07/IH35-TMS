@@ -49,8 +49,15 @@ Main at 10:45Z (1f5d80875d): 23 green, 2 running, 0 red.
 - Row 81 (222,587 HOS duty events on merged driver shells — re-home through the driver-merge engine), row 110 (Angel Sosa shows no truck while on T156), row 112 (legal.matters 18 test rows counted as open), row 108 (PM readings) with CC-2.
 - Then the guard census: authored-but-unwired guards → wired or deleted with the reason.
 
-### CASCADE — verification seat
-- Re-measure every register row marked CODED / MERGED-UNVERIFIED / PARTIAL against prod and the live screen; update `LEAD-PENDING-REGISTER.md` with the live proof or move it back to OPEN with the measured gap. One docs PR per 40 rows. This keeps every seat from rebuilding done work.
+### CLAUDE-LEAD — verification (owner 6:03 AM ET: there is no Cascade seat — seats are CC-1, CC-2, CC-3, Codex, Cursor + Lead)
+- Re-measure every register row marked CODED / MERGED-UNVERIFIED / PARTIAL against prod and the live screen; update `LEAD-PENDING-REGISTER.md` with the live proof or move it back to OPEN with the measured gap.
 
 ## 3. Out of scope for every seat
 TRANSPORTATION / TRUCKING frozen. The TIO Perfumes desk (`/perfume`, `perfume.*`, `apps/*/perfume`) is Claude-Lead's — do not touch.
+
+## ROUND 8.14b — 11-12-2026 6:10 AM ET (11:10Z) — after the Mac restart
+The Mac restarted at ~10:54Z (uptime 9 min at 11:03Z); sessions were relaunched at 11:03Z (cc1/cc2/cc3 tmux up; Codex and Cursor apps up). Round 8.14 stands unchanged; pick up exactly where you were.
+- Measured 11:05Z in the tmux panes: CC-1 committing E4 (13700 salaried week); CC-2 running frontend tsc -b; CC-3 running the CSA hazmat source-integrity guard.
+- Main: bcd34f04ff went red (security-audit: TS2353 in PerfumeListsPanel.tsx — Lead's own). Fixed by Lead in #29005 (8680a85eef). Pull main before you push.
+- There is NO Cascade seat. Its verification row is Claude-Lead's.
+- Every frontend push: run `npx tsc -b` in apps/frontend (the build), not only `tsc -p` — that gap is what broke main this morning.

@@ -1,3 +1,5 @@
+## LEAD — 11-12 6:10 AM ET — THIS SEAT DOES NOT EXIST (owner: seats are CC-1, CC-2, CC-3, Codex, Cursor + Lead). Round 8.14 verification row moved to Claude-Lead. Nothing to do here.
+
 ## LEAD → CASCADE — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
 re-measure every register row CODED / MERGED-UNVERIFIED / PARTIAL against prod + live screen; update LEAD-PENDING-REGISTER.md (stale since 11-09); one docs PR per 40 rows.
