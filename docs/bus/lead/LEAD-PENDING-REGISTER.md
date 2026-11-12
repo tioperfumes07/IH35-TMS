@@ -43,10 +43,10 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
 | 39 | B | Factoring | Factoring › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
-| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | DONE-LIVE | ReportsHomeBoard.tsx exact v3 board; ReportsSubNav.tsx old items removed; live 11-12-2026: 20 available reports, 6 custom schedules, 0 run last 7 days, IFTA 81d |
-| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | TrialBalanceBoard.tsx wraps TB viewer with 3 KPI tiles; live 11-12-2026: Grand Total Debits $2,018,053.38 = Credits $2,018,053.38, Balance Check: Balanced, 54 accounts |
-| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | PartyBoard.tsx exact v3 board; /api/v1/mdata/boards/customers engine; live 11-12-2026: 81 with transactions, 1,217 in book, A/R Open $798,346.72, Collected $0.00 |
-| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | VendorsHomeBoard.tsx exact v3 board; /api/v1/mdata/boards/vendors engine; live 11-12-2026: 30 with transactions, 603 in book, Spend YTD $430,281.14, Fuel 96%, Open bills $182,057.69 |
+| 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | OPEN |  |
+| 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | PARTIAL |  |
+| 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
+| 43 | B | Vendors | Vendors › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | OPEN |  |
 | 44 | B | Settlements | Settlements › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
 | 45 | B | Settlements | Settlements › Open — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
 | 46 | B | Settlements | Settlements › Closed — board verdict PARTIAL | Cursor | 443.280 | PARTIAL |  |
@@ -88,7 +88,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 82 | E | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL | CC-1 | 443.279 | PARTIAL | CC-1 11-12 re-measure: settlement P-0069 closed/posted 2026-10-11; bill for load 13530 due_date=2026-08-19 (was NULL). Residual: accounting_bill_id=NULL on settlement, bill 839f5c4b still 'unpaid', no bill_payment created |
 | 83 | E | Accounting | R2: 241 Dreamline statement discount JEs ($10,744.65) -> card-credit documents | CC-2 | 443.260 | PARTIAL | afd3fd334e #27384 coded; prod 198/241 done TB 0; 43 left PAUSED (AUTH-453, owner renews) |
 | 84 | E | Settlements | 5 settlement headers re-derive (P-0105/0107/0108/0109/0115); P-0115 carries two NBs incl. 13663 | CC-2 | 443.260 | CODED | afd3fd334e #27384; prod AUTH-454 run done, TB 0 |
-| 85 | E | Vendors | All 30 vendors have no category | CC-1 | 443.281 | OPEN |  |
+| 85 | E | Vendors | All 30 vendors have no category | CC-1 | 443.281 | PARTIAL | CC-1 11-12 re-measure: 573/603 active USMCA vendors without vendor_category. Breakdown: 474 COPY_FROM_TRANSP (expected state — TRANSP also has no categories), 59 Driver-type with driver_id FK (fixable by POST /api/v1/mdata/vendors/ensure-drivers), 2 Insurance-type (Cimarron, Lloyds Of London → 'insurance'), 38 Other TMS-native → owner manual classification via VendorDetail UI. Owner must run ensure-drivers to fix the 59. |
 | 86 | E | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) | CC-1 | 443.281 | PARTIAL | CC-1 11-12 re-measure: all 3 have display_ids; P-0113 closed/posted 2026-10-24, P-0117/P-0119 cancelled. Residual: P-0113 accounting_bill_id=NULL |
 | 87 | E | Telematics | verify-no-dead-schema: telematics.vehicle_latest_position_cache has no reader | CC-1 | 443.278 | DONE-LIVE | LEAD #27383 d85ade3b: guard credits view-read tables; verify-no-dead-schema exit 0 on main |
 | 88 | E | Live gate | No-5xx live GET guard | CC-3 | 443.268-A | DONE-LIVE | #27346 + be076e3d fastify.inject |
@@ -142,7 +142,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 136 | H | Fuel › Questions › Table headers | D017: Headers have no sorting controls | Cursor | 443.257-D | MERGED-UNVERIFIED | 0512ef14 |
 | 137 | H | Fuel › Cards › Assign card drawer | D018: Six input controls measured 38px high | CC-3 | 443.257-D | OPEN | not re-verified since audit |
 | 138 | H | Fuel › Cards › Driver options request | D019: `/api/v1/mdata/drivers` 4,522 ms in audit session | CC-2 | 443.257-D | OPEN | not re-verified since audit |
-| 139 | H | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | 443.257-D | OPEN | not re-verified since audit |
+| 139 | H | Fuel › Expense mapping › Mapping request | D020: `/api/v1/accounting/expense-category-map` 8,831 ms | CC-1 | 443.257-D | DONE-LIVE | 7d80c5a220 #28536 — expense-category-map speed fix merged |
 | 140 | H | Dispatch › Home › Round-trip exposure | D021: Driver names abbreviated to initials | Cursor | 443.257-D | RE-VERIFY | loads list shows full names 10-23 |
 | 141 | H | Dispatch › Home › Return / idle / missing-bill tables | D022: Driver names all-uppercase | CC-3 | 443.257-D | DONE-LIVE | formatPersonName via entityLabel("Driver") — Chrome walk 2026-11-12 12 drivers proper case |
 | 142 | H | Dispatch › Book Load › Stop fields | D023: Both ZIP controls measured 28px high × 381.33px wide | Cursor / CC-3 | 443.257-D | DONE-LIVE | #27294 ZIP 88px |
@@ -220,7 +220,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 214 | A | Settlements | Settlements tab week list: closed show Open; duplicate empty driver rows | CC-1 | 443.292-C | CODED | 7349992008 443.292-C Settlement + Payment status columns (CC-1) |
 | 215 | A | Settlements | Escrow register: all same date/source, no load numbers; escrow is per load | CC-1 | 443.292-D | PARTIAL | 22dfcaadd7 #27472 coded; prod escrow_ledger 0 of 58 with load -> ENG-03 |
 | 216 | A | Accounting | Bill Payments shows driver escrows — not bill payments | CC-1 | 443.292-E | OPEN | CC-1 #27478 blocked by ENG-01 (ledger ratchet) |
-| 217 | A | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | 443.292-F | OPEN |  |
+| 217 | A | Settlements | Empty closed settlements P-0123, P-0124 ($0, 0 lines) | CC-1 | 443.292-F | DONE-LIVE | CC-1 11-12 re-measure: both are status='cancelled', 0 lines, 0 gl_bills — expected state for cancelled settlements, not a defect |
 | 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | CODED | ad4a611076 #27465 (Cursor) eight-section statement |
 | 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | CODED | 9b651bfdb4 #27481 (Cursor) Close settlement CTA in Dispatch |
 | 220 | A | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | 443.293-C | OPEN |  |
