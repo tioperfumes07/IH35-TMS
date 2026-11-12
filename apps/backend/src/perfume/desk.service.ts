@@ -123,6 +123,11 @@ export type ImportIn = {
   /** Sum of every price the reader read from the file, in cents. Must equal the saved total. */
   file_price_total_cents: number;
   rows: ImportRowIn[];
+  /**
+   * true (default): this file is the vendor's full list and replaces the vendor's current list(s).
+   * false: a supplement (new arrivals, specials) — it is added and the vendor's current list stays current.
+   */
+  replaces_current?: boolean;
 };
 export type ImportCheck = {
   rows_read: number; rows_saved: number; rows_skipped: number;
@@ -206,7 +211,9 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     [vendor.id, body.list_date, body.label ?? null, body.file_name, body.source_kind, check.rows_read, check.rows_saved, check.rows_skipped,
       check.price_total_file_cents, check.price_total_saved_cents, userId]);
   const listId = list.rows[0].id;
-  await c.query(`UPDATE perfume.price_lists SET is_current = false WHERE vendor_id = $1 AND id <> $2 AND is_current`, [vendor.id, listId]);
+  if (body.replaces_current !== false) {
+    await c.query(`UPDATE perfume.price_lists SET is_current = false WHERE vendor_id = $1 AND id <> $2 AND is_current`, [vendor.id, listId]);
+  }
 
   // Pass 1 — match every line in memory. New items get a temporary id so later lines of the same file
   // link to them; nothing is written per line (one round-trip per 500 rows, not per row).
@@ -308,11 +315,18 @@ export async function listLists(c: PoolClient) {
 export async function voidList(c: PoolClient, listId: string, reason: string) {
   const r = await c.query(`UPDATE perfume.price_lists SET voided_at = now(), void_reason = $2, is_current = false WHERE id = $1 AND voided_at IS NULL RETURNING vendor_id`, [listId, reason]);
   if (!r.rowCount) throw new Error("list_not_found");
-  // The vendor's newest remaining list becomes current again.
+  // If that left the vendor with no current list, its newest remaining list becomes current again.
   await c.query(
     `UPDATE perfume.price_lists SET is_current = true WHERE id = (
-       SELECT id FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL ORDER BY list_date DESC, imported_at DESC LIMIT 1)`,
+       SELECT id FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL ORDER BY list_date DESC, imported_at DESC LIMIT 1)
+       AND NOT EXISTS (SELECT 1 FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL AND is_current)`,
     [r.rows[0].vendor_id]);
+}
+
+/** Owner switch: count this list in the grid (current) or not. Voided lists cannot be switched. */
+export async function setListCurrent(c: PoolClient, listId: string, current: boolean) {
+  const r = await c.query(`UPDATE perfume.price_lists SET is_current = $2 WHERE id = $1 AND voided_at IS NULL`, [listId, current]);
+  if (!r.rowCount) throw new Error("list_not_found");
 }
 
 /* ---------------- review & confirm ---------------- */
@@ -405,10 +419,12 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
   const buyV = vendors.filter((v) => v.kind !== "sell");
   const sellV = vendors.filter((v) => v.kind !== "buy");
   const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null }>(
-    `SELECT r.item_id, l.vendor_id, min(r.price_cents)::int AS price_cents, max(r.qty) AS qty, max(r.case_pack) AS case_pack, min(r.sku) AS sku
+    // A vendor can have several current lists (full list + new arrivals). For each item the vendor's NEWEST
+    // current list that carries it sets the price (list date, then import time); within that list, the lowest line.
+    `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.item_id IS NOT NULL AND l.is_current AND l.voided_at IS NULL
-      GROUP BY r.item_id, l.vendor_id`);
+      ORDER BY r.item_id, l.vendor_id, l.list_date DESC, l.imported_at DESC, r.price_cents ASC`);
   const items = await c.query<{ id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string; upcs: string[] | null }>(
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs

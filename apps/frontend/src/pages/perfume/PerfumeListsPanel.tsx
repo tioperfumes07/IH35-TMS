@@ -7,7 +7,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, voidPerfumeList,
+  listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList,
   type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
 import { extractRows, FIELDS, findHeaderRow, guessMapping, readAnyFile, type Mapping, type ReadFile } from "./perfumeFileReaders";
@@ -39,12 +39,27 @@ export function PerfumeListsPanel() {
             { key: "matched", label: "Linked", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "review", label: "To review", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "unmatched", label: "No match", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
-            { key: "is_current", label: "Current", sortable: true, render: (l) => (l.is_current ? "Yes" : "Older") },
+            { key: "is_current", label: "In the grid", sortable: true, render: (l) => (l.is_current ? "Yes" : "No (older)") },
           ]}
-          rowActions={(l) => <VoidListButton list={l} />}
+          rowActions={(l) => <span className="flex items-center gap-1"><CurrentListButton list={l} /><VoidListButton list={l} /></span>}
+          rowActionsWidth={320}
         />
       </section>
     </div>
+  );
+}
+
+function CurrentListButton({ list }: { list: PerfumeList }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" disabled={busy} onClick={async () => {
+      setBusy(true);
+      try { await setPerfumeListCurrent(list.id, !list.is_current); await qc.invalidateQueries({ queryKey: ["perfume"] }); pushToast(list.is_current ? "Removed from the grid" : "Counted in the grid", "success"); }
+      catch (e) { pushToast(userFacingApiError(e, "Not changed"), "error"); }
+      finally { setBusy(false); }
+    }}>{list.is_current ? "Take out of grid" : "Use in grid"}</Button>
   );
 }
 
@@ -144,7 +159,9 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const [headerRow, setHeaderRow] = useState(0);
   const [map, setMap] = useState<Mapping>({});
   const [vendorId, setVendorId] = useState<string | null>(null);
-  const [listDate, setListDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [listDate, setListDate] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
+  // A full price list replaces the vendor's current list; a supplement (new arrivals, specials) is added next to it.
+  const [replaces, setReplaces] = useState(true);
   const [check, setCheck] = useState<PerfumeImportCheck | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -154,6 +171,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
 
   const open = async (f: File) => {
     setFile(f); setCheck(null);
+    setReplaces(!/arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement/i.test(f.name));
     try {
       const r = await readAnyFile(f);
       const si = Math.max(0, r.sheets.findIndex((s) => s.cells.length > 1));
@@ -166,7 +184,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   };
   const body = (): PerfumeImportBody | null => {
     if (!read || !extracted || !vendorId || !file) return null;
-    return { vendor_id: vendorId, list_date: listDate, file_name: file.name, source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows };
+    return { vendor_id: vendorId, list_date: listDate, file_name: file.name, source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows, replaces_current: replaces };
   };
   const run = async (save: boolean) => {
     const b = body(); if (!b) return;
@@ -235,6 +253,13 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
               { key: "price", label: "Price", cellClass: "text-right tabular-nums", render: (r) => `$${r.price}` }, { key: "qty", label: "Qty" },
             ]}
           />
+          <label className="flex items-start gap-2 text-xs text-gray-700">
+            <input type="checkbox" className="mt-0.5" checked={replaces} onChange={(e) => setReplaces(e.target.checked)} data-testid="perfume-import-replaces" />
+            <span>
+              <b>This is the vendor&apos;s full price list</b> — it replaces their current list in the grid.
+              Untick for new arrivals / specials: the file is added and their current list stays in the grid (the newest list wins when both carry an item).
+            </span>
+          </label>
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(false)}>Check before saving</Button>
             <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length} onClick={() => void run(true)}>Save list</Button>

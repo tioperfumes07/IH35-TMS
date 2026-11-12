@@ -8,7 +8,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import {
   buildGrid, confirmRow, exportWorkbook, filterView, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
-  reviewQueue, searchItems, searchRows, setInternalCode, sortRows, upsertVendor, voidList, type GridView,
+  reviewQueue, searchItems, searchRows, setInternalCode, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
@@ -83,6 +83,7 @@ const importSchema = z.object({
   rows_read: z.number().int().min(0).max(100_000),
   file_price_total_cents: z.number().int().min(0),
   rows: z.array(rowSchema).max(100_000),
+  replaces_current: z.boolean().optional(),
 });
 const gridQuery = z.object({
   view: z.enum(["buy", "sell", "wholesale", "all"]).default("buy"),
@@ -144,6 +145,14 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ reason: z.string().trim().min(3).max(500) }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason));
+    return { ok: true };
+  });
+
+  app.post("/api/v1/perfume/lists/:id/current", async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
+    const body = z.object({ current: z.boolean() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
+    await withCurrentUser(uid, (c) => setListCurrent(c, params.data.id, body.data.current));
     return { ok: true };
   });
 

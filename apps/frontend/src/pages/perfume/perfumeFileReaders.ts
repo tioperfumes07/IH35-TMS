@@ -124,6 +124,16 @@ export async function readSpreadsheet(file: File): Promise<ReadFile> {
  * Text PDF → one sheet of [description, price] pairs. Lines are rebuilt from text positions; each line can
  * hold several "NAME $00.00" pairs (two-column lists). Lines with no price become section headers.
  */
+export const PDF_NO_NAME = "(no name on this line in the file)";
+/**
+ * Every "$00.00" on a PDF text line becomes one [name, price] pair — including a price printed with no name
+ * (LISTA N 5 has one), so the file total counts every price the file shows and the nameless line lands in
+ * Review instead of vanishing.
+ */
+export function pdfLinePairs(line: string): Array<[string, string]> {
+  return [...line.matchAll(/((?:\S.*?)?)\s*\$\s?([\d,]+\.\d{2})/g)].map((m) => [m[1].trim() || PDF_NO_NAME, m[2].replace(/,/g, "")]);
+}
+
 export async function readPdf(file: File): Promise<ReadFile> {
   const pdfjs = await import("pdfjs-dist");
   const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
@@ -142,8 +152,8 @@ export async function readPdf(file: File): Promise<ReadFile> {
     }
     for (const y of [...byY.keys()].sort((a, b) => b - a)) {
       const line = byY.get(y)!.sort((a, b) => a.x - b.x).map((t) => t.s).join(" ").replace(/\s+/g, " ").trim();
-      const pairs = [...line.matchAll(/(\S.*?)\s*\$\s?([\d,]+\.\d{2})/g)];
-      if (pairs.length) for (const m of pairs) cells.push([m[1].trim(), m[2].replace(/,/g, "")]);
+      const pairs = pdfLinePairs(line);
+      if (pairs.length) for (const pr of pairs) cells.push(pr);
       else if (line.length <= 40 && /^[A-ZÁÉÍÓÚÑ &/'-]+$/i.test(line)) cells.push([line, null]);
     }
   }

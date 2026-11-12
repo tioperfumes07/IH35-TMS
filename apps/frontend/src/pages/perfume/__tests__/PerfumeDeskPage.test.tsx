@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientApi from "../../../api/client";
 import { ToastProvider } from "../../../components/Toast";
 import PerfumeDeskPage from "../PerfumeDeskPage";
-import { extractRows, guessMapping, priceToCents } from "../perfumeFileReaders";
+import { extractRows, guessMapping, PDF_NO_NAME, pdfLinePairs, priceToCents } from "../perfumeFileReaders";
 
 vi.mock("../../../auth/useAuth", () => ({ useAuth: () => ({ user: { uuid: "u", role: "Owner" } }) }));
 vi.mock("../../../api/client", async (importOriginal) => {
@@ -113,5 +113,12 @@ describe("PERFUME-DESK file reader", () => {
     expect(out.fileTotalCents).toBe(9950);
     expect(out.rows[1].section).toBe("WOMEN");
     expect(out.rows[0].upc).toBe("8411061043868");
+  });
+
+  it("PDF lines: two-column pairs, and a price with no name is kept (real LISTA N 5 line), never dropped", () => {
+    expect(pdfLinePairs("CK DEFY M 3.4oz $41.00 CURVE WAVE M 4.2oz EDT $11.00")).toEqual([["CK DEFY M 3.4oz", "41.00"], ["CURVE WAVE M 4.2oz EDT", "11.00"]]);
+    expect(pdfLinePairs("$41.00")).toEqual([[PDF_NO_NAME, "41.00"]]);
+    expect(pdfLinePairs("LANCOME LA VIE EST BELLE 100ML EDP $1,105.00")).toEqual([["LANCOME LA VIE EST BELLE 100ML EDP", "1105.00"]]);
+    expect(pdfLinePairs("WOMEN")).toEqual([]);
   });
 });

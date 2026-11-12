@@ -11,10 +11,10 @@
 | bucket | n | meaning |
 |---|---:|---|
 | **create** (collection POST) | 370 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 291 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| **nested create** (child POST) | 292 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 257 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 991 | |
+| **TOTAL POST endpoints** | 992 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -771,6 +771,15 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/docs/files/:file_id/versions` | `apps/backend/src/docs/files.routes.ts` | — | — | — |
 | create | `/api/v1/docs/files/upload-url` | `apps/backend/src/docs/files.routes.ts` | — | — | — |
 
+### perfume — 4 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+
 ### cash-flow — 3 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -802,14 +811,6 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/notifications/:id/dismiss` | `apps/backend/src/notifications/notifications.routes.ts` | — | — | — |
 | nested | `/api/v1/notifications/:id/read` | `apps/backend/src/notifications/notifications.routes.ts` | — | — | — |
 | create | `/api/v1/notifications/mark-all-read` | `apps/backend/src/notifications/notifications.routes.ts` | — | — | — |
-
-### perfume — 3 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 
 ### safety-docs — 3 create-surface(s)
 

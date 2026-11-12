@@ -66,6 +66,8 @@ export type PerfumeImportBody = {
   rows_read: number;
   file_price_total_cents: number;
   rows: PerfumeImportRow[];
+  /** false = supplement (new arrivals): added next to the vendor's current list instead of replacing it. */
+  replaces_current?: boolean;
 };
 export type PerfumeImportCheck = {
   rows_read: number;
@@ -124,6 +126,8 @@ export const listPerfumeLists = () => apiRequest<{ lists: PerfumeList[] }>("/api
 export const previewPerfumeImport = (b: PerfumeImportBody) => apiRequest<PerfumeImportCheck>("/api/v1/perfume/lists/preview", { method: "POST", body: b });
 export const savePerfumeImport = (b: PerfumeImportBody) =>
   apiRequest<{ list_id: string; check: PerfumeImportCheck }>("/api/v1/perfume/lists", { method: "POST", body: b });
+export const setPerfumeListCurrent = (id: string, current: boolean) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
 export const getPerfumeReview = (offset = 0, limit = 100) =>
   apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?offset=${offset}&limit=${limit}`);
