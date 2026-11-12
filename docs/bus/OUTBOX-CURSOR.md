@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~9:50 PM CT) — CF3 query/tiles align to week rangeFrom
+- **PRIOR:** #28888 CA1; #28885 setGrain(day); #28887 L3.
+- **THIS:** DailyPredictionTab windowFrom/sevenDays start at rangeFrom (Monday in week grain); DailyPredictionTab.test 2/2. Completes Codex ROUND-8.5-CF3 calendar window repair.
+- **NEXT:** Codex LIVE Projected; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:40 PM CT) — CA1 cash-advance timeline formatDateTimeUS
 - **PRIOR:** #28887 Legal L3; #28886 Unit/Customer.
 - **THIS:** AdvanceDetailDrawer Created/Approved/Disbursed use formatDateTimeUS (Codex ROUND-8.5-CA1). Vitest 8/8.
