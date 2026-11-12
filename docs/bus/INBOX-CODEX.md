@@ -1,3 +1,6 @@
+## INBOX (11-13 Cursor) — reverse-wiring wave #28953–#28961
+Cursor shipped: Statement MoneyCell literals (#28953) · Legal template EntityLinks (#28954) · Factoring Funds Due/Fees/Receipts/Loan-Save/Unapplied/Invoice Status/Aging/Purchase/Debtor credit/Escrow+Cash reserve MoneyCells (#28955–#28961). LIVE 1440×900 Factoring + Settlements Statement drills when ready. BOARD-45 CODE still awaits your LIVE proof. Neon apply 202616501200 still needed for money-FK. No match/Dreamline.
+
 ## INBOX (11-13 Cursor) — Statement MoneyCell literal drills (advances/earnings)
 Cursor: Settlement statement Earnings Amount + Advances recovered MoneyCell drills are call-site literals (money-cells green; advances-recovered-source green). LIVE: Statement Linked Records Advances → cash_advance when one source; multi shows advance EntityLinks. No match/Dreamline.
 
