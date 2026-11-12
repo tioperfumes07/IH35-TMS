@@ -40,20 +40,22 @@ if (/tx\.is_credit \|\| Number\(tx\.amount_cents/.test(viewSrc)) {
 // Default is For review; Categorized holds the statement-walk categorized rows.
 function hasReviewContract(source) {
   const tabs = source.match(/export const BANKING_REVIEW_TABS\s*=\s*\[([\s\S]*?)\]\s*as const/)?.[1] ?? "";
-  // ROUND 8.17: a validated URL cohort may initialize the tab; absent a cohort,
-  // the default remains For review. Do not require the retired literal-only initializer.
+  // ROUND 8.17 / 8.20 board3: URL cohort (cohortReview) or prop (initialReviewTab) may initialize
+  // the tab; absent a cohort, the default remains For review. Literal-only initializer still OK.
+  const defaultInit =
+    /useState<ReviewTabId>\(\s*(?:(?:cohortReview|initialReviewTab)\s*\?\?\s*)?"for_review"\s*\)/.test(source);
   return /\{ id: "for_review", label: "For review" \}/.test(tabs) &&
     /\{ id: "categorized", label: "Categorized" \}/.test(tabs) &&
     /\{ id: "excluded", label: "Excluded" \}/.test(tabs) &&
     [...tabs.matchAll(/\bid:\s*"([^"]+)"/g)].map((m) => m[1]).join(",") === "for_review,categorized,excluded" &&
-    /useState<ReviewTabId>\(\s*(?:initialReviewTab\s*\?\?\s*)?"for_review"\s*\)/.test(source);
+    defaultInit;
 }
 if (process.argv.includes("--selftest")) {
   if (!hasReviewContract(viewSrc)) fail("selftest clean source must satisfy review contract");
-  const initializer = /useState<ReviewTabId>\(\s*(?:initialReviewTab\s*\?\?\s*)?"for_review"\s*\)/;
+  const initializer = /useState<ReviewTabId>\(\s*(?:(?:cohortReview|initialReviewTab)\s*\?\?\s*)?"for_review"\s*\)/;
   const plants = [
-    ["wrong fallback", viewSrc.replace(initializer, 'useState<ReviewTabId>(initialReviewTab ?? "categorized")')],
-    ["missing fallback", viewSrc.replace(initializer, "useState<ReviewTabId>(initialReviewTab)")],
+    ["wrong fallback", viewSrc.replace(initializer, 'useState<ReviewTabId>(cohortReview ?? "categorized")')],
+    ["missing fallback", viewSrc.replace(initializer, "useState<ReviewTabId>(cohortReview)")],
     ["missing For review", viewSrc.replace('{ id: "for_review", label: "For review" }', '{ id: "wrong", label: "For review" }')],
     ["missing Categorized", viewSrc.replace('{ id: "categorized", label: "Categorized" }', '{ id: "wrong", label: "Categorized" }')],
     ["missing Excluded", viewSrc.replace('{ id: "excluded", label: "Excluded" }', '{ id: "wrong", label: "Excluded" }')],
@@ -65,7 +67,9 @@ if (process.argv.includes("--selftest")) {
   }
   const oldLiteral = viewSrc.replace(initializer, 'useState<ReviewTabId>("for_review")');
   if (!hasReviewContract(oldLiteral)) fail("selftest literal default must remain supported");
-  console.log(`verify-bank-register-sign selftest PASS: ${plants.length} failing plants plus current/literal positive controls`);
+  const propForm = viewSrc.replace(initializer, 'useState<ReviewTabId>(initialReviewTab ?? "for_review")');
+  if (!hasReviewContract(propForm)) fail("selftest initialReviewTab ?? for_review must remain supported");
+  console.log(`verify-bank-register-sign selftest PASS: ${plants.length} failing plants plus current/literal/prop positive controls`);
 }
 if (!hasReviewContract(viewSrc)) {
   fail("register review tabs must be For review / Categorized / Excluded with default for_review (All review tab banned)");
