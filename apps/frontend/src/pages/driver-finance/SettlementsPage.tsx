@@ -446,14 +446,14 @@ export function SettlementsPage() {
           value={formatQuantityTable(Number(kpis.total_unpaid ?? 0), 0)}
           sub="settlements not yet paid"
           testId="settlements-kpi-total-unpaid"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
+          href="/driver-finance/settlements?tab=payments&payment_state=unpaid"
         />
         <V3KpiTile
           label="This period"
           value={formatQuantityTable(Number(kpis.this_period ?? 0), 0)}
           sub="period end ≥ this week"
           testId="settlements-kpi-this-period"
-          onClick={() => navigate("/driver-finance/settlements")}
+          href="/driver-finance/settlements"
         />
         <V3KpiTile
           label="Driver pay (period)"
@@ -480,7 +480,7 @@ export function SettlementsPage() {
             )
           }
           testId="settlements-kpi-driver-pay"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+          href="/driver-finance/settlements?tab=payments"
         />
         <V3KpiTile
           label="Drivers w/ debt"
@@ -490,21 +490,21 @@ export function SettlementsPage() {
           sub={focusFilter === "debt" ? "filter on" : "live debt balance"}
           tone={typeof kpis.drivers_with_debt === "number" && kpis.drivers_with_debt > 0 ? "red" : "ink"}
           testId="settlements-kpi-debt"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments&focus=debt")}
+          href="/driver-finance/settlements?tab=payments&focus=debt"
         />
         <V3KpiTile
           label="YTD settlements"
           value={formatQuantityTable(Number(kpis.ytd_settlements ?? 0), 0)}
           sub={`${ytdYear} calendar year`}
           testId="settlements-kpi-ytd"
-          onClick={() => navigate("/driver-finance/settlements")}
+          href="/driver-finance/settlements"
         />
         <V3KpiTile
           label="Open driver bills"
           value={formatQuantityTable(Number(kpis.open_driver_bills ?? 0), 0)}
           sub="unsettled driver pay"
           testId="settlements-kpi-open-bills"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+          href="/driver-finance/settlements?tab=payments"
         />
       </div>
     ) : undefined;

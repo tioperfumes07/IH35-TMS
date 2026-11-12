@@ -18,7 +18,6 @@ import {
 } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
-import { MoneyInput } from "../../components/forms/MoneyInput";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "I buy from them"], ["sell", "Laredo store I sell against"], ["both", "Both"]];
