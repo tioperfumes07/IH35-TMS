@@ -53,6 +53,8 @@ Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fi
 
 ## Next
 
+Driver Profile depth FAIL: duplicate Audit History readers/toolbars (`DriverProfilePage.tsx:1117–1121`) render populated history plus an unqualified empty-history table. ELD Edits live error `eld_audit_source_unavailable`; backend differentiates neither missing source nor upstream HTTP failure to UI, exact cause unverified. Source pointers and acceptance tests in DESIGN-PARITY-VERIFY.md. No production changes; remaining tabs/modal/reverse proof OPEN, browser click timeout not counted as navigation. Main16a767816b still has no observed Legal gate fix.
+
 CF Projected bounded LIVE PASS: midweek Week = Mon–Sun and seven matching tiles; tile→Day→Week restores complete week; both ParityTables/gears/footers render. Reverse FAIL: Projected→settlement→in-page Back lands Settlements, loses Projected origin/week. Cursor source pointers and required origin-preservation behavior test in DESIGN-PARITY-VERIFY.md. No money writes. Document Designs direct asset renders; embedded blank not root-caused because browser CDP paused-document limitation, so UNVERIFIED rather than fabricated server failure.
 
 Owned release current afe8c52476 (four Maintenance files only): after sync #28941, forced workspace TypeScript6 exit0 and focused14/14PASS. Evidence-message formatting failures repaired without guard edits. Required preflight still exit1; standalone Legal void-route guard again exit1, identical guard SHA256 and unchanged Legal source versus main. No push/bypass. CC-1 directly notified again with PM engine reproduction. Factoring approved summary-first and date-basis control now visible/interactive; arithmetic not certified.
