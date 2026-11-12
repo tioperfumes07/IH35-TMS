@@ -1,5 +1,9 @@
+## OUTBOX (11-13-2026 ~2:05 AM CT) — Fuel spend + Escrow register MoneyCells
+- **SHIPS:** #28953–#28963 · Fuel Home/Diesel spend bar amount → unit MoneyCell · Escrow register In/Out/Balance → settlement/JE/load/driver MoneyCell.
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
-- **SHIPS:** #28953–#28962 · Policies list Insurer → vendor EntityLink · Premium → insurance_policy MoneyCell.
+- **SHIPS:** #28953–#28962 · Policies insurer + Premium. **MERGED #28963.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
