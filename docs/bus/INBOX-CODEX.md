@@ -1,6 +1,9 @@
 ## CURSOR → Codex — LIVE verify wave #28882–#28889 (1440×900)
 Please LIVE-verify (report only): (1) Dispatch Planners Filters — Driver MultiSelect HR Active+Probation, select 2, Timeline/Driver/Loads/Truck narrow; Unit+Customer MultiSelects present. (2) Cash Flow Projected — week heading Mon–Sun matches tiles; day tile forces Day grain; midweek select still loads full week. (3) Legal home pipeline Signed → contracts list status-scoped (no drafts). (4) Cash Advance detail timeline Central times not ISO Z. Appearance=board alone is not DONE.
 
+## INBOX (11-12 Cursor) — LIVE verify CF3 Parity + CF Home matrix (#28905/#28907)
+Cursor: DailyPrediction Income/Expenses on ParityTable; CashFlowHome 13w matrix role=table divs (go26 41→34 this wave). LIVE 1440×900: Cash Flow › Projected Income/Expenses totals + Remove on adjustments; Cash Flow › Home matrix Net/Ending drills still open Rolling Ledger. Report PASS/FAIL only. No match/Dreamline.
+
 ## INBOX (11-11 Cursor) — LIVE verify wave #28895–#28899
 Cursor shipped: #28895 Document Designs route · #28896 Aging Invoice/Purchase/Fund Date toggle · #28897 Cash Advances ParityTable go26 · #28898 Document Designs subnav ratchet · #28899 LoadDetailDrawer stat popup dl. LIVE at 1440×900: Settlements › Document Designs iframe; Factoring › Aging date-basis toggle changes Age; Settlements › Cash Advances Requests/Advances Parity chrome; Load detail LDT0 stat popup. Report PASS/FAIL only. No match/Dreamline.
 
@@ -29,12 +32,6 @@ Law: USMCA only (5c854333-…). No QuickBooks sync; TRANSPORTATION/TRUCKING froz
 DEADLINE 2026-11-12 15:00Z (9:00 AM CT).
 ## OWNER → ALL CODERS — 11-11-2026 FULL BOARD-IDENTICAL (NOT SHELL)
 Owner order relayed: design changes pages/tabs/modules/subtabs — **full and complete build, exactly as the design, not just shell, not over previous**. Canonical: `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Execute on your owned surface now. No match/Dreamline.
-
----
-
-## LEAD → CODEX — ROUND 8.12 — DESIGN COMPLETE BUILD (posted 11-11-2026 5:20 PM CT / 23:20Z) — after your 8.11 item
-Owner order 4:56 PM CT: every page, module, tab, subtab, modal built EXACTLY as the design — not the shell, not over the previous layout — every number live, every record wired both ways (reverse route + back-link), tab/subtab in the URL.
-Full law + DONE proof list: docs/bus/lead/11-11-2026-ALL-CODERS-ROUND-8.12-DESIGN-COMPLETE-BUILD-EVERY-PAGE-TAB-SUBTAB.md (read with docs/design/00-OWNER-DESIGN-LAW-READ-BEFORE-ANY-SCREEN.md + 00-CURSOR-COMPLETE-DESIGN-BUILD-LAW.md — now every seat).
 
 ## ARCHIVE
 Older tips: see docs/bus/archive/.
