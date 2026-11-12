@@ -1,6 +1,6 @@
 // TABLE_DATE_OMIT: this table has no date column by design — Diesel by truck is one row per TRUCK aggregated over the period chosen in the board's Oct / Sep / YTD period control — the period is the filter, not a column.
-import { useMemo, useState } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useCallback, useMemo } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -146,7 +146,21 @@ export function FuelHomePage() {
       { replace: true },
     );
   };
-  const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
+  // ROUND 8.20 board 19 — period lives in URL so View all / Back / KPI drills keep the month.
+  const periodFromUrl = searchParams.get("period");
+  const period: FuelBoardPeriodId =
+    periodFromUrl === "oct" || periodFromUrl === "sep" || periodFromUrl === "ytd" ? periodFromUrl : "oct";
+  const setPeriod = (next: FuelBoardPeriodId) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "oct") p.delete("period");
+        else p.set("period", next);
+        return p;
+      },
+      { replace: true },
+    );
+  };
   const range = fuelBoardPeriodRange(period);
 
   // Love's sync status — fail-loud banner only (board KPI strip is FuelBoardKpiStrip).
@@ -195,6 +209,16 @@ export function FuelHomePage() {
     });
   }, [dieselQuery.data?.rows, makeModelByUnitId, search]);
 
+  const unitHistoryHref = useCallback(
+    (unitId: string | null | undefined) => {
+      const target = unitId
+        ? `/fuel/history?unit_id=${encodeURIComponent(unitId)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
+        : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+      return withReturnContext(target, originHref);
+    },
+    [originHref, range.from, range.to],
+  );
+
   // Fuel.dc.html seven columns: (graphic) · Unit · Spend · $ · Gallons · $/gal · Fills · Loads.
   const dieselColumns = useMemo<ParityColumn<DieselBoardRow>[]>(
     () => [
@@ -240,12 +264,18 @@ export function FuelHomePage() {
         render: (r) => {
           const max = Math.max(1, ...dieselRows.map((x) => x.spend_cents));
           const pct = Math.max(0, Math.min(100, (r.spend_cents / max) * 100));
+          // ROUND 8.20 board 19 — Spend bar opens period fuel txs (never fleet/unit profile).
           return (
-            <div className="flex min-w-0 items-center" data-testid="fuel-home-diesel-spend-bar">
+            <Link
+              to={unitHistoryHref(r.unit_id)}
+              className="flex min-w-0 items-center"
+              data-testid="fuel-home-diesel-spend-bar"
+              aria-label={`Open fuel history for ${r.unit_number}`}
+            >
               <div className="h-1.5 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
                 <div className="h-1.5 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
-            </div>
+            </Link>
           );
         },
       },
@@ -258,18 +288,16 @@ export function FuelHomePage() {
         className: QBO_MONEY_CELL_CLASS,
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.spend_cents,
-        // ROUND 8.17 class S — $ opens period fuel txs for this unit; `ret` restores Home.
-        render: (r) => {
-          const target = r.unit_id
-            ? `/fuel/history?unit_id=${encodeURIComponent(r.unit_id)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
-            : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
-          const href = withReturnContext(target, originHref);
-          return (
-            <a href={href} className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-amount-drill">
-              {formatMoneyCents(r.spend_cents)}
-            </a>
-          );
-        },
+        // ROUND 8.20 board 19 — $ opens period fuel txs for this unit; `ret` restores Home.
+        render: (r) => (
+          <Link
+            to={unitHistoryHref(r.unit_id)}
+            className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline"
+            data-testid="fuel-home-diesel-amount-drill"
+          >
+            {formatMoneyCents(r.spend_cents)}
+          </Link>
+        ),
       },
       {
         key: "gallons",
@@ -278,7 +306,14 @@ export function FuelHomePage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.gallons,
-        render: (r) => (Number.isFinite(r.gallons) ? formatQuantityTable(r.gallons, 1) : "—"),
+        render: (r) =>
+          Number.isFinite(r.gallons) ? (
+            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-gallons-drill">
+              {formatQuantityTable(r.gallons, 1)}
+            </Link>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "per_gal",
@@ -288,7 +323,14 @@ export function FuelHomePage() {
         cellClass: "text-right tabular-nums",
         // ROUND 8.17 N19 — known-volume rate from fuelDieselByTruck (not all-spend / all-gallons).
         sortValue: (r) => r.avg_price_per_gallon ?? Number.POSITIVE_INFINITY,
-        render: (r) => (r.avg_price_per_gallon != null ? formatUsdRateTable(r.avg_price_per_gallon, 3) : "—"),
+        render: (r) =>
+          r.avg_price_per_gallon != null ? (
+            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-rate-drill">
+              {formatUsdRateTable(r.avg_price_per_gallon, 3)}
+            </Link>
+          ) : (
+            "—"
+          ),
       },
       {
         key: "fill_count",
@@ -297,7 +339,11 @@ export function FuelHomePage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.fill_count,
-        render: (r) => formatQuantityTable(r.fill_count, 0),
+        render: (r) => (
+          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-fills-drill">
+            {formatQuantityTable(r.fill_count, 0)}
+          </Link>
+        ),
       },
       {
         key: "load_count",
@@ -306,10 +352,14 @@ export function FuelHomePage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.load_count,
-        render: (r) => formatQuantityTable(r.load_count, 0),
+        render: (r) => (
+          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-loads-drill">
+            {formatQuantityTable(r.load_count, 0)}
+          </Link>
+        ),
       },
     ],
-    [dieselRows, makeModelByUnitId, originHref, range.from, range.to],
+    [dieselRows, makeModelByUnitId, unitHistoryHref],
   );
 
   if (!companyId) {
