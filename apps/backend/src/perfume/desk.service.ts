@@ -132,7 +132,7 @@ export type ImportIn = {
 export type ImportCheck = {
   rows_read: number; rows_saved: number; rows_skipped: number;
   price_total_file_cents: number; price_total_saved_cents: number; totals_match: boolean;
-  by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number;
+  by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number; upcs_on_two_products: number;
 };
 
 function intOrNull(v: unknown): number | null {
@@ -167,7 +167,10 @@ export async function previewImport(c: PoolClient, body: ImportIn): Promise<Impo
   const { saved, total } = prepare(body);
   const check = baseCheck(body, saved.length, total);
   let created = 0;
-  for (const r of saved) {
+  const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
+  check.upcs_on_two_products = sharedUpcs.size;
+  for (const r0 of saved) {
+    const r = sharedUpcs.has(normalizeUpc(r0.upc)) ? { ...r0, upc: null } : r0;
     const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
     tally(check, m.method, m.status);
     if (m.method === "new_item") {
@@ -186,7 +189,7 @@ function baseCheck(body: ImportIn, savedCount: number, savedTotal: number): Impo
     rows_read: body.rows_read, rows_saved: savedCount, rows_skipped: body.rows_read - savedCount,
     price_total_file_cents: body.file_price_total_cents, price_total_saved_cents: savedTotal,
     totals_match: body.file_price_total_cents === savedTotal && body.rows_read >= savedCount,
-    by_method: {}, review: 0, unmatched: 0, items_created: 0, items_renamed: 0, items_merged: 0,
+    by_method: {}, review: 0, unmatched: 0, items_created: 0, items_renamed: 0, items_merged: 0, upcs_on_two_products: 0,
   };
 }
 function tally(check: ImportCheck, method: string | null, status: string) {
@@ -206,6 +209,18 @@ export class ImportCheckFailed extends Error {
 }
 
 /** Saves a list. Refuses (writes nothing) when the file total and the saved total differ by even one cent. */
+/** UPCs that one file prints on two products with different identities (different name, size, type …). */
+export function ambiguousUpcs(rows: Array<{ upc?: unknown; description: string; brand?: string | null; size_text?: string | null; gender?: string | null; type?: string | null; section?: string | null }>, aliases: Record<string, string>): Set<string> {
+  const keys = new Map<string, Set<string>>();
+  for (const r of rows) {
+    const u = normalizeUpc(r.upc);
+    if (!u) continue;
+    const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender, type: r.type, section: r.section, brandAliases: aliases });
+    (keys.get(u) ?? keys.set(u, new Set()).get(u)!).add(id.key);
+  }
+  return new Set([...keys].filter(([, k]) => k.size > 1).map(([u]) => u));
+}
+
 export async function importList(c: PoolClient, userId: string, body: ImportIn): Promise<{ list_id: string; check: ImportCheck }> {
   const vendor = await vendorById(c, body.vendor_id);
   const { saved, total } = prepare(body);
@@ -239,7 +254,13 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const newUpcs = new Map<string, string>();              // upc → item (tmp or real)
   const newSkus = new Map<string, string>();              // sku → item (tmp or real)
   const lineIds: Array<{ itemId: string | null; method: string | null; identity: Identity }> = [];
-  for (const r of saved) {
+  // A UPC this file prints on two DIFFERENT products (PCA 11/10/2026: one UPC on "AL HARAMAIN AMBER" and "BAHR") is a
+  // vendor error: for those lines the UPC is not trusted — each line matches by its own name (audit 2026-11-12).
+  const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
+  check.upcs_on_two_products = sharedUpcs.size;
+  for (const r0 of saved) {
+    const shared = sharedUpcs.has(normalizeUpc(r0.upc));
+    const r = shared ? { ...r0, upc: null } : r0;
     const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
     let itemId = m.itemId;
     if (m.method === "new_item") {
@@ -257,7 +278,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     const sku = String(r.sku ?? "").trim();
     if (strong && sku && !ix.vendorSku.has(`${vendor.id}|${sku}`)) { ix.vendorSku.set(`${vendor.id}|${sku}`, itemId!); newSkus.set(sku, itemId!); }
     out.push({
-      sheet: r.sheet ?? null, row_no: r.row_no, raw: r.raw ?? {}, upc: m.upc || null, sku: sku || null, brand: r.brand ?? null,
+      sheet: r.sheet ?? null, row_no: r.row_no, raw: r.raw ?? {}, upc: normalizeUpc(r0.upc) || null, sku: sku || null, brand: r.brand ?? null,
       description: r.description, size_text: r.size_text ?? null, price_cents: r.price_cents, qty: intOrNull(r.qty), case_pack: intOrNull(r.case_pack),
       identity_key: m.identity.key, loose_key: looseKey(m.identity), item_id: itemId, match_method: m.method,
       match_status: itemId ? "matched" : m.status, suggestions: m.suggestions,

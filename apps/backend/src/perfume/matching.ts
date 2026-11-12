@@ -141,5 +141,6 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
 export function displayNameOf(id: Identity): string {
   const size = id.sizeMl != null ? `${id.sizeMl} ml` : "";
   const g = id.gender === "M" ? "Men" : id.gender === "W" ? "Women" : id.gender === "U" ? "Unisex" : "";
-  return [id.brand, id.nameText, size, id.conc, g, id.flags.join(" ")].filter(Boolean).join(" · ");
+  const base = [id.brand, id.nameText, size, id.conc, g, id.flags.join(" ")].filter(Boolean).join(" · ");
+  return id.contents ? `${base} · + ${id.contents.split("+").join(" + ")}` : base;
 }

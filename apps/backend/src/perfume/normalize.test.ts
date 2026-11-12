@@ -264,3 +264,33 @@ describe("PERFUME-DESK identity — PCA 11/10/2026 puts the brand inside the lin
     expect(identify({ description: "MISS DIOR EDP 3.4 W", brand: "DIOR" }).nameText).toBe("MISS DIOR");
   });
 });
+
+describe("PERFUME-DESK vendor line ending — box count only from the MTZ ending (audit 2026-11-12)", () => {
+  it("reads '- 12pcs ByBox' as the box, never the pieces of a set", () => {
+    expect(vendorLineTail("MARC JACOBS DAISY 3.4 EDT L TST  (102767) - France - 12pcs ByBox").casePack).toBe(12);
+    expect(vendorLineTail("4711 3.4 EDC U  (130562) - Germany - 30pcs ByBox").casePack).toBe(30);
+    expect(vendorLineTail("Beauty Space Hand Lotion Duo - Limen and Mandarin by SpaceNK for Unisex - 2 Pc 11.8oz Hand Lotion, 1").casePack).toBeNull();
+  });
+});
+
+describe("PERFUME-DESK identity — audit 2026-11-12 (Eternity Cologne, Moonlight sets, cut-off PCA sets)", () => {
+  it("COLOGNE is part of the name when the line has its own type; alone it is the type", () => {
+    const a = identify({ description: "ETERNITY COLOGNE(M)EDT SP 3.3oz", brand: "Calvin Klein" });
+    const b = identify({ description: "ETERNITY(M)EDT SP 3.4oz(NEW PACK)(LI FREE)", brand: "Calvin Klein" });
+    expect(a.nameText).toBe("ETERNITY COLOGNE");
+    expect(a.key).not.toBe(b.key);
+    expect(identify({ description: "4711 3.4 EDC U", brand: "4711" }).conc).toBe("EDC");
+  });
+  it("two sets with the same main bottle and different contents are different items", () => {
+    const x = identify({ description: "ARIANA GRANDE MOONLIGHT 3.4 EDP L + 3.4 S/G+ 3.4 B/L  (114749) - United States - 6pcs ByBox", brand: "ARIANA GRANDE" });
+    const y = identify({ description: "ARIANA GRANDE MOONLIGHT 3.4 EDP L + 4.0 B/M+ 3.4 B/C  (125926) - United States - 6pcs ByBox", brand: "ARIANA GRANDE" });
+    expect(x.flags).toContain("SET");
+    expect(x.key).not.toBe(y.key);
+    expect(x.contents).toBe("34SG+34BL");
+    expect(x.nameText).toBe("MOONLIGHT");
+  });
+  it("a description cut off inside a parenthesis does not leave its pieces in the name", () => {
+    const c = identify({ description: "CARVEN L'EAU DE TOILETTE(W)(LI)3PC SET(3.3oz EDT SP, 3.3 Body Cream, 3", brand: "Carven" });
+    expect(c.nameText).not.toMatch(/BODY CREAM|\b3 3\b/);
+  });
+});

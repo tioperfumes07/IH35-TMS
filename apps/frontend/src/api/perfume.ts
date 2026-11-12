@@ -90,6 +90,8 @@ export type PerfumeImportCheck = {
   /** Items a newer list re-identified (old rule name corrected) or merged into the item that already had that identity. */
   items_renamed?: number;
   items_merged?: number;
+  /** UPCs this file prints on two different products — not trusted for those lines. */
+  upcs_on_two_products?: number;
 };
 export type PerfumeList = {
   id: string;
