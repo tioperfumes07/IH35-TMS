@@ -14,7 +14,7 @@
  *   7. anything else → "review" with up to 5 suggestions. Never counted in a price until confirmed.
  * Owner rule: identified correctly or not at all — no fuzzy score ever links an item by itself.
  */
-import { identify, looseKey, normalizeUpc, type Identity } from "./normalize.js";
+import { genderHintOf, identify, looseKey, normalizeUpc, type Identity } from "./normalize.js";
 
 export type IndexItem = {
   id: string;
@@ -98,7 +98,8 @@ export function nameMatch(ix: MatchIndex, id: Identity): string | null {
     if (id.brand && it.brand && it.brand !== id.brand) return false;
     if (!id.nameWords.length && it.brand !== id.brand) return false;
     if (id.conc && it.conc && it.conc !== id.conc) return false;
-    if (id.gender && it.gender && it.gender !== id.gender) return false;
+    const itGender = it.gender || genderHintOf(it.name);
+    if (id.gender && itGender && itGender !== id.gender) return false;
     return true;
   });
   return fits.length === 1 ? fits[0] : null;
@@ -159,7 +160,9 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
   const lineFull = trigrams(`${id.brand} ${id.nameText}`);
   for (const it of ix.items.values()) {
     if (id.sizeMl != null && it.sizeMl != null && Math.abs(id.sizeMl - it.sizeMl) > 0.5) continue;
-    if (id.gender && it.gender && id.gender !== it.gender) continue;
+    // An item filed with no gender still has the one its name says (BURBERRY BRIT HER → W, … POUR HIM → M).
+    const itGender = it.gender || genderHintOf(it.name);
+    if (id.gender && itGender && id.gender !== itGender) continue;
     // A set is never suggested for a single bottle (or the reverse), nor a tester for a boxed bottle, a mini for a
     // full bottle, a body product for a fragrance (owner 2026-11-12: "it is not separating sets" — ARMANI CODE 4.2
     // EDP was offered "ARMANI CODE 125 ml SET").

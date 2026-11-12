@@ -163,3 +163,30 @@ describe("PERFUME-DESK suggestions across a brand the item master spells another
     expect(esp("PINK SUGAR W 3.4oz EDT").suggestions.map((s) => s.item_id)).not.toContain("prada-x");
   });
 });
+
+describe("PERFUME-DESK HER / HIM name the gender (owner 2026-11-12: 'BURBERRY BRIT HER … recommending for him')", () => {
+  function brit(): MatchIndex {
+    const ix = emptyIndex();
+    const add = (id: string, name: string, gender: string, conc: string) =>
+      addItem(ix, { id, brand: "BURBERRY", name, sizeMl: 100, conc, gender, flags: [], identityKey: `${id}-k`, looseKey: `${id}-l`, displayName: `BURBERRY · ${name} · 100 ml · ${conc} · ${gender}` });
+    add("brit-him", "BRIT", "M", "EDT");
+    add("brit-her", "BRIT", "W", "EDP");
+    add("brit-nogender-him", "BRIT FOR HIM", "", "EDT");
+    return ix;
+  }
+  it("a HER line reads as Women and is never offered the men's bottle", () => {
+    const id = identify({ description: "BURBERRY BRIT HER EDP 3.4oz" });
+    expect(id.gender).toBe("W");
+    expect(id.nameText).toContain("HER");
+    const m = matchLine(brit(), "esp", { description: "BURBERRY BRIT HER EDP 3.4oz" }, { allowNewItem: false });
+    const offered = [m.itemId, ...m.suggestions.map((s) => s.item_id)];
+    expect(offered).not.toContain("brit-him");
+    expect(offered).not.toContain("brit-nogender-him");
+  });
+  it("HIM / HIS read as Men; HERS as Women; an explicit gender word still wins", () => {
+    expect(identify({ description: "GUCCI GUILTY POUR HIM EDT 3oz" }).gender).toBe("M");
+    expect(identify({ description: "ARMANI CODE HIS 4.2 EDT" }).gender).toBe("M");
+    expect(identify({ description: "DKNY HERS EDP 3.4" }).gender).toBe("W");
+    expect(identify({ description: "BURBERRY HER EDP 3.4 M" }).gender).toBe("M");
+  });
+});
