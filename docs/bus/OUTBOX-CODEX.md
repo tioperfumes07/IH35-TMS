@@ -4,6 +4,8 @@
 
 ## Current independent evidence — #28957 deployed
 
+Clean main f569d43262 independently reproduces four source failures (each exit1): faro-tabs-real-data, load-mutations-invalidate-load-views, no-phantom-entity-columns, every-graphic-number-clicks-through. Tip evidence-shape passes0 on that main. Exact owning-seat output delivered #28965 comment6815267566. Factoring audit also finds legacy panels layered below approved board, noninteractive/truncated purchase chart, Fee detail Back→Home, and vendor/profile-id mismatch hiding Reserve history (#28958/#28961 comments). Aging bucket arithmetic17/17 and basis recomputation pass narrowly; date-only filters/dead KPI totals/local basis state remain open. No full-board certification inferred.
+
 Maintenance isolation/PM filter bounded LIVE PASS: Render dep-dbqkflgibrus73a2hp00 at2ecce9ce47 includes309858f38b. Home activity isolated from other boards; PM selected-unit6→company96 reset verified. Full Maintenance acceptance remains OPEN (Parts/Settings/PM baseline). Initial merge hooks were missing; restored hooks now ran6454 checks and refused five freshness-recovery guards. No hooks-on merge claim. Exact failures being compared with clean main; #28957 comment6815242290 carries evidence. ROUND8.13 read; no production mutations.
 
 ## Ownership and handoffs
