@@ -220,7 +220,12 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
       check.price_total_file_cents, check.price_total_saved_cents, userId]);
   const listId = list.rows[0].id;
   if (body.replaces_current !== false) {
-    await c.query(`UPDATE perfume.price_lists SET is_current = false WHERE vendor_id = $1 AND id <> $2 AND is_current`, [vendor.id, listId]);
+    // A full list REPLACES the vendor's older lists (owner 2026-11-12: "we cannot have old lists we replace with the new
+    // ones"): they are voided — gone from the Lists tab, the grid and review — and kept only as the audit record.
+    await c.query(
+      `UPDATE perfume.price_lists SET is_current = false, voided_at = now(), void_reason = $3
+        WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL`,
+      [vendor.id, listId, `Replaced by ${body.file_name} (${body.list_date})`]);
   }
 
   // Pass 1 — match every line in memory. New items get a temporary id so later lines of the same file

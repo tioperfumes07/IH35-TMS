@@ -349,7 +349,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <label className="flex items-start gap-2 text-xs text-gray-700">
             <input type="checkbox" className="mt-0.5" checked={replaces} onChange={(e) => setReplaces(e.target.checked)} data-testid="perfume-import-replaces" />
             <span>
-              <b>{tr("perfume.lists.31", "This is the vendor's full price list")}</b> {tr("perfume.lists.32", "— it replaces their current list in the grid. Untick for new arrivals / specials: the file is added and their current list stays in the grid (the newest list wins when both carry an item).")}
+              <b>{tr("perfume.lists.31", "This is the vendor's full price list")}</b> {tr("perfume.lists.32", "— it replaces ALL their older lists: those are removed from Lists, the grid and review (kept only as the audit record). Untick for new arrivals / specials: the file is added next to their full list (the newest list wins when both carry an item) until their next full list replaces both.")}
             </span>
           </label>
           <div className="flex flex-wrap gap-2">
