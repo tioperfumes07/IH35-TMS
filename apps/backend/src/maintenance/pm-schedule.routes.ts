@@ -3,6 +3,10 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
+import { evaluatePmDue } from "../maint/pm-due.shared.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
+import { pmScheduleBaselineAbsentReason } from "./pm-auto-engine.service.js";
+import { loadPmOdometers, absentOdometerReason } from "./pm-current-odometer.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 
 /** Nil UUID is never a real unit / company — reject create payloads that still hardcode it. */
@@ -16,7 +20,7 @@ const companyQuerySchema = z.object({
   operating_company_id: z.string().uuid(),
   unit_id: z.string().uuid().optional(),
   pm_type: z.string().trim().optional(),
-  status: z.enum(["all", "current", "due_soon", "overdue"]).optional().default("all"),
+  status: z.enum(["all", "current", "due_soon", "overdue", "unknown"]).optional().default("all"),
 });
 
 const createSchema = z.object({
@@ -55,12 +59,29 @@ async function withCompany<T>(userId: string, companyId: string, fn: (client: an
   });
 }
 
-function classifyPmStatus(nextDueOdometer: number | null, nowOdometer: number | null) {
-  if (nextDueOdometer == null || nowOdometer == null) return "current";
-  const delta = nextDueOdometer - nowOdometer;
-  if (delta < 0) return "overdue";
-  if (delta <= dueSoonConfig.miles) return "due_soon";
-  return "current";
+export function classifyPmScheduleStatus(
+  schedule: { interval_kind: "miles" | "days" | "hours"; interval_value: number; last_service_odometer: number | null; next_due_odometer: number | null; last_service_date: string | null },
+  currentOdometer: number | null,
+  today = companyBusinessDate(),
+  thresholds = dueSoonConfig
+): { status: "current" | "due_soon" | "overdue" | "unknown"; status_reason: string | null } {
+  const absent = pmScheduleBaselineAbsentReason(schedule);
+  if (absent) return { status: "unknown", status_reason: absent };
+  if (schedule.interval_kind === "miles" && (currentOdometer == null || !Number.isFinite(currentOdometer))) {
+    return { status: "unknown", status_reason: "No current odometer reading available" };
+  }
+  const due = evaluatePmDue({
+    interval_miles: schedule.interval_kind === "miles" ? Number(schedule.interval_value) : null,
+    interval_days: schedule.interval_kind === "days" ? Number(schedule.interval_value) : null,
+    last_done_miles: schedule.last_service_odometer == null ? null : Number(schedule.last_service_odometer),
+    last_done_date: schedule.last_service_date,
+    next_due_miles: schedule.interval_kind === "miles" && schedule.next_due_odometer != null ? Number(schedule.next_due_odometer) : null,
+    next_due_date: null,
+  }, currentOdometer, today);
+  const remaining = schedule.interval_kind === "days" ? due.days_remaining : due.miles_remaining;
+  const threshold = schedule.interval_kind === "days" ? thresholds.days : thresholds.miles;
+  if (remaining == null || !Number.isFinite(remaining)) return { status: "unknown", status_reason: "PM due reading is unavailable" };
+  return { status: remaining <= 0 ? "overdue" : remaining <= threshold ? "due_soon" : "current", status_reason: null };
 }
 
 export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) {
@@ -92,6 +113,7 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
             s.interval_kind,
             s.interval_value,
             s.last_service_odometer,
+            s.last_service_date::text AS last_service_date,
             s.next_due_odometer,
             s.created_at::text
           FROM maintenance.pm_schedules s
@@ -104,13 +126,22 @@ export async function registerMaintenancePmScheduleRoutes(app: FastifyInstance) 
         `,
         values
       );
-      return res.rows.map((row: Record<string, unknown>) => ({
-        ...row,
-        status: classifyPmStatus(
-          row.next_due_odometer == null ? null : Number(row.next_due_odometer),
-          row.last_service_odometer == null ? null : Number(row.last_service_odometer)
-        ),
-      }));
+      const { byUnit, stopEventsLive } = await loadPmOdometers(client, q.operating_company_id,
+        [...new Set<string>(res.rows.map((row: { unit_id: string }) => row.unit_id))]);
+      const today = companyBusinessDate();
+      return res.rows.map((row: Parameters<typeof classifyPmScheduleStatus>[0] & { unit_id: string }) => {
+        const reading = byUnit.get(row.unit_id);
+        const result = classifyPmScheduleStatus(row, reading?.odometer ?? null, today);
+        return {
+          ...row,
+          current_odometer: reading?.odometer ?? null,
+          current_odometer_source: reading?.source ?? null,
+          current_odometer_read_at: reading?.read_at ?? null,
+          ...result,
+          status_reason: result.status === "unknown" && row.interval_kind === "miles" && !reading
+            ? result.status_reason + "; " + absentOdometerReason(stopEventsLive) : result.status_reason,
+        };
+      });
     });
 
     const filtered =
