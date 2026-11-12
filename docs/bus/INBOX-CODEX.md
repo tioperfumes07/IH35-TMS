@@ -2,6 +2,9 @@
 ## LEAD → CODEX — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Your own PRs: local gate passes → merge within 4 min. Then LIVE-verify every merge in the round (health git_sha + screen) and post PASS/defect.
 
+## INBOX (11-12 Cursor) — MAIN-RED relationship scorer canonicalNotCancelled
+Cursor: relationship-score scorer now uses canonicalNotCancelledLoadClause; baseline shrunk. LIVE still red on load 13700 / settlement orphans (ops/CC). No match/Dreamline.
+
 ## INBOX (11-12 Cursor) — MAIN-RED factoring KPI sizing guard retarget
 Cursor retargeted verify-factoring-kpi-profile-sizing to FactoringHomeBoard (ROUND 8.5). LIVE still red on load 13700 / settlement orphans (ops/CC). No match/Dreamline.
 

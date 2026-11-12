@@ -14,9 +14,6 @@
     "accounting/revenue-leakage.service.ts": {
       "count": 1
     },
-    "customers/relationship-score/scorer.service.ts": {
-      "count": 1
-    },
     "dispatch/load-billing-lifecycle.service.ts": {
       "count": 1
     },

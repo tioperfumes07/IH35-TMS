@@ -9,6 +9,7 @@
  * (ROUND 337 header — docs/specs/ENGINE-HEADER-TEMPLATE.md)
  */
 import type { PoolClient } from "pg";
+import { canonicalNotCancelledLoadClause } from "../../dispatch/canonical-active-load-set.js";
 import { STOP_ARRIVAL_EVENTS_SQL } from "../../telematics/stop-arrival-events.js";
 
 type DbClient = Pick<PoolClient, "query">;
@@ -252,23 +253,23 @@ async function computeMarginTrendSubscore(
   }>(
     `
       SELECT
-        COALESCE(SUM(rate_total_cents) FILTER (WHERE created_at >= now() - interval '30 days'), 0)::numeric::text AS revenue_30,
+        COALESCE(SUM(l.rate_total_cents) FILTER (WHERE l.created_at >= now() - interval '30 days'), 0)::numeric::text AS revenue_30,
         COALESCE(
-          SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0))
-          FILTER (WHERE created_at >= now() - interval '30 days'),
+          SUM(COALESCE(l.loaded_miles, l.miles_practical, l.miles_shortest, 0))
+          FILTER (WHERE l.created_at >= now() - interval '30 days'),
           0
         )::numeric::text AS miles_30,
-        COALESCE(SUM(rate_total_cents) FILTER (WHERE created_at >= now() - interval '180 days'), 0)::numeric::text AS revenue_180,
+        COALESCE(SUM(l.rate_total_cents) FILTER (WHERE l.created_at >= now() - interval '180 days'), 0)::numeric::text AS revenue_180,
         COALESCE(
-          SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0))
-          FILTER (WHERE created_at >= now() - interval '180 days'),
+          SUM(COALESCE(l.loaded_miles, l.miles_practical, l.miles_shortest, 0))
+          FILTER (WHERE l.created_at >= now() - interval '180 days'),
           0
         )::numeric::text AS miles_180
-      FROM mdata.loads
-      WHERE operating_company_id = $1::uuid
-        AND customer_id = $2::uuid
-        AND soft_deleted_at IS NULL
-        AND status::text <> 'cancelled'
+      FROM mdata.loads l
+      WHERE l.operating_company_id = $1::uuid
+        AND l.customer_id = $2::uuid
+        AND l.soft_deleted_at IS NULL
+        AND ${canonicalNotCancelledLoadClause("l")}
     `,
     [operatingCompanyId, customerUuid]
   );
@@ -384,16 +385,16 @@ export async function computeRelationshipScoresForCompany(
 
   const loads = hasLoads ? byCustomer((await client.query<{ customer_id: string; loads_30d: string; loads_90d: string; revenue_30: string; miles_30: string; revenue_180: string; miles_180: string }>(
     `
-      SELECT customer_id::text AS customer_id,
-             COUNT(*) FILTER (WHERE created_at >= now() - interval '30 days')::int::text AS loads_30d,
-             COUNT(*) FILTER (WHERE created_at >= now() - interval '90 days')::int::text AS loads_90d,
-             COALESCE(SUM(rate_total_cents) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '30 days'), 0)::numeric::text AS revenue_30,
-             COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0)) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '30 days'), 0)::numeric::text AS miles_30,
-             COALESCE(SUM(rate_total_cents) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '180 days'), 0)::numeric::text AS revenue_180,
-             COALESCE(SUM(COALESCE(loaded_miles, miles_practical, miles_shortest, 0)) FILTER (WHERE status::text <> 'cancelled' AND created_at >= now() - interval '180 days'), 0)::numeric::text AS miles_180
-        FROM mdata.loads
-       WHERE operating_company_id = $1::uuid AND customer_id = ANY($2::uuid[]) AND soft_deleted_at IS NULL
-       GROUP BY customer_id
+      SELECT l.customer_id::text AS customer_id,
+             COUNT(*) FILTER (WHERE l.created_at >= now() - interval '30 days')::int::text AS loads_30d,
+             COUNT(*) FILTER (WHERE l.created_at >= now() - interval '90 days')::int::text AS loads_90d,
+             COALESCE(SUM(l.rate_total_cents) FILTER (WHERE ${canonicalNotCancelledLoadClause("l")} AND l.created_at >= now() - interval '30 days'), 0)::numeric::text AS revenue_30,
+             COALESCE(SUM(COALESCE(l.loaded_miles, l.miles_practical, l.miles_shortest, 0)) FILTER (WHERE ${canonicalNotCancelledLoadClause("l")} AND l.created_at >= now() - interval '30 days'), 0)::numeric::text AS miles_30,
+             COALESCE(SUM(l.rate_total_cents) FILTER (WHERE ${canonicalNotCancelledLoadClause("l")} AND l.created_at >= now() - interval '180 days'), 0)::numeric::text AS revenue_180,
+             COALESCE(SUM(COALESCE(l.loaded_miles, l.miles_practical, l.miles_shortest, 0)) FILTER (WHERE ${canonicalNotCancelledLoadClause("l")} AND l.created_at >= now() - interval '180 days'), 0)::numeric::text AS miles_180
+        FROM mdata.loads l
+       WHERE l.operating_company_id = $1::uuid AND l.customer_id = ANY($2::uuid[]) AND l.soft_deleted_at IS NULL
+       GROUP BY l.customer_id
     `,
     [operatingCompanyId, customerUuids]
   )).rows) : new Map();
