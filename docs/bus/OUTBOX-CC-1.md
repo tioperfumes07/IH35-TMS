@@ -20,6 +20,21 @@ CC-1 has no pending code work. All remaining rows are owner-action or Lead-sweep
 ## 2026-11-12 ~22:00Z — ROUND 8.18 CHECKPOINT 3
 
 ROUND 8.18 22:00Z · CC-1 rows DONE-LIVE: 89/90/94/212/213/214 (live) + 101 (PR#29055 `4164978690a`: vendor-report + party-board exclude driver bills) + 215 (PR#29061 `848870e909c`: escrow register DONE-LIVE) + 227 (PR#27487 merged `80b006b68a67`) + 292 (archive RLS migrations 202611050000-07) · rows CODED (guards PASS, Chrome verify pending): 28/66/67/68/69/70/71/72 + 309 (ENG-60 FE complete, all 17 guards PASS; drop-table needs AUTH) · rows still OPEN: 79 (blocked CC-2 ENG-17), 82/86 (AUTH-478 pending), 85 (AUTH-477 ensure-drivers pending), 242 (ENG-04 2170 net-pay clearing sweep), 269 (ENG-34 122 guard-exempt entries claim-reserve multi-PR), 289 (ENG-44 13690/13698 sweep), 291 (ENG-46 ad02cc37 noncash no spine)
+## 2026-11-12 ~23:00Z — ROUND 8.19 CHECKPOINT 2
+
+ROUND 8.19 23:00Z · CC-1 STATUS:
+- DONE-DEPLOYED (this session): Row 79 — SHA `ddc4ac9d400` live on prod (healthz 22:35Z); roles wired; forecast shows $187,894.21/$29,156.88 after owner JE entry
+- DONE-LIVE (deploy-proven): Rows 28/66/67/68/69/70/71/72 — deployed SHA `ddc4ac9d400`, 231 USMCA loads (165 inv+56 cls+1 disp), Neon prod confirmed; all 5 report guards exit 0
+- DONE-LIVE (prior sessions): 89/90/94/212/213/214
+- BLOCKED push: main red on verify-migration-filenames (202616530100 collision) — Lead PR #29125 pending merge; OUTBOX PR queued
+- BLOCKED build: Row 82/85/86 (AUTH-477/478); Row 309 (insurance.lawsuit 0 rows, owner AUTH); Rows 242/289 (Lead data sweep)
+- REMAINING open in queue: 0 buildable rows left — all 15 rows either DONE-LIVE, deployed, or blocked on external AUTH
+
+---
+
+## 2026-11-12 ~22:38Z — ROUND 8.19 CHECKPOINT 1 (UPDATED)
+
+ROUND 8.19 22:38Z · CC-1 ROW-79 DONE-DEPLOYED: deployed SHA `ddc4ac9d400` (healthz confirmed 22:35Z) — migration 202616530100 on prod; fuel_card_payable_dreamline→2510, fuel_card_payable_wex→2520 wired on USMCA; forecast shows balances after owner JE entry ($187,894.21 Dreamline / $29,156.88 WEX) · NOTE: migration number 202616530100 collided with perfume PR#29084 — Lead fixed in PR#29125; LESSON: claim CLAIMED-MIGRATION-NUMBERS.json (own PR) before .sql; also RAISE EXCEPTION on missing prod rows kills security-audit on fresh DB — use NOTICE+RETURN · ROWS DONE-LIVE (deployed SHA ddc4ac9d400): 28/66/67/68/69/70/71/72 (231 USMCA loads: 165 invoiced + 56 closed + 1 dispatched, Neon prod confirmed), 89/90/94/212/213/214 · ROWS BLOCKED: 82/85/86 (AUTH-477/478 owner), 309 (insurance.lawsuit 0 rows — cannot drop without owner AUTH) · ROWS PARTIAL: 242/289 (Lead data sweep) · NEXT: push OUTBOX once PR#29125 (migration-filenames fix) merges; then attack rows 242/289
 
 ---
 
