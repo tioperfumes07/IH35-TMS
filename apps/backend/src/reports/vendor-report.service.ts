@@ -58,6 +58,8 @@ export async function getVendorReport(
     // status exclusion matches fin20-aging canonical pattern — ties to GL 2000 $126,443.92
     postedBillStatus("b"),
     `b.bill_date BETWEEN $2::date AND $3::date`,
+    // ROW-101: exclude driver-category AP bills — those are driver pay, not vendor spend
+    `(b.bill_category IS NULL OR b.bill_category <> 'driver')`,
   ];
 
   if (query.vendorId) {
