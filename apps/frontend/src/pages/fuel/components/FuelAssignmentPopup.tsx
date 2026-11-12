@@ -304,6 +304,20 @@ export function FuelAssignmentPopup({ open, operatingCompanyId, question, onClos
                   </>
                 ) : null}
               </Kv>
+              <Kv label="Settlement">
+                {question.proposed_settlement_id ? (
+                  <EntityLink
+                    kind="settlement"
+                    id={question.proposed_settlement_id}
+                    label={entityLabel(question.proposed_settlement_ref, question.proposed_settlement_id, "Settlement")}
+                    data-testid="fuel-assignment-proposed-settlement"
+                  />
+                ) : (
+                  <span data-testid="fuel-assignment-proposed-settlement-empty">
+                    {question.proposed_settlement_ref ?? "—"}
+                  </span>
+                )}
+              </Kv>
               <Kv label="Why">{question.proposed_why ?? "—"}</Kv>
               <div className="flex flex-wrap gap-2" data-testid="fuel-assignment-mode-buttons">
                 <button

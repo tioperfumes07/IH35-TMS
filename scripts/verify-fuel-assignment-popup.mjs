@@ -87,6 +87,15 @@ export function collectProblems(sources) {
   if (!/fuel-assignment-proposed/.test(popup)) {
     problems.push(`${FILES.popup}: must show proposed answer`);
   }
+  // ROUND 8.12 reverse-wiring — Proposed Settlement drills via EntityLink when live id is present
+  // (list panel already linked; popup previously showed only load/unit).
+  if (
+    !/kind=["']settlement["']/.test(sources.popup) ||
+    !/proposed_settlement_id/.test(sources.popup) ||
+    !/fuel-assignment-proposed-settlement/.test(sources.popup)
+  ) {
+    problems.push(`${FILES.popup}: Proposed Settlement must EntityLink via proposed_settlement_id`);
+  }
   for (const mode of ["confirm", "pick", "keep"]) {
     if (!new RegExp(`fuel-assignment-mode-${mode}`).test(popup)) {
       problems.push(`${FILES.popup}: missing mode button ${mode}`);
