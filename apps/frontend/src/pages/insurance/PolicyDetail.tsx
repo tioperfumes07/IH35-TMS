@@ -448,7 +448,7 @@ export function PolicyDetail() {
           data-testid="policy-detail-coverage-summary"
         >
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Premium</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Premium</div>
             <div className="mt-1 text-sm font-semibold text-[#0F1219]">
               <MoneyCell
                 cents={policy.total_premium_cents}
@@ -457,19 +457,19 @@ export function PolicyDetail() {
             </div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Effective</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Effective</div>
             <div className="mt-1 text-sm text-[#0F1219]">{formatDateUS(policy.effective_date) || "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Expiry</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Expiry</div>
             <div className="mt-1 text-sm text-[#0F1219]">{formatDateUS(policy.expiry_date) || "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Coverage</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Coverage</div>
             <div className="mt-1 text-sm text-[#0F1219]">{coverageTypeName || "—"}</div>
           </div>
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">Status</div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[#4B5563]">Status</div>
             <div className="mt-1 text-sm capitalize text-[#0F1219]">{policy.status}</div>
           </div>
         </div>
