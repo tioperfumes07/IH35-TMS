@@ -1,3 +1,9 @@
+## 2026-11-12 ~22:00Z — ROUND 8.18 CHECKPOINT 3
+
+ROUND 8.18 22:00Z · CC-1 rows DONE-LIVE: 89/90/94/212/213/214 (live) + 101 (PR#29055 `4164978690a`: vendor-report + party-board exclude driver bills) + 215 (PR#29061 `848870e909c`: escrow register DONE-LIVE) + 227 (PR#27487 merged `80b006b68a67`) + 292 (archive RLS migrations 202611050000-07) · rows CODED (guards PASS, Chrome verify pending): 28/66/67/68/69/70/71/72 + 309 (ENG-60 FE complete, all 17 guards PASS; drop-table needs AUTH) · rows still OPEN: 79 (blocked CC-2 ENG-17), 82/86 (AUTH-478 pending), 85 (AUTH-477 ensure-drivers pending), 242 (ENG-04 2170 net-pay clearing sweep), 269 (ENG-34 122 guard-exempt entries claim-reserve multi-PR), 289 (ENG-44 13690/13698 sweep), 291 (ENG-46 ad02cc37 noncash no spine)
+
+---
+
 ## 2026-11-12 ~20:00Z — ROUND 8.18 CHECKPOINT 2
 
 ROUND 8.18 20:00Z · CC-1 rows DONE-LIVE: 89/90/94/212/213/214 (live queries confirmed) + 292 (archive RLS closed by migrations 202611050000-07) · rows CODED: 28/66/67/68/69/70/71/72 (Chrome verify pending) + 101 (PR#29055 in CI: exclude driver bills from vendor-report + party-board) · rows still OPEN: 79 (blocked CC-2 ENG-17), 82/86 (AUTH-478 pending owner), 85 (AUTH-477 pending owner), 215/227/242/269/289/291/309 (partial)
