@@ -412,7 +412,7 @@ import { initializeDriverPromptsCron } from "./integrations/samsara/messaging/dr
 import { initializeSamsaraDvirPollCron } from "./safety/samsara-dvir-poll.cron.js";
 import { registerMaintPartsRoutes } from "./maint/parts.routes.js";
 import { registerMaintPmRoutes } from "./maint/pm.routes.js";
-import { registerPmDueEngineRoutes } from "./maintenance/pm-due-engine.service.js";
+import { registerPmDueEngineRoutes } from "./maintenance/pm-due-engine.routes.js";
 import { registerPmCostPerMileRoutes } from "./maintenance/pm-cost-per-mile.service.js";
 import { registerMaintWoApRoutes } from "./maint/wo-ap.routes.js";
 import { registerInsuranceCoiRequestRoutes } from "./insurance/coi-request.routes.js";

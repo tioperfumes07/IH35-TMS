@@ -8,8 +8,8 @@
  * unavailable" although 35 trucks HAVE a live odometer. The missing fact is the last PM, which pm-auto-engine already
  * refuses to guess (pmScheduleBaselineAbsentReason).
  *
- *   R1  both state CASEs (KPI + per unit) send a baseline-absent clock to 'none' BEFORE the overdue/soon/ok arithmetic;
- *   R2  PM_BASELINE_ABSENT_SQL is the SQL twin of pmScheduleBaselineAbsentReason (no next-due AND last <= 1);
+ *   R1  both state CASEs consume the SAME canonical PM state, with absent clocks 'none';
+ *   R2  the canonical engine refuses absent baselines/current readings; its adapter cannot label them OK;
  *   R3  the page names what is missing ("No last PM on file — enter it", linked to the clock) and says
  *       "Odometer unavailable" only when the odometer is.
  *   R4  (LEAD 11-02) every mdata.units read (all 3: KPI, unit_state, rows) applies the shared fleet-visibility rule
@@ -26,15 +26,24 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-fleet-health-no-false-ok";
 const FILES = {
   route: "apps/backend/src/maintenance/fleet-health.routes.ts",
+  adapter: "apps/backend/src/maintenance/fleet-health-pm.ts",
+  engine: "apps/backend/src/maintenance/pm-due-engine.service.ts",
   line: "apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx",
 };
 
 export function audit(s) {
   const f = [];
-  const cases = s.route.match(/WHEN pm\.unit_id IS NULL THEN 'none'\s*(?:--[^\n]*\n\s*)*WHEN \$\{PM_BASELINE_ABSENT_SQL\("pm"\)\} THEN 'none'/g) ?? [];
-  if (cases.length < 2) f.push(`R1: ${2 - cases.length} state CASE(s) let a clock with no last-PM baseline fall through to 'ok'`);
-  if (!/const PM_BASELINE_ABSENT_SQL = \(a: string\) =>\s*`\(\$\{a\}\.next_due_odometer IS NULL AND COALESCE\(\$\{a\}\.last_service_odometer, 0\) <= 1\)`/.test(s.route)) {
-    f.push("R2: PM_BASELINE_ABSENT_SQL is not the twin of pmScheduleBaselineAbsentReason (no next-due AND last <= 1)");
+  const cases = s.route.match(/ELSE COALESCE\(pm\.state, 'none'\)/g) ?? [];
+  if (cases.length !== 2 || (s.route.match(/\$\{FLEET_PM_CTE\}/g) ?? []).length !== 2
+      || !s.route.includes("fleetHealthPmRows(await computePmDueEngineForCompany(client, q.operating_company_id, odometers)")) {
+    f.push("R1: KPI and rows must consume one canonical PM population, absent clocks never OK");
+  }
+  if (!s.engine.includes("const baselineAbsent = pmScheduleBaselineAbsentReason(row)")
+      || !s.engine.includes("if (!isMiles || baselineAbsent)")
+      || !s.engine.includes("else if (odo == null)")
+      || !s.adapter.includes('row.miles_to_due == null ? (baselineAbsent ? "none" : "unknown")')
+      || !s.adapter.includes('daysLeft == null ? "unknown"')) {
+    f.push("R2: canonical baseline, current-odometer or projection absence is not preserved");
   }
   // ROUND 8.17 class R — PM leaf links carry return context; cohort filter `fh` lives in the URL.
   if (!/withReturnContext|pmHref\(/.test(s.line) || !/searchParams\.get\("fh"\)/.test(s.line)) {
@@ -58,8 +67,12 @@ if (process.argv.includes("--selftest")) {
   const plant = (key, from, to) => (src[key].includes(from) ? audit({ ...src, [key]: src[key].replace(from, to) }).length > 0 : null);
   const cases = [
     ["clean sources pass", audit(src).length === 0],
-    ["KPI CASE falling through to ok FAILS", plant("route", 'WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN \'none\'\n                WHEN COALESCE(tele', "WHEN COALESCE(tele")],
-    ["baseline rule ignoring next-due FAILS", plant("route", "`(${a}.next_due_odometer IS NULL AND ", "`(")],
+    ["KPI CASE falling through to ok FAILS", plant("route", "ELSE COALESCE(pm.state, 'none')", "ELSE 'ok'")],
+    ["baseline rule bypass FAILS", plant("engine", "if (!isMiles || baselineAbsent)", "if (!isMiles)")],
+    ["missing current odometer refusal FAILS", plant("engine", "else if (odo == null)", "else if (false)")],
+    ["missing remaining mileage labelled OK FAILS", plant("adapter", 'row.miles_to_due == null ? (baselineAbsent ? "none" : "unknown")', 'row.miles_to_due == null ? "ok"')],
+    ["missing rate labelled OK FAILS", plant("adapter", 'daysLeft == null ? "unknown"', 'daysLeft == null ? "ok"')],
+    ["missing shared KPI population FAILS", plant("route", "${FLEET_PM_CTE}", "pm_best AS (SELECT 1)")],
     ["a units read without the fleet-visibility rule FAILS", plant("route", "AND u.disposed_date IS NULL\n              AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}", "AND u.disposed_date IS NULL")],
     ["a local phantom rule instead of the shared one FAILS", plant("route", '${excludeDemoPhantomSql("u.unit_number")} AND ', "u.unit_number NOT ILIKE 'SAM-%' AND ")],
     ["generic 'PM reading unavailable' only FAILS", plant("line", 't("maintenance.fleetHealth.noLastPm")', 't("maintenance.fleetHealth.pmReadingUnavailable")')],

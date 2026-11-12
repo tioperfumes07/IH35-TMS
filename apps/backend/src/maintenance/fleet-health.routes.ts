@@ -4,7 +4,7 @@
  *
  * Per unit: PM state, body_style, live odo, driver, current load, open WO, fault count.
  * 443.218 rule: every number from SQL aggregates — no client-side arithmetic.
- * PM_INTERVAL = 25 000 mi; planning rate = 400 mi/day (12 000/mo) — SQL-derived.
+ * PM status and projected days come from the canonical PM due engine.
  * body_style: /389/ → classic, /VOLVO|CASCADIA/ → sloped, else aero.
  * state priority: shop > overdue > soon (≤14 d) > ok > none.
  */
@@ -21,23 +21,19 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { openWorkOrderPredicateSql } from "./in-shop-condition.js";
 import { canonicalDispatchWorkStatusClause } from "../dispatch/canonical-active-load-set.js";
+import { computePmDueEngineForCompany } from "./pm-due-engine.service.js";
+import { fleetHealthPmRows, FLEET_PM_CTE } from "./fleet-health-pm.js";
+import { loadPmOdometers } from "./pm-current-odometer.js";
+import { companyBusinessDate } from "../lib/company-business-date.js";
 import {
   unitOpenVdaDriverLateralSql,
   unitLastDeliveredDriverLateralSql,
   unitCurrentDriverJoinSql,
 } from "../dispatch/unit-current-driver.js";
 
-/** LEAD 443.281 row 108 — SQL twin of pm-auto-engine pmScheduleBaselineAbsentReason (miles): no next-due and no real
- *  last-PM odometer (NULL or the <= 1 placeholder) = no baseline. The clock cannot be evaluated; it is never 'ok'. */
-const PM_BASELINE_ABSENT_SQL = (a: string) =>
-  `(${a}.next_due_odometer IS NULL AND COALESCE(${a}.last_service_odometer, 0) <= 1)`;
-
-const PM_INTERVAL = 25_000;
-const PLAN_RATE_PER_DAY = 400; // 12 000/mo
-
 const querySchema = z.object({
   operating_company_id: z.string().uuid(),
-  state: z.enum(["all", "ok", "soon", "overdue", "shop", "none"]).optional().default("all"),
+  state: z.enum(["all", "ok", "soon", "overdue", "shop", "none", "unknown"]).optional().default("all"),
   limit: z.coerce.number().int().min(1).max(500).default(200),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -62,11 +58,20 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
 
       const rows = await withCurrentUser(user.uuid, async (client) => {
         await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [q.operating_company_id]);
+        const fleet = await client.query<{ id: string }>(`
+          SELECT u.id::text FROM mdata.units u
+          WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = $1::uuid
+            AND u.disposed_date IS NULL
+            AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}
+        `, [q.operating_company_id]);
+        const odometers = await loadPmOdometers(client, q.operating_company_id, fleet.rows.map(row => row.id));
+        const pmRows = fleetHealthPmRows(await computePmDueEngineForCompany(client, q.operating_company_id, odometers), companyBusinessDate(), odometers.byUnit);
+        const values = [q.operating_company_id, q.limit, q.offset, JSON.stringify(pmRows)];
 
         // KPI aggregate (separate query, single round-trip for the summary chips)
         const kpiRes = await client.query(
           `
-          WITH co AS (SELECT $1::uuid AS oc_id),
+          WITH co AS (SELECT $1::uuid AS oc_id, $2::int AS page_limit, $3::int AS page_offset),
           units AS (
             SELECT u.id
             FROM mdata.units u, co
@@ -74,22 +79,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               AND u.disposed_date IS NULL
               AND ${FLEET_HEALTH_VISIBLE_UNIT_SQL}
           ),
-          pm AS (
-            SELECT DISTINCT ON (ps.unit_id)
-              ps.unit_id,
-              ps.last_service_odometer,
-              ps.next_due_odometer,
-              ps.interval_value
-            FROM maintenance.pm_schedules ps, co
-            WHERE ps.operating_company_id = co.oc_id
-              AND ps.interval_kind = 'miles'
-            ORDER BY ps.unit_id, ps.interval_value DESC
-          ),
-          tele AS (
-            SELECT vlp.unit_id, vlp.odometer_mi
-            FROM telematics.vehicle_latest_position vlp, co
-            WHERE vlp.operating_company_id = co.oc_id
-          ),
+          ${FLEET_PM_CTE},
           shop_units AS (
             SELECT DISTINCT wo.unit_id
             FROM maintenance.work_orders wo, co
@@ -103,17 +93,10 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               u.id,
               CASE
                 WHEN su.unit_id IS NOT NULL THEN 'shop'
-                WHEN pm.unit_id IS NULL THEN 'none'
-                -- LEAD 443.281 row 108: a miles clock with no last-PM odometer and no next-due is ABSENT (pm-auto-engine
-                -- pmScheduleBaselineAbsentReason) — no evaluable clock, never 'ok'.
-                WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN 'none'
-                WHEN COALESCE(tele.odometer_mi, pm.last_service_odometer) - pm.last_service_odometer >= pm.interval_value THEN 'overdue'
-                WHEN (pm.last_service_odometer + pm.interval_value - COALESCE(tele.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY} <= 14 THEN 'soon'
-                ELSE 'ok'
+                ELSE COALESCE(pm.state, 'none')
               END AS state
             FROM units u
-            LEFT JOIN pm ON pm.unit_id = u.id
-            LEFT JOIN tele ON tele.unit_id = u.id
+            LEFT JOIN pm_best pm ON pm.unit_id = u.id
             LEFT JOIN shop_units su ON su.unit_id = u.id
           )
           SELECT
@@ -122,10 +105,11 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             COUNT(*) FILTER (WHERE state = 'soon')::int AS soon,
             COUNT(*) FILTER (WHERE state = 'overdue')::int AS overdue,
             COUNT(*) FILTER (WHERE state = 'shop')::int AS shop,
-            COUNT(*) FILTER (WHERE state = 'none')::int AS no_clock
+            COUNT(*) FILTER (WHERE state = 'none')::int AS no_clock,
+            COUNT(*) FILTER (WHERE state = 'unknown')::int AS unknown
           FROM state_map
           `,
-          [q.operating_company_id]
+          values
         );
         const kpi = kpiRes.rows[0];
 
@@ -135,25 +119,7 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
         const unitRes = await client.query(
           `
           WITH co AS (SELECT $1::uuid AS oc_id),
-          pm_best AS (
-            /* worst (closest to due) miles-based PM per unit */
-            SELECT DISTINCT ON (ps.unit_id)
-              ps.id AS pm_schedule_id,
-              ps.unit_id,
-              ps.label AS pm_label,
-              ps.interval_value AS pm_interval,
-              ps.last_service_odometer,
-              ps.next_due_odometer
-            FROM maintenance.pm_schedules ps, co
-            WHERE ps.operating_company_id = co.oc_id
-              AND ps.interval_kind = 'miles'
-            ORDER BY ps.unit_id,
-              /* prioritise the schedule with least miles remaining */
-              (COALESCE(ps.next_due_odometer, ps.last_service_odometer + ps.interval_value)
-               - COALESCE((SELECT vlp.odometer_mi FROM telematics.vehicle_latest_position vlp, co
-                            WHERE vlp.operating_company_id = co.oc_id AND vlp.unit_id = ps.unit_id LIMIT 1),
-                          ps.last_service_odometer)) ASC NULLS LAST
-          ),
+          ${FLEET_PM_CTE},
           open_wo AS (
             SELECT
               wo.unit_id,
@@ -179,18 +145,12 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               u.id AS unit_id,
               CASE
                 WHEN ow.in_shop = true THEN 'shop'
-                WHEN pm.unit_id IS NULL THEN 'none'
-                WHEN ${PM_BASELINE_ABSENT_SQL("pm")} THEN 'none'
-                WHEN (COALESCE(vlp.odometer_mi, pm.last_service_odometer) - pm.last_service_odometer) >= pm.pm_interval THEN 'overdue'
-                WHEN (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval) - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY} <= 14 THEN 'soon'
-                ELSE 'ok'
+                ELSE COALESCE(pm.state, 'none')
               END AS state
             -- 443.267-A: CROSS JOIN, not a comma — an explicit JOIN binds tighter than ",", so "u, co LEFT JOIN … u.id"
             -- could not see u (42P01 → 500).
             FROM mdata.units u CROSS JOIN co
             LEFT JOIN pm_best pm ON pm.unit_id = u.id
-            LEFT JOIN telematics.vehicle_latest_position vlp
-              ON vlp.unit_id = u.id AND vlp.operating_company_id = co.oc_id
             LEFT JOIN open_wo ow ON ow.unit_id = u.id
             WHERE COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = co.oc_id
               AND u.disposed_date IS NULL
@@ -209,7 +169,10 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             END AS body_style,
 
             /* live telemetry */
-            vlp.odometer_mi,
+            pm.odometer_mi,
+            pm.odometer_source,
+            pm.odometer_read_at,
+            pm.pm_status_reason,
             vlp.captured_at::text AS telemetry_at,
             vlp.city AS telemetry_city,
             vlp.state AS telemetry_state,
@@ -222,16 +185,10 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
             pm.pm_label,
             pm.pm_interval,
             pm.last_service_odometer,
-            (pm.unit_id IS NOT NULL AND ${PM_BASELINE_ABSENT_SQL("pm")}) AS pm_baseline_absent,
+            COALESCE(pm.pm_baseline_absent, false) AS pm_baseline_absent,
             pm.next_due_odometer,
-            /* miles_left & days_left from SQL */
-            (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval)
-             - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::int AS miles_left,
-            ROUND(
-              (COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval)
-               - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::numeric / ${PLAN_RATE_PER_DAY},
-              1
-            ) AS days_left,
+            pm.miles_left,
+            pm.days_left,
 
             /* state */
             _state.state,
@@ -293,14 +250,12 @@ export async function registerFleetHealthRoutes(app: FastifyInstance) {
               WHEN 'ok'      THEN 4
               ELSE 5
             END,
-            -- 443.267-A: an output alias cannot sit inside an ORDER BY expression (42703 "miles_left"); same expression as miles_left.
-            COALESCE((COALESCE(pm.next_due_odometer, pm.last_service_odometer + pm.pm_interval)
-             - COALESCE(vlp.odometer_mi, pm.last_service_odometer))::int, 999999) ASC,
+            pm.miles_left ASC NULLS LAST,
             u.unit_number
 
           LIMIT $2 OFFSET $3
           `,
-          [q.operating_company_id, q.limit, q.offset]
+          values
         );
 
         return { kpi, units: unitRes.rows };

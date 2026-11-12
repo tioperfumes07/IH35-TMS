@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, confirmRow, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, confirmRow, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
   reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -206,7 +206,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/perfume/review", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const q = z.object({ list_id: z.string().uuid().optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
+    const q = z.object({ list_id: z.string().uuid().optional(),
+      list_ids: z.string().max(4000).optional().transform((v) => (v ? v.split(",").filter(Boolean) : undefined)).pipe(z.array(z.string().uuid()).max(50).optional()),
+      q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });
@@ -217,6 +219,19 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     return withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+  });
+
+  app.post("/api/v1/perfume/rows/bulk", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const ids = z.array(z.string().uuid()).min(1).max(500);
+    const body = z.discriminatedUnion("action", [
+      z.object({ action: z.literal("confirm_best"), row_ids: ids }),
+      z.object({ action: z.literal("link_item"), row_ids: ids, item_id: z.string().uuid() }),
+      z.object({ action: z.literal("create_new"), row_ids: ids }),
+      z.object({ action: z.literal("set_gender"), row_ids: ids, gender: z.enum(["M", "W", "U"]) }),
+    ]).safeParse(req.body);
+    if (!body.success) return bad(reply, body.error);
+    return withCurrentUser(uid, (c) => bulkReview(c, uid, body.data));
   });
 
   app.get("/api/v1/perfume/items/search", RL_READ, async (req, reply) => {

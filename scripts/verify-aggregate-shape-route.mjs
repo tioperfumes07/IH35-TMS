@@ -16,11 +16,17 @@ const aggregate = fs.readFileSync(aggregatePath, "utf8");
 const equipmentAggregate = fs.readFileSync(equipmentAggregatePath, "utf8");
 const maintenanceSnapshot = fs.readFileSync(maintenanceSnapshotPath, "utf8");
 const fleetRequired = fs.readFileSync(fleetRequiredPath, "utf8");
+const pmEngine = fs.readFileSync(path.join(ROOT, "apps/backend/src/maintenance/pm-due-engine.service.ts"), "utf8");
 
-function pmScheduleScopeFailures(unitSource, equipmentSource) {
+function pmScheduleScopeFailures(unitSource, equipmentSource, engineSource = pmEngine) {
   const scopedJoin = /JOIN maintenance\.pm_schedules ps ON ps\.id = pa\.pm_schedule_id\s+AND ps\.operating_company_id = pa\.operating_company_id/;
+  const unitScoped = /computePmDueEngineForCompany\(client, operatingCompanyId, undefined, unitId\)/.test(unitSource) &&
+    /WHERE s\.operating_company_id = \$1::uuid/.test(engineSource) &&
+    /AND s\.unit_id = \$2::uuid/.test(engineSource) &&
+    /\[operatingCompanyId, onlyUnitId\]/.test(engineSource) &&
+    /COALESCE\(u\.currently_leased_to_company_id, u\.owner_company_id\) = s\.operating_company_id/.test(engineSource);
   return [
-    ["unit aggregate PM schedule join", scopedJoin.test(unitSource)],
+    ["unit aggregate canonical PM reader company/unit scope", unitScoped],
     ["trailer aggregate PM schedule join", scopedJoin.test(equipmentSource)],
   ].filter(([, ok]) => !ok).map(([name]) => name);
 }
@@ -145,7 +151,11 @@ if (process.argv.includes("--selftest")) {
   const unscoped = "JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id";
   const scoped = /JOIN maintenance\.pm_schedules ps ON ps\.id = pa\.pm_schedule_id\s+AND ps\.operating_company_id = pa\.operating_company_id/;
   const mutations = [
-    pmScheduleScopeFailures(aggregate.replace(scoped, unscoped), equipmentAggregate),
+    pmScheduleScopeFailures(aggregate.replace("computePmDueEngineForCompany(client, operatingCompanyId, undefined, unitId)", "computePmDueEngineForCompany(client, operatingCompanyId)"), equipmentAggregate),
+    pmScheduleScopeFailures(aggregate, equipmentAggregate, pmEngine.replace("WHERE s.operating_company_id = $1::uuid", "WHERE true")),
+    pmScheduleScopeFailures(aggregate, equipmentAggregate, pmEngine.replace("AND s.unit_id = $2::uuid", "")),
+    pmScheduleScopeFailures(aggregate, equipmentAggregate, pmEngine.replace("[operatingCompanyId, onlyUnitId]", "[operatingCompanyId]")),
+    pmScheduleScopeFailures(aggregate, equipmentAggregate, pmEngine.replace("COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = s.operating_company_id", "true")),
     pmScheduleScopeFailures(aggregate, equipmentAggregate.replace(scoped, unscoped)),
     lastServiceVendorFailures(aggregate.replace("COALESCE(w.external_vendor_id, w.vendor_id)::text AS vendor_id", "w.external_vendor_id::text AS vendor_id"), maintenanceSnapshot),
     lastServiceVendorFailures(aggregate.replace("mdata.get_vendor_same_company(", "mdata.get_vendor_active_only("), maintenanceSnapshot),
@@ -166,7 +176,7 @@ if (process.argv.includes("--selftest")) {
     console.error("verify:aggregate-shape-route SELFTEST FAIL: a PM schedule company-scope mutation stayed green");
     process.exit(1);
   }
-  console.log("verify:aggregate-shape-route SELFTEST PASS — 12/12 aggregate scope/vendor/void/customer/schema mutations red");
+  console.log(`verify:aggregate-shape-route SELFTEST PASS — ${mutations.length}/${mutations.length} aggregate scope/vendor/void/customer/schema mutations red`);
   process.exit(0);
 }
 

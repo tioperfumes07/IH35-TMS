@@ -12,9 +12,10 @@ function failures(p, a) {
   if (!p.includes("offset: (fuelHistoryPage - 1) * fuelHistoryPageSize")) out.push("history must send server offset");
   if (!p.includes('data-testid="fuel-history-server-pager"')) out.push("history pager must be mounted");
   // d7de33bcd7 (CC-2-R-102-B: voided documents read VOIDED, disclosed counts…) appended
-  // `includeVoidedFuel` after `fuelHistoryPage`; the page must still follow the last reverse
+  // `includeVoidedFuel` after `fuelHistoryPage`; ROUND 8.17 (#29088) added the date/unlinked reverse filters
+  // (deepLinkFrom, deepLinkTo, deepLinkUnlinked) between deepLinkTransactionId and the page — owned filters too. the page must still follow the last reverse
   // filter, and any later key must be a plain identifier (another owned filter), never dropped.
-  if (!/queryKey:\s*\[\s*"fuel",\s*"transactions",[\s\S]*?deepLinkTransactionId,\s*fuelHistoryPage,(?:\s*[A-Za-z_]\w*,)*\s*\]/.test(p)) out.push("query key must own every reverse filter and page");
+  if (!/queryKey:\s*\[\s*"fuel",\s*"transactions",[\s\S]*?deepLinkTransactionId,(?:\s*[A-Za-z_]\w*,)*?\s*fuelHistoryPage,(?:\s*[A-Za-z_]\w*,)*\s*\]/.test(p)) out.push("query key must own every reverse filter and page");
   if (!p.includes("setFuelHistoryPage(1);") || !p.includes("fuelHistoryPage > fuelHistoryPageCount")) out.push("scope/filter and empty-page recovery required");
   if (/CappedListNotice/.test(p)) out.push("a cap notice is not navigation");
   if (!a.includes("total_count: number") || !a.includes("has_more: boolean")) out.push("canonical API must expose exact count");
