@@ -2532,11 +2532,71 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   },
                   { key: "invoice_count", label: "Invoices", cellClass: "text-right", sortable: true },
                   { key: "debtors", label: "Debtors", render: (row) => row.debtors },
-                  { key: "purchase", label: "Purchased", cellClass: "text-right", sortable: true, sortValue: (row) => row.gross_cents, render: (row) => fmtCurrency(row.gross_cents / 100) },
-                  { key: "advance_amount", label: "Net Adv", cellClass: "text-right", sortable: true, sortValue: (row) => row.net_advance_cents, render: (row) => fmtCurrency(row.net_advance_cents / 100) },
-                  { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => row.escrow_cents, render: (row) => fmtCurrency(row.escrow_cents / 100) },
-                  { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => row.cash_cents, render: (row) => fmtCurrency(row.cash_cents / 100) },
-                  { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => row.fee_cents, render: (row) => fmtCurrency(row.fee_cents / 100) },
+                  {
+                    key: "purchase",
+                    label: "Purchased",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => row.gross_cents,
+                    render: (row) => (
+                      <MoneyCell
+                        cents={row.gross_cents}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "advance_amount",
+                    label: "Net Adv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => row.net_advance_cents,
+                    render: (row) => (
+                      <MoneyCell
+                        cents={row.net_advance_cents}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "escrow_rsv",
+                    label: "Escrow Rsv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => row.escrow_cents,
+                    render: (row) => (
+                      <MoneyCell
+                        cents={row.escrow_cents}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "cash_rsv",
+                    label: "Cash Rsv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => row.cash_cents,
+                    render: (row) => (
+                      <MoneyCell
+                        cents={row.cash_cents}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "fees",
+                    label: "Fees",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => row.fee_cents,
+                    render: (row) => (
+                      <MoneyCell
+                        cents={row.fee_cents}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
                 ]}
                 rows={purchaseReportSummary}
                 rowKey={(row) => row.purchase_id}
@@ -2595,12 +2655,82 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     render: (row) => (row.settlement_id ? <EntityLink kind="settlement" id={row.settlement_id} label={row.settlement_display_id ?? "—"} /> : "—"),
                   },
                   // OWNER MEGA-REPORT 2026-09-09: original invoice amount, then advance, then reserve, then fees.
-                  { key: "purchase", label: "Purchased", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.gross_cents), render: (row) => fmtCurrency(Number(row.gross_cents) / 100) },
-                  { key: "advance_amount", label: "Net Adv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.net_advance_cents), render: (row) => fmtCurrency(Number(row.net_advance_cents) / 100) },
-                  { key: "escrow_rsv", label: "Escrow Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.escrow_reserve_cents), render: (row) => fmtCurrency(Number(row.escrow_reserve_cents) / 100) },
-                  { key: "cash_rsv", label: "Cash Rsv", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.cash_reserve_cents), render: (row) => fmtCurrency(Number(row.cash_reserve_cents) / 100) },
-                  { key: "fees", label: "Fees", cellClass: "text-right", sortable: true, sortValue: (row) => Number(row.fee_cents), render: (row) => fmtCurrency(Number(row.fee_cents) / 100) },
-                  { key: "invoice_total", label: "Invoice total", cellClass: "text-right", render: (row) => fmtCurrency(Number(row.invoice_total_cents ?? 0) / 100) },
+                  {
+                    key: "purchase",
+                    label: "Purchased",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => Number(row.gross_cents),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.gross_cents)}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "advance_amount",
+                    label: "Net Adv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => Number(row.net_advance_cents),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.net_advance_cents)}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "escrow_rsv",
+                    label: "Escrow Rsv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => Number(row.escrow_reserve_cents),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.escrow_reserve_cents)}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "cash_rsv",
+                    label: "Cash Rsv",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => Number(row.cash_reserve_cents),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.cash_reserve_cents)}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "fees",
+                    label: "Fees",
+                    cellClass: "text-right",
+                    sortable: true,
+                    sortValue: (row) => Number(row.fee_cents),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.fee_cents)}
+                        drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+                      />
+                    ),
+                  },
+                  {
+                    key: "invoice_total",
+                    label: "Invoice total",
+                    cellClass: "text-right",
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Number(row.invoice_total_cents ?? 0)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ),
+                  },
                   { key: "faro_report_ref", label: "Faro report", render: (row) => row.faro_report_ref ?? "—" },
                   { key: "wire_date", label: "Wire date", render: (row) => fmtDate(row.wire_date) },
                   {
@@ -2609,7 +2739,12 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     cellClass: "text-right",
                     sortable: true,
                     sortValue: (row) => chargebacksByInvoice.get(row.invoice_id) ?? 0,
-                    render: (row) => fmtCurrency(chargebacksByInvoice.get(row.invoice_id) ?? 0),
+                    render: (row) => (
+                      <MoneyCell
+                        cents={Math.round((chargebacksByInvoice.get(row.invoice_id) ?? 0) * 100)}
+                        drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+                      />
+                    ),
                   },
                   // Faro-portal columns with no backing field yet — kept (owner: nothing removed unless he says). Visible by
                   // default: the additive-only law (docs/LAW.md L379, verify-additive-only shrink-only defaultHidden ratchet)
