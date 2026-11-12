@@ -41,7 +41,7 @@ describe("Legal pipeline stage routes drive the canonical list query", () => {
     const user = userEvent.setup();
     mount(["/legal/contracts?status=draft&signer_type=driver&signer_entity_id=local-driver"]);
     await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith(expect.objectContaining({ status: "draft" })));
-    await user.click(screen.getByRole("button", { name: "+ Create", exact: true }));
+    await user.click(screen.getByRole("button", { name: /^\+ Create$/ }));
     expect(screen.getByTestId("location")).toHaveTextContent("status=draft");
     await user.click(screen.getByRole("button", { name: "Close creator" }));
     expect(screen.getByTestId("location")).toHaveTextContent("status=draft");
@@ -54,7 +54,7 @@ describe("Legal pipeline stage routes drive the canonical list query", () => {
     ["Signed", "signed_electronically"], ["Voided", "voided"],
   ])("%s filters the API before pagination", async (label, status) => {
     const user = userEvent.setup(); mount();
-    await user.click(await screen.findByRole("link", { name: label, exact: true }));
+    await user.click(await screen.findByRole("link", { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }));
     await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith(expect.objectContaining({ status, operating_company_id: "company-local-fixture" })));
   });
 
@@ -63,8 +63,8 @@ describe("Legal pipeline stage routes drive the canonical list query", () => {
     mount(["/legal/contracts?status=sent&status=viewed&signer_type=driver&signer_entity_id=local-driver"]);
     await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith(expect.objectContaining({ status: "sent,viewed", signer_type: "driver", signer_entity_id: "local-driver" })));
     await user.click(screen.getByRole("button", { name: /^Filters/ }));
-    await user.click(screen.getByRole("button", { name: "Reset", exact: true }));
-    await user.click(screen.getByRole("button", { name: "Apply", exact: true }));
+    await user.click(screen.getByRole("button", { name: /^Reset$/ }));
+    await user.click(screen.getByRole("button", { name: /^Apply$/ }));
     await waitFor(() => expect(mocks.list).toHaveBeenLastCalledWith(expect.objectContaining({ status: undefined, signer_entity_id: "local-driver" })));
     expect(screen.getByTestId("location")).not.toHaveTextContent("status=");
     await user.click(screen.getByRole("button", { name: "History back" }));

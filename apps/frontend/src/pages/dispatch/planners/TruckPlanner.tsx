@@ -312,7 +312,8 @@ export function TruckPlanner() {
                   <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
                 ) : (
                   row.currentLoad
-                ), }
+                ),
+            },
             { key: "status", label: "Status", sortable: true },
             { key: "nextAvailable", label: "Next Available", sortable: true },
           ];

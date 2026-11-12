@@ -29,6 +29,9 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 
 type Grain = "day" | "week";
 
+/** Expense panel row — real ledger lines plus empty-priority placeholders (`_empty`). */
+type ExpenseBoardRow = RollingLedgerRow & { _group: string; _empty?: boolean };
+
 type Props = {
   operatingCompanyId: string;
 };
@@ -268,24 +271,28 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     [incomeGroups],
   );
 
-  const expenseFlatRows = useMemo(
+  const expenseFlatRows = useMemo<ExpenseBoardRow[]>(
     () =>
       expenseGroups.flatMap(({ key, rows }, idx) => {
         const title = expenseGroupTitle(key, idx);
         if (rows.length === 0) {
-          return [
-            {
-              document_kind: "empty",
-              document_id: `empty-${key}`,
-              due_date: "",
-              amount_cents: 0,
-              row_kind: "expense" as const,
-              type: "",
-              counterparty: emptyExpenseHint(key),
-              _group: title,
-              _empty: true,
-            } as RollingLedgerRow & { _group: string; _empty?: boolean },
-          ];
+          // Placeholder row for an empty priority group — not a real ledger document.
+          const emptyRow: ExpenseBoardRow = {
+            document_kind: "expense",
+            document_id: `empty-${key}`,
+            document_label: "",
+            origin_date: "",
+            due_date: "",
+            amount_cents: 0,
+            days_overdue: 0,
+            status: "upcoming",
+            row_kind: "expense",
+            type: "",
+            counterparty: emptyExpenseHint(key),
+            _group: title,
+            _empty: true,
+          };
+          return [emptyRow];
         }
         return rows.map((row) => ({ ...row, _group: title }));
       }),
@@ -363,9 +370,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     [],
   );
 
-  const expenseColumns = useMemo<
-    ParityColumn<RollingLedgerRow & { _group: string; _empty?: boolean }>[]
-  >(
+  const expenseColumns = useMemo<ParityColumn<ExpenseBoardRow>[]>(
     () => [
       {
         key: "group",
