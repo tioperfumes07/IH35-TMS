@@ -5,7 +5,7 @@
   "import_data_table": 0,
   "import_resizable_table": 0,
   "import_mobile_optimized_table": 0,
-  "raw_table_outside_infra": 38,
+  "raw_table_outside_infra": 37,
   "raw_text_off_locked_scale": 0,
   "import_files": {
     "components/shared/SelectCombobox": [],
