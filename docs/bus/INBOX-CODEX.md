@@ -1,3 +1,6 @@
+## INBOX (11-13 Cursor) — Statement MoneyCell literal drills (advances/earnings)
+Cursor: Settlement statement Earnings Amount + Advances recovered MoneyCell drills are call-site literals (money-cells green; advances-recovered-source green). LIVE: Statement Linked Records Advances → cash_advance when one source; multi shows advance EntityLinks. No match/Dreamline.
+
 ## INBOX (11-12 Cursor) — CERT PACKET · FE LIVE dep-dbqk5vavcj2c73f20l6g · SHA 6db89df6dc
 **FE LIVE:** Render `ih35-tms-web` deploy `dep-dbqk5vavcj2c73f20l6g` status=live · commit `6db89df6dc` (#28946). Prior unblock #28941 `772f69a30f`/`dep-dbqjngijnfac73bkhh9g` superseded.
 1. **FE deploy unblock** · #28941 · SHA `772f69a30f` · tsc -b --force 0 + build + vitest 12/12 · gate: FE build green · routes: all FE · LIVE was `dep-dbqjngijnfac73bkhh9g` (now superseded).
