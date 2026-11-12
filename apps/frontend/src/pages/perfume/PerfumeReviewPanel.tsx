@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { Combobox } from "../../components/Combobox";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -15,7 +16,7 @@ const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFrac
 export function PerfumeReviewPanel() {
   const [page, setPage] = useState(1);
   // Owner 2026-11-12: "where do I review the Esperanza items?" — review one vendor's list at a time.
-  const [listId, setListId] = useState<string | null>(null);
+  const [listIds, setListIds] = useState<string[]>([]);
   const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
   const listOptions = (lists.data?.lists ?? []).filter((l) => l.is_current)
     .map((l) => ({ value: l.id, label: `${l.vendor_name} · ${String(l.list_date).slice(0, 10)}`, sublabel: l.file_name }));
@@ -24,8 +25,8 @@ export function PerfumeReviewPanel() {
   const [status, setStatus] = useState<"review" | "unmatched" | null>(null);
   const [PAGE, setPageSize] = useState(100);
   const reset = () => { setPage(1); setSelected([]); };
-  const q = useQuery({ queryKey: ["perfume", "review", page, listId, text, status, PAGE],
-    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listId, q: text, status }), placeholderData: (p) => p });
+  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE],
+    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status }), placeholderData: (p) => p });
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   if (q.isError) {
@@ -34,21 +35,17 @@ export function PerfumeReviewPanel() {
   return (
     <section className="space-y-2" aria-label={tr("perfume.review.1", "Review")}>
       <div className="flex flex-wrap items-end gap-2">
-        <label className="w-[360px] max-w-full text-xs text-gray-700">
-          {tr("perfume.review.listFilter", "Vendor list")}
-          <Combobox
-            ariaLabel={tr("perfume.review.listFilter", "Vendor list")}
-            allowClear
-            value={listId}
-            onChange={(v) => { setListId((v as string | null) || null); reset(); }}
-            options={listOptions}
-            placeholder={tr("perfume.review.allLists", "All vendors")}
-            dataTestId="perfume-review-list-filter"
-          />
-        </label>
+        <MultiSelectDropdown
+          label={tr("perfume.review.listFilter", "Vendor list")}
+          allLabel={tr("perfume.review.allLists", "All vendors")}
+          data-testid="perfume-review-list-filter"
+          options={listOptions.map((o) => ({ value: o.value, label: o.label }))}
+          selected={listIds}
+          onChange={(next) => { setListIds(next); reset(); }}
+        />
         <label className="w-[260px] max-w-full text-xs text-gray-700">
           {tr("perfume.review.searchLabel", "Words in their line, UPC or code")}
-          <input type="search" className="mt-0.5 h-[34px] w-full rounded border border-gray-300 px-2 text-sm" value={text}
+          <input type="search" className="mt-0.5 h-[34px] w-full rounded border border-gray-300 px-2 text-xs" value={text}
             data-testid="perfume-review-search" placeholder={tr("perfume.review.searchPh", "e.g. ARMAF CLUB")}
             onChange={(e) => { setText(e.target.value); reset(); }} />
         </label>

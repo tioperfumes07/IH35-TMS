@@ -161,10 +161,10 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
-export type PerfumeReviewFilter = { listId?: string | null; q?: string; status?: "review" | "unmatched" | null };
+export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null };
 export const getPerfumeReview = (offset = 0, limit = 100, f: PerfumeReviewFilter = {}) => {
   const p = new URLSearchParams({ offset: String(offset), limit: String(limit) });
-  if (f.listId) p.set("list_id", f.listId);
+  if (f.listIds?.length) p.set("list_ids", f.listIds.join(","));
   if (f.q?.trim()) p.set("q", f.q.trim());
   if (f.status) p.set("status", f.status);
   return apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?${p.toString()}`);

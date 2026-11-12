@@ -424,12 +424,13 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
-export async function reviewQueue(c: PoolClient, opts: { list_id?: string; q?: string; status?: "review" | "unmatched"; limit: number; offset: number }) {
+export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; limit: number; offset: number }) {
   // Filters (owner 2026-11-12: "1788 items, lets have the filters"): one vendor list, words in the vendor's line,
   // and "has a suggestion" (review) vs "nothing close" (unmatched).
   const cond: string[] = [];
   const fp: unknown[] = [];
-  if (opts.list_id) { fp.push(opts.list_id); cond.push(`r.list_id = $${fp.length}`); }
+  const lists = [...(opts.list_ids ?? []), ...(opts.list_id ? [opts.list_id] : [])];
+  if (lists.length) { fp.push(lists); cond.push(`r.list_id = ANY($${fp.length}::uuid[])`); }
   if (opts.status) { fp.push(opts.status); cond.push(`r.match_status = $${fp.length}`); }
   for (const w of (opts.q ?? "").trim().split(/\s+/).filter(Boolean).slice(0, 6)) {
     fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
