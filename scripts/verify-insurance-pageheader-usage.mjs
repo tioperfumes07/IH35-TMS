@@ -24,11 +24,18 @@ if (!/<PageHeader[\s>]/.test(detail)) {
   failures.push(`${detailPath}: must render <PageHeader> for policy detail chrome.`);
 }
 
-// INS-443282 (#27400): Insurance is its own module at /insurance/* — the Safety-nested path is retired.
-if (!/backHref=["']\/insurance\/policies["']/.test(detail)) {
+// INS-443282 (#27400) + ROUND 8.17/#29116: Insurance module at /insurance/*; Back consumes ret
+// with fallback /insurance (Home/Fleet Covered). Hardcoded /insurance/policies alone loses ret.
+if (!/resolveBackHref\(/.test(detail) || !/fallback:\s*["']\/insurance["']/.test(detail)) {
   failures.push(
-    `${detailPath}: PageHeader must set backHref="/insurance/policies" so ← returns to the policies list.`
+    `${detailPath}: PageHeader must use resolveBackHref({ fallback: "/insurance" }) so ← restores board ret or Insurance Home.`
   );
+}
+if (!/backHref=\{insuranceBackHref\}/.test(detail)) {
+  failures.push(`${detailPath}: PageHeader must bind backHref={insuranceBackHref} (resolveBackHref result).`);
+}
+if (/backHref=["']\/safety\/insurance\/policies["']/.test(detail) || /fallback:\s*["']\/safety\/insurance/.test(detail)) {
+  failures.push(`${detailPath}: must NOT use retired Safety-nested /safety/insurance path.`);
 }
 
 if (!/breadcrumb=\{/.test(detail)) {
@@ -71,14 +78,16 @@ if (process.argv.includes("--selftest")) {
   const detail = readFileSync(detailPath, "utf8");
   const header = readFileSync(headerPath, "utf8");
   const plants = [
-    ["back to the retired Safety-nested list", detail.replaceAll('backHref="/insurance/policies"', 'backHref="/safety/insurance/policies"')],
+    ["resolveBackHref removed", detail.replaceAll("resolveBackHref", "goneBackHref")],
+    ["fallback leaves Insurance module", detail.replaceAll('fallback: "/insurance"', 'fallback: "/safety/insurance"')],
+    ["backHref unbound from insuranceBackHref", detail.replaceAll("backHref={insuranceBackHref}", 'backHref="/insurance/policies"')],
     ["shared PageHeader removed", detail.split("<PageHeader").join("<div")],
     ["bespoke back button", detail + "\n// <button>Back to policies</button>"],
     ["breadcrumb dropped", detail.replace(/breadcrumb=\{/g, "crumbs={")],
     ["BoardSection stripped", detail.replace(/from ["']\.\.\/\.\.\/components\/v3\/BoardSection["']/, "").replace(/testId="policy-detail-units-board"/g, 'testId="x"')],
   ];
   let ok = check(detail, header).length === 0;
-  if (!ok) console.error("SELFTEST FAIL — real source does not pass");
+  if (!ok) console.error("SELFTEST FAIL — real source does not pass", check(detail, header));
   for (const [name, mutated] of plants) {
     const caught = mutated !== detail && check(mutated, header).length > 0;
     console.log(`  ${caught ? "PASS" : "FAIL"}  planted "${name}" caught`);

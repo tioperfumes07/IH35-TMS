@@ -29,6 +29,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
+import { settlementCloseNetPay } from "./settlementCloseNet";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 
 /** 443.280 — step body / Result use shared BoardSection (not local bordered extract). */
@@ -185,19 +186,35 @@ export function SettlementCloseArrivalPage() {
 
   // LEAD 443.269-A 3b / 443.293-B: Dispatch "Close settlement" opens this page for THAT driver
   // (?driver_id=&settlement_id=). Same wizard as Settlements › Settlement Close queue — one engine.
-  const [closeSearchParams] = useSearchParams();
+  const [closeSearchParams, setCloseSearchParams] = useSearchParams();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(() => closeSearchParams.get("driver_id"));
   const [paymentMethodId, setPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodGlAccountId, setPaymentMethodGlAccountId] = useState<string | null>(null);
   const [driverCreateOpen, setDriverCreateOpen] = useState(false);
   // ROUND 443.280-A — real wizard state (was hardcoded activeStep = settlement ? 3 : 1).
-  const [wizardStep, setWizardStep] = useState<CloseWizardStep>(1);
+  // ROUND 8.19 — ?close_step= N bookmarks KPI → breakdown (board 37 all-KPI-same-statement FAIL).
+  const [wizardStep, setWizardStep] = useState<CloseWizardStep>(() => {
+    const n = Number(closeSearchParams.get("close_step") ?? "");
+    return n >= 1 && n <= 7 ? (n as CloseWizardStep) : 1;
+  });
 
   // Keep picker in sync when Dispatch navigates here with a different driver_id (same mount).
   useEffect(() => {
     const fromUrl = closeSearchParams.get("driver_id");
     if (fromUrl && fromUrl !== selectedDriverId) setSelectedDriverId(fromUrl);
   }, [closeSearchParams, selectedDriverId]);
+
+  useEffect(() => {
+    const n = Number(closeSearchParams.get("close_step") ?? "");
+    if (n >= 1 && n <= 7) setWizardStep(n as CloseWizardStep);
+  }, [closeSearchParams]);
+
+  function goCloseStep(step: CloseWizardStep) {
+    setWizardStep(step);
+    const next = new URLSearchParams(closeSearchParams);
+    next.set("close_step", String(step));
+    setCloseSearchParams(next, { replace: true });
+  }
 
   const openQuery = useQuery({
     queryKey: ["driver-finance", "pre-settlements", "open-by-driver", companyId],
@@ -334,7 +351,16 @@ export function SettlementCloseArrivalPage() {
   const advanceRecoveryLines = lines.filter((l) => ADVANCE_RECOVERY_LINE_TYPES.has(l.line_type));
   const advanceRecoveryTotal = sumLines(lines, ADVANCE_RECOVERY_LINE_TYPES);
   const reimbursements = sumLines(lines, REIMBURSEMENT_LINE_TYPES);
-  const netPay = Number(settlement?.net_pay ?? 0);
+  // ROUND 8.19 board 37 — stored net_pay 0 with positive gross was the uncomputed fallback FAIL.
+  const netPay = settlementCloseNetPay({
+    storedNet: Number(settlement?.net_pay ?? 0),
+    gross,
+    earnings,
+    otherDeductionsTotal,
+    escrowContribution: escrowContributionThisSettlement,
+    advanceRecovery: advanceRecoveryTotal,
+    reimbursements,
+  });
 
   // Escrow cap indicator: current total escrow balance (pre + post clause, from the shared debt
   // summary) vs the $2,500 owner-locked cap. "$X to cap" = headroom remaining BEFORE this
@@ -579,20 +605,20 @@ export function SettlementCloseArrivalPage() {
 
   const goBack = () => {
     if (wizardStep > 1) {
-      setWizardStep((s) => (s - 1) as CloseWizardStep);
+      goCloseStep((wizardStep - 1) as CloseWizardStep);
       return;
     }
     setSelectedDriverId(null);
-    setWizardStep(1);
+    goCloseStep(1);
   };
 
   const goNext = () => {
-    if (wizardStep < 7) setWizardStep((s) => (s + 1) as CloseWizardStep);
+    if (wizardStep < 7) goCloseStep((wizardStep + 1) as CloseWizardStep);
   };
 
   const selectDriver = (id: string | null) => {
     setSelectedDriverId(id);
-    setWizardStep(1);
+    goCloseStep(1);
     setPaymentMethodId(null);
     setPaymentMethodGlAccountId(null);
   };
@@ -878,38 +904,43 @@ export function SettlementCloseArrivalPage() {
             value={settlement ? "1" : String(openOptions.length || "—")}
             sub="with open pre-settlement"
             testId="settlement-close-kpi-open-drivers"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : "/driver-finance/settlements"}
+            onClick={() => goCloseStep(1)}
           />
           <V3KpiTile
             label="Gross"
             value={formatUsd(boardGrossDisplay)}
             testId="settlement-close-kpi-gross"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+            onClick={settlement ? () => goCloseStep(3) : undefined}
+            noDrill={settlement ? undefined : "Select a driver on arrival first"}
           />
           <V3KpiTile
             label="Deductions"
             value={formatUsd(otherDeductionsTotal)}
             testId="settlement-close-kpi-deductions"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+            onClick={settlement ? () => goCloseStep(4) : undefined}
+            noDrill={settlement ? undefined : "Select a driver on arrival first"}
           />
           <V3KpiTile
             label="Escrow"
             value={formatUsd(escrowContributionThisSettlement)}
             testId="settlement-close-kpi-escrow"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+            onClick={settlement ? () => goCloseStep(5) : undefined}
+            noDrill={settlement ? undefined : "Select a driver on arrival first"}
           />
           <V3KpiTile
             label="Advances recovered"
             value={formatUsd(advanceRecoveryTotal)}
             testId="settlement-close-kpi-advances"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+            onClick={settlement ? () => goCloseStep(6) : undefined}
+            noDrill={settlement ? undefined : "Select a driver on arrival first"}
           />
           <V3KpiTile
             label="Net to driver"
             value={formatUsd(netPay)}
             tone="green"
             testId="settlement-close-kpi-net"
-            href={settlement ? `/driver-finance/settlements?settlement_id=${encodeURIComponent(settlement.id)}` : undefined}
+            onClick={settlement ? () => goCloseStep(7) : undefined}
+            noDrill={settlement ? undefined : "Select a driver on arrival first"}
           />
         </div>
       }
@@ -946,7 +977,7 @@ export function SettlementCloseArrivalPage() {
               key={step.n}
               type="button"
               disabled={!reachable}
-              onClick={() => reachable && setWizardStep(step.n)}
+              onClick={() => reachable && goCloseStep(step.n as CloseWizardStep)}
               data-testid={`settlement-close-step-${step.n}`}
               data-active={on ? "1" : "0"}
               style={{
@@ -1012,7 +1043,7 @@ export function SettlementCloseArrivalPage() {
           >
             {stepPanel}
 
-            <CloseBoardPanel title="Result" stepTitle="Result" testId="settlement-close-result-panel" onViewAll={() => setWizardStep(7)}>
+            <CloseBoardPanel title="Result" stepTitle="Result" testId="settlement-close-result-panel" onViewAll={() => goCloseStep(7)}>
               <div className="mb-2 flex flex-wrap items-center gap-2">
                 <Button type="button" variant="secondary" onClick={goBack} data-testid="settlement-close-back">
                   Back
