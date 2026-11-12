@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave16
+- **PRIOR:** prior residual board wave.
+- **THIS:** ViolationsTab.tsx appearance=board (1 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining Customers/Vendors/Drivers residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~4:55 PM CT) — Residual ParityTables appearance=board wave15 (AuditTrail+DocsHome)
 - **PRIOR:** #28852 wave14 Users.
 - **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
