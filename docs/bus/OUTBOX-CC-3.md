@@ -2,6 +2,10 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 04Z (B) — ROUND 8.18 ROW 5 DONE-LIVE
+
+- **ROW 5 (Names proper-case):** guard verify-no-uppercase-names-rendered --selftest 5/5 PASS · triggers: trg_drivers_proper_names (202616210300) + trg_customers_proper_name + trg_vendors_proper_name (202616250900) · mdata.proper_person_name() = ONE formatter · Chrome 2026-11-12: /drivers/roster 13/13 active drivers proper case (Eduardo Azael Flores Ortiz, Luis Armando Sosa Perez, Jorge Luis Infante Corona, etc.) · org names kept as-is (ACME pattern) — PARTIAL → DONE-LIVE
+
 ## 2026-11-13 04Z — ROUND 8.18 ROWS 262 264 298 DONE-LIVE
 
 - **ROW 262 (ENG-27 G6 bank-cat postings no load):** verify-eng27-bank-cat-pre-1017-no-load-ceiling --selftest PASS · ceiling 290 (shrink-only; was 458 on claim, 290 live 10-28) · 290 pre-10-17 postings remain; backfill via engine when Lead issues AUTH; guard prevents any new ones — PARTIAL → DONE-LIVE

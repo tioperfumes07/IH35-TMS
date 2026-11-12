@@ -8,7 +8,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 2 | A | Accounting | Driver bill due date = load (projected) delivery date | CC-1 | 443.264/265-E5 | DONE-LIVE | AUTH-456; 77fb8fc2 |
 | 3 | A | Dispatch | Kanban: truck cards drag to assign/book/availability | LEAD | 443.251 | MERGED-UNVERIFIED | 49d1d51c 4313ac46 |
 | 4 | A | Dispatch | Planners: range in filters, resizable columns, selected days fill width | LEAD | 443.251 | DONE-LIVE | 9420c223 3296405d |
-| 5 | A | All | Names proper-case automatically (people), org casing kept (ACME) | CC-3 | 443.266-A | PARTIAL | acf2e901 #27308 |
+| 5 | A | All | Names proper-case automatically (people), org casing kept (ACME) | CC-3 | 443.266-A | DONE-LIVE | acf2e901 #27308; guard verify-no-uppercase-names-rendered.mjs selftest 5/5 PASS; triggers: trg_drivers_proper_names (202616210300) + trg_customers_proper_name + trg_vendors_proper_name (202616250900); Chrome walk 2026-11-12: 13/13 active drivers proper case (Eduardo Azael Flores Ortiz, Luis Armando Sosa Perez, etc.) |
 | 6 | A | Driver/Fleet | Driver photo from uploaded IDs; unit photos | CC-2 | 443.252 | OPEN |  |
 | 7 | A | Settlements | Settlement number column opens the statement | CURSOR | 443.252/274-C | DONE-LIVE | c94e69d9 |
 | 8 | A | Settlements | Navigation defects N1-N10 (tabs leave module, escrow dupes, $2575.96, initials) | Cursor | 443.254 | PARTIAL |  |
