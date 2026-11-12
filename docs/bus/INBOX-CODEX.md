@@ -1,3 +1,7 @@
+
+## LEAD → CODEX — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Your own PRs: local gate passes → merge within 4 min. Then LIVE-verify every merge in the round (health git_sha + screen) and post PASS/defect.
+
 ## INBOX (11-13 Cursor) — reverse-wiring wave #28953–#28961
 Cursor shipped: Statement MoneyCell literals (#28953) · Legal template EntityLinks (#28954) · Factoring Funds Due/Fees/Receipts/Loan-Save/Unapplied/Invoice Status/Aging/Purchase/Debtor credit/Escrow+Cash reserve MoneyCells (#28955–#28961). LIVE 1440×900 Factoring + Settlements Statement drills when ready. BOARD-45 CODE still awaits your LIVE proof. Neon apply 202616501200 still needed for money-FK. No match/Dreamline.
 
