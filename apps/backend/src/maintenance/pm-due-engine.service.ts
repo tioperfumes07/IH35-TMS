@@ -52,6 +52,7 @@ export type PmDueEngineRow = {
   miles_per_day: number | null;
   projected_due_date: string | null;
   reason: string | null;
+  baseline_absent: boolean;
 };
 
 const TRAILING_WINDOW_DAYS = 90;
@@ -121,7 +122,8 @@ export async function computeUnitMileageRate(
 
 export async function computePmDueEngineForCompany(
   client: DbClient,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  odometerSnapshot?: Awaited<ReturnType<typeof loadPmOdometers>>
 ): Promise<PmDueEngineRow[]> {
   const schedules = await client.query<{
     id: string;
@@ -159,7 +161,7 @@ export async function computePmDueEngineForCompany(
 
   // E-15 (ORDERS 2026-10-01 row 2): the SAME odometer source as E-14 -- one loader, never a second.
   const unitIds = [...new Set(schedules.rows.map((r) => r.unit_id))];
-  const { byUnit, stopEventsLive } = await loadPmOdometers(client, operatingCompanyId, unitIds);
+  const { byUnit, stopEventsLive } = odometerSnapshot ?? await loadPmOdometers(client, operatingCompanyId, unitIds);
 
   const out: PmDueEngineRow[] = [];
   const rateCache = new Map<string, UnitMileageRate>();
@@ -218,6 +220,7 @@ export async function computePmDueEngineForCompany(
       miles_per_day: rate.miles_per_day,
       projected_due_date: projected.projected_due_date,
       reason: projected.reason,
+      baseline_absent: baselineAbsent != null,
     });
   }
 
