@@ -2,6 +2,12 @@
 
 ## Fresh verification — 2026-11-11 22:16–22:22 ET
 
+### Insurance continuation — bounded read-only certification
+
+CSS1440x900: six approved landing nav labels/order, five KPI labels and three policy timeline rows with Today marker present. Timeline→named policy→Policies and Fleet Covered→named policy clicks PASS; Policies loads3records, Fleet Covered26records. Policy Assigned Units links present. Scheduled+Overdue both checked with Status(2): selection mechanics PASS; filtering semantics UNVERIFIED because no payment rows displayed for that selected policy. Policy Back goes to Policies, not originating Fleet Covered/landing. No financial writes or edit/archive actions. Full visual census, all modals and amount tie-outs remain UNVERIFIED; existing links do not prove #28924 deployed.
+
+New frontend blocker: Render dep-dbqjj6hkph1s739ud85g fails TruckPlanner.tsx316 TS1005; origin/main81e7dab2c2 missing comma after Current Load column315 introduced #28933. Independent TypeScript parser exit1 confirms. Cursor handoff https://github.com/tioperfumes07/IH35-TMS/pull/28933#issuecomment-6814086897. Certification cannot accept undelivered revisions.
+
 ### Certification pass — Maintenance In Shop / ShopBays, 22:53 ET
 
 Measured CSS1440x900. PASS controls: In Shop URL retains `status=in-shop`; selected navigation visible; four bay articles render; no Home recent-history panels on In Shop; Check a truck in opens `/maintenance/arriving-soon`; In Shop link returns to all four bays. The arrival page has an explicit empty queue; no check-in, bay move, work-order create or other write was invoked. Occupied-bay status/progress/release and source correctness remain UNVERIFIED against real populated records; empty UI is not evidence that the backend population is truly zero. Full boards23/45 remain OPEN, not certified. Arrival page still mounts Home history panels; owned isolation repair remains local pending release gates. Screenshot private in audit chat.
