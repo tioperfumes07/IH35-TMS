@@ -224,7 +224,7 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 218 | A | Settlements | Statement must match the owner settlement document (5753 format): loads+stops+dates, fuel, expenses, per-load deductions, P&L | Cursor | 443.293-A | CODED | ad4a611076 #27465 (Cursor) eight-section statement |
 | 219 | A | Dispatch / Settlements | Settlement Close: what it does; should be a button in Dispatch | Cursor | 443.293-B | CODED | 9b651bfdb4 #27481 (Cursor) Close settlement CTA in Dispatch |
 | 220 | A | Accounting | Inspect every Accounting tab; only Bills first tab is right | Cursor | 443.293-C | OPEN |  |
-| 221 | A | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | 443.294 | OPEN |  |
+| 221 | A | All modules | Override: one reasons catalog + one button app-wide; owner/accountant confirm only; others dropdown; no typing | CC-3 | 443.294 | DONE-LIVE | verify-override-reasons-one-catalog --selftest 19/19 PASS · Chrome: /accounting/reclassify → Reclassify → Override → plain "OVERRIDE / Confirm this override?" dialog (Owner, no dropdown) 2026-11-12 |
 | 222 | A | All modules | Popup standard app-wide + Fuel assignment popup redesign | Cursor | 443.295 | OPEN | design PR #27439 |
 | 223 | E | Fuel | Fuel evidence: odometer blank, "no GPS truck" while truck parked at pump | CC-2 | 443.296 | OPEN |  |
 | 224 | A | Process | CODE-COMPLETE MODE: code every row, verify at the end | ALL | 443.297 | IN PROGRESS | box in docs/bus/lead/boxes/2026-10-23 |
