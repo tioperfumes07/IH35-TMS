@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { visibleDocumentLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
 
@@ -99,11 +100,29 @@ export function buildLoadCostColumns<R>(
     defaultHidden: opts.defaultHidden,
     sortValue: (row) => pick(adapt(row)) ?? Number.NEGATIVE_INFINITY,
     render: (row) => {
-      const cents = pick(adapt(row));
-      if (opts.redWhenNegative && cents != null && cents < 0) {
-        return <span className="text-[#991B1B]">{money(cents)}</span>;
+      const fields = adapt(row);
+      const cents = pick(fields);
+      if (cents == null) return DASH;
+      const className = opts.redWhenNegative && cents < 0 ? "text-[#991B1B]" : undefined;
+      if (fields.loadId) {
+        return (
+          <MoneyCell
+            cents={cents}
+            className={className}
+            drill={{ entity: { kind: "load", id: fields.loadId } }}
+          />
+        );
       }
-      return money(cents);
+      if (fields.settlementId) {
+        return (
+          <MoneyCell
+            cents={cents}
+            className={className}
+            drill={{ entity: { kind: "settlement", id: fields.settlementId } }}
+          />
+        );
+      }
+      return className ? <span className={className}>{money(cents)}</span> : money(cents);
     },
   });
 
