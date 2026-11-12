@@ -1,6 +1,6 @@
-<!-- heartbeat 2026-11-12T09:44Z Cursor MAIN-RED session -->
-# NOW — CURSOR — MAIN-RED settlement-linkage orphans + reverse-wiring
+<!-- heartbeat 2026-11-12T10:07Z Cursor MAIN-RED session -->
+# NOW — CURSOR — MAIN-RED scorer test + reverse-wiring
 
-**ACTIVE:** Align settlement-linkage orphans with OWNER_PENDING_UNLINKED (13544/13563). Shared lib.
+**ACTIVE:** Fix ACCT-F11129 scorer mock for `FROM mdata.loads l` alias after canonicalNotCancelled.
 
-**EXTERNAL:** CC-1 still must link owner-pending loads. CodeQL WriteCheckForm/auth. Neon 202616501200. Codex LIVE. No match/Dreamline.
+**EXTERNAL LIVE:** load-to-cash LINK1 load 13700 missing driver_bills (ops/CC). CodeQL WriteCheckForm/auth. Neon 202616501200. Codex LIVE. No match/Dreamline.

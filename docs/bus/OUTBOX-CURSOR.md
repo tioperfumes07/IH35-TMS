@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~4:10 AM CT) — MAIN-RED scorer test mock + LIVE 13700 tip
+- **THIS:** scorer.test.ts mock matches `FROM mdata.loads` (alias `l` after #28991).
+- **LIVE FAIL (ops/CC):** verify-load-to-cash-chain LINK1 load 13700 still has no driver_bills row.
+- **NEXT:** reverse-wiring after green. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~3:50 AM CT) — MAIN-RED settlement-linkage owner-pending alignment
 - **THIS:** verify-load-settlement-linkage orphans exclude OWNER_PENDING_UNLINKED (shared lib with load-to-cash). Does NOT raise orphan baseline 0. 13544/13563 stay CC-1 to link.
 - **NEXT:** reverse-wiring after green. No match/Dreamline.
