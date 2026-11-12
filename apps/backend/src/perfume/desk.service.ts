@@ -620,71 +620,40 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   }
   const close = (v: number | null) => (v == null ? null : closeCents(v, rules.round_step, rules.round_dir));
 
+  // Owner 2026-11-12: "my data on the left and their data should be one or two columns … you are adding too much."
+  // No quantities, box counts, ranks or per-vendor freight anywhere in the grid.
   const cols: GridCol[] = [
-    { key: "code", label: "Internal code", group: "Item", kind: "text" },
-    { key: "upc", label: "UPC", group: "Item", kind: "text" },
-    { key: "upc_count", label: "# UPCs", group: "Item", kind: "int" },
-    { key: "sku", label: "Vendor SKU", group: "Item", kind: "text" },
     { key: "brand", label: "Brand", group: "Item", kind: "text" },
     { key: "name", label: "Name", group: "Item", kind: "text" },
     { key: "size_ml", label: "Size ml", group: "Item", kind: "int" },
     { key: "conc", label: "Type", group: "Item", kind: "text" },
-    { key: "gender", label: "Gender", group: "Item", kind: "text" },
-    { key: "category", label: "Category", group: "Item", kind: "text" },
-    { key: "flags", label: "Tester / set", group: "Item", kind: "text" },
-    { key: "country", label: "Country", group: "Item", kind: "text" },
+    { key: "category", label: "Kind", group: "Item", kind: "text" },
+    { key: "upc", label: "UPC", group: "Item", kind: "text" },
+    // MINE — left of every vendor column.
+    { key: "landed_likely", label: "My cost", group: "Mine", kind: "money" },
+    { key: "best_vendor", label: "Buy from", group: "Mine", kind: "text" },
+    { key: "target_price_margin", label: `My price @${target}%`, group: "Mine", kind: "money" },
+    { key: "target_profit", label: `My profit @${target}%`, group: "Mine", kind: "money" },
+    { key: "trade_beats", label: "My price beats their cost at", group: "Mine", kind: "text" },
+    { key: "low_sell", label: "Lowest competitor", group: "Mine", kind: "money" },
+    { key: "target_action", label: "Raise / lower", group: "Mine", kind: "text" },
   ];
+  // PURCHASE — one column per supplier: its price.
+  // Owner 2026-11-12: "in purchase … I just need their list price and the price after the cushion."
   for (const v of buyV) {
-    cols.push({ key: `v:${v.id}:price`, label: "Price", group: v.name, kind: "money" });
-    cols.push({ key: `v:${v.id}:landed`, label: "My cost", group: v.name, kind: "money" });
-    cols.push({ key: `v:${v.id}:rank`, label: "Rank", group: v.name, kind: "int" });
-    cols.push({ key: `v:${v.id}:qty`, label: "Qty", group: v.name, kind: "int" });
+    cols.push({ key: `v:${v.id}:price`, label: "List price", group: v.name, kind: "money" });
+    cols.push({ key: `v:${v.id}:net`, label: "After cushion", group: v.name, kind: "money" });
   }
-  cols.push(
-    { key: "best_vendor", label: "Buy from", group: "Purchase", kind: "text" },
-    { key: "tied", label: "Tied vendors", group: "Purchase", kind: "int" },
-    { key: "n_vendors", label: "# vendors", group: "Purchase", kind: "int" },
-    { key: "best_price", label: "Vendor price", group: "Purchase", kind: "money" },
-    { key: "cushion", label: "Cushion", group: "Purchase", kind: "money" },
-    { key: "freight", label: "Freight / pc", group: "Purchase", kind: "money" },
-    { key: "landed_likely", label: "My cost", group: "Purchase", kind: "money" },
-    { key: "landed_best", label: "My cost (best case)", group: "Purchase", kind: "money" },
-    { key: "saves_next", label: "Saves vs next", group: "Purchase", kind: "money" },
-    { key: "vendor_cost", label: "Vendor's est. cost", group: "Purchase", kind: "money" },
-    { key: "case_pack", label: "Box qty", group: "Purchase", kind: "int" },
-  );
-  // TRADING — I also SELL to the vendors I buy from. Their own list price less the % they earn is what they pay;
-  // against my cost from the OTHER vendors that is my profit on the trade (owner 2026-11-12).
+  // TRADING — two columns per supplier: their price, and their cost = (their price − cushion) less the % they earn.
   for (const v of buyV) {
-    cols.push({ key: `t:${v.id}:list`, label: "Their price", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:offer`, label: "My offer to them", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:cost`, label: "My cost (other vendors)", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:profit`, label: "My profit", group: `Trade · ${v.name}`, kind: "money" });
-    cols.push({ key: `t:${v.id}:margin`, label: "My margin %", group: `Trade · ${v.name}`, kind: "pct" });
+    // Owner 2026-11-12: "the data from each vendor should only really be the price of the vendor's list, the approx
+    // profit they earn and the price I approximately need to sell to them."
+    cols.push({ key: `t:${v.id}:list`, label: "Their list price", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:earn`, label: "They earn ≈", group: `Trade · ${v.name}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${v.name}`, kind: "money" });
   }
-  cols.push(
-    { key: "trade_best_vendor", label: "Best vendor to sell to", group: "Trading", kind: "text" },
-    { key: "trade_best_offer", label: "Offer", group: "Trading", kind: "money" },
-    { key: "trade_best_profit", label: "Profit / pc", group: "Trading", kind: "money" },
-  );
-  // WHOLESALE — my competitors' selling prices next to my price.
-  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their selling price", group: `Competitor · ${v.name}`, kind: "money" });
-  cols.push(
-    { key: "low_sell", label: "Lowest competitor price", group: "Competition", kind: "money" },
-    { key: "low_sell_vendor", label: "Lowest at", group: "Competition", kind: "text" },
-    { key: "profit", label: "Profit / pc at their price", group: "Competition", kind: "money" },
-    { key: "margin", label: "Margin % at their price", group: "Competition", kind: "pct" },
-    { key: "markup", label: "Markup % at their price", group: "Competition", kind: "pct" },
-  );
-  // ONE set of target columns, driven by the margin the owner types on the grid (replaces the fixed 11 / 12.5 / 15 pairs).
-  cols.push(
-    { key: "target_price_margin", label: `Sell at ${target}% margin`, group: "My target", kind: "money" },
-    { key: "target_price_markup", label: `Sell at ${target}% markup`, group: "My target", kind: "money" },
-    { key: "target_profit", label: `Profit at ${target}% margin`, group: "My target", kind: "money" },
-    { key: "target_max_cost", label: `Most I can pay for ${target}% vs lowest competitor`, group: "My target", kind: "money" },
-    { key: "target_vs_low", label: `Lowest competitor − my ${target}% price`, group: "My target", kind: "money" },
-    { key: "target_action", label: "Raise / lower", group: "My target", kind: "text" },
-  );
+  // WHOLESALE — one column per competitor: its selling price.
+  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their price", group: `Competitor · ${v.name}`, kind: "money" });
 
   const vName = new Map(vendors.map((v) => [v.id, v.name]));
   const rows: GridRow[] = [];
@@ -703,27 +672,14 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     const ranked = rankOffers(offers);
     for (const o of ranked) {
       row[`v:${o.vendorId}:price`] = o.listedCents;
-      row[`v:${o.vendorId}:landed`] = o.likelyCents;
-      row[`v:${o.vendorId}:rank`] = o.rank;
-      row[`v:${o.vendorId}:qty`] = offersMap.get(o.vendorId)!.qty;
+      row[`v:${o.vendorId}:net`] = Math.max(0, o.listedCents - o.cushionLoCents);
     }
     const best = ranked[0];
     if (best) {
       const winners = ranked.filter((o) => o.rank === 1);
       row.best_vendor = winners.map((o) => vName.get(o.vendorId)).join(" | ");
-      row.tied = winners.length > 1 ? winners.length : 0;
       row.n_vendors = ranked.length;
-      row.best_price = best.listedCents;
-      row.cushion = best.cushionLoCents;
-      row.freight = best.freightHiCents;
       row.landed_likely = best.likelyCents;
-      row.landed_best = best.bestCaseCents;
-      row.saves_next = ranked.find((o) => o.rank > 1) ? ranked.find((o) => o.rank > 1)!.likelyCents - best.likelyCents : null;
-      const ve = buyV.find((v) => v.id === best.vendorId)!;
-      row.vendor_cost = close(costFromPrice(best.listedCents - best.cushionHiCents, ve.earn_pct == null ? rules.vendor_earn_pct : Number(ve.earn_pct), "markup"));
-      row.case_pack = offersMap.get(best.vendorId)!.case_pack;
-      row.sku = offersMap.get(best.vendorId)!.sku;
-      row.country = offersMap.get(best.vendorId)!.country;
     } else {
       row.n_vendors = 0;
     }
@@ -737,14 +693,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.low_sell = low;
     row.low_sell_vendor = lowAt;
     const cost = (row.landed_likely as number | null) ?? null;
-    if (low != null) {
-      row.profit = cost == null ? null : low - cost;
-      row.margin = round1(marginPct(low, cost));
-      row.markup = round1(markupPct(low, cost));
-    }
     if (cost != null) {
       row.target_price_margin = close(priceFromCost(cost, target, "margin"));
-      row.target_price_markup = close(priceFromCost(cost, target, "markup"));
       row.target_profit = (row.target_price_margin as number) - cost;
       if (low != null) {
         const gap = low - (row.target_price_margin as number);
@@ -752,25 +702,24 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
         row.target_action = wholesaleAction(gap);
       }
     }
-    // TRADING: for each vendor I buy from, what I can offer them and what I make, buying from the cheapest OTHER vendor.
-    let tBest: { name: string; offer: number; profit: number } | null = null;
+    // TRADING: each supplier's cost = (their price − their cushion) less the % they earn. My price beats it when it is
+    // at or under their cost (owner 2026-11-12: "their list price, and the cushion and then their margin … compare
+    // their cost so I can see if my offer is good enough").
+    const beats: string[] = [];
     for (const v of buyV) {
       const theirs = offersMap.get(v.id)?.price;
       if (theirs == null) continue;
       const earn = earnTyped ?? (v.earn_pct == null ? rules.vendor_earn_pct : Number(v.earn_pct));
-      const offer = close(costFromPrice(theirs, earn, "margin"))!;
+      const cushion = v.cushion_hi_cents ?? rules.cushion_hi_cents;
+      const theirCost = Math.round(costFromPrice(Math.max(0, theirs - cushion), earn, "margin"));
       row[`t:${v.id}:list`] = theirs;
-      row[`t:${v.id}:offer`] = offer;
-      const others = ranked.filter((o) => o.vendorId !== v.id);
-      const oc = others.length ? others[0].likelyCents : null;
-      row[`t:${v.id}:cost`] = oc;
-      if (oc != null) {
-        row[`t:${v.id}:profit`] = offer - oc;
-        row[`t:${v.id}:margin`] = round1(marginPct(offer, oc));
-        if (!tBest || offer - oc > tBest.profit) tBest = { name: v.name, offer, profit: offer - oc };
-      }
+      row[`t:${v.id}:cost`] = theirCost;
+      // What they make on it: their list price less the cushion they give, less what they pay (= what I sell at).
+      row[`t:${v.id}:earn`] = Math.max(0, theirs - cushion) - theirCost;
+      const mine = row.target_price_margin as number | undefined;
+      if (mine != null && mine <= theirCost) beats.push(v.name);
     }
-    if (tBest) { row.trade_best_vendor = tBest.name; row.trade_best_offer = tBest.offer; row.trade_best_profit = tBest.profit; }
+    row.trade_beats = beats.length ? beats.join(", ") : null;
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
     row.carried_by = vendors.filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
@@ -791,9 +740,13 @@ function round1(v: number | null): number | null {
   return v == null ? null : Math.round(v * 10) / 10;
 }
 
+function buyPriced(r: GridRow): boolean {
+  return Object.keys(r).some((k) => k.startsWith("t:") && k.endsWith(":list") && r[k] != null);
+}
+
 export function filterView(rows: GridRow[], view: GridView): GridRow[] {
   if (view === "buy") return rows.filter((r) => (r.n_vendors as number) > 0);
-  if (view === "trade") return rows.filter((r) => r.trade_best_vendor != null);
+  if (view === "trade") return rows.filter((r) => buyPriced(r));
   if (view === "wholesale") return rows.filter((r) => r.landed_likely != null && r.low_sell != null);
   return rows;
 }
@@ -913,14 +866,11 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
-    ["My cost (best case)", "Vendor price − high cushion + low freight"],
-    ["Margin %", "(Lowest Laredo list price − my cost) ÷ list price"],
-    ["Markup %", "(Lowest Laredo list price − my cost) ÷ my cost"],
-    ["Trading · My offer to them", "Their own price × (1 − the % they earn), closed — what that vendor pays me"],
-    ["Trading · My cost (other vendors)", "My cost buying the same bottle from the cheapest OTHER vendor"],
-    ["Trading · My profit", "My offer to them − my cost (other vendors)"],
-    ["Wholesale · Lowest competitor price", "The lowest selling price among my wholesale competitors' lists"],
-    ["Wholesale · Raise / lower", "Lowest competitor − my price at X%: positive = room to raise, negative = lower to compete"],
+    ["Purchase · After cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
+    ["Trading · They earn ≈", "(Their list price − their cushion) − Sell to them ≈ — what that supplier makes on it"],
+    ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
+    ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],
+    ["Mine · Raise / lower", "Lowest competitor − my price at X%: positive = room to raise, negative = lower to compete"],
     ["Sell at X% margin", "My cost ÷ (1 − X%) — X is the margin typed on the grid"],
     ["Sell at X% markup", "My cost × (1 + X%)"],
     ["Profit at X% margin", "Sell at X% margin − my cost"],
