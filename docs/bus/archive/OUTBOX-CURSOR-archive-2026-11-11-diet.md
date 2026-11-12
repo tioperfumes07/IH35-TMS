@@ -1,3 +1,8 @@
+## OUTBOX (11-11-2026 ~5:20 PM CT) — Residual ParityTables appearance=board wave19 (Vendors)
+- **PRIOR:** prior residual board wave.
+- **THIS:** Vendors appearance=board (3 tables). Engines unchanged. Cascade owns R5.
+- **NEXT:** remaining customer/vendor/driver residuals. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~5:05 PM CT) — Residual ParityTables appearance=board wave18
 - **PRIOR:** prior residual board wave.
 - **THIS:** Drivers.tsx appearance=board (3 tables). Engines unchanged. Cascade owns R5.
