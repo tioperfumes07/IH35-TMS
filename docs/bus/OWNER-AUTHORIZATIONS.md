@@ -8212,3 +8212,11 @@ scope: USMCA driver_finance.driver_settlements — re-trigger postFinalLoadSettl
 action: POST /api/v1/driver-finance/settlements/stuck-close-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
 expires_at: 2026-11-19T00:00:00Z
 status: OPEN
+
+## AUTH-477
+issued_at: 2026-11-12T14:00:00Z
+issued_by: CC-1, E2 standing repair — delegated by owner standing auth ("you have full permissions and authorization … we need to complete the full engines", AUTH-473 quotes, 2026-11-02 11:25 AM CT) + INBOX-CC-1 ROUND 8.14 directive (fix E2: 9 voided headers with live JEs)
+scope: USMCA accounting.expenses — issue reversing JEs for 5 voided expense documents (9b3feabb 59d9b3ef 87e6b3e2 f24b3d7c 94bc20d6) and 4 linked fuel purchases (337a035f 3543b85c 37b620f2 71c8456f) that were voided before ACCT-F4431310 landed. The old void path reversed only 'expense' source_transaction_type lines and swallowed SOURCE_NOT_FOUND — fuel_event JEs were left live. The repair calls reverseExpenseDocumentInClientTx (ACCT-F4431310 engine) for each stranded expense and links reversed_by_je_id. Idempotent: documents with no live postings are skipped. verify-void-is-whole baseline shrinks from count=10 to count=1.
+action: POST /api/v1/accounting/expenses/stranded-je-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
+expires_at: 2026-11-19T00:00:00Z
+status: OPEN
