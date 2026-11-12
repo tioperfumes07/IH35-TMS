@@ -1,3 +1,22 @@
+## 2026-11-13 ~04:00Z — ROUND 8.18 FINAL CHECKPOINT (CC-1 DONE)
+
+ROUND 8.18 04:00Z FINAL · CC-1 all buildable rows DONE · Summary:
+- DONE-LIVE (code merged, live): 89/90/94/101/212/213/214/215/227/292
+- CODED (code merged, Chrome verify by owner): 28/66/67/68/69/70/71/72/309
+- BLOCKED — owner AUTH needed: 82/85/86 (AUTH-478 header-backlink-restamp + AUTH-477 ensure-drivers)
+- BLOCKED — CC-2 ENG-17: 79
+- BLOCKED — data sweep (Lead): 242/269/289/291
+
+Owner AUTH-runs still needed (engines live, routes registered):
+1. AUTH-478: `POST /api/v1/driver-finance/settlements/header-backlink-restamp { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` → closes rows 82/86
+2. AUTH-477: `POST /api/v1/accounting/expenses/stranded-je-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` → row 85 (stranded JEs)
+3. `POST /api/v1/mdata/vendors/ensure-drivers { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80" }` → row 85 (59 driver-type vendors)
+4. AUTH-476: `POST /api/v1/driver-finance/settlements/stuck-close-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }` → P-0125/P-0128/P-0130
+
+CC-1 has no pending code work. All remaining rows are owner-action or Lead-sweep blocked.
+
+---
+
 ## 2026-11-12 ~22:00Z — ROUND 8.18 CHECKPOINT 3
 
 ROUND 8.18 22:00Z · CC-1 rows DONE-LIVE: 89/90/94/212/213/214 (live) + 101 (PR#29055 `4164978690a`: vendor-report + party-board exclude driver bills) + 215 (PR#29061 `848870e909c`: escrow register DONE-LIVE) + 227 (PR#27487 merged `80b006b68a67`) + 292 (archive RLS migrations 202611050000-07) · rows CODED (guards PASS, Chrome verify pending): 28/66/67/68/69/70/71/72 + 309 (ENG-60 FE complete, all 17 guards PASS; drop-table needs AUTH) · rows still OPEN: 79 (blocked CC-2 ENG-17), 82/86 (AUTH-478 pending), 85 (AUTH-477 ensure-drivers pending), 242 (ENG-04 2170 net-pay clearing sweep), 269 (ENG-34 122 guard-exempt entries claim-reserve multi-PR), 289 (ENG-44 13690/13698 sweep), 291 (ENG-46 ad02cc37 noncash no spine)
