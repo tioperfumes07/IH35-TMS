@@ -672,7 +672,7 @@ export async function rewriteDocumentLine(
   p: SelectedPosting,
   target: { account_id: string | null; class_id: string | null; location_id: string | null; entity_uuid: string | null; entity_type: string | null; item_id?: string | null; load_id?: string | null },
   actorUserId: string | null = null,
-): Promise<{ updated: boolean; note: string | null }> {
+): Promise<{ updated: boolean; note: string | null; document?: { type: "expense"; id: string; line_id: string; from_item_id: string | null } }> {
   const type = p.source_transaction_type;
   if (!type || !p.source_transaction_id) return { updated: false, note: "hand-keyed journal entry: no source document to rewrite (ledger moved by the reclass JE)" };
   // LEAD 443.192 — a fuel receipt's load move: the whole receipt (fuel rows + adopting expense document) follows the ledger.
@@ -732,9 +732,19 @@ export async function rewriteDocumentLine(
     if (!a.line_id || Number(a.lines) !== 1) {
       return { updated: false, note: `fuel_event: the adopting expense has ${a.lines} lines of ${p.amount_cents} cents (need exactly 1); nothing moved` };
     }
-    return rewriteDocumentLine(client, companyId, { ...p, source_transaction_type: "expense", source_transaction_id: a.expense_id, source_transaction_line_id: a.line_id }, target);
+    // LST-F11166 — report the document line actually rewritten: the batch line records it, and the commit-time trigger
+    // trg_expense_lines_posted_account_moves_with_its_entry (202615360800) accepts an expense line's account change only
+    // when an applied batch line names that expense line (source 'expense' + its line id) and the reclass entry.
+    // The line's item BEFORE the rewrite — the batch line's from_item (a fuel posting carries none), so an undo puts the
+    // line back on its own item and account instead of an item-less line the categorization trigger refuses.
+    const before = await client.query<{ item_id: string | null }>(
+      `SELECT item_id::text FROM accounting.expense_lines WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [a.line_id, companyId]);
+    const rw = await rewriteDocumentLine(client, companyId, { ...p, source_transaction_type: "expense", source_transaction_id: a.expense_id, source_transaction_line_id: a.line_id }, target);
+    return { ...rw, document: { type: "expense", id: a.expense_id, line_id: a.line_id, from_item_id: before.rows[0]?.item_id ?? null } };
   }
   const notes: string[] = [];
+  // LST-F11166 — what the rewrite DID alongside the line (not a refusal): e.g. the fuel record flipped with the item.
+  const info: string[] = [];
   // U24 — the item and the load live on the document LINE; without the posting's line id the move is refused, never guessed.
   if ((target.item_id || target.load_id) && (type === "expense" || type === "bill")) {
     if (!p.source_transaction_line_id) {
@@ -758,8 +768,11 @@ export async function rewriteDocumentLine(
       // the item. The ledger moves too: the item's own account comes with it (Fuel-Reefer-Diesel -> 5015 Reefer Diesel
       // (Off-Highway), ROUND 391.2), so item, account, IFTA category and trailer move together (LAW 363.4).
       else if (type === "expense" && target.item_id) {
+        // LST-F11166 — the sync's return is a statement of what it DID (record flipped, IFTA in/out), never a refusal:
+        // pushing it into `notes` marked every Diesel <-> Reefer move "the document cannot follow the ledger" and rolled
+        // it back after it had succeeded.
         const reeferNote = await syncReeferFuelForExpenseLine(client, companyId, p.source_transaction_line_id);
-        if (reeferNote) notes.push(reeferNote);
+        if (reeferNote) info.push(reeferNote);
       }
     }
   }
@@ -791,7 +804,8 @@ export async function rewriteDocumentLine(
     if (target.location_id) {
       await client.query(`UPDATE accounting.expenses SET location_id = $3::uuid, updated_at = now() WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [p.source_transaction_id, companyId, target.location_id]);
     }
-    return { updated: notes.length === 0, note: notes.length ? notes.join("; ") : null };
+    const all = [...notes, ...info];
+    return { updated: notes.length === 0, note: all.length ? all.join("; ") : null };
   }
   if (type === "bill") {
     if (target.entity_uuid) notes.push("bill vendor is the A/P subledger: void-and-reissue the bill to change it; vendor dimension not moved");
@@ -1191,7 +1205,7 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
         // the whole document rolls back and is refused by name — the ledger never moves without its document. Before,
         // the reclass JE posted first and a failed rewrite was only a note ("ledger moved, line unchanged").
         // A hand-keyed journal entry has no separate document: the reclass JE itself is the record.
-        const rewrites = new Map<string, { updated: boolean; note: string | null }>();
+        const rewrites = new Map<string, { updated: boolean; note: string | null; document?: { type: "expense"; id: string; line_id: string; from_item_id: string | null } }>();
         for (const p of eligible) {
           const handKeyed = isHandKeyed(p);
           const rw = handKeyed
@@ -1228,12 +1242,16 @@ export async function applyReclassifyOnClient(client: DbClient, input: ApplyRecl
         for (const p of eligible) {
           const rw = rewrites.get(p.posting_id)!;
           if (!rw.updated) { docUpdated = false; if (rw.note) notes.push(rw.note); }
+          // LST-F11166 — a fuel purchase's line is rewritten on its adopting EXPENSE document: the batch line names that
+          // document line (so the commit-time trigger sees the ledger moved with it, and an undo rewrites the same line).
+          const doc = rw.document;
           await client.query(INSERT_LINE, [
-            batchId, companyId, p.posting_id, p.journal_entry_id, p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id,
+            batchId, companyId, p.posting_id, p.journal_entry_id,
+            doc ? doc.type : p.source_transaction_type, doc ? doc.id : p.source_transaction_id, doc ? doc.line_id : p.source_transaction_line_id,
             p.account_id, p.class_id, p.location_id, p.entity_uuid, p.entity_type,
             target.to_account_id ?? p.account_id, target.to_class_id ?? p.class_id, target.to_location_id ?? p.location_id, target.to_entity_uuid ?? p.entity_uuid, target.to_entity_uuid ? target.to_entity_type : p.entity_type,
             p.debit_or_credit, p.amount_cents, "applied", null, jeId, rw.updated, rw.note, overridden.get(p.posting_id) ?? null,
-            p.item_id ?? null, target.to_item_id ?? p.item_id ?? null, p.load_id ?? null, target.to_load_id ?? p.load_id ?? null,
+            doc ? doc.from_item_id : p.item_id ?? null, target.to_item_id ?? (doc ? doc.from_item_id : p.item_id) ?? null, p.load_id ?? null, target.to_load_id ?? p.load_id ?? null,
           ]);
           result.lines_applied += 1;
           result.amount_cents_moved += p.amount_cents;
@@ -1323,9 +1341,14 @@ export async function undoReclassifyBatch(input: { operating_company_id: string;
       const loadMoved = l.to_load_id !== l.from_load_id;
       if ((itemMoved || loadMoved) && l.source_transaction_line_id && (l.source_transaction_type === "expense" || l.source_transaction_type === "bill")) {
         const table = l.source_transaction_type === "expense" ? "accounting.expense_lines" : "accounting.bill_lines";
+        // LST-F11166 — the item goes back WITH its account in one statement (the categorization trigger checks every row
+        // write; restoring the item first left new-account + old-item, refused as line_account_differs_from_item).
+        const accountCol = l.source_transaction_type === "expense" ? "expense_account_uuid" : "account_id";
         await client.query(
-          `UPDATE ${table} SET item_id = CASE WHEN $2 THEN $3::uuid ELSE item_id END, load_id = CASE WHEN $4 THEN $5::uuid ELSE load_id END WHERE id = $1::uuid`,
-          [l.source_transaction_line_id, itemMoved, l.from_item_id, loadMoved, l.from_load_id],
+          `UPDATE ${table} SET item_id = CASE WHEN $2 THEN $3::uuid ELSE item_id END, load_id = CASE WHEN $4 THEN $5::uuid ELSE load_id END,
+                  ${accountCol} = CASE WHEN $2 AND $6::uuid IS NOT NULL THEN $6::uuid ELSE ${accountCol} END
+            WHERE id = $1::uuid`,
+          [l.source_transaction_line_id, itemMoved, l.from_item_id, loadMoved, l.from_load_id, l.from_account_id],
         );
         // U25 — undoing Diesel -> Reefer Diesel puts the fuel transaction back in its category (and back on IFTA).
         if (itemMoved && l.source_transaction_type === "expense") {

@@ -218,6 +218,12 @@ describe("Reclassify engine — a fuel purchase's adopted entry (ROUND 290.1)", 
     expect(calls[1]!.sql).toMatch(/ft\.relay_fuel_transaction_id::text = \$3/);
   });
 
+  it("LST-F11166: the rewrite reports the adopting EXPENSE line, which the batch line records", async () => {
+    const { client } = fake([{ expense_id: "exp-1", line_id: "el-1", lines: "1" }]);
+    const r = await rewriteDocumentLine(client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
+    expect(r.document).toEqual({ type: "expense", id: "exp-1", line_id: "el-1", from_item_id: null });
+  });
+
   it("refuses by name when no live expense, or more than one, adopts the entry — the ledger never moves alone", async () => {
     for (const rows of [[], [{ expense_id: "a", line_id: "x", lines: "1" }, { expense_id: "b", line_id: "y", lines: "1" }]]) {
       const r = await rewriteDocumentLine(fake(rows).client, "co", fuelPosting, { account_id: "acc-5010", class_id: null, location_id: null, entity_uuid: null, entity_type: null });
