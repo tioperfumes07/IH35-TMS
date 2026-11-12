@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 375 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 376 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 292 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 258 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 998 | |
+| **TOTAL POST endpoints** | 999 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -661,6 +661,18 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-pay/settlements/:id/reopen-manual-paid` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
 | create | `/api/v1/driver-pay/settlements/repair-paid-status` | `apps/backend/src/driver-finance/settlement-payment.routes.ts` | — | — | — |
 
+### perfume — 7 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/items/canonicalize-brands` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+
 ### settlements — 7 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -695,17 +707,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/checks/pay-bills` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
 | create | `/api/v1/checks/print-batch` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
 | nested | `/api/v1/checks/print-batch/:id/confirm` | `apps/backend/src/accounting/checks/checks.routes.ts` | — | — | — |
-
-### perfume — 6 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 
 ### bank-recon — 5 create-surface(s)
 

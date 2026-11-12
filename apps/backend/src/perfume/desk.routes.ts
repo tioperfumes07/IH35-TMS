@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
-  reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
@@ -221,6 +221,11 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     return withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+  });
+
+  app.post("/api/v1/perfume/items/canonicalize-brands", RL_IMPORT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => canonicalizeItemBrands(c));
   });
 
   app.post("/api/v1/perfume/review/rematch", RL_IMPORT, async (req, reply) => {
