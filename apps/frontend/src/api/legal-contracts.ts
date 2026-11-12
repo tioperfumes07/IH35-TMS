@@ -169,6 +169,17 @@ export const legalContractsApi = {
     );
   },
 
+  /** ROUND 8.12 — bulk/single void (draft/sent/viewed; signed skipped server-side). */
+  voidMany(operatingCompanyId: string, contractInstanceIds: string[], reason?: string) {
+    return apiRequest<{ voided: string[]; skipped: Array<{ id: string; reason: string }> }>(
+      withCompany("/api/v1/legal/contracts/void", operatingCompanyId),
+      {
+        method: "POST",
+        body: { contract_instance_ids: contractInstanceIds, reason: reason ?? null },
+      }
+    );
+  },
+
   // Lease-to-Own: real backend routes (404 when LEGAL_CONTRACTS_ENABLED off). Save reuses create().
   leaseToOwnFleet(input: { operating_company_id: string; owner_company_id?: string }) {
     const params = new URLSearchParams();

@@ -13,6 +13,7 @@ import {
   parseContractInstanceStatusFilter,
   sendContractSigningLink,
   syncCompanyContractLinkage,
+  voidContractInstances,
 } from "./contracts.service.js";
 import { renderSignedContractPdf } from "./pdf-renderer.service.js";
 import {
@@ -329,6 +330,36 @@ export async function registerLegalContractRoutes(app: FastifyInstance) {
         return reply.code(400).send({ error: message });
       }
       return reply.code(500).send({ error: "legal_contract_create_failed" });
+    }
+  });
+
+  // ROUND 8.12 — bulk/single void for office Contracts list (honest-disabled button → live).
+  app.post("/api/v1/legal/contracts/void", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const authUser = currentAuthUser(req, reply);
+    if (!authUser) return reply;
+    if (!requireWriteRole(reply, String(authUser.role ?? ""))) return;
+    const parsedQuery = operatingCompanyQuerySchema.safeParse(req.query ?? {});
+    if (!parsedQuery.success) return sendValidationError(reply, parsedQuery.error);
+    const parsedBody = z
+      .object({
+        contract_instance_ids: z.array(z.string().uuid()).min(1).max(100),
+        reason: z.string().trim().max(500).optional().nullable(),
+      })
+      .safeParse(req.body ?? {});
+    if (!parsedBody.success) return sendValidationError(reply, parsedBody.error);
+    try {
+      const result = await withCurrentUser(authUser.uuid, async (client) => {
+        await setOperatingCompany(client, parsedQuery.data.operating_company_id);
+        return voidContractInstances(client, {
+          operatingCompanyId: parsedQuery.data.operating_company_id,
+          contractInstanceIds: parsedBody.data.contract_instance_ids,
+          reason: parsedBody.data.reason ?? null,
+          ...getAuditContext(req, authUser),
+        });
+      });
+      return result;
+    } catch {
+      return reply.code(500).send({ error: "legal_contract_void_failed" });
     }
   });
 
