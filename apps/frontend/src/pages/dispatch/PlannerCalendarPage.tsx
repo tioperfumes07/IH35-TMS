@@ -82,10 +82,12 @@ function PlannerDayCell({
   });
 
   return (
-    <td
+    <div
+      role="cell"
       ref={setNodeRef}
       data-testid={`planner-cell-${driverId}-${day}`}
       className={`min-w-[120px] border-b border-r align-top p-1 ${isOver ? "bg-[#F7F8FA]" : "bg-[var(--surface-unselected)]"}`}
+      style={{ display: "table-cell", verticalAlign: "top" }}
     >
       {showHosOverlay && dayBlackouts.length > 0 ? (
         <div
@@ -99,7 +101,7 @@ function PlannerDayCell({
       {loads.map((load) => (
         <PlannerLoadChip key={load.id} load={load} disabled={disabled} />
       ))}
-    </td>
+    </div>
   );
 }
 
@@ -260,55 +262,58 @@ export function PlannerCalendarPage() {
           <div className="p-6 text-center text-xs text-[#6B7280]">Loading planner week…</div>
         ) : weekQ.isError ? null : (
           <DndContext onDragEnd={handleDragEnd}>
-            <table className="min-w-full text-xs">
-              <thead className="border-b bg-[#F7F8FA] text-left text-xs uppercase tracking-wide text-[#6B7280]">
-                <tr>
-                  <th className="sticky left-0 z-10 bg-[#F7F8FA] px-3 py-2">Driver / Unit</th>
+            <div role="table" className="min-w-full text-xs" style={{ display: "table", width: "100%" }}>
+              <div role="rowgroup" className="border-b bg-[#F7F8FA] text-left text-xs uppercase tracking-wide text-[#6B7280]" style={{ display: "table-header-group" }}>
+                <div role="row" style={{ display: "table-row" }}>
+                  <div role="columnheader" className="sticky left-0 z-10 bg-[#F7F8FA] px-3 py-2" style={{ display: "table-cell" }}>
+                    Driver / Unit
+                  </div>
                   {days.map((day) => (
-                    <th key={day} className="px-3 py-2">
+                    <div role="columnheader" key={day} className="px-3 py-2" style={{ display: "table-cell" }}>
                       {formatPlannerDayLabel(day)}
-                    </th>
+                    </div>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </div>
+              </div>
+              <div role="rowgroup" style={{ display: "table-row-group" }}>
                 {drivers.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={8}
+                  <div role="row" style={{ display: "table-row" }}>
+                    <div
+                      role="cell"
                       data-testid="dispatch-planner-honest-empty"
                       className="px-3 py-6 text-center text-[#6B7280]"
+                      style={{ display: "table-cell" }}
                     >
                       No active drivers for this company this week. Assign drivers under Drivers / Lists, then
                       return here — load chips appear once loads have a start_at on a driver row.
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 ) : (
                   drivers.map((driver) => (
-                    <tr key={driver.id}>
-                      <td className="sticky left-0 z-10 border-b bg-white px-3 py-2">
+                    <div role="row" key={driver.id} style={{ display: "table-row" }}>
+                      <div role="cell" className="sticky left-0 z-10 border-b bg-white px-3 py-2" style={{ display: "table-cell" }}>
                         <div className="font-medium"><EntityLink kind="driver" id={driver.id} label={entityLabel(driver.name, driver.id, "Driver")} /></div>
                         <div className="text-xs text-[#6B7280]"><EntityLinkOrTombstone kind="unit" id={driver.unit_id ?? null} name={driver.unit_number} noun="Unit" /></div>
                         <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${hosClass(driver.hos_status)}`}>
                           {driver.hos_status === "violation" ? "HOS VIOL" : driver.hos_status === "ok" ? "HOS OK" : "HOS WARN"}
                         </span>
-                      </td>
+                      </div>
                       {days.map((day) => (
                         <PlannerDayCell
                           key={`${driver.id}-${day}`}
                           driverId={driver.id}
                           day={day}
                           loads={loadsByDriverDay.get(`${driver.id}:${day}`) ?? []}
-                            blackouts={driver.blackouts}
-                            showHosOverlay={showHosOverlay}
-                            disabled={rescheduleM.isPending}
+                          blackouts={driver.blackouts}
+                          showHosOverlay={showHosOverlay}
+                          disabled={rescheduleM.isPending}
                         />
                       ))}
-                    </tr>
+                    </div>
                   ))
                 )}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </DndContext>
         )}
       </section>
