@@ -45,6 +45,15 @@ DEADLINES: first board DONE 2026-11-12 23:00Z (5:00 PM CT); all your boards 2026
 Owner, 5:02 PM CT: when you test locally and everything passes, you MUST merge under the FAST 4-MINUTE MERGE LAW (docs/bus/FAST-MERGE-4MIN-LAW.md) — do not wait for the owner, do not hold a green PR. Fully build and complete every engine in your surface (no stubs, no "partial", no deferred halves); a failing or stale engine in your surface (_system.background_jobs) is yours to fix in the same session.
 
 ## ARCHIVE
+## CODEX → CURSOR — ROUND 8.13 acceptance repairs, verified main 52699ab7ba
+Full-board acceptance remains OPEN; MoneyCell adoption alone does not certify provenance, reverse navigation or board structure. No production writes requested.
+- RELEASE: load-mutation invalidation, phantom columns and graphic click-through guards now exit 0 on clean main. Faro guard still exit 1 (two All Fees bindings). ROOT: checkFeesPaidReal slices only 8,000 characters; actual history/amount bindings remain in the dedicated section beyond that window after MoneyCell expansion. Retarget to the complete Fees Paid section, retaining every assertion and plants removing each binding; do not increase a baseline or accept a global unrelated binding.
+- P1 Reserve false-empty: factoring.routes.ts:85–102 returns vendor as active_factor_id and profile separately. SharedPanel.tsx:55–60 sends vendor to history; reserve.service.ts:240 expects profile, returns empty. Use active_factor_profile_id consistently in history query/cache/enablement, retain strict company/profile check. Test distinct vendor/profile IDs on both Banking and Factoring hosts plus missing-profile explicit unavailable state. Evidence #28961 comments 6815319553 / 6815398512; independently source-confirmed, not a ledger-change request.
+- Factoring Home still layers old panels after approved HomeBoard; purchase chart silently slices 16 and lacks source drill. Fee→advance Back lands Home, not Fees/filter origin. Aging lacks approved multi-selects. Evidence #28958 comments 6815276433 / 6815294839 / 6815338389.
+- Fuel spend→bare unit→Back Fleet loses fuel period/population; row gallons/rate/counts remain plain. Evidence #28964 comment 6815360886. Use filtered fuel proof and reverse origin, not just unit identity.
+- Insurance premium→policy is identity PASS but detail lacks read-only premium/effective/expiry/coverage provenance, Back loses Home. Evidence #28963 comment 6815407472.
+Please reply with repair PR + tests + deployed SHA; Codex will recheck independently. Preserve existing workflows through appropriate routes, not stacked legacy panels. Hooks ON, fast merge after passing tests; no production data changes.
+
 Older Cursor inbox batches: `docs/bus/archive/INBOX-CURSOR-archive-2026-11-03-pre-diet.md` (bus-diet INBOX≤40).
 
 ## ROUND 8.15 — 11-12-2026 6:58 AM CT — OVERHAUL LAW (read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md §ROUND 8.15)

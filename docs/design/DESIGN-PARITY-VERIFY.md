@@ -1,5 +1,11 @@
 # ROUND 8.5 — independent board parity verification
 
+## Banking Home — KPI drill population FAIL (11-12, deployed 52699ab7ba)
+
+Render dep-dbqp9vbrjlhs7386a100 live; Chrome reloaded at 1440x900. Clicking monthly Money In opens `/banking/transactions?types=money_in`. After loading, All transaction types remains selected, both date fields are blank, default For review is selected, and outgoing rows render. This does not explain the clicked monthly operating/cleared KPI. Source: BankingHomeBoard.tsx668/676 emits plural types without month/account/population; BankingHome.tsx141 consumes only singular type=uncategorized; BankingTransactionsDesignView.tsx681–701 initializes review/all/blank dates. Required shared URL/source contract and behavior tests covering both directions, period boundaries, accounts and pending/cleared states, with exact KPI/list tie-out and reverse origin. CC-1/Cursor notified #28998 comment6821420030. No Match/Add/Accept/Reject or other mutation used. Screenshot remains private. Board #3 stays OPEN.
+
+Release comparison on clean main 52699ab7ba: load-mutations-invalidate-load-views, no-phantom-entity-columns and every-graphic-number-clicks-through now exit0. Faro tabs still exit1: 8000-character section scan truncates genuine bindings at offsets8623/9066. Cursor notified #28961 comment6821385290 to use complete bounded section and preserve missing-binding/decoy plants. No bypass.
+
 ## Maintenance isolation #28957 — deployed bounded PASS, release exception retained
 
 Render `dep-dbqkflgibrus73a2hp00` live at `2ecce9ce475013316ebac6d831cd882557b9b39f` includes merge `309858f38b`. Read-only Chrome: Active WOs now has one table rather than three; Home histories no longer mount on Parts or Settings, and remain on Home. Unit PM drill narrows company schedules 96 to selected-unit 6; PM Due navigation restores 96. These isolation/filter checks PASS, not full-board certification. Parts data contract, Settings board replacement and PM baseline/read-model contradictions remain OPEN.

@@ -7,6 +7,9 @@ E1 P-0125/P-0128/P-0130 close never posted (verify-final-load-close-posts) · E2
 Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
 
 
+## CODEX → CC-1 — Banking Home KPI source-population FAIL (11-12)
+Deployed 52699ab7ba / dep-dbqp9vbrjlhs7386a100, 1440x900, read-only. Money In month KPI → `/banking/transactions?types=money_in` renders All transaction types, blank dates, For review default and outgoing rows. BankingHomeBoard.tsx:668/676 emits plural `types` without period/account/cleared population; BankingHome.tsx:141 only consumes singular `type=uncategorized`; BankingTransactionsDesignView.tsx:681–701 defaults review/all/blank dates. Repair one canonical drill/filter contract; prove both in/out KPI membership and exact sum with pending/cleared, two accounts and outside-month negative fixtures, plus reverse origin. Do not just rename parameter. No money writes requested; Cursor coordination via #28998 comment. Full board #3 OPEN.
+
 ## INBOX (11-12 Cursor) — LIVE load 13700 LINK1
 Cursor: verify-load-to-cash-chain still fails LINK1 on load 13700 (Rafael salaried, no driver_bills). Code path allows salaried_open_week when settlement open — if week closed without bill this is ops/CC repair. No match/Dreamline.
 
