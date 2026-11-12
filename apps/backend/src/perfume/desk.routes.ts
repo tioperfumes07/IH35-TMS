@@ -15,8 +15,8 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, confirmRow, exportWorkbook, filterView, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
-  reviewQueue, searchItems, searchRows, setInternalCode, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  buildGrid, confirmRow, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
+  reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
@@ -98,6 +98,10 @@ const gridQuery = z.object({
   sort: z.string().max(120).optional(),
   dir: z.enum(["asc", "desc"]).default("asc"),
   q: z.string().max(200).default(""),
+  // Comma-separated facet picks; empty = all. Category is the type (Women, Men, Set Men, Tester Women, Cosmetics, Various…).
+  category: z.string().max(400).default(""),
+  gender: z.string().max(200).default(""),
+  brand: z.string().max(4000).default(""),
   offset: z.coerce.number().int().min(0).default(0),
   limit: z.coerce.number().int().min(1).max(1000).default(200),
 });
@@ -226,18 +230,21 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c));
-    let rows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
+    const viewRows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
+    const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand) };
+    let rows = filterFacets(viewRows, picks);
     if (q.data.sort) {
       if (!g.cols.some((c) => c.key === q.data.sort)) return reply.code(400).send({ error: "unknown_sort_column" });
       rows = sortRows(rows, q.data.sort, q.data.dir);
     }
-    return { cols: g.cols, total: rows.length, rows: rows.slice(q.data.offset, q.data.offset + q.data.limit), rules: g.rules, vendors: g.vendors, measured_at: new Date().toISOString() };
+    return { cols: g.cols, total: rows.length, rows: rows.slice(q.data.offset, q.data.offset + q.data.limit), facets: gridFacets(viewRows, picks), rules: g.rules, vendors: g.vendors, measured_at: new Date().toISOString() };
   });
   app.get("/api/v1/perfume/export.xlsx", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c));
-    let rows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
+    let rows = filterFacets(searchRows(filterView(g.rows, q.data.view as GridView), q.data.q),
+      { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand) });
     if (q.data.sort && g.cols.some((c) => c.key === q.data.sort)) rows = sortRows(rows, q.data.sort, q.data.dir);
     const want = q.data.cols ? q.data.cols.split(",") : null;
     const cols = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;

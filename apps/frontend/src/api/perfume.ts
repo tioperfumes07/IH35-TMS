@@ -39,8 +39,11 @@ export type PerfumeGrid = {
   total: number;
   rules: PerfumeRules;
   vendors: PerfumeVendor[];
+  /** Type (category), gender and brand options with counts for the current view, search and other picks. */
+  facets?: Record<PerfumeFacetKey, Array<{ value: string; count: number }>>;
   measured_at: string;
 };
+export type PerfumeFacetKey = "category" | "gender" | "brand";
 export type PerfumeImportRow = {
   sheet?: string | null;
   row_no: number;
@@ -160,9 +163,10 @@ export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItem
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[] }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
+  for (const k of ["category", "gender", "brand"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);

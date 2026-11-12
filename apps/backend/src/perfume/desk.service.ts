@@ -638,18 +638,60 @@ export function searchRows(rows: GridRow[], q: string): GridRow[] {
     || (digits.length >= 6 && String(r.upcs ?? "").includes(digits)));
 }
 
+export type FacetPicks = { category: string[]; gender: string[]; brand: string[] };
+
+export function splitPicks(v: string): string[] {
+  return [...new Set(v.split(",").map((x) => x.trim()).filter(Boolean))];
+}
+
+const facetValue = (r: GridRow, k: keyof FacetPicks): string => String(r[k] ?? "").trim() || "—";
+
+/** Keeps rows whose type (category), gender and brand are each in the picks; an empty pick list means all. */
+export function filterFacets(rows: GridRow[], picks: FacetPicks): GridRow[] {
+  const keys = (Object.keys(picks) as Array<keyof FacetPicks>).filter((k) => picks[k].length > 0);
+  if (keys.length === 0) return rows;
+  const sets = keys.map((k) => [k, new Set(picks[k])] as const);
+  return rows.filter((r) => sets.every(([k, set]) => set.has(facetValue(r, k))));
+}
+
+export type GridFacet = { value: string; count: number };
+
+/** Each facet's options with counts, measured against the other two facets' picks (so the counts always add up to
+ *  what the grid would show), sorted A→Z with "—" (blank) last. */
+export function gridFacets(rows: GridRow[], picks: FacetPicks): Record<keyof FacetPicks, GridFacet[]> {
+  const out = {} as Record<keyof FacetPicks, GridFacet[]>;
+  for (const k of ["category", "gender", "brand"] as const) {
+    const scoped = filterFacets(rows, { ...picks, [k]: [] });
+    const counts = new Map<string, number>();
+    for (const r of scoped) { const v = facetValue(r, k); counts.set(v, (counts.get(v) ?? 0) + 1); }
+    for (const v of picks[k]) if (!counts.has(v)) counts.set(v, 0);
+    out[k] = [...counts].map(([value, count]) => ({ value, count }))
+      .sort((a, b) => (a.value === "—" ? 1 : b.value === "—" ? -1 : a.value.localeCompare(b.value, "en", { numeric: true })));
+  }
+  return out;
+}
+
 /** Sort any column ascending or descending; empty cells always last; text compares A→Z, numbers numerically. */
 export function sortRows(rows: GridRow[], key: string, dir: "asc" | "desc"): GridRow[] {
   const sign = dir === "asc" ? 1 : -1;
   return rows.slice().sort((a, b) => {
     const x = a[key], y = b[key];
     const xe = x == null || x === "", ye = y == null || y === "";
-    if (xe && ye) return String(a.display_name ?? "").localeCompare(String(b.display_name ?? ""));
+    if (xe && ye) return byBrandName(a, b);
     if (xe) return 1;
     if (ye) return -1;
     const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "en", { numeric: true });
-    return c === 0 ? String(a.display_name ?? "").localeCompare(String(b.display_name ?? "")) : c * sign;
+    return c === 0 ? byBrandName(a, b) : c * sign;
   });
+}
+
+/** The standing tie-break under every sort: brand, then name, then size, then the full display name. */
+function byBrandName(a: GridRow, b: GridRow): number {
+  const t = (x: unknown) => String(x ?? "");
+  return t(a.brand).localeCompare(t(b.brand), "en", { numeric: true })
+    || t(a.name).localeCompare(t(b.name), "en", { numeric: true })
+    || (Number(a.size_ml ?? 0) - Number(b.size_ml ?? 0))
+    || t(a.display_name).localeCompare(t(b.display_name), "en", { numeric: true });
 }
 
 /* ---------------- Excel export ---------------- */

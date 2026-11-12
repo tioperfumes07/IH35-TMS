@@ -7,11 +7,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
-  type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
+  type PerfumeFacetKey, type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
 } from "../../api/perfume";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
@@ -99,14 +100,23 @@ function defaultVisible(view: PerfumeGridView, key: string): boolean {
   return item || /^w:/.test(key) || ["landed_likely", "low_sell"].includes(key);
 }
 
+const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
+  { key: "category", label: "Type", all: "All types" },
+  { key: "gender", label: "Gender", all: "All genders" },
+  { key: "brand", label: "Brand", all: "All brands" },
+];
+
+const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
+
 function GridPanel({ view }: { view: PerfumeGridView }) {
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
+  const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>({ category: [], gender: [], brand: [] });
   const [page, setPage] = useState(1);
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, page],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, offset: (page - 1) * PAGE, limit: PAGE }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, page],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, offset: (page - 1) * PAGE, limit: PAGE }),
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
@@ -162,7 +172,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         suppressToolbarSearch
         stickyHeader
         enableColumnReorder
-        emptyText={q ? "No items match the search." : "No items yet — import a price list."}
+        emptyText={q || picks.category.length || picks.gender.length || picks.brand.length ? "No items match the search and filters." : "No items yet — import a price list."}
         toolbar={
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -173,13 +183,30 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
               aria-label={tr("perfume.desk.7", "Search items")}
               className="h-[34px] w-[260px] max-w-full rounded-sm border border-gray-300 px-2 text-xs"
             />
+            {FACETS.map((f) => (
+              <MultiSelectDropdown
+                key={f.key}
+                label={f.label}
+                allLabel={f.all}
+                data-testid={`perfume-filter-${f.key}`}
+                searchable={f.key === "brand"}
+                options={(query.data?.facets?.[f.key] ?? []).map((o) => ({ value: o.value, label: `${f.key === "gender" ? GENDER_WORD[o.value] ?? o.value : o.value} (${o.count.toLocaleString()})` }))}
+                selected={picks[f.key]}
+                onChange={(next) => { setPicks((p) => ({ ...p, [f.key]: next })); setPage(1); }}
+              />
+            ))}
+            {(picks.category.length || picks.gender.length || picks.brand.length) ? (
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks({ category: [], gender: [], brand: [] }); setPage(1); }}>
+                {tr("perfume.desk.filters.clear", "Clear filters")}
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="secondary"
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}
