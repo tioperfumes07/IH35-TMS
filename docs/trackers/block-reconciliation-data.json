@@ -1,6 +1,6 @@
 {
  "date": "2026-11-12",
- "generated_at_iso": "2026-11-12T12:30:09.572Z",
+ "generated_at_iso": "2026-11-12T18:25:40.946Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -882,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -893,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -915,10 +915,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1036,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1047,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1058,10 +1058,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1069,10 +1069,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1080,10 +1080,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #28978 title-match only, unverified",
+   "evidence": "PR #29013 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "CHAIN-04-bill-payment-tieout",
@@ -2984,7 +2984,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -2995,7 +2995,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3006,7 +3006,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3017,7 +3017,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 28978
+   "pr": 29013
   },
   {
    "id": "CC1-FINANCE-SETTLEMENTS-TOOLBAR-CONNECTIVITY-HONESTY-2026-08-16",
@@ -3254,7 +3254,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "D-CAL-1 (DESIGN-PARITY REQ 1): every date field uses the canonical QuickBooks-format month-grid picker components/forms/",
    "registered_on": null,
-   "pr": 28718
+   "pr": 29043
   },
   {
    "id": "D-CREATE-INLINE-referenceselect",
@@ -3265,7 +3265,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "D-CREATE-INLINE (DESIGN-PARITY REQ 4): every accounting create-form dropdown offers the inline '+ Create' via the shared",
    "registered_on": null,
-   "pr": 28718
+   "pr": 29043
   },
   {
    "id": "D-CREATE-VERIFY-DEAD-FORMS-UNMOUNTED",
@@ -3276,7 +3276,7 @@
    "evidence": "[verified 2026-07-12] verify-dead-forms-unmounted.mjs + verify-steps/110 + package.json:866; guard PASS (11 dead forms u",
    "name": "",
    "registered_on": null,
-   "pr": 28718
+   "pr": 29043
   },
   {
    "id": "D-SECTION7-EMOJI-cleanup",
@@ -13738,6 +13738,402 @@
  ],
  "merged_prs": [
   {
+   "number": 29079,
+   "title": "ROUND 8.17 — FE TS2339: TourListRow PENDING uses is_open (unblocks Render)",
+   "mergedAt": "2026-11-12T18:12:59Z",
+   "branch": "cursor/round817-tourlistrow-presettlement"
+  },
+  {
+   "number": 29078,
+   "title": "Claude-3- CC-3 R8.18 Rows 257 262 264 298 5 DONE-LIVE (guards + live proof)",
+   "mergedAt": "2026-11-12T18:10:07Z",
+   "branch": "cc-3/r8.18-row257-eng22-and-remaining"
+  },
+  {
+   "number": 29077,
+   "title": "FINDING: ACCT-F817-BACK-GUARD ROUND 8.17 repair inert selftest",
+   "mergedAt": "2026-11-12T18:05:02Z",
+   "branch": "codex/round817-back-guard-mutation"
+  },
+  {
+   "number": 29076,
+   "title": "ROUND 8.17 — Settlements Open/Closed always write ?tab= for ret Back",
+   "mergedAt": "2026-11-12T18:04:23Z",
+   "branch": "cursor/round817-open-tab-url"
+  },
+  {
+   "number": 29075,
+   "title": "ROUND 8.17 — Cursor INBOX bus-diet ≤40 (archive pre-diet)",
+   "mergedAt": "2026-11-12T18:00:53Z",
+   "branch": "cursor/round817-inbox-diet"
+  },
+  {
+   "number": 29074,
+   "title": "FINDING: LST-F12027 PERFUME-DESK — another vendor's list never renames an item; cross-vendor UPC name conflict not trusted LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T18:04:01Z",
+   "branch": "claude/perfume-heal-own-vendor"
+  },
+  {
+   "number": 29073,
+   "title": "ROUND 8.17 — tip OUTBOX + register for residual #29071 SHA dd4d46c91e2",
+   "mergedAt": "2026-11-12T17:58:05Z",
+   "branch": "cursor/round817-residual-next"
+  },
+  {
+   "number": 29071,
+   "title": "ROUND 8.17 residual Class R+S — boards 2/12/19/33–35/42 drills + txn_id + planner Apply",
+   "mergedAt": "2026-11-12T17:54:59Z",
+   "branch": "cursor/round817-class-s-residual"
+  },
+  {
+   "number": 29070,
+   "title": "Claude-1- FINDING: CC-1-ROUND818-ROWS-269-291-DONE-LIVE LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:49:01Z",
+   "branch": "cc-1/round818-rows-269-291-register-update"
+  },
+  {
+   "number": 29069,
+   "title": "Claude-3: ROWS 15 74 258 DONE-LIVE + 20Z OUTBOX",
+   "mergedAt": "2026-11-12T17:45:52Z",
+   "branch": "cc-3/r8.18-eng23-258-5-design"
+  },
+  {
+   "number": 29068,
+   "title": "FINDING: LST-F12026 PERFUME-DESK AUDIT — 5 reader/match defects fixed LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:48:31Z",
+   "branch": "claude/perfume-audit-fixes"
+  },
+  {
+   "number": 29067,
+   "title": "FINDING: ROUND 8.17 20Z OUTBOX + settlements report KPI source drills",
+   "mergedAt": "2026-11-12T17:36:53Z",
+   "branch": "cursor/round817-outbox-20z"
+  },
+  {
+   "number": 29066,
+   "title": "Claude-1-ROUND818-04Z-FINAL-OUTBOX",
+   "mergedAt": "2026-11-12T17:35:39Z",
+   "branch": "cc-1/round818-04z-outbox"
+  },
+  {
+   "number": 29065,
+   "title": "Claude-1- FINDING: CC-1-ROW-101-VENDOR-DRIVER-BILL-EXCLUSION LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:33:41Z",
+   "branch": "cc-1/row101-vendor-driver-bills-fix"
+  },
+  {
+   "number": 29064,
+   "title": "FINDING: BANK-F817 ROUND 8.17 class S — every number opens its source on boards 3 6 10 18 19",
+   "mergedAt": "2026-11-12T17:32:45Z",
+   "branch": "cursor/round817-class-s"
+  },
+  {
+   "number": 29063,
+   "title": "Claude-1-ROUND818-22Z-OUTBOX",
+   "mergedAt": "2026-11-12T17:31:32Z",
+   "branch": "cc-1/round818-22z-outbox"
+  },
+  {
+   "number": 29062,
+   "title": "Claude-3: CC-3 ROW 221 DONE-LIVE + 18Z OUTBOX + dates guard fix",
+   "mergedAt": "2026-11-12T17:27:41Z",
+   "branch": "cc-3/r8.18-row221-outbox-18z"
+  },
+  {
+   "number": 29061,
+   "title": "Claude-1-ROUND818-ROW-215-DONE-LIVE",
+   "mergedAt": "2026-11-12T17:27:30Z",
+   "branch": "cc-1/round818-row215-done"
+  },
+  {
+   "number": 29060,
+   "title": "FINDING: LST-F12025 PERFUME-DESK — Purchase · Trading · Wholesale views + list role box LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:26:04Z",
+   "branch": "claude/perfume-three-views"
+  },
+  {
+   "number": 29059,
+   "title": "FINDING: ROUND 8.17 class L — delete layered legacy UI on boards 9 10 11 18 19 32",
+   "mergedAt": "2026-11-12T17:23:36Z",
+   "branch": "cursor/round817-class-l"
+  },
+  {
+   "number": 29058,
+   "title": "Claude-1-ROUND818 register rows 101/227/292/309 + OUTBOX 20:00Z",
+   "mergedAt": "2026-11-12T17:20:19Z",
+   "branch": "cc-1/round818-register-updates"
+  },
+  {
+   "number": 29057,
+   "title": "FINDING: ROUND 8.17 class R — shared returnContext; PageHeader/EntityLink/FleetHealth restore origin",
+   "mergedAt": "2026-11-12T17:14:44Z",
+   "branch": "cursor/round817-class-r"
+  },
+  {
+   "number": 29056,
+   "title": "FINDING: LST-F12024 PERFUME-DESK — a full list replaces (voids) the vendor's older lists LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:13:03Z",
+   "branch": "claude/perfume-replace-voids"
+  },
+  {
+   "number": 29055,
+   "title": "Claude-1-ROW101 vendor report + party-board exclude driver A/P bills from vendor spend",
+   "mergedAt": "2026-11-12T17:13:29Z",
+   "branch": "cc-1/row101-vendor-driver-bills-fix"
+  },
+  {
+   "number": 29054,
+   "title": "Claude-1- FINDING: CC-1-ROUND-8.18-ROWS-89-90-94-212-213-214-DONE-LIVE LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:10:50Z",
+   "branch": "cc-1/round-8-18-coded-verify-outbox-auth"
+  },
+  {
+   "number": 29053,
+   "title": "FINDING: LST-F12023 PERFUME-DESK — brand inside the line leaves the name (PCA Marc Jacobs); Mark→Marc LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T17:10:02Z",
+   "branch": "claude/perfume-brand-anywhere"
+  },
+  {
+   "number": 29052,
+   "title": "Claude-1- FINDING: ROUND 8.18 rows 28/66-72 register CODED — 5 report boards + load history board",
+   "mergedAt": "2026-11-12T16:57:48Z",
+   "branch": "cc-1/round818-reports"
+  },
+  {
+   "number": 29051,
+   "title": "Claude-3 chore: OUTBOX-R8.18-checkpoint-1 ENG-25b rows116-117 DONE",
+   "mergedAt": "2026-11-12T16:56:07Z",
+   "branch": "cc-3/outbox-r8.18-checkpoint-1"
+  },
+  {
+   "number": 29050,
+   "title": "FINDING: Codex ACCT-F81731 ROUND 8.17 card payables read liabilities, not spend",
+   "mergedAt": "2026-11-12T16:51:43Z",
+   "branch": "codex/round817-vendor-card-liability"
+  },
+  {
+   "number": 29049,
+   "title": "Claude-3 fix(fuel): ACCT-F3301 ENG-25b Transportation diesel → 8000 intercompany ops script",
+   "mergedAt": "2026-11-12T16:47:07Z",
+   "branch": "cc-3/eng25b-transp-diesel-reclass-to-8000"
+  },
+  {
+   "number": 29048,
+   "title": "FINDING: LST-F12021 MAIN-RED — capacity SAVEPOINTs, swallowed-DB-error guard 111→108 LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T16:55:31Z",
+   "branch": "claude/capacity-savepoints"
+  },
+  {
+   "number": 29047,
+   "title": "Claude-1- FINDING: CC-1 rows 146+165+216 register DONE-LIVE",
+   "mergedAt": "2026-11-12T16:43:50Z",
+   "branch": "cc-1/row216-bill-payments"
+  },
+  {
+   "number": 29046,
+   "title": "FINDING: LST-F12018 PERFUME-DESK — filters by Type, Gender, Brand; brand→name→size sort LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T16:58:02Z",
+   "branch": "claude/perfume-filters"
+  },
+  {
+   "number": 29045,
+   "title": "Claude-3: ACCT-F3049 D049 D055 customer name formatter tombstone and tooltip",
+   "mergedAt": "2026-11-12T16:22:26Z",
+   "branch": "cc-3/d049-d053-d055-name-formatters"
+  },
+  {
+   "number": 29044,
+   "title": "FINDING: LEAD-ROUND-8.17 — 45 boards two-seat plan (Cursor R/L/S, Codex N+V) LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T16:22:44Z",
+   "branch": "claude/round-8-17-two-seat-plan"
+  },
+  {
+   "number": 29043,
+   "title": "FINDING: ROUND-8.15b Factoring Home — Factoring.dc.html board only (drop Account Summary N/A theater)",
+   "mergedAt": "2026-11-12T16:12:28Z",
+   "branch": "cursor/factoring-home-815b"
+  },
+  {
+   "number": 29042,
+   "title": "FINDING: LST-F12017 PERFUME-DESK — Category column (Women / Men / Set / Tester / Cosmetics / Various)",
+   "mergedAt": "2026-11-12T16:07:29Z",
+   "branch": "claude/perfume-category"
+  },
+  {
+   "number": 29041,
+   "title": "FINDING: ROUND-8.15b-FOLLOW — re-point settlement-load-linkage guard off tourLoadColumns",
+   "mergedAt": "2026-11-12T15:53:22Z",
+   "branch": "cursor/setl-linkage-repoint"
+  },
+  {
+   "number": 29040,
+   "title": "FINDING: LST-F12016 PERFUME-DESK — JIZAN / Perfumes Plus / Nandansons / Lux / Darielle lists read correctly",
+   "mergedAt": "2026-11-12T15:50:10Z",
+   "branch": "claude/perfume-more-vendors"
+  },
+  {
+   "number": 29039,
+   "title": "Claude-1- FINDING: CC-1-ROUND-8.14-CLOSE — row 93 DONE-LIVE + OUTBOX 8.14 close LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T15:45:46Z",
+   "branch": "cc-1/row93-done-live"
+  },
+  {
+   "number": 29038,
+   "title": "FINDING: Codex Fuel single-board certification checklist and failing cases",
+   "mergedAt": "2026-11-12T15:44:08Z",
+   "branch": "codex/round815-fuel-certification"
+  },
+  {
+   "number": 29037,
+   "title": "Claude-3- FINDING: ACCT-F3047 — FactorReserveCard customer name formatter LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T15:43:03Z",
+   "branch": "cc-3/d047-factor-reserve-company-name"
+  },
+  {
+   "number": 29036,
+   "title": "FINDING: LST-F12015 PERFUME-DESK — Brand / Model / Country / Case pack columns; CK FREE model kept",
+   "mergedAt": "2026-11-12T15:39:35Z",
+   "branch": "claude/perfume-columns"
+  },
+  {
+   "number": 29035,
+   "title": "FINDING: ROUND-8.15b-FOLLOW — Fuel relay_inbox import without new i18n title string",
+   "mergedAt": "2026-11-12T15:32:08Z",
+   "branch": "cursor/fuel-relay-i18n"
+  },
+  {
+   "number": 29034,
+   "title": "FINDING: LST-F12014 bus ROUND 8.16 — full builds, replace old code, fast 4-minute merge",
+   "mergedAt": "2026-11-12T15:31:27Z",
+   "branch": "claude/round-8.16"
+  },
+  {
+   "number": 29033,
+   "title": "Claude-1- FINDING: CC-1-GUARD-REPOINT-10520-SETTLEMENT-LEGS-V3 LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T15:26:04Z",
+   "branch": "cc-1/guard-repoint-settlement-legs-10520"
+  },
+  {
+   "number": 29032,
+   "title": "Claude-3- FINDING: CC-3-ROWS-80-100-CLOSE LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T15:22:36Z",
+   "branch": "cc-3/rows-80-100-close"
+  },
+  {
+   "number": 29031,
+   "title": "FINDING: MAIN-RED-2026-11-12m — regenerate stale USMCA-EXHAUSTIVE-BATTERY.md",
+   "mergedAt": "2026-11-12T15:18:05Z",
+   "branch": "claude/main-red-battery-doc"
+  },
+  {
+   "number": 29030,
+   "title": "Claude-3- FINDING: CC-3-OUTBOX-ROWS-40-43-DONE + CC-3-GUARD-REPOINT-REPORTS-FIVE-WIRED LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T15:15:06Z",
+   "branch": "cc-3/outbox-rows-40-43-done"
+  },
+  {
+   "number": 29029,
+   "title": "FINDING: Codex Cash Flow classification and reverse-route acceptance failures",
+   "mergedAt": "2026-11-12T15:12:07Z",
+   "branch": "codex/round815-cashflow-acceptance"
+  },
+  {
+   "number": 29028,
+   "title": "Claude-1- FINDING: CC-1-SETL-HEADER-05-RESTAMP LANE: FINANCIAL",
+   "mergedAt": "2026-11-12T15:10:40Z",
+   "branch": "cc-1/settlement-header-backlink-restamp"
+  },
+  {
+   "number": 29027,
+   "title": "Claude-3- FINDING: CC-3-ROUND-8.15-ROWS-40-41-42-43 LANE: NON-FINANCIAL — Reports subnav rebuilt to v3 board, rows 40-43 DONE-LIVE",
+   "mergedAt": "2026-11-12T15:02:41Z",
+   "branch": "cc-3/round815-row40-reports-subnav"
+  },
+  {
+   "number": 29026,
+   "title": "FINDING: ROUND-8.15b Settlements Open/Closed + Fuel Home exact board rebuild",
+   "mergedAt": "2026-11-12T15:00:57Z",
+   "branch": "cursor/round815b-open-closed-fuel"
+  },
+  {
+   "number": 29025,
+   "title": "Claude-1- FINDING: CC-1-ROUND-8.14-REGISTER-ROWS-73-75-82-86-93-95 LANE: NON-FINANCIAL",
+   "mergedAt": "2026-11-12T14:59:26Z",
+   "branch": "cc-1/register-remeasure-8-14-rows"
+  },
+  {
+   "number": 29024,
+   "title": "FINDING: Codex board certification findings and live repair evidence",
+   "mergedAt": "2026-11-12T14:58:58Z",
+   "branch": "codex/round812-deploy-blocker-handoff"
+  },
+  {
+   "number": 29023,
+   "title": "FINDING: LST-F12013 PERFUME-DESK — MTZ identity (box qty, brand-only name, sets) + import heal",
+   "mergedAt": "2026-11-12T15:30:50Z",
+   "branch": "claude/perfume-identity"
+  },
+  {
+   "number": 29022,
+   "title": "FINDING: Codex Maintenance Settings waits for persisted values before Save",
+   "mergedAt": "2026-11-12T14:43:35Z",
+   "branch": "codex/round814-maintenance-settings-ready"
+  },
+  {
+   "number": 29020,
+   "title": "FINDING: LST-F12012 bus ROUND 8.15b — owner ruling: v3 boards built completely",
+   "mergedAt": "2026-11-12T14:32:25Z",
+   "branch": "lead/round-8.15b"
+  },
+  {
+   "number": 29019,
+   "title": "FINDING: LST-F12011 MAIN-RED — regenerate stale USMCA-EXHAUSTIVE-BATTERY.md",
+   "mergedAt": "2026-11-12T14:14:15Z",
+   "branch": "cursor/main-red-battery"
+  },
+  {
+   "number": 29018,
+   "title": "Claude-1-E2-void-reversals: ACCT-F4431310-E2 — 9 voided headers carry live JEs; add stranded-JE repair engine",
+   "mergedAt": "2026-11-12T13:17:20Z",
+   "branch": "cc-1/e2-void-reversals"
+  },
+  {
+   "number": 29017,
+   "title": "Claude-3- FINDING: CC-3-ROUND-8.15-ROWS-122-141-145-150-155-157-163-109 LANE: NON-FINANCIAL — driver name casing DONE-LIVE on 7 screens + row 109 HOS/planner re",
+   "mergedAt": "2026-11-12T13:12:29Z",
+   "branch": "cc-3/round815-name-rows-close"
+  },
+  {
+   "number": 29016,
+   "title": "FINDING: LST-F12010 bus tip — #29015 merged; board-column rebuild BLOCKED on CC-1 additive guards",
+   "mergedAt": "2026-11-12T12:53:41Z",
+   "branch": "cursor/bus-tip-29015"
+  },
+  {
+   "number": 29015,
+   "title": "FINDING: ROUND-8.15 Settlements KPI href drills + MAIN-RED PerfumeListsPanel duplicate MoneyInput",
+   "mergedAt": "2026-11-12T12:50:39Z",
+   "branch": "cursor/reverse-continue"
+  },
+  {
+   "number": 29014,
+   "title": "Claude-1-ACCT-F20261112-E1 stuck settlements repair: postFinalLoadSettlementsGl re-trigger for P-0125/P-0128/P-0130",
+   "mergedAt": "2026-11-12T12:45:38Z",
+   "branch": "cc-1/e1-stuck-settlements-final-close"
+  },
+  {
+   "number": 29013,
+   "title": "CC-2- CLAIM-RESERVE step 19915 — row-77 factoring invoice status parity guard",
+   "mergedAt": "2026-11-12T12:35:36Z",
+   "branch": "cc-2/claim-reserve-row77-19915"
+  },
+  {
+   "number": 29012,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-12T12:30:57Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
    "number": 29011,
    "title": "Claude-1-ACCT-F20261112-E3E4E5 guard fixes: alias-shadow truth SQL, salaried $0 closed week, orphan-fk capacity migration",
    "mergedAt": "2026-11-12T12:22:15Z",
@@ -16939,402 +17335,6 @@
    "number": 28470,
    "title": "fix(factoring): workqueue need-company + quantity days",
    "mergedAt": "2026-11-03T21:42:34Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28469,
-   "title": "fix(legal): template + matter detail need-company boards",
-   "mergedAt": "2026-11-03T21:40:58Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28468,
-   "title": "fix(home): Driver Hub BoardSection need-company",
-   "mergedAt": "2026-11-03T21:39:39Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28467,
-   "title": "fix(legal): templates + contracts list need-company boards",
-   "mergedAt": "2026-11-03T21:38:44Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28466,
-   "title": "FINDING: Codex Vendor fix retest and Relay receipt live backlog",
-   "mergedAt": "2026-11-03T21:37:55Z",
-   "branch": "codex/round7-independent-qa-batch80"
-  },
-  {
-   "number": 28465,
-   "title": "fix(legal): Attorney Review BoardSection need-company",
-   "mergedAt": "2026-11-03T21:37:16Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28464,
-   "title": "fix(legal): Policies page BoardSection need-company",
-   "mergedAt": "2026-11-03T21:36:17Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28463,
-   "title": "FINDING: ACCT-F11042 E9 queue — the fill-engine sweep reads every eligible fill in keyset pages and excludes person-confirmed fills on the read side (Codex batc",
-   "mergedAt": "2026-11-03T21:34:41Z",
-   "branch": "lead/e9-queue-keyset"
-  },
-  {
-   "number": 28462,
-   "title": "docs(bus): tip #28460 vendors multi-status + CC-1 handoff for batch75",
-   "mergedAt": "2026-11-03T21:34:25Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28461,
-   "title": "FINDING: Codex bank tie-out coverage and Cursor repair verification",
-   "mergedAt": "2026-11-03T21:33:33Z",
-   "branch": "codex/round7-independent-qa-batch79"
-  },
-  {
-   "number": 28460,
-   "title": "fix(vendors): batch76 multi-status comma-union before LIMIT",
-   "mergedAt": "2026-11-03T21:32:46Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28459,
-   "title": "FINDING: Codex E13 independent live source contradiction",
-   "mergedAt": "2026-11-03T21:30:57Z",
-   "branch": "codex/round7-independent-qa-batch78"
-  },
-  {
-   "number": 28458,
-   "title": "fix(guards): batch72 ENG17 selftest + ENG-34 inline/inert holes",
-   "mergedAt": "2026-11-03T21:29:13Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28457,
-   "title": "FINDING: ACCT-F11041 ENG-65 residual — every Relay fill is recorded from its own Relay lines at receipt; the Creator adopts, never writes a second set (48 fills",
-   "mergedAt": "2026-11-03T21:27:20Z",
-   "branch": "lead/eng65-receipt-records"
-  },
-  {
-   "number": 28456,
-   "title": "CLAIM-RESERVE: verify-step 19841 (LEAD) — ENG-65 guard",
-   "mergedAt": "2026-11-03T21:22:19Z",
-   "branch": "chore/claim-reserve-19841-lead"
-  },
-  {
-   "number": 28455,
-   "title": "FINDING: Codex E13 period and gate-scope counterexamples",
-   "mergedAt": "2026-11-03T21:18:14Z",
-   "branch": "codex/round7-independent-qa-batch77"
-  },
-  {
-   "number": 28454,
-   "title": "FINDING: Codex Vendor filter boundary and historical audit",
-   "mergedAt": "2026-11-03T21:10:36Z",
-   "branch": "codex/round7-independent-qa-batch76"
-  },
-  {
-   "number": 28453,
-   "title": "FINDING: Codex historical audit and Reclassify date-only refusal",
-   "mergedAt": "2026-11-03T21:07:03Z",
-   "branch": "codex/round7-independent-qa-batch75"
-  },
-  {
-   "number": 28452,
-   "title": "CC-2- E13 (row 161): seed fuel.fuel_card_assignments 27 USMCA card-unit periods from Relay fill history",
-   "mergedAt": "2026-11-03T21:02:22Z",
-   "branch": "cc-2/e13-fuel-card-assignments"
-  },
-  {
-   "number": 28451,
-   "title": "FINDING: Codex Legal live acceptance and E9 boundary audit",
-   "mergedAt": "2026-11-03T21:01:22Z",
-   "branch": "codex/round7-independent-qa-batch74"
-  },
-  {
-   "number": 28450,
-   "title": "FIX: E11 / ENG-29 — real-driven-miles boundaries without an odometer read get Samsara's own reads (91 of 148 loads without miles carry the gap)",
-   "mergedAt": "2026-11-03T20:57:06Z",
-   "branch": "lead/e11-odometer-history"
-  },
-  {
-   "number": 28449,
-   "title": "CLAIM-RESERVE: verify-step 19837 (LEAD) — E11 guard",
-   "mergedAt": "2026-11-03T20:54:47Z",
-   "branch": "chore/claim-reserve-19837-lead"
-  },
-  {
-   "number": 28448,
-   "title": "FINDING: Codex independent Legal and E9 verification",
-   "mergedAt": "2026-11-03T20:46:59Z",
-   "branch": "codex/round7-independent-qa-batch73"
-  },
-  {
-   "number": 28447,
-   "title": "BUS: E9 / row 145 — ENG-64 shipped (#28444)",
-   "mergedAt": "2026-11-03T20:44:46Z",
-   "branch": "lead/bus-e9"
-  },
-  {
-   "number": 28446,
-   "title": "fix(legal): batch71 allowlisted comma-union status at HTTP routes",
-   "mergedAt": "2026-11-03T20:44:13Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28445,
-   "title": "FINDING: Codex guard coverage independent recheck",
-   "mergedAt": "2026-11-03T20:43:43Z",
-   "branch": "codex/round7-independent-qa-batch72"
-  },
-  {
-   "number": 28444,
-   "title": "FINDING: ACCT-F11040 E9 / ENG-64 — every fill goes through the one fill engine; owner rulings and confirmed loads are never moved",
-   "mergedAt": "2026-11-03T20:41:30Z",
-   "branch": "lead/e9-fuel-follows-truck"
-  },
-  {
-   "number": 28443,
-   "title": "FIX: ENG-34 guard-wired ignores comment-only CI mentions",
-   "mergedAt": "2026-11-03T20:39:09Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28442,
-   "title": "FINDING: Codex Legal union HTTP validation regression",
-   "mergedAt": "2026-11-03T20:38:05Z",
-   "branch": "codex/round7-independent-qa-batch71"
-  },
-  {
-   "number": 28441,
-   "title": "CLAIM-RESERVE: verify-step 19833 (LEAD) — E9 ENG-64 guard",
-   "mergedAt": "2026-11-03T20:37:34Z",
-   "branch": "chore/claim-reserve-19833-lead"
-  },
-  {
-   "number": 28440,
-   "title": "Claude-1- FINDING: N/A LANE: NON-FINANCIAL — FIX ROSTER-DUP-PLACEHOLDERS phoneKey rejects placeholder numbers",
-   "mergedAt": "2026-11-03T20:26:28Z",
-   "branch": "cc-1/roster-dup-placeholders"
-  },
-  {
-   "number": 28439,
-   "title": "BUS: Legal multi-status closed; Invoice Search → Cascade",
-   "mergedAt": "2026-11-03T20:18:47Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28438,
-   "title": "FINDING: Codex ENG34 comment-only coverage counterexample",
-   "mergedAt": "2026-11-03T20:18:04Z",
-   "branch": "codex/round7-independent-qa-batch70"
-  },
-  {
-   "number": 28437,
-   "title": "FIX: Legal templates multi-status uses server status union",
-   "mergedAt": "2026-11-03T20:17:12Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28436,
-   "title": "FINDING: Codex capped invoice and contract filter audit",
-   "mergedAt": "2026-11-03T20:15:58Z",
-   "branch": "codex/round7-independent-qa-batch69"
-  },
-  {
-   "number": 28435,
-   "title": "FIX: Legal contracts multi-status filters before LIMIT 300",
-   "mergedAt": "2026-11-03T20:15:06Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28434,
-   "title": "FINDING: Codex historical control limits and trip predicates",
-   "mergedAt": "2026-11-03T20:13:54Z",
-   "branch": "codex/round7-independent-qa-batch68"
-  },
-  {
-   "number": 28433,
-   "title": "BUS: tip after #28432 Legal multi-status server union",
-   "mergedAt": "2026-11-03T20:13:11Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28432,
-   "title": "FIX: Legal matters multi-status filters before COUNT/LIMIT",
-   "mergedAt": "2026-11-03T20:12:44Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28431,
-   "title": "BUS: tip after #28428/#28430 factoring qty + trip voided",
-   "mergedAt": "2026-11-03T20:09:25Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28430,
-   "title": "FORMAT: factoring submit + tour footer counts house quantity",
-   "mergedAt": "2026-11-03T20:07:38Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28429,
-   "title": "FINDING: Codex Relay live linkage and status-pagination evidence",
-   "mergedAt": "2026-11-03T20:06:03Z",
-   "branch": "codex/round7-independent-qa-batch67"
-  },
-  {
-   "number": 28428,
-   "title": "FIX: trip profitability excludes voided/cancelled loads",
-   "mergedAt": "2026-11-03T20:05:40Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28427,
-   "title": "FORMAT: reverse/home/fleet count badges house quantity",
-   "mergedAt": "2026-11-03T20:03:53Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28426,
-   "title": "FINDING: Codex maintenance multi-status pagination audit",
-   "mergedAt": "2026-11-03T20:03:08Z",
-   "branch": "codex/round7-independent-qa-batch66"
-  },
-  {
-   "number": 28425,
-   "title": "FINDING: Codex independent audit query and consumer corrections",
-   "mergedAt": "2026-11-03T19:59:52Z",
-   "branch": "codex/round7-independent-qa-batch65"
-  },
-  {
-   "number": 28424,
-   "title": "FIX: AvP expense-accuracy tile uses matched coverage (batch64)",
-   "mergedAt": "2026-11-03T19:56:04Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28423,
-   "title": "BUS: register 146/261 + CC-1 queue",
-   "mergedAt": "2026-11-03T19:55:14Z",
-   "branch": "lead/bus-1400"
-  },
-  {
-   "number": 28422,
-   "title": "FINDING: ACCT-F11039 ENG-65 — Relay fill documents link their fuel record on every adopt",
-   "mergedAt": "2026-11-03T19:53:53Z",
-   "branch": "lead/eng65"
-  },
-  {
-   "number": 28421,
-   "title": "FORMAT: compliance HOS/2290 count badges house quantity",
-   "mergedAt": "2026-11-03T19:53:47Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28420,
-   "title": "FINDING: Codex expense accuracy consumer audit",
-   "mergedAt": "2026-11-03T19:53:18Z",
-   "branch": "codex/round7-independent-qa-batch64"
-  },
-  {
-   "number": 28419,
-   "title": "FIX: customer profitability excludes voided loads",
-   "mergedAt": "2026-11-03T19:52:47Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28418,
-   "title": "FIX: lane profitability excludes cancelled/voided loads (batch63)",
-   "mergedAt": "2026-11-03T19:51:51Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28417,
-   "title": "CLAIM-RESERVE: verify-step 19829 (LEAD) ENG-65",
-   "mergedAt": "2026-11-03T19:51:17Z",
-   "branch": "chore/claim-step-19829-eng65"
-  },
-  {
-   "number": 28416,
-   "title": "FORMAT: factoring/remint/fuel/settlement count badges house quantity",
-   "mergedAt": "2026-11-03T19:50:24Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28415,
-   "title": "FINDING: Codex Neon recovery and lane population audit",
-   "mergedAt": "2026-11-03T19:48:41Z",
-   "branch": "codex/round7-independent-qa-batch63"
-  },
-  {
-   "number": 28414,
-   "title": "FINDING: ACCT-F11038 E8 — AvP projected expense = daily engine; snapshot captures expense",
-   "mergedAt": "2026-11-03T19:46:50Z",
-   "branch": "lead/e8-v2-ship"
-  },
-  {
-   "number": 28413,
-   "title": "FORMAT: reverse/factoring/settlements/legal count badges house quantity",
-   "mergedAt": "2026-11-03T19:46:19Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28412,
-   "title": "FORMAT: kanban/presettle/home/system count badges house quantity",
-   "mergedAt": "2026-11-03T19:43:04Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28411,
-   "title": "BUS: restore CLAIMED-NUMBERS characters (formatting only)",
-   "mergedAt": "2026-11-03T19:40:00Z",
-   "branch": "lead/claim-json-unescape"
-  },
-  {
-   "number": 28410,
-   "title": "FIX: profitability equipment filter hooks + real dimension (batch61)",
-   "mergedAt": "2026-11-03T19:38:43Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28409,
-   "title": "CLAIM-RESERVE: verify-step 19827 (LEAD) E8",
-   "mergedAt": "2026-11-03T19:38:39Z",
-   "branch": "chore/claim-step-19827-e8"
-  },
-  {
-   "number": 28408,
-   "title": "CLAIM-RESERVE: migration 202616320100 (LEAD) E8",
-   "mergedAt": "2026-11-03T19:37:20Z",
-   "branch": "chore/claim-migration-202616320100-e8-expense-snapshot"
-  },
-  {
-   "number": 28407,
-   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
-   "mergedAt": "2026-11-03T20:32:39Z",
-   "branch": "chore/tracker-artifacts-sync"
-  },
-  {
-   "number": 28406,
-   "title": "FINDING: Codex scheduled delivery and consumer guard audit",
-   "mergedAt": "2026-11-03T19:36:04Z",
-   "branch": "codex/round7-independent-qa-batch62"
-  },
-  {
-   "number": 28405,
-   "title": "FINDING: owner 11-03 — Lead may change any non-FORBIDDEN path",
-   "mergedAt": "2026-11-03T19:35:53Z",
-   "branch": "lead/owner-lead-all-lanes"
-  },
-  {
-   "number": 28404,
-   "title": "FORMAT: fleet/dispatch/RL/settlement counts house quantity + CASH-T03 AdjustPopover",
-   "mergedAt": "2026-11-03T19:33:16Z",
    "branch": "cursor/eng-build-shells47"
   }
  ],
