@@ -1,10 +1,10 @@
 {
-  "healthzSha": "cf8c21c",
-  "generated_at": "2026-11-12T04:25:15.608Z",
+  "healthzSha": "b189e20",
+  "generated_at": "2026-11-12T06:33:26.074Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "cf8c21c",
+    "deployedSha": "b189e20",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28944,
-      "title": "feat(cash-flow): Home Net/Ending drill preserves forecast breakdown",
+      "number": 28948,
+      "title": "FINDING: LST-F12003 PERFUME-DESK — owner-only hidden TIO Perfumes price desk (isolated perfume.* schema)",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 10:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28944",
-      "sha": "cf8c21c3aa",
-      "committedAtIso": "2026-11-11T23:16:44-05:00"
+      "mergedAtCt": "11/12/2026, 12:24 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28948",
+      "sha": "b189e2036e",
+      "committedAtIso": "2026-11-12T00:24:27-06:00"
     },
     {
-      "number": 28943,
-      "title": "docs(bus): FE LIVE dep-dbqjngijnfac73bkhh9g + Cascade/CC-1 cert tips",
+      "number": 28982,
+      "title": "FINDING: MAIN-RED-2026-11-12d — insurance payment-schedule route test red on main since #28916",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 10:13 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28943",
-      "sha": "9739b886c3",
-      "committedAtIso": "2026-11-11T23:13:38-05:00"
+      "mergedAtCt": "11/12/2026, 12:16 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28982",
+      "sha": "7fbfa3d593",
+      "committedAtIso": "2026-11-12T00:16:57-06:00"
     },
     {
-      "number": 28941,
-      "title": "fix(fe): unblock deploy — tsc, CF3 empty rows, TL exact",
+      "number": 28981,
+      "title": "FINDING: LoadSaveProofPanel ledger MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 10:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28941",
-      "sha": "772f69a30f",
-      "committedAtIso": "2026-11-11T23:08:31-05:00"
+      "mergedAtCt": "11/12/2026, 12:08 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28981",
+      "sha": "b6a9f75712",
+      "committedAtIso": "2026-11-12T01:08:23-05:00"
     },
     {
-      "number": 28939,
-      "title": "feat(fuel): Fuel Assignment candidate Driver EntityLink",
+      "number": 28980,
+      "title": "FINDING: Workqueue/FaroImport/FactorAdmin/LoadCost MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 10:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28939",
-      "sha": "81e7dab2c2",
-      "committedAtIso": "2026-11-11T23:00:41-05:00"
+      "mergedAtCt": "11/12/2026, 12:04 AM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28980",
+      "sha": "e3391dbf99",
+      "committedAtIso": "2026-11-12T01:04:31-05:00"
     },
     {
-      "number": 28938,
-      "title": "docs(bus): tip Codex LIVE #28935–#28937 reverse wave",
+      "number": 28979,
+      "title": "FINDING: SubmissionQueue/ReserveTracker/BatchDetail MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:59 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28938",
-      "sha": "304ea8205b",
-      "committedAtIso": "2026-11-11T22:59:20-05:00"
+      "mergedAtCt": "11/11/2026, 11:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28979",
+      "sha": "8db2d5eedd",
+      "committedAtIso": "2026-11-12T00:56:49-05:00"
     },
     {
-      "number": 28937,
-      "title": "feat(legal): Lease-to-Own fleet picker Unit EntityLink",
+      "number": 28978,
+      "title": "FINDING: AUTH-475 Part 2 BLOCKED — Relay wallet (1295) needs card-7941 top-up before fill posts LANE: CC-2",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:58 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28937",
-      "sha": "893932c561",
-      "committedAtIso": "2026-11-11T22:58:59-05:00"
+      "mergedAtCt": "11/11/2026, 11:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28978",
+      "sha": "18661910c4",
+      "committedAtIso": "2026-11-12T00:54:06-05:00"
     },
     {
-      "number": 28936,
-      "title": "docs(bus): tip Codex LIVE #28932–#28935 settlement identity + CF3",
+      "number": 28977,
+      "title": "FINDING: MAIN-RED-2026-11-12b — Factoring Queue showed Mexico (MXN) load rates as US dollars after #28971",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:57 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28936",
-      "sha": "b8f2a20883",
-      "committedAtIso": "2026-11-11T22:57:27-05:00"
+      "mergedAtCt": "11/11/2026, 11:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28977",
+      "sha": "53fa6dbbe1",
+      "committedAtIso": "2026-11-11T23:53:01-06:00"
     },
     {
-      "number": 28935,
-      "title": "fix(settlements,cash-flow): identity strip EntityLinks + CF3 Load nav",
+      "number": 28976,
+      "title": "FINDING: OCR Rate + Relay wallet doc MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:56 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28935",
-      "sha": "ab3f7d2cb2",
-      "committedAtIso": "2026-11-11T22:56:55-05:00"
+      "mergedAtCt": "11/11/2026, 11:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28976",
+      "sha": "c7767fd840",
+      "committedAtIso": "2026-11-12T00:52:39-05:00"
     },
     {
-      "number": 28934,
-      "title": "docs(bus): tip Codex LIVE #28932–#28933 planner list EntityLinks",
+      "number": 28975,
+      "title": "FINDING: Fuel Assignment + Relay Deposit MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28934",
-      "sha": "d34f7500d4",
-      "committedAtIso": "2026-11-11T22:53:50-05:00"
+      "mergedAtCt": "11/11/2026, 11:48 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28975",
+      "sha": "ce2c3ea7c1",
+      "committedAtIso": "2026-11-12T00:48:09-05:00"
     },
     {
-      "number": 28933,
-      "title": "feat(dispatch): planner list EntityLinks Timeline/Driver/Truck",
+      "number": 28974,
+      "title": "FINDING: Cash Flow Rolling/DailyPrediction MoneyCell residual reverse-wiring",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 09:53 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28933",
-      "sha": "bca187ee92",
-      "committedAtIso": "2026-11-11T22:53:23-05:00"
+      "mergedAtCt": "11/11/2026, 11:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28974",
+      "sha": "91b8984ca6",
+      "committedAtIso": "2026-11-12T00:43:16-05:00"
     }
   ]
 }
