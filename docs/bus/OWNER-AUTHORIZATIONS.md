@@ -8203,3 +8203,12 @@ scope: USMCA accounting: Part 1 — reclassify 15 Relay reefer diesel >60 gal po
 action: DATABASE_URL=<prod> npx tsx scripts/ops/2026-11-10-cc2-round8.8-reefer-reclass-99149999.ts --apply
 expires_at: 2026-11-14T00:00:00Z
 status: OPEN
+
+
+## AUTH-476
+issued_at: 2026-11-12T12:30:00Z
+issued_by: CC-1, E1 standing repair — delegated by owner standing auth ("you have full permissions and authorization … we need to complete the full engines", AUTH-473 quotes, 2026-11-02 11:25 AM CT) + INBOX-CC-1 ROUND 8.14 directive (fix E1: stuck settlements P-0125/P-0128/P-0130)
+scope: USMCA driver_finance.driver_settlements — re-trigger postFinalLoadSettlementsGl for loads 13711/13727/13729 (settlements P-0125/P-0128/P-0130) whose trip_closed_at fired but GL post failed silently (ENG-61 era). The engine call is the SAME function the original route handler fires; no new GL math. Idempotent: a rerun skips already-closed settlements. Guard verify-final-load-close-posts PASS = this AUTH has done its job.
+action: POST /api/v1/driver-finance/settlements/stuck-close-repair { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
+expires_at: 2026-11-19T00:00:00Z
+status: OPEN
