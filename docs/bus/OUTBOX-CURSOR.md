@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~2:00 AM CT) — high-water #28916; reverse-wiring continue
+- **SHIPS:** #28915 Fuel Assignment candidate Settlement EntityLink (settlement_id) · #28916 Insurance Payment Schedule Policy EntityLink + policy_number join · prior #28911–#28914.
+- **NEXT:** Reverse-wiring spot checks continue; Map/DAT360 honest-gated; Legal signed bulk-void stays skipped. Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~1:40 AM CT) — high-water #28913; reverse-wiring wave
 - **SHIPS:** #28911 FinalizeBlock Save Draft → PATCH …/acknowledge · #28912 Fuel Assignment Proposed Settlement EntityLink · #28913 Factoring Messages tel/mailto contacts · #28895–#28910 go26/Document Designs/Aging.
 - **NEXT:** Reverse-wiring spot checks continue; Map/DAT360 honest-gated; Legal signed bulk-void stays skipped (executed signatures). Codex LIVE. No match/Dreamline.
