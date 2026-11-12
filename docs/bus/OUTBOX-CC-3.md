@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 10Z — ROUND 8.18 Rows 61 62 40 41 42 43 DONE-LIVE
+
+- **Row 61 (Dispatch › Truck Planner):** Chrome 2026-11-12: trucks listed with bars, T170 load 13735 Laredo→Medley $4,200; fix 4ff9f272 #27359 — PARTIAL → DONE-LIVE
+- **Row 62 (Dispatch › Book Load modal):** Chrome 2026-11-12: modal max-w 1260px ✓; NB/TR/SB trip type; Load # preview "assigned on save"; fix 4ff9f272 #27359 — PARTIAL → DONE-LIVE
+- **Row 40 (Reports › Home LAYERED):** source-verified: ReportsHomeBoard.tsx rebuilt to v3 board, no layered sections — OPEN → DONE-LIVE
+- **Row 41 (Reports › Trial balance PARTIAL):** Chrome 2026-11-12: Revenue $63,830 · COGS 9 rows · per-account drill-through to register · section totals rendering — PARTIAL → DONE-LIVE
+- **Row 42 (Customers › Home CHROME-ONLY):** Chrome 2026-11-12: WITH TRANSACTIONS 91 · IN THE BOOK 1,217 · OPEN INVOICES 209 · BILLED $774,446.72 · A/R OPEN $796,346.72 — OPEN → DONE-LIVE
+- **Row 43 (Vendors › Home CHROME-ONLY):** Chrome 2026-11-12: WITH TRANSACTIONS 30 · IN THE BOOK 603 · SPEND YTD $430,291.14 · FUEL SHARE 96% — OPEN → DONE-LIVE
+
 ## 2026-11-13 08Z — ROUND 8.18 D047 D074 D079 DONE-LIVE
 
 - **D047 (Factoring Home FactorReserveCard names):** Chrome 2026-11-12: no raw ALLCAPS customer names; formatCompanyName on main (32336a9d06 #29037); submit-invoice page proper-case names verified — OPEN → DONE-LIVE
