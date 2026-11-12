@@ -15,11 +15,11 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ListErrorState } from "../../components/ListErrorState";
 import { Modal } from "../../components/Modal";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents } from "../../lib/money";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
 
@@ -89,7 +89,18 @@ export function RepurchaseDuePanel({ companyId, isOwner }: { companyId: string; 
     { key: "purchase_date", label: "Purchased", sortable: true, render: (row) => formatDateUS(row.purchase_date) },
     { key: "due_date", label: "Repurchase due", sortable: true, render: (row) => formatDateUS(row.due_date) },
     { key: "days_since_purchase", label: "Days", kind: "number", sortable: true, render: (row) => formatQuantityTable(row.days_since_purchase, 0) },
-    { key: "gross_cents", label: "Face", kind: "money", sortable: true, render: (row) => formatUsdCents(row.gross_cents) },
+    {
+      key: "gross_cents",
+      label: "Face",
+      kind: "money",
+      sortable: true,
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.gross_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+        />
+      ),
+    },
     {
       key: "decide",
       label: "Decide",

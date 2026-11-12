@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
@@ -110,7 +111,16 @@ export function FuelDieselByTruckPanel({
               <div className="h-2 min-w-[72px] flex-1 rounded-sm bg-[#EEF0F3]" aria-hidden>
                 <div className="h-2 rounded-sm bg-[#14314F]" style={{ width: `${pct}%` }} />
               </div>
-              <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+              {r.unit_id ? (
+                <MoneyCell
+                  cents={r.spend_cents}
+                  format={(c) => formatMoneyCents(c)}
+                  drill={{ entity: { kind: "unit", id: r.unit_id } }}
+                  className="shrink-0"
+                />
+              ) : (
+                <span className="shrink-0 whitespace-nowrap tabular-nums">{formatMoneyCents(r.spend_cents)}</span>
+              )}
             </div>
           );
         },

@@ -10,6 +10,7 @@ import {
 } from "../../api/insurance";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { Button } from "../../components/Button";
 import { ClaimCreateModal } from "../../components/insurance/ClaimCreateModal";
@@ -18,7 +19,6 @@ import { StatusBadge } from "../../components/layout/StatusBadge";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
-import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { LegalMattersReverseSection } from "../../components/legal/LegalMattersReverseSection";
@@ -49,10 +49,6 @@ function claimStatusVariant(status: InsuranceClaimStatus): "neutral" | "warn" | 
   if (status === "investigating") return "warn";
   if (status === "denied") return "crit";
   return "neutral";
-}
-
-function formatMoney(cents: number): string {
-  return formatUsdCents(cents);
 }
 
 const CLAIM_FAULT_LABELS: Record<string, string> = {
@@ -239,13 +235,17 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "amount_claimed_cents",
         label: "Claimed",
         sortable: true,
-        render: (claim) => formatMoney(claim.amount_claimed_cents),
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_claimed_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
       },
       {
         key: "amount_paid_cents",
         label: "Paid",
         sortable: true,
-        render: (claim) => formatMoney(claim.amount_paid_cents),
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_paid_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
       },
       // Slice-2 economics on the grid. Without these the wizard collected fault / responsibility /
       // deductible / recovery rail and no list ever showed them back — the write-only half of the
@@ -268,7 +268,12 @@ export function ClaimsTab({ operatingCompanyId, policyId, assetId }: Props) {
         key: "deductible_cents",
         label: "Deductible",
         sortable: true,
-        render: (claim) => (claim.deductible_cents ? formatMoney(claim.deductible_cents) : "—"),
+        render: (claim) =>
+          claim.deductible_cents ? (
+            <MoneyCell cents={claim.deductible_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+          ) : (
+            "—"
+          ),
       },
       {
         key: "recovery_rail",

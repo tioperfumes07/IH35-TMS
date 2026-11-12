@@ -1,5 +1,44 @@
+## OUTBOX (11-13-2026 ~4:00 AM CT) — TripProfitability + At-Risk MoneyCell wave
+- **THIS:** TripProfitability Quick Pay/Revenue/Driver Pay/Fuel/Company Expenses/Net → settlement MoneyCell · At-Risk Rate → load MoneyCell.
+- **Prior:** #28969–#28971 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~3:40 AM CT) — Legal/Dispatch MoneyCell residual wave
+- **THIS:** Legal home claimed vs reserve · Load History Rate/Driver pay · Factoring Queue Rate · Detention accrued + approval amounts → MoneyCell.
+- **Prior:** #28969/#28970 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~3:20 AM CT) — Fuel/Insurance/Legal/Aging MoneyCell residual wave
+- **THIS:** Aging bucket fallbacks → advance · Equipment loan principal/outstanding → equipment_loan · FuelTransactions Amount · CardOverage overage/total · FleetCovered insured/premium · Insurance home policy premium · PolicyDetail lawsuit demand · Legal matter claimed/seek/reserve.
+- **Prior:** #28969 Factoring/Insurance/Fuel residual (merged).
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~2:55 AM CT) — Factoring/Insurance/Fuel MoneyCell residual wave
+- **THIS:** SubmitToFactor total/open → invoice · RepurchaseDue Face → purchase · RecoursePipeline invoice/advance/reserve → advance · Chargebacks chargeback/fee · Faro1090 net → purchase · PaymentsToYou detail lines → invoice · PolicyDetail insured value + claimed · FuelIntegrity cost → unit/fuel_transaction · FactoringHome Loan-Save + Fees-open fallbacks.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~2:35 AM CT) — Settlements/Insurance/Factoring MoneyCell wave
+- **SHIPS:** ROUND 8.13 #28903 closed · M3 #28966/#28967 (verify-step 20020) · Cash Advance amount · SettlementsTable gross/ded/net · Company Settlements money · Claims claimed/paid/deductible · Payment Schedule amount/late fee · Payments to You wire amounts → MoneyCell.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~2:20 AM CT) — ROUND 8.13 #28903 closed · M3 claim #28966 · wiring 20020
+- **DONE:** Closed #28903. CLAIM #28966 + wire #28967 verify-step 20020 (**MERGED**). M3 green.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~2:05 AM CT) — Fuel spend + Escrow register MoneyCells
+- **SHIPS:** #28953–#28964 Fuel spend + Escrow register MoneyCells (merged).
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
+## OUTBOX (11-13-2026 ~1:50 AM CT) — Insurance Policies insurer + Premium MoneyCell
+- **SHIPS:** #28953–#28962 · Policies insurer + Premium. **MERGED #28963.**
+- **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~1:35 AM CT) — Factoring Debtor credit + Escrow/Cash reserve purchase MoneyCells
-- **SHIPS:** #28953–#28960 · Debtor credit-check totals → customer · Escrow Account + Cash Reserve purchase name+amounts → factoring_purchase.
+- **SHIPS:** #28953–#28961 Debtor credit + Escrow/Cash reserve. **MERGED #28962 tip.**
 - **NEXT:** reverse-wiring residuals; Neon apply 202616501200; Codex LIVE BOARD-45. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~1:20 AM CT) — Factoring Purchase Report + Escrow Held MoneyCells

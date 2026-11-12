@@ -12,12 +12,12 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { StatusBadge } from "../../components/layout/StatusBadge";
 import { formatDateUS } from "../../lib/formatDate";
 import { useListState } from "../../components/list-state";
-import { formatUsdCents } from "../../lib/money";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 
 type Props = {
@@ -42,10 +42,6 @@ function statusBadgeVariant(status: PaymentScheduleStatus): "neutral" | "warn" |
 
 function statusLabel(status: PaymentScheduleStatus): string {
   return status.replace(/_/g, " ");
-}
-
-function formatMoney(cents: number): string {
-  return formatUsdCents(cents);
 }
 
 function canMarkPaid(schedule: InsurancePaymentSchedule): boolean {
@@ -137,8 +133,22 @@ export function PaymentScheduleTab({ operatingCompanyId, policyId }: Props) {
         ),
       },
       { key: "due_date", label: "Due Date", sortable: true, render: (row) => <span className="text-gray-800">{formatDateUS(row.due_date)}</span> },
-      { key: "amount_cents", label: "Amount", sortable: true, render: (row) => formatMoney(row.amount_cents) },
-      { key: "late_fee_cents", label: "Late Fee", sortable: true, render: (row) => formatMoney(row.late_fee_cents) },
+      {
+        key: "amount_cents",
+        label: "Amount",
+        sortable: true,
+        render: (row) => (
+          <MoneyCell cents={row.amount_cents} drill={{ entity: { kind: "insurance_policy", id: row.policy_id } }} />
+        ),
+      },
+      {
+        key: "late_fee_cents",
+        label: "Late Fee",
+        sortable: true,
+        render: (row) => (
+          <MoneyCell cents={row.late_fee_cents} drill={{ entity: { kind: "insurance_policy", id: row.policy_id } }} />
+        ),
+      },
       { key: "status", label: "Status", sortable: true, render: (row) => <StatusBadge variant={statusBadgeVariant(row.status)}>{statusLabel(row.status)}</StatusBadge> },
     ],
     [],

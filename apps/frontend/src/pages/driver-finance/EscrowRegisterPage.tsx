@@ -16,6 +16,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { useTranslation } from "react-i18next";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
@@ -321,7 +322,21 @@ export function EscrowRegisterPage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.inAmt ?? 0,
-        render: (r) => (r.inAmt == null ? "" : formatUsdTable(r.inAmt).replace(/^\$/, "")),
+        render: (r) => {
+          if (r.inAmt == null) return "";
+          const cents = Math.round(r.inAmt * 100);
+          const format = (c: number) => formatUsdTable(c / 100).replace(/^\$/, "");
+          if (r.settlementId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "settlement", id: r.settlementId } }} />;
+          }
+          if (r.journalEntryId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "journal_entry", id: r.journalEntryId } }} />;
+          }
+          if (r.loadId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "load", id: r.loadId } }} />;
+          }
+          return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "driver", id: driverId } }} />;
+        },
       },
       {
         key: "outAmt",
@@ -330,7 +345,21 @@ export function EscrowRegisterPage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.outAmt ?? 0,
-        render: (r) => (r.outAmt == null ? "" : formatUsdTable(r.outAmt).replace(/^\$/, "")),
+        render: (r) => {
+          if (r.outAmt == null) return "";
+          const cents = Math.round(r.outAmt * 100);
+          const format = (c: number) => formatUsdTable(c / 100).replace(/^\$/, "");
+          if (r.settlementId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "settlement", id: r.settlementId } }} />;
+          }
+          if (r.journalEntryId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "journal_entry", id: r.journalEntryId } }} />;
+          }
+          if (r.loadId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "load", id: r.loadId } }} />;
+          }
+          return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "driver", id: driverId } }} />;
+        },
       },
       {
         key: "balance",
@@ -339,10 +368,23 @@ export function EscrowRegisterPage() {
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.balance,
-        render: (r) => formatUsdTable(r.balance).replace(/^\$/, ""),
+        render: (r) => {
+          const cents = Math.round(r.balance * 100);
+          const format = (c: number) => formatUsdTable(c / 100).replace(/^\$/, "");
+          if (r.settlementId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "settlement", id: r.settlementId } }} />;
+          }
+          if (r.journalEntryId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "journal_entry", id: r.journalEntryId } }} />;
+          }
+          if (r.loadId) {
+            return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "load", id: r.loadId } }} />;
+          }
+          return <MoneyCell cents={cents} format={format} drill={{ entity: { kind: "driver", id: driverId } }} />;
+        },
       },
     ],
-    [],
+    [driverId],
   );
 
   if (!companyId) {

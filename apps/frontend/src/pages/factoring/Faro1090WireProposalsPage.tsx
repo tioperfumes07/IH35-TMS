@@ -19,6 +19,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
@@ -97,7 +98,12 @@ export function Faro1090WireProposalsPage() {
         label: "Net to company",
         sortable: true,
         cellClass: "text-right tabular-nums",
-        render: (row) => formatUsdCents(row.net_to_company_cents),
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.net_to_company_cents ?? 0)}
+            drill={{ entity: { kind: "factoring_purchase", id: row.purchase_id } }}
+          />
+        ),
       },
       {
         key: "days_unfunded",

@@ -10,24 +10,19 @@ import { MoneyInput } from "../../components/forms/MoneyInput";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { Modal } from "../../components/Modal";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useStagedListFilters } from "../../components/table";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { entityLabel } from "../../lib/entity-label";
-import { formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 
 const EMPTY_FILTERS = {
   driverId: "",
 };
-
-function formatUsdFromCents(cents: unknown) {
-  const n = Number(cents ?? 0);
-  return formatUsdCents(n);
-}
 
 // Maker<>checker (migration 202607380000, I4): a request's reviewer can never be the office user
 // who created it. Owner/Administrator requests auto-approve at create (no checker needed, so this
@@ -220,7 +215,12 @@ export function CashAdvanceRequestsPage() {
         key: "requested_amount_cents",
         label: "Amount",
         sortable: true,
-        render: (row) => formatUsdFromCents(row.requested_amount_cents),
+        render: (row) => (
+          <MoneyCell
+            cents={Number(row.requested_amount_cents ?? 0)}
+            drill={{ entity: { kind: "cash_advance_request", id: String(row.id ?? "") } }}
+          />
+        ),
       },
       {
         key: "policy",

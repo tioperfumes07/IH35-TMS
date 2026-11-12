@@ -25,6 +25,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { computePresetRange, ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useStagedListFilters } from "../../components/table";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -245,7 +246,20 @@ export default function LoadHistoryBoardPage() {
         className: "whitespace-nowrap text-right",
         render: (r) => cellButton(r, r.miles_deadhead == null ? "—" : formatNumber(r.miles_deadhead)),
       },
-      { key: "revenue_cents", label: "Rate", sortable: true, kind: "money", cellClass: "whitespace-nowrap text-right", className: "whitespace-nowrap text-right", render: (r) => cellButton(r, formatUsdCents(r.revenue_cents)) },
+      {
+        key: "revenue_cents",
+        label: "Rate",
+        sortable: true,
+        kind: "money",
+        cellClass: "whitespace-nowrap text-right",
+        className: "whitespace-nowrap text-right",
+        render: (r) =>
+          r.invoice_id ? (
+            <MoneyCell cents={Number(r.revenue_cents ?? 0)} drill={{ entity: { kind: "invoice", id: r.invoice_id } }} />
+          ) : (
+            <MoneyCell cents={Number(r.revenue_cents ?? 0)} drill={{ entity: { kind: "load", id: r.load_id } }} />
+          ),
+      },
       {
         key: "rpm",
         label: "$/mi",
@@ -256,7 +270,9 @@ export default function LoadHistoryBoardPage() {
         className: "whitespace-nowrap text-right",
         render: (r) => {
           const c = ratePerMileCents(r.revenue_cents, r.miles_practical);
-          return cellButton(r, c == null ? "—" : formatUsdCents(c));
+          if (c == null) return cellButton(r, "—");
+          // Rate-per-mile is a computed ratio — keep board open via cellButton (declared no-drill pattern elsewhere).
+          return cellButton(r, formatUsdCents(c));
         },
       },
       {
@@ -272,7 +288,23 @@ export default function LoadHistoryBoardPage() {
             cellButton(r, <span className="text-[#6B7280]">not invoiced</span>)
           ),
       },
-      { key: "driver_pay_cents", label: "Driver pay", sortable: true, kind: "money", cellClass: "whitespace-nowrap text-right", className: "whitespace-nowrap text-right", render: (r) => cellButton(r, formatUsdCents(r.driver_pay_cents)) },
+      {
+        key: "driver_pay_cents",
+        label: "Driver pay",
+        sortable: true,
+        kind: "money",
+        cellClass: "whitespace-nowrap text-right",
+        className: "whitespace-nowrap text-right",
+        render: (r) =>
+          r.settlement_id ? (
+            <MoneyCell
+              cents={Number(r.driver_pay_cents ?? 0)}
+              drill={{ entity: { kind: "settlement", id: r.settlement_id } }}
+            />
+          ) : (
+            <MoneyCell cents={Number(r.driver_pay_cents ?? 0)} drill={{ entity: { kind: "load", id: r.load_id } }} />
+          ),
+      },
       {
         key: "settlement_number",
         label: "Settlement",

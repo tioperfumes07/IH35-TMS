@@ -8,6 +8,7 @@ import type { ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useToast } from "../../components/Toast";
 import type { LoadCostRollupFields } from "../../api/factoring";
 import { buildLoadCostColumns, centsFromWire } from "./loadCostColumnManifest";
@@ -100,13 +101,29 @@ export function ChargebacksTable({ rows, fmtCurrency, fmtDate, filterBar }: Prop
       key: "chargeback_amount",
       label: "Chargeback",
       sortable: true,
-      render: (row) => fmtCurrency(row.chargeback_amount),
+      render: (row) =>
+        row.invoice_id ? (
+          <MoneyCell
+            cents={Math.round(Number(row.chargeback_amount ?? 0) * 100)}
+            drill={{ entity: { kind: "invoice", id: row.invoice_id } }}
+          />
+        ) : (
+          <MoneyCell
+            cents={Math.round(Number(row.chargeback_amount ?? 0) * 100)}
+            drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+          />
+        ),
     },
     {
       key: "factor_fee_amount",
       label: "Fee",
       sortable: true,
-      render: (row) => fmtCurrency(row.factor_fee_amount),
+      render: (row) => (
+        <MoneyCell
+          cents={Math.round(Number(row.factor_fee_amount ?? 0) * 100)}
+          drill={{ entity: { kind: "factoring_advance", id: row.factoring_advance_id } }}
+        />
+      ),
     },
     // FAC-08: same SHARED Load-Costs manifest as the recourse register (one manifest, two consumers).
     // Advanced + Factoring fee excluded — this register renders native Advance + Fee dollar columns

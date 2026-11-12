@@ -21,10 +21,10 @@ import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsd, formatUsdCents } from "../../lib/money";
 import { PaymentScheduleTab } from "./PaymentScheduleTab";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
@@ -35,10 +35,6 @@ import { SelectCombobox } from "../../components/Combobox";
 
 /** Lawsuits fetched per claim of this policy; each response carries its own total (disclosed if exceeded). */
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
-
-function formatMoney(cents: number) {
-  return formatUsdCents(cents);
-}
 
 export function PolicyDetail() {
   const { selectedCompanyId } = useCompanyContext();
@@ -177,7 +173,17 @@ export function PolicyDetail() {
           );
         },
       },
-      { key: "insured_value_cents", label: "Insured Value", sortable: true, render: (unit) => formatMoney(unit.insured_value_cents) },
+      {
+        key: "insured_value_cents",
+        label: "Insured Value",
+        sortable: true,
+        render: (unit) => {
+          const unitId = unit.unit_id ?? unit.asset_id;
+          return (
+            <MoneyCell cents={unit.insured_value_cents} drill={{ entity: { kind: "unit", id: unitId } }} />
+          );
+        },
+      },
       { key: "created_at", label: "Assigned", sortable: true, render: (unit) => formatDateUS(unit.created_at) },
     ],
     [],
@@ -218,7 +224,14 @@ export function PolicyDetail() {
         ),
       },
       { key: "status", label: "Status", sortable: true },
-      { key: "amount_claimed_cents", label: "Claimed", sortable: true, render: (claim) => formatMoney(claim.amount_claimed_cents) },
+      {
+        key: "amount_claimed_cents",
+        label: "Claimed",
+        sortable: true,
+        render: (claim) => (
+          <MoneyCell cents={claim.amount_claimed_cents} drill={{ entity: { kind: "claim", id: claim.id } }} />
+        ),
+      },
     ],
     [],
   );
@@ -250,13 +263,21 @@ export function PolicyDetail() {
         // amount_claimed_against_us is dollars (legal.matters numeric); financial_reserve_cents is cents.
         // Never coerce one through the other's formatter (Codex 11-02 PolicyDetail demand /100).
         render: (row) => {
+          const matterId = String(row.id ?? "");
           const claimed = row.amount_claimed_against_us;
-          if (claimed != null && claimed !== "" && Number.isFinite(Number(claimed))) {
-            return formatUsd(Number(claimed));
+          if (claimed != null && claimed !== "" && Number.isFinite(Number(claimed)) && matterId) {
+            return (
+              <MoneyCell
+                cents={Math.round(Number(claimed) * 100)}
+                drill={{ entity: { kind: "matter", id: matterId } }}
+              />
+            );
           }
           const reserve = row.financial_reserve_cents;
-          if (reserve != null && reserve !== "" && Number.isFinite(Number(reserve))) {
-            return formatUsdCents(Number(reserve));
+          if (reserve != null && reserve !== "" && Number.isFinite(Number(reserve)) && matterId) {
+            return (
+              <MoneyCell cents={Number(reserve)} drill={{ entity: { kind: "matter", id: matterId } }} />
+            );
           }
           return "—";
         },

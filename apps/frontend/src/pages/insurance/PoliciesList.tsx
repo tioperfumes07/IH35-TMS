@@ -22,9 +22,10 @@ import { CollapsedListFilters, useStagedListFilters } from "../../components/tab
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatCalendarDateUS } from "../../lib/formatDate";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
+import { companyLabel } from "../../lib/formatCompanyName";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { companyToday } from "../../lib/businessDate";
 import { statusOptions } from "../../lib/statusListParams";
@@ -35,10 +36,6 @@ const STATUS_FILTER_OPTIONS = statusOptions({
   expired: "Expired",
   cancelled: "Cancelled",
 });
-
-function formatMoney(cents: number) {
-  return formatUsdCents(cents);
-}
 
 function daysUntil(value: string) {
   const start = new Date(`${companyToday()}T00:00:00.000Z`);
@@ -118,10 +115,28 @@ export function PoliciesList() {
   // TBL-STANDARD: shared ParityTable columns (alignment per GLOBAL-SORT-RULE — text centers, money/dates right).
   const columns: ParityColumn<InsurancePolicy>[] = [
     { key: "policy_number", label: "Policy #", sortable: true, render: (p: InsurancePolicy) => <EntityLink kind="insurance_policy" id={p.id} label={entityLabel(p.policy_number, p.id, "Policy")} className="font-medium text-[#0F1219]" /> },
-    { key: "insurer_name", label: "Insurer", sortable: true },
+    {
+      key: "insurer_name",
+      label: "Insurer",
+      sortable: true,
+      render: (p: InsurancePolicy) =>
+        p.vendor_id ? (
+          <EntityLink kind="vendor" id={p.vendor_id} label={companyLabel(p.insurer_name, p.vendor_id, "Vendor")} />
+        ) : (
+          p.insurer_name || "—"
+        ),
+    },
     { key: "coverage_type", label: "Type", sortable: true, render: (p: InsurancePolicy) => coverageTypeName(p) },
     // Codex QA 11-02: total_premium_cents is premium, not a coverage limit — label must say Premium.
-    { key: "total_premium_cents", label: "Premium", sortable: true, cellClass: "text-right tabular-nums", render: (p: InsurancePolicy) => formatMoney(p.total_premium_cents) },
+    {
+      key: "total_premium_cents",
+      label: "Premium",
+      sortable: true,
+      cellClass: "text-right tabular-nums",
+      render: (p: InsurancePolicy) => (
+        <MoneyCell cents={p.total_premium_cents} drill={{ entity: { kind: "insurance_policy", id: p.id } }} />
+      ),
+    },
     { key: "effective_date", label: "Effective Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatCalendarDateUS(p.effective_date) },
     { key: "expiry_date", label: "Expiry Date", sortable: true, cellClass: "text-right", render: (p: InsurancePolicy) => formatCalendarDateUS(p.expiry_date) },
     { key: "status", label: "Status", sortable: true, render: (p: InsurancePolicy) => (
