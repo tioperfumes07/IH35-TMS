@@ -1,4 +1,4 @@
-import webpush from "web-push";
+import * as webpush from "web-push";
 import { withLuciaBypass } from "../auth/db.js";
 import { dispatchNotification } from "../notifications/dispatcher.js";
 
