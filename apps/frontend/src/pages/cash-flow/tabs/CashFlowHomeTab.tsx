@@ -542,8 +542,44 @@ function bucketRange(bucket: WeekBucket | MonthBucket): { from: string; to: stri
   return { from: bounds.start, to: bounds.end };
 }
 
+function netEndingDrillOpts(
+  explain: "net" | "ending",
+  bucket: WeekBucket | MonthBucket,
+  scenario: Scenario,
+): CashFlowNavOpts {
+  const { from, to } = bucketRange(bucket);
+  const rr = [
+    bucket.driver_run_rate ? "driver" : null,
+    bucket.diesel_run_rate ? "diesel" : null,
+    bucket.other_run_rate ? "other" : null,
+    bucket.topup_run_rate ? "topup" : null,
+  ].filter(Boolean) as string[];
+  return {
+    rl_from: from,
+    rl_to: to,
+    rl_explain: explain,
+    rl_scenario: scenario,
+    rl_bucket: bucket.kind,
+    rl_invoice: String(bucket.invoice_cents),
+    rl_topup: String(bucket.topup_cents),
+    rl_finance: String(bucket.finance_cents),
+    rl_driver: String(bucket.driver_cents),
+    rl_diesel: String(bucket.diesel_cents),
+    rl_vendor: String(bucket.vendor_cents),
+    rl_other: String(bucket.other_cents),
+    rl_income: String(bucket.income_cents),
+    rl_expenses: String(bucket.expenses_cents),
+    rl_net: String(bucket.net_cents),
+    rl_rr: rr.length ? rr.join(",") : undefined,
+  };
+}
+
 /** Map a matrix cell to Rolling Ledger URL opts. Run-rate rows open the week untyped (no fake docs). */
-function matrixDrillOpts(row: MatrixRowKey, bucket: WeekBucket | MonthBucket): CashFlowNavOpts {
+function matrixDrillOpts(
+  row: MatrixRowKey,
+  bucket: WeekBucket | MonthBucket,
+  scenario: Scenario,
+): CashFlowNavOpts {
   const { from, to } = bucketRange(bucket);
   switch (row) {
     case "invoice":
@@ -583,17 +619,21 @@ function matrixDrillOpts(row: MatrixRowKey, bucket: WeekBucket | MonthBucket): C
       return { rl_from: from, rl_to: to, rl_kind: "expenses" };
     case "net":
     case "ending":
-      return { rl_from: from, rl_to: to };
+      // Preserve scenario + component cents so Rolling Ledger can reconcile the clicked figure
+      // (forecast assumptions / run-rate legs) — does not rewrite ledger amounts.
+      return netEndingDrillOpts(row, bucket, scenario);
   }
 }
 
 function ThirteenWeekTable({
   columns,
   unit,
+  scenario,
   onOpen,
 }: {
   columns: Array<WeekBucket | MonthBucket>;
   unit: TableUnit;
+  scenario: Scenario;
   onOpen: (tab: Exclude<CashFlowTabId, "home">, opts?: CashFlowNavOpts) => void;
 }) {
   const totalIncome = columns.reduce((s, w) => s + w.income_cents, 0) || 1;
@@ -628,7 +668,7 @@ function ThirteenWeekTable({
   };
 
   const openCell = (rowKey: MatrixRowKey, bucket: WeekBucket | MonthBucket) => {
-    onOpen("rolling_ledger", matrixDrillOpts(rowKey, bucket));
+    onOpen("rolling_ledger", matrixDrillOpts(rowKey, bucket, scenario));
   };
 
   const row = (
@@ -1097,7 +1137,7 @@ export function CashFlowHomeTab({
           footer="Grey = run-rate estimate · black = committed documents · every cell opens what is behind it."
           testId="cash-flow-home-table-panel"
         >
-          <ThirteenWeekTable columns={tableColumns} unit={tableUnit} onOpen={openSibling} />
+          <ThirteenWeekTable columns={tableColumns} unit={tableUnit} scenario={scenario} onOpen={openSibling} />
         </BoardSection>
       )}
 

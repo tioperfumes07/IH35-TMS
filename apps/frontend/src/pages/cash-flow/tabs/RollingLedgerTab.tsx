@@ -692,6 +692,29 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const urlFrom = searchParams.get("rl_from");
   const urlTo = searchParams.get("rl_to");
+  const homeExplain = searchParams.get("rl_explain");
+  const homeScenario = searchParams.get("rl_scenario");
+  const homeBucket = searchParams.get("rl_bucket");
+  const homeRr = (searchParams.get("rl_rr") || "").split(",").filter(Boolean);
+  const homeNetBreakdown =
+    homeExplain === "net" || homeExplain === "ending"
+      ? {
+          explain: homeExplain as "net" | "ending",
+          scenario: homeScenario === "conservative" ? "Conservative" : homeScenario === "base" ? "Base" : null,
+          bucket: homeBucket === "actual" ? "Actual (bank)" : homeBucket === "forecast" ? "Forecast" : null,
+          invoice: Number(searchParams.get("rl_invoice") || 0),
+          topup: Number(searchParams.get("rl_topup") || 0),
+          finance: Number(searchParams.get("rl_finance") || 0),
+          driver: Number(searchParams.get("rl_driver") || 0),
+          diesel: Number(searchParams.get("rl_diesel") || 0),
+          vendor: Number(searchParams.get("rl_vendor") || 0),
+          other: Number(searchParams.get("rl_other") || 0),
+          income: Number(searchParams.get("rl_income") || 0),
+          expenses: Number(searchParams.get("rl_expenses") || 0),
+          net: Number(searchParams.get("rl_net") || 0),
+          rr: homeRr,
+        }
+      : null;
   const [from, setFrom] = useState(urlFrom || today);
   const [to, setTo] = useState(urlTo || addDaysIso(today, 13));
 
@@ -1260,11 +1283,54 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   };
   const dateRangeLabel = `${fmtNavDate(from).replace(/^\w+, /, "")} – ${fmtNavDate(to).replace(/^\w+, /, "")}`;
 
+  const rrNote = (leg: string) => (homeNetBreakdown?.rr.includes(leg) ? " · run-rate estimate" : " · committed");
+
   return (
     <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab" style={{ fontFamily: V3.font }}>
       {unknownAmountCount > 0 && (
         <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
       )}
+
+      {homeNetBreakdown ? (
+        <BoardSection
+          title={homeNetBreakdown.explain === "ending" ? "Home Ending cash — source breakdown" : "Home Net cash flow — source breakdown"}
+          testId="cash-flow-rolling-home-net-breakdown"
+        >
+          <div className="space-y-2 px-3 py-2 text-xs text-[#1F2A44]" data-testid="cash-flow-rolling-home-net-breakdown-body">
+            <p>
+              Opened from Cash Flow Home · week {formatDateUS(from) || from}–{formatDateUS(to) || to}
+              {homeNetBreakdown.scenario ? ` · scenario ${homeNetBreakdown.scenario}` : ""}
+              {homeNetBreakdown.bucket ? ` · ${homeNetBreakdown.bucket} bucket` : ""}.
+              Ledger rows below are live obligations in this window — they do not rewrite the Home figure.
+            </p>
+            <p className="font-semibold tabular-nums" data-testid="cash-flow-rolling-home-net-clicked">
+              Clicked {homeNetBreakdown.explain === "ending" ? "Ending" : "Net"} = {formatUsdCents(homeNetBreakdown.net)}
+              {" · "}Income {formatUsdCents(homeNetBreakdown.income)} − Expenses {formatUsdCents(homeNetBreakdown.expenses)}
+            </p>
+            <ul className="list-inside list-disc space-y-0.5 text-[#4B5563]">
+              <li>Invoices / loads / factor advances: {formatUsdCents(homeNetBreakdown.invoice)}</li>
+              <li>
+                Income top-up{rrNote("topup")}: {formatUsdCents(homeNetBreakdown.topup)}
+              </li>
+              <li>Finance / loan: {formatUsdCents(homeNetBreakdown.finance)}</li>
+              <li>
+                Driver pay{rrNote("driver")}: {formatUsdCents(homeNetBreakdown.driver)}
+              </li>
+              <li>
+                Diesel / fuel{rrNote("diesel")}: {formatUsdCents(homeNetBreakdown.diesel)}
+              </li>
+              <li>Vendor bills: {formatUsdCents(homeNetBreakdown.vendor)}</li>
+              <li>
+                Other expenses{rrNote("other")}: {formatUsdCents(homeNetBreakdown.other)}
+              </li>
+            </ul>
+            <p className="text-[#6B7280]">
+              Grey Home cells are run-rate estimates (Base scenario). Conservative uses committed documents only.
+              This banner preserves the Home assumptions for reconciliation — it does not post or adjust money.
+            </p>
+          </div>
+        </BoardSection>
+      ) : null}
 
       {/* Board chrome: Filters ▾ · Date · By day|By type · day nav · Export. Banking contracts expand under Filters. */}
       <div
