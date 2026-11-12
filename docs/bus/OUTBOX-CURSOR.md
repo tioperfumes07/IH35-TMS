@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~5:30 AM CT) — Settlement KPI + Load profitability MoneyCell
+- **THIS:** SettlementKpiGrid six KPIs → settlement MoneyCell · SettlementProfitabilityCard breakdown → load MoneyCell.
+- **Prior:** #28994 TripPairing · #28995 FactoringQueue merged.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~5:20 AM CT) — FactoringQueue Reserve/MTD MoneyCell
 - **THIS:** Dispatch Factoring Queue summary Reserve Balance + MTD Advances → MoneyCell → active factor vendor.
 - **Prior:** #28994 TripPairing Revenue MoneyCell + go26 33→32 merged.

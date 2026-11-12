@@ -13,6 +13,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { getLoadProfitability, classifyProfit } from "../../../lib/loadProfit";
+import { MoneyCell } from "../../shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 
 type Props = {
@@ -32,13 +33,30 @@ function money(cents: number | null | undefined, currency?: string | null) {
   return formatUsdCents(cents);
 }
 
-function Row({ label, cents, currency, negative = false }: { label: string; cents: number; currency: string; negative?: boolean }) {
+function moneyFormat(currency: string) {
+  return (cents: number) => money(cents, currency);
+}
+
+function Row({
+  label,
+  cents,
+  currency,
+  loadId,
+  negative = false,
+}: {
+  label: string;
+  cents: number;
+  currency: string;
+  loadId: string;
+  negative?: boolean;
+}) {
   const isNeg = negative && cents > 0;
   return (
     <div className="flex justify-between text-xs">
       <span className="text-gray-600">{label}</span>
       <span className={isNeg ? "text-red-600" : "text-gray-900"}>
-        {isNeg ? `−${money(cents, currency)}` : money(cents, currency)}
+        {isNeg ? "−" : null}
+        <MoneyCell cents={cents} format={moneyFormat(currency)} drill={{ entity: { kind: "load", id: loadId } }} />
       </span>
     </div>
   );
@@ -72,7 +90,7 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
   if (!d) return null;
 
   const variant = classifyProfit(d.net_profit_cents, d.margin_pct);
-  const netLabel = money(d.net_profit_cents, currencyCode);
+  const fmt = moneyFormat(currencyCode);
 
   const variantBg: Record<typeof variant, string> = {
     positive: "bg-[#F7F8FA] border-[#E5E7EB]",
@@ -102,37 +120,51 @@ export function SettlementProfitabilityCard({ loadId, operatingCompanyId, curren
           )}
         </div>
         <div className={`mt-1 text-page-title font-bold ${variantText[variant]}`}>
-          {netLabel}
+          <MoneyCell cents={d.net_profit_cents} format={fmt} drill={{ entity: { kind: "load", id: loadId } }} />
         </div>
         <div className="mt-0.5 text-xs text-gray-500">
           {formatQuantityTable(d.margin_pct, 1)}% margin
-          {d.miles > 0 ? ` · ${money(Math.round(d.net_profit_cents / d.miles * 100), currencyCode)}/mi` : ""}
+          {d.miles > 0 ? (
+            <>
+              {" · "}
+              <MoneyCell
+                cents={Math.round((d.net_profit_cents / d.miles) * 100)}
+                format={fmt}
+                drill={{ entity: { kind: "load", id: loadId } }}
+              />
+              /mi
+            </>
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
       {/* Cost breakdown */}
       <div className="rounded-sm border border-gray-200 bg-white p-3 space-y-1.5">
         <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Breakdown</div>
-        <Row label="Revenue" cents={d.revenue_cents} currency={currencyCode} />
+        <Row label="Revenue" cents={d.revenue_cents} currency={currencyCode} loadId={loadId} />
         <div className="border-t border-gray-100 my-1" />
-        <Row label="Driver pay" cents={d.driver_pay_cents} currency={currencyCode} negative />
-        <Row label="Fuel" cents={d.fuel_cents} currency={currencyCode} negative />
+        <Row label="Driver pay" cents={d.driver_pay_cents} currency={currencyCode} loadId={loadId} negative />
+        <Row label="Fuel" cents={d.fuel_cents} currency={currencyCode} loadId={loadId} negative />
         {d.maintenance_cents > 0 && (
-          <Row label="Maintenance / repairs" cents={d.maintenance_cents} currency={currencyCode} negative />
+          <Row label="Maintenance / repairs" cents={d.maintenance_cents} currency={currencyCode} loadId={loadId} negative />
         )}
         {d.insurance_alloc_cents > 0 && (
-          <Row label="Insurance allocation" cents={d.insurance_alloc_cents} currency={currencyCode} negative />
+          <Row label="Insurance allocation" cents={d.insurance_alloc_cents} currency={currencyCode} loadId={loadId} negative />
         )}
         {d.factoring_fee_cents > 0 && (
-          <Row label="Factoring fee" cents={d.factoring_fee_cents} currency={currencyCode} negative />
+          <Row label="Factoring fee" cents={d.factoring_fee_cents} currency={currencyCode} loadId={loadId} negative />
         )}
         {d.accessorial_deductions_cents > 0 && (
-          <Row label="Accessorial deductions" cents={d.accessorial_deductions_cents} currency={currencyCode} negative />
+          <Row label="Accessorial deductions" cents={d.accessorial_deductions_cents} currency={currencyCode} loadId={loadId} negative />
         )}
         <div className="border-t border-gray-200 mt-1 pt-1.5">
           <div className="flex justify-between text-xs font-semibold">
             <span className="text-gray-700">Net profit</span>
-            <span className={variantText[variant]}>{money(d.net_profit_cents, currencyCode)}</span>
+            <span className={variantText[variant]}>
+              <MoneyCell cents={d.net_profit_cents} format={fmt} drill={{ entity: { kind: "load", id: loadId } }} />
+            </span>
           </div>
         </div>
       </div>
