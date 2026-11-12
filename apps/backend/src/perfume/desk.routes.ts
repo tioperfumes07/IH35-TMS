@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
   reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -47,7 +47,7 @@ const cents = z.number().int().min(0).max(100_000).nullable().optional();
 const vendorSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(120),
-  kind: z.enum(["buy", "sell", "both"]).optional(),
+  kind: z.enum(["buy", "sell", "both", "offer", "inventory"]).optional(),
   cushion_lo_cents: cents, cushion_hi_cents: cents, freight_lo_cents: cents, freight_hi_cents: cents,
   earn_pct: z.number().min(0).max(99).nullable().optional(),
   sells_by_box: z.boolean().optional(),
@@ -98,6 +98,7 @@ const gridQuery = z.object({
   sort: z.string().max(120).optional(),
   dir: z.enum(["asc", "desc"]).default("asc"),
   q: z.string().max(200).default(""),
+  mine: z.enum(["offer", "inventory", "need"]).optional(),
   // Comma-separated facet picks; empty = all. Category is the type (Women, Men, Set Men, Tester Women, Cosmetics, Various…).
   category: z.string().max(400).default(""),
   gender: z.string().max(200).default(""),
@@ -256,7 +257,8 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
-    const viewRows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
+    // My lists narrow the item set BEFORE the view rule, so "Need to buy" items show in Purchase even with no cost yet.
+    const viewRows = searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView), q.data.q);
     const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
     let rows = filterFacets(viewRows, picks);
     if (q.data.sort) {
@@ -269,7 +271,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
-    let rows = filterFacets(searchRows(filterView(g.rows, q.data.view as GridView), q.data.q),
+    let rows = filterFacets(searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView), q.data.q),
       { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     if (q.data.sort && g.cols.some((c) => c.key === q.data.sort)) rows = sortRows(rows, q.data.sort, q.data.dir);
     const want = q.data.cols ? q.data.cols.split(",") : null;

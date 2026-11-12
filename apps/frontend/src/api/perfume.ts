@@ -5,7 +5,7 @@ import { apiRequest, resolveApiUrl } from "./client";
 export function getPerfumeAccess(): Promise<{ allowed: boolean }> {
   return apiRequest<{ allowed: boolean }>("/api/v1/perfume/access");
 }
-export type PerfumeVendorKind = "buy" | "sell" | "both";
+export type PerfumeVendorKind = "buy" | "sell" | "both" | "offer" | "inventory";
 export type PerfumeVendor = {
   id: string;
   name: string;
@@ -182,12 +182,13 @@ export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItem
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
   for (const k of ["category", "gender", "brand", "size", "vendor"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
   if (p.target_pct != null) s.set("target_pct", String(p.target_pct));
   if (p.earn_pct != null) s.set("earn_pct", String(p.earn_pct));
+  if (p.mine) s.set("mine", p.mine);
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);

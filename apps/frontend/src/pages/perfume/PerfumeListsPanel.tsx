@@ -20,7 +20,8 @@ import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both"]];
+const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both"],
+  ["offer", "My offer list — what I offer my clients"], ["inventory", "My inventory — my stock, quantities and last cost"]];
 
 export function PerfumeListsPanel() {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });

@@ -69,6 +69,9 @@ describe("PERFUME-DESK page", () => {
     // Owner 2026-11-12: a rule separates each vendor's columns from the next.
     const vendorHead = screen.getAllByRole("columnheader").find((th) => th.textContent?.includes("List price"));
     expect(vendorHead?.className).toContain("border-l-2");
+    // Grouped tables carry a <colgroup> so each column keeps its own fitted width (not an equal split).
+    const colgroup = screen.getByTestId("parity-table-colgroup");
+    expect(colgroup.querySelectorAll("col").length).toBe(screen.getAllByRole("columnheader").filter((th) => th.closest("tr")?.getAttribute("data-testid") !== "parity-table-column-groups").length);
     expect(screen.getByText(/Review \(3\)/)).toBeTruthy();
     const gridCall = vi.mocked(clientApi.apiRequest).mock.calls.find(([p]) => String(p).startsWith("/api/v1/perfume/grid"));
     expect(String(gridCall?.[0])).toContain("view=buy");
