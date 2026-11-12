@@ -1857,6 +1857,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   </div>
                 );
               }
+              const remit = factorToProfileForm(factor);
+              const phoneHref = remit.telephone.trim() ? `tel:${remit.telephone.replace(/[^\d+]/g, "")}` : null;
+              const emailHref = (addr: string) => {
+                const trimmed = addr.trim();
+                return trimmed ? `mailto:${trimmed}` : null;
+              };
+              const primaryMail = emailHref(remit.primaryContactEmail);
+              const generalMail = emailHref(remit.generalEmail);
+              const submissionMail = emailHref(remit.submissionEmail);
               return (
                 <div className="space-y-3" data-testid="factoring-messages-support-content">
                   <div className="bg-gray-50 p-3">
@@ -1867,6 +1876,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                     {factor.noa_remit_to_addr ? (
                       <div className="mt-1 text-xs text-gray-700">Address: {factor.noa_remit_to_addr}</div>
                     ) : null}
+                    {remit.address.trim() && remit.address.trim() !== (factor.noa_remit_to_addr ?? "").trim() ? (
+                      <div className="mt-1 text-xs text-gray-700">Profile address: {remit.address}</div>
+                    ) : null}
                     {factor.noa_remit_to_wire_ref ? (
                       <div className="mt-1 text-xs text-gray-700">Wire Ref: {factor.noa_remit_to_wire_ref}</div>
                     ) : null}
@@ -1874,12 +1886,72 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                       <div className="mt-1 text-xs text-gray-700">Notes: {factor.notes}</div>
                     ) : null}
                   </div>
-                  <div className="bg-gray-50 p-3">
-                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Send a Message</div>
-                    <p className="mt-1 text-xs text-gray-600">
-                      To contact {factor.name} about your factoring account, use the contact information above.{" "}
+                  <div className="bg-gray-50 p-3" data-testid="factoring-messages-support-contacts">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Contact channels</div>
+                    <dl className="mt-2 grid gap-2 text-xs text-gray-700 sm:grid-cols-2">
+                      <div>
+                        <dt className="font-medium text-gray-500">Telephone</dt>
+                        <dd>
+                          {phoneHref ? (
+                            <a className="font-semibold text-[#1F2A44] underline" href={phoneHref} data-testid="factoring-messages-tel">
+                              {remit.telephone}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500">Primary contact</dt>
+                        <dd>
+                          {remit.primaryContactName.trim() || "—"}
+                          {primaryMail ? (
+                            <>
+                              {" · "}
+                              <a className="font-semibold text-[#1F2A44] underline" href={primaryMail} data-testid="factoring-messages-primary-email">
+                                {remit.primaryContactEmail}
+                              </a>
+                            </>
+                          ) : null}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500">General email</dt>
+                        <dd>
+                          {generalMail ? (
+                            <a className="font-semibold text-[#1F2A44] underline" href={generalMail} data-testid="factoring-messages-general-email">
+                              {remit.generalEmail}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500">Submission email</dt>
+                        <dd>
+                          {submissionMail ? (
+                            <a className="font-semibold text-[#1F2A44] underline" href={submissionMail} data-testid="factoring-messages-submission-email">
+                              {remit.submissionEmail}
+                            </a>
+                          ) : (
+                            "—"
+                          )}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500">Accounting</dt>
+                        <dd>{remit.accountingContact.trim() || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-medium text-gray-500">Disputes</dt>
+                        <dd>{remit.disputesContact.trim() || "—"}</dd>
+                      </div>
+                    </dl>
+                    <p className="mt-3 text-xs text-gray-600">
+                      Opens your mail/phone app — there is no in-app chat to the factor.{" "}
                       <InfoPopover label="About messaging the factor">
-                        In-app messaging to the factor company is not available — this is a read-only contact reference.
+                        In-app messaging to the factor company is not available — use the live telephone and email links from the factor profile.
                       </InfoPopover>
                     </p>
                   </div>
