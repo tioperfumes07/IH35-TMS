@@ -21,8 +21,11 @@ function verify(source) {
   need("cashFlow", 'data-testid="cash-flow-predicted-load-link"', "daily prediction load identity must expose a canonical href");
   // LEAD 443.312: Cursor 443.250 (e99c04f617) made the prediction row drill to its LOAD when it has one, else to its
   // invoice — still the persisted id + human label through EntityLinkOrTombstone. Whitespace-tolerant, not a literal indent.
-  if (!/<EntityLinkOrTombstone\s+kind=\{item\.load_id \? "load" : "invoice"\}\s+id=\{item\.load_id \?\? item\.document_id\}\s+name=\{item\.load_number \?\? item\.document_label\}[\s\S]{0,200}?data-testid="cash-flow-predicted-load-link"/.test(source.cashFlow)
-      && !/<EntityLinkOrTombstone\s+kind="load"\s+id=\{item\.load_id\}\s+name=\{item\.load_number\}/.test(source.cashFlow)) {
+  // Literal kind="load" branch preferred (verify-canonical-load-nav); ternary kind= still accepted.
+  const ternaryDrill = /<EntityLinkOrTombstone\s+kind=\{item\.load_id \? "load" : "invoice"\}\s+id=\{item\.load_id \?\? item\.document_id\}\s+name=\{item\.load_number \?\? item\.document_label\}[\s\S]{0,200}?data-testid="cash-flow-predicted-load-link"/.test(source.cashFlow);
+  const splitDrill = /<EntityLinkOrTombstone\s+kind="load"\s+id=\{item\.load_id\}\s+name=\{item\.load_number(?: \?\? item\.document_label)?\}[\s\S]{0,200}?data-testid="cash-flow-predicted-load-link"/.test(source.cashFlow)
+    && /kind="invoice"\s+id=\{item\.document_id\}/.test(source.cashFlow);
+  if (!ternaryDrill && !splitDrill) {
     failures.push("daily prediction must use its persisted load id and human label through an unresolved-safe drill");
   }
   need("liabilities", 'data-testid="liability-roster-record-link"', "liability roster primary identity must drill through");
@@ -45,7 +48,7 @@ if (process.argv.includes("--self-test")) {
     ["currentLoad", 'kind="customer"', 'kind="vendor"'],
     ["currentLoad", 'data-testid="vp-current-load-link"', 'data-testid="broken-load-link"'],
     ["cashFlow", 'data-testid="cash-flow-predicted-load-link"', 'data-testid="broken-load-link"'],
-    ["cashFlow", '<EntityLinkOrTombstone\n                      kind="load"\n                      id={item.load_id}\n                      name={item.load_number}', '<EntityLinkOrTombstone\n                      kind="unit"\n                      id={item.load_id}\n                      name={null}'],
+    ["cashFlow", 'kind="load"\n              id={item.load_id}\n              name={item.load_number ?? item.document_label}', 'kind="unit"\n              id={item.load_id}\n              name={null}'],
     ["liabilities", 'data-testid="liability-roster-record-link"', 'data-testid="broken-liability-link"'],
     ["liabilities", 'id={String(row.id)}', 'id={undefined}'],
     ["matrix", '"id": "liabilities.list"', '"id": "liabilities.list.broken"'],

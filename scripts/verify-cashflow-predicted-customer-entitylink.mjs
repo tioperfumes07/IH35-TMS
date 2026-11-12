@@ -95,10 +95,19 @@ function audit({ svc = read(SVC), fe = read(FE), api = read(API), receipts = rea
   if (/entityLabel\(item\.customer_name,\s*null/.test(fe) && !/item\.customer_id \?/.test(fe)) {
     failures.push(`${FE}: customer still always rendered with null id`);
   }
-  if (!/kind=\{item\.load_id \? ["']load["'] : ["']invoice["']\}/.test(fe)) {
+  // Prefer literal kind="load" / kind="invoice" branches (verify-canonical-load-nav); ternary kind= also accepted.
+  const ternaryKind = /kind=\{item\.load_id \? ["']load["'] : ["']invoice["']\}/.test(fe);
+  const splitKind =
+    /kind=["']load["'][\s\S]{0,120}id=\{item\.load_id\}/.test(fe) &&
+    /kind=["']invoice["'][\s\S]{0,120}id=\{item\.document_id\}/.test(fe);
+  if (!ternaryKind && !splitKind) {
     failures.push(`${FE}: income doc EntityLink must use load vs invoice identity`);
   }
-  if (!/id=\{item\.load_id \?\? item\.document_id\}/.test(fe)) {
+  const ternaryId = /id=\{item\.load_id \?\? item\.document_id\}/.test(fe);
+  const splitId =
+    /kind=["']load["'][\s\S]{0,80}id=\{item\.load_id\}/.test(fe) &&
+    /kind=["']invoice["'][\s\S]{0,80}id=\{item\.document_id\}/.test(fe);
+  if (!ternaryId && !splitId) {
     failures.push(`${FE}: income doc EntityLink id must prefer load_id then document_id`);
   }
 
@@ -121,8 +130,9 @@ if (process.argv.includes("--selftest")) {
     ["svc", "customer_id: row.customer_id", "customer_id: null"],
     ["svc", "customer_id: inv.customer_id", "customer_id: null"],
     ["svc", "customer_id: l.customer_id", "customer_id: null"],
-    ["fe", 'kind={item.load_id ? "load" : "invoice"}', 'kind="load"'],
-    ["fe", "id={item.load_id ?? item.document_id}", "id={item.load_id}"],
+    // Split-branch form (literal kind="load"/"invoice") — plant by dropping the invoice branch id.
+    ["fe", 'kind="invoice"\n              id={item.document_id}', 'kind="invoice"\n              id={item.load_id}'],
+    ["fe", 'kind="load"\n              id={item.load_id}', 'kind="load"\n              id={item.document_id}'],
   ];
   for (const [key, from, to] of plants) {
     if (!good[key].includes(from)) throw Error(`inert plant: ${from}`);

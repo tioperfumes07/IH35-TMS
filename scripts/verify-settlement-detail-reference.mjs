@@ -69,6 +69,10 @@ function verify(files) {
   // 6 — every new section drills to its source via EntityLink.
   if (!/EntityLink/.test(loadsSection)) f.push("loads-section-no-entitylink");
 
+  // ROUND 8.12 reverse — identity strip Unit(s) + Tour legs must EntityLinkOrTombstone (not plain text).
+  if (!/data-testid="settlement-detail-unit"[\s\S]*?kind="unit"/.test(page)) f.push("identity-strip-unit-no-entitylink");
+  if (!/data-testid="settlement-detail-tour-legs"[\s\S]*?kind="load"/.test(page)) f.push("identity-strip-legs-no-entitylink");
+
   // BANK-F91182 leftover chrome: identity-strip captions must use locked text-xs, never text-[11px] / off-scale muted.
   if (page.includes("text-[11px]")) f.push("leftover-text-[11px]");
   if (page.includes("#8A92AB") || page.includes("#334155")) f.push("leftover-off-scale-muted");

@@ -37,6 +37,7 @@ import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBankingMatchBanner";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
@@ -729,7 +730,27 @@ export function SettlementStatementWorkflowPage() {
         <div>
           <div className="text-xs uppercase text-gray-500">Unit(s)</div>
           <div className="text-xs font-semibold" data-testid="settlement-detail-unit">
-            {readout?.tour?.unit_number ?? "—"}
+            {(() => {
+              // Tour-level readout has unit_number only; per-leg unit_id is the FK for EntityLink.
+              const unitIds = new Map<string, string | null>();
+              for (const leg of readout?.legs ?? []) {
+                if (leg.unit_number) unitIds.set(leg.unit_number, leg.unit_id);
+              }
+              if (readout?.tour?.unit_number && !unitIds.has(readout.tour.unit_number)) {
+                unitIds.set(readout.tour.unit_number, null);
+              }
+              if (unitIds.size === 0) return "—";
+              return [...unitIds.entries()].map(([unitNumber, unitId], i) => (
+                <span key={unitNumber}>
+                  {i > 0 ? ", " : null}
+                  {unitId ? (
+                    <EntityLinkOrTombstone kind="unit" id={unitId} name={unitNumber} noun="Unit" />
+                  ) : (
+                    unitNumber
+                  )}
+                </span>
+              ));
+            })()}
           </div>
         </div>
         <div style={{ flex: 1, minWidth: 220 }}>
@@ -738,7 +759,8 @@ export function SettlementStatementWorkflowPage() {
             {readout && readout.legs.length > 0 ? (
               readout.legs.map((leg) => (
                 <span key={leg.load_id} className={`ldt-pill ${leg.is_cancelled ? "" : leg.trip_type === "SB" ? "ok" : leg.trip_type === "NB" ? "warn" : ""}`} title={`${leg.load_number} · ${leg.lane}`}>
-                  {leg.trip_type ?? "?"} {leg.load_number}
+                  {leg.trip_type ?? "?"}{" "}
+                  <EntityLinkOrTombstone kind="load" id={leg.load_id} name={leg.load_number} noun="Load" />
                   {leg.pickup_date ? ` ${formatDateUS(leg.pickup_date)}` : ""}
                   {leg.delivery_date ? `→${formatDateUS(leg.delivery_date)}` : ""}
                 </span>
