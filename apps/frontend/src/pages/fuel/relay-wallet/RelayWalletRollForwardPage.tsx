@@ -67,28 +67,80 @@ export function RelayWalletRollForwardPage() {
   const days = q ? allDays.filter((d) => d.day.toLowerCase().includes(q) || formatDateUS(d.day).toLowerCase().includes(q)) : allDays;
   const totals = query.data?.totals;
 
-  const drill = (row: RelayRollForwardDay, bucket: Bucket, cents: number) =>
-    row[bucket].length > 0 ? (
-      <button
-        type="button"
-        className="text-[#1F4E9D] underline"
-        data-testid={`relay-wallet-open-${bucket}-${row.day}`}
-        onClick={() => setOpen({ day: row.day, bucket })}
-      >
-        {money(cents)}
-      </button>
-    ) : (
-      money(cents)
-    );
+  const drill = (row: RelayRollForwardDay, bucket: Bucket, cents: number) => {
+    const docs = row[bucket];
+    if (docs.length === 1) {
+      const kind = bucket === "deposits" ? "relay_topup" : "fuel_transaction";
+      return (
+        <MoneyCell
+          cents={cents}
+          drill={{ entity: { kind, id: docs[0].id } }}
+          data-testid={`relay-wallet-open-${bucket}-${row.day}`}
+        />
+      );
+    }
+    if (docs.length > 1) {
+      return (
+        <button
+          type="button"
+          className="text-[#1F4E9D] underline"
+          data-testid={`relay-wallet-open-${bucket}-${row.day}`}
+          onClick={() => setOpen({ day: row.day, bucket })}
+        >
+          {money(cents)}
+        </button>
+      );
+    }
+    return money(cents);
+  };
+
+  const feeOrBalance = (
+    row: RelayRollForwardDay,
+    cents: number,
+    source: Bucket | null,
+  ) => {
+    if (source && row[source].length === 1) {
+      const kind = source === "deposits" ? "relay_topup" : "fuel_transaction";
+      return <MoneyCell cents={cents} drill={{ entity: { kind, id: row[source][0].id } }} />;
+    }
+    if (source && row[source].length > 1) {
+      return (
+        <button
+          type="button"
+          className="text-[#1F4E9D] underline"
+          onClick={() => setOpen({ day: row.day, bucket: source })}
+        >
+          {money(cents)}
+        </button>
+      );
+    }
+    return money(cents);
+  };
 
   const columns: ParityColumn<RelayRollForwardDay>[] = [
     { key: "day", label: "Day", sortable: true, render: (row) => formatDateUS(row.day) },
     { key: "deposits_cents", label: "+ Deposits", sortable: true, render: (row) => drill(row, "deposits", row.deposits_cents) },
     { key: "fills_cents", label: "− Fuel fills", sortable: true, render: (row) => drill(row, "fills", row.fills_cents) },
-    { key: "fill_fees_cents", label: "− Fill fees", sortable: true, render: (row) => money(row.fill_fees_cents) },
+    {
+      key: "fill_fees_cents",
+      label: "− Fill fees",
+      sortable: true,
+      render: (row) => feeOrBalance(row, row.fill_fees_cents, "fills"),
+    },
     { key: "lumper_cents", label: "− Lumper", sortable: true, render: (row) => drill(row, "lumper", row.lumper_cents) },
-    { key: "balance_cents", label: "= Balance", sortable: true, render: (row) => money(row.balance_cents) },
-    { key: "deposit_fees_cents", label: "Deposit fees (card)", sortable: true, render: (row) => money(row.deposit_fees_cents) },
+    {
+      key: "balance_cents",
+      label: "= Balance",
+      sortable: true,
+      // Running wallet balance for the day — open deposits when present, else fills.
+      render: (row) => feeOrBalance(row, row.balance_cents, row.deposits.length ? "deposits" : row.fills.length ? "fills" : null),
+    },
+    {
+      key: "deposit_fees_cents",
+      label: "Deposit fees (card)",
+      sortable: true,
+      render: (row) => feeOrBalance(row, row.deposit_fees_cents, "deposits"),
+    },
   ];
 
   const openDay = open ? days.find((d) => d.day === open.day) : undefined;
