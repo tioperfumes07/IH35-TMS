@@ -47,6 +47,7 @@ const cents = z.number().int().min(0).max(100_000).nullable().optional();
 const vendorSchema = z.object({
   id: z.string().uuid().optional(),
   name: z.string().trim().min(1).max(120),
+  short_name: z.string().trim().max(12).nullable().optional(),
   kind: z.enum(["buy", "sell", "both", "offer", "inventory"]).optional(),
   cushion_lo_cents: cents, cushion_hi_cents: cents, freight_lo_cents: cents, freight_hi_cents: cents,
   earn_pct: z.number().min(0).max(99).nullable().optional(),

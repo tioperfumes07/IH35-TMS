@@ -10542,6 +10542,7 @@
       "kind",
       "name",
       "sells_by_box",
+      "short_name",
       "updated_at"
     ],
     "preserve.dvir_submissions": [

@@ -9,6 +9,8 @@ export type PerfumeVendorKind = "buy" | "sell" | "both" | "offer" | "inventory";
 export type PerfumeVendor = {
   id: string;
   name: string;
+  /** The owner's column-header abbreviation (PCA, MTZ, NAND, PPW …); the full name when empty. */
+  short_name: string | null;
   kind: PerfumeVendorKind;
   cushion_lo_cents: number | null;
   cushion_hi_cents: number | null;
