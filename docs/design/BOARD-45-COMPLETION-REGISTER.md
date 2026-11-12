@@ -77,5 +77,9 @@ Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · 
 | 11 | Driver Profile | FAIL pending Codex | Class L: one Legal / one audit / one Stops+miles; period dates formatted |
 | 18 | Factoring | FAIL pending Codex | Class R ret + Class L account-summary board-only (prior 8.15b) |
 | 19 | Fuel | FAIL pending Codex | Class L: seven columns + make/model identity (Fuel.dc.html) |
+| 3 | Banking | FAIL pending Codex | Class S #29064: Money In/Out cohort dates+types+categorized |
+| 6 | Cash Flow — Actual vs Projected | FAIL pending Codex | Class S #29064: KPI/View all → table source |
+| 10 | Vendors | FAIL pending Codex | Class L #29059 + Class S #29064 Pays-through counts drill |
+| 19 | Fuel | FAIL pending Codex | Class L seven cols + Class S #29064 period/unlinked/$→history |
 | 32 | Settlements Home | FAIL pending Codex | Class L: Closed panel never labels tour-closed rows Open |
 
