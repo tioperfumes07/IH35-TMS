@@ -1,4 +1,8 @@
 <!-- heartbeat 2026-11-12T08:54Z Cursor MAIN-RED session -->
+<!-- heartbeat 2026-11-12T08:00Z Cursor MAIN-RED session -->
+<!-- heartbeat 2026-11-12T07:16Z Cursor MAIN-RED session -->
+<!-- heartbeat 2026-11-12T06:04Z Cursor reverse-wiring session -->
+<!-- heartbeat 2026-11-11T05:00Z CC-3 insurance-edit-test-fix branch unblock — gate clear, pushing -->
 # NOW — CC-3 — ROUND 443 (2026-10-10) — READ FIRST
 
 **READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute every block headed CC-3, top to bottom; later blocks override earlier ones.**

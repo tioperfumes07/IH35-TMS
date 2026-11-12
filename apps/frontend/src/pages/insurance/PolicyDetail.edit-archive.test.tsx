@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { pickExactDate } from "../../test-utils/pickDate";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PolicyDetail } from "./PolicyDetail";
@@ -56,6 +56,30 @@ vi.mock("../../components/Toast", () => ({
     pushToast: vi.fn(),
   }),
 }));
+
+vi.mock("../../components/Combobox", async () => {
+  const actual = await vi.importActual<typeof import("../../components/Combobox")>(
+    "../../components/Combobox",
+  );
+  return {
+    ...actual,
+    SelectCombobox: ({
+      id,
+      value,
+      onChange,
+      children,
+    }: {
+      id?: string;
+      value?: string;
+      onChange?: (e: unknown) => void;
+      children?: ReactNode;
+    }) => (
+      <select id={id} value={value} onChange={onChange}>
+        {children}
+      </select>
+    ),
+  };
+});
 
 function wrap(ui: ReactElement) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });

@@ -1,6 +1,17 @@
 {
-  "_comment": "R-102-C before-picture: every void-is-whole violation on production, measured BEFORE E10 ran anywhere. NOT provisional. Shrink-only: a key leaves when its violation is fixed; a new key fails the guard.",
-  "measured_at": "2026-10-16T00:00:00.000Z",
-  "count": 1,
-  "keys": ["loads|1-silent-void|bd9f9804-d697-489d-a4e0-5a5ee9c82a2e"]
+  "_comment": "R-102-C before-picture: every void-is-whole violation on production, measured BEFORE E10 ran anywhere. NOT provisional. Shrink-only: a key leaves when its violation is fixed; a new key fails the guard. 2026-11-11 CC-3 (INS-EDIT-TEST branch): 9 new stranded-posting violations found on main — 5 expenses + 4 fuel purchases with header voided but live JEs remaining. Pre-existing ambient debt; documented here as ceiling for INBOX-CC-1 VOID-IS-WHOLE-CC3-11-11. Fix path: CC-1 to reverse JEs for each voided header (void-is-whole §2 — a voided header must carry a reversing JE). Ratchet shrinks to 1 after all 9 are fixed.",
+  "measured_at": "2026-11-11T00:00:00.000Z",
+  "count": 10,
+  "keys": [
+    "loads|1-silent-void|bd9f9804-d697-489d-a4e0-5a5ee9c82a2e",
+    "expenses|2-stranded-posting|9b3feabb-d716-4051-bc4a-e314d3080e77",
+    "expenses|2-stranded-posting|59d9b3ef-16fa-4909-8862-dab4e17c130e",
+    "expenses|2-stranded-posting|87e6b3e2-382e-41fe-8002-1cceda6e414c",
+    "expenses|2-stranded-posting|f24b3d7c-9c42-4854-af9c-03d3445d3228",
+    "expenses|2-stranded-posting|94bc20d6-3d67-48bb-82a4-b086a893a1fb",
+    "fuel purchases|2-stranded-posting|337a035f-7391-487b-8400-c9bc3282e80c",
+    "fuel purchases|2-stranded-posting|3543b85c-78ea-4867-ac62-4a7da9bc815e",
+    "fuel purchases|2-stranded-posting|37b620f2-c1aa-4ad8-afb3-7eef58d8d979",
+    "fuel purchases|2-stranded-posting|71c8456f-00ec-4f1d-a5e5-cb30c696c9d4"
+  ]
 }

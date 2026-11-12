@@ -124,7 +124,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14", "Kind")}
             <span className="flex gap-1">{KINDS.map(([k, l]) => (
               <button key={k} type="button" aria-pressed={edit.kind === k} onClick={() => setEdit({ ...edit, kind: k })}
-                className={`h-[40px] rounded-sm border px-2 ${edit.kind === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white"}`}>{l}</button>
+                className={`h-[40px] rounded-sm border px-2 ${edit.kind === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>{l}</button>
             ))}</span>
           </span>
           {cents("cushion_lo_cents", "Cushion from $")}{cents("cushion_hi_cents", "to $")}

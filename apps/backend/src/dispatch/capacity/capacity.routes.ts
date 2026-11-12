@@ -142,7 +142,7 @@ export async function registerCapacityRoutes(app: FastifyInstance) {
     const unitId = p.data.unitId;
     const result = await withCompanyScope(user.uuid, companyId, async (client) => {
       const unit: { rows: Array<{ id: string }> } = await client.query(
-        `SELECT id::text FROM mdata.units WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+        `SELECT id::text FROM mdata.units WHERE id = $1::uuid AND (owner_company_id = $2::uuid OR currently_leased_to_company_id = $2::uuid)`,
         [unitId, companyId]
       );
       if (!unit.rows[0]) return { status: 404 as const, body: { error: "unit_not_found" } };

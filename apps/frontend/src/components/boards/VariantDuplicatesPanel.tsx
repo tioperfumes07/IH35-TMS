@@ -113,7 +113,7 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
     <div className="pb-card" data-testid="variant-duplicates-panel">
       {q.data?.rule ? (
         <div className="pb-sub-sm" data-testid="variant-duplicates-rule">
-          {q.data.rule}{q.data.name_only_hidden ? ` ${q.data.name_only_hidden} name-only lead${q.data.name_only_hidden === 1 ? "" : "s"} not counted.` : ""}
+          {q.data.rule}{q.data.name_only_hidden ? <> <NumLink to="/customers?chip=duplicates">{q.data.name_only_hidden}</NumLink>{` name-only lead${q.data.name_only_hidden === 1 ? "" : "s"} not shown.`}</> : ""}
         </div>
       ) : null}
       <ParityTable<Pair>

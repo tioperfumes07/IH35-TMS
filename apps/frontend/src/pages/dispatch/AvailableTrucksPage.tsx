@@ -77,12 +77,14 @@ export function AvailableTrucksPage() {
   });
 
   const offerM = useMutation({
+    meta: { loads: true },
     mutationFn: (args: { unitId: string; enabled: boolean; reasonCode: string | null }) =>
       setUnitOffer(companyId, args.unitId, args.enabled, args.reasonCode),
     onSuccess: () => { setActionError(null); void qc.invalidateQueries({ queryKey: ["dispatch", "capacity", companyId] }); },
     onError: (e: unknown) => setActionError(e instanceof Error ? e.message : "Could not change the offer."),
   });
   const switchM = useMutation({
+    meta: { loads: true },
     mutationFn: (on: boolean) => updateCapacitySettings(companyId, { send_truck_offers: on }),
     onSuccess: () => { setActionError(null); void qc.invalidateQueries({ queryKey: ["dispatch", "capacity", companyId] }); },
     onError: (e: unknown) => setActionError(e instanceof Error ? e.message : "Could not change the switch."),

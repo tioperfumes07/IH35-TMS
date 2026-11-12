@@ -152,6 +152,9 @@ const EXEMPT_ROUTES = [
   // Codex cert: /api/v1/legal/contracts/void stamps legal.contract_instances status=voided only
   // (voidContractInstances — no amount, no JE). Signed instances are refused. Not a money void.
   { pattern: /\/legal\/contracts\/void$/, reason: "legal contract instance status void — no GL; voidContractInstances stamps voided_at only; signed_cannot_void" },
+  // CC-3 cert: /api/v1/perfume/lists/:id/void stamps perfume.price_lists voided_at only (voidList —
+  // no GL, no JE, perfume-schema isolated from carrier accounting). Not a money void.
+  { pattern: /\/perfume\/lists\/[^/]+\/void$/, reason: "perfume price list void — no GL; voidList stamps voided_at only; perfume schema isolated from carrier accounting" },
 ];
 
 function fail(msg) {
@@ -278,6 +281,8 @@ if (isEntryPoint && process.argv.includes("--selftest")) {
   if (matchExempt("/api/v1/accounting/invoices/123/void")) fail("selftest: invoice void should NOT be exempt");
   if (matchExempt("/api/v1/accounting/bills/123/void")) fail("selftest: bill void should NOT be exempt");
   if (!matchExempt("/api/v1/legal/contracts/void")) fail("selftest: legal contracts void should be exempt (non-money status stamp)");
+  if (!matchExempt("/api/v1/perfume/lists/abc-uuid/void")) fail("selftest: perfume list void should be exempt (non-money voided_at stamp)");
+  if (matchExempt("/api/v1/perfume/lists/abc-uuid/void-payment")) fail("selftest: hypothetical perfume money-ish path must NOT match list/void exempt");
   if (matchExempt("/api/v1/legal/contracts/123/void-payment")) fail("selftest: hypothetical money-ish legal path must NOT match contracts/void exempt");
 
   // WRAPPER: voidBill wrapper should be detected

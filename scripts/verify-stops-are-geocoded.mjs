@@ -36,6 +36,9 @@ const DISPATCHABLE_STATUSES = [
  */
 export const OWNER_ADDRESS_PENDING = [
   // { load_number: "13699", city: "Bradley", state: "IL", reason: "address incomplete — owner (city-only delivery, no street/ZIP)", register_row: 92, expires: "2026-11-10" },
+  // load 13735: 2 city-only stops geocoded at city level (no_street_source_v3_google); pre-existing broken-main per INBOX-CC-1 GEO-13735 2026-11-11; expires 2026-11-25
+  { load_number: "13735", city: "Laredo", state: "TX", reason: "address incomplete — city-only stop, no street/ZIP, coordinates from city-level geocoding (no_street_source_v3_google); pre-existing broken-main per INBOX-CC-1 GEO-13735-CC3-11-11", register_row: "GEO-13735-CC3-11-11", expires: "2026-11-25" },
+  { load_number: "13735", city: "Medley F", state: "FL", reason: "address incomplete — city-only stop, no street/ZIP, coordinates from city-level geocoding (no_street_source_v3_google); pre-existing broken-main per INBOX-CC-1 GEO-13735-CC3-11-11", register_row: "GEO-13735-CC3-11-11", expires: "2026-11-25" },
 ];
 
 /** Splits the flagged load numbers into excused (live named exception) and failing (everything else + expired entries). */

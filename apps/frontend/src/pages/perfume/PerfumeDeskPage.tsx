@@ -69,7 +69,7 @@ export default function PerfumeDeskPage() {
             type="button"
             onClick={() => setParams({ tab: k })}
             aria-current={tab === k ? "page" : undefined}
-            className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"}`}
+            className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
           >
             {label}{k === "review" && review.data?.total ? ` (${review.data.total.toLocaleString()})` : ""}
           </button>
@@ -157,7 +157,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         sortMode="external"
         onSortChange={(key, dir) => { setSort({ key, dir }); setPage(1); }}
         page={1}
-        pageSize={Math.max(1, query.data?.rows.length ?? PAGE)}
+        pageSize={Math.max(1, query.data?.rows?.length ?? PAGE)}
         hidePager
         suppressToolbarSearch
         stickyHeader
@@ -229,7 +229,7 @@ function RulesPanel() {
   const seg = <T extends string>(opts: Array<[T, string]>, value: T, set: (v: T) => void) => (
     <span className="inline-flex flex-wrap gap-1">{opts.map(([v, l]) => (
       <button key={v} type="button" onClick={() => set(v)} aria-pressed={value === v}
-        className={`h-[34px] rounded-sm border px-2 text-xs ${value === v ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white"}`}>{l}</button>
+        className={`h-[34px] rounded-sm border px-2 text-xs ${value === v ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>{l}</button>
     ))}</span>
   );
   return (
@@ -255,7 +255,7 @@ function RulesPanel() {
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>{tr("perfume.desk.31", "Cancel")}</Button>
       </div>
       <div className="text-xs text-gray-600">
-        {vendors.data?.vendors.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost (likely) = vendor price − low cushion + high freight; best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
+        {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost (likely) = vendor price − low cushion + high freight; best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
       </div>
     </section>
   );

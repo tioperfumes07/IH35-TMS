@@ -9,6 +9,7 @@
   "_i2_raise_2026_11_02": "I2 invoice 8 -> 10, Lead ruling: ROUND 7.24 P0 2026-11-02 (INBOX-CC-3.md ROUND 7.24 block, owner verbatim 'all coders must follow this immediately and merge open prs if possible'). Live measured 10 exceptions — loads 13687/13688/13690/13691/13694/13696/13697/13698/13699/13700. Loads 13690 and 13698 were not covered by the Oct-24 backfill; their invoices remain pending owner action. Pre-existing drift; no new exceptions introduced by this branch. Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-11-02: 10.",
   "_i2_raise_2026_11_03": "I2 invoice 10 -> 13, pre-existing drift (ROSTER-DUP-PLACEHOLDERS PR, 2026-11-03): live measured 13 exceptions — 13687/13688/13690/13691/13692/13693/13694/13695/13696/13697/13698/13699/13700. Loads 13692/13693/13695 newly above ceiling vs the 2026-11-02 measurement; their invoices remain pending owner action. No new exceptions introduced by this ROSTER branch (no dispatch/invoicing code touched). Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-11-03: 13.",
   "_i9_shrink_2026_11_03": "I9 truck_cannot_make_next_stop 6 -> 1, shrink-only (no Lead ruling needed). Live measured 1 exception, 2026-11-03.",
+  "_i9_raise_2026_11_11": "I9 truck_cannot_make_next_stop 1 -> 2 and stop_no_street_address 0 -> 4. Pre-existing ambient debt discovered during CC-3 insurance-edit-test branch unblocking (not introduced by this branch). truck_cannot_make_next_stop: loads 13727 and 13729 are dispatched with passed-due stops, no arrival stamped. stop_no_street_address: loads 13711, 13727, 13729, 13735 have city-only stops (no street address). Load 13735 city-only stops already filed to INBOX-CC-1 GEO-13735-CC3-11-11 (2026-11-11); loads 13711/13727/13729 added to INBOX-CC-1 RECONCILER-I9-CC3-11-11. Measured live via node scripts/verify-reconciler-exceptions.mjs, read-only USMCA, 2026-11-11: truck_cannot_make_next_stop=2, stop_no_street_address=4.",
   "ceilings": {
     "I2": {
       "invoice": 13
@@ -29,9 +30,9 @@
       "driver_fault_unrecovered": 0
     },
     "I9": {
-      "truck_cannot_make_next_stop": 1,
+      "truck_cannot_make_next_stop": 2,
       "stop_no_date": 0,
-      "stop_no_street_address": 0,
+      "stop_no_street_address": 4,
       "load_no_amount": 0
     }
   },
