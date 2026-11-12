@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~5:20 AM CT) — FactoringQueue Reserve/MTD MoneyCell
+- **THIS:** Dispatch Factoring Queue summary Reserve Balance + MTD Advances → MoneyCell → active factor vendor.
+- **Prior:** #28994 TripPairing Revenue MoneyCell + go26 33→32 merged.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~5:10 AM CT) — TripPairing Revenue MoneyCell + go26 bank
 - **THIS:** Trip Pairing Board Revenue → load MoneyCell (first tour leg). Banked go26 raw_table_outside_infra 33→32. #28993 MAIN-RED scorer mock merged (5712d7d46b).
 - **ROUND 8.13:** #28903 already CLOSED; M3 advances-recovered verify-step 20020 already on main.
