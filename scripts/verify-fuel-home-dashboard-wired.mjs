@@ -99,7 +99,9 @@ export function computeFailures(source) {
   if (
     !/to="\/fuel\/by-truck"/.test(source) &&
     !/viewAllHref="\/fuel\/by-truck"/.test(source) &&
-    !/navigate\(["']\/fuel\/by-truck["']\)/.test(source)
+    !/navigate\(["']\/fuel\/by-truck["']\)/.test(source) &&
+    // ROUND 8.17 (#29091): View all keeps the selected period — /fuel/by-truck?period=… is still the by-truck board.
+    !/navigate\(`\/fuel\/by-truck(?:\?[^`]*)?`\)/.test(source)
   ) {
     errors.push("FuelHome.tsx must link diesel View all to /fuel/by-truck");
   }
