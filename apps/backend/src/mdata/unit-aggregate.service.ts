@@ -7,6 +7,8 @@ import type { PgClient } from "../integrations/samsara/samsara.service.js";
 import { excludeInsuranceFixtureSql } from "../insurance/insurance-visibility.js";
 import { form2290DueDateForFirstUse } from "../compliance/form-2290-generator.js";
 import { generatePresignedDownloadUrl, isR2Configured } from "../storage/r2-client.js";
+import { computePmDueEngineForCompany } from "../maintenance/pm-due-engine.service.js";
+import { truckServicePmRows } from "../maintenance/fleet-health-pm.js";
 
 const UNIT_PHOTO_FILE_PREFIX = "file:";
 
@@ -574,33 +576,9 @@ export async function buildUnitAggregate(
   );
   const wo = woRes.rows[0] ?? { in_house: 0, external: 0, roadside: 0, total: 0 };
 
-  const pmRes = await client.query(
-    `
-      SELECT ps.label, ps.next_due_odometer::int, ps.last_service_odometer::int
-      FROM maintenance.pm_alerts pa
-      JOIN maintenance.pm_schedules ps ON ps.id = pa.pm_schedule_id
-                                      AND ps.operating_company_id = pa.operating_company_id
-      WHERE pa.unit_id = $1::uuid
-        AND pa.operating_company_id = $2::uuid
-        AND pa.state IN ('open', 'acknowledged')
-      ORDER BY ps.next_due_odometer ASC NULLS LAST
-      LIMIT 4
-    `,
-    [unitId, operatingCompanyId]
+  const next_pm_due = truckServicePmRows(
+    await computePmDueEngineForCompany(client, operatingCompanyId, undefined, unitId),
   );
-  const next_pm_due: Record<string, unknown> = {};
-  for (const row of pmRes.rows) {
-    const key = String(row.label ?? "general").toLowerCase().replace(/\s+/g, "_");
-    const milesRemaining =
-      row.next_due_odometer != null && samsara?.raw_payload_parsed?.odometer_miles != null
-        ? Number(row.next_due_odometer) - Number(samsara.raw_payload_parsed.odometer_miles)
-        : null;
-    next_pm_due[key] = {
-      miles_remaining: milesRemaining,
-      due_date_est: null,
-      last_done_odometer: row.last_service_odometer,
-    };
-  }
 
   const lastServiceRes = await client.query(
     `

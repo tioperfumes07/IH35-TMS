@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fleetHealthPmRows } from "../fleet-health-pm.js";
+import { fleetHealthPmRows, truckServicePmRows } from "../fleet-health-pm.js";
 import type { PmDueEngineRow } from "../pm-due-engine.service.js";
 
 const row: PmDueEngineRow = {
@@ -42,5 +42,47 @@ describe("Fleet Health consumes canonical PM evidence", () => {
   it("distinguishes missing baseline from missing current reading", () => {
     expect(fleetHealthPmRows([{ ...row, baseline_absent: true, miles_to_due: null, current_odometer: null,
       projected_due_date: null }])[0]).toMatchObject({ state: "none", pm_baseline_absent: true });
+  });
+});
+
+describe("truck map retains canonical schedule evidence", () => {
+  it("keeps more than four schedules and duplicate labels without alert dependence", () => {
+    const rows = Array.from({ length: 6 }, (_, n) => ({ ...row, pm_schedule_id: `s${n}`, label: "Oil PM" }));
+    const result = truckServicePmRows(rows, "2026-11-12");
+    expect(Object.keys(result)).toHaveLength(6);
+    expect(new Set(Object.values(result).map(r => r.pm_schedule_id)).size).toBe(6);
+    expect(result.oil_pm).toMatchObject({ label: "Oil PM", current_odometer: 126000,
+      miles_remaining: -1000, state: "overdue" });
+    expect(result).toEqual(truckServicePmRows([...rows].reverse(), "2026-11-12"));
+  });
+  it("unknown current/rate and unsupported day/hour clocks never become healthy", () => {
+    for (const interval_kind of ["days", "hours"]) {
+      expect(truckServicePmRows([{ ...row, interval_kind }]).pm).toMatchObject({ state: "unknown" });
+    }
+    expect(truckServicePmRows([{ ...row, current_odometer: null, miles_to_due: null,
+      projected_due_date: null, reason: "No current reading" }]).pm).toMatchObject({
+      state: "unknown", current_odometer: null, reason: "No current reading",
+    });
+    expect(truckServicePmRows([{ ...row, miles_to_due: 4000, projected_due_date: null,
+      reason: "No mileage rate" }]).pm.state).toBe("unknown");
+  });
+  it("keeps urgent clocks first for bounded existing UI consumers", () => {
+    const healthy = Array.from({ length: 6 }, (_, n) => ({ ...row, label: `Healthy ${n}`,
+      pm_schedule_id: `a${n}`, miles_to_due: 10000, projected_due_date: "2027-01-01" }));
+    const result = truckServicePmRows([...healthy, { ...row, pm_schedule_id: "z-overdue" }], "2026-11-12");
+    expect(Object.values(result)).toHaveLength(7);
+    expect(Object.values(result)[0].pm_schedule_id).toBe("z-overdue");
+  });
+  it("does not lose special object-property labels during JSON serialization", () => {
+    const result = truckServicePmRows([{ ...row, label: "__proto__" }, { ...row, pm_schedule_id: "s2", label: "constructor" }]);
+    expect(Object.keys(JSON.parse(JSON.stringify(result)))).toEqual(["__proto__", "constructor"]);
+  });
+  it("does not promote numeric labels above overdue schedules in JSON enumeration", () => {
+    const healthy = Array.from({ length: 6 }, (_, n) => ({ ...row, label: String(n + 1),
+      pm_schedule_id: `a${n}`, miles_to_due: 10000, projected_due_date: "2027-01-01" }));
+    const result = JSON.parse(JSON.stringify(truckServicePmRows([...healthy,
+      { ...row, label: "Oil", pm_schedule_id: "z-overdue" }], "2026-11-12")));
+    expect(Object.values(result)[0]).toMatchObject({ pm_schedule_id: "z-overdue" });
+    expect(Object.values(result)).toHaveLength(7);
   });
 });

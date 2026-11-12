@@ -123,7 +123,8 @@ export async function computeUnitMileageRate(
 export async function computePmDueEngineForCompany(
   client: DbClient,
   operatingCompanyId: string,
-  odometerSnapshot?: Awaited<ReturnType<typeof loadPmOdometers>>
+  odometerSnapshot?: Awaited<ReturnType<typeof loadPmOdometers>>,
+  onlyUnitId?: string,
 ): Promise<PmDueEngineRow[]> {
   const schedules = await client.query<{
     id: string;
@@ -154,9 +155,10 @@ export async function computePmDueEngineForCompany(
         AND s.is_active = true
         -- ROUND 303 T-37: a sample/test unit's schedule is never a real PM due date, no exceptions.
         AND COALESCE(u.is_sample_data, false) = false
+        ${onlyUnitId == null ? "" : "AND s.unit_id = $2::uuid"}
       ORDER BY u.unit_number, s.label
     `,
-    [operatingCompanyId]
+    onlyUnitId == null ? [operatingCompanyId] : [operatingCompanyId, onlyUnitId]
   );
 
   // E-15 (ORDERS 2026-10-01 row 2): the SAME odometer source as E-14 -- one loader, never a second.
