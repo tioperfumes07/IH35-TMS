@@ -191,6 +191,16 @@ function analyze(src) {
     }
   }
 
+  // ROUND 8.12 — Messages & Support must surface live tel/mailto from factor profile remittance.
+  if (
+    !home.includes('data-testid="factoring-messages-support-contacts"') ||
+    !home.includes('data-testid="factoring-messages-tel"') ||
+    !home.includes("mailto:") ||
+    !home.includes("factorToProfileForm(factor)")
+  ) {
+    errors.push(`${HOME}: Messages & Support must expose tel/mailto contacts from factorToProfileForm`);
+  }
+
   if (!home.includes("<ReserveTracker") || !/show\("reserve_tracker"\)\s*\?\s*<ReserveTracker/.test(home)) {
     errors.push(`${HOME}: reserve_tracker tab must mount <ReserveTracker /> (boards owned by panel)`);
   }
