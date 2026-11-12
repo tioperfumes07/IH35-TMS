@@ -2,6 +2,12 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 08Z — ROUND 8.18 D047 D074 D079 DONE-LIVE
+
+- **D047 (Factoring Home FactorReserveCard names):** Chrome 2026-11-12: no raw ALLCAPS customer names; formatCompanyName on main (32336a9d06 #29037); submit-invoice page proper-case names verified — OPEN → DONE-LIVE
+- **D074 (Dispatch Truck Line performance):** fc0a287e + f22b4d3ecc on main; positions 0.29ms, detention 0.14ms, units-without-load 25ms (prod EXPLAIN ANALYZE #28567) — PARTIAL → DONE-LIVE
+- **D079 (Customer P&L classification labels):** Chrome 2026-11-12: no raw high_margin/past_due tokens; formatCustomerProfitabilityFlagLabel on main (c0de12aca1 #27574) — OPEN → DONE-LIVE
+
 ## 2026-11-13 06Z — ROUND 8.18 DESIGN ROWS D018 D028 D032 D049 D050 D051 D053 D055 D056 D057 D058 DONE-LIVE
 
 - **D018 (Fuel/Assign card):** Chrome 2026-11-12: 6 inputs 40px ✓; fixed e5c9dbf8c4 #27697 — OPEN → DONE-LIVE
