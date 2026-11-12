@@ -1,5 +1,13 @@
 # ROUND 8.5 — independent board parity verification
 
+## 11-12 resumed authenticated in-app checks — bounded results only
+
+USMCA session is available in the in-app browser. Banking Home income drill still opens `transactions?types=money_in` with blank dates, All transaction types, For review and outgoing rows (FAIL); explicit Back returns Banking Home (bounded PASS). Cursor notified #28998 comment6823668287. These observations preceded the asset reload; do not infer current-tip deployment parity.
+
+After reloading the available Maintenance assets, Fleet Health Line has all four controls including Moving. Moving narrows 39 rows to 1 (bounded display/filter PASS; not an independent speed-source tie-out). Its PM schedule drill opens the real schedule page; Back returns Maintenance but resets Moving to All (reverse cohort preservation FAIL). Full Maintenance certification remains OPEN. No create/save/generate/match action submitted.
+
+Shipping: #29009 merged at ab78c4f7607c. The synced Settings repair still cannot ship: frontend tsc exits2 because main's PerfumeListsPanel imports MoneyInput at both lines3 and21. Our branch does not touch that file. Lead notified #29009 comment6823678759; hooks remain enabled. Settings pending-read overwrite prevention remains locally tested, not deployed.
+
 ## Safety Driver Files — calendar identity and reverse context FAIL (11-12)
 
 Board24 matrix has the approved seven columns and the CDL cohort narrows9 to5 rows (bounded PASS). A calendar expiry appears one day earlier than the same person's profile; DriverQualificationMatrix uses timestamp-oriented formatDateUS instead of the calendar-date formatter. CDL status opens generic Driver Profile rather than the Safety-file context, and Back goes to Drivers instead of restoring the Safety cohort. Required: shared calendar-only formatting tests (bare date and midnight-Z across CST/CDT), source-bound document drill and reverse origin/filter preservation. Cursor notified #28764 comment6821480320. No stored dates, driver records or documents changed; private screenshot not committed. This is not full-board acceptance.
