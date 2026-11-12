@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, confirmRow, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
   reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -219,6 +219,11 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     return withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+  });
+
+  app.post("/api/v1/perfume/review/rematch", RL_IMPORT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => rematchReview(c));
   });
 
   app.post("/api/v1/perfume/rows/bulk", RL_WRITE, async (req, reply) => {
