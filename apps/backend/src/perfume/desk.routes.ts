@@ -156,7 +156,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       return await extractPriceLines(p.data.images);
     } catch (e) {
       if (e instanceof PerfumeExtractInputError) return reply.code(400).send({ error: "extract_input", message: e.message });
-      if (e instanceof AnthropicNotConfiguredError) return reply.code(503).send({ error: "reader_not_configured", message: "The picture reader is not configured on the server (ANTHROPIC_API_KEY)." });
+      if (e instanceof AnthropicNotConfiguredError) return reply.code(503).send({ error: "reader_not_configured", message: "The picture reader is not configured on the server (no Claude API key on the backend)." });
       if (e instanceof AnthropicRateLimitError) return reply.code(429).send({ error: "reader_busy", message: "The picture reader is busy — wait a minute and press Read again." });
       if (e instanceof AnthropicTimeoutError) return reply.code(504).send({ error: "reader_timeout", message: "The picture reader took too long — try fewer pictures at a time." });
       req.log.error({ err: e }, "perfume extract failed");
