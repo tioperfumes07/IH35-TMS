@@ -1,5 +1,5 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type Props = {
   label?: string;
@@ -10,12 +10,14 @@ type Props = {
 export function BackButton({ label = "Back", fallbackTo }: Props) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
 
   return (
     <button
       type="button"
       onClick={() => {
-        navigate(inModuleBackHref(pathname, fallbackTo));
+        // ROUND 8.17 — `ret` restores origin board state; else in-module structural parent.
+        navigate(resolveBackHref({ searchParams, pathname, fallback: fallbackTo }));
       }}
       className="inline-flex items-center gap-1 text-xs font-semibold text-[#1F2A44] hover:text-[#0F1219] hover:underline"
       aria-label={label}

@@ -98,8 +98,8 @@ const headerFiles = [
 ];
 for (const f of headerFiles) {
   const src = strip(read(f));
-  if (!/inModuleBackHref/.test(src)) {
-    fails.push(`${f}: must use inModuleBackHref so Up cannot leave the module (ROUND 435-CUR)`);
+  if (!/inModuleBackHref|resolveBackHref/.test(src)) {
+    fails.push(`${f}: must use resolveBackHref or inModuleBackHref so Up stays structural (ROUND 8.17)`);
   }
 }
 

@@ -1,5 +1,6 @@
 import type { MouseEvent, ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 /**
  * EntityLink — the shared drill-through primitive for total-connectivity (LAW OF THE LAND).
@@ -767,6 +768,7 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
  */
 export function EntityLink({ kind, id, label, className, title, onClick, "data-testid": testId }: EntityLinkProps) {
   const display = label ?? id ?? "—";
+  const { pathname, search } = useLocation();
 
   if (!id) {
     return (
@@ -785,9 +787,13 @@ export function EntityLink({ kind, id, label, className, title, onClick, "data-t
     );
   }
 
+  // ROUND 8.17 class R — every EntityLink carries the originating board URL as `ret`
+  // so detail Back restores tab/filters/period/cohort (including cross-module).
+  const to = withReturnContext(route, currentOriginHref(pathname, search));
+
   return (
     <Link
-      to={route}
+      to={to}
       className={className ?? DEFAULT_LINK_CLASSNAME}
       title={title}
       data-testid={testId}

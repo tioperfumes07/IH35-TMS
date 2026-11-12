@@ -63,9 +63,9 @@ try {
 
   const layoutPageHeader = read("apps/frontend/src/components/layout/PageHeader.tsx");
   const formPageHeader = read("apps/frontend/src/components/forms/shared/PageHeader.tsx");
-  // ROUND 435-CUR — Up is inModuleBackHref (clamps structural parent to this module), never navigate(-1).
-  assertIncludes(layoutPageHeader, "inModuleBackHref", "Layout PageHeader structural Up missing");
-  assertIncludes(formPageHeader, "inModuleBackHref", "Form PageHeader structural Up missing");
+  // ROUND 8.17 class R — Up is resolveBackHref (ret origin, else inModuleBackHref), never navigate(-1).
+  assertIncludes(layoutPageHeader, "resolveBackHref", "Layout PageHeader structural Up missing");
+  assertIncludes(formPageHeader, "resolveBackHref", "Form PageHeader structural Up missing");
   assertIncludes(formPageHeader, "string | BreadcrumbItem", "Form PageHeader must accept string[] breadcrumbs from leaf pages");
   const app = read("apps/frontend/src/App.tsx");
   assertIncludes(app, "<ScrollToTop", "App must mount CC-2 ScrollToTop (do not duplicate RouteScrollReset)");

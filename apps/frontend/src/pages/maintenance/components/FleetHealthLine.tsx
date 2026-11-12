@@ -1,13 +1,14 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per UNIT with its current health (odometer / location / PM interval / miles left), a current-state view; each unit's last-reported telemetry time is printed under its location.
-import { useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { readFleetHealth, type FleetHealthRow } from "./fleet-health-source";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { V3Panel } from "../../../components/v3/V3Panel";
 
 const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "In shop", none: "No PM clock" };
@@ -34,12 +35,28 @@ export function FleetTruck({ row, vertical = false }: { row: Pick<FleetHealthRow
 
 export function FleetHealthLine({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
-  const [filter, setFilter] = useState("all");
+  const { pathname, search } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.17 class R — cohort filter lives in the URL (`fh`), restored on PM Back via `ret`.
+  const filter = searchParams.get("fh") || "all";
+  const setFilter = (next: string) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (!next || next === "all") p.delete("fh");
+        else p.set("fh", next);
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const origin = useMemo(() => currentOriginHref(pathname, search), [pathname, search]);
+  const pmHref = (href: string) => withReturnContext(href, origin);
   const health = useQuery({ queryKey: ["maintenance", "fleet-health", companyId], queryFn: () => readFleetHealth(companyId), enabled: Boolean(companyId), staleTime: 60_000, refetchInterval: 180_000 });
   // LEAD 443.281 row 108: say WHAT is missing — a clock with no last-PM odometer (the truck's reading is there) vs no odometer.
   const statusCell = (row: FleetHealthRow) => {
     if (row.pm_baseline_absent && row.pm_schedule_id && row.state !== "shop") {
-      return <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`} data-testid="fleet-health-no-last-pm">{t("maintenance.fleetHealth.noLastPm")}</Link>;
+      return <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} data-testid="fleet-health-no-last-pm">{t("maintenance.fleetHealth.noLastPm")}</Link>;
     }
     if (row.odometer_mi == null && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.odometerUnavailable");
     if ((row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.pmReadingUnavailable");
@@ -50,9 +67,9 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Number(row.odometer_mi).toLocaleString("en-US")} mi`} /> },
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM", render: (row) => row.pm_schedule_id
-      ? <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <span className={`relative block ${tones[row.state]}`}><progress className="h-2 w-full" style={{ accentColor: "currentColor" }} max={row.pm_interval} value={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} /><span aria-hidden="true" className="absolute left-[80%] top-0 h-3 border-l border-slate-400" /></span> : "PM reading unavailable"}</Link>
-      : <Link to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`}>Start PM clock →</Link> },
-    { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
+      ? <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <span className={`relative block ${tones[row.state]}`}><progress className="h-2 w-full" style={{ accentColor: "currentColor" }} max={row.pm_interval} value={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} /><span aria-hidden="true" className="absolute left-[80%] top-0 h-3 border-l border-slate-400" /></span> : "PM reading unavailable"}</Link>
+      : <Link to={pmHref(`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`)}>Start PM clock →</Link> },
+    { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
     { key: "state", label: "Status", sortable: true, sortValue: (row) => row.state, render: (row) => statusCell(row) },
   ];
   const rows = (health.data?.units ?? []).filter((row) => {

@@ -60,8 +60,8 @@ function auditAccountingWrapper(source) {
 function auditReg007(file, source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/inModuleBackHref/.test(stripped)) {
-    failures.push(`${file}: must use inModuleBackHref for Up (ROUND 435-CUR)`);
+  if (!/inModuleBackHref|resolveBackHref/.test(stripped)) {
+    failures.push(`${file}: must use resolveBackHref or inModuleBackHref for Up (ROUND 8.17)`);
   }
   if (/hasInAppHistory|onClick=\{\(\)\s*=>\s*navigate\(-1\)\}|navigate\(\s*-1\s*\)/.test(stripped)) {
     failures.push(`${file}: must not use history-based back (ROUND 367.9)`);
@@ -136,9 +136,9 @@ if (process.argv.includes("--selftest")) {
   const reg007Mutations = [];
   for (const f of REG007_FILES) {
     reg007Mutations.push({
-      name: `strip inModuleBackHref from ${f}`,
+      name: `strip resolveBackHref/inModuleBackHref from ${f}`,
       file: f,
-      mutate: (t) => t.replace(/inModuleBackHref/g, "MISSING"),
+      mutate: (t) => t.replace(/resolveBackHref|inModuleBackHref/g, "MISSING"),
     });
     reg007Mutations.push({
       name: `reintroduce bare navigate(-1) in ${f}`,

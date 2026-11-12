@@ -24,6 +24,7 @@ import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/Ho
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { maintenancePartsStockQueryKey } from "../inventory/partsStockQueryKeys";
 import { ArrivingSoonPage } from "./ArrivingSoonPage";
 import { DriverReportsQueuePage } from "./DriverReportsQueuePage";
@@ -522,10 +523,10 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
           data-maintenance-tab="rm_status_board"
         >
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="maintenance-board-kpis">
-            <V3KpiTile label="PM due soon" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.pm_due ?? "—")} onClick={() => navigate("/maintenance/pm-schedule")} />
-            <V3KpiTile label="Road service" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.road_service ?? "—")} onClick={() => navigate("/maintenance/road-service")} />
-            <V3KpiTile label="Parts low-stock" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.parts_low_stock ?? "—")} onClick={() => navigate("/maintenance/parts-inventory")} />
-            <V3KpiTile label="MTD cost" value={kpisQuery.isError || kpisQuery.isPending || kpis.mtd_repair_cost == null ? "Unavailable" : Number(kpis.mtd_repair_cost).toLocaleString("en-US", { style: "currency", currency: "USD" })} onClick={() => navigate("/maintenance/work-orders")} />
+            <V3KpiTile label="PM due soon" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.pm_due ?? "—")} onClick={() => navigate(withReturnContext("/maintenance/pm-schedule", currentOriginHref(location.pathname, location.search)))} />
+            <V3KpiTile label="Road service" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.road_service ?? "—")} onClick={() => navigate(withReturnContext("/maintenance/road-service", currentOriginHref(location.pathname, location.search)))} />
+            <V3KpiTile label="Parts low-stock" value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.parts_low_stock ?? "—")} onClick={() => navigate(withReturnContext("/maintenance/parts-inventory", currentOriginHref(location.pathname, location.search)))} />
+            <V3KpiTile label="MTD cost" value={kpisQuery.isError || kpisQuery.isPending || kpis.mtd_repair_cost == null ? "Unavailable" : Number(kpis.mtd_repair_cost).toLocaleString("en-US", { style: "currency", currency: "USD" })} onClick={() => navigate(withReturnContext("/maintenance/work-orders", currentOriginHref(location.pathname, location.search)))} />
           </div>
           <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
           <div className="min-w-0">

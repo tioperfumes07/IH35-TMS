@@ -62,3 +62,14 @@ Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 comp
 **Cursor wave 11-11 ~11PM–12AM CT:** #28895 Settlement Document Designs route (+ #28898 subnav ratchet) · #28896 Factoring Aging Invoice/Purchase/Fund Date toggle · #28897–#28902 go26 Cash Advances / LoadDetail / Statement Earnings+KV panels (raw_table files 41→36). LIVE still Codex for all 45.
 **Cursor wave 11-12 ~1–4AM CT:** #28905–#28909 CF go26 →33 · #28911–#28930 Finalize Save Draft / Fuel Settlement / Factoring Messages / Insurance Payment Schedule + Fleet Covered / CF3 customer / Legal Alerts + Policies/Templates / Escrow Register / Available Trucks Driver EntityLinks. LIVE still Codex for all 45.
 **OPEN:** LIVE Codex proof for all 45 (screenshots + wiring tables). Source CODE = 45/45 after R5/R6. SettlementDocumentDesigns mounted under Settlements (extra board specimen; not one of the numbered 45).
+
+## ROUND 8.17 — Cursor class R/L/S lines
+Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time`
+(A board Cursor fixed is CERTIFIED only after Codex checks it live.)
+
+| # | Board | Status | Notes |
+|---|---|---|---|
+| 7 | Cash Flow — Rolling Ledger | FAIL pending Codex | Class R: EntityLink+PageHeader `ret` restores CF origin (await deploy recheck) |
+| 22/43 | Maintenance / Fleet Health → PM | FAIL pending Codex | Class R: `fh` cohort in URL + PM links wrap `ret` |
+| * | All EntityLink detail Back | FAIL pending Codex | Shared `returnContext` / PageHeader / BackButton |
+
