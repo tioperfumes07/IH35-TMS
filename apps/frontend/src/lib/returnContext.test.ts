@@ -64,4 +64,41 @@ describe("returnContext (ROUND 8.17 class R)", () => {
     );
     expect(mergeUrlBoardState("?group=driver", { status: "unpaid", group: null })).toBe("?status=unpaid");
   });
+
+  it("Fuel By-truck period+q → History → Back restores origin cohort", () => {
+    const origin = currentOriginHref("/fuel/by-truck", "?period=oct&q=unit-12");
+    const history = withReturnContext(
+      "/fuel/history?unit_id=u1&from=2026-10-01&to=2026-10-31",
+      origin,
+    );
+    const params = new URLSearchParams(history.slice(history.indexOf("?") + 1));
+    expect(params.get("unit_id")).toBe("u1");
+    expect(
+      resolveBackHref({
+        searchParams: params,
+        pathname: "/fuel/history",
+        fallback: "/fuel",
+      }),
+    ).toBe("/fuel/by-truck?period=oct&q=unit-12");
+  });
+
+  it("Fuel History transaction_id drill keeps History filters in ret for Back", () => {
+    const historyOrigin = currentOriginHref(
+      "/fuel/history",
+      "?unit_id=u1&from=2026-10-01&to=2026-10-31&q=diesel",
+    );
+    const deep = withReturnContext(
+      "/fuel/history?transaction_id=tx-9&unit_id=u1&from=2026-10-01&to=2026-10-31&q=diesel",
+      historyOrigin,
+    );
+    const params = new URLSearchParams(deep.slice(deep.indexOf("?") + 1));
+    expect(params.get("transaction_id")).toBe("tx-9");
+    expect(
+      resolveBackHref({
+        searchParams: params,
+        pathname: "/fuel/history",
+        fallback: "/fuel",
+      }),
+    ).toBe("/fuel/history?unit_id=u1&from=2026-10-01&to=2026-10-31&q=diesel");
+  });
 });

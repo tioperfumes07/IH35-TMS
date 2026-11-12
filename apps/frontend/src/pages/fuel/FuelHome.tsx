@@ -1,6 +1,6 @@
 // TABLE_DATE_OMIT: this table has no date column by design — Diesel by truck is one row per TRUCK aggregated over the period chosen in the board's Oct / Sep / YTD period control — the period is the filter, not a column.
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -18,6 +18,7 @@ import { formatMoneyCents } from "../../lib/formatMoney";
 import { formatQuantityTable, formatUsdRateTable } from "../../lib/money";
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
 import { entityLabel } from "../../lib/entity-label";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
 import { V3Segmented } from "../../components/v3/V3Segmented";
@@ -127,9 +128,24 @@ type DieselBoardRow = DieselByTruckRow & { id: string };
  */
 export function FuelHomePage() {
   const navigate = useNavigate();
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [search, setSearch] = useState("");
+  // ROUND 8.17 — typed search in `?q=` so History Back/`ret` restores Home cohort.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get("q") ?? "";
+  const setSearch = (value: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value.trim()) next.set("q", value);
+        else next.delete("q");
+        return next;
+      },
+      { replace: true },
+    );
+  };
   const [period, setPeriod] = useState<FuelBoardPeriodId>("oct");
   const range = fuelBoardPeriodRange(period);
 
@@ -242,11 +258,12 @@ export function FuelHomePage() {
         className: QBO_MONEY_CELL_CLASS,
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.spend_cents,
-        // ROUND 8.17 class S — $ opens the period's fuel transactions for this unit (not the unit profile).
+        // ROUND 8.17 class S — $ opens period fuel txs for this unit; `ret` restores Home.
         render: (r) => {
-          const href = r.unit_id
+          const target = r.unit_id
             ? `/fuel/history?unit_id=${encodeURIComponent(r.unit_id)}&from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`
             : `/fuel/history?from=${encodeURIComponent(range.from)}&to=${encodeURIComponent(range.to)}`;
+          const href = withReturnContext(target, originHref);
           return (
             <a href={href} className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-amount-drill">
               {formatMoneyCents(r.spend_cents)}
@@ -292,7 +309,7 @@ export function FuelHomePage() {
         render: (r) => formatQuantityTable(r.load_count, 0),
       },
     ],
-    [dieselRows, makeModelByUnitId, range.from, range.to],
+    [dieselRows, makeModelByUnitId, originHref, range.from, range.to],
   );
 
   if (!companyId) {
