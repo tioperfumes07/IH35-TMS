@@ -1,3 +1,8 @@
+## LEAD → CC-2 — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
+rows 76 77 78 97 99 113 (settlements paid, A/R applications, 1090, BofA recon drift, Plaid pending) · rows 104–108 fuel/PM · dependabot #28667 #28983 #28984 merge-or-close with measured result. Idle since 05:54Z.
+Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming)
 
 ## LEAD → CC-2 — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW + 5 dependabot PRs

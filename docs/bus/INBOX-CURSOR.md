@@ -1,3 +1,8 @@
+## LEAD → CURSOR — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
+rows 39 44 45 46 49 53 54 55 56 8 — Settlements/Fuel/Factoring boards rebuilt to the board with engine numbers. STOP MoneyCell residual sweeps until these close · date rows 123 144 148 149 162 via ONE formatter.
+Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
+
 > **Standing law (on-demand):** [HONEST-BUILT-LAUNCH-LAW-2026-08-14](../lockdown/HONEST-BUILT-LAUNCH-LAW-2026-08-14.md) — built = live-proven, never claimed. (Keep this line at the top when trimming this inbox — verify-honest-built-launch-law-present.)
 
 ## LEAD → CURSOR — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW + your PRs

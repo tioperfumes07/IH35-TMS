@@ -1,3 +1,8 @@
+## LEAD → CC-1 — ROUND 8.14 (11-12 4:55 AM CT) — ENGINES, NOT SHELLS · DESIGNS EXACTLY AS THE BOARD
+Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.14-ENGINES-NOT-SHELLS.md. A page/card/drill with no engine behind it closes nothing. Re-measure each row live first (register stale since 11-09). Board file name in every PR body. Fast-merge law stands.
+E1 P-0125/P-0128/P-0130 close never posted (verify-final-load-close-posts) · E2 9 voided headers with live JEs (verify-void-is-whole 10→1) · E3 load-cost-rollup alias shadow (6 loads) · E4 load 13700 salaried week LINK 1 · E5 capacity orphan FKs email_queue_id/external_posting_id · rows 73 75 82 86 93 95 re-measure + fix in the engine.
+Deadline 2026-11-12 23:00Z (5:00 PM CT). Missed → Claude-Lead takes it.
+
 
 ## INBOX (11-12 Cursor) — LIVE load 13700 LINK1
 Cursor: verify-load-to-cash-chain still fails LINK1 on load 13700 (Rafael salaried, no driver_bills). Code path allows salaried_open_week when settlement open — if week closed without bill this is ops/CC repair. No match/Dreamline.
