@@ -1,4 +1,4 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -6,6 +6,7 @@ import { useAuth } from "../../auth/useAuth";
 import { Button } from "../Button";
 import { useToast } from "../Toast";
 import { switchIdentityCompany } from "../../api/identity";
+import { getPerfumeAccess } from "../../api/perfume";
 import type { MyCompany } from "../../api/org";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { selectedCompanySwitcherLabel } from "../../lib/selected-company-label";
@@ -30,7 +31,10 @@ export function CarrierSwitcher() {
   const navigate = useNavigate();
   // PERFUME-DESK: the Owner also sees "Other businesses → TIO Perfumes". It is NOT a carrier in
   // org.companies (no carrier engine, cron or seeder ever runs against it); it opens the isolated price desk.
-  const isOwner = String(auth.user?.role ?? "") === "Owner";
+  // Only the login listed in perfume.desk_users sees it — not every Owner-role user.
+  const isOwnerRole = String(auth.user?.role ?? "") === "Owner";
+  const perfumeAccess = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, enabled: isOwnerRole, staleTime: 300_000, retry: false });
+  const isOwner = isOwnerRole && perfumeAccess.data?.allowed === true;
   const showSwitcher = activeCompanies.length > 1 || isOwner;
   const selectedLabel = selectedCompanySwitcherLabel(selectedCompany);
 

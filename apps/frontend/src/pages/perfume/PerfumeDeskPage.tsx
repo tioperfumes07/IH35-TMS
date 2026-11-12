@@ -10,7 +10,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  downloadPerfumeExcel, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
+  downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
   type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
 } from "../../api/perfume";
 import logoUrl from "./tio-perfumes-logo.png";
@@ -40,7 +40,18 @@ function TioLogo() {
 export default function PerfumeDeskPage() {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.find(([k]) => k === params.get("tab"))?.[0] ?? "buy") as Tab;
-  const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1) });
+  const access = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, staleTime: 300_000 });
+  const allowed = access.data?.allowed === true;
+  const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1), enabled: allowed });
+  if (!allowed) {
+    return (
+      <div className="p-3" data-testid="perfume-desk-locked">
+        <div className="text-sm text-gray-700">
+          {access.isLoading ? "Checking access…" : access.isError ? `Could not check access: ${(access.error as Error).message}` : "The TIO Perfumes price desk is not open for this login."}
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-3 p-3" data-testid="perfume-desk">
       <div className="flex flex-wrap items-center gap-3">

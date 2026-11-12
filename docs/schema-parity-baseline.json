@@ -10433,6 +10433,11 @@
       "brand",
       "created_at"
     ],
+    "perfume.desk_users": [
+      "added_at",
+      "note",
+      "user_id"
+    ],
     "perfume.item_aliases": [
       "confirmed_at",
       "confirmed_by",

@@ -11,13 +11,25 @@ import {
   reviewQueue, searchItems, searchRows, setInternalCode, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
-function ownerOnly(req: FastifyRequest, reply: FastifyReply): string | null {
+/** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
+export async function deskAllowed(uid: string): Promise<boolean> {
+  return withCurrentUser(uid, async (c) => {
+    const r = await c.query<{ ok: boolean }>("SELECT perfume.is_owner() AS ok");
+    return r.rows[0]?.ok === true;
+  });
+}
+async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
   if (String(req.user?.role ?? "") !== "Owner") {
     void reply.code(403).send({ error: "owner_only" });
     return null;
   }
-  return req.user!.uuid;
+  const uid = req.user!.uuid;
+  if (!(await deskAllowed(uid))) {
+    void reply.code(403).send({ error: "perfume_desk_not_granted" });
+    return null;
+  }
+  return uid;
 }
 function bad(reply: FastifyReply, e: z.ZodError) {
   return reply.code(400).send({ error: "validation_error", details: e.flatten() });
@@ -82,37 +94,43 @@ const gridQuery = z.object({
 });
 
 export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
+  // Lets the company selector show the TIO Perfumes entry only to the desk user. Never 403s an Owner.
+  app.get("/api/v1/perfume/access", async (req, reply) => {
+    if (!requireAuth(req, reply)) return;
+    if (String(req.user?.role ?? "") !== "Owner") return { allowed: false };
+    return { allowed: await deskAllowed(req.user!.uuid) };
+  });
   app.get("/api/v1/perfume/rules", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     return withCurrentUser(uid, (c) => getRules(c));
   });
   app.put("/api/v1/perfume/rules", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = rulesSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     return withCurrentUser(uid, (c) => putRules(c, uid, p.data));
   });
 
   app.get("/api/v1/perfume/vendors", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     return { vendors: await withCurrentUser(uid, (c) => listVendors(c)) };
   });
   app.post("/api/v1/perfume/vendors", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = vendorSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     return withCurrentUser(uid, (c) => upsertVendor(c, uid, p.data));
   });
 
   app.get("/api/v1/perfume/lists", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     return { lists: await withCurrentUser(uid, (c) => listLists(c)) };
   });
   app.post("/api/v1/perfume/lists/preview", { bodyLimit: 25 * 1024 * 1024 }, async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = importSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     return withCurrentUser(uid, (c) => previewImport(c, p.data));
   });
   app.post("/api/v1/perfume/lists", { bodyLimit: 25 * 1024 * 1024 }, async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = importSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     try {
       return await withCurrentUser(uid, (c) => importList(c, uid, p.data));
@@ -122,7 +140,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     }
   });
   app.post("/api/v1/perfume/lists/:id/void", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ reason: z.string().trim().min(3).max(500) }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason));
@@ -130,13 +148,13 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/perfume/review", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ list_id: z.string().uuid().optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });
   app.post("/api/v1/perfume/rows/:id/confirm", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ item_id: z.string().uuid().optional(), create_new: z.boolean().optional() })
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
@@ -145,12 +163,12 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/perfume/items/search", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ q: z.string().max(200) }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     return { items: await withCurrentUser(uid, (c) => searchItems(c, q.data.q)) };
   });
   app.put("/api/v1/perfume/items/:id/internal-code", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ internal_code: z.string().max(60).nullable() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => setInternalCode(c, params.data.id, body.data.internal_code));
@@ -158,7 +176,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/v1/perfume/grid", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c));
     let rows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);
@@ -169,7 +187,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     return { cols: g.cols, total: rows.length, rows: rows.slice(q.data.offset, q.data.offset + q.data.limit), rules: g.rules, vendors: g.vendors, measured_at: new Date().toISOString() };
   });
   app.get("/api/v1/perfume/export.xlsx", async (req, reply) => {
-    const uid = ownerOnly(req, reply); if (!uid) return;
+    const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c));
     let rows = searchRows(filterView(g.rows, q.data.view as GridView), q.data.q);

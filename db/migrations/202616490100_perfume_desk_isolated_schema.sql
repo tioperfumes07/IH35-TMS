@@ -9,18 +9,46 @@
 -- editions); MANY vendor spellings/SKUs per item (perfume.item_aliases). Prices are integer cents.
 -- Every imported line keeps its file, sheet and row number, so any number traces to its source.
 --
--- Access: Owner role only (FORCE RLS). Lucia bypass for migrations/ops reads.
+-- Access: ONLY the users listed in perfume.desk_users (seeded with the owner's own login, owner order
+-- "at the moment it would only be me") AND holding the Owner role on an active account. Other Owner-role
+-- users of IH35-TMS (9 on prod 2026-11-12) do NOT see this desk. FORCE RLS everywhere. Lucia bypass for
+-- migrations/ops reads.
 
 BEGIN;
 SET LOCAL lock_timeout = '5s';
+SET LOCAL app.bypass_rls = 'lucia';
 
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE SCHEMA IF NOT EXISTS perfume;
 GRANT USAGE ON SCHEMA perfume TO ih35_app;
 
+-- Who may open the desk. Rows are added by the owner (ops write under Lucia bypass); the app can only read
+-- its own row, so no user can grant themselves access.
+CREATE TABLE IF NOT EXISTS perfume.desk_users (
+  user_id uuid PRIMARY KEY REFERENCES identity.users(id),
+  added_at timestamptz NOT NULL DEFAULT now(),
+  note text
+);
+ALTER TABLE perfume.desk_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.desk_users FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS desk_users_self_only ON perfume.desk_users;
+CREATE POLICY desk_users_self_only ON perfume.desk_users
+  USING (identity.is_lucia_bypass() OR user_id = identity.current_user_id())
+  WITH CHECK (identity.is_lucia_bypass());
+GRANT SELECT ON perfume.desk_users TO ih35_app;
+
+INSERT INTO perfume.desk_users (user_id, note)
+SELECT u.id, 'owner login — the only perfume desk user (owner order 2026-11-11)'
+FROM identity.users u
+WHERE lower(u.email) = 'tioperfumes07@gmail.com' AND u.role::text = 'Owner' AND u.deactivated_at IS NULL
+ON CONFLICT (user_id) DO NOTHING;
+
+-- current_user_role() already returns NULL for a deactivated account.
 CREATE OR REPLACE FUNCTION perfume.is_owner() RETURNS boolean
   LANGUAGE sql STABLE AS $$
-    SELECT identity.is_lucia_bypass() OR identity.current_user_role()::text = 'Owner'
+    SELECT identity.is_lucia_bypass()
+        OR (identity.current_user_role()::text = 'Owner'
+            AND EXISTS (SELECT 1 FROM perfume.desk_users d WHERE d.user_id = identity.current_user_id()))
   $$;
 
 -- Vendors and Laredo sellers. kind: buy (I buy from them), sell (I compare/sell against them), both.

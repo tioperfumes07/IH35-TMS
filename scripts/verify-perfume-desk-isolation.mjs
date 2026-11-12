@@ -73,9 +73,12 @@ export function checkBackendFile(name, src) {
 export function checkRoutes(name, src) {
   const errs = [];
   for (const m of src.matchAll(/app\.(get|post|put|patch|delete)\(\s*"([^"]+)"[^]*?async\s*\(req,\s*reply\)\s*=>\s*\{\s*([^\n]*)/g)) {
+    if (m[2] === "/api/v1/perfume/access") continue; // answers {allowed} only; asserted below
     if (!/ownerOnly\(req,\s*reply\)/.test(m[3])) errs.push(`${name}: ${m[1].toUpperCase()} ${m[2]} does not start with ownerOnly(req, reply)`);
   }
   if (!/role\s*\?\?\s*""\)\s*!==\s*"Owner"/.test(src)) errs.push(`${name}: ownerOnly no longer checks role === "Owner"`);
+  if (!/async function ownerOnly[\s\S]*?deskAllowed\(uid\)/.test(src)) errs.push(`${name}: ownerOnly no longer checks perfume.desk_users (deskAllowed) — every Owner-role user would see the desk`);
+  if (/perfume\/access"[\s\S]{0,300}?(SELECT|INSERT|perfume\.(items|vendors|price_))/.test(src)) errs.push(`${name}: /perfume/access may only answer {allowed}`);
   return errs;
 }
 
@@ -111,7 +114,8 @@ function selftest() {
     ["carrier import caught", checkBackendFile("f.ts", 'import { post } from "../accounting/poster.js";').length > 0],
     ["perfume SQL passes", checkBackendFile("f.ts", "await c.query(`SELECT id FROM perfume.items JOIN identity.users u ON true`)").length === 0],
     ["route without owner check caught", checkRoutes("r.ts", 'const x = (req.user?.role ?? "") !== "Owner";\napp.get("/api/v1/perfume/x", async (req, reply) => {\n    return 1;\n  });').length > 0],
-    ["route with owner check passes", checkRoutes("r.ts", 'const x = (req.user?.role ?? "") !== "Owner";\napp.get("/api/v1/perfume/x", async (req, reply) => {\n    const uid = ownerOnly(req, reply); if (!uid) return;\n  });').length === 0],
+    ["route with owner check passes", checkRoutes("r.ts", 'async function ownerOnly(req, reply) { const x = (req.user?.role ?? "") !== "Owner"; if (!(await deskAllowed(uid))) {} }\napp.get("/api/v1/perfume/x", async (req, reply) => {\n    const uid = await ownerOnly(req, reply); if (!uid) return;\n  });').length === 0],
+    ["owner gate without desk_users caught", checkRoutes("r.ts", 'async function ownerOnly(req, reply) { const x = (req.user?.role ?? "") !== "Owner"; }\napp.get("/api/v1/perfume/x", async (req, reply) => {\n    const uid = await ownerOnly(req, reply); if (!uid) return;\n  });').length > 0],
   ];
   const bad = cases.filter(([, ok]) => !ok);
   for (const [n] of bad) console.error(`  FAIL: ${n}`);

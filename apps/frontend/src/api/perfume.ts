@@ -1,6 +1,10 @@
 import { apiRequest, resolveApiUrl } from "./client";
 
 /** PERFUME-DESK — owner-only TIO Perfumes price desk. Every amount is integer cents. */
+/** True only for the login listed in perfume.desk_users (other Owner-role users get false). */
+export function getPerfumeAccess(): Promise<{ allowed: boolean }> {
+  return apiRequest<{ allowed: boolean }>("/api/v1/perfume/access");
+}
 export type PerfumeVendorKind = "buy" | "sell" | "both";
 export type PerfumeVendor = {
   id: string;

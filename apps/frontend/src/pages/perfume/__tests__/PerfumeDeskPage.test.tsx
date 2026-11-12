@@ -45,6 +45,7 @@ describe("PERFUME-DESK page", () => {
   beforeEach(() => {
     vi.mocked(clientApi.apiRequest).mockReset();
     vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/access") return { allowed: true };
       if (path.startsWith("/api/v1/perfume/grid")) return GRID;
       if (path.startsWith("/api/v1/perfume/review")) return { rows: [], total: 3 };
       if (path.startsWith("/api/v1/perfume/vendors")) return { vendors: [VENDOR] };
@@ -62,6 +63,17 @@ describe("PERFUME-DESK page", () => {
     expect(screen.getByText(/Review \(3\)/)).toBeTruthy();
     const gridCall = vi.mocked(clientApi.apiRequest).mock.calls.find(([p]) => String(p).startsWith("/api/v1/perfume/grid"));
     expect(String(gridCall?.[0])).toContain("view=buy");
+  });
+
+  it("another Owner-role login not listed in perfume.desk_users sees the locked notice and no data is fetched", async () => {
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/access") return { allowed: false };
+      throw new Error(`must not fetch ${path}`);
+    });
+    renderPage();
+    expect(await screen.findByText("The TIO Perfumes price desk is not open for this login.")).toBeTruthy();
+    const paths = vi.mocked(clientApi.apiRequest).mock.calls.map(([p]) => String(p));
+    expect(paths.every((p) => p === "/api/v1/perfume/access")).toBe(true);
   });
 
   it("every tab renders without crashing", async () => {
