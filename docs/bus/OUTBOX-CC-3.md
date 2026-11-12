@@ -2,6 +2,12 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 03Z — ROUND 8.19 CC-2 OVERFLOW: row 110 DONE-LIVE; rows 104-108 113 124 138 investigating
+
+**Row 110 (Angel Sosa current truck — DONE-LIVE):** Code fix c7419ed291 deployed (position 8126 on main, pre-dates deployed SHA ddc4ac9d40). VDA query at driver-aggregate.service.ts:302 now reads all OPEN VDA records (no samsara_webhook filter). Live Chrome: Angel Sosa correctly shows "No current truck assignment" because T156 VDA ended (status Probation). Behavior correct. Register updated DONE-LIVE.
+
+**Rows 104-108 113 124 138 — investigating next.**
+
 ## 2026-11-13 02Z — ROUND 8.19 CC-2 OVERFLOW: rows 112 115 DONE-LIVE; rows 104 105 106 107 108 110 113 124 138 require Chrome/AUTH
 
 **CC-2 overflow taken (CC-2 OUTBOX last written 2026-11-02 — 10 days silent):**
