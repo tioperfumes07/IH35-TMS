@@ -1,4 +1,41 @@
 # BOARD-45 COMPLETION REGISTER — ROUND 8.12
+
+## ROUND 8.17 verification overlay — 2026-11-12
+
+19:11Z board19 #29088 on FE/BE1758d493e72: Amount→one source transaction and conditional planner strip bounded PASS; ret present but no in-app Back, so reverse FAIL. Render FEdep-dbr0s417lnhs73egtskg/BEdep-dbr0s47prmrc73d8ap30 live. Cursor6833347707; no full certificate.
+
+19:09Z: N4/7 classification merged #29090 `b83663d2663` (16 tests, normal hooks,44 affected guards/no regressions); independent deployed cross-check requested, not certified. Board19 By-truck #29086 count39 opens39 source rows with unit/date bounds on FE928a0cb (bounded PASS); no origin ret/app Back on History (FAIL). Cursor comments6833268917/6833269460. PM normal push static sweep remains running. Production writes zero.
+
+19:02Z overlay on FE/BE `9f75917d96461e4c66da0f5d59aee9b5e562f2b7`: board35 primary identity defect bounded PASS after #29082 (tile/H1/company link agree). Board2 forward transaction drawer PASS, reverse FAIL (Close→Back lands Banking, not Unexpected). Comments6833113179/6833067771. Earlier 18:28 identity failure is superseded only for this measured header; full board35 remains uncertified.
+
+18:36Z board19 remains FAIL on FE/BE `b6eb3a6d480cc0c86f514dc24c5a14404a72a5e4`: October View all preserves period/cohort; no-load October 0 and November 6 agree with KPI counts (bounded PASS). By-truck Spend/History Amount still target units, not source transactions; plain values and all-dash planner strip remain. Cursor #29071 comments6832490692/6832509792. No full certificate, no production write.
+
+The CODE rows below describe prior source work, not CERTIFIED boards. Current full certificates: **0/45**. The seven-point, other-seat acceptance in INBOX-CODEX is required. Production writes: zero.
+
+18:28Z recheck: FE/BE `a8d6ae8027f546b818735570080ff1574514c175` identified by `/version.json` and healthz `git_sha`; Render FE `dep-dbr03bmq1p3s73doh8s0`, BE `dep-dbr03bjbktic73cmnke0` live. Board34 Closed → statement → in-app Back restores `?tab=closed` and selected Closed cohort: bounded PASS (#29076 comment6832340439). Board35 loaded primary SETTLEMENT tile still a dash despite linked company statement identity: FAIL. Lifecycle reader and full board certification remain pending. Shared Back-guard fix #29077 merged7f56b738; subsequent frontend TS2339 repaired by Cursor #29079. No production writes.
+
+17:55Z update: deployed FE/BE5694517 observed Render live, frontend version matches. Banking Money In route dates/type now correct but Categorized cohort is empty despite positive KPI: bank-cleared is not categorized, so board3 FAIL. Fuel unlinked KPI6 and history6 agree narrowly; other acceptance remains FAIL. PM14 targeted tests/build0/gate0 and CashFlow16tests/build0/gate0 are LOCAL, not deployment. Reserve identity15tests/build0 local; gate pending. Back-guard inert mutation repaired locally without changing assertions; gate pending. No new board certificates.
+
+| Boards | Current result | Evidence / remaining |
+|---|---|---|
+|31|FAIL — UI/live acceptance pending|Reader #29050 merged6470db6a;8 tests/build0; hook incident and remedial full hook exit0 disclosed in PR. Liability must replace spend in UI.|
+|22/43/44|FAIL — unshipped canonical PM reader / consumer pending|18 tests/build0;10 guard plants;local gate_exit0, live skips explicitly unverified. Cursor unknown-state consumer requested.|
+|32/34/35|FAIL — lifecycle consumer / deployed proof pending|7 reader tests/build0; gate_exit1 on same30 inherited handwritten-JE findings; no number invented.|
+|19/26|FAIL — reader fixes unshipped|Fuel/TB local negative controls pass; same30 live handwritten-JE findings on clean main block current gate.|
+|3/4/7/8/18/24|FAIL — Cursor consumer repairs requested|Exact cohort/classification/opening/profile-id/date-only contracts posted on #29044.|
+|13|FAIL — search population / Back hydration|Empty search leaves full KPI/paging cohort; Back restores URL but not applied search. Cursor6830636452/6830740953.|
+|14–16|FAIL — wizard geometry|CSS1440x900: dialog1408 vs1260; inputs40 vs32; side labels overlap. Cursor6830802208.|
+|17|UNVERIFIED — bounded trip-type display PASS|NB/TR/SB conditional port/tour text checked without booking. Full writer acceptance remains unproved.|
+|36|FAIL — identity / controls / composition|PENDING identity despite real P-number in picker; missing panel Filters/Back; clipped nav. Cursor6830879598.|
+|37|FAIL — uncomputed net / identity|Stored-net fallback shows zero with positive gross and zero displayed deductions; source-specific KPI drill missing. Cursor6830930148.|
+|38|FAIL — recovery source / drawer labels / composition|Recover-on links load rather than recovery tour; raw method enum; attribution HOLD; header/nav differs. Cursor6831012820.|
+|39|FAIL — controls / composition|Driver-to-register route bounded PASS; approved Filters/Back composition absent. Cursor6831032455.|
+|40|FAIL — KPI drills / filters / composition|Resolved source link and Back PASS; initial generic-href observation withdrawn after async resolution. Source labels date-only; KPI tiles inert. Cursor6831041139/6831049018.|
+|41|FAIL — displayed type sum differs from total|Four category rows zero with positive total; separate capped population drops other types. New deduction opens, no submit. Cursor6831066333.|
+|42|FAIL — composition / cohort scope|Missing five-chip subnav/Creator; extra inert technical KPIs remain full population after no-match search. Cursor6831082369.|
+
+17:34Z: all12 V boards have bounded checks; **0/12 complete seven-point acceptance, 0/45 certified**. FEbf05f75 measured by version.json; BE4164978690a2 last observed Render live, healthz confirmation still pending. PM and this docs branch normal pushes failed on inherited `verify-pageheader-smart-back-wired --selftest` inert mutation from mainbf05f75; no bypass. Private production screenshots are not committed.
+
 Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 complete
 
 **Law:** full board-identical build (structure + chrome + live engines + Save/Close + reverse/double links). Not shell. Not layered over previous. Approved board replaces old UI.
