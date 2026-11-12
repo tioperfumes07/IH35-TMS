@@ -1,10 +1,10 @@
 {
-  "healthzSha": "56e5061",
-  "generated_at": "2026-11-12T02:27:07.288Z",
+  "healthzSha": "cf8c21c",
+  "generated_at": "2026-11-12T04:25:15.608Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "56e5061",
+    "deployedSha": "cf8c21c",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 28875,
-      "title": "FINDING: BOARD-45 type-scale lock — raw_font_sizes 79→0 + completion register (43/45 CODE)",
+      "number": 28944,
+      "title": "feat(cash-flow): Home Net/Ending drill preserves forecast breakdown",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 08:22 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28875",
-      "sha": "76dc9d2b43",
-      "committedAtIso": "2026-11-11T21:22:29-05:00"
+      "mergedAtCt": "11/11/2026, 10:16 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28944",
+      "sha": "cf8c21c3aa",
+      "committedAtIso": "2026-11-11T23:16:44-05:00"
     },
     {
-      "number": 28874,
-      "title": "Cursor- FINDING: ROUND8.12 deliver owning-seat design dependencies and current Codex status",
+      "number": 28943,
+      "title": "docs(bus): FE LIVE dep-dbqjngijnfac73bkhh9g + Cascade/CC-1 cert tips",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 08:20 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28874",
-      "sha": "56e5061b11",
-      "committedAtIso": "2026-11-11T21:20:42-05:00"
+      "mergedAtCt": "11/11/2026, 10:13 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28943",
+      "sha": "9739b886c3",
+      "committedAtIso": "2026-11-11T23:13:38-05:00"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 28941,
+      "title": "fix(fe): unblock deploy — tsc, CF3 empty rows, TL exact",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 06:43 PM CT",
-      "url": "",
-      "sha": "faa5669c33",
-      "committedAtIso": "2026-11-12T00:43:55Z"
+      "mergedAtCt": "11/11/2026, 10:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28941",
+      "sha": "772f69a30f",
+      "committedAtIso": "2026-11-11T23:08:31-05:00"
     },
     {
-      "number": 28873,
-      "title": "FINDING: LST-F11162 bus ROUND 8.8b — CC-2 fuel round re-scoped on prod measurement: the reclassify engine cannot move Relay fuel_event lines; the 13588 premise is gone (BAT-001 root)",
+      "number": 28939,
+      "title": "feat(fuel): Fuel Assignment candidate Driver EntityLink",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28873",
-      "sha": "f1641b3687",
-      "committedAtIso": "2026-11-11T17:41:09-06:00"
+      "mergedAtCt": "11/11/2026, 10:00 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28939",
+      "sha": "81e7dab2c2",
+      "committedAtIso": "2026-11-11T23:00:41-05:00"
     },
     {
-      "number": 28872,
-      "title": "FIX: a salaried Settlement Creator post with a blank Settlement No. no longer mints the next AlwaysTrack number (stamped 5873 on Rafael's $0 P-0159) (LST-F11161)",
+      "number": 28938,
+      "title": "docs(bus): tip Codex LIVE #28935–#28937 reverse wave",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:38 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28872",
-      "sha": "328a0c749f",
-      "committedAtIso": "2026-11-11T17:38:30-06:00"
+      "mergedAtCt": "11/11/2026, 09:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28938",
+      "sha": "304ea8205b",
+      "committedAtIso": "2026-11-11T22:59:20-05:00"
     },
     {
-      "number": 28871,
-      "title": "FINDING: LST-F11160 ROUND 8.7d — signed settlements 5853–5872 posted on prod by Claude-Lead (net = PDF, TB 0, rerun already_as_signed); Rafael 13700 closed $0 salaried with no number; payload corrected to prod evidence",
+      "number": 28937,
+      "title": "feat(legal): Lease-to-Own fleet picker Unit EntityLink",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:25 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28871",
-      "sha": "1c423f2830",
-      "committedAtIso": "2026-11-11T17:25:43-06:00"
+      "mergedAtCt": "11/11/2026, 09:58 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28937",
+      "sha": "893932c561",
+      "committedAtIso": "2026-11-11T22:58:59-05:00"
     },
     {
-      "number": 28870,
-      "title": "FIX: Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)",
+      "number": 28936,
+      "title": "docs(bus): tip Codex LIVE #28932–#28935 settlement identity + CF3",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:05 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28870",
-      "sha": "66456a36a5",
-      "committedAtIso": "2026-11-11T18:05:55-05:00"
+      "mergedAtCt": "11/11/2026, 09:57 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28936",
+      "sha": "b8f2a20883",
+      "committedAtIso": "2026-11-11T22:57:27-05:00"
     },
     {
-      "number": 28869,
-      "title": "FIX: BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)",
+      "number": 28935,
+      "title": "fix(settlements,cash-flow): identity strip EntityLinks + CF3 Load nav",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28869",
-      "sha": "815a9b66e6",
-      "committedAtIso": "2026-11-11T18:04:43-05:00"
+      "mergedAtCt": "11/11/2026, 09:56 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28935",
+      "sha": "ab3f7d2cb2",
+      "committedAtIso": "2026-11-11T22:56:55-05:00"
     },
     {
-      "number": 28868,
-      "title": "FINDING: LST-F11159 bus ROUND 8.12a — owner law repeated into all six INBOXes: fast 4-minute merge after local PASS; complete every engine in your surface",
+      "number": 28934,
+      "title": "docs(bus): tip Codex LIVE #28932–#28933 planner list EntityLinks",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:04 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28868",
-      "sha": "4a312438cb",
-      "committedAtIso": "2026-11-11T17:04:38-06:00"
+      "mergedAtCt": "11/11/2026, 09:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28934",
+      "sha": "d34f7500d4",
+      "committedAtIso": "2026-11-11T22:53:50-05:00"
     },
     {
-      "number": 28867,
-      "title": "FIX: ROUND 8.12 Settlements T5 — ReadyDots use engine ready_total (no hard-coded six)",
+      "number": 28933,
+      "title": "feat(dispatch): planner list EntityLinks Timeline/Driver/Truck",
       "state": "merged",
-      "mergedAtCt": "11/11/2026, 05:03 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28867",
-      "sha": "6f29ca1603",
-      "committedAtIso": "2026-11-11T18:03:39-05:00"
+      "mergedAtCt": "11/11/2026, 09:53 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/28933",
+      "sha": "bca187ee92",
+      "committedAtIso": "2026-11-11T22:53:23-05:00"
     }
   ]
 }
