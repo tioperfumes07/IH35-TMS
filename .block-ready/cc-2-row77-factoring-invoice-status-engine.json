@@ -1,0 +1,31 @@
+{
+  "block_id": "cc-2-row77-factoring-invoice-status-engine",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.15-CC-2",
+  "task": "CC-2 Row 77 — factoring invoice status engine + account summary replace (Round 8.15). CODER-34 secured-borrowing law: invoice.status must remain sent/partial/paid after advance (never factored). Engine: listFactoringPurchases/listFactoringPurchaseLines. Bar chart + terms on account_summary tab. Reverse route: advance→purchase link in fetchAdvanceDetail. Guard 19915 enforces status!=factored and no orphan advanced invoices.",
+  "branch": "cc-2/row77-factoring-invoice-status-engine",
+  "lane": "CC-2-BANKING-AR-FACTORING",
+  "runtime_path": "src",
+  "allowed_files": [
+    "apps/backend/src/accounting/factoring-advances.routes.ts",
+    "apps/frontend/src/api/accounting.ts",
+    "apps/frontend/src/pages/accounting/FactoringDetailPage.tsx",
+    "apps/frontend/src/pages/factoring/FactoringHome.tsx",
+    "scripts/money-pr-local-gate.mjs",
+    "scripts/verify-factoring-invoice-status-parity.mjs",
+    "scripts/verify-steps/19915-verify-factoring-invoice-status-parity.mjs",
+    ".block-ready/cc-2-row77-factoring-invoice-status-engine.json"
+  ],
+  "acceptance": [
+    { "kind": "guard", "script": "scripts/verify-factoring-invoice-status-parity.mjs", "wired_into": "scripts/verify-steps/19915-verify-factoring-invoice-status-parity.mjs" },
+    { "kind": "live", "assert": "node scripts/verify-factoring-invoice-status-parity.mjs --selftest PASS; status=factored → 0; advanced_without_purchase_line → 0" },
+    { "kind": "route", "value": "apps/frontend/src/pages/factoring/FactoringHome.tsx", "note": "Account Summary tab: bar chart (gross_cents/advance_cents per purchase) + Terms on File section. Forward routes to payments_to_you and statements_settings." },
+    { "kind": "route", "value": "apps/backend/src/accounting/factoring-advances.routes.ts", "note": "fetchAdvanceDetail: added factoring_purchase_id/factoring_purchase_display_id subqueries for reverse route." }
+  ],
+  "linkage": "factoring_advances → factoring_purchases (reverse route via purchase_id subquery). Bar chart: factoring_purchases.gross_cents / advance_cents. Guard: invoices.status != factored AND factoring_purchase_lines linkage.",
+  "db_required": false,
+  "guard_required": true,
+  "extra_gates": [],
+  "hold": "FINANCIAL — merge on green per fast-merge law (owner confirmed 2026-08-26)."
+}

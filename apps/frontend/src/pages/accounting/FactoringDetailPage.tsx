@@ -298,6 +298,20 @@ export function FactoringDetailPage() {
             </span>
           </DataPanelRow>
           <DataPanelRow>
+            <span className="text-xs text-gray-600">{"Purchase"}</span>
+            <span className="text-xs text-gray-900">
+              {detail.factoring_purchase_id ? (
+                <EntityLink
+                  kind="factoring_purchase"
+                  id={detail.factoring_purchase_id}
+                  label={entityLabel(detail.factoring_purchase_display_id, detail.factoring_purchase_id, "Purchase")}
+                />
+              ) : (
+                <span className="text-[#6B7280]">—</span>
+              )}
+            </span>
+          </DataPanelRow>
+          <DataPanelRow>
             <span className="text-xs text-gray-600">Bank wire</span>
             <span className="text-xs text-gray-900">
               {detail.matched_bank_transaction_id ? (

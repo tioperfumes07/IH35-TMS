@@ -7,6 +7,7 @@
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { truckProfileBoardSvgHtml } from "./truckProfileBoardSvg";
 
 export type TruckServiceMapState = "ok" | "soon" | "defect" | "none";
@@ -244,6 +245,7 @@ export function TruckServiceMap(props: {
   }
 
   const driverName = dash(props.currentDriver?.name);
+  const driverId = props.currentDriver?.id != null ? String(props.currentDriver.id) : null;
   const loadNumber = dash(props.currentLoad?.load_number);
 
   const svgHtml = truckProfileBoardSvgHtml(props.unitId);
@@ -272,7 +274,14 @@ export function TruckServiceMap(props: {
             }}
             testId="truck-service-map-now"
           />
-          <HeaderChip label="Driver" value={driverName} testId="truck-service-map-driver" />
+          {driverId ? (
+            <div data-testid="truck-service-map-driver" style={{ background: "#FFFFFF", borderRadius: 12, padding: "10px 16px", display: "flex", flexDirection: "column", gap: 2, boxShadow: "0 1px 0 #D5DCE5", minWidth: 0 }}>
+              <span style={CHIP_LABEL}>{"Driver"}</span>
+              <EntityLink kind="driver" id={driverId} label={driverName} />
+            </div>
+          ) : (
+            <HeaderChip label="Driver" value={driverName} testId="truck-service-map-driver" />
+          )}
           <HeaderChip label="Load" value={loadNumber === "—" ? "—" : String(loadNumber)} testId="truck-service-map-load" />
         </div>
 

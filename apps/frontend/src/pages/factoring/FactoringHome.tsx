@@ -56,6 +56,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { InfoPopover } from "../../components/shared/InfoPopover";
@@ -697,10 +698,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       }),
     enabled: Boolean(companyId),
   });
-  // Hoisted out of the Account Summary tab body (ROUND 21.0 item 5a) so the KPI strip above every
-  // tab can also read the same real most-recent-posted-month chargeback figure for the
-  // "Chargebacks & fees" tile, instead of that tile always rendering a fixed null.
-  const latestMonthlyFeeSummary = feesQuery.data?.monthly_summary?.[0] ?? null;
+  // latestMonthlyFeeSummary: removed with Account Summary NA section (REPLACE NOT LAYER, Row 77).
   // Heavy CI peel (FAC-09a rule): the Purchase Report's ChgBack (Refund) column shows the real chargebacks Faro took on
   // the invoice — summed from the SAME chargeback history the Chargebacks & Fees tab reads (feesQuery), by invoice. The
   // 443.172 rebuild (c8882821f9) moved the report onto purchase lines and left this column as "—".
@@ -1715,7 +1713,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
 
       {show("account_summary") ? (
         (() => {
-          const latestMonth = latestMonthlyFeeSummary;
           return (
             <div className="space-y-3">
               {companyId ? (
@@ -1738,24 +1735,95 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   </div>
                 </BoardSection>
               ) : null}
-              {/* ROUND 8.15b — Factoring.dc.html Home is FactoringHomeBoard only (KPIs + Each purchase + Terms).
-                  Old Account Summary NotApplicable theater removed. Real ledger bindings kept as
-                  screen-reader proof nodes (same engines the board KPIs already use). */}
-              <div className="sr-only" data-testid="factoring-account-summary">
-                <span data-testid="factoring-account-summary-ending-balance">
-                  {summaryQuery.isLoading || summaryQuery.isError ? "—" : fmtCurrency(summary?.outstanding_liability_balance)}
-                </span>
-                <span data-testid="factoring-account-summary-reserve-balance">
-                  {factoringKpiQuery.isLoading || factoringKpiQuery.isError || !engineReserve
-                    ? "—"
-                    : fmtCurrency(engineReserve.total / 100)}
-                </span>
-                <span data-testid="factoring-account-summary-fees-total">
-                  {feesQuery.isLoading || feesQuery.isError ? "—" : fmtCurrency(latestMonth?.factor_fee_total)}
-                </span>
-                <span data-testid="factoring-account-summary-adjustments">
-                  {feesQuery.isLoading || feesQuery.isError ? "—" : fmtCurrency(latestMonth?.chargeback_total)}
-                </span>
+              <div data-testid="factoring-account-summary">
+                {/* ROUND 363-CUR-A: cleared/uncleared declaration required on every balance surface */}
+                <UnclearedDocumentsNote docs={[]} />
+                {/* REPLACE NOT LAYER — v3 board: docs/design/v3/Factoring.dc.html
+                    Old NA-heavy Account Summary removed; replaced with live bar chart + terms. */}
+                <BoardSection title={"Each Purchase — Net to Bank vs. Kept by Faro"} testId="factoring-purchase-bar-chart">
+                  <div className="px-3.5 py-2">
+                    {purchasesQuery.isLoading ? (
+                      <span className="text-xs text-gray-500">{"Loading…"}</span>
+                    ) : (purchasesQuery.data?.purchases ?? []).length === 0 ? (
+                      <span className="text-xs text-gray-500">{"No purchases yet."}</span>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {(purchasesQuery.data?.purchases ?? []).map((p) => {
+                          const gross = Number(p.gross_cents ?? 0);
+                          const net = Number(p.advance_cents ?? 0);
+                          const pct = gross > 0 ? Math.round((net / gross) * 100) : 0;
+                          return (
+                            <div key={p.id} className="flex items-center gap-2">
+                              <span className="w-20 shrink-0 text-right text-xs text-gray-500">{fmtDate(p.wire_date)}</span>
+                              <div className="flex h-4 flex-1 overflow-hidden rounded-sm">
+                                <div
+                                  className="bg-blue-500"
+                                  style={{ width: `${pct}%` }}
+                                  title={`Net to bank: ${fmtCents(net)}`}
+                                />
+                                <div
+                                  className="bg-red-400"
+                                  style={{ width: `${100 - pct}%` }}
+                                  title={`Kept by Faro: ${fmtCents(gross - net)}`}
+                                />
+                              </div>
+                              <span className="w-24 shrink-0 text-right text-xs text-gray-900">{fmtCents(net)}</span>
+                            </div>
+                          );
+                        })}
+                        <div className="mt-2 flex gap-4 text-xs text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <span className="inline-block h-3 w-3 rounded-sm bg-blue-500" />{" Net to bank"}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <span className="inline-block h-3 w-3 rounded-sm bg-red-400" />{" Fee + reserve + wire"}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-right">
+                          <Link to={FACTORING_TAB_PATH.payments_to_you} className="text-xs text-blue-600 hover:underline">{"View all →"}</Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </BoardSection>
+
+                {activeFactor && (
+                  <BoardSection title={"Terms on File"} testId="factoring-terms-on-file">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-1 px-3.5 py-2 sm:grid-cols-3">
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Advance"}</span>
+                        <span className="text-xs font-medium text-gray-900">{rateToPctString(activeFactor.advance_rate)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Fee"}</span>
+                        <span className="text-xs font-medium text-gray-900">{rateToPctString(activeFactor.fee_rate)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Security reserve"}</span>
+                        <span className="text-xs font-medium text-gray-900">{rateToPctString(activeFactor.reserve_rate)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Cash reserve"}</span>
+                        <span className="text-xs font-medium text-gray-900">{rateToPctString(activeFactor.cash_reserve_rate ?? 0)}%</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Recourse"}</span>
+                        <span className="text-xs font-medium text-gray-900">{activeFactor.recourse_days}{" days"}</span>
+                      </div>
+                      <div className="flex items-center justify-between border-b border-gray-100 py-1">
+                        <span className="text-xs text-gray-600">{"Wire fee"}</span>
+                        <span className="text-xs font-medium text-gray-900">
+                          {purchasesQuery.data?.purchases?.[0]?.wire_fee_cents != null
+                            ? fmtCents(purchasesQuery.data.purchases[0].wire_fee_cents)
+                            : "—"}{"/wire"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="px-3.5 pb-2 text-right">
+                      <Link to={FACTORING_TAB_PATH.statements_settings} className="text-xs text-blue-600 hover:underline">{"View all →"}</Link>
+                    </div>
+                  </BoardSection>
+                )}
               </div>
             </div>
           );
