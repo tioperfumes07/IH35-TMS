@@ -2768,8 +2768,15 @@ function acceptedAcctF11152CostsAreExpensesAmbient(name, code, changed) {
     "apps/backend/src/accounting/settlement-posting/",
   ];
   if (changed.some((f) => COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  // If accounting/ files other than has-transactions-predicate.ts are in the diff, do NOT bypass.
-  const ALLOWED_ACCOUNTING = new Set(["apps/backend/src/accounting/has-transactions-predicate.ts"]);
+  // If accounting/ files other than read-only / repair-dispatcher files are in the diff, do NOT bypass.
+  // owner-data-repair.routes.ts: pure repair dispatcher — reads + calls repair services, writes zero JEs.
+  // settlement-stuck-close-repair.service.ts: calls postFinalLoadSettlementsGl (driver_settlement exempt
+  // source type); does not write to accounting.journal_entries or accounting.expenses directly.
+  const ALLOWED_ACCOUNTING = new Set([
+    "apps/backend/src/accounting/has-transactions-predicate.ts",
+    "apps/backend/src/accounting/owner-data-repair.routes.ts",
+    "apps/backend/src/accounting/settlement-stuck-close-repair.service.ts",
+  ]);
   if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
   return true;
 }

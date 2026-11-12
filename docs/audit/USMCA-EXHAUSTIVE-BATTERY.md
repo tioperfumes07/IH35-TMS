@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 371 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 372 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 292 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
 | action (NOT a create) | 257 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 993 | |
+| **TOTAL POST endpoints** | 994 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -447,7 +447,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/wo-cancellation-reasons` | `apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts` | — | — | — |
 | create | `/api/v1/catalogs/workflow-requests` | `apps/backend/src/catalogs/workflow-routes.ts` | — | — | — |
 
-### driver-finance — 28 create-surface(s)
+### driver-finance — 29 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -479,6 +479,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver-finance/settlements/:id/payrun-close` | `apps/backend/src/driver-finance/settlement-payrun-close.routes.ts` | — | — | — |
 | nested | `/api/v1/driver-finance/settlements/:id/unlock` | `apps/backend/src/driver-finance/settlements.routes.ts` | — | — | — |
 | create | `/api/v1/driver-finance/settlements/header-boundaries-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
+| create | `/api/v1/driver-finance/settlements/stuck-close-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
 
 ### legal — 22 create-surface(s)
 
