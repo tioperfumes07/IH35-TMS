@@ -391,7 +391,6 @@ function ImportCheckBox({ check }: { check: PerfumeImportCheck }) {
       <div>
         {tr("perfume.lists.40", "Linked by UPC")} {m.upc ?? 0} {tr("perfume.lists.41", "· by SKU")} {m.sku ?? 0} {tr("perfume.lists.42", "· by your confirmed spelling")} {m.alias ?? 0} {tr("perfume.lists.43", "· by identity")} {(m.key ?? 0) + (m.loose_key ?? 0)} {tr("perfume.lists.44", "· new items")} {check.items_created} {tr("perfume.lists.44b", "· corrected")} {check.items_renamed ?? 0} {tr("perfume.lists.44c", "· merged")} {check.items_merged ?? 0} {tr("perfume.lists.45", "· to review")} {check.review} {tr("perfume.lists.46", "· no match")} {check.unmatched}
         {check.upcs_on_two_products ? <b className="text-red-700"> · {check.upcs_on_two_products} {tr("perfume.lists.47", "UPC(s) the file prints on two different products — matched by name, not by that UPC")}</b> : null}
-        {check.upc_name_conflicts ? <b className="text-red-700"> · {check.upc_name_conflicts} {tr("perfume.lists.48", "line(s) whose UPC is on another vendor's item with a different name — matched by name, not by that UPC")}</b> : null}
       </div>
     </div>
   );

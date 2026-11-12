@@ -92,8 +92,6 @@ export type PerfumeImportCheck = {
   items_merged?: number;
   /** UPCs this file prints on two different products — not trusted for those lines. */
   upcs_on_two_products?: number;
-  /** Lines whose UPC points at another vendor's item with a different name — matched by name instead. */
-  upc_name_conflicts?: number;
 };
 export type PerfumeList = {
   id: string;
