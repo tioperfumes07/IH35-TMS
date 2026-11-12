@@ -6,7 +6,7 @@
  * The import check: the reader also totals EVERY price it sees in the file independently of which
  * rows it keeps. The server refuses the list unless its saved total equals that file total to the cent.
  */
-import type { PerfumeImportRow } from "../../api/perfume";
+import type { PerfumeExtractedLine, PerfumeImportRow, PerfumePicture } from "../../api/perfume";
 
 export type Field = "code" | "sku" | "upc" | "brand" | "desc" | "size" | "type" | "gender" | "section" | "price" | "qty" | "case_pack";
 export const FIELDS: Array<[Field, string]> = [
@@ -16,7 +16,8 @@ export const FIELDS: Array<[Field, string]> = [
 ];
 export type Mapping = Partial<Record<Field, number>>;
 export type Sheet = { name: string; cells: Array<Array<string | number | null>> };
-export type ReadFile = { kind: "xlsx" | "xls" | "csv" | "pdf_text"; sheets: Sheet[] };
+/** "image" = offer photos or a scanned PDF (no text layer): the pictures are read by Claude, then approved. */
+export type ReadFile = { kind: "xlsx" | "xls" | "csv" | "pdf_text" | "image"; sheets: Sheet[]; pictures?: PerfumePicture[] };
 
 const GUESS: Record<Field, RegExp[]> = {
   upc: [/upc/, /ean/, /barcode/, /gtin/, /c[oó]digo de barras/],
@@ -160,6 +161,92 @@ export async function readPdf(file: File): Promise<ReadFile> {
   return { kind: "pdf_text", sheets: [{ name: file.name, cells }] };
 }
 
+export const PICTURE_MAX_SIDE = 1600;
+export const isPictureFile = (f: File) => /^image\//.test(f.type) || /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(f.name);
+
+function canvasToPicture(canvas: HTMLCanvasElement, name: string): PerfumePicture {
+  const url = canvas.toDataURL("image/jpeg", 0.85);
+  return { name, media_type: "image/jpeg", data_base64: url.slice(url.indexOf(",") + 1) };
+}
+
+/** Shrink a photo to <= 1600 px on its long side as JPEG (keeps prices readable, keeps each call small). */
+export async function pictureFromFile(file: File, maxSide = PICTURE_MAX_SIDE): Promise<PerfumePicture> {
+  let bmp: ImageBitmap;
+  try {
+    bmp = await createImageBitmap(file);
+  } catch {
+    throw new Error(`${file.name}: this browser cannot open that picture type (HEIC/HEIF photos: share them as JPEG)`);
+  }
+  const k = Math.min(1, maxSide / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(bmp.width * k));
+  canvas.height = Math.max(1, Math.round(bmp.height * k));
+  canvas.getContext("2d")!.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close?.();
+  return canvasToPicture(canvas, file.name);
+}
+
+/** A scanned PDF has no text layer: render every page to a picture for the reader. */
+export async function picturesFromPdf(file: File, maxSide = 1800): Promise<PerfumePicture[]> {
+  const pdfjs = await import("pdfjs-dist");
+  const worker = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  const out: PerfumePicture[] = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const base = page.getViewport({ scale: 1 });
+    const viewport = page.getViewport({ scale: Math.min(3, maxSide / Math.max(base.width, base.height)) });
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    await page.render({ canvasContext: canvas.getContext("2d")!, viewport }).promise;
+    out.push(canvasToPicture(canvas, `${file.name} · page ${p}`));
+  }
+  return out;
+}
+
+/** True when a PDF read gave no priced line at all — it is a scan (pictures of pages), not a text PDF. */
+export function pdfHasNoText(r: ReadFile): boolean {
+  return !(r.sheets[0]?.cells ?? []).slice(1).some((c) => c[1] != null && c[1] !== "");
+}
+
 export async function readAnyFile(file: File): Promise<ReadFile> {
-  return file.name.toLowerCase().endsWith(".pdf") ? readPdf(file) : readSpreadsheet(file);
+  if (isPictureFile(file)) return { kind: "image", sheets: [], pictures: [await pictureFromFile(file)] };
+  if (file.name.toLowerCase().endsWith(".pdf")) {
+    const r = await readPdf(file);
+    return pdfHasNoText(r) ? { kind: "image", sheets: [], pictures: await picturesFromPdf(file) } : r;
+  }
+  return readSpreadsheet(file);
+}
+
+/** Several offer photos at once → one picture list (a spreadsheet or text PDF is always one file). */
+export async function readPictureFiles(files: File[]): Promise<ReadFile> {
+  const pictures: PerfumePicture[] = [];
+  for (const f of files) {
+    if (isPictureFile(f)) pictures.push(await pictureFromFile(f));
+    else if (f.name.toLowerCase().endsWith(".pdf")) pictures.push(...(await picturesFromPdf(f)));
+    else throw new Error(`${f.name}: pick pictures and PDFs together, or one spreadsheet on its own`);
+  }
+  return { kind: "image", sheets: [], pictures };
+}
+
+/** Approved picture lines → import rows. The approved lines ARE the file total for the to-the-cent check. */
+export type PictureLine = PerfumeExtractedLine & { key: string; include: boolean };
+export function pictureLinesToExtracted(lines: PictureLine[]): Extracted {
+  const rows: PerfumeImportRow[] = [];
+  let total = 0;
+  for (const l of lines) {
+    if (!l.include) continue;
+    const cents = priceToCents(l.price ?? "");
+    if (cents == null || cents <= 0 || !l.description.trim()) continue;
+    total += cents;
+    rows.push({
+      sheet: l.image_name.slice(0, 120) || null, row_no: rows.length + 1, brand: l.brand?.trim() || null, description: l.description.trim().slice(0, 400),
+      size_text: l.size?.slice(0, 60) || null, type: l.type?.slice(0, 40) || null, gender: l.gender?.slice(0, 30) || null,
+      section: l.section?.slice(0, 120) || null, price: (cents / 100).toFixed(2), qty: l.qty?.slice(0, 30) || null,
+      raw: { image: l.image, image_name: l.image_name, note: l.note },
+    });
+  }
+  return { rows, rowsRead: rows.length, fileTotalCents: total, sections: 0 };
 }

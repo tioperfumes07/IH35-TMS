@@ -6,6 +6,14 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { AnthropicRateLimitError, AnthropicTimeoutError } from "../ai/anthropic-messages.js";
+import {
+  AnthropicNotConfiguredError,
+  extractPriceLines,
+  PERFUME_EXTRACT_MAX_IMAGES,
+  PERFUME_EXTRACT_MEDIA,
+  PerfumeExtractInputError,
+} from "./extract.service.js";
 import {
   buildGrid, confirmRow, exportWorkbook, filterView, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
   reviewQueue, searchItems, searchRows, setInternalCode, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
@@ -98,6 +106,16 @@ const RL_READ = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } a
 const RL_WRITE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
 const RL_IMPORT = { bodyLimit: 25 * 1024 * 1024, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } } as const;
 
+// Pictures are read in small batches (the screen loops), so one call stays well under the request timeout.
+const RL_EXTRACT = { bodyLimit: 40 * 1024 * 1024, config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
+const extractSchema = z.object({
+  images: z.array(z.object({
+    name: z.string().min(1).max(200),
+    media_type: z.enum(PERFUME_EXTRACT_MEDIA),
+    data_base64: z.string().min(16).regex(/^[A-Za-z0-9+/=]+$/),
+  })).min(1).max(PERFUME_EXTRACT_MAX_IMAGES),
+});
+
 export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   // Lets the company selector show the TIO Perfumes entry only to the desk user. Never 403s an Owner.
   app.get("/api/v1/perfume/access", RL_READ, async (req, reply) => {
@@ -128,6 +146,22 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   app.get("/api/v1/perfume/lists", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     return { lists: await withCurrentUser(uid, (c) => listLists(c)) };
+  });
+  // Reads offer photos / scanned price-list pages. Writes NOTHING: the lines go back to the owner to fix and
+  // approve; only the approved lines are saved, through POST /lists like any file (to-the-cent check intact).
+  app.post("/api/v1/perfume/extract", RL_EXTRACT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = extractSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
+    try {
+      return await extractPriceLines(p.data.images);
+    } catch (e) {
+      if (e instanceof PerfumeExtractInputError) return reply.code(400).send({ error: "extract_input", message: e.message });
+      if (e instanceof AnthropicNotConfiguredError) return reply.code(503).send({ error: "reader_not_configured", message: "The picture reader is not configured on the server (ANTHROPIC_API_KEY)." });
+      if (e instanceof AnthropicRateLimitError) return reply.code(429).send({ error: "reader_busy", message: "The picture reader is busy — wait a minute and press Read again." });
+      if (e instanceof AnthropicTimeoutError) return reply.code(504).send({ error: "reader_timeout", message: "The picture reader took too long — try fewer pictures at a time." });
+      req.log.error({ err: e }, "perfume extract failed");
+      return reply.code(502).send({ error: "reader_failed", message: String((e as Error)?.message ?? e).slice(0, 200) });
+    }
   });
   app.post("/api/v1/perfume/lists/preview", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
