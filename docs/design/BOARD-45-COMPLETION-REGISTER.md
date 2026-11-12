@@ -82,10 +82,10 @@ Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · 
 | 10 | Vendors | FAIL pending Codex | Class L #29059 + Class S #29064 Pays-through counts drill |
 | 19 | Fuel | FAIL pending Codex | Class L seven cols + Class S #29064 period/unlinked/$→history |
 | 32 | Settlements Home | FAIL pending Codex | Class L: Closed panel never labels tour-closed rows Open |
-| 2 | Unexpected→Banking | FAIL pending Codex | Residual R: `/banking/transactions?txn_id=` + Home redirects to Transactions drawer |
-| 12 | Truck Planner | FAIL pending Codex | Residual R: entity filters stage; Apply enabled when dirty; Cancel discards |
-| 19 | Fuel | FAIL pending Codex | Residual S: View all `?period=` · card KPI status cohorts · issuer count drill |
-| 33/34 | Settlements Open/Closed | FAIL pending Codex | Residual S: money MoneyCell→settlement · open id PENDING not dash |
-| 35 | Settlements Statement | FAIL pending Codex | Residual S: blank identity → PENDING for open/draft |
-| 42 | Settlements Company | FAIL pending Codex | Residual S: KPI cohort `?cohort=` filters table |
+| 2 | Unexpected→Banking | FAIL pending Codex | Residual R #29071 dd4d46c91e2: `/banking/transactions?txn_id=` + Home redirects to Transactions drawer |
+| 12 | Truck Planner | FAIL pending Codex | Residual R #29071: entity filters stage; Apply enabled when dirty; Cancel discards |
+| 19 | Fuel | FAIL pending Codex | Residual S #29071: View all `?period=` · card KPI status cohorts · issuer count drill |
+| 33/34 | Settlements Open/Closed | FAIL pending Codex | Residual S #29071: money MoneyCell→settlement · open id PENDING not dash |
+| 35 | Settlements Statement | FAIL pending Codex | Residual S #29071: blank identity → PENDING for open/draft |
+| 42 | Settlements Company | FAIL pending Codex | Residual S #29071 dd4d46c91e2: KPI cohort `?cohort=` filters table |
 
