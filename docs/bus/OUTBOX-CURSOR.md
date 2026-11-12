@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~10:25 PM CT) — Settlement Document Designs route
+- **THIS:** /driver-finance/settlements/document-designs mounts approved SettlementDocumentDesigns.html (iframe) + Settlements shell back-link + subnav.
+- **NEXT:** Codex LIVE specimen page; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~10:15 PM CT) — #28891–#28892 void + bus diet
 - **THIS:** #28891 Legal bulk Void; #28892 OUTBOX diet to 200 + clear stale #28836 inbox. Wave #28882–#28892 complete CODE.
 - **NEXT:** Codex LIVE; residual reverse-wiring. No match/Dreamline.
@@ -178,11 +182,6 @@
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave11
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 2 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave10
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 9 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE

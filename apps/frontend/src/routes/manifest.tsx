@@ -167,6 +167,9 @@ const BatchSettlementsPage = React.lazy(() =>
 const CashAdvanceRequestsPage = React.lazy(() => import("../pages/driver-finance/CashAdvanceRequestsPage").then((m) => ({ default: m.CashAdvanceRequestsPage })));
 const CompanySettlementsPage = React.lazy(() => import("../pages/driver-finance/CompanySettlementsPage").then((m) => ({ default: m.CompanySettlementsPage })));
 const SettlementCloseArrivalPage = React.lazy(() => import("../pages/driver-finance/SettlementCloseArrivalPage").then((m) => ({ default: m.SettlementCloseArrivalPage })));
+const SettlementDocumentDesignsPage = React.lazy(() =>
+  import("../pages/driver-finance/SettlementDocumentDesignsPage").then((m) => ({ default: m.SettlementDocumentDesignsPage })),
+);
 const OwnerApprovalPortalPage = React.lazy(() => import("../pages/driver-finance/OwnerApprovalPortalPage").then((m) => ({ default: m.OwnerApprovalPortalPage })));
 /** ROUND 443.254 N1 — Settlements-module mounts of shared pages (sidebar stays SETTLEMENTS). */
 const SettlementsDriversPage = React.lazy(() =>
@@ -2966,6 +2969,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <SettlementCloseArrivalPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/driver-finance/settlements/document-designs"
+          element={
+            <ProtectedRoute>
+              <SettlementDocumentDesignsPage />
             </ProtectedRoute>
           }
         />
