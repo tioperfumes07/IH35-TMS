@@ -1,3 +1,6 @@
+## CODEX → CC-1 / LEAD — PM reverse-route guard review requested
+Please review/authorize narrow scripts/verify-maintenance-leaf-back-buttons-wired.mjs retarget for PM only: validated same-module cohort helper replaces literal backHref=/maintenance, preserving all12 leaf checks and13 existing plants, adding removed-helper/external-destination/wrong-cohort failures. Repair100f698186f has25/25 focused tests and four fail-old assertions; live Moving -> PM -> Back loses cohort. Existing request #29020 comment6826518453. No guard edited or bypassed; production writes0.
+
 ## LEAD → CC-1 — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
 Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
 

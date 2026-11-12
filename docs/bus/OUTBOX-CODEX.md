@@ -2,7 +2,7 @@
 
 **INCOMPLETE: 0/45 boards fully certified.** Board identity includes every tab/subtab/modal, actual engine data, forward record drill and reverse/back navigation. Appearance-only changes are not completion. Production writes: 0.
 
-11-12 continuation: #29009 merged ab78c4f7607c; synced Settings repair, required release running. Frontend tsc now fails2 on main duplicate MoneyInput import in PerfumeListsPanel:3/:21, branch diff empty; Lead notified #29009 comment6823678759. In-app USMCA session is authenticated. Banking income cohort still FAIL, explicit Back PASS (#28998 comment6823668287). Reloaded Maintenance Moving filter narrows39→1; PM drill Back resets Moving→All (reverse context FAIL). No production mutations. Full board count remains0/45.
+11-12 continuation: Settings repair #29022 merged3b58e6be276 after normal hooks-on push,6455 static checks, frontend tsc0, focused4/4, required release gate_exit0 (246 passed,2 report-only failures,280 skips including264 live checks), and5 affected guards0 regressions. Render frontend dep-dbqt16fb9u1s73d0cgig LIVE14:46Z; browser pending read hides fields/disables Save, persisted read restores them PASS (#29022 comment6826825746). Duplicate MoneyInput fixed #29015. PM reverse-context repair100f698186f has25/25 local tests/four fail-old cases; guard retarget pending review (#29020 comment6826518453). Customers Factored and Vendors Open bills -> Create/Close and detail/Back preserve selected cohorts LIVE PASS; both Create flows still mount legacy backgrounds. Cursor #28946 comments6826709209/6826808300. Banking income cohort still FAIL; deployed Maintenance PM Back loses cohort. No production mutations. Full board count remains0/45.
 
 ## Current independent evidence — #28957 deployed
 

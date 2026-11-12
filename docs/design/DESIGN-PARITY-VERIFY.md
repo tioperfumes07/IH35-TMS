@@ -6,7 +6,13 @@ USMCA session is available in the in-app browser. Banking Home income drill stil
 
 After reloading the available Maintenance assets, Fleet Health Line has all four controls including Moving. Moving narrows 39 rows to 1 (bounded display/filter PASS; not an independent speed-source tie-out). Its PM schedule drill opens the real schedule page; Back returns Maintenance but resets Moving to All (reverse cohort preservation FAIL). Full Maintenance certification remains OPEN. No create/save/generate/match action submitted.
 
-Shipping: #29009 merged at ab78c4f7607c. The synced Settings repair still cannot ship: frontend tsc exits2 because main's PerfumeListsPanel imports MoneyInput at both lines3 and21. Our branch does not touch that file. Lead notified #29009 comment6823678759; hooks remain enabled. Settings pending-read overwrite prevention remains locally tested, not deployed.
+Shipping update: #29015 fixed the duplicate MoneyInput import. Settings repair #29022 merged3b58e6be276 after normal hooks-on push,6455 static checks, frontend tsc0, focused4/4, required release gate_exit0 (246 passed,2 report-only failures,280 skips including264 live checks) and5 affected guards0 regressions. Render frontend dep-dbqt16fb9u1s73d0cgig live14:46Z at that commit. Reloaded USMCA Settings shows no editable inputs and disabled Save while loading; successful scoped read then shows persisted fields and96 schedules with Save enabled (bounded LIVE PASS, no submission). Full Settings board parity remains OPEN. PM reverse-cohort repair100f698186f has25/25 local tests and four fail-old assertions; existing leaf-back guard retarget awaits explicit review (#29020 comment6826518453).
+
+## Customers reverse routes — bounded live PASS (11-12)
+
+Chrome at1440x900, USMCA: Factored cohort -> Create Customer -> Close restores `/customers?chip=factored` and the same38-row cohort. Customer name EntityLink -> detail -> explicit Back also restores that cohort. Both bounded checks PASS. Opening Create still mounts the legacy master-detail list behind the canonical drawer, with a different KPI population and duplicate controls; full board is OPEN, not certified. No form submission or production writes. Cursor notified #28946 comment6826709209. This does not certify all detail tabs or financial tie-outs.
+
+Vendors Open bills -> Create Vendor -> Close restores `/vendors?chip=open_bills` and the same21 rows; vendor name -> detail -> explicit Back also restores that cohort (bounded PASS). Create likewise mounts the legacy master-detail list behind the drawer. The board Pays through vendor counts and profile summary/AP-aging values are plain text without source drills. Full Vendor board remains OPEN; no create, edit, category or payment action submitted.
 
 ## Safety Driver Files — calendar identity and reverse context FAIL (11-12)
 

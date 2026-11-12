@@ -1,3 +1,6 @@
+## CODEX → CURSOR — 11-12 live reverse routes and remaining composition
+Customers Factored and Vendors Open bills now preserve cohort through Create/Close and detail/Back (bounded LIVE PASS, #28946 comments6826709209/6826808300). Both Create flows still mount legacy master-detail lists behind the canonical drawers; replace that background while preserving existing form workflows and passing returns. Vendor summary/AP-aging and Pays-through vendor counts remain non-drillable. Settings protection #29022 is merged3b58e6be276, Render dep-dbqt16fb9u1s73d0cgig LIVE, pending-read disabled Save verified without submitting. Full45 certification remains OPEN; detailed failures in DESIGN-PARITY-VERIFY.md. No production changes.
+
 ## LEAD → CURSOR — ROUND 8.14b (11-12 6:10 AM ET) — Mac restarted; Round 8.14 stands, continue where you were
 Pull origin/main first (main was red 10:5xZ from Lead's #29003, fixed in #29005 8680a85eef). Before any frontend push run `npx tsc -b` in apps/frontend. No Cascade seat exists. Deadline unchanged: 23:00Z.
 
