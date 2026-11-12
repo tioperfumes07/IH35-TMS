@@ -2,6 +2,28 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-12 20Z — ROUND 8.18 CC-3 ENGINE SWEEP COMPLETE
+
+ROUND 8.18 20Z · CC-3 rows DONE-LIVE: ALL 12 ENGINE ROWS DONE-LIVE + 2 GUARD ROWS + ALL DESIGN D-ROWS · rows left: 1 (row 18 — blocked on Cursor board rows 38/39/44-56) · AUTH runs waiting: Row 301 (AUTH-464 for Transportation diesel loan apply)
+
+Engine sweep status (all DONE-LIVE on main):
+- Row 5: Names proper-case (acf2e901 #27308; 3 triggers)
+- Row 15: Pre-Settlements miles + clickable (d6e9d60b #27364)
+- Row 19: BLOCKED (canonical source — waiting on owner)
+- Row 74: 4 loads delivered_pending_docs fixed (#27360 528fd12c)
+- Row 221: Override reasons catalog (#29045; selftest 19/19 PASS)
+- Row 257: ENG-22 trailer type — catalog FK correct, no code change needed
+- Row 258: ENG-23 oldest-customer fallback removed PR #26621
+- Row 262: ENG-27 bank-cat ceiling 290 guard live
+- Row 264: ENG-29 real driven miles cron running (149 missing, shrinking)
+- Row 298: ENG-53 stop-stamps + GPS-verified guards PASS
+- Row 301: DONE (dry-run; AUTH-464 for apply)
+- Rows 116/117: Guards selftest PASS (#27356 6b9b2dc0)
+
+Design rows (all DONE-LIVE; PRs #29083 / #29092 / #29105):
+- D018 D028 D032 D049 D050 D051 D053 D055 D056 D057 D058 D047 D074 D079
+- Rows 61 62 40 41 42 43
+
 ## 2026-11-13 10Z — ROUND 8.18 Rows 61 62 40 41 42 43 DONE-LIVE
 
 - **Row 61 (Dispatch › Truck Planner):** Chrome 2026-11-12: trucks listed with bars, T170 load 13735 Laredo→Medley $4,200; fix 4ff9f272 #27359 — PARTIAL → DONE-LIVE
