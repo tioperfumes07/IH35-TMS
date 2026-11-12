@@ -1,6 +1,6 @@
-<!-- heartbeat 2026-11-12T10:17Z Cursor reverse-wiring -->
-# NOW — CURSOR — Settlements Home week-of MoneyCell
+<!-- heartbeat 2026-11-12T10:39Z Cursor reverse-wiring -->
+# NOW — CURSOR — TripProfitability + KPI href drills
 
-**ACTIVE:** Settlements Home week-of Gross/Ded/Reimb/Net → settlement MoneyCell. #28996 merged.
+**ACTIVE:** TripProfitability KPI strip → company-settlements href; Insurance/Fuel/Factoring/Savings KPI tiles onClick→href.
 
 **EXTERNAL LIVE:** load 13700 LINK1 (ops/CC). Neon 202616501200. Codex LIVE. No match/Dreamline.

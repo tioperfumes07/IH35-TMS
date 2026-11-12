@@ -17,6 +17,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { CollapsedListFilters } from "../../components/table";
 import { ReportsSubNav } from "../reports/ReportsSubNav";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -261,25 +262,40 @@ export function TripProfitability() {
         </div>
       )}
 
-      {/* Totals cards */}
+      {/* Totals — period population is the company-settlements list (same engine rows below). */}
       {t && (
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-5">
-          {[
-            { label: "Settlements", value: formatQuantityTable(t.settlement_count, 0) },
-            { label: "Revenue", value: formatUsdCents(t.revenue_cents) },
-            { label: "Quick pay", value: formatUsdCents(t.quick_pay_cents) },
-            { label: "Driver pay", value: formatUsdCents(t.driver_pay_cents + t.additional_driver_pay_cents) },
-            {
-              label: "Net profit",
-              value: formatUsdCents(t.net_profit_cents),
-              highlight: t.net_profit_cents < 0 ? "text-red-600" : "text-green-700",
-            },
-          ].map(({ label, value, highlight }) => (
-            <div key={label} className="rounded-sm border bg-white p-3">
-              <div className="text-xs text-[#6B7280]">{label}</div>
-              <div className={`text-page-title font-semibold ${highlight ?? "text-[#0F1219]"}`}>{value}</div>
-            </div>
-          ))}
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-5" data-testid="trip-profitability-kpi-strip">
+          <V3KpiTile
+            label="Settlements"
+            value={formatQuantityTable(t.settlement_count, 0)}
+            href="/driver-finance/company-settlements"
+            testId="trip-profit-kpi-settlements"
+          />
+          <V3KpiTile
+            label="Revenue"
+            value={formatUsdCents(t.revenue_cents)}
+            href="/driver-finance/company-settlements"
+            testId="trip-profit-kpi-revenue"
+          />
+          <V3KpiTile
+            label="Quick pay"
+            value={formatUsdCents(t.quick_pay_cents)}
+            href="/driver-finance/company-settlements"
+            testId="trip-profit-kpi-quick-pay"
+          />
+          <V3KpiTile
+            label="Driver pay"
+            value={formatUsdCents(t.driver_pay_cents + t.additional_driver_pay_cents)}
+            href="/driver-finance/company-settlements"
+            testId="trip-profit-kpi-driver-pay"
+          />
+          <V3KpiTile
+            label="Net profit"
+            value={formatUsdCents(t.net_profit_cents)}
+            tone={t.net_profit_cents < 0 ? "red" : "green"}
+            href="/driver-finance/company-settlements"
+            testId="trip-profit-kpi-net-profit"
+          />
         </div>
       )}
 

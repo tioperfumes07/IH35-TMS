@@ -379,26 +379,26 @@ export function FactoringHomeBoard({
           label="Outstanding liability"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.outstanding_liability_balance)}
           sub={recourseQuery.isError ? "—" : `${formatQuantityTable(invoiceCount, 0)} invoice${invoiceCount === 1 ? "" : "s"}`}
-          onClick={() => navigate(FACTORING_TAB_PATH.recourse_pipeline)}
+          href={FACTORING_TAB_PATH.recourse_pipeline}
         />
         <V3KpiTile
           testId="factoring-kpi-advanced-mtd"
           label="Advanced MTD"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.mtd_advanced_total)}
           sub={wiresCount == null ? "—" : `${formatQuantityTable(wiresCount, 0)} wire${wiresCount === 1 ? "" : "s"}`}
-          onClick={() => navigate(FACTORING_TAB_PATH.payments_to_you)}
+          href={FACTORING_TAB_PATH.payments_to_you}
         />
         <V3KpiTile
           testId="factoring-kpi-recourse-days"
           label="Repurchase deadline"
           value={summaryQuery.isError ? "—" : `${formatQuantityTable(Number(summary?.recourse_days ?? 95), 0)} days`}
-          onClick={() => navigate(FACTORING_TAB_PATH.recourse_pipeline)}
+          href={FACTORING_TAB_PATH.recourse_pipeline}
         />
         <V3KpiTile
           testId="factoring-kpi-chargebacks"
           label="Chargebacks & fees"
           value={feesQuery.isError ? "—" : fmtMoneyDollars(chargebacksFees)}
-          onClick={() => navigate(FACTORING_TAB_PATH.chargebacks_fees)}
+          href={FACTORING_TAB_PATH.chargebacks_fees}
         />
         <V3KpiTile
           testId="factoring-kpi-true-cost"
@@ -415,7 +415,7 @@ export function FactoringHomeBoard({
               ? "—"
               : `fee ${formatUsdCents(mtdFeeCents)} + wires ${formatUsdCents(mtdWireFeeCents)}`
           }
-          onClick={() => navigate(FACTORING_TAB_PATH.purchase_report)}
+          href={FACTORING_TAB_PATH.purchase_report}
         />
       </div>
 

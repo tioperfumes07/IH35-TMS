@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~5:55 AM CT) — TripProfitability + board KPI href drills
+- **THIS:** TripProfitability totals → V3KpiTile href company-settlements · Insurance/Fuel/Factoring/Savings KPIs use href (bookmarkable drills).
+- **Prior:** #28993–#28997 merged.
+- **NEXT:** reverse-wiring continue. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~5:40 AM CT) — Settlements Home week-of MoneyCell
 - **THIS:** Settlements Home week-of roster Gross/Deductions/Reimb/Net → settlement MoneyCell.
 - **Prior:** #28994–#28996 merged.

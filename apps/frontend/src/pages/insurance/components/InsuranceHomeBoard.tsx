@@ -242,7 +242,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-kpi-active-policies"
           label="Active policies"
           value={loading && activeCount == null ? "…" : dash(activeCount)}
-          onClick={() => navigate("/insurance/policies")}
+          href="/insurance/policies"
         />
         <V3KpiTile
           testId="insurance-kpi-annual-premium"
@@ -254,7 +254,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 ? formatUsdCents(annualPremiumCents)
                 : "—"
           }
-          onClick={() => navigate("/insurance/policies")}
+          href="/insurance/policies"
         />
         <V3KpiTile
           testId="insurance-kpi-renewal"
@@ -267,13 +267,13 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 : "—"
           }
           sub={renewal ? `${formatQuantityTable(renewal.days, 0)} days` : undefined}
-          onClick={() => navigate("/insurance/policies")}
+          href="/insurance/policies"
         />
         <V3KpiTile
           testId="insurance-kpi-open-claims"
           label="Open claims"
           value={loading && openClaims == null ? "…" : dash(openClaims)}
-          onClick={() => navigate("/insurance/claims")}
+          href="/insurance/claims"
         />
         <V3KpiTile
           testId="insurance-kpi-coverage-gaps"
@@ -281,7 +281,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           value={loading && gapCount == null ? "…" : dash(gapCount)}
           sub="units without a policy"
           tone={gapCount != null && gapCount > 0 ? "red" : "ink"}
-          onClick={() => navigate("/insurance/coverage-gaps")}
+          href="/insurance/coverage-gaps"
         />
       </section> : null}
 
