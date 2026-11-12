@@ -1,53 +1,31 @@
 #!/usr/bin/env node
 /**
- * verify-factoring-r315-home-cash-flow.mjs — ROUND 315 / Lead B6
- * Home mounts FactoringCashFlowPanel; panel TOTAL PER DAY from listFactoringPurchases +
- * listPurchaseCandidates; money via formatUsdCents.
+ * verify-factoring-r315-home-cash-flow.mjs — ROUND 315 / Lead B6 → ROUND 8.19 OVERHAUL retarget
+ *
+ * Was: FactoringHome mounts FactoringCashFlowPanel (TOTAL PER DAY + projected candidates).
+ * Now: that panel is DELETED (layered under Purchase report). Account-summary FactoringHomeBoard
+ * owns the purchase chart (all periods, value axis, source drill). Negative control: Home must
+ * not remount FactoringCashFlowPanel.
  */
 import fs from "node:fs";
 
 const HOME = "apps/frontend/src/pages/factoring/FactoringHome.tsx";
-const PANEL = "apps/frontend/src/pages/factoring/FactoringCashFlowPanel.tsx";
+const BOARD = "apps/frontend/src/pages/factoring/components/FactoringHomeBoard.tsx";
 
 function analyze(src) {
   const e = [];
-  const { home, panel } = src;
-  if (!home.includes("FactoringCashFlowPanel") || !home.includes("<FactoringCashFlowPanel")) {
-    e.push("FactoringHome must mount <FactoringCashFlowPanel");
+  const { home, board } = src;
+  if (home.includes("<FactoringCashFlowPanel")) {
+    e.push("FactoringHome must NOT mount <FactoringCashFlowPanel (ROUND 8.19 OVERHAUL)");
   }
-  if (!panel.includes("listFactoringPurchases") || !panel.includes("listPurchaseCandidates")) {
-    e.push("CashFlowPanel must read purchases + candidates (CC-2 engines)");
+  if (!board.includes('data-testid="factoring-home-purchase-chart"') && !board.includes("factoring-home-purchase-chart")) {
+    e.push("FactoringHomeBoard must render factoring-home-purchase-chart");
   }
-  if (!panel.includes("formatUsdCents")) {
-    e.push("CashFlowPanel must use formatUsdCents");
+  if (!board.includes("factoring-home-purchase-chart-axis")) {
+    e.push("FactoringHomeBoard purchase chart must expose a value axis (factoring-home-purchase-chart-axis)");
   }
-  if (!panel.includes('data-testid="factoring-home-cash-flow"')) {
-    e.push("CashFlowPanel missing data-testid=factoring-home-cash-flow");
-  }
-  if (!panel.includes("TOTAL PER DAY") && !panel.includes("TOTAL PER DAY".toLowerCase()) && !/TOTAL PER DAY/i.test(panel)) {
-    e.push("CashFlowPanel must label TOTAL PER DAY");
-  }
-  if (!panel.includes("kind: \"posted\"") && !panel.includes('kind: "posted"')) {
-    e.push("CashFlowPanel must distinguish posted vs projected days");
-  }
-  // FT3 — Home KPI strip from the same ledger totals (not a second engine).
-  if (!panel.includes('data-testid="factoring-home-cash-flow-kpis"')) {
-    e.push("FT3: CashFlowPanel must render factoring-home-cash-flow-kpis strip");
-  }
-  for (const id of [
-    "factoring-home-kpi-wires",
-    "factoring-home-kpi-invoices",
-    "factoring-home-kpi-net",
-    "factoring-home-kpi-escrow",
-    "factoring-home-kpi-cash",
-    "factoring-home-kpi-projected",
-  ]) {
-    if (!panel.includes(`"${id}"`) && !panel.includes(`'${id}'`)) {
-      e.push(`FT3: CashFlowPanel missing KPI tile testid ${id}`);
-    }
-  }
-  if (!panel.includes("totals.wires") || !panel.includes("totals.net") || !panel.includes("totals.escrow")) {
-    e.push("FT3: KPI tiles must bind to posted-day ledger totals");
+  if (!/listFactoringPurchases/.test(board)) {
+    e.push("FactoringHomeBoard must read listFactoringPurchases for the purchase chart");
   }
   return e;
 }
@@ -55,7 +33,7 @@ function analyze(src) {
 function selftest() {
   const base = {
     home: fs.readFileSync(HOME, "utf8"),
-    panel: fs.readFileSync(PANEL, "utf8"),
+    board: fs.readFileSync(BOARD, "utf8"),
   };
   const clean = analyze(base);
   if (clean.length) {
@@ -63,9 +41,9 @@ function selftest() {
     process.exit(1);
   }
   const mutants = [
-    { ...base, home: base.home.replaceAll("FactoringCashFlowPanel", "X") },
-    { ...base, panel: base.panel.replaceAll("listFactoringPurchases", "listX") },
-    { ...base, panel: base.panel.replaceAll("formatUsdCents", "fmtCurrency") },
+    { ...base, home: base.home.replace("<DuplicateVendorsBanner", "<FactoringCashFlowPanel companyId={companyId} /><DuplicateVendorsBanner") },
+    { ...base, board: base.board.replaceAll("factoring-home-purchase-chart", "factoring-home-purchase-gone") },
+    { ...base, board: base.board.replaceAll("listFactoringPurchases", "listGonePurchases") },
   ];
   for (let i = 0; i < mutants.length; i++) {
     if (analyze(mutants[i]).length === 0) {
@@ -80,7 +58,7 @@ if (process.argv.includes("--selftest")) selftest();
 else {
   const fails = analyze({
     home: fs.readFileSync(HOME, "utf8"),
-    panel: fs.readFileSync(PANEL, "utf8"),
+    board: fs.readFileSync(BOARD, "utf8"),
   });
   if (fails.length) {
     console.error("verify-factoring-r315-home-cash-flow: FAIL");

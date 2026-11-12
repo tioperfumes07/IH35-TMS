@@ -117,12 +117,16 @@ function analyze(src) {
     errors.push(`${BOARD}: register #98 — True cost must not mix chargebacks-report fees or the advances summary into the ratio`);
   }
 
-  // r315 / r326 keepers still mounted on Factoring (Purchase report — not layered on every tab).
-  if (!/<FactoringCashFlowPanel/.test(home)) {
-    errors.push("FactoringHome must keep FactoringCashFlowPanel mounted (r315)");
+  // ROUND 8.19 OVERHAUL — DELETE layered FactoringCashFlowPanel (was under Purchase report).
+  // Purchase chart + KPIs live on FactoringHomeBoard (Account summary). FactoringKpiPanel stays on Reserve.
+  if (/<FactoringCashFlowPanel/.test(home)) {
+    errors.push("FactoringHome must NOT mount FactoringCashFlowPanel (ROUND 8.19 OVERHAUL — layered Purchase-report chrome deleted)");
+  }
+  if (!/factoring-home-purchase-chart/.test(board)) {
+    errors.push(`${BOARD}: ROUND 8.19 — FactoringHomeBoard must own the purchase chart (replaces deleted CashFlowPanel)`);
   }
   if (!/<FactoringKpiPanel/.test(home)) {
-    errors.push("FactoringHome must keep FactoringKpiPanel mounted (r326)");
+    errors.push("FactoringHome must keep FactoringKpiPanel mounted (r326 Reserve tab)");
   }
 
   // 443.280 — rebuild-not-layer: Home board is Account summary only; no always-on chrome stack.
@@ -283,7 +287,8 @@ if (process.argv.includes("--selftest")) {
     ["board drops purchase panel", withField("board", (s) => s.replace(/Each purchase — net to bank vs kept by Faro/g, "Gone"))],
     ["board drops Terms", withField("board", (s) => s.replace(/Terms on file/g, "Gone"))],
     ["board drops summary engine", withField("board", (s) => s.replace(/getFactoringSummary/g, "getGone"))],
-    ["home drops cash-flow panel", withField("home", (s) => s.replace(/<FactoringCashFlowPanel/g, "<GoneCash"))],
+    ["home re-layers cash-flow panel", withField("home", (s) => s.replace("<DuplicateVendorsBanner", "<FactoringCashFlowPanel companyId={companyId} /><DuplicateVendorsBanner"))],
+    ["board drops purchase chart", withField("board", (s) => s.replace(/factoring-home-purchase-chart/g, "factoring-home-purchase-gone"))],
     ["board reintroduces V3Panel", withField("board", (s) => s.replace(/<FactoringBoardCard/g, "<V3Panel"))],
     ["board True cost reverts to two sources", withField("board", (s) => s.replace(/trueCostPercent\(mtdFeeCents, mtdWireFeeCents, mtdGrossCents\)/, "trueCostPercent(mtdFactorFeeFromReportCents, 0, mtdAdvancedCents)"))],
     ["board fmtMoneyDollars stops coercing", withField("board", (s) => s.replace(/const v = Number\(n\)/, "const v = n as number"))],
