@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~4:30 AM CT) — Fuel Assignment + Relay Deposit MoneyCell wave
+- **THIS:** FuelAssignment popup amount → fuel_transaction · RelayDeposit Amount → bank_transaction / relay_topup.
+- **Prior:** #28969–#28974 merged (#28973 MAIN-RED unused helpers cleanup by other seat).
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~4:15 AM CT) — Cash Flow Rolling/DailyPrediction MoneyCell wave
 - **THIS:** Rolling Ledger income/expense Amount → document/load MoneyCell · Daily Prediction income/expense Amount → document/load MoneyCell.
 - **Prior:** #28969–#28972 merged.
