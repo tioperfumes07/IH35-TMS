@@ -12,6 +12,7 @@
 import { issuedInvoice, liveOpenInvoice } from "../../accounting/live-document-predicates.sql.js";
 import { readVendorSuggestedCategories } from "./vendor-suggested-category.js";
 import { relayFillPostedSql } from "../../fuel/relay-fill-posted.sql.js";
+import { LOADS_REPORT_SCOPE_SQL, scheduledStopDateSql } from "../../reports/loads-report.service.js";
 
 type Q = { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }> };
 export type BoardRange = "ytd" | "12m" | "all";
@@ -55,16 +56,27 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
              ON pa.payment_id = p.id AND pa.operating_company_id = p.operating_company_id
           WHERE p.operating_company_id = $1::uuid AND p.voided_at IS NULL AND p.customer_id IS NOT NULL
             AND pa.unapplied_at IS NULL AND p.payment_date >= ${from}
-          GROUP BY p.customer_id)
+          GROUP BY p.customer_id),
+       -- R5 / V3-Reports-Customers: Loads + Avg / load from the same real-loads scope as Loads report.
+       loads AS (
+         SELECT l.customer_id, count(*)::int AS loads
+           FROM mdata.loads l
+          WHERE l.operating_company_id = $1::uuid
+            AND l.customer_id IS NOT NULL
+            AND ${LOADS_REPORT_SCOPE_SQL.join(" AND ")}
+            AND ${scheduledStopDateSql("delivery")} >= ${from}
+          GROUP BY l.customer_id)
        SELECT c.id, c.customer_name AS name, c.status::text AS status, c.deactivated_at, c.factoring_eligible,
               fv.vendor_name AS factor_name, fv.id AS factor_vendor_id,
               coalesce(inv.invoices, 0) AS invoices, coalesce(inv.billed, 0) AS billed_cents, coalesce(inv.proforma, 0) AS proforma_cents, coalesce(inv.open, 0) AS open_cents,
               coalesce(collected.collected, 0) AS collected_cents, coalesce(inv.paid_invoices, 0) AS paid_invoices,
               coalesce(inv.factored_invoices, 0) AS factored_invoices,
+              coalesce(loads.loads, 0) AS loads,
               inv.last_invoice, inv.a_current, inv.a_1_30, inv.a_31_60, inv.a_61_90, inv.a_90
          FROM mdata.customers c
          LEFT JOIN inv ON inv.customer_id = c.id
          LEFT JOIN collected ON collected.customer_id = c.id
+         LEFT JOIN loads ON loads.customer_id = c.id
          LEFT JOIN mdata.vendors fv ON fv.id = c.factoring_company_vendor_id AND fv.operating_company_id = c.operating_company_id
         WHERE c.operating_company_id = $1::uuid
         ORDER BY coalesce(inv.open, 0) DESC, coalesce(inv.billed, 0) DESC, c.customer_name`,
@@ -75,11 +87,11 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
     factored: n(r.factored_invoices) > 0 ? (r.factor_name ?? "Factored") : null,
     // Rows 55/56 — the Factored cell names the factor's vendor record, so it links to it (null = no factor vendor on file).
     factor_vendor_id: n(r.factored_invoices) > 0 ? ((r.factor_vendor_id as string | null) ?? null) : null,
-    invoices: n(r.invoices), billed_cents: n(r.billed_cents), proforma_cents: n(r.proforma_cents), collected_cents: n(r.collected_cents), open_cents: n(r.open_cents),
+    invoices: n(r.invoices), loads: n(r.loads), billed_cents: n(r.billed_cents), proforma_cents: n(r.proforma_cents), collected_cents: n(r.collected_cents), open_cents: n(r.open_cents),
     paid_invoices: n(r.paid_invoices), last_invoice: r.last_invoice ?? null,
     aging: { current: n(r.a_current), d1_30: n(r.a_1_30), d31_60: n(r.a_31_60), d61_90: n(r.a_61_90), d90_plus: n(r.a_90) },
   }));
-  const withTx = rows.filter((r) => r.invoices > 0);
+  const withTx = rows.filter((r) => r.invoices > 0 || r.loads > 0);
   const sum = (k: "invoices" | "billed_cents" | "proforma_cents" | "collected_cents" | "open_cents" | "paid_invoices") => withTx.reduce((s, r) => s + r[k], 0);
   // The exact first day the board counts from — the Open invoices drill passes it as date_from.
   const rangeFrom = String((await client.query(`SELECT (${from})::text AS d`)).rows[0]?.d ?? "");
@@ -104,8 +116,11 @@ export async function readCustomerBoard(client: Q, oc: string, range: BoardRange
   };
 }
 
-export async function readVendorBoard(client: Q, oc: string, range: BoardRange) {
+export async function readVendorBoard(client: Q, oc: string, range: BoardRange, unitIds: string[] = []) {
   const from = rangeStartSql(range);
+  // R6 — Truck filter: when unit ids are selected, only expenses tagged to those units count.
+  const unitClause = unitIds.length > 0 ? `AND e.unit_id = ANY($2::uuid[])` : "";
+  const params: unknown[] = unitIds.length > 0 ? [oc, unitIds] : [oc];
   // Row 97: the account most of each vendor's live expenses post to, offered (never written) as its saved category.
   const suggestions = await readVendorSuggestedCategories(client, oc);
   const rows = (
@@ -115,12 +130,14 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
                 mode() WITHIN GROUP (ORDER BY pa.account_name) AS pays_through
            FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid AND pa.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+            ${unitClause}
           GROUP BY e.vendor_uuid),
        cat AS (
          SELECT DISTINCT ON (e.vendor_uuid) e.vendor_uuid AS vendor_id, a.account_name AS category, a.id AS category_account_id
            FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
            LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid AND a.operating_company_id = e.operating_company_id
           WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+            ${unitClause}
           GROUP BY e.vendor_uuid, a.id, a.account_name
           ORDER BY e.vendor_uuid, sum(coalesce(el.amount_cents, round(el.amount * 100))) DESC NULLS LAST),
        bills AS (
@@ -150,7 +167,7 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
             GROUP BY 1 ORDER BY count(*) DESC, 1 LIMIT 1) pt ON exp.pays_through IS NOT NULL
         WHERE v.operating_company_id = $1::uuid
         ORDER BY coalesce(exp.spend, 0) DESC, coalesce(bills.open_cents, 0) DESC, v.vendor_name`,
-      [oc]
+      params
     )
   ).rows.map((r) => ({
     id: r.id, name: r.name, status: r.deactivated_at ? "inactive" : "active", category: r.category ?? null,
@@ -167,8 +184,9 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
               coalesce(sum(coalesce(el.amount_cents, round(el.amount * 100))), 0) AS total
          FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
          LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
-        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}`,
-      [oc]
+        WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          ${unitClause}`,
+      params
     )
   ).rows[0];
   // The fuel accounts the Fuel share numerator counts — the tile drills to exactly these expense lines.
@@ -179,8 +197,9 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
          JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
         WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
           AND ${FUEL_ACCOUNT_SQL}
+          ${unitClause}
         ORDER BY 1`,
-      [oc]
+      params
     )
   ).rows.map((r) => String(r.id));
   const unposted = (
@@ -205,8 +224,9 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
          FROM accounting.expenses e JOIN accounting.expense_lines el ON el.expense_id = e.id
          LEFT JOIN catalogs.accounts a ON a.id = el.expense_account_uuid
         WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          ${unitClause}
         GROUP BY a.id, a.account_name ORDER BY 3 DESC, 2`,
-      [oc]
+      params
     )
   ).rows.map((r) => ({ account_id: (r.account_id as string | null) ?? null, category: r.category as string, spend_cents: n(r.spend) }));
   // The exact first day the board counts from — drills pass it as date_from instead of re-deriving "Jan 1" client side.
@@ -217,8 +237,9 @@ export async function readVendorBoard(client: Q, oc: string, range: BoardRange) 
               count(DISTINCT e.vendor_uuid)::int AS vendors, coalesce(sum(e.total_amount_cents), 0)::bigint AS spend
          FROM accounting.expenses e LEFT JOIN catalogs.accounts pa ON pa.id = e.payment_account_uuid
         WHERE e.operating_company_id = $1::uuid AND e.voided_at IS NULL AND e.vendor_uuid IS NOT NULL AND e.transaction_date >= ${from}
+          ${unitClause}
         GROUP BY 1, 2 ORDER BY 4 DESC, 2`,
-      [oc]
+      params
     )
   ).rows.map((r) => ({ account_id: r.account_id ?? null, account_name: r.account_name as string, vendors: n(r.vendors), spend_cents: n(r.spend) }));
   const openCheck = (
