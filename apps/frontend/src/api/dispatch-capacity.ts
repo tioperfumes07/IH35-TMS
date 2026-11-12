@@ -6,6 +6,7 @@ export type CapacitySource = "actual" | "appointment" | "scheduled" | "gps";
 export type CapacityRow = {
   unit_id: string;
   unit_number: string;
+  driver_id?: string | null;
   driver_name: string | null;
   equipment: string | null;
   equipment_source: "next_load" | "last_load" | null;

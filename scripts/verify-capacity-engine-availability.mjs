@@ -39,6 +39,10 @@ export function check(files) {
   if (/\bstatus\s+(NOT\s+)?IN\s*\(/i.test(svc)) f.push("inline status list in capacity.service.ts — use the canonical sets");
   if (!/app\.get\("\/api\/v1\/dispatch\/capacity"/.test(routes)) f.push("GET /api/v1/dispatch/capacity route missing");
   if (!/await registerCapacityRoutes\(app\);/.test(index)) f.push("registerCapacityRoutes(app) not registered in index.ts");
+  // ROUND 8.12 reverse — capacity returns driver_id so Available Trucks can EntityLink Driver.
+  if (!/d\.id::text AS driver_id/.test(svc) || !/driver_id: r\.driver_id/.test(svc)) {
+    f.push("capacity SQL/row must select and return driver_id for EntityLink");
+  }
   return f;
 }
 
