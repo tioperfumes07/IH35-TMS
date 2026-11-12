@@ -22,7 +22,7 @@ import { tr } from "./perfumeI18n";
 
 type Tab = PerfumeGridView | "lists" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
-  ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["all", "All items"],
+  ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["all", "All items"],
   ["lists", "Price lists & import"], ["review", "Review"], ["rules", "Rules"],
 ];
 
@@ -92,6 +92,7 @@ const VIEW_HELP: Record<PerfumeGridView, string> = {
   buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "Your price at My margin % against each competitor's price, with how much to raise or lower.",
+  comp: "Each competitor's margin if they buy from the cheapest supplier: that supplier's list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30 — change it in Rules) is their cost; their price less that is what they earn.",
   all: "The whole item database.",
 };
 const PAGE = 200;
@@ -105,6 +106,7 @@ function defaultVisible(view: PerfumeGridView, key: string): boolean {
   if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
+  if (view === "comp") return item || /^c:.*:(price|earn|margin)$/.test(key) || ["comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
   if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "target_price_margin", "low_sell", "target_action"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
@@ -386,6 +388,19 @@ function RulesPanel() {
       <div>
         <div className="text-section-header">{tr("perfume.desk.26", "What they earn")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.27", "My suppliers earn")} {percent("vendor_earn_pct")}{tr("perfume.desk.29", "% on their price — the Trading tab offers them their price less this (change it there for one look, or here to keep it)")}</div>
+      </div>
+      <div>
+        <div className="text-section-header">{tr("perfume.desk.34", "Competition margin — cushion by list price")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" data-testid="perfume-comp-tiers">
+          {(r.competitor_cushion_tiers ?? []).map((t, i) => (
+            <span key={i} className="inline-flex items-center gap-1">{t.over_cents === 0 ? tr("perfume.desk.35", "Any price") : `${tr("perfume.desk.36", "Over")} ${money(t.over_cents)}`}:
+              <input type="number" step="0.05" min="0" aria-label={`cushion tier ${i + 1}`} className="h-[40px] w-[96px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
+                value={(t.cushion_cents / 100).toFixed(2)}
+                onChange={(e) => setDraft({ ...draft, competitor_cushion_tiers: (r.competitor_cushion_tiers ?? []).map((x, j) => (j === i ? { ...x, cushion_cents: Math.round(Number(e.target.value) * 100) } : x)) })} />
+            </span>
+          ))}
+          <span className="text-gray-600">{tr("perfume.desk.37", "— the Competition tab takes the cheapest supplier's list price less this as each competitor's cost")}</span>
+        </div>
       </div>
       <div className="flex gap-2">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>{tr("perfume.desk.30", "Save")}</Button>

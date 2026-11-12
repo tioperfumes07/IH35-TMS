@@ -20,12 +20,24 @@ export type DeskRules = {
   vendor_earn_pct: number;
   store_earn_pct: number;
   wholesale_targets_pct: number[];
+  /** Cushion my suppliers give a competitor, by list price: the highest tier whose `over_cents` the price exceeds
+   * applies. Owner 2026-11-12: ".25 under 10 dollars, .50 of items over 10 dollars, 1.00 of items over 30 dollars".
+   * Used to estimate a competitor's cost, and from it the margin the competitor earns. */
+  competitor_cushion_tiers: Array<{ over_cents: number; cushion_cents: number }>;
   columns?: Record<string, string[]>;
 };
 export const DEFAULT_RULES: DeskRules = {
   round_step: "50", round_dir: "up", cushion_lo_cents: 25, cushion_hi_cents: 50, freight_lo_cents: 35, freight_hi_cents: 45,
   vendor_earn_pct: 16, store_earn_pct: 16, wholesale_targets_pct: [11, 12.5, 15],
+  competitor_cushion_tiers: [{ over_cents: 0, cushion_cents: 25 }, { over_cents: 1000, cushion_cents: 50 }, { over_cents: 3000, cushion_cents: 100 }],
 };
+
+/** The cushion a supplier gives on an item at this list price under the tiers (0 when no tier applies). */
+export function tieredCushionCents(priceCents: number, tiers: DeskRules["competitor_cushion_tiers"]): number {
+  let best: { over_cents: number; cushion_cents: number } | null = null;
+  for (const t of tiers ?? []) if (priceCents > t.over_cents && (best == null || t.over_cents > best.over_cents)) best = t;
+  return best?.cushion_cents ?? 0;
+}
 
 export async function getRules(c: PoolClient): Promise<DeskRules> {
   const r = await c.query<{ rules: Partial<DeskRules> }>(`SELECT rules FROM perfume.settings WHERE id = 1`);
@@ -614,7 +626,7 @@ export async function setInternalCode(c: PoolClient, itemId: string, code: strin
 
 export type ColKind = "text" | "money" | "pct" | "int";
 export type GridCol = { key: string; label: string; group: string; kind: ColKind };
-export type GridView = "buy" | "trade" | "wholesale" | "all";
+export type GridView = "buy" | "trade" | "wholesale" | "comp" | "all";
 export type GridRow = Record<string, string | number | null>;
 
 /** The margin the owner types on the grid; when none is typed, the first saved wholesale target. */
@@ -700,7 +712,23 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
   }
   // WHOLESALE — one column per competitor: its selling price.
+  // WHOLESALE — one column per competitor: its selling price.
   for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their price", group: `Competitor · ${vendorLabel(v)}`, kind: "money" });
+  // COMPETITION MARGIN — owner 2026-11-12: "a tab … an engine, check the margin of the competition if purchasing from
+  // the same vendors, the lowest cost vendors … the vendors' prices − the cushion (.25 under $10, .50 over $10, 1.00
+  // over $30) … so I can measure their margin." Their cost ≈ cheapest supplier list price − that tiered cushion.
+  cols.push(
+    { key: "comp_low_vendor", label: "Cheapest supplier", group: "Their cost", kind: "text" },
+    { key: "comp_low_list", label: "List price", group: "Their cost", kind: "money" },
+    { key: "comp_cushion", label: "Cushion", group: "Their cost", kind: "money" },
+    { key: "comp_cost", label: "Their cost ≈", group: "Their cost", kind: "money" },
+  );
+  for (const v of sellV) {
+    const g = `Margin · ${vendorLabel(v)}`;
+    cols.push({ key: `c:${v.id}:price`, label: "Their price", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:earn`, label: "They earn", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:margin`, label: "Margin %", group: g, kind: "pct" });
+  }
 
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
   const rows: GridRow[] = [];
@@ -742,10 +770,21 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // Need to buy: on my offer list and short in stock — the offered qty (or 1 when the list gives none) less my stock.
     row.my_need = myOffer != null ? Math.max(0, (offerQty ?? 1) - (myQty ?? 0)) : null;
     let low: number | null = null, lowAt: string | null = null;
+    // What a competitor most likely pays: the cheapest supplier list price for the item, less the tiered cushion.
+    let lowList: number | null = null, lowListAt: string | null = null;
+    for (const v of buyV) { const p = offersMap.get(v.id)?.price; if (p != null && (lowList == null || p < lowList)) { lowList = p; lowListAt = vendorLabel(v); } }
+    const compCushion = lowList == null ? null : Math.min(lowList, tieredCushionCents(lowList, rules.competitor_cushion_tiers));
+    const compCost = lowList == null ? null : lowList - (compCushion ?? 0);
+    row.comp_low_vendor = lowListAt; row.comp_low_list = lowList; row.comp_cushion = compCushion; row.comp_cost = compCost;
     for (const v of sellV) {
       const p = offersMap.get(v.id)?.price;
       if (p == null) continue;
       row[`s:${v.id}:price`] = p;
+      row[`c:${v.id}:price`] = p;
+      if (compCost != null) {
+        row[`c:${v.id}:earn`] = p - compCost;
+        row[`c:${v.id}:margin`] = p > 0 ? Math.round(((p - compCost) / p) * 1000) / 10 : null;
+      }
       if (low == null || p < low) { low = p; lowAt = vendorLabel(v); }
     }
     row.low_sell = low;
@@ -815,6 +854,7 @@ export function filterView(rows: GridRow[], view: GridView): GridRow[] {
   if (view === "buy") return rows.filter((r) => (r.n_vendors as number) > 0);
   if (view === "trade") return rows.filter((r) => buyPriced(r));
   if (view === "wholesale") return rows.filter((r) => r.landed_likely != null && r.low_sell != null);
+  if (view === "comp") return rows.filter((r) => r.comp_cost != null && r.low_sell != null);
   return rows;
 }
 
@@ -934,6 +974,8 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
     ["Purchase · Cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
+    ["Competition · Their cost ≈", "Cheapest supplier list price − the cushion tier ($10 and under: $0.25, over $10: $0.50, over $30: $1.00 — set in Rules)"],
+    ["Competition · They earn / Margin %", "Competitor's price − Their cost ≈; Margin % = that ÷ the competitor's price"],
     ["Trading · They earn ≈", "(Their list price − their cushion) − Sell to them ≈ — what that supplier makes on it"],
     ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
     ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],

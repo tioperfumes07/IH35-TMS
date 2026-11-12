@@ -65,6 +65,7 @@ const rulesSchema = z.object({
   vendor_earn_pct: z.number().min(0).max(99).optional(),
   store_earn_pct: z.number().min(0).max(99).optional(),
   wholesale_targets_pct: z.array(z.number().min(0).max(99)).max(6).optional(),
+  competitor_cushion_tiers: z.array(z.object({ over_cents: z.number().int().min(0).max(1_000_000), cushion_cents: z.number().int().min(0).max(10_000) })).max(6).optional(),
   columns: z.record(z.string(), z.array(z.string()).max(200)).optional(),
 });
 const rowSchema = z.object({
@@ -95,7 +96,7 @@ const importSchema = z.object({
   replaces_current: z.boolean().optional(),
 });
 const gridQuery = z.object({
-  view: z.enum(["buy", "trade", "wholesale", "all"]).default("buy"),
+  view: z.enum(["buy", "trade", "wholesale", "comp", "all"]).default("buy"),
   sort: z.string().max(120).optional(),
   dir: z.enum(["asc", "desc"]).default("asc"),
   q: z.string().max(200).default(""),

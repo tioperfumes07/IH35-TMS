@@ -31,10 +31,12 @@ export type PerfumeRules = {
   vendor_earn_pct: number;
   store_earn_pct: number;
   wholesale_targets_pct: number[];
+  /** Cushion by list price for a competitor's cost: highest tier whose over_cents the price exceeds. */
+  competitor_cushion_tiers: Array<{ over_cents: number; cushion_cents: number }>;
 };
 export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int" };
 export type PerfumeGridRow = Record<string, string | number | null>;
-export type PerfumeGridView = "buy" | "trade" | "wholesale" | "all";
+export type PerfumeGridView = "buy" | "trade" | "wholesale" | "comp" | "all";
 export type PerfumeGrid = {
   cols: PerfumeGridCol[];
   rows: PerfumeGridRow[];
