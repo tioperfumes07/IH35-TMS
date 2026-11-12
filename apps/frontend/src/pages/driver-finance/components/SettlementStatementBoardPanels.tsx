@@ -6,6 +6,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
+import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3, V3_TABLE } from "../../../design/v3-tokens";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../../lib/money";
@@ -182,62 +183,79 @@ export function SettlementStatementBoardPanels({
       style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginTop: 10, marginBottom: 12 }}
     >
       <BoardSection title="Earnings — by load" testId="settlement-statement-panel-earnings">
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
-          <thead>
-            <tr>
-              <th style={th}>Load</th>
-              <th style={th}>Lane</th>
-              <th style={thRight}>Miles (doc)</th>
-              <th style={thRight}>Rate</th>
-              <th style={thRight}>Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {earnings.length === 0 ? (
-              <tr>
-                <td style={td} colSpan={5}>
-                  —
-                </td>
-              </tr>
-            ) : (
-              earnings.map((row) => (
-                <tr key={row.id}>
-                  <td style={td}>
-                    {row.load_id ? (
-                      <EntityLink
-                        kind="load"
-                        id={row.load_id}
-                        label={entityLabel(row.load_number, row.load_id, "Load")}
-                      />
-                    ) : (
-                      row.load_number ?? "—"
-                    )}
-                  </td>
-                  <td style={{ ...td, whiteSpace: "normal", maxWidth: 220 }}>{laneLabel(row)}</td>
-                  <td style={tdRight}>{fmtMiles(row.miles)}</td>
-                  <td style={tdRight}>{fmtRate(row.rate)}</td>
-                  <MoneyTd
+        <ParityTable
+          appearance="board"
+          title="Earnings — by load"
+          columns={
+            [
+              {
+                key: "load",
+                label: "Load",
+                render: (row) =>
+                  row.load_id ? (
+                    <EntityLink
+                      kind="load"
+                      id={row.load_id}
+                      label={entityLabel(row.load_number, row.load_id, "Load")}
+                    />
+                  ) : (
+                    row.load_number ?? "—"
+                  ),
+              },
+              {
+                key: "lane",
+                label: "Lane",
+                render: (row) => <span className="whitespace-normal">{laneLabel(row)}</span>,
+              },
+              {
+                key: "miles",
+                label: "Miles (doc)",
+                cellClass: "text-right",
+                render: (row) => fmtMiles(row.miles),
+              },
+              {
+                key: "rate",
+                label: "Rate",
+                cellClass: "text-right",
+                render: (row) => fmtRate(row.rate),
+              },
+              {
+                key: "amount",
+                label: "Amount",
+                cellClass: "text-right",
+                render: (row) => (
+                  <MoneyCell
                     cents={Math.round(row.amount * 100)}
                     format={dollarsAsCentsFormat}
-                    loadId={row.load_id}
+                    drill={
+                      row.load_id
+                        ? { entity: { kind: "load", id: row.load_id } }
+                        : { entity: { kind: "settlement", id: settlementId } }
+                    }
                   />
-                </tr>
-              ))
-            )}
-            <tr>
-              <td style={{ ...td, fontWeight: 700, borderBottom: "none" }} colSpan={2}>
-                Gross pay
-              </td>
-              <td style={{ ...tdRight, fontWeight: 700, borderBottom: "none" }}>{fmtMiles(grossMiles)}</td>
-              <td style={{ ...tdRight, borderBottom: "none" }}>{""}</td>
-              <MoneyTd
+                ),
+              },
+            ] satisfies ParityColumn<StatementEarningsRow>[]
+          }
+          rows={earnings}
+          rowKey={(row) => row.id}
+          emptyText="—"
+          storageKey="settlement-statement-earnings-panel"
+          tableTestId="settlement-statement-earnings-table"
+          suppressToolbarSearch
+          suppressToolbarRange
+          footerCells={{
+            load: "Gross pay",
+            miles: fmtMiles(grossMiles),
+            amount: (
+              <MoneyCell
                 cents={Math.round(grossPayDollars * 100)}
                 format={dollarsAsCentsFormat}
-                style={{ fontWeight: 700, borderBottom: "none" }}
+                drill={{ entity: { kind: "settlement", id: settlementId } }}
               />
-            </tr>
-          </tbody>
-        </table>
+            ),
+          }}
+        />
       </BoardSection>
 
       <BoardSection title="Deductions · reimbursements · net" testId="settlement-statement-panel-deductions">
