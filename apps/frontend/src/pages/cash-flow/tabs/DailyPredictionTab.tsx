@@ -308,7 +308,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             <EntityLinkOrTombstone
               kind="customer"
               id={item.customer_id}
-              name={ledgerPartyLabel({ ...row, counterparty: customerName })}
+              name={ledgerPartyLabel({ ...item, counterparty: customerName })}
               noun="Customer"
               className="font-medium"
               data-testid="cash-flow-predicted-customer-link"

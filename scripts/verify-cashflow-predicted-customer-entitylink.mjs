@@ -85,6 +85,13 @@ function audit({ svc = read(SVC), fe = read(FE), api = read(API), receipts = rea
   if (!/kind=["']customer["']/.test(fe)) {
     failures.push(`${FE}: must EntityLink kind=customer`);
   }
+  // ParityTable render param is `item` — `{ ...row }` is a ReferenceError when customer_id is set.
+  if (/ledgerPartyLabel\(\{\s*\.\.\.row\b/.test(fe)) {
+    failures.push(`${FE}: customer link must spread item (not undefined row) into ledgerPartyLabel`);
+  }
+  if (!/ledgerPartyLabel\(\{\s*\.\.\.item\b/.test(fe)) {
+    failures.push(`${FE}: customer link must call ledgerPartyLabel({ ...item, counterparty })`);
+  }
   if (/entityLabel\(item\.customer_name,\s*null/.test(fe) && !/item\.customer_id \?/.test(fe)) {
     failures.push(`${FE}: customer still always rendered with null id`);
   }
