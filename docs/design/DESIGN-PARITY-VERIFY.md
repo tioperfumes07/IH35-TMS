@@ -2,6 +2,8 @@
 
 ## Deployed repair acceptance — Legal L3, 11-11 23:15 ET
 
+Factoring follow-up on the same deployed frontend: account-summary begins with the five approved KPI tiles and purchase/terms panels (FA1 ordering gap no longer observed). Aging now exposes Invoice Date/Purchase Date/Fund Date; clicking Invoice then Purchase changes selected state, explanatory caption and date-column header.17rows render. This closes the missing-selector observation only; independent date-source/aging arithmetic and every drill remain UNVERIFIED. No import, terms edit, submission, or money action invoked. CSS1440x900 and private screenshot captured. Whole Factoring board remains OPEN.
+
 Render independently confirms frontend `dep-dbqjngijnfac73bkhh9g` status=live at `772f69a30f48f35a5627e027c0a20d7d3c7ce125` (#28941), finished2026-11-12T04:10:51Z. Fresh Chrome1440x900: Legal Signed pipeline link opens `status=signed_electronically`, Signed checkbox alone is checked, and zero contract rows render. Selecting Draft as a second status and applying yields two draft rows and both repeated status query parameters. Back returns `/legal`. L3 wrong-stage drill CLOSED-LIVE (bounded), including multi-select mechanics and negative control; no contract writes/voids/sends. Full Legal board/modals/financial correctness remain OPEN. Screenshots private inline, no identities or financial records committed.
 
 ## Certification coverage correction — Maintenance Settings and census floor

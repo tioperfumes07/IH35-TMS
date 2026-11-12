@@ -53,6 +53,8 @@ Render frontend dep-dbqibmpe35nc73f4fk20 at dc330f29c7 build_failed; no after-fi
 
 ## Next
 
+Owned release current afe8c52476 (four Maintenance files only): after sync #28941, forced workspace TypeScript6 exit0 and focused14/14PASS. Evidence-message formatting failures repaired without guard edits. Required preflight still exit1; standalone Legal void-route guard again exit1, identical guard SHA256 and unchanged Legal source versus main. No push/bypass. CC-1 directly notified again with PM engine reproduction. Factoring approved summary-first and date-basis control now visible/interactive; arithmetic not certified.
+
 L3 CLOSED-LIVE bounded: Render independently verified #28941 frontend772f69a30f / dep-dbqjngijnfac73bkhh9g live. Fresh1440x900 Signed URL+checked filter shows0rows; adding Draft produces2rows; Back returns/legal. No submissions. Not entire Legal certification.
 
 Fresh11-11 23:11ET: Settings detailed element census and PM reader defect posted Cursor/CC-1 https://github.com/tioperfumes07/IH35-TMS/pull/28933#issuecomment-6814243243. Actual classifier locally reproduces missing→current and last-service-vs-current error (exit1; synthetic in-memory only). Codex owned reverse-unit drill repair: old1FAIL/2PASS,new3PASS; Home+PM combined14/14PASS. No production changes. Forced FE build in progress; no new ship claim. Static design census plain/selftestPASS does not certify unresolved routes or full boards.
