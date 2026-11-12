@@ -2,7 +2,13 @@
 
 ## Fresh verification — 2026-11-11 22:16–22:22 ET
 
+### Customers continuation — read-only 1440x900
+
+Bounded PASS: nine overview column labels/order, six KPI labels, five chips, Factored chip reduces91→38 records, customer detail and canonical create form open. FAIL C-return: detail Back drops `chip=factored` and returns91 records (`CustomerDetail.tsx:1045`). FAIL C-create-return: opening then closing Create Customer leaves `/customers?view=detail` and the legacy master-detail page instead of the originating approved board. `routes/manifest.tsx:53` sets detail+create; `Customers.tsx:650` clears only create; `PartyBoard.tsx:232` retains legacy page. Preserve originating board/query state and add behavioral round-trip tests. No form fields typed, no Save, no production mutation. Full customer subtabs and financial correctness remain UNVERIFIED.
+
 ### Cash Flow continuation — 22:40 ET
+
+Vendor create-return also FAILS: approved board30rows → Create Vendor → Close leaves `/vendors?view=detail`, legacy master-detail page with zero displayed transaction rows. `Vendors.tsx:242` clears only create; shared manifest forces detail. No submission. Reference six KPI labels, category/payment panels and seven named vendor columns are present, but full reverse wiring remains OPEN. Private screenshot captured. Customer/Vendor shared handoff: https://github.com/tioperfumes07/IH35-TMS/pull/28900#issuecomment-6813800079.
 
 Cash Flow Home net matrix drill opens the selected week in Rolling Ledger and Home navigation returns correctly: bounded navigation PASS. Full amount-drill FAIL: Home includes run-rate forecast components, while the destination displays due documents and no bridge from the clicked forecast net. This is a missing explanatory/source drill, not proof of a wrong posted ledger. Preserve scenario, bucket, opening cash and forecast assumptions in the drill before certification. Source `CashFlowHomeTab.tsx:546,631`; [Cursor handoff](https://github.com/tioperfumes07/IH35-TMS/pull/28907#issuecomment-6813717730). Private screenshot, no production mutation.
 
