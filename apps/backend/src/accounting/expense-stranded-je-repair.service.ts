@@ -8,11 +8,17 @@
  * NO 'expense' lines — so the old path found nothing, got SOURCE_NOT_FOUND, swallowed it, and
  * completed the void stamp leaving the fuel JEs live.
  *
- * Fix: for every USMCA expense that is voided (voided_at IS NOT NULL) but has no reversal JE
- * (reversed_by_je_id IS NULL) and still carries live postings, call
- * reverseExpenseDocumentInClientTx (ACCT-F4431310 engine — handles both 'expense' and 'fuel_event'
- * sources), then link reversed_by_je_id.  After this runs, verify-void-is-whole baseline
- * shrinks from count=10 to count=1 (only the 1 silent-void on loads remains).
+ * Four of the five affected expenses are fuel-linked and have a GHOST reversed_by_je_id — a UUID
+ * stamped on the expense during an earlier partial repair attempt whose JE was never committed to
+ * accounting.journal_entries.  Those four are excluded by the original `reversed_by_je_id IS NULL`
+ * filter; the fix broadens the candidate query to also include expenses where reversed_by_je_id
+ * points to a non-existent JE.
+ *
+ * Fix: for every USMCA expense that is voided (voided_at IS NOT NULL) and either has no reversal
+ * JE (reversed_by_je_id IS NULL) or carries a ghost reversed_by_je_id pointing to a missing JE,
+ * call reverseExpenseDocumentInClientTx (ACCT-F4431310 engine — handles both 'expense' and
+ * 'fuel_event' sources), then link reversed_by_je_id.  After this runs, verify-void-is-whole
+ * baseline shrinks from count=10 to count=1 (only the 1 silent-void on loads remains).
  *
  * Pattern: each expense is reversed in its own committed transaction (idempotent;
  * resolveExpenseDocumentLivePostings will return all-false for already-fixed documents).
@@ -56,7 +62,13 @@ async function findCandidates(companyId: string): Promise<StrandedExpense[]> {
          FROM accounting.expenses e
         WHERE e.operating_company_id = $1::uuid
           AND e.voided_at IS NOT NULL
-          AND e.reversed_by_je_id IS NULL
+          AND (
+            e.reversed_by_je_id IS NULL
+            OR NOT EXISTS (
+              SELECT 1 FROM accounting.journal_entries je
+              WHERE je.id = e.reversed_by_je_id
+            )
+          )
         ORDER BY e.transaction_date, e.expense_number`,
       [companyId]
     );
@@ -116,10 +128,11 @@ export async function repairStrandedExpenseJes(input: {
           expenseReverser: "source",
         });
         const jeId = rev.reversal_journal_entry_id;
-        // Link the reversing JE back to the expense header (the original void left this NULL).
+        // Link the reversing JE back to the expense header.  Use $2 directly (not COALESCE) so
+        // ghost reversed_by_je_id values (pointing to non-existent JEs) are overwritten.
         await client.query(
           `UPDATE accounting.expenses
-              SET reversed_by_je_id = COALESCE($2::uuid, reversed_by_je_id),
+              SET reversed_by_je_id = $2::uuid,
                   updated_at = now()
             WHERE id = $1::uuid AND operating_company_id = $3::uuid`,
           [exp.id, jeId, input.companyId]
