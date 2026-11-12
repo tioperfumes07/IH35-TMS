@@ -15,6 +15,7 @@ import {
   type FactoringPurchaseListRow,
 } from "../../api/factoring-purchases";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -233,56 +234,93 @@ export function PaymentsToYouPanel({ companyId, dateFrom, dateTo, filterBar, sum
       label: "Gross",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.gross_cents),
+      render: (row) => (
+        <MoneyCell cents={Number(row.gross_cents ?? 0)} drill={{ entity: { kind: "factoring_purchase", id: row.id } }} />
+      ),
     },
     {
       key: "escrow_reserve_cents",
       label: "Escrow rsv",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.escrow_reserve_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.escrow_reserve_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "cash_reserve_cents",
       label: "Cash rsv",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.cash_reserve_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.cash_reserve_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "fee_cents",
       label: "Fees",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(cents(row.fee_cents) + cents(row.wire_fee_cents)),
+      render: (row) => (
+        <MoneyCell
+          cents={cents(row.fee_cents) + cents(row.wire_fee_cents)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "net_to_company_cents",
       label: "Net paid to IH35",
       sortable: true,
       cellClass: "text-right tabular-nums font-semibold",
-      render: (row) => formatUsdCents(row.net_to_company_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.net_to_company_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "running_escrow_cents",
       label: "Run escrow",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.running_escrow_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.running_escrow_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "running_cash_cents",
       label: "Run cash rsv",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.running_cash_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.running_cash_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "running_net_cents",
       label: "Run net paid",
       sortable: true,
       cellClass: "text-right tabular-nums",
-      render: (row) => formatUsdCents(row.running_net_cents),
+      render: (row) => (
+        <MoneyCell
+          cents={Number(row.running_net_cents ?? 0)}
+          drill={{ entity: { kind: "factoring_purchase", id: row.id } }}
+        />
+      ),
     },
     {
       key: "bank_transaction_id",

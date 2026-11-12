@@ -1,7 +1,10 @@
+## OUTBOX (11-13-2026 ~2:35 AM CT) — Settlements/Insurance/Factoring MoneyCell wave
+- **SHIPS:** ROUND 8.13 #28903 closed · M3 #28966/#28967 (verify-step 20020) · Cash Advance amount · SettlementsTable gross/ded/net · Company Settlements money · Claims claimed/paid/deductible · Payment Schedule amount/late fee · Payments to You wire amounts → MoneyCell.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~2:20 AM CT) — ROUND 8.13 #28903 closed · M3 claim #28966 · wiring 20020
-- **DONE:** Closed #28903 (CONFLICTING; BOARD-45 register already has #28895–#28902 wave on main). CLAIM-RESERVE #28966 verify-step 20020. Wiring `20020-verify-statement-advances-recovered-source.mjs` next (orphan → CI).
-- **Guards:** verify-statement-advances-recovered-source plain+selftest OK; verify-guard-wired PASS with step file present.
-- **NEXT:** merge M3 wire; reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+- **DONE:** Closed #28903. CLAIM #28966 + wire #28967 verify-step 20020 (**MERGED**). M3 green.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
 
 ## OUTBOX (11-13-2026 ~2:05 AM CT) — Fuel spend + Escrow register MoneyCells
 - **SHIPS:** #28953–#28964 Fuel spend + Escrow register MoneyCells (merged).
