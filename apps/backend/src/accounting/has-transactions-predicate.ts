@@ -17,21 +17,25 @@
 // join happens.
 
 /** `idExpr` is the exact SQL expression for the candidate row's own id (e.g. "id" when the query's
- * FROM has no alias, or "c.id" when it does) — this function never introduces its own alias. */
-export function customerHasTransactionsSql(idExpr: string): string {
+ * FROM has no alias, or "c.id" when it does) — this function never introduces its own alias.
+ * `opcoExpr` is the SQL expression for `operating_company_id` to scope the correlated EXISTS
+ * subqueries explicitly (e.g. "$1::uuid"). Required: the inner tables are RLS-protected and
+ * return 0 rows without either the GUC or an explicit company predicate; always pass the bound
+ * parameter — never `current_setting(...)::uuid` alone (empty GUC → silent 0). */
+export function customerHasTransactionsSql(idExpr: string, opcoExpr: string): string {
   return `(
-    EXISTS (SELECT 1 FROM accounting.invoices i WHERE i.customer_id = ${idExpr} AND i.status NOT IN ('proforma', 'void'))
-    OR EXISTS (SELECT 1 FROM accounting.payments p WHERE p.customer_id = ${idExpr})
-    OR EXISTS (SELECT 1 FROM accounting.credit_memos cm WHERE cm.customer_id = ${idExpr})
+    EXISTS (SELECT 1 FROM accounting.invoices i WHERE i.customer_id = ${idExpr} AND i.status NOT IN ('proforma', 'void') AND i.operating_company_id = ${opcoExpr})
+    OR EXISTS (SELECT 1 FROM accounting.payments p WHERE p.customer_id = ${idExpr} AND p.operating_company_id = ${opcoExpr})
+    OR EXISTS (SELECT 1 FROM accounting.credit_memos cm WHERE cm.customer_id = ${idExpr} AND cm.operating_company_id = ${opcoExpr})
   )`;
 }
 
-/** Same idExpr contract as customerHasTransactionsSql. */
-export function vendorHasTransactionsSql(idExpr: string): string {
+/** Same idExpr/opcoExpr contract as customerHasTransactionsSql. */
+export function vendorHasTransactionsSql(idExpr: string, opcoExpr: string): string {
   return `(
-    EXISTS (SELECT 1 FROM accounting.bills b WHERE b.vendor_uuid = ${idExpr}::text AND b.status != 'void')
-    OR EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.vendor_uuid = ${idExpr} AND e.voided_at IS NULL)
-    OR EXISTS (SELECT 1 FROM fuel.fuel_transactions f WHERE f.vendor_id = ${idExpr} AND f.voided_at IS NULL)
-    OR EXISTS (SELECT 1 FROM accounting.vendor_credits vc WHERE vc.vendor_id::text = ${idExpr}::text)
+    EXISTS (SELECT 1 FROM accounting.bills b WHERE b.vendor_uuid = ${idExpr}::text AND b.status != 'void' AND b.operating_company_id = ${opcoExpr})
+    OR EXISTS (SELECT 1 FROM accounting.expenses e WHERE e.vendor_uuid = ${idExpr} AND e.voided_at IS NULL AND e.operating_company_id = ${opcoExpr})
+    OR EXISTS (SELECT 1 FROM fuel.fuel_transactions f WHERE f.vendor_id = ${idExpr} AND f.voided_at IS NULL AND f.operating_company_id = ${opcoExpr})
+    OR EXISTS (SELECT 1 FROM accounting.vendor_credits vc WHERE vc.vendor_id::text = ${idExpr}::text AND vc.operating_company_id = ${opcoExpr})
   )`;
 }

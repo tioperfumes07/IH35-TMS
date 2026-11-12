@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1579,
+  "migration_count": 1581,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -6308,6 +6308,10 @@
       "checksum": "6ea5641d473dcfadf7109aabff71913c41910ea009741efbfa807f41b60c61cb"
     },
     {
+      "filename": "202616480200_dispatch_capacity_load_board_audit_triggers.sql",
+      "checksum": "fc9323aeb527ddf8706d319b8445e81af4733301e7a16ef04f5e9151d3bb01fb"
+    },
+    {
       "filename": "202616490100_perfume_desk_isolated_schema.sql",
       "checksum": "9dbadf6c0e96ee0bf6319554aff5e70eadea6df6d7cf2a96a12c790ad3d13c51"
     },
@@ -6318,6 +6322,10 @@
     {
       "filename": "202616501200_settlement_lines_reinstated_from_void_je_same_entity_fk.sql",
       "checksum": "0cc0c489ab9a2f072dde8e9a8a0632297abf7952fa1a36c2d41262ca4291bbd3"
+    },
+    {
+      "filename": "202616510100_settlement_lines_reinstated_je_same_entity_fk.sql",
+      "checksum": "395a09c276232d91c049590a6630669a2cf9ee6d14f6328a0148a70562c10441"
     }
   ]
 }
