@@ -1839,6 +1839,21 @@ export function ParityTable<T>({
         style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: Math.max(minWidthPx, proportionalMinTable) } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
         data-table-appearance={appearance}
       >
+        {/* GROUPED-WIDTH FIX (owner 2026-11-12, perfume desk: every column rendered 117px): under table-layout:fixed
+            the browser sizes columns from the FIRST row. With columnGroups that row is the colSpan'd group band,
+            whose cells carry no widths, so every column split evenly and the leaf <th> widths below were ignored.
+            A <colgroup> carries the same per-column widths the leaf headers use, so auto-fit and drag-resize apply. */}
+        {columnGroups && columnLayout !== "auto" ? (
+          <colgroup data-testid="parity-table-colgroup">
+            {renderExpanded ? <col style={{ width: 32 }} /> : null}
+            {selectable ? <col style={{ width: TABLE_SELECT_COLUMN_PX }} /> : null}
+            {visibleColumns.map((column) => {
+              const w = widthFor(column);
+              return <col key={String(column.key)} style={w ? { width: cssWidthFor(w, column) } : undefined} />;
+            })}
+            {rowActions ? <col style={{ width: rowActionsWidth }} /> : null}
+          </colgroup>
+        ) : null}
         <thead
           className={stickyHeader ? "sticky top-0 z-10" : ""}
           style={{ backgroundColor: resolvedHeaderBg, color: resolvedHeaderInk }}

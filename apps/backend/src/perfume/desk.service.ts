@@ -62,7 +62,7 @@ export function toCents(v: unknown): number | null {
 /* ---------------- vendors ---------------- */
 
 export type VendorRow = {
-  id: string; name: string; kind: "buy" | "sell" | "both";
+  id: string; name: string; kind: "buy" | "sell" | "both" | "offer" | "inventory";
   cushion_lo_cents: number | null; cushion_hi_cents: number | null; freight_lo_cents: number | null; freight_hi_cents: number | null;
   earn_pct: string | null; sells_by_box: boolean; contact: string | null; column_mapping: Record<string, unknown>;
 };
@@ -632,8 +632,12 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.
   const earnTyped = opts.earnPct == null ? null : earnPctOf(rules, opts.earnPct);
   const vendors = await listVendors(c);
-  const buyV = vendors.filter((v) => v.kind !== "sell");
-  const sellV = vendors.filter((v) => v.kind !== "buy");
+  const buyV = vendors.filter((v) => v.kind === "buy" || v.kind === "both");
+  const sellV = vendors.filter((v) => v.kind === "sell" || v.kind === "both");
+  // My own lists (owner 2026-11-12): my offer list to clients and my inventory (stock, quantities, last cost).
+  // Never a supplier and never a competitor; each new upload replaces the last.
+  const offerV = vendors.filter((v) => v.kind === "offer");
+  const invV = vendors.filter((v) => v.kind === "inventory");
   const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null; description: string }>(
     // A vendor can have several current lists (full list + new arrivals). For each item the vendor's NEWEST
     // current list that carries it sets the price (list date, then import time); within that list, the lowest line.
@@ -671,6 +675,13 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     { key: "low_sell", label: "Lowest competitor", group: "Mine", kind: "money" },
     { key: "target_action", label: "Raise / lower", group: "Mine", kind: "text" },
   ];
+  // My lists' columns appear only once that list is uploaded (no empty columns before the first upload).
+  const hasInv = prices.rows.some((p) => invV.some((v) => v.id === p.vendor_id));
+  const hasOffer = prices.rows.some((p) => offerV.some((v) => v.id === p.vendor_id));
+  const mineCols: GridCol[] = [];
+  if (hasInv) mineCols.push({ key: "my_qty", label: "My stock", group: "Mine", kind: "int" }, { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" });
+  if (hasOffer) mineCols.push({ key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" }, { key: "my_need", label: "Need to buy", group: "Mine", kind: "int" });
+  cols.splice(cols.findIndex((c) => c.group === "Mine"), 0, ...mineCols);
   // PURCHASE — one column per supplier: its price.
   // Owner 2026-11-12: "in purchase … I just need their list price and the price after the cushion."
   for (const v of buyV) {
@@ -716,6 +727,17 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     } else {
       row.n_vendors = 0;
     }
+    // My lists: stock and last cost from my inventory, my offer price (and the qty I offer) from my offer list.
+    let myQty: number | null = null, myCost: number | null = null, myOffer: number | null = null, offerQty: number | null = null;
+    for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; } }
+    for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; offerQty = o.qty ?? offerQty; } }
+    row.my_qty = myQty;
+    row.my_last_cost = myCost;
+    row.my_offer_price = myOffer;
+    row.in_offer = myOffer != null ? 1 : 0;
+    row.in_inventory = myQty != null ? 1 : 0;
+    // Need to buy: on my offer list and short in stock — the offered qty (or 1 when the list gives none) less my stock.
+    row.my_need = myOffer != null ? Math.max(0, (offerQty ?? 1) - (myQty ?? 0)) : null;
     let low: number | null = null, lowAt: string | null = null;
     for (const v of sellV) {
       const p = offersMap.get(v.id)?.price;
@@ -755,7 +777,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.trade_beats = beats.length ? beats.join(", ") : null;
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
-    row.carried_by = vendors.filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
+    row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
   return { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct };
@@ -775,6 +797,15 @@ function round1(v: number | null): number | null {
 
 function buyPriced(r: GridRow): boolean {
   return Object.keys(r).some((k) => k.startsWith("t:") && k.endsWith(":list") && r[k] != null);
+}
+
+/** Owner 2026-11-12: "a selector that will only show items from my list that I offer or from my needs list". */
+export type MineFilter = "offer" | "inventory" | "need";
+export function filterMine(rows: GridRow[], mine: MineFilter | undefined): GridRow[] {
+  if (mine === "offer") return rows.filter((r) => r.in_offer === 1);
+  if (mine === "inventory") return rows.filter((r) => r.in_inventory === 1);
+  if (mine === "need") return rows.filter((r) => Number(r.my_need ?? 0) > 0);
+  return rows;
 }
 
 export function filterView(rows: GridRow[], view: GridView): GridRow[] {

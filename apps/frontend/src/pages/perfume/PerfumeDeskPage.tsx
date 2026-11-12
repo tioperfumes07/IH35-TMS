@@ -102,11 +102,11 @@ function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
   // who is cheapest, then each supplier's list price and price after cushion. No cost / price / profit columns.
-  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || key === "best_vendor";
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
-  if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || key === "landed_likely";
-  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "target_price_margin", "low_sell", "target_action"].includes(key);
-  return item || ["upc", "landed_likely", "best_vendor", "low_sell"].includes(key);
+  if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
+  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "target_price_margin", "low_sell", "target_action"].includes(key);
+  return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
 
 const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
@@ -125,6 +125,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
   const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
+  // Owner 2026-11-12: "a selector that will only show items from my list that I offer or from my needs list".
+  const [mine, setMine] = useState<"offer" | "inventory" | "need" | null>(null);
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE);
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
@@ -144,8 +146,8 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     if (t !== target) { setTarget(t); setPage(1); }
   };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
@@ -270,6 +272,14 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
                 />
               </label>
             ) : null}
+            <span className="flex items-center gap-1" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
+              {([[null, "All items"], ["offer", "My offer list"], ["inventory", "My inventory"], ["need", "Need to buy"]] as const).map(([k, l]) => (
+                <button key={String(k)} type="button" aria-pressed={mine === k} onClick={() => { setMine(k); setPage(1); }}
+                  className={`h-[34px] rounded-sm border px-2 text-xs font-semibold ${mine === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>
+                  {tr(`perfume.desk.mine.${k ?? "all"}`, l)}
+                </button>
+              ))}
+            </span>
             {FACETS.map((f) => (
               <MultiSelectDropdown
                 key={f.key}
