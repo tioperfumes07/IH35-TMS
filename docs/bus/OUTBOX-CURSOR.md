@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~3:50 AM CT) — MAIN-RED settlement-linkage owner-pending alignment
+- **THIS:** verify-load-settlement-linkage orphans exclude OWNER_PENDING_UNLINKED (shared lib with load-to-cash). Does NOT raise orphan baseline 0. 13544/13563 stay CC-1 to link.
+- **NEXT:** reverse-wiring after green. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~3:35 AM CT) — MAIN-RED canonicalNotCancelled for relationship scorer
 - **THIS:** scorer.service.ts uses canonicalNotCancelledLoadClause; removed from one-canonical-active-load-set baseline (1→0 debt).
 - **LIVE FAIL (ops/CC):** load 13700 driver_bills; settlement orphans. CodeQL WriteCheckForm + auth.routes.

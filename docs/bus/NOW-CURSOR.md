@@ -1,6 +1,6 @@
-<!-- heartbeat 2026-11-12T09:30Z Cursor MAIN-RED session -->
-# NOW — CURSOR — MAIN-RED canonical load set + reverse-wiring
+<!-- heartbeat 2026-11-12T09:44Z Cursor MAIN-RED session -->
+# NOW — CURSOR — MAIN-RED settlement-linkage orphans + reverse-wiring
 
-**ACTIVE:** relationship-score scorer → canonicalNotCancelledLoadClause; shrink baseline.
+**ACTIVE:** Align settlement-linkage orphans with OWNER_PENDING_UNLINKED (13544/13563). Shared lib.
 
-**EXTERNAL LIVE:** load 13700; settlement orphans; CodeQL WriteCheckForm/auth.routes. Neon 202616501200. Codex LIVE. No match/Dreamline.
+**EXTERNAL:** CC-1 still must link owner-pending loads. CodeQL WriteCheckForm/auth. Neon 202616501200. Codex LIVE. No match/Dreamline.
