@@ -34,7 +34,9 @@ export function check(src) {
   const out = [];
   const i = src.indexOf('if (type === "fuel_event") {\n    // LST-F11163');
   if (i < 0) return ["the fuel_event document branch (LST-F11163) was not found"];
-  const branch = src.slice(i, src.indexOf("return rewriteDocumentLine(client, companyId, { ...p, source_transaction_type: \"expense\"", i));
+  const branchEnd = src.indexOf("rewriteDocumentLine(client, companyId, { ...p, source_transaction_type: \"expense\"", i);
+  if (branchEnd < 0) return ["the fuel_event branch does not hand the adopting expense line to rewriteDocumentLine"];
+  const branch = src.slice(i, branchEnd);
   if (!/WITH RECURSIVE chain\(je, depth\)/.test(branch) || !/accounting\.reclassify_batch_lines bl\s+ON bl\.reclass_journal_entry_id = c\.je/.test(branch) || !/bl\.result = 'applied'/.test(branch))
     out.push("the lookup does not walk a reclassification entry back to its root entry (reclassify_batch_lines)");
   if (!/\[companyId, adoptedEntryId, p\.source_transaction_id/.test(branch))
@@ -52,6 +54,15 @@ export function check(src) {
   // … and the item and its account are written in ONE statement (the categorization trigger checks every row write).
   if (!/\$\{accountCol\} = CASE WHEN \$3::uuid IS NOT NULL THEN COALESCE\(\$5::uuid, \$\{accountCol\}\)/.test(src))
     out.push("the item and its account are not written in one statement (line_account_differs_from_item in between)");
+  // LST-F11166 — the batch line names the document line actually rewritten (commit-time trigger 202615360800), and
+  // undo restores item + account in one statement.
+  if (!/return \{ \.\.\.rw, document: \{ type: "expense", id: a\.expense_id, line_id: a\.line_id \} \};/.test(src) ||
+      !/doc \? doc\.type : p\.source_transaction_type, doc \? doc\.id : p\.source_transaction_id, doc \? doc\.line_id : p\.source_transaction_line_id/.test(src))
+    out.push("the batch line does not name the adopting expense line a fuel purchase was rewritten on (LST-F11166)");
+  if (!/if \(reeferNote\) info\.push\(reeferNote\);/.test(src) || /if \(reeferNote\) notes\.push\(reeferNote\);/.test(src))
+    out.push("the reefer sync's success note is counted as a refusal (LST-F11166)");
+  if (!/\$\{accountCol\} = CASE WHEN \$2 AND \$6::uuid IS NOT NULL THEN \$6::uuid ELSE \$\{accountCol\} END/.test(src))
+    out.push("undo does not restore the item with its account in one statement (LST-F11166)");
   return out;
 }
 
@@ -66,6 +77,9 @@ function selftest() {
     ["no record-less match", src.replace("OR (e.source_fuel_transaction_id IS NULL", "OR (false"), "record-less document"],
     ["exactly-one weakened", src.replace("if (adopt.rows.length !== 1) {", "if (adopt.rows.length === 0) {"), "exactly-one-document"],
     ["fuel by item refused", src.replace("if (!fuelByItem && (target.to_item_id || target.to_load_id)", "if ((target.to_item_id || target.to_load_id)"), "cannot move by item"],
+    ["batch line names fuel posting", src.replace("doc ? doc.type : p.source_transaction_type, doc ? doc.id : p.source_transaction_id, doc ? doc.line_id : p.source_transaction_line_id", "p.source_transaction_type, p.source_transaction_id, p.source_transaction_line_id"), "name the adopting expense line"],
+    ["undo item then account", src.replace("${accountCol} = CASE WHEN $2 AND $6::uuid IS NOT NULL THEN $6::uuid ELSE ${accountCol} END", "${accountCol} = ${accountCol}"), "undo does not restore"],
+    ["reefer note refuses", src.replace("if (reeferNote) info.push(reeferNote);", "if (reeferNote) notes.push(reeferNote);"), "success note is counted as a refusal"],
     ["item then account", src.replace("${accountCol} = CASE WHEN $3::uuid IS NOT NULL THEN COALESCE($5::uuid, ${accountCol}) ELSE ${accountCol} END", "${accountCol} = ${accountCol}"), "one statement"],
   ];
   for (const [name, planted, needle] of plants) {

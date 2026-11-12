@@ -79,9 +79,11 @@ describe("reclassify engine — a fuel receipt moves by load, whole and alone (4
     expect(eligible.map((p) => p.posting_id)).toEqual(["p1", "p2"]);
   });
 
-  it("a fuel_event load move with an account change in the same batch is refused by name; an item move stays refused", () => {
+  it("a fuel_event load move with an account change in the same batch is refused by name; an item move with a load move stays refused", () => {
     expect(classifySelection([fuelLine()], { to_load_id: NEW, to_account_id: "acc-x" }).refused[0]?.why).toMatch(/moves to another load on its own/);
-    expect(classifySelection([fuelLine()], { to_item_id: "item-x" }).refused[0]?.why).toMatch(/carry no item \/ load/);
+    expect(classifySelection([fuelLine()], { to_item_id: "item-x", to_load_id: NEW }).refused[0]?.why).toMatch(/carry no item \/ load/);
+    // LST-F11165 — by item alone a fuel purchase's adopting expense line is rewritten (owner ruling 2026-11-09)
+    expect(classifySelection([fuelLine()], { to_item_id: "item-x" }).refused).toEqual([]);
   });
 
   it("a fuel_event line already on the target load is refused as no change", () => {
