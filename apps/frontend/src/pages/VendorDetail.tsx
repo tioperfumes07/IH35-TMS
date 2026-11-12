@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
+import { partyBoardReturnHref } from "../lib/partyBoardReturn";
 import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } from "../api/accounting";
 import { listVendorCredits } from "../api/vendor-credits";
 import { ApiError, apiRequest } from "../api/client";
@@ -452,7 +453,7 @@ export function VendorDetailPage() {
           <div className="text-xs text-[#1F2A44]" role="alert">
             This vendor is archived or is not available in the selected company. Historical transactions remain preserved.
           </div>
-          <Button variant="secondary" onClick={() => navigate("/vendors")}>
+          <Button variant="secondary" onClick={() => navigate(partyBoardReturnHref("vendors"))}>
             Back to Vendors
           </Button>
         </div>
@@ -464,7 +465,7 @@ export function VendorDetailPage() {
     return (
       <div className="space-y-3">
         <div className="text-xs text-red-600">Vendor not found.</div>
-        <Button variant="secondary" onClick={() => navigate("/vendors")}>
+        <Button variant="secondary" onClick={() => navigate(partyBoardReturnHref("vendors"))}>
           Back to Vendors
         </Button>
       </div>
@@ -484,9 +485,9 @@ export function VendorDetailPage() {
     <div className="space-y-3">
       <PageHeader
         title={vendor.name}
-        backHref="/vendors"
+        backHref={partyBoardReturnHref("vendors")}
         breadcrumb={[
-          { label: "Vendors", href: "/vendors" },
+          { label: "Vendors", href: partyBoardReturnHref("vendors") },
           { label: vendor.name },
         ]}
         subtitle={vendor.vendor_type}

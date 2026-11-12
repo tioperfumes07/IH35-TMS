@@ -9,11 +9,12 @@
  * show (search, aging filter, column chooser, the full governed column set) lives on the master-detail directory,
  * reached by "View all →" (?view=detail) — never on or under this board. The VENDORS home is VendorsHomeBoard.tsx.
  */
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, apiRequest } from "../../api/client";
 import { V3 } from "../../design/v3-tokens";
+import { rememberPartyBoardReturn } from "../../lib/partyBoardReturn";
 import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 import { formatCompanyName } from "../../lib/formatCompanyName";
 import { formatUsdCents, formatUsdCentsTable } from "../../lib/money";
@@ -90,6 +91,10 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       else params.set("chip", next);
       return params;
     }, { replace: true });
+  // Codex cert: detail Back must restore this board's chip/range (EntityLink drops query).
+  useEffect(() => {
+    rememberPartyBoardReturn("customers", `${location.pathname}${location.search}`);
+  }, [location.pathname, location.search]);
   const exportRef = useRef<() => void>(() => undefined);
   const q = useQuery({
     queryKey: ["party-board", props.kind, props.operatingCompanyId, range],

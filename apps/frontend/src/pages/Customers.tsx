@@ -9,6 +9,7 @@ import { EntityLink } from "../components/shared/EntityLink";
 import { customerQualityKind, customerQualityClass } from "../lib/quality-badge";
 import { formatQuantityTable, formatUsdCents } from "../lib/money";
 import { customerIsSelectable } from "../lib/customer-selectable";
+import { clearPartyCreateParams } from "../lib/partyBoardReturn";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllInvoices, listAllCustomerInvoices, type Invoice } from "../api/accounting";
@@ -649,7 +650,9 @@ export function CustomersPage() {
   };
   const closeCreate = () => {
     if (searchParams.get("create") !== "1") return;
-    const next = new URLSearchParams(searchParams);
+    // Codex cert: clear create + view=detail so Close returns to the approved board with chip/range.
+    // verify-modal-close-retracts-url: keep next.delete("create") literal in this file.
+    const next = clearPartyCreateParams(searchParams);
     next.delete("create");
     setSearchParams(next, { replace: true });
   };

@@ -46,11 +46,39 @@ function DriverHubRoute() {
 function PartyListRoute({ kind, children }: { kind: PartyKind; children: ReactNode }) {
   const { selectedCompanyId } = useCompanyContext();
   const [params, setParams] = useSearchParams();
-  const detailActive = params.get("view") === "detail" || ["customer", "vendor", "create", "tab", "listTab", "category"].some((k) => params.has(k));
-  const setDetail = (on: boolean) => setParams(on ? { view: "detail" } : {}, { replace: false });
+  // Codex cert: create alone must not wipe board chips — view=detail hosts the create modal on the
+  // legacy page, but chip/range stay on the URL. create is NOT a detailActive key by itself after
+  // close (close clears create+view); while create=1, view=detail is also set by onCreate.
+  const detailActive = params.get("view") === "detail" || ["customer", "vendor", "tab", "listTab", "category"].some((k) => params.has(k));
+  const setDetail = (on: boolean) =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (on) next.set("view", "detail");
+        else {
+          next.delete("view");
+          next.delete("create");
+        }
+        return next;
+      },
+      { replace: false },
+    );
   return (
-    <PartyListSwitch kind={kind} operatingCompanyId={selectedCompanyId ?? null} detail={children} detailActive={detailActive}
-      setDetail={setDetail} onCreate={() => setParams({ view: "detail", create: "1" })} />
+    <PartyListSwitch
+      kind={kind}
+      operatingCompanyId={selectedCompanyId ?? null}
+      detail={children}
+      detailActive={detailActive}
+      setDetail={setDetail}
+      onCreate={() =>
+        setParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("view", "detail");
+          next.set("create", "1");
+          return next;
+        })
+      }
+    />
   );
 }
 
