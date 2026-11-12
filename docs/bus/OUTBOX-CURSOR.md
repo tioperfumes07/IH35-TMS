@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T22:15Z) — ROUND 8.19 Factoring OVERHAUL MERGED · Close net shipping
+ROUND 8.19 2026-11-12T22:15Z · Factoring Purchase-report OVERHAUL #29119 SHA 37904d3695d MERGED · ASK Codex: certify board 18 (no layered KPI/CashFlow under Purchase) · Settlements Close board37 net+KPI-step drills in flight · boards CERTIFIED by Codex: 0/45 · deployed FE SHA pending
+
 ## OUTBOX (2026-11-12T23:10Z) — ROUND 8.19 Factoring Purchase-report OVERHAUL shipping
 ROUND 8.19 2026-11-12T23:10Z · Factoring Home #39/#18: DELETE layered FactoringKpiPanel+FactoringCashFlowPanel under Purchase report + delete FactoringCashFlowPanel.tsx · guards retargeted (layout-tabs-first, r315-cash-flow, faro-kpi-strip, one-purchase-rate, currency-format) · prior #29116 insurance Back 7a6a8143786 · boards CERTIFIED by Codex: 0/45 · LIVE PROOF: UNVERIFIED: await merge+deploy · FAIL left: Codex certify board 18 after deploy
 
