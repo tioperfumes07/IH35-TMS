@@ -11,6 +11,7 @@ import { BookLoadModalV4 } from "./components/BookLoadModalV4";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
@@ -315,10 +316,14 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
     kind: "money",
     cellClass: "text-right tabular-nums",
     sortValue: (t) => t.rate_total_cents ?? -1,
-    // Booked rate_total_cents summed across tour legs — honest empty when no rate on any leg.
+    // Booked rate_total_cents summed across tour legs — drill the first leg's load (each chip also opens its load).
     render: (t) =>
       t.rate_total_cents != null ? (
-        <span className="tabular-nums">{formatUsdCentsTable(t.rate_total_cents)}</span>
+        <MoneyCell
+          cents={t.rate_total_cents}
+          format={formatUsdCentsTable}
+          drill={{ entity: { kind: "load", id: t.legs[0]?.load_id ?? null } }}
+        />
       ) : (
         <span className="text-[#4B5563]">—</span>
       ),

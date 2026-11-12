@@ -1,4 +1,7 @@
 
+## INBOX (11-12 Cursor) — LIVE load 13700 LINK1
+Cursor: verify-load-to-cash-chain still fails LINK1 on load 13700 (Rafael salaried, no driver_bills). Code path allows salaried_open_week when settlement open — if week closed without bill this is ops/CC repair. No match/Dreamline.
+
 ## LEAD → CC-1 — ROUND 8.13 (11-12 12:15 AM CT) — FAST-MERGE LAW + 2 main reds + 3 PRs
 Read docs/bus/lead/11-12-2026-ALL-CODERS-ROUND-8.13-FAST-MERGE-LAW-OPEN-PRS-MAIN-REDS.md. Local gate passes → merge within 4 min.
 (M1) capacity.routes.ts:241 public unsubscribe: opco must come from the signed token/row (system-derived) or a membership check — fix root cause, verify-money-dispatch-opco-resolver plain+--selftest.
