@@ -20,7 +20,8 @@
  *  - All 15 named nav items exist in FactoringHome.tsx's SUBNAV, in the doc's own order.
  *  - The 5 pre-existing internal-ops tabs are NOT deleted (Rule 07) — still present, reachable
  *    via the "Internal Tools" dropdown.
- *  - The Aging tab renders the real column set (ID/Memos/Invoice/Debtor/PO/Other Ref/Inv Date/
+ *  - The Aging tab renders the real column set (ID/Memos/Invoice/Debtor/PO/Other Ref/
+ *    Invoice|Purchase|Fund Date via agingDateColumnLabel + date-basis toggle /
  *    Due Date/Age/0-30/31-60/61-90/90+/Balance/Purchase) built on the recourse-pipeline data
  *    (no fabricated new data source), with a summary strip (Total Records + the 4 buckets +
  *    Total Balance).
@@ -150,22 +151,26 @@ export function checkInternalToolsPreserved(src) {
 
 export function checkAgingReal(src) {
   const failures = [];
-  // Window bumped 6000->9000 (2026-09-09): the aging table has legitimately grown two real
-  // columns since this window was sized (Settlement EntityLink, real advance-linked when present
-  // + lc_settlement_number fallback) -- same content requirement, more real content to scan past.
-  const agingSection = src.split('show("aging")')[1]?.slice(0, 9000) ?? "";
+  // Window bumped 6000->9000 (2026-09-09) -> 14000 (2026-11-11): Aging gained Settlement +
+  // Invoice/Purchase/Fund Date basis toggle chrome before the ParityTable column list.
+  const agingSection = src.split('show("aging")')[1]?.slice(0, 14000) ?? "";
   if (!agingSection) {
     failures.push(`${HOME}: could not find the aging tab block.`);
     return failures;
   }
   const requiredColumnLabels = [
-    '"ID"', '"Memos"', '"Invoice"', '"Debtor"', '"PO"', '"Other Ref"', '"Inv Date"', '"Due Date"',
+    '"ID"', '"Memos"', '"Invoice"', '"Debtor"', '"PO"', '"Other Ref"', '"Due Date"',
     '"Age"', '"0-30"', '"31-60"', '"61-90"', '"90+"', '"Balance"', '"Purchase"',
   ];
   for (const label of requiredColumnLabels) {
     if (!agingSection.includes(`label: ${label}`)) {
       failures.push(`${HOME}: aging table missing required column label ${label}.`);
     }
+  }
+  // Inv Date is now the Faro basis toggle (Invoice/Purchase/Fund Date) via agingDateColumnLabel.
+  if (!/agingDateColumnLabel\(agingDateBasis\)/.test(agingSection) ||
+      !/factoring-aging-date-basis-toggle/.test(agingSection)) {
+    failures.push(`${HOME}: aging table must wire Invoice/Purchase/Fund Date basis via agingDateColumnLabel + toggle.`);
   }
   if (!/factoring-aging-total-records/.test(agingSection) ||
       !/factoring-aging-total-balance/.test(agingSection)) {
@@ -422,6 +427,7 @@ if (process.argv.includes("--selftest")) {
   const internalBlock = INTERNAL_TOOLS_IDS.map((id) => `  { id: "${id}", label: "x" },`).join("\n");
   const agingBlock = `
     show("aging") ? (
+      <div data-testid="factoring-aging-date-basis-toggle" />
       <ParityTable
         columns={[
           { key: "id", label: "ID" },
@@ -430,7 +436,7 @@ if (process.argv.includes("--selftest")) {
           { key: "debtor", label: "Debtor" },
           { key: "po", label: "PO" },
           { key: "other_ref", label: "Other Ref" },
-          { key: "inv_date", label: "Inv Date" },
+          { key: "ageDate", label: agingDateColumnLabel(agingDateBasis) },
           { key: "due_date", label: "Due Date" },
           { key: "age", label: "Age" },
           { key: "b1", label: "0-30" },

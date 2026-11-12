@@ -269,13 +269,19 @@ export async function registerFactoringRoutes(app: FastifyInstance) {
               inv.invoice_id,
               inv.customer_id,
               inv.load_id,
+              inv.issue_date AS invoice_date,
+              fa.faro_purchase_date AS purchase_date,
+              fa.advanced_at AS fund_date,
               sett.settlement_id,
               sett.settlement_display_id,
               ${LOAD_COST_ROLLUP_SELECT},
               COUNT(*) OVER()::int AS _total_count
             FROM views.factoring_recourse_at_risk rr
+            LEFT JOIN accounting.factoring_advances fa
+              ON fa.id = rr.factoring_advance_id
+             AND fa.operating_company_id = rr.operating_company_id
             LEFT JOIN LATERAL (
-              SELECT i.id AS invoice_id, i.customer_id, i.source_load_id AS load_id
+              SELECT i.id AS invoice_id, i.customer_id, i.source_load_id AS load_id, i.issue_date
               FROM accounting.invoices i
               WHERE i.factoring_advance_id = rr.factoring_advance_id
                 AND i.operating_company_id = rr.operating_company_id

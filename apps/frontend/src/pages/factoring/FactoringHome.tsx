@@ -1,5 +1,11 @@
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
 import { ImportFaroPurchaseReportAction } from "../../components/imports/OwnerImportActions";
+import {
+  AGING_DATE_BASIS_OPTIONS,
+  agingDateColumnLabel,
+  agingDateForBasis,
+  type AgingDateBasis,
+} from "./agingDateBasis";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
@@ -392,6 +398,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // REG-044: Summary/Detail toggle for all factoring tabs (Account Summary, Aging,
   // Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import).
   const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
+  // Faro Aging "View by Invoice / Purchase / Fund Date" — real columns from recourse-pipeline.
+  const [agingDateBasis, setAgingDateBasis] = useState<AgingDateBasis>("fund");
   const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
   const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
   const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("summary");
@@ -807,16 +815,16 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   });
 
   // FAC-09a Aging Report — built on the same recourseQuery rows (no new fetch). Age = days since
-  // factored_at (the closest real "when this invoice entered the factoring register" field this
-  // data model has); Balance = invoice_amount (live-verified: sums to $151,740.00 across all 51
-  // rows, matching the owner's own doc). See agingBucketFor/daysSince above.
+  // the selected Faro date basis (Invoice issue_date / Faro purchase_date / Fund advanced_at),
+  // falling back to factored_at when that basis is null. Balance = invoice_amount.
   const agingRows = useMemo(
     () =>
       (recourseQuery.data?.invoices ?? []).map((row) => {
-        const age = daysSince(row.factored_at);
-        return { ...row, age, bucket: agingBucketFor(age) };
+        const ageDate = agingDateForBasis(row, agingDateBasis);
+        const age = daysSince(ageDate);
+        return { ...row, ageDate, age, bucket: agingBucketFor(age) };
       }),
-    [recourseQuery.data?.invoices],
+    [recourseQuery.data?.invoices, agingDateBasis],
   );
   const agingTotals = useMemo(() => {
     const totals: Record<AgingBucket | "balance", number> = { "0-30": 0, "31-60": 0, "61-90": 0, "90+": 0, balance: 0 };
@@ -2509,8 +2517,30 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
           <BoardSection
             title={`Aging Report — as of ${fmtDate(new Date().toISOString())}`}
             testId="factoring-aging-summary"
-            headerRight={summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
-            subtitle='Aged by factored date — Invoice/Purchase/Fund Date toggle not wired (one real date field).'
+            headerRight={
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex" data-testid="factoring-aging-date-basis-toggle" role="group" aria-label="Age by date">
+                  {AGING_DATE_BASIS_OPTIONS.map((opt, idx) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      data-testid={`factoring-aging-date-basis-${opt.id}`}
+                      className={`${idx > 0 ? "border-l border-gray-300 " : ""}px-2.5 py-1 text-xs font-semibold ${
+                        agingDateBasis === opt.id
+                          ? "bg-[#1F2A44] text-white"
+                          : "bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"
+                      }`}
+                      aria-pressed={agingDateBasis === opt.id}
+                      onClick={() => setAgingDateBasis(opt.id)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {summaryDetailToggle(agingView, setAgingView, "factoring-aging")}
+              </div>
+            }
+            subtitle={`Aged by ${agingDateColumnLabel(agingDateBasis).toLowerCase()} — missing values fall back to advance register date.`}
           >
             <div className="grid grid-cols-2 gap-2 px-3.5 py-2 sm:grid-cols-3 lg:grid-cols-6" data-testid="factoring-aging-summary-strip">
               <div className="border border-gray-200 p-2 text-center">
@@ -2533,9 +2563,8 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               </div>
             </div>
             <p className="sr-only" data-testid="factoring-aging-date-basis-note">
-              Aged by factored date (the date each invoice entered the factoring register) —
-              the real portal's "View by Invoice Date / Purchase Date / Fund Date" toggle is not
-              wired this pass; this data model has one real date field to age against.
+              Aged by {agingDateColumnLabel(agingDateBasis)} (Invoice issue_date / Faro purchase_date /
+              Fund advanced_at). Null basis dates fall back to factored_at.
             </p>
           </BoardSection>
           <BoardSection title="Aging — detail" testId="factoring-aging-table">
@@ -2608,7 +2637,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                           row.lc_settlement_number || "—"
                         ),
                     },
-                    { key: "factored_at", label: "Inv Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.factored_at) },
+                    {
+                      key: "ageDate",
+                      label: agingDateColumnLabel(agingDateBasis),
+                      sortable: true,
+                      sortValue: (row: (typeof agingRows)[number]) => row.ageDate,
+                      render: (row: (typeof agingRows)[number]) => fmtDate(row.ageDate),
+                    },
                     { key: "recourse_expiry_date", label: "Due Date", sortable: true, render: (row: (typeof agingRows)[number]) => fmtDate(row.recourse_expiry_date) },
                     { key: "age", label: "Age", sortable: true, cellClass: "text-right", render: (row: (typeof agingRows)[number]) => formatQuantityTable(row.age, 0) },
                     { key: "b0_30", label: "0-30", cellClass: "text-right", render: (row: (typeof agingRows)[number]) => (row.bucket === "0-30" ? fmtCurrency(row.invoice_amount) : "—") },

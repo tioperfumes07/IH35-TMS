@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~10:40 PM CT) — Factoring Aging Invoice/Purchase/Fund Date toggle
+- **THIS:** recourse-pipeline returns invoice_date + purchase_date + fund_date; Aging toggle ages buckets/Inv column by selected basis (fallback factored_at). Vitest agingDateBasis 3/3.
+- **NEXT:** Codex LIVE Aging toggle; reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~10:25 PM CT) — Settlement Document Designs route
 - **THIS:** /driver-finance/settlements/document-designs mounts approved SettlementDocumentDesigns.html (iframe) + Settlements shell back-link + subnav.
 - **NEXT:** Codex LIVE specimen page; reverse-wiring. No match/Dreamline.
@@ -177,11 +181,6 @@
 ## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave12
 - **PRIOR:** prior low-guard board wave.
 - **THIS:** 7 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave11
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 2 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
 - **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE
