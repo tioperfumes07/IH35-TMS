@@ -1,3 +1,7 @@
+## OUTBOX (11-12-2026 ~1:40 AM CT) — high-water #28913; reverse-wiring wave
+- **SHIPS:** #28911 FinalizeBlock Save Draft → PATCH …/acknowledge · #28912 Fuel Assignment Proposed Settlement EntityLink · #28913 Factoring Messages tel/mailto contacts · #28895–#28910 go26/Document Designs/Aging.
+- **NEXT:** Reverse-wiring spot checks continue; Map/DAT360 honest-gated; Legal signed bulk-void stays skipped (executed signatures). Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~1:10 AM CT) — high-water #28909; Cursor FE go26 raw tables cleared
 - **SHIPS THIS WAVE:** #28895–#28909 Document Designs, Aging date-basis, go26 Cash Advances/Statement/CF3/CF Home/Planner (raw_table 41→33), tips/register.
 - **NEXT:** Reverse-wiring spot checks; FinalizeBlock draft API still deferred; Map/DAT360 honest-gated; Codex LIVE. No match/Dreamline.
@@ -119,70 +123,5 @@
 - **THIS:** #28882 — Timeline/Driver/Loads apply entityFilters; Driver MultiSelect + AssignDriverDropdown HR Active+Probation; guards updated. Vitest 7/7; assign-driver guards PASS.
 - **NEXT:** Codex LIVE Filters multi-select proof; reverse-wiring audits on Cursor boards. No match/Dreamline.
 
-## OUTBOX (11-11-2026 ~8:40 PM CT) — Planner entityFilters + HR Active/Probation roster (#28836)
-- **PRIOR:** #28878 AvailableTrucks drawer; BOARD-45 CODE 45/45.
-- **THIS:** Codex ROUND 8.5/#28836: planner Driver MultiSelect uses HR Active+Probation (not movement Active); Timeline/Driver/Loads planners apply shared entityFilters; AssignDriverDropdown preload roster same; tests cover 2-driver multi-select + timeline filter.
-- **NEXT:** Codex LIVE proofs on Filters multi-select deploy; reverse-wiring audits. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~6:30 PM CT) — AvailableTrucks ParityDrawer surface-bar mapped (home.truck_line)
-- **PRIOR:** #28877 Codex LIVE tip; #28876 R5/R6; 45/45 CODE.
-- **THIS:** Map AvailableTrucksPage ParityDrawer → home.truck_line owned_surface_paths. Guard PASS.
-- **NEXT:** Codex LIVE proofs; residual Legal bulk-void honest-disabled (no backend). No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~6:20 PM CT) — BOARD-45 source CODE 45/45; tipped Codex for LIVE proof
-- **PRIOR:** #28876 R5/R6; #28875 raw_font_sizes 0.
-- **THIS:** Register 45/45 CODE. Tipped INBOX-CODEX for ROUND 8.12 LIVE screenshots + wiring tables. Cursor continues reverse-link audits on owned boards.
-- **NEXT:** Reverse-wiring spot checks; Codex LIVE. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~6:15 PM CT) — BOARD-45 R5/R6: Customers Loads/Avg·load + Vendors Truck/Card payables (45/45 CODE)
-- **PRIOR:** #28875 raw_font_sizes→0 + register 43/45.
-- **THIS:** party-board customer loads CTE; Vendor Truck unit_id filter + Card payables KPI. Register 45/45 CODE. LIVE proofs remain Codex.
-- **NEXT:** Codex LIVE verify; Cursor reverse-wiring audits. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:55 PM CT) — BOARD-45: raw_font_sizes 79→0 + completion register (43/45 CODE; R5/R6 Cascade OPEN)
-- **PRIOR:** Owner no-stop until all 45; #28870 type-scale.
-- **THIS:** App-wide locked type scale — every remaining text-[Npx] → semantic classes; baseline raw_font_sizes **0**. BOARD-45-COMPLETION-REGISTER.md: 43 CODE, #30/#31 Cascade OPEN (R5/R6). Shared shell 42px/66px/Inter. No match/Dreamline.
-- **NEXT:** Cascade R5/R6; Codex LIVE proof per board. Cursor continues reverse-wiring audits on #4–8/#12–21/#32–42.
-
-## OUTBOX (11-11-2026 ~5:35 PM CT) — OWNER: do not stop until all 45 boards COMPLETE (full wire, reverse, no layer)
-- **PRIOR:** #28870 type-scale; #28871 Lead 8.7d settlements.
-- **THIS:** Owner: all 45 boards — modules/tabs/subtabs fully built to spec, fully connected/wired/rendering, NOT layered on old code, DOUBLE WIRED + REVERSED. No pause. No drift. Executing ROUND 8.12 Cursor set first (#4–8,#12–21,#32–42), then other-seat boards with SURFACE-BREACH per owner design-complete authorization.
-- **NEXT:** Board #12 TruckPlanner DONE proof ship → #13 → #14–17 → Settlements → Factoring/Fuel/Insurance/Legal/CashFlow. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:45 PM CT) — Dispatch LoadStops/LoadHistory residual type-scale (raw_font_sizes 82→79)
-- **PRIOR:** #28869 BookLoad helpers 103→82; #28867 T5; #28866 R2; #28864/#28865 owner FULL BOARD law to all seats.
-- **THIS:** LoadStopsRecordTab + LoadHistoryDetailPanel text-[11px]/text-[12px] → text-section-header/text-xs. Baseline 82→79.
-- **NEXT:** ROUND 8.12 Cursor boards live proof (screenshots + wiring tables). No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:35 PM CT) — BookLoad residual text-[11px] → text-section-header (raw_font_sizes 103→82)
-- **PRIOR:** #28867 Settlements T5 ReadyDots; #28866 R2; #28864 owner order.
-- **THIS:** BookLoadStops/Equipment/Customer + book-load-v4 helpers use text-section-header. Baseline banked 103→82. ROUND 8.12 continues.
-- **NEXT:** Cursor boards #12–21 / #4–8 / #32–42 under ROUND 8.12. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:25 PM CT) — ROUND 8.12 progress + Settlements T5 ReadyDots follow ready_total
-- **PRIOR:** #28866 R2 raw_font_sizes 133→103; #28864 owner full-board order.
-- **THIS:** Settlements Open ReadyDots no longer hard-code 6 — dots = engine `ready_total` (— when unmeasured). Board order Settlement→Driver→Unit→Tour legs already live. ROUND 8.12 Cursor boards in progress: #12 TruckPlanner / #13 LoadHistory / #14–17 BookLoad coded pending live proof; #33 Open T5 readiness prose aligned.
-- **NEXT:** Continue Cursor 8.12 boards (#32–42 Settlements, #18 Factoring, #19 Fuel, #20 Insurance, #21 Legal, #4–8 Cash Flow). No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:15 PM CT) — ROUND 8.11 R2 FIXED: raw_font_sizes 133→103 (BookLoad + Planner semantic classes)
-- **PRIOR:** #28864 owner ALL-CODERS full-board order relayed.
-- **THIS:** BookLoadModalV4 + DispatchPlannersLayout `text-[11px]` → `text-section-header`. ui-design-system-ratchet PASS; baseline banked 129→103. ROUND 8.12 boards next. No match/Dreamline.
-- **NEXT:** ROUND 8.12 first Cursor board DONE (TruckPlanner / LoadHistory / BookLoad). Cascade R5 remains Cascade.
-
-## OUTBOX (11-11-2026 ~5:00 PM CT) — OWNER ORDER relayed to ALL CODERS: full board-identical NOT shell
-- **PRIOR:** #28862 PostingGrid appearance=board; unowned pages/portal appearance sweep DONE.
-- **THIS:** Posted `docs/bus/lead/11-11-2026-ALL-CODERS-OWNER-ORDER-FULL-BOARD-IDENTICAL-NOT-SHELL.md`. Owner verbatim: design changes pages/tabs/modules/subtabs — full complete build exactly as design, not shell, not over previous. Tipped INBOX Cursor/Cascade/Codex/CC-1/CC-2/CC-3.
-- **NEXT:** Cursor continues owned dispatch + unowned board engines under this law. Cascade R5; CC-1/2/3/Codex on their seats. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:45 PM CT) — Residual ParityTables appearance=board wave24 (PostingGrid) + unowned pages DONE
-- **PRIOR:** #28861 CustomerDetail appearance=board.
-- **THIS:** PostingGrid appearance=board (unowned components/accounting). Unowned pages/portal ParityTable appearance sweep complete. Accounting/Banking/Maint/Safety/Reports page trees remain other-seat. Cascade owns R5.
-- **NEXT:** other-seat owned board tables; Cascade R5. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~5:35 PM CT) — Residual ParityTables appearance=board wave23 (CustomerDetail)
-- **PRIOR:** prior residual board wave.
-- **THIS:** CustomerDetail appearance=board (5 tables). Engines unchanged. Cascade owns R5.
-- **NEXT:** remaining residuals / done. No match/Dreamline.
-
 ## ARCHIVE
-Older tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.
+Older Cursor outbox tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.
