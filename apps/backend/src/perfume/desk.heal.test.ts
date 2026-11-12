@@ -128,3 +128,46 @@ describeIntegration("a full list replaces the vendor's older lists (real Postgre
     expect(byId.get(fresh.list_id)).toMatchObject({ is_current: true, voided: false });
   });
 });
+
+describeIntegration("another vendor's list never renames an item; the UPC still links it (real Postgres, rolled back)", () => {
+  let db: pg.Client;
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    db = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL!));
+    await db.connect();
+    await db.query("BEGIN");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+  });
+  afterAll(async () => {
+    await db?.query("ROLLBACK").catch(() => {});
+    await db?.end().catch(() => {});
+  });
+
+  it("Lux (no gender column) does not strip MTZ's reading; Lux's KISMET ANGEL line links to MTZ's item by UPC", async () => {
+    const mk = async (name: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ($1, 'buy') RETURNING id`, [name])).rows[0].id;
+    const mtz = await mk("HEALTEST MTZ"), lux = await mk("HEALTEST LUX");
+    const imp = (vendor: string, file: string, rows: Array<Record<string, unknown>>) => importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: vendor, list_date: "2026-11-12", file_name: file, source_kind: "xlsx", rows_read: rows.length,
+      file_price_total_cents: rows.reduce((t, r) => t + Math.round(Number(r.price) * 100), 0), rows: rows as never,
+    });
+    await imp(mtz, "mtz.xlsx", [
+      { row_no: 1, upc: "6290360590004", brand: "MAISON ALHAMBRA", description: "MAISON ALHAMBRA BRONZE 3.4 EDP M  (128948) - United Arab Emirates - 24pcs ByBox", price: "11.00" },
+      { row_no: 2, upc: "6290360590011", brand: "MAISON ALHAMBRA", description: "MAISON ALHAMBRA KISMET MAGIC 3.4 EDP M  (129438) - United Arab Emirates - 24pcs ByBox", price: "12.00" },
+    ]);
+    const before = (await db.query<{ display_name: string }>(`SELECT i.display_name FROM perfume.items i JOIN perfume.item_upcs u ON u.item_id = i.id WHERE u.upc = '6290360590004'`)).rows[0].display_name;
+    const { check } = await imp(lux, "lux.xlsx", [
+      { row_no: 1, upc: "6290360590004", description: "AL HAMBRA BRONZE FOR MEN 100ML EDP SPRAY", price: "10.50" },
+      { row_no: 2, upc: "6290360590011", description: "AL HAMBRA KISMET ANGEL 100ML EDP SPRAY", price: "10.75" },
+    ]);
+    const after = (await db.query<{ display_name: string }>(`SELECT i.display_name FROM perfume.items i JOIN perfume.item_upcs u ON u.item_id = i.id WHERE u.upc = '6290360590004'`)).rows[0].display_name;
+    expect(after).toBe(before);
+    expect(check.items_renamed).toBe(0);
+    expect(check.by_method.upc).toBe(2);
+    const magic = (await db.query<{ n: string }>(
+      `SELECT count(*)::text n FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.item_upcs u ON u.item_id = r.item_id
+        WHERE l.vendor_id = $1 AND u.upc = '6290360590011'`, [lux])).rows[0].n;
+    expect(magic).toBe("1");
+    const magicName = (await db.query<{ display_name: string }>(`SELECT i.display_name FROM perfume.items i JOIN perfume.item_upcs u ON u.item_id = i.id WHERE u.upc = '6290360590011'`)).rows[0].display_name;
+    expect(magicName).toContain("KISMET MAGIC");
+  });
+});

@@ -209,6 +209,19 @@ export class ImportCheckFailed extends Error {
 }
 
 /** Saves a list. Refuses (writes nothing) when the file total and the saved total differ by even one cent. */
+/** Items whose earliest priced line came from ANOTHER vendor (that vendor created them), excluding the list being saved.
+ *  An item no line has priced yet belongs to no vendor and is not in this set. */
+export async function itemsCreatedByOtherVendors(c: PoolClient, vendorId: string, excludeListId: string | null): Promise<Set<string>> {
+  const r = await c.query<{ item_id: string }>(
+    `SELECT item_id FROM (
+       SELECT DISTINCT ON (r.item_id) r.item_id, l.vendor_id
+         FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+        WHERE r.item_id IS NOT NULL AND ($2::uuid IS NULL OR l.id <> $2::uuid)
+        ORDER BY r.item_id, l.imported_at, r.created_at) first
+      WHERE vendor_id <> $1`, [vendorId, excludeListId]);
+  return new Set(r.rows.map((x) => x.item_id));
+}
+
 /** UPCs that one file prints on two products with different identities (different name, size, type …). */
 export function ambiguousUpcs(rows: Array<{ upc?: unknown; description: string; brand?: string | null; size_text?: string | null; gender?: string | null; type?: string | null; section?: string | null }>, aliases: Record<string, string>): Set<string> {
   const keys = new Map<string, Set<string>>();
@@ -258,6 +271,11 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   // vendor error: for those lines the UPC is not trusted — each line matches by its own name (audit 2026-11-12).
   const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
   check.upcs_on_two_products = sharedUpcs.size;
+  // Items ANOTHER vendor's lines created (their earliest priced line): this vendor's list never re-reads (heals) them —
+  // a list with no gender/type column (Lux America) must not strip what MTZ read (audit 2026-11-12: 124 items
+  // degraded by the Lux import). The UPC still links the bottle whatever each vendor calls it (owner 2026-11-12:
+  // "a upc might have confusing descriptions depending on the vendor").
+  const foreignItems = await itemsCreatedByOtherVendors(c, vendor.id, listId);
   for (const r0 of saved) {
     const shared = sharedUpcs.has(normalizeUpc(r0.upc));
     const r = shared ? { ...r0, upc: null } : r0;
@@ -295,7 +313,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const heals = new Map<string, Identity>();
   for (const l of lineIds) {
     if (!l.itemId || l.itemId.startsWith("tmp:") || (l.method !== "upc" && l.method !== "sku")) continue;
-    if (protectedIds.has(l.itemId) || heals.has(l.itemId)) continue;
+    if (protectedIds.has(l.itemId) || heals.has(l.itemId) || foreignItems.has(l.itemId)) continue;
     const cur = ix.items.get(l.itemId);
     if (cur && cur.identityKey !== l.identity.key) heals.set(l.itemId, l.identity);
   }
