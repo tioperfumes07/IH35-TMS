@@ -1,3 +1,13 @@
+## OUTBOX (11-12-2026 ~7:20 AM CT) — ROUND 8.15 KPI href + Perfume MoneyInput; board-column rebuild BLOCKED
+- **THIS:** Settlements Home/Tours + Fuel fraud/overage KPI onClick→href. PerfumeListsPanel Price→MoneyInput (MAIN-RED money-input gate).
+- **BLOCKED:** Open/Closed exact-board column strip + Fuel Home unlayer fail CC-1 additive guards (verify-settlements-tours-columns-visible / module-one-readout / margin-pct-separate / fuel-home-dashboard-wired / bank-f10 / relay-history-import). Need LEAD OWNER-REMOVE or SURFACE-BREACH to retarget those guards to Settlements-Open|Closed.dc.html + Fuel.dc.html.
+- **NEXT:** Factoring Home #39 after Lead unblocks, or Close #49 if ungated. No match/Dreamline.
+
+## OUTBOX (11-12-2026 ~7:05 AM CT) — ROUND 8.15 Settlements Open/Closed + Fuel Home + Escrow Register
+- **THIS:** Open/Closed tours = Settlements-Open|Closed.dc.html columns only (dropped layered Date started/Margin%/checks/Post/Load#/closed-miles). EscrowRegister Load col removed (board Date·Source·Type·In·Out·Balance). Fuel Home unlayered to Fuel.dc.html KPIs+Diesel; Relay history import → relay_inbox. Settlements home/tours KPI onClick→href.
+- **STOP:** MoneyCell residual sweeps until board rows 39/44–46/49/54–56/8 close.
+- **NEXT:** Factoring Home #39 + Settlements Close #49 + Fuel sub-tabs #56 + nav #8. No match/Dreamline.
+
 ## OUTBOX (11-12-2026 ~6:20 AM CT) — ROUND 8.14 row 53 Escrow + date rows CODED
 - **THIS:** Settlements Escrow driver name + Held → escrow register (board Settlements-Escrow.dc.html; was EntityLink profile). KPI href→/driver-finance/escrow. Register date rows 123/144/148/149/162 → CODED (formatDate.screens.test 5/5).
 - **STOP:** MoneyCell residual sweeps per ROUND 8.14 until board rows 39/44–46/49/53–56/8 close.

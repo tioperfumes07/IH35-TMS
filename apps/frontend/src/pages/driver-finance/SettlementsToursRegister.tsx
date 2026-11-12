@@ -447,21 +447,21 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           value={display(totalUnpaid === null ? null : Math.round(Number(totalUnpaid)))}
           sub={c.kpiTotalUnpaidSub}
           testId="settlements-tours-kpi-total-unpaid"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments&payment_state=unpaid")}
+          href="/driver-finance/settlements?tab=payments&payment_state=unpaid"
         />
         <V3KpiTile
           label={c.kpiThisPeriod}
           value={display(thisPeriod === null ? null : Math.round(Number(thisPeriod)))}
           sub={c.kpiThisPeriodSub}
           testId="settlements-tours-kpi-this-period"
-          onClick={() => navigate("/driver-finance/settlements")}
+          href="/driver-finance/settlements"
         />
         <V3KpiTile
           label={c.kpiDriverPay}
           value={display(driverPayThisPeriod)}
           sub={driverPaySub}
           testId="settlements-tours-kpi-driver-pay"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+          href="/driver-finance/settlements?tab=payments"
         />
         <V3KpiTile
           label={c.kpiDriversDebt}
@@ -469,21 +469,21 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={c.kpiDriversDebtSub}
           tone={typeof driversWithDebt === "number" && driversWithDebt > 0 ? "red" : "ink"}
           testId="settlements-tours-kpi-debt"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments&focus=debt")}
+          href="/driver-finance/settlements?tab=payments&focus=debt"
         />
         <V3KpiTile
           label={c.kpiYtd}
           value={display(ytdSettlements === null ? null : Math.round(Number(ytdSettlements)))}
           sub={preSettlementsYtdSub(ytdYear)}
           testId="settlements-tours-kpi-ytd"
-          onClick={() => navigate("/driver-finance/settlements")}
+          href="/driver-finance/settlements"
         />
         <V3KpiTile
           label={c.kpiOpenBills}
           value={display(openBills === null ? null : Math.round(openBills))}
           sub={c.kpiOpenBillsSub}
           testId="settlements-tours-kpi-open-bills"
-          onClick={() => navigate("/driver-finance/settlements?tab=payments")}
+          href="/driver-finance/settlements?tab=payments"
         />
       </div>
 
