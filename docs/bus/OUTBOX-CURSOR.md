@@ -1,3 +1,9 @@
+## OUTBOX (11-13-2026 ~5:20 AM CT) — Workqueue/FaroImport/FactorAdmin/LoadCost MoneyCell wave
+- **THIS:** SubmissionWorkqueue linehaul/advance/reserve/fee/chargeback → invoice · FaroImport gross/advance/reserve/net → invoice · FactorAdmin reserve balance → factor · loadCostColumnManifest money cols → load/settlement.
+- **Prior:** #28969–#28979 merged.
+- **Guards:** money-cells + seat-surface-ownership PASS; declared no-drill stays 35.
+- **NEXT:** reverse-wiring continue; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~5:00 AM CT) — SubmissionQueue/ReserveTracker/BatchDetail MoneyCell wave
 - **THIS:** SubmissionQueue Amount + Expected Reserve → invoice · ReserveTracker chargeback/fee → invoice/advance · BatchDetail invoice Amount → invoice.
 - **Prior:** #28969–#28976 merged.
