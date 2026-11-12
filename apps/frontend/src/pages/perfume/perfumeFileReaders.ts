@@ -37,7 +37,7 @@ const GUESS: Record<Field, RegExp[]> = {
 export function guessMapping(headers: string[]): Mapping {
   const m: Mapping = {};
   const used = new Set<number>();
-  const order: Field[] = ["upc", "code", "price", "qty", "case_pack", "brand", "size", "type", "gender", "section", "sku", "desc"];
+  const order: Field[] = ["upc", "code", "price", "case_pack", "qty", "brand", "size", "type", "gender", "section", "sku", "desc"];
   for (const f of order) {
     for (const re of GUESS[f]) {
       const i = headers.findIndex((h, idx) => !used.has(idx) && re.test(String(h).toLowerCase().trim()));
