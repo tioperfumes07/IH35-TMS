@@ -159,9 +159,9 @@ export function AdvanceDetailDrawer({ open, operatingCompanyId, advance, onClose
 
         <div className="mt-2 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-2">
           <div className="font-semibold">Disbursement Timeline</div>
-          <div>Created: {String(advance.created_at ?? "—")}</div>
-          <div>Approved: {String(advance.approved_at ?? "—")}</div>
-          <div>Disbursed: {String(advance.disbursed_at ?? "—")}</div>
+          <div>Created: {formatDateTimeUS(String(advance.created_at ?? "")) || "—"}</div>
+          <div>Approved: {formatDateTimeUS(String(advance.approved_at ?? "")) || "—"}</div>
+          <div>Disbursed: {formatDateTimeUS(String(advance.disbursed_at ?? "")) || "—"}</div>
         </div>
 
         <div className="mt-2 rounded-sm border border-gray-200 p-2">

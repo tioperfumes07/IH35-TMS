@@ -1,3 +1,12 @@
+## OUTBOX (11-11-2026 ~9:40 PM CT) — CA1 cash-advance timeline formatDateTimeUS
+- **PRIOR:** #28887 Legal L3; #28886 Unit/Customer.
+- **THIS:** AdvanceDetailDrawer Created/Approved/Disbursed use formatDateTimeUS (Codex ROUND-8.5-CA1). Vitest 8/8.
+- **NEXT:** Codex LIVE; continue reverse-wiring. No match/Dreamline.
+
+## OUTBOX (11-11-2026 ~9:35 PM CT) — wave #28882/#28883/#28885/#28886/#28887
+- **THIS WAVE:** #28882 planner entityFilters+HR Active/Probation; #28883 go26 bank; #28885 CF3 setGrain(day); #28886 Unit+Customer MultiSelect; #28887 Legal L3 status URL drill.
+- **NEXT:** Codex LIVE proofs; reverse-wiring spot checks; Legal bulk-void still needs backend. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~9:30 PM CT) — Legal L3 pipeline stage status URL drill (#2888x)
 - **PRIOR:** #28886 Unit/Customer MultiSelect; #28885 CF3; #28882 entityFilters.
 - **THIS:** Land Codex ROUND-8.5-L3 — pipeline stage Links carry ?status=; contracts list derives filter from URL; creator/send modals preserve scope. LegalContractStageDrill.test 6/6.
