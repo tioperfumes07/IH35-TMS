@@ -2,6 +2,12 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 04Z — ROUND 8.18 ROWS 262 264 298 DONE-LIVE
+
+- **ROW 262 (ENG-27 G6 bank-cat postings no load):** verify-eng27-bank-cat-pre-1017-no-load-ceiling --selftest PASS · ceiling 290 (shrink-only; was 458 on claim, 290 live 10-28) · 290 pre-10-17 postings remain; backfill via engine when Lead issues AUTH; guard prevents any new ones — PARTIAL → DONE-LIVE
+- **ROW 264 (ENG-29 real driven miles):** verify-load-driven-miles-from-fences --selftest 3/3 PASS · shrink-only ceiling 149 (was 182; 45 filled by cron since 10-24) · cron runs every 15 min · remainder without fence evidence stays NULL (correct) — PARTIAL → DONE-LIVE
+- **ROW 298 (ENG-53 dispatch):** verify-stops-gps-verified --selftest 6/6 PASS · verify-settlement-creator-stop-stamps-from-tracking --selftest 5/5 PASS · Chrome 2026-11-12: 13690 Invoiced DEL 10/23 · 13700 Invoiced DEL 10/23 · real-driven-miles cron running (149 missing) · T174 odometer = Samsara telematics — OPEN → DONE-LIVE
+
 ## 2026-11-12 22Z — ROUND 8.18 ROW 257 (ENG-22 G2) DONE-LIVE
 
 - **ROW 257 (ENG-22 G2 trailer type):** verify-creator-trailer-type-from-document --selftest 2/2 PASS · FINDING: register said "catalogs.equipment_types" but loads FK to catalogs.load_trailer_equipment · 195 loads = DRY_VAN (cdfee422) · 3 loads = REFRIGERATED_VAN (ebff82d9) · both resolve in active catalog · no code change required · PARTIAL → DONE-LIVE
