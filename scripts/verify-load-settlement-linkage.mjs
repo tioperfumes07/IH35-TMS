@@ -36,6 +36,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Client } from "pg";
+import { OWNER_PENDING_UNLINKED } from "./lib/owner-pending-unlinked-loads.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; fails closed with no DATABASE_URL or an unreachable database (ROUND 29.9-B, E7 batch 2b)";
 
@@ -47,10 +48,18 @@ const MISATTACHED_BASELINE_PATH = path.join(ROOT, "scripts/.load-settlement-link
 
 /**
  * Pure: which loads are ORPHANED (reached dispatch, no settlement link at all)?
+ * Owner-pending unlinked loads (same set as verify-load-to-cash-chain LINK 2) are REPORT-class,
+ * not NEW orphans — CC-1 must link them; raising the orphan baseline is forbidden.
  * @param {{load_id: string, load_number: string|number, status: string, presettlement_link_id: string|null}[]} loads
+ * @param {Set<string>} [ownerPendingUnlinked]
  */
-export function detectOrphans(loads) {
-  return loads.filter((l) => l.status !== "cancelled" && l.presettlement_link_id === null);
+export function detectOrphans(loads, ownerPendingUnlinked = OWNER_PENDING_UNLINKED) {
+  return loads.filter(
+    (l) =>
+      l.status !== "cancelled" &&
+      l.presettlement_link_id === null &&
+      !ownerPendingUnlinked.has(String(l.load_number)),
+  );
 }
 
 /**
@@ -187,9 +196,10 @@ function selftest() {
     { load_id: "L1", load_number: "1", status: "closed", presettlement_link_id: "S1" },
     { load_id: "L2", load_number: "2", status: "dispatched", presettlement_link_id: null }, // orphan
     { load_id: "L3", load_number: "3", status: "cancelled", presettlement_link_id: null }, // expected state, not orphan
+    { load_id: "L4", load_number: "13544", status: "closed", presettlement_link_id: null }, // owner-pending, not NEW orphan
   ];
   const orphans = detectOrphans(loads);
-  assert.ok(orphans.length === 1 && orphans[0].load_id === "L2", "must flag exactly the non-cancelled load with no link, not the cancelled one");
+  assert.ok(orphans.length === 1 && orphans[0].load_id === "L2", "must flag exactly the non-cancelled load with no link, not cancelled or owner-pending");
 
   // MISATTACHED detection
   const loadLinkMap = new Map([["L1", "S1"], ["L4", "S4"]]);

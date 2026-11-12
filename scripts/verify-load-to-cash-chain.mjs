@@ -27,6 +27,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 import { exitIfEmptyByPurge } from "./lib/purge-window.mjs";
+import { OWNER_PENDING_UNLINKED } from "./lib/owner-pending-unlinked-loads.mjs";
+export { OWNER_PENDING_UNLINKED };
 
 /** @matrix-built {"modules":["dispatch"],"cols":["connectivity"],"leafRe":"^(loads|driver_bills|presettlement|expenses)$","task":"LOAD-TO-CASH-CHAIN-C1-C3","vertical":"class-sweep"} */
 
@@ -50,59 +52,8 @@ export const R224_LINK2_PENDING = Object.freeze([...( _r224GateEx.r224_load_to_c
 // cross-entity false positives — corrected to scope on operating_company_id 2026-09-13 (Cursor).
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 
-// LINK 2 owner-pending baseline (consciously baselined, orphan-fk-inventory convention). These
-// driver-having loads cannot be auto-linked — their pre-settlement was script-cancelled on
-// 2026-09-12 while OPEN and the driver has since opened a NEWER tour, so the old one can only be
-// owner-CLOSED (never re-opened: one-open-per-driver), or it never had a pre-settlement at all. Full
-// forensic + the safe restore of the 4 owner-CLOSED siblings: docs/reconcile/CHAIN-C1-C2-BACKFILL-
-// 2026-09-13.md. A driver-having unlinked load NOT in this set is a real regression and fails.
-// 13563: ROUND 28 STEP 3 PHASE 1 stray unlink (PR #22148) — presettlement_link_id nulled after
-// verifying zero settlement_lines existed for it; a pre-settlement-no-doc-yet load.
-// 13595: ROUND 29.5 owner ruling item 1 (docs/bus/CORRECTION-REGISTER-ROUND-28-STEP3-PHASE2B.md-era
-// work) — verified against DRIVER PAY LINES to belong to document 5816, not 5809; its live
-// escrow_contribution line was voided and presettlement_link_id nulled (contamination correction,
-// not re-linked here since 5816 is outside this session's assigned range).
-// 13615: genuinely pre-settlement, still 'dispatched' — its rate confirmation is not available to
-// the owner and "nobody waits on it" (ROUND 29.5 owner ruling, explicit).
-// 13609/13610/13612 (2026-09-23, CC-1) — live-verified via a dry-run call to the REAL, existing
-// linkLoadToPresettlementAtBookingInClientTx (presettlement-link.service.ts): NOT a stale-anchor
-// baseline entry, a genuine, deeper bug found and disclosed, not fixed blind. 13610's driver
-// already has an open driver_finance.driver_settlements row, but suggestPresettlementLink's own
-// suggestion returned action="create_new" instead of "link_existing" -- attempting the real
-// backfill hit uq_driver_settlements_one_open_per_driver (a real, correct DB constraint refusing a
-// second open settlement for the same driver). Forcing this through risks a duplicate/incorrect
-// settlement record for real driver pay -- not attempted. Filed to the board (CC-1's own
-// presettlement-link.service.ts lane) as its own finding, not silently patched here. Remove from
-// this set once suggestPresettlementLink's matching bug is found and these 3 genuinely link.
-const OWNER_PENDING_UNLINKED = new Set([
-  "13526", "13527", "13561", "13563", "13567", "13571", "13574", "13595", "13615",
-  "13609", "13610", "13612",
-  // 2026-09-22 evening re-measurement (CC-1): same 5 loads as LINK1_PENDING_REAL_MILEAGE_SOURCE
-  // above also fail LINK2 (no presettlement_link_id). NOT individually re-run through
-  // suggestPresettlementLink this pass -- assumed same class as 13609/13610/13612 (same batch,
-  // same creation window, same driver-pay blocker) rather than independently confirmed per-load;
-  // flagging that distinction honestly rather than asserting a dry-run result that wasn't taken.
-  "13613", "13618", "13616", "13617", "13614",
-  // 90007 (2026-09-25, Claude-Lead, R-195/AUTH-041): its only pre-settlement was P-0006, the empty
-  // pre-settlement the AlwaysTrack-sequence allocator minted as "5817" (voided under AUTH-041). 90007
-  // is on the owner's ROUND 153 ITEM1 list (Transportation-era, must leave USMCA) but carries a LIVE
-  // factored invoice (Faro inv 7, $350.00, advance e93a0d50) -- a link fix cannot resolve it; the
-  // cancellation + factoring unwind is the closing guard's ITEM1 work (CC-1 R-187). Remove this entry
-  // in the PR that lands ITEM1 for 90007. Never re-link it to a pre-settlement.
-  "90007",
-  // 13544 (2026-10-22, Cursor Lead 443.258-B ship unblock — Neon br-fancy-credit-akjnd07a,
-  // bypass_rls=lucia, USMCA): status=closed, trip_type=NB, has_bill=true, bill.settled_in=NULL,
-  // presettlement_link_id=NULL, in_review_queue=false, created 2026-10-16. Driver Rafael Rogelio
-  // Rivero Reynoso already has 1 OPEN driver_settlements row (source_document_ref null) plus closed
-  // 5780/5816 — same one-open-per-driver class as 13610: forcing create_new risks a duplicate open
-  // settlement; link_existing is CC-1's presettlement-link.service.ts lane, not this non-money
-  // formatters PR. Remove when CC-1 links 13544 onto the open tour. NOT an R224 baseline grow
-  // (ROUND 240 shrink-only JSON stays untouched).
-  "13544",
-  // R224 additions — SHRINK-ONLY via scripts/lib/r224-gate-exception-sets.baseline.json
-  // (ROUND 240 ratchet). Do not append loads here; edit the baseline under a Lead ruling.
-  ...R224_LINK2_PENDING,
-]);
+// LINK 2 owner-pending set — scripts/lib/owner-pending-unlinked-loads.mjs (shared with
+// verify-load-settlement-linkage so post-deploy orphans stay aligned; MAIN-RED-2026-11-12i).
 const DELIVERED_STATUSES = ["delivered_pending_docs", "completed_docs_received", "closed", "invoiced"];
 
 // LINK 1 pending-real-source exception (2026-09-23, CC-1) — 13609/13610/13612 are 3 of the loads
