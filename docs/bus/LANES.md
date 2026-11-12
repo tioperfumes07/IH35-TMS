@@ -11,6 +11,7 @@ ruling's filename to the PR body under `LANE-CROSS:`.
 db/migrations/**
 scripts/verify-*.mjs
 scripts/verify-*.baseline.json
+scripts/verify-*.non-fk-columns.json
 scripts/verify-step-number-historical-collisions.json
 scripts/entity-link-adoption-baseline.json
 scripts/verify-steps/**

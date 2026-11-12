@@ -170,6 +170,10 @@
     "202616330100_relay_driver_links.sql::relay_integration_id": {
       "kind": "external_id",
       "reason": "Relay Payments' own card/driver integration id printed on every Relay fill (E1 relay_driver_links). It is Relay's identifier, not a row of ours, so no FOREIGN KEY can hold."
+    },
+    "202616480100_capacity_engine_offers_and_postings.sql::external_posting_id": {
+      "kind": "external_id",
+      "reason": "DAT/Truckstop load board posting identifier (text) assigned by the external board API — stored verbatim on dispatch.load_board_postings for withdrawal/update calls. The board (CHECK IN ('dat','truckstop')) owns this id; there is no internal table to reference."
     }
   }
 }

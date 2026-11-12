@@ -106,12 +106,21 @@ export const SALARIED_BILLED_SQL = `EXISTS (SELECT 1 FROM driver_finance.driver_
 export const SALARIED_OPEN_WEEK_SQL = `EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
                        WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id
                          AND s.voided_at IS NULL AND s.status = 'open')`;
+// LEAD 443.3xx (measured 2026-11-12: load 13700, settlement P-0159 — Rafael salaried, closed by Lead
+// with $0 net-pay because there were no miles that week). A $0 salaried closed week produces no A/P
+// bill (nothing to bill) and no driver_settlement_gl_bills row, so both SALARIED_BILLED_SQL and
+// SALARIED_OPEN_WEEK_SQL are false. That is correct state — $0 means no money moved, no bill needed.
+export const SALARIED_ZERO_CLOSED_SQL = `EXISTS (SELECT 1 FROM driver_finance.driver_settlements s
+                       WHERE s.id = l.presettlement_link_id AND s.operating_company_id = l.operating_company_id
+                         AND s.voided_at IS NULL AND s.status = 'closed'
+                         AND COALESCE(s.gross_pay, 0) = 0 AND COALESCE(s.net_pay, 0) = 0)`;
 
 /** LINK 1 verdict for one load row: ok (bill or no driver), salaried (recorded salaried week, salary billed), pending, fail. */
 export function link1Verdict(r, pending = LINK1_PENDING_REAL_MILEAGE_SOURCE) {
   if (!r.has_driver || r.has_bill) return "ok";
   if (r.salaried_reason && r.salaried_billed) return "salaried";
   if (r.salaried_reason && r.salaried_open_week) return "salaried_open_week";
+  if (r.salaried_reason && r.salaried_zero_closed) return "salaried_zero_closed";
   if (pending.has(r.load_number)) return "pending";
   return "fail";
 }
@@ -144,7 +153,8 @@ async function live() {
              EXISTS (SELECT 1 FROM driver_finance.driver_bills db WHERE db.load_id = l.id) AS has_bill,
              ${SALARIED_LOAD_SQL} AS salaried_reason,
              ${SALARIED_BILLED_SQL} AS salaried_billed,
-             ${SALARIED_OPEN_WEEK_SQL} AS salaried_open_week
+             ${SALARIED_OPEN_WEEK_SQL} AS salaried_open_week,
+             ${SALARIED_ZERO_CLOSED_SQL} AS salaried_zero_closed
         FROM mdata.loads l
        WHERE l.soft_deleted_at IS NULL
          AND l.status <> 'cancelled'
@@ -168,6 +178,7 @@ async function live() {
     const link1PendingPresent = loads.filter((r) => link1Verdict(r) === "pending").map((r) => r.load_number);
     const salariedWeek = loads.filter((r) => link1Verdict(r) === "salaried").map((r) => r.load_number);
     const salariedOpenWeek = loads.filter((r) => link1Verdict(r) === "salaried_open_week").map((r) => r.load_number);
+    const salariedZeroClosed = loads.filter((r) => link1Verdict(r) === "salaried_zero_closed").map((r) => r.load_number);
     const driverlessDelivered = loads
       .filter((r) => !r.has_driver && DELIVERED_STATUSES.includes(r.status))
       .map((r) => r.load_number);
@@ -206,6 +217,9 @@ async function live() {
     }
     if (salariedOpenWeek.length > 0) {
       console.log(`${LABEL}: REPORT — ${salariedOpenWeek.length} salaried load(s) on a still-OPEN week: the salary bills on the A/P chain at close (fails if the week leaves 'open' unbilled): ${salariedOpenWeek.join(", ")}`);
+    }
+    if (salariedZeroClosed.length > 0) {
+      console.log(`${LABEL}: REPORT — ${salariedZeroClosed.length} load(s) of a salaried $0 closed week: no A/P bill needed (gross_pay=0, net_pay=0 — owner ruling 2026-11-12): ${salariedZeroClosed.join(", ")}`);
     }
     if (link1PendingPresent.length > 0) {
       console.log(`${LABEL}: REPORT — ${link1PendingPresent.length} load(s) pending a real mileage source before a driver bill can mint (never fabricated, owner-locked P1 rule): ${link1PendingPresent.join(", ")}`);
@@ -268,6 +282,7 @@ if (process.argv.includes("--selftest")) {
   assert.equal(link1Verdict(row({ salaried_reason: false, salaried_billed: true })), "fail", "a per-mile load on a salaried settlement without its own bill fails");
   assert.equal(link1Verdict(row({})), "fail", "a per-mile load without a driver bill fails");
   assert.equal(link1Verdict(row({ salaried_reason: true, salaried_open_week: true })), "salaried_open_week", "a salaried load on a still-open week is reported (salary bills at close)");
+  assert.equal(link1Verdict(row({ salaried_reason: true, salaried_open_week: false, salaried_zero_closed: true })), "salaried_zero_closed", "a salaried $0 closed week needs no bill");
   assert.equal(link1Verdict(row({ salaried_reason: true, salaried_open_week: false })), "fail", "a salaried load whose week left 'open' with the salary unbilled still fails");
   assert.equal(link1Verdict(row({ salaried_open_week: true })), "fail", "a per-mile load on an open week without its own driver bill still fails");
   assert.ok(/s\.status = 'open'/.test(SALARIED_OPEN_WEEK_SQL) && /voided_at IS NULL/.test(SALARIED_OPEN_WEEK_SQL), "the open-week test is a live linked settlement still 'open'");
