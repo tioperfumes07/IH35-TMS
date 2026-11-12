@@ -84,3 +84,39 @@ describe("PERFUME-DESK matching — real MTZ 11/10/2026 lines (LST-F12013)", () 
   });
 });
 
+
+// Real lines from La Esperanza "LISTA N 5" (competitor, no UPCs) — audit 2026-11-12.
+describe("PERFUME-DESK name match for lines without a barcode (5b)", () => {
+  const SUP = [
+    { upc: "3614273316309", brand: "Tous", description: "TOUS BABY (W) EDC SP 3.4oz" },
+    { upc: "3349668508587", brand: "Paco Rabanne", description: "1 MILLION (M) EDT SP 3.4oz" },
+    { upc: "3349668508588", brand: "Paco Rabanne", description: "1 MILLION (M) EDP SP 3.4oz" },
+    { upc: "7640111493648", brand: "Animale", description: "ANIMALE (M) EDT SP 3.4oz" },
+  ];
+  it("a line that omits gender links to the ONE item with that name, size and type", () => {
+    const m = matchLine(seed(SUP), "esp", { description: "TOUS BABY 3.4oz EDC" }, { allowNewItem: false });
+    expect([m.method, m.itemId]).toEqual(["name", "item-0"]);
+  });
+  it("glued size+type (3.4ozEDT) is read as size and type", () => {
+    const id = identify({ description: "PACO R ONE MILLION M 3.4ozEDT" });
+    expect([id.brand, id.nameWords.join(" "), id.sizeMl, id.conc, id.gender]).toEqual(["PACO RABANNE", "1 MILLION", 100, "EDT", "M"]);
+    expect(identify({ description: "ARMAF ODYSSEY FEMME BLACK2.7oz" }).sizeMl).toBe(80);
+    expect(identify({ description: "CK ETERNITY W 3PCSET" }).flags).toContain("SET");
+  });
+  it("two real products fit (EDT and EDP on file, line prints no type) → review, never a pick", () => {
+    const m = matchLine(seed(SUP), "esp", { description: "PACO R ONE MILLION M 3.4oz" }, { allowNewItem: false });
+    expect(m.itemId).toBeNull();
+  });
+  it("a printed type that disagrees never links", () => {
+    const m = matchLine(seed(SUP), "esp", { description: "TOUS BABY 3.4oz EDP" }, { allowNewItem: false });
+    expect(m.itemId).toBeNull();
+  });
+  it("a brand-only line links to that brand's no-name item only", () => {
+    const m = matchLine(seed(SUP), "esp", { description: "ANIMALE M 3.4oz EDT" }, { allowNewItem: false });
+    expect([m.method, m.itemId]).toEqual(["name", "item-3"]);
+  });
+  it("a line WITH a barcode never uses the name tier", () => {
+    const m = matchLine(seed(SUP), "esp", { upc: "1234567890123", description: "TOUS BABY 3.4oz EDC" }, { allowNewItem: false });
+    expect(m.method).not.toBe("name");
+  });
+});

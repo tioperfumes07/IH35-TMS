@@ -6,6 +6,10 @@
  *   3. this vendor's spelling already confirmed     → matched "alias"
  *   4. identical identity key (brand+name+size+type+gender+flags) → matched "key"
  *   5. brand-less line, identical loose key, exactly ONE item has it → matched "loose_key"
+ *   5b. a line with NO barcode (competitor lists such as La Esperanza print none): same name words + same bottle
+ *       size + same flags, the same brand when the line names one, and every type / gender the line DOES print
+ *       agrees — and exactly ONE item fits → matched "name". Two or more fits (EDT and EDP both on file, a line
+ *       that prints no type) → review: the engine never picks between real products.
  *   6. a line WITH a brand and a UPC or SKU from a vendor I buy from → a NEW item ("new_item")
  *   7. anything else → "review" with up to 5 suggestions. Never counted in a price until confirmed.
  * Owner rule: identified correctly or not at all — no fuzzy score ever links an item by itself.
@@ -30,6 +34,8 @@ export type MatchIndex = {
   byUpc: Map<string, string>;
   byKey: Map<string, string>;
   byLoose: Map<string, string[]>;
+  /** `${nameWords}|${size}|${flags}` → items with that name, size and flags (any brand, type, gender). */
+  byName: Map<string, string[]>;
   vendorSku: Map<string, string>;   // `${vendorId}|${sku}` → item id
   vendorText: Map<string, string>;  // `${vendorId}|${textKey}` → item id
   brandAliases: Record<string, string>;
@@ -52,13 +58,13 @@ export type LineMatch = {
   upc: string;
   textKey: string;
   itemId: string | null;
-  method: "upc" | "sku" | "alias" | "key" | "loose_key" | "new_item" | null;
+  method: "upc" | "sku" | "alias" | "key" | "loose_key" | "name" | "new_item" | null;
   status: "matched" | "review" | "unmatched";
   suggestions: Suggestion[];
 };
 
 export function emptyIndex(brandAliases: Record<string, string> = {}): MatchIndex {
-  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byLoose: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
+  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
 }
 
 export function addItem(ix: MatchIndex, it: IndexItem) {
@@ -67,7 +73,35 @@ export function addItem(ix: MatchIndex, it: IndexItem) {
   const l = ix.byLoose.get(it.looseKey) ?? [];
   if (!l.includes(it.id)) l.push(it.id);
   ix.byLoose.set(it.looseKey, l);
+  const nk = nameKeyOfIdentityKey(it.identityKey);
+  if (nk) { const n = ix.byName.get(nk) ?? []; if (!n.includes(it.id)) n.push(it.id); ix.byName.set(nk, n); }
   if (it.brand && !ix.brandAliases[it.brand]) ix.brandAliases[it.brand] = it.brand; // every known brand is detectable in brand-less lines
+}
+
+/** identity key = brand|name|size|type|gender|flags[|contents]. Sets with listed contents never name-match. */
+function nameKeyOfIdentityKey(k: string): string | null {
+  const p = k.split("|");
+  if (p.length !== 6 || p[2] === "?") return null;
+  if (!p[1] && (!p[0] || p[0] === "?")) return null; // a brand-only item needs its brand
+  return `${p[1]}|${p[2]}|${p[5]}`;
+}
+
+/** Tier 5b — see the header. Returns the ONE item that fits, else null. */
+export function nameMatch(ix: MatchIndex, id: Identity): string | null {
+  if (id.sizeMl == null || id.contents) return null;
+  // A brand-only bottle ("ANIMALE M 3.4OZ EDT") matches only an item of that same brand with no name words.
+  if (!id.nameWords.length && !id.brand) return null;
+  const cands = ix.byName.get(`${id.nameWords.join(" ")}|${id.sizeMl}|${id.flags.join("+")}`) ?? [];
+  const fits = cands.filter((cid) => {
+    const it = ix.items.get(cid);
+    if (!it) return false;
+    if (id.brand && it.brand && it.brand !== id.brand) return false;
+    if (!id.nameWords.length && it.brand !== id.brand) return false;
+    if (id.conc && it.conc && it.conc !== id.conc) return false;
+    if (id.gender && it.gender && it.gender !== id.gender) return false;
+    return true;
+  });
+  return fits.length === 1 ? fits[0] : null;
 }
 
 /** The vendor's own spelling, normalized — what a confirmation remembers. */
@@ -125,6 +159,7 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
     const c = ix.byLoose.get(looseKey(identity)) ?? [];
     if (c.length === 1) return done(c[0], "loose_key");
   }
+  if (!upc && (named || identity.brand)) { const n = nameMatch(ix, identity); if (n) return done(n, "name"); }
   // A brand-only bottle ("4711 3.4 EDC U") is a strong identity only when the vendor also gives its barcode.
   // With its barcode a line is a strong identity even when the vendor prints no known brand (Lux America
   // "AL HAMBRA ANARCH 100ML EDP"); without a barcode it needs brand + name + size.
