@@ -150,6 +150,15 @@ const HISTORICAL_TIMESTAMP_DUP_ALLOWLIST = new Set([
   "202614430000",
   "202614560000",
   "202614570000",
+  // ACCEPTED 2026-11-12 by Lead (main RED for every seat): both files already APPLIED on production,
+  // read from _system._schema_migrations on br-fancy-credit-akjnd07a under app.bypass_rls = 'lucia':
+  //   202616530100_perfume_match_method_name.sql        2026-11-12T18:49:22.635Z  (Lead, claimed in #29084)
+  //   202616530100_usmca_card_payable_role_wiring.sql   2026-11-12T22:24:25.000Z  (CC-1 #29123, number not claimed)
+  // Independent objects (perfume.price_list_rows.match_method CHECK vs accounting.chart_of_accounts_roles
+  // rows) — neither depends on the other. Renaming either would leave a ledger row with no file
+  // ("exists in ledger but missing on disk" → pre-deploy refusal) and re-run its body. The exact-pair
+  // ratchet in verify-migration-no-number-collision freezes these two filenames; a third still fails.
+  "202616530100",
 ]);
 
 function fail(lines) {
