@@ -170,8 +170,12 @@ export function SettlementStatementWorkflowPage() {
   const approvalStatus = String(settlement.approval_status ?? "needs_review");
   // ROUND 167 (owner, 2026-09-28): "Open" is retired as a settlement-number label -- a
   // pre-settlement in flight (is_presettlement=true) reads "PENDING", never a status word.
+  // ROUND 8.17 board 35 — blank identity is a defect; open/presettlement without AlwaysTrack → PENDING.
   const settlementDisplayId =
-    settlementNumber(settlement) ?? (settlement.is_presettlement === true ? "PENDING" : null);
+    settlementNumber(settlement) ??
+    (settlement.is_presettlement === true || String(settlement.status ?? "").toLowerCase() === "open" || String(settlement.status ?? "").toLowerCase() === "draft"
+      ? "PENDING"
+      : null);
   // R-102-B item 3 (owner, ROUND 112) — moved up from its original spot below so the gates that
   // follow can reference it; isFinalSettlement/showFinalizeBlock/canApproveSettlement/canOpenDispute
   // all previously checked ONLY isFinalSettlement (locked/final), never cancelled — a cancelled

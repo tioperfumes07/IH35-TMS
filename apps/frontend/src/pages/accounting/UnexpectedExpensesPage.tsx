@@ -47,7 +47,8 @@ function TruckWoCell({ row }: { row: UnexpectedCandidate }) {
   }
   return (
     <Link
-      to={`/banking?txn_id=${encodeURIComponent(row.id)}`}
+      // ROUND 8.17 class R residual — Banking opens the transaction drawer on the Transactions tab, not Home.
+      to={`/banking/transactions?txn_id=${encodeURIComponent(row.id)}`}
       style={{ color: V3.link, fontWeight: 500, textDecoration: "none" }}
       data-testid={`unexpected-link-${row.id}`}
     >

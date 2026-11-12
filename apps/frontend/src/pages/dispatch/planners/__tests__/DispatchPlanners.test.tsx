@@ -127,6 +127,11 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     await userEvent.click(ana);
     await userEvent.click(pat);
     expect(within(driverFilter).getByRole("button", { name: /Driver \(2\)/i })).toBeTruthy();
+    // ROUND 8.17 class R — entity filters stage until Apply; chip appears only after Apply.
+    expect(screen.queryByTestId("planner-chip-driver")).toBeNull();
+    const applyBtn = screen.getByRole("button", { name: /^Apply$/i });
+    expect(applyBtn).not.toBeDisabled();
+    await userEvent.click(applyBtn);
     expect(await screen.findByTestId("planner-chip-driver")).toBeTruthy();
   });
 });

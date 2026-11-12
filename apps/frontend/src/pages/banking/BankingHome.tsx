@@ -146,6 +146,16 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     }
   }, [location.pathname]);
 
+  // ROUND 8.17 class R residual — ?txn_id= must open the Transactions tab drawer (Board 2 Unexpected).
+  // Legacy /banking?txn_id= landed on Home with no transactions view mounted.
+  useEffect(() => {
+    if (!deepLinkTxnId) return;
+    const tab = bankingTabFromPath(location.pathname) as BankingTabId;
+    if (tab === "transactions") return;
+    const qs = searchParams.toString();
+    navigate(`${BANKING_TAB_PATH.transactions}${qs ? `?${qs}` : ""}`, { replace: true });
+  }, [deepLinkTxnId, location.pathname, navigate, searchParams]);
+
   // Legacy /banking/uncategorized alias + ROUND 8.17 class S Money In/Out cohort (?types=&date_from=&date_to=&review=).
   useEffect(() => {
     const type = searchParams.get("type");

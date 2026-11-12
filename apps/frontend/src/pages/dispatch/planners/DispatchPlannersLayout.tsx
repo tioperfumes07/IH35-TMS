@@ -11,6 +11,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
   DEFAULT_PLANNER_RANGE_DAYS,
+  EMPTY_PLANNER_ENTITY_FILTERS,
   buildPlannerRange,
   plannerPresetRange,
   type PlannerEntityFilterState,
@@ -303,6 +304,16 @@ function PlannerFilterChips() {
   );
 }
 
+function entityFiltersEqual(a: PlannerEntityFilterState, b: PlannerEntityFilterState): boolean {
+  const same = <T,>(x: readonly T[], y: readonly T[]) => x.length === y.length && x.every((v, i) => v === y[i]);
+  return (
+    same(a.status, b.status) &&
+    same(a.driverIds, b.driverIds) &&
+    same(a.unitIds, b.unitIds) &&
+    same(a.customerIds, b.customerIds)
+  );
+}
+
 function PlannerControls() {
   const { range, setRange, entityFilters, setEntityFilters } = usePlannerRange();
   const [filters, setFilters] = useState<FilterState>({
@@ -310,6 +321,8 @@ function PlannerControls() {
     from: range.start,
     to: range.end,
   });
+  // ROUND 8.17 class R Board 12 — entity filters stage until Apply; Cancel discards draft.
+  const [draftEntityFilters, setDraftEntityFilters] = useState<PlannerEntityFilterState>(entityFilters);
 
   useEffect(() => {
     setFilters((current) =>
@@ -318,6 +331,10 @@ function PlannerControls() {
         : { ...current, period: "custom", from: range.start, to: range.end }
     );
   }, [range.end, range.start]);
+
+  useEffect(() => {
+    setDraftEntityFilters(entityFilters);
+  }, [entityFilters]);
 
   const applyFilters = (next: FilterState) => {
     if (next.period !== "custom" && PLANNER_PRESET_KEYS.includes(next.period)) {
@@ -328,8 +345,8 @@ function PlannerControls() {
     setRange({ start: next.from, end: next.to });
   };
 
-  // The range toolbar (7d / 14d / 30d / Custom) and the Show-days toggles live INSIDE the Filters
-  // popover now — no button row outside it (owner 10-22). D3 Status/Driver apply live (entity engines).
+  const entityDirty = !entityFiltersEqual(draftEntityFilters, entityFilters);
+
   return (
     <>
       <UniversalFilterBar
@@ -338,11 +355,18 @@ function PlannerControls() {
         defaultPeriod="custom"
         defaultOpen={false}
         presetKeys={PLANNER_PRESET_KEYS}
+        extraDirty={entityDirty}
+        onExtraApply={() => setEntityFilters(draftEntityFilters)}
+        onExtraCancel={() => setDraftEntityFilters(entityFilters)}
+        onExtraReset={() => {
+          setDraftEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
+          setEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
+        }}
         extra={
           <>
             <PlannerRangeToolbar />
             <PlannerShowDays />
-            <PlannerEntityFilters value={entityFilters} onChange={setEntityFilters} />
+            <PlannerEntityFilters value={draftEntityFilters} onChange={setDraftEntityFilters} />
           </>
         }
       />

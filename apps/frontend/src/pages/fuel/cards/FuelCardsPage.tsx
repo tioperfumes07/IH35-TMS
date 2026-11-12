@@ -4,7 +4,7 @@
  * migration 202615140600, PR #23695). Backend-only until now; this is the first screen.
  */
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   endFuelCardAssignment,
@@ -219,7 +219,23 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
           <span className="text-gray-400">Not designated</span>
         ),
     },
-    { key: "active_card_count", label: "Cards", sortable: true, render: (row) => formatQuantityTable(row.active_card_count, 0) },
+    {
+      key: "active_card_count",
+      label: "Cards",
+      sortable: true,
+      render: (row) =>
+        row.issuer_vendor_id ? (
+          <Link
+            to={`/fuel/cards?vendor_id=${encodeURIComponent(row.issuer_vendor_id)}`}
+            className={LINK}
+            data-testid={`fuel-card-issuer-count-${row.code}`}
+          >
+            {formatQuantityTable(row.active_card_count, 0)}
+          </Link>
+        ) : (
+          formatQuantityTable(row.active_card_count, 0)
+        ),
+    },
   ];
   return (
     <FuelBoardSection
@@ -258,6 +274,8 @@ export function FuelCardsPage() {
   // Reverse link from a vendor's profile: /fuel/cards?vendor_id=<issuer>.
   const [searchParams, setSearchParams] = useSearchParams();
   const vendorFilter = searchParams.get("vendor_id") ?? undefined;
+  // ROUND 8.17 class S — card KPI tiles filter the registry by status cohort.
+  const statusCohort = searchParams.get("status"); // active | ended | voided | null
   const [assignOpen, setAssignOpen] = useState(false);
   const [cardSearch, setCardSearch] = useState("");
   const [endTarget, setEndTarget] = useState<FuelCardAssignment | null>(null);
@@ -353,23 +371,25 @@ export function FuelCardsPage() {
   }
 
   const allRows = query.data?.rows ?? [];
+  const setStatusCohort = (next: string | null, alsoShowVoided = false) => {
+    const params = new URLSearchParams(searchParams);
+    if (!next) params.delete("status");
+    else params.set("status", next);
+    setSearchParams(params, { replace: true });
+    if (alsoShowVoided) setIncludeVoided(true);
+  };
   const q = cardSearch.trim().toLowerCase();
-  const rows = q
-    ? allRows.filter((row) =>
-        [
-          row.card_last_digits,
-          row.fuel_card_type_name,
-          row.issuer_vendor_name,
-          row.unit_number,
-          row.driver_name,
-          row.notes,
-        ]
-          .filter(Boolean)
-          .join(" ")
-          .toLowerCase()
-          .includes(q),
-      )
-    : allRows;
+  const rows = allRows.filter((row) => {
+    if (statusCohort === "active" && statusBadge(row).label !== "Active") return false;
+    if (statusCohort === "ended" && statusBadge(row).label !== "Ended") return false;
+    if (statusCohort === "voided" && statusBadge(row).label !== "Voided") return false;
+    if (!q) return true;
+    return [row.card_last_digits, row.fuel_card_type_name, row.issuer_vendor_name, row.unit_number, row.driver_name, row.notes]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
+  });
   const kpis = assignmentKpis(allRows);
   const kpiValue = (n: number) => (query.isPending ? "…" : query.isError ? "—" : String(n));
 
@@ -381,10 +401,10 @@ export function FuelCardsPage() {
         data-testid="fuel-cards-v3-kpi-strip"
         data-fuel-cards-v3-kpis="1"
       >
-        <V3KpiTile label="Active" value={kpiValue(kpis.active)} sub="current assignment" testId="fuel-cards-kpi-active" />
-        <V3KpiTile label="Ended" value={kpiValue(kpis.ended)} sub="past effective to" testId="fuel-cards-kpi-ended" />
-        <V3KpiTile label="Voided" value={kpiValue(kpis.voided)} sub={includeVoided ? "in this list" : "show voided to count"} testId="fuel-cards-kpi-voided" />
-        <V3KpiTile label="Assignments" value={kpiValue(kpis.total)} sub="rows in filter" testId="fuel-cards-kpi-assignments" />
+        <V3KpiTile label="Active" value={kpiValue(kpis.active)} sub="current assignment" testId="fuel-cards-kpi-active" onClick={() => setStatusCohort("active")} />
+        <V3KpiTile label="Ended" value={kpiValue(kpis.ended)} sub="past effective to" testId="fuel-cards-kpi-ended" onClick={() => setStatusCohort("ended")} />
+        <V3KpiTile label="Voided" value={kpiValue(kpis.voided)} sub={includeVoided ? "in this list" : "show voided to count"} testId="fuel-cards-kpi-voided" onClick={() => setStatusCohort("voided", true)} />
+        <V3KpiTile label="Assignments" value={kpiValue(kpis.total)} sub="rows in filter" testId="fuel-cards-kpi-assignments" onClick={() => setStatusCohort(null)} />
       </div>
       <MoneyListToolbar
         search={cardSearch}
