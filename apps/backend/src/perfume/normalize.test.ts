@@ -211,3 +211,34 @@ describe("PERFUME-DESK category (owner 2026-11-12): Women / Men / Set / Tester /
     expect(m.method).toBe("new_item");
   });
 });
+
+describe("PERFUME-DESK identity — Marc Jacobs MTZ 11/10/2026 lines (owner 2026-11-12: 'marc jacobs … wrong data')", () => {
+  const mj = (d: string) => identify({ description: d, brand: "MARC JACOBS" });
+  it("keeps an ML size exactly as written — a 4 ML mini is 4 ml, a 1.2 ML vial is 1.2 ml", () => {
+    expect(mj("MINI MARC JACOBS DAISY EVER SO FRESH 4ML EDP L  (134144) - Spain - 72pcs ByBox").sizeMl).toBe(4);
+    expect(mj("VIAL MARC JACOBS PERFECT 1.2ML EDT L (125767) - France - 768pcs ByBox").sizeMl).toBe(1.2);
+    expect(mj("MINI MARC JACOBS PERFECT 10ML EDP L  (137790) - Spain - 288pcs ByBox").sizeMl).toBe(10);
+  });
+  it("a leading MINI / VIAL is a flag and the brand after it is the brand, not part of the name", () => {
+    const a = mj("MINI MARC JACOBS DAISY WILD 4ML EDP L  (137007) - Spain - 135pcs ByBox");
+    expect(a.brand).toBe("MARC JACOBS");
+    expect(a.nameText).toBe("DAISY WILD");
+    expect(a.flags).toContain("MINI");
+    const v = mj("VIAL MARC JACOBS DAISY WILD INTENSE 1.2ML EDP L  (134071) - France - 144pcs ByBox");
+    expect(v.nameText).toBe("DAISY WILD INTENSE");
+    expect(v.flags).toContain("MINI");
+  });
+  it("shows a name's own EAU but matches without it", () => {
+    const a = mj("MARC JACOBS DAISY EAU SO FRESH 2.5 EDT L  (102774) - France - 12pcs ByBox");
+    expect(a.nameText).toBe("DAISY EAU SO FRESH");
+    expect(a.sizeMl).toBe(75);
+    expect(a.conc).toBe("EDT");
+    const b = mj("MARC JACOBS DAISY SO FRESH 2.5 EDT L");
+    expect(b.key).toBe(a.key);
+  });
+  it("an EAU DE PARFUM phrase is still the concentration, never the name", () => {
+    const a = mj("MARC JACOBS PERFECT EAU DE PARFUM 3.4 L");
+    expect(a.conc).toBe("EDP");
+    expect(a.nameText).toBe("PERFECT");
+  });
+});

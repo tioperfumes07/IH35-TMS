@@ -149,6 +149,9 @@ export function ozToMl(oz: number): number {
   for (const [o, ml] of OZ_TO_ML) if (Math.abs(o - oz) < 0.011) return ml;
   return snapMl(oz * 29.5735);
 }
+export function exactMl(ml: number): number {
+  return Math.round(ml * 10) / 10;
+}
 export function snapMl(ml: number): number {
   let best = ml, d = Infinity;
   for (const v of STD_ML) { const dd = Math.abs(v - ml); if (dd < d) { d = dd; best = v; } }
@@ -159,7 +162,9 @@ export function snapMl(ml: number): number {
 export function parseSize(text: string): { ml: number | null; spans: RegExp[] } {
   const s = text.toUpperCase();
   let m = s.match(/(\d+(?:\.\d+)?)\s*ML\b/);
-  if (m) return { ml: snapMl(parseFloat(m[1])), spans: [/(\d+(?:\.\d+)?)\s*ML\b/] };
+  // A size written in ML is the size, exactly as written (4 ML mini, 1.2 ML vial). Only ounce sizes are converted
+  // and snapped to the bottle they mean.
+  if (m) return { ml: exactMl(parseFloat(m[1])), spans: [/(\d+(?:\.\d+)?)\s*ML\b/] };
   m = s.match(/(\d*\.?\d+)\s*(?:FL\.?\s*)?OZ\b/);
   if (m) return { ml: ozToMl(parseFloat(m[1])), spans: [/(\d*\.?\d+)\s*(?:FL\.?\s*)?OZ\b/] };
   // A bare decimal ("212 3.4 EDT L", "SEXY MUJER 3.3") is an ounce size. Whole numbers are names (212, 360, 1881).
@@ -260,6 +265,10 @@ export function identify(input: IdentityInput): Identity {
     leadGender = GENDER_WORDS[g]; leadFlag = f === "S" ? "SET" : f === "T" ? "TESTER" : ""; return " ";
   });
   s = s.replace(/\s+-\s*\d{3,8}\s*$/, " ");
+  // A leading MINI / MINIATURE / VIAL / SAMPLE describes the bottle, not the name: it is a MINI flag, and the brand
+  // that follows it is read as the brand ("MINI MARC JACOBS DAISY WILD 4ML", "VIAL MARC JACOBS PERFECT 1.2ML").
+  let leadMini = false;
+  s = s.replace(/^\s*(?:MINIATURES?|MINIS?|VIALS?|SAMPLES?)\b\s*/, () => { leadMini = true; return " "; });
   // JIZAN: "AMOUAGE GUIDANCE (U) EDP 100 ml OM" — a 2-letter origin code after the bottle size is the country, not the name.
   s = s.replace(new RegExp(`(\\d\\s*(?:ML|OZ)\\b[^A-Z0-9]*(?:\\([A-Z]\\)\\s*)?)\\b(?:${Object.keys(ISO2_COUNTRY).join("|")})\\s*$`), "$1 ");
   // "STRONGER W YOU" / "W/YOU" means WITH YOU, not women.
@@ -282,6 +291,7 @@ export function identify(input: IdentityInput): Identity {
   if (gtok.includes("SET")) flags.add("SET");
   if (!gender && leadGender) gender = leadGender;
   if (leadFlag) flags.add(leadFlag);
+  if (leadMini) flags.add("MINI");
   const paren = s.match(/\((M|W|U|L)[*.]?\)/);
   if (!gender && paren) gender = GENDER_WORDS[paren[1]];
   s = s.replace(/\([^)]*\)/g, " ");
@@ -339,10 +349,14 @@ export function identify(input: IdentityInput): Identity {
   if (!gender) gender = sec.gender;
   for (const f of sec.flags) flags.add(f);
 
-  const shownWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  const keyWords = kept.filter((w, i) => !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w))) && w !== ".");
+  // What the owner sees keeps a name's own EAU ("DAISY EAU SO FRESH", "CHANCE EAU TENDRE"); the concentration
+  // phrases (EAU DE PARFUM / TOILETTE / COLOGNE) were already removed above. The KEY still drops it, so a vendor
+  // that writes "DAISY SO FRESH" is the same bottle.
+  const shownWords = kept.filter((w, i) => (w === "EAU" || !(NOISE.has(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w)))) && w !== ".");
   // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
   // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
-  const nameWords = shownWords.map((w) => SAME_NAME_WORD[w] ?? w);
+  const nameWords = keyWords.map((w) => SAME_NAME_WORD[w] ?? w);
   if (sizeMl != null && sizeMl <= 15 && !flags.has("SET")) flags.add("MINI");
 
   const flagList = [...flags].sort();

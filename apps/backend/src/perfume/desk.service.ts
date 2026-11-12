@@ -472,8 +472,15 @@ export type GridCol = { key: string; label: string; group: string; kind: ColKind
 export type GridView = "buy" | "sell" | "wholesale" | "all";
 export type GridRow = Record<string, string | number | null>;
 
-export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[] }> {
+/** The margin the owner types on the grid; when none is typed, the first saved wholesale target. */
+export function targetPctOf(rules: DeskRules, typed: number | null | undefined): number {
+  const t = typed ?? rules.wholesale_targets_pct[0] ?? 12;
+  return Math.min(95, Math.max(0, t));
+}
+
+export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null } = {}): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number }> {
   const rules = await getRules(c);
+  const target = targetPctOf(rules, opts.targetPct);
   const vendors = await listVendors(c);
   const buyV = vendors.filter((v) => v.kind !== "sell");
   const sellV = vendors.filter((v) => v.kind !== "buy");
@@ -512,7 +519,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
   ];
   for (const v of buyV) {
     cols.push({ key: `v:${v.id}:price`, label: "Price", group: v.name, kind: "money" });
-    cols.push({ key: `v:${v.id}:landed`, label: "Landed likely", group: v.name, kind: "money" });
+    cols.push({ key: `v:${v.id}:landed`, label: "My cost", group: v.name, kind: "money" });
     cols.push({ key: `v:${v.id}:rank`, label: "Rank", group: v.name, kind: "int" });
     cols.push({ key: `v:${v.id}:qty`, label: "Qty", group: v.name, kind: "int" });
   }
@@ -523,7 +530,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "best_price", label: "Vendor price", group: "Purchase", kind: "money" },
     { key: "cushion", label: "Cushion", group: "Purchase", kind: "money" },
     { key: "freight", label: "Freight / pc", group: "Purchase", kind: "money" },
-    { key: "landed_likely", label: "My cost (likely)", group: "Purchase", kind: "money" },
+    { key: "landed_likely", label: "My cost", group: "Purchase", kind: "money" },
     { key: "landed_best", label: "My cost (best case)", group: "Purchase", kind: "money" },
     { key: "saves_next", label: "Saves vs next", group: "Purchase", kind: "money" },
     { key: "vendor_cost", label: "Vendor's est. cost", group: "Purchase", kind: "money" },
@@ -543,10 +550,14 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "offer_margin", label: "My margin %", group: "Sell to stores", kind: "pct" },
     { key: "offer_markup", label: "My markup %", group: "Sell to stores", kind: "pct" },
   );
-  for (const t of rules.wholesale_targets_pct) {
-    cols.push({ key: `w:${t}:margin`, label: `Price @${t}% margin`, group: "Wholesale", kind: "money" });
-    cols.push({ key: `w:${t}:markup`, label: `Price @${t}% markup`, group: "Wholesale", kind: "money" });
-  }
+  // ONE set of target columns, driven by the margin the owner types on the grid (replaces the fixed 11 / 12.5 / 15 pairs).
+  cols.push(
+    { key: "target_price_margin", label: `Sell at ${target}% margin`, group: "My target", kind: "money" },
+    { key: "target_price_markup", label: `Sell at ${target}% markup`, group: "My target", kind: "money" },
+    { key: "target_profit", label: `Profit at ${target}% margin`, group: "My target", kind: "money" },
+    { key: "target_max_cost", label: `Most I can pay for ${target}% vs Laredo low`, group: "My target", kind: "money" },
+    { key: "target_vs_low", label: `Laredo low − my ${target}% price`, group: "My target", kind: "money" },
+  );
 
   const vName = new Map(vendors.map((v) => [v.id, v.name]));
   const rows: GridRow[] = [];
@@ -610,13 +621,18 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
       row.offer_margin = round1(marginPct(row.offer_store as number, cost));
       row.offer_markup = round1(markupPct(row.offer_store as number, cost));
     }
-    if (cost != null) for (const t of rules.wholesale_targets_pct) {
-      row[`w:${t}:margin`] = close(priceFromCost(cost, t, "margin"));
-      row[`w:${t}:markup`] = close(priceFromCost(cost, t, "markup"));
+    if (cost != null) {
+      row.target_price_margin = close(priceFromCost(cost, target, "margin"));
+      row.target_price_markup = close(priceFromCost(cost, target, "markup"));
+      row.target_profit = (row.target_price_margin as number) - cost;
+      if (low != null) row.target_vs_low = low - (row.target_price_margin as number);
     }
+    if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
+    // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
+    row.carried_by = vendors.filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  return { cols, rows, rules, vendors };
+  return { cols, rows, rules, vendors, target_pct: target };
 }
 
 function round1(v: number | null): number | null {
@@ -638,18 +654,67 @@ export function searchRows(rows: GridRow[], q: string): GridRow[] {
     || (digits.length >= 6 && String(r.upcs ?? "").includes(digits)));
 }
 
+export type FacetPicks = { category: string[]; gender: string[]; brand: string[]; size?: string[]; vendor?: string[] };
+const FACET_KEYS = ["category", "gender", "brand", "size", "vendor"] as const;
+type FacetKey = (typeof FACET_KEYS)[number];
+
+export function splitPicks(v: string): string[] {
+  return [...new Set(v.split(",").map((x) => x.trim()).filter(Boolean))];
+}
+
+/** A row's values for one facet. Vendor is many-valued: every vendor that prices the item. */
+function facetValues(r: GridRow, k: FacetKey): string[] {
+  if (k === "vendor") { const v = String(r.carried_by ?? ""); return v ? v.split("\n") : ["—"]; }
+  if (k === "size") return [r.size_ml == null || r.size_ml === "" ? "—" : String(r.size_ml)];
+  return [String(r[k] ?? "").trim() || "—"];
+}
+
+/** Keeps rows whose type, gender, brand, size and vendor each match the picks; an empty pick list means all.
+ *  Vendor: the item is carried by ANY picked vendor. */
+export function filterFacets(rows: GridRow[], picks: FacetPicks): GridRow[] {
+  const sets = FACET_KEYS.filter((k) => (picks[k] ?? []).length > 0).map((k) => [k, new Set(picks[k])] as const);
+  if (sets.length === 0) return rows;
+  return rows.filter((r) => sets.every(([k, set]) => facetValues(r, k).some((v) => set.has(v))));
+}
+
+export type GridFacet = { value: string; count: number };
+
+/** Each facet's options with counts, measured against the other two facets' picks (so the counts always add up to
+ *  what the grid would show), sorted A→Z with "—" (blank) last. */
+export function gridFacets(rows: GridRow[], picks: FacetPicks): Record<FacetKey, GridFacet[]> {
+  const out = {} as Record<FacetKey, GridFacet[]>;
+  for (const k of FACET_KEYS) {
+    const scoped = filterFacets(rows, { ...picks, [k]: [] });
+    const counts = new Map<string, number>();
+    for (const r of scoped) for (const v of facetValues(r, k)) counts.set(v, (counts.get(v) ?? 0) + 1);
+    for (const v of picks[k] ?? []) if (!counts.has(v)) counts.set(v, 0);
+    out[k] = [...counts].map(([value, count]) => ({ value, count }))
+      .sort((a, b) => (a.value === "—" ? 1 : b.value === "—" ? -1 : a.value.localeCompare(b.value, "en", { numeric: true })));
+  }
+  return out;
+}
+
 /** Sort any column ascending or descending; empty cells always last; text compares A→Z, numbers numerically. */
 export function sortRows(rows: GridRow[], key: string, dir: "asc" | "desc"): GridRow[] {
   const sign = dir === "asc" ? 1 : -1;
   return rows.slice().sort((a, b) => {
     const x = a[key], y = b[key];
     const xe = x == null || x === "", ye = y == null || y === "";
-    if (xe && ye) return String(a.display_name ?? "").localeCompare(String(b.display_name ?? ""));
+    if (xe && ye) return byBrandName(a, b);
     if (xe) return 1;
     if (ye) return -1;
     const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "en", { numeric: true });
-    return c === 0 ? String(a.display_name ?? "").localeCompare(String(b.display_name ?? "")) : c * sign;
+    return c === 0 ? byBrandName(a, b) : c * sign;
   });
+}
+
+/** The standing tie-break under every sort: brand, then name, then size, then the full display name. */
+function byBrandName(a: GridRow, b: GridRow): number {
+  const t = (x: unknown) => String(x ?? "");
+  return t(a.brand).localeCompare(t(b.brand), "en", { numeric: true })
+    || t(a.name).localeCompare(t(b.name), "en", { numeric: true })
+    || (Number(a.size_ml ?? 0) - Number(b.size_ml ?? 0))
+    || t(a.display_name).localeCompare(t(b.display_name), "en", { numeric: true });
 }
 
 /* ---------------- Excel export ---------------- */
@@ -695,12 +760,17 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
   const how = wb.addWorksheet("How computed");
   for (const line of [
-    ["My cost (likely)", "Vendor price − low cushion + high freight (the safe number)"],
+    ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
     ["My cost (best case)", "Vendor price − high cushion + low freight"],
     ["Margin %", "(Lowest Laredo list price − my cost) ÷ list price"],
     ["Markup %", "(Lowest Laredo list price − my cost) ÷ my cost"],
     ["Store's cost @ margin", `List price × (1 − ${rules.store_earn_pct}%)`],
     ["Store's cost @ markup", `List price ÷ (1 + ${rules.store_earn_pct}%)`],
+    ["Sell at X% margin", "My cost ÷ (1 − X%) — X is the margin typed on the grid"],
+    ["Sell at X% markup", "My cost × (1 + X%)"],
+    ["Profit at X% margin", "Sell at X% margin − my cost"],
+    ["Most I can pay for X%", "Lowest Laredo list price × (1 − X%) — buy at or under this to still earn X% at Laredo's low price"],
+    ["Laredo low − my X% price", "Positive = my X% price is under the lowest Laredo price"],
     ["Closed numbers", `Every computed price rounds ${rules.round_dir} to ${rules.round_step === "75" ? "a price ending in .75" : `$${(Number(rules.round_step) / 100).toFixed(2)}`}`],
     ["Default cushion", `$${(rules.cushion_lo_cents / 100).toFixed(2)} – $${(rules.cushion_hi_cents / 100).toFixed(2)} (each vendor can override)`],
     ["Default freight", `$${(rules.freight_lo_cents / 100).toFixed(2)} – $${(rules.freight_hi_cents / 100).toFixed(2)} per piece`],

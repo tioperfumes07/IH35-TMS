@@ -7,11 +7,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
-  type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
+  type PerfumeFacetKey, type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
 } from "../../api/perfume";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
@@ -85,28 +87,50 @@ export default function PerfumeDeskPage() {
 const VIEW_HELP: Record<PerfumeGridView, string> = {
   buy: "Every item your vendors offer, side by side. The cheapest after cushion and freight wins and becomes your cost. Margin and markup are against the lowest Laredo list price.",
   sell: "Items a Laredo store lists. The store's own cost is backed out of its list price at its %, closed to your rounding — that is the most it can pay you.",
-  wholesale: "Your price to customers at each target margin and markup over your landed cost, closed to your rounding.",
+  wholesale: "Your price to customers at the margin you type (My margin %) over your landed cost, closed to your rounding.",
   all: "The whole item database: every bottle, every UPC it carries, every vendor price.",
 };
 const PAGE = 200;
+const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
 function defaultVisible(view: PerfumeGridView, key: string): boolean {
   const item = ["code", "upc", "brand", "name", "size_ml", "conc", "gender", "flags"].includes(key);
   if (view === "all") return item || ["upc_count", "n_vendors", "best_vendor", "landed_likely", "low_sell"].includes(key);
-  if (view === "buy") return item || /^v:.*:(price|landed)$/.test(key) || ["best_vendor", "saves_next", "landed_likely", "low_sell", "profit", "margin", "markup"].includes(key);
+  if (view === "buy") return item || /^v:.*:price$/.test(key) || ["best_vendor", "saves_next", "landed_likely", "low_sell", "profit", "margin", "markup", "target_price_margin", "target_max_cost"].includes(key);
   if (view === "sell") return item || /^s:.*:price$/.test(key) || ["landed_likely", "store_cost_margin", "store_cost_markup", "offer_store", "offer_profit", "offer_margin", "offer_markup"].includes(key);
-  return item || /^w:/.test(key) || ["landed_likely", "low_sell"].includes(key);
+  return item || /^target_/.test(key) || ["landed_likely", "low_sell"].includes(key);
 }
+
+const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
+  { key: "category", label: "Type", all: "All types" },
+  { key: "gender", label: "Gender", all: "All genders" },
+  { key: "brand", label: "Brand", all: "All brands" },
+  { key: "size", label: "Size ml", all: "All sizes" },
+  { key: "vendor", label: "Vendor", all: "All vendors" },
+];
+const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [] };
+
+const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
 function GridPanel({ view }: { view: PerfumeGridView }) {
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
+  const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(PAGE);
+  // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
+  const [target, setTarget] = useState<number | null>(null);
+  const [targetDraft, setTargetDraft] = useState("");
+  const applyTarget = () => {
+    const t = targetDraft.trim() === "" ? null : Number(targetDraft);
+    if (t != null && !(Number.isFinite(t) && t >= 0 && t <= 95)) { pushToast(tr("perfume.desk.target.bad", "Margin must be between 0 and 95%."), "error"); return; }
+    if (t !== target) { setTarget(t); setPage(1); }
+  };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, page],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, offset: (page - 1) * PAGE, limit: PAGE }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, page, pageSize],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   const cols = query.data?.cols ?? [];
@@ -140,7 +164,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     return groups;
   }, [cols]);
   const total = query.data?.total ?? 0;
-  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <section className="space-y-2" aria-label={`${view} view`}>
       <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
@@ -150,19 +174,19 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
-        storageKey={`perfume-desk-${view}-v1`}
+        storageKey={`perfume-desk-${view}-v2`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}
         sortMode="external"
         onSortChange={(key, dir) => { setSort({ key, dir }); setPage(1); }}
         page={1}
-        pageSize={Math.max(1, query.data?.rows?.length ?? PAGE)}
+        pageSize={Math.max(1, query.data?.rows?.length ?? pageSize)}
         hidePager
         suppressToolbarSearch
         stickyHeader
         enableColumnReorder
-        emptyText={q ? "No items match the search." : "No items yet — import a price list."}
+        emptyText={q || Object.values(picks).some((p) => p.length > 0) ? "No items match the search and filters." : "No items yet — import a price list."}
         toolbar={
           <div className="flex flex-wrap items-center gap-2">
             <input
@@ -173,13 +197,48 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
               aria-label={tr("perfume.desk.7", "Search items")}
               className="h-[34px] w-[260px] max-w-full rounded-sm border border-gray-300 px-2 text-xs"
             />
+            <label className="flex items-center gap-1 text-xs text-gray-700">
+              {tr("perfume.desk.target.label", "My margin %")}
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="95"
+                inputMode="decimal"
+                data-testid="perfume-target-pct"
+                value={targetDraft}
+                placeholder={query.data?.target_pct != null ? String(query.data.target_pct) : ""}
+                onChange={(e) => setTargetDraft(e.target.value)}
+                onBlur={applyTarget}
+                onKeyDown={(e) => { if (e.key === "Enter") applyTarget(); }}
+                aria-label={tr("perfume.desk.target.aria", "Margin percent for the My target columns")}
+                className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
+              />
+            </label>
+            {FACETS.map((f) => (
+              <MultiSelectDropdown
+                key={f.key}
+                label={f.label}
+                allLabel={f.all}
+                data-testid={`perfume-filter-${f.key}`}
+                searchable={f.key === "brand" || f.key === "vendor" || f.key === "size"}
+                options={(query.data?.facets?.[f.key] ?? []).map((o) => ({ value: o.value, label: `${f.key === "gender" ? GENDER_WORD[o.value] ?? o.value : o.value} (${o.count.toLocaleString()})` }))}
+                selected={picks[f.key]}
+                onChange={(next) => { setPicks((p) => ({ ...p, [f.key]: next })); setPage(1); }}
+              />
+            ))}
+            {Object.values(picks).some((p) => p.length > 0) ? (
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks(NO_PICKS); setPage(1); }}>
+                {tr("perfume.desk.filters.clear", "Clear filters")}
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="secondary"
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}
@@ -189,7 +248,19 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
       />
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
         <span>{total.toLocaleString()} {tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
-        <span className="flex gap-1">
+        <span className="flex items-center gap-1">
+          <label className="flex items-center gap-1">
+            {tr("perfume.desk.pagesize", "Rows per page")}
+            <SelectCombobox
+              value={String(pageSize)}
+              onChange={(e) => { setPageSize(Number(e.target.value)); setPage(1); }}
+              aria-label={tr("perfume.desk.pagesize.aria", "Rows per page")}
+              data-testid="perfume-page-size"
+              className="h-[34px] w-[84px] text-xs"
+            >
+              {PAGE_SIZES.map((n) => <option key={n} value={String(n)}>{n}</option>)}
+            </SelectCombobox>
+          </label>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(1)}>{tr("perfume.desk.11", "First")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page <= 1} onClick={() => setPage(page - 1)}>{tr("perfume.desk.12", "Previous")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={page >= pages} onClick={() => setPage(page + 1)}>{tr("perfume.desk.13", "Next")}</Button>
@@ -255,7 +326,7 @@ function RulesPanel() {
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>{tr("perfume.desk.31", "Cancel")}</Button>
       </div>
       <div className="text-xs text-gray-600">
-        {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost (likely) = vendor price − low cushion + high freight; best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
+        {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost = vendor price − low cushion + high freight (the safe number); best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
       </div>
     </section>
   );
