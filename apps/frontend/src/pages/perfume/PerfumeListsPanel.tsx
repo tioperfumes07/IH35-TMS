@@ -282,7 +282,7 @@ function ImportCheckBox({ check }: { check: PerfumeImportCheck }) {
   const ok = check.totals_match;
   const m = check.by_method;
   return (
-    <div className={`rounded-sm border p-2 text-xs ${ok ? "border-green-300 bg-green-50" : "border-red-300 bg-red-50"}`} role="status">
+    <div className={`rounded-sm border p-2 text-xs ${ok ? "border-slate-200 bg-slate-100" : "border-red-300 bg-red-50"}`} role="status">
       <div className="font-semibold">{ok ? "Import check passed — totals match to the cent" : "Import check FAILED — nothing was saved"}</div>
       <div>{tr("perfume.lists.35", "Lines read")} {check.rows_read.toLocaleString()} {tr("perfume.lists.36", "· saved")} {check.rows_saved.toLocaleString()} {tr("perfume.lists.37", "· skipped")} {check.rows_skipped.toLocaleString()}</div>
       <div>{tr("perfume.lists.38", "File price total")} {money(check.price_total_file_cents)} {tr("perfume.lists.39", "· saved price total")} {money(check.price_total_saved_cents)}</div>

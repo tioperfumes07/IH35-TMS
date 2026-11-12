@@ -1,8 +1,6 @@
-<!-- heartbeat 2026-11-12T06:04Z Cursor reverse-wiring session -->
-# NOW — CURSOR — ROUND 8.13 / reverse-wiring (READ FIRST)
+<!-- heartbeat 2026-11-12T07:16Z Cursor MAIN-RED session -->
+# NOW — CURSOR — MAIN-RED + reverse-wiring
 
-**ACTIVE:** Fast-merge ON. MoneyCell residuals. DECLARED_NO_DRILL stays 35.
+**ACTIVE:** Fast-merge ON. MAIN-RED: capacity unsubscribe opco allowlist + perfume requireAuth return reply.
 
-**THIS:** LoadSaveProofPanel ledger amounts → journal_entry. #28969–#28980 on main.
-
-**EXTERNAL:** Neon apply `202616501200`. Codex LIVE BOARD-45. No match/Dreamline.
+**EXTERNAL LIVE (not code):** load-to-cash LINK1 load 13700 missing driver_bills; load-settlement-linkage 2 orphans. Neon apply 202616501200. Codex LIVE BOARD-45. No match/Dreamline.

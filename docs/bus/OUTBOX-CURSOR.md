@@ -1,3 +1,8 @@
+## OUTBOX (11-12-2026 ~1:20 AM CT) — MAIN-RED capacity opco + perfume requireAuth
+- **THIS:** allowlist public capacity unsubscribe (HMAC-token opco) in verify-money-dispatch-opco-resolver; perfume desk `/perfume/access` `return reply` after requireAuth.
+- **LIVE FAIL (ops/CC, not this PR):** verify-load-to-cash-chain LINK1 load 13700 no driver_bills; verify-load-settlement-linkage 2 orphaned loads.
+- **NEXT:** reverse-wiring resume after green; Neon apply 202616501200; Codex LIVE. No match/Dreamline.
+
 ## OUTBOX (11-13-2026 ~5:35 AM CT) — LoadSaveProofPanel MoneyCell
 - **THIS:** Book Load save-proof ledger posting amounts → journal_entry MoneyCell.
 - **Prior:** #28969–#28980 merged.
