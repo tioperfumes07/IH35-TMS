@@ -52,6 +52,9 @@ export function SettlementsPreSettlementsPage() {
       title={"Pre-Settlements"}
       subtitle={"Open tours ready to close"}
       createControl={<SettlementCreatorButton testId="settlements-presettle-creator" />}
+      showBack
+      backLabel="Settlements"
+      backTo="/driver-finance/settlements"
     >
       <SettlementsPreSettlementsBoard />
     </SettlementsModuleShell>

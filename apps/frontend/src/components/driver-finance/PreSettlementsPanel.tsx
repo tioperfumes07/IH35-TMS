@@ -82,9 +82,18 @@ type Props = {
   onViewAll?: () => void;
 };
 
-/** Board Number: AlwaysTrack doc number when present; PENDING for open/pre-settlement; — for closed-unnumbered. */
+/**
+ * Board Number (Settlements-PreSettlements.dc.html / board 36):
+ * Prefer the open pre-settlement identity (P-0115…) when listTours returns display_id —
+ * Codex FAIL was "PENDING while actual P-number is known in close picker".
+ * AlwaysTrack source_document_ref still wins once stamped; otherwise PENDING/— via settlementLabel.
+ */
 function tourNumberLabel(r: TourListRow): string {
-  return settlementLabel(r);
+  const alwaysTrack = settlementLabel(r);
+  if (alwaysTrack !== "PENDING" && alwaysTrack !== "—") return alwaysTrack;
+  const preId = String(r.display_id ?? "").trim();
+  if (preId) return preId;
+  return alwaysTrack;
 }
 
 /** ROUND 443.280-A — Ready = n/6 dots from listTours ready_ok / ready_total. */
