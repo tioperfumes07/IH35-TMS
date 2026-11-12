@@ -569,7 +569,9 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
       {tab === "history" ? (
         <div className="space-y-3" data-testid="fuel-history-tab">
-          <TripPlanSummaryBanner route={detail ?? activeRoute} />
+          {/* ROUND 8.17 — planner metric strip only when a real plan is selected; KPI drills into
+              History must not paint an all-dash TripPlanSummaryBanner above the transactions. */}
+          {(detail ?? activeRoute) ? <TripPlanSummaryBanner route={detail ?? activeRoute} /> : null}
           {savingsQuery.isError ? (
             <div data-testid="fuel-history-savings-error">
               <ListErrorBanner onRetry={() => void savingsQuery.refetch()} />

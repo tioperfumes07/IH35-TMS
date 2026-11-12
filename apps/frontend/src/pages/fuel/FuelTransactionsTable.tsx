@@ -216,12 +216,11 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
           key: "amount_cents",
           label: "Amount",
           sortable: true,
-          render: (row) =>
-            row.unit_id ? (
-              <MoneyCell cents={Number(row.amount_cents ?? 0)} drill={{ entity: { kind: "unit", id: row.unit_id } }} />
-            ) : (
-              <MoneyCell cents={Number(row.amount_cents ?? 0)} drill={{ entity: { kind: "fuel_transaction", id: row.id } }} />
-            ),
+          // ROUND 8.17 class S — Amount opens the fuel transaction/receipt (history?transaction_id=),
+          // never the unit/fleet profile (Codex 18:35Z / 19:01Z History Amount FAIL).
+          render: (row) => (
+            <MoneyCell cents={Number(row.amount_cents ?? 0)} drill={{ entity: { kind: "fuel_transaction", id: row.id } }} />
+          ),
         },
         {
           key: "expense_number",
