@@ -887,16 +887,14 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
         </header>
         <Modal open={Boolean(statPop && ldt0.popups[statPop])} onClose={() => setStatPop(null)} title={statPop && ldt0.popups[statPop] ? ldt0.popups[statPop].title : ""} size="sm" data-testid="ldt0-stat-popup">
           {statPop && ldt0.popups[statPop] ? (
-            <table className="w-full text-xs">
-              <tbody>
-                {ldt0.popups[statPop].rows.map(([k, v]) => (
-                  <tr key={k} className="border-b border-gray-100 last:border-0">
-                    <td className="px-4 py-1.5 text-gray-500">{k}</td>
-                    <td className="px-4 py-1.5 text-right font-medium text-[#0F1219]">{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <dl className="w-full text-xs" data-testid="ldt0-stat-popup-rows">
+              {ldt0.popups[statPop].rows.map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3 border-b border-gray-100 px-4 py-1.5 last:border-0">
+                  <dt className="text-gray-500">{k}</dt>
+                  <dd className="text-right font-medium text-[#0F1219]">{v}</dd>
+                </div>
+              ))}
+            </dl>
           ) : null}
         </Modal>
 

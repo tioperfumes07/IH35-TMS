@@ -1,3 +1,7 @@
+## OUTBOX (11-11-2026 ~11:35 PM CT) — go26 LoadDetailDrawer stat popup dl (−1)
+- **THIS:** LoadDetailDrawer LDT0 stat popup raw table → dl rows; go26 raw_table 38→37 banked.
+- **NEXT:** Continue go26 Cursor residuals / reverse-wiring. No match/Dreamline.
+
 ## OUTBOX (11-11-2026 ~11:25 PM CT) — Document Designs locked in settlements-subnav guard
 - **THIS:** verify-settlements-subnav-stays-in-module requires Document Designs tab + route + page/iframe + HTML (#28895 ratchet; no new claim number).
 - **NEXT:** Continue reverse-wiring / go26 residuals; Codex LIVE. No match/Dreamline.
@@ -179,11 +183,6 @@
 - **PRIOR:** #28852 wave14 Users.
 - **THIS:** 2 ParityTables (AuditTrailPage + DocsHomePage) appearance=board. Engines unchanged. Cascade owns R5.
 - **NEXT:** Violations/History then Customers/Vendors/Drivers residuals. No match/Dreamline.
-
-## OUTBOX (11-11-2026 ~4:45 PM CT) — Low-guard residual ParityTables appearance=board wave14
-- **PRIOR:** prior low-guard board wave.
-- **THIS:** 1 ParityTables appearance=board (low-guard split). Engines unchanged. Cascade owns R5.
-- **NEXT:** next low-guard residual boards. No match/Dreamline.
 
 ## ARCHIVE
 Older tips: `docs/bus/archive/OUTBOX-CURSOR-archive-2026-11-11-diet.md`.
