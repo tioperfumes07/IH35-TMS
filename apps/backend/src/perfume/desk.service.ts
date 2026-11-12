@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
-import { BUILTIN_BRAND_ALIASES, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
 /* ---------------- rules ---------------- */
@@ -401,7 +401,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; limit
     const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, brandAliases: aliases });
     const tail = vendorLineTail(String(r.description ?? ""));
     return { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
-      flags: id.flags.join(" "), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
+      flags: id.flags.join(" "), category: categoryOf(id.gender, id.flags), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
   });
   return { rows: out, total: total.rows[0].n };
 }
@@ -506,6 +506,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     { key: "size_ml", label: "Size ml", group: "Item", kind: "int" },
     { key: "conc", label: "Type", group: "Item", kind: "text" },
     { key: "gender", label: "Gender", group: "Item", kind: "text" },
+    { key: "category", label: "Category", group: "Item", kind: "text" },
     { key: "flags", label: "Tester / set", group: "Item", kind: "text" },
     { key: "country", label: "Country", group: "Item", kind: "text" },
   ];
@@ -553,7 +554,7 @@ export async function buildGrid(c: PoolClient): Promise<{ cols: GridCol[]; rows:
     const offersMap = byItem.get(it.id) ?? new Map();
     const row: GridRow = {
       id: it.id, code: it.internal_code, upc: it.upcs?.[0] ?? null, upc_count: it.upcs?.length ?? 0, brand: it.brand, name: it.name,
-      size_ml: it.size_ml == null ? null : Number(it.size_ml), conc: it.conc, gender: it.gender, flags: it.flags.join(" "), display_name: it.display_name,
+      size_ml: it.size_ml == null ? null : Number(it.size_ml), conc: it.conc, gender: it.gender, category: categoryOf(it.gender, it.flags), flags: it.flags.join(" "), display_name: it.display_name,
       upcs: (it.upcs ?? []).join(" "),
     };
     const offers = buyV.filter((v) => offersMap.has(v.id)).map((v) => ({
