@@ -14,12 +14,7 @@
  * NEVER the owner's 12,000-mi/month rule of thumb: every projected due date comes from THAT
  * UNIT'S OWN trailing 90-day mileage rate, computed live, or it is NULL with a stated reason.
  */
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 import { projectPmDueDateFromRate } from "../maint/pm-due.shared.js";
-import { withCurrentUser } from "../auth/db.js";
-import { requireAuth } from "../auth/session-middleware.js";
-import { assertCompanyMembership } from "../_helpers/company-membership-guard.js";
 import { absentOdometerReason, loadPmOdometers, type PmOdometerSource } from "./pm-current-odometer.js";
 import { pmScheduleBaselineAbsentReason } from "./pm-auto-engine.service.js";
 
@@ -52,6 +47,7 @@ export type PmDueEngineRow = {
   miles_per_day: number | null;
   projected_due_date: string | null;
   reason: string | null;
+  baseline_absent: boolean;
 };
 
 const TRAILING_WINDOW_DAYS = 90;
@@ -121,7 +117,9 @@ export async function computeUnitMileageRate(
 
 export async function computePmDueEngineForCompany(
   client: DbClient,
-  operatingCompanyId: string
+  operatingCompanyId: string,
+  odometerSnapshot?: Awaited<ReturnType<typeof loadPmOdometers>>,
+  onlyUnitId?: string,
 ): Promise<PmDueEngineRow[]> {
   const schedules = await client.query<{
     id: string;
@@ -152,14 +150,15 @@ export async function computePmDueEngineForCompany(
         AND s.is_active = true
         -- ROUND 303 T-37: a sample/test unit's schedule is never a real PM due date, no exceptions.
         AND COALESCE(u.is_sample_data, false) = false
+        ${onlyUnitId == null ? "" : "AND s.unit_id = $2::uuid"}
       ORDER BY u.unit_number, s.label
     `,
-    [operatingCompanyId]
+    onlyUnitId == null ? [operatingCompanyId] : [operatingCompanyId, onlyUnitId]
   );
 
   // E-15 (ORDERS 2026-10-01 row 2): the SAME odometer source as E-14 -- one loader, never a second.
   const unitIds = [...new Set(schedules.rows.map((r) => r.unit_id))];
-  const { byUnit, stopEventsLive } = await loadPmOdometers(client, operatingCompanyId, unitIds);
+  const { byUnit, stopEventsLive } = odometerSnapshot ?? await loadPmOdometers(client, operatingCompanyId, unitIds);
 
   const out: PmDueEngineRow[] = [];
   const rateCache = new Map<string, UnitMileageRate>();
@@ -218,31 +217,10 @@ export async function computePmDueEngineForCompany(
       miles_per_day: rate.miles_per_day,
       projected_due_date: projected.projected_due_date,
       reason: projected.reason,
+      baseline_absent: baselineAbsent != null,
     });
   }
 
   return out;
 }
 
-const companyQuerySchema = z.object({ operating_company_id: z.string().uuid() });
-
-function authed(req: FastifyRequest, reply: FastifyReply) {
-  if (!requireAuth(req, reply)) return null;
-  return req.user;
-}
-
-export async function registerPmDueEngineRoutes(app: FastifyInstance) {
-  app.get("/api/v1/maintenance/pm-due-engine", { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
-    const user = authed(req, reply);
-    if (!user) return;
-    const parsed = companyQuerySchema.safeParse(req.query ?? {});
-    if (!parsed.success) return reply.code(400).send({ error: "validation_error", details: parsed.error.flatten() });
-
-    await assertCompanyMembership(user.uuid, parsed.data.operating_company_id);
-    const rows = await withCurrentUser(user.uuid, async (client) => {
-      await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [parsed.data.operating_company_id]);
-      return computePmDueEngineForCompany(client as DbClient, parsed.data.operating_company_id);
-    });
-    return { rows, computed_from: "telematics.unit_stop_events -> telematics.odometer_readings -> ABSENT", never: "fleet_average" };
-  });
-}
