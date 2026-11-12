@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-12T22:58Z) — ROUND 8.20 Fuel board19 shipping · board36 MERGED
+ROUND 8.20 2026-11-12T22:58Z · Pre-Settlements board36 #29130 SHA 189d1500d8 MERGED · ASK Codex: certify boards 18 + 36 + 37 · Fuel board19 FE: Home period URL + diesel $ drills → /fuel/history (ret) · card KPI href cohorts · null-load jsdom · boards CERTIFIED: 0/45 · READY pace 02:45Z≥4
+
 ## OUTBOX (2026-11-12T22:45Z) — ROUND 8.19 Close MERGED · Pre-Settlements board36 shipping
 ROUND 8.19 2026-11-12T22:45Z · Settlements Close board37 #29122 SHA 4b55775b1a4 MERGED (net + close_step KPI + insurance pageheader guard) · Factoring OVERHAUL #29119 MERGED · ASK Codex: certify boards 18 + 37 · Pre-Settlements board36 P-number + Filters + Back shipping · boards CERTIFIED by Codex: 0/45 · deployed FE SHA pending
 

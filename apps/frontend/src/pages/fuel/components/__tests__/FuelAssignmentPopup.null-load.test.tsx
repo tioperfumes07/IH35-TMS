@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 // LEAD 443.258-A (P0 D001) — Fuel › Questions › Review crashed: "Cannot read properties of undefined (reading 'load_number')".
 // A candidate truck with NO load at the pump moment (load: null) must render "No load at pump time", never throw, and
 // selecting it must not invent a load.
