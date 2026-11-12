@@ -35,6 +35,7 @@ type DieselRow = {
   unit_number: string;
   spend_cents: number;
   gallons: number;
+  avg_price_per_gallon: number | null;
   fill_count: number;
   load_count: number;
 };
@@ -82,6 +83,7 @@ export function FuelDieselByTruckPanel({
       unit_number: r.unit_number,
       spend_cents: r.spend_cents,
       gallons: r.gallons,
+      avg_price_per_gallon: r.avg_price_per_gallon,
       fill_count: r.fill_count,
       load_count: r.load_count,
     }));
@@ -191,11 +193,12 @@ export function FuelDieselByTruckPanel({
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
-        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
+        // ROUND 8.17 N19 — known-volume rate from fuelDieselByTruck (Codex helper adopted).
+        sortValue: (r) => r.avg_price_per_gallon ?? Number.POSITIVE_INFINITY,
         render: (r) =>
-          r.gallons > 0 ? (
+          r.avg_price_per_gallon != null ? (
             <Link to={historyHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-diesel-rate-drill">
-              {formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3)}
+              {formatUsdRateTable(r.avg_price_per_gallon, 3)}
             </Link>
           ) : (
             "—"

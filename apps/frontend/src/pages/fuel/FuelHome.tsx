@@ -269,8 +269,9 @@ export function FuelHomePage() {
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
-        sortValue: (r) => (r.gallons > 0 ? r.spend_cents / r.gallons : Number.POSITIVE_INFINITY),
-        render: (r) => (r.gallons > 0 ? formatUsdRateTable(r.spend_cents / 100 / r.gallons, 3) : "—"),
+        // ROUND 8.17 N19 — known-volume rate from fuelDieselByTruck (not all-spend / all-gallons).
+        sortValue: (r) => r.avg_price_per_gallon ?? Number.POSITIVE_INFINITY,
+        render: (r) => (r.avg_price_per_gallon != null ? formatUsdRateTable(r.avg_price_per_gallon, 3) : "—"),
       },
       {
         key: "fill_count",
