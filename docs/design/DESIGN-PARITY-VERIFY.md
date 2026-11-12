@@ -2,6 +2,10 @@
 
 ## Reports depth — cash-basis navigation FAIL
 
+Additional read-only finding: manually selecting Cash and Apply completes with an Out of balance result, whereas Accrual displays Balanced. This requires CC-1 independent cash-read-model reconciliation; it is NOT proof of corrupted posted ledger and no balancing entry is authorized. Private amounts are not committed. CC-1 notified #28950 comment6814925656.
+
+Reports-Loads chart FAIL: board explicitly requires revenue-bar drill; live role=img has no interactive descendants and `LoadsReportBoard.tsx:573–584` renders plain div bars without handlers. Week table label does narrow to detail rows, bounded PASS, but drill/group live only in component state rather than URL. Cursor notified #28941 comment6814947418: keyboard-accessible bar drill, same filtered population, route/reverse preservation and rendered tests required. Preserve additive Fuel/Margin columns.
+
 Read-only live: Reports Home Cash selected → Trial balance opens `/reports/trial-balance?basis=cash`, but the loaded viewer selects Accrual, labels Accrual basis and queries that applied state. `TrialBalancePage.tsx:79–81` initializes applied from hard-coded accrual rather than URL. Required owning-seat repair: validate and initialize basis/date from URL, synchronize navigation, and rendered tests for cash/accrual deep links and reverse state. This is a control/query mismatch, not evidence of ledger corruption. ReportsHomeBoard.tsx:287–306 also has no drill action on Available reports or Run last 7 days counts. Screenshot private inline; Cursor notified #28941 comment6814901649. Reports and Trial Balance boards remain OPEN.
 
 ## Party-board navigation #28946 — bounded LIVE PASS
