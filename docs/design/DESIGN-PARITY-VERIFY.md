@@ -1,5 +1,21 @@
 # ROUND 8.5 — independent board parity verification
 
+## Cash Flow depth acceptance — 11-12 deployed 3b58e6be276
+
+Read-only Chrome, USMCA, 1440x900. No Save, Pull, Create, Stop, Roll over or accounting mutation submitted. Full boards remain OPEN.
+
+| Board / element | Result | Evidence and required repair |
+|---|---|---|
+| CashFlow-Home / expense classification | FAIL | `CashFlowHomeTab.tsx:127` returns `other` for a non-expense row. Both committed other at192 and run-rate seed at823 sum that classifier. Executing the actual extracted classifier on a synthetic income-only invoice of10000 cents returns `other`; the assertion fails exit1. Live Conservative breakdown repeats invoice income as Other expenses. Exclude income at the canonical classification boundary; preserve real other expenses. Test income-only, mixed-category totals and run-rate seed. Cursor notified #28944 comment6827024818. |
+| CashFlow-Home / Net breakdown | Bounded PASS | Week, scenario, bucket and component banner survive Home -> Rolling Ledger. This proves the bridge, not the erroneous component calculation above or a canonical ledger tie-out. |
+| CashFlow-RollingLedger / invoice return | FAIL | Invoice link reaches matching record; its explicit Back returns `/accounting/invoices`, losing Cash Flow origin/week/scenario. `InvoiceDetailPage.tsx:355` hard-codes that backHref. Carry validated origin context; test forward/back and invalid external-origin fallback. |
+| CashFlow-ActualVsProjected / populated comparison and filter | Bounded PASS | Four KPI tiles, cumulative chart and eight dated rows load. Net under projected filter narrows8 to6 rows. This is UI behavior only, not an independent bank-source reconciliation. |
+| CashFlow-ActualVsProjected / full board wiring | FAIL | Approved board has chart/table View all controls and variance chips; live omits View all and replaces chips with a single-select filter. Amount cells and KPI values have no source drills. Preserve real bank/snapshot populations and add source-bound/reverse routes, not generic links. |
+| CashFlow-Manual / pending-read Save | FAIL | Loading projections is visible while Save projection is enabled and opening cash displays fallback zero. `ManualDailyProjectionsTab.tsx:690` disables only pending mutation or missing date; click handler passes openingCents to openingMutation. Mutation at524 defaults undefined amount to0 and writes opening balance, not a dated projection snapshot. Never exercised live. Add read-success/tenant guards in both UI and submit path, delayed/error/read-switch behavioral tests; separately reconcile Save projection semantics with the board. |
+| CashFlow-Manual / History and groups | Bounded PASS / limited | History opens Saved projection dates picker; six expense groups and dated drill links render. Current selected date has no entries, so real-entry linkage and persistence are UNVERIFIED, not PASS. No fixtures created. |
+
+Private screenshots remain inline in the audit session. No production names, amounts or screenshots added to this report. Handoff publication #29024 mergedf3986f89aba with hooks ON;15 affected guards0regressions, inherited inbox-cap red disclosed by the fast-merge comparison. Settings #29022 deployment proof above remains valid; its post-merge branch-fresh CI race is not described as all-CI-green.
+
 ## 11-12 resumed authenticated in-app checks — bounded results only
 
 USMCA session is available in the in-app browser. Banking Home income drill still opens `transactions?types=money_in` with blank dates, All transaction types, For review and outgoing rows (FAIL); explicit Back returns Banking Home (bounded PASS). Cursor notified #28998 comment6823668287. These observations preceded the asset reload; do not infer current-tip deployment parity.
