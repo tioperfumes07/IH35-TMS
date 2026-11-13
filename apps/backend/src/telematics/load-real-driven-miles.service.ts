@@ -398,6 +398,7 @@ export async function loadsDueForRealMiles(client: DbClient, operatingCompanyId:
           ready
             ? `AND (
                  l.miles_driven_actual_computed_at IS NULL
+                 OR l.miles_driven_actual IS NULL
                  OR l.updated_at > now() - interval '14 days'
                  OR l.miles_driven_actual_computed_at > now() - interval '14 days'
                  OR (
