@@ -4,9 +4,10 @@
  * expense_lines → catalogs.accounts, accounting.bills, mdata.vendors.vendor_category / eligible_1099).
  * Open bills: GET /api/v1/reports/ap-aging (the canonical A/P aging). No new engine.
  */
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { getApAgingReport, getVendorBoardReport, type APAgingRow, type PartyBoardRange, type VendorBoardReportRow } from "../../../api/reports";
 import { listAllUnits } from "../../../api/mdata";
 import { EntityMultiSelect, entityFilterIds } from "../../../components/EntityMultiSelect";
@@ -59,11 +60,36 @@ export function cardPayablesHref(rows: Array<{ account_id: string; balance_cents
 export function VendorReportBoard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [range, setRange] = useState<PartyBoardRange>("ytd");
-  const [view, setView] = useState<View>("spend");
-  const [vendorIds, setVendorIds] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
-  const [unitIds, setUnitIds] = useState<string[]>([]);
+  const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board31 — view/range/vendors/categories/units in URL so reverse restores cohort.
+  const rangeFromUrl = (searchParams.get("range") ?? "ytd") as PartyBoardRange;
+  const range: PartyBoardRange = RANGE_OPTIONS.some((r) => r.id === rangeFromUrl) ? rangeFromUrl : "ytd";
+  const viewFromUrl = (searchParams.get("view") ?? "spend") as View;
+  const view: View = VIEW_OPTIONS.some((v) => v.id === viewFromUrl) ? viewFromUrl : "spend";
+  const vendorIds = searchParams.get("vendors") ?? "";
+  const categories = (searchParams.get("categories") ?? "").split(",").filter(Boolean);
+  const unitIds = (searchParams.get("units") ?? "").split(",").filter(Boolean);
+  const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const patchUrl = (patch: Record<string, string | null>) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v == null || v === "") p.delete(k);
+          else p.set(k, v);
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const setRange = (next: PartyBoardRange) => patchUrl({ range: next === "ytd" ? null : next });
+  const setView = (next: View) => patchUrl({ view: next === "spend" ? null : next });
+  const setVendorIds = (next: string) => patchUrl({ vendors: next || null });
+  const setCategories = (next: string[]) => patchUrl({ categories: next.length ? next.join(",") : null });
+  const setUnitIds = (next: string[]) => patchUrl({ units: next.length ? next.join(",") : null });
+  const withRet = (href: string) => withReturnContext(href, originHref);
   const asOf = companyToday();
 
   const unitsQ = useQuery({
@@ -144,7 +170,7 @@ export function VendorReportBoard() {
       sortable: true,
       sortValue: (r) => r.txns,
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={`/vendors/${encodeURIComponent(r.id)}`}>
+        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/vendors/${encodeURIComponent(r.id)}`)}>
           Open vendor
         </Link>
       ),
@@ -160,7 +186,7 @@ export function VendorReportBoard() {
       cellClass: "text-right",
       className: "text-right",
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={`/accounting/bills?vendor_id=${encodeURIComponent(r.vendor_id)}`}>
+        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/accounting/bills?vendor_id=${encodeURIComponent(r.vendor_id)}`)}>
           {r.open_bill_count}
         </Link>
       ),
@@ -189,7 +215,7 @@ export function VendorReportBoard() {
       sortable: true,
       sortValue: (c) => c.spend_cents,
       render: (c) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={`/accounting/expenses?expense_account_id=${encodeURIComponent(c.account_id ?? "none")}&date_from=${board.data?.range_from ?? ""}`}>
+        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/accounting/expenses?expense_account_id=${encodeURIComponent(c.account_id ?? "none")}&date_from=${board.data?.range_from ?? ""}`)}>
           Open expenses
         </Link>
       ),
