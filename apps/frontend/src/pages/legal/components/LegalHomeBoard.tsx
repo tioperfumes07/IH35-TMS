@@ -6,7 +6,7 @@
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { legalContractsApi, type LegalContractSummary } from "../../../api/legal-contracts";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { legalTemplatesApi } from "../../../api/legal-templates";
@@ -17,6 +17,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3 } from "../../../design/v3-tokens";
 import { formatDateUS } from "../../../lib/formatDate";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { properEnumOrFilterLabel } from "../../../lib/properDisplayText";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ParityTable } from "../../../components/parity/ParityTable";
@@ -112,6 +113,9 @@ const PIPELINE_DOT: Record<string, string> = {
 
 export function LegalHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const legalHref = (target: string) => withReturnContext(target, originHref);
 
   const templatesQuery = useQuery({
     queryKey: ["legal", "home-board", "templates", companyId],
@@ -261,31 +265,31 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           testId="legal-kpi-active-templates"
           label="Active templates"
           value={loading && !templatesQuery.isSuccess ? "…" : dash(metrics.activeTemplates)}
-          onClick={() => navigate("/legal/templates")}
+          href={legalHref("/legal/templates")}
         />
         <V3KpiTile
           testId="legal-kpi-pending-signatures"
           label="Pending signatures"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.pendingSignatures)}
-          onClick={() => navigate("/legal/contracts")}
+          href={legalHref("/legal/contracts?status=sent&status=viewed")}
         />
         <V3KpiTile
           testId="legal-kpi-recently-signed"
           label="Recently signed (30d)"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.recentlySigned)}
-          onClick={() => navigate("/legal/contracts")}
+          href={legalHref("/legal/contracts?status=signed_electronically")}
         />
         <V3KpiTile
           testId="legal-kpi-expiring-contracts"
           label="Expiring contracts (60d)"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.expiringContracts)}
-          onClick={() => navigate("/legal/contracts")}
+          href={legalHref("/legal/contracts")}
         />
         <V3KpiTile
           testId="legal-kpi-open-matters"
           label="Open matters"
           value={loading && !mattersQuery.isSuccess ? "…" : dash(metrics.openMatters)}
-          onClick={() => navigate("/legal/matters")}
+          href={legalHref("/legal/matters")}
         />
       </div>
 
@@ -296,7 +300,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
       >
         <BoardSection
           title="Contract pipeline"
-          onViewAll={() => navigate("/legal/contracts")}
+          onViewAll={() => navigate(legalHref("/legal/contracts"))}
           testId="legal-home-contract-pipeline"
         >
           <div style={{ overflowX: "auto" }}>
@@ -310,7 +314,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               rows={pipeline}
               rowKey={(row) => row.stage}
               rowTestId={(row) => `legal-pipeline-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
-              onRowClick={(row) => navigate(row.href)}
+              onRowClick={(row) => navigate(legalHref(row.href))}
               emptyText="No contracts."
               columns={[
                 {
@@ -321,7 +325,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
                   // ROUND 8.5 L1/L3 — colored stage marker + real Link (keyboard/screen-reader).
                   render: (row) => (
                     <Link
-                      to={row.href}
+                      to={legalHref(row.href)}
                       className="inline-flex items-center gap-2 text-inherit no-underline hover:underline"
                       data-testid={`legal-pipeline-link-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
                       onClick={(e) => e.stopPropagation()}
@@ -365,7 +369,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Matters & deadlines"
-          onViewAll={() => navigate("/legal/matters")}
+          onViewAll={() => navigate(legalHref("/legal/matters"))}
           testId="legal-home-matters-deadlines"
         >
           {/* ROUND 8.5 L2 — empty state keeps Matter / Next date / At risk headers (board table). */}
@@ -433,7 +437,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Quick actions"
-          onViewAll={() => navigate("/legal/contracts")}
+          onViewAll={() => navigate(legalHref("/legal/contracts"))}
           testId="legal-home-quick-actions"
         >
           <div style={{ padding: "4px 14px 12px", fontFamily: V3.font }}>
@@ -448,7 +452,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               <button
                 key={label}
                 type="button"
-                onClick={() => navigate(to)}
+                onClick={() => navigate(legalHref(to))}
                 style={{
                   display: "block",
                   width: "100%",

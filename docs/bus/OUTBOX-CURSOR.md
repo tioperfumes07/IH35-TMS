@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:39Z) — ROUND 8.20 board21 Legal home ret shipping
+ROUND 8.20 2026-11-13T05:39Z · board21 Legal home KPIs/pipeline/quick actions carry ?ret=/legal · tip boards 14–17 #29195 911d37ae9f4 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+21+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T05:38Z) — ROUND 8.20 boards 14–17 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T05:38Z · boards 14–17 #29195 SHA 911d37ae9f4 MERGED (Book Load trip-type keyboard) · tip board1 #29186 d64386761e3 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+22+36+37 · LIVE: UNVERIFIED await /version.json contains 911d37ae9f4 · next board21 Legal / board23 In Shop
+
 ## OUTBOX (2026-11-13T05:35Z) — ROUND 8.20 boards 14–17 Book Load trip-type keyboard shipping
 ROUND 8.20 2026-11-13T05:35Z · boards 14–17 Book Load trip-type radiogroup Arrow/Home/End (NB/TR/SB) + unit test · tip board1 #29186 d64386761e3 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json · no production book
 
