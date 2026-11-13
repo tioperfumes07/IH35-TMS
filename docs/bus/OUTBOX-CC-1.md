@@ -294,3 +294,15 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 - Insurance/vendor bills: accounting.bills (billsPromise — already wired)
 
 **NEXT**: D074 truck-line 11.4s + units-without-load 4.8-8.8s → ≤2s. Starting now.
+
+---
+
+## 2026-11-13 ~17:10Z — ROUND 8.23 CC-1 CHECKPOINT
+
+**Row 82** · #29245 · 0620f673b8f · DONE-ENGINE | DATA-LATER: AUTH-478 restamp P-0069/P-0113/P-0119/P-0117 accounting_bill_id on old closed settlements (settlement-payrun-close.service.ts SETL-HEADER-05-PAYRUN added; guard verify-step 20137 extended Rule 6)
+
+**Row 86** · #29245 · 0620f673b8f · DONE-ENGINE | DATA-LATER: AUTH-478 restamp; settlement number + company settlement = old records pre-code, AUTH-478 (same PR as Row 82)
+
+**Row 230** (443.304 bank match combinations) · #27494 · 3455886689f · DONE-LIVE (already on main from 2026-10-24; difference_as_loan engine, multi-document match, Faro purchase dedup)
+
+**Row 231** (443.305 loan match) · #27494+#27587 · 3455886689f+f46b22f1b3c · DONE-LIVE (financial engine on main via PR #27494 Row 230; SelectCombobox picker on main via PR #27587)
