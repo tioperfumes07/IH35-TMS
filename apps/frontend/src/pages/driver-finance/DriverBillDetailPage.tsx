@@ -14,6 +14,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useAuth } from "../../auth/useAuth";
 import { VoidStrayPracticalBillAction } from "./VoidStrayPracticalBillAction";
+import { ReinstateBillAction } from "./ReinstateBillAction";
 
 /**
  * REG-023(b) (owner 2026-09-10: "the Open Driver Bill button is unwired — no driver_bills/:id route
@@ -101,13 +102,22 @@ export function DriverBillDetailPage() {
         title={`Driver bill ${label}`}
         subtitle={subtitle}
         actions={
-          <VoidStrayPracticalBillAction
-            billId={bill.id}
-            operatingCompanyId={selectedCompanyId}
-            billLabel={label}
-            bill={bill}
-            role={auth.user?.role}
-          />
+          <>
+            <VoidStrayPracticalBillAction
+              billId={bill.id}
+              operatingCompanyId={selectedCompanyId}
+              billLabel={label}
+              bill={bill}
+              role={auth.user?.role}
+            />
+            <ReinstateBillAction
+              billId={bill.id}
+              operatingCompanyId={selectedCompanyId}
+              billLabel={label}
+              bill={bill}
+              role={auth.user?.role}
+            />
+          </>
         }
         breadcrumb={[
           { label: "Driver Finance", href: "/driver-finance" },

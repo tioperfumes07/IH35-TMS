@@ -1975,7 +1975,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   {advanceSummaryRows.length > 0 ? (
                     <div className="mb-3 px-3.5" data-testid="factoring-collection-summary">
                       <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4B5563", marginBottom: "4px" }}>Collection Summary by Advance</div>
-                      <table className="w-full border-collapse text-xs">
+                      <table className="w-full border-collapse text-xs tabular-nums">
                         <thead>
                           <tr className="border-b border-[#E5E7EB]">
                             <th className="py-1 text-left" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Advance</th>
@@ -1994,9 +1994,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                                 <td className="py-1">
                                   <EntityLink kind="factoring_advance" id={advId} label={s.advance_display_id} />
                                 </td>
-                                <td className="py-1 text-right font-mono">{fmtCents(s.total_cents)}</td>
-                                <td className="py-1 text-right font-mono text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
-                                <td className="py-1 text-right font-mono text-gray-700">{fmtCents(s.open_cents)}</td>
+                                <td className="py-1 text-right font-mono tabular-nums">{fmtCents(s.total_cents)}</td>
+                                <td className="py-1 text-right font-mono tabular-nums text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
+                                <td className="py-1 text-right font-mono tabular-nums text-gray-700">{fmtCents(s.open_cents)}</td>
                                 <td className="py-1 text-right">
                                   {allCollected ? (
                                     <span className="text-[#16A34A] font-medium">Fully Collected</span>

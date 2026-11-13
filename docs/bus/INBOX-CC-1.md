@@ -169,7 +169,7 @@ Measured: `docs/bus/lead/LEAD-PENDING-REGISTER.md` on main (bb8a165c08) with you
 | 227 | ENGINE | INPROGRESS | Settlements | OWNER 10-24: P-0123/P-0124/P-0125 duplicates deleted completely + tour-close engine never opens a settlement for a settled load |
 | 242 | ENGINE | PARTIAL | Accounting | ENG-04 2170 Driver Net-Pay Clearing Cr $2,575.96 / 12 postings — tie to open net pay, clear through documents |
 | 269 | ENGINE | PARTIAL | Engine | ENG-34 920 guard-exempt entries (CI does not run them) — wire or delete, shrink-only |
-| 289 | ENGINE | PARTIAL | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695 |
+| 289 | ENGINE | CODED | Driver pay | ENG-44 bill 13697 due date; salaried stray bill not voided; presettlement autolink 13556/13563; live_load_number self-referential 13694/13695; REVERSE un-void endpoint + guard 20137 |
 | 291 | ENGINE | PARTIAL | Accounting | ENG-46 bill_payment ad02cc37 no source link; escrow sub-ledger 315,000¢ vs baseline 132,500¢; 5796/P-0102 USMCA settlement for a Transportation document |
 | 292 | ENGINE | PARTIAL | Engine | ENG-47 guards stale vs owner rulings: TIO PERFUMES kept; voids are design; S-13655/56; unbilled revenue migration; 'USMCA hidden'; archive tables RLS |
 | 309 | ENGINE | PARTIAL | Legal | ENG-60 retire the insurance.lawsuit side table: PolicyDetail lawsuit section → legal matters by claim, claim.lawsuit_id → legal matter, LawsuitsTab + 17 guards that read it; drop table after 0 rows all entities |

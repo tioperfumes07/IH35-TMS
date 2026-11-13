@@ -8,6 +8,7 @@ import { canAccessDriverLoadBills } from "./driver-bills-access.js";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
 import { DriverBillRepriceRefused, repriceDriverBillToSettlementLineInClientTx } from "./driver-bill-reprice-to-settlement.service.js";
 import { StraySalariedBillVoidRefusedError, voidStraySalariedDriverBill, voidStrayPracticalBasisDriverBill } from "./void-stray-salaried-driver-bill.service.js";
+import { reinstateDocumentThenVoidReversal, ReinstateDocumentError } from "../accounting/reinstate-document.service.js";
 
 const VOID_STRAY_ROLES = new Set(["Owner", "Administrator", "Accountant"]);
 
@@ -584,6 +585,32 @@ export async function registerDriverFinanceDriverBillsRoutes(app: FastifyInstanc
       return reply.code(200).send(result);
     } catch (e) {
       if (e instanceof DriverBillRepriceRefused) return reply.code(409).send({ error: e.code, message: e.message, details: e.details });
+      throw e;
+    }
+  });
+
+  /**
+   * ENG-44 REVERSE — reinstate ONE voided driver bill (un-void).
+   * Uses the universal reinstate engine. A voided stray bill never reached the GL, so
+   * reinstateDocumentThenVoidReversal simply re-opens it without any GL restoration.
+   * Fail-closed on role + reason length. Audited.
+   */
+  app.post("/api/v1/driver-finance/driver-bills/:id/reinstate", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req: FastifyRequest, reply: FastifyReply) => {
+    const user = currentAuthUser(req, reply);
+    if (!user) return;
+    if (!VOID_STRAY_ROLES.has(user.role)) return reply.code(403).send({ error: "forbidden", message: "Owner/Administrator/Accountant only" });
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params ?? {});
+    if (!params.success) return validationError(reply, params.error);
+    const body = z.object({ operating_company_id: z.string().uuid(), reason: z.string().trim().min(20).max(1000) }).safeParse(req.body ?? {});
+    if (!body.success) return validationError(reply, body.error);
+    try {
+      const result = await reinstateDocumentThenVoidReversal(
+        (fn) => withCompanyScope(user.uuid, body.data.operating_company_id, fn),
+        { operatingCompanyId: body.data.operating_company_id, type: "driver_bill", id: params.data.id, reason: body.data.reason, actor: { userId: user.uuid, role: user.role } },
+      );
+      return reply.code(200).send({ ok: true, reinstated_at: result.reinstatedAt, reinstated_from_void_je_id: result.reinstatedFromVoidJeId });
+    } catch (e) {
+      if (e instanceof ReinstateDocumentError) return reply.code(409).send({ error: e.code, message: e.message });
       throw e;
     }
   });
