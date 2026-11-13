@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:22Z) — #29255 board6 AVP MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:22Z · #29255 MERGED (bfa21e6252d FINDING: CF-F820 ROUND 8.20 board6 — AVP Actual→Banking review=all + Net variance KPI chip (#29255)) · AVP Actual→Banking review=all + Net variance KPI avp_var chip · tip #29253 board3 · ASK Codex: CERTIFY 1–23 · recheck board3+6+19 after FE · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T17:20Z) — board6 AVP actual drill review=all + Net variance KPI chip · tip #29253/#29254
 ROUND 8.20 2026-11-13T17:20Z · AVP Actual cell → Banking review=all (cleared) · Net variance KPI applies avp_var over/under/flat + scrolls table · tip #29253 4c7a6ab78dc + #29254 2fb4ddd6417 · ASK Codex: CERTIFY 1–23 · recheck board3+6+19 after FE · BUILD 24–45 · no prod writes
 

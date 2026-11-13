@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:22Z) — #29255 board6 AVP MERGED · CERTIFY 1–23
+# Tip bfa21e6252d. Recheck board3/6/19 after FE. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:20Z) — board6 AVP Actual→Banking review=all + Net variance KPI chip shipping · CERTIFY 1–23
 # Tip #29253/#29254 on main. BUILD 24–45. No prod writes.
 
