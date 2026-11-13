@@ -29,7 +29,8 @@ const CHECKS = [
   ["fleet:api-client", "api", /getInsuranceFleetCovered/],
   ["fleet:registered-get", "route", /app\.get\("\/api\/v1\/insurance\/fleet-covered"/],
   ["fleet:route-mounted", "tab", /path="fleet-covered" element=\{<FleetCoveredPage/],
-  ["fleet:landing-drill", "board", /to="\/insurance\/fleet-covered"/],
+  // ROUND 8.20 — Fleet Covered drill carries ?ret= via insHref/withReturnContext (literal to= retired).
+  ["fleet:landing-drill", "board", /insHref\("\/insurance\/fleet-covered"\)|to=\{insHref\("\/insurance\/fleet-covered"\)\}/],
   ["fleet:parity-table", "fleet", /<ParityTable/],
   ["fleet:stable-storage", "fleet", /storageKey="insurance-fleet-covered"/],
   ["fleet:tiv-source", "fleetSql", /MAX\(pu\.insured_value_cents\) FILTER \(WHERE p\.id IS NOT NULL\)/],

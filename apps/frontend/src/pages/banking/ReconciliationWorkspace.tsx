@@ -302,11 +302,10 @@ function varianceClass(varianceCents: number) {
 }
 
 export function ReconciliationWorkspacePage() {
-  const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
-  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const { bankAccountId = "" } = useParams<{ bankAccountId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const sessionId = searchParams.get("session_id") ?? "";
   const bankAccountHint = searchParams.get("bank_account_hint") ?? "";
   const [pickedBankAccountId, setPickedBankAccountId] = useState("");

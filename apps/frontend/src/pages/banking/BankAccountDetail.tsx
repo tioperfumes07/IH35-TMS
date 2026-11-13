@@ -50,9 +50,6 @@ function matchedTransactionLinks(row: PlaidBankTransaction) {
 
 /** Signed QBO amount — direction from is_credit (same spentReceived convention as the live register). */
 export function formatBankTransactionSignedAmount(tx: Pick<PlaidBankTransaction, "amount_cents" | "is_credit">) {
-  const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
-  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const { spent, received } = spentReceived(tx as PlaidBankTransaction);
   return received > 0 ? formatUsdCents(received) : formatUsdCents(-spent);
 }
@@ -76,6 +73,9 @@ function syncStatusClasses(status: string) {
 export function BankAccountDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const auth = useAuth();
