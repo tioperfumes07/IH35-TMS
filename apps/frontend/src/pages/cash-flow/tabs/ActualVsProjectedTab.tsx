@@ -244,13 +244,14 @@ export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
 // backend measured 0 categorized bank lines company-wide -- a bare $0 here would read as
 // "confirmed zero cash moved" when the truth is "we cannot see actuals yet". Render the honest
 // state instead of the number.
-/** ROUND 8.20 board6 — Actual Income/Exp → same-day Banking Money In/Out with ret. */
+/** ROUND 8.20 board6 — Actual Income/Exp → same-day Banking Money In/Out with ret.
+ *  review=all (cleared for_review∪categorized) — matches board3 Money In cohort (cleared ≠ categorized-only). */
 export function buildAvpActualDrillHref(
   line: Pick<AvpLineItem, "category" | "date">,
   originHref: string,
 ): string {
   const types = line.category === "income" ? "money_in" : "money_out";
-  const target = `${BANKING_TAB_PATH.transactions}?types=${types}&review=categorized&date_from=${encodeURIComponent(line.date)}&date_to=${encodeURIComponent(line.date)}`;
+  const target = `${BANKING_TAB_PATH.transactions}?types=${types}&review=all&date_from=${encodeURIComponent(line.date)}&date_to=${encodeURIComponent(line.date)}`;
   return withReturnContext(target, originHref);
 }
 
@@ -804,6 +805,28 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             // Raw actual net stays separate — never invent variance vs an unavailable projection.
             const netVar = coverageNets.matched_variance_cents;
             const varianceUnavailable = actualsUnavailable || netVar == null;
+            // ROUND 8.20 board6 — Net variance KPI applies the matching variance chip (URL SoT) + scrolls table.
+            const applyNetVarianceChip = () => {
+              if (varianceUnavailable || netVar == null) {
+                const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
+                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+              }
+              const varianceFilter: VarianceFilter = netVar > 0 ? "over" : netVar < 0 ? "under" : "flat";
+              setApplied((prev) => ({ ...prev, varianceFilter }));
+              staged.setDraft({ ...staged.draft, varianceFilter });
+              setSearchParams(
+                (prev) => {
+                  const merged = mergeUrlBoardState(prev.toString(), {
+                    avp_var: varianceFilter === "all" ? null : varianceFilter,
+                  });
+                  return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
+                },
+                { replace: true },
+              );
+              const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            };
             return (
               <V3KpiTile
                 label="Net variance"
@@ -821,7 +844,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-net"
-                href={`#cash-flow-avp-table`}
+                onClick={applyNetVarianceChip}
               />
             );
           })()}
@@ -831,7 +854,10 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             sub={shortRangeLabel(applied.from, applied.to)}
             tone="muted"
             testId="cash-flow-avp-v3-kpi-days"
-            href={`#cash-flow-avp-table`}
+            onClick={() => {
+              const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
+              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
           />
         </div>
       )}

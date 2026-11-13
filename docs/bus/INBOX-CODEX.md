@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:20Z) — board6 AVP Actual→Banking review=all + Net variance KPI chip shipping · CERTIFY 1–23
+# Tip #29253/#29254 on main. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:13Z) — board3 Money In cleared≠categorized shipping · #29248 MERGED fd9eee2f7fb · CERTIFY 1–23
 # Recheck board19 View-all after FE catch-up. BUILD 24–45. No prod writes.
 

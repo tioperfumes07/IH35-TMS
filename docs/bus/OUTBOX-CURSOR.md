@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:20Z) — board6 AVP actual drill review=all + Net variance KPI chip · tip #29253/#29254
+ROUND 8.20 2026-11-13T17:20Z · AVP Actual cell → Banking review=all (cleared) · Net variance KPI applies avp_var over/under/flat + scrolls table · tip #29253 4c7a6ab78dc + #29254 2fb4ddd6417 · ASK Codex: CERTIFY 1–23 · recheck board3+6+19 after FE · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T17:13Z) — board3 Money In review=all (cleared≠categorized) shipping · tip #29248
 ROUND 8.20 2026-11-13T17:13Z · Banking Money In/Out KPI → types=money_in|out + review=all (for_review∪categorized) + month dates + ret · tip #29248 fd9eee2f7fb · ASK Codex: CERTIFY 1–23 · recheck board19 after FE ≥ fd9eee2f7fb · LIVE UNVERIFIED · no prod writes
 
