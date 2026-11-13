@@ -5,6 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { getDriverSettlementsReport, type DriverSettlementsReportRow } from "../../../api/reports";
 import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
@@ -70,11 +71,90 @@ export function DriverSettlementsReportBoard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const emptyFilters: Filters = { start: `${companyToday().slice(0, 4)}-01-01`, end: companyToday(), driverId: "", status: [], paid: [] };
-  const [applied, setApplied] = useState(emptyFilters);
-  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board28 — status/paid/group/drill in URL so KPI drills + Back restore cohort.
+  const statusFromUrl = (searchParams.get("status") ?? "").split(",").filter(Boolean);
+  const paidFromUrl = (searchParams.get("paid") ?? "")
+    .split(",")
+    .filter((v): v is "paid" | "unpaid" => v === "paid" || v === "unpaid");
+  const emptyWithUrl: Filters = {
+    ...emptyFilters,
+    status: statusFromUrl.filter((s) => s === "open" || s === "closed"),
+    paid: paidFromUrl,
+  };
+  const [applied, setApplied] = useState(emptyWithUrl);
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: (next) => {
+      setApplied(next);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          if (next.status.length) p.set("status", next.status.join(","));
+          else p.delete("status");
+          if (next.paid.length) p.set("paid", next.paid.join(","));
+          else p.delete("paid");
+          p.delete("drill");
+          p.delete("drill_label");
+          return p;
+        },
+        { replace: true },
+      );
+    },
+  });
   const [search, setSearch] = useState("");
-  const [by, setBy] = useState<GroupBy>("settlement");
-  const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
+  const groupFromUrl = (searchParams.get("group") ?? "settlement") as GroupBy;
+  const by: GroupBy = GROUP_OPTIONS.some((g) => g.id === groupFromUrl) ? groupFromUrl : "settlement";
+  const drillKey = searchParams.get("drill");
+  const drillLabel = searchParams.get("drill_label");
+  const drill = drillKey ? { key: drillKey, label: drillLabel || drillKey } : null;
+  const setBy = (next: GroupBy) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "settlement") p.delete("group");
+        else p.set("group", next);
+        p.delete("drill");
+        p.delete("drill_label");
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const setDrill = (next: { key: string; label: string } | null) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (!next) {
+          p.delete("drill");
+          p.delete("drill_label");
+        } else {
+          p.set("drill", next.key);
+          if (next.label && next.label !== next.key) p.set("drill_label", next.label);
+          else p.delete("drill_label");
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const applyClosedUnpaidKpi = () => {
+    const next: Filters = { ...applied, status: ["closed"], paid: ["unpaid"] };
+    setApplied(next);
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.set("status", "closed");
+        p.set("paid", "unpaid");
+        p.delete("group");
+        p.delete("drill");
+        p.delete("drill_label");
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   const query = useQuery({
     queryKey: ["reports", "driver-settlements-board", companyId, { ...applied, status: applied.status.join(","), paid: applied.paid.join(",") }],
@@ -319,10 +399,7 @@ export function DriverSettlementsReportBoard() {
         <V3Segmented
           value={by}
           options={GROUP_OPTIONS}
-          onChange={(next) => {
-            setDrill(null);
-            setBy(next);
-          }}
+          onChange={(next) => setBy(next)}
           testId="driver-settlements-report-group-by"
         />
       </div>
@@ -385,9 +462,8 @@ export function DriverSettlementsReportBoard() {
           sub={`${totals.closedUnpaid.length} settlements`}
           tone={totals.closedUnpaid.length ? "amber" : "muted"}
           onClick={() => {
-            setDrill(null);
-            setBy("settlement");
-            setApplied((p) => ({ ...p, status: ["closed"], paid: ["unpaid"] }));
+            applyClosedUnpaidKpi();
+            document.querySelector('[data-testid="dsr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
           }}
         />
       </ReportKpiGrid>
