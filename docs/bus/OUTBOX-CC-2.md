@@ -212,4 +212,10 @@ ROUND 8.20 00:30Z · CC-2 DONE-LIVE: ROW-77 ACCT-F77 · PR #29145 · merged cfd5
 
 ROUND 8.20 06:45Z · CC-2 DONE-LIVE: ENG-50 invoice paid-amount engine · PR #29152 · merged 285a9d72746e · guards: verify-invoice-amount-paid ceiling 102→210 (209 measured live, 0 mismatches PASS) · verify-book-equals-faro new guard ceiling 58 (57 legacy FPLs predate full poster wiring, documented gap) · verify-step 19919 · starting ENG-17 (card/factoring payable residual engine, DUE 10:45Z)
 
-ROUND 8.20 10:45Z · CC-2 DONE-LIVE: ENG-17 card/factoring payable residual engine · PR TBD · guards: verify-card-factoring-payable-residual (selftest 2/2 PASS, live PASS: 1090 $244,325.48 36 postings 0 missing src | 2510 $275,018.42 1598 postings 0 missing src | open-doc residuals match) · verify-step 19923 · starting ENG-13 (trailer choice engine)
+ROUND 8.20 10:45Z · CC-2 DONE-LIVE: ENG-17 card/factoring payable residual engine · PR #29163 · merged d0377084a1 · guards: verify-card-factoring-payable-residual (selftest 2/2 PASS, live PASS: 1090 $244,325.48 36 postings 0 missing src | 2510 $275,018.42 1598 postings 0 missing src | open-doc residuals match) · verify-step 19923
+
+ROUND 8.20 11:00Z · CC-2 DONE-LIVE: ENG-13 trailer choice engine · PR #29161 · merged e7f3f764834d · guards: verify-trailer-choice-engine (selftest 2/2 PASS, live PASS: 0/227 active loads missing trailer ceiling 0) · verify-step 19927
+
+ROUND 8.20 11:30Z · CC-2 DONE-LIVE: ENG-48 fuel fill expense one-to-one ratchet engine · PR #29167 · merged 9dcaebcee1 · guards: verify-fuel-fill-expense-one-to-one (selftest 2/2 PASS, live PASS: total_fills=1088 no_je=907/907 no_expense=125/125 multi_expense=214/214 zero_je=0/0) · verify-step 19931
+
+ROUND 8.20 11:30Z · CC-2 DONE-LIVE: ENG-49 settlement line totals engine · PR #29168 · merged bc43e9454994 · guards: verify-settlement-line-totals (selftest 2/2 PASS, live PASS: total_closed=103 reimb_mismatch=0/0 deductions_mismatch=13/13) · verify-step 19935
