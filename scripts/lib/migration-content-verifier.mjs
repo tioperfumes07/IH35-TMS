@@ -780,6 +780,18 @@ async function checkMigrationObjects(
     const tableIsPresent = await tableExists(client, item.tableSchema, item.tableName, tableExistsCache);
     if (!tableIsDeclaredHere && !tableIsPresent) continue;
 
+    // ROUND 8.20 P0 — DROP TABLE (incl. inside DO $$ … END $$) removes every index. ENG-60 dropped
+    // insurance.lawsuit; 0285 indexes must not false-red content-drift when the table is gone.
+    if (droppedObjectSet.has(makeObjectKey("table", tableKey)) && !tableIsPresent) {
+      skipped.push({
+        kind: "index",
+        object: item.fqin,
+        reason: "DROPPED_LATER",
+        trace: `table ${tableKey} dropped in a later migration (drops its indexes)`,
+      });
+      continue;
+    }
+
     const res = await client.query(
       `
         SELECT 1
