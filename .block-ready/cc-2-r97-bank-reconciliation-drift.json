@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r97-bank-reconciliation-drift",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 97 — bank reconciliation drift ratchet. Guard 19947 enforces ceiling of 231 tieouts with |diff_cents| > tolerance_cents until reconciliation engine resolves them.",
+  "branch": "cc-2/eng-r97-bank-reconciliation-drift",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-bank-reconciliation-drift.mjs",
+    "scripts/verify-steps/19947-verify-bank-reconciliation-drift.mjs",
+    ".block-ready/cc-2-r97-bank-reconciliation-drift.json"
+  ],
+  "acceptance": [
+    "verify-bank-reconciliation-drift selftest PASS 2/2",
+    "total_tieouts=358 drift_count=231/231 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
