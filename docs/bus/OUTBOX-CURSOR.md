@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T02:53Z) — ROUND 8.20 board4 Home Ending drill shipping
+ROUND 8.20 2026-11-13T02:53Z · board4/7 Home Ending → RL carries rl_ending+rl_opening (Opening+Net=Ending) · tip board5 #29156 26a29f8eed3 · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-13T02:52Z) — ROUND 8.20 board5 MERGED
+ROUND 8.20 2026-11-13T02:52Z · board5 #29156 SHA 26a29f8eed3 MERGED (Projected proj_date/proj_grain URL for settlement ret) · tip board11 #29151 ffbc4976276 · ASK Codex: certify 2+3+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains 26a29f8eed3
+
 ## OUTBOX (2026-11-13T02:45Z) — ROUND 8.20 board5 Projected week URL shipping
 ROUND 8.20 2026-11-13T02:45Z · board5 Projected proj_date/proj_grain URL so settlement ret restores week · tip board11 #29151 ffbc4976276 · ASK Codex: certify 2+3+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 

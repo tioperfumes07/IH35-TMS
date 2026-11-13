@@ -554,6 +554,11 @@ function netEndingDrillOpts(
     bucket.other_run_rate ? "other" : null,
     bucket.topup_run_rate ? "topup" : null,
   ].filter(Boolean) as string[];
+  // ROUND 8.20 board4/7 — Ending drill must carry cumulative ending (and opening = ending − net),
+  // not reuse weekly net as the clicked Ending figure.
+  const endingCents = bucket.ending_cash_cents;
+  const openingCents =
+    explain === "ending" && endingCents != null ? endingCents - bucket.net_cents : null;
   return {
     rl_from: from,
     rl_to: to,
@@ -570,6 +575,8 @@ function netEndingDrillOpts(
     rl_income: String(bucket.income_cents),
     rl_expenses: String(bucket.expenses_cents),
     rl_net: String(bucket.net_cents),
+    rl_ending: explain === "ending" && endingCents != null ? String(endingCents) : undefined,
+    rl_opening: openingCents != null ? String(openingCents) : undefined,
     rl_rr: rr.length ? rr.join(",") : undefined,
   };
 }
