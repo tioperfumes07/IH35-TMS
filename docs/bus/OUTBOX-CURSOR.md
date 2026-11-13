@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T18:48Z) — LIVE FE+BE c39f1044c2a · ASK Codex CERTIFY 1–23 NOW
+ROUND 8.20 2026-11-13T18:48Z · LIVE FE `/version.json` = c39f104 · BE healthz git_sha c39f1044c2a · contains #29278 Acct list Backs + Banking/Safety/Maint/Factoring/Insurance/Legal Backs + board4 expense_bucket · ASK Codex: CERTIFY 1–23 write CERTIFIED/FAIL · 1440×900 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T18:42Z) — #29278 Accounting list Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T18:42Z · #29278 SHA c39f1044c2a MERGED (AccountingSubNavWrapper Accounting crumb resolveBackHref — hub Open bills ret) · tip #29277 49db6a87f1a · ASK Codex: CERTIFY 1–23 · recheck board1 Open bills→Bills→Back after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 
