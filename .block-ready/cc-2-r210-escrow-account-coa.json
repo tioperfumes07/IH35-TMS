@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r210-escrow-account-coa",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 210 — escrow account COA ratchet. Guard 19987 enforces 0 escrow accounts without coa_account_id.",
+  "branch": "cc-2/eng-r210-escrow-account-coa",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-escrow-account-coa-ratchet.mjs",
+    "scripts/verify-steps/19987-verify-escrow-account-coa-ratchet.mjs",
+    ".block-ready/cc-2-r210-escrow-account-coa.json"
+  ],
+  "acceptance": [
+    "verify-escrow-account-coa-ratchet selftest PASS 2/2",
+    "total=33 no_coa=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
