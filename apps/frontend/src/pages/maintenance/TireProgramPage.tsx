@@ -23,7 +23,8 @@ import { ReferenceSelect } from "../../components/parity/ReferenceSelect";
 import { EntityPicker } from "../../components/EntityPicker";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { SelectCombobox } from "../../components/Combobox";
 
 type MountDraft = {
@@ -58,6 +59,9 @@ export function TireProgramPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const [assetKind, setAssetKindState] = useState<"unit" | "trailer">("unit");
   const [assetId, setAssetIdState] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<MaintenanceTireRecordRow | null>(null);
@@ -374,7 +378,7 @@ export function TireProgramPage() {
         title="Tire Program"
         subtitle="Per-axle tire records with rotation, replacement history, brand tracking, and tread depth alerts."
         breadcrumb={[{ label: "Maintenance" }, { label: "Tire Program" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <div className="flex gap-2">
             <Button type="button" variant="secondary" disabled={!companyId || brandsQ.isError} onClick={() => setBrandOpen(true)}>

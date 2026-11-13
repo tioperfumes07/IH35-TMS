@@ -17,7 +17,8 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityPicker } from "../../components/EntityPicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateUS } from "../../lib/formatDate";
 
 type ClaimDraft = {
@@ -38,6 +39,9 @@ const EMPTY_CLAIM: ClaimDraft = {
 
 export function WarrantyClaimsPage() {
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const highlightedClaimId = searchParams.get("claim_id")?.trim() || "";
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -181,7 +185,7 @@ export function WarrantyClaimsPage() {
         title="Warranty Claims"
         subtitle="Track parts warranty coverage, file vendor claims, and detect eligible parts from completed work orders."
         breadcrumb={[{ label: "Maintenance" }, { label: "Warranty Claims" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <Button type="button" disabled={!companyId || claimsQ.isError} onClick={() => setCreateOpen(true)}>
             + Create Claim

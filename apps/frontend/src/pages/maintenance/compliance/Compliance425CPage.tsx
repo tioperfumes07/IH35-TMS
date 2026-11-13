@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { listMaintenanceCompliance425cLog } from "../../../api/maintenance";
@@ -11,6 +13,10 @@ type Compliance425cRow = Record<string, unknown>;
 const PAGE_SIZE = 50;
 
 export function Compliance425CPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [page, setPage] = useState(0);
@@ -47,7 +53,7 @@ export function Compliance425CPage() {
   return (
     <div className="space-y-3">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see VehiclesMasterDataPage.tsx sibling comment. */}
-      <PageHeader title="Compliance / 425C Linkage" breadcrumb={[{ label: "Maintenance" }, { label: "Compliance" }]} backHref="/maintenance" />
+      <PageHeader title="Compliance / 425C Linkage" breadcrumb={[{ label: "Maintenance" }, { label: "Compliance" }]} backHref={maintBackHref} />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 text-xs text-gray-600">Read-only 425C audit linkage feed for maintenance events.</div>
         {/* CLS-LIST-ERROR-STATE-UNGUARDED: a failed query fell through to the empty state — an outage presenting as a clean 425C compliance record. */}

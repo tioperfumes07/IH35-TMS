@@ -1,7 +1,8 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useSearchParams, useLocation, Link, useParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   getMaintenanceWorkOrderPdfUrl,
   getPartsAssignmentsPage,
@@ -454,6 +455,10 @@ function normalizeLineItems(lineItems: unknown): TwoSectionLine[] {
 }
 
 export function WorkOrderDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance/work-orders).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance/work-orders" });
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -780,7 +785,7 @@ export function WorkOrderDetailPage() {
     <div className="space-y-3">
       <PageHeader
         title={`Work Order ${woNumber}`}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         breadcrumb={[
           { label: "Maintenance", href: "/maintenance" },
           { label: "Work Orders", href: "/maintenance/work-orders" },

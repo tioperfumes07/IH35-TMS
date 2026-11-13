@@ -6,7 +6,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, Link, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { listFaultCodeAlerts, type FaultCodeAlertRow } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -28,6 +29,9 @@ export function FaultCodeAlertsPage() {
   const companyId = selectedCompanyId ?? "";
   const { id: deepLinkFaultId } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
 
@@ -139,7 +143,7 @@ export function FaultCodeAlertsPage() {
   return (
     <div className="space-y-4 p-4" data-testid="fault-code-alerts-page">
       <PageHeader
-        backHref="/maintenance"
+        backHref={maintBackHref}
         breadcrumb={["Maintenance", "Faults"]}
         title="Faults"
         subtitle="Samsara fault codes by unit and driver-at-the-time — open alerts, history, and linked auto work orders."

@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,6 +47,10 @@ const EMPTY_DRAFT: PartDraft = {
 };
 
 export function PartsMasterDataPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -245,7 +251,7 @@ export function PartsMasterDataPage() {
         title="Maintenance Parts"
         subtitle="Primary CSV bulk-load path with manual create/edit/void support."
         breadcrumb={[{ label: "Maintenance" }, { label: "Parts" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <div className="flex items-center gap-2">
             {/* MAINT-F3518: server-bound parts search — keep; ParityTable toolbar Search suppressed */}

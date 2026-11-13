@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceReportRows, getMaintenanceReportXlsxUrl } from "../../../api/maintenance";
@@ -22,6 +24,10 @@ const REPORTS = [
 ] as const;
 
 export function MaintenanceReportsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [report, setReport] = useState<(typeof REPORTS)[number]["id"]>("cost_per_unit");
@@ -53,7 +59,7 @@ export function MaintenanceReportsPage() {
       <PageHeader
         title="Maintenance Reports"
         breadcrumb={[{ label: "Maintenance" }, { label: "Reports" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <a
             className="rounded-sm border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"

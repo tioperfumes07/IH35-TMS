@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -45,6 +47,10 @@ const EMPTY_DRAFT: DriverDraft = {
 };
 
 export function DriversMasterDataPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -237,7 +243,7 @@ export function DriversMasterDataPage() {
         title="Maintenance Drivers"
         subtitle="Manage projected drivers with manual create/edit/void controls."
         breadcrumb={[{ label: "Maintenance" }, { label: "Drivers" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <div className="flex items-center gap-2">
             {/* MAINT-F3522: server-bound drivers search — keep; ParityTable toolbar Search suppressed */}

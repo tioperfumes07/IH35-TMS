@@ -21,7 +21,8 @@ import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { Combobox } from "../../../components/Combobox";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { SelectCombobox } from "../../../components/Combobox";
 
@@ -91,6 +92,9 @@ export function InspectionsPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const actionGenerationRef = useRef(0);
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const deepLinkInspectionId = searchParams.get("inspection_id")?.trim() ?? "";
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
@@ -325,7 +329,7 @@ export function InspectionsPage() {
       <PageHeader
         title="Inspections"
         breadcrumb={[{ label: "Maintenance" }, { label: "Inspections" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <Button type="button" disabled={listQ.isError} onClick={() => { setCreateOpen(true); setDraft(EMPTY_DRAFT); setPhotoFile(null); }}>
             + Create Inspection

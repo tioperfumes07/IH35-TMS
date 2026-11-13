@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef } from "react";
 import {
@@ -17,6 +19,10 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export function PmAutoEnginePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -94,7 +100,7 @@ export function PmAutoEnginePage() {
         title="PM Auto Engine"
         subtitle="Hourly evaluation of PM schedules — auto-creates work orders at due thresholds and near-due alerts."
         breadcrumb={[{ label: "Maintenance" }, { label: "PM Auto Engine" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <div className="flex gap-2">
             <Button
