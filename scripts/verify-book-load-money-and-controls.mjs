@@ -4,9 +4,10 @@
  *
  * CC-2-INSTRUCTIONS-09-02-2026.txt tasks 1-5 + guard spec ("after task 5"), tasks 6/19/20.
  * Extended 2026-09-03 (owner layout restore): Section A freight fields, no Equipment/load type,
- * MoneyInput leading-minus, accessorial amounts column total, Time window h-7 cap.
+ * MoneyInput leading-minus, accessorial amounts column total, Time window Spec 150×32.
  *
- * IH35-347-A: MoneyInput / NumberInput / Combobox size=sm use h-9; TimeWindowDropdown stays h-7.
+ * IH35-347-A: MoneyInput / NumberInput / Combobox size=sm use h-9.
+ * ROUND 8.20 board16: TimeWindowDropdown is h-8 max-w-[150px] (Dispatch-BookLoad-Spec.dc.html).
  */
 import fs from "node:fs";
 
@@ -100,8 +101,13 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!editor.includes("accessorial-amounts-column-total")) {
     errors.push("AccessorialEditor amounts column must show a total (display bug fix)");
   }
-  if (!/className="h-7 w-full max-w-\[11rem\] text-xs"/.test(timeWindow)) {
-    errors.push("Time window dropdown must be h-7 and width-capped");
+  // ROUND 8.20 board16 Spec — appointment/time window = 150×32 (not legacy h-7/11rem).
+  if (!/className="h-8 w-full max-w-\[150px\] text-xs"/.test(timeWindow)) {
+    errors.push("Time window dropdown must be h-8 max-w-[150px] (Book Load Spec 150×32)");
+  }
+  // ROUND 8.20 board14 — center dialog locks 1260 (FAIL was ~1408 from w-full at 1440).
+  if (!/maxWidth:\s*1260/.test(wizard) || !/min\(1260px/.test(wizard)) {
+    errors.push("Book Load center dialog must lock maxWidth 1260 (Spec)");
   }
   // 443.258-B: driver_pay_rate_per_mile removed from Book Load — settlement owns the rate.
   // Assert ABSENCE so a re-registration without the settlement owner fix is caught.
@@ -191,7 +197,8 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard.replace("Broker / Direct", "Customer kind"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace("Incomplete typed states", "TYPED"), numberInput],
     [lib, editor.replace("accessorial-amounts-column-total", "accessorial-subtotal-only"), wizard, equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard, equipment, timeWindow.replace("h-7 w-full max-w-[11rem] text-xs", "h-8 w-full text-sm"), moneyInput, numberInput],
+    [lib, editor, wizard, equipment, timeWindow.replace("h-8 w-full max-w-[150px] text-xs", "h-7 w-full max-w-[11rem] text-xs"), moneyInput, numberInput],
+    [lib, editor, wizard.replace("maxWidth: 1260", "maxWidth: 1408").replace("min(1260px", "min(1408px"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment + '\n// mutation: {...register("driver_pay_rate_per_mile")}', timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('data-testid="book-load-section-rail"', 'data-testid="book-load-section-rail-REMOVED"').replace("BOOK_LOAD_SECTION_RAIL", "BOOK_LOAD_SECTION_RAIL_REMOVED"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('data-testid="book-load-charges-grid"', 'data-testid="book-load-charges-REMOVED"'), equipment, timeWindow, moneyInput, numberInput],
