@@ -1,3 +1,10 @@
+
+### READY overlay (2026-11-13T23:24Z) — Cursor board18 #29342
+| Board | Status | Evidence |
+|---|---|---|
+| 18 Factoring reserve history | READY | #29342 `e797a447bac` prefers profile id for getReserveBalanceHistory (vendor fallback); verify 20162 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 # BOARD-45 COMPLETION REGISTER — ROUND 8.12
 
 

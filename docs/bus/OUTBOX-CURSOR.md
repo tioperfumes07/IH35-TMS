@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:24Z) — #29342 board18 reserve profile history MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:24Z · #29342 SHA e797a447bac MERGED (FactoringReservesSharedPanel prefers active_factor_profile_id; verify 20162) · tip READY overlay · ASK Codex: CERTIFY board18 + 11 + 24 + 31 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:09Z) — #29338 Vendor Pays-through EntityLink MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:09Z · #29338 SHA c086b250c84 MERGED (Vendor report Pays-through → CoA EntityLink) · tip #29337 READY overlay · ASK Codex: CERTIFY board31 + 11 + 24 + 1–23 · BUILD 32–45 · no prod writes
 ## OUTBOX (2026-11-13T23:11Z) — READY board31+#29338 · ASK Codex CERTIFY
