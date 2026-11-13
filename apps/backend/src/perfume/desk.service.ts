@@ -745,6 +745,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
     { key: "offer_vs_low", label: "Offer vs lowest", group: "Mine", kind: "money" },
     { key: "offer_action", label: "My offer: raise / lower", group: "Mine", kind: "text" },
+    { key: "offer_margin_pct", label: "My offer margin %", group: "Mine", kind: "pct" },
     { key: "my_need", label: "Need to buy", group: "Mine", kind: "int" },
   );
   cols.splice(cols.findIndex((c) => c.group === "Mine"), 0, ...mineCols);
@@ -843,6 +844,11 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.low_sell_vendor = lowAt;
     // My offer price against the lowest competitor (owner 2026-11-13: "my wholesale prices … compare in wholesale and
     // with other vendors"). Positive gap = my offer is under the cheapest competitor.
+    // The margin my offer price already carries (owner 2026-11-13: "my list already has margin … 6 percent"):
+    // (offer − my cost) ÷ offer, my cost = my inventory's last cost, else the cheapest supplier landed cost.
+    // Measured, never assumed — no margin is added on top of my offer price anywhere.
+    const offerCost = (myCost ?? (row.landed_likely as number | null)) ?? null;
+    row.offer_margin_pct = myOffer != null && myOffer > 0 && offerCost != null ? Math.round(((myOffer - offerCost) / myOffer) * 1000) / 10 : null;
     if (myOffer != null && low != null) {
       row.offer_vs_low = low - myOffer;
       row.offer_action = wholesaleAction(low - myOffer);

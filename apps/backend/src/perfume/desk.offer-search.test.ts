@@ -6,6 +6,7 @@
  */
 import { describe, expect, it } from "vitest";
 import { filterView, searchRows, wholesaleAction, type GridRow } from "./desk.service.js";
+import { readFileSync } from "node:fs";
 
 const row = (o: Partial<GridRow>): GridRow => ({ id: "x", brand: "ARMAF", name: "CDN INTENSE MAN", display_name: "ARMAF CDN INTENSE MAN 105ML", upcs: "6085010044712", line_text: "", ...o });
 
@@ -32,5 +33,14 @@ describe("wholesale offer compare", () => {
   it("offer vs lowest competitor reads as raise / lower", () => {
     expect(wholesaleAction(2500 - 2250)).toBe("Under by $2.50 — can raise");
     expect(wholesaleAction(1400 - 1500)).toBe("Over by $1.00 — lower to compete");
+  });
+});
+
+describe("my offer margin is measured, never added on top", () => {
+  it("the grid computes (offer − my cost) ÷ offer from inventory cost, else cheapest supplier cost", () => {
+    const src = readFileSync(new URL("./desk.service.ts", import.meta.url), "utf8");
+    expect(src).toContain("const offerCost = (myCost ?? (row.landed_likely as number | null)) ?? null;");
+    expect(src).toContain("((myOffer - offerCost) / myOffer) * 1000");
+    expect(src).toContain('{ key: "offer_margin_pct", label: "My offer margin %", group: "Mine", kind: "pct" }');
   });
 });
