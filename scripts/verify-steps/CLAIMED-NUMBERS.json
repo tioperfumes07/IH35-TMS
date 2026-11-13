@@ -17847,5 +17847,35 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cc-2",
     "purpose": "verify-insurance-claim-policy-link-ratchet"
+  },
+  "19995": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-photo-upload-ratchet"
+  },
+  "19999": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-fuel-questions-load-linkage"
+  },
+  "20003": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-miles-reprice-bills-ratchet"
+  },
+  "20007": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-unapplied-credit-ratchet"
+  },
+  "20011": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-relay-bank-feed-current"
+  },
+  "20015": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-test-records-purge-ratchet"
   }
 }
