@@ -8228,3 +8228,11 @@ scope: USMCA driver_finance.driver_settlements — backfill accounting_bill_id /
 action: POST /api/v1/driver-finance/settlements/header-backlink-restamp { "operating_company_id": "5c854333-6ea5-4faa-af31-67cb272fef80", "dry_run": false }
 expires_at: 2026-11-19T00:00:00Z
 status: OPEN
+
+## AUTH-464
+issued_at: 2026-11-12T22:55:00Z
+issued_by: CC-3, R8.20 owner standing order (INBOX-CC-3.md ENG-25b assignment, 2026-11-12 22:55Z): "make sure all coders are working on the engines … full complete and total overhaul coding." Owner ruling 2026-10-24 2:36 PM CT: Transportation diesel on USMCA loads = intercompany loan. Full CC-3 engine authority including ops replay script.
+scope: USMCA accounting.journal_entry_postings + accounting.journal_entries — apply ops script 2026-11-12-cc3-eng25b-transp-diesel-reclass-to-8000.mts: reclassify existing USMCA fuel postings (account 5000/5005/5010) where load.operating_company_id ≠ USMCA from their current expense account to 8000 (intercompany_ih35). Read-only dry_run=true first; apply only after confirming count. Engine: applyReclassifyOnClient via rewriteDocumentLine. No new GL math, no new loads, no new settlements.
+action: npx tsx scripts/ops/2026-11-12-cc3-eng25b-transp-diesel-reclass-to-8000.mts --apply (after OWNER_AUTH_ID=AUTH-464 DATABASE_URL=... set)
+expires_at: 2026-11-19T00:00:00Z
+status: OPEN

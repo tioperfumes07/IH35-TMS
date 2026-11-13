@@ -547,6 +547,11 @@ export async function reattributeFuelReceiptsForLoad(
   for (const receipt of candidates) {
     const r = await reattributeOne(client, input.operatingCompanyId, input.actorUserId, receipt, input.dryRun === true);
     if (r.outcome !== "in_place") out.push(r);
+    // ENG-25b edit path: after reattribution to a non-USMCA load, reclassify the fuel posting to 8000.
+    if (r.outcome === "reattributed" && !input.dryRun && r.load_id && r.journal_entry_id) {
+      const { maybeReclassifyFuelFillForIntercompanyDiesel } = await import("../accounting/bank-recon/bank-match-fuel-post.service.js");
+      await maybeReclassifyFuelFillForIntercompanyDiesel(client as never, input.operatingCompanyId, receipt.fill_id, r.journal_entry_id, input.actorUserId);
+    }
   }
   return out;
 }

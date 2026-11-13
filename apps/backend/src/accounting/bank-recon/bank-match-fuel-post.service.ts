@@ -122,6 +122,11 @@ export async function postFuelFillOnReceipt(
       journal_entry_id: posted.journal_entry_id,
       posting_batch_id: posted.posting_batch_id,
     }, "info", "LEAD-443.116");
+    // ENG-25b: Transportation diesel on USMCA loads = intercompany loan (owner ruling 10-24 2:36 PM CT).
+    // If the fill's load belongs to a different company, reclassify the expense account to 8000 intercompany.
+    if (posted.journal_entry_id) {
+      await maybeReclassifyFuelFillForIntercompanyDiesel(client, input.operating_company_id, input.fill_id, posted.journal_entry_id, input.actor_user_uuid);
+    }
   }
   return posted;
 }
@@ -505,4 +510,65 @@ export async function postAlreadyMatchedFuelLine(
   );
   if (stamped.rowCount !== 1) throw new Error(`bank_line_stamp_lost: ${input.bank_transaction_id}`);
   return { bank_transaction_id: input.bank_transaction_id, kind, fill_id: fillId, journal_entry_id: posted.journal_entry_id };
+}
+
+/**
+ * ENG-25b — owner ruling 10-24 2:36 PM CT: fuel paid by Transportation for a USMCA load is an
+ * intercompany loan, not a USMCA expense. Automatically reclassifies 5000/5005/5010 → 8000
+ * (intercompany_ih35, "Inter-company - IH35 Transportation") when the fill's load belongs to a
+ * different operating company than the fill itself. No-op when load is USMCA or fill has no load.
+ */
+export async function maybeReclassifyFuelFillForIntercompanyDiesel(
+  client: DbClient,
+  operatingCompanyId: string,
+  fillId: string,
+  journalEntryId: string,
+  actorUserId: string,
+): Promise<{ reclassified: boolean; reason?: string }> {
+  // Check if the fill's load (from the NEW posting) belongs to a different company
+  const loadCheck = await client.query<{ load_id: string; load_company_id: string; posting_ids: string[] }>(
+    `SELECT p.load_id::text,
+            ml.operating_company_id::text AS load_company_id,
+            array_agg(p.id::text) AS posting_ids
+       FROM accounting.journal_entry_postings p
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+                                          AND je.operating_company_id = $1::uuid
+       JOIN mdata.loads ml ON ml.id = p.load_id
+      WHERE p.operating_company_id = $1::uuid
+        AND p.journal_entry_id = $2::uuid
+        AND p.source_transaction_type = 'fuel_event'
+        AND p.debit_or_credit = 'debit'
+        AND p.load_id IS NOT NULL
+        AND ml.operating_company_id IS DISTINCT FROM $1::uuid
+        AND je.voided_at IS NULL AND p.voided_at IS NULL
+      GROUP BY p.load_id, ml.operating_company_id`,
+    [operatingCompanyId, journalEntryId],
+  );
+  if (!loadCheck.rows.length) return { reclassified: false };
+
+  // Find 8000 intercompany_ih35 account for this company
+  const acctRes = await client.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.accounts
+      WHERE operating_company_id = $1::uuid
+        AND system_purpose = 'intercompany_ih35'
+        AND deactivated_at IS NULL AND is_postable = true
+      LIMIT 1`,
+    [operatingCompanyId],
+  );
+  if (!acctRes.rows.length) return { reclassified: false, reason: "8000 intercompany_ih35 account not found" };
+  const toAccountId = acctRes.rows[0]!.id;
+
+  const postingIds = loadCheck.rows.flatMap((r) => r.posting_ids);
+  const { applyReclassifyOnClient } = await import("../../accounting/reclassify/reclassify.service.js");
+  await applyReclassifyOnClient(
+    client as Parameters<typeof applyReclassifyOnClient>[0],
+    {
+      operating_company_id: operatingCompanyId,
+      posting_ids: postingIds,
+      reason: "ENG-25b: Transportation diesel on non-USMCA load = intercompany loan (owner ruling 10-24)",
+      to_account_id: toAccountId,
+    },
+    { userId: actorUserId, role: "Owner" },
+  );
+  return { reclassified: true };
 }
