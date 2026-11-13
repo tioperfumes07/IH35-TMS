@@ -1146,5 +1146,10 @@
     "claimed_at": "2026-11-12",
     "claimed_by": "CC-1",
     "purpose": "ACCT-F11152 batch82: dispatch capacity audit triggers backfill \u2014 audit.tg_audit_row() on dispatch.capacity_* tables (D3 standing order backfill); held migration DO NOT RUN ON PROD"
+  },
+  "202616590100": {
+    "claimed_at": "2026-11-12",
+    "claimed_by": "CC-3",
+    "purpose": "ENG-27 R8.20 \u2014 backfill journal_entry_postings.load_id for bank_categorization postings where bt.categorization_load_id IS NOT NULL but posting was written before G8 engine fix (resolvePostingSourceLoad had no bank_categorization branch)"
   }
 }
