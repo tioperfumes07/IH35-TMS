@@ -95,9 +95,10 @@ export async function registerInsuranceSummaryRoutes(app: FastifyInstance) {
            WHERE operating_company_id = $1::uuid AND status IN ('open', 'investigating')
              AND ${excludeInsuranceFixtureSql("claim_number")}`
       );
+      // ENG-60: source is legal.matters type=lawsuit (insurance.lawsuit dropped, 0 rows).
       const open_lawsuits = await count(
-        `SELECT count(*)::int AS count FROM insurance.lawsuit
-           WHERE operating_company_id = $1::uuid AND status IN ('filed', 'active')
+        `SELECT count(*)::int AS count FROM legal.matters
+           WHERE operating_company_id = $1::uuid AND type = 'lawsuit' AND status IN ('filed', 'active')
              AND ${excludeInsuranceFixtureSql("case_number")}`
       );
       const recent_coi_requests = await count(

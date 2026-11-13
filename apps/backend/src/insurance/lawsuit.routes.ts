@@ -31,21 +31,22 @@ async function withCompanyScope<T>(userId: string, operatingCompanyId: string, f
 
 function lawsuitSelectColumns(alias = "", includeClaimLinks = false) {
   const p = alias ? `${alias}.` : "";
+  // ENG-60: table is legal.matters type=lawsuit; unmapped columns return NULL for API compat (0 rows).
   return `
     ${p}id::text,
     ${p}operating_company_id::text AS operating_company_id,
     ${p}case_number,
-    ${p}plaintiff,
-    ${p}defendant,
-    ${p}court_name,
-    ${p}filed_date::text,
+    NULL::text AS plaintiff,
+    NULL::text AS defendant,
+    NULL::text AS court_name,
+    ${p}created_at::text AS filed_date,
     ${p}status,
-    ${p}claim_id::text,
-    ${p}demand_cents::bigint,
-    ${p}settlement_cents::bigint,
-    ${p}attorney_name,
-    ${p}attorney_email,
-    ${p}notes,
+    ${p}insurance_claim_id::text AS claim_id,
+    NULL::bigint AS demand_cents,
+    NULL::bigint AS settlement_cents,
+    NULL::text AS attorney_name,
+    NULL::text AS attorney_email,
+    NULL::text AS notes,
     ${p}created_at::text${includeClaimLinks ? ",\n    claim.claim_number,\n    claim.driver_id::text AS driver_id,\n    NULLIF(TRIM(CONCAT(COALESCE(driver.first_name, ''), ' ', COALESCE(driver.last_name, ''))), '') AS driver_name,\n    asset.unit_id::text AS unit_id,\n    unit.unit_number" : ""}
   `;
 }
@@ -61,14 +62,15 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       const values: unknown[] = [parsed.data.operating_company_id];
       // INSURANCE-DASHBOARD-FIXTURE-LEAK: keep the Lawsuits list in parity with the Open Lawsuits KPI
       // (summary.routes.ts), which already excludes agent-created fixture rows.
-      const filters = ["lawsuit.operating_company_id = $1::uuid", excludeInsuranceFixtureSql("lawsuit.case_number")];
+      // ENG-60: source is legal.matters type=lawsuit (insurance.lawsuit dropped, 0 rows).
+      const filters = ["lawsuit.operating_company_id = $1::uuid", "lawsuit.type = 'lawsuit'", excludeInsuranceFixtureSql("lawsuit.case_number")];
       if (parsed.data.status) {
         values.push(parsed.data.status);
         filters.push(`lawsuit.status = $${values.length}`);
       }
       if (parsed.data.claim_id) {
         values.push(parsed.data.claim_id);
-        filters.push(`lawsuit.claim_id = $${values.length}::uuid`);
+        filters.push(`lawsuit.insurance_claim_id = $${values.length}::uuid`);
       }
       if (parsed.data.policy_id) {
         values.push(parsed.data.policy_id);
@@ -85,10 +87,10 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
       const result = await client.query(
         `
           SELECT ${lawsuitSelectColumns("lawsuit", true)}
-          FROM insurance.lawsuit AS lawsuit
+          FROM legal.matters AS lawsuit
           LEFT JOIN insurance.claim AS claim
             ON claim.operating_company_id = lawsuit.operating_company_id
-           AND claim.id = lawsuit.claim_id
+           AND claim.id = lawsuit.insurance_claim_id
           LEFT JOIN mdata.assets AS asset
             ON asset.operating_company_id = lawsuit.operating_company_id
            AND asset.id = claim.asset_id
@@ -99,7 +101,7 @@ export async function registerInsuranceLawsuitRoutes(app: FastifyInstance) {
             ON unit.id = asset.unit_id
            AND COALESCE(unit.currently_leased_to_company_id, unit.owner_company_id) = lawsuit.operating_company_id
           WHERE ${filters.join(" AND ")}
-          ORDER BY lawsuit.filed_date DESC, lawsuit.created_at DESC
+          ORDER BY lawsuit.created_at DESC
         `,
         values
       );

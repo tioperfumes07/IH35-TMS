@@ -378,10 +378,11 @@ export async function registerInsuranceClaimRoutes(app: FastifyInstance) {
         ),
         client.query(
           `
-            SELECT id::text, case_number, claim_id::text, status, filed_date::text
-            FROM insurance.lawsuit
+            SELECT id::text, case_number, insurance_claim_id::text AS claim_id, status, created_at::text AS filed_date
+            FROM legal.matters
             WHERE operating_company_id = $1::uuid
-              AND claim_id = $2::uuid
+              AND type = 'lawsuit'
+              AND insurance_claim_id = $2::uuid
             ORDER BY filed_date DESC NULLS LAST, id ASC
           `,
           [query.data.operating_company_id, params.data.id]

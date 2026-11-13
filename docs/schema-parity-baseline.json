@@ -6935,7 +6935,6 @@
       "expense_id",
       "fault",
       "id",
-      "lawsuit_id",
       "liability_id",
       "load_id",
       "notes",
@@ -6973,22 +6972,6 @@
       "submitted_at",
       "updated_at",
       "voided_at"
-    ],
-    "insurance.lawsuit": [
-      "attorney_email",
-      "attorney_name",
-      "case_number",
-      "claim_id",
-      "court_name",
-      "created_at",
-      "defendant",
-      "demand_cents",
-      "filed_date",
-      "id",
-      "notes",
-      "plaintiff",
-      "settlement_cents",
-      "status"
     ],
     "insurance.payment_schedule": [
       "amount_cents",
