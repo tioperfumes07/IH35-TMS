@@ -15977,6 +15977,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-fuel-card-overage-status-url-ret board19"
   },
+  "20170": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-vendor-ap-aging-money-cells board10"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
