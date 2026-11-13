@@ -30,6 +30,17 @@ function cents(v: number | string | null | undefined): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+/** Prefer factor profile id (reserve reader SoT); fall back to vendor id. */
+export function reserveHistoryFactorId(summary: {
+  active_factor_profile_id?: string | null;
+  active_factor_id?: string | null;
+} | null | undefined): string | null {
+  const profile = summary?.active_factor_profile_id?.trim() || null;
+  if (profile) return profile;
+  const vendor = summary?.active_factor_id?.trim() || null;
+  return vendor;
+}
+
 type Props = {
   companyId: string;
   /** Where this panel is mounted — mirrored for testids, same body. */
@@ -52,7 +63,10 @@ export function FactoringReservesSharedPanel({ companyId, host }: Props) {
     enabled: Boolean(companyId),
   });
 
-  const activeFactorId = summaryQuery.data?.active_factor_id ?? null;
+  // ROUND 8.20 board18 — reserve lists expose the factor PROFILE identity; summary also exposes the
+  // vendor id. Prefer profile so history never goes falsely empty when only the vendor UUID was
+  // passed and the company-scoped canonical binding is missing/failed. Vendor remains the fallback.
+  const activeFactorId = reserveHistoryFactorId(summaryQuery.data);
 
   const reserveHistoryQuery = useQuery({
     queryKey: ["factoring", "reserves", "history", companyId, activeFactorId, "reserves-shared"],

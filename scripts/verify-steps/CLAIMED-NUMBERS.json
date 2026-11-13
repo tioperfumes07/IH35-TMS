@@ -17961,6 +17961,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-safety-dq-calendar-cohort board24 N24"
+  },
+  "20162": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-factoring-reserve-history-prefers-profile"
   }
-
 }

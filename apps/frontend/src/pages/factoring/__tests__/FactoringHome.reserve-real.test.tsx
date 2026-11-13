@@ -56,7 +56,8 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
     stubCommonApis();
     vi.spyOn(factoringApi, "getFactoringSummary").mockResolvedValue({
       active_factor_name: "Faro Factoring",
-      active_factor_id: "factor-1",
+      active_factor_id: "vendor-faro-1",
+      active_factor_profile_id: "profile-faro-1",
       recourse_days: 95,
     } as never);
     vi.spyOn(factoringKpisApi, "getFactoringKpis").mockResolvedValue({
@@ -91,6 +92,12 @@ describe("FactoringHomePage Reserve tab (real, owner mega-report 2026-09-09)", (
     wrap(<FactoringHomePage initialTab="reserve" />);
 
     await screen.findByText("Reserve held on invoice 393702");
+    // ROUND 8.20 board18 — history must call with the profile id, not the vendor id.
+    expect(factoringApi.getReserveBalanceHistory).toHaveBeenCalledWith(
+      "profile-faro-1",
+      companyId,
+      expect.objectContaining({ limit: 50 }),
+    );
     // ROUND 435 — no KPI twice: escrow and cash show once, in the page-level factoring KPI strip; the reserve panel adds the total.
     expect((await screen.findByTestId("factoring-kpi-escrow_reserve_balance")).textContent).toContain("$51.00");
     expect(screen.getByTestId("factoring-kpi-cash_reserve_balance").textContent).toContain("$78.00");
