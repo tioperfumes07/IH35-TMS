@@ -1,7 +1,8 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { AmountLink, resolveAmountRoute, type AmountFilter } from "../../components/shared/AmountLink";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
@@ -80,7 +81,10 @@ export function TrialBalancePage() {
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const navigate = useNavigate();
+  // ROUND 8.20 board25 — Home Cash attaches ret=/reports?basis=cash; Back must restore it.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);
   const emptyFilters = { ...currentQuarterRange(), basis: urlBasis };
   const [applied, setApplied] = useState(emptyFilters);
@@ -354,7 +358,7 @@ export function TrialBalancePage() {
       <PageHeader
         title="Trial balance"
         subtitle={`Ledger debits and credits by account · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Trial Balance"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

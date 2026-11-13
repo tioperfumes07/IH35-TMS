@@ -9,7 +9,8 @@
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
 import { FrequentlyRunTable } from "../../../components/reports/FrequentlyRunTable";
 import {
@@ -88,13 +89,20 @@ const ACCOUNTING_FINANCIAL_ROWS: readonly CatalogRow[] = [
 const BASIS_AWARE = new Set(["trial-balance", "profit-loss", "balance-sheet"]);
 
 /** The route a catalog row opens — one resolver for the name, Run → and Export links. */
-export function reportCatalogHref(reportKey: string, basis: AccountingBasis): string | null {
+export function reportCatalogHref(
+  reportKey: string,
+  basis: AccountingBasis,
+  originHref?: string | null,
+): string | null {
   if (reportKey.startsWith(MANAGEMENT_KEY_PREFIX)) {
-    return `/reports/management?type=${encodeURIComponent(reportKey.slice(MANAGEMENT_KEY_PREFIX.length))}`;
+    const target = `/reports/management?type=${encodeURIComponent(reportKey.slice(MANAGEMENT_KEY_PREFIX.length))}`;
+    return originHref ? withReturnContext(target, originHref) : target;
   }
   const href = PHASE_6_REPORT_HREFS[reportKey];
   if (!href) return null;
-  return BASIS_AWARE.has(reportKey) ? `${href}?basis=${basis}` : href;
+  const withBasis = BASIS_AWARE.has(reportKey) ? `${href}?basis=${basis}` : href;
+  // ROUND 8.20 board25 — attach ret so TB/BS/PL Back restores Home Cash/Accrual selection.
+  return originHref ? withReturnContext(withBasis, originHref) : withBasis;
 }
 
 /** A catalog cell: a real anchor to the report route (row 53 — rows open through links, not buttons). */
@@ -155,7 +163,9 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
 // ── Component ─────────────────────────────────────────────────────────────────
 export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
   // ROUND 8.20 board25 — Cash/Accrual lives in URL so TB/BS drills + Back restore the Home selection.
   const basis: AccountingBasis = (searchParams.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
   const setBasis = (next: AccountingBasis) => {
@@ -223,7 +233,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortable: true,
       sortValue: ([, label]) => label,
       render: ([reportKey, label]) => (
-        <CatalogLink href={reportCatalogHref(reportKey, basis)} testId={`reports-acct-link-${reportKey}`}>
+        <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-link-${reportKey}`}>
           {label}
         </CatalogLink>
       ),
@@ -236,7 +246,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortable: true,
       sortValue: ([, label]) => label,
       render: ([reportKey]) => (
-        <CatalogLink href={reportCatalogHref(reportKey, basis)} testId={`reports-acct-run-${reportKey}`}>
+        <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-run-${reportKey}`}>
           Run →
         </CatalogLink>
       ),
@@ -248,7 +258,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       sortValue: ([, label]) => label,
       render: ([reportKey]) => (
         <CatalogLink
-          href={reportCatalogHref(reportKey, basis)}
+          href={reportCatalogHref(reportKey, basis, originHref)}
           muted
           bold={false}
           title="Opens the live viewer — export PDF / XLSX from the report with filters applied"

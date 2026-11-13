@@ -14,11 +14,11 @@ vi.mock("../../../api/reports", () => ({
 vi.mock("../ScheduledReportsPanel", () => ({ ScheduledReportsPanel: () => <div data-testid="scheduled-panel-stub" /> }));
 vi.mock("../../../components/reports/IftaPreparerCard", () => ({ IftaPreparerCard: () => <div data-testid="ifta-card-stub" /> }));
 
-function renderBoard() {
+function renderBoard(initialEntry = "/reports") {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>
         <ReportsHomeBoard companyId="usmca" />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -43,8 +43,11 @@ describe("row 53 — Reports Home is exactly the board", () => {
     renderBoard();
     const tb = screen.getByTestId("reports-acct-link-trial-balance");
     expect(tb.tagName).toBe("A");
-    expect(tb.getAttribute("href")).toBe("/reports/trial-balance?basis=accrual");
-    expect(screen.getByTestId("reports-acct-run-profit-per-truck").getAttribute("href")).toBe("/reports/profit-per-truck");
+    expect(tb.getAttribute("href") ?? "").toContain("/reports/trial-balance?basis=accrual");
+    expect(tb.getAttribute("href") ?? "").toContain("ret=");
+    expect(screen.getByTestId("reports-acct-run-profit-per-truck").getAttribute("href") ?? "").toContain(
+      "/reports/profit-per-truck",
+    );
     const table = screen.getByTestId("reports-home-accounting-financial");
     expect(within(table).queryAllByRole("button", { name: /Run →|Trial balance/ })).toHaveLength(0);
   });
@@ -55,7 +58,7 @@ describe("row 53 — Reports Home is exactly the board", () => {
     for (const key of ["driver-settlements-report", "company-settlements-report", "customer-report", "vendor-report", "scheduled-reports"]) {
       expect(screen.getByTestId(`reports-acct-link-${key}`).tagName).toBe("A");
     }
-    expect(screen.getByTestId("reports-acct-link-management-company-overview").getAttribute("href")).toBe(
+    expect(screen.getByTestId("reports-acct-link-management-company-overview").getAttribute("href") ?? "").toContain(
       "/reports/management?type=company-overview",
     );
   });
@@ -77,5 +80,14 @@ describe("row 53 — Reports Home is exactly the board", () => {
     expect(reportCatalogHref("fuel-reconciliation", "cash")).toBe("/reports/fuel-reconciliation");
     expect(reportCatalogHref("management-sales-performance", "accrual")).toBe("/reports/management?type=sales-performance");
     expect(reportCatalogHref("no-such-report", "accrual")).toBeNull();
+  });
+
+  it("reportCatalogHref attaches ret so TB Back restores Home Cash", () => {
+    const href = reportCatalogHref("trial-balance", "cash", "/reports?basis=cash") ?? "";
+    expect(href).toContain("/reports/trial-balance?");
+    expect(href).toContain("basis=cash");
+    expect(href).toContain("ret=");
+    const ret = new URLSearchParams(href.split("?")[1] ?? "").get("ret") ?? "";
+    expect(decodeURIComponent(ret)).toBe("/reports?basis=cash");
   });
 });

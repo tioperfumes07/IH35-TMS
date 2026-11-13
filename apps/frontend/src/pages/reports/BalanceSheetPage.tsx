@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -100,6 +101,8 @@ export function BalanceSheetPage() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);
   const emptyFilters = { asOfDate: today, basis: urlBasis, compareToDate: "" };
   const [applied, setApplied] = useState(emptyFilters);
@@ -315,7 +318,7 @@ export function BalanceSheetPage() {
       <PageHeader
         title="Balance sheet"
         subtitle={`As of ${mmmDd(applied.asOfDate)} · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Balance Sheet"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

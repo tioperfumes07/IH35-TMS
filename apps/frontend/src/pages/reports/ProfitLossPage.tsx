@@ -1,7 +1,8 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -78,6 +79,8 @@ export function ProfitLossPage() {
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);
   const emptyFilters = { ...currentMonthRange(), basis: urlBasis };
   const [applied, setApplied] = useState(emptyFilters);
@@ -244,7 +247,7 @@ export function ProfitLossPage() {
       <PageHeader
         title="Profit & loss"
         subtitle={`Revenue, COGS, expenses, and net income — ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Profit & Loss"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
