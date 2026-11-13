@@ -2752,63 +2752,6 @@ function acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changed) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-load-cost-rollup-lateral-no-alias-shadow fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod drift: settlement 0f7d6e18/load 8f4af2dc costs_cents=139716 != independently computed=152752
-// on origin/main. This batch82 diff does NOT touch load-cost-rollup SQL or dispatch posting paths.
-// Filed COST-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes load-cost-rollup or dispatch writers.
-function acceptedAcctF11152LoadCostRollupAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-load-cost-rollup-lateral-no-alias-shadow") return false;
-  if (!changed) return false;
-  if (
-    changed.some(
-      (f) =>
-        f.startsWith("apps/backend/src/accounting/load-cost-rollup") ||
-        f.startsWith("apps/backend/src/accounting/load-unit-cost-split") ||
-        f.startsWith("apps/backend/src/dispatch/"),
-    )
-  )
-    return false;
-  return true;
-}
-
-// ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-stops-are-geocoded fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod debt: load 13735 has at least one uncoordinated stop — same finding as GEO-F13735.
-// This batch82 diff does NOT touch any geocoding / stop-data paths. Filed GEO-F11152-BATCH82-20261112.
-// Content-based: fires only when diff does not include geocoding writers.
-function acceptedAcctF11152StopsGeocodedAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-stops-are-geocoded") return false;
-  if (!changed) return false;
-  const GEOCODE_WRITERS = [
-    "apps/backend/src/dispatch/stop-gps-verification.service.ts",
-    "apps/backend/src/dispatch/geocode.service.ts",
-    "apps/backend/src/dispatch/stops.service.ts",
-  ];
-  if (changed.some((f) => GEOCODE_WRITERS.includes(f) || f.startsWith("apps/backend/src/dispatch/stop"))) return false;
-  return true;
-}
-
-// ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-party-boards-bound-live fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod drift: customers billed (cents) engine 77444672 != recompute 79634672 on origin/main.
-// This batch82 diff does NOT touch any party-board / billing calculation paths.
-// Content-based: fires only when diff does not include party-board service or billing writers.
-function acceptedAcctF11152PartyBoardsAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-party-boards-bound-live") return false;
-  if (!changed) return false;
-  const PARTY_BOARD_WRITERS = [
-    "apps/backend/src/mdata/canonical/party-board.service.ts",
-    "apps/backend/src/mdata/canonical/driver-hub.service.ts",
-    "apps/backend/src/mdata/canonical/driver-overview.service.ts",
-    "apps/backend/src/accounting/invoices.service.ts",
-    "apps/backend/src/accounting/billing.service.ts",
-  ];
-  if (changed.some((f) => PARTY_BOARD_WRITERS.includes(f) || f.startsWith("apps/backend/src/mdata/canonical/"))) return false;
-  return true;
-}
-
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-booked-loads-save-miles fires via db/migrations/ DATA_WRITE.
 // Pre-existing prod debt: RULE 2 (loads 13716/13728) + RULE 4 (loads 13702/13704/13711/13718/13723/13725/13735)
@@ -2851,46 +2794,6 @@ function acceptedAcctF11152PurgeWindowStateAmbient(name, code, changed) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-reconciler-exceptions fires via db/migrations/ DATA_WRITE
-// (two held .sql migration files). Pre-existing prod debt: I9 truck_cannot_make_next_stop (loads 13727/13729
-// vs ceiling 1) + I9 stop_no_street_address (loads 13711/13727/13729/13735 vs ceiling 0) — same findings
-// as RECON-F443-I9-STOPS-20261111 on origin/main. This batch82 diff does NOT touch any reconciler/ or
-// stop-schedule writers. The mdata/customers+vendors changes are read-only opco-scoping only.
-// Filed RECON-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real reconciler or stop-schedule writers.
-function acceptedAcctF11152ReconcilerExceptionsAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-reconciler-exceptions") return false;
-  if (!changed) return false;
-  const RECONCILER_WRITERS = [
-    "apps/backend/src/reconciler/",
-    "scripts/reconciler/",
-    "scripts/verify-reconciler-exceptions.baseline.json",
-  ];
-  if (changed.some((f) => RECONCILER_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  // Dispatch stop writers that can affect I9 stop-schedule exceptions.
-  const STOP_WRITERS = [
-    "apps/backend/src/dispatch/stops.service.ts",
-    "apps/backend/src/dispatch/stop-gps-verification.service.ts",
-    "apps/backend/src/dispatch/book-load.service.ts",
-  ];
-  if (changed.some((f) => STOP_WRITERS.includes(f))) return false;
-  return true;
-}
-
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-bus-files-are-readable fires via db/migrations/ DATA_WRITE
-// (two held .sql migration files). Pre-existing: all NOW-*.md bus files are >48h stale — same ambient
-// condition as BUS-F443-NOW-STALE-20261111 on origin/main. This batch82 diff does NOT touch any docs/bus/
-// files. Filed BUS-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real docs/bus/ writers.
-function acceptedAcctF11152BusFilesAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-bus-files-are-readable") return false;
-  if (!changed) return false;
-  if (changed.some((f) => f.startsWith("docs/bus/"))) return false;
-  return true;
-}
-
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
@@ -2921,16 +2824,6 @@ function acceptedEng53BookedMilesAmbient(name, code, changed) {
   ];
   if (changed.some((f) => OTHER_MILES_WRITERS.some((p) => f.startsWith(p)))) return false;
   if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/"))) return false;
-  return true;
-}
-
-// 443.182 B: verify-pl-cost-of-revenue.mjs has alwaysRun:true and fires on any PR with a DATABASE_URL.
-// DEFECT 2 (delivery-evidence-latch.ts:82 date mismatch) is a pre-existing structural issue not
-// introduced by this branch. Gate-block accepted via ROUND_443_182_B_PL_COST_AMBIENT=1.
-function accepted443182BPlCostAmbient(file, code) {
-  if (code === 0) return false;
-  if (file !== "verify-pl-cost-of-revenue.mjs") return false;
-  if (process.env.ROUND_443_182_B_PL_COST_AMBIENT !== "1") return false;
   return true;
 }
 
@@ -4346,33 +4239,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 samsara-zip-fence ambient pre-existing debt`);
         continue;
       }
-      if (acceptedAcctF11152LoadCostRollupAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-load-cost-rollup-lateral-no-alias-shadow pre-existing prod drift ` +
-            `(settlement 0f7d6e18/load 8f4af2dc costs_cents=139716 != 152752 on origin/main; ` +
-            `diff has zero load-cost-rollup/dispatch writers; cite COST-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 load-cost-rollup ambient pre-existing drift`);
-        continue;
-      }
-      if (acceptedAcctF11152StopsGeocodedAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-stops-are-geocoded pre-existing prod debt ` +
-            `(load 13735 uncoordinated stop on origin/main; diff has zero geocoding writers; ` +
-            `cite GEO-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 stops-geocoded ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152PartyBoardsAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-party-boards-bound-live pre-existing prod drift ` +
-            `(customers billed (cents) engine 77444672 != recompute 79634672 on origin/main; ` +
-            `diff has zero party-board/billing writers; cite PARTY-F11152-BATCH82-20261111 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 party-boards ambient pre-existing drift`);
-        continue;
-      }
       if (acceptedAcctF11152BookedMilesAmbient(name, code, changedForLiveDomains)) {
         console.log(
           `[${LABEL}] ACCEPTED — verify-booked-loads-save-miles pre-existing prod debt ` +
@@ -4390,25 +4256,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff has zero purge-window writers; cite PURGE-F11152-BATCH82-20261112 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 purge-window-state ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152ReconcilerExceptionsAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-reconciler-exceptions pre-existing prod debt ` +
-            `(I9 truck_cannot_make_next_stop loads 13727/13729 vs ceiling 1; ` +
-            `I9 stop_no_street_address loads 13711/13727/13729/13735 vs ceiling 0 on origin/main; ` +
-            `diff has zero reconciler/stop-schedule writers; cite RECON-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 reconciler-exceptions ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152BusFilesAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-bus-files-are-readable pre-existing ambient debt ` +
-            `(all NOW-*.md files >48h stale on origin/main; diff has zero docs/bus/ changes; ` +
-            `cite BUS-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 bus-files-readable ambient pre-existing debt`);
         continue;
       }
       if (acceptedEng53BookedMilesAmbient(name, code, changedForLiveDomains)) {
@@ -4530,7 +4377,7 @@ for (const [file, args] of e7Batch2) {
     );
   }
   const code = runNode(`scripts/${file}`, {}, args);
-  if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code) && !accepted443182BPlCostAmbient(file, code)) {
+  if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code)) {
     failStep(file);
     process.exit(code);
   }
