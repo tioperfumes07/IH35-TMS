@@ -1065,7 +1065,8 @@
     "202616550100",
     "202616560100",
     "202616570100",
-    "202616580100"
+    "202616580100",
+    "202616610100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1161,5 +1162,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "CC-2",
     "purpose": "ROW 124+138: hos.duty_status_events partial index (opco, duty_status, started_at) for driver-day-summary duty CTE overlap scan perf fix"
+  },
+  "202616610100": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "claude",
+    "purpose": "BOARD-29 perf indexes for closed-tour batch query (presettlement_link_id + settlement_lines)"
   }
 }

@@ -554,6 +554,233 @@ export type TourListRow = {
   tour_id: string | null;
 };
 
+const CANCELLED_STATUSES = new Set(["cancelled", "canceled", "abandoned", "driver_walkoff", "driver_no_show"]);
+
+// BOARD-29-BATCH (2026-11-13): replaces the N×buildTourReadout serial loop for state=closed.
+// 106 settlements × ~10 queries each ≈ 1060 round-trips → 6 queries total → < 2s.
+async function batchBuildClosedTourRows(
+  client: Db, companyId: string, ids: string[], hasOdometerSegments: boolean,
+): Promise<TourListRow[]> {
+  if (ids.length === 0) return [];
+  const milesRealSql = hasOdometerSegments
+    ? `(SELECT SUM(seg.driven_miles) FROM telematics.load_odometer_segments seg WHERE seg.load_id = l.id AND seg.operating_company_id = l.operating_company_id AND seg.ended_at > seg.started_at AND seg.driven_miles / (EXTRACT(EPOCH FROM (seg.ended_at - seg.started_at)) / 3600.0) <= 200)`
+    : `NULL::numeric`;
+
+  // 1. Headers
+  const headersRes = await client.query<{
+    id: string; display_id: string | null; source_document_ref: string | null; status: string;
+    settlement_model: string | null; trip_started_at: string | null; trip_closed_at: string | null;
+    period_start: string | null; period_end: string | null; driver_id: string; driver_name: string | null;
+    tour_id: string | null; gross_pay: unknown; deductions_total: unknown; reimbursements_total: unknown;
+    net_pay: unknown; first_load_id: string | null; last_load_id: string | null; voided_at: string | null;
+  }>(
+    `SELECT s.id::text, s.display_id, s.source_document_ref, s.status, s.settlement_model,
+            s.trip_started_at::text, s.trip_closed_at::text, s.period_start::text,
+            CASE WHEN s.trip_closed_at IS NULL THEN (NOW() AT TIME ZONE 'America/Chicago')::date::text
+                 ELSE s.period_end::text END AS period_end,
+            s.driver_id::text, concat_ws(' ', d.first_name, d.last_name) AS driver_name,
+            s.tour_id::text, s.gross_pay, s.deductions_total, s.reimbursements_total, s.net_pay,
+            s.first_load_id::text, s.last_load_id::text, s.voided_at::text
+       FROM driver_finance.driver_settlements s
+       LEFT JOIN mdata.drivers d ON d.id = s.driver_id AND d.operating_company_id = s.operating_company_id
+      WHERE s.id = ANY($1::uuid[]) AND s.operating_company_id = $2::uuid`,
+    [ids, companyId],
+  );
+  const headerMap = new Map(headersRes.rows.map((r) => [r.id, r]));
+
+  // 2. All legs for all settlements — single batch query replacing N×legsRes
+  const allLegsRes = await client.query<{
+    settlement_id: string; load_id: string; load_number: string; trip_type: string | null;
+    status: string; rate_total_cents: unknown;
+    miles_practical: unknown; miles_shortest: unknown; miles_deadhead: unknown;
+    pickup_city: string | null; pickup_state: string | null; delivery_city: string | null; delivery_state: string | null;
+    pickup_date: string | null; delivery_date: string | null;
+    unit_id: string | null; unit_number: string | null; trailer_id: string | null; trailer_number: string | null;
+    lc_revenue_cents: unknown; lc_is_invoiced: unknown; costs_cents: unknown; driver_pay_cents: unknown;
+    cost_count: unknown; pod_count: unknown; miles_real: unknown;
+  }>(
+    `WITH sett_ids AS (
+       SELECT s.id, s.first_load_id, s.last_load_id
+         FROM driver_finance.driver_settlements s
+        WHERE s.id = ANY($1::uuid[]) AND s.operating_company_id = $2::uuid
+     ),
+     leg_load_ids AS (
+       SELECT sett.id AS settlement_id, l.id AS load_id
+         FROM sett_ids sett
+         JOIN mdata.loads l ON l.operating_company_id = $2::uuid AND l.soft_deleted_at IS NULL
+              AND (l.presettlement_link_id = sett.id
+                   OR l.id = sett.first_load_id
+                   OR l.id = sett.last_load_id
+                   OR EXISTS (
+                     SELECT 1 FROM driver_finance.settlement_lines sl
+                      WHERE sl.settlement_id = sett.id AND sl.operating_company_id = $2::uuid
+                        AND sl.load_id = l.id AND sl.is_active AND sl.voided_at IS NULL))
+     ),
+     unique_legs AS (SELECT DISTINCT settlement_id, load_id FROM leg_load_ids)
+     SELECT ul.settlement_id::text,
+            l.id::text AS load_id, l.load_number, l.trip_type::text, l.status::text, l.rate_total_cents,
+            l.miles_practical, l.miles_shortest, l.miles_deadhead,
+            (SELECT s1.city FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_city,
+            (SELECT s1.state FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_state,
+            (SELECT s2.city FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_city,
+            (SELECT s2.state FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_state,
+            (SELECT COALESCE(s1.actual_arrival_at, s1.appointment_start_at, s1.scheduled_arrival_at)::text FROM mdata.load_stops s1 WHERE s1.load_id = l.id AND s1.soft_deleted_at IS NULL ORDER BY s1.sequence_number ASC LIMIT 1) AS pickup_date,
+            (SELECT COALESCE(s2.actual_arrival_at, s2.appointment_start_at, s2.scheduled_arrival_at)::text FROM mdata.load_stops s2 WHERE s2.load_id = l.id AND s2.soft_deleted_at IS NULL ORDER BY s2.sequence_number DESC LIMIT 1) AS delivery_date,
+            u.id::text AS unit_id, u.unit_number,
+            CASE WHEN l.trailer_source IN ('customer', 'none') THEN NULL ELSE tr.id::text END AS trailer_id,
+            ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
+            lcr.revenue_cents AS lc_revenue_cents, lcr.is_invoiced AS lc_is_invoiced,
+            lcr.costs_cents, lcr.driver_pay_cents,
+            (SELECT COUNT(*) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void')
+              + (SELECT COUNT(DISTINCT bl.bill_id) FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id WHERE bl.load_id = l.id AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND bl.voided_at IS NULL) AS cost_count,
+            (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = l.operating_company_id AND a.entity_type = 'load' AND a.entity_id = l.id AND a.is_deleted = false AND a.category IN ('pod','bol','proof_of_delivery')) AS pod_count,
+            ${milesRealSql} AS miles_real
+       FROM unique_legs ul
+       JOIN mdata.loads l ON l.id = ul.load_id
+       LEFT JOIN mdata.units u ON u.id = l.assigned_unit_id
+                               AND COALESCE(u.currently_leased_to_company_id, u.owner_company_id) = l.operating_company_id
+       ${loadServiceTrailerLateralSql("l", "tr")}
+       ${loadCostRollupLateral("l.id", "$2::uuid")}
+      ORDER BY ul.settlement_id,
+               CASE l.trip_type::text WHEN 'NB' THEN 1 WHEN 'TR' THEN 2 WHEN 'SB' THEN 3 ELSE 4 END,
+               l.created_at ASC`,
+    [ids, companyId],
+  );
+
+  const legsBySettlement = new Map<string, typeof allLegsRes.rows>();
+  for (const r of allLegsRes.rows) {
+    if (!legsBySettlement.has(r.settlement_id)) legsBySettlement.set(r.settlement_id, []);
+    legsBySettlement.get(r.settlement_id)!.push(r);
+  }
+
+  // 3. Company settlements for all
+  const csRes = await client.query<{ driver_settlement_id: string; id: string; display_id: string | null }>(
+    `SELECT j.driver_settlement_id::text, cs.id::text, cs.display_id
+       FROM accounting.company_settlement_driver_settlements j
+       JOIN accounting.company_settlements cs ON cs.id = j.company_settlement_id
+      WHERE j.driver_settlement_id = ANY($1::uuid[]) AND cs.operating_company_id = $2::uuid`,
+    [ids, companyId],
+  );
+  const csMap = new Map(csRes.rows.map((r) => [r.driver_settlement_id, r]));
+
+  // All load IDs across all settlements
+  const allLoadIds = [...new Set(allLegsRes.rows.map((r) => r.load_id))];
+
+  // 4. Settlement lines for all (ready.settlement_lines)
+  const linesRes = allLoadIds.length > 0 ? await client.query<{ settlement_id: string }>(
+    `SELECT sl.settlement_id::text, COUNT(*)::int AS line_count
+       FROM driver_finance.settlement_lines sl
+      WHERE sl.settlement_id = ANY($1::uuid[]) AND sl.operating_company_id = $2::uuid
+        AND sl.is_active = true AND sl.voided_at IS NULL
+      GROUP BY sl.settlement_id`,
+    [ids, companyId],
+  ) : { rows: [] as Array<{ settlement_id: string; line_count: unknown }> };
+  const lineCountMap = new Map(
+    (linesRes.rows as Array<{ settlement_id: string; line_count: unknown }>).map((r) => [r.settlement_id, Number(r.line_count ?? 0)]),
+  );
+
+  // 5. Driver bills for all load IDs (ready.driver_pay)
+  const billsRes = allLoadIds.length > 0 ? await client.query<{ load_id: string; loaded_pay_cents: unknown; deadhead_pay_cents: unknown }>(
+    `SELECT load_id::text, loaded_pay_cents, deadhead_pay_cents
+       FROM driver_finance.driver_bills
+      WHERE operating_company_id = $1::uuid AND load_id = ANY($2::uuid[]) AND status <> 'void' AND voided_at IS NULL`,
+    [companyId, allLoadIds],
+  ) : { rows: [] };
+  const billsByLoad = new Map<string, Array<{ loaded_pay_cents: unknown; deadhead_pay_cents: unknown }>>();
+  for (const b of billsRes.rows) {
+    if (!billsByLoad.has(b.load_id)) billsByLoad.set(b.load_id, []);
+    billsByLoad.get(b.load_id)!.push({ loaded_pay_cents: b.loaded_pay_cents, deadhead_pay_cents: b.deadhead_pay_cents });
+  }
+
+  // Assemble rows
+  const out: TourListRow[] = [];
+  for (const id of ids) {
+    const s = headerMap.get(id);
+    if (!s) continue;
+
+    const rawLegs = legsBySettlement.get(id) ?? [];
+    const legs: TourLeg[] = rawLegs.map((r) => {
+      const cancelled = CANCELLED_STATUSES.has(String(r.status).toLowerCase());
+      const revenue = cancelled && !r.lc_is_invoiced ? 0 : n(r.lc_revenue_cents);
+      const costs = n(r.costs_cents); const pay = n(r.driver_pay_cents); const margin = revenue - costs - pay;
+      return {
+        load_id: r.load_id, load_number: r.load_number, trip_type: r.trip_type, status: r.status,
+        is_delivered: DELIVERED.has(String(r.status).toLowerCase()), is_cancelled: cancelled,
+        lane: `${[r.pickup_city, r.pickup_state].filter(Boolean).join(" ")} → ${[r.delivery_city, r.delivery_state].filter(Boolean).join(" ")}`.trim(),
+        pickup_city: r.pickup_city, delivery_city: r.delivery_city,
+        pickup_date: r.pickup_date, delivery_date: r.delivery_date,
+        revenue_cents: revenue, costs_cents: costs, driver_pay_cents: pay, margin_cents: margin,
+        margin_pct: revenue > 0 ? Math.round((margin / revenue) * 1000) / 10 : null,
+        miles_practical: nOrNull(r.miles_practical), miles_shortest: nOrNull(r.miles_shortest),
+        miles_deadhead: nOrNull(r.miles_deadhead), miles_real: nOrNull(r.miles_real),
+        unit_id: r.unit_id, unit_number: r.unit_number, trailer_id: r.trailer_id, trailer_number: r.trailer_number,
+        pod_count: n(r.pod_count), cost_count: n(r.cost_count), is_this_load: false,
+      };
+    });
+
+    const live = legs.filter((l) => !l.is_cancelled);
+    const unitLeg = rawLegs.find((r) => r.unit_number);
+    const trailerLeg = rawLegs.find((r) => r.trailer_number);
+    const totals = live.reduce(
+      (t, l) => ({ revenue_cents: t.revenue_cents + l.revenue_cents, costs_cents: t.costs_cents + l.costs_cents, driver_pay_cents: t.driver_pay_cents + l.driver_pay_cents, miles_practical: t.miles_practical + (l.miles_practical ?? 0), miles_real: l.miles_real == null ? t.miles_real : (t.miles_real ?? 0) + l.miles_real }),
+      { revenue_cents: 0, costs_cents: 0, driver_pay_cents: 0, miles_practical: 0, miles_real: null as number | null },
+    );
+    const margin = totals.revenue_cents - totals.costs_cents - totals.driver_pay_cents;
+    const originLeg = legs.find((l) => s.first_load_id != null && l.load_id === s.first_load_id) ?? legs.find((l) => l.trip_type === "NB") ?? legs[0] ?? null;
+    const cs = csMap.get(id) ?? null;
+    const lineCount = lineCountMap.get(id) ?? 0;
+    const payIncomplete = live.filter((l) => !(billsByLoad.get(l.load_id) ?? []).some((b) => b.loaded_pay_cents != null && b.deadhead_pay_cents != null));
+    const sb = live.filter((l) => l.trip_type === "SB");
+    const undelivered = live.filter((l) => !l.is_delivered);
+    const deliveredLegs = live.filter((l) => l.is_delivered);
+    const podsHave = deliveredLegs.filter((l) => l.pod_count > 0).length;
+    // For closed tours: can_close = false; ready items are informational only.
+    // costs_complete and expense_loads_confirmed require extra queries; skip → ok=false (conservative).
+    const ready: ReadyItem[] = [
+      { key: "has_nb", label: "Tour has a confirmed NB leg", hard: false, ok: live.some((l) => l.trip_type === "NB"), detail: live.some((l) => l.trip_type === "NB") ? "yes" : "missing NB" },
+      { key: "sb_delivered", label: "SB load delivered at Laredo", hard: true, ok: sb.length > 0 && sb.every((l) => l.is_delivered) && undelivered.length === 0,
+        detail: undelivered.length ? `${undelivered.map((l) => `${l.trip_type ?? "leg"} ${l.load_number} ${l.status}`).join(", ")} not delivered` : sb.length === 0 ? "no SB leg on this tour yet" : "yes" },
+      { key: "pods", label: "All PODs on file", hard: false, ok: deliveredLegs.length > 0 && podsHave === deliveredLegs.length, detail: `${podsHave} of ${deliveredLegs.length || live.length}` },
+      { key: "costs_complete", label: "Every cost has account + vendor + receipt", hard: false, ok: false, detail: "not evaluated in list view" },
+      { key: "driver_pay", label: "Driver pay lines complete (loaded + empty)", hard: false, ok: live.length > 0 && payIncomplete.length === 0, detail: payIncomplete.length ? `${payIncomplete.map((l) => l.load_number).join(", ")} missing a two-line driver bill` : "yes" },
+      { key: "real_miles", label: "Real driven miles captured", hard: false, ok: live.length > 0 && live.every((l) => l.miles_real != null), detail: live.every((l) => l.miles_real != null) && live.length > 0 ? `${totals.miles_real?.toFixed(1)} mi` : "no odometer segments" },
+      { key: "expense_loads_confirmed", label: "Every expense's load confirmed by a person", hard: true, ok: false, detail: "tour already closed" },
+      { key: "settlement_lines", label: "Settlement lines computed", hard: true, ok: lineCount > 0, detail: lineCount > 0 ? `${lineCount} line(s)` : "no settlement lines" },
+    ];
+    out.push({
+      settlement_id: s.id, display_id: s.display_id, settlement_number: s.source_document_ref,
+      status: s.status, is_open: false,
+      driver_id: s.driver_id, driver_name: s.driver_name,
+      unit_id: unitLeg?.unit_id ?? null, unit_number: unitLeg?.unit_number ?? null,
+      trailer_id: trailerLeg?.trailer_id ?? null, trailer_number: trailerLeg?.trailer_number ?? null,
+      period_start: s.period_start, period_end: s.period_end,
+      trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
+      leg_count: live.length, legs_label: live.map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
+      legs: live.map((l) => ({
+        load_id: l.load_id, load_number: l.load_number, trip_type: l.trip_type, status: l.status,
+        lane: l.lane, pickup_date: l.pickup_date, delivery_date: l.delivery_date,
+        revenue_cents: l.revenue_cents, costs_cents: l.costs_cents, driver_pay_cents: l.driver_pay_cents, margin_cents: l.margin_cents, margin_pct: l.margin_pct,
+        miles_practical: l.miles_practical, miles_real: l.miles_real,
+        unit_id: l.unit_id, unit_number: l.unit_number, trailer_id: l.trailer_id, trailer_number: l.trailer_number,
+      })),
+      origin_load_number: originLeg?.load_number ?? null,
+      origin_pickup_date: originLeg?.pickup_date ?? null,
+      origin_delivery_date: originLeg?.delivery_date ?? null,
+      revenue_cents: totals.revenue_cents, costs_cents: totals.costs_cents, driver_pay_cents: totals.driver_pay_cents,
+      margin_cents: margin, margin_pct: totals.revenue_cents > 0 ? Math.round((margin / totals.revenue_cents) * 1000) / 10 : null,
+      miles_practical: totals.miles_practical, miles_real: totals.miles_real,
+      ready_ok: ready.filter((x) => x.ok).length, ready_total: ready.length,
+      can_close: false,
+      close_blockers: [`tour already closed (${s.status}${s.trip_closed_at ? ` at ${s.trip_closed_at}` : ""})`],
+      driver_net_cents: Math.round(n(s.net_pay) * 100),
+      company_settlement_id: cs?.id ?? null,
+      company_settlement_display_id: cs?.display_id ?? null,
+      tour_id: s.tour_id,
+    });
+  }
+  return out;
+}
+
 /**
  * LDT-TABS (owner 2026-09-06 02:4xZ: "IT WAS TO BE BUILT ON TABS … I AM GOING TO CLICK ON THE TAB AND LOOK AT THE
  * LOADS, FROM THERE I AM GOING TO CLOSE THE LOAD"). The Load costs board's Pre-Settlement tab lists every OPEN tour,
@@ -591,6 +818,14 @@ export async function listTours(client: Db, companyId: string, state: "open" | "
     // 443.284: OFFSET + the unique id tie-breaker let the client page the WHOLE population (the 200 cap hid tours).
     [companyId, limit, offset]
   );
+  // BOARD-29-BATCH: closed state uses a batch path (6 queries total) instead of N×buildTourReadout.
+  if (state === "closed") {
+    const odoRes = await client.query<{ ok: boolean }>(`SELECT to_regclass('telematics.load_odometer_segments') IS NOT NULL AS ok`);
+    const hasOdo = Boolean(odoRes.rows[0]?.ok);
+    const rows = await batchBuildClosedTourRows(client, companyId, ids.rows.map((r) => r.id), hasOdo);
+    return { rows, total_count };
+  }
+
   const out: TourListRow[] = [];
   for (const { id } of ids.rows) {
     const r = await buildTourReadout(client, companyId, id, null);
