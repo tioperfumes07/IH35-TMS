@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r81-vendor-bill-postings",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 81 — vendor bill postings ratchet. Guard 19955 enforces ceiling of 9 non-void bills without GL account assignment (coa_account_id IS NULL).",
+  "branch": "cc-2/eng-r81-vendor-bill-postings",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-vendor-bill-postings-ratchet.mjs",
+    "scripts/verify-steps/19955-verify-vendor-bill-postings-ratchet.mjs",
+    ".block-ready/cc-2-r81-vendor-bill-postings.json"
+  ],
+  "acceptance": [
+    "verify-vendor-bill-postings-ratchet selftest PASS 2/2",
+    "total_bills=260 uncharted=9/9 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
