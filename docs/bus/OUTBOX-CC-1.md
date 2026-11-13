@@ -1,3 +1,15 @@
+## 2026-11-13 ~22:00Z — ROUND 8.27 ACCT-RATCHET DONE-ENGINE (CC-1)
+
+**PR #29325 MERGED** `722a0656ccd` — convert verify-costs-are-expenses-not-handwritten-jes to shrink-only ratchet; delete 3 ambient bypasses (acceptedRow104FuelCardTestAmbient + acceptedEng44ReinstateDbTestAmbient + acceptedBoard35TourReadoutAmbient) from money-pr-local-gate.mjs.
+- `scripts/verify-steps/handwritten-cost-je-baseline.json`: 30 known WEX fuel JE IDs measured on prod 2026-11-13; shrink-only
+- Guard selftest: new JE → FAIL, baseline grown → FAIL, baseline shrunk → PASS (25 fixtures all correct)
+- money-pr-local-gate.mjs: exit 0 locally (246 passed, 279 skipped)
+- DATA-LATER (unchanged): 30 WEX fuel JEs → expense documents via AUTH-464 ops replay after ENG-25b deploy
+
+DONE per Lead directive 21:40Z — ROOT FIX delivered, patch pattern eliminated.
+
+---
+
 ## 2026-11-13 ~21:30Z — ROUND 8.25 ENG-44 CODED-GAP CLOSED (CC-1)
 
 **PR #29308 MERGED** `2f9111b044d` — ENG-44 REVERSE real-PG test (reinstate voided driver bill)
