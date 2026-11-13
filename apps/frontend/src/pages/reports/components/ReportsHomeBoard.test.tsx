@@ -75,6 +75,14 @@ describe("row 53 — Reports Home is exactly the board", () => {
     await waitFor(() => expect(screen.getByTestId("ifta-card-stub")).toBeTruthy());
   });
 
+  it("ROUND 8.20 board25 — Available / Run-7d KPIs are interactive and write ?cat=", async () => {
+    renderBoard("/reports?basis=cash");
+    fireEvent.click(screen.getByTestId("reports-kpi-run-7d"));
+    await waitFor(() => expect(screen.getByTestId("reports-home-frequently-run")).toBeTruthy());
+    fireEvent.click(screen.getByTestId("reports-kpi-available"));
+    await waitFor(() => expect(screen.getByTestId("reports-home-accounting-financial")).toBeTruthy());
+  });
+
   it("reportCatalogHref resolves basis-aware, plain and management rows", () => {
     expect(reportCatalogHref("balance-sheet", "cash")).toBe("/reports/balance-sheet?basis=cash");
     expect(reportCatalogHref("fuel-reconciliation", "cash")).toBe("/reports/fuel-reconciliation");

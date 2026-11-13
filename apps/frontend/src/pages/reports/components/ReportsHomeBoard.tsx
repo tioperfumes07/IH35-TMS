@@ -180,7 +180,22 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
     );
   };
   const [showAll, setShowAll] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<SidebarCategory>("financial");
+  // ROUND 8.20 board25 — category in URL so KPI drills + Back restore the selected catalog cohort.
+  const catFromUrl = (searchParams.get("cat") ?? "").toLowerCase();
+  const activeCategory: SidebarCategory = SIDEBAR_CATEGORIES.some((c) => c.id === catFromUrl)
+    ? (catFromUrl as SidebarCategory)
+    : "financial";
+  const setActiveCategory = (next: SidebarCategory) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "financial") p.delete("cat");
+        else p.set("cat", next);
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   const kpiQuery = useQuery({
     queryKey: ["reports", "home-board", "kpi-summary", companyId],
@@ -312,6 +327,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           label="Available reports"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.available_reports)}
           sub={kpiReady ? "categories live" : kpiQuery.isError ? "Failed to load" : "Loading…"}
+          // ROUND 8.20 board25 — STATUS FAIL: report counts must be interactive → Financial catalog.
+          onClick={() => setActiveCategory("financial")}
         />
         <V3KpiTile
           testId="reports-kpi-schedules"
@@ -325,6 +342,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           label="Run last 7 days"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.run_last_7d)}
           sub={kpiReady ? "across all users" : kpiQuery.isError ? "Failed to load" : "Loading…"}
+          // ROUND 8.20 board25 — run count → Saved / Frequently run cohort.
+          onClick={() => setActiveCategory("saved")}
         />
         <V3KpiTile
           testId="reports-kpi-ifta"
