@@ -252,13 +252,14 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
   const today = companyToday();
   const bounds = monthBoundsIso(today);
   const monthLabel = MONTH_SHORT[Number(today.slice(5, 7)) - 1] ?? "Month";
-  // ROUND 8.20 board 3 — Money In/Out KPI population as bookmarkable href + ret (URL is source of truth).
+  // ROUND 8.20 board 3 — Money In/Out = CLEARED posted lines (for_review + categorized), NOT categorized-only.
+  // Codex FAIL: review=categorized emptied the cohort while money-map counts bank-cleared deposits still For review.
   const moneyInHref = withReturnContext(
-    `${BANKING_TAB_PATH.transactions}?types=money_in&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+    `${BANKING_TAB_PATH.transactions}?types=money_in&review=all&date_from=${bounds.start}&date_to=${today}`,
     originHref,
   );
   const moneyOutHref = withReturnContext(
-    `${BANKING_TAB_PATH.transactions}?types=money_out&review=categorized&date_from=${bounds.start}&date_to=${today}`,
+    `${BANKING_TAB_PATH.transactions}?types=money_out&review=all&date_from=${bounds.start}&date_to=${today}`,
     originHref,
   );
   const reviewHref = withReturnContext(
@@ -681,7 +682,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-in"
-          // ROUND 8.20 board 3 — month dates + money_in + categorized (cleared); never For review / all types.
+          // ROUND 8.20 board 3 — month dates + money_in + review=all (cleared for_review∪categorized).
           href={moneyInHref}
         />
         <V3KpiTile
