@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -455,7 +455,7 @@ function PlannerExportButtons() {
 }
 
 export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
-
+  const location = useLocation();
   return (
     <PlannerRangeProvider>
       {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12): this shell used to cap at a fixed
@@ -475,7 +475,8 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
-              to={tab.to}
+              // ROUND 8.20 board 12 — keep applied planner_* cohort query across Truck/Driver/Loads tabs.
+              to={{ pathname: tab.to, search: location.search }}
               className={({ isActive }: { isActive: boolean }) =>
                 `flex h-7 shrink-0 items-center rounded-sm px-3 text-xs font-medium text-white ${isActive ? "bg-[var(--planner-tab-selected)]" : "hover:bg-[var(--planner-tab-hover)]"}`
               }

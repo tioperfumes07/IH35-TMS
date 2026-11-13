@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { MemoryRouter } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as driverSchedulerApi from "../../../api/driver-scheduler";
 import * as dispatchApi from "../../../api/dispatch";
 import { UnifiedTimelinePlanner } from "./UnifiedTimelinePlanner";
@@ -44,6 +44,11 @@ function wrap(ui: ReactNode) {
 }
 
 describe("UnifiedTimelinePlanner (Phase 1)", () => {
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     plannerRangeMock.entityFilters = { status: [], driverIds: [], unitIds: [], customerIds: [] };
     vi.spyOn(dispatchApi, "getDispatchPlannerWeek").mockResolvedValue({
@@ -105,5 +110,25 @@ describe("UnifiedTimelinePlanner (Phase 1)", () => {
     expect(await screen.findByText("Jane Driver")).toBeTruthy();
     expect(screen.getByText("Free Agent")).toBeTruthy();
     expect(screen.queryByText("On Leave Guy")).toBeNull();
+  });
+
+  // ROUND 8.20 board12 — HOS-only population must not paint whole-board "No drivers" above real rows.
+  it("does not show honest-empty above a populated HOS-violation group", async () => {
+    vi.spyOn(dispatchApi, "getDispatchPlannerWeek").mockResolvedValue({
+      week_start: "2026-06-22",
+      week_end: "2026-06-29",
+      drivers: [
+        { id: "hv1", name: "Hos One", unit_number: "T-201", hos_status: "violation", blackouts: [] },
+        { id: "hv2", name: "Hos Two", unit_number: "T-202", hos_status: "violation", blackouts: [] },
+      ],
+      loads: [],
+      unassignedLoads: [],
+    } as Awaited<ReturnType<typeof dispatchApi.getDispatchPlannerWeek>>);
+    wrap(<UnifiedTimelinePlanner />);
+    expect(await screen.findByTestId("planner-hos-violation-group")).toBeTruthy();
+    expect(screen.getByText("Hos One")).toBeTruthy();
+    expect(screen.getByText("Hos Two")).toBeTruthy();
+    expect(screen.queryByTestId("dispatch-timeline-honest-empty")).toBeNull();
+    expect(screen.queryAllByTestId("timeline-planner-v3")).toHaveLength(0);
   });
 });

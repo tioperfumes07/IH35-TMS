@@ -20,6 +20,8 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const FILES = {
   customers: "apps/frontend/src/pages/Customers.tsx",
+  /** ROUND 8.20 board9 — createCustomer lives here after Create overlay extract. */
+  createDrawer: "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
   detailTabNav: "apps/frontend/src/pages/customers/CustomersDetailTabNav.tsx",
   listView: "apps/frontend/src/pages/customers/CustomersListView.tsx",
   profileForm: "apps/frontend/src/components/customers/CustomerProfileForm.tsx",
@@ -50,7 +52,11 @@ const EXACT_LEAVES = new Map([
 
 export function audit(src) {
   const failures = [];
-  if (!/createCustomer\(profileValuesToCreatePayload\(/.test(src.customers)) {
+  // ROUND 8.20 board9 — Customers hosts CustomerCreateModal; createCustomer is on NewCustomerDrawerForm.
+  const hostsCreateModal = /<CustomerCreateModal[\s\S]{0,400}operatingCompanyId=/.test(src.customers);
+  const createOnDrawer = /createCustomer\(profileValuesToCreatePayload\(/.test(src.createDrawer ?? "");
+  const createInline = /createCustomer\(profileValuesToCreatePayload\(/.test(src.customers);
+  if (!(hostsCreateModal && createOnDrawer) && !createInline) {
     failures.push(`${FILES.customers}: list.create must call the canonical createCustomer`);
   }
   if (!/customer\.deactivated_at != null/.test(src.customers) || !/customer\.deactivated_at == null/.test(src.customers)) {
@@ -203,6 +209,7 @@ export function audit(src) {
 function loadSrc(root) {
   return {
     customers: fs.readFileSync(path.join(root, FILES.customers), "utf8"),
+    createDrawer: fs.readFileSync(path.join(root, FILES.createDrawer), "utf8"),
     detailTabNav: fs.readFileSync(path.join(root, FILES.detailTabNav), "utf8"),
     listView: fs.readFileSync(path.join(root, FILES.listView), "utf8"),
     profileForm: fs.readFileSync(path.join(root, FILES.profileForm), "utf8"),
@@ -226,7 +233,8 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["create-call", "customers", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
+    ["create-call", "createDrawer", /createCustomer\(profileValuesToCreatePayload\(/, "createSomethingElse("],
+    ["create-host", "customers", /<CustomerCreateModal[\s\S]{0,400}operatingCompanyId=/, "<LegacyCreate remounted operatingCompanyId="],
     ["inactive-filter", "customers", /customer\.deactivated_at != null/g, "false"],
     ["active-filter", "customers", /customer\.deactivated_at == null/g, "false"],
     ["inactive-roster-error", "customers", /customersQuery\.isError \|\| inactiveCustomersQuery\.isError/g, "customersQuery.isError"],

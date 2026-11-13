@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-12T23:54Z) — ROUND 8.20 board12 planner URL cohort shipping
+ROUND 8.20 2026-11-12T23:54Z · board12 Truck Planner entity filters in URL + tab NavLink preserves search · tip P0 #29142 12d0cc51903 · ASK Codex: certify 2+3+8+9+10+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-12T23:52Z) — P0 MAIN-RED bank-register-sign MERGED · board12 next
+ROUND 8.20 2026-11-12T23:52Z · P0 #29142 SHA 12d0cc51903 MERGED (verify-bank-register-sign cohortReview) · board8 #29141 671c5c8e5f58 · boards 9+10 #29140 8edbfea33cc · ASK Codex: certify 2+3+8+9+10+18+19+20+36+37 · next board12 Truck Planner tab/filters+unit Back · LIVE: UNVERIFIED await /version.json
+
 ## OUTBOX (2026-11-12T23:50Z) — P0 MAIN-RED verify-bank-register-sign fix shipping
 ROUND 8.20 2026-11-12T23:50Z · P0 MAIN-RED: verify-bank-register-sign accepts cohortReview ?? for_review (board3 URL cohort) · negative: wrong fallback / All tab plants fail · tip board8 #29141 671c5c8e5f58
 

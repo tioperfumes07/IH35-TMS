@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { companyToday } from "../../../lib/businessDate";
 
 // BRD-23: calendar ranges are 7d / 14d / 30d / custom. The old 40d preset is removed —
@@ -113,7 +114,56 @@ export const EMPTY_PLANNER_ENTITY_FILTERS: PlannerEntityFilterState = {
   customerIds: [],
 };
 
+const PLANNER_STATUS_IDS: readonly PlannerEntityStatus[] = ["in-use", "available", "reserved", "in-shop"];
+
+function parseCsvParam(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** ROUND 8.20 board 12 — applied entity filters live in the URL so tab switches / unit Back restore them. */
+export function readPlannerEntityFiltersFromSearch(params: URLSearchParams): PlannerEntityFilterState {
+  const status = parseCsvParam(params.get("planner_status")).filter((s): s is PlannerEntityStatus =>
+    (PLANNER_STATUS_IDS as readonly string[]).includes(s),
+  );
+  return {
+    status,
+    driverIds: parseCsvParam(params.get("planner_driver_ids")),
+    unitIds: parseCsvParam(params.get("planner_unit_ids")),
+    customerIds: parseCsvParam(params.get("planner_customer_ids")),
+  };
+}
+
+export function writePlannerEntityFiltersToSearch(
+  params: URLSearchParams,
+  filters: PlannerEntityFilterState,
+): URLSearchParams {
+  const next = new URLSearchParams(params);
+  const setOrDel = (key: string, values: string[]) => {
+    if (values.length > 0) next.set(key, values.join(","));
+    else next.delete(key);
+  };
+  setOrDel("planner_status", filters.status);
+  setOrDel("planner_driver_ids", filters.driverIds);
+  setOrDel("planner_unit_ids", filters.unitIds);
+  setOrDel("planner_customer_ids", filters.customerIds);
+  return next;
+}
+
+function entityFiltersKey(f: PlannerEntityFilterState): string {
+  return [
+    f.status.slice().sort().join(","),
+    f.driverIds.slice().sort().join(","),
+    f.unitIds.slice().sort().join(","),
+    f.customerIds.slice().sort().join(","),
+  ].join("|");
+}
+
 export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLANNER_RANGE_DAYS) {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [range, setRangeState] = useState<PlannerRange>(() => buildPlannerRange(initialDays));
   const rangeLength = useMemo(() => {
     const start = Date.parse(`${range.start}T00:00:00Z`);
@@ -141,7 +191,18 @@ export function usePlannerRangeState(initialDays: PlannerRangeDays = DEFAULT_PLA
       /* private mode — the toggle still applies for this session */
     }
   };
-  const [entityFilters, setEntityFilters] = useState<PlannerEntityFilterState>(EMPTY_PLANNER_ENTITY_FILTERS);
+  const [entityFilters, setEntityFiltersState] = useState<PlannerEntityFilterState>(() =>
+    readPlannerEntityFiltersFromSearch(searchParams),
+  );
+  // Remount / tab NavLink with preserved search: rehydrate applied filters from the URL.
+  useEffect(() => {
+    const fromUrl = readPlannerEntityFiltersFromSearch(searchParams);
+    setEntityFiltersState((prev) => (entityFiltersKey(prev) === entityFiltersKey(fromUrl) ? prev : fromUrl));
+  }, [searchParams]);
+  const setEntityFilters = (next: PlannerEntityFilterState) => {
+    setEntityFiltersState(next);
+    setSearchParams((prev) => writePlannerEntityFiltersToSearch(prev, next), { replace: true });
+  };
   const days = useMemo(() => visiblePlannerDays(range, hiddenWeekdays), [range, hiddenWeekdays]);
   return {
     windowDays,
