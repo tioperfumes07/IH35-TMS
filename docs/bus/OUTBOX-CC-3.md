@@ -2,6 +2,19 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 07Z — ROUND 8.20 ENG-27 DONE-MERGED; R8.21 lead-coded rows confirmed
+
+**ENG-27 (R8.20 row 262 engine fix — MERGED):** `d406b85e` PR #29226 — `resolvePostingSourceLoad` bank_categorization branch added; reads `bt.categorization_load_id`; engine fix prospective (0 existing violations, guard ceiling 290 ratchets down). Gate exit 0.
+
+**R8.21 Lead-coded rows confirmed on main:**
+- Row 111 (Insurance standalone shell): `8cff827545` #27400 — DONE-LIVE (Chrome-verified: insurance module loads, breadcrumb shows, 0 matters for USMCA)
+- Row 120 (fuel reverse-drill + FuelAssignmentPopup): `bf7dadd3cf` #27311 — MERGED-UNVERIFIED (Chrome walk needed)
+- Row 125 (Settlements guard): `f3855c3116` #27485 — DONE-LIVE
+- Row 152 (Maintenance money cents): `864c4db7d8` #27491 — DONE-LIVE
+- Row 154 (Active WOs sort headers): `ac09dabb4a` #27483 — DONE-LIVE
+- Row 200 (Open invoices KPI): `eef79722` #27452 — DONE-LIVE
+- Rows 29+119 (entity filters multi-select): `450ce42d6b` #27464 — DONE-LIVE
+
 ## 2026-11-13 03Z — ROUND 8.19 CC-2 OVERFLOW: row 110 DONE-LIVE; rows 104-108 113 124 138 investigating
 
 **Row 110 (Angel Sosa current truck — DONE-LIVE):** Code fix c7419ed291 deployed (position 8126 on main, pre-dates deployed SHA ddc4ac9d40). VDA query at driver-aggregate.service.ts:302 now reads all OPEN VDA records (no samsara_webhook filter). Live Chrome: Angel Sosa correctly shows "No current truck assignment" because T156 VDA ended (status Probation). Behavior correct. Register updated DONE-LIVE.
