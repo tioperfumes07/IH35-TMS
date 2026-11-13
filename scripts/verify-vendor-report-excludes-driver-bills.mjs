@@ -14,6 +14,18 @@ const files = [
   "apps/backend/src/mdata/canonical/party-board.service.ts",
 ];
 
+if (process.argv.includes("--selftest")) {
+  // Mutation: a source without the exclusion clause must be caught.
+  const fake = "SELECT * FROM accounting.bills b WHERE b.vendor_id = $1";
+  const caught = !fake.includes(DRIVER_EXCL);
+  if (!caught) {
+    process.stderr.write("verify-vendor-report-excludes-driver-bills SELFTEST FAIL — mutation not caught\n");
+    process.exit(1);
+  }
+  process.stdout.write("verify-vendor-report-excludes-driver-bills --selftest PASS 1/1 mutations caught\n");
+  process.exit(0);
+}
+
 for (const rel of files) {
   const path = resolve(rel);
   const src = readFileSync(path, "utf8");

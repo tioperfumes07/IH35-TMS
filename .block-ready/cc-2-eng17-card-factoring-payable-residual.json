@@ -1,0 +1,20 @@
+{
+  "block_id": "cc-2-eng17-card-factoring-payable-residual",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.20-CC-2",
+  "task": "CC-2 ENG-17 — card/factoring payable residual engine. Account 1090 (Undeposited Funds) and 2510 (Dreamline Diesel Card Payable) balances must equal sum of open source documents. Guard 19923 enforces 0 postings missing source_transaction_id and balance = open-document residual.",
+  "branch": "cc-2/eng17-card-factoring-payable-residual",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-card-factoring-payable-residual.mjs",
+    "scripts/verify-steps/19923-verify-card-factoring-payable-residual.mjs",
+    ".block-ready/cc-2-eng17-card-factoring-payable-residual.json"
+  ],
+  "acceptance": [
+    "verify-card-factoring-payable-residual selftest PASS 2/2",
+    "1090: 0 postings missing source_transaction_id | GL balance $244,325.48 = open-document sum | PASS",
+    "2510: 0 postings missing source_transaction_id | GL balance $275,018.42 = open-document sum | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
