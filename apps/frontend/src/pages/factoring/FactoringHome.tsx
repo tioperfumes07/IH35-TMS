@@ -5,6 +5,8 @@ import {
   agingDateColumnLabel,
   agingDateForBasis,
   type AgingDateBasis,
+  buildAgingDateBasisParam,
+  parseAgingDateBasisParam,
 } from "./agingDateBasis";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
@@ -351,8 +353,6 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // REG-044: Summary/Detail toggle for all factoring tabs (Account Summary, Aging,
   // Chargebacks/Overpayments, Payment-To-You, Purchase Report, Faro Import).
   const [agingView, setAgingView] = useState<"summary" | "detail">("detail");
-  // Faro Aging "View by Invoice / Purchase / Fund Date" — real columns from recourse-pipeline.
-  const [agingDateBasis, setAgingDateBasis] = useState<AgingDateBasis>("fund");
   const [chargebacksOverpaymentsView, setChargebacksOverpaymentsView] = useState<"summary" | "detail">("detail");
   const [paymentsToYouView, setPaymentsToYouView] = useState<"summary" | "detail">("detail");
   const [purchaseReportView, setPurchaseReportView] = useState<"summary" | "detail">("summary");
@@ -426,6 +426,20 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   // capped at LIMIT 500.
   // LST-F5193 + LV-FACTORING-HOME-FILTER-SILENT-APPLY — stage until Apply; URL sync on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board18 — aging_basis lives in URL so Back/ret restores the age-by cohort.
+  const agingDateBasis = parseAgingDateBasisParam(searchParams.get("aging_basis"));
+  const setAgingDateBasis = (next: AgingDateBasis) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        const encoded = buildAgingDateBasisParam(next);
+        if (encoded) p.set("aging_basis", encoded);
+        else p.delete("aging_basis");
+        return p;
+      },
+      { replace: true },
+    );
+  };
   const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
   const vendorIdFromUrl = searchParams.get("vendor_id")?.trim() ?? "";

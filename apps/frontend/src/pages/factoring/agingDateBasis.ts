@@ -28,3 +28,13 @@ export function agingDateForBasis(row: AgingDateFields, basis: AgingDateBasis): 
 export function agingDateColumnLabel(basis: AgingDateBasis): string {
   return AGING_DATE_BASIS_OPTIONS.find((o) => o.id === basis)?.label ?? "Inv Date";
 }
+
+/** ROUND 8.20 board18 — URL SoT `?aging_basis=invoice|purchase|fund` (default fund omitted). */
+export function parseAgingDateBasisParam(raw: string | null | undefined): AgingDateBasis {
+  if (raw === "invoice" || raw === "purchase" || raw === "fund") return raw;
+  return "fund";
+}
+
+export function buildAgingDateBasisParam(basis: AgingDateBasis): string | null {
+  return basis === "fund" ? null : basis;
+}
