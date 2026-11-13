@@ -54,4 +54,17 @@ describe("BackArrowHeader", () => {
     expect(target).not.toBe("/accounting/bills");
     expect(target).not.toBe(-1);
   });
+
+  // ROUND 8.20 board21 — Legal Home KPI → Templates carries ?ret=/legal; Back must restore Home.
+  it("honors ?ret= over backTo when present", () => {
+    const ret = encodeURIComponent("/legal");
+    render(
+      <MemoryRouter initialEntries={[`/legal/templates?ret=${ret}`]}>
+        <BackArrowHeader backTo="/legal" breadcrumb={["Legal", "Templates"]} title="Legal Template Library" />
+      </MemoryRouter>,
+    );
+    fireEvent.click(screen.getByLabelText("Back"));
+    expect(navigateSpy).toHaveBeenCalledWith("/legal");
+    expect(navigateSpy).not.toHaveBeenCalledWith(-1);
+  });
 });

@@ -1,4 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { legalMattersApi } from "../../../api/legal-matters";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -47,6 +49,10 @@ function SeverityChips({ bySeverity }: { bySeverity: Record<string, number> }) {
 }
 
 export function LegalReportsLandingPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — honor ?ret= from Legal Home (fallback /legal).
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const q = useQuery({
@@ -58,7 +64,7 @@ export function LegalReportsLandingPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal" breadcrumb={["Legal", "Reports"]} title="Legal reports" subtitle="Exposure and deadline rollups" />
+      <PageHeader backHref={reportsBackHref} breadcrumb={["Legal", "Reports"]} title="Legal reports" subtitle="Exposure and deadline rollups" />
       <LegalModuleTabs />
       {!companyId ? (
         <BoardSection title="Legal reports" testId="legal-reports-need-company">

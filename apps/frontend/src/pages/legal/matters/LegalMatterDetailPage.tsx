@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MatterReservePanel } from "../../../components/legal/MatterReservePanel";
 import { useEffect, useState } from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import {
   legalMattersApi,
   type LegalMatterDeadline,
@@ -12,6 +12,7 @@ import {
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
@@ -109,7 +110,14 @@ export function LegalMatterDetailPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const admin = user?.role === "Owner" || user?.role === "Administrator";
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board21 — Matter detail Back restores list/Home via ret (fallback Matters list).
+  const matterDetailBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/legal/matters",
+  });
   const tab = parseLegalMatterTab(searchParams.get("tab"));
   const setTab = (next: Tab) => {
     const params = new URLSearchParams(searchParams);
@@ -257,7 +265,7 @@ export function LegalMatterDetailPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={matterDetailBackHref}
         breadcrumb={["Legal", "Matters"]}
         title={matter ? String(matter.matter_number ?? "Matter") : "Matter"}
         subtitle={matter ? properEnumOrFilterLabel(matter.type) : ""}

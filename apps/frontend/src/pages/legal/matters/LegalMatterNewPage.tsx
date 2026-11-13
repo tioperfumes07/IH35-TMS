@@ -1,12 +1,13 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { LegalModuleTabs } from "../LegalModuleTabs";
 import {
   EMPTY_LEGAL_MATTER_FORM,
@@ -19,6 +20,14 @@ export function LegalMatterNewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — Create Matter Back restores list/Home via ret (fallback Matters list).
+  const matterNewBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/legal/matters",
+  });
   const [form, setForm] = useState<LegalMatterFormState>(EMPTY_LEGAL_MATTER_FORM);
 
   const createMut = useMutation<{ matter: LegalMatterRow }, Error, void>({
@@ -28,7 +37,7 @@ export function LegalMatterNewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal" breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
+      <PageHeader backHref={matterNewBackHref} breadcrumb={["Legal", "Matters"]} title="Create legal matter" subtitle="Create a matter record" />
       <LegalModuleTabs />
       {!companyId ? (
         <BoardSection title="Create legal matter" testId="legal-matter-new-need-company">

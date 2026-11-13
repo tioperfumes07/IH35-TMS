@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { Fragment } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type BackArrowHeaderProps = {
   backTo: string;
@@ -14,6 +14,9 @@ type BackArrowHeaderProps = {
 export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions }: BackArrowHeaderProps) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — Home KPI drills attach ?ret=; Back must honor it (fallback stays in-module via backTo).
+  const backHref = resolveBackHref({ searchParams, pathname, fallback: backTo });
 
   return (
     <div className="border-b border-(--border-default) px-6 pb-2 pt-3.5">
@@ -26,12 +29,12 @@ export function BackArrowHeader({ backTo, breadcrumb, title, countBadge, actions
         ))}
       </div>
       <div className="flex items-center gap-2.5">
-        {/* ROUND 435-CUR — Up stays inside this module. Never navigate(-1). */}
+        {/* ROUND 435-CUR — Up stays inside this module when no ret. Never navigate(-1). */}
         <button
           type="button"
           aria-label="Back"
           onClick={() => {
-            navigate(inModuleBackHref(pathname, backTo));
+            navigate(backHref);
           }}
           className="inline-flex items-center gap-1 rounded-xs border-0 bg-transparent px-1 py-0.5 text-xs font-semibold text-(--text-secondary) no-underline hover:bg-(--bg-surface-alt) hover:text-(--text-primary)"
         >
