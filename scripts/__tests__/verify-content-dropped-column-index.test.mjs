@@ -13,12 +13,27 @@ function migrationsDir(files) {
   return dir;
 }
 
-function client({ columns = new Set(), indexes = new Set() } = {}) {
+function client({ columns = new Set(), indexes = new Set(), tables = null } = {}) {
+  // When `tables` is omitted, infer present tables from column keys (schema.table.column).
+  const presentTables =
+    tables ??
+    new Set(
+      [...columns].map((fq) => {
+        const parts = String(fq).split(".");
+        return parts.length >= 2 ? `${parts[0]}.${parts[1]}` : fq;
+      }),
+    );
   return {
     async query(sql, params = []) {
       const lower = sql.toLowerCase();
       if (lower.includes("from information_schema.schemata")) return { rows: [{}] };
-      if (lower.includes("from information_schema.tables")) return { rows: [{}] };
+      if (lower.includes("from information_schema.tables")) {
+        const [schema, table] = params;
+        if (schema != null && table != null) {
+          return { rows: presentTables.has(`${schema}.${table}`) ? [{}] : [] };
+        }
+        return { rows: presentTables.size ? [{}] : [] };
+      }
       if (lower.includes("from information_schema.columns")) {
         const [schema, table, column] = params;
         return { rows: columns.has(`${schema}.${table}.${column}`) ? [{}] : [] };
@@ -69,4 +84,22 @@ test("an index whose columns were never dropped is still drift", async () => {
     migrationsDirectory: dir, minNumber: 1, maxNumber: Number.MAX_SAFE_INTEGER,
   });
   assert.deepEqual(missingIndexes(r), ["ins.idx_policy_status"]);
+});
+
+// ROUND 8.20 P0 — ENG-60 DROP TABLE insurance.lawsuit (inside DO $$) removes indexes; not drift.
+test("an index on a later-dropped table is not drift", async () => {
+  const dir = migrationsDir({
+    "0001_create.sql": `CREATE TABLE IF NOT EXISTS insurance.lawsuit (id uuid, claim_id uuid);
+CREATE INDEX IF NOT EXISTS idx_insurance_lawsuit_claim ON insurance.lawsuit (claim_id);`,
+    "0002_drop.sql": `DO $$ BEGIN DROP TABLE IF EXISTS insurance.lawsuit; END $$;`,
+  });
+  const r = await verifyMigrationContent({
+    client: client({ columns: new Set(), indexes: new Set() }),
+    migrationsDirectory: dir,
+    minNumber: 1,
+    maxNumber: Number.MAX_SAFE_INTEGER,
+  });
+  assert.deepEqual(missingIndexes(r), []);
+  const skipped = r.report.flatMap((m) => m.skipped ?? []);
+  assert.ok(skipped.some((s) => s.object === "insurance.idx_insurance_lawsuit_claim" && /table insurance\.lawsuit dropped/.test(s.trace)));
 });
