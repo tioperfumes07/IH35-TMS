@@ -735,6 +735,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           income: Number(searchParams.get("rl_income") || 0),
           expenses: Number(searchParams.get("rl_expenses") || 0),
           net: Number(searchParams.get("rl_net") || 0),
+          ending: searchParams.get("rl_ending") != null ? Number(searchParams.get("rl_ending")) : null,
+          opening: searchParams.get("rl_opening") != null ? Number(searchParams.get("rl_opening")) : null,
           rr: homeRr,
         }
       : null;
@@ -1326,8 +1328,23 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               Ledger rows below are live obligations in this window — they do not rewrite the Home figure.
             </p>
             <p className="font-semibold tabular-nums" data-testid="cash-flow-rolling-home-net-clicked">
-              Clicked {homeNetBreakdown.explain === "ending" ? "Ending" : "Net"} = {formatUsdCents(homeNetBreakdown.net)}
-              {" · "}Income {formatUsdCents(homeNetBreakdown.income)} − Expenses {formatUsdCents(homeNetBreakdown.expenses)}
+              {homeNetBreakdown.explain === "ending" && homeNetBreakdown.ending != null ? (
+                <>
+                  Clicked Ending = {formatUsdCents(homeNetBreakdown.ending)}
+                  {homeNetBreakdown.opening != null ? (
+                    <>
+                      {" · "}Opening {formatUsdCents(homeNetBreakdown.opening)} + Net{" "}
+                      {formatUsdCents(homeNetBreakdown.net)} = Ending {formatUsdCents(homeNetBreakdown.ending)}
+                    </>
+                  ) : null}
+                </>
+              ) : (
+                <>
+                  Clicked Net = {formatUsdCents(homeNetBreakdown.net)}
+                  {" · "}Income {formatUsdCents(homeNetBreakdown.income)} − Expenses{" "}
+                  {formatUsdCents(homeNetBreakdown.expenses)}
+                </>
+              )}
             </p>
             <ul className="list-inside list-disc space-y-0.5 text-[#4B5563]">
               <li>Invoices / loads / factor advances: {formatUsdCents(homeNetBreakdown.invoice)}</li>

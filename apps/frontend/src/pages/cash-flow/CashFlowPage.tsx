@@ -35,6 +35,10 @@ export type CashFlowNavOpts = {
   rl_income?: string;
   rl_expenses?: string;
   rl_net?: string;
+  /** Home Ending drill — cumulative ending cash for the clicked week/month (not weekly net). */
+  rl_ending?: string;
+  /** Home Ending drill — opening = ending − net for that bucket (recon banner). */
+  rl_opening?: string;
   /** Comma list of run-rate estimate legs: driver,diesel,other,topup. */
   rl_rr?: string;
 };
@@ -68,6 +72,8 @@ const RL_PARAM_KEYS = [
   "rl_income",
   "rl_expenses",
   "rl_net",
+  "rl_ending",
+  "rl_opening",
   "rl_rr",
 ] as const;
 
@@ -112,6 +118,8 @@ export function CashFlowPage() {
     if (opts?.rl_income != null) params.set("rl_income", opts.rl_income);
     if (opts?.rl_expenses != null) params.set("rl_expenses", opts.rl_expenses);
     if (opts?.rl_net != null) params.set("rl_net", opts.rl_net);
+    if (opts?.rl_ending != null) params.set("rl_ending", opts.rl_ending);
+    if (opts?.rl_opening != null) params.set("rl_opening", opts.rl_opening);
     if (opts?.rl_rr) params.set("rl_rr", opts.rl_rr);
     setSearchParams(params, { replace: true });
   };
