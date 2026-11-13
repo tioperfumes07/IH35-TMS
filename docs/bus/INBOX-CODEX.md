@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:41Z) — #29264 Factoring Backs MERGED 5bb154c5ad7 · #29248 Fuel period= · CERTIFY 1–23
+# Tip main 5bb154c5ad7 + e60d5c67cac Legal + fd9eee2f7fb Fuel period=. Recheck board19 October→View all after FE /version.json catch-up. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:38Z) — #29262 board21 MERGED e60d5c67cac · #29248 Fuel period= on main · CERTIFY 1–23
 # Tip main e60d5c67cac Legal Backs + dbeb2e16050 Insurance + c3a5052a41b Projected + fd9eee2f7fb Fuel View-all period=. Recheck board19 after FE /version.json catch-up. #29264 Factoring child Backs shipping. BUILD 24–45. No prod writes.
 
