@@ -43,6 +43,19 @@ type CategoryRow = { key: string; account_id: string | null; category: string; s
 const money = (cents: number) => formatUsdCents(cents);
 const name = (n: string | null | undefined) => (n ? formatCompanyName(n) : "Vendor");
 
+/** BOARD 31 — the liability tile's caption: each card account's balance and the as-of date. */
+export function cardPayablesSub(rows: Array<{ account_name: string; balance_cents: number }>, asOf?: string): string {
+  if (!rows.length) return asOf ? `nothing owed on fuel cards · as of ${mmmDd(asOf)}` : "nothing owed on fuel cards";
+  const parts = rows.map((r) => `${r.account_name} ${formatUsdCents(r.balance_cents)}`);
+  return asOf ? `${parts.join(" · ")} · as of ${mmmDd(asOf)}` : parts.join(" · ");
+}
+
+/** BOARD 31 — drill to the register of the largest card-payable account (the source of the number). */
+export function cardPayablesHref(rows: Array<{ account_id: string; balance_cents: number }>): string | undefined {
+  const top = [...rows].sort((a, b) => b.balance_cents - a.balance_cents)[0];
+  return top ? `/accounting/chart-of-accounts/register/${encodeURIComponent(top.account_id)}` : undefined;
+}
+
 export function VendorReportBoard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -290,17 +303,15 @@ export function VendorReportBoard() {
           sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${mmmDd(asOf)}`}
           onClick={() => setView("open")}
         />
-        {/* R6 — Card payables = fuel-account expense cents (board); 1099 stays as a View. */}
+        {/* BOARD 31 (LEAD ROUND 8.25) — Card payables = what the company OWES the fuel-card issuers now (Dreamline 2510,
+            WEX 2520 credit balances from readCardPayableBalances), never fuel SPEND. Fail-old (live): the tile showed
+            kpis.fuel_cents — period fuel expense — under a liability label. Drills to the card-payable account register. */}
         <V3KpiTile
           testId="vr-kpi-card-payables"
           label="Card payables"
-          value={board.data ? money(board.data.kpis.fuel_cents ?? 0) : "…"}
-          sub={
-            board.data?.kpis.fuel_share_pct != null
-              ? `${pctLabel(board.data.kpis.fuel_share_pct)} of spend · ${rows1099.length} vendors flagged 1099`
-              : `${rows1099.length} vendors flagged 1099`
-          }
-          onClick={() => setView("category")}
+          value={board.data ? money(board.data.kpis.card_payables_cents ?? 0) : "…"}
+          sub={cardPayablesSub(board.data?.card_payables ?? [], board.data?.card_payables_as_of)}
+          href={cardPayablesHref(board.data?.card_payables ?? [])}
         />
       </ReportKpiGrid>
 
