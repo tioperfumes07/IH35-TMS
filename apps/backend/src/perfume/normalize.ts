@@ -146,6 +146,23 @@ const GENDER_WORDS: Record<string, Gender> = {
 };
 
 /**
+ * Owner 2026-11-12: "detect her / hers as woman and his / him as men … in BURBERRY BRIT HER it is recommending for
+ * him". These words stay IN the name (they name the fragrance) but tell the gender when nothing else does.
+ */
+const NAME_GENDER_HINT: Record<string, Gender> = { HER: "W", HERS: "W", ELLE: "W", SHE: "W", HIM: "M", HIS: "M", LUI: "M", HE: "M" };
+/** Gender a name implies by its own words (HER, HIM, POUR FEMME …), or "" when it names none. */
+export function genderHintOf(text: string): Gender {
+  let g: Gender = "";
+  for (const w of String(text ?? "").toUpperCase().split(/[^A-Z]+/)) {
+    if (NAME_GENDER_HINT[w]) g = NAME_GENDER_HINT[w];
+    else if (w === "FEMME") g = "W";
+    else if (w === "HOMME") g = "M";
+    else if (w === "UNISEX" || w === "UNISEXO") g = "U";
+  }
+  return g;
+}
+
+/**
  * Name words vendors spell more than one way — each maps to ONE spelling for the identity key, so
  * "CK ONE" = "CK 1", "CK B" = "CK BE" = "CK BEE", "ONE MILLION" = "1 MILLION". Display keeps the vendor's words.
  */
@@ -408,6 +425,8 @@ export function identify(input: IdentityInput): Identity {
     kept.push(w);
   }
   if (!gender) gender = textGender;
+  // HER / HIM / HIS / HERS inside the name (kept as name words) give the gender when nothing else did.
+  if (!gender) gender = genderHintOf(kept.join(" "));
   const sec = readSection(input.section);
   if (!gender) gender = sec.gender;
   for (const f of sec.flags) flags.add(f);
