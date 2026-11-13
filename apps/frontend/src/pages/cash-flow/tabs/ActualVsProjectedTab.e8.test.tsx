@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import type { ReactElement } from "react";
+import { MemoryRouter } from "react-router-dom";
 import {
   AvpCompareChart,
   ProjectedExpenseCell,
   buildAvpActualDrillHref,
+  buildAvpProjectedDrillHref,
   buildAvpChartPoints,
   buildAvpChartSeries,
   accuracyPct,
@@ -20,7 +22,11 @@ import { decodeReturnContext, RETURN_PARAM } from "../../../lib/returnContext";
 
 // ProjectedExpenseCell / AvpCompareChart live beside the tab's useQuery; supply the provider the module consumes.
 function renderWithQuery(ui: ReactElement) {
-  return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>);
+  return render(
+    <MemoryRouter>
+      <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>{ui}</QueryClientProvider>
+    </MemoryRouter>,
+  );
 }
 
 // E8 11-03 (row 261): a past day before expense capture is "not captured", never a projected $0.
@@ -230,6 +236,21 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
     expect(expense).toContain("review=all");
     expect(income).toContain("date_from=2026-11-03");
     expect(income).toContain("date_to=2026-11-03");
+    const q = new URLSearchParams(income.slice(income.indexOf("?") + 1));
+    expect(decodeReturnContext(q.get(RETURN_PARAM))).toBe(origin);
+  });
+
+  it("ROUND 8.20 board6 — Projected Income/Exp drill Rolling Ledger same-day cohort with ret", () => {
+    const origin = "/cash-flow?tab=actual_vs_projected&avp_var=over";
+    const income = buildAvpProjectedDrillHref({ category: "income", date: "2026-11-03" }, origin);
+    const expense = buildAvpProjectedDrillHref({ category: "expenses", date: "2026-11-03" }, origin);
+    expect(income).toContain("tab=rolling_ledger");
+    expect(expense).toContain("tab=rolling_ledger");
+    expect(income).toContain("rl_kind=income");
+    expect(expense).toContain("rl_kind=expenses");
+    expect(income).toContain("rl_from=2026-11-03");
+    expect(income).toContain("rl_to=2026-11-03");
+    expect(expense).toContain("rl_from=2026-11-03");
     const q = new URLSearchParams(income.slice(income.indexOf("?") + 1));
     expect(decodeReturnContext(q.get(RETURN_PARAM))).toBe(origin);
   });
