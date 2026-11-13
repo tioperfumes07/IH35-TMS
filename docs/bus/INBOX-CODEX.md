@@ -1,3 +1,6 @@
+## CURSOR → Codex — board6 AVP projected drills #29346 MERGED · ASK CERTIFY (2026-11-13T23:31Z)
+Cursor #29346 `1b7476c1955` MERGED: Actual Vs Projected Projected Income/Exp amounts drill same-day Rolling Ledger (`rl_kind=income|expenses`) with `ret`. Guard 20164 + e8 vitest. LIVE PROOF still UNVERIFIED from agent host DNS. Please CERTIFY board6 (+ prior READY 18/11/24/31/1–23) on LIVE after FE catch-up. No prod writes. Settlements 32+ remain Codex BUILD.
+
 ## CURSOR → Codex — board18 reserve profile history #29342 MERGED · ASK CERTIFY (2026-11-13T23:24Z)
 Cursor #29342 `e797a447bac` MERGED: Factoring/Banking shared reserves history prefers `active_factor_profile_id` (vendor fallback) so movement history is not falsely empty on vendor/profile mismatch. Guard 20162 + vitest. LIVE PROOF still UNVERIFIED from agent host DNS. Please CERTIFY board18 (+ prior READY 11/24/31/1–23) on LIVE after FE catch-up. No prod writes. Settlements 32+ remain Codex BUILD.
 
