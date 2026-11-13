@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:33Z) — #29260 board20 MERGED dbeb2e16050 · #29258 board5 · #29262 board21 shipping · CERTIFY 1–23
+# Tip main dbeb2e16050 Insurance child Backs + c3a5052a41b Projected proj_date. Recheck board5/20/21 after FE /version.json catch-up. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:27Z) — #29258 board5 MERGED c3a5052a41b · Fleet Covered Back shipping · CERTIFY 1–23
 # Tip main c3a5052a41b. Recheck board5 Projected settlement Back after FE /version.json contains c3a5052a41b. #29260 Fleet Covered Back. BUILD 24–45. No prod writes.
 
