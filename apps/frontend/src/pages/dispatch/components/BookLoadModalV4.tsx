@@ -1976,16 +1976,24 @@ export function BookLoadModalV4({
         className={
           bookLoadPresentation === "side"
             ? "flex h-full max-h-[100dvh] w-[760px] max-w-[100vw] flex-col overflow-hidden border-l border-gray-200 bg-white shadow-2xl"
-            : "flex max-h-[min(95vh,calc(100dvh-2rem))] w-full max-w-[min(1260px,calc(100vw-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-[var(--surface)] shadow-2xl"
+            : "flex max-h-[min(95vh,calc(100dvh-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-[var(--surface)] shadow-2xl"
         }
         // Owner 2026-07-04: let the dispatcher shrink/resize the wizard from the bottom-right corner so they
         // can keep the units / dispatch board visible behind it. Native `resize: both` grip; floors keep it
-        // usable; the max-w/max-h classes cap the top end. The flex-col body already scrolls, so content
-        // stays reachable at any size. ROUND 443.257 / 443.280-C (Spec board): Center = 1260px; Side panel = 760px drawer; both clamp to the viewport (1280/1024/768 reflow).
+        // usable. ROUND 8.20 board14/16: Center MUST be 1260px (FAIL was w-full → ~1408 at 1440×900);
+        // Side panel = 760px drawer. maxWidth locks resize so drag cannot exceed Spec.
+        data-testid="book-load-dialog-panel"
+        data-board-width={bookLoadPresentation === "side" ? "760" : "1260"}
         style={
           bookLoadPresentation === "side"
             ? { width: "min(760px, 100vw)", minWidth: 440, minHeight: "100%" }
-            : { width: "100%", resize: "both", minWidth: "440px", minHeight: "340px" }
+            : {
+                width: "min(1260px, calc(100vw - 2rem))",
+                maxWidth: 1260,
+                resize: "both",
+                minWidth: "440px",
+                minHeight: "340px",
+              }
         }
         onMouseDown={(e) => e.stopPropagation()}
       >

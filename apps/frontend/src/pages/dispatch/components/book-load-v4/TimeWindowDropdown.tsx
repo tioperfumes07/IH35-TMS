@@ -8,7 +8,8 @@ type Props = {
 
 export function TimeWindowDropdown({ register, name }: Props) {
   return (
-    <SelectCombobox {...register(name)} className="h-7 w-full max-w-[11rem] text-xs">
+    // ROUND 8.20 board16 Spec — appointment/time window = 150×32 (not h-7 ~28px / 11rem drift).
+    <SelectCombobox {...register(name)} className="h-8 w-full max-w-[150px] text-xs" data-testid="book-load-time-window">
       <option value="appointment">Appointment (fixed time)</option>
       <option value="open_window">Open window (any time during business hours)</option>
       <option value="select_hours">Select hours (custom window)</option>
