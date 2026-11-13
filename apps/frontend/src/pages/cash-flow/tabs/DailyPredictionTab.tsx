@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -147,14 +147,69 @@ function openingForSelection(data: RollingLedgerResult, from: string): number | 
   return data.opening_cash_cents;
 }
 
+function parseProjDate(raw: string | null): string {
+  if (raw && /^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  return todayIso();
+}
+
+function parseProjGrain(raw: string | null): Grain {
+  return raw === "week" ? "week" : "day";
+}
+
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
-  const [date, setDate] = useState<string>(todayIso());
-  const [grain, setGrain] = useState<Grain>("day");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board5 — week/date must live in the URL so settlement EntityLink `ret` restores Projected origin.
+  const [date, setDateState] = useState<string>(() => parseProjDate(searchParams.get("proj_date")));
+  const [grain, setGrainState] = useState<Grain>(() => parseProjGrain(searchParams.get("proj_grain")));
   const [addLabel, setAddLabel] = useState("");
   const [addAmount, setAddAmount] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Only rehydrate when the URL carries Projected provenance (Back/`ret`); do not force today on bare tab.
+    const rawDate = searchParams.get("proj_date");
+    if (!rawDate) return;
+    const fromUrlDate = parseProjDate(rawDate);
+    const fromUrlGrain = parseProjGrain(searchParams.get("proj_grain"));
+    setDateState((prev) => (prev === fromUrlDate ? prev : fromUrlDate));
+    setGrainState((prev) => (prev === fromUrlGrain ? prev : fromUrlGrain));
+  }, [searchParams]);
+
+  const applyProj = useCallback(
+    (nextDate: string, nextGrain: Grain) => {
+      setDateState(nextDate);
+      setGrainState(nextGrain);
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("tab", "daily_prediction");
+          next.set("proj_date", nextDate);
+          if (nextGrain === "day") next.delete("proj_grain");
+          else next.set("proj_grain", nextGrain);
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
+  const setDate = useCallback(
+    (nextDate: string | ((prev: string) => string)) => {
+      const resolved = typeof nextDate === "function" ? nextDate(date) : nextDate;
+      applyProj(resolved, grain);
+    },
+    [applyProj, date, grain],
+  );
+
+  const setGrain = useCallback(
+    (nextGrain: Grain) => {
+      applyProj(date, nextGrain);
+    },
+    [applyProj, date],
+  );
 
   const queryClient = useQueryClient();
   const rangeFrom = grain === "week" ? mondayOf(date) : date;
@@ -672,8 +727,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               // CF3 / Codex ROUND 8.5 — tile click selects that day AND forces grain=day so a week/month
               // view cannot leave the strip looking selected while the panels still show week aggregates.
               onClick={() => {
-                setDate(entry.date);
-                setGrain("day");
+                applyProj(entry.date, "day");
               }}
               title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
               style={{
