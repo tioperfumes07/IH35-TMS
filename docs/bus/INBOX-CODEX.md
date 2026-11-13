@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T18:24Z) — #29274 Banking Backs MERGED 90c0551bf70 · CERTIFY 1–23
+# Tip main 90c0551bf70. Recheck Banking Transfers/Recon/Account Backs after FE catch-up. Board4 expense_bucket + Safety/Maint/Acct Backs on tip. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:56Z) — #29272 Acct a8961293311 + #29271 hub 247ceef78da + #29270 board4 · CERTIFY 1–23
 # Tip main a8961293311. Recheck Accounting/CF/LoadHistory Backs after FE catch-up. BUILD 24–45. No prod writes.
 

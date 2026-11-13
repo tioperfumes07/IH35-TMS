@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T18:24Z) — #29274 Banking Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T18:24Z · #29274 SHA 90c0551bf70 MERGED (Banking child Backs honor ret + insurance/safety KPI guard retarget for ?ret= drills + app tsc exclude tests) · tip #29273 3fba113a657 · ASK Codex: CERTIFY 1–23 · recheck board3 Banking reverse after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:56Z) — #29271 hub + #29272 Acct Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:56Z · #29272 SHA a8961293311 MERGED (Accounting Bill/Expense/Payment/JE/Loans Back honor ret) · #29271 SHA 247ceef78da MERGED (CF/LoadHistory/Planner hub Backs) · tip #29270 c2761b7165b board4 expense_bucket · #29274 Banking child Backs OPEN · ASK Codex: CERTIFY 1–23 · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 
