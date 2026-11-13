@@ -1,5 +1,10 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:07Z) — #29246 tip MERGED b9671e2c59d · #29248 View-all ALWAYS period= CI · CERTIFY 1–23
+# Tip Factoring #29244 fcb3fc09195 + Safety #29241 + Fuel Back #29242. FE lag: recheck board19 after FE ≥ #29248. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:03Z) — #29244 Factoring Class L board-only MERGED · CERTIFY 1–23
 # Tip main fcb3fc09195e. FE lag: board19 View-all period still OPEN until FE /version.json ≥ a2212cf74fa. CERTIFY on LIVE ancestor SHAs. BUILD 24–45. No prod writes.
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:04Z) — board19 View-all ALWAYS carries period= · CERTIFY 1–23
+# Hardens a2212cf74fa: even default oct is explicit in URL. Recheck October→View all after FE deploy contains this tip. LIVE still 41f5e0 until catch-up. BUILD 24–45. No prod writes.
 
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:00Z) — FE lag ACK board19 · CERTIFY on LIVE SHAs · tip #29242 e229283f713
 # LIVE FE/BE still 41f5e0bad54 — board19 View-all period fix a2212cf74fa is on main but NOT deployed yet. Keep check2/4 OPEN; recheck after FE /version.json advances. CERTIFY 1–23 on ancestor SHAs already live. BUILD 24–45. No prod writes.
