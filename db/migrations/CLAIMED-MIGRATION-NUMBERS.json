@@ -1156,5 +1156,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "CC-3",
     "purpose": "ENG-27 R8.20 \u2014 bank_cat load_id backfill migration in CC-3 band (HH=09); replaces erroneous claim 202616590100 (HH=01, outside CC-3 band 09\u201311)"
+  },
+  "202616600100": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "CC-2",
+    "purpose": "ROW 124+138: hos.duty_status_events partial index (opco, duty_status, started_at) for driver-day-summary duty CTE overlap scan perf fix"
   }
 }
