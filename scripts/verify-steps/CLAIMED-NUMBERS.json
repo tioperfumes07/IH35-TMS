@@ -15563,15 +15563,30 @@
     "claimed_at": "2026-11-04",
     "purpose": "verify-settlement-paid-rollup"
   },
+  "19939": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-11-13",
+    "purpose": "ENG-R76 settlements-paid ratchet engine — ceiling for closed settlements with paid_at NULL"
+  },
   "19941": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-factored-invoice-payment-status"
   },
+  "19943": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-11-13",
+    "purpose": "ENG-R77 customer-payments-applied ratchet engine — ceiling for invoices with no payment/Faro purchase applied"
+  },
   "19945": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
     "purpose": "verify-settlement-line-dedupe-keys-on-load"
+  },
+  "19947": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-11-13",
+    "purpose": "ENG-R97 bank-reconciliation-drift ratchet engine — ceiling for bank lines not reconciled in BofA/Relay feeds"
   },
   "19949": {
     "claimed_by": "claude",
