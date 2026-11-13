@@ -6,7 +6,8 @@
  * possible-duplicates panel shows — so the figure that opened this page is the figure at the top of it.
  */
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { useLocation, useSearchParams, Link, useParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { ApiError, apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -65,6 +66,10 @@ const COLUMNS: Array<ParityColumn<FaroDebtorLine>> = [
 ];
 
 export function FaroDebtorRecordPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const { name = "" } = useParams<{ name: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const q = useQuery({
@@ -79,7 +84,7 @@ export function FaroDebtorRecordPage() {
     return (
       <div className="space-y-3 p-4 text-xs" data-testid="faro-debtor-record">
         <PageHeader
-          backHref="/factoring"
+          backHref={factoringBackHref}
           breadcrumb={["Factoring", "Faro debtor"]}
           title="Faro debtor"
           subtitle="Read-only factor statement lines for one debtor"

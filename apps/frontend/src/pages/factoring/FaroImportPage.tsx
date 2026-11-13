@@ -14,6 +14,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type PreviewLine = {
   invoice_number: string;
@@ -123,6 +125,10 @@ const PREVIEW_COLUMNS: Array<ParityColumn<PreviewLine>> = [
 ];
 
 export function FaroImportPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const [fileName, setFileName] = useState("");
@@ -166,7 +172,7 @@ export function FaroImportPage() {
   return (
     <div className="space-y-3" data-testid="faro-import-page">
       <PageHeader
-        backHref="/factoring"
+        backHref={factoringBackHref}
         breadcrumb={["Factoring", "Faro CSV Import"]}
         title="Faro CSV Import"
         subtitle="Upload Faro factoring statement CSV → invoice updates + reserve movements"

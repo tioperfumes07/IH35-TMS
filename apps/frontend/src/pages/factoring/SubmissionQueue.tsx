@@ -1,6 +1,7 @@
 import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listSubmissionQueue, submitFactoringQueueBatch, type SubmissionQueueItem } from "../../api/factoring";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -44,6 +45,7 @@ export function SubmissionQueue() {
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const qc = useQueryClient();
+  const { pathname } = useLocation();
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
@@ -51,6 +53,8 @@ export function SubmissionQueue() {
   // ?customer_id=/?load_id=; LST-F5163N adds visible EntityPicker filters (URL-only is not reverse chrome).
   // LST-F5196 + LV-FACTORING-SUBMISSION-QUEUE-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
   const loadIdFromUrl = searchParams.get("load_id")?.trim() ?? "";
 
@@ -239,7 +243,7 @@ export function SubmissionQueue() {
     return (
       <div className="space-y-3 p-4">
         <PageHeader
-          backHref="/factoring"
+          backHref={factoringBackHref}
           title="Submit to Factor"
           subtitle="Eligible invoices ready for factor submission"
         />
@@ -255,7 +259,7 @@ export function SubmissionQueue() {
   return (
     <div className="space-y-3 p-4">
       <PageHeader
-        backHref="/factoring"
+        backHref={factoringBackHref}
         title="Submit to Factor"
         subtitle="Eligible invoices ready for factor submission"
       />

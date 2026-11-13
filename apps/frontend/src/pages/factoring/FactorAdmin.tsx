@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
@@ -142,6 +143,7 @@ type AddFactorForm = {
 };
 
 export function FactorAdmin() {
+  const { pathname } = useLocation();
   const { t } = useTranslation();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -192,6 +194,8 @@ export function FactorAdmin() {
   // nothing selected. selectedFactor needs the FULL Factor object (used by every mutation below), so
   // the effect waits for factorsQuery to resolve and looks the id up rather than setting a bare id.
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const deepLinkFactorId = searchParams.get("factor_id");
   useEffect(() => {
     if (!deepLinkFactorId || !factorsQuery.data) return;
@@ -392,7 +396,7 @@ export function FactorAdmin() {
     return (
       <div className="space-y-3 p-4" data-testid="factor-admin-page">
         <PageHeader
-          backHref="/factoring"
+          backHref={factoringBackHref}
           breadcrumb={["Factoring", "Factors"]}
           title="Factor Administration"
           subtitle="Manage factors, assign customers, and review assignment/batch history"
@@ -407,7 +411,7 @@ export function FactorAdmin() {
   return (
     <div className="space-y-3" data-testid="factor-admin-page">
       <PageHeader
-        backHref="/factoring"
+        backHref={factoringBackHref}
         breadcrumb={["Factoring", "Factors"]}
         title="Factor Administration"
         subtitle="Manage factors, assign customers, and review assignment/batch history"
