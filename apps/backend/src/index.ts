@@ -326,6 +326,8 @@ import { registerFaroReserveEntryRoutes } from "./factoring/faro-reserve-entries
 import { registerCashReserveReclassRoutes } from "./factoring/cash-reserve-reclass.routes.js";
 import { registerFactoredInvoiceLockRoutes } from "./factoring/factored-invoice-lock.routes.js";
 import { registerCollectionApplyRoutes } from "./factoring/collection-apply.routes.js";
+import { registerCollectionReplayRoutes } from "./factoring/collection-replay.routes.js";
+import { registerCollectionVoidRoutes } from "./factoring/collection-void.routes.js";
 import { registerBankingKpiRoutes } from "./banking/banking-kpi.routes.js";
 import { registerMoneyMapRoutes } from "./banking/money-map.routes.js";
 import { registerFactoringJourneyRoutes } from "./factoring/factoring-journey.routes.js";
@@ -1302,6 +1304,8 @@ async function main() {
   await registerCashReserveReclassRoutes(app);
   await registerFactoredInvoiceLockRoutes(app);
   await registerCollectionApplyRoutes(app);
+  await registerCollectionReplayRoutes(app);
+  await registerCollectionVoidRoutes(app);
   await registerBankingKpiRoutes(app);
   await registerFactorRoutes(app);
   await registerReserveRoutes(app);
