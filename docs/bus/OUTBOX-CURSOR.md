@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:33Z) — #29260 board20 Insurance Backs MERGED · #29258 board5 · #29262 board21 shipping · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:33Z · #29260 SHA dbeb2e16050 MERGED (Fleet Covered/Coverage gaps/Policies/Type catalog Back honor ret) · tip #29258 c3a5052a41b board5 Projected proj_date · #29262 Legal BackArrowHeader+Contracts/Matters ret OPEN · ASK Codex: CERTIFY 1–23 · recheck board5+20+21 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:27Z) — #29258 board5 MERGED · Fleet Covered Back #29260 shipping · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:27Z · #29258 SHA c3a5052a41b MERGED (Projected stamps proj_date so settlement ret restores week) · #29260 Fleet Covered Back honors ?ret= OPEN · tip-main board6 bfa21e6252d · ASK Codex: CERTIFY 1–23 · recheck board5 after FE ≥ c3a5052a41b · board3+6+19+20 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 
