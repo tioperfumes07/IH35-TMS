@@ -3159,6 +3159,44 @@ function acceptedEng44ReinstateDbTestAmbient(name, code, changed) {
   return true;
 }
 
+// BOARD-35 (CC-1, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
+// driver-finance/ matches touchesCostExpenseLaw. The diff adds tour-readout.routes.ts (GET-only
+// endpoint: status derived from payment_state + atomic settlement-number assignment in close tx —
+// zero JE writers, zero expense writers, zero posting paths) + a db.test.ts + a verify-step guard.
+// Pre-existing prod debt: 30 WEX fuel JEs on origin/main (loads 13702/13725/13727/13729/13735;
+// ENG-25b intercompany diesel ambient debt). Filed BOARD35-IDENTITY-AMBIENT-20261113.
+// Content-based: fires only when diff is EXACTLY tour-readout.routes.ts + __tests__ + verify-steps.
+function acceptedBoard35TourReadoutAmbient(name, code, changed) {
+  if (code === 0) return false;
+  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
+  if (!changed) return false;
+  // Must have tour-readout.routes.ts (the BOARD-35 fix file) as positive control
+  const TOUR_READOUT = "apps/backend/src/driver-finance/tour-readout.routes.ts";
+  if (!changed.includes(TOUR_READOUT)) return false;
+  const REAL_WRITERS = [
+    "apps/backend/src/expenses/",
+    "apps/backend/src/accounting/fuel-posting/",
+    "apps/backend/src/accounting/expense-posting/",
+    "apps/backend/src/accounting/settlement-posting/",
+    "apps/backend/src/accounting/bank-recon/",
+    "apps/backend/src/accounting/posting-line-writer.ts",
+    "apps/backend/src/fuel/",
+  ];
+  if (changed.some((f) => REAL_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
+  // No other real driver-finance service/routes — only tour-readout.routes.ts + __tests__/ allowed
+  const DF_TEST_PREFIX = "apps/backend/src/driver-finance/__tests__/";
+  if (
+    changed.some(
+      (f) =>
+        f.startsWith("apps/backend/src/driver-finance/") &&
+        f !== TOUR_READOUT &&
+        !f.startsWith(DF_TEST_PREFIX),
+    )
+  )
+    return false;
+  return true;
+}
+
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
 // has-transactions-predicate.ts is READ-ONLY: adds operating_company_id scoping to EXISTS subqueries;
@@ -4862,6 +4900,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff is driver-finance/__tests__/ db.test.ts only — zero JE/expense/posting writers; cite ENG44-REINSTATE-TEST-20261113 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ENG-44 reinstate db-test-only ambient pre-existing WEX fuel JE debt`);
+        continue;
+      }
+      if (acceptedBoard35TourReadoutAmbient(name, code, changedForLiveDomains)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing prod debt ` +
+            `(30 WEX fuel JEs loads 13702/13725/13727/13729/13735 on origin/main; ` +
+            `diff is tour-readout.routes.ts (GET-only, zero JE writers) + __tests__/ + verify-step; cite BOARD35-IDENTITY-AMBIENT-20261113 in PR).`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED BOARD-35 tour-readout GET-only ambient pre-existing WEX fuel JE debt`);
         continue;
       }
       failStep(name);

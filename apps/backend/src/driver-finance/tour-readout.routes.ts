@@ -9,6 +9,7 @@ import { appendCrudAudit } from "../audit/crud-audit.js";
 import { stampTripClosedForBookendedSettlement } from "./settlements-load-bookended.service.js";
 import { closeCompanySettlementAlongsideDriverSettlement } from "../accounting/company-settlement-close.service.js";
 import { postLoadBookendedSettlementGlAfterClose } from "./settlement-payrun-close.service.js";
+import { allocateNextSettlementSourceDocumentRef, setSettlementSourceDocumentRef, type Queryable } from "./settlement-source-document-ref.service.js";
 import { loadCostRollupLateral } from "../accounting/load-cost-rollup.sql.js";
 import { CLOSED_LOAD_STATUS } from "../dispatch/canonical-active-load-set.js";
 
@@ -471,7 +472,11 @@ export async function buildTourReadout(client: Db, companyId: string, settlement
       // document number carried in source_document_ref (5769…5800, next 5801…). The S-YYYY-NNNN value in
       // display_id is a retired internal counter and is NEVER rendered as a settlement number. A tour with
       // no AlwaysTrack number yet (open / unsettled) shows NO number — exactly AlwaysTrack "Unsettled Loads".
-      settlement_number: s.source_document_ref, status: s.status, approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
+      settlement_number: s.source_document_ref,
+      // BOARD-35: status label = paid/unpaid/open from payment_state — never raw DB status on a closed tour.
+      // A closed tour stuck at status='open' (GL posting pending) must show "unpaid", not "open".
+      status: closedAlready ? (s.paid_at ? "paid" : "unpaid") : "open",
+      approval_status: s.approval_status, settlement_model: s.settlement_model, tour_id: s.tour_id,
       driver_id: s.driver_id, driver_name: s.driver_name, unit_id: unitId, unit_number: unitNumber, trailer_id: trailerId, trailer_number: trailerNumber, trip_started_at: s.trip_started_at, trip_closed_at: s.trip_closed_at,
       period_start: s.period_start, period_end: s.period_end, is_open: !closedAlready, locked_at: s.locked_at, paid_at: s.paid_at,
       // NEW-10 — the ORIGINAL load that opened this (re)settlement, so the tours register can show its
@@ -743,6 +748,19 @@ export async function registerTourReadoutRoutes(app: FastifyInstance) {
       try {
         const stamped = await stampTripClosedForBookendedSettlement(client as never, { settlementId: p.data.id, operatingCompanyId: b.data.operating_company_id, actorUserId: user.uuid });
         if (!stamped.stamped && stamped.reason !== "already_closed") { await client.query("ROLLBACK"); return reply.code(422).send({ error: `trip_close_${stamped.reason}` }); }
+        // BOARD-35: assign the settlement number atomically with trip_closed_at so it is durable
+        // even if the GL-posting step (postLoadBookendedSettlementGlAfterClose) fails later.
+        // closeSettlementPayRun idempotently skips its own assignment when source_document_ref is set.
+        if (stamped.stamped && !before.tour.settlement_number) {
+          const nextRef = await allocateNextSettlementSourceDocumentRef(client as unknown as Queryable, b.data.operating_company_id);
+          const refResult = await setSettlementSourceDocumentRef(client as unknown as Queryable, {
+            operatingCompanyId: b.data.operating_company_id,
+            settlementId: p.data.id,
+            sourceDocumentRef: nextRef,
+            actorUserId: user.uuid,
+          });
+          if (!refResult) throw new Error(`settlement_number_assign_failed: could not stamp ${nextRef} on ${p.data.id}`);
+        }
         const company = await closeCompanySettlementAlongsideDriverSettlement(client as never, { operatingCompanyId: b.data.operating_company_id, driverSettlementId: p.data.id, actorUserId: user.uuid });
         await appendCrudAudit(client as never, user.uuid, "driver_finance.tour.closed_by_office", { operating_company_id: b.data.operating_company_id, settlement_id: p.data.id, soft_warnings_confirmed: before.soft_warnings, company_settlement_id: company.company_settlement_id, legs: before.legs.map((l) => l.load_number) });
         await client.query("COMMIT");
