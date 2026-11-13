@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-13T23:37Z) — Cursor board6 #29349
+| Board | Status | Evidence |
+|---|---|---|
+| 6 CF Actual vs Projected | READY | #29349 `35c88fb5f8e` Income/Expense accuracy KPIs → Banking range drills + ret; verify 20166 (Projected amount drills #29346 prior) |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:31Z) — Cursor board6 #29346
 | Board | Status | Evidence |
 |---|---|---|
