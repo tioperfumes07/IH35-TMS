@@ -306,3 +306,24 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 **Row 230** (443.304 bank match combinations) · #27494 · 3455886689f · DONE-LIVE (already on main from 2026-10-24; difference_as_loan engine, multi-document match, Faro purchase dedup)
 
 **Row 231** (443.305 loan match) · #27494+#27587 · 3455886689f+f46b22f1b3c · DONE-LIVE (financial engine on main via PR #27494 Row 230; SelectCombobox picker on main via PR #27587)
+## 2026-11-13 ~18:10Z — CC-1 ROUND 8.24 — DONE-ENGINE: Row 108 (PM reading) + Row 6 (driver photo) — ALREADY BUILT on main
+
+**Row 108 — PM Reading: DONE-ENGINE (pre-existing on main)**
+- ENGINE: `apps/backend/src/maintenance/fleet-health-pm.ts` — returns `pm_status_reason` per unit; computes `last_service_odometer`, `next_due_odometer`, `miles_left`, `state`
+- FRONTEND: `apps/frontend/src/pages/maintenance/components/FleetHealthLine.tsx` — `statusCell()` function (line 56-73)  
+  - `data-testid="fleet-health-no-last-pm"` → no last-PM odometer (truck reading present, PM record absent)
+  - `odometerUnavailable` → odometer missing entirely  
+  - `"PM reading unavailable"` → no schedule/odometer  
+  - Comment (line ~56): "LEAD 443.281 row 108: say WHAT is missing — a clock with no last-PM odometer vs no odometer"
+- STATUS: DONE-ENGINE — no code change needed; Lead confirmed via fleet-health-pm.ts + FleetHealthLine.tsx statusCell
+
+**Row 6 — Driver photo from uploaded ID: DONE-ENGINE (pre-existing on main)**
+- ENGINE: `apps/backend/src/mdata/driver-aggregate.service.ts` lines 1, 108-114  
+  - Imports `pickDriverIdPhoto` from `./uploaded-photo-pick.js`
+  - When `photo_url` is null and R2 is configured, calls `pickDriverIdPhoto()` on linked image files
+  - Sets `photo_derived_from: { file_id, original_filename }` on the response
+- PICKER: `apps/backend/src/mdata/uploaded-photo-pick.ts`  
+  - Line 2: "Register row 3 — Driver photo from uploaded IDs; unit photos."
+  - `DRIVER_ID_CATEGORIES = new Set(["cdl", "driver_license", "drivers_license", "government_id", "id_card", "driver_photo"])`
+  - `export function pickDriverIdPhoto(files: LinkedImageFile[]): LinkedImageFile | null`
+- STATUS: DONE-ENGINE — no code change needed; Lead confirmed via driver-aggregate.service.ts pickDriverIdPhoto + uploaded-photo-pick.ts

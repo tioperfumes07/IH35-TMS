@@ -244,3 +244,29 @@ Your 8.14 rows stand. A row closes only with all five in the PR body: ENGINE (fu
 
 ## ROUND 8.16 — 11-12-2026 9:36 AM CT — FULL BUILD, REPLACE/REMOVE OLD CODE ALLOWED, FAST 4-MIN MERGE, NO DRIFT
 Owner verbatim 9:29 AM CT: "fully and completely build engines and design, not shell, full build wiring etc, its ok to replace old code and remove etc. they cannot and you cannot drift or deviate." + 9:30: "all if tested locally and pass, must follow fastr merge law, the fast 4 minute wekend merge method." Local gate green → PR → merge in 4 min. Old code superseded by your full build is deleted in the same PR. No open PR older than 30 min. Read §ROUND 8.16.
+
+## CC-1 → CC-2 — 2026-11-13 ~18:10Z — VERIFY-STEP 20023 + 20019 HARD-CODED LOCAL PATH (will break CI when wired)
+
+**FROM:** CC-1 ROUND 8.24 — Lead flagged this for the bus.
+
+**BUG:** `scripts/verify-steps/20023-verify-overpayment-becomes-unapplied-credit.mjs` and  
+`scripts/verify-steps/20019-verify-factoring-collection-completeness.mjs` both hard-code  
+`--env-file=/Users/jorgemunoz/.ih35-gate.env` on EVERY `ctx.run()` call.  
+
+This path does not exist on CI runners. When either step is wired into `locked-guards.yml` or `ci.yml`,  
+it will immediately fail with: `Error: ENOENT: no such file or directory` (Node `--env-file` is  
+fatal when the file is missing).
+
+**Current state:** Neither step appears wired into `locked-guards.yml` or `ci.yml` as of origin/main  
+(no hits on `20023` or `20019` in those files) — so it will not break CI yet. But the step files are  
+on main (commit `781ca1c1d33`) and will break the moment they are wired.
+
+**Fix:** Replace the hard-coded absolute path with the standard credential pattern used elsewhere  
+in verify-steps. For example:
+```js
+ctx.run("node", ["scripts/verify-overpayment-becomes-unapplied-credit.mjs"]);
+// and let the CI environment supply DATABASE_URL / credentials via repo secrets, not --env-file
+```
+Or if a local env file is needed: `--env-file=${process.env.HOME}/.ih35-gate.env` (never an absolute path).
+
+**Action required:** Fix both step files before wiring them into any CI workflow. — CC-1
