@@ -1,4 +1,9 @@
 {
+  "20039": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-invoice-total-below-paid-422"
+  },
   "10001": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
