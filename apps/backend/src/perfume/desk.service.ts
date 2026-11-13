@@ -705,7 +705,13 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
   const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null }>>();
+  // Every current line's own text and SKU per item: the search reads them, so "CLUB DE NUIT" (the owner's list)
+  // finds the item another vendor named "CDN" first (owner 2026-11-13: compare my Book 7 + Book 8 offer list).
+  const lineText = new Map<string, Set<string>>();
   for (const p of prices.rows) {
+    const t = lineText.get(p.item_id) ?? new Set<string>();
+    t.add(String(p.description ?? "")); if (p.sku) t.add(p.sku);
+    lineText.set(p.item_id, t);
     const m = byItem.get(p.item_id) ?? new Map();
     m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country });
     byItem.set(p.item_id, m);
@@ -735,7 +741,12 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const hasOffer = prices.rows.some((p) => offerV.some((v) => v.id === p.vendor_id));
   const mineCols: GridCol[] = [];
   if (hasInv) mineCols.push({ key: "my_qty", label: "My stock", group: "Mine", kind: "int" }, { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" });
-  if (hasOffer) mineCols.push({ key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" }, { key: "my_need", label: "Need to buy", group: "Mine", kind: "int" });
+  if (hasOffer) mineCols.push(
+    { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
+    { key: "offer_vs_low", label: "Offer vs lowest", group: "Mine", kind: "money" },
+    { key: "offer_action", label: "My offer: raise / lower", group: "Mine", kind: "text" },
+    { key: "my_need", label: "Need to buy", group: "Mine", kind: "int" },
+  );
   cols.splice(cols.findIndex((c) => c.group === "Mine"), 0, ...mineCols);
   // PURCHASE — one column per supplier: its price.
   // Owner 2026-11-12: "in purchase … I just need their list price and the price after the cushion."
@@ -778,6 +789,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       id: it.id, code: it.internal_code, upc: it.upcs?.[0] ?? null, upc_count: it.upcs?.length ?? 0, brand: it.brand, name: it.name,
       size_ml: it.size_ml == null ? null : Number(it.size_ml), conc: it.conc, gender: it.gender, category: categoryOf(it.gender, it.flags), flags: it.flags.join(" "), display_name: it.display_name,
       upcs: (it.upcs ?? []).join(" "),
+      line_text: [...(lineText.get(it.id) ?? [])].join(" | "),
     };
     const offers = buyV.filter((v) => offersMap.has(v.id)).map((v) => ({
       vendorId: v.id, listedCents: offersMap.get(v.id)!.price,
@@ -829,6 +841,15 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     }
     row.low_sell = low;
     row.low_sell_vendor = lowAt;
+    // My offer price against the lowest competitor (owner 2026-11-13: "my wholesale prices … compare in wholesale and
+    // with other vendors"). Positive gap = my offer is under the cheapest competitor.
+    if (myOffer != null && low != null) {
+      row.offer_vs_low = low - myOffer;
+      row.offer_action = wholesaleAction(low - myOffer);
+    } else {
+      row.offer_vs_low = null;
+      row.offer_action = myOffer != null ? "No competitor carries it" : null;
+    }
     const cost = (row.landed_likely as number | null) ?? null;
     if (cost != null) {
       row.target_price_margin = close(priceFromCost(cost, target, "margin"));
@@ -890,20 +911,34 @@ export function filterMine(rows: GridRow[], mine: MineFilter | undefined): GridR
   return rows;
 }
 
-export function filterView(rows: GridRow[], view: GridView): GridRow[] {
+/** Each tab shows only the items it can price. When the owner narrows to HIS OWN list (mine = offer / inventory /
+ *  need), every item on that list stays: a blank supplier or competitor cell then says "nobody carries it", which is
+ *  the answer he is looking for (owner 2026-11-13: 463 offer items, only 95 shown because 368 had no competitor). */
+export function filterView(rows: GridRow[], view: GridView, mine?: MineFilter): GridRow[] {
+  if (mine) return rows;
   if (view === "buy") return rows.filter((r) => (r.n_vendors as number) > 0);
   if (view === "trade") return rows.filter((r) => buyPriced(r));
-  if (view === "wholesale") return rows.filter((r) => r.landed_likely != null && r.low_sell != null);
+  if (view === "wholesale") return rows.filter((r) => r.low_sell != null && (r.landed_likely != null || r.my_offer_price != null));
   if (view === "comp") return rows.filter((r) => r.comp_cost != null && r.low_sell != null);
   return rows;
 }
 
+/** Every typed word must appear, in any order, in the item's code, UPCs, brand, name, or the text of any current
+ *  vendor line for it (so the owner's own wording finds the item). A 6+ digit query also matches a UPC. */
 export function searchRows(rows: GridRow[], q: string): GridRow[] {
-  const s = q.trim().toUpperCase();
+  const s = stripAccentsLite(q).trim().toUpperCase();
   if (!s) return rows;
   const digits = s.replace(/\D/g, "").replace(/^0+/, "");
-  return rows.filter((r) => `${r.code ?? ""} ${r.upcs ?? ""} ${r.sku ?? ""} ${r.brand ?? ""} ${r.name ?? ""} ${r.display_name ?? ""}`.toUpperCase().includes(s)
-    || (digits.length >= 6 && String(r.upcs ?? "").includes(digits)));
+  const words = s.replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
+  return rows.filter((r) => {
+    if (digits.length >= 6 && /^[\d\s-]+$/.test(s) && String(r.upcs ?? "").includes(digits)) return true;
+    const hay = stripAccentsLite(`${r.code ?? ""} ${r.upcs ?? ""} ${r.sku ?? ""} ${r.brand ?? ""} ${r.name ?? ""} ${r.display_name ?? ""} ${r.line_text ?? ""}`).toUpperCase();
+    return words.length > 0 && words.every((w) => hay.includes(w));
+  });
+}
+
+function stripAccentsLite(v: string): string {
+  return v.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 export type FacetPicks = { category: string[]; gender: string[]; brand: string[]; size?: string[]; vendor?: string[] };

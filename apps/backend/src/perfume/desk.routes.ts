@@ -265,7 +265,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     // My lists narrow the item set BEFORE the view rule, so "Need to buy" items show in Purchase even with no cost yet.
-    const viewRows = searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView), q.data.q);
+    const viewRows = searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView, q.data.mine), q.data.q);
     const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
     let rows = filterFacets(viewRows, picks);
     if (q.data.sort) {
@@ -278,7 +278,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
-    let rows = filterFacets(searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView), q.data.q),
+    let rows = filterFacets(searchRows(filterView(filterMine(g.rows, q.data.mine), q.data.view as GridView, q.data.mine), q.data.q),
       { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     if (q.data.sort && g.cols.some((c) => c.key === q.data.sort)) rows = sortRows(rows, q.data.sort, q.data.dir);
     const want = q.data.cols ? q.data.cols.split(",") : null;

@@ -109,7 +109,7 @@ function defaultVisible(view: PerfumeGridView, key: string): boolean {
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   if (view === "comp") return item || /^c:.*:(price|earn|margin)$/.test(key) || ["comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
-  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "target_price_margin", "low_sell", "target_action"].includes(key);
+  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "offer_action", "target_price_margin", "low_sell", "target_action"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
 
