@@ -15510,6 +15510,11 @@
     "claimed_at": "2026-11-04",
     "purpose": "verify-void-stray-practical-ui-wired"
   },
+  "19919": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-11-13",
+    "purpose": "verify-book-equals-faro — ENG-50: every active factoring_purchase_line must have a payment_application on its linked invoice (Faro subledger parity)"
+  },
   "19921": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
@@ -17739,5 +17744,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1106
+  "total_claimed": 1107
 }
