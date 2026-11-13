@@ -1,13 +1,18 @@
 // ARCHIVE (A23-6): orphan exceptions surface — linked from HoursOfServicePage. Sunset 2026-09-01. Do not extend.
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 
 export default function HosExceptionsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   return (
     <main className="space-y-3">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: not an extension of A23-6's exception-logging feature --
           just the same navigational fix every leaf page gets in this audit. */}
-      <PageHeader title="HOS Exceptions" breadcrumb={[{ label: "Safety" }, { label: "HOS Exceptions" }]} backHref="/safety" />
+      <PageHeader title="HOS Exceptions" breadcrumb={[{ label: "Safety" }, { label: "HOS Exceptions" }]} backHref={safetyBackHref} />
       <p className="text-xs text-gray-500">
         Exception logging remains on this route. Fleet compliance clocks and near-violation monitoring live on the canonical
         dashboard.

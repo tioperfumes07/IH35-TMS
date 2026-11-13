@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../../api/client";
@@ -28,6 +30,10 @@ async function fetchSessions(operatingCompanyId: string, page: number) {
 }
 
 export function PhotoComparisonPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   // @matrix-built safety:photo_comparison.list:{connectivity,qbo_chrome}
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -74,7 +80,7 @@ export function PhotoComparisonPage() {
 
   return (
     <div className="space-y-3 p-4">
-      <PageHeader backHref="/safety" breadcrumb={["Safety", "Photo Comparison"]} title="Photo Comparison" subtitle="AI pre/post-trip damage detection" />
+      <PageHeader backHref={safetyBackHref} breadcrumb={["Safety", "Photo Comparison"]} title="Photo Comparison" subtitle="AI pre/post-trip damage detection" />
 
       {!companyId ? <p className="text-xs text-red-600">Select operating company.</p> : null}
 

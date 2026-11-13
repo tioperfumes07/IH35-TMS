@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,6 +38,9 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
   const pageSize = 50;
   const [page, setPage] = useState(1);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const deepLinkTrainingId = searchParams.get("training_id")?.trim() || "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() || "";
   const queryClient = useQueryClient();
@@ -184,7 +188,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
         title="Training Records"
         subtitle="Per-driver completion history with expiry tracking."
         breadcrumb={[{ label: "Safety" }, { label: "Training Records" }]}
-        backHref="/safety"
+        backHref={safetyBackHref}
         actions={
           <Button size="sm" data-testid="training-records-create-btn" onClick={() => setCreateOpen(true)}>
             + Create Record

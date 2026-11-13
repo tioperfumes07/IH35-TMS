@@ -1,9 +1,10 @@
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../../auth/useAuth";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { AnomalyDashboard } from "./AnomalyDashboard";
 import { RuleEditor } from "./RuleEditor";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 
 type TabId = "alerts" | "rules";
 
@@ -17,7 +18,14 @@ export function AnomalyAlertsPage() {
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
   const isOwner = auth.user?.role === "Owner";
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const anomalyBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/safety/home",
+  });
   const tab = parseTab(searchParams.get("tab"), isOwner);
 
   const setTab = (next: TabId) => {
@@ -35,7 +43,7 @@ export function AnomalyAlertsPage() {
   return (
     <div className="space-y-3 p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="Anomaly Alerts" breadcrumb={[{ label: "Safety" }, { label: "Anomaly Alerts" }]} backHref="/safety" />
+      <PageHeader title="Anomaly Alerts" breadcrumb={[{ label: "Safety" }, { label: "Anomaly Alerts" }]} backHref={anomalyBackHref} />
       <div className="flex items-center gap-2 border-b border-[#E5E7EB] pb-2">
         <button
           type="button"

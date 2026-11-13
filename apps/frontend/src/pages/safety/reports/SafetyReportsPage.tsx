@@ -22,7 +22,7 @@
  * Those claims are stated as "not yet available" rather than faked.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
@@ -38,6 +38,7 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { formatDateUS } from "../../../lib/formatDate";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 
 /** The rollup route accepts any report_id; this one names the activity rollup it actually returns. */
 const ACTIVITY_ROLLUP_ID = "safety-activity-rollup";
@@ -66,6 +67,10 @@ function MetricCard({ label, value, detail, to }: { label: string; value: string
 
 export default function SafetyReportsPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const companyId = selectedCompanyId ?? "";
   const enabled = Boolean(companyId);
   const [csaHistoryPage, setCsaHistoryPage] = useState(1);
@@ -183,7 +188,7 @@ export default function SafetyReportsPage() {
         title="Safety Reports"
         subtitle="CSA inspection-point rollups, roadside pass rate, out-of-service counts, and recorded safety-event activity for the selected entity."
         breadcrumb={[{ label: "Safety" }, { label: "Reports" }]}
-        backHref="/safety"
+        backHref={safetyBackHref}
       />
 
       {!enabled ? (
