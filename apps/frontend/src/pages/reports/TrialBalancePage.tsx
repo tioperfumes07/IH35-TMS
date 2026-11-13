@@ -70,6 +70,31 @@ function currentQuarterRange() {
 
 type SortKey = keyof AccountingTrialBalanceRow;
 
+type TrialBalanceUrlState = { start: string; end: string; basis: AccountingBasis };
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** URL → applied filters. Unknown or malformed values fall back to the defaults, never to a half-read state. */
+export function readTrialBalanceUrlState(params: URLSearchParams, defaults: TrialBalanceUrlState): TrialBalanceUrlState {
+  const basis = params.get("basis");
+  const from = params.get("from");
+  const to = params.get("to");
+  const validRange = from && to && ISO_DAY.test(from) && ISO_DAY.test(to) && from <= to;
+  return {
+    start: validRange ? from : defaults.start,
+    end: validRange ? to : defaults.end,
+    basis: basis === "cash" || basis === "accrual" ? basis : defaults.basis,
+  };
+}
+
+/** applied filters → URL (keeps every other param, e.g. ret / preset). */
+export function writeTrialBalanceUrlState(params: URLSearchParams, state: TrialBalanceUrlState): URLSearchParams {
+  const next = new URLSearchParams(params);
+  next.set("basis", state.basis);
+  next.set("from", state.start);
+  next.set("to", state.end);
+  return next;
+}
+
 export function TrialBalancePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -77,8 +102,14 @@ export function TrialBalancePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
-  const [applied, setApplied] = useState(emptyFilters);
-  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  // BOARD 26 (LEAD ROUND 8.25) — basis and period live in the URL: Reports Home links ?basis=cash, a Back / ret link
+  // restores the exact view, and Apply writes them back. Fail-old (live): ?basis=cash opened an Accrual report.
+  const [applied, setApplied] = useState(() => readTrialBalanceUrlState(searchParams, emptyFilters));
+  const applyAndSync = (next: typeof emptyFilters) => {
+    setApplied(next);
+    setSearchParams(writeTrialBalanceUrlState(searchParams, next), { replace: true });
+  };
+  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: applyAndSync });
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("account_code");
