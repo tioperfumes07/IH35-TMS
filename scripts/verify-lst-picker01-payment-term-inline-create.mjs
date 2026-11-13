@@ -43,11 +43,15 @@ const SITES = [
 
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const ROUTES = "apps/backend/src/catalogs/payment-terms.routes.ts";
-// ROUND 8.20 board9 — Customers.tsx hosts CustomerCreateModal → NewCustomerDrawerForm; fail-closed
-// payment-term truth lives on the drawer, not the board shell.
-const CUSTOMERS_BOARD = "apps/frontend/src/pages/Customers.tsx";
+// #29140 (ROUND 8.20 boards 9+10) moved the Customers page create into CustomerCreateModal, which renders the
+// canonical NewCustomerDrawerForm. The form carries the payment-term fail-closed rule; the page and the modal
+// must keep delegating to it (checked below as CREATE_DELEGATES).
 const CREATE_CONSUMERS = [
   "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
+];
+const CREATE_DELEGATES = [
+  ["apps/frontend/src/pages/Customers.tsx", /<CustomerCreateModal\b/],
+  ["apps/frontend/src/components/customers/CustomerCreateModal.tsx", /<NewCustomerDrawerForm\b/],
 ];
 
 function readRel(root, rel) {
@@ -146,13 +150,6 @@ export function collectProblems(root = ROOT, registryOverride = null) {
     }
   }
 
-  const customersBoard = readRel(root, CUSTOMERS_BOARD);
-  if (!customersBoard) {
-    problems.push(`missing ${CUSTOMERS_BOARD}`);
-  } else if (!/<CustomerCreateModal[\s\S]{0,400}operatingCompanyId=/.test(customersBoard)) {
-    problems.push(`${CUSTOMERS_BOARD}: must host CustomerCreateModal (create fail-closed lives in NewCustomerDrawerForm)`);
-  }
-
   for (const rel of CREATE_CONSUMERS) {
     const src = readRel(root, rel);
     if (!src) {
@@ -165,6 +162,12 @@ export function collectProblems(root = ROOT, registryOverride = null) {
     if (!/type="submit" disabled=\{[^}]*paymentTermsQuery\.isError[^}]*\}/.test(src)) {
       problems.push(`${rel}: customer create must fail closed while payment terms are unavailable`);
     }
+  }
+
+  for (const [rel, re] of CREATE_DELEGATES) {
+    const src = readRel(root, rel);
+    if (!src) problems.push(`missing ${rel}`);
+    else if (!re.test(src)) problems.push(`${rel}: customer create no longer delegates to the canonical NewCustomerDrawerForm (payment-term fail-closed lives there)`);
   }
 
   problems.push(...collectRegistryProblems(registry));
@@ -223,7 +226,7 @@ if (process.argv.includes("--selftest")) {
 
   for (const rel of CREATE_CONSUMERS) {
     const mutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-create-failure-"));
-    for (const site of [...SITES.map((entry) => entry.rel), CUSTOMERS_BOARD, ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
+    for (const site of [...SITES.map((entry) => entry.rel), ...CREATE_CONSUMERS, ...CREATE_DELEGATES.map(([r]) => r), REGISTRY, ROUTES]) {
       const target = path.join(mutationRoot, site);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       const source = readRel(ROOT, site);
@@ -236,19 +239,18 @@ if (process.argv.includes("--selftest")) {
     }
   }
 
-  const boardMutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-board-host-"));
-  for (const site of [...SITES.map((entry) => entry.rel), CUSTOMERS_BOARD, ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
-    const target = path.join(boardMutationRoot, site);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    const source = readRel(ROOT, site);
-    fs.writeFileSync(
-      target,
-      site === CUSTOMERS_BOARD ? source.replace(/<CustomerCreateModal[\s\S]*?\/>/, "<LegacyCreate remounted />") : source,
-    );
-  }
-  if (!collectProblems(boardMutationRoot).some((p) => p.includes("must host CustomerCreateModal"))) {
-    console.error(`${LABEL} SELFTEST FAIL: Customers board host-modal mutation escaped`);
-    process.exit(1);
+  for (const [rel, re] of CREATE_DELEGATES) {
+    const delegateRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-delegate-"));
+    for (const site of [...SITES.map((entry) => entry.rel), ...CREATE_CONSUMERS, ...CREATE_DELEGATES.map(([r]) => r), REGISTRY, ROUTES]) {
+      const target = path.join(delegateRoot, site);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      const source = readRel(ROOT, site);
+      fs.writeFileSync(target, site === rel ? source.replace(new RegExp(re.source, "g"), "<LegacyCreate") : source);
+    }
+    if (!collectProblems(delegateRoot).some((p) => p.startsWith(`${rel}:`) && p.includes("delegates"))) {
+      console.error(`${LABEL} SELFTEST FAIL: ${rel} delegation-removal mutation escaped`);
+      process.exit(1);
+    }
   }
 
   console.log(`${LABEL} SELFTEST OK`);
