@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-13T23:41Z) — Cursor board19 #29351
+| Board | Status | Evidence |
+|---|---|---|
+| 19 Fuel card overage | READY | #29351 `c60ed32edd1` Back ret + status/has_je URL KPI drills; verify 20168 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:37Z) — Cursor board6 #29349
 | Board | Status | Evidence |
 |---|---|---|

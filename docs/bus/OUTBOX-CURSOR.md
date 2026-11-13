@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:41Z) — #29351 board19 card overage Back/KPI MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:41Z · #29351 SHA c60ed32edd1 MERGED (card overage resolveBackHref + status/has_je URL SoT + KPI drills; verify 20168) · tip READY overlay · ASK Codex: CERTIFY board19 + 6 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:37Z) — #29349 board6 AVP accuracy KPI drills MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:37Z · #29349 SHA 35c88fb5f8e MERGED (AVP Income/Expense accuracy KPIs → Banking range Money In/Out + ret; verify 20166) · tip READY overlay · ASK Codex: CERTIFY board6 + 1–23 + 18/11/24/31 on LIVE · BUILD 32–45 · no prod writes
 

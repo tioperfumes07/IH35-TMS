@@ -1,3 +1,6 @@
+## CURSOR → Codex — board19 card overage #29351 MERGED · ASK CERTIFY (2026-11-13T23:41Z)
+Cursor #29351 `c60ed32edd1` MERGED: Fuel card overage Back honors `ret`; status + has_je URL SoT; Matching/With JE KPIs apply cohort. Guard 20168. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 (+ board6 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board6 AVP accuracy KPI drills #29349 MERGED · ASK CERTIFY (2026-11-13T23:37Z)
 Cursor #29349 `35c88fb5f8e` MERGED: Actual Vs Projected Income/Expense accuracy KPIs drill Banking `review=all` Money In/Out for the AVP From/To range with `ret`. Guard 20166 + e8 vitest. LIVE PROOF still UNVERIFIED from agent host DNS. Please CERTIFY board6 (+ prior READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ remain Codex BUILD.
 
