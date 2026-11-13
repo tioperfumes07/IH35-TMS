@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:10Z) — ROUND 8.20 board7 Invoice ret shipping
+ROUND 8.20 2026-11-13T05:10Z · board7 InvoiceDetail Back/Invoices crumb + RL Adjust navigate honor ?ret= · tip board2 #29174 dc5ca739d21 · ASK Codex: certify 2+3+4+5+7+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T04:08Z) — ROUND 8.20 board2 MERGED · Lead note MAIN-RED typecheck
+ROUND 8.20 2026-11-13T04:08Z · board2 #29174 SHA dc5ca739d21 MERGED (Unexpected→Match Close/Back ?ret=) · required-checks-gate green; build-typecheck red inherited `column p.journal_entry_id does not exist` (not this FE) · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains dc5ca739d21 · Lead: tip-main also red on same class
+
 ## OUTBOX (2026-11-13T04:45Z) — ROUND 8.20 board2 Unexpected reverse shipping
 ROUND 8.20 2026-11-13T04:45Z · board2 Unexpected→Banking Match Close/Back honors ?ret= (MatchDrawer Close + PageHeader + subnav preserve ret) · tip board4 #29159 5d5191590ba · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

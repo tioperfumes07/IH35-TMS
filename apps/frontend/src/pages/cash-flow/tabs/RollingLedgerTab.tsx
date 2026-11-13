@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
@@ -611,8 +612,13 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
   const [note, setNote] = useState("");
   const [hide, setHide] = useState(false);
   const [hiddenReason, setHiddenReason] = useState("");
+  const location = useLocation();
   const ledgerKind = ledgerEntityKind(row.document_kind, row);
   const route = ledgerKind ? resolveEntityRoute(ledgerKind, row.document_id) : null;
+  // ROUND 8.20 board7 — Adjust "Go to document" must carry ?ret= so Invoice Back restores Rolling Ledger.
+  const routeWithRet = route
+    ? withReturnContext(route, currentOriginHref(location.pathname, location.search))
+    : null;
 
   const canSave = hide ? hiddenReason.trim().length > 0 && reasonCode : reasonCode && projectedDate;
 
@@ -650,12 +656,12 @@ function AdjustPopover({ row, reasons, applies, onClose, onSubmit, pending }: Ad
             className="h-[26px] w-full rounded-sm border border-[#E5E7EB] px-2 text-xs"
           />
         </label>
-        {route && (
+        {routeWithRet && (
           <div className="col-span-2">
             <span className="mb-1 block text-xs font-medium uppercase tracking-wide text-[#6B7280]">Or record it</span>
             <button
               type="button"
-              onClick={() => navigate(route)}
+              onClick={() => navigate(routeWithRet)}
               className="rounded-sm border border-[#E5E7EB] bg-white px-2 py-1 text-xs text-[#4B5563] hover:bg-[#F7F8FA]"
             >
               Go to {row.document_label} to record the payment →

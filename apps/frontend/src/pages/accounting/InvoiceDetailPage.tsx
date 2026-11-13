@@ -5,7 +5,8 @@ import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { RETURN_PARAM, resolveBackHref } from "../../lib/returnContext";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { listCreditMemos } from "../../api/credit-memos";
@@ -61,11 +62,22 @@ function factoringPillClass(status: string | null | undefined) {
 export function InvoiceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   // BANK-SORT-ROLLOUT-ACCT: invoice line grid sort persists in URL (?sort=&dir=).
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
+  // ROUND 8.20 board7 — Cash Flow Rolling Ledger → Invoice carries ?ret=; Back + Invoices crumb must honor it.
+  const invoiceListHref = "/accounting/invoices";
+  const invoiceReturnHref = searchParams.get(RETURN_PARAM)
+    ? resolveBackHref({
+        searchParams,
+        pathname: location.pathname,
+        fallback: invoiceListHref,
+      })
+    : invoiceListHref;
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false);
   // M-1: inline QBO money entry for invoice lines (replaces window.prompt). unit_amount stays CENTS.
   const [newLineDesc, setNewLineDesc] = useState("");
@@ -352,10 +364,14 @@ export function InvoiceDetailPage() {
       ) : null}
       <PageHeader
         title={entityLabel(invoice.display_id, invoice.id, "Invoice")}
-        backHref="/accounting/invoices"
+        backHref={invoiceReturnHref}
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
-          { label: "Invoices", href: "/accounting/invoices" },
+          // When ret is present, do not hard-link to the invoices list (that was the board7 FAIL path).
+          {
+            label: "Invoices",
+            href: searchParams.get(RETURN_PARAM) ? undefined : invoiceListHref,
+          },
           { label: entityLabel(invoice.display_id, invoice.id, "Invoice") },
         ]}
         subtitle={entityLabel(invoice.customer_name, invoice.customer_id, "Customer")}
