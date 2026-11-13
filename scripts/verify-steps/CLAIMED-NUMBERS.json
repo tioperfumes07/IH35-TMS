@@ -1,9 +1,4 @@
 {
-  "20039": {
-    "claimed_at": "2026-11-13",
-    "claimed_by": "cc-2",
-    "purpose": "verify-invoice-total-below-paid-422"
-  },
   "10001": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
@@ -10942,6 +10937,11 @@
     "claimed_by": "claude",
     "purpose": "verify-relay-service-codes-post (ACCT-F11127)"
   },
+  "20039": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-invoice-total-below-paid-422"
+  },
   "20041": {
     "claimed_at": "2026-11-10",
     "claimed_by": "claude",
@@ -11026,6 +11026,11 @@
     "claimed": "2026-11-13",
     "purpose": "ENG-44 combined four-rules guard",
     "seat": "CC-1"
+  },
+  "20141": {
+    "claimed": "2026-11-13",
+    "purpose": "ROW 97 Banking Home drift board one row per account",
+    "seat": "LEAD"
   },
   "20145": {
     "claimed": "2026-11-13",
