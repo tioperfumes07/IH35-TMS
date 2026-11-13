@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r84-factoring-payout-reconciliation",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 84 — factoring payout reconciliation. Guard 19963 enforces 0 factoring purchases without journal entries and 0 unposted purchases.",
+  "branch": "cc-2/eng-r84-factoring-payout-reconciliation",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-factoring-payout-reconciliation.mjs",
+    "scripts/verify-steps/19963-verify-factoring-payout-reconciliation.mjs",
+    ".block-ready/cc-2-r84-factoring-payout-reconciliation.json"
+  ],
+  "acceptance": [
+    "verify-factoring-payout-reconciliation selftest PASS 2/2",
+    "total_purchases=25 no_je=0/0 unposted=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
