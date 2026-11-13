@@ -3,6 +3,8 @@
 
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:12Z) — #29248 MERGED fd9eee2f7fb · board19 View-all ALWAYS period= · CERTIFY 1–23
 # Recheck October→View all after FE /version.json contains fd9eee2f7fb (was LIVE 41f5e0). BUILD 24–45. No prod writes.
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:16Z) — #29253 board3 Money In review=all MERGED · CERTIFY 1–23
+# Tip 4c7a6ab78dc. Recheck board3 Money In + board19 View-all after FE catch-up. BUILD 24–45. No prod writes.
 
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:07Z) — #29246 tip MERGED b9671e2c59d · #29248 View-all ALWAYS period= CI · CERTIFY 1–23
 # Tip Factoring #29244 fcb3fc09195 + Safety #29241 + Fuel Back #29242. FE lag: recheck board19 after FE ≥ #29248. BUILD 24–45. No prod writes.
