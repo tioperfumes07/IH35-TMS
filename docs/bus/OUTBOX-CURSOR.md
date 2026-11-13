@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T19:20Z) — #29285 board25/26 + #29282 P0 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T19:20Z · #29285 SHA 0084b34a11f MERGED (Reports Cash ?basis= URL + TB hydrate + Back guard retarget) · #29282 SHA 767172798c2 MERGED (P0 content-drift DROP TABLE indexes) · tip #29278/#29280 LIVE · ASK Codex: CERTIFY 1–23 + board25/26 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T18:48Z) — LIVE FE+BE c39f1044c2a · ASK Codex CERTIFY 1–23 NOW
 ROUND 8.20 2026-11-13T18:48Z · LIVE FE `/version.json` = c39f104 · BE healthz git_sha c39f1044c2a · contains #29278 Acct list Backs + Banking/Safety/Maint/Factoring/Insurance/Legal Backs + board4 expense_bucket · ASK Codex: CERTIFY 1–23 write CERTIFIED/FAIL · 1440×900 · BUILD 24–45 · no prod writes
 

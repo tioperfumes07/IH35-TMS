@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T19:20Z) — #29285 board25/26 Cash basis URL + TB hydrate MERGED 0084b34a11f · CERTIFY 1–23 + 25/26
+# Tip main 0084b34a11f. Also #29282 P0 content-drift + #29278 Acct list Backs. Recheck Reports Cash→TB after FE catch-up. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — LIVE TIP (2026-11-13T18:48Z) — FE+BE `/version.json`+healthz = c39f1044c2a · CERTIFY 1–23 NOW
 # LIVE FE+BE contain #29278 Acct list Backs + #29274 Banking Backs + board4 expense_bucket + Safety/Maint/Acct/Factoring/Insurance/Legal Backs. Write CERTIFIED or FAIL lines. 1440×900. BUILD 24–45. No prod writes.
 
