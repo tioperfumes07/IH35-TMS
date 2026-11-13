@@ -2910,30 +2910,6 @@ function acceptedAcctF11152BusFilesAmbient(name, code, changed) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-final-load-close-posts fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod debt: settlements P-0125/P-0128/P-0130 (loads 13711/13727/13729) stuck open since
-// 2026-11-09 — postFinalLoadSettlementsGl never ran or failed. Same finding on origin/main before this branch.
-// This batch82 diff does NOT touch settlement closing, trip-close, or posting paths.
-// Filed CLOSE-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real settlement-close/posting writers.
-function acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-final-load-close-posts") return false;
-  if (!changed) return false;
-  const CLOSE_WRITERS = [
-    "apps/backend/src/driver-finance/settlement-creator.service.ts",
-    "apps/backend/src/driver-finance/settlement-pay-line.service.ts",
-    "apps/backend/src/driver-finance/settlement-close.service.ts",
-    "apps/backend/src/accounting/from-load/",
-    "apps/backend/src/dispatch/book-load.service.ts",
-    "apps/backend/src/dispatch/trip-close.service.ts",
-  ];
-  if (changed.some((f) => CLOSE_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/") && !f.includes("test"))) return false;
-  const ALLOWED_ACCOUNTING = new Set(["apps/backend/src/accounting/has-transactions-predicate.ts"]);
-  if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
-  return true;
-}
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
@@ -4473,15 +4449,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `no new violations introduced; R8.20 CC-3 owner standing order).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ENG-53 booked-miles ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-final-load-close-posts pre-existing prod debt ` +
-            `(settlements P-0125/P-0128/P-0130 loads 13711/13727/13729 stuck open since 2026-11-09 on origin/main; ` +
-            `diff has zero settlement-close/trip-close/posting writers; cite CLOSE-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 final-load-close-posts ambient pre-existing debt`);
         continue;
       }
       failStep(name);

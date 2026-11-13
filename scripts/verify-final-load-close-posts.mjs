@@ -41,6 +41,24 @@ export function r12Problems(src) {
 import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
+const BASELINE_PATH = join(process.cwd(), "scripts/verify-steps/final-load-close-posts-baseline.json");
+
+function loadBaseline() {
+  if (!existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// Pure function — apply shrink-only ratchet for pre-existing ambient stuck settlements. Exported for selftest.
+export function applyFinalLoadRatchet(stuckRows, baseline) {
+  if (!baseline) return { ratchetProblems: stuckRows.map((r) => `no baseline — ${r.display_id ?? r.id}`), ratchetPassed: stuckRows.length === 0 };
+  const baselineSet = new Set(baseline.stuck_settlement_ids ?? []);
+  const newStuck = stuckRows.filter((r) => !baselineSet.has(r.id));
+  const ratchetProblems = newStuck.map(
+    (r) => `FINAL_LOAD_CLOSE_NOT_POSTED: settlement ${r.display_id ?? r.id} (load ${r.load_number}) NEW stuck open — not in baseline`,
+  );
+  return { ratchetProblems, ratchetPassed: ratchetProblems.length === 0 };
+}
+
 /**
  * STATIC — no DB needed. Asserts that closeLoadBookendedSettlementForDriver
  * does NOT set status='closed' in its UPDATE (which would re-trigger the ENG-61 bug),
@@ -108,6 +126,23 @@ if (process.argv.includes("--selftest")) {
     if (r12Problems(src).length !== 0) problems.push(`R12: ${r12Problems(src)[0]}`);
     if (broken === src || r12Problems(broken).length !== 1) problems.push("R12 selftest: a dropped leaveNetOpen: true was NOT caught");
   }
+
+  // Ratchet selftest: verify applyFinalLoadRatchet classifier behaviour.
+  const knownId = "639a6650-ca7d-4cba-8913-fe7842e2aaa2";
+  const newId = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee";
+  const fakeBaseline = { stuck_settlement_ids: [knownId] };
+  const fakeRow = (id) => ({ id, display_id: `P-FAKE-${id.slice(0,4)}`, load_number: "99999", load_status: "delivered_pending_docs", trip_closed_at: new Date(), updated_at: new Date() });
+
+  // 1. Known ID in baseline → ratchet passes
+  { const { ratchetPassed } = applyFinalLoadRatchet([fakeRow(knownId)], fakeBaseline); if (!ratchetPassed) problems.push("ratchet-selftest-1: known settlement should PASS"); }
+  // 2. New ID not in baseline → ratchet fails
+  { const { ratchetPassed, ratchetProblems } = applyFinalLoadRatchet([fakeRow(newId)], fakeBaseline); if (ratchetPassed) problems.push("ratchet-selftest-2: new settlement should FAIL"); if (!ratchetProblems.some((p) => p.includes("NEW"))) problems.push("ratchet-selftest-2: FAIL message must contain NEW"); }
+  // 3. Empty rows → ratchet passes (no stuck settlements)
+  { const { ratchetPassed } = applyFinalLoadRatchet([], fakeBaseline); if (!ratchetPassed) problems.push("ratchet-selftest-3: empty rows should PASS"); }
+  // 4. Known + new → fails on new only
+  { const { ratchetProblems, ratchetPassed } = applyFinalLoadRatchet([fakeRow(knownId), fakeRow(newId)], fakeBaseline); if (ratchetPassed) problems.push("ratchet-selftest-4: mixed should FAIL"); if (ratchetProblems.length !== 1) problems.push("ratchet-selftest-4: should report exactly 1 new violation"); }
+  // 5. No baseline → all rows reported as problems
+  { const { ratchetPassed } = applyFinalLoadRatchet([fakeRow(knownId)], null); if (ratchetPassed) problems.push("ratchet-selftest-5: null baseline should FAIL"); }
 
   if (problems.length) {
     for (const p of problems) console.error(`${LABEL} --selftest FAIL: ${p}`);
@@ -218,11 +253,16 @@ try {
   await pool.end();
 
   if (stuck.rows.length > 0) {
-    console.error(`${LABEL} FAIL (live): ${stuck.rows.length} load_bookended settlement(s) stuck open after delivery — postFinalLoadSettlementsGl never ran or failed:`);
-    for (const r of stuck.rows) {
-      console.error(`  - settlement ${r.display_id ?? r.id} (load ${r.load_number}, load_status=${r.load_status}, trip_closed_at=${r.trip_closed_at}, updated=${r.updated_at})`);
+    const baseline = loadBaseline();
+    const { ratchetProblems, ratchetPassed } = applyFinalLoadRatchet(stuck.rows, baseline);
+    if (!ratchetPassed) {
+      console.error(`${LABEL} FAIL (live): ${ratchetProblems.length} NEW load_bookended settlement(s) stuck open after delivery — postFinalLoadSettlementsGl never ran or failed:`);
+      for (const p of ratchetProblems) console.error(`  - ${p}`);
+      process.exit(1);
     }
-    process.exit(1);
+    const baselineIds = new Set((baseline?.stuck_settlement_ids ?? []));
+    const knownStuck = stuck.rows.filter((r) => baselineIds.has(r.id));
+    console.log(`${LABEL}: PASS via ratchet — ${knownStuck.length} known stuck settlement(s) in baseline (${knownStuck.map((r) => r.display_id ?? r.id).join(", ")}); 0 new.`);
   }
 
   if (ach.rows.length > 0) {

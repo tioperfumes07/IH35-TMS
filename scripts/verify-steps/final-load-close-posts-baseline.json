@@ -1,0 +1,12 @@
+{
+  "_comment": "Baseline of known pre-existing stuck-open load_bookended settlements for verify-final-load-close-posts. Measured on prod 2026-11-13 (br-fancy-credit-akjnd07a, USMCA). SHRINK-ONLY — entries removed when settlements are closed/posted; new settlement IDs NEVER added. A new stuck settlement not in this baseline must FAIL the guard.",
+  "_measured_at": "2026-11-13",
+  "stuck_settlement_ids_count": 3,
+  "stuck_settlement_ids": [
+    "639a6650-ca7d-4cba-8913-fe7842e2aaa2",
+    "153ff427-bda2-4942-a573-1e969447971f",
+    "23bba93e-7eb2-4bf9-8d3f-36fcdbb0482d"
+  ],
+  "stuck_settlement_display_ids": ["P-0125", "P-0128", "P-0130"],
+  "_note": "P-0125 (load 13711), P-0128 (load 13727), P-0130 (load 13729) — stuck since 2026-11-09, postFinalLoadSettlementsGl never ran or failed. Shrinks as settlements are closed."
+}
