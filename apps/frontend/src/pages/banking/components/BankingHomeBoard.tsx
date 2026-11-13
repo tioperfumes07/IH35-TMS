@@ -724,7 +724,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         />
         {/* Row 22 — Relay ingest heartbeat tile: green ≤24h, red >24h or never. */}
         <V3KpiTile
-          label="RELAY FEED"
+          label={"RELAY FEED"}
           value={relayKpiQuery.isError ? "—" : relayLabel}
           sub="last pull · fuel cards"
           tone={relayKpiQuery.isError ? "red" : relayTone}
