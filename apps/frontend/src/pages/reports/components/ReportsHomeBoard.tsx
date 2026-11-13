@@ -9,7 +9,7 @@
  */
 import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
 import { FrequentlyRunTable } from "../../../components/reports/FrequentlyRunTable";
 import {
@@ -155,7 +155,20 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
 // ── Component ─────────────────────────────────────────────────────────────────
 export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
-  const [basis, setBasis] = useState<AccountingBasis>("accrual");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Cash/Accrual lives in URL so TB/BS drills + Back restore the Home selection.
+  const basis: AccountingBasis = (searchParams.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
+  const setBasis = (next: AccountingBasis) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "cash") p.set("basis", "cash");
+        else p.delete("basis");
+        return p;
+      },
+      { replace: true },
+    );
+  };
   const [showAll, setShowAll] = useState(false);
   const [activeCategory, setActiveCategory] = useState<SidebarCategory>("financial");
 

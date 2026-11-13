@@ -21,8 +21,9 @@ function stripComments(text) {
 function auditBackArrowHeader(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/navigate\(\s*inModuleBackHref\(\s*pathname\s*,\s*backTo\s*\)/.test(stripped)) {
-    failures.push(`${BACK_ARROW_HEADER}: must navigate(inModuleBackHref(pathname, backTo)) — in-module parent`);
+  // ROUND 8.20 — resolveBackHref(?ret=, fallback backTo) supersedes bare inModuleBackHref.
+  if (!/resolveBackHref\s*\(/.test(stripped) || !/navigate\(\s*backHref\s*\)/.test(stripped)) {
+    failures.push(`${BACK_ARROW_HEADER}: must navigate(backHref) from resolveBackHref({ fallback: backTo }) — honor ?ret=`);
   }
   if (/hasInAppHistory|navigate\(\s*-1\s*\)/.test(stripped)) {
     failures.push(`${BACK_ARROW_HEADER}: must not use hasInAppHistory or navigate(-1) (ROUND 367.9)`);
@@ -45,8 +46,12 @@ function auditAccountingWrapper(source) {
   if (!/<Breadcrumb items=\{breadcrumb\}/.test(stripped)) {
     failures.push(`${ACCOUNTING_WRAPPER}: must render the Accounting breadcrumb (the way back to the module home)`);
   }
-  if (!/\{ label: "Accounting", href: "\/accounting" \}/.test(stripped)) {
-    failures.push(`${ACCOUNTING_WRAPPER}: the breadcrumb's first link must be the Accounting home (/accounting)`);
+  // ROUND 8.20 board1 — crumb uses resolveBackHref (fallback /accounting) so hub Open bills ?ret= restores.
+  if (!/resolveBackHref\s*\(/.test(stripped) || !/href:\s*accountingBackHref/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: Accounting crumb must use resolveBackHref → href: accountingBackHref (fallback /accounting)`);
+  }
+  if (!/fallback:\s*"\/accounting"/.test(stripped)) {
+    failures.push(`${ACCOUNTING_WRAPPER}: resolveBackHref fallback must stay /accounting`);
   }
   if (/hasInAppHistory|navigate\(-1\)|history\.back\(/.test(stripped)) {
     failures.push(`${ACCOUNTING_WRAPPER}: must not go back through browser history (U18)`);
@@ -85,7 +90,7 @@ if (process.argv.includes("--selftest")) {
     {
       name: "reintroduce navigate(-1) in BackArrowHeader",
       target: "backArrow",
-      mutate: (t) => t.replace("navigate(inModuleBackHref(pathname, backTo));", "navigate(-1);"),
+      mutate: (t) => t.replace("navigate(backHref);", "navigate(-1);"),
     },
     {
       name: "remove the breadcrumb from AccountingSubNavWrapper entirely",
@@ -98,9 +103,9 @@ if (process.argv.includes("--selftest")) {
       mutate: (t) => t.replace("<span>Back</span>", ""),
     },
     {
-      name: "AccountingSubNavWrapper breadcrumb no longer starts at the Accounting home",
+      name: "AccountingSubNavWrapper crumb drops resolveBackHref",
       target: "accounting",
-      mutate: (t) => t.replace('{ label: "Accounting", href: "/accounting" }', '{ label: "Accounting", href: "/home" }'),
+      mutate: (t) => t.replace(/href:\s*accountingBackHref/, 'href: "/home"').replace(/resolveBackHref/g, "MISSING"),
     },
     {
       name: "AccountingSubNavWrapper goes back through browser history again",
