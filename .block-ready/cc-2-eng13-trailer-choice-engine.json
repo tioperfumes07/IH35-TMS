@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-eng13-trailer-choice-engine",
+  "status": "GUARD",
+  "classification": "OPERATIONAL",
+  "phase": "ROUND-8.20-CC-2",
+  "task": "CC-2 ENG-13 — trailer choice engine. Every active USMCA load must have a trailer recorded (load_trailer_equipment_id or non_owned_trailer_id). Guard 19927 enforces 0 active loads missing trailer.",
+  "branch": "cc-2/eng13-trailer-choice-engine",
+  "lane": "CC-2-DISPATCH-ENGINE",
+  "allowed_files": [
+    "scripts/verify-trailer-choice-engine.mjs",
+    "scripts/verify-steps/19927-verify-trailer-choice-engine.mjs",
+    ".block-ready/cc-2-eng13-trailer-choice-engine.json"
+  ],
+  "acceptance": [
+    "verify-trailer-choice-engine selftest PASS 2/2",
+    "0 active USMCA loads missing trailer (ceiling 0) | 227 active loads measured 2026-11-13 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
