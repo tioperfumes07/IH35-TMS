@@ -4,12 +4,12 @@ import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDoc
 import { companyToday } from "../../lib/businessDate";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { formatDateUS } from "../../lib/formatDate";
-import { formatUsdCents } from "../../lib/money";
 
 type Props = {
   operatingCompanyId: string;
@@ -50,8 +50,14 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
       ) : (
         <div className="space-y-1" data-testid="vendor-ap-aging-reverse">
           <div className="rounded-sm border border-gray-200 bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]">
-            Cleared {formatUsdCents(clearedCents)}. Applied payments that have not been matched or
-            categorized in Banking are named not cleared.
+            {/* ROUND 8.20 board10 — cleared total is MoneyCell (not plain text); drills first open bill when present. */}
+            Cleared{" "}
+            <MoneyCell
+              cents={clearedCents}
+              drill={{ amount: { target: "bills", vendorId, hasBalance: true } }}
+              data-testid="vendor-ap-aging-cleared"
+            />
+            . Applied payments that have not been matched or categorized in Banking are named not cleared.
             <UnclearedDocumentsNote docs={query.data?.uncleared_documents ?? []} />
           </div>
           {bills.map((bill) => (
@@ -72,7 +78,15 @@ export function VendorApAgingSection({ operatingCompanyId, vendorId }: Props) {
               <span className="flex items-center gap-1 text-gray-600">
                 <span>due {formatDateUS(bill.due_date)}</span>
                 {bill.days_overdue > 0 ? <span className="font-medium text-rose-700">· {bill.days_overdue}d overdue</span> : null}
-                <span>· {formatUsdCents(bill.open_cents)} open</span>
+                <span className="inline-flex items-center gap-1">
+                  ·{" "}
+                  <MoneyCell
+                    cents={bill.open_cents}
+                    drill={{ entity: { kind: "bill", id: bill.bill_id } }}
+                    data-testid={`vendor-ap-aging-open-${bill.bill_id}`}
+                  />{" "}
+                  open
+                </span>
               </span>
             </div>
           ))}
