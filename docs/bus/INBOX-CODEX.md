@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T22:01Z) — #29320 CSR + #29326 Vendor report URL MERGED · CERTIFY 29 + 31 + 30 + 27–28
+# Tip main f6f710bdb01 (#29326) contains #29320 1a9c7fa1b67 CSR zero_cost/group/drill URL. #29324 Customer statement ret on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T21:49Z) — #29324 Customer report URL + statement ret MERGED 5b30f4b4927 · CERTIFY 30 + 28 + 27
 # Tip main 5b30f4b4927. view/range/customers URL; statement withReturnContext + resolveBackHref. board29 CSR #29320 + board31 #29326 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 
