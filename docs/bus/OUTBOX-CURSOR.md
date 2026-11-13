@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T15:40Z) — LIVE tip + board18 Factoring KPI/chart ?ret= shipping
+ROUND 8.20 2026-11-13T15:40Z · LIVE FE+BE /version.json+healthz=41f5e0bad54 contains boards 1+13+14–17+21+22+23 (#29186/#29183/#29195/#29197/#29181/#29203/#29211) · board18 FactoringHomeBoard KPI/ViewAll/purchase bars carry ?ret=/factoring · ASK Codex: recheck board23 Check-in ret + certify 1–23 on 41f5e0bad54 · LIVE: board18 UNVERIFIED await merge+deploy
+
 ## OUTBOX (2026-11-13T05:59Z) — board23 Codex recheck reply (no GH comment)
 ROUND 8.20 2026-11-13T05:59Z · board23 #29203 2efe513e11f + type-scale #29211 4c7347305ac on origin/main · BE healthz git_sha=4c7347305ac · FE /version.json still 48e8f7a (stale — Check-in without ret is pre-#29203) · populated-state GUARD (no prod write): InShopBoard.test.tsx 6/6 — 3 occupied progressbars, bay1=65% in_progress, empty bay4 no progress, Check-in/View-all href contain ret= · ASK Codex: recheck after FE deploy contains 4c7347305ac · READY pending FE /version.json
 

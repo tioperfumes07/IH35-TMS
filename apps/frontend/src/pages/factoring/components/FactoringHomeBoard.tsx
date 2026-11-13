@@ -8,7 +8,7 @@
  */
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   getFactoringChargebacksFees,
   getFactoringRecoursePipeline,
@@ -25,6 +25,7 @@ import { V3 } from "../../../design/v3-tokens";
 import { companyToday, monthBoundsIso } from "../../../lib/businessDate";
 import { rateToPctString } from "../../../lib/factorProfile";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { FACTORING_TAB_PATH } from "../../../router/route-manifest";
 import { formatDateUS, formatQuantityTable, formatUsd, formatUsdCents } from "../../../utils/qboFormat";
 
@@ -154,7 +155,13 @@ function modeWireFeeCents(purchases: FactoringPurchaseListRow[]): number | null 
   return best;
 }
 
-function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[] }) {
+function PurchaseNetChart({
+  purchases,
+  originHref,
+}: {
+  purchases: FactoringPurchaseListRow[];
+  originHref: string;
+}) {
   const navigate = useNavigate();
   // ROUND 8.17 class S — ALL posted periods (no silent last-16), value axis, bar → purchase source.
   const bars = useMemo(() => {
@@ -219,7 +226,14 @@ function PurchaseNetChart({ purchases }: { purchases: FactoringPurchaseListRow[]
                   key={b.id}
                   title={`${b.label}: net ${formatUsdCents(b.net)} · kept ${formatUsdCents(b.kept)} — open purchase`}
                   data-testid={`factoring-home-purchase-bar-${b.id}`}
-                  onClick={() => navigate(`${FACTORING_TAB_PATH.purchase_report}?purchase_id=${encodeURIComponent(b.id)}`)}
+                  onClick={() =>
+                    navigate(
+                      withReturnContext(
+                        `${FACTORING_TAB_PATH.purchase_report}?purchase_id=${encodeURIComponent(b.id)}`,
+                        originHref,
+                      ),
+                    )
+                  }
                   style={{
                     flex: 1,
                     minWidth: 0,
@@ -276,6 +290,9 @@ export function FactoringHomeBoard({
   onEditTerms?: () => void;
 }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const factorHref = (target: string) => withReturnContext(target, originHref);
   const today = companyToday();
   const bounds = monthBoundsIso(today);
 
@@ -419,26 +436,26 @@ export function FactoringHomeBoard({
           label="Outstanding liability"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.outstanding_liability_balance)}
           sub={recourseQuery.isError ? "—" : `${formatQuantityTable(invoiceCount, 0)} invoice${invoiceCount === 1 ? "" : "s"}`}
-          href={FACTORING_TAB_PATH.recourse_pipeline}
+          href={factorHref(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
           testId="factoring-kpi-advanced-mtd"
           label="Advanced MTD"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.mtd_advanced_total)}
           sub={wiresCount == null ? "—" : `${formatQuantityTable(wiresCount, 0)} wire${wiresCount === 1 ? "" : "s"}`}
-          href={FACTORING_TAB_PATH.payments_to_you}
+          href={factorHref(FACTORING_TAB_PATH.payments_to_you)}
         />
         <V3KpiTile
           testId="factoring-kpi-recourse-days"
           label="Repurchase deadline"
           value={summaryQuery.isError ? "—" : `${formatQuantityTable(Number(summary?.recourse_days ?? 95), 0)} days`}
-          href={FACTORING_TAB_PATH.recourse_pipeline}
+          href={factorHref(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
           testId="factoring-kpi-chargebacks"
           label="Chargebacks & fees"
           value={feesQuery.isError ? "—" : fmtMoneyDollars(chargebacksFees)}
-          href={FACTORING_TAB_PATH.chargebacks_fees}
+          href={factorHref(FACTORING_TAB_PATH.chargebacks_fees)}
         />
         <V3KpiTile
           testId="factoring-kpi-true-cost"
@@ -455,7 +472,7 @@ export function FactoringHomeBoard({
               ? "—"
               : `fee ${formatUsdCents(mtdFeeCents)} + wires ${formatUsdCents(mtdWireFeeCents)}`
           }
-          href={FACTORING_TAB_PATH.purchase_report}
+          href={factorHref(FACTORING_TAB_PATH.purchase_report)}
         />
       </div>
 
@@ -472,21 +489,24 @@ export function FactoringHomeBoard({
       >
         <FactoringBoardCard
           title="Each purchase — net to bank vs kept by Faro"
-          onViewAll={() => navigate(FACTORING_TAB_PATH.purchase_report)}
+          onViewAll={() => navigate(factorHref(FACTORING_TAB_PATH.purchase_report))}
           testId="factoring-home-purchase-panel"
         >
           {chartPurchasesQuery.isError ? (
             <div style={{ padding: "12px 14px", fontSize: 12, color: V3.muted }}>Could not load purchases.</div>
           ) : (
             <div style={{ padding: "12px 14px" }}>
-              <PurchaseNetChart purchases={chartPurchasesQuery.data?.purchases ?? []} />
+              <PurchaseNetChart
+                purchases={chartPurchasesQuery.data?.purchases ?? []}
+                originHref={originHref}
+              />
             </div>
           )}
         </FactoringBoardCard>
 
         <FactoringBoardCard
           title="Terms on file"
-          onViewAll={() => navigate(FACTORING_TAB_PATH.statements_settings)}
+          onViewAll={() => navigate(factorHref(FACTORING_TAB_PATH.statements_settings))}
           headerRight={
             onEditTerms ? (
               <button
