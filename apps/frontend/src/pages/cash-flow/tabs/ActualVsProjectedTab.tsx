@@ -818,7 +818,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               setSearchParams(
                 (prev) => {
                   const merged = mergeUrlBoardState(prev.toString(), {
-                    avp_var: varianceFilter === "all" ? null : varianceFilter,
+                    avp_var: varianceFilter,
                   });
                   return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
                 },
