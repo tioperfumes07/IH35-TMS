@@ -14,7 +14,7 @@
  * and verifies both are caught.
  */
 
-import { requireLiveDbOrExit } from "./lib/require-live-db-or-exit.mjs";
+import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
 
 // --- ratchet config -------------------------------------------------------
 const COLLECTION_FLOOR = 0;      // grows when real collections land
@@ -154,10 +154,20 @@ async function runSelftest() {
     const testInvId = factoredRes.rows[0].id;
 
     // Flip to 'collected' without a payment
-    await client.query(
-      `UPDATE accounting.invoices SET factoring_status = 'collected' WHERE id = $1::uuid`,
-      [testInvId]
-    );
+    try {
+      await client.query(
+        `UPDATE accounting.invoices SET factoring_status = 'collected' WHERE id = $1::uuid`,
+        [testInvId]
+      );
+    } catch (e) {
+      if (e && typeof e === "object" && e.code === "25006") {
+        // read-only transaction (guard reader credential) — skip mutation selftest
+        console.log("SELFTEST SKIP: guard credential is read-only; mutation selftest requires write access (run in CI)");
+        await client.query("ROLLBACK");
+        return;
+      }
+      throw e;
+    }
 
     const afterMut1 = await measureDb(client);
     if (afterMut1.orphanCount === 0) {
