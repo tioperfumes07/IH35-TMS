@@ -18,7 +18,6 @@ import {
   getMoneyMap,
   getPlaidCompanyTransactions,
   type BankingTile,
-  type DriftAlert,
   type MoneyMapAccount,
   type MoneyMapPendingLine,
   type PlaidBankTransaction,
@@ -36,6 +35,7 @@ import { formatUsdCentsTable } from "../../../lib/money";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 import { MoneyCell } from "../../../components/shared/MoneyCell";
 import { formatUsdCents } from "../../../utils/qboFormat";
+import { groupDriftAlertsByAccount, type DriftAccountRow } from "./drift-board-rows";
 
 const MONTH_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 
@@ -48,11 +48,9 @@ type AccountBoardRow = {
   tile?: BankingTile;
 };
 
-type DriftBoardRow = DriftAlert & {
+// ROW 97 — one row per bank account (drift-board-rows.ts); a stale feed carries no Bank / Book / Diff.
+type DriftBoardRow = DriftAccountRow & {
   account_label: string;
-  bank_cents: number;
-  book_cents: number;
-  diff_cents: number;
   days_open: number;
 };
 
@@ -380,24 +378,18 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
   // never the generic word "Account" for an alert that carries a bank_account_id.
   const accountNameById = useMemo(() => new Map(accountRows.map((r) => [r.id, r.name])), [accountRows]);
   const driftRows = useMemo((): DriftBoardRow[] => {
-    return (driftQuery.data?.rows ?? []).map((alert) => {
-      const ownName = alert.account_name || accountNameById.get(alert.bank_account_id) || null;
+    return groupDriftAlertsByAccount(driftQuery.data?.rows ?? []).map((row) => {
+      const ownName = row.account_name || accountNameById.get(row.bank_account_id) || null;
       const account_label =
-        [alert.institution_name, ownName].filter(Boolean).join(" · ") ||
-        (alert.account_mask ? `••${alert.account_mask}` : "") ||
-        entityLabel(null, alert.bank_account_id, "Bank account");
-      return {
-        ...alert,
-        account_label,
-        bank_cents: Number(alert.bank_balance_cents),
-        book_cents: Number(alert.book_balance_cents),
-        diff_cents: Number(alert.drift_cents),
-        days_open: daysOpen(alert.detected_at),
-      };
+        [row.institution_name, ownName].filter(Boolean).join(" · ") ||
+        (row.account_mask ? `••${row.account_mask}` : "") ||
+        entityLabel(null, row.bank_account_id, "Bank account");
+      return { ...row, account_label, days_open: daysOpen(row.detected_at) };
     });
   }, [driftQuery.data?.rows, accountNameById]);
 
-  const driftCount = driftQuery.data?.total_count ?? driftRows.length;
+  // ROW 97 — the KPI counts ACCOUNTS with an open drift alert (the rows below), never raw alerts.
+  const driftCount = driftRows.length;
   const pendingLines: MoneyMapPendingLine[] = moneyMapQuery.data?.pending_lines ?? [];
   const pendingSummary = useMemo(() => {
     let inCents = 0;
@@ -485,14 +477,17 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         kind: "money",
         sortable: true,
         minWidth: 120,
-        sortValue: (row) => row.bank_cents,
+        sortValue: (row) => row.bank_cents ?? Number.NEGATIVE_INFINITY,
         cellClass: "text-right",
-        render: (row) => (
-          <MoneyCell
-            cents={row.bank_cents}
-            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
-          />
-        ),
+        render: (row) =>
+          row.bank_cents == null ? (
+            <span className="text-slate-500" title="Feed stale — no live balance to compare">—</span>
+          ) : (
+            <MoneyCell
+              cents={row.bank_cents}
+              drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+            />
+          ),
       },
       {
         key: "book_cents",
@@ -500,14 +495,17 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         kind: "money",
         sortable: true,
         minWidth: 120,
-        sortValue: (row) => row.book_cents,
+        sortValue: (row) => row.book_cents ?? Number.NEGATIVE_INFINITY,
         cellClass: "text-right",
-        render: (row) => (
-          <MoneyCell
-            cents={row.book_cents}
-            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
-          />
-        ),
+        render: (row) =>
+          row.book_cents == null ? (
+            <span className="text-slate-500" title="Feed stale — no live balance to compare">—</span>
+          ) : (
+            <MoneyCell
+              cents={row.book_cents}
+              drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+            />
+          ),
       },
       {
         key: "diff_cents",
@@ -515,14 +513,24 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         kind: "money",
         sortable: true,
         minWidth: 120,
-        sortValue: (row) => row.diff_cents,
+        sortValue: (row) => row.diff_cents ?? Number.NEGATIVE_INFINITY,
         cellClass: "text-right",
-        render: (row) => (
-          <MoneyCell
-            cents={row.diff_cents}
-            drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
-          />
-        ),
+        render: (row) =>
+          row.diff_cents == null ? (
+            <span className="text-slate-500" title="Feed stale — no live balance to compare">—</span>
+          ) : (
+            <MoneyCell
+              cents={row.diff_cents}
+              drill={{ entity: { kind: "bank_account", id: row.bank_account_id } }}
+            />
+          ),
+      },
+      {
+        key: "issues",
+        label: "Issue",
+        sortable: true,
+        sortValue: (row) => row.issues.join(", "),
+        render: (row) => <span data-testid="banking-home-drift-issue">{row.issues.join(" · ")}</span>,
       },
       {
         key: "days_open",
@@ -717,7 +725,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         <V3KpiTile
           label="Drift alerts"
           value={driftQuery.isError ? "—" : String(driftCount)}
-          sub="bank vs book"
+          sub="accounts · bank vs book"
           tone={driftCount > 0 ? "red" : "ink"}
           testId="banking-kpi-drift-alerts"
           href={BANKING_TAB_PATH.reconciliation}
@@ -784,7 +792,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           }
           footer={
             driftCount > 0
-              ? `Bank $0.00 = no live balance feed for that account. ${driftCount} open alert${driftCount === 1 ? "" : "s"}.`
+              ? `${driftCount} account${driftCount === 1 ? "" : "s"} with open drift. "—" = feed stale, no live balance to compare.`
               : "No open drift alerts."
           }
           testId="banking-home-board-drift"
@@ -793,7 +801,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
             embedded
             appearance="board"
             rows={driftRows}
-            rowKey={(row) => row.id}
+            rowKey={(row) => row.bank_account_id}
             columns={driftColumns}
             loading={driftQuery.isPending}
             emptyText="No open reconciliation drift."
