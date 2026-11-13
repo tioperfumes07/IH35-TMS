@@ -2,7 +2,8 @@ import { AccountRegisterPage } from "../../accounting/AccountRegisterPage";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { RETURN_PARAM, resolveBackHref } from "../../../lib/returnContext";
 import { Download, MessageSquare, Paperclip, Printer } from "lucide-react";
 import {
   categorizeBankTransaction,
@@ -688,6 +689,7 @@ export function BankingTransactionsDesignView({
   // ROUND 8.20 board 3 — URL is source of truth for Money In/Out KPI cohort (types/review/dates).
   // Parent props can lag one paint after navigate; reading searchParams closes blank-dates / All-types FAIL.
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const urlType = searchParams.get("type");
   const urlTypes = searchParams.get("types");
   const urlReview = searchParams.get("review");
@@ -4242,7 +4244,26 @@ export function BankingTransactionsDesignView({
           return sourceTransaction?.transaction_date?.slice(0, 10) ?? null;
         })()}
         operatingCompanyId={companyId}
-        onClose={() => setMatchDrawerTxId(null)}
+        onClose={() => {
+          const closedId = matchDrawerTxId;
+          setMatchDrawerTxId(null);
+          // ROUND 8.20 board2 — Unexpected→Match deep-link Close returns via ?ret= (Unexpected),
+          // not stay on Banking. Only when this drawer was opened from highlightTransactionId.
+          if (
+            closedId &&
+            highlightTransactionId &&
+            closedId === highlightTransactionId &&
+            searchParams.get(RETURN_PARAM)
+          ) {
+            navigate(
+              resolveBackHref({
+                searchParams,
+                pathname: "/banking/transactions",
+                fallback: "/accounting/expenses/unexpected",
+              }),
+            );
+          }
+        }}
         onAccepted={() => onDataChanged()}
       />
       {/* BANK-FEED-BULK-QBO — one vendor + one Category OR Product/Service for every selected row. */}
