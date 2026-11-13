@@ -378,8 +378,10 @@ function collectExpectedObjects(migrationsDirectory) {
 
       if (/^do\b/i.test(lowerStmt)) {
         const doMasked = normalizedStmt.replace(/'(?:''|[^'])*'/g, "''");
+        // ROUND 8.20 / ENG-60: also capture ALTER TABLE … DROP COLUMN / DROP CONSTRAINT inside DO $$ …
+        // (202616310100 drops insurance.claim.lawsuit_id; Postgres drops idx_claim_lawsuit_id with it).
         const doOps = doMasked.match(
-          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema)\s+[^;]+|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?(?:\s+using\s+\w+)?(?:\s*\([^;]*?\))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
+          /(drop\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+(?:rename\s+to|set\s+schema)\s+[^;]+|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+drop\s+column\s+(?:if\s+exists\s+)?(?:"?[\w$]+"?)|alter\s+table\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+drop\s+constraint\s+(?:if\s+exists\s+)?(?:"?[\w$]+"?)|create\s+(?:unique\s+)?index\s+(?:concurrently\s+)?(?:if\s+not\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+on\s+(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?(?:\s+using\s+\w+)?(?:\s*\([^;]*?\))?|drop\s+index\s+(?:concurrently\s+)?(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?|alter\s+index\s+(?:if\s+exists\s+)?(?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?\s+rename\s+to\s+"?[\w$]+"?|alter\s+schema\s+"?[\w$]+"?\s+rename\s+to\s+"?[\w$]+"?)/gi
         );
         if (doOps) {
           for (const op of doOps) {
@@ -414,6 +416,35 @@ function collectExpectedObjects(migrationsDirectory) {
               const from = resolveTableRef(setSchemaInDo[1], defaultSchema, expectedTables);
               const toSchema = normalizeIdent(setSchemaInDo[2]);
               renameTableState(expectedTables, expectedIndexes, expectedFks, from.schema, from.name, toSchema, from.name, opSource);
+              continue;
+            }
+
+            // ROUND 8.20 — DROP COLUMN inside DO $$ drops every index on that column (Postgres).
+            const dropColumnInDo = opStmt.match(
+              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+drop\s+column\s+(?:if\s+exists\s+)?("?[\w$]+"?)/i
+            );
+            if (dropColumnInDo) {
+              const tableParts = resolveTableRef(dropColumnInDo[1], defaultSchema, expectedTables);
+              const column = normalizeIdent(dropColumnInDo[2]);
+              for (const [key, ix] of expectedIndexes) {
+                if (
+                  ix.tableSchema === tableParts.schema &&
+                  ix.table === tableParts.name &&
+                  (ix.columns ?? []).includes(column)
+                ) {
+                  expectedIndexes.delete(key);
+                }
+              }
+              continue;
+            }
+
+            const dropConstraintInDo = opStmt.match(
+              /^alter\s+table\s+(?:if\s+exists\s+)?((?:"?[a-zA-Z_][\w$]*"?)(?:\.(?:"?[a-zA-Z_][\w$]*"?))?)\s+drop\s+constraint\s+(?:if\s+exists\s+)?("?[\w$]+"?)/i
+            );
+            if (dropConstraintInDo) {
+              const tableParts = resolveTableRef(dropConstraintInDo[1], defaultSchema, expectedTables);
+              const constraint = normalizeIdent(dropConstraintInDo[2]);
+              expectedFks.delete(fkKey(tableParts.schema, tableParts.name, constraint));
               continue;
             }
 

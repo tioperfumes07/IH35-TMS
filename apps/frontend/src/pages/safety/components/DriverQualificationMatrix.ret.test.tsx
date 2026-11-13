@@ -17,9 +17,9 @@ vi.mock("../../../api/safety", () => ({
   }),
 }));
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, entry = "/safety/driver-files") {
   return (
-    <MemoryRouter initialEntries={["/safety/driver-files"]}>
+    <MemoryRouter initialEntries={[entry]}>
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         {ui}
       </QueryClientProvider>
@@ -40,5 +40,17 @@ describe("ROUND 8.20 board24 DriverQualificationMatrix ret", () => {
     const ret = new URL(civil.getAttribute("href") ?? "", "http://local").searchParams.get("ret");
     expect(decodeURIComponent(ret ?? "")).toContain("/safety/driver-files");
     expect(screen.getByTestId("dq-internal-fines-link").getAttribute("href") ?? "").toContain("ret=");
+  });
+
+  it("filtered cohort is preserved in register ret", async () => {
+    const user = userEvent.setup();
+    render(
+      wrap(<DriverQualificationMatrix companyId="91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" />, "/safety/driver-files?cohort=cdl"),
+    );
+    await waitFor(() => expect(screen.getByText("Open fines")).toBeTruthy());
+    await user.click(screen.getByText("Open fines").closest("button") ?? screen.getByText("Open fines"));
+    const civil = await screen.findByTestId("dq-civil-fines-link");
+    const ret = new URL(civil.getAttribute("href") ?? "", "http://local").searchParams.get("ret");
+    expect(decodeURIComponent(ret ?? "")).toContain("cohort=cdl");
   });
 });

@@ -17946,5 +17946,11 @@
     "seat": "LEAD",
     "purpose": "return-context encode once (ret double-encoding)",
     "claimed": "2026-11-13"
+  },
+  "20158": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-safety-dq-calendar-cohort board24 N24"
   }
+
 }

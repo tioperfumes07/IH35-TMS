@@ -170,7 +170,7 @@ export function TrainingRecordsPage({ operatingCompanyId }: Props) {
       sortable: true,
       render: (row) => String(row.training_type ?? row.training_name ?? row.name ?? "Training"),
     },
-    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => (row.expiry_date || row.due_at ? formatDateUS(row.expiry_date ?? row.due_at) : "—") },
+    { key: "expiry_date", label: "Expiry", sortable: true, render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) : row.due_at ? formatDateUS(row.due_at) : "—") },
     {
       key: "status",
       label: "Status",

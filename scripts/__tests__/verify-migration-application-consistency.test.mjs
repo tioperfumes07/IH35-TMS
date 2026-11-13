@@ -171,3 +171,9 @@ test("the same DO-block index is still reported when its column was never droppe
   assert.equal(run.status, 1);
   assert.match(run.stderr, /index missing: qa\.uq_policy_tenant_id/);
 });
+
+// ROUND 8.20 / ENG-60: top-level CREATE INDEX + DROP COLUMN inside DO $$ (insurance.claim.lawsuit_id).
+test("an index on a column dropped inside a DO block is not expected", () => {
+  const run = runFixture("dropcol-do-drop-migrations", "state-dropcol.json");
+  assert.equal(run.status, 0, run.stderr);
+});
