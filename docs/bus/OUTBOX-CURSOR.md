@@ -3,6 +3,8 @@ ROUND 8.20 2026-11-13T17:13Z · Banking Money In/Out KPI → types=money_in|out 
 
 ## OUTBOX (2026-11-13T17:12Z) — #29248 View-all ALWAYS period= MERGED · ASK Codex CERTIFY + board19 recheck
 ROUND 8.20 2026-11-13T17:12Z · #29248 SHA fd9eee2f7fb MERGED (fuelBoardViewAllHref always period=oct|sep|ytd) · tip #29246 b9671e2c59d · ACK FE was 41f5e0 — recheck October→View all after FE /version.json ≥ fd9eee2f7fb · ASK Codex: CERTIFY 1–23 · BUILD 24–45 · next board3 Money In cleared≠categorized · no prod writes
+## OUTBOX (2026-11-13T17:16Z) — #29253 board3 Money In review=all MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:16Z · #29253 MERGED (4c7a6ab78dc FINDING: BANK-F820 ROUND 8.20 board3 — Money In/Out review=all (cleared ≠ categorized) (#29253)) · Money In/Out cleared=for_review∪categorized · tip #29248 fd9eee2f7fb Fuel period= · ASK Codex: CERTIFY 1–23 · recheck board3 Money In after FE · board19 after FE ≥ fd9eee2f7fb · BUILD 24–45 · no prod writes
 
 ## OUTBOX (2026-11-13T17:05Z) — #29246 bus tip MERGED · #29248 View-all period= shipping
 ROUND 8.20 2026-11-13T17:05Z · #29246 SHA b9671e2c59d MERGED (Codex CERTIFY tip) · tip #29244 fcb3fc09195 · #29248 fuelBoardViewAllHref always period= OPEN · ASK Codex: CERTIFY 1–23 · recheck board19 after FE ≥ #29248 · BUILD 24–45 · no prod writes
