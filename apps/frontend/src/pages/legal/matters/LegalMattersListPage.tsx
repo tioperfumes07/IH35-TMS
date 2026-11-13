@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityMultiSelect } from "../../../components/EntityMultiSelect";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -70,9 +71,16 @@ export type LegalMattersListPageProps = { fixedType?: "lawsuit" };
 
 export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = {}) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // ROUND 8.20 board21 — Home KPI/pipeline drills attach ?ret=/legal; Back must honor it.
+  const mattersBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/legal",
+  });
   const [status, setStatus] = useState<string[]>([]);
   const [severity, setSeverity] = useState<string[]>([]);
   const [type, setType] = useState<string[]>(fixedType ? [fixedType] : []);
@@ -214,7 +222,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={mattersBackHref}
         breadcrumb={fixedType ? ["Legal", "Lawsuits"] : ["Legal", "Matters"]}
         title={fixedType ? "Lawsuits" : "Legal matters"}
         subtitle={fixedType ? "Lawsuits where the company is a party — reserve, driver, unit, load and claim links" : "Lawsuits, claims, and regulatory matters"}

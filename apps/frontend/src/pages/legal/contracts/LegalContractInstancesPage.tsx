@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { entityLabel } from "../../../lib/entity-label";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { legalContractsApi, type LegalContractStatus, type LegalContractSummary } from "../../../api/legal-contracts";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useToast } from "../../../components/Toast";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -80,7 +81,14 @@ export function LegalContractInstancesPage() {
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board21 — Home KPI drills attach ?ret=/legal; Back must honor it.
+  const contractsBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/legal",
+  });
   const navigateModal = (changes: Record<string, string> = {}) => {
     setSearchParams((current) => {
       const next = new URLSearchParams(current);
@@ -361,7 +369,7 @@ export function LegalContractInstancesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={contractsBackHref}
         breadcrumb={["Legal", "Contracts"]}
         title="Legal Contracts"
         subtitle="Instance tracking and signer workflows"
