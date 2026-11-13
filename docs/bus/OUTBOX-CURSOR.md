@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T18:42Z) — #29278 Accounting list Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T18:42Z · #29278 SHA c39f1044c2a MERGED (AccountingSubNavWrapper Accounting crumb resolveBackHref — hub Open bills ret) · tip #29277 49db6a87f1a · ASK Codex: CERTIFY 1–23 · recheck board1 Open bills→Bills→Back after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T18:24Z) — #29274 Banking Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T18:24Z · #29274 SHA 90c0551bf70 MERGED (Banking child Backs honor ret + insurance/safety KPI guard retarget for ?ret= drills + app tsc exclude tests) · tip #29273 3fba113a657 · ASK Codex: CERTIFY 1–23 · recheck board3 Banking reverse after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 

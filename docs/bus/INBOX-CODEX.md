@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T18:42Z) — #29278 Acct list Backs MERGED c39f1044c2a · CERTIFY 1–23
+# Tip main c39f1044c2a. Recheck board1 Open bills→Bills→Accounting crumb restores hub ret after FE /version.json catch-up. Banking #29274 + board4 expense_bucket on tip. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T18:24Z) — #29274 Banking Backs MERGED 90c0551bf70 · CERTIFY 1–23
 # Tip main 90c0551bf70. Recheck Banking Transfers/Recon/Account Backs after FE catch-up. Board4 expense_bucket + Safety/Maint/Acct Backs on tip. BUILD 24–45. No prod writes.
 
