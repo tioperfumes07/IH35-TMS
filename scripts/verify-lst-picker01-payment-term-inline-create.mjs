@@ -43,8 +43,10 @@ const SITES = [
 
 const REGISTRY = "apps/frontend/src/components/parity/catalogPickerRegistry.ts";
 const ROUTES = "apps/backend/src/catalogs/payment-terms.routes.ts";
+// ROUND 8.20 board9 — Customers.tsx hosts CustomerCreateModal → NewCustomerDrawerForm; fail-closed
+// payment-term truth lives on the drawer, not the board shell.
+const CUSTOMERS_BOARD = "apps/frontend/src/pages/Customers.tsx";
 const CREATE_CONSUMERS = [
-  "apps/frontend/src/pages/Customers.tsx",
   "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
 ];
 
@@ -144,6 +146,13 @@ export function collectProblems(root = ROOT, registryOverride = null) {
     }
   }
 
+  const customersBoard = readRel(root, CUSTOMERS_BOARD);
+  if (!customersBoard) {
+    problems.push(`missing ${CUSTOMERS_BOARD}`);
+  } else if (!/<CustomerCreateModal[\s\S]{0,400}operatingCompanyId=/.test(customersBoard)) {
+    problems.push(`${CUSTOMERS_BOARD}: must host CustomerCreateModal (create fail-closed lives in NewCustomerDrawerForm)`);
+  }
+
   for (const rel of CREATE_CONSUMERS) {
     const src = readRel(root, rel);
     if (!src) {
@@ -214,7 +223,7 @@ if (process.argv.includes("--selftest")) {
 
   for (const rel of CREATE_CONSUMERS) {
     const mutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-create-failure-"));
-    for (const site of [...SITES.map((entry) => entry.rel), ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
+    for (const site of [...SITES.map((entry) => entry.rel), CUSTOMERS_BOARD, ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
       const target = path.join(mutationRoot, site);
       fs.mkdirSync(path.dirname(target), { recursive: true });
       const source = readRel(ROOT, site);
@@ -225,6 +234,21 @@ if (process.argv.includes("--selftest")) {
       console.error(`${LABEL} SELFTEST FAIL: ${rel} failure-truth mutation escaped`);
       process.exit(1);
     }
+  }
+
+  const boardMutationRoot = fs.mkdtempSync(path.join(process.env.TMPDIR || "/tmp", "payment-term-board-host-"));
+  for (const site of [...SITES.map((entry) => entry.rel), CUSTOMERS_BOARD, ...CREATE_CONSUMERS, REGISTRY, ROUTES]) {
+    const target = path.join(boardMutationRoot, site);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    const source = readRel(ROOT, site);
+    fs.writeFileSync(
+      target,
+      site === CUSTOMERS_BOARD ? source.replace(/<CustomerCreateModal[\s\S]*?\/>/, "<LegacyCreate remounted />") : source,
+    );
+  }
+  if (!collectProblems(boardMutationRoot).some((p) => p.includes("must host CustomerCreateModal"))) {
+    console.error(`${LABEL} SELFTEST FAIL: Customers board host-modal mutation escaped`);
+    process.exit(1);
   }
 
   console.log(`${LABEL} SELFTEST OK`);
