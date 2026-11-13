@@ -9,13 +9,14 @@
  *     Fix:    idx_hos_duty_status_events_duty_ended (opco, duty_status, ended_at) partial WHERE
  *             ended_at IS NOT NULL → hits only recent events (~52 rows, BitmapOr with open index)
  *
- *   ROW 124 finish (arrivals geofence narrowing, 11-13):
+ *   ROW 124 / 124b (arrivals geofence narrowing + LATERAL, 11-13):
  *     Before: stop_fence_keys regex-scanned ALL geo.geofences (26,342 on prod) → 983 stop-label fences
  *             → ~270 ms slice under app role (warm 551–575 ms vs. 500 ms target)
- *     Fix:    day_geofence_ids AS MATERIALIZED first collects the ~86 distinct fences that fired
- *             'entered' events today (ix_geo_geofence_events_company_lookup); stop_fence_keys then
- *             PK-looks up only those 86 → ~300x fewer regex calls
- *     Result: 417–450 ms warm (2026-11-13 measured, guard reader, USMCA Freight)
+ *     ROW 124: day_geofence_ids AS MATERIALIZED collects ~90 fences that fired 'entered' today.
+ *             Planner estimated day_geofence_ids=5001 rows (actual=90) → still seq-scanned all geofences
+ *             building a Hash Join (580 ms) → warm 677–881 ms (measured 11-13 on 3d53e428c7+).
+ *     ROW 124b: JOIN LATERAL forces 90 PK lookups instead of hash build over full geofences table.
+ *     Result: 332–354 ms warm (2026-11-13 measured, guard reader, USMCA Freight)
  *
  *   ROW 138 — /api/v1/mdata/drivers 4,522 ms regression (ROW 197 fix, PR #28503):
  *     Before: two separate withCurrentUser pool checkouts per request (company resolve + list),
@@ -138,7 +139,9 @@ async function runSelftest() {
     }
   }
 
-  // 9. ROW 124 (CC-2 11-13): day_geofence_ids CTE narrows geofence regex from 26,342 → ~86 fences/day
+  // 9. ROW 124b (CC-2 11-13): LATERAL forces 90 PK lookups instead of Hash Join over all 26,342 geofences.
+  //    day_geofence_ids AS MATERIALIZED must still exist; stop_fence_keys must use LATERAL (not a plain JOIN)
+  //    so the planner cannot flip back to building a hash from the full geofences table (the 580 ms regression).
   const ddsRoutesPath = resolve(root, "apps/backend/src/telematics/driver-day-summary.routes.ts");
   if (existsSync(ddsRoutesPath)) {
     const ddsRoutes = readFileSync(ddsRoutesPath, "utf8");
@@ -147,9 +150,9 @@ async function runSelftest() {
         "ROW124-NARROW: driver-day-summary.routes.ts missing day_geofence_ids AS MATERIALIZED — geofence scan regression risk"
       );
     }
-    if (!ddsRoutes.includes("JOIN day_geofence_ids dgi ON dgi.geofence_id = g.id")) {
+    if (!ddsRoutes.includes("JOIN LATERAL")) {
       failures.push(
-        "ROW124-JOIN: stop_fence_keys must join day_geofence_ids to narrow the regex scan"
+        "ROW124-LATERAL: stop_fence_keys must use JOIN LATERAL to force 90 PK lookups — without it the planner seq-scans all 26,342 geofences"
       );
     }
   }
@@ -158,7 +161,7 @@ async function runSelftest() {
     for (const f of failures) console.error("SELFTEST FAIL:", f);
     process.exit(1);
   }
-  console.log(`SELFTEST PASS: 9/9 static checks — duty CTE index + drivers single-checkout + arrivals geofence narrowing intact`);
+  console.log(`SELFTEST PASS: 9/9 static checks — duty CTE index + drivers single-checkout + arrivals LATERAL geofence narrowing intact`);
 }
 
 async function runLive() {
