@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { legalTemplatesApi, type LegalTemplateDraft, type LegalTemplateStatus, type LegalTemplateSummary } from "../../../api/legal-templates";
 import { Button } from "../../../components/Button";
@@ -17,6 +17,7 @@ import { CollapsedListFilters, TableSearch, useStagedListFilters } from "../../.
 import { statusOptions } from "../../../lib/statusListParams";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { formatQuantityTable } from "../../../lib/money";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 
 const STATUS_LABELS: Record<LegalTemplateStatus, string> = {
   draft: "Draft",
@@ -40,6 +41,8 @@ function statusPillClass(status: string) {
 
 export function LegalTemplatesListPage() {
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -142,7 +145,8 @@ export function LegalTemplatesListPage() {
         rows={rows}
         columns={columns}
         rowKey={(row) => row.id}
-        onRowClick={(row) => navigate(`/legal/templates/${row.id}`)}
+        // ROUND 8.20 board21 — detail Back restores Templates list cohort via ?ret=.
+        onRowClick={(row) => navigate(withReturnContext(`/legal/templates/${row.id}`, originHref))}
         // Settled-only empty (LIST-EMPTY-1 invariant): see LegalPoliciesPage for the same pattern.
         loading={query.isPending || (query.isFetching && rows.length === 0)}
         storageKey="legal-templates"
