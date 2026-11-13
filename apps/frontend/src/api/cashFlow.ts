@@ -109,6 +109,9 @@ export type RollingLedgerDocumentKind =
   | "relay_topup"
   | "fuel_forecast";
 
+/** ROUND 8.17 / 8.20 — reader-owned Home expense grouping (`rollingLedgerExpenseBucket`). Income is null. */
+export type CashFlowExpenseBucket = "finance" | "driver" | "diesel" | "vendor" | "other";
+
 export type RollingLedgerRow = {
   amount_known?: boolean;
   row_kind: RollingLedgerRowKind;
@@ -131,6 +134,8 @@ export type RollingLedgerRow = {
   /** LINK-F5171 — present on single-customer income rows from the rolling ledger. */
   customer_id?: string | null;
   customer_name?: string | null;
+  /** ROUND 8.17 — canonical Home expense bucket; null for income (never "other"). */
+  expense_bucket?: CashFlowExpenseBucket | null;
 };
 
 export type CashFlowAdjustmentReason = {

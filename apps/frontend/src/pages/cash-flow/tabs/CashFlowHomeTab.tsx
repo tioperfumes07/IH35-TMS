@@ -15,6 +15,7 @@ import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatCashFlowCents } from "./CashFlowKpiStrip";
 import type { CashFlowNavOpts, CashFlowTabId } from "../CashFlowPage";
+import { expenseBucket } from "./expenseBucket";
 
 // ROUND 443.280-A #7 — Cash Flow Home board (docs/design/v3/CashFlow-Home):
 // V3KpiTile strip ONLY (no layered CashFlowKpiStrip), no tab-card-theater theater,
@@ -120,37 +121,6 @@ function isInvoiceIncome(row: RollingLedgerRow): boolean {
       row.type === "Invoice" ||
       /invoice|load|factor/i.test(row.type))
   );
-}
-
-type ExpenseBucket = "finance" | "driver" | "diesel" | "vendor" | "other";
-
-function expenseBucket(row: RollingLedgerRow): ExpenseBucket {
-  if (row.row_kind !== "expense") return "other";
-  const t = `${row.type} ${row.document_kind} ${row.document_label} ${row.counterparty}`.toLowerCase();
-  if (
-    row.document_kind === "loan_amortization_row" ||
-    /loan|lease|amort|note|rent|finance/.test(t)
-  ) {
-    return "finance";
-  }
-  if (
-    row.document_kind === "driver_bill" ||
-    row.document_kind === "settlement" ||
-    /driver|settlement/.test(t)
-  ) {
-    return "driver";
-  }
-  if (
-    /fuel \(projected\)|fuel est|diesel|fuel|relay|card fill|card_payable/.test(t) ||
-    row.document_kind === "card_payable" ||
-    row.document_kind === "relay_topup" ||
-    row.document_kind === "fuel_forecast" ||
-    /^fuel-avg-/.test(row.document_id)
-  ) {
-    return "diesel";
-  }
-  if (row.document_kind === "bill" || row.type === "Bill") return "vendor";
-  return "other";
 }
 
 function rowsInWeek(rows: RollingLedgerRow[], weekStart: string): RollingLedgerRow[] {
