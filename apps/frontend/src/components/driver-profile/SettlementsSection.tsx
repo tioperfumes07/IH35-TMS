@@ -56,7 +56,8 @@ const WEEK_COLUMNS: Array<ParityColumn<WeekRow>> = [
     key: "week_ending",
     label: "Period End",
     sortable: true,
-    render: (row) => String(row.week_ending || "—"),
+    // ROUND 8.20 board11 — Period Begin already uses formatDateUS; Period End was raw YYYY-MM-DD.
+    render: (row) => (row.week_ending ? formatDateUS(row.week_ending) : "—"),
   },
   {
     key: "gross",

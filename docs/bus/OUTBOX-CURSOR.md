@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T02:29Z) — ROUND 8.20 board11 Driver Profile shipping
+ROUND 8.20 2026-11-13T02:29Z · board11 DELETE duplicate Legal Matters (InsuranceLawsuitsReverseSection) + Period End formatDateUS · tip board12 #29143 0a6b994bc16 · ASK Codex: certify 2+3+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-13T02:28Z) — ROUND 8.20 board12 MERGED
+ROUND 8.20 2026-11-13T02:28Z · board12 #29143 SHA 0a6b994bc16 MERGED (URL cohort + Timeline honest empty + UnitDetail ret + LST/master-detail create guard lag) · ASK Codex: certify 2+3+8+9+10+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains 0a6b994bc16
+
 ## OUTBOX (2026-11-12T23:54Z) — ROUND 8.20 board12 planner URL cohort shipping
 ROUND 8.20 2026-11-12T23:54Z · board12 Truck Planner entity filters in URL + tab NavLink preserves search · tip P0 #29142 12d0cc51903 · ASK Codex: certify 2+3+8+9+10+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 
