@@ -15982,6 +15982,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-vendor-ap-aging-money-cells board10"
   },
+  "20172": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-customers-ar-open-money-cells board9"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

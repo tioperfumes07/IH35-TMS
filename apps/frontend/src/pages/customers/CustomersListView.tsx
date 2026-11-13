@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { getCustomerBillingSummary, listAllAtRiskCustomerRelationshipScores, type Customer, type CustomerFinanceRollup } from "../../api/mdata";
 import { type ARAgingRow } from "../../api/reports";
 import { customerQualityKind, customerQualityClass } from "../../lib/quality-badge";
@@ -485,7 +486,17 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             cellClass: "text-right tabular-nums",
             sortValue: (row) => row.ar_open_cents ?? -1,
-            render: (row) => (row.ar_open_cents == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.ar_open_cents)),
+            // ROUND 8.20 board9 — Open balance drills invoices with has_balance for this customer (not plain text).
+            render: (row) =>
+              row.ar_open_cents == null ? (
+                <span className="text-gray-500">Unavailable</span>
+              ) : (
+                <MoneyCell
+                  cents={row.ar_open_cents}
+                  drill={{ amount: { target: "invoices", customerId: row.id, hasBalance: true } }}
+                  data-testid={`customers-ar-open-${row.id}`}
+                />
+              ),
           },
           {
             key: "aging_bar",
@@ -565,7 +576,11 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               row.ar_open_cents == null ? (
                 <span className="text-gray-500">Unavailable</span>
               ) : (
-                fmtMoney(row.ar_open_cents + (unclearedByCustomerId?.get(row.id)?.uncleared_cents ?? 0))
+                <MoneyCell
+                  cents={row.ar_open_cents + (unclearedByCustomerId?.get(row.id)?.uncleared_cents ?? 0)}
+                  drill={{ amount: { target: "invoices", customerId: row.id, hasBalance: true } }}
+                  data-testid={`customers-ar-cleared-${row.id}`}
+                />
               ),
           },
           {
@@ -738,7 +753,16 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             defaultHidden: true,
             cellClass: "text-right tabular-nums",
-            render: (row) => row.open_balance == null ? <span className="text-gray-500">Unavailable</span> : fmtMoney(row.open_balance),
+            render: (row) =>
+              row.open_balance == null ? (
+                <span className="text-gray-500">Unavailable</span>
+              ) : (
+                <MoneyCell
+                  cents={row.open_balance}
+                  drill={{ amount: { target: "invoices", customerId: row.id, hasBalance: true } }}
+                  data-testid={`customers-open-balance-${row.id}`}
+                />
+              ),
           },
           {
             key: "load_count",
