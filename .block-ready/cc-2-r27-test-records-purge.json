@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r27-test-records-purge",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 27 — test records purge ratchet. Guard 20015 enforces legal.matters=0, accidents=0, policies<=3 (prevents test record re-introduction).",
+  "branch": "cc-2/eng-r27-test-records-purge",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-test-records-purge-ratchet.mjs",
+    "scripts/verify-steps/20015-verify-test-records-purge-ratchet.mjs",
+    ".block-ready/cc-2-r27-test-records-purge.json"
+  ],
+  "acceptance": [
+    "verify-test-records-purge-ratchet selftest PASS 2/2",
+    "legal=0/0 accidents=0/0 policies=3/3 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
