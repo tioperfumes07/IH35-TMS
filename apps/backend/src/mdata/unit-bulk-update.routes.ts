@@ -1,4 +1,5 @@
 import { setScopedCompanyContext } from "../_helpers/scoped-company-context.js";
+import { isUnitOwnershipViolation, sendUnitOwnershipViolation } from "./unit-ownership-rule.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { z } from "zod";
 import { vehicleTypeInputSchema } from "./fleet-type-filter.js";
@@ -175,6 +176,7 @@ export async function registerUnitBulkUpdateRoutes(app: FastifyInstance) {
       return payload;
       } catch (error) {
         if (error instanceof FleetBulkTargetMismatchError) return sendFleetBulkTargetMismatch(reply, error);
+        if (isUnitOwnershipViolation(error)) return sendUnitOwnershipViolation(reply, error);
         throw error;
       }
     });

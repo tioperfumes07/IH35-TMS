@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1581,
+  "migration_count": 1588,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -6309,7 +6309,7 @@
     },
     {
       "filename": "202616480200_dispatch_capacity_load_board_audit_triggers.sql",
-      "checksum": "fc9323aeb527ddf8706d319b8445e81af4733301e7a16ef04f5e9151d3bb01fb"
+      "checksum": "ada157ca9463a98e0abfd33d281907bf612829ce90278be53ae48a44d0997441"
     },
     {
       "filename": "202616490100_perfume_desk_isolated_schema.sql",
@@ -6325,7 +6325,35 @@
     },
     {
       "filename": "202616510100_settlement_lines_reinstated_je_same_entity_fk.sql",
-      "checksum": "395a09c276232d91c049590a6630669a2cf9ee6d14f6328a0148a70562c10441"
+      "checksum": "bb765c5381f696e9aa28e0b665cf18656d1fa431cf63ee26cba4af056b293ef0"
+    },
+    {
+      "filename": "202616520100_capacity_offer_sends_email_queue_fk.sql",
+      "checksum": "701c40724726976bd8d2e8abb75475c4f3f9b6861f6dc4230760ac5c3326dc61"
+    },
+    {
+      "filename": "202616530100_perfume_match_method_name.sql",
+      "checksum": "cd0b4bc0501905554a5466ea555134ae8625a4180e41c7bcb032a040cc2d1462"
+    },
+    {
+      "filename": "202616530100_usmca_card_payable_role_wiring.sql",
+      "checksum": "f524732140f7fa3339e08283448f72a90dbcbb2d1e09015f466c41bbdd85907e"
+    },
+    {
+      "filename": "202616540100_perfume_row_gender_override.sql",
+      "checksum": "502324619fa755d4e258ddc0ef17b8eb79f4433d34b4cc430db51346abb390f1"
+    },
+    {
+      "filename": "202616550100_perfume_my_offer_and_inventory.sql",
+      "checksum": "18d380fe6cdd8729ee4fe75399c91444196881a90faf86a2207b3ac2461f48ec"
+    },
+    {
+      "filename": "202616560100_perfume_vendor_short_names.sql",
+      "checksum": "1619b98ec7ffebc514b84aa66167e6e91c8af26c918b59a662843b287e29c5b0"
+    },
+    {
+      "filename": "202616570100_unit_lease_owner_asset_holder_engine.sql",
+      "checksum": "fabbb1f7006202b1d93a8b7a5d9acde95753e23f3ff3d804ce43c11f2030a8c1"
     }
   ]
 }

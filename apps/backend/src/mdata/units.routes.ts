@@ -22,6 +22,7 @@ import { registerUnitTripCostRoutes } from "./unit-trip-cost.routes.js";
 import { registerUnitFinanceLinkageRoutes } from "./unit-finance-linkage.routes.js";
 import { emitMasterDataCreatedSpineEvent } from "./master-data-spine-emit.js";
 import { looksLikeSampleDataName } from "./sample-data-name-detection.js";
+import { isUnitOwnershipViolation, sendUnitOwnershipViolation } from "./unit-ownership-rule.js";
 import { USMCA_COMPANY_ID } from "../org/companies.routes.js";
 import {
   getUnitFinancialYTD,
@@ -619,6 +620,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
       });
       return reply.code(201).send(created);
     } catch (err) {
+      if (isUnitOwnershipViolation(err)) return sendUnitOwnershipViolation(reply, err);
       const code = (err as { code?: string }).code;
       if (code === "23505")
         return reply.code(409).send({ error: "mdata_unit_conflict" });
@@ -899,6 +901,7 @@ export async function registerUnitsRoutes(app: FastifyInstance) {
           return reply.code(404).send({ error: "mdata_unit_not_found" });
         return updated;
       } catch (err) {
+        if (isUnitOwnershipViolation(err)) return sendUnitOwnershipViolation(reply, err);
         const code = (err as { code?: string }).code;
         if (code === "23505")
           return reply.code(409).send({ error: "mdata_unit_conflict" });
