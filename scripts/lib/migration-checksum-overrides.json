@@ -549,7 +549,7 @@
     "reason": "CC-1 #29123's RAISE EXCEPTION when USMCA 2510/2520 are absent broke every fresh CI database (security-audit fresh migrate: 'USMCA account 2510 ... not found'). Now RAISE NOTICE + RETURN when absent. On production 2510/2520 exist and both roles are bound (read 2026-11-12 ~22:35Z: fuel_card_payable_dreamline -> 2510, fuel_card_payable_wex -> 2520), so the guarded file does exactly what the applied file did (applied 2026-11-12 22:24:25Z). Same treatment as 202616131600.",
     "added_at": "2026-11-12",
     "added_in_pr": "MAIN-RED-MIG-202616530100",
-    "ruling": "Lead 2026-11-12 22:35Z (main red for every seat)"
+    "ruling": "docs/bus/11-12-2026-LEAD-RULING-202616530100-CHECKSUM-OVERRIDE.md"
   },
   {
     "filename": "202616480200_dispatch_capacity_load_board_audit_triggers.sql",
