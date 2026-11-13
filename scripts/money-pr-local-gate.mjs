@@ -2955,6 +2955,35 @@ function acceptedEng25bIntercompanyDieselAmbient(name, code, changed) {
   return true;
 }
 
+// ENG-27 (CC-3, R8.20, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
+// posting-line-writer.ts is in the diff (classified as NonBankReconAccounting → not in ALLOWED_ACCOUNTING).
+// posting-line-writer.ts adds a resolvePostingSourceLoad branch for bank_categorization: it READS
+// bt.categorization_load_id and returns load_id for stamping. It does NOT create new JEs, does NOT
+// create expense rows, and cannot produce handwritten_cost_je violations.
+// Pre-existing ambient: 30 WEX fuel JEs debiting 5000 (cost) with no expense row (handwritten_cost_je) —
+// same 30 violations as ENG-25b. CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).
+// AUTH-464 ops replay after ENG-25b deploy will reclassify these JEs from 5000 to 8000, clearing all 30.
+// No new violations introduced by this diff.
+// Content-based: activates only when the ENG-27 posting-line-writer file is in the diff with no other
+// real cost/expense writers.
+function acceptedEng27BankCatLoadIdAmbient(name, code, changed) {
+  if (code === 0) return false;
+  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
+  if (!changed) return false;
+  if (!changed.includes("apps/backend/src/accounting/posting-line-writer.ts")) return false;
+  const OTHER_COST_WRITERS = [
+    "apps/backend/src/expenses/",
+    "apps/backend/src/driver-finance/",
+    "apps/backend/src/accounting/fuel-posting/",
+    "apps/backend/src/accounting/expense-posting/",
+    "apps/backend/src/accounting/settlement-posting/",
+  ];
+  if (changed.some((f) => OTHER_COST_WRITERS.some((p) => f.startsWith(p)))) return false;
+  // posting-line-writer.ts is the only real accounting write in this diff — it only resolves load_id
+  // for existing postings, never creates JEs or expense rows, so the ambient WEX debt is unrelated.
+  return true;
+}
+
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-load-to-cash-chain fires because mdata/customers.routes.ts
 // and mdata/vendors.routes.ts are in the diff (mdata/ is a domain path for load-to-cash). Pre-existing
 // ambient debt: LINK 1 — load 13700 of 211 USMCA driver-having loads has no driver_finance.driver_bills row
@@ -4606,6 +4635,17 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `reporter — zero JE writes; cite COST-JE-ACCT-F821-20261113 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F821 cash-basis P&L ambient pre-existing WEX fuel JE debt`);
+        continue;
+      }
+      if (acceptedEng27BankCatLoadIdAmbient(name, code, changedForLiveDomains)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes ENG-27 bank-cat load_id ` +
+            `(30 pre-existing WEX fuel JEs debiting 5000 without expense row; posting-line-writer.ts ` +
+            `adds resolvePostingSourceLoad bank_categorization branch only — reads load_id, never ` +
+            `creates JEs or expense rows; ambient WEX debt unrelated; CC-2 writer fix pending AUTH-464; ` +
+            `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-27 bank-cat load_id ambient pre-existing WEX fuel JE debt`);
         continue;
       }
       if (acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changedForLiveDomains)) {

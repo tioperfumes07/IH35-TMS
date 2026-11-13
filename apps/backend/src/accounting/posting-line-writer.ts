@@ -302,6 +302,18 @@ export async function resolvePostingSourceLoad(
     );
     return fa.rows[0]?.load_id ?? null;
   }
+  // ENG-27 / G8 — a bank categorization that tags a load carries that load on every leg.
+  // Reads bt.categorization_load_id; never guesses — if unset, returns null and the leg posts without a load.
+  if (line.source_transaction_type === "bank_categorization" && line.operating_company_id) {
+    const bc = await client.query<{ load_id: string | null }>(
+      `SELECT categorization_load_id::text AS load_id
+         FROM banking.bank_transactions
+        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+        LIMIT 1`,
+      [id, line.operating_company_id]
+    );
+    return bc.rows[0]?.load_id ?? null;
+  }
   if (line.source_transaction_type !== "fuel_event") return null;
   const r = await client.query<{ load_id: string }>(
     `SELECT DISTINCT ft.load_id::text AS load_id FROM fuel.fuel_transactions ft
