@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r83-expense-category-mapping",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 83 — expense category mapping ratchet. Guard 19959 enforces active_count >= 33 and inactive_count <= 1.",
+  "branch": "cc-2/eng-r83-expense-category-mapping",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-expense-category-mapping-ratchet.mjs",
+    "scripts/verify-steps/19959-verify-expense-category-mapping-ratchet.mjs",
+    ".block-ready/cc-2-r83-expense-category-mapping.json"
+  ],
+  "acceptance": [
+    "verify-expense-category-mapping-ratchet selftest PASS 2/2",
+    "total=34 active=33>=33 inactive=1/1 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
