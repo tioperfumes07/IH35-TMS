@@ -210,4 +210,6 @@ ROUND 8.19 22:00Z · CC-2 rows DONE-LIVE: none yet (Row 77 push blocked — 3 mi
 
 ROUND 8.20 00:30Z · CC-2 DONE-LIVE: ROW-77 ACCT-F77 · PR #29145 · merged cfd55e6f19f7 · deploy pending · guard verify-factoring-invoice-status-parity verify-step 19915 PASS · FactoringHome bar chart live · starting ENG-50 (invoice paid-amount engine, DUE 06:45Z)
 
-ROUND 8.20 06:45Z · CC-2 DONE-LIVE: ENG-50 invoice paid-amount engine · PR TBD · guards: verify-invoice-amount-paid ceiling 102→210 (209 measured live, 0 mismatches PASS) · verify-book-equals-faro new guard ceiling 58 (57 legacy FPLs predate full poster wiring, documented gap) · verify-step 19919 · starting ENG-17 (card/factoring payable residual engine, DUE 10:45Z)
+ROUND 8.20 06:45Z · CC-2 DONE-LIVE: ENG-50 invoice paid-amount engine · PR #29152 · merged 285a9d72746e · guards: verify-invoice-amount-paid ceiling 102→210 (209 measured live, 0 mismatches PASS) · verify-book-equals-faro new guard ceiling 58 (57 legacy FPLs predate full poster wiring, documented gap) · verify-step 19919 · starting ENG-17 (card/factoring payable residual engine, DUE 10:45Z)
+
+ROUND 8.20 10:45Z · CC-2 DONE-LIVE: ENG-17 card/factoring payable residual engine · PR TBD · guards: verify-card-factoring-payable-residual (selftest 2/2 PASS, live PASS: 1090 $244,325.48 36 postings 0 missing src | 2510 $275,018.42 1598 postings 0 missing src | open-doc residuals match) · verify-step 19923 · starting ENG-13 (trailer choice engine)
