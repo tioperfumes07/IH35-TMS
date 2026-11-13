@@ -6,7 +6,7 @@
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getInsuranceSummary,
   listInsurancePolicies,
@@ -27,6 +27,7 @@ import { formatQuantityTable, formatUsdCents } from "../../../lib/money";
 import { formatDateUS, formatCalendarDateUS } from "../../../lib/formatDate";
 import { insuranceTypeLabel } from "../../../lib/insurance-type-label";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 
 function dayMs(iso: string): number {
@@ -113,6 +114,9 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
 
 export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const insHref = (target: string) => withReturnContext(target, originHref);
   const today = companyToday();
 
   const summaryQuery = useQuery({
@@ -242,7 +246,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           testId="insurance-kpi-active-policies"
           label="Active policies"
           value={loading && activeCount == null ? "…" : dash(activeCount)}
-          href="/insurance/policies"
+          href={insHref("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-annual-premium"
@@ -254,7 +258,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 ? formatUsdCents(annualPremiumCents)
                 : "—"
           }
-          href="/insurance/policies"
+          href={insHref("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-renewal"
@@ -267,13 +271,13 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                 : "—"
           }
           sub={renewal ? `${formatQuantityTable(renewal.days, 0)} days` : undefined}
-          href="/insurance/policies"
+          href={insHref("/insurance/policies")}
         />
         <V3KpiTile
           testId="insurance-kpi-open-claims"
           label="Open claims"
           value={loading && openClaims == null ? "…" : dash(openClaims)}
-          href="/insurance/claims"
+          href={insHref("/insurance/claims")}
         />
         <V3KpiTile
           testId="insurance-kpi-coverage-gaps"
@@ -281,7 +285,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           value={loading && gapCount == null ? "…" : dash(gapCount)}
           sub="units without a policy"
           tone={gapCount != null && gapCount > 0 ? "red" : "ink"}
-          href="/insurance/coverage-gaps"
+          href={insHref("/insurance/coverage-gaps")}
         />
       </section> : null}
 
@@ -291,7 +295,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
       >
         <BoardSection
           title="Policy year"
-          onViewAll={() => navigate("/insurance/policies")}
+          onViewAll={() => navigate(insHref("/insurance/policies"))}
           testId="insurance-home-policy-year"
         >
           {yearWindow ? (
@@ -423,7 +427,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Premium by coverage"
-          onViewAll={() => navigate("/insurance/policies")}
+          onViewAll={() => navigate(insHref("/insurance/policies"))}
           testId="insurance-home-premium-by-coverage"
           footer={
             <>

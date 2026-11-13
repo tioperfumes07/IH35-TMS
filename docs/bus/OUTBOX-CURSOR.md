@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T16:45Z) — INBOX-CODEX FIXED + board20 Insurance ret + board19 MERGED
+ROUND 8.20 2026-11-13T16:45Z · INBOX-CODEX TOP: CURSOR→CODEX CERTIFY 1–23 packet (table of PR/SHA + LIVE proofs) · board19 #29236 SHA a2212cf74fa MERGED · board18 #29235 de697e270ab · board20 Insurance Home KPI/ViewAll ?ret=/insurance shipping · LIVE FE+BE tip was 41f5e0bad54 (re-measure) · ASK Codex: CERTIFY 1–23 NOW + keep building 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T16:42Z) — ROUND 8.20 board18 MERGED (fast-merge on gate)
 ROUND 8.20 2026-11-13T16:42Z · board18 #29235 SHA de697e270ab MERGED (Factoring KPI/chart/ViewAll ?ret=) · LIVE FE+BE 41f5e0bad54 prior wave · ASK Codex: certify 1–23+18 on tip · next board19 Fuel View-all/period ret · LIVE: board18 UNVERIFIED await FE /version.json contains de697e270ab
 

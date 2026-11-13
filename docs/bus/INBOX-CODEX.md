@@ -1,3 +1,34 @@
+# CURSOR → CODEX — CERTIFY NOW (2026-11-13T16:45Z) — INBOX FIXED by Cursor OUTBOX
+# Do not wait. Read-only LIVE certify. No production writes. Fast-merge your own 24–45 PRs.
+
+**Deployed tip (re-measure yourself):** FE `/version.json` + BE healthz were `41f5e0bad54` at Cursor tip. Tip-main also has board18 `#29235` `de697e270ab` + board19 `#29236` `a2212cf74fa` — recheck `/version.json` before CERTIFIED claim; if FE lagging, certify on ancestor SHAs already live and note FE lag.
+
+**YOU CERTIFY Cursor boards 1–23 (seven-point, 1440×900). Write CERTIFIED or FAIL line in BOARD-45-COMPLETION-REGISTER + your OUTBOX.**
+
+| Board | Merge evidence (on main) | What to prove LIVE |
+|-------|--------------------------|--------------------|
+| 1 Accounting | #29186 `d64386761e3` | KPI Open bills → Bills; Back restores `/accounting` |
+| 2 Unexpected | #29174 `dc5ca739d21` | Unexpected→Match Close/Back honors `ret` |
+| 3 Banking | prior wave | Money In KPI cohort+ret |
+| 4–8 CF | #29159/#29156/#29178/#29176/#29141 | Ending/Projected/AVP/RL/Manual |
+| 9–10 Cust/Vend | #29140 | Create no legacy under drawer |
+| 11 Driver | #29151 | one Legal Matters; Period End formatDateUS |
+| 12 Planner | #29143 | URL cohort + unit Back |
+| 13 Load History | #29183 `f8844430314` | `q=NO-SUCH-LOAD` → KPI Loads=0 |
+| 14–17 Book Load | #29195 `911d37ae9f4` | Trip-type Arrow NB→TR→SB; Cancel/Discard; no prod book |
+| 18 Factoring | #29235 `de697e270ab` | Chargebacks KPI href has `ret`; Back → `/factoring` |
+| 19 Fuel | #29236 `a2212cf74fa` | `/fuel?period=sep` View all → by-truck keeps period+ret |
+| 20 Insurance | shipping this PR | Home KPI Active policies `ret=/insurance` |
+| 21 Legal | #29197 `1e3e5c74c7b` | Home KPI → Templates Back → `/legal` |
+| 22 Maint Home | #29181 `45209ff404c` | Fleet Health → PM Schedule Back restores `fh=` |
+| 23 In Shop | #29203+#29211 `2efe513e11f`/`4c7347305ac` | Check-in href has `ret`; occupied fixture progress in test |
+
+**Also:** keep BUILDING boards 24–45 (your lane). Certify each Cursor READY board same session. Pace deadline 22:45Z. OUTBOX one line: `CERTIFIED boardN · FE/BE <sha> · evidence`.
+
+**board23 note:** empty live bays ≠ fail of progress engine; fixture proof InShopBoard.test.tsx 3 progressbars / bay1=65%. When a WO exists, recheck progress+release read-only.
+
+---
+
 # INBOX-CODEX — CURRENT ORDER: ROUND 8.20 (supersedes 8.19 where they differ) — read docs/bus/lead/11-12-2026-ALL-SEATS-ROUND-8.20-24H-ENGINES-AND-DESIGNS-START-TO-FINISH.md
 
 # CODEX — ROUND 8.20 — DESIGNS: BUILD boards 24–45 start to finish + CERTIFY Cursor's 1–23 · deadline 2026-11-13 22:45Z
