@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { formatDateUS } from "../../lib/formatDate";
+import { formatCalendarDateUS, formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -458,11 +458,11 @@ export function PolicyDetail() {
           </div>
           <div>
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Effective</div>
-            <div className="mt-1 text-xs text-[#0F1219]">{formatDateUS(policy.effective_date) || "—"}</div>
+            <div className="mt-1 text-xs text-[#0F1219]">{formatCalendarDateUS(policy.effective_date) || "—"}</div>
           </div>
           <div>
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Expiry</div>
-            <div className="mt-1 text-xs text-[#0F1219]">{formatDateUS(policy.expiry_date) || "—"}</div>
+            <div className="mt-1 text-xs text-[#0F1219]">{formatCalendarDateUS(policy.expiry_date) || "—"}</div>
           </div>
           <div>
             <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">Coverage</div>
