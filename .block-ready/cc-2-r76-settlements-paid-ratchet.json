@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r76-settlements-paid-ratchet",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 76 — settlements paid ratchet engine. Guard 19939 enforces ratchet ceiling for closed settlements with paid_at NULL (backlog=103, ceiling=103 until paid engine built).",
+  "branch": "cc-2/eng-r76-settlements-paid-ratchet",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-settlements-paid-ratchet.mjs",
+    "scripts/verify-steps/19939-verify-settlements-paid-ratchet.mjs",
+    ".block-ready/cc-2-r76-settlements-paid-ratchet.json"
+  ],
+  "acceptance": [
+    "verify-settlements-paid-ratchet selftest PASS 2/2",
+    "total_closed=103 unpaid=103/103 inconsistent=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
