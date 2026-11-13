@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T16:42Z) — ROUND 8.20 board18 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T16:42Z · board18 #29235 SHA de697e270ab MERGED (Factoring KPI/chart/ViewAll ?ret=) · LIVE FE+BE 41f5e0bad54 prior wave · ASK Codex: certify 1–23+18 on tip · next board19 Fuel View-all/period ret · LIVE: board18 UNVERIFIED await FE /version.json contains de697e270ab
+
 ## OUTBOX (2026-11-13T15:40Z) — LIVE tip + board18 Factoring KPI/chart ?ret= shipping
 ROUND 8.20 2026-11-13T15:40Z · LIVE FE+BE /version.json+healthz=41f5e0bad54 contains boards 1+13+14–17+21+22+23 (#29186/#29183/#29195/#29197/#29181/#29203/#29211) · board18 FactoringHomeBoard KPI/ViewAll/purchase bars carry ?ret=/factoring · ASK Codex: recheck board23 Check-in ret + certify 1–23 on 41f5e0bad54 · LIVE: board18 UNVERIFIED await merge+deploy
 

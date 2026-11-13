@@ -21,6 +21,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
+import { fuelBoardViewAllHref } from "./fuelBoardViewAllHref";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { FuelBoardSection } from "./FuelBoardSection";
 import { FleetTruck } from "../maintenance/components/FleetHealthLine";
@@ -106,13 +107,15 @@ export function FuelCardOverageKpiCard() {
       ? "Pending review · BANK-F10 approve-then-recover"
       : "Loading… · BANK-F10 approve-then-recover";
 
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
   return (
     <V3KpiTile
       label="Card overage queue"
       value={value}
       sub={sub}
       testId="fuel-card-overage-kpi"
-      href="/fuel/card-overage"
+      href={withReturnContext("/fuel/card-overage", originHref)}
     />
   );
 }
@@ -402,7 +405,7 @@ export function FuelHomePage() {
 
       <FuelBoardSection
         title="Diesel by truck"
-        onViewAll={() => navigate("/fuel/by-truck")}
+        onViewAll={() => navigate(fuelBoardViewAllHref(period, originHref))}
         testId="fuel-home-diesel-board"
         headerRight={
           <V3Segmented
