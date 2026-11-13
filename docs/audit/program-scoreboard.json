@@ -1,10 +1,10 @@
 {
-  "healthzSha": "12d0cc5",
-  "generated_at": "2026-11-13T00:43:12.266Z",
+  "healthzSha": "add6a98",
+  "generated_at": "2026-11-13T02:24:10.401Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "12d0cc5",
+    "deployedSha": "add6a98",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,6 +2123,87 @@
   },
   "recentActivity": [
     {
+      "number": 29139,
+      "title": "PERFUME: Review select-all / select ≥N% alike + 'Use suggestion for all selected' (100–500 at once)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 08:17 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29139",
+      "sha": "add6a98148",
+      "committedAtIso": "2026-11-12T20:17:38-06:00"
+    },
+    {
+      "number": 29137,
+      "title": "PERFUME: HER/HERS read as Women, HIM/HIS as Men (kept in the name) — no men's bottle offered for BURBERRY BRIT HER",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 08:15 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29137",
+      "sha": "6a37ee6aa4",
+      "committedAtIso": "2026-11-12T20:15:59-06:00"
+    },
+    {
+      "number": 29149,
+      "title": "Claude-1- MAIN-RED 3 fixes: migration-override ruling + customer-create target + USMCA battery doc",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 08:09 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29149",
+      "sha": "9aa874275e",
+      "committedAtIso": "2026-11-13T02:09:34Z"
+    },
+    {
+      "number": 29148,
+      "title": "CC-2- chore: reserve verify-step 19919 book-equals-Faro (ENG-50)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 08:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29148",
+      "sha": "b23897b570",
+      "committedAtIso": "2026-11-12T21:08:17-05:00"
+    },
+    {
+      "number": 29147,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 07:54 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29147",
+      "sha": "70729a3237",
+      "committedAtIso": "2026-11-13T01:54:52Z"
+    },
+    {
+      "number": 29146,
+      "title": "FINDING: CLAIM-RESERVE CC-1 20113 ENG-60 no-insurance-lawsuit-sql-reads (CC-1 band ≡1)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 07:52 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29146",
+      "sha": "2ed8a9a293",
+      "committedAtIso": "2026-11-13T01:52:57Z"
+    },
+    {
+      "number": 29145,
+      "title": "FINDING: ACCT-F77-ROW77 — factoring invoice status engine + account summary replace (Round 8.15)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 07:50 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29145",
+      "sha": "cfd55e6f19",
+      "committedAtIso": "2026-11-12T20:50:33-05:00"
+    },
+    {
+      "number": 29144,
+      "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:43 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29144",
+      "sha": "0da83637a1",
+      "committedAtIso": "2026-11-13T00:43:56Z"
+    },
+    {
+      "number": 0,
+      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 06:43 PM CT",
+      "url": "",
+      "sha": "a23362d2f0",
+      "committedAtIso": "2026-11-13T00:43:12Z"
+    },
+    {
       "number": 29142,
       "title": "FINDING: LEAD-F820 P0 MAIN-RED — bank-register-sign accepts cohortReview",
       "state": "merged",
@@ -2130,87 +2211,6 @@
       "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29142",
       "sha": "12d0cc5190",
       "committedAtIso": "2026-11-12T17:51:49-06:00"
-    },
-    {
-      "number": 29141,
-      "title": "FINDING: BANK-F820 ROUND 8.20 board8 Manual Save waits for opening cash",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:45 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29141",
-      "sha": "671c5c8e5f",
-      "committedAtIso": "2026-11-12T17:45:52-06:00"
-    },
-    {
-      "number": 29140,
-      "title": "FINDING: BANK-F820 ROUND 8.20 boards 9+10 Create overlays Regular board",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:41 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29140",
-      "sha": "8edbfea33c",
-      "committedAtIso": "2026-11-12T17:41:03-06:00"
-    },
-    {
-      "number": 29136,
-      "title": "FINDING: BANK-F820 ROUND 8.20 board20 Insurance PolicyDetail coverage summary",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:23 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29136",
-      "sha": "e10d3fef23",
-      "committedAtIso": "2026-11-12T17:23:05-06:00"
-    },
-    {
-      "number": 29134,
-      "title": "FINDING: BANK-F820 ROUND 8.20 board3 Banking Money In cohort URL + KPI hrefs",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:16 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29134",
-      "sha": "1759d4e933",
-      "committedAtIso": "2026-11-12T17:16:04-06:00"
-    },
-    {
-      "number": 29133,
-      "title": "FINDING: BANK-F820 ROUND 8.20 board2 Unexpected Link → Banking Match drawer + ret",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29133",
-      "sha": "4b595650a3",
-      "committedAtIso": "2026-11-12T17:09:01-06:00"
-    },
-    {
-      "number": 29132,
-      "title": "FINDING: BANK-F820 ROUND 8.20 Fuel board19 Home drills + period URL + card KPI hrefs",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:01 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29132",
-      "sha": "0986ff829f",
-      "committedAtIso": "2026-11-12T17:01:30-06:00"
-    },
-    {
-      "number": 29131,
-      "title": "PERFUME: Rules › Match clean-up — one click merges brand spellings and re-runs Review",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:00 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29131",
-      "sha": "4a36128147",
-      "committedAtIso": "2026-11-12T17:00:14-06:00"
-    },
-    {
-      "number": 29130,
-      "title": "FINDING: BANK-F819 ROUND 8.19 Pre-Settlements board36 P-number + Filters + Back",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 04:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29130",
-      "sha": "189d1500d8",
-      "committedAtIso": "2026-11-12T16:52:23-06:00"
-    },
-    {
-      "number": 29128,
-      "title": "docs(bus): ROUND 8.20 — 24h plan, every engine and every board start to finish, one owner each (measured 0/45 boards, 27 engines open)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 04:48 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29128",
-      "sha": "e8a6e277ac",
-      "committedAtIso": "2026-11-12T16:48:07-06:00"
     }
   ]
 }
