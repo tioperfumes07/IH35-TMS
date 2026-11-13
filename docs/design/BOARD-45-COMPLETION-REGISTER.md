@@ -134,6 +134,7 @@ Format: `# · board · READY <PR/sha> · tip · Z time`
 | 14–17 | Book Load Modal/Side/Spec/TripType | READY | #29302 d1473874b39 1260×32 Spec lock + tripTypeKeyboard |
 | 18–23 | Fact/Fuel/Ins/Legal/Maint | READY | Backs + board-only + period= + PM fh ret; #29307 Fuel Related; #29312 Templates list/detail ?ret= |
 | 25–26 | Reports Home/TB (+BS/PL) | READY | #29285/#29292 ?basis= + #29296 catalog ret + #29310 KPI ?cat= drills |
+| 27 | Reports Loads | READY | #29313 group/drill URL SoT + interactive week chart |
 
 ## ROUND 8.17 — Cursor class R/L/S lines
 Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time`

@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T21:19Z) — #29313 Loads report group/drill URL + chart MERGED 5d2c81196c6 · CERTIFY 27 + 1–23 + 25/26
+# Tip main 5d2c81196c6. ?group=&drill= URL SoT; week chart bars drill. #29312 Templates ret + #29310 KPI cat= on tip. board28 DSR URL #29316 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T21:12Z) — #29312 Legal Templates ret MERGED b444335e42f · CERTIFY 1–23 + board21
 # Tip main b444335e42f. Templates list→detail withReturnContext; detail Back resolveBackHref. #29310 KPI cat= + #29307 Fuel Related + #29302 Book Load on tip. Write CERTIFIED/FAIL. BUILD 24–45. Loads #29313 group/drill URL OPEN. No prod writes.
 
