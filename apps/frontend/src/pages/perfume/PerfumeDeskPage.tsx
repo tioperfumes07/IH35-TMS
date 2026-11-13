@@ -45,6 +45,15 @@ function TioLogo() {
 export default function PerfumeDeskPage() {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.find(([k]) => k === params.get("tab"))?.[0] ?? "buy") as Tab;
+  // Owner 2026-11-13: "each tab must have a button or selector so i can have it show only those items in my list and
+  // all competitions and all vendors prices on only my items". One selector for the whole desk, in the URL, kept on
+  // every tab switch.
+  const mine = MINE_OPTIONS.find(([k]) => k === params.get("mine"))?.[0] ?? null;
+  const go = (next: { tab?: Tab; mine?: MineChoice }) => {
+    const t = next.tab ?? tab;
+    const m = next.mine === undefined ? mine : next.mine;
+    setParams(m ? { tab: t, mine: m } : { tab: t });
+  };
   const access = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, staleTime: 300_000 });
   const allowed = access.data?.allowed === true;
   const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1), enabled: allowed });
@@ -71,7 +80,7 @@ export default function PerfumeDeskPage() {
           <button
             key={k}
             type="button"
-            onClick={() => setParams({ tab: k })}
+            onClick={() => go({ tab: k })}
             aria-current={tab === k ? "page" : undefined}
             className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}
           >
@@ -83,7 +92,21 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} />}
+      {tab === "lists" || tab === "review" || tab === "rules" ? null : (
+        <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
+          <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
+          {MINE_OPTIONS.map(([k, l]) => (
+            <button key={String(k)} type="button" aria-pressed={mine === k} data-testid={`perfume-mine-${k ?? "all"}`} onClick={() => go({ mine: k })}
+              className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${mine === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}>
+              {tr(`perfume.desk.mine.${k ?? "all"}`, l)}
+            </button>
+          ))}
+          <span className="text-xs text-gray-600">
+            {mine ? tr("perfume.desk.mine.help.on", "Only items on this list — every supplier's and every competitor's price shown for them, on every tab.") : tr("perfume.desk.mine.help.off", "Every item this tab can price.")}
+          </span>
+        </div>
+      )}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
@@ -97,19 +120,25 @@ const VIEW_HELP: Record<PerfumeGridView, string> = {
   comp: "Each competitor's margin if they buy from the cheapest supplier: that supplier's list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30 — change it in Rules) is their cost; their price less that is what they earn.",
   all: "The whole item database.",
 };
+type MineChoice = "offer" | "inventory" | "need" | null;
+const MINE_OPTIONS: ReadonlyArray<readonly [MineChoice, string]> = [[null, "All items"], ["offer", "My offer list"], ["inventory", "My inventory"], ["need", "Need to buy"]];
 const PAGE = 200;
 const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
-function defaultVisible(view: PerfumeGridView, key: string): boolean {
+function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = null): boolean {
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
+  // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
+  // price for those items (owner 2026-11-13), on top of the tab's own columns.
+  if (mine && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
+    || ["my_offer_price", "offer_action", "offer_margin_pct", "my_qty", "my_last_cost", "my_need", "best_vendor", "low_sell"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
   // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
   if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   if (view === "comp") return item || /^c:.*:(price|earn|margin)$/.test(key) || ["comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
-  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "offer_action", "target_price_margin", "low_sell", "target_action"].includes(key);
+  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "offer_action", "offer_margin_pct", "target_price_margin", "low_sell", "target_action"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
 
@@ -124,14 +153,15 @@ const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], 
 
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
-function GridPanel({ view }: { view: PerfumeGridView }) {
+function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) {
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
   const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
-  // Owner 2026-11-12: "a selector that will only show items from my list that I offer or from my needs list".
-  const [mine, setMine] = useState<"offer" | "inventory" | "need" | null>(null);
   const [page, setPage] = useState(1);
+  // The desk-wide "Show" selector changed: back to page 1.
+  const [mineSeen, setMineSeen] = useState(mine);
+  if (mineSeen !== mine) { setMineSeen(mine); setPage(1); }
   const [pageSize, setPageSize] = useState(PAGE);
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
   const [target, setTarget] = useState<number | null>(null);
@@ -161,18 +191,18 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
     const seen = new Set<string>();
     const starts = new Set<string>();
     for (const c of cols) {
-      if (seen.has(c.group) || !defaultVisible(view, c.key)) continue;
+      if (seen.has(c.group) || !defaultVisible(view, c.key, mine)) continue;
       seen.add(c.group);
       if (c.group !== "Item") starts.add(c.key);
     }
     return starts;
-  }, [cols, view]);
+  }, [cols, view, mine]);
   const columns: Array<ParityColumn<PerfumeGridRow>> = useMemo(
     () => cols.map((c) => ({
       key: c.key,
       label: c.label,
       sortable: true,
-      defaultHidden: !defaultVisible(view, c.key),
+      defaultHidden: !defaultVisible(view, c.key, mine),
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
       cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
@@ -187,7 +217,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view, groupStart],
+    [cols, view, mine, groupStart],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
@@ -210,12 +240,12 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
         <div className="text-xs text-gray-500" data-testid="perfume-grid-loading">{query.isError ? "Couldn't load the grid" : "Loading…"}</div>
       ) : (
       <ParityTable<PerfumeGridRow>
-        key={view}
+        key={`${view}-${mine ?? "all"}`}
         columns={columns}
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
-        storageKey={`perfume-desk-${view}-v6`}
+        storageKey={`perfume-desk-${view}${mine ? "-mine" : ""}-v7`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}
@@ -276,14 +306,6 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
                 />
               </label>
             ) : null}
-            <span className="flex items-center gap-1" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
-              {([[null, "All items"], ["offer", "My offer list"], ["inventory", "My inventory"], ["need", "Need to buy"]] as const).map(([k, l]) => (
-                <button key={String(k)} type="button" aria-pressed={mine === k} onClick={() => { setMine(k); setPage(1); }}
-                  className={`h-[34px] rounded-sm border px-2 text-xs font-semibold ${mine === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>
-                  {tr(`perfume.desk.mine.${k ?? "all"}`, l)}
-                </button>
-              ))}
-            </span>
             {FACETS.map((f) => (
               <MultiSelectDropdown
                 key={f.key}
@@ -307,7 +329,7 @@ function GridPanel({ view }: { view: PerfumeGridView }) {
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}

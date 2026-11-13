@@ -77,6 +77,36 @@ describe("PERFUME-DESK page", () => {
     expect(String(gridCall?.[0])).toContain("view=buy");
   });
 
+  it("Show: My offer list holds on every tab, sends mine=offer, and shows every supplier and competitor price", async () => {
+    const MINE_GRID = {
+      ...GRID,
+      cols: [
+        { key: "brand", label: "Brand", group: "Item", kind: "text" },
+        { key: "name", label: "Name", group: "Item", kind: "text" },
+        { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
+        { key: "v:a:price", label: "List price", group: "Supplier A", kind: "money" },
+        { key: "s:b:price", label: "Their price", group: "Competitor · B", kind: "money" },
+      ],
+      rows: [{ id: "i1", brand: "ARMAF", name: "CLUB NUIT INTENSE", my_offer_price: 2250, "v:a:price": 2020, "s:b:price": 2450 }],
+    };
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/access") return { allowed: true };
+      if (path.startsWith("/api/v1/perfume/grid")) return MINE_GRID;
+      if (path.startsWith("/api/v1/perfume/review")) return { rows: [], total: 0 };
+      throw new Error(`unexpected ${path}`);
+    });
+    renderPage("/perfume?tab=wholesale&mine=offer");
+    expect(await screen.findByText("$24.50")).toBeTruthy(); // competitor
+    expect(screen.getByText("$20.20")).toBeTruthy(); // supplier — shown on Wholesale only because the list is narrowed
+    expect(screen.getByText("$22.50")).toBeTruthy(); // my offer
+    expect(screen.getByTestId("perfume-mine-offer").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: "Competition · their margin" }));
+    await waitFor(() => expect(vi.mocked(clientApi.apiRequest).mock.calls.some(([p]) => String(p).includes("view=comp") && String(p).includes("mine=offer"))).toBe(true));
+    expect(screen.getByTestId("perfume-mine-offer").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByTestId("perfume-mine-all"));
+    await waitFor(() => expect(screen.getByTestId("perfume-mine-all").getAttribute("aria-pressed")).toBe("true"));
+  });
+
   it("another Owner-role login not listed in perfume.desk_users sees the locked notice and no data is fetched", async () => {
     vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
       if (path === "/api/v1/perfume/access") return { allowed: false };
