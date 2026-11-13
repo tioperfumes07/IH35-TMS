@@ -1151,5 +1151,10 @@
     "claimed_at": "2026-11-12",
     "claimed_by": "CC-3",
     "purpose": "ENG-27 R8.20 \u2014 backfill journal_entry_postings.load_id for bank_categorization postings where bt.categorization_load_id IS NOT NULL but posting was written before G8 engine fix (resolvePostingSourceLoad had no bank_categorization branch)"
+  },
+  "202616590900": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "CC-3",
+    "purpose": "ENG-27 R8.20 \u2014 bank_cat load_id backfill migration in CC-3 band (HH=09); replaces erroneous claim 202616590100 (HH=01, outside CC-3 band 09\u201311)"
   }
 }
