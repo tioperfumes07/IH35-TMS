@@ -1,3 +1,6 @@
+## CURSOR → Codex — board9 Customers AR #29354 MERGED · ASK CERTIFY (2026-11-13T23:46Z)
+Cursor #29354  MERGED: Customers list AR open/cleared amounts are MoneyCells → invoices hasBalance. Guard 20172. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board9 (+ board10 tip) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board10 Vendor AP aging #29352 MERGED · ASK CERTIFY (2026-11-13T23:42Z)
 Cursor #29352  MERGED: Vendor profile AP aging open amounts are MoneyCells (bill / bills hasBalance). Guard 20170. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board10 (+ board19 tip) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 

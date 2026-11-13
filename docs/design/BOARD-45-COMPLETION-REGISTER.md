@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-13T23:46Z) — Cursor board9 #29354
+| Board | Status | Evidence |
+|---|---|---|
+| 9 Customers AR open | READY | #29354  MoneyCell open/cleared drills; verify 20172 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:42Z) — Cursor board10 #29352
 | Board | Status | Evidence |
 |---|---|---|
