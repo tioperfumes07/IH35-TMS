@@ -1,5 +1,5 @@
 {
-  "  "20159": {
+  "20159": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-driver-profile-stops-miles-once board11"
@@ -9,7 +9,7 @@
     "claimed_by": "cursor",
     "purpose": "verify-vendor-report-pays-through-entitylink board10/31"
   },
-10001": {
+  "10001": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-invoice-source-load-uniqueness-race"
