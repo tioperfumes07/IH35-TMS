@@ -1,3 +1,45 @@
+## 2026-11-13 ~22:15Z — ROUND 8.27 AMBIENT-BYPASS SWEEP TABLE (CC-1)
+
+PR #29328 IN CI — delete 4 more redundant `verify-costs-are-expenses` bypasses (ratchet covers them).
+
+### Remaining `accepted*Ambient` bypasses — full inventory (post #29325 + #29328)
+
+Priority tiers: **MONEY** = silences a money/GL integrity guard · **OPS** = silences an operational data guard · **ENV** = environment-variable-gated (requires explicit var to activate)
+
+| # | Function | Guard silenced | Prod data hidden | Action |
+|---|----------|---------------|-----------------|--------|
+| 1 | `acceptedAcctF11152FuelCostExactlyOnceAmbient` | `verify-fuel-cost-posts-exactly-once` | 30 orphan fuel_event JEs + FUEL_5000 mismatch $369k≠$373k + 12 linkage gaps (USMCA, batch82) | **RATCHET** (MONEY — same 30 WEX JEs; baseline same as costs-are-expenses) |
+| 2 | `acceptedEng25bFuelCostExactlyOnceAmbient` | same ^ | same 30 orphan JEs, ENG-25b diff shape | **DELETE** after #1 ratchet (redundant) |
+| 3 | `acceptedAcctF11152VoidIsWholeAmbient` | `verify-void-is-whole` | fuel purchase 71c8456f header voided, live JEs remain (VOID-F443-STRANDED-POSTINGS-20261110) | **RATCHET** (MONEY) |
+| 4 | `acceptedAcctF11152FinalLoadClosePostsAmbient` | `verify-final-load-close-posts` | settlements P-0125/P-0128/P-0130 (loads 13711/13727/13729) stuck open — `postFinalLoadSettlementsGl` never ran | **RATCHET** (MONEY) |
+| 5 | `acceptedAcctF11152LoadToCashChainAmbient` | `verify-load-to-cash-chain` | load 13700 of 211 USMCA driver-having loads has no `driver_finance.driver_bills` row (LINK1-F11152) | **RATCHET** (MONEY) |
+| 6 | `acceptedAcctF11152FactoringKpisAmbient` | `verify-factoring-banking-kpis-tie-to-ledger` | 4 banking KPI mismatches: cleared_vs_uncleared $101,996,437≠$102,346,437; unmatched_inflow $97,349,337≠$97,699,337; unmatched_outflow $107,959,938≠$109,570,136; match_rate 4.69≠4.64 (BANK-F11152) | **RATCHET** (MONEY) |
+| 7 | `acceptedLdt4FactoringStatusAmbient` | `verify-ldt-4-factoring-money` | Invoice 18-13529 status='factored' (A/R derecognized) on prod — appeared after CC-2 factoring purchase engine (LDT-F11152-E2) | **RATCHET** (MONEY) |
+| 8 | `acceptedAcctF11152BookedMilesAmbient` | `verify-booked-loads-save-miles` | RULE 2: loads 13716/13728 + RULE 4: loads 13702/13704/13711/13718/13723/13725/13735 — 9 findings / 227 USMCA loads (MILES-F11152) | **RATCHET** (OPS) |
+| 9 | `acceptedEng53BookedMilesAmbient` | same ^ | same 9 missing-miles findings, ENG-53 diff shape | **DELETE** after #8 ratchet (redundant) |
+| 10 | `acceptedAcctF11152LoadCostRollupAmbient` | `verify-load-cost-rollup-lateral-no-alias-shadow` | settlement 0f7d6e18/load 8f4af2dc costs_cents=139,716≠152,752 (COST-F11152) | **RATCHET** (OPS) |
+| 11 | `acceptedAcctF11152SamsaraZipFenceAmbient` | `verify-stops-resolve-samsara-no-zip-fence` | fence 26464921-…/stop-1-gps auto_dispatch zip/city center — no street (SAMSARA-F11152) | **RATCHET** (OPS) |
+| 12 | `acceptedAcctF11152StopsGeocodedAmbient` | `verify-stops-are-geocoded` | load 13735 has at least 1 uncoordinated stop (GEO-F13735) | **RATCHET** (OPS) |
+| 13 | `acceptedAcctF11152PartyBoardsAmbient` | `verify-party-boards-bound-live` | customers billed (cents) engine 77,444,672≠recompute 79,634,672 (PARTY-F11152) | **RATCHET** (OPS) |
+| 14 | `acceptedAcctF11152PurgeWindowStateAmbient` | `verify-purge-window-state` | 4 voided company_settlements with no void_reason (VOID-PURGE-F443) | **RATCHET** (OPS) |
+| 15 | `acceptedAcctF11152ReconcilerExceptionsAmbient` | `verify-reconciler-exceptions` | I9 truck_cannot_make_next_stop (loads 13727/13729) + stop_no_street_address (loads 13711/13727/13729/13735) | **RATCHET** (OPS — baseline may already exist in `verify-reconciler-exceptions.baseline.json`) |
+| 16 | `acceptedAcctF11152BusFilesAmbient` | `verify-bus-files-are-readable` | all NOW-*.md bus files >48h stale (BUS-F443 — operational condition, not financial data) | **DELETE** (guard fires on stale operational files; bus files update on every push; bypass is a no-op once files are current) |
+| 17 | `accepted443182BPlCostAmbient` | `verify-pl-cost-of-revenue` | DEFECT 2 delivery-evidence-latch.ts:82 date mismatch | **ENV-GATED** (requires `ROUND_443_182_B_PL_COST_AMBIENT=1`; never fires without explicit activation — lowest priority) |
+
+**Order (money-critical first):**
+1. #1 + #2 (fuel-cost-exactly-once ratchet + ENG-25b delete) — MONEY, same WEX 30 JEs
+2. #3 (void-is-whole ratchet) — MONEY, stranded posting
+3. #4 (final-load-close-posts ratchet) — MONEY, stuck settlements
+4. #5 (load-to-cash-chain ratchet) — MONEY, missing driver_bills
+5. #6 (factoring-banking-kpis ratchet) — MONEY, banking KPI mismatch
+6. #7 (ldt4-factoring-money ratchet) — MONEY, invoice status
+7. #8 + #9 (booked-miles ratchet + ENG-53 delete) — OPS
+8. #10–#15 (remaining OPS ratchets) — batch one PR each
+9. #16 (bus-files delete) — after confirming guard behavior
+10. #17 (443.182B env-gated) — lowest, needs root-fix of delivery-evidence-latch
+
+---
+
 ## 2026-11-13 ~22:00Z — ROUND 8.27 ACCT-RATCHET DONE-ENGINE (CC-1)
 
 **PR #29325 MERGED** `722a0656ccd` — convert verify-costs-are-expenses-not-handwritten-jes to shrink-only ratchet; delete 3 ambient bypasses (acceptedRow104FuelCardTestAmbient + acceptedEng44ReinstateDbTestAmbient + acceptedBoard35TourReadoutAmbient) from money-pr-local-gate.mjs.
