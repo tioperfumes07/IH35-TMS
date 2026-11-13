@@ -12,18 +12,24 @@ describe("ROUND 8.20 board25/26 — Reports Cash basis survives TB/BS/PL open + 
     expect(tb).toMatch(/basisFromSearch/);
     expect(tb).toMatch(/urlBasis/);
     expect(tb).toMatch(/p\.set\("basis", next\.basis\)/);
+    expect(tb).toMatch(/resolveBackHref/);
+    expect(tb).toMatch(/backHref=\{reportsBackHref\}/);
   });
 
   it("BalanceSheetPage hydrates applied basis from ?basis=cash", () => {
     expect(bs).toMatch(/basisFromSearch/);
     expect(bs).toMatch(/urlBasis/);
     expect(bs).toMatch(/p\.set\("basis", next\.basis\)/);
+    expect(bs).toMatch(/resolveBackHref/);
+    expect(bs).toMatch(/backHref=\{reportsBackHref\}/);
   });
 
   it("ProfitLossPage hydrates applied basis from ?basis=cash", () => {
     expect(pl).toMatch(/basisFromSearch/);
     expect(pl).toMatch(/urlBasis/);
     expect(pl).toMatch(/p\.set\("basis", next\.basis\)/);
+    expect(pl).toMatch(/resolveBackHref/);
+    expect(pl).toMatch(/backHref=\{reportsBackHref\}/);
   });
 
   it("ReportsHomeBoard stores Cash/Accrual in the URL (not local-only state)", () => {
