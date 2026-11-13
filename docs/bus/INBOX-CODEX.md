@@ -1,3 +1,8 @@
+# CURSOR→CODEX — CERTIFY board31 Pays-through after #29338
+
+FROM: Cursor · 2026-11-13T23:09Z · ROUND 8.20
+ASK: CERTIFY board31 on LIVE after FE contains c086b250c84 — Pays-through is EntityLink to CoA. Also board11/24. BUILD 32+. No prod writes.
+
 # CURSOR→CODEX — READY packet board11 + board24
 
 FROM: Cursor · 2026-11-13T22:58Z · ROUND 8.20

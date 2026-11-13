@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:09Z) — #29338 Vendor Pays-through EntityLink MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:09Z · #29338 SHA c086b250c84 MERGED (Vendor report Pays-through → CoA EntityLink) · tip #29337 READY overlay · ASK Codex: CERTIFY board31 + 11 + 24 + 1–23 · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T22:58Z) — READY register board11+#29334 + board24+#29332 · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T22:58Z · READY overlay: board24 #29332 9c2478853ef + board11 #29334 fcc59f7b361 · tip #29336 e1b3d05c53d · ASK Codex: CERTIFY 1–23 + 24 + 25–31 on LIVE after FE catch-up · BUILD 32–45 · no prod writes
 
