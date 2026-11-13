@@ -34,15 +34,15 @@ Source of truth: LEAD-PENDING-REGISTER.xlsx (same rows). DONE only with live pro
 | 28 | A | Reports | Load History tab + Settlement (driver/company), Loads, Customers, Vendors reports | CC-1 | 443.281 | DONE-LIVE | ddc4ac9d400 CC-1 11-12: deployed SHA ddc4ac9d400 (healthz 22:35Z); USMCA 231 loads live (Neon prod); verify-reports-five-pages-wired exit 0; verify-load-history-surface exit 0 |
 | 29 | A | All | LAW 5:08 PM: every selector is multi-select (units, loads, settlements, trucks, trailers, drivers, customers, vendors…) everywhere | LEAD | 443.281 | CODED | 450ce42d6b #27464 (LEAD, Codex filters rebased) |
 | 30 | A | All | Baseline screenshots of every page before the rebuild | LEAD | 443.281 | DONE-LIVE | #27369 9932b495 |
-| 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 (Home unchanged = board) |
-| 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 |
-| 33 | B | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | 443.280 | CODED | #27453 AvP board restored |
-| 34 | B | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | 443.280 | CODED | #27453 |
-| 35 | B | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | 443.280 | CODED | #27453 Manual board + opening cash |
+| 31 | B | Cash Flow | Cash Flow › Home — board verdict PARTIAL | Cursor | 443.280 | DONE-LIVE | #27453 d86e35ce75 · CC-2 R8.22: live opening cash BofA $25,533.37, 13-wk forecast chart, run-rate KPI strip, V3KpiTile+BoardSection wired |
+| 32 | B | Cash Flow | Cash Flow › Projected (Auto) — board verdict PARTIAL | Cursor | 443.280 | DONE-LIVE | #27453 d86e35ce75 · CC-2 R8.22: DailyPredictionTab getRollingLedger+getActualVsProjected wired, bar chart base/conservative scenarios |
+| 33 | B | Cash Flow | Cash Flow › Actual vs Projected — board verdict PARTIAL | Cursor | 443.280 | DONE-LIVE | #27453 d86e35ce75 · CC-2 R8.22: live Oct income $208,031.56/expense $205,270.54, is_credit form 283b |
+| 34 | B | Cash Flow | Cash Flow › Rolling Ledger — board verdict LAYERED | Cursor | 443.280 | DONE-LIVE | #27453 d86e35ce75 · CC-2 R8.22: factoring advances excluded from double-count, matched by bt.matched_factoring_advance_id |
+| 35 | B | Cash Flow | Cash Flow › Manual — board verdict LAYERED | Cursor | 443.280 | DONE-LIVE | #27453 d86e35ce75 · CC-2 R8.22: opening cash BofA USMCA FREIGHT only (Plaid+GL Checking), credit cards+Faro excluded from cash balance |
 | 36 | B | Accounting | Accounting › Home — board verdict REBUILT | CURSOR | 443.280 | DONE-LIVE |  |
-| 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
-| 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | PARTIAL |  |
-| 39 | B | Factoring | Factoring › Home — board verdict LAYERED | Cursor | 443.280 | OPEN |  |
+| 37 | B | Accounting | Accounting › Unexpected — board verdict REBUILT | Cursor | 443.280 | DONE-LIVE | CC-2 R8.22: BoardSection+ParityTable wired; Link→Banking Match drawer; unexpectedExpenses API live; accounting-nav guard PASS |
+| 38 | B | Banking | Banking › Home — board verdict REBUILT | Cursor | 443.280 | DONE-LIVE | CC-2 R8.22: BankingHomeBoard uses ParityTable; banking-home-boards PASS; banking-home-kpi-owner-now PASS; 3 violations cleared |
+| 39 | B | Factoring | Factoring › Home — board verdict LAYERED | Cursor | 443.280 | DONE-LIVE | #29230 324f3c92 · CC-2 R8.22 ENG-17: collection summary by advance widget; guard verify-step 20019 PASS; COA role factoring_advance_liability needs USMCA mapping before Faro GL flows |
 | 40 | B | Reports | Reports › Home — board verdict LAYERED | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: v3 board, no layered sections; fix on main (ReportsHomeBoard.tsx) |
 | 41 | B | Reports | Reports › Trial balance viewer — board verdict PARTIAL | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: Revenue $63,830 · COGS 9 rows · per-account drill-through links · section totals |
 | 42 | B | Customers | Customers › Home — board verdict CHROME-ONLY | CC-3 | 443.280 | DONE-LIVE | Chrome 2026-11-12: WITH TRANSACTIONS 91 · IN THE BOOK 1,217 · OPEN INVOICES 209 · BILLED $774,446.72 · A/R OPEN $796,346.72 |

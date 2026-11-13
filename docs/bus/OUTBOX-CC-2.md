@@ -233,3 +233,16 @@ ROUND 8.21 10:30Z · CC-2 DONE-LIVE: ROW-202 #29206 9475b7a4 live: total_active=
 ROUND 8.21 12:00Z · CC-2 DONE-LIVE: ROW-21 #29219 75ca5de9 live: total=241 overpaid=0/0 | ROW-22 #29216 19a39118 live: total=315 last_txn=2026-11-10 recent_30d=39>=1 | ROW-27 #29217 309ab954 live: legal=0/0 accidents=0/0 policies=3/3 · all CC-2 guard batch rows 6/12/16/21/22/27/76/81/83/84/97/99/201/202/204/205/207/210/223 DONE-LIVE · step 20007/20011/20015 merged
 
 ROUND 8.21 13:00Z · CC-2 DONE-LIVE: ROW-6 #29222 428f9b27 live: drivers_with_photo=0 broken_driver_photo=0 | unit_photos=0 broken_unit_photo=0 | PASS step 19995 · ROUND 8.21 CC-2 COMPLETE — all rows done
+
+## ROUND 8.22 — 2026-11-13 09:00Z — CC-2 checkpoint
+
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ENG-17 factoring collection engine — #29230 324f3c92 — routes replay+void wired; guard verify-step 20019 PASS (selftest SKIP: guard-reader read-only, selftest runs in CI); collection summary by advance widget in FactoringHome.tsx; ratchet fix: 6 raw text-[11px] → style props; COA role factoring_advance_liability needs USMCA mapping before Faro GL report flows through
+
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-31 Cash Flow Home — #27453 d86e35ce75 · live opening cash BofA $25,533.37, 13-wk forecast chart, run-rate KPI strip
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-32 Cash Flow Projected (Auto) — #27453 d86e35ce75 · DailyPredictionTab getRollingLedger+getActualVsProjected wired, base/conservative scenarios
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-33 Cash Flow Actual vs Projected — #27453 d86e35ce75 · live Oct income $208,031.56/expense $205,270.54
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-34 Cash Flow Rolling Ledger — #27453 d86e35ce75 · factoring advances excluded from double-count via bt.matched_factoring_advance_id
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-35 Cash Flow Manual — #27453 d86e35ce75 · opening cash BofA USMCA FREIGHT only (Plaid+GL Checking), credit cards+Faro excluded
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-37 Accounting Unexpected — BoardSection+ParityTable wired; Link→Banking Match drawer; accounting-nav guard PASS
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-38 Banking Home — BankingHomeBoard uses ParityTable; banking-home-boards PASS; banking-home-kpi-owner-now PASS
+ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-39 Factoring Home — #29230 324f3c92 ENG-17 collection summary widget; guard step 20019 PASS
