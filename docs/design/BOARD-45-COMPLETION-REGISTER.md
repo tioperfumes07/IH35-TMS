@@ -1,5 +1,9 @@
 # BOARD-45 COMPLETION REGISTER — ROUND 8.12
 
+## ROUND 8.20 Cursor LIVE overlay — 2026-11-13T15:40Z
+FE+BE `41f5e0bad54` (`/version.json` + healthz). Contains Cursor wave #29181/#29183/#29186/#29195/#29197/#29203/#29211. Boards 1/13/14–17/21/22/23 MERGED-UNVERIFIED→LIVE SHA present; full CERTIFIED still Codex. board18 Factoring ret shipping this PR. Production writes: 0.
+
+
 ## ROUND 8.17 verification overlay — 2026-11-12
 
 21:10Z checkpoint (20:00Z deadline missed; not backdated): FE version.json and BE healthz both identify `72b9a27cc202d09b1847098527afeb61e5c6f99c`. This contains N4/7 #29090 `b83663d2663`, N22/43/44 #29095 `a4da74221de`, N18 #29100 `0d3447e0328`, and N31 #29050 `6470db6a356`. Merged/deployed is not independent certification. V boards checked 12/12 bounded; full CERTIFIED 0/45; production writes 0.
