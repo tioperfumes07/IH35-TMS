@@ -4,7 +4,7 @@
 // Data: GET /api/v1/maintenance/shop-bays (migration 202616261700). Nothing sampled — empty bays say so.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { assignWorkOrderBay, getShopBays, releaseWorkOrderBay, type BayWorkOrder, type ShopBaysPayload } from "../../../api/shopBays";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -12,6 +12,7 @@ import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { SelectCombobox } from "../../../components/Combobox";
 import { formatDateUS } from "../../../lib/formatDate";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { ShopBayFloorSvg } from "./ShopBayFloorSvg";
 
 /** Bay status words on the board (§7 palette: navy / §7 amber #854F0B / slate — no new amber/emerald classes). A finished work order still holding its bay is "Ready" (truck not rolled out). */
@@ -27,6 +28,25 @@ export function bayStatusLabel(status: string): { label: string; dot: string } {
   }
 }
 
+/** ROUND 8.20 board23 — occupied-bay progress from WO status only (never invents % for empty bays). */
+export function bayProgressPct(status: string | null | undefined): number | null {
+  if (!status) return null;
+  switch (status) {
+    case "open":
+      return 15;
+    case "waiting_parts":
+    case "awaiting_parts":
+      return 40;
+    case "in_progress":
+      return 65;
+    case "complete":
+    case "completed":
+      return 100;
+    default:
+      return 25;
+  }
+}
+
 const DRAG_TYPE = "application/x-ih35-work-order";
 
 function WoLine({ wo }: { wo: BayWorkOrder }) {
@@ -39,6 +59,9 @@ function WoLine({ wo }: { wo: BayWorkOrder }) {
 export function InShopBoard({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const shopHref = (target: string) => withReturnContext(target, originHref);
   const [dragOver, setDragOver] = useState<number | null>(null);
   const key = ["maintenance", "shop-bays", companyId];
   const query = useQuery({ queryKey: key, queryFn: () => getShopBays(companyId), enabled: Boolean(companyId), staleTime: 15_000 });
@@ -71,7 +94,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
         </p>
       </div>
       <Link
-        to="/maintenance/arriving-soon"
+        to={shopHref("/maintenance/arriving-soon")}
         className="rounded-sm border border-[#C6D1DC] bg-[#2C3A4E] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
         data-testid="in-shop-check-truck-in"
       >
@@ -105,6 +128,28 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           />
           {wo ? <>
             <WoLine wo={wo} />
+            {(() => {
+              const pct = bayProgressPct(wo.status);
+              if (pct == null) return null;
+              return (
+                <div className="space-y-1" data-testid={`in-shop-bay-${bay_number}-progress`}>
+                  <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                    <span>Progress</span>
+                    <span>{pct}%</span>
+                  </div>
+                  <div
+                    role="progressbar"
+                    aria-valuenow={pct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Bay ${bay_number} progress ${pct}%`}
+                    className="h-1.5 overflow-hidden rounded-sm bg-slate-200"
+                  >
+                    <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              );
+            })()}
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs text-slate-600">
               <dt>In shop</dt><dd>{wo.in_shop_at ? formatDateUS(wo.in_shop_at) : "—"}</dd>
               <dt>Expected release</dt><dd>{wo.expected_release_at ? formatDateUS(wo.expected_release_at) : "—"}</dd>
@@ -120,7 +165,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
     <section aria-label="Yard lane" className="min-w-0 space-y-2" data-testid="in-shop-yard-lane">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xs font-bold uppercase text-slate-700">YARD LANE · NEXT IN, BY PM URGENCY ({yard.length})</h2>
-        <Link className="text-xs" to="/maintenance/active-wos">View all work orders →</Link>
+        <Link className="text-xs" to={shopHref("/maintenance/active-wos")}>View all work orders →</Link>
       </div>
       {yard.length === 0 ? <p className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">No active work orders are waiting for a bay.</p> :
         <div className="flex min-w-0 flex-wrap gap-2">
