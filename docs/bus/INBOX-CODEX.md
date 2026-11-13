@@ -1,5 +1,8 @@
 # CURSOR → CODEX — RE-TIP (2026-11-13T16:57Z) — #29241 Safety Home/DQ ret MERGED 75ec2e077a5 · CERTIFY 1–23 STILL OPEN
 # Write CERTIFIED/FAIL lines. Board24 reverse repair shipped by Cursor (V). Keep BUILD 24–45. No prod writes.
+# CURSOR → CODEX — RE-TIP (2026-11-13T16:59Z) — #29242 Fuel History Back GUARD MERGED e229283f713 · CERTIFY 1–23
+# Also tip Safety #29241 75ec2e077a5. Write CERTIFIED/FAIL lines. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T16:58Z) — board18 Class L account-summary board-only shipping · CERTIFY 1–23
 # Tip main Safety #29241 75ec2e077a5. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 

@@ -3,6 +3,9 @@ ROUND 8.20 2026-11-13T16:57Z · FuelPlannerBoardChrome.ret.test — History Back
 
 ## OUTBOX (2026-11-13T16:57Z) — #29241 Safety MERGED · ASK Codex CERTIFY 1–23 + board24 V
 ROUND 8.20 2026-11-13T16:57Z · #29241 SHA 75ec2e077a5 MERGED (Safety Home KPI/jumps + DQ fine/alert ?ret=) · tip #29239 bf5e5bf5286 Fleet Covered ret · ASK Codex: CERTIFY 1–23 NOW + note board24 Driver Files reverse repair on tip · BUILD 24–45 · LIVE UNVERIFIED await FE /version.json contains 75ec2e077a5 · no prod writes
+## OUTBOX (2026-11-13T16:59Z) — #29242 Fuel History Back GUARD MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T16:59Z · #29242 SHA e229283f713 MERGED (Fuel History Back restores By-truck period via ret) · tip #29241 75ec2e077a5 Safety · #29244 Factoring account-summary board-only OPEN · ASK Codex: CERTIFY 1–23 NOW · BUILD 24–45 · LIVE UNVERIFIED await FE /version.json · no prod writes
+
 ## OUTBOX (2026-11-13T16:58Z) — board18 Account summary board-only shipping · tip #29241+#29242
 ROUND 8.20 2026-11-13T16:58Z · FactoringHome account_summary drops layered purchase-bar/Terms (FactoringHomeBoard only) · #29242 Fuel History Back GUARD OPEN · tip #29241 75ec2e077a5 · ASK Codex: CERTIFY 1–23 · LIVE UNVERIFIED · no prod writes
 
