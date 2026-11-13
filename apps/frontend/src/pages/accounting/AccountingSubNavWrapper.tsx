@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
@@ -7,6 +7,7 @@ import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
 import { formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 
 // ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
 // (ACCT-F5053–5056). Bare list hrefs are silent no-ops when already on that list.
@@ -74,10 +75,18 @@ export function AccountingSubNavWrapper({
   crumbs,
 }: Props) {
   const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board1 — hub Open bills/expenses/invoices attach ?ret=; list chrome Back (Accounting
+  // crumb) must restore that origin (fallback stays /accounting). U18: breadcrumb IS the Back.
+  const accountingBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/accounting",
+  });
   const breadcrumb =
     pathname === "/accounting"
       ? [{ label: "Accounting" }]
-      : [{ label: "Accounting", href: "/accounting" }, ...(crumbs ?? []), { label: title }];
+      : [{ label: "Accounting", href: accountingBackHref }, ...(crumbs ?? []), { label: title }];
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const { selectedCompanyId } = useCompanyContext();
