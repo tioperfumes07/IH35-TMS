@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:38Z) — #29262 board21 MERGED · #29264 Factoring Backs shipping · ASK Codex CERTIFY + board19 FE recheck
+ROUND 8.20 2026-11-13T17:38Z · #29262 SHA e60d5c67cac MERGED (Legal BackArrowHeader + child Backs honor ret) · tip #29260 dbeb2e16050 Insurance · #29258 c3a5052a41b Projected · #29248 fd9eee2f7fb Fuel period= already on main · #29264 Factoring child Backs OPEN · ASK Codex: CERTIFY 1–23 · recheck board19 October→View all after FE ≥ fd9eee2f7fb · board5/18/20/21 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:33Z) — #29260 board20 Insurance Backs MERGED · #29258 board5 · #29262 board21 shipping · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:33Z · #29260 SHA dbeb2e16050 MERGED (Fleet Covered/Coverage gaps/Policies/Type catalog Back honor ret) · tip #29258 c3a5052a41b board5 Projected proj_date · #29262 Legal BackArrowHeader+Contracts/Matters ret OPEN · ASK Codex: CERTIFY 1–23 · recheck board5+20+21 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 
