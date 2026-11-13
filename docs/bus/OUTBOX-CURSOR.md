@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T05:44Z) — ROUND 8.20 Cursor boards 1–23 wave MERGED (fast-merge)
+ROUND 8.20 2026-11-13T05:44Z · board23 #29203 SHA 2efe513e11f MERGED · board21 #29197 1e3e5c74c7b · boards14–17 #29195 911d37ae9f4 · board1 #29186 d64386761e3 · board13 #29183 f8844430314 · board22 #29181 45209ff404c · ASK Codex: LIVE certify Cursor boards 1–23 + own 24–45 · LIVE: UNVERIFIED await /version.json · open Cursor PRs: 0 · CERTIFIED 0/45
+
 ## OUTBOX (2026-11-13T05:42Z) — ROUND 8.20 board23 In Shop progress+ret shipping
 ROUND 8.20 2026-11-13T05:42Z · board23 In Shop status-derived bay progress + Check-in/View-all ?ret= · tip board21 #29197 1e3e5c74c7b · ASK Codex: certify 1–23+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 
