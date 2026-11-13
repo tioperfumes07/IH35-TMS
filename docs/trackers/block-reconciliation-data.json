@@ -1,26 +1,26 @@
 {
  "date": "2026-11-13",
- "generated_at_iso": "2026-11-13T01:52:53.173Z",
+ "generated_at_iso": "2026-11-13T02:33:49.327Z",
  "counts": {
   "PENDING": 18,
   "PENDING (GATED)": 31,
   "NEEDS-VERIFY": 63,
-  "DONE": 547,
+  "DONE": 548,
   "AUDIT-NOTE": 588
  },
  "universe": {
-  "total_blocks_after_dedup": 1247,
+  "total_blocks_after_dedup": 1248,
   "by_source_after_dedup": {
-   ".block-ready": 1053,
+   ".block-ready": 1054,
    "program": 83,
    "enterprise-29": 29,
    "accounting": 25,
    "gap-spec": 57
   },
   "raw_file_counts": {
-   ".block-ready (*.json files)": 1425,
+   ".block-ready (*.json files)": 1426,
    ".block-ready retired (dup/stale/superseded, excluded)": 367,
-   ".block-ready active (counted)": 1058
+   ".block-ready active (counted)": 1059
   },
   "note": "Total = union of 5 sources (.block-ready, docs/blocks program, docs/accounting, docs/dispatch enterprise-29, docs/specs gap), de-duped by UNIQUE block_id, EXCLUDING files with EXPLICIT retirement markers (_DUP/_STALE/_SUPERSEDED underscore suffixes, status superseded/duplicate/dup/stale, or superseded_by/duplicate_of). Hyphen descriptive …-stale/…-duplicate live defect IDs are NOT retired by filename alone. So the block count is neither the raw .block-ready file count nor inflated by duplicate/retired registrations."
  },
@@ -871,10 +871,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 cross-check signal for Codex/Cursor: ran verify-codex-vertical-nonmoney-zero-remainder.mjs directly, confirming rem",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-claim-reports-0223",
@@ -882,10 +882,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 claims POST-U14 leftover sequence order 5 (REPORTS, /reports) after driver-hub's unique-FINDING hunting came up emp",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-codex-progress-check-fleet-sweep-0223",
@@ -893,10 +893,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 confirms Codex is actively progressing (DRV-F6246-53 series, commit-message status not OUTBOX-CODEX.md) and reports",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-customers-reverse-proof-0223",
@@ -904,10 +904,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=customers reverse SQL/GET hops (per U14-OPEN-MODULE-BY-MODULE-HOPS-2026-08-23.md). Live SQL ",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-dot-inspection-test-fixture-void-0223",
@@ -915,10 +915,10 @@
    "fin": true,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: found and voided a stray test-fixture row (safety.dot_inspections) live in the DOT audit ",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-chrome-law-note-0223",
@@ -926,10 +926,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep session close-out status: 3 PRs merged this leg (label-leak fix, sample-data-fixture-",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-chrome-law-pass2-0223",
@@ -937,10 +937,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: second chrome-law live pass. Leave Requests Range filter honest-empty state + Reset/Ca",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-create-void-verified-0223",
@@ -948,10 +948,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: live CREATE-TEST-THEN-VOID verification of the Assign Temp Cover control on production",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-postdeploy-confirm-0223",
@@ -959,10 +959,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: post-deploy live re-check confirms LV-DRIVER-HUB-REPORTING-STALE-NO-LOAD-FK's fix (#14",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-responsive-checked-0223",
@@ -970,10 +970,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired leg: responsive-overflow check clean (Driver Scheduler + Reporting, ~500px viewport, 0 hori",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-row3-done-0223",
@@ -981,10 +981,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 3 (DRIVER HUB) DONE with full close-out summary, correcting stale claim-only text so th",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-hub-sweep-status-0223",
@@ -992,10 +992,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /driver-hub Fully-Wired sweep progress status. Documents that Overview/Driver Scheduler/Leave Requests tabs plus th",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-drivers-fleet-reverse-proof-0223",
@@ -1003,10 +1003,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 helping Codex's MODULE=drivers and MODULE=fleet reverse SQL/GET hops. Live SQL proof of forward+reverse FK chains f",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-mdata-reverse-sweep-0223b",
@@ -1014,10 +1014,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). This pass",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-mdata-sweep-clean-0223c",
@@ -1025,10 +1025,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 mdata reverse SQL/GET sweep continuation on customers/drivers/fleet (help Codex CERTIFY). This pass swept clean acr",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-reports-full-category-sweep-0223",
@@ -1036,10 +1036,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg session close-out: all 9 report categories walked, 8 reports run live, all genuinely wired",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-reports-progress-status-0223",
@@ -1047,10 +1047,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg progress status: IFTA Quarterly Preparer entry confirmed real and correctly wired; Generat",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-reports-row-done-0223",
@@ -1058,10 +1058,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 marks POST-U14 leftover row 5 (REPORTS) DONE, matching CC-3's table-exhausted close-out. Returning full attention t",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-reports-sweep2-clean-0223",
@@ -1069,10 +1069,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 /reports Fully-Wired leg: Fleet utilization and Internal inspection-point rollup reports spot-checked live, both cl",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-sql-proof-rls-discriminator-0223",
@@ -1080,10 +1080,10 @@
    "fin": false,
    "tier": "",
    "status": "NEEDS-VERIFY",
-   "evidence": "PR #29145 title-match only, unverified",
+   "evidence": "PR #29152 title-match only, unverified",
    "name": "CC-2 delivers a hop-10 (RLS + completeness discriminator) SQL proof for Codex's MODULE=drivers and MODULE=fleet CERTIFIE",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "CHAIN-04-bill-payment-tieout",
@@ -2984,7 +2984,7 @@
    "evidence": "all 1 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired 1-12 Live Chrome leftover (POST-URGENT-14 sequence order 3), triggered by an empty unique-F",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-driver-list-sample-data-exclusion-0223",
@@ -2995,7 +2995,18 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /driver-hub Fully-Wired leg, CREATE-flow probe on Assign Temp Cover found other seats' test/QA fixture units and dr",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
+  },
+  {
+   "id": "cc-2-eng50-invoice-paid-amount-engine",
+   "source": ".block-ready",
+   "fin": true,
+   "tier": "",
+   "status": "DONE",
+   "evidence": "PR #29152 merged 2026-11-13",
+   "name": "CC-2 ENG-50 — invoice paid-amount engine. amount_paid_cents is computed by one trigger from payment_applications; never ",
+   "registered_on": null,
+   "pr": 29152
   },
   {
    "id": "cc-2-help-codex-certify-cdf-0223",
@@ -3006,7 +3017,7 @@
    "evidence": "all 2 file(s) on main",
    "name": "CC-2 mdata reverse SQL/GET hunt on customers/drivers/fleet (help Codex CERTIFY, per INBOX-CC-2). Found + root-caused + f",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-reports-required-filter-indicator-0223",
@@ -3017,7 +3028,7 @@
    "evidence": "all 3 file(s) on main",
    "name": "CC-2 /reports Fully-Wired leg. Live probe on driver-pay-history found Run report silently disabled with zero visual expl",
    "registered_on": null,
-   "pr": 29145
+   "pr": 29152
   },
   {
    "id": "cc-2-row77-factoring-invoice-status-engine",
@@ -13749,6 +13760,42 @@
  ],
  "merged_prs": [
   {
+   "number": 29152,
+   "title": "CC-2- FINDING: ACCT-F295-ENG50 — invoice paid-amount engine + book-equals-Faro guard (Round 8.20)",
+   "mergedAt": "2026-11-13T02:31:40Z",
+   "branch": "cc-2/eng50-invoice-paid-amount-engine"
+  },
+  {
+   "number": 29150,
+   "title": "Claude-1- CLAIM-RESERVE ENG-54 ENG-38 migration numbers 202616570100 202616580100",
+   "mergedAt": "2026-11-13T02:32:07Z",
+   "branch": "cc-1/claim-reserve-eng54-eng38"
+  },
+  {
+   "number": 29149,
+   "title": "Claude-1- MAIN-RED 3 fixes: migration-override ruling + customer-create target + USMCA battery doc",
+   "mergedAt": "2026-11-13T02:09:34Z",
+   "branch": "cc-1/main-red-3"
+  },
+  {
+   "number": 29148,
+   "title": "CC-2- chore: reserve verify-step 19919 book-equals-Faro (ENG-50)",
+   "mergedAt": "2026-11-13T02:08:17Z",
+   "branch": "chore/claim-reserve-cc2-19919"
+  },
+  {
+   "number": 29147,
+   "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
+   "mergedAt": "2026-11-13T01:54:52Z",
+   "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 29146,
+   "title": "Claude-1- CLAIM-RESERVE CC-1 20113 ENG-60 no-insurance-lawsuit-sql-reads",
+   "mergedAt": "2026-11-13T01:52:58Z",
+   "branch": "cc-1/claim-reserve-20113"
+  },
+  {
    "number": 29145,
    "title": "CC-2- FINDING: ACCT-F77-ROW77 — factoring invoice status engine + account summary replace",
    "mergedAt": "2026-11-13T01:50:34Z",
@@ -13759,6 +13806,12 @@
    "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
    "mergedAt": "2026-11-13T00:43:57Z",
    "branch": "chore/tracker-artifacts-sync"
+  },
+  {
+   "number": 29143,
+   "title": "FINDING: BANK-F820 ROUND 8.20 board12 planner filters survive tab switches",
+   "mergedAt": "2026-11-13T02:28:05Z",
+   "branch": "cursor/round820-board12-planner"
   },
   {
    "number": 29142,
@@ -13777,6 +13830,18 @@
    "title": "FINDING: BANK-F820 ROUND 8.20 boards 9+10 Create overlays Regular board",
    "mergedAt": "2026-11-12T23:41:03Z",
    "branch": "cursor/round820-board9-customers"
+  },
+  {
+   "number": 29139,
+   "title": "PERFUME: Review — select all / ≥N% alike + 'Use suggestion for all selected' (100–500 at once)",
+   "mergedAt": "2026-11-13T02:17:39Z",
+   "branch": "claude/perfume-review-select-alike"
+  },
+  {
+   "number": 29137,
+   "title": "PERFUME: HER/HERS = Women, HIM/HIS = Men (BURBERRY BRIT HER no longer offered men's bottles)",
+   "mergedAt": "2026-11-13T02:16:00Z",
+   "branch": "claude/perfume-her-him"
   },
   {
    "number": 29136,
@@ -17293,60 +17358,6 @@
    "title": "ROUND 7.30 tip #29 popup standard MERGED-UNVERIFIED",
    "mergedAt": "2026-11-03T22:51:36Z",
    "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28538,
-   "title": "ROUND 7.30: reimbursements formatUsd row+subtotal guard (batch90)",
-   "mergedAt": "2026-11-03T22:50:08Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28537,
-   "title": "ROUND 7.30 #27: Accounting need-company wave 6",
-   "mergedAt": "2026-11-03T22:49:10Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28536,
-   "title": "FIX: rows 198 203 222 + 38 — expense-category-map pool wait, Load Costs settlement labels, drift account names, banking tests",
-   "mergedAt": "2026-11-03T22:49:07Z",
-   "branch": "lead/cc1-small-rows"
-  },
-  {
-   "number": 28535,
-   "title": "ROUND 7.30: Settlements week chart selects Week-of",
-   "mergedAt": "2026-11-03T22:47:00Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28534,
-   "title": "ROUND 7.30 #27: Accounting need-company wave 5",
-   "mergedAt": "2026-11-03T22:44:52Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28533,
-   "title": "BUS: ROUND 7.30d — register updates + CC-3 skip list",
-   "mergedAt": "2026-11-03T22:43:56Z",
-   "branch": "lead/bus-730d"
-  },
-  {
-   "number": 28532,
-   "title": "ROUND 7.30 #27: Accounting need-company wave 4",
-   "mergedAt": "2026-11-03T22:42:15Z",
-   "branch": "cursor/eng-build-shells47"
-  },
-  {
-   "number": 28531,
-   "title": "FIX: E1 row 162 — Relay fills take their driver from Relay's own id (relay_driver_links)",
-   "mergedAt": "2026-11-03T22:40:52Z",
-   "branch": "claude/e1-relay-driver-links"
-  },
-  {
-   "number": 28530,
-   "title": "FIX: HOS + planner driver columns, driver current truck + documents, one MTD fuel figure (rows 164 166 167)",
-   "mergedAt": "2026-11-03T22:40:44Z",
-   "branch": "lead/rows-164-166-167"
   }
  ],
  "merged_pr_total": 3000,
