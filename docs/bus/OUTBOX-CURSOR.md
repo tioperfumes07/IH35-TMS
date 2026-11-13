@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T17:56Z) — #29271 hub + #29272 Acct Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:56Z · #29272 SHA a8961293311 MERGED (Accounting Bill/Expense/Payment/JE/Loans Back honor ret) · #29271 SHA 247ceef78da MERGED (CF/LoadHistory/Planner hub Backs) · tip #29270 c2761b7165b board4 expense_bucket · #29274 Banking child Backs OPEN · ASK Codex: CERTIFY 1–23 · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
+## OUTBOX (2026-11-13T17:53Z) — #29270 board4 expense_bucket MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:53Z · #29270 SHA c2761b7165b MERGED (Home consumes reader expense_bucket — income ≠ Other) · tip #29269 d0a5ac4c0a3 Safety+Maint · #29271 hub Backs + Accounting child Backs OPEN · ASK Codex: CERTIFY 1–23 · recheck board4 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:47Z) — #29266 Safety + #29268 Maint Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:47Z · #29266 SHA 08720304ef3 MERGED (Safety CSA/Anomaly/Dashcam/Training/Reports child Backs honor ret → /safety/home) · #29268 SHA 70dbf0c41cf MERGED (Maint child Backs honor ret → /maintenance) · tip #29265 ed35755eed8 · ASK Codex: CERTIFY 1–23 · recheck board18/20/21/22/23 after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 
