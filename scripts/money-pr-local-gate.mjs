@@ -2728,28 +2728,6 @@ function acceptedRound8_8LoadBoardsAgreeSafetyGrid(name, code) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-void-is-whole fires via db/migrations/ domain path.
-// Pre-existing prod debt: fuel purchase 71c8456f header voided but live journal entries remain —
-// same finding as VOID-F443-STRANDED-POSTINGS-20261110 documented in Round 8.8. This batch82 diff
-// does NOT touch void/JE writers. Filed VOID-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real void/JE posting writers.
-function acceptedAcctF11152VoidIsWholeAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-void-is-whole") return false;
-  if (!changed) return false;
-  const VOID_WRITERS = [
-    "apps/backend/src/accounting/void.service.ts",
-    "apps/backend/src/accounting/journal-entries.service.ts",
-    "apps/backend/src/fuel/fuel-posting.service.ts",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/factoring/",
-  ];
-  if (changed.some((f) => VOID_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  // Only allow the read-only accounting predicate file; block any other accounting writer.
-  const ALLOWED_ACCOUNTING = new Set(["apps/backend/src/accounting/has-transactions-predicate.ts"]);
-  if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
-  return true;
-}
 
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-stops-resolve-samsara-no-zip-fence fires via db/migrations/ DATA_WRITE.
@@ -2872,30 +2850,6 @@ function acceptedAcctF11152BookedMilesAmbient(name, code, changed) {
 }
 
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-load-to-cash-chain fires because mdata/customers.routes.ts
-// and mdata/vendors.routes.ts are in the diff (mdata/ is a domain path for load-to-cash). Pre-existing
-// ambient debt: LINK 1 — load 13700 of 211 USMCA driver-having loads has no driver_finance.driver_bills row
-// — same finding as 443.282 ambient on origin/main. This batch82 diff adds operating_company_id scoping to
-// customers/vendors read queries ONLY; it cannot create or omit driver_bills rows.
-// Filed LINK1-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real load-to-cash writers (book-load, driver-finance
-// settlement, dispatch/create-load paths).
-function acceptedAcctF11152LoadToCashChainAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-load-to-cash-chain") return false;
-  if (!changed) return false;
-  const LOAD_TO_CASH_WRITERS = [
-    "apps/backend/src/dispatch/book-load.service.ts",
-    "apps/backend/src/dispatch/create-load.service.ts",
-    "apps/backend/src/driver-finance/settlement-creator.service.ts",
-    "apps/backend/src/driver-finance/settlement-pay-line.service.ts",
-    "apps/backend/src/driver-finance/driver-bill.service.ts",
-  ];
-  if (changed.some((f) => LOAD_TO_CASH_WRITERS.includes(f))) return false;
-  if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/") && !f.includes("test"))) return false;
-  if (changed.some((f) => f.startsWith("apps/backend/src/accounting/from-load"))) return false;
-  return true;
-}
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-purge-window-state fires via db/migrations/ DATA_WRITE
 // (two held .sql migration files in the diff; .sql = always a write by definition). Pre-existing prod
@@ -3023,22 +2977,6 @@ function accepted443182BPlCostAmbient(file, code) {
   return true;
 }
 
-// LDT-4 (alwaysRun, CC-1 E2 2026-11-12): verify-ldt-4-factoring-money fires because Invoice 18-13529
-// has status='factored' (A/R was derecognized) on origin/main — a data change that appeared after E1
-// merged. The CC-2 factoring purchase engine set this status. E2 diff does NOT touch factoring status
-// writers or accounting.invoices status paths. Pre-existing ambient debt: LDT-F11152-E2-20261112.
-// Content-based: fires only when diff includes real factoring status / invoice-status writers.
-function acceptedLdt4FactoringStatusAmbient(file, code) {
-  if (code === 0) return false;
-  if (file !== "verify-ldt-4-factoring-money.mjs") return false;
-  if (!changedForLiveDomains) return false;
-  const FACTORING_WRITERS = [
-    "apps/backend/src/factoring/",
-    "apps/frontend/src/components/dispatch/tabs/FactoringTab.tsx",
-  ];
-  if (changedForLiveDomains.some((f) => FACTORING_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  return true;
-}
 
 // GATE-SCOPE-03-REFIX (self-discovered, 2026-09-23, second occurrence) — this exact fix was already
 // shipped once (PR #22464, merged e71960a27e) and was silently reverted by a lost-update race: a
@@ -4442,15 +4380,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 load-boards-agree SafetyDriverSchedulerGrid pre-existing`);
         continue;
       }
-      if (acceptedAcctF11152VoidIsWholeAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-void-is-whole pre-existing prod debt ` +
-            `(fuel purchase 71c8456f header voided + live JEs on origin/main; ` +
-            `diff has zero void/JE writers; cite VOID-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 void-is-whole ambient pre-existing debt`);
-        continue;
-      }
       if (acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changedForLiveDomains)) {
         console.log(
           `[${LABEL}] ACCEPTED — verify-stops-resolve-samsara-no-zip-fence pre-existing prod debt ` +
@@ -4505,15 +4434,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `cite MILES-F11152-BATCH82-20261111 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 booked-miles ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152LoadToCashChainAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-load-to-cash-chain pre-existing ambient debt ` +
-            `(LINK 1: load 13700 no driver_bills row on origin/main; ` +
-            `mdata/customers+vendors changes are read-only opco-scoping; cite LINK1-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 load-to-cash-chain LINK1 ambient pre-existing debt`);
         continue;
       }
       if (acceptedAcctF11152PurgeWindowStateAmbient(name, code, changedForLiveDomains)) {
@@ -4672,7 +4592,7 @@ for (const [file, args] of e7Batch2) {
     );
   }
   const code = runNode(`scripts/${file}`, {}, args);
-  if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code) && !accepted443182BPlCostAmbient(file, code) && !acceptedLdt4FactoringStatusAmbient(file, code)) {
+  if (code !== 0 && !acceptedAsEmptyByPurge(`scripts/${file}`, code) && !accepted443182BPlCostAmbient(file, code)) {
     failStep(file);
     process.exit(code);
   }
