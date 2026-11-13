@@ -1,10 +1,11 @@
 import { UnitHeaderPhoto } from "../../components/units/UnitHeaderPhoto";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { UnitPermitsTab } from "./UnitPermitsTab";
 import { UnitTollTagsTab } from "./UnitTollTagsTab";
@@ -29,9 +30,16 @@ type UnitDetailTab = "permits" | "toll-tags" | "tasks" | "brakes" | "tires" | "f
 
 export function UnitDetail() {
   const { id = "" } = useParams();
+  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // ROUND 8.20 board12 — Truck Planner unit drill attaches `ret`; hardcoded /fleet dropped planner origin.
+  const unitBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/fleet",
+  });
   const [activeTab, setActiveTab] = useState<UnitDetailTab>("permits");
   const unitQuery = useQuery({
     queryKey: ["mdata", "unit-detail", companyId, id],
@@ -64,7 +72,7 @@ export function UnitDetail() {
   return (
     <div className="space-y-3 p-4" data-testid="unit-detail-page">
       <PageHeader
-        backHref="/fleet"
+        backHref={unitBackHref}
         breadcrumb={["Fleet", "Units", unitLabel]}
         title={unitLabel}
         subtitle="Permits, toll tags, and finance linkage"
