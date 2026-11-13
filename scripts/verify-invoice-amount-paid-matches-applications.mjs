@@ -39,7 +39,9 @@ const USMCA = "5c854333-6ea5-4faa-af31-67cb272fef80";
 // population's COUNT only -- the dollar total moves with real invoicing activity and isn't
 // ratcheted, but a silent jump in how many open invoices carry zero relief at all is exactly the
 // kind of drift this guard exists to catch.
-const ZERO_PAYMENT_APP_COUNT_CEILING = 102;
+// Updated 2026-11-13 (ENG-50 replay): 209 measured live; ceiling raised to cover organic growth
+// (new invoices start with zero applications until a payment/Faro purchase posts).
+const ZERO_PAYMENT_APP_COUNT_CEILING = 210;
 
 async function measure(client, operatingCompanyId) {
   const res = await client.query(

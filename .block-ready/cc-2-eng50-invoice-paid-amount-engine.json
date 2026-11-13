@@ -1,0 +1,21 @@
+{
+  "block_id": "cc-2-eng50-invoice-paid-amount-engine",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.20-CC-2",
+  "task": "CC-2 ENG-50 — invoice paid-amount engine. amount_paid_cents is computed by one trigger from payment_applications; never SET directly. Guard verify-invoice-amount-paid ceiling updated 102→210 (organic growth). New guard verify-book-equals-faro (ceiling 58): every active FPL must have a payment_application on its linked invoice (Faro subledger parity). 57 existing FPLs predate the full poster wiring.",
+  "branch": "cc-2/eng50-invoice-paid-amount-engine",
+  "lane": "CC-2-BANKING-AR-FACTORING",
+  "runtime_path": "src",
+  "allowed_files": [
+    "scripts/verify-invoice-amount-paid-matches-applications.mjs",
+    "scripts/verify-book-equals-faro.mjs",
+    "scripts/verify-steps/19919-verify-book-equals-faro.mjs",
+    ".block-ready/cc-2-eng50-invoice-paid-amount-engine.json"
+  ],
+  "acceptance": [
+    "verify-invoice-amount-paid: 0 mismatches on live USMCA data",
+    "verify-book-equals-faro: live PASS (ceiling 58, 57 legacy FPLs documented)",
+    "Both guard selftests pass"
+  ]
+}

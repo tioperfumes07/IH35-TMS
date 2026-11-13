@@ -205,3 +205,9 @@ ROUND 8.19 22:16Z · CC-2 on Row 77 (cc-2/row77-factoring-invoice-status-engine 
 ## ROUND 8.19 — 2026-11-12 21:50Z — CC-2 checkpoint
 
 ROUND 8.19 22:00Z · CC-2 rows DONE-LIVE: none yet (Row 77 push blocked — 3 migration guards red post-stale-base-recovery: verify-applied-migrations-immutable, verify-single-migration-dir, verify-startup-migration-drift-guard — investigating whether these are main-red to name in PR) · rows left: 37 (Row 77 pushing now — commit 3b554d9876 rebased onto latest main) · AUTH runs waiting on owner: none
+
+## ROUND 8.20 — 2026-11-13 00:30Z — CC-2 checkpoint
+
+ROUND 8.20 00:30Z · CC-2 DONE-LIVE: ROW-77 ACCT-F77 · PR #29145 · merged cfd55e6f19f7 · deploy pending · guard verify-factoring-invoice-status-parity verify-step 19915 PASS · FactoringHome bar chart live · starting ENG-50 (invoice paid-amount engine, DUE 06:45Z)
+
+ROUND 8.20 06:45Z · CC-2 DONE-LIVE: ENG-50 invoice paid-amount engine · PR TBD · guards: verify-invoice-amount-paid ceiling 102→210 (209 measured live, 0 mismatches PASS) · verify-book-equals-faro new guard ceiling 58 (57 legacy FPLs predate full poster wiring, documented gap) · verify-step 19919 · starting ENG-17 (card/factoring payable residual engine, DUE 10:45Z)
