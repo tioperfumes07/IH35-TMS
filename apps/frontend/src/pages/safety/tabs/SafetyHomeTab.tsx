@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { colors, spacing } from "../../../design/tokens";
 import {
@@ -19,6 +19,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { formatDateUS } from "../../../lib/formatDate";
 import { Combobox } from "../../../components/Combobox";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 
 // S-11: Safety previously had no dedicated landing dashboard — `/safety` redirected straight into the
 // "Incidents & Claims" tab, with no company-wide aggregate view. This is the missing home page.
@@ -38,12 +39,14 @@ function KpiTile({
   isError,
   isLoading,
   to,
+  testId,
 }: {
   label: string;
   value: number | string;
   isError?: boolean;
   isLoading?: boolean;
   to?: string;
+  testId?: string;
 }) {
   const inner = (
     <>
@@ -67,7 +70,7 @@ function KpiTile({
     return (
       <Link
         to={to}
-        data-testid="safety-home-kpi-link"
+        data-testid={testId ?? "safety-home-kpi-link"}
         className="block rounded-sm border px-3 py-2 text-center transition hover:border-[#E5E7EB] hover:shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E5E7EB]"
         style={{ maxHeight: spacing.kpiTileMaxHeight, backgroundColor: colors.kpiTileBg, borderColor: colors.kpiTileBorder }}
       >
@@ -149,6 +152,10 @@ function DrillRow({ record }: { record: DrillRecord }) {
 export function SafetyHomeTab() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const location = useLocation();
+  // ROUND 8.20 class R — Home KPI/jump drills attach `ret` so destination Back restores Safety Home.
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const [activeDriverWindow, setActiveDriverWindow] = useState<ActiveDriverSetThresholdDays>(7);
 
   const activeDriversQuery = useQuery({
@@ -205,7 +212,7 @@ export function SafetyHomeTab() {
           unitLabel: entityLabel(row.unit_number, row.unit_id, "Unit"),
           // C-13 / LST-F104: AccidentsPage already honors ?accident_id= (opens drawer). Leaving
           // detailTo null was a dead "Open record" affordance — driver/unit links alone are not enough.
-          detailTo: id ? `/safety/accidents?accident_id=${encodeURIComponent(id)}` : null,
+          detailTo: id ? safetyHref(`/safety/accidents?accident_id=${encodeURIComponent(id)}`) : null,
         };
       });
 
@@ -221,11 +228,11 @@ export function SafetyHomeTab() {
       unitId: row.subject_unit_id ?? null,
       unitLabel: entityLabel(row.subject_unit_number, row.subject_unit_id, "Unit"),
       // C-13 / LST-F106: SafetyEventsPage honors ?event_id= (opens detail panel).
-      detailTo: row.id ? `/safety/safety-events?event_id=${encodeURIComponent(row.id)}` : null,
+      detailTo: row.id ? safetyHref(`/safety/safety-events?event_id=${encodeURIComponent(row.id)}`) : null,
     }));
 
     return [...eventRecords, ...accidentRecords];
-  }, [accidentsQuery.data?.accidents, openEventsQuery.data]);
+  }, [accidentsQuery.data?.accidents, openEventsQuery.data, originHref]);
 
   const drillLoading = accidentsQuery.isPending || openEventsQuery.isPending;
   const drillError = accidentsQuery.isError && openEventsQuery.isError;
@@ -331,28 +338,32 @@ export function SafetyHomeTab() {
           value={Number(eventKpisQuery.data?.total ?? 0)}
           isError={eventKpisQuery.isError}
           isLoading={eventKpisQuery.isPending}
-          to="/safety/safety-events"
+          to={safetyHref("/safety/safety-events")}
+          testId="safety-home-kpi-total-events"
         />
         <KpiTile
           label="Open Safety Events"
           value={Number(eventKpisQuery.data?.open_count ?? 0)}
           isError={eventKpisQuery.isError}
           isLoading={eventKpisQuery.isPending}
-          to="/safety/safety-events"
+          to={safetyHref("/safety/safety-events")}
+          testId="safety-home-kpi-open-events"
         />
         <KpiTile
           label="Severe Events"
           value={Number(eventKpisQuery.data?.severe_count ?? 0)}
           isError={eventKpisQuery.isError}
           isLoading={eventKpisQuery.isPending}
-          to="/safety/safety-events"
+          to={safetyHref("/safety/safety-events")}
+          testId="safety-home-kpi-severe-events"
         />
         <KpiTile
           label="Accidents on File"
           value={(accidentsQuery.data?.accidents ?? []).length}
           isError={accidentsQuery.isError}
           isLoading={accidentsQuery.isPending}
-          to="/safety/accidents"
+          to={safetyHref("/safety/accidents")}
+          testId="safety-home-kpi-accidents"
         />
         <KpiTile
           label="Open Company Violations"
@@ -361,7 +372,8 @@ export function SafetyHomeTab() {
           isLoading={kpisQuery.isPending}
           // C-06: land on company-violation filter (merged into External Fines) — bare /external-fines
           // defaulted to driver-fine and looked like a dead/wrong tile.
-          to="/safety/external-fines?record_type=company-violation"
+          to={safetyHref("/safety/external-fines?record_type=company-violation")}
+          testId="safety-home-kpi-company-violations"
         />
         <KpiTile
           label="Drivers with Open Fines"
@@ -369,14 +381,16 @@ export function SafetyHomeTab() {
           isError={kpisQuery.isError}
           isLoading={kpisQuery.isPending}
           // Align with SafetyKpiRow — internal fines surface (not external-fines default).
-          to="/safety/internal-fines"
+          to={safetyHref("/safety/internal-fines")}
+          testId="safety-home-kpi-open-fines"
         />
         <KpiTile
           label="Critical Integrity Alerts"
           value={Number((kpisQuery.data as Record<string, unknown> | undefined)?.critical_integrity_alerts ?? 0)}
           isError={kpisQuery.isError}
           isLoading={kpisQuery.isPending}
-          to="/safety/integrity-alerts"
+          to={safetyHref("/safety/integrity-alerts")}
+          testId="safety-home-kpi-integrity-alerts"
         />
         <KpiTile
           label="Internal inspection points"
@@ -387,7 +401,8 @@ export function SafetyHomeTab() {
           }
           isError={csaQuery.isError}
           isLoading={csaQuery.isPending}
-          to="/safety/csa-score"
+          to={safetyHref("/safety/csa-score")}
+          testId="safety-home-kpi-csa"
         />
       </div>
 
@@ -430,7 +445,7 @@ export function SafetyHomeTab() {
           {SAFETY_GROUPS.map((group) => (
             <Link
               key={group.id}
-              to={group.tabs[0]?.route ?? "/safety/home"}
+              to={safetyHref(group.tabs[0]?.route ?? "/safety/home")}
               className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
             >
               {group.label}
@@ -447,7 +462,7 @@ export function SafetyHomeTab() {
           {SAFETY_ALIAS_TABS.map(({ tab }) => (
             <Link
               key={tab.id}
-              to={tab.route}
+              to={safetyHref(tab.route)}
               className="rounded-sm border border-gray-200 px-3 py-2 text-xs font-medium text-[#4B5563] hover:bg-[#F7F8FA]"
               data-testid={`safety-home-alias-${tab.id}`}
             >

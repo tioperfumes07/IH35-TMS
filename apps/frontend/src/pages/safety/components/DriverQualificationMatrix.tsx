@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { listAllDrivers } from "../../../api/mdata";
 import { getSafetyKpis } from "../../../api/safety";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
@@ -10,6 +10,7 @@ import { EntityLink } from "../../../components/shared/EntityLink";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import type { Driver } from "../../../types/api";
 
 type Cohort = "all" | "medical" | "contact" | "cdl";
@@ -19,6 +20,10 @@ const countValue = (value: unknown) => typeof value === "number" && Number.isFin
 
 /** Read-only qualification inventory, not a dispatch-eligibility engine. */
 export function DriverQualificationMatrix({ companyId }: { companyId: string }) {
+  const location = useLocation();
+  // ROUND 8.20 board24 — fine/alert register links carry `ret` so Back restores Driver Files.
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const [cohort, setCohort] = useState<Cohort>("all");
   const [summarySource, setSummarySource] = useState<"fines" | "alerts" | null>(null);
   const roster = useQuery({
@@ -77,10 +82,13 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
     {summarySource ? <aside className="rounded-sm border border-slate-200 bg-white p-3 text-xs" aria-label="Summary source registers">
       {summarySource === "fines" ? <>
         <p>This count is distinct drivers across open or contested civil fines and pending, approved or disputed internal fines. Voided fines are excluded; deactivated civil fines are excluded. These registers include other statuses too — select the stated statuses when reviewing.</p>
-        <div className="mt-2 flex flex-wrap gap-3"><Link to="/safety/external-fines">Civil fine register →</Link><Link to="/safety/internal-fines">Internal fine register →</Link></div>
+        <div className="mt-2 flex flex-wrap gap-3">
+          <Link to={safetyHref("/safety/external-fines")} data-testid="dq-civil-fines-link">Civil fine register →</Link>
+          <Link to={safetyHref("/safety/internal-fines")} data-testid="dq-internal-fines-link">Internal fine register →</Link>
+        </div>
       </> : <>
         <p>This count includes critical alerts that are unresolved or investigating and not currently snoozed. The source register includes other alerts too; select Critical and review those resolution states.</p>
-        <Link className="mt-2 inline-block" to="/safety/integrity-alerts">Integrity alert register →</Link>
+        <Link className="mt-2 inline-block" to={safetyHref("/safety/integrity-alerts")} data-testid="dq-integrity-alerts-link">Integrity alert register →</Link>
       </>}
       <button className="mt-2 block underline" type="button" onClick={() => setSummarySource(null)}>Close source details</button>
     </aside> : null}

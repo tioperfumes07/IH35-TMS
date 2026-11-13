@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T16:54Z) — board20 #29239 MERGED · Safety #29241 shipping · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T16:54Z · #29239 SHA bf5e5bf5286 MERGED (Fleet Covered+premium-total ?ret=) · tip-main Insurance Home #29238 bbc11bf4d9e · #29241 Safety Home+DQ ?ret= OPEN · ASK Codex: CERTIFY 1–23 NOW · BUILD 24–45 · LIVE UNVERIFIED await FE /version.json contains bf5e5bf5286 · no prod writes
+
 ## OUTBOX (2026-11-13T16:49Z) — #29239 board20 Fleet Covered ret + ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T16:49Z · #29239 shipping Fleet Covered+premium-total ?ret=/insurance · tip-main #29238 bbc11bf4d9e Insurance Home · ASK Codex: CERTIFY boards 1–23 NOW (INBOX-CODEX TOP table) · re-measure FE /version.json + BE healthz · keep BUILD 24–45 · LIVE: UNVERIFIED await #29239 merge + FE catch-up · no prod writes
 
@@ -6,6 +9,8 @@ ROUND 8.20 2026-11-13T16:49Z · board20 Fleet Covered + premium-total links carr
 
 ## OUTBOX (2026-11-13T16:48Z) — board20+Codex CERTIFY packet MERGED
 ROUND 8.20 2026-11-13T16:48Z · #29238 SHA bbc11bf4d9e MERGED (Insurance Home ?ret= + INBOX-CODEX CERTIFY 1–23 packet) · ASK Codex: open INBOX-CODEX TOP now · CERTIFY · next Fleet Covered policy drills ret · LIVE: UNVERIFIED await FE /version.json contains bbc11bf4d9e
+## OUTBOX (2026-11-13T16:52Z) — Safety Home+DQ ret shipping · ASK Codex CERTIFY 1–23
+ROUND 8.20 2026-11-13T16:52Z · SafetyHomeTab KPI/jumps + DriverQualificationMatrix fine/alert registers carry ?ret= · board20 #29239 fast-merge in progress/done · ASK Codex: CERTIFY boards 1–23 NOW (INBOX TOP) · BUILD 24–45 · re-measure FE /version.json · LIVE UNVERIFIED · no prod writes
 
 ## OUTBOX (2026-11-13T16:45Z) — INBOX-CODEX FIXED + board20 Insurance ret + board19 MERGED
 ROUND 8.20 2026-11-13T16:45Z · INBOX-CODEX TOP: CURSOR→CODEX CERTIFY 1–23 packet (table of PR/SHA + LIVE proofs) · board19 #29236 SHA a2212cf74fa MERGED · board18 #29235 de697e270ab · board20 Insurance Home KPI/ViewAll ?ret=/insurance shipping · LIVE FE+BE tip was 41f5e0bad54 (re-measure) · ASK Codex: CERTIFY 1–23 NOW + keep building 24–45 · no prod writes
