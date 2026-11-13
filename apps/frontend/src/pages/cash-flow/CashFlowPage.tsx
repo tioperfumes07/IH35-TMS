@@ -1,4 +1,4 @@
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -11,6 +11,7 @@ import { RollingLedgerTab } from "./tabs/RollingLedgerTab";
 import { CashFlowHomeTab } from "./tabs/CashFlowHomeTab";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CASH_FORECAST_ENABLED_FLAG } from "../../api/forecast";
+import { resolveBackHref } from "../../lib/returnContext";
 
 export type CashFlowTabId = "home" | "daily_prediction" | "actual_vs_projected" | "manual_daily_projections" | "rolling_ledger";
 
@@ -90,7 +91,10 @@ function parseCashFlowTab(raw: string | null, allowManual: boolean): CashFlowTab
 
 export function CashFlowPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompanyContext();
+  // ROUND 8.20 — Cross-module drills attach ?ret=; hub Back must honor it (fallback stays /cash-flow).
+  const cashFlowBackHref = resolveBackHref({ searchParams, pathname, fallback: "/cash-flow" });
   // Block F: the hand-entered tab only appears once its OFF-by-default flag is on.
   const { enabled: manualForecastEnabled } = useFeatureFlag(CASH_FORECAST_ENABLED_FLAG, selectedCompanyId ?? undefined);
   const activeTab = parseCashFlowTab(searchParams.get("tab"), Boolean(manualForecastEnabled));
@@ -134,7 +138,7 @@ export function CashFlowPage() {
   if (!selectedCompanyId) {
     return (
       <div className="space-y-4">
-        <PageHeader backHref="/cash-flow" title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
+        <PageHeader backHref={cashFlowBackHref} title="Cash Flow" subtitle="Daily cash position — predicted income and expenses" />
         <BoardSection title="Cash Flow" testId="cash-flow-need-company">
           <div className="px-3 py-6 text-center">
             <TrendingUp className="mx-auto mb-3 h-10 w-10 text-gray-300" />
@@ -148,7 +152,7 @@ export function CashFlowPage() {
   return (
     <div className="min-w-0 max-w-full space-y-4" data-testid="cash-flow-page" data-c06-page="cash-flow">
       <PageHeader
-        backHref="/cash-flow"
+        backHref={cashFlowBackHref}
         title="Cash Flow"
         subtitle="Forward-looking daily cash position — predicted income and expenses"
       />

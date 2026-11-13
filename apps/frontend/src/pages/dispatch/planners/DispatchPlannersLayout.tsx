@@ -1,8 +1,9 @@
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../../components/layout/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 import "./planner-design-tokens.css";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
@@ -456,6 +457,13 @@ function PlannerExportButtons() {
 
 export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board12 — unit/detail drills attach ?ret=; Planner Back restores origin.
+  const plannerBackHref = resolveBackHref({
+    searchParams,
+    pathname: location.pathname,
+    fallback: "/dispatch",
+  });
   return (
     <PlannerRangeProvider>
       {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12): this shell used to cap at a fixed
@@ -466,7 +474,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           days.length))) already fills whatever width it's actually given -- it just needed the
           real width, not 1400px, to work with. */}
       <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
-        <PageHeader backHref="/dispatch"
+        <PageHeader backHref={plannerBackHref}
           title="Dispatch Planners"
           subtitle="Driver leave, truck availability, and load timeline — shared date range"
           actions={<PlannerExportButtons />}
