@@ -1,7 +1,7 @@
-/** CC-1 claim 20137 — ENG-44 combined four-rules guard + reinstate UI.
+/** CC-1 claim 20137 — ENG-44 combined four-rules guard + reinstate UI + header backlink.
  *  Rules: (1) bill due date = load delivery, (2) salaried stray bill voided,
  *  (3) presettlement autolinks loads, (4) live_load_number not self-referential,
- *  (5) reinstate (un-void) UI wired.
+ *  (5) reinstate (un-void) UI wired, (6) payrun-close stamps accounting_bill_id header backlink.
  */
 export default {
   name: "verify-eng44-driver-bill-four-rules",
@@ -18,5 +18,8 @@ export default {
     // Rule 5 — reinstate (un-void) UI wired to POST .../reinstate
     await ctx.run("node", ["scripts/verify-reinstate-driver-bill-ui-wired.mjs", "--selftest"]);
     await ctx.run("node", ["scripts/verify-reinstate-driver-bill-ui-wired.mjs"]);
+    // Rule 6 — payrun-close stamps accounting_bill_id on settlement header (Row 82/86)
+    await ctx.run("node", ["scripts/verify-settlement-payrun-close-stamps-accounting-bill-id.mjs", "--selftest"]);
+    await ctx.run("node", ["scripts/verify-settlement-payrun-close-stamps-accounting-bill-id.mjs"]);
   },
 };

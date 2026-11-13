@@ -1542,12 +1542,17 @@ export async function closeSettlementPayRun(
       // ROUND 443 (prod-fork e2e): record HOW the net was paid — nothing ever wrote pay_method, so the feed gate's
       // settlement.header_complete failed every closed settlement. Owner ROUND 326: net pay is a bill payment from a
       // real bank — the chosen payment method's bank, else the operating bank; no method chosen is not a refusal.
+      // SETL-HEADER-05-PAYRUN (Row 82/86, 2026-11-13): mirror the same COALESCE that
+      // settlement-bill-payment-posting.service.ts SETL-HEADER-05 writes — the payrun-close path
+      // creates accounting bills via the AP chain but never stamped the header backlink. $5 is the
+      // first accounting_bill_id from the AP chain (NULL for salaried-zero settlements with no bills).
       `UPDATE driver_finance.driver_settlements
           SET posted_at = COALESCE(posted_at, now()), posted_by_user_id = COALESCE(posted_by_user_id, $3::uuid),
               status = CASE WHEN status = 'open' THEN 'closed' ELSE status END,
-              pay_method = COALESCE(pay_method, $4)
+              pay_method = COALESCE(pay_method, $4),
+              accounting_bill_id = COALESCE(accounting_bill_id, $5::uuid)
         WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
-      [settlementId, opco, actor.userId, input.leaveNetOpen ? (netCents > 0 ? "open_ap_unpaid" : "no_net_pay") : paymentMethod?.name ?? (netCents > 0 ? "bank_bill_payment" : "no_net_pay")]
+      [settlementId, opco, actor.userId, input.leaveNetOpen ? (netCents > 0 ? "open_ap_unpaid" : "no_net_pay") : paymentMethod?.name ?? (netCents > 0 ? "bank_bill_payment" : "no_net_pay"), chain.bills[0]?.accounting_bill_id ?? null]
     );
 
     // Lead ROUND 330.6 ruling 1: a settlement re-posted against loads of a REVERSED settlement links to it both ways
