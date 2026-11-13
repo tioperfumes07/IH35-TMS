@@ -2,6 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 20Z — LEAD ROW 99+113 MERGED
+
+**BANK-R99/BANK-F99 (pending re-issue retires older generation — MERGED):** `386aaa9aa4` PR #29283 — `retireOlderPendingGenerationOnReissue` wired in Plaid ingest; 5 live duplicate-pending pairs retire on next Plaid sync. Guard RULE 6 added; selftest 11/11 PASS. LIVE PROOF: UNVERIFIED until next sync (DATA-LATER). module banking 19/20.
+
+## 2026-11-13 20Z — ROUND 8.23 CC-3 rows complete
+
+**Row 19 (relay_ingest_heartbeat KPI):** `5a322c10df` PR #29275 — MERGED. Guard exit 0.
+Rows 80/200/29+119/111/113/124/138/125/152/154: DONE-ENGINE or DATA-LATER per OUTBOX register below.
+
 ## 2026-11-13 09Z — ROUND 8.22 CC-3 Chrome walk: rows 120 104 105 106 107 108 124 138
 
 **Row 120 (FuelAssignmentPopup — DONE-LIVE):** Chrome walk 2026-11-13. `bf7dadd3cf` #27311 — clicked Review on fuel question row; FuelAssignmentPopup opened showing Fill/Station/Gallons/Amount, Evidence trucks at station, Proposed truck, Confirm/Cancel buttons. No crash. Register updated DONE-LIVE.
@@ -244,3 +253,19 @@ Design rows (all DONE-LIVE; PRs #29083 / #29092 / #29105):
 - **FINDING:** FINAL-2 row 41 — Trial balance viewer board-faithful (443.280)
 - **FIX:** TrialBalancePage — cell() for plain 2-dp table cells; arSubledgerQuery; measuredArNote→live ReactNode; footerCells removed; onTotalsDrill prop; space-y-3. TrialBalanceBoard — ReactNode measuredArNote; onTotalsDrill → onClick on debit/credit KPI tiles
 - **GATE:** tsc -b exit 0 · vite build exit 0
+
+## ROUND 8.23 — CC-3 — 2026-11-13
+
+| Row | PR/SHA | Status | Notes |
+|-----|--------|--------|-------|
+| 19 | `a35c1e53dc` #29276 | DONE-ENGINE | guard verify-canonical-source-entity-kpis PASS; fuel KPI → readFuelPeriodSpend; banking → clearedBankLine |
+| 80 | — | DATA-LATER | ops script `scripts/ops/2026-10-24-lead-13699-correct-from-alwaystrack.mts` needs AUTH-468 --apply by Lead (data-feed law: coders never apply) |
+| 200 | `eef79722` #27452 | DONE-ENGINE | guard verify-steps/3677 exit 0; issued-only KPI = GL 1100 |
+| 29+119 | `450ce42d6b` #27464 | DONE-ENGINE | verify-entity-filters-multi-select 149/149 PASS |
+| 111 | `8cff827545` #27400 | DONE-ENGINE | verify-insurance-dashboard-routes-registered PASS (fleet:landing-drill insHref form fixed on main by 8.20) |
+| 113 | on main | DONE-ENGINE | bank-tx-dedup.ts + verify-pending-bank-lines-never-counted SELFTEST 9/9 PASS; LIVE PROOF: UNVERIFIED until next Plaid sync; DATA-LATER: 43 live Plaid PENDING lines retire on next Plaid sync |
+| 124 | `fbf44f6921` #28503 | DONE-LIVE | driver-day-summary 5,071ms → 265ms (Chrome walk R8.22 #29229) |
+| 138 | `fbf44f6921` #28503 | DONE-LIVE | mdata/drivers 4,522ms → 303ms (Chrome walk R8.22 #29229) |
+| 125 | `f3855c3116` #27485 | DONE-ENGINE | guard verify-settlements-subnav-stays-in-module PASS |
+| 152 | `864c4db7d8` #27491 | DONE-ENGINE | maintenance money cents |
+| 154 | `ac09dabb4a` #27483 | DONE-ENGINE | every WO column sorts |
