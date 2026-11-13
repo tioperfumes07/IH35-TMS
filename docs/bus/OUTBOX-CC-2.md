@@ -252,3 +252,7 @@ ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-39 Factoring Home — #29230 324f3c92 E
 ## ROUND 8.23 — 2026-11-13 17:00Z — CC-2 checkpoint
 
 ROUND 8.23 17:00Z · CC-2 DONE-ENGINE: ENG-17 factoring collection engine — resolver live-verified: factoring_advance_liability → account 2150 "Factoring Advance" (Liability, is_postable=true) resolves correctly for USMCA (5c854333); guard step 20019 PASS exit=0; COA role row present since 2026-07-22; no migration needed — binding was already in place; DATA-LATER: Faro replay (apply collections to live invoices)
+
+## ROUND 8.28 — 2026-11-14 00:00Z — CC-2 checkpoint
+
+ROUND 8.28 00:00Z · CC-2 DONE-PERF: ROW 124b stop_fence_keys LATERAL — PR #29339 · merge sha 1270725f87dc · before (plain JOIN): 794·744·677·881·807 ms avg 781 ms · after (LATERAL): 332·348·354·342·332 ms avg 342 ms · target <500 ms ✓ · guard step 20035 selftest 9/9 PASS
