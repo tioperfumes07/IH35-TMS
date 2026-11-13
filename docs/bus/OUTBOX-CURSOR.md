@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:16Z) — ROUND 8.20 board13 Load History KPI=search shipping
+ROUND 8.20 2026-11-13T05:16Z · board13 Load History `q` URL + KPIs/pager follow visible cohort (NO-SUCH-LOAD → 0) · tip board22 #29181 45209ff404c · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T05:14Z) — ROUND 8.20 board22 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T05:14Z · board22 #29181 SHA 45209ff404c MERGED (PmSchedule Back ?ret= fh=moving) · tip board6 #29178 250322ac957 · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+18+19+20+22+36+37 · LIVE: UNVERIFIED await /version.json contains 45209ff404c
+
 ## OUTBOX (2026-11-13T05:10Z) — ROUND 8.20 board22 PM Schedule ret shipping
 ROUND 8.20 2026-11-13T05:10Z · board22 PmSchedulePage Back honors Fleet Health `?ret=` (fh=moving cohort) · tip board6 #29178 250322ac957 · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

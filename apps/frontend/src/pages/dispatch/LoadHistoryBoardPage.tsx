@@ -12,7 +12,9 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
+import { mergeUrlBoardState } from "../../lib/returnContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
@@ -92,6 +94,30 @@ export function emptyMilesPct(loaded: number, empty: number): string {
   return `${((empty / all) * 100).toFixed(1)}%`;
 }
 
+/** ROUND 8.20 board13 — when search/client filters narrow rows, KPIs must match the visible cohort (not server totals). */
+export function cohortTotalsFromRows(rows: LoadsHistoryRow[]) {
+  let revenue_cents = 0;
+  let loaded_miles = 0;
+  let empty_miles = 0;
+  let delivered_not_invoiced = 0;
+  const customers = new Set<string>();
+  for (const r of rows) {
+    revenue_cents += Number(r.revenue_cents ?? 0);
+    loaded_miles += Number(r.miles_loaded ?? 0);
+    empty_miles += Number(r.miles_deadhead ?? 0);
+    if (r.customer_id) customers.add(String(r.customer_id));
+    if (String(r.status ?? "") === "delivered" && !r.invoice_id) delivered_not_invoiced += 1;
+  }
+  return {
+    load_count: rows.length,
+    revenue_cents,
+    loaded_miles,
+    empty_miles,
+    customer_count: customers.size,
+    delivered_not_invoiced,
+  };
+}
+
 /** Which rows the API is asked for: the cancelled exclusion lifts only when the viewer asks for it. */
 export function loadHistoryApiParams(f: Filters) {
   const wantsCancelled = f.includeCancelled || f.status.includes("cancelled");
@@ -124,7 +150,20 @@ export default function LoadHistoryBoardPage() {
   };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board13 — `q` is URL source of truth (deep-link NO-SUCH-LOAD must zero KPIs + table).
+  const search = searchParams.get("q") ?? "";
+  const setSearch = (next: string) => {
+    setOffset(0);
+    setSelectedId(null);
+    setSearchParams(
+      (prev) => {
+        const merged = mergeUrlBoardState(prev.toString(), { q: next.trim() ? next : null });
+        return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
+      },
+      { replace: true },
+    );
+  };
   const [offset, setOffset] = useState(0);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerLoadId, setDrawerLoadId] = useState<string | null>(null);
@@ -137,6 +176,7 @@ export default function LoadHistoryBoardPage() {
     retry: false,
   });
 
+  const clientFiltered = Boolean(search.trim()) || applied.status.length > 1 || applied.tripType.length > 1;
   const rows = useMemo(() => {
     let list = query.data?.rows ?? [];
     if (applied.status.length > 1) list = list.filter((r) => applied.status.includes(String(r.status ?? "")));
@@ -153,11 +193,14 @@ export default function LoadHistoryBoardPage() {
   }, [query.data?.rows, applied.status, applied.tripType, search]);
 
   const selected = useMemo(() => rows.find((r) => r.load_id === selectedId) ?? null, [rows, selectedId]);
-  const totals = query.data?.totals;
+  const cohortTotals = useMemo(() => cohortTotalsFromRows(rows), [rows]);
+  const totals = clientFiltered ? cohortTotals : query.data?.totals;
   const statusCounts = query.data?.status_counts ?? [];
-  const allBooked = statusCounts.reduce((s, c) => s + c.count, 0);
-  const cancelled = statusCounts.find((c) => c.status === "cancelled")?.count ?? 0;
-  const total = query.data?.pagination.total ?? 0;
+  const allBooked = clientFiltered ? rows.length : statusCounts.reduce((s, c) => s + c.count, 0);
+  const cancelled = clientFiltered
+    ? rows.filter((r) => String(r.status ?? "") === "cancelled").length
+    : statusCounts.find((c) => c.status === "cancelled")?.count ?? 0;
+  const total = clientFiltered ? rows.length : query.data?.pagination.total ?? 0;
 
   const openPanel = (r: LoadsHistoryRow) => setSelectedId(r.load_id);
   const cellButton = (r: LoadsHistoryRow, content: React.ReactNode, testId?: string) => (
