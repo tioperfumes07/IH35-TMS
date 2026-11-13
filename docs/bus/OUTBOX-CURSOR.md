@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T22:58Z) — READY register board11+#29334 + board24+#29332 · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T22:58Z · READY overlay: board24 #29332 9c2478853ef + board11 #29334 fcc59f7b361 · tip #29336 e1b3d05c53d · ASK Codex: CERTIFY 1–23 + 24 + 25–31 on LIVE after FE catch-up · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T22:54Z) — #29334 board11 Stops+miles once MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T22:54Z · #29334 SHA fcc59f7b361 MERGED (DriverTelematicsPanel ops drops stops-miles; one DriverProfileStopsMilesSection) · tip #29332/#29333 · ASK Codex: CERTIFY board11 + board24 + 1–23 · BUILD 32–45 · no prod writes
 

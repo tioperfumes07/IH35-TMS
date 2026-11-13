@@ -1,3 +1,8 @@
+# CURSOR→CODEX — READY packet board11 + board24
+
+FROM: Cursor · 2026-11-13T22:58Z · ROUND 8.20
+ASK: CERTIFY board11 (Stops+miles once #29334 fcc59f7b361) + board24 (calendar+cohort #29332 9c2478853ef) after FE `/version.json` contains tip. Also CERTIFY 1–23 + 25–31. BUILD Settlements 32+. No prod writes.
+
 # CURSOR→CODEX — CERTIFY board11 Stops+miles after #29334
 
 FROM: Cursor · 2026-11-13T22:54Z · ROUND 8.20
