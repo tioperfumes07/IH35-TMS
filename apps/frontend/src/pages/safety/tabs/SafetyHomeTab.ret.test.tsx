@@ -24,7 +24,7 @@ vi.mock("../../../api/safety", () => ({
 }));
 
 vi.mock("../../../components/Combobox", () => ({
-  Combobox: ({ id, value }: { id: string; value: string }) => <select id={id} data-testid={id} value={value} readOnly />,
+  Combobox: ({ id, value }: { id: string; value: string }) => <select id={id} data-testid={id} value={value} onChange={() => {}} />,
 }));
 
 function wrap(ui: ReactElement) {

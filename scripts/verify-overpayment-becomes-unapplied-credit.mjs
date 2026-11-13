@@ -10,6 +10,7 @@
  */
 
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+export const ALLOW_OFFLINE_SKIP = "unapplied-credit engine requires a live DB; CI always has DATABASE_URL";
 
 const CREDIT_MEMO_FLOOR = 0;   // grows when real overpayment credit memos are created
 
@@ -22,7 +23,7 @@ if (!isSelftest) {
 }
 
 async function runLive() {
-  const { client, pool } = await requireLiveDbOrExit({ label: "verify-overpayment-becomes-unapplied-credit" });
+  const { client, pool } = await requireLiveDbOrExit({ label: "verify-overpayment-becomes-unapplied-credit", allowOfflineSkip: ALLOW_OFFLINE_SKIP });
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'on'");
@@ -81,7 +82,7 @@ async function measureDb(client) {
 }
 
 async function runSelftest() {
-  const { client, pool } = await requireLiveDbOrExit({ label: "verify-overpayment-becomes-unapplied-credit (selftest)" });
+  const { client, pool } = await requireLiveDbOrExit({ label: "verify-overpayment-becomes-unapplied-credit (selftest)", allowOfflineSkip: ALLOW_OFFLINE_SKIP });
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'on'");
