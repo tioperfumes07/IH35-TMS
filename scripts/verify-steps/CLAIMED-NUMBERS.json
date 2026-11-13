@@ -17887,5 +17887,11 @@
     "seat": "CC-1",
     "purpose": "ENG-44 combined four-rules guard",
     "claimed": "2026-11-13"
+  },
+  "20027": {
+    "lane": "cc-2",
+    "description": "verify-bank-pending-superseded-by-posted",
+    "round": "8.24",
+    "row": "99+113"
   }
 }
