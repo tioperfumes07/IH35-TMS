@@ -1974,15 +1974,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   {/* ENG-17: Collected vs Open per Purchase summary */}
                   {advanceSummaryRows.length > 0 ? (
                     <div className="mb-3 px-3.5" data-testid="factoring-collection-summary">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-[#4B5563] mb-1">Collection Summary by Advance</div>
-                      <table className="w-full border-collapse text-xs">
+                      <div className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563] mb-1">Collection Summary by Advance</div>
+                      <table className="w-full border-collapse text-xs tabular-nums">
                         <thead>
                           <tr className="border-b border-[#E5E7EB]">
-                            <th className="py-1 text-left text-[11px] font-semibold uppercase text-[#4B5563]">Advance</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Total Invoiced</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Collected</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Open</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Status</th>
+                            <th className="py-1 text-left text-section-header font-semibold uppercase text-[#4B5563]">Advance</th>
+                            <th className="py-1 text-right text-section-header font-semibold uppercase text-[#4B5563]">Total Invoiced</th>
+                            <th className="py-1 text-right text-section-header font-semibold uppercase text-[#4B5563]">Collected</th>
+                            <th className="py-1 text-right text-section-header font-semibold uppercase text-[#4B5563]">Open</th>
+                            <th className="py-1 text-right text-section-header font-semibold uppercase text-[#4B5563]">Status</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1994,9 +1994,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                                 <td className="py-1">
                                   <EntityLink kind="factoring_advance" id={advId} label={s.advance_display_id} />
                                 </td>
-                                <td className="py-1 text-right font-mono">{fmtCents(s.total_cents)}</td>
-                                <td className="py-1 text-right font-mono text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
-                                <td className="py-1 text-right font-mono text-gray-700">{fmtCents(s.open_cents)}</td>
+                                <td className="py-1 text-right tabular-nums font-mono">{fmtCents(s.total_cents)}</td>
+                                <td className="py-1 text-right tabular-nums font-mono text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
+                                <td className="py-1 text-right tabular-nums font-mono text-gray-700">{fmtCents(s.open_cents)}</td>
                                 <td className="py-1 text-right">
                                   {allCollected ? (
                                     <span className="text-[#16A34A] font-medium">Fully Collected</span>

@@ -19,6 +19,7 @@
     "scripts/ops/round28-step3-recompute-strays.ts": true,
     "scripts/ops/round28-step3-settlement-repoint.ts": true,
     "scripts/reconcile-feed-day.mjs": true,
+    "scripts/seed-settlements-cc-2.ts": true,
     "scripts/verify-bank-line-status-has-live-target.mjs": true,
     "scripts/verify-bank-match-suggest-is-read-only.mjs": true,
     "scripts/verify-costs-are-expenses-not-handwritten-jes.mjs": true,
