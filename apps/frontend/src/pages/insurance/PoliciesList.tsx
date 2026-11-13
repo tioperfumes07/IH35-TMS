@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import {
   listInsurancePolicies,
   listInsuranceTypeCatalog,
@@ -57,7 +57,14 @@ export function PoliciesList() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname, search } = useLocation();
-  const vendorId = useSearchParams()[0].get("vendor_id") ?? undefined;
+  const [searchParams] = useSearchParams();
+  const vendorId = searchParams.get("vendor_id") ?? undefined;
+  // ROUND 8.20 board20 — Home Active policies KPI attaches ?ret=/insurance; Back must honor it.
+  const policiesBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/insurance",
+  });
   const companyId = selectedCompanyId ?? "";
   const [createOpen, setCreateOpen] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -150,7 +157,7 @@ export function PoliciesList() {
     return (
       <div className="space-y-3" data-testid="insurance-policies-page">
         <PageHeader
-          backHref="/insurance"
+          backHref={policiesBackHref}
           breadcrumb={["Insurance", "Policies"]}
           title="Policies"
           subtitle="Filter and review insurance policies. Click any row to open policy details."
@@ -165,7 +172,7 @@ export function PoliciesList() {
   return (
     <div className="space-y-3" data-testid="insurance-policies-page">
       <PageHeader
-        backHref="/insurance"
+        backHref={policiesBackHref}
         breadcrumb={["Insurance", "Policies"]}
         title="Policies"
         subtitle="Filter and review insurance policies. Click any row to open policy details."
