@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:35Z) — ROUND 8.20 boards 14–17 Book Load trip-type keyboard shipping
+ROUND 8.20 2026-11-13T05:35Z · boards 14–17 Book Load trip-type radiogroup Arrow/Home/End (NB/TR/SB) + unit test · tip board1 #29186 d64386761e3 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json · no production book
+
+## OUTBOX (2026-11-13T05:22Z) — ROUND 8.20 board1 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T05:22Z · board1 #29186 SHA d64386761e3 MERGED (Accounting hub KPI/ViewAll/settlement ?ret=) · tip board13 #29183 f8844430314 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await /version.json contains d64386761e3 · next boards 14–17 Book Load
+
 ## OUTBOX (2026-11-13T05:20Z) — ROUND 8.20 board1 Accounting hub KPI drills shipping
 ROUND 8.20 2026-11-13T05:20Z · board1 Accounting hub KPIs/ViewAll/settlement $ carry ?ret=/accounting; lower grid 1.2fr 1.2fr 1fr guarded · tip board13 #29183 f8844430314 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

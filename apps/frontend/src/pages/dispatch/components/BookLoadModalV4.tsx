@@ -62,6 +62,7 @@ import { openPrintableDocument } from "../../../lib/openPrintableDocument";
 import { BorderCrossingCaptureField } from "./book-load-v4/BorderCrossingCaptureField";
 import type { PortOfEntry } from "../../../components/border-crossing/borderCrossingApi";
 import { buildBorderCrossingStop, isCrossBorderTripType, withBorderCrossingStop } from "./book-load-v4/borderCrossingStop";
+import { nextTripTypeFromKey } from "./book-load-v4/tripTypeKeyboard";
 import { OcrDropZone } from "./book-load-v4/OcrDropZone";
 import { RateConUploadPanel } from "./book-load-v4/RateConUploadPanel";
 import { useFeatureFlag } from "../../../hooks/useFeatureFlag";
@@ -2201,7 +2202,21 @@ export function BookLoadModalV4({
             <span className="text-section-header font-bold text-[#4B5563]">
               Trip type <span className="text-red-500">*</span>
             </span>
-            <div className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Trip type">
+            <div
+              className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3"
+              role="radiogroup"
+              aria-label="Trip type"
+              data-testid="trip-type-radiogroup"
+              onKeyDown={(e) => {
+                // ROUND 8.20 board17 — Arrow/Home/End move selection across NB/TR/SB (no production book).
+                const code = nextTripTypeFromKey(e.key, watchedTripType);
+                if (!code) return;
+                e.preventDefault();
+                form.setValue("trip_type", code, { shouldDirty: true });
+                form.clearErrors("trip_type");
+                document.querySelector<HTMLElement>(`[data-testid="trip-type-card-${code}"]`)?.focus();
+              }}
+            >
               {([
                 ["NB", "▲", "Northbound", "Cross-border load — record the port of entry"],
                 ["TR", "▶", "Triangulation", "Joins this unit's tour after its most recent Northbound leg"],
