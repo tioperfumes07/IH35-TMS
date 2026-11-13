@@ -1,3 +1,19 @@
+## 2026-11-13 ~05:40Z — ROUND 8.20/8.21 CHECKPOINT (CC-1)
+
+ROUND 8.20/8.21 05:40Z · CC-1 rows DONE-LIVE this session:
+- **Row 309 ENG-60** · PR #29182 merged `48e8f7a5` 05:15Z · insurance.lawsuit routes retired (moved to legal.matters type=lawsuit); 17 guards PASS live; drop-table migration applied prod (202616590100)
+- **ENG-54 unit ownership engine** · PR #29169 merged `d535b8ae` 03:34Z · mdata.tg_units_lease_owner_asset_holder() SECURITY DEFINER trigger; 2 triggers wired; migration 202616570100 applied prod
+- **ENG-38 period-lock engine** · PR #29171 merged `f217dabc` 03:37Z · 16 triggers on 12 doc + 4 line tables; migration 202616580100 applied prod; 24 periods open/0 closed
+
+Row status ROUND 8.21:
+- **Row 242 ENG-04** PARTIAL — guard 18809 PASS (3/3 selftest + live); writer never credits 2170; residual $2,575.96 (12 postings) needs Lead BANK_UNIQUE reclass; CC-1 code done
+- **Row 289 ENG-44** PARTIAL — writer stamps due_date; salaried stray void + self-ref + presettlement wired; residual 13690/13698 waiting load delivery data (not a code gap)
+- **Row 79** OPEN — blocked CC-2 ENG-17 (card payable 2510 $187,894.21 sits in 1090; forecast code wired, reads role-bound accounts correctly)
+- **Row 82/86** PARTIAL — restamp route wired (AUTH-478); residual: bill 839f5c4b unpaid (no bill_payment); investigating whether settlement-payrun re-run closes it
+- **Row 85** PARTIAL — AUTH-477 ensure-drivers (59 driver-type) pending owner; investigating insurance vendor category fix for Cimarron/Lloyds of London
+
+---
+
 ## 2026-11-13 ~04:00Z — ROUND 8.18 FINAL CHECKPOINT (CC-1 DONE)
 
 ROUND 8.18 04:00Z FINAL · CC-1 all buildable rows DONE · Summary:
