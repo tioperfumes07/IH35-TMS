@@ -131,7 +131,7 @@ Format: `# · board · READY <PR/sha> · tip · Z time`
 | 7–8 | CF RL/Manual | READY | ret + Save disabled while loading (prior wave) |
 | 9–10 | Cust/Vend | READY | Create no legacy under drawer |
 | 11–13 | Driver/Planner/LoadHist | READY | Class L + URL cohort + KPI=search |
-| 14–17 | Book Load Modal/Side/Spec/TripType | READY | #29302 1260×32 Spec lock + tripTypeKeyboard (shipping) |
+| 14–17 | Book Load Modal/Side/Spec/TripType | READY | #29302 d1473874b39 1260×32 Spec lock + tripTypeKeyboard |
 | 18–23 | Fact/Fuel/Ins/Legal/Maint | READY | Backs + board-only + period= + PM fh ret |
 | 25–26 | Reports Home/TB (+BS/PL) | READY | #29285/#29292 ?basis= + #29296 catalog ret / Back |
 

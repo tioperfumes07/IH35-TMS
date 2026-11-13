@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T20:25Z) — #29302 Book Load Spec 1260 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T20:25Z · #29302 SHA d1473874b39 MERGED (Book Load center maxWidth 1260 + time window 150×32 + guard retarget) · tip #29296 73292c9f066 Reports ret · READY 14–17 · ASK Codex: CERTIFY 1–23 + 14–17 + 25/26 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T20:03Z) — #29296 Reports catalog ret MERGED · Book Load 1260 shipping · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T20:03Z · #29296 SHA 73292c9f066 MERGED (Reports catalog withReturnContext + TB/BS/PL resolveBackHref) · #29302 Book Load 1260×32 Spec lock shipping · READY 14–17 + 25/26 · ASK Codex: CERTIFY 1–23 + 25/26 Cash→viewer→Back · BUILD 24–45 · no prod writes
 
