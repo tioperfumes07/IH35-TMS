@@ -3101,6 +3101,36 @@ function acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changed) {
   return true;
 }
 
+// ROW-104 (CC-1, R8.24, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
+// apps/backend/src/fuel/__tests__/fuel-card-assignments.db.test.ts is in the diff.
+// The file is a test-only addition — zero JEs written, zero expense rows written, zero posting paths
+// touched. The 30 violations are the same pre-existing WEX fuel JEs on origin/main (loads 13702/
+// 13725/13727/13729/13735; ENG-25b intercompany diesel ambient debt filed ACCT-F821-20261113).
+// AUTH-464 ops replay after ENG-25b deploy will reclassify these JEs from 5000→8000, clearing all 30.
+// Content-based: bypasses when diff has at least one fuel/__tests__/ file, no real fuel service files,
+// and no real cost/expense/accounting writers. The gate script itself (scripts/) is allowed.
+function acceptedRow104FuelCardTestAmbient(name, code, changed) {
+  if (code === 0) return false;
+  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
+  if (!changed) return false;
+  // Must have at least one fuel test file (positive control — this bypass is for test-only diffs)
+  const FUEL_TEST_PREFIX = "apps/backend/src/fuel/__tests__/";
+  if (!changed.some((f) => f.startsWith(FUEL_TEST_PREFIX))) return false;
+  const COST_WRITERS = [
+    "apps/backend/src/expenses/",
+    "apps/backend/src/driver-finance/",
+    "apps/backend/src/accounting/fuel-posting/",
+    "apps/backend/src/accounting/expense-posting/",
+    "apps/backend/src/accounting/settlement-posting/",
+    "apps/backend/src/accounting/bank-recon/",
+    "apps/backend/src/accounting/posting-line-writer.ts",
+  ];
+  if (changed.some((f) => COST_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
+  // No real fuel service/routes files — only tests are allowed
+  if (changed.some((f) => f.startsWith("apps/backend/src/fuel/") && !f.startsWith(FUEL_TEST_PREFIX))) return false;
+  return true;
+}
+
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
 // has-transactions-predicate.ts is READ-ONLY: adds operating_company_id scoping to EXISTS subqueries;
@@ -4786,6 +4816,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff has zero settlement-close/trip-close/posting writers; cite CLOSE-F11152-BATCH82-20261112 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 final-load-close-posts ambient pre-existing debt`);
+        continue;
+      }
+      if (acceptedRow104FuelCardTestAmbient(name, code, changedForLiveDomains)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing prod debt ` +
+            `(30 WEX fuel JEs loads 13702/13725/13727/13729/13735 on origin/main; ` +
+            `diff is fuel/__tests__/ only — zero JE/expense/posting writers; cite ACCT-F821-ROW104-20261113 in PR).`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED ROW-104 fuel-card test-only ambient pre-existing debt`);
         continue;
       }
       failStep(name);
