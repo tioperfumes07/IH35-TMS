@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T20:50Z) — #29310 Reports KPI counts + ?cat= MERGED 77157eed148 · CERTIFY 1–23 + 25/26
+# Tip main 77157eed148. Available→Financial; Run-7d→Saved; category URL. #29307 Fuel Related + #29296 ret on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T20:38Z) — #29307 Fuel Home/By-truck Related strip removed MERGED f776c75e15e · CERTIFY 1–23 + 19
 # Tip main f776c75e15e. Fuel.dc.html board-only (no Related above diesel). Book Load #29302 + Reports #29296 on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 
