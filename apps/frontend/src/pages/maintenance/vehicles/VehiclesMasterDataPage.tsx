@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
@@ -48,6 +50,10 @@ const EMPTY_DRAFT: VehicleDraft = {
 };
 
 export function VehiclesMasterDataPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -233,14 +239,14 @@ export function VehiclesMasterDataPage() {
         UI-BACK-BUTTON-MISSING-ENTIRELY: this leaf route (/maintenance/vehicles) had a bespoke
         title bar with no back control at all -- part of a systemwide route-manifest audit that
         found 13 such Maintenance leaves with no shared wrapper to fix in one shot. Replaced with
-        the standard PageHeader (backHref="/maintenance", the module hub) so it gets the same
+        the standard PageHeader (backHref={maintBackHref}, the module hub) so it gets the same
         smart-back wiring as the rest of the app instead of yet another bespoke back button.
       */}
       <PageHeader
         title="Maintenance Vehicles"
         subtitle="Create, edit, void, and review projected source status."
         breadcrumb={[{ label: "Maintenance" }, { label: "Vehicles" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
         actions={
           <div className="flex items-center gap-2">
             {/* MAINT-F3520: server-bound vehicles search — keep; ParityTable toolbar Search suppressed */}

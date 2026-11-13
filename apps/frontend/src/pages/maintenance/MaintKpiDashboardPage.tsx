@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { Link } from "react-router-dom";
+import { useSearchParams, useLocation, Link } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   confirmIdleEventManual,
@@ -92,6 +93,10 @@ function KpiTile({
 }
 
 export function MaintKpiDashboardPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
+  const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaults = useMemo(() => defaultPeriod(), []);
@@ -216,7 +221,7 @@ export function MaintKpiDashboardPage() {
         title="Maintenance KPI Dashboard"
         subtitle="Downtime, MTBF, CPM, cost-per-truck, and PM compliance with drill-down."
         breadcrumb={[{ label: "Maintenance" }, { label: "KPI Dashboard" }]}
-        backHref="/maintenance"
+        backHref={maintBackHref}
       />
       <p className="-mt-2 text-xs text-gray-500">
         Cross-link:{" "}
