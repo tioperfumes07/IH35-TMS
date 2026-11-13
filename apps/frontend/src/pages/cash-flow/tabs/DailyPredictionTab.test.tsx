@@ -2,11 +2,16 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { addDaysIso } from "../../../lib/businessDate";
 import { getRollingLedger } from "../../../api/cashFlow";
 import { DailyPredictionTab } from "./DailyPredictionTab";
+
+function LocationProbe() {
+  const { search } = useLocation();
+  return <div data-testid="location-search">{search}</div>;
+}
 
 vi.mock("../../../lib/businessDate", async (original) => ({
   ...(await original<typeof import("../../../lib/businessDate")>()),
@@ -21,9 +26,23 @@ vi.mock("../../../api/cashFlow", () => ({
 const companyId = "11111111-1111-4111-8111-111111111111";
 function mount(entry = "/cash-flow?tab=daily_prediction") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[entry]}>
-    <DailyPredictionTab operatingCompanyId={companyId} />
-  </MemoryRouter></QueryClientProvider>);
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={[entry]}>
+        <Routes>
+          <Route
+            path="/cash-flow"
+            element={
+              <>
+                <DailyPredictionTab operatingCompanyId={companyId} />
+                <LocationProbe />
+              </>
+            }
+          />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  );
 }
 
 describe("Projected date selection uses one coherent calendar window", () => {
@@ -77,5 +96,11 @@ describe("Projected date selection uses one coherent calendar window", () => {
     await user.click(screen.getByRole("button", { name: /^Day$/ }));
     await waitFor(() => expect(getRollingLedger).toHaveBeenLastCalledWith(companyId, "2026-11-12", "2026-11-25"));
     expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/12/2026");
+  });
+
+  it("stamps proj_date into the URL on bare Projected open so EntityLink ret can restore week", async () => {
+    mount("/cash-flow?tab=daily_prediction");
+    await waitFor(() => expect(screen.getByTestId("location-search").textContent).toContain("proj_date=2026-11-11"));
+    expect(screen.getByTestId("location-search").textContent).toContain("tab=daily_prediction");
   });
 });
