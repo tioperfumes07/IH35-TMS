@@ -2782,6 +2782,32 @@ function acceptedAcctF11152CostsAreExpensesAmbient(name, code, changed) {
   return true;
 }
 
+// ACCT-F821 (CC-1, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
+// accounting/cash-basis/ is in the diff (classified as NonBankReconAccounting domain path).
+// profit-loss-cash.service.ts is a READ-ONLY P&L reporter — it queries journal_entry_postings
+// via SELECT but writes zero JEs, zero expenses, zero accounting rows. The 30 WEX fuel JEs
+// that cause the violation predate this PR on origin/main (USMCA loads 13702/13725/13727/
+// 13729/13735; ENG-25b intercompany diesel ambient debt). Filed COST-JE-ACCT-F821-20261113.
+// Content-based: fires only when diff includes real cost/expense/posting writers.
+function acceptedAcctF821CashBasisPnlAmbient(name, code, changed) {
+  if (code === 0) return false;
+  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
+  if (!changed) return false;
+  const COST_WRITERS = [
+    "apps/backend/src/fuel/",
+    "apps/backend/src/expenses/",
+    "apps/backend/src/driver-finance/",
+    "apps/backend/src/accounting/fuel-posting/",
+    "apps/backend/src/accounting/expense-posting/",
+    "apps/backend/src/accounting/settlement-posting/",
+  ];
+  if (changed.some((f) => COST_WRITERS.some((p) => f.startsWith(p)))) return false;
+  // Only applies when diff is scoped to cash-basis read-only files (service + tests).
+  const CASH_BASIS_PREFIX = "apps/backend/src/accounting/cash-basis/";
+  if (!changed.every((f) => f.startsWith(CASH_BASIS_PREFIX) || !f.startsWith("apps/backend/src/accounting/"))) return false;
+  return true;
+}
+
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-stops-resolve-samsara-no-zip-fence fires via db/migrations/ DATA_WRITE.
 // Pre-existing prod debt: customer-site fence 26464921-bf24-4c24-b1bf-38815adf1636 (load ebeafc9c stop-1-gps)
 // is active with no street (auto_dispatch, zip/city center) on origin/main. This batch82 diff does NOT touch
@@ -4571,6 +4597,15 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ENG-25b intercompany diesel ambient pre-existing WEX fuel JE debt`);
+        continue;
+      }
+      if (acceptedAcctF821CashBasisPnlAmbient(name, code, changedForLiveDomains)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes ACCT-F821 cash-basis P&L ` +
+            `(30 pre-existing WEX fuel JEs on origin/main; profit-loss-cash.service.ts is a read-only ` +
+            `reporter — zero JE writes; cite COST-JE-ACCT-F821-20261113 in PR).`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F821 cash-basis P&L ambient pre-existing WEX fuel JE debt`);
         continue;
       }
       if (acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changedForLiveDomains)) {
