@@ -1,10 +1,10 @@
 {
-  "healthzSha": "add6a98",
-  "generated_at": "2026-11-13T02:24:10.401Z",
+  "healthzSha": "0c8014b",
+  "generated_at": "2026-11-13T04:25:40.741Z",
   "meta": {
     "generatedAt": "2026-09-09T01:35:16-05:00",
     "sourceSha": "936fd96538",
-    "deployedSha": "add6a98",
+    "deployedSha": "0c8014b",
     "prodReadAt": "2026-08-02 22:02 CDT",
     "ledgerRows": 2386,
     "failOpen": 180,
@@ -2123,94 +2123,94 @@
   },
   "recentActivity": [
     {
-      "number": 29139,
-      "title": "PERFUME: Review select-all / select ≥N% alike + 'Use suggestion for all selected' (100–500 at once)",
+      "number": 29177,
+      "title": "FINDING: ACCT-F2026111303 — ENG-29 actual driven miles replay engine; 14-day window excluded NULL loads; guard baseline 135",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 08:17 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29139",
-      "sha": "add6a98148",
-      "committedAtIso": "2026-11-12T20:17:38-06:00"
+      "mergedAtCt": "11/12/2026, 10:18 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29177",
+      "sha": "0c8014ba7d",
+      "committedAtIso": "2026-11-12T22:18:40-06:00"
     },
     {
-      "number": 29137,
-      "title": "PERFUME: HER/HERS read as Women, HIM/HIS as Men (kept in the name) — no men's bottle offered for BURBERRY BRIT HER",
+      "number": 29174,
+      "title": "FINDING: BANK-F820 ROUND 8.20 board2 Unexpected→Match reverse — Close/Back honor ?ret=",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 08:15 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29137",
-      "sha": "6a37ee6aa4",
-      "committedAtIso": "2026-11-12T20:15:59-06:00"
+      "mergedAtCt": "11/12/2026, 10:08 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29174",
+      "sha": "dc5ca739d2",
+      "committedAtIso": "2026-11-12T22:08:14-06:00"
     },
     {
-      "number": 29149,
-      "title": "Claude-1- MAIN-RED 3 fixes: migration-override ruling + customer-create target + USMCA battery doc",
+      "number": 29175,
+      "title": "FINDING: ACCT-F2026111302 — ENG-53 load mileage not re-computed on stop events; T174 odometer stale",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 08:09 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29149",
-      "sha": "9aa874275e",
-      "committedAtIso": "2026-11-13T02:09:34Z"
+      "mergedAtCt": "11/12/2026, 09:59 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29175",
+      "sha": "64c664094c",
+      "committedAtIso": "2026-11-12T21:59:20-06:00"
     },
     {
-      "number": 29148,
-      "title": "CC-2- chore: reserve verify-step 19919 book-equals-Faro (ENG-50)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 08:08 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29148",
-      "sha": "b23897b570",
-      "committedAtIso": "2026-11-12T21:08:17-05:00"
-    },
-    {
-      "number": 29147,
+      "number": 29173,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 07:54 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29147",
-      "sha": "70729a3237",
-      "committedAtIso": "2026-11-13T01:54:52Z"
+      "mergedAtCt": "11/12/2026, 09:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29173",
+      "sha": "c8bc5e3be7",
+      "committedAtIso": "2026-11-12T21:39:50-06:00"
     },
     {
-      "number": 29146,
-      "title": "FINDING: CLAIM-RESERVE CC-1 20113 ENG-60 no-insurance-lawsuit-sql-reads (CC-1 band ≡1)",
+      "number": 29172,
+      "title": "chore(outbox): DONE-LIVE ENG-17 ENG-13 ENG-48 ENG-49 (Round 8.20)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 07:52 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29146",
-      "sha": "2ed8a9a293",
-      "committedAtIso": "2026-11-13T01:52:57Z"
+      "mergedAtCt": "11/12/2026, 09:39 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29172",
+      "sha": "b0f667270a",
+      "committedAtIso": "2026-11-12T22:39:37-05:00"
     },
     {
-      "number": 29145,
-      "title": "FINDING: ACCT-F77-ROW77 — factoring invoice status engine + account summary replace (Round 8.15)",
-      "state": "merged",
-      "mergedAtCt": "11/12/2026, 07:50 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29145",
-      "sha": "cfd55e6f19",
-      "committedAtIso": "2026-11-12T20:50:33-05:00"
-    },
-    {
-      "number": 29144,
+      "number": 29170,
       "title": "chore(tracker): auto-refresh reconcile + phase-manifest artifacts",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 06:43 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29144",
-      "sha": "0da83637a1",
-      "committedAtIso": "2026-11-13T00:43:56Z"
+      "mergedAtCt": "11/12/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29170",
+      "sha": "e8e330c2ef",
+      "committedAtIso": "2026-11-13T03:37:18Z"
     },
     {
-      "number": 0,
-      "title": "FINDING: PROGRAM-SCOREBOARD-FALLBACK-SYNC LANE: NON-FINANCIAL",
+      "number": 29171,
+      "title": "FINDING: ACCT-F820 ENG-38 period-lock engine — a closed month refuses create, money edit and delete on every money document and line (no month is closed)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 06:43 PM CT",
-      "url": "",
-      "sha": "a23362d2f0",
-      "committedAtIso": "2026-11-13T00:43:12Z"
+      "mergedAtCt": "11/12/2026, 09:37 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29171",
+      "sha": "f217dabca3",
+      "committedAtIso": "2026-11-13T03:37:05Z"
     },
     {
-      "number": 29142,
-      "title": "FINDING: LEAD-F820 P0 MAIN-RED — bank-register-sign accepts cohortReview",
+      "number": 29168,
+      "title": "FINDING: ACCT-F255-ENG49 — settlement line totals engine (Round 8.20)",
       "state": "merged",
-      "mergedAtCt": "11/12/2026, 05:51 PM CT",
-      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29142",
-      "sha": "12d0cc5190",
-      "committedAtIso": "2026-11-12T17:51:49-06:00"
+      "mergedAtCt": "11/12/2026, 09:35 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29168",
+      "sha": "bc43e94549",
+      "committedAtIso": "2026-11-12T22:35:47-05:00"
+    },
+    {
+      "number": 29169,
+      "title": "FINDING: LST-F820 ENG-54 unit ownership engine — a truck leased to an operating carrier must be owned by the asset holder",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 09:34 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29169",
+      "sha": "d535b8ae84",
+      "committedAtIso": "2026-11-13T03:34:03Z"
+    },
+    {
+      "number": 29167,
+      "title": "FINDING: ACCT-F255-ENG48 — fuel fill expense one-to-one ratchet engine (Round 8.20)",
+      "state": "merged",
+      "mergedAtCt": "11/12/2026, 09:32 PM CT",
+      "url": "https://github.com/tioperfumes07/IH35-TMS/pull/29167",
+      "sha": "9dcaebcee1",
+      "committedAtIso": "2026-11-12T22:32:53-05:00"
     }
   ]
 }
