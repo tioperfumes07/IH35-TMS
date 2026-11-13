@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T21:19Z) — #29313 Loads group/drill URL MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T21:19Z · #29313 SHA 5d2c81196c6 MERGED (Loads ?group=&drill= + week chart drill) · tip #29312/#29315 · board28 DSR #29316 OPEN · ASK Codex: CERTIFY board27 + 1–23 + 25/26 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T21:12Z) — #29312 Legal Templates ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T21:12Z · #29312 SHA b444335e42f MERGED (Legal Templates detail/list honor ?ret=) · tip #29310/#29307 · board27 Loads URL #29313 OPEN · ASK Codex: CERTIFY board21 + 1–23 · BUILD 24–45 · no prod writes
 
