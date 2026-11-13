@@ -47,10 +47,7 @@ const repoRoot = process.cwd();
  */
 const DISCOVERED_BASELINE_PATH = "scripts/list-error-state-coverage-baseline.json";
 const PAGES_ROOT = "apps/frontend/src/pages";
-/** Program scoreboard — deliberate snapshot/fallback UX; not a list-error sweep target (CC-2 read-before-edit 2026-08-11). */
-const DISCOVERY_EXEMPT = new Set([
-  "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
-]);
+const DISCOVERY_EXEMPT = new Set([]);
 const RENDERS_A_LIST = /<table|<tbody|ParityTable|DataTable/;
 /**
  * An error branch in ANY of the spellings this codebase actually uses.
@@ -300,7 +297,6 @@ function selftest() {
   const discovered = discoverOffenders() ?? [];
   const mustExclude = [
     "apps/frontend/src/pages/banking/components/forms/BillPaymentForm.tsx",
-    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
   ];
   const stillFlagged = mustExclude.filter((p) => discovered.includes(p));
   if (stillFlagged.length) {

@@ -6,10 +6,6 @@
       "why": "build-verifier-rollup --check snapshot only. GET /program/module-matrix computes verifierRollup on read. Do not treat this file as live V1–V6. Delete when --check is retired."
     },
     {
-      "path": "apps/frontend/src/pages/program/programScoreboard.data.ts",
-      "why": "Typed copy of docs/audit/program-scoreboard.json (the stored derived parent). Freshness is on the JSON."
-    },
-    {
       "path": "apps/frontend/src/pages/program/classScoreboard.data.ts",
       "why": "Typed copy of docs/audit/wave-queue.json. Not a live V-column freeze."
     },

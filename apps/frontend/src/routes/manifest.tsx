@@ -108,9 +108,6 @@ const ModuleCompletionPage = React.lazy(() => import("../pages/program/ModuleCom
 const AuditScoreboardPage = React.lazy(() =>
   import("../pages/program/AuditScoreboardPage").then((m) => ({ default: m.AuditScoreboardPage }))
 );
-const LegacyAuditScoreboardPage = React.lazy(() =>
-  import("../pages/program/LegacyAuditScoreboardPage").then((m) => ({ default: m.LegacyAuditScoreboardPage }))
-);
 const ModuleMatrixPreviewPage = React.lazy(() =>
   import("../pages/program/ModuleMatrixPreviewPage").then((m) => ({ default: m.ModuleMatrixPreviewPage }))
 );
@@ -1117,15 +1114,6 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <ModuleMatrixPreviewPage />
-            </ProtectedRoute>
-          }
-        />
-        {/* Archived 13-gate / blocks certification board — reachable until matrix is live-sourced. */}
-        <Route
-          path="/program/legacy-scoreboard"
-          element={
-            <ProtectedRoute>
-              <LegacyAuditScoreboardPage />
             </ProtectedRoute>
           }
         />

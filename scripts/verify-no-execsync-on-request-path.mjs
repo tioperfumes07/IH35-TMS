@@ -27,7 +27,7 @@ import process from "node:process";
 
 const LABEL = "verify-no-execsync-on-request-path";
 const FILES = [
-  "apps/backend/src/program/audit-scoreboard.routes.ts",
+  "apps/backend/src/program/audit-scoreboard.routes.ts", // now module-matrix route only (scoreboard feed removed 2026-11-12)
   "apps/backend/src/program/module-matrix.service.ts",
 ];
 
@@ -80,21 +80,8 @@ for (const rel of FILES) {
   check(fs.readFileSync(p, "utf8"), rel);
 }
 
-// The async replacement must actually exist.
-const a = fs.readFileSync(path.join(process.cwd(), FILES[0]), "utf8");
-if (!/execFileAsync\(\s*\n?\s*"git"/.test(a) && !/execFileAsync\(/.test(a)) {
-  fail(`${FILES[0]}: no execFileAsync git call — the non-blocking replacement is missing.`);
-}
-if (!/recentGitCache/.test(a)) {
-  fail(`${FILES[0]}: no recentGitCache — the handler would respawn git per request.`);
-}
-
 if (process.argv.includes("--selftest")) {
-  const bug = a.replace(
-    /export function readRecentActivityFromGitLog[\s\S]*?\n}/,
-    'export function readRecentActivityFromGitLog(limit = 10) {\n  const raw = execSync(`git log origin/main -n ${limit}`, { timeout: 8000 });\n  return [];\n}',
-  );
-  if (bug === a) fail("selftest could not construct the bug variant.");
+  const bug = 'export function readRecentActivityFromGitLog(limit = 10) {\n  const raw = execSync(`git log origin/main -n ${limit}`, { timeout: 8000 });\n  return [];\n}';
   if (!/execSync\(\s*[`"'][^`"']*git log/.test(bug)) {
     fail("selftest: bug variant does not match the detector — guard would miss the regression.");
   }

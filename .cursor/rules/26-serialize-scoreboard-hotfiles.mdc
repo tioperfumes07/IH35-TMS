@@ -30,9 +30,8 @@ At most **ONE ready-for-review Cursor PR** may edit any of these hotfiles
 
 ## CI
 
-`scripts/verify-no-parallel-scoreboard-prs.mjs` (verify-step **1428**) fails when the current PR
-diff edits a scoreboard hotfile **and** another **non-draft** open PR against `main` also edits one
-(when `GH_TOKEN`/`GITHUB_TOKEN` is available). Local preflight covers the same intent without token.
+`verify-no-parallel-scoreboard-prs` (verify-step 1428) was removed 2026-11-12 with the program scoreboard (owner order). The
+hotfile list above is now enforced by local preflight only.
 
 ## Tie-breakers
 

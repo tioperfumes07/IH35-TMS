@@ -150,8 +150,6 @@ const STEPS = [
   ["verify-party-tab-drills-and-reverse", "scripts/verify-party-tab-drills-and-reverse.mjs"],
   ["verify-no-money-theater", "scripts/verify-no-money-theater.mjs"],
   ["verify-no-capability-regression", "scripts/verify-no-capability-regression.mjs"],
-  // Rule 26 — block parallel scoreboard-hotfile PRs before push (SKIP-PASS without gh token).
-  ["verify-no-parallel-scoreboard-prs", "scripts/verify-no-parallel-scoreboard-prs.mjs"],
   // §7 palette — financial + nonfinancial (Cursor #4198 burned build-typecheck on amber banner).
   ["verify-section7-palette-financial", "scripts/verify-section7-palette-financial.mjs"],
   ["verify-section7-palette-nonfinancial", "scripts/verify-section7-palette-nonfinancial.mjs"],
@@ -2414,9 +2412,7 @@ for (const [name, rel] of STEPS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -3682,9 +3678,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -3911,9 +3905,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -3936,9 +3928,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -3960,9 +3950,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -4017,9 +4005,7 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
         "scripts/money-pr-local-gate.mjs",
         "scripts/verify-no-silent-db-skip.mjs",
         "scripts/entity-link-adoption-baseline.json",
-        "docs/audit/program-scoreboard.json",
         "docs/audit/GUARD-WORKORDERS.md",
-        "apps/frontend/src/pages/program/programScoreboard.data.ts",
         "apps/frontend/src/pages/legal/contracts/TruckLeaseCreatorModal.tsx",
       ].includes(f)
     )
@@ -4883,6 +4869,6 @@ if (skippedLiveChecks.length > 0) {
 }
 
 console.log(
-  `${LABEL}: PASS — DoD + money-theater + scoreboard serialize + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)${skippedLiveChecks.length > 0 ? ` — WITH ${skippedLiveChecks.length} LIVE CHECK(S) SKIPPED (see above)` : ""}`,
+  `${LABEL}: PASS — DoD + money-theater + §7 palette (fin+nonfin) + auth rateLimit + migration band + verify-step band + no-CLAIMED-edits + EntityLink + Rule 30 (no guard deletion + Claude-green LIVE PROOF) OK (fail-fast before CI)${skippedLiveChecks.length > 0 ? ` — WITH ${skippedLiveChecks.length} LIVE CHECK(S) SKIPPED (see above)` : ""}`,
 );
 process.exit(0);

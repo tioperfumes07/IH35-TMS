@@ -18,7 +18,7 @@ alwaysApply: false
 
 1. `verify-definition-of-done-evidence` (every branch commit — labelled Rule 16 lines)
 2. `verify-no-money-theater` (FINDING / LANE / DOD-A…E / VERIFY-1…8 / MODULE_PROGRESS / `MIGRATE:` when migrations touch)
-3. `verify-no-parallel-scoreboard-prs`
+3. (removed 2026-11-12: `verify-no-parallel-scoreboard-prs`)
 4. `verify-section7-palette-financial`
 5. `verify-section7-palette-nonfinancial` — **Cursor #4198** amber/emerald thrash
 6. `verify-new-auth-routes-rate-limited` — **Cursor #4198** CodeQL `js/missing-rate-limiting`

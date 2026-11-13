@@ -31,7 +31,6 @@ const SKIP_DIR = new Set([
 const HEADER_RE = /GENERATED FILE|do not hand-edit|Do not hand-edit|Produced by scripts\//i;
 
 const EXTRA_SNAPSHOTS = [
-  "docs/audit/program-scoreboard.json",
   "docs/specs/scoreboard/verifier-rollup.json",
 ];
 
@@ -119,7 +118,7 @@ function selftest() {
     if (!looksGenerated("x.ts", "// GENERATED FILE — do not hand-edit.\n")) throw new Error("header");
   });
   t("looksGenerated extra snapshot", () => {
-    if (!looksGenerated("docs/audit/program-scoreboard.json", "{}")) throw new Error("snapshot");
+    if (!looksGenerated("docs/specs/scoreboard/verifier-rollup.json", "{}")) throw new Error("snapshot");
   });
   t("authored json is not generated", () => {
     if (looksGenerated("docs/specs/foo.json", '{ "note": "authored" }\n')) throw new Error("false positive");

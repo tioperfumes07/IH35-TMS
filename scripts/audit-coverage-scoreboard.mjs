@@ -5,7 +5,6 @@
  * Usage:
  *   node scripts/audit-coverage-scoreboard.mjs            # print metrics + verify file matches
  *   node scripts/audit-coverage-scoreboard.mjs --write    # rewrite ## Scoreboard section
- *   node scripts/audit-coverage-scoreboard.mjs --emit-program-json  # docs/audit/program-scoreboard.json
  *   node scripts/audit-coverage-scoreboard.mjs --selftest
  *
  * Module column law: canonical SIDEBAR_ITEM_IDS id, optional " · subtag" for sub-module rows.
@@ -13,88 +12,16 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const COVERAGE = path.join(ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
 const SIDEBAR = path.join(ROOT, "apps/frontend/src/components/layout/sidebar-config.ts");
-const PROGRAM_JSON = path.join(ROOT, "docs/audit/program-scoreboard.json");
-const MODULE_COMPLETION_DIR = path.join(ROOT, "docs/module-completion");
 const LABEL = "audit-coverage-scoreboard";
 const LAYERS = ["A", "B", "C", "D", "E"];
 const ENTITIES = ["TRANSP", "TRK", "USMCA"];
-const GATE_OK = new Set(["PASS", "AUDIT", "FIX", "FAIL", "UNV", "NA"]);
-/** DoD A–E + VERIFY V1–V8 — 13 gates (Program scoreboard + meta.gateTally). */
-export const GATE_LABELS_13 = ["A", "B", "C", "D", "E", "V1", "V2", "V3", "V4", "V5", "V6", "V7", "V8"];
-/**
- * Program board entity columns (audit spec B11 — certify only when BOTH are green).
- * TRK stays on the class / ledger axes; the module table splits TRANSP + USMCA (= 26 gate cols).
- */
-export const PROGRAM_BOARD_ENTITIES = ["TRANSP", "USMCA"];
 const SCOREBOARD_START = "## Scoreboard";
 
-/**
- * Stored-artifact freshness is the time this artifact was regenerated, not the
- * last time its source ledger changed. Keep the ledger as-of time separately in
- * meta.generatedAt so consumers can distinguish those two clocks.
- */
-export function regenerationTimestamp(nowMs = Date.now()) {
-  const at = new Date(nowMs);
-  if (Number.isNaN(at.getTime())) throw new Error("invalid regeneration timestamp");
-  return at.toISOString();
-}
-
-/** Worst-wins fold when collapsing entity cells (FAIL beats everything). */
-const GATE_RANK = { FAIL: 0, UNV: 1, FIX: 2, AUDIT: 3, PASS: 4, NA: 5 };
-export function worstGate(a, b) {
-  const A = GATE_OK.has(a) ? a : "UNV";
-  const B = GATE_OK.has(b) ? b : "UNV";
-  return (GATE_RANK[A] ?? 1) <= (GATE_RANK[B] ?? 1) ? A : B;
-}
-
-function tallyFromCellArrays(modules, pickCells) {
-  const out = {};
-  for (let i = 0; i < GATE_LABELS_13.length; i++) {
-    const gate = GATE_LABELS_13[i];
-    let pass = 0;
-    let applicable = 0;
-    let fail = 0;
-    let unverified = 0;
-    for (const m of modules || []) {
-      const cells = pickCells(m) || [];
-      const c = cells[i] || "UNV";
-      if (c === "NA") continue;
-      applicable += 1;
-      if (c === "PASS") pass += 1;
-      else if (c === "FAIL") fail += 1;
-      else if (c === "UNV") unverified += 1;
-    }
-    out[gate] = { pass, applicable, fail, unverified };
-  }
-  return out;
-}
-
-/**
- * Per-gate tally across module rows.
- * Prefer folded `cells` (worst of TRANSP/USMCA) so the strip stays the "weakest column" signal.
- */
-export function computeGateTally(modules) {
-  return tallyFromCellArrays(modules, (m) => (Array.isArray(m.cells) ? m.cells : []));
-}
-
-/** Per-entity 13-gate tallies — the honest B11 board. */
-export function computeGateTallyByEntity(modules) {
-  const out = {};
-  for (const ent of PROGRAM_BOARD_ENTITIES) {
-    out[ent] = tallyFromCellArrays(modules, (m) => {
-      const by = m.cellsByEntity && m.cellsByEntity[ent];
-      if (Array.isArray(by) && by.length === 13) return by;
-      return Array.isArray(m.cells) ? m.cells : [];
-    });
-  }
-  return out;
-}
 // End marker: first `---` after Scoreboard that precedes ## Findings (Deployed SHA / help lines may sit between).
 const FINDINGS_HEADER = "\n## Findings";
 
@@ -595,380 +522,9 @@ export function assertScoreboardMatches(md, sidebarIds = loadSidebarIds()) {
   return { metrics, problems, expected };
 }
 
-/**
- * Map one DoD layer (A–E) for a module from TRANSP ledger rows → board gate.
- * Honesty: PASS only when GUARD Status is VERIFIED (PROD-VERIFIED). Counts never upgrade to PASS.
- * CODE-VERIFIED / PASS-without-VERIFIED → AUDIT. No row → null (caller keeps prior / UNV).
- */
-function gateFromLayerRows(layerRows) {
-  if (!layerRows.length) return null;
-  let hasFailOpen = false;
-  let hasFailFixed = false;
-  let hasUnv = false;
-  let hasNa = false;
-  let hasAuditTrace = false;
-  let hasProdPass = false;
-  for (const r of layerRows) {
-    const cls = primaryVerdictClass(r.verdict);
-    const status = r.status.replace(/\*\*/g, "").trim();
-    const guardVerified = /^VERIFIED\b/i.test(status) && !/^VERIFIED-CORRECT\b/i.test(status);
-    if (cls === "FAIL") {
-      if (/^FIXED\b/i.test(status) || /\bFIXED\b/i.test(status)) hasFailFixed = true;
-      else hasFailOpen = true;
-      continue;
-    }
-    if (cls === "UNVERIFIED") {
-      hasUnv = true;
-      continue;
-    }
-    if (cls === "N/A") {
-      hasNa = true;
-      continue;
-    }
-    if (cls === "PASS") {
-      if (guardVerified) hasProdPass = true;
-      else hasAuditTrace = true;
-      continue;
-    }
-    // CODE-VERIFIED, OTHER, etc. — traced, not PROD-VERIFIED
-    hasAuditTrace = true;
-  }
-  if (hasFailOpen) return "FAIL";
-  if (hasFailFixed) return "FIX";
-  if (hasUnv) return "UNV";
-  if (hasProdPass) return "PASS";
-  if (hasAuditTrace) return "AUDIT";
-  if (hasNa) return "NA";
-  return "AUDIT";
-}
-
-function loadBuildFraction(moduleId) {
-  // banking.json uses id "banking"; board module "banking" / sidebar "bank"
-  const candidates = [moduleId];
-  if (moduleId === "bank") candidates.push("banking");
-  if (moduleId === "banking") candidates.push("bank");
-  for (const id of candidates) {
-    const p = path.join(MODULE_COMPLETION_DIR, `${id}.json`);
-    if (!fs.existsSync(p)) continue;
-    try {
-      const j = JSON.parse(fs.readFileSync(p, "utf8"));
-      const items = Array.isArray(j.items) ? j.items : [];
-      if (!items.length) continue;
-      const pass = items.filter(
-        (it) => it.status === "PASS" || (it.status === "HOLD" && it.owner_hold && it.tracker && it.future_block)
-      ).length;
-      return `${pass}/${items.length}`;
-    } catch {
-      /* keep prior */
-    }
-  }
-  return null;
-}
-
-function gitShortSha() {
-  try {
-    return execSync("git rev-parse --short HEAD", { cwd: ROOT, encoding: "utf8" }).trim();
-  } catch {
-    return "unknown";
-  }
-}
-
-/** Ledger-commit meta — byte-stable across re-emits (CI HEAD / wall clock must not dirty the tree). */
-const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
-/**
- * PROG-PRFEED-PRIVATE-EMPTY — the last-10 feed, sourced from the LEDGER instead of the GitHub API.
- *
- * The panel went empty the moment this repo was made private. The backend fetches
- * api.github.com/repos/.../pulls; that call supports a GITHUB_TOKEN, but no valid token is present in
- * the deployed environment, so a private repo returns nothing and the endpoint answers 200 with
- * recentActivity: [] (verified live: GET /api/v1/program/audit-scoreboard returned 200, length 0).
- *
- * "Last synced" survived the same event precisely because it is ledger-derived (meta.generatedAt =
- * git log %cI). That is the pattern copied here: read the merge history from git AT GENERATION TIME,
- * in CI, where the repo is checked out and reachable. No network call, no token, no browser fetch,
- * so repository visibility can never empty this panel again.
- *
- * Squash-merges carry the PR number in the subject as (#1234), which is where number and url come
- * from. A commit without one still renders (number 0, no link) rather than being dropped: an honest
- * row beats a missing row.
- */
-function ledgerRecentActivity(limit = 10) {
-  const SEP = "\u001f";
-  let raw = "";
-  for (const ref of ["origin/main", "HEAD"]) {
-    try {
-      raw = execSync("git log " + ref + " -n " + limit + " --format=%h" + SEP + "%cI" + SEP + "%s", {
-        cwd: ROOT,
-        encoding: "utf8",
-      }).trim();
-      if (raw) break;
-    } catch {
-      /* try the next ref: a shallow or detached checkout may lack origin/main */
-    }
-  }
-  if (!raw) return [];
-  return raw
-    .split("\n")
-    .map((line) => {
-      const [sha, iso, ...rest] = line.split(SEP);
-      const subject = rest.join(SEP);
-      const m = /\(#(\d+)\)\s*$/.exec(subject || "");
-      const number = m ? Number(m[1]) : 0;
-      return {
-        number,
-        title: (subject || "").replace(/\s*\(#\d+\)\s*$/, "").trim() || sha,
-        state: "merged",
-        mergedAtCt: formatCt(iso),
-        url: number ? "https://github.com/tioperfumes07/IH35-TMS/pull/" + number : "",
-        sha,
-        committedAtIso: iso,
-      };
-    })
-    .filter((r) => r.sha);
-}
-
-/** ISO to America/Chicago, labeled CT. Mirrors the frontend formatLedgerCt so both agree. */
-function formatCt(iso) {
-  try {
-    const d = new Intl.DateTimeFormat("en-US", {
-      timeZone: "America/Chicago",
-      month: "2-digit", day: "2-digit", year: "numeric",
-      hour: "2-digit", minute: "2-digit", hour12: true,
-    }).format(new Date(iso));
-    return d + " CT";
-  } catch {
-    return "";
-  }
-}
-
-function ledgerGitOr(fmt, fb) {
-  try {
-    const out = execSync(`git log -1 --format=${fmt} -- ${LEDGER_REL}`, {
-      cwd: ROOT,
-      encoding: "utf8",
-    }).trim();
-    return out || fb;
-  } catch {
-    return fb;
-  }
-}
-
-/**
- * Prefer env, then a short live healthz probe, then prior JSON tip.
- * Never blocks emit on network failure.
- */
-function resolveDeployedSha(prior) {
-  const fromEnv = String(process.env.IH35_DEPLOYED_SHA || "").trim();
-  if (/^[0-9a-f]{7,40}$/i.test(fromEnv)) return fromEnv.slice(0, 9);
-  try {
-    const raw = execSync(
-      "curl -fsS --max-time 4 https://api.ih35dispatch.com/api/v1/healthz/shallow",
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
-    );
-    const v = JSON.parse(raw)?.version;
-    if (typeof v === "string" && /^[0-9a-f]{7,40}$/i.test(v)) return v.slice(0, 9);
-  } catch {
-    /* offline / CI without egress — keep prior */
-  }
-  const p = String(prior || "").trim();
-  return /^[0-9a-f]{7,40}$/i.test(p) ? p.slice(0, 9) : "";
-}
-
-/**
- * Emit docs/audit/program-scoreboard.json for the Program Audit Scoreboard page.
- * Shape = PROGRAM_SCOREBOARD (meta, modules[], prod[], chain[], chainMoney, chainReverse, guard[]).
- * Preserves Cascade-authored prod/chain/guard/V1–V8 from the prior JSON; refreshes meta + A–E
- * from the ledger. Never invents PASS for unmodeled VERIFY gates.
- */
-/**
- * Build the Program scoreboard payload from the ledger + prior JSON seed.
- * @param {{ write?: boolean }} [opts] — when write:false, return the object without touching disk
- *   (used by the live /program API). Default write:true keeps the gen:program-scoreboard contract.
- */
-export function emitProgramJson(rows, metrics, sidebarIds, opts = {}) {
-  const write = opts.write !== false;
-  let prev;
-  try {
-    prev = JSON.parse(fs.readFileSync(PROGRAM_JSON, "utf8"));
-  } catch {
-    throw new Error(
-      `${path.relative(ROOT, PROGRAM_JSON)} missing — commit the seed JSON first; refuse to fabricate a board`
-    );
-  }
-  for (const k of ["meta", "modules", "prod", "chain", "chainMoney", "chainReverse", "guard"]) {
-    if (!(k in prev)) throw new Error(`prior program-scoreboard.json missing key: ${k}`);
-  }
-
-  const active = rows.filter((r) => !isSupersededRow(r));
-  // `${entity}|${id}|${layer}` → rows[] — B11 requires TRANSP and USMCA as separate columns
-  const byEntModLayer = new Map();
-  for (const r of active) {
-    if (!LAYERS.includes(r.layer)) continue;
-    const p = parseModuleCell(r.module, sidebarIds);
-    if (!p.ok) continue;
-    const ents = entitiesFor(r.entity).filter((e) => PROGRAM_BOARD_ENTITIES.includes(e));
-    for (const ent of ents) {
-      const key = `${ent}|${p.id}|${r.layer}`;
-      if (!byEntModLayer.has(key)) byEntModLayer.set(key, []);
-      byEntModLayer.get(key).push(r);
-    }
-  }
-
-  function layerRowsFor(ent, modId, layer) {
-    const primary = byEntModLayer.get(`${ent}|${modId}|${layer}`) || [];
-    if (primary.length) return primary;
-    if (modId === "banking") return byEntModLayer.get(`${ent}|bank|${layer}`) || [];
-    if (modId === "bank") return byEntModLayer.get(`${ent}|banking|${layer}`) || [];
-    return [];
-  }
-
-  const sha = gitShortSha();
-  const ledgerGeneratedAt = ledgerGitOr("%cI", "1970-01-01T00:00:00Z");
-  const ledgerSourceSha = ledgerGitOr("%h", "unknown");
-  const modules = prev.modules.map((m) => {
-    const priorFolded = Array.isArray(m.cells) ? [...m.cells] : Array(13).fill("UNV");
-    while (priorFolded.length < 13) priorFolded.push("UNV");
-    const priorByEnt = m.cellsByEntity && typeof m.cellsByEntity === "object" ? m.cellsByEntity : {};
-
-    const cellsByEntity = {};
-    for (const ent of PROGRAM_BOARD_ENTITIES) {
-      const seed = Array.isArray(priorByEnt[ent]) ? [...priorByEnt[ent]] : [...priorFolded];
-      while (seed.length < 13) seed.push("UNV");
-      // DoD A–E from ledger rows scoped to this entity
-      for (let i = 0; i < 5; i++) {
-        const L = LAYERS[i];
-        const merged = layerRowsFor(ent, m.module, L);
-        const next = gateFromLayerRows(merged);
-        if (next != null) {
-          seed[i] = next;
-        } else if (!GATE_OK.has(seed[i]) || seed[i] === "PASS") {
-          // No entity-scoped ledger row: refuse unearned PASS
-          if (seed[i] === "PASS") seed[i] = "UNV";
-        }
-      }
-      // V1–V8: not Layer-modeled — keep prior per-entity seed; never invent PASS for USMCA from TRANSP fold
-      for (let i = 5; i < 13; i++) {
-        if (!GATE_OK.has(seed[i])) seed[i] = "UNV";
-        // First time splitting: if we only had folded PASS and no entity-specific prior, demote USMCA PASS→UNV
-        if (
-          ent === "USMCA" &&
-          seed[i] === "PASS" &&
-          !Array.isArray(priorByEnt.USMCA) &&
-          priorFolded[i] === "PASS"
-        ) {
-          seed[i] = "UNV";
-        }
-      }
-      cellsByEntity[ent] = seed.slice(0, 13);
-    }
-
-    // Folded cells = worst across board entities (backward-compat tally / metrics)
-    const cells = Array.from({ length: 13 }, (_, i) =>
-      PROGRAM_BOARD_ENTITIES.reduce(
-        (acc, ent) => worstGate(acc, cellsByEntity[ent][i]),
-        cellsByEntity[PROGRAM_BOARD_ENTITIES[0]][i]
-      )
-    );
-
-    const build = loadBuildFraction(m.module) || m.build;
-    return { ...m, build, cells, cellsByEntity };
-  });
-
-  const out = {
-    ...prev,
-    meta: {
-      ...prev.meta,
-      // Deterministic from the ledger's own last commit — not wall clock / CI HEAD.
-      generatedAt: ledgerGeneratedAt,
-      sourceSha: ledgerSourceSha,
-      // Prefer live healthz / IH35_DEPLOYED_SHA so the board does not forever pin an ancient deploy tip.
-      // Falls back to prior JSON, then this checkout SHA. Never invents PROD-VERIFIED gates.
-      deployedSha: String(resolveDeployedSha(prev.meta.deployedSha) || sha).slice(0, 9),
-      // prodReadAt stays from Cascade live-read snapshot — CI must not pretend it re-read prod
-      ledgerRows: metrics.rowsTotal,
-      failOpen: metrics.failOpen,
-      defects: metrics.defectModules,
-    },
-    modules,
-    // PROG-PRFEED-PRIVATE-EMPTY: ledger-sourced, generated in CI. Never a runtime GitHub call.
-    recentActivity: ledgerRecentActivity(10),
-  };
-  out.healthzSha = String(out.meta.deployedSha || "").slice(0, 40);
-  out.generated_at = regenerationTimestamp();
-
-
-  // Guard contract: text (markdown emphasis), never HTML tags / html key.
-  // CodeQL js/incomplete-multi-character-sanitization: strip tags to a fixed point, then drop residue.
-  out.guard = (out.guard || []).map((g) => {
-    let text = String(g.text ?? g.html ?? "")
-      .replace(/<\/?b>/gi, "**")
-      .replace(/<\/?code>/gi, "`")
-      .replace(/&amp;/g, "&");
-    for (let i = 0; i < 20 && /<[^>]*>/.test(text); i++) {
-      text = text.replace(/<[^>]*>/g, "");
-    }
-    if (/[<>]/.test(text)) text = text.replace(/[<>]/g, "");
-    const { html: _drop, ...rest } = g;
-    return { ...rest, text };
-  });
-
-  // A requested re-emit refreshes generated_at even when the ledger is unchanged.
-  // meta.generatedAt/sourceSha remain ledger-derived so the source as-of is still explicit.
-  if (JSON.stringify(prev) === JSON.stringify(out)) {
-    if (write) console.log(`${LABEL}: program-scoreboard.json unchanged (skip write)`);
-    return prev;
-  }
-
-  if (!write) return out;
-
-  // Atomic replace — avoids CodeQL js/file-system-race-condition (exists/check then write).
-  const payload = JSON.stringify(out, null, 2) + "\n";
-  const tmp = `${PROGRAM_JSON}.tmp`;
-  fs.writeFileSync(tmp, payload);
-  fs.renameSync(tmp, PROGRAM_JSON);
-  return out;
-}
-
-/**
- * Request-time board: parse AUDIT-COVERAGE-LIVE.md → scoreboard object (no disk write).
- * Used by apps/backend program audit-scoreboard routes (ledger_live source).
- */
-export function buildProgramScoreboardLive() {
-  const md = fs.readFileSync(COVERAGE, "utf8");
-  const ids = loadSidebarIds();
-  const rows = parseFindings(md);
-  const metrics = computeMetrics(rows, ids);
-  if (metrics.problems.length) {
-    throw new Error(`${LABEL}: ledger metrics problems: ${metrics.problems.join("; ")}`);
-  }
-  const data = emitProgramJson(rows, metrics, ids, { write: false });
-  const gateTally = computeGateTally(data.modules || []);
-  const gateTallyByEntity = computeGateTallyByEntity(data.modules || []);
-  return {
-    ...data,
-    meta: {
-      ...(data.meta ?? {}),
-      source: "ledger_live",
-      ledgerRows: metrics.rowsTotal,
-      failOpen: metrics.failOpen,
-      defects: metrics.defectModules,
-      gateTally,
-      gateTallyByEntity,
-      boardEntities: PROGRAM_BOARD_ENTITIES,
-    },
-  };
-}
-
 const IS_MAIN = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (IS_MAIN && process.argv.includes("--selftest")) {
-  const fixedNow = Date.parse("2026-09-02T12:34:56.000Z");
-  if (regenerationTimestamp(fixedNow) !== "2026-09-02T12:34:56.000Z") {
-    throw new Error("selftest: generated_at must describe regeneration time");
-  }
-  let badTimestampThrew = false;
-  try { regenerationTimestamp(Number.NaN); } catch { badTimestampThrew = true; }
-  if (!badTimestampThrew) throw new Error("selftest: invalid regeneration time must fail closed");
   const ids = loadSidebarIds();
   if (ids.length !== 30) throw new Error("selftest: ids");
   const sample = `| # | Module | Layer | Entity | Verdict | Evidence | Status | Block/PR | Owner-gate? | Date | Auditor |
@@ -1009,14 +565,6 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
   if (m.cellsPassByEntity.TRANSP >= m.cellsByEntity.TRANSP) {
     throw new Error("PASS cells must be strictly less than covered when FAIL cells exist");
   }
-  const tallyProbe = computeGateTally([
-    { cells: ["PASS", "FAIL", "UNV", "NA", "AUDIT", "PASS", "UNV", "FAIL", "NA", "NA", "NA", "NA", "NA"] },
-    { cells: ["PASS", "PASS", "PASS", "PASS", "PASS", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT", "AUDIT"] },
-  ]);
-  if (tallyProbe.A.pass !== 2 || tallyProbe.A.applicable !== 2) throw new Error("gateTally A");
-  if (tallyProbe.B.fail !== 1 || tallyProbe.B.pass !== 1) throw new Error("gateTally B");
-  if (tallyProbe.C.unverified !== 1) throw new Error("gateTally C");
-  if (tallyProbe.D.applicable !== 1) throw new Error("gateTally D applicable excludes NA from first row only — expect 1");
   const fuelAlias = parseModuleCell("Fuel", ids);
   if (!fuelAlias.ok || fuelAlias.id !== "fuel" || fuelAlias.via !== "alias") {
     throw new Error("Fuel must resolve via MODULE_ALIASES");
@@ -1038,7 +586,6 @@ if (IS_MAIN && process.argv.includes("--selftest")) {
 if (IS_MAIN) {
   const write = process.argv.includes("--write");
   const normalize = process.argv.includes("--normalize-modules");
-  const emitProgram = process.argv.includes("--emit-program-json");
   let md = fs.readFileSync(COVERAGE, "utf8");
   const ids = loadSidebarIds();
   if (normalize) {
@@ -1068,26 +615,12 @@ if (IS_MAIN) {
     fs.writeFileSync(COVERAGE, md);
     console.log(`${LABEL}: wrote Scoreboard (rows=${metrics.rowsTotal} failOpen=${metrics.failOpen} defects=${metrics.defectModules})`);
   }
-  if (emitProgram) {
-    const emitted = emitProgramJson(parseFindings(fs.readFileSync(COVERAGE, "utf8")), metrics, ids);
-    console.log(
-      `${LABEL}: emitted program-scoreboard.json (modules=${emitted.modules.length} rows=${emitted.meta.ledgerRows} failOpen=${emitted.meta.failOpen})`
-    );
+  const check = assertScoreboardMatches(fs.readFileSync(COVERAGE, "utf8"), ids);
+  if (check.problems.length) {
+    console.error(`${LABEL}: FAIL\n${check.problems.map((p) => `  - ${p}`).join("\n")}`);
+    process.exit(1);
   }
-  // When only emitting program JSON (gen pipeline), skip md scoreboard equality gate —
-  // that gate still runs on plain / --write invocations.
-  if (!emitProgram || write || normalize) {
-    const check = assertScoreboardMatches(fs.readFileSync(COVERAGE, "utf8"), ids);
-    if (check.problems.length) {
-      console.error(`${LABEL}: FAIL\n${check.problems.map((p) => `  - ${p}`).join("\n")}`);
-      process.exit(1);
-    }
-    console.log(
-      `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · covered TRANSP ${check.metrics.cellsByEntity.TRANSP}/150 · PASS TRANSP ${check.metrics.cellsPassByEntity.TRANSP}/150 · rows ${check.metrics.rowsTotal}`
-    );
-  } else {
-    console.log(
-      `${LABEL}: emit-only OK — certified ${metrics.certified}/30 · defects ${metrics.defectModules}/30 · FAIL+OPEN ${metrics.failOpen} · rows ${metrics.rowsTotal}`
-    );
-  }
+  console.log(
+    `${LABEL}: PASS — certified ${check.metrics.certified}/30 · defects ${check.metrics.defectModules}/30 · FAIL+OPEN ${check.metrics.failOpen} · VERIFIED ${check.metrics.verifiedGuard} · covered TRANSP ${check.metrics.cellsByEntity.TRANSP}/150 · PASS TRANSP ${check.metrics.cellsPassByEntity.TRANSP}/150 · rows ${check.metrics.rowsTotal}`
+  );
 }

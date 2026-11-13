@@ -41,7 +41,6 @@ export const HOT_FILES = [
   "scripts/verify-pre-commit.mjs",
   "package.json",
   "apps/frontend/src/pages/program/AuditScoreboardPage.tsx",
-  "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
 ];
 
 export function findContention(thisPr, openPrs) {

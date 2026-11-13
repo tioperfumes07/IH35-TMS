@@ -70,7 +70,6 @@ export const GUARDS = [
   "verify-claim-graph-human-labels.mjs",
   "verify-class-picker-shows-names.mjs",
   "verify-class-scoreboard-fresh.mjs",
-  "verify-class-scoreboard-live-sourced.mjs",
   "verify-closure-17-on-hold-triage.mjs",
   "verify-closure-18-perf-artifacts.mjs",
   "verify-closure-19-sec-artifacts.mjs",

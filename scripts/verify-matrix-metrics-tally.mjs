@@ -117,31 +117,6 @@ export function simulateBoard(cells) {
   return finalizeTierMetrics(bucket);
 }
 
-export function matrixPreviewRecentProblems(preview) {
-  const problems = [];
-  if (!/module-matrix-recent-activity/.test(preview)) {
-    problems.push("ModuleMatrixPreviewPage must show last-10 merged PRs (module-matrix-recent-activity)");
-  }
-  if (!/<h1 className="t">/.test(preview)) {
-    problems.push("ModuleMatrixPreviewPage page title must be <h1 className=\"t\"> (COMPLICATED-BATTERY-F10 — first heading was Recent activity)");
-  }
-  const h1At = preview.indexOf("<h1 className=\"t\">");
-  const recentAt = preview.indexOf("module-matrix-recent-activity");
-  if (h1At < 0 || recentAt < 0 || h1At > recentAt) {
-    problems.push("page <h1> must precede module-matrix-recent-activity so ?module=accounting is not read as a PR list");
-  }
-  if (!/resolveApiUrl\(\s*[`'"]\/api\/v1\/program\/audit-scoreboard/.test(preview)) {
-    problems.push("matrix last-10 feed must fetch resolveApiUrl(\"/api/v1/program/audit-scoreboard\")");
-  }
-  if (!/mergedAtCt/.test(preview) || !/America\/Chicago/.test(preview)) {
-    problems.push("matrix last-10 must display merge times in CT (America/Chicago mergedAtCt)");
-  }
-  if (!/slice\(0,\s*10\)/.test(preview)) {
-    problems.push("matrix last-10 must cap recentActivity at 10 rows");
-  }
-  return problems;
-}
-
 function matrixPreviewEmptyWhyProblems(preview) {
   const problems = [];
   if (!/module-matrix-empty-why-legend/.test(preview) || !/not_built = FIX/.test(preview) || !/built_unproven = ERRAND/.test(preview)) {
@@ -331,7 +306,6 @@ function repoProblems() {
   if (!fs.existsSync(PREVIEW)) problems.push(`MISSING ${PREVIEW}`);
   else {
     const previewSrc = fs.readFileSync(PREVIEW, "utf8");
-    problems.push(...matrixPreviewRecentProblems(previewSrc));
     problems.push(...matrixPreviewEmptyWhyProblems(previewSrc));
   }
   if (!fs.existsSync(CATALOG)) problems.push(`MISSING ${CATALOG}`);
@@ -459,11 +433,6 @@ if (SELFTEST) {
     process.exit(1);
   }
   const previewLive = fs.readFileSync(PREVIEW, "utf8");
-  const plantedNoRecent = previewLive.replace("module-matrix-recent-activity", "module-matrix-kpi-only");
-  if (!matrixPreviewRecentProblems(plantedNoRecent).some((p) => p.includes("last-10 merged"))) {
-    console.error(`${LABEL} selftest: last-10 strip mutation escaped`);
-    process.exit(1);
-  }
   const plantedNoEmptyWhy = previewLive.replace("module-matrix-empty-why-legend", "module-matrix-kpi-only");
   if (!matrixPreviewEmptyWhyProblems(plantedNoEmptyWhy).some((p) => p.includes("not_built=FIX"))) {
     console.error(`${LABEL} selftest: empty-why legend mutation escaped`);

@@ -22,11 +22,8 @@
  * `liveDefect` is a SEPARATE boolean (drain_proof.money_critical on a not-yet-drained class), so the
  * money-critical signal is kept without spending the blocked colour on it.
  *
- * THIS FILE IS THE OFFLINE FALLBACK, NOT THE LIVE PATH. The Programs page reads `classScoreboard`
- * off GET /api/v1/program/audit-scoreboard, which the backend computes per request from the same
- * queue — that is what makes the grid react without a redeploy (PROG-CLASS-STALE). What is emitted
- * here is only what the page shows when that live read fails, and the page labels it as such.
- * classifyCell() here and classCellFor() in the backend MUST stay in agreement.
+ * NOTE (2026-11-12): the Programs by-class grid page and its live API (GET /api/v1/program/audit-scoreboard)
+ * were removed on owner order; this generator and classScoreboard.data.ts are kept as-is.
  *
  * HONEST LIMIT — READ BEFORE TRUSTING A GREEN CELL. "drained" is the queue's own claim. This generator
  * does NOT re-verify it against prod, and a class is only genuinely drained when every instance is
@@ -59,10 +56,6 @@ const OUT = path.join(ROOT, "apps/frontend/src/pages/program/classScoreboard.dat
  *
  * Status is the field the queue actually maintains, so status is what colours the cell. The
  * money_critical signal is NOT discarded: it is carried out as a separate `liveDefect` flag.
- *
- * MUST agree with classCellFor() in apps/backend/src/program/audit-scoreboard.routes.ts — that is the
- * live path and this is the offline fallback; two different mappings would mean the board changed
- * colour depending on whether the API answered. Guarded by verify-class-scoreboard-live-sourced.mjs.
  */
 export function classifyCell(wave) {
   const status = String(wave.status ?? "").trim().toLowerCase();

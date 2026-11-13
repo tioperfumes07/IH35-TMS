@@ -1,14 +1,14 @@
 # DESIGN-PARITY-CENSUS
 
-Generated: 2026-11-13T02:55:21.278Z
+Generated: 2026-11-12T23:14:51.629Z
 Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · boards (banking, driver-customers-vendors, maintenance, settlements) · approved-screens (13).
 
 ## Totals
 
 | Metric | Count |
 |---|---:|
-| Routes in manifest | 690 |
-| Passing (static app-wide rules) | 690 |
+| Routes in manifest | 689 |
+| Passing (static app-wide rules) | 689 |
 | Failing (rule hits on resolved pages) | 0 |
 | Unresolved page binding (informational) | 219 |
 | v3 .dc.html designs | 50 |
@@ -81,7 +81,7 @@ Source order: ROUND 8.4 UI-F11125 · owner design law · docs/design/v3 (50) · 
 | perfume | 1 | 1 | 0 | 0 |
 | portal | 5 | 5 | 0 | 5 |
 | profitability | 1 | 1 | 0 | 0 |
-| program | 8 | 8 | 0 | 1 |
+| program | 7 | 7 | 0 | 1 |
 | pwa | 1 | 1 | 0 | 0 |
 | qbo | 1 | 1 | 0 | 0 |
 | reports | 60 | 60 | 0 | 3 |
