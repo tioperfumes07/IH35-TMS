@@ -17887,5 +17887,11 @@
     "seat": "CC-1",
     "purpose": "ENG-44 combined four-rules guard",
     "claimed": "2026-11-13"
+  },
+  "20035": {
+    "lane": "cc-2",
+    "description": "verify-perf-budget-driver-day-summary-drivers",
+    "round": "8.24",
+    "row": "124+138"
   }
 }
