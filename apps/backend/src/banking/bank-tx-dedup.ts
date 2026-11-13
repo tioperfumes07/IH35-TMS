@@ -278,7 +278,8 @@ export async function retirePlaidPendingPredecessor(
  * posted line. Financially linked rows are never touched. Void + merged_into, never DELETE.
  * $1 retired pending id · $2 posted row id · $3 posted plaid txn id · $4 company · $5 bank account.
  */
-export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = `
+export function orphanPendingGenerationSql(voidReasonPrefix: string): string {
+  return `
   WITH retired AS (
     SELECT r.id, r.amount_cents, r.is_credit, r.transaction_date, r.description, r.created_at,
            substring(r.description from ' ON ([0-9]{2}/[0-9]{2})[[:space:]]*$') AS card_date
@@ -317,7 +318,7 @@ export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = `
   )
   UPDATE banking.bank_transactions t
      SET voided_at = now(),
-         voided_reason = 'replaced_by_plaid_posted:' || $3::text,
+         voided_reason = '${voidReasonPrefix}' || $3::text,
          merged_into_bank_transaction_id = $2::uuid,
          dedup_hash = NULL,
          notes = trim(BOTH ';' FROM concat_ws(';', t.notes, 'superseded_pending_generation:' || $1::text)),
@@ -327,6 +328,47 @@ export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = `
      AND t.pending = true
      AND t.voided_at IS NULL
   RETURNING t.id`;
+}
+
+export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = orphanPendingGenerationSql("replaced_by_plaid_posted:");
+
+/**
+ * ROW 99 + 113 (LEAD ROUND 8.24) — retire the older pending generation the moment the bank RE-ISSUES it, not
+ * 7 days later and not only when the posted line lands.
+ *
+ * Measured live 2026-11-13 18:10Z (Banking Home › Pending, USMCA BofA): five purchases listed TWICE while still
+ * pending — gen 1 "PURCHASE 11/10 IDCGR5EIM7J31UV …" −3,304.00 (11/11) beside gen 2 "PURCHASE RELAY … ON 11/10"
+ * −3,304.00 (11/10), and the same for −339.23, −53.58, −30.78, −7.20 — so the Pending count and its out-total
+ * carried each of them twice until the posted line arrived.
+ *
+ * Same selection rule as the posted path (orphanPendingGenerationSql): same account, amount, direction and
+ * leading verb, card date equal, created at an earlier sync, never a financially linked row. The survivor is
+ * the re-issued pending itself; when Plaid later posts it, retirePlaidPendingPredecessor retires that one.
+ * Void + merged_into, never DELETE. Reason 'replaced_by_plaid_pending_reissue:<plaid txn id of the re-issue>'.
+ */
+export const RETIRE_PENDING_GENERATION_ON_REISSUE_SQL = orphanPendingGenerationSql("replaced_by_plaid_pending_reissue:");
+
+export async function retireOlderPendingGenerationOnReissue(
+  client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },
+  args: { reissuedPendingId: string; reissuedPlaidTransactionId: string; operatingCompanyId: string; bankAccountId: string }
+): Promise<string[]> {
+  const res = await client.query(RETIRE_PENDING_GENERATION_ON_REISSUE_SQL, [
+    args.reissuedPendingId,
+    args.reissuedPendingId,
+    args.reissuedPlaidTransactionId,
+    args.operatingCompanyId,
+    args.bankAccountId,
+  ]);
+  const ids = (res.rows as Array<{ id?: unknown }>).map((r) => String(r?.id ?? "")).filter(Boolean);
+  for (const id of ids) {
+    await repointReconciliationMatchesOnPlaidMerge(client, {
+      pendingId: id,
+      survivorId: args.reissuedPendingId,
+      operatingCompanyId: args.operatingCompanyId,
+    });
+  }
+  return ids;
+}
 
 export async function retireOrphanPendingGenerations(
   client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[]; rowCount?: number }> },

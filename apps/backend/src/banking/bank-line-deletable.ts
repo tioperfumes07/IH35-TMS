@@ -38,6 +38,7 @@
  *   retirePlaidPendingPredecessor               -> 'replaced_by_plaid_posted:<plaid txn id>'
  *   supersedePlaidPendingByExactPostedCandidate -> 'operator_confirmed_plaid_pending_replacement:<id>'
  *   the duplicate-void arm                      -> 'merged_into_plaid'
+ *   retireOlderPendingGenerationOnReissue       -> 'replaced_by_plaid_pending_reissue:<plaid txn id>' (ROW 99+113)
  *
  * The merged_into pointer is the load-bearing clause and the reasons are belt-and-suspenders, because
  * a row whose pointer an earlier reset cleared must still be recognised. Measured on prod USMCA
@@ -49,6 +50,7 @@ export function bankLineIsFeedSupersessionArtifact(alias = "bt"): string {
   return `(
       ${alias}.merged_into_bank_transaction_id IS NOT NULL
       OR ${alias}.voided_reason LIKE 'replaced_by_plaid_posted:%'
+      OR ${alias}.voided_reason LIKE 'replaced_by_plaid_pending_reissue:%'
       OR ${alias}.voided_reason LIKE 'operator_confirmed_plaid_pending_replacement:%'
       OR ${alias}.voided_reason = 'merged_into_plaid'
     )`;

@@ -11,6 +11,7 @@ import {
   mergeManualBankTransactionStub,
   normalizeBankTransactionDescription,
   retirePlaidPendingPredecessor,
+  retireOlderPendingGenerationOnReissue,
 } from "../../banking/bank-tx-dedup.js";
 import { suggestForBankTransaction } from "../../banking/banking-rules.engine.js";
 import { dispatchNotification, listCompanyUserIdsByRoles } from "../../notifications/dispatcher.js";
@@ -739,6 +740,15 @@ export async function syncTransactions(itemId: string, opts?: { actorUserUuid?: 
             });
             if (!pendingRetirement.retired && pendingRetirement.reason === "financially_linked") {
               throw new Error("plaid_pending_predecessor_financially_linked");
+            }
+            // ROW 99+113 — a pending the bank RE-ISSUED retires its older pending generation now (one live pending per purchase).
+            if (transaction.pending) {
+              await retireOlderPendingGenerationOnReissue(client, {
+                reissuedPendingId: row.id,
+                reissuedPlaidTransactionId: transaction.transaction_id,
+                operatingCompanyId: row.operating_company_id,
+                bankAccountId: bankAccount.id,
+              });
             }
             await suggestForBankTransaction(client, row.id, row.operating_company_id);
             await mergeManualBankTransactionStub(client, {
