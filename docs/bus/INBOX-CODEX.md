@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:56Z) — #29272 Acct a8961293311 + #29271 hub 247ceef78da + #29270 board4 · CERTIFY 1–23
+# Tip main a8961293311. Recheck Accounting/CF/LoadHistory Backs after FE catch-up. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:53Z) — #29270 board4 expense_bucket MERGED c2761b7165b · CERTIFY 1–23
 # Tip main c2761b7165b. Recheck Cash Flow Home Other expenses excludes invoice income after FE /version.json catch-up. Safety/Maint Backs on tip. BUILD 24–45. No prod writes.
 
