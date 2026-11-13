@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../api/legal-templates";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -14,6 +15,10 @@ import { LegalModuleTabs } from "./LegalModuleTabs";
 
 export function LegalPoliciesPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — honor ?ret= from Legal Home (fallback /legal).
+  const policiesBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
 
@@ -70,7 +75,7 @@ export function LegalPoliciesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal" breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
+      <PageHeader backHref={policiesBackHref} breadcrumb={["Legal", "Policies"]} title="Legal Policies" subtitle="Policy acknowledgments and governance" />
       <LegalModuleTabs />
       <div className="rounded-sm border border-gray-200 bg-white p-3">
         {query.isError ? (

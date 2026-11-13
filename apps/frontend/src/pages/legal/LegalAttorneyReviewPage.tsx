@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../api/legal-templates";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -16,6 +17,10 @@ import { formatQuantityTable } from "../../lib/money";
 
 export function LegalAttorneyReviewPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — honor ?ret= from Legal Home (fallback /legal).
+  const attorneyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
 
@@ -78,7 +83,7 @@ export function LegalAttorneyReviewPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
+      <PageHeader backHref={attorneyBackHref} breadcrumb={["Legal", "Attorney Review"]} title="Attorney Review" subtitle="Templates pending legal approval" />
       <LegalModuleTabs />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

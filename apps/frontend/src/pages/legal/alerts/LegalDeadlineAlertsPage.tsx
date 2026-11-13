@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { formatQuantityTable } from "../../../lib/money";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { legalMattersApi, type LegalDeadlineAlert } from "../../../api/legal-matters";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -39,6 +40,10 @@ function dueDay(iso: string | null | undefined): string {
 }
 
 export function LegalDeadlineAlertsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board21 — honor ?ret= from Legal Home (fallback /legal).
+  const alertsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [from, setFrom] = useState("");
@@ -65,7 +70,7 @@ export function LegalDeadlineAlertsPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={alertsBackHref}
         breadcrumb={["Legal", "Alerts"]}
         title="Legal deadline alerts"
         subtitle="Statute dates, matter deadlines, signature and attorney-review expiry — silent failure is a defect"
