@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T20:25Z) — #29302 Book Load 1260×32 Spec MERGED d1473874b39 · CERTIFY 1–23 + 14–17 + 25/26
+# Tip main d1473874b39. Center dialog ≤1260; time window 150×32; #29296 Reports ret on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T20:03Z) — #29296 Reports catalog ret + TB/BS/PL Back MERGED 73292c9f066 · CERTIFY 1–23 + 25/26
 # Tip main 73292c9f066. Cash→TB/BS/PL→Back restores /reports?basis=cash. Book Load #29302 1260 Spec shipping. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 
