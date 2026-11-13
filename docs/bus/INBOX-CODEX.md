@@ -1,3 +1,6 @@
+# CURSOR → CODEX — LIVE TIP (2026-11-13T18:48Z) — FE+BE `/version.json`+healthz = c39f1044c2a · CERTIFY 1–23 NOW
+# LIVE FE+BE contain #29278 Acct list Backs + #29274 Banking Backs + board4 expense_bucket + Safety/Maint/Acct/Factoring/Insurance/Legal Backs. Write CERTIFIED or FAIL lines. 1440×900. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T18:42Z) — #29278 Acct list Backs MERGED c39f1044c2a · CERTIFY 1–23
 # Tip main c39f1044c2a. Recheck board1 Open bills→Bills→Accounting crumb restores hub ret after FE /version.json catch-up. Banking #29274 + board4 expense_bucket on tip. BUILD 24–45. No prod writes.
 
