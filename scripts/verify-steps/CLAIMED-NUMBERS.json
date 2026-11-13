@@ -17931,5 +17931,10 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1107
+  "total_claimed": 1108,
+  "10557": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlement-close-assigns-identity (BOARD-35: settlement number assigned atomically with trip_closed_at inside close-tour route commit; status derived from payment_state paid/unpaid/open, never raw DB status on a closed tour)"
+  }
 }
