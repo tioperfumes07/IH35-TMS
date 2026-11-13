@@ -5,6 +5,7 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { listTours, type TourListRow } from "../../../api/tourReadout";
 import { EntityMultiSelect, entityFilterIds } from "../../../components/EntityMultiSelect";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -63,8 +64,57 @@ export function CompanySettlementsReportBoard() {
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [search, setSearch] = useState("");
-  const [by, setBy] = useState<GroupBy>("trip");
-  const [drill, setDrill] = useState<{ key: string; label: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board29 — group/drill/zero_cost in URL so KPI Open list + Back restore cohort.
+  const groupFromUrl = (searchParams.get("group") ?? "trip") as GroupBy;
+  const by: GroupBy = GROUP_OPTIONS.some((g) => g.id === groupFromUrl) ? groupFromUrl : "trip";
+  const drillKey = searchParams.get("drill");
+  const drillLabel = searchParams.get("drill_label");
+  const drill = drillKey ? { key: drillKey, label: drillLabel || drillKey } : null;
+  const zeroCostOnly = searchParams.get("zero_cost") === "1";
+  const setBy = (next: GroupBy) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "trip") p.delete("group");
+        else p.set("group", next);
+        p.delete("drill");
+        p.delete("drill_label");
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const setDrill = (next: { key: string; label: string } | null) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (!next) {
+          p.delete("drill");
+          p.delete("drill_label");
+        } else {
+          p.set("drill", next.key);
+          if (next.label && next.label !== next.key) p.set("drill_label", next.label);
+          else p.delete("drill_label");
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const openZeroCostList = () => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        p.set("zero_cost", "1");
+        p.delete("group");
+        p.delete("drill");
+        p.delete("drill_label");
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   const query = useQuery({
     queryKey: ["reports", "company-settlements-board", companyId],
@@ -147,8 +197,12 @@ export function CompanySettlementsReportBoard() {
     return by === "week" || by === "month" ? out.sort((a, b) => b.key.localeCompare(a.key)) : out.sort((a, b) => b.margin - a.margin);
   }, [trips, by]);
 
-  const detail = useMemo(() => (drill ? trips.filter((t) => keyOf(t, by) === drill.key) : trips), [trips, drill, by]);
-  const showDetail = by === "trip" || drill != null;
+  const detail = useMemo(() => {
+    let list = drill ? trips.filter((t) => keyOf(t, by) === drill.key) : trips;
+    if (zeroCostOnly) list = list.filter((t) => !t.costs_cents);
+    return list;
+  }, [trips, drill, by, zeroCostOnly]);
+  const showDetail = by === "trip" || drill != null || zeroCostOnly;
 
   const tripColumns = useMemo<ParityColumn<Trip>[]>(
     () => [
@@ -311,10 +365,7 @@ export function CompanySettlementsReportBoard() {
         <V3Segmented
           value={by}
           options={GROUP_OPTIONS}
-          onChange={(next) => {
-            setDrill(null);
-            setBy(next);
-          }}
+          onChange={(next) => setBy(next)}
           testId="company-settlements-report-group-by"
         />
         <span className="text-[#5B6576]">dated by trip close (Central)</span>
@@ -366,16 +417,44 @@ export function CompanySettlementsReportBoard() {
           value={query.data ? String(totals.zeroCost.length) : "…"}
           sub="no fuel or expense linked"
           tone={totals.zeroCost.length ? "amber" : "muted"}
-          onClick={() => document.querySelector('[data-testid="csr-measured"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          onClick={() => {
+            openZeroCostList();
+            document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }}
         />
       </ReportKpiGrid>
 
-      {drill ? (
+      {drill || zeroCostOnly ? (
         <div className="flex items-center gap-2 text-xs text-[#5B6576]">
           <span>
-            Trips in <strong className="text-[#111827]">{drill.label}</strong>
+            {zeroCostOnly ? (
+              <>
+                Trips with <strong className="text-[#111827]">$0 costs</strong>
+              </>
+            ) : (
+              <>
+                Trips in <strong className="text-[#111827]">{drill?.label}</strong>
+              </>
+            )}
           </span>
-          <button type="button" className="font-semibold text-[#1D4ED8] hover:underline" onClick={() => setDrill(null)}>
+          <button
+            type="button"
+            className="font-semibold text-[#1D4ED8] hover:underline"
+            onClick={() => {
+              if (zeroCostOnly) {
+                setSearchParams(
+                  (prev) => {
+                    const p = new URLSearchParams(prev);
+                    p.delete("zero_cost");
+                    return p;
+                  },
+                  { replace: true },
+                );
+              } else {
+                setDrill(null);
+              }
+            }}
+          >
             ← back
           </button>
         </div>
