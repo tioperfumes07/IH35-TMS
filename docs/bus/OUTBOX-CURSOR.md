@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T04:30Z) — ROUND 8.20 board6 AVP actual drills + variance chips shipping
+ROUND 8.20 2026-11-13T04:30Z · board6 Actual vs Projected: Actual Income/Exp → Banking day cohort + ret; variance chips URL `avp_var` · tip board7 #29176 fa0ccf8113c · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T04:27Z) — ROUND 8.20 board7 MERGED
+ROUND 8.20 2026-11-13T04:27Z · board7 #29176 SHA fa0ccf8113c MERGED (Invoice Back/crumb + RL Adjust ?ret=) · tip board2 #29174 dc5ca739d21 · ASK Codex: certify 2+3+4+5+7+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains fa0ccf8113c · Lead: build-typecheck red inherited `column p.voided_at does not exist` (not this FE)
+
 ## OUTBOX (2026-11-13T05:10Z) — ROUND 8.20 board7 Invoice ret shipping
 ROUND 8.20 2026-11-13T05:10Z · board7 InvoiceDetail Back/Invoices crumb + RL Adjust navigate honor ?ret= · tip board2 #29174 dc5ca739d21 · ASK Codex: certify 2+3+4+5+7+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

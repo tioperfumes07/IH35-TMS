@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import {
   AvpCompareChart,
   ProjectedExpenseCell,
+  buildAvpActualDrillHref,
   buildAvpChartPoints,
   buildAvpChartSeries,
   accuracyPct,
@@ -15,6 +16,7 @@ import {
   rawActualNetFromGroups,
 } from "./ActualVsProjectedTab";
 import type { AvpLineItem } from "../../../api/cashFlow";
+import { decodeReturnContext, RETURN_PARAM } from "../../../lib/returnContext";
 
 // ProjectedExpenseCell / AvpCompareChart live beside the tab's useQuery; supply the provider the module consumes.
 function renderWithQuery(ui: ReactElement) {
@@ -216,5 +218,17 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
     expect(screen.getByTestId("cash-flow-avp-proj-exp-legend").textContent).toMatch(/Projected expenses/i);
     expect(screen.getAllByTestId("cash-flow-avp-proj-exp-polyline").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByTestId("cash-flow-avp-chart-svg").querySelectorAll("polyline").length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("ROUND 8.20 board6 — Actual Income/Exp drill Banking same-day cohort with ret", () => {
+    const origin = "/cash-flow?tab=actual_vs_projected&avp_var=under";
+    const income = buildAvpActualDrillHref({ category: "income", date: "2026-11-03" }, origin);
+    const expense = buildAvpActualDrillHref({ category: "expenses", date: "2026-11-03" }, origin);
+    expect(income).toContain("types=money_in");
+    expect(expense).toContain("types=money_out");
+    expect(income).toContain("date_from=2026-11-03");
+    expect(income).toContain("date_to=2026-11-03");
+    const q = new URLSearchParams(income.slice(income.indexOf("?") + 1));
+    expect(decodeReturnContext(q.get(RETURN_PARAM))).toBe(origin);
   });
 });
