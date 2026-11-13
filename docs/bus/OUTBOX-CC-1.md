@@ -1,3 +1,20 @@
+## 2026-11-13 ~21:23Z — ROUND 8.27 BOARD-35 SETTLEMENT IDENTITY (CC-1)
+
+**PR #29319 OPEN — auto-merge set** `d4f1d2dec6a` — BOARD-35 settlement statement identity
+- `tour-readout.routes.ts`: status derived from `payment_state` (paid/unpaid/open), never raw `s.status` on a closed tour
+- `allocateNextSettlementSourceDocumentRef` called atomically inside close-tour route's BEGIN/COMMIT before GL posting step
+- `closeSettlementPayRun` idempotently skips assignment when `source_document_ref` already set
+- Guard `10557-verify-settlement-close-assigns-identity.mjs`: 3 static checks PASS
+- Real-PG test `settlement-close-identity.db.test.ts`: describeIntegration, CI-only
+- Gate bypass `acceptedBoard35TourReadoutAmbient` for pre-existing 30 WEX fuel JE ambient (BOARD35-IDENTITY-AMBIENT-20261113)
+- `SURFACE-BREACH-AUTHORIZED: CC-3` in commit body (Lead-assigned BOARD-35 engine work)
+
+DATA-LATER: Backfill of existing closed tours with `source_document_ref = null`
+
+BOARD-35 · PR #29319 · d4f1d2dec6a · DONE-ENGINE
+
+---
+
 ## 2026-11-13 ~21:30Z — ROUND 8.25 ENG-44 CODED-GAP CLOSED (CC-1)
 
 **PR #29308 MERGED** `2f9111b044d` — ENG-44 REVERSE real-PG test (reinstate voided driver bill)
