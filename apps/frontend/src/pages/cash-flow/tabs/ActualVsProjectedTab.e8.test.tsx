@@ -8,6 +8,7 @@ import {
   ProjectedExpenseCell,
   buildAvpActualDrillHref,
   buildAvpProjectedDrillHref,
+  buildAvpAccuracyKpiDrillHref,
   buildAvpChartPoints,
   buildAvpChartSeries,
   accuracyPct,
@@ -251,6 +252,26 @@ describe("E8 batch45 matched coverage + chart gaps", () => {
     expect(income).toContain("rl_from=2026-11-03");
     expect(income).toContain("rl_to=2026-11-03");
     expect(expense).toContain("rl_from=2026-11-03");
+    const q = new URLSearchParams(income.slice(income.indexOf("?") + 1));
+    expect(decodeReturnContext(q.get(RETURN_PARAM))).toBe(origin);
+  });
+
+  it("ROUND 8.20 board6 — Income/Expense accuracy KPIs drill Banking range cohort with ret", () => {
+    const origin = "/cash-flow?tab=actual_vs_projected&avp_var=under";
+    const income = buildAvpAccuracyKpiDrillHref(
+      { category: "income", from: "2026-11-01", to: "2026-11-07" },
+      origin,
+    );
+    const expense = buildAvpAccuracyKpiDrillHref(
+      { category: "expenses", from: "2026-11-01", to: "2026-11-07" },
+      origin,
+    );
+    expect(income).toContain("types=money_in");
+    expect(expense).toContain("types=money_out");
+    expect(income).toContain("review=all");
+    expect(income).toContain("date_from=2026-11-01");
+    expect(income).toContain("date_to=2026-11-07");
+    expect(expense).toContain("date_from=2026-11-01");
     const q = new URLSearchParams(income.slice(income.indexOf("?") + 1));
     expect(decodeReturnContext(q.get(RETURN_PARAM))).toBe(origin);
   });

@@ -203,6 +203,16 @@ export function buildAvpProjectedDrillHref(
   return withReturnContext(target, originHref);
 }
 
+/** ROUND 8.20 board6 — Income/Expense accuracy KPIs → range Banking Money In/Out with ret. */
+export function buildAvpAccuracyKpiDrillHref(
+  opts: { category: "income" | "expenses"; from: string; to: string },
+  originHref: string,
+): string {
+  const types = opts.category === "income" ? "money_in" : "money_out";
+  const target = `${BANKING_TAB_PATH.transactions}?types=${types}&review=all&date_from=${encodeURIComponent(opts.from)}&date_to=${encodeURIComponent(opts.to)}`;
+  return withReturnContext(target, originHref);
+}
+
 // E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0.
 export function ProjectedCell({ line, originHref }: { line: AvpLineItem; originHref: string }) {
   if (line.category === "expenses" && line.projected_unavailable) {
@@ -769,7 +779,14 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-income"
-                href={`#cash-flow-avp-table`}
+                href={
+                  actualsUnavailable
+                    ? undefined
+                    : buildAvpAccuracyKpiDrillHref(
+                        { category: "income", from: applied.from, to: applied.to },
+                        originHref,
+                      )
+                }
               />
             );
           })()}
@@ -801,7 +818,14 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-expense"
-                href={`#cash-flow-avp-table`}
+                href={
+                  expenseAccuracyUnavailable
+                    ? undefined
+                    : buildAvpAccuracyKpiDrillHref(
+                        { category: "expenses", from: applied.from, to: applied.to },
+                        originHref,
+                      )
+                }
               />
             );
           })()}
