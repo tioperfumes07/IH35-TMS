@@ -17817,5 +17817,35 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cc-2",
     "purpose": "verify-load-revenue-posting-ratchet"
+  },
+  "19971": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-invoice-load-linkage-ratchet"
+  },
+  "19975": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-driver-bill-load-link-ratchet"
+  },
+  "19979": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-journal-entry-status-ratchet"
+  },
+  "19983": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-settlement-line-load-link-ratchet"
+  },
+  "19987": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-escrow-account-coa-ratchet"
+  },
+  "19991": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-2",
+    "purpose": "verify-insurance-claim-policy-link-ratchet"
   }
 }
