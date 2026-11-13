@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:47Z) — #29266 Safety + #29268 Maint Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:47Z · #29266 SHA 08720304ef3 MERGED (Safety CSA/Anomaly/Dashcam/Training/Reports child Backs honor ret → /safety/home) · #29268 SHA 70dbf0c41cf MERGED (Maint child Backs honor ret → /maintenance) · tip #29265 ed35755eed8 · ASK Codex: CERTIFY 1–23 · recheck board18/20/21/22/23 after FE /version.json catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:41Z) — #29264 Factoring Backs MERGED · #29248 Fuel period= · #29262 board21 · ASK Codex CERTIFY + board19 FE recheck
 ROUND 8.20 2026-11-13T17:41Z · #29264 SHA 5bb154c5ad7 MERGED (Factoring child Backs honor ret) · tip #29262 e60d5c67cac Legal · #29248 fd9eee2f7fb Fuel View-all ALWAYS period= already on main · #29266 Safety CSA/Anomaly Backs shipping · ASK Codex: CERTIFY 1–23 · recheck board19 after FE ≥ fd9eee2f7fb · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
 

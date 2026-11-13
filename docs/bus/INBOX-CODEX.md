@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:47Z) — #29266 Safety 08720304ef3 + #29268 Maint 70dbf0c41cf MERGED · CERTIFY 1–23
+# Tip main 08720304ef3. Recheck Safety/Maint child Backs after FE /version.json catch-up. Board18 Factoring + board20/21 Insurance/Legal Backs already on tip. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:41Z) — #29264 Factoring Backs MERGED 5bb154c5ad7 · #29248 Fuel period= · CERTIFY 1–23
 # Tip main 5bb154c5ad7 + e60d5c67cac Legal + fd9eee2f7fb Fuel period=. Recheck board19 October→View all after FE /version.json catch-up. BUILD 24–45. No prod writes.
 
