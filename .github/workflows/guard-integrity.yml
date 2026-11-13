@@ -23,6 +23,12 @@ jobs:
           cache: "npm"
       - run: npm ci
 
+      # JSON-UNION-PARSE-GUARD (2026-11-13 Round 8.31) — HARD: every file tracked with
+      # merge=json-union must be valid JSON before merge. GitHub's merge API ignores the
+      # json-union driver; this step is the authoritative merge gate for the registry.
+      - name: json-union-parse-guard
+        run: node scripts/verify-registry-json-parses.mjs
+
       # Guard classification remit — every guard in this workflow is tagged CORRECT, STALE,
       # MISCALIBRATED, MANDATES-A-DEFECT, or NOT-WIRED. The worst classes are found by asking
       # "if this guard passes, what does the operator experience?" and "does CI ever run it?",
