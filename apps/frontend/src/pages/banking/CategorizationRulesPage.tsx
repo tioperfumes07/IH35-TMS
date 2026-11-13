@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   applyCategorizationRuleHistorical,
   createCategorizationRule,
@@ -43,6 +44,8 @@ export function CategorizationRulesPage() {
   // `merchant` search param prefills this when arriving from a transaction's "Create rule" action
   // (BankingTransactionsDesignView) so the merchant text doesn't have to be retyped.
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const merchantPrefill = searchParams.get("merchant") ?? "";
   const [descriptionPattern, setDescriptionPattern] = useState(merchantPrefill);
   useEffect(() => {
@@ -202,7 +205,7 @@ export function CategorizationRulesPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/banking" title="Auto-Categorize Rules" subtitle="Map Plaid category patterns to Chart of Accounts" />
+      <PageHeader backHref={bankingBackHref} title="Auto-Categorize Rules" subtitle="Map Plaid category patterns to Chart of Accounts" />
       {rulesQuery.isError || previewQuery.isError || accountsQuery.isError || statsQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       {Number(statsQuery.data?.unmatched_7d ?? 0) > 0 ? (
         <div

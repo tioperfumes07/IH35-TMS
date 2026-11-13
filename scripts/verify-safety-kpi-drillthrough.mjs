@@ -75,16 +75,20 @@ requireAll(tabPath, tab, [
   { pattern: /subject_unit_id/, label: "uses events-log subject_unit_id (existing id)" },
   { pattern: /driver_id/, label: "uses accidents driver_id (existing id)" },
   { pattern: /unit_id/, label: "uses accidents unit_id (existing id)" },
-  { pattern: /to="\/safety\/[a-z-]+"/, label: "KPI tile deep-links to a scoped safety surface" },
+  // ROUND 8.20 — KPI drills use safetyHref/withReturnContext (carry ?ret=); literal to= retired.
+  {
+    pattern: /safetyHref\("\/safety\/[a-z-]+/,
+    label: "KPI tile deep-links to a scoped safety surface",
+  },
   // Company Violations KPI must drill to External Fines WITH the company-violation filter (C-06).
   {
     pattern:
-      /label="Open Company Violations"[\s\S]*?to="\/safety\/external-fines\?record_type=company-violation"/,
+      /label="Open Company Violations"[\s\S]*?safetyHref\("\/safety\/external-fines\?record_type=company-violation"\)/,
     label: "Open Company Violations KPI links to /safety/external-fines?record_type=company-violation",
   },
   // Drivers with Open Fines must match SafetyKpiRow (internal-fines), not external-fines default.
   {
-    pattern: /label="Drivers with Open Fines"[\s\S]*?to="\/safety\/internal-fines"/,
+    pattern: /label="Drivers with Open Fines"[\s\S]*?safetyHref\("\/safety\/internal-fines"\)/,
     label: "Drivers with Open Fines KPI links to /safety/internal-fines",
   },
   // Events-log DOES support status — open filter must remain.

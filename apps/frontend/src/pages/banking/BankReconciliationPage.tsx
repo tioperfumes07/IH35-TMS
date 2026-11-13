@@ -2,7 +2,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   acceptBankReconMatch,
   type BankMatchCandidateKind,
@@ -80,6 +81,8 @@ export function BankReconciliationPage() {
   const { pushToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
 
   // 0441-mod8: honor deep link from ReconciliationWorkspace Auto-Match Suggestions
   // (?account_id=&period_start=&period_end=) so the auto_matched_candidates worklist loads.
@@ -240,7 +243,7 @@ export function BankReconciliationPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/banking"
+        backHref={bankingBackHref}
         title="Bank Reconciliation"
         subtitle="Review unmatched transactions, accept/reject auto matches, and close reconciled periods."
       />

@@ -16,8 +16,13 @@ import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateTimeUS } from "../../utils/qboFormat";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 export function QboSyncQueuePage() {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
@@ -73,7 +78,7 @@ export function QboSyncQueuePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/banking" title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
+      <PageHeader backHref={bankingBackHref} title="QBO Sync Queue" subtitle="Review pending/failed/blocked banking sync jobs" />
       {statsQuery.isError || queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">

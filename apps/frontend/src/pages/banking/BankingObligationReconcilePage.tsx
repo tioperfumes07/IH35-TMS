@@ -24,6 +24,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
 function money(cents: number) {
@@ -41,6 +43,9 @@ const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = {
 };
 
 export function BankingObligationReconcilePage() {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -139,7 +144,7 @@ export function BankingObligationReconcilePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/banking" title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
+      <PageHeader backHref={bankingBackHref} title="Bank reconciliation" subtitle="Drag a transaction onto an obligation, or use bulk actions." />
       {/*
         Only claim 'nothing to reconcile' when BOTH queries actually ran and succeeded. Without the
         isError/isSuccess checks a failed or not-yet-enabled fetch (companyId still resolving) renders

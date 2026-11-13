@@ -3,7 +3,8 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { getIntercompanyTransferGroup, getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -113,6 +114,8 @@ export function TransfersListPage() {
   // override TRUE for USMCA, TRANSP and TRK, so "default OFF" was wrong for every real company.
   const transferGlFlag = useFeatureFlag("TRANSFER_GL_POSTING_ENABLED", companyId || undefined);
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
   const deepLinkGroupId = searchParams.get("group_id")?.trim() || "";
 
@@ -376,7 +379,7 @@ export function TransfersListPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/banking"
+        backHref={bankingBackHref}
         title="Transfers"
         subtitle="Bank transfers and credit-card payments"
         actions={

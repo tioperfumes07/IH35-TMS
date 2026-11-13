@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   disconnectPlaidBankAccount,
   getPlaidBankAccount,
@@ -72,6 +73,9 @@ function syncStatusClasses(status: string) {
 export function BankAccountDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const auth = useAuth();
@@ -254,7 +258,7 @@ export function BankAccountDetailPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/banking"
+        backHref={bankingBackHref}
         title={headerTitle}
         subtitle={account?.account_mask ? `••••${account.account_mask}` : ""}
         actions={

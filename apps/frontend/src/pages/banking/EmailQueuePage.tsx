@@ -9,8 +9,13 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 export function EmailQueuePage() {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
@@ -43,7 +48,7 @@ export function EmailQueuePage() {
   if (!privileged) {
     return (
       <div className="space-y-3">
-        <PageHeader backHref="/banking" title="Email Queue" subtitle="Owner/Administrator only" />
+        <PageHeader backHref={bankingBackHref} title="Email Queue" subtitle="Owner/Administrator only" />
         <p className="text-xs text-gray-600">You need Owner or Administrator access to view outbound email jobs.</p>
       </div>
     );
@@ -51,7 +56,7 @@ export function EmailQueuePage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/banking" title="Email Queue" subtitle="Retry failed deliveries without SQL" />
+      <PageHeader backHref={bankingBackHref} title="Email Queue" subtitle="Retry failed deliveries without SQL" />
       {queueQuery.isError ? <ListErrorBanner onRetry={() => void refresh()} /> : null}
       <div className="rounded-sm border border-gray-200 bg-white p-3 text-xs text-gray-700">
         <p>
