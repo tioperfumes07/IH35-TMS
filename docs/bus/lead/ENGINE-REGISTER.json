@@ -88,7 +88,7 @@
       "status": "PARTIAL",
       "guard": "verify-advance-resolver-never-uses-driver-payroll-clearing (step 18809)",
       "deadline_utc": "2026-10-25T03:00:00Z",
-      "evidence": "CODED #27902 + LIVE dry-run 10-28 CT reconfirmed: 12 advances / 3 PROPOSE_RECLASS ($705.97: CA-0004/0006/0007 BANK_UNIQUE) / 3 NO-EVIDENCE / 6 AMBIGUOUS; residual clearing 257596¢. Writer never credits 2170 going forward. APPLY of 3 reclasses BLOCKED — no OWNER AUTH / apply script yet (dry-run only). Do not invent JE."
+      "evidence": "CODED #27902 + LIVE dry-run 10-28. CORRECTED EVIDENCE (post ACCT-F11091 2026-11-13): only CA-0005 BANK_UNIQUE $151.99; CA-0004/0006/0007 BANK_AMBIGUOUS; 7 others NO_EVIDENCE/AMBIGUOUS; residual clearing 257596¢. Original $705.97 auth (3 reclasses) was based on incorrect voided/double-claimed lines — STALE. Guard 18809 PASS (writer never credits 2170). verify-driver-net-pay-clearing-balance-zero PASS. APPLY BLOCKED — requires new OWNER AUTH for CA-0005 only ($151.99). Do not invent JE."
     },
     {
       "id": "ENG-05",

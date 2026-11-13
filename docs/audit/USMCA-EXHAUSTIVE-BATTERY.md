@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 376 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 292 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 258 | `/:id/approve`, `/scan` — operates on an existing row |
+| **create** (collection POST) | 377 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **nested create** (child POST) | 293 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| action (NOT a create) | 259 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 999 | |
+| **TOTAL POST endpoints** | 1002 | |
 | UI files with `+ Create`/`+ Book` | 198 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -414,13 +414,14 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/dispatch/truck-line/loads/:loadId/stops/:stopId/depart` | `apps/backend/src/dispatch/truck-line/stop-stamp.routes.ts` | — | — | — |
 | create | `/api/v1/dispatch/validation/pre-dispatch` | `apps/backend/src/dispatch/validation/pre-dispatch.routes.ts` | — | — | — |
 
-### driver-finance — 30 create-surface(s)
+### driver-finance — 31 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | create | `/api/v1/driver-finance/batch-settlements` | `apps/backend/src/driver-finance/batch-settlements.routes.ts` | — | — | — |
 | create | `/api/v1/driver-finance/cash-advance-requests` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
 | nested | `/api/v1/driver-finance/cash-advance-requests/:id/deny` | `apps/backend/src/driver-finance/cash-advance-requests.routes.ts` | — | — | — |
+| nested | `/api/v1/driver-finance/driver-bills/:id/reinstate` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
 | nested | `/api/v1/driver-finance/driver-bills/:id/reprice-to-settlement-line` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
 | nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-practical` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
 | nested | `/api/v1/driver-finance/driver-bills/:id/void-stray-salaried` | `apps/backend/src/driver-finance/driver-bills.routes.ts` | — | — | — |
@@ -533,6 +534,28 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/driver/settlements/:settlementId/dispute` | `apps/backend/src/driver/settlement-disputes-p6.routes.ts` | — | — | — |
 | nested | `/api/v1/driver/status-suggestions/:id/respond` | `apps/backend/src/driver/status-suggestions.routes.ts` | — | — | — |
 
+### factoring — 17 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/factoring/1090-wire-proposals/dry-run-accept` | `apps/backend/src/factoring/factoring.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/batches` | `apps/backend/src/factoring/batch.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/cash-reserve-reclass` | `apps/backend/src/factoring/cash-reserve-reclass.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/collection-apply` | `apps/backend/src/factoring/collection-apply.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/collection-void` | `apps/backend/src/factoring/collection-void.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/factors` | `apps/backend/src/factoring/factor.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/factors/:id/letter-of-release` | `apps/backend/src/factoring/factor.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/faro-imports` | `apps/backend/src/data-infra/data-infra.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/faro-reserve-entries/:id/short-pay-resolution` | `apps/backend/src/factoring/faro-reserve-entries.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/import/faro` | `apps/backend/src/factoring/faro-csv-import.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/interest-accrual/propose` | `apps/backend/src/factoring/interest-accrual.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/interest-accrual/runs/:id/decide` | `apps/backend/src/factoring/interest-accrual.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/purchase-lines/:id/faro-invoice-number` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/purchases` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/purchases/candidates/:invoiceId/${suffix}` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
+| nested | `/api/v1/factoring/repurchase-due/:id/decide` | `apps/backend/src/factoring/repurchase-due.routes.ts` | — | — | — |
+| create | `/api/v1/factoring/submission-queue/submit-batch` | `apps/backend/src/factoring/submission-queue.routes.ts` | — | — | — |
+
 ### fuel — 17 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -554,27 +577,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts` | — | — | — |
-
-### factoring — 16 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/factoring/1090-wire-proposals/dry-run-accept` | `apps/backend/src/factoring/factoring.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/batches` | `apps/backend/src/factoring/batch.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/cash-reserve-reclass` | `apps/backend/src/factoring/cash-reserve-reclass.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/collection-apply` | `apps/backend/src/factoring/collection-apply.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/factors` | `apps/backend/src/factoring/factor.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/factors/:id/letter-of-release` | `apps/backend/src/factoring/factor.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/faro-imports` | `apps/backend/src/data-infra/data-infra.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/faro-reserve-entries/:id/short-pay-resolution` | `apps/backend/src/factoring/faro-reserve-entries.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/import/faro` | `apps/backend/src/factoring/faro-csv-import.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/interest-accrual/propose` | `apps/backend/src/factoring/interest-accrual.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/interest-accrual/runs/:id/decide` | `apps/backend/src/factoring/interest-accrual.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/purchase-lines/:id/faro-invoice-number` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/purchases` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/purchases/candidates/:invoiceId/${suffix}` | `apps/backend/src/factoring/purchase.routes.ts` | — | — | — |
-| nested | `/api/v1/factoring/repurchase-due/:id/decide` | `apps/backend/src/factoring/repurchase-due.routes.ts` | — | — | — |
-| create | `/api/v1/factoring/submission-queue/submit-batch` | `apps/backend/src/factoring/submission-queue.routes.ts` | — | — | — |
 
 ### compliance — 11 create-surface(s)
 
