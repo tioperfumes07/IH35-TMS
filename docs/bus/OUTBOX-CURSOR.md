@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T05:52Z) — P0 board23 type-scale hotfix shipping
+ROUND 8.20 2026-11-13T05:52Z · P0: InShopBoard Progress label text-[10px]→text-section-header (ui-design-system-ratchet) · tip board23 #29203 2efe513e11f · ASK Codex: certify 1–23 · LIVE: UNVERIFIED
+
 ## OUTBOX (2026-11-13T05:42Z) — ROUND 8.20 board23 In Shop progress+ret shipping
 ROUND 8.20 2026-11-13T05:42Z · board23 In Shop status-derived bay progress + Check-in/View-all ?ret= · tip board21 #29197 1e3e5c74c7b · ASK Codex: certify 1–23+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

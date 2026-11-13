@@ -133,7 +133,7 @@ export function InShopBoard({ companyId }: { companyId: string }) {
               if (pct == null) return null;
               return (
                 <div className="space-y-1" data-testid={`in-shop-bay-${bay_number}-progress`}>
-                  <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                  <div className="flex justify-between text-section-header font-semibold uppercase tracking-wide text-slate-500">
                     <span>Progress</span>
                     <span>{pct}%</span>
                   </div>
