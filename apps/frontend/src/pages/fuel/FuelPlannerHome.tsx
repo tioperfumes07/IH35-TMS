@@ -314,10 +314,10 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       effectiveTrailerId,
       deepLinkVendorId,
       deepLinkTransactionId,
+      fuelHistoryPage,
       deepLinkFrom,
       deepLinkTo,
       deepLinkUnlinked,
-      fuelHistoryPage,
       includeVoidedFuel,
     ],
     queryFn: () =>

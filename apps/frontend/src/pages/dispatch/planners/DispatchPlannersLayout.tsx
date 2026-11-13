@@ -8,6 +8,7 @@ import { PlannerRangeProvider } from "./PlannerRangeContext";
 import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
 import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../../components/planner/UniversalFilterBar";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
+import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import {
   DEFAULT_PLANNER_RANGE_DAYS,
@@ -268,7 +269,11 @@ function PlannerFilterChips() {
       ) : null}
       {entityFilters.unitIds.length > 0 ? (
         <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-unit">
-          Unit: {entityFilters.unitIds.length} selected
+          {entityFilters.unitIds.length === 1 ? (
+            <EntityLink kind="unit" id={entityFilters.unitIds[0]} label={entityFilters.unitIds[0]} />
+          ) : (
+            <>Unit: {entityFilters.unitIds.length} selected</>
+          )}
           <button
             type="button"
             aria-label="Clear unit filter"

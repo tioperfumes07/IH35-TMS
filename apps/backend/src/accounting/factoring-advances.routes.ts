@@ -128,7 +128,15 @@ async function fetchAdvanceDetail(client: any, advanceId: string, operatingCompa
           WHERE b.matched_factoring_advance_id = fa.id
             AND b.operating_company_id = fa.operating_company_id
           ORDER BY b.created_at DESC NULLS LAST
-          LIMIT 1) AS matched_bank_transaction_label
+          LIMIT 1) AS matched_bank_transaction_label,
+        (SELECT fp.id FROM accounting.factoring_purchases fp
+          WHERE fp.factoring_advance_id = fa.id
+            AND fp.operating_company_id = fa.operating_company_id
+          LIMIT 1) AS factoring_purchase_id,
+        (SELECT fp.display_id FROM accounting.factoring_purchases fp
+          WHERE fp.factoring_advance_id = fa.id
+            AND fp.operating_company_id = fa.operating_company_id
+          LIMIT 1) AS factoring_purchase_display_id
       FROM accounting.factoring_advances fa
       -- ENTITY PREDICATE (CLS-JOIN-ENTITY-UNSCOPED): the advance is scoped, the factoring-company
       -- vendor it names was not. This supplies the vendor NAME shown on the advance.

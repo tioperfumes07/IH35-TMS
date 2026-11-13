@@ -15,6 +15,7 @@ import {
 import { listTours } from "../../api/tourReadout";
 import { ListErrorState } from "../../components/ListErrorState";
 import { preSettlementColumns } from "../../components/driver-finance/PreSettlementsPanel";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -257,6 +258,11 @@ export function SettlementsPreSettlementsBoard() {
 
       {!companyId ? (
         <p className="text-xs text-red-600">{S443326.preSettlements.selectCompany}</p>
+      ) : null}
+      {filteredRows.length === 1 && filteredRows[0].driver_id ? (
+        <p className="px-1 text-xs text-[#6B7280]" data-testid="settlements-presettle-driver-link">
+          <EntityLinkOrTombstone kind="driver" id={filteredRows[0].driver_id} name={filteredRows[0].driver_name} noun="Driver" />
+        </p>
       ) : null}
 
       <div

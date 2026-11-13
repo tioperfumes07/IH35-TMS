@@ -27,8 +27,11 @@ import path from "node:path";
 
 const ROOT = process.cwd();
 
+// #29140 (ROUND 8.20 boards 9+10) moved the page's create into CustomerCreateModal, which delegates to
+// NewCustomerDrawerForm; Customers.tsx now only mounts the modal (checked below as CUSTOMERS_PAGE).
+const CUSTOMERS_PAGE = "apps/frontend/src/pages/Customers.tsx";
 const CUSTOMER_CREATORS = [
-  "apps/frontend/src/pages/Customers.tsx",
+  "apps/frontend/src/components/customers/CustomerCreateModal.tsx",
   "apps/frontend/src/components/parity/drawers/NewCustomerDrawerForm.tsx",
   "apps/frontend/src/components/forms/shared/QuickCreateEntityModal.tsx",
 ];
@@ -116,9 +119,12 @@ export function auditMasterDataCreateTargets(sources) {
   if (!/onCreated=\{\(id\) => \{[\s\S]{0,180}next\.set\("part_id", id\)/.test(partsPageSrc)) {
     errors.push("D5-1 REGRESSION: InventoryPartsStockPage must route the created part id to ?part_id= for row selection.");
   }
-  const customersPage = sources[CUSTOMER_CREATORS[0]] ?? "";
-  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers", "page", companyId\]/.test(customersPage) || !/navigate\(`\/customers\/\$\{customer\.id\}`\)/.test(customersPage)) {
+  const customerCreateModal = sources[CUSTOMER_CREATORS[0]] ?? "";
+  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\] \}\)/.test(customerCreateModal) || !/navigate\(`\/customers\/\$\{result\.id\}`\)/.test(customerCreateModal)) {
     errors.push("D1-1 REGRESSION: Customers create must reload then navigate to the returned customer id.");
+  }
+  if (!/<CustomerCreateModal\b/.test(sources[CUSTOMERS_PAGE] ?? "")) {
+    errors.push("D1-1 REGRESSION: Customers.tsx no longer mounts CustomerCreateModal — the page has no customer create.");
   }
   const customerDrawer = sources[CUSTOMER_CREATORS[1]] ?? "";
   if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\]/.test(customerDrawer) || !/onCreated\(\{ id: customer\.id, label \}\)/.test(customerDrawer)) {
@@ -134,7 +140,7 @@ export function auditMasterDataCreateTargets(sources) {
   return errors;
 }
 
-const FILES = [...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER, PARTS_PAGE, CUSTOMERS_MATRIX, INVENTORY_MATRIX, SELF];
+const FILES = [CUSTOMERS_PAGE, ...CUSTOMER_CREATORS, CUSTOMER_PAYLOAD_HELPER, PART_CREATE_DRAWER, PARTS_PAGE, CUSTOMERS_MATRIX, INVENTORY_MATRIX, SELF];
 const readErrors = [];
 const sources = Object.fromEntries(FILES.map((rel) => [rel, read(rel, readErrors) ?? ""]));
 const errors = [...readErrors, ...auditMasterDataCreateTargets(sources)];
@@ -147,6 +153,8 @@ if (process.argv.includes("--selftest")) {
   const cases = [
     ["shared invoice email removed", CUSTOMER_PAYLOAD_HELPER, /\bap_email:\s*apEmail/, "ap_email"],
     ["quick create targets mirror", CUSTOMER_CREATORS[2], /<NewCustomerDrawerForm/, "<QboCustomerDrawerForm"],
+    ["page create stops navigating", CUSTOMER_CREATORS[0], /navigate\(`\/customers\/\$\{result\.id\}`\)/, "void result"],
+    ["page drops the create modal", CUSTOMERS_PAGE, /<CustomerCreateModal\b/g, "<NoCreate"],
     ["part create bypasses helper", PART_CREATE_DRAWER, /apiRequest\s*[<(]/, "fetch(resolveApiUrl("],
     ["part returned id dropped", PART_CREATE_DRAWER, /onCreated\?\.\(created\.id\)/, "void created.id"],
     ["part reverse route dropped", PARTS_PAGE, /next\.set\("part_id", id\)/, "void id"],

@@ -549,6 +549,24 @@
     "reason": "CC-1 #29123's RAISE EXCEPTION when USMCA 2510/2520 are absent broke every fresh CI database (security-audit fresh migrate: 'USMCA account 2510 ... not found'). Now RAISE NOTICE + RETURN when absent. On production 2510/2520 exist and both roles are bound (read 2026-11-12 ~22:35Z: fuel_card_payable_dreamline -> 2510, fuel_card_payable_wex -> 2520), so the guarded file does exactly what the applied file did (applied 2026-11-12 22:24:25Z). Same treatment as 202616131600.",
     "added_at": "2026-11-12",
     "added_in_pr": "MAIN-RED-MIG-202616530100",
-    "ruling": "Lead 2026-11-12 22:35Z (main red for every seat)"
+    "ruling": "docs/bus/11-12-2026-LEAD-RULING-202616530100-CHECKSUM-OVERRIDE.md"
+  },
+  {
+    "filename": "202616480200_dispatch_capacity_load_board_audit_triggers.sql",
+    "ledger_checksum": "fc9323aeb527ddf8706d319b8445e81af4733301e7a16ef04f5e9151d3bb01fb",
+    "disk_checksum": "ada157ca9463a98e0abfd33d281907bf612829ce90278be53ae48a44d0997441",
+    "reason": "LIVE PROOF: SELECT found=[] from _system._schema_migrations for this file (2026-11-12 22:00Z) — migration is NOT applied on prod. File is a held migration (DO NOT RUN comment added by CC-1 commit 52699ab7ba after the .ledger.json snapshot was taken). Snapshot staleness only — no SQL DDL change, no prod impact.",
+    "ruling": "docs/bus/11-12-2026-CC2-ROW77-MIGRATION-SNAPSHOT-STALENESS-RULING.md",
+    "added_at": "2026-11-12",
+    "added_in_pr": "cc-2/row77-factoring-invoice-status-engine"
+  },
+  {
+    "filename": "202616510100_settlement_lines_reinstated_je_same_entity_fk.sql",
+    "ledger_checksum": "395a09c276232d91c049590a6630669a2cf9ee6d14f6328a0148a70562c10441",
+    "disk_checksum": "bb765c5381f696e9aa28e0b665cf18656d1fa431cf63ee26cba4af056b293ef0",
+    "reason": "LIVE PROOF: SELECT found=[] from _system._schema_migrations for this file (2026-11-12 22:00Z) — migration is NOT applied on prod. File is a held migration (DO NOT RUN comment added by CC-1 commit 52699ab7ba after the .ledger.json snapshot was taken). Snapshot staleness only — no SQL DDL change, no prod impact.",
+    "ruling": "docs/bus/11-12-2026-CC2-ROW77-MIGRATION-SNAPSHOT-STALENESS-RULING.md",
+    "added_at": "2026-11-12",
+    "added_in_pr": "cc-2/row77-factoring-invoice-status-engine"
   }
 ]

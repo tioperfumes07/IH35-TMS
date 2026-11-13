@@ -143,6 +143,8 @@ export type FactoringAdvance = {
   source_load_number?: string | null;
   matched_bank_transaction_id?: string | null;
   matched_bank_transaction_label?: string | null;
+  factoring_purchase_id?: string | null;
+  factoring_purchase_display_id?: string | null;
 };
 
 export type FactoringAdvanceDetail = FactoringAdvance & {
