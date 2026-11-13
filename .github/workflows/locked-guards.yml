@@ -1051,6 +1051,11 @@ jobs:
       - name: verify:tracker-artifacts-fresh
         run: npm run verify:tracker-artifacts-fresh
 
+      - name: verify:battery-doc-auto-regen-wired --selftest
+        run: node scripts/verify-battery-doc-auto-regen-wired.mjs --selftest
+      - name: verify:battery-doc-auto-regen-wired
+        run: node scripts/verify-battery-doc-auto-regen-wired.mjs
+
       - name: verify:inline-create-writes-canonical --selftest
         run: node scripts/verify-inline-create-writes-canonical.mjs --selftest
       - name: verify:inline-create-writes-canonical

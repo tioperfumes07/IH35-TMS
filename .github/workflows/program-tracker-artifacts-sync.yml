@@ -81,6 +81,14 @@ jobs:
         # docs/specs/DERIVED-ARTIFACTS.json against these two inputs is regenerated in the same commit.
         run: node scripts/regen-tracker-dependents.mjs --paths-file "$RUNNER_TEMP/tracker-dependents.txt"
 
+      - name: Regenerate USMCA exhaustive battery doc
+        # CC-1 Row 82/86 fix (2026-11-13): docs/audit/USMCA-EXHAUSTIVE-BATTERY.md is a derived artifact
+        # registered in DERIVED-ARTIFACTS.json against apps/backend/src/**/*.ts route sources. Any merge
+        # that adds or removes a create surface (new POST route) must refresh this doc in the same run;
+        # otherwise verify-derived-artifact-freshness --strict fails required-live-load-guard on main.
+        # This runs last so it always reflects the current HEAD route set regardless of what changed.
+        run: node scripts/gen-usmca-battery-doc.mjs
+
       # ----------------------------------------------------------------------
       # PR-BASED LANDING (2026-07-20 root-cause fix — replaces direct push to main)
       #
@@ -135,8 +143,9 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           # Stage the two tracker artifacts plus the registered artifacts regenerated from them
-          # (scripts/regen-tracker-dependents.mjs) — never the dated .md / .xlsx side-outputs, never anything else.
-          git add docs/trackers/block-reconciliation-data.json docs/trackers/program-phase-manifest.json
+          # (scripts/regen-tracker-dependents.mjs) + the USMCA battery doc (gen-usmca-battery-doc.mjs).
+          # Never the dated .md / .xlsx side-outputs, never anything else.
+          git add docs/trackers/block-reconciliation-data.json docs/trackers/program-phase-manifest.json docs/audit/USMCA-EXHAUSTIVE-BATTERY.md
           xargs -r git add -- < "$RUNNER_TEMP/tracker-dependents.txt"
           if git diff --cached --quiet; then
             echo "[program-tracker-artifacts-sync] no changes — tracker artifacts already fresh"
