@@ -443,29 +443,36 @@ export function UnifiedTimelinePlanner() {
         })()
       ) : (
         <>
-          <PlannerGrid
-            days={days}
-            rowPx={44}
-            testId="timeline-planner-v3"
-            frozenLabel="Driver"
-            actionLabel="Book"
-            frozenPx={360}
-            frozenColumns={[
-              { key: "name", header: "Driver", minWidth: 100, maxWidth: 240, defaultWidth: 130 },
-              { key: "secondary", header: "Customer", minWidth: 90, maxWidth: 360, defaultWidth: 140 },
-              { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
-              { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
-              { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
-            ]}
-            rows={[...toRows(inService), ...unassignedRow]}
-            onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
-            empty={
-              <span data-testid="dispatch-timeline-honest-empty">
-                No drivers in this range for this company. Active drivers from the dispatch planner week feed appear as
-                rows; book loads or assign drivers to populate the timeline.
-              </span>
-            }
-          />
+          {/* ROUND 8.20 board12 — do not paint whole-population "No drivers" above a populated HOS group.
+              Show the primary grid when it has rows, or when the whole timeline is empty (honest empty).
+              Skip it when only HOS-violation rows exist so the axis header moves to that group. */}
+          {inService.length + unassignedRow.length > 0 || hosViolation.length === 0 ? (
+            <PlannerGrid
+              days={days}
+              rowPx={44}
+              testId="timeline-planner-v3"
+              frozenLabel="Driver"
+              actionLabel="Book"
+              frozenPx={360}
+              frozenColumns={[
+                { key: "name", header: "Driver", minWidth: 100, maxWidth: 240, defaultWidth: 130 },
+                { key: "secondary", header: "Customer", minWidth: 90, maxWidth: 360, defaultWidth: 140 },
+                { key: "unit", header: "Unit", minWidth: 44, maxWidth: 160, defaultWidth: 56 },
+                { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
+                { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
+              ]}
+              rows={[...toRows(inService), ...unassignedRow]}
+              onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
+              empty={
+                inService.length === 0 && hosViolation.length === 0 && unassignedRow.length === 0 ? (
+                  <span data-testid="dispatch-timeline-honest-empty">
+                    No drivers in this range for this company. Active drivers from the dispatch planner week feed appear as
+                    rows; book loads or assign drivers to populate the timeline.
+                  </span>
+                ) : null
+              }
+            />
+          ) : null}
           {hosViolation.length > 0 ? (
             <div className="mt-3" data-testid="planner-hos-violation-group">
               <PlannerGrid
@@ -484,7 +491,7 @@ export function UnifiedTimelinePlanner() {
                 rows={toRows(hosViolation)}
                 onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
                 empty={null}
-                showAxisHeader={false}
+                showAxisHeader={inService.length + unassignedRow.length === 0}
               />
             </div>
           ) : null}
