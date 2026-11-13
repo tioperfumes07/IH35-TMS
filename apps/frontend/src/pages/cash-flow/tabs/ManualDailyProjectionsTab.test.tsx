@@ -162,4 +162,23 @@ describe("ManualDailyProjectionsTab opening cash (443.283)", () => {
     await waitFor(() => expect(screen.getAllByText("$25,533.37").length).toBeGreaterThan(0));
     expect(screen.queryByText("Use bank total")).toBeNull();
   });
+
+  it("ROUND 8.20 board 8: Save projection stays disabled while opening cash is loading (negative: no $0 overwrite)", async () => {
+    listForecastEntries.mockResolvedValue({ entries: [] });
+    getForecastOpeningBalance.mockResolvedValue({ operating_company_id: COMPANY_ID, amount_cents: 0, as_of_date: null });
+    getBankingTiles.mockResolvedValue({ tiles: [] });
+    let releaseOpening: (() => void) | undefined;
+    getCashFlowOpeningCash.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          releaseOpening = () => resolve({ opening_cash_cents: 2553337, accounts: [] });
+        }),
+    );
+    renderTab();
+    const save = await screen.findByTestId("cash-flow-mdp-save-projection");
+    expect(save).toBeDisabled();
+    expect(putForecastOpeningBalance).not.toHaveBeenCalled();
+    releaseOpening?.();
+    await waitFor(() => expect(screen.getByTestId("cash-flow-mdp-save-projection")).not.toBeDisabled());
+  });
 });

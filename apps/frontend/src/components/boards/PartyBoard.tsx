@@ -22,6 +22,8 @@ import { ListErrorState } from "../ListErrorState";
 import { EntityLink } from "../shared/EntityLink";
 import { V3KpiTile, V3Panel, V3Segmented } from "../v3";
 import { VariantDuplicatesPanel, useVariantCandidates, variantPairsFor } from "./VariantDuplicatesPanel";
+import { CustomerCreateModal } from "../customers/CustomerCreateModal";
+import { VendorCreateModal } from "../vendors/VendorCreateModal";
 import { VendorsHomeBoard } from "./VendorsHomeBoard";
 import { DotLabel, MeasuredNote, NumLink, PartyHomeHeader, PartyTable, day, int, outlineButton, type PartyCol } from "./partyBoardKit";
 import "../../design/ih35-design-tokens.css";
@@ -240,11 +242,24 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
 }
 
 /** One toggle, same position on every list: Regular (the board) is the default; Master-detail is the existing page. */
-export function PartyListSwitch(props: { kind: PartyKind; operatingCompanyId: string | null; detail: ReactNode; detailActive: boolean; setDetail: (on: boolean) => void; onCreate: () => void }) {
+export function PartyListSwitch(props: {
+  kind: PartyKind;
+  operatingCompanyId: string | null;
+  detail: ReactNode;
+  detailActive: boolean;
+  setDetail: (on: boolean) => void;
+  onCreate: () => void;
+  /** ROUND 8.20 boards 9/10 — Create overlays Regular board; never force legacy directory under the drawer. */
+  createOpen?: boolean;
+  onCloseCreate?: () => void;
+}) {
+  const createOpen = Boolean(props.createOpen);
+  const closeCreate = props.onCloseCreate ?? (() => undefined);
+
   if (props.detailActive || !props.operatingCompanyId) {
     return (
       <>
-        {props.operatingCompanyId ? (
+        {props.operatingCompanyId && !createOpen ? (
           <div className="pb-switch">
             <button type="button" className="pb-chip" aria-pressed={false} onClick={() => props.setDetail(false)}>Regular</button>
             <button type="button" className="pb-chip" aria-pressed>All columns</button>
@@ -255,8 +270,23 @@ export function PartyListSwitch(props: { kind: PartyKind; operatingCompanyId: st
     );
   }
   // Rows 55 / 56 — both homes are their V3 boards: Vendors = VendorsHomeBoard, Customers = PartyBoard (above).
-  if (props.kind === "vendors") {
-    return <VendorsHomeBoard operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />;
-  }
-  return <PartyBoard kind="customers" operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />;
+  // Create stays on this board (drawer overlay). Do not mount Customers.tsx / Vendors.tsx behind it.
+  const board =
+    props.kind === "vendors" ? (
+      <VendorsHomeBoard operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />
+    ) : (
+      <PartyBoard kind="customers" operatingCompanyId={props.operatingCompanyId} onMasterDetail={() => props.setDetail(true)} onCreate={props.onCreate} />
+    );
+  return (
+    <>
+      {board}
+      {createOpen ? (
+        props.kind === "vendors" ? (
+          <VendorCreateModal open onClose={closeCreate} operatingCompanyId={props.operatingCompanyId} />
+        ) : (
+          <CustomerCreateModal open onClose={closeCreate} operatingCompanyId={props.operatingCompanyId} />
+        )
+      ) : null}
+    </>
+  );
 }

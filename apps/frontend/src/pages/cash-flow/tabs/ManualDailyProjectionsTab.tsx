@@ -687,8 +687,27 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           type="button"
           className="h-7 rounded-sm px-3 font-semibold disabled:opacity-50"
           style={{ background: V3.shell, color: V3.onShell }}
-          disabled={openingMutation.isPending || !projectionDate}
+          // ROUND 8.20 board 8 — never Save while opening-cash/projections are still loading or failed:
+          // bankTotalDollars falls back to 0 and would overwrite production opening balance with $0.
+          disabled={
+            openingMutation.isPending ||
+            !projectionDate ||
+            !operatingCompanyId ||
+            banksQuery.isPending ||
+            banksQuery.isFetching ||
+            banksQuery.isError ||
+            !banksQuery.isSuccess ||
+            entriesQuery.isPending
+          }
+          title={
+            banksQuery.isPending || banksQuery.isFetching || entriesQuery.isPending
+              ? "Wait for opening cash and projections to load"
+              : banksQuery.isError
+                ? "Opening cash failed to load — retry before saving"
+                : undefined
+          }
           onClick={() => {
+            if (!banksQuery.isSuccess || banksQuery.data == null) return;
             setOpeningError(null);
             openingMutation.mutate(openingCents);
           }}
