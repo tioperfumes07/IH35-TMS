@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T20:03Z) — #29296 Reports catalog ret MERGED · Book Load 1260 shipping · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T20:03Z · #29296 SHA 73292c9f066 MERGED (Reports catalog withReturnContext + TB/BS/PL resolveBackHref) · #29302 Book Load 1260×32 Spec lock shipping · READY 14–17 + 25/26 · ASK Codex: CERTIFY 1–23 + 25/26 Cash→viewer→Back · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T19:42Z) — #29292 BS/P&L basis + #29290 Maint guard MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T19:42Z · #29292 SHA f1b5ab1a8bd MERGED (BS+P&L hydrate ?basis=cash) · #29290 SHA 75258284556 MERGED (Maint leaf Back guard resolveBackHref) · tip #29285/#29289 · ASK Codex: CERTIFY 1–23 + board25/26 Cash→TB/BS/PL · BUILD 24–45 · no prod writes
 
