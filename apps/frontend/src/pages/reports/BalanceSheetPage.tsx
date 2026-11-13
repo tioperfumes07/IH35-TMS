@@ -1,5 +1,5 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -90,14 +90,37 @@ function lineRow(prefix: string, line: AccountingBalanceSheetLine): BsRow {
   };
 }
 
+/** ROUND 8.20 board25 — Reports Home Cash attaches ?basis=cash; BS must hydrate like TB. */
+function basisFromSearch(params: URLSearchParams): AccountingBasis {
+  return (params.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
+}
+
 export function BalanceSheetPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
-  const emptyFilters = { asOfDate: today, basis: "accrual" as AccountingBasis, compareToDate: "" };
+  const urlBasis = basisFromSearch(searchParams);
+  const emptyFilters = { asOfDate: today, basis: urlBasis, compareToDate: "" };
   const [applied, setApplied] = useState(emptyFilters);
-  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: (next) => {
+      setApplied(next);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set("basis", next.basis);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+  });
+  useEffect(() => {
+    setApplied((prev) => (prev.basis === urlBasis ? prev : { ...prev, basis: urlBasis }));
+  }, [urlBasis]);
   const [reportSearch, setReportSearch] = useState("");
   const exportAction = useExportAction();
   // ROUND 83 RULING 1 — the on-screen table rendered account_code unconditionally; only the

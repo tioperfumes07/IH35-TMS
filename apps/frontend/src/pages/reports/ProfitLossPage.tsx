@@ -1,6 +1,6 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { AmountLink, type AmountFilter } from "../../components/shared/AmountLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
@@ -68,14 +68,37 @@ function sectionLedger(
   return { target: "ledger", accountIds: lines.map((l) => String(l.account_id)), from, to, basis };
 }
 
+/** ROUND 8.20 board25 — Reports Home Cash attaches ?basis=cash; P&L must hydrate like TB/BS. */
+function basisFromSearch(params: URLSearchParams): AccountingBasis {
+  return (params.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
+}
+
 export function ProfitLossPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
-  const emptyFilters = { ...currentMonthRange(), basis: "accrual" as AccountingBasis };
+  const urlBasis = basisFromSearch(searchParams);
+  const emptyFilters = { ...currentMonthRange(), basis: urlBasis };
   const [applied, setApplied] = useState(emptyFilters);
-  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: (next) => {
+      setApplied(next);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set("basis", next.basis);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+  });
+  useEffect(() => {
+    setApplied((prev) => (prev.basis === urlBasis ? prev : { ...prev, basis: urlBasis }));
+  }, [urlBasis]);
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
 
