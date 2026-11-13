@@ -1,5 +1,10 @@
 {
-  "10001": {
+  "  "20159": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-driver-profile-stops-miles-once board11"
+  },
+10001": {
     "claimed_at": "2026-08-28",
     "claimed_by": "cc-1",
     "purpose": "verify-invoice-source-load-uniqueness-race"

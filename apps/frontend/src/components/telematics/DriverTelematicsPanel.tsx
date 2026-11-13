@@ -13,7 +13,9 @@ import { SectionTable } from "./TelematicsSectionTable";
 type Part = "operations" | "safety";
 
 const ENDPOINTS: Record<Part, string[]> = {
-  operations: ["assignments", "stops-miles", "fuel", "samsara"],
+  // ROUND 8.20 board11 — Stops + miles lives only in DriverProfileStopsMilesSection on the Loads tab.
+  // Do not also mount the telematics stops-miles grid here (duplicate chrome + contradictory empties).
+  operations: ["assignments", "fuel", "samsara"],
   safety: ["safety"],
 };
 
@@ -21,8 +23,6 @@ const SECTIONS: Record<Part, Array<Section & { from: string }>> = {
   operations: [
     { from: "assignments", key: "assignments", title: "Truck assignments", note: "Which truck this driver held, and when (Samsara + dispatch).", empty: "No truck assignments in the last 30 days.",
       columns: [col("started_at", "From", when), col("ended_at", "To", when), UNIT, col("source", "Source"), col("is_default", "Default", yes)] },
-    { from: "stops-miles", key: "stops", title: "Stops + miles", note: "Stops while this driver held the truck, with the load the truck carried.", empty: "No stops in the last 30 days.",
-      columns: [col("started_at", "Stopped", when), col("dwell_minutes", "Dwell min"), UNIT, LOAD, col("city", "City"), col("state", "State"), col("odometer_mi", "Odometer", num(1)), col("miles_since_previous_stop", "Miles since prior", num(1))] },
     { from: "fuel", key: "fills", title: "Fuel", note: "Fills on the truck this driver held at fill time.", empty: "No fuel in the last 30 days.",
       columns: [col("transaction_at", "When", when), col("fuel_type", "Fuel"), col("gallons", "Gallons", num(3)), col("total_cost", "Cost", num(2)), UNIT, LOAD, col("location_city", "City"), col("location_state", "State")] },
     { from: "fuel", key: "samsara_fuel_reports", title: "Samsara fuel burn (daily)", note: "Gallons the engine burned while this driver drove, per day (Samsara).", empty: "No Samsara fuel report in the last 30 days.",
@@ -59,7 +59,7 @@ export function DriverTelematicsPanel({ part, driverId, operatingCompanyId }: { 
   return (
     <section className="space-y-3 rounded-sm border border-gray-200 bg-white p-4" data-testid={`driver-telematics-${part}`}>
       <h3 className="text-xs font-semibold text-gray-800">
-        {part === "operations" ? "Trucks, stops, miles and fuel (Samsara, last 30 days)" : "Samsara safety (last 30 days)"}
+        {part === "operations" ? "Trucks and fuel (Samsara, last 30 days)" : "Samsara safety (last 30 days)"}
       </h3>
       {failed ? (
         <ListErrorState title="Couldn't load driver telematics" status={0} message={(failed.error as Error)?.message} onRetry={() => results.forEach((r) => void r.refetch())} />
