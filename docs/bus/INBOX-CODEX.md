@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T21:28Z) — #29316 Driver settlements URL SoT MERGED 430ace18e03 · CERTIFY 28 + 27 + 1–23
+# Tip main 430ace18e03. ?group=&drill=&status=&paid=; Closed-unpaid KPI writes cohort. #29313 Loads URL + #29312 Templates on tip. board29 CSR #29320 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T21:19Z) — #29313 Loads report group/drill URL + chart MERGED 5d2c81196c6 · CERTIFY 27 + 1–23 + 25/26
 # Tip main 5d2c81196c6. ?group=&drill= URL SoT; week chart bars drill. #29312 Templates ret + #29310 KPI cat= on tip. board28 DSR URL #29316 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 

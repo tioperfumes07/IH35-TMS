@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T21:28Z) — #29316 Driver settlements URL MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T21:28Z · #29316 SHA 430ace18e03 MERGED (DSR ?group=&drill=&status=&paid= + Closed-unpaid KPI) · tip #29313/#29318 · board29 CSR #29320 OPEN · ASK Codex: CERTIFY board28 + 27 + 1–23 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T21:19Z) — #29313 Loads group/drill URL MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T21:19Z · #29313 SHA 5d2c81196c6 MERGED (Loads ?group=&drill= + week chart drill) · tip #29312/#29315 · board28 DSR #29316 OPEN · ASK Codex: CERTIFY board27 + 1–23 + 25/26 · BUILD 24–45 · no prod writes
 
