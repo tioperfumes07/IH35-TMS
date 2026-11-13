@@ -96,6 +96,23 @@ export function routeCorrectionFailures(gpsSrc, moduleSrc) {
   return out;
 }
 
+/** RULE 10 (ENG-53) — stop-stamp.service.ts enqueues dispatch.relearn_load_miles on BOTH arrival and departure,
+ *  under a SAVEPOINT, so a stop time change triggers miles re-computation without blocking the stamp. */
+export function stopEventRelearnFailures(stampSrc) {
+  const out = [];
+  if (!stampSrc.includes('import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";'))
+    out.push("RULE 10 stop-stamp.service.ts does not import enqueueOutboxEvent — stop events never trigger miles relearn");
+  if (!/"dispatch\.relearn_load_miles"/.test(stampSrc))
+    out.push("RULE 10 stop-stamp.service.ts does not enqueue dispatch.relearn_load_miles on stop events");
+  if (!/(stop_arrival_relearn_miles|stop-arrival-)/.test(stampSrc))
+    out.push("RULE 10 stop-stamp.service.ts does not enqueue relearn on arrival — only departure is covered");
+  if (!/(stop_departure_relearn_miles|stop-departure-)/.test(stampSrc))
+    out.push("RULE 10 stop-stamp.service.ts does not enqueue relearn on departure — only arrival is covered");
+  if (!/withSavepoint[\s\S]{0,500}dispatch\.relearn_load_miles/.test(stampSrc))
+    out.push("RULE 10 stop-stamp.service.ts enqueue must be inside a withSavepoint so a failure never rolls back the stamp");
+  return out;
+}
+
 export function liveFailures(rows) {
   const out = [];
   for (const r of rows) {
@@ -192,6 +209,10 @@ if (isMain) {
       ["RULE 9 engine without the yard-move exclusion fails", yardMoveFailures("x").some((x) => x.startsWith("RULE 9"))],
       ["RULE 9 engine with it passes", yardMoveFailures('else if (yardMove) out.lane_skip_reason = "yard_move";\nelse if (yardMove) out.customer_lane_skip_reason = "yard_move";\n"dispatch.load.lane_excluded"').length === 0],
       ["an untouched lane fails", liveFailures([{ load_number: "1", non_first_stops_without_leg: 0, lane_touched: false, lane: "A -> B" }]).some((x) => x.startsWith("RULE 3"))],
+      ["RULE 10 wired clean passes", stopEventRelearnFailures('import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";\nawait withSavepoint(client, "stop_arrival_relearn_miles", async () => {\n  await enqueueOutboxEvent(client, "dispatch.relearn_load_miles", {}, {}, `dispatch.relearn_load_miles:x:stop-arrival-y`);\n});\nawait withSavepoint(client, "stop_departure_relearn_miles", async () => {\n  await enqueueOutboxEvent(client, "dispatch.relearn_load_miles", {}, {}, `dispatch.relearn_load_miles:x:stop-departure-y`);\n});').length === 0],
+      ["RULE 10 no import fails", stopEventRelearnFailures('await withSavepoint(client, "stop_arrival_relearn_miles", async () => { "dispatch.relearn_load_miles" "stop-arrival-" "stop-departure-" "stop_departure_relearn_miles" });').some((x) => x.startsWith("RULE 10"))],
+      ["RULE 10 no event fails", stopEventRelearnFailures('import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";\nawait withSavepoint(client, "stop_arrival_relearn_miles", async () => {});').some((x) => x.startsWith("RULE 10"))],
+      ["RULE 10 no savepoint fails", stopEventRelearnFailures('import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";\nawait enqueueOutboxEvent(client, "dispatch.relearn_load_miles", {}, {}, "stop-arrival-x");\nawait enqueueOutboxEvent(client, "dispatch.relearn_load_miles", {}, {}, "stop-departure-x");').some((x) => x.startsWith("RULE 10"))],
     ];
     for (const [n, pass] of cases) console.log(`  ${pass ? "✓" : "✗"} ${n}`);
     const bad = cases.filter(([, pass]) => !pass).length;
@@ -210,6 +231,7 @@ if (isMain) {
     readFileSync(resolve(ROOT, "apps/backend/src/dispatch/book-load.service.ts"), "utf8"),
     readFileSync(resolve(ROOT, "apps/backend/src/dispatch/load-lane-learning.service.ts"), "utf8")
     ),
+    ...stopEventRelearnFailures(readFileSync(resolve(ROOT, "apps/backend/src/dispatch/stop-stamp.service.ts"), "utf8")),
   ];
   requireLiveDbOrExit(LABEL, REQUIRES_LIVE_DB);
   const client = new pg.Client({ connectionString: process.env.DATABASE_URL });

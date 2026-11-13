@@ -5,6 +5,7 @@
 import { recomputeFirstStopDeadhead, relearnLoadStopLegs } from "../../dispatch/load-lane-learning.service.js";
 import { geocodeStopsWithClient } from "../../telematics/stops-geocode-backfill.service.js";
 import { fillLoadDeadhead, recordBookedMilesSources, recordDocumentMilesSources } from "../../dispatch/mileage/miles-recommendations.service.js";
+import { captureGeofenceOdometerEvents } from "../../integrations/samsara/geofences/geofence-odometer-capture.service.js";
 import type { OutboxEventHandler, OutboxHandlerContext, OutboxPayload } from "./outbox-handler.types.js";
 
 function requireUuid(value: unknown, field: string): string {
@@ -32,6 +33,9 @@ export class DispatchRelearnLoadMilesHandler implements OutboxEventHandler {
     // session state. Transaction-local bypass like every other outbox handler — every engine query below names its company.
     await ctx.client.query(`SELECT set_config('app.bypass_rls', 'lucia', true)`);
     await ctx.client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [operatingCompanyId]);
+    // ENG-53: capture odometer readings from geofence events BEFORE computing leg miles, so stop boundaries
+    // that just moved (a fresh stamp) land their odometer reading in the same event delivery.
+    await captureGeofenceOdometerEvents(ctx.client as never, { operatingCompanyId });
     // 443.53 #1: first resolve the load's stops through the one resolution order (Samsara address > existing street location >
     // Google place in the stop's city / state > recorded Google no-result) — in THIS event's transaction, so a deploy restart
     // cannot roll back a whole-company sweep — then measure the legs from the real points.

@@ -20,6 +20,7 @@ import { pingSettlementOnLoadEvent } from "../driver-finance/settlements-load-bo
 import { mintProformaInvoiceOnFirstPickup } from "../accounting/proforma-mint-on-first-pickup.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { withSavepoint } from "../auth/db.js";
+import { enqueueOutboxEvent } from "../outbox/enqueue-outbox-event.js";
 
 export type StopArrivalSource = "driver_app" | "eld_geofence" | "manual";
 
@@ -90,6 +91,24 @@ export async function stampStopArrival(
     stopId: stop.id,
   });
   const proformaInvoice = pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent" ? pickupMint.invoice : null;
+
+  // ENG-53: a stop arrival changes the boundary of the leg ending at this stop — re-learn miles and
+  // capture odometer from telemetry. SAVEPOINT so a failure never rolls back the stamp itself.
+  await withSavepoint(
+    client as never,
+    "stop_arrival_relearn_miles",
+    async () => {
+      await enqueueOutboxEvent(
+        client as never,
+        "dispatch.relearn_load_miles",
+        { aggregate_type: "mdata.loads", aggregate_id: ctx.loadId },
+        { operating_company_id: stop.operating_company_id, load_id: ctx.loadId, actor_user_id: ctx.actorUserId },
+        `dispatch.relearn_load_miles:${ctx.loadId}:stop-arrival-${stop.id}`
+      );
+    },
+    undefined,
+    (err) => console.warn({ err, load_id: ctx.loadId, stop_id: stop.id }, "stop_arrival_relearn_miles_enqueue_failed")
+  );
 
   return { ok: true, proforma_invoice: proformaInvoice };
 }
@@ -187,6 +206,24 @@ export async function stampStopDeparture(
     stopId: stop.id,
   });
   const proformaInvoice = pickupMint.outcome === "minted" || pickupMint.outcome === "idempotent" ? pickupMint.invoice : null;
+
+  // ENG-53: a stop departure changes the boundary of the leg starting from this stop — re-learn miles and
+  // capture odometer from telemetry. SAVEPOINT so a failure never rolls back the stamp itself.
+  await withSavepoint(
+    client as never,
+    "stop_departure_relearn_miles",
+    async () => {
+      await enqueueOutboxEvent(
+        client as never,
+        "dispatch.relearn_load_miles",
+        { aggregate_type: "mdata.loads", aggregate_id: ctx.loadId },
+        { operating_company_id: stop.operating_company_id, load_id: ctx.loadId, actor_user_id: ctx.actorUserId },
+        `dispatch.relearn_load_miles:${ctx.loadId}:stop-departure-${stop.id}`
+      );
+    },
+    undefined,
+    (err) => console.warn({ err, load_id: ctx.loadId, stop_id: stop.id }, "stop_departure_relearn_miles_enqueue_failed")
+  );
 
   return { ok: true, proforma_invoice: proformaInvoice };
 }

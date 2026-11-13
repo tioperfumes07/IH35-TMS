@@ -531,11 +531,11 @@ export async function maybeReclassifyFuelFillForIntercompanyDiesel(
             ml.operating_company_id::text AS load_company_id,
             array_agg(p.id::text) AS posting_ids
        FROM accounting.journal_entry_postings p
-       JOIN accounting.journal_entries je ON je.id = p.journal_entry_id
+       JOIN accounting.journal_entries je ON je.id = p.journal_entry_uuid
                                           AND je.operating_company_id = $1::uuid
        JOIN mdata.loads ml ON ml.id = p.load_id
       WHERE p.operating_company_id = $1::uuid
-        AND p.journal_entry_id = $2::uuid
+        AND p.journal_entry_uuid = $2::uuid
         AND p.source_transaction_type = 'fuel_event'
         AND p.debit_or_credit = 'debit'
         AND p.load_id IS NOT NULL

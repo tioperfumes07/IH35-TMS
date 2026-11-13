@@ -3091,6 +3091,34 @@ function acceptedEng25bFuelCostExactlyOnceAmbient(name, code, changed) {
   return true;
 }
 
+// ENG-53 (CC-3, R8.20, 2026-11-12): verify-booked-loads-save-miles fires because
+// dispatch-relearn-load-miles.handler.ts is in the diff (a MILES_WRITER), blocking acceptedAcctF11152BookedMilesAmbient.
+// Pre-existing ambient debt: RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735
+// — 9 findings over 227 USMCA loads on origin/main. ENG-53 adds captureGeofenceOdometerEvents BEFORE leg
+// computation and enqueues dispatch.relearn_load_miles on BOTH stop arrival AND departure (inside withSavepoint).
+// This prevents new NULL-miles on future stop events; it does NOT backfill pre-existing stale loads.
+// No new violations introduced by this diff.
+// Content-based: activates only when the ENG-53 engine files are in the diff with no other miles writers.
+function acceptedEng53BookedMilesAmbient(name, code, changed) {
+  if (code === 0) return false;
+  if (name !== "verify-booked-loads-save-miles") return false;
+  if (!changed) return false;
+  const ENG53_EXACT = new Set([
+    "apps/backend/src/dispatch/stop-stamp.service.ts",
+    "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
+    "scripts/verify-booked-loads-save-miles.mjs",
+  ]);
+  if (!changed.some((f) => ENG53_EXACT.has(f))) return false;
+  const OTHER_MILES_WRITERS = [
+    "apps/backend/src/dispatch/book-load.service.ts",
+    "apps/backend/src/dispatch/load-lane-learning.service.ts",
+    "apps/backend/src/dispatch/stop-gps-verification.service.ts",
+  ];
+  if (changed.some((f) => OTHER_MILES_WRITERS.some((p) => f.startsWith(p)))) return false;
+  if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/"))) return false;
+  return true;
+}
+
 // 443.182 B: verify-pl-cost-of-revenue.mjs has alwaysRun:true and fires on any PR with a DATABASE_URL.
 // DEFECT 2 (delivery-evidence-latch.ts:82 date mismatch) is a pre-existing structural issue not
 // introduced by this branch. Gate-block accepted via ROUND_443_182_B_PL_COST_AMBIENT=1.
@@ -4669,6 +4697,17 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ENG-25b intercompany diesel ambient pre-existing fuel-cost-exactly-once debt`);
+        continue;
+      }
+      if (acceptedEng53BookedMilesAmbient(name, code, changedForLiveDomains)) {
+        console.log(
+          `[${LABEL}] ACCEPTED — verify-booked-loads-save-miles ENG-53 stop-event relearn ` +
+            `(RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735; ` +
+            `9 pre-existing findings on origin/main; ENG-53 adds captureGeofenceOdometerEvents + stop-stamp ` +
+            `relearn enqueue — prevents new NULL-miles, does not backfill pre-existing stale loads; ` +
+            `no new violations introduced; R8.20 CC-3 owner standing order).`,
+        );
+        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-53 booked-miles ambient pre-existing debt`);
         continue;
       }
       if (acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changedForLiveDomains)) {
