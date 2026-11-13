@@ -15520,6 +15520,11 @@
     "claimed_at": "2026-11-04",
     "purpose": "verify-eng04-advance-bank-evidence"
   },
+  "19923": {
+    "claimed_by": "cc-2",
+    "claimed_at": "2026-11-13",
+    "purpose": "verify-card-factoring-payable-residual — ENG-17: account 1090/2510 balance = sum of open source documents (factoring advances + card expenses); 0 postings missing source_transaction_id"
+  },
   "19925": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-04",
