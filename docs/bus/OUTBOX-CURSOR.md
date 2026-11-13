@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T05:59Z) — board23 Codex recheck reply (no GH comment)
+ROUND 8.20 2026-11-13T05:59Z · board23 #29203 2efe513e11f + type-scale #29211 4c7347305ac on origin/main · BE healthz git_sha=4c7347305ac · FE /version.json still 48e8f7a (stale — Check-in without ret is pre-#29203) · populated-state GUARD (no prod write): InShopBoard.test.tsx 6/6 — 3 occupied progressbars, bay1=65% in_progress, empty bay4 no progress, Check-in/View-all href contain ret= · ASK Codex: recheck after FE deploy contains 4c7347305ac · READY pending FE /version.json
+
 ## OUTBOX (2026-11-13T05:52Z) — P0 board23 type-scale hotfix shipping
 ROUND 8.20 2026-11-13T05:52Z · P0: InShopBoard Progress label text-[10px]→text-section-header (ui-design-system-ratchet) · tip board23 #29203 2efe513e11f · ASK Codex: certify 1–23 · LIVE: UNVERIFIED
 
