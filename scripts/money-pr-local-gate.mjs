@@ -3101,102 +3101,6 @@ function acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changed) {
   return true;
 }
 
-// ROW-104 (CC-1, R8.24, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
-// apps/backend/src/fuel/__tests__/fuel-card-assignments.db.test.ts is in the diff.
-// The file is a test-only addition — zero JEs written, zero expense rows written, zero posting paths
-// touched. The 30 violations are the same pre-existing WEX fuel JEs on origin/main (loads 13702/
-// 13725/13727/13729/13735; ENG-25b intercompany diesel ambient debt filed ACCT-F821-20261113).
-// AUTH-464 ops replay after ENG-25b deploy will reclassify these JEs from 5000→8000, clearing all 30.
-// Content-based: bypasses when diff has at least one fuel/__tests__/ file, no real fuel service files,
-// and no real cost/expense/accounting writers. The gate script itself (scripts/) is allowed.
-function acceptedRow104FuelCardTestAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  // Must have at least one fuel test file (positive control — this bypass is for test-only diffs)
-  const FUEL_TEST_PREFIX = "apps/backend/src/fuel/__tests__/";
-  if (!changed.some((f) => f.startsWith(FUEL_TEST_PREFIX))) return false;
-  const COST_WRITERS = [
-    "apps/backend/src/expenses/",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-    "apps/backend/src/accounting/bank-recon/",
-    "apps/backend/src/accounting/posting-line-writer.ts",
-  ];
-  if (changed.some((f) => COST_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  // No real fuel service/routes files — only tests are allowed
-  if (changed.some((f) => f.startsWith("apps/backend/src/fuel/") && !f.startsWith(FUEL_TEST_PREFIX))) return false;
-  return true;
-}
-
-// ENG-44 REVERSE (CC-1, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
-// driver-finance/ matches touchesCostExpenseLaw. The diff adds only a real-PG db.test.ts
-// (apps/backend/src/driver-finance/__tests__/reinstate-driver-bill.db.test.ts) for the reinstate
-// endpoint already built in PR #29237. Zero JE writers, zero expense writers, zero posting paths.
-// Pre-existing prod debt: 30 WEX fuel JEs on origin/main (loads 13702/13725/13727/13729/13735;
-// ENG-25b intercompany diesel ambient debt filed ACCT-F821-20261113). Filed ENG44-REINSTATE-TEST-20261113.
-// Content-based: bypasses only when diff is driver-finance/__tests__/*.db.test.ts + allowed support files.
-function acceptedEng44ReinstateDbTestAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  const DF_TEST_PREFIX = "apps/backend/src/driver-finance/__tests__/";
-  if (!changed.some((f) => f.startsWith(DF_TEST_PREFIX) && /\.db\.test\.[cm]?tsx?$/.test(f))) return false;
-  const REAL_WRITERS = [
-    "apps/backend/src/expenses/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-    "apps/backend/src/accounting/bank-recon/",
-    "apps/backend/src/accounting/posting-line-writer.ts",
-    "apps/backend/src/fuel/",
-  ];
-  if (changed.some((f) => REAL_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  // No real driver-finance service/routes files — only __tests__/ allowed
-  if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/") && !f.startsWith(DF_TEST_PREFIX))) return false;
-  return true;
-}
-
-// BOARD-35 (CC-1, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
-// driver-finance/ matches touchesCostExpenseLaw. The diff adds tour-readout.routes.ts (GET-only
-// endpoint: status derived from payment_state + atomic settlement-number assignment in close tx —
-// zero JE writers, zero expense writers, zero posting paths) + a db.test.ts + a verify-step guard.
-// Pre-existing prod debt: 30 WEX fuel JEs on origin/main (loads 13702/13725/13727/13729/13735;
-// ENG-25b intercompany diesel ambient debt). Filed BOARD35-IDENTITY-AMBIENT-20261113.
-// Content-based: fires only when diff is EXACTLY tour-readout.routes.ts + __tests__ + verify-steps.
-function acceptedBoard35TourReadoutAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  // Must have tour-readout.routes.ts (the BOARD-35 fix file) as positive control
-  const TOUR_READOUT = "apps/backend/src/driver-finance/tour-readout.routes.ts";
-  if (!changed.includes(TOUR_READOUT)) return false;
-  const REAL_WRITERS = [
-    "apps/backend/src/expenses/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-    "apps/backend/src/accounting/bank-recon/",
-    "apps/backend/src/accounting/posting-line-writer.ts",
-    "apps/backend/src/fuel/",
-  ];
-  if (changed.some((f) => REAL_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  // No other real driver-finance service/routes — only tour-readout.routes.ts + __tests__/ allowed
-  const DF_TEST_PREFIX = "apps/backend/src/driver-finance/__tests__/";
-  if (
-    changed.some(
-      (f) =>
-        f.startsWith("apps/backend/src/driver-finance/") &&
-        f !== TOUR_READOUT &&
-        !f.startsWith(DF_TEST_PREFIX),
-    )
-  )
-    return false;
-  return true;
-}
-
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
 // has-transactions-predicate.ts is READ-ONLY: adds operating_company_id scoping to EXISTS subqueries;
@@ -4882,33 +4786,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff has zero settlement-close/trip-close/posting writers; cite CLOSE-F11152-BATCH82-20261112 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 final-load-close-posts ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedRow104FuelCardTestAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing prod debt ` +
-            `(30 WEX fuel JEs loads 13702/13725/13727/13729/13735 on origin/main; ` +
-            `diff is fuel/__tests__/ only — zero JE/expense/posting writers; cite ACCT-F821-ROW104-20261113 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ROW-104 fuel-card test-only ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedEng44ReinstateDbTestAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing prod debt ` +
-            `(30 WEX fuel JEs loads 13702/13725/13727/13729/13735 on origin/main; ` +
-            `diff is driver-finance/__tests__/ db.test.ts only — zero JE/expense/posting writers; cite ENG44-REINSTATE-TEST-20261113 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-44 reinstate db-test-only ambient pre-existing WEX fuel JE debt`);
-        continue;
-      }
-      if (acceptedBoard35TourReadoutAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing prod debt ` +
-            `(30 WEX fuel JEs loads 13702/13725/13727/13729/13735 on origin/main; ` +
-            `diff is tour-readout.routes.ts (GET-only, zero JE writers) + __tests__/ + verify-step; cite BOARD35-IDENTITY-AMBIENT-20261113 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED BOARD-35 tour-readout GET-only ambient pre-existing WEX fuel JE debt`);
         continue;
       }
       failStep(name);

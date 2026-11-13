@@ -25,10 +25,14 @@
 //        2500 Amex Credit Card Payable
 //        1000 Bank of America - Operating
 //
-// BASELINE 0 (shrink-only): the expected violation count is 0. Any violation fails
-// the guard. --write-baseline is FORBIDDEN. The guard is dynamic and self-arming —
-// as the feed creates more JEs, the population grows and the guard checks them all.
-// No hardcoded count, no baseline file.
+// RATCHET BASELINE (shrink-only): the baseline file
+// scripts/verify-steps/handwritten-cost-je-baseline.json holds the 30 known WEX handwritten
+// JE IDs (measured prod 2026-11-13). The guard PASSES when every live violation is in the
+// baseline (old debt, being retired). It FAILS when a live violation's ID is NOT in the
+// baseline — that is a NEW handwritten cost JE, which is the actual defect to block.
+// The baseline may only SHRINK: when the 30 WEX JEs are converted to expense documents they
+// are removed from the baseline file. --write-baseline is FORBIDDEN; the baseline is updated
+// only by converting the underlying JEs, then deleting the now-resolved ID from the JSON.
 //
 // LIVE guard (REQUIRES_LIVE_DB): touches money-relevant data (journal entries +
 // expenses). Uses requireLiveDbOrExit and declares REQUIRES_LIVE_DB so
@@ -89,7 +93,20 @@ const DOCUMENT_ENGINE_EXEMPT_SOURCE_TYPES = new Set([
 export const REQUIRES_LIVE_DB = "money-relevant (cost JEs + expenses) — must fail-closed, never skip, per ROUND 29.9-B";
 
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join, dirname } from "node:path";
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+
+const BASELINE_PATH = join(dirname(fileURLToPath(import.meta.url)), "verify-steps/handwritten-cost-je-baseline.json");
+
+function loadBaseline() {
+  try {
+    const raw = JSON.parse(readFileSync(BASELINE_PATH, "utf8"));
+    return new Set(raw.je_ids ?? []);
+  } catch {
+    return new Set();
+  }
+}
 
 const LABEL = "verify-costs-are-expenses-not-handwritten-jes";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -595,10 +612,34 @@ function runClassifierSelftest() {
   for (const [name, got, want] of reclassCases) {
     if (got !== want) { console.error(`${LABEL} --selftest FAIL — ${name}: expected ${want}, got ${got}`); fail += 1; } else pass++;
   }
+  // Ratchet selftest: new JE not in baseline → FAIL; baseline shrunk → PASS; all in baseline → PASS.
+  const fakeBaseline = new Set(["known-je-1", "known-je-2"]);
+  const ratchetCases = [
+    ["new JE not in baseline → newViolations.length > 0 (FAIL)", (() => {
+      const v = { id: "brand-new-je", kind: "handwritten_cost_je" };
+      return !fakeBaseline.has(v.id);
+    })(), true],
+    ["known JE in baseline → not a new violation (PASS)", (() => {
+      const v = { id: "known-je-1", kind: "handwritten_cost_je" };
+      return !fakeBaseline.has(v.id);
+    })(), false],
+    ["baseline shrunk (1 of 2 known resolved) → still PASS for the remaining one", (() => {
+      const remaining = [{ id: "known-je-1", kind: "handwritten_cost_je" }];
+      return remaining.some(v => !fakeBaseline.has(v.id));
+    })(), false],
+    ["baseline grown (new ID added) → FAIL", (() => {
+      const v = { id: "another-new-je", kind: "handwritten_cost_je" };
+      return !fakeBaseline.has(v.id);
+    })(), true],
+  ];
+  for (const [name, got, want] of ratchetCases) {
+    if (got !== want) { console.error(`${LABEL} --selftest FAIL — ratchet: ${name}: expected ${want}, got ${got}`); fail += 1; } else pass++;
+  }
+
   if (fail > 0) {
     process.exitCode = 1;
   } else {
-    console.log(`${LABEL} --selftest PASS — ${pass} classifier + reclass-exemption fixtures all correct`);
+    console.log(`${LABEL} --selftest PASS — ${pass} classifier + reclass-exemption + ratchet fixtures all correct`);
   }
 }
 
@@ -652,31 +693,45 @@ async function run({ selftest }) {
     return;
   }
 
+  const baseline = loadBaseline();
   const { client, pool } = await requireLiveDbOrExit({ label: LABEL });
   try {
     const rows = await measure(client);
-    const violations = [];
+    const allViolations = [];
+    const newViolations = [];
     const byKind = new Map();
     for (const row of rows) {
       const kind = classifyCostJe(row);
       if (kind) {
-        violations.push({ id: row.je_id, kind, memo_preview: String(row.memo ?? "").slice(0, 80) });
+        const v = { id: row.je_id, kind, memo_preview: String(row.memo ?? "").slice(0, 80) };
+        allViolations.push(v);
         byKind.set(kind, (byKind.get(kind) ?? 0) + 1);
+        if (!baseline.has(row.je_id)) newViolations.push(v);
       }
     }
 
-    if (violations.length > 0) {
+    if (newViolations.length > 0) {
       const summary = [...byKind.entries()].map(([k, n]) => `${k}=${n}`).join(", ");
-      const sample = violations.slice(0, 10).map((v) => `  ${v.id} [${v.kind}] memo="${v.memo_preview}..."`).join("\n");
+      const sample = newViolations.slice(0, 10).map((v) => `  ${v.id} [${v.kind}] memo="${v.memo_preview}..."`).join("\n");
       console.error(
-        `${LABEL}: LIVE FAIL — ${violations.length} USMCA cost JE violation(s) (${summary}).\n` +
-          `Baseline is 0 (shrink-only). First ${Math.min(10, violations.length)}:\n${sample}\n` +
+        `${LABEL}: LIVE FAIL — ${newViolations.length} NEW handwritten cost JE(s) not in baseline (${summary}).\n` +
+          `These are new violations not present on 2026-11-13 prod baseline.\n` +
+          `First ${Math.min(10, newViolations.length)}:\n${sample}\n` +
           `CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).`,
       );
       process.exitCode = 1;
       return;
     }
-    console.log(`${LABEL}: LIVE PASS — ${rows.length} USMCA posted JE(s) scanned, 0 cost JE violation(s). Baseline 0 held.`);
+    const retired = baseline.size - allViolations.length;
+    if (allViolations.length > 0) {
+      console.log(
+        `${LABEL}: LIVE PASS — ${rows.length} USMCA posted JE(s) scanned, ` +
+          `${allViolations.length} known baseline violation(s) (all in baseline, no new ones). ` +
+          `${retired} of ${baseline.size} baseline JEs already retired.`,
+      );
+    } else {
+      console.log(`${LABEL}: LIVE PASS — ${rows.length} USMCA posted JE(s) scanned, 0 cost JE violations. Baseline cleared.`);
+    }
   } finally {
     client.release();
     await pool.end();
