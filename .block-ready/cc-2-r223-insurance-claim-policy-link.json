@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r223-insurance-claim-policy-link",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 223 — insurance claim policy link ratchet. Guard 19991 enforces 0 claims without policy_id.",
+  "branch": "cc-2/eng-r223-insurance-claim-policy-link",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-insurance-claim-policy-link-ratchet.mjs",
+    "scripts/verify-steps/19991-verify-insurance-claim-policy-link-ratchet.mjs",
+    ".block-ready/cc-2-r223-insurance-claim-policy-link.json"
+  ],
+  "acceptance": [
+    "verify-insurance-claim-policy-link-ratchet selftest PASS 2/2",
+    "total=0 no_policy=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
