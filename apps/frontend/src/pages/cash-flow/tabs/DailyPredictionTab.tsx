@@ -196,6 +196,14 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
     [setSearchParams],
   );
 
+  // ROUND 8.20 board5 — stamp proj_date into the URL on first paint so EntityLink `ret` restores week/date
+  // (STATUS FAIL: settlement Back lost Projected week when origin search omitted proj_date).
+  useEffect(() => {
+    if (searchParams.get("proj_date")) return;
+    applyProj(date, grain);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot stamp of current day/week into URL
+  }, []);
+
   const setDate = useCallback(
     (nextDate: string | ((prev: string) => string)) => {
       const resolved = typeof nextDate === "function" ? nextDate(date) : nextDate;
