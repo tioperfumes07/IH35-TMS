@@ -1569,6 +1569,12 @@ jobs:
       - name: verify:settlement-gl-bills-exist
         run: node scripts/verify-steps/18849-verify-settlement-gl-bills-exist.mjs
 
+      # Row 79/91/148/149 (step 19909) — card payables (2510/2520) are forecast outflows via ONE shared reader; bank cash excludes them
+      - name: verify:verify-rows-91-148-149 --selftest
+        run: node scripts/verify-steps/19909-verify-rows-91-148-149.mjs --selftest
+      - name: verify:verify-rows-91-148-149
+        run: node scripts/verify-steps/19909-verify-rows-91-148-149.mjs
+
   # Thin aggregator — required context `locked-guards / locked-guards` always reports.
   locked-guards:
     name: locked-guards
