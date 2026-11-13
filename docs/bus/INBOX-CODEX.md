@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:53Z) — #29270 board4 expense_bucket MERGED c2761b7165b · CERTIFY 1–23
+# Tip main c2761b7165b. Recheck Cash Flow Home Other expenses excludes invoice income after FE /version.json catch-up. Safety/Maint Backs on tip. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:47Z) — #29266 Safety 08720304ef3 + #29268 Maint 70dbf0c41cf MERGED · CERTIFY 1–23
 # Tip main 08720304ef3. Recheck Safety/Maint child Backs after FE /version.json catch-up. Board18 Factoring + board20/21 Insurance/Legal Backs already on tip. BUILD 24–45. No prod writes.
 
