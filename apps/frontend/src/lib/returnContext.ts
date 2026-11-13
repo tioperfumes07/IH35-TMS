@@ -21,12 +21,23 @@ export function encodeReturnContext(originHref: string): string {
   return encodeURIComponent(href);
 }
 
+function safeInternalHref(href: string): string | null {
+  if (!href.startsWith("/") || href.startsWith("//") || href.includes("://")) return null;
+  return href;
+}
+
+/**
+ * `raw` is the value URLSearchParams.get already decoded once.
+ * ENCODE-ONCE (LEAD 11-13): withReturnContext now stores the plain href, so a value that already starts with "/"
+ * is final — decoding it again would corrupt a nested `ret` inside it. A legacy link written by the old
+ * double-encoding writer arrives as "%2F…" and is decoded exactly once more.
+ */
 export function decodeReturnContext(raw: string | null | undefined): string | null {
   if (!raw) return null;
+  const value = String(raw);
+  if (value.startsWith("/")) return safeInternalHref(value);
   try {
-    const href = decodeURIComponent(String(raw));
-    if (!href.startsWith("/") || href.startsWith("//") || href.includes("://")) return null;
-    return href;
+    return safeInternalHref(decodeURIComponent(value));
   } catch {
     return null;
   }
@@ -40,7 +51,9 @@ export function withReturnContext(targetHref: string, originHref: string): strin
   const qIdx = withoutHash.indexOf("?");
   const path = qIdx >= 0 ? withoutHash.slice(0, qIdx) : withoutHash;
   const params = new URLSearchParams(qIdx >= 0 ? withoutHash.slice(qIdx + 1) : "");
-  params.set(RETURN_PARAM, encodeReturnContext(originHref));
+  // ENCODE-ONCE (LEAD 11-13): URLSearchParams encodes the value itself. The old writer passed an already
+  // encodeURIComponent'd value, so every hop doubled the escaping (live /legal: ret=%252F… → %2525252F…).
+  params.set(RETURN_PARAM, originHref.startsWith("/") ? originHref : `/${originHref}`);
   const s = params.toString();
   return `${path}?${s}${hash}`;
 }

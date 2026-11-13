@@ -128,3 +128,25 @@ describe("returnContext (ROUND 8.17 class R)", () => {
     ).toBe("/fuel/history?unit_id=u1&from=2026-10-01&to=2026-10-31&q=diesel");
   });
 });
+
+describe("ENCODE-ONCE (LEAD 11-13) — ret is escaped exactly once and nests without growth", () => {
+  it("one hop stores %2F, not %252F", async () => {
+    const { withReturnContext } = await import("./returnContext");
+    const href = withReturnContext("/legal/templates", "/legal");
+    expect(href).toBe("/legal/templates?ret=%2Flegal");
+  });
+  it("two hops nest with single escaping and Back unwinds both", async () => {
+    const { withReturnContext, resolveBackHref } = await import("./returnContext");
+    const list = withReturnContext("/legal/templates", "/legal");
+    const detail = withReturnContext("/legal/templates/abc", list);
+    expect(detail).toBe("/legal/templates/abc?ret=%2Flegal%2Ftemplates%3Fret%3D%252Flegal");
+    const back1 = resolveBackHref({ searchParams: detail.split("?")[1], pathname: "/legal/templates/abc" });
+    expect(back1).toBe(list);
+    const back2 = resolveBackHref({ searchParams: back1.split("?")[1], pathname: "/legal/templates" });
+    expect(back2).toBe("/legal");
+  });
+  it("legacy double-encoded links still resolve", async () => {
+    const { decodeReturnContext } = await import("./returnContext");
+    expect(decodeReturnContext("%2Flegal")).toBe("/legal");
+  });
+});
