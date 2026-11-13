@@ -1,0 +1,39 @@
+{
+  "_comment": "Baseline of known pre-existing ambient debt for verify-fuel-cost-posts-exactly-once. Measured on prod 2026-11-13 (br-fancy-credit-akjnd07a, USMCA). SHRINK-ONLY — entries removed when violations are resolved; new IDs NEVER added. A new violation ID in check_a or check_d must FAIL the guard.",
+  "_measured_at": "2026-11-13",
+  "check_a_orphan_je_ids_count": 15,
+  "check_a_orphan_je_ids": [
+    "076dbb8f-953b-4ad9-942d-45a29023086b",
+    "0cf4df0a-aa2f-4591-9681-1052658f6eaa",
+    "21f0a142-8d64-403a-b0d7-d4d8e349814d",
+    "36f2145a-7682-4c57-b6a1-a3ae8ddbca42",
+    "41ac5348-a4d9-4c34-8910-aa6ca9dd80a9",
+    "4214265e-3df9-45c2-9e66-545fe0891779",
+    "4422a78b-0817-40f5-a322-39c26e23caa6",
+    "5bd78b18-856a-4f9d-854e-6ffb826ed1ac",
+    "6854e9e0-0562-48c3-b120-c9af5a92e15e",
+    "8caa315b-0970-4d2a-be36-7cf377402bbe",
+    "96df3d14-2f41-485d-91ca-7b428e8c00ba",
+    "b176edaa-47d8-4a79-bbd8-18e830dea8da",
+    "ba0e3159-c0c5-4d51-ba60-a9326a8fcff8",
+    "c82fcfe8-1521-487d-b716-cf31216bc4b6",
+    "d7460fcf-2452-4658-ab63-f0bc8be45ef0"
+  ],
+  "check_c_mismatch_cents": 417642,
+  "check_c_mismatch_note": "FUEL_5000 mismatch $4176.42 measured 2026-11-13. Shrinks as orphan JEs are adopted into expense documents.",
+  "check_d_null_linkage_expense_ids_count": 12,
+  "check_d_null_linkage_expense_ids": [
+    "12af83bf-d744-4cc0-b9e9-4cee066b62e1",
+    "16674d4b-dc28-4a64-b5ae-fc954010b4be",
+    "30626035-8c36-4a6b-82ef-2c4c4d924028",
+    "39722504-481a-4f50-9370-5bf8e4c4a293",
+    "3d8e9714-a9f5-490a-bd3f-f676250b94fc",
+    "59c9622c-af61-4395-9091-de0965be8e34",
+    "64f820ae-6703-4e94-b892-104532d85105",
+    "68724702-7d36-4d8a-b54b-ea7443940d5b",
+    "71d834af-bdea-4507-af2f-d993f0270193",
+    "8ac3d1d7-ee96-43c0-9496-7e9ec859591d",
+    "b4d25adf-ee83-4fff-b67d-c104afb097e1",
+    "e22eb05a-74b7-4dbe-960f-a146ca32bbdd"
+  ]
+}

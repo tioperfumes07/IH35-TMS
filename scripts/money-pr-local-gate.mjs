@@ -2985,51 +2985,6 @@ function acceptedAcctF11152FinalLoadClosePostsAmbient(name, code, changed) {
 // accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
 // has-transactions-predicate.ts is READ-ONLY: adds operating_company_id scoping to EXISTS subqueries;
 // it cannot create fuel JEs, post expenses, or touch any fuel/expense path.
-// Pre-existing prod debt: 30 orphan fuel_event JEs, FUEL_5000 mismatch $369k!=373k, 12 linkage gaps
-// — same findings on origin/main. Filed FUEL-ONCE-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real fuel posting / expense writers.
-function acceptedAcctF11152FuelCostExactlyOnceAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-fuel-cost-posts-exactly-once") return false;
-  if (!changed) return false;
-  const FUEL_COST_WRITERS = [
-    "apps/backend/src/fuel/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => FUEL_COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  const ALLOWED_ACCOUNTING = new Set(["apps/backend/src/accounting/has-transactions-predicate.ts"]);
-  if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
-  return true;
-}
-
-// ENG-25b (CC-3, R8.20, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
-// fuel-receipt-repoint.service.ts is in the diff.
-// Pre-existing ambient: 30 orphan live fuel_event JEs (no matching expense rows), FUEL_5000 mismatch
-// ($373k != $369k), 12 linkage gaps — same findings as batch82 on origin/main. ENG-25b adds
-// the intercompany reclassification hook only; AUTH-464 ops replay after deploy clears violations.
-// Content-based: activates only when the ENG-25b engine files are in the diff with no other fuel writers.
-function acceptedEng25bFuelCostExactlyOnceAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-fuel-cost-posts-exactly-once") return false;
-  if (!changed) return false;
-  const ENG25B_EXACT = new Set([
-    "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts",
-    "apps/backend/src/fuel/fuel-receipt-repoint.service.ts",
-    "docs/bus/OWNER-AUTHORIZATIONS.md",
-    "scripts/money-pr-local-gate.mjs",
-  ]);
-  if (!changed.some((f) => ENG25B_EXACT.has(f))) return false;
-  const OTHER_FUEL_WRITERS = [
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => OTHER_FUEL_WRITERS.some((p) => f.startsWith(p)))) return false;
-  return true;
-}
-
 // ENG-53 (CC-3, R8.20, 2026-11-12): verify-booked-loads-save-miles fires because
 // dispatch-relearn-load-miles.handler.ts is in the diff (a MILES_WRITER), blocking acceptedAcctF11152BookedMilesAmbient.
 // Pre-existing ambient debt: RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735
@@ -4587,25 +4542,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `cite BUS-F11152-BATCH82-20261112 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 bus-files-readable ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152FuelCostExactlyOnceAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-fuel-cost-posts-exactly-once pre-existing prod debt ` +
-            `(30 orphan fuel_event JEs + FUEL_5000 mismatch $369k!=373k + 12 linkage gaps on origin/main; ` +
-            `diff has zero fuel/expense posting writers; cite FUEL-ONCE-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 fuel-cost-exactly-once ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedEng25bFuelCostExactlyOnceAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-fuel-cost-posts-exactly-once ENG-25b intercompany diesel ` +
-            `(30 pre-existing orphan fuel_event JEs + FUEL_5000 mismatch $369k!=373k + 12 linkage gaps; ` +
-            `ENG-25b adds reclassification hook only; AUTH-464 ops replay after deploy clears violations; ` +
-            `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-25b intercompany diesel ambient pre-existing fuel-cost-exactly-once debt`);
         continue;
       }
       if (acceptedEng53BookedMilesAmbient(name, code, changedForLiveDomains)) {

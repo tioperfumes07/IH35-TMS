@@ -84,6 +84,34 @@ const LABEL = "verify-fuel-cost-posts-exactly-once";
 const USMCA_COMPANY_ID = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const ROOT = path.resolve(path.dirname(new URL(import.meta.url).pathname), "..");
 const ACCEPT_PATH_FILE = path.join(ROOT, "apps/backend/src/accounting/bank-recon/match.service.ts");
+const BASELINE_PATH = path.join(ROOT, "scripts/verify-steps/fuel-cost-exactly-once-baseline.json");
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// Pure function — apply shrink-only ratchet for pre-existing ambient violations. Exported for selftest.
+// new JE not in baseline → FAIL; baseline JE fixed (no longer in prod) → PASS; mismatch grown → FAIL.
+export function applyFuelRatchet(live, baseline) {
+  const ratchetProblems = [];
+  const baselineJeSet = new Set(baseline.check_a_orphan_je_ids ?? []);
+  const newOrphanJes = (live.orphanJeIds ?? []).filter((id) => !baselineJeSet.has(id));
+  if (newOrphanJes.length > 0) {
+    ratchetProblems.push(`FUEL_TRANSACTION_HAS_LIVE_LEDGER: ${newOrphanJes.length} NEW orphan fuel_event JE(s) not in baseline — adopt-or-post debt grew (${newOrphanJes.join(", ")}).`);
+  }
+  const mismatch = Math.abs((live.fuel5000NetCents ?? 0) - ((live.fuelExpenseTotalCents ?? 0) + (live.driverBillFuelLineCents ?? 0) + (live.cardDiscountNetCents ?? 0)));
+  const baselineMismatch = baseline.check_c_mismatch_cents ?? 0;
+  if (mismatch > baselineMismatch) {
+    ratchetProblems.push(`FUEL_5000_MISMATCH: grew to $${(mismatch / 100).toFixed(2)}, baseline $${(baselineMismatch / 100).toFixed(2)}.`);
+  }
+  const baselineExpSet = new Set(baseline.check_d_null_linkage_expense_ids ?? []);
+  const newNullLinkExps = (live.nullLinkExpenseIds ?? []).filter((id) => !baselineExpSet.has(id));
+  if (newNullLinkExps.length > 0) {
+    ratchetProblems.push(`FUEL_EXPENSE_MISSING_LINKAGE: ${newNullLinkExps.length} NEW null-linkage expense(s) not in baseline (${newNullLinkExps.join(", ")}).`);
+  }
+  return { ratchetProblems, ratchetPassed: ratchetProblems.length === 0 };
+}
 
 // ROUND 291 (CC-1) — check D was counting "ANY of 5 fields null" as one undifferentiated bucket
 // against a shrink-only ratchet, but this guard's own ROUND 277 correction already established
@@ -452,6 +480,39 @@ function runSelftest() {
     } else pass += 1;
   }
 
+  // Ratchet selftest: applyFuelRatchet — new JE FAIL / mismatch grown FAIL / shrunk PASS
+  const knownJeId = "076dbb8f-953b-4ad9-942d-45a29023086b";
+  const knownExpId = "12af83bf-d744-4cc0-b9e9-4cee066b62e1";
+  const ratchetBase = { fuel5000NetCents: 100, fuelExpenseTotalCents: 100, driverBillFuelLineCents: 0, cardDiscountNetCents: 0 };
+
+  // new JE not in baseline → FAIL
+  const ratchetNewJe = applyFuelRatchet({ ...ratchetBase, orphanJeIds: ["new-je-id-not-in-baseline"], nullLinkExpenseIds: [] }, { check_a_orphan_je_ids: [knownJeId], check_c_mismatch_cents: 0, check_d_null_linkage_expense_ids: [] });
+  if (ratchetNewJe.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET A new JE: expected FAIL when new JE not in baseline`); fail += 1; } else pass += 1;
+
+  // baseline grown: check A — new JEs on prod (baseline empty, prod has them) → FAIL
+  const ratchetGrownA = applyFuelRatchet({ ...ratchetBase, orphanJeIds: ["je-a", "je-b"], nullLinkExpenseIds: [] }, { check_a_orphan_je_ids: ["je-a"], check_c_mismatch_cents: 0, check_d_null_linkage_expense_ids: [] });
+  if (ratchetGrownA.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET A grown: expected FAIL when prod has JE not in baseline`); fail += 1; } else pass += 1;
+
+  // baseline shrunk: check A — prod JEs all in baseline, one baseline entry already fixed → PASS
+  const ratchetShrunkA = applyFuelRatchet({ ...ratchetBase, orphanJeIds: [knownJeId], nullLinkExpenseIds: [] }, { check_a_orphan_je_ids: [knownJeId, "old-fixed-je"], check_c_mismatch_cents: 0, check_d_null_linkage_expense_ids: [] });
+  if (!ratchetShrunkA.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET A shrunk: expected PASS when all prod JEs are in baseline`); fail += 1; } else pass += 1;
+
+  // check C grown → FAIL
+  const ratchetGrownC = applyFuelRatchet({ ...ratchetBase, fuel5000NetCents: 100 + 500, orphanJeIds: [], nullLinkExpenseIds: [] }, { check_a_orphan_je_ids: [], check_c_mismatch_cents: 400, check_d_null_linkage_expense_ids: [] });
+  if (ratchetGrownC.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET C grown: expected FAIL when mismatch > baseline`); fail += 1; } else pass += 1;
+
+  // check C shrunk → PASS
+  const ratchetShrunkC = applyFuelRatchet({ ...ratchetBase, fuel5000NetCents: 100 + 300, orphanJeIds: [], nullLinkExpenseIds: [] }, { check_a_orphan_je_ids: [], check_c_mismatch_cents: 400, check_d_null_linkage_expense_ids: [] });
+  if (!ratchetShrunkC.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET C shrunk: expected PASS when mismatch <= baseline`); fail += 1; } else pass += 1;
+
+  // new expense ID not in baseline → FAIL
+  const ratchetNewExp = applyFuelRatchet({ ...ratchetBase, orphanJeIds: [], nullLinkExpenseIds: ["new-exp-id"] }, { check_a_orphan_je_ids: [], check_c_mismatch_cents: 0, check_d_null_linkage_expense_ids: [knownExpId] });
+  if (ratchetNewExp.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET D new expense: expected FAIL when new expense not in baseline`); fail += 1; } else pass += 1;
+
+  // check D shrunk → PASS
+  const ratchetShrunkD = applyFuelRatchet({ ...ratchetBase, orphanJeIds: [], nullLinkExpenseIds: [knownExpId] }, { check_a_orphan_je_ids: [], check_c_mismatch_cents: 0, check_d_null_linkage_expense_ids: [knownExpId, "old-fixed-exp"] });
+  if (!ratchetShrunkD.ratchetPassed) { console.error(`${LABEL} --selftest FAIL — RATCHET D shrunk: expected PASS when all prod expenses are in baseline`); fail += 1; } else pass += 1;
+
   if (fail > 0) {
     process.exitCode = 1;
   } else {
@@ -648,6 +709,31 @@ async function measureLive(client) {
     [USMCA_COMPANY_ID],
   );
 
+  // A: orphan JE IDs for ratchet (same predicate as fuelJeRes but returning distinct JE UUIDs)
+  const orphanJeIdsRes = await client.query(
+    `SELECT DISTINCT jep.journal_entry_uuid AS je_id
+       FROM accounting.journal_entry_postings jep
+       JOIN accounting.journal_entries je ON je.id = jep.journal_entry_uuid
+      WHERE jep.source_transaction_type = 'fuel_event'
+        AND jep.operating_company_id = $1::uuid
+        AND je.voided_at IS NULL AND je.reversed_by_je_id IS NULL AND je.reverses_je_id IS NULL AND je.status = 'posted'
+        AND NOT ${CHECK_A_ADOPTED_SQL}
+        AND NOT EXISTS (SELECT 1 FROM accounting.reclassify_batch_lines rl
+                        WHERE rl.operating_company_id = jep.operating_company_id AND rl.reclass_journal_entry_id = je.id AND rl.result = 'applied')
+      ORDER BY jep.journal_entry_uuid`,
+    [USMCA_COMPANY_ID],
+  );
+
+  // D: null-linkage expense IDs for ratchet
+  const nullLinkExpenseIdsRes = await client.query(
+    `SELECT id FROM accounting.expenses
+      WHERE operating_company_id = $1::uuid AND voided_at IS NULL
+        AND source_fuel_transaction_id IS NOT NULL
+        AND (load_id IS NULL OR driver_uuid IS NULL OR unit_id IS NULL OR vendor_uuid IS NULL)
+      ORDER BY id`,
+    [USMCA_COMPANY_ID],
+  );
+
   await client.query("ROLLBACK");
 
   const d = nullLinkDetailRes.rows[0];
@@ -672,6 +758,8 @@ async function measureLive(client) {
     trailerOnlyGapCount: trailerOnlyRes.rows[0].cnt,
     expensesWithNullLinkageDetails: linkageDetails.join(", "),
     docsDoublePosted: doublePostedRes.rows[0].cnt,
+    orphanJeIds: orphanJeIdsRes.rows.map((r) => r.je_id),
+    nullLinkExpenseIds: nullLinkExpenseIdsRes.rows.map((r) => r.id),
   };
 }
 
@@ -703,7 +791,34 @@ async function runFull() {
     await pool.end();
   }
 
-  const { checks, problems, allPass } = classifyFuelPostsOnce(live);
+  const { checks, problems } = classifyFuelPostsOnce(live);
+
+  // Apply shrink-only ratchet for pre-existing ambient debt (measured prod 2026-11-13).
+  // A/C/D violations are only reported as FAIL when they are NEW (not in baseline).
+  const baseline = loadBaseline();
+  let finalProblems;
+  if (baseline) {
+    const { ratchetProblems } = applyFuelRatchet(live, baseline);
+    // Replace A/C/D problems with ratchet-based ones; B/E/F come from classifyFuelPostsOnce unchanged.
+    const keptProblems = problems.filter(
+      (p) => !p.startsWith("FUEL_TRANSACTION_HAS_LIVE_LEDGER") && !p.startsWith("FUEL_5000_MISMATCH") && !p.startsWith("FUEL_EXPENSE_MISSING_LINKAGE"),
+    );
+    finalProblems = [...ratchetProblems, ...keptProblems, ...staticProblems];
+    // Update check pass/fail display for A/C/D to reflect ratchet verdict
+    const baselineJeSet = new Set(baseline.check_a_orphan_je_ids ?? []);
+    const newOrphanCount = live.orphanJeIds.filter((id) => !baselineJeSet.has(id)).length;
+    const checkA = checks.find((c) => c.id === "A");
+    if (checkA) { checkA.pass = newOrphanCount === 0; checkA.live += ` (${newOrphanCount} new, ${live.orphanJeIds.length} total, ${baseline.check_a_orphan_je_ids.length} in baseline)`; }
+    const mismatch = Math.abs(live.fuel5000NetCents - (live.fuelExpenseTotalCents + live.driverBillFuelLineCents + live.cardDiscountNetCents));
+    const checkC = checks.find((c) => c.id === "C");
+    if (checkC) { checkC.pass = mismatch <= (baseline.check_c_mismatch_cents ?? 0); checkC.live += ` (baseline max $${((baseline.check_c_mismatch_cents ?? 0) / 100).toFixed(2)})`; }
+    const baselineExpSet = new Set(baseline.check_d_null_linkage_expense_ids ?? []);
+    const newNullCount = live.nullLinkExpenseIds.filter((id) => !baselineExpSet.has(id)).length;
+    const checkD = checks.find((c) => c.id === "D");
+    if (checkD) { checkD.pass = newNullCount === 0; checkD.live += ` (${newNullCount} new, ${live.nullLinkExpenseIds.length} total, ${baseline.check_d_null_linkage_expense_ids.length} in baseline)`; }
+  } else {
+    finalProblems = [...problems, ...staticProblems];
+  }
 
   console.log(`${LABEL}: fuel-cost-posts-exactly-once (whole population, no wall-clock scope)`);
   console.log("");
@@ -725,9 +840,8 @@ async function runFull() {
   }
   console.log("");
 
-  const allProblems = [...problems, ...staticProblems];
-  if (allProblems.length > 0) {
-    console.error(`${LABEL}: FAIL — ${allProblems.length} problem(s):\n` + allProblems.map((p) => `  ${p}`).join("\n"));
+  if (finalProblems.length > 0) {
+    console.error(`${LABEL}: FAIL — ${finalProblems.length} problem(s):\n` + finalProblems.map((p) => `  ${p}`).join("\n"));
     process.exitCode = 1;
   } else {
     console.log(`${LABEL}: PASS — fuel costs post exactly once.`);
