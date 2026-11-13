@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T20:38Z) — #29307 Fuel Home/By-truck Related strip removed MERGED f776c75e15e · CERTIFY 1–23 + 19
+# Tip main f776c75e15e. Fuel.dc.html board-only (no Related above diesel). Book Load #29302 + Reports #29296 on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T20:25Z) — #29302 Book Load 1260×32 Spec MERGED d1473874b39 · CERTIFY 1–23 + 14–17 + 25/26
 # Tip main d1473874b39. Center dialog ≤1260; time window 150×32; #29296 Reports ret on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 

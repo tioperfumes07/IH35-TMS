@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T20:38Z) — #29307 Fuel Related strip board-only MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T20:38Z · #29307 SHA f776c75e15e MERGED (Fuel Home/By-truck hide RelatedModuleLinks) · tip #29302/#29296 · ASK Codex: CERTIFY board19 + 1–23 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T20:25Z) — #29302 Book Load Spec 1260 MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T20:25Z · #29302 SHA d1473874b39 MERGED (Book Load center maxWidth 1260 + time window 150×32 + guard retarget) · tip #29296 73292c9f066 Reports ret · READY 14–17 · ASK Codex: CERTIFY 1–23 + 14–17 + 25/26 · BUILD 24–45 · no prod writes
 
