@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r6-driver-unit-photo",
+  "status": "GUARD",
+  "classification": "DATA-INTEGRITY",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 6 — driver/unit photo reference integrity. Guard 19995 enforces ceiling of 0 broken photo_url references for both mdata.drivers and mdata.unit_photos.",
+  "branch": "cc-2/eng-r6-driver-unit-photo",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-driver-unit-photo-wired.mjs",
+    "scripts/verify-steps/19995-verify-driver-unit-photo-wired.mjs",
+    ".block-ready/cc-2-r6-driver-unit-photo.json"
+  ],
+  "acceptance": [
+    "verify-driver-unit-photo-wired selftest PASS 2/2",
+    "drivers_with_photo=0 broken_driver_photo=0 | unit_photos=0 broken_unit_photo=0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
