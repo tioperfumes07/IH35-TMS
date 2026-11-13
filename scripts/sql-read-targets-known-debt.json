@@ -118,7 +118,7 @@
     "apps/backend/src/insurance/late-fee.service.ts: p.operating_company_id — column \"operating_company_id\" does not exist on insurance.policy",
     "apps/backend/src/insurance/late-fee.service.ts: ps.operating_company_id — column \"operating_company_id\" does not exist on insurance.payment_schedule",
     "apps/backend/src/insurance/lawsuit.routes.ts: claim.operating_company_id — column \"operating_company_id\" does not exist on insurance.claim",
-    "apps/backend/src/insurance/lawsuit.routes.ts: lawsuit.operating_company_id — column \"operating_company_id\" does not exist on insurance.lawsuit",
+    "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts: p.voided_at — column \"voided_at\" does not exist on accounting.journal_entry_postings",
     "apps/backend/src/insurance/payment-schedule.routes.ts: p.operating_company_id — column \"operating_company_id\" does not exist on insurance.policy",
     "apps/backend/src/insurance/payment-schedule.routes.ts: ps.operating_company_id — column \"operating_company_id\" does not exist on insurance.payment_schedule",
     "apps/backend/src/insurance/policy-unit-fleet.service.ts: p.operating_company_id — column \"operating_company_id\" does not exist on insurance.policy",

@@ -145,16 +145,33 @@ const DRIVER_DAY_SUMMARY_SQL = `
           -- materialised first: under RLS the planner estimates the fence scan as 1 row and picks a nested
           -- loop, and re-scanning RLS-filtered mdata.load_stops once per fence cost 4,400 ms (measured 10-19);
           -- re-scanning a 410-row tuplestore costs nothing.
+          --
+          -- ROW 124 (CC-2 11-13): arrivals block measured ~270 ms. Root: stop_fence_keys regex-scanned ALL
+          -- geo.geofences (26,342 on prod 11-13) to find 983 stop-label fences. Fix: day_geofence_ids first
+          -- collects only the distinct fences that fired an 'entered' event today (~86 on 11-13) using the
+          -- existing ix_geo_geofence_events_company_lookup index; stop_fence_keys then PK-looks up only those
+          -- 86 and regexes them — a ~300x reduction in scanned rows.
           live_stops AS MATERIALIZED (
             SELECT ls.id, ls.load_id, ls.sequence_number
             FROM mdata.load_stops ls
             WHERE ls.soft_deleted_at IS NULL
+          ),
+          -- ROW 124: narrow geofence label scan to fences that actually fired today
+          day_geofence_ids AS MATERIALIZED (
+            SELECT DISTINCT ge.geofence_id
+            FROM geo.geofence_events ge
+            CROSS JOIN bounds b
+            WHERE ge.operating_company_id = $1::uuid
+              AND ge.event_kind = 'entered'
+              AND ge.occurred_at >= b.day_start
+              AND ge.occurred_at < b.day_end
           ),
           stop_fence_keys AS MATERIALIZED (
             SELECT g.id AS geofence_id,
                    substring(g.label FROM '^load-([0-9a-f-]{36})-stop-')::uuid AS load_id,
                    substring(g.label FROM '-stop-([0-9]+)$')::int AS sequence_number
             FROM geo.geofences g
+            JOIN day_geofence_ids dgi ON dgi.geofence_id = g.id
             WHERE g.label ~ '${STOP_FENCE_LABEL_RE_SQL}'
           ),
           stop_fences AS MATERIALIZED (

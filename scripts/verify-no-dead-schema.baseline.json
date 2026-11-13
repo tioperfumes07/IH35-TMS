@@ -3365,6 +3365,30 @@
       "kind": "COLUMN",
       "verdict": "none",
       "migration": "202606080244_usmca_ops_schema_grant.sql"
+    },
+    {
+      "object": "perfume.desk_users.added_at",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202616490100_perfume_desk_isolated_schema.sql"
+    },
+    {
+      "object": "perfume.desk_users.user_id",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202616490100_perfume_desk_isolated_schema.sql"
+    },
+    {
+      "object": "perfume.price_lists.file_r2_key",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202616490100_perfume_desk_isolated_schema.sql"
+    },
+    {
+      "object": "perfume.price_lists.file_sha256",
+      "kind": "COLUMN",
+      "verdict": "none",
+      "migration": "202616490100_perfume_desk_isolated_schema.sql"
     }
   ],
   "measured_at": "2026-09-24T00:30:00Z",

@@ -86,7 +86,13 @@ if (process.argv.includes("--selftest")) {
       "arrivals over STOP_ARRIVAL_EVENTS_SQL (unbounded history)",
       summary.slice(0, summary.indexOf("          stop_fences AS MATERIALIZED (")) + oldArrivals + summary.slice(summary.indexOf("          all_drivers AS (")),
     ],
-    ["day_entries unbounded", summary.replace("AND ge.occurred_at >= b.day_start\n              AND ge.occurred_at < b.day_end\n", "")],
+    // ROW 124 (CC-2 11-13): day_geofence_ids also has the same day bounds; use a replace
+    // string that spans the JOIN stop_fences line (unique to day_entries) so .replace() doesn't
+    // consume the first occurrence from day_geofence_ids and silently skip day_entries.
+    ["day_entries unbounded", summary.replace(
+      "JOIN stop_fences sf ON sf.geofence_id = ge.geofence_id\n            WHERE ge.operating_company_id = $1::uuid\n              AND ge.event_kind = 'entered'\n              AND ge.occurred_at >= b.day_start\n              AND ge.occurred_at < b.day_end",
+      "JOIN stop_fences sf ON sf.geofence_id = ge.geofence_id\n            WHERE ge.operating_company_id = $1::uuid\n              AND ge.event_kind = 'entered'",
+    )],
     ["stop_fences not materialised", summary.replace("stop_fences AS MATERIALIZED (", "stop_fences AS (")],
     ["first-ever probe removed", summary.replace("AND x.occurred_at < sa.triggered_at", "AND x.occurred_at <= sa.triggered_at - interval '0'")],
     [
