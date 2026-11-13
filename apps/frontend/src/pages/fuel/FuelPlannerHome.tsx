@@ -493,7 +493,11 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         </p>
       ) : null}
 
-      <RelatedModuleLinks testId="fuel-related-module-links" links={offBoardLinks} />
+      {/* ROUND 8.20 board19 Class L — Fuel.dc.html Home/By-truck have no Related strip (composition FAIL).
+          Off-board tabs stay reachable from History/Cards/Questions/Settings/etc. */}
+      {tab !== "home" && tab !== "by_truck" ? (
+        <RelatedModuleLinks testId="fuel-related-module-links" links={offBoardLinks} />
+      ) : null}
 
       {tab === "home" ? <FuelHomePage /> : null}
 
