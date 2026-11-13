@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   disconnectPlaidBankAccount,
   getPlaidBankAccount,
@@ -49,6 +50,9 @@ function matchedTransactionLinks(row: PlaidBankTransaction) {
 
 /** Signed QBO amount — direction from is_credit (same spentReceived convention as the live register). */
 export function formatBankTransactionSignedAmount(tx: Pick<PlaidBankTransaction, "amount_cents" | "is_credit">) {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const { spent, received } = spentReceived(tx as PlaidBankTransaction);
   return received > 0 ? formatUsdCents(received) : formatUsdCents(-spent);
 }
@@ -254,7 +258,7 @@ export function BankAccountDetailPage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/banking"
+        backHref={bankingBackHref}
         title={headerTitle}
         subtitle={account?.account_mask ? `••••${account.account_mask}` : ""}
         actions={

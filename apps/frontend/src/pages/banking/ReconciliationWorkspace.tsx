@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import {
@@ -301,6 +302,9 @@ function varianceClass(varianceCents: number) {
 }
 
 export function ReconciliationWorkspacePage() {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const { bankAccountId = "" } = useParams<{ bankAccountId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get("session_id") ?? "";
@@ -657,7 +661,7 @@ export function ReconciliationWorkspacePage() {
   return (
     <div className="space-y-4">
       <PageHeader
-        backHref="/banking"
+        backHref={bankingBackHref}
         title={isReportMode ? "Reconciliation report" : "Reconciliation Workspace"}
         subtitle={
           effectiveBankAccountId

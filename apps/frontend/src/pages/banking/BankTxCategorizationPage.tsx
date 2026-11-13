@@ -30,6 +30,8 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { coaAccountReferenceOption } from "../../components/parity/referenceOptionLabels";
 import { formatUsdCents } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 function txDate(tx: Record<string, unknown>) {
   return String(tx.transaction_date ?? tx.txn_date ?? "");
@@ -95,6 +97,9 @@ function mergeMeta(
 }
 
 export function BankTxCategorizationPage() {
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -287,7 +292,7 @@ export function BankTxCategorizationPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/banking" title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
+      <PageHeader backHref={bankingBackHref} title="Bank transaction categorization" subtitle="Uncategorized Plaid activity · daily ops" />
       {!companyId ? (
         <BoardSection title="Bank transaction categorization" testId="bank-tx-categorization-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
