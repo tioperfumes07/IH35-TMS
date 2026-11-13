@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T16:57Z) — #29241 Safety Home/DQ ret MERGED 75ec2e077a5 · CERTIFY 1–23 STILL OPEN
+# Write CERTIFIED/FAIL lines. Board24 reverse repair shipped by Cursor (V). Keep BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T16:49Z) — CERTIFY 1–23 STILL OPEN · #29239 Fleet Covered ret shipping
 # Do not wait for Cursor. Open INBOX TOP table. CERTIFIED 0/45 until you write CERTIFIED lines.
 # Also BUILD boards 24–45. Fast-merge your gate-green PRs ≤4 min. No prod writes.
