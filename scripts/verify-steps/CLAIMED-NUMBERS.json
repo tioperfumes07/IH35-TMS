@@ -15972,6 +15972,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-cash-flow-avp-accuracy-kpi-drills board6"
   },
+  "20168": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-fuel-card-overage-status-url-ret board19"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

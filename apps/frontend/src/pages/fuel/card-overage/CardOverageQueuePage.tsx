@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { apiRequest } from "../../../api/client";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
@@ -108,18 +109,39 @@ export async function listOverageEvents(
   return apiRequest<ListResponse>(`/api/v1/fuel/card-overage-events?${params.toString()}`);
 }
 
+/** ROUND 8.20 board19 — status cohort in URL so KPI/Back/ret restore the queue filter. */
+export function parseOverageStatusParam(raw: string | null): string[] {
+  if (raw == null || raw.trim() === "") return ["pending_review"];
+  if (raw === "all") return [];
+  return raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+export function buildOverageStatusParam(statuses: string[]): string | null {
+  if (statuses.length === 0) return "all";
+  if (statuses.length === 1 && statuses[0] === "pending_review") return null;
+  return statuses.join(",");
+}
+
 export function CardOverageQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const actionGenerationRef = useRef(0);
-  // U12: multi-select status — API takes one status; 0/1 pass through; 2+ fetch all then filter.
-  const [statusFilter, setStatusFilter] = useState<string[]>(["pending_review"]);
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board19 — Fuel Home → Card overage carries ?ret=; Back must restore Fuel origin.
+  const fuelBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fuel" });
+  // U12: multi-select status — API takes one status; 0/1 pass through; 2+ fetch all then filter.
+  // URL SoT: ?status=pending_review|approved|posted|… (comma) or status=all.
+  const [statusFilter, setStatusFilter] = useState<string[]>(() => parseOverageStatusParam(searchParams.get("status")));
   const eventId = searchParams.get("event_id") ?? undefined;
   const driverId = searchParams.get("driver_id") ?? undefined;
   const unitId = searchParams.get("unit_id") ?? undefined;
+  const hasJeOnly = searchParams.get("has_je") === "1";
   // FUEL-MONEY-F6535-CARD-OVERAGE-APPROVAL-NATIVE-CONFIRM-AND-MUTABLE-COMPANY — the mutable-
   // company/generation half of this fix was already in place (approveMut already snapshots
   // {eventId, companyId, generation}); the remaining defect is window.confirm() bypassing
@@ -139,6 +161,15 @@ export function CardOverageQueuePage() {
   }, [companyId]);
   // BANK-F5167 + CLS-ADJACENT — EntityPicker FKs stage with status; URL only on Apply.
   // LV-FUEL-TOOLBAR-LEAVES-POINT-HOME — do not keep dead set*Filter helpers that write URL immediately.
+  // Keep applied status in sync when URL changes (Back via ret / KPI href).
+  useEffect(() => {
+    const fromUrl = parseOverageStatusParam(searchParams.get("status"));
+    setStatusFilter((prev) => {
+      if (prev.length === fromUrl.length && prev.every((v, i) => v === fromUrl[i])) return prev;
+      return fromUrl;
+    });
+  }, [searchParams]);
+
   const staged = useStagedListFilters({
     applied: {
       statusFilter,
@@ -155,6 +186,11 @@ export function CardOverageQueuePage() {
           else params.delete("driver_id");
           if (next.unitId) params.set("unit_id", next.unitId);
           else params.delete("unit_id");
+          const statusParam = buildOverageStatusParam(next.statusFilter);
+          if (statusParam) params.set("status", statusParam);
+          else params.delete("status");
+          // Filters Apply clears has_je KPI cohort unless operator re-clicks With JE.
+          params.delete("has_je");
           return params;
         },
         { replace: true },
@@ -378,30 +414,54 @@ export function CardOverageQueuePage() {
   }
 
   const q = listSearch.trim().toLowerCase();
+  const cohortRows = hasJeOnly ? rows.filter((row) => Boolean(row.journal_entry_id)) : rows;
   const visibleRows = q
-    ? rows.filter((row) =>
+    ? cohortRows.filter((row) =>
         [row.driver_name, row.unit_number, row.overage_rule, row.status, row.review_reason]
           .filter(Boolean)
           .join(" ")
           .toLowerCase()
           .includes(q),
       )
-    : rows;
-  const totalMatching = eventsQuery.data?.total_count ?? rows.length;
-  const overageSumCents = rows.reduce((sum, row) => sum + (row.overage_cents ?? 0), 0);
+    : cohortRows;
+  const totalMatching = hasJeOnly ? cohortRows.length : (eventsQuery.data?.total_count ?? rows.length);
+  const overageSumCents = cohortRows.reduce((sum, row) => sum + (row.overage_cents ?? 0), 0);
   const withJe = rows.filter((row) => Boolean(row.journal_entry_id)).length;
   const kpiValue = (n: number) => (eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : String(n));
+
+  const applyKpiCohort = (opts: { status?: string | null; hasJe?: boolean }) => {
+    setSearchParams(
+      (prev) => {
+        const params = new URLSearchParams(prev);
+        if (opts.status === undefined) {
+          /* leave status */
+        } else if (opts.status === null) {
+          params.delete("status");
+          setStatusFilter(["pending_review"]);
+        } else {
+          params.set("status", opts.status);
+          setStatusFilter(parseOverageStatusParam(opts.status));
+        }
+        if (opts.hasJe) params.set("has_je", "1");
+        else params.delete("has_je");
+        return params;
+      },
+      { replace: true },
+    );
+    const el = document.querySelector('[data-testid="fuel-card-overage-v3-panel"]');
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   return (
     <div className="space-y-3" data-testid="fuel-card-overage-queue">
       {/* ROUND 443.326 — KPI + MoneyListToolbar + FuelBoardSection (no PageHeader). */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <Breadcrumb items={[{ label: "Fuel", href: "/fuel" }, { label: "Card overage" }]} />
+          <Breadcrumb items={[{ label: "Fuel", href: fuelBackHref }, { label: "Card overage" }]} />
           <h1 className="text-page-title font-semibold text-gray-900">{"Fuel card overage"}</h1>
           <p className="text-xs text-gray-600">{"Approve-then-recover over-limit / non-fuel card charges"}</p>
         </div>
-        <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+        <Link to={fuelBackHref} className="text-xs font-semibold text-[#1F2A44] hover:underline" data-testid="fuel-card-overage-back">
           Back to Fuel Home
         </Link>
       </div>
@@ -410,14 +470,27 @@ export function CardOverageQueuePage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
         data-testid="fuel-card-overage-v3-kpi-strip"
       >
-        <V3KpiTile label={"Matching"} value={kpiValue(totalMatching)} sub="filter total" testId="fuel-card-overage-kpi-matching" />
+        <V3KpiTile
+          label={"Matching"}
+          value={kpiValue(totalMatching)}
+          sub="filter total"
+          testId="fuel-card-overage-kpi-matching"
+          onClick={() => applyKpiCohort({ status: "all", hasJe: false })}
+        />
         <V3KpiTile
           label={"Overage $"}
           value={eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : money(overageSumCents)}
           sub="rows loaded"
           testId="fuel-card-overage-kpi-dollars"
+          onClick={() => applyKpiCohort({ status: "all", hasJe: false })}
         />
-        <V3KpiTile label={"With JE"} value={kpiValue(withJe)} sub="posted recovery" testId="fuel-card-overage-kpi-je" />
+        <V3KpiTile
+          label={"With JE"}
+          value={kpiValue(withJe)}
+          sub="posted recovery"
+          testId="fuel-card-overage-kpi-je"
+          onClick={() => applyKpiCohort({ status: "all", hasJe: true })}
+        />
       </div>
 
       <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
