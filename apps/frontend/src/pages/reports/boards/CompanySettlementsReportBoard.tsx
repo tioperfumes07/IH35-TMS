@@ -426,20 +426,15 @@ export function CompanySettlementsReportBoard() {
 
       {drill || zeroCostOnly ? (
         <div className="flex items-center gap-2 text-xs text-[#5B6576]">
-          <span>
-            {zeroCostOnly ? (
-              <>
-                Trips with <strong className="text-[#111827]">$0 costs</strong>
-              </>
-            ) : (
-              <>
-                Trips in <strong className="text-[#111827]">{drill?.label}</strong>
-              </>
-            )}
-          </span>
+          {drill ? (
+            <span>
+              Trips in <strong className="text-[#111827]">{drill.label}</strong>
+            </span>
+          ) : null}
           <button
             type="button"
             className="font-semibold text-[#1D4ED8] hover:underline"
+            data-testid="csr-clear-cohort"
             onClick={() => {
               if (zeroCostOnly) {
                 setSearchParams(
