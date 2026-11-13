@@ -116,20 +116,27 @@ export function transformTrialBalanceToCashBasis(rows: TrialBalanceRow[], summar
     row.net_balance = row.total_debits - row.total_credits;
   }
   const transformedRows = [...aggregates.values()];
-  const adjustment = computeCashBasisAdjustment({
-    assets: { total: transformedRows.filter((row) => row.account_type === "Asset").reduce((sum, row) => sum + row.net_balance, 0) },
-    liabilities: { total: transformedRows.filter((row) => row.account_type === "Liability").reduce((sum, row) => sum + Math.abs(row.net_balance), 0) },
-    equity: { total: transformedRows.filter((row) => row.account_type === "Equity").reduce((sum, row) => sum + Math.abs(row.net_balance), 0) },
-  });
-  if (adjustment.amount !== 0) {
+  // BOARD 26 (LEAD ROUND 8.25) — the cash-basis TB plug is the TRIAL BALANCE's own difference, not the balance-sheet
+  // identity. Root cause (live: explicit Cash showed "Out of balance" while Accrual showed "Balanced"): the plug was
+  // computeCashBasisAdjustment(A − (L + E)), which (1) ignores every Revenue / Expense row a trial balance carries,
+  // (2) takes |net| of liabilities and equity so a debit-balance liability counted the wrong way, and (3) booked a
+  // positive delta as a DEBIT, which doubles an excess of debits instead of offsetting it. Suppression (@decision Q3
+  // AR/AP control, Q5 unrecognized settlements, Q6 refunds) removes amounts from one side only, so the only plug that
+  // always restores debits = credits is (Σ debits − Σ credits) posted to the opposite side of the Cash Basis Adjustment
+  // equity line. No account other than the adjustment line changes; the accrual TB is untouched.
+  const preDebits = transformedRows.reduce((sum, row) => sum + row.total_debits, 0);
+  const preCredits = transformedRows.reduce((sum, row) => sum + row.total_credits, 0);
+  const excessDebits = preDebits - preCredits;
+  if (excessDebits !== 0) {
+    const label = computeCashBasisAdjustment({ assets: { total: 0 }, liabilities: { total: 0 }, equity: { total: 0 } });
     transformedRows.push({
       account_id: "cash-basis-adjustment",
-      account_code: adjustment.account_code,
-      account_name: adjustment.account_name,
+      account_code: label.account_code,
+      account_name: label.account_name,
       account_type: "Equity",
-      total_debits: adjustment.amount > 0 ? adjustment.amount : 0,
-      total_credits: adjustment.amount < 0 ? Math.abs(adjustment.amount) : 0,
-      net_balance: adjustment.amount,
+      total_debits: excessDebits < 0 ? -excessDebits : 0,
+      total_credits: excessDebits > 0 ? excessDebits : 0,
+      net_balance: -excessDebits,
     });
   }
   const finalDebits = transformedRows.reduce((sum, row) => sum + row.total_debits, 0);
