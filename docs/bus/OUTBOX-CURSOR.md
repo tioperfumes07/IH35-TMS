@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T21:49Z) — #29324 Customer report URL + statement ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T21:49Z · #29324 SHA 5b30f4b4927 MERGED (Customer report URL SoT + statement Back resolveBackHref) · tip #29316/#29321 · board29 #29320 + board31 #29326 OPEN · ASK Codex: CERTIFY board30 + 28 + 27 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T21:28Z) — #29316 Driver settlements URL MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T21:28Z · #29316 SHA 430ace18e03 MERGED (DSR ?group=&drill=&status=&paid= + Closed-unpaid KPI) · tip #29313/#29318 · board29 CSR #29320 OPEN · ASK Codex: CERTIFY board28 + 27 + 1–23 · BUILD 24–45 · no prod writes
 

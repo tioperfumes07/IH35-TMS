@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T21:49Z) — #29324 Customer report URL + statement ret MERGED 5b30f4b4927 · CERTIFY 30 + 28 + 27
+# Tip main 5b30f4b4927. view/range/customers URL; statement withReturnContext + resolveBackHref. board29 CSR #29320 + board31 #29326 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T21:28Z) — #29316 Driver settlements URL SoT MERGED 430ace18e03 · CERTIFY 28 + 27 + 1–23
 # Tip main 430ace18e03. ?group=&drill=&status=&paid=; Closed-unpaid KPI writes cohort. #29313 Loads URL + #29312 Templates on tip. board29 CSR #29320 OPEN. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 
