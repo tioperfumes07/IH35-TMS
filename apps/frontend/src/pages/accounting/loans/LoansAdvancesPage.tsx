@@ -6,9 +6,11 @@
  * computes GL.
  */
 import { useMemo, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { useQuery } from "@tanstack/react-query";
+import { resolveBackHref } from "../../../lib/returnContext";
 import {
   listRelatedPartyLoanFacilities,
   listRelatedPartyLoans,
@@ -78,6 +80,9 @@ function balanceText(cents: number): string {
 export function LoansAdvancesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting" });
   const [showAccountNumbers] = useShowAccountNumbers();
   const [direction, setDirection] = useState<"" | LoanDirection>("");
   // U12 (owner UI register 2026-10-03) — status is a multi-select; none picked = every live status (reversed hidden).
@@ -151,7 +156,7 @@ export function LoansAdvancesPage() {
   return (
     <div className="p-4">
       <PageHeader
-        backHref="/accounting"
+        backHref={accountingBackHref}
         breadcrumb={["Accounting", "Loans & Advances"]}
         title="Loans & Advances"
         subtitle="One running facility per related party. Advances and repayments hang under the person."

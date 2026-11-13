@@ -1,7 +1,8 @@
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { applyPayment, getPayment, listInvoices, unapplyPayment, voidPayment, type PaymentApplication } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -41,6 +42,9 @@ function accountLabel(name: string | null | undefined, number: string | null | u
 
 export function PaymentDetailPage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting/payments" });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
@@ -199,7 +203,7 @@ export function PaymentDetailPage() {
       ) : null}
       <PageHeader
         title={entityLabel(payment.display_id, payment.id, "Payment")}
-        backHref="/accounting/payments"
+        backHref={accountingBackHref}
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Payments", href: "/accounting/payments" },

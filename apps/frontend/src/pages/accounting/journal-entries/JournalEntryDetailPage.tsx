@@ -1,7 +1,8 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getJournalEntry,
@@ -178,6 +179,9 @@ function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
 
 export function JournalEntryDetailPage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting/journal-entries" });
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
@@ -267,7 +271,7 @@ export function JournalEntryDetailPage() {
       ) : null}
       <PageHeader
         title={chromeLabel}
-        backHref="/accounting/journal-entries"
+        backHref={accountingBackHref}
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Journal Entries", href: "/accounting/journal-entries" },

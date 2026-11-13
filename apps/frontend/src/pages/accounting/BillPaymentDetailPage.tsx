@@ -2,7 +2,8 @@ import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getBillPayment, voidVendorBillPayment } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -32,6 +33,9 @@ function money(cents: number) {
 
 export function BillPaymentDetailPage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting/bill-payments" });
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -105,7 +109,7 @@ export function BillPaymentDetailPage() {
       ) : null}
       <PageHeader
         title={displayId}
-        backHref="/accounting/bill-payments"
+        backHref={accountingBackHref}
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Bill payments", href: "/accounting/bill-payments" },
