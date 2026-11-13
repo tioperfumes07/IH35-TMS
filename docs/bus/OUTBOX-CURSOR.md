@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T04:45Z) — ROUND 8.20 board2 Unexpected reverse shipping
+ROUND 8.20 2026-11-13T04:45Z · board2 Unexpected→Banking Match Close/Back honors ?ret= (MatchDrawer Close + PageHeader + subnav preserve ret) · tip board4 #29159 5d5191590ba · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T03:11Z) — ROUND 8.20 board4 MERGED
+ROUND 8.20 2026-11-13T03:11Z · board4 #29159 SHA 5d5191590ba MERGED (Home Ending rl_ending+rl_opening Opening+Net=Ending) · tip board5 #29156 26a29f8eed3 · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains 5d5191590ba
+
 ## OUTBOX (2026-11-13T02:53Z) — ROUND 8.20 board4 Home Ending drill shipping
 ROUND 8.20 2026-11-13T02:53Z · board4/7 Home Ending → RL carries rl_ending+rl_opening (Opening+Net=Ending) · tip board5 #29156 26a29f8eed3 · ASK Codex: certify 2+3+4+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 

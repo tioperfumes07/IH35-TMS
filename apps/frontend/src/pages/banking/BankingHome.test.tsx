@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import * as bankingApi from "../../api/banking";
 import { ToastProvider } from "../../components/Toast";
@@ -10,6 +10,10 @@ import { BankingHomePage } from "./BankingHome";
 
 vi.mock("../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "company-1" }),
+}));
+
+vi.mock("./components/BankingTransactionsDesignView", () => ({
+  BankingTransactionsDesignView: () => <div data-testid="banking-txn-design-stub" />,
 }));
 
 vi.mock("./components/ManageAccountsModal", () => ({
@@ -250,5 +254,34 @@ describe("BANK-F02 — Record Transfer trigger reachable from the + New menu", (
     await userEvent.click(await screen.findByTestId("banking-new-menu-trigger"));
     await userEvent.click(await screen.findByTestId("banking-home-record-transfer"));
     expect(await screen.findByTestId("transfer-modal-stub")).toBeInTheDocument();
+  });
+});
+
+describe("ROUND 8.20 board2 — Unexpected→Banking reverse via ?ret=", () => {
+  it("PageHeader Back restores Unexpected when ret is present on transactions deep-link", async () => {
+    stubHomeQueries();
+    const ret = encodeURIComponent("/accounting/expenses/unexpected");
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <MemoryRouter
+        initialEntries={[`/banking/transactions?txn_id=tx-board2&review=for_review&ret=${ret}`]}
+      >
+        <QueryClientProvider client={queryClient}>
+          <ToastProvider>
+            <Routes>
+              <Route path="/banking/transactions" element={<BankingHomePage />} />
+              <Route
+                path="/accounting/expenses/unexpected"
+                element={<div data-testid="unexpected-restored">unexpected</div>}
+              />
+            </Routes>
+          </ToastProvider>
+        </QueryClientProvider>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByTestId("banking-txn-design-stub")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Back" }));
+    expect(await screen.findByTestId("unexpected-restored")).toBeInTheDocument();
   });
 });

@@ -60,6 +60,7 @@ import { SelectCombobox } from "../../components/Combobox";
 
 
 import { InfoPopover } from "../../components/shared/InfoPopover";
+import { RETURN_PARAM, resolveBackHref } from "../../lib/returnContext";
 type BankingTabId = BankingModuleTabId;
 
 type Props = {
@@ -517,20 +518,41 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     </div>
   );
 
+  // ROUND 8.20 board2 — Unexpected→Banking Match deep-links carry ?ret=; PageHeader Back must honor it.
+  const bankingReturnHref = searchParams.get(RETURN_PARAM)
+    ? resolveBackHref({
+        searchParams,
+        pathname: location.pathname,
+        fallback: null,
+      })
+    : undefined;
+
   return (
     <div className="min-w-0 max-w-full space-y-3" data-c06-page="banking">
       <PageHeader
         title="Banking Home"
         subtitle="QBO mirrored accounts + categorization"
         actions={headerActions}
+        backHref={bankingReturnHref}
       />
       <NavyPageSubNav
         items={BANKING_MODULE_TABS.filter((tab) =>
           (BANKING_SUBNAV_TAB_IDS as readonly string[]).includes(tab.id),
-        ).map((tab) => ({
-          label: tab.label,
-          to: BANKING_TAB_PATH[tab.id],
-        }))}
+        ).map((tab) => {
+          // ROUND 8.20 board2 — subnav must not strip ?ret= (Unexpected origin) when switching tabs.
+          const base = BANKING_TAB_PATH[tab.id];
+          const ret = searchParams.get(RETURN_PARAM);
+          if (!ret) return { label: tab.label, to: base };
+          const q = new URLSearchParams();
+          q.set(RETURN_PARAM, ret);
+          if (tab.id === "transactions") {
+            const txn = searchParams.get("txn_id");
+            const review = searchParams.get("review");
+            if (txn) q.set("txn_id", txn);
+            if (review) q.set("review", review);
+          }
+          return { label: tab.label, to: `${base}?${q.toString()}` };
+        })}
       />
       {kpiQuery.isError || tilesQuery.isError || uncategorizedQuery.isError ? <ListErrorBanner onRetry={() => void uncategorizedQuery.refetch()} /> : null}
       {/* ROUND-20.8 B9 — Plaid sync status pair deleted; BankingPlaidConnectionsPanel is canonical. */}
