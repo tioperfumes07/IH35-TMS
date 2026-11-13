@@ -327,3 +327,10 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
   - `DRIVER_ID_CATEGORIES = new Set(["cdl", "driver_license", "drivers_license", "government_id", "id_card", "driver_photo"])`
   - `export function pickDriverIdPhoto(files: LinkedImageFile[]): LinkedImageFile | null`
 - STATUS: DONE-ENGINE — no code change needed; Lead confirmed via driver-aggregate.service.ts pickDriverIdPhoto + uploaded-photo-pick.ts
+
+**Row 104 — Fuel card assignment history: DONE-LIVE (CC-3 verified, 2026-11-13)**
+- CC-3 Chrome walk confirmed: Fuel/Cards shows ACTIVE=17 card assignments, ENDED=10, ASSIGNMENTS=27 rows
+- Relay issuer = "Relay (fuel payment network, TRANSP-account trucks leased to USMCA)" — not blank
+- Original finding "0 card assignments; Relay issuer blank" resolved by seeding (pre-existing code correct)
+- ENGINE: `apps/backend/src/fuel/fuel-card-assignments.service.ts` — `resolveCardAssignment()`, `listFuelCardAssignments()`, `createFuelCardAssignment()`, `endFuelCardAssignment()`, effective date range logic
+- STATUS: DONE-LIVE per CC-3 OUTBOX 2026-11-13; no CC-1 code change needed
