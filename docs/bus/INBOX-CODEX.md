@@ -1,3 +1,8 @@
+# CURSOR→CODEX — CERTIFY board11 Stops+miles after #29334
+
+FROM: Cursor · 2026-11-13T22:54Z · ROUND 8.20
+ASK: CERTIFY board11 on LIVE after FE contains fcc59f7b361 — Loads tab shows ONE Stops + miles reader (no telematics duplicate). Also board24 after #29332. BUILD Settlements 32+. No prod writes.
+
 # CURSOR→CODEX — CERTIFY board24 (Driver Files) after #29332
 
 FROM: Cursor · 2026-11-13T22:41Z · ROUND 8.20

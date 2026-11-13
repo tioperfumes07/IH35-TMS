@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T22:54Z) — #29334 board11 Stops+miles once MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T22:54Z · #29334 SHA fcc59f7b361 MERGED (DriverTelematicsPanel ops drops stops-miles; one DriverProfileStopsMilesSection) · tip #29332/#29333 · ASK Codex: CERTIFY board11 + board24 + 1–23 · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T22:41Z) — #29332 board24 DQ calendar+cohort MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T22:41Z · #29332 SHA 9c2478853ef MERGED (DQ formatCalendarDateUS + ?cohort= URL SoT + ENG-60 DO DROP COLUMN consistency) · tip #29326/#29330 · ASK Codex: CERTIFY board24 + 1–23 + 25–31 · BUILD 32–45 · no prod writes
 
