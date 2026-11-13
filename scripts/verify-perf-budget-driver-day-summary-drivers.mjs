@@ -1,12 +1,19 @@
 /**
  * verify-perf-budget-driver-day-summary-drivers (ROW 124+138 / step 20035)
  *
- * Guards the duty CTE perf fix for driver-day-summary:
- *   Before: idx_hos_duty_status_events_driver_time (opco, driver_id, started_at)
- *           → planner scanned 15,550 index rows for 52 results (2026-11-12 prod, owner+bypass ~0.9s)
- *   Fix:    idx_hos_duty_status_events_duty_overlap (opco, duty_status, started_at) partial WHERE
- *           duty_status IN ('on_duty','on_duty_not_driving','driving')
- *           → planner filters opco+duty_status first, bounds started_at range, heap fetch is small
+ * Guards two perf fixes:
+ *
+ *   ROW 124+138 — duty CTE in driver-day-summary:
+ *     Before: idx_hos_duty_status_events_driver_time (opco, driver_id, started_at)
+ *             → planner scanned 15,550 index rows for 52 results (2026-11-12 prod, ~0.9s)
+ *     Fix:    idx_hos_duty_status_events_duty_ended (opco, duty_status, ended_at) partial WHERE
+ *             ended_at IS NOT NULL → hits only recent events (~52 rows, BitmapOr with open index)
+ *
+ *   ROW 138 — /api/v1/mdata/drivers 4,522 ms regression (ROW 197 fix, PR #28503):
+ *     Before: two separate withCurrentUser pool checkouts per request (company resolve + list),
+ *             causing 4,522 ms wait on a 5-connection pool shared with heavy reads.
+ *     Fix:    ONE pool checkout per request; company resolution inside the list transaction.
+ *     Result: 1.0 ms on prod (16 rows, 46 buffers, 2026-11-13 measured).
  *
  * --selftest: static checks only (no DB)
  * default:    live PG checks (requires DATABASE_URL); skips gracefully when absent
@@ -104,11 +111,30 @@ async function runSelftest() {
     }
   }
 
+  // 8. ROW 138: drivers.routes.ts single pool checkout (ROW 197 fix, PR #28503)
+  //    ONE pool checkout per request; company resolution inside the list transaction.
+  const driversRoutesPath = resolve(root, "apps/backend/src/mdata/drivers.routes.ts");
+  if (existsSync(driversRoutesPath)) {
+    const driversRoutes = readFileSync(driversRoutesPath, "utf8");
+    // The ROW 197 fix comment is authoritative. If someone reverts to two checkouts, this fires.
+    if (!driversRoutes.includes("ONE pool checkout per request")) {
+      failures.push(
+        "ROW138-POOL: drivers.routes.ts missing ROW 197 single-checkout comment — verify fix is still in place"
+      );
+    }
+    // company resolution must be inside the list transaction (not before it)
+    if (!driversRoutes.includes("resolveOperatingCompanyId(client, authUser.uuid, operating_company_id)")) {
+      failures.push(
+        "ROW138-RESOLVE: drivers.routes.ts no longer inlines resolveOperatingCompanyId inside the list transaction — double-checkout regression risk"
+      );
+    }
+  }
+
   if (failures.length > 0) {
     for (const f of failures) console.error("SELFTEST FAIL:", f);
     process.exit(1);
   }
-  console.log(`SELFTEST PASS: 7/7 static checks — duty CTE index migration intact`);
+  console.log(`SELFTEST PASS: 8/8 static checks — duty CTE index + drivers list single-checkout intact`);
 }
 
 async function runLive() {
@@ -192,6 +218,36 @@ async function runLive() {
         process.exit(1);
       }
       console.log(`ROW SCAN: estimated ${estimatedRows} ≤ ${CEILING} ✓`);
+    }
+
+    // ROW 138: drivers list buffer ceiling (before ROW 197 fix: 4,522 ms connection wait)
+    // After fix: 1.0 ms on prod (16 rows, 46 buffers). Ceiling is 100 to allow growth.
+    const driversExplainRes = await client.query(`
+      EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
+      SELECT count(*)::int AS total
+      FROM mdata.drivers
+      WHERE (operating_company_id = (
+               SELECT id FROM org.companies WHERE short_name ILIKE '%USMCA%' LIMIT 1
+             )
+            )
+        AND deactivated_at IS NULL
+        AND is_sample_data IS NOT TRUE
+    `);
+    const driversPlan = driversExplainRes.rows.map((r) => Object.values(r)[0]).join("\n");
+
+    // Extract shared buffers hit/read
+    const bufMatch = driversPlan.match(/shared (?:hit|read)=(\d+)/i);
+    const driversBufs = bufMatch ? parseInt(bufMatch[1], 10) : null;
+    const BUF_CEILING = 100;
+    if (driversBufs !== null && driversBufs > BUF_CEILING) {
+      console.error(
+        `FAIL: mdata/drivers count query buffers=${driversBufs} exceeds ceiling ${BUF_CEILING} — ROW 197 fix may have been reverted`
+      );
+      await client.query("ROLLBACK");
+      process.exit(1);
+    }
+    if (driversBufs !== null) {
+      console.log(`DRIVERS BUFFERS: ${driversBufs} ≤ ${BUF_CEILING} ✓ (ROW 138/197 fix intact)`);
     }
 
     console.log("PASS");
