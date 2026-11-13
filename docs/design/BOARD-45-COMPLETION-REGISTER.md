@@ -116,6 +116,24 @@ Updated 2026-11-11 ~5:50 PM CT · Cursor · Owner: do not stop until all 45 comp
 **Cursor wave 11-12 ~1–4AM CT:** #28905–#28909 CF go26 →33 · #28911–#28930 Finalize Save Draft / Fuel Settlement / Factoring Messages / Insurance Payment Schedule + Fleet Covered / CF3 customer / Legal Alerts + Policies/Templates / Escrow Register / Available Trucks Driver EntityLinks. LIVE still Codex for all 45.
 **OPEN:** LIVE Codex proof for all 45 (screenshots + wiring tables). Source CODE = 45/45 after R5/R6. SettlementDocumentDesigns mounted under Settlements (extra board specimen; not one of the numbered 45).
 
+## ROUND 8.20 — Cursor READY (await Codex LIVE CERTIFIED)
+Format: `# · board · READY <PR/sha> · tip · Z time`
+(Codex writes CERTIFIED after 1440×900 LIVE proof.)
+
+| # | Board | Status | Notes |
+|---|---|---|---|
+| 1 | Accounting | READY | #29278 c39f1044c2a list crumb resolveBackHref; #29272 child Backs; hub KPI ret |
+| 2 | Unexpected→Banking | READY | txn_id Match drawer + ret (prior #29071/#29274 wave) |
+| 3 | Banking | READY | #29274 child Backs; #29253 Money In review=all |
+| 4 | CF Home | READY | #29270 expense_bucket; Ending cumulative drill |
+| 5 | CF Projected | READY | #29258 proj_date stamp |
+| 6 | CF AVP | READY | #29255 review=all + Net variance chip |
+| 7–8 | CF RL/Manual | READY | ret + Save disabled while loading (prior wave) |
+| 9–10 | Cust/Vend | READY | Create no legacy under drawer |
+| 11–13 | Driver/Planner/LoadHist | READY | Class L + URL cohort + KPI=search |
+| 18–23 | Fact/Fuel/Ins/Legal/Maint | READY | Backs + board-only + period= + PM fh ret |
+| 25–26 | Reports Home/TB (+BS/PL) | READY | #29285/#29292 ?basis= URL hydrate |
+
 ## ROUND 8.17 — Cursor class R/L/S lines
 Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time`
 (A board Cursor fixed is CERTIFIED only after Codex checks it live.)
