@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -188,16 +189,14 @@ export function SettlementsEscrowBoard() {
         label: "Driver",
         sortable: true,
         sortValue: (r) => r.driverName,
-        // Settlements-Escrow.dc.html: name opens the driver's escrow register (not the HR profile).
         render: (r) => (
-          <Link
-            to={settlementsEscrowRegisterHref(r.holderId)}
-            className="font-bold underline"
-            style={{ color: V3.link, textUnderlineOffset: 2 }}
+          <EntityLinkOrTombstone
+            kind="driver"
+            id={r.holderId}
+            name={r.driverName}
+            noun="Driver"
             data-testid="settlements-escrow-driver-link"
-          >
-            {r.driverName}
-          </Link>
+          />
         ),
       },
       {
