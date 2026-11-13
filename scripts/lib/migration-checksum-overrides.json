@@ -568,5 +568,14 @@
     "ruling": "docs/bus/11-12-2026-CC2-ROW77-MIGRATION-SNAPSHOT-STALENESS-RULING.md",
     "added_at": "2026-11-12",
     "added_in_pr": "cc-2/row77-factoring-invoice-status-engine"
+  },
+  {
+    "filename": "202616310100_eng60_drop_insurance_lawsuit.sql",
+    "ledger_checksum": "27a2b34ff4d2fb409b4a78ba2bc080c1c7d7b649f6e1035cb1497887ebb9c4c3",
+    "disk_checksum": "567528164169a60fd61c5a5ff5d22fd45c4e32c48a6616509a3192351d6213c4",
+    "reason": "Fresh-DB order fix: drop legal.matters FK only while it still references insurance.lawsuit (prod: already retargeted by 202616311200 on 2026-11-03, so no-op). Verified both orders on a scratch DB 2026-11-13.",
+    "ruling": "docs/bus/11-13-2026-LEAD-RULING-202616310100-FRESH-DB-ORDER.md",
+    "added_by": "claude-lead",
+    "added_at": "2026-11-13"
   }
 ]
