@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r202-invoice-load-linkage",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 202 — invoice load linkage ratchet. Guard 19971 enforces ceiling of 2 active invoices without source_load_id.",
+  "branch": "cc-2/eng-r202-invoice-load-linkage",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-invoice-load-linkage-ratchet.mjs",
+    "scripts/verify-steps/19971-verify-invoice-load-linkage-ratchet.mjs",
+    ".block-ready/cc-2-r202-invoice-load-linkage.json"
+  ],
+  "acceptance": [
+    "verify-invoice-load-linkage-ratchet selftest PASS 2/2",
+    "total_active=223 no_load=2/2 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
