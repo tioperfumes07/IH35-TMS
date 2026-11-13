@@ -7,7 +7,7 @@
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
@@ -33,6 +33,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3, V3_TABLE } from "../../design/v3-tokens";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { describeQboSyncStatus } from "../../lib/qbo-sync-status";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../utils/qboFormat";
@@ -195,6 +196,9 @@ export function AccountingHubPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const [manualJeOpen, setManualJeOpen] = useState(false);
 
   const today = companyToday();
@@ -496,6 +500,7 @@ export function AccountingHubPage() {
           value={formatUsdCents(openBillsAmountCents)}
           sub={`${openBills.length} unpaid`}
           tone={openBills.length ? "red" : "ink"}
+          href={hubHref("/accounting/bills")}
           testId="acct-hub-kpi-open-bills"
         />
       )}
@@ -506,6 +511,7 @@ export function AccountingHubPage() {
           label="MTD expenses"
           value={formatUsdCents(expensesMtdCents)}
           sub="bills + expenses"
+          href={hubHref("/accounting/expenses/list")}
           testId="acct-hub-kpi-mtd-expenses"
         />
       )}
@@ -516,6 +522,7 @@ export function AccountingHubPage() {
           label="Open invoices"
           value={formatUsdCents(openInvoicesCents)}
           sub={`${openInvoicesCount} open`}
+          href={hubHref("/accounting/invoices?has_balance=true")}
           testId="acct-hub-kpi-open-invoices"
         />
       )}
@@ -527,6 +534,7 @@ export function AccountingHubPage() {
           value={formatUsdCents(overdueInvoiceCents)}
           sub={`${overdueInvoicesCount} overdue`}
           tone={overdueInvoicesCount > 0 ? "amber" : "ink"}
+          href={hubHref("/reports/ar-aging")}
           testId="acct-hub-kpi-overdue"
         />
       )}
@@ -537,6 +545,7 @@ export function AccountingHubPage() {
           label="Unmatched"
           value={String(unmatchedItems.length)}
           sub="failed / blocked queue"
+          href={hubHref("/banking/qbo-sync-queue")}
           testId="acct-hub-kpi-unmatched"
         />
       )}
@@ -548,6 +557,7 @@ export function AccountingHubPage() {
           value={qboSyncSummary.label}
           sub={qboSyncSummary.sub}
           tone={qboTone}
+          href={hubHref("/banking/qbo-sync-queue")}
           testId="acct-hub-kpi-qbo"
         />
       )}
@@ -583,7 +593,7 @@ export function AccountingHubPage() {
       >
         <BoardSection
           title={`${year} close — ${closedPastCount} of ${Math.max(0, pastMonthsInYear)} past months closed`}
-          onViewAll={() => navigate("/accounting/month-close")}
+          onViewAll={() => navigate(hubHref("/accounting/month-close"))}
           testId="accounting-hub-close-calendar"
         >
           <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -635,7 +645,7 @@ export function AccountingHubPage() {
         >
           <BoardSection
             title="Receivables aging"
-            onViewAll={() => navigate("/reports/ar-aging")}
+            onViewAll={() => navigate(hubHref("/reports/ar-aging"))}
             testId="accounting-hub-receivables-aging"
           >
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -709,7 +719,7 @@ export function AccountingHubPage() {
 
           <BoardSection
             title="Cash pulse · operating account"
-            onViewAll={() => navigate("/cash-flow")}
+            onViewAll={() => navigate(hubHref("/cash-flow"))}
             testId="accounting-hub-cash-pulse"
           >
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -756,7 +766,7 @@ export function AccountingHubPage() {
 
           <BoardSection
             title="Settlements open"
-            onViewAll={() => navigate("/driver-finance/settlements?state=open")}
+            onViewAll={() => navigate(hubHref("/driver-finance/settlements?state=open"))}
             testId="accounting-hub-settlements-open"
           >
             {toursOpenQ.isError ? (
@@ -795,11 +805,11 @@ export function AccountingHubPage() {
                       <Link
                         className="underline"
                         style={{ color: V3.ink }}
-                        to={
+                        to={hubHref(
                           row.driverId
                             ? `/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driverId)}`
-                            : "/driver-finance/settlements?state=open"
-                        }
+                            : "/driver-finance/settlements?state=open",
+                        )}
                       >
                         {formatUsdCents(row.cents)}
                       </Link>

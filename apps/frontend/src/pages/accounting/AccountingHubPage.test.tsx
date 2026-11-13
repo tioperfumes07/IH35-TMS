@@ -120,7 +120,7 @@ vi.mock("../../api/reports", () => ({
 
 function wrap(ui: ReactElement) {
   return (
-    <MemoryRouter>
+    <MemoryRouter initialEntries={["/accounting"]}>
       <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
         <ToastProvider>{ui}</ToastProvider>
       </QueryClientProvider>
@@ -148,5 +148,18 @@ describe("AccountingHubPage — board 443.267", () => {
     render(wrap(<AccountingHubPage />));
     expect(await screen.findByText("Test Driver")).toBeInTheDocument();
     expect(screen.getByText(/Receivables aging/i)).toBeInTheDocument();
+  });
+
+  it("ROUND 8.20 board1 — KPIs drill with ?ret=/accounting; lower grid asymmetric 1.2/1.2/1", async () => {
+    render(wrap(<AccountingHubPage />));
+    const openBills = await screen.findByTestId("acct-hub-kpi-open-bills");
+    expect(openBills.getAttribute("href") ?? "").toContain("ret=");
+    expect(decodeURIComponent(openBills.getAttribute("href") ?? "")).toContain("/accounting");
+    expect(screen.getByTestId("acct-hub-kpi-open-invoices").getAttribute("href") ?? "").toContain("ret=");
+    expect(screen.getByTestId("acct-hub-kpi-overdue").getAttribute("href") ?? "").toContain("/reports/ar-aging");
+    const grid = screen.getByTestId("accounting-hub-lower-grid");
+    expect(grid.className).toContain("min-[1100px]:grid-cols-[1.2fr_1.2fr_1fr]");
+    const settleAmt = await screen.findByRole("link", { name: /\$14\.78|\$1,478/i });
+    expect(settleAmt.getAttribute("href") ?? "").toContain("ret=");
   });
 });
