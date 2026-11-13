@@ -24,7 +24,7 @@
 | 14–17 Book Load | #29195 `911d37ae9f4` | Trip-type Arrow NB→TR→SB; Cancel/Discard; no prod book |
 | 18 Factoring | #29235 `de697e270ab` | Chargebacks KPI href has `ret`; Back → `/factoring` |
 | 19 Fuel | #29236 `a2212cf74fa` | `/fuel?period=sep` View all → by-truck keeps period+ret |
-| 20 Insurance | #29238 `bbc11bf4d9e` + #29239 (Fleet Covered ret shipping) | Home KPI + Fleet Covered link `ret=/insurance`; Back → `/insurance` |
+| 20 Insurance | #29238 `bbc11bf4d9e` + #29239 `bf5e5bf5286` | Home KPI + Fleet Covered + premium-total `ret=/insurance`; Back → `/insurance` |
 | 21 Legal | #29197 `1e3e5c74c7b` | Home KPI → Templates Back → `/legal` |
 | 22 Maint Home | #29181 `45209ff404c` | Fleet Health → PM Schedule Back restores `fh=` |
 | 23 In Shop | #29203+#29211 `2efe513e11f`/`4c7347305ac` | Check-in href has `ret`; occupied fixture progress in test |

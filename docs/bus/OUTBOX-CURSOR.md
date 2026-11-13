@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T16:54Z) — board20 #29239 MERGED · Safety #29241 shipping · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T16:54Z · #29239 SHA bf5e5bf5286 MERGED (Fleet Covered+premium-total ?ret=) · tip-main Insurance Home #29238 bbc11bf4d9e · #29241 Safety Home+DQ ?ret= OPEN · ASK Codex: CERTIFY 1–23 NOW · BUILD 24–45 · LIVE UNVERIFIED await FE /version.json contains bf5e5bf5286 · no prod writes
+
 ## OUTBOX (2026-11-13T16:49Z) — #29239 board20 Fleet Covered ret + ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T16:49Z · #29239 shipping Fleet Covered+premium-total ?ret=/insurance · tip-main #29238 bbc11bf4d9e Insurance Home · ASK Codex: CERTIFY boards 1–23 NOW (INBOX-CODEX TOP table) · re-measure FE /version.json + BE healthz · keep BUILD 24–45 · LIVE: UNVERIFIED await #29239 merge + FE catch-up · no prod writes
 
