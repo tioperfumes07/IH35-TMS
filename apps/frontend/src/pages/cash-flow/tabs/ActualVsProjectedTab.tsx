@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { localDateFromIso } from "../../../lib/businessDate";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,8 @@ import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
+import { currentOriginHref, mergeUrlBoardState, withReturnContext } from "../../../lib/returnContext";
+import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 
 // CASHFLOW-1: range must end on the company business date (Central), not the UTC date — otherwise the
 // "To" defaults to tomorrow after ~7 PM Central. See lib/businessDate.
@@ -90,8 +93,9 @@ function VarianceCell({ variance_cents, variance_pct }: { variance_cents: number
   );
 }
 
-// Column order/formatting preserved 1:1 from the former hand-rolled table markup (display-only migration).
-const COLUMNS: Array<ParityColumn<RowGroup>> = [
+// ROUND 8.20 board6 — columns close over originHref so Actual cells carry ?ret= to Banking.
+function buildAvpColumns(originHref: string): Array<ParityColumn<RowGroup>> {
+  return [
   {
     key: "date",
     label: "Date",
@@ -133,7 +137,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     sortable: true,
     className: "text-right",
     sortValue: (g) => g.income.actual_cents,
-    render: (g) => <ActualCell line={g.income} />,
+    render: (g) => <ActualCell line={g.income} originHref={originHref} />,
   },
   {
     key: "income_variance",
@@ -164,7 +168,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
     sortable: true,
     className: "text-right",
     sortValue: (g) => g.expenses.actual_cents,
-    render: (g) => <ActualCell line={g.expenses} />,
+    render: (g) => <ActualCell line={g.expenses} originHref={originHref} />,
   },
   {
     key: "expense_variance",
@@ -203,6 +207,7 @@ const COLUMNS: Array<ParityColumn<RowGroup>> = [
       ),
   },
 ];
+}
 
 // E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0; a past
 // day read from the morning snapshot says so, like Projected Income does.
@@ -239,7 +244,18 @@ export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
 // backend measured 0 categorized bank lines company-wide -- a bare $0 here would read as
 // "confirmed zero cash moved" when the truth is "we cannot see actuals yet". Render the honest
 // state instead of the number.
-function ActualCell({ line }: { line: AvpLineItem }) {
+/** ROUND 8.20 board6 — Actual Income/Exp → same-day Banking Money In/Out with ret. */
+export function buildAvpActualDrillHref(
+  line: Pick<AvpLineItem, "category" | "date">,
+  originHref: string,
+): string {
+  const types = line.category === "income" ? "money_in" : "money_out";
+  const target = `${BANKING_TAB_PATH.transactions}?types=${types}&review=categorized&date_from=${encodeURIComponent(line.date)}&date_to=${encodeURIComponent(line.date)}`;
+  return withReturnContext(target, originHref);
+}
+
+// ROUND 8.20 board6 — available actuals drill the same-day Banking Money In/Out cohort with ret.
+function ActualCell({ line, originHref }: { line: AvpLineItem; originHref: string }) {
   if (line.actual_unavailable) {
     return (
       <span
@@ -251,7 +267,16 @@ function ActualCell({ line }: { line: AvpLineItem }) {
       </span>
     );
   }
-  return <span style={{ color: V3.ink }}>{formatCents(line.actual_cents)}</span>;
+  return (
+    <Link
+      to={buildAvpActualDrillHref(line, originHref)}
+      className="font-semibold underline-offset-2 hover:underline"
+      style={{ color: V3.ink }}
+      data-testid={`cash-flow-avp-actual-${line.category}-${line.date}`}
+    >
+      {formatCents(line.actual_cents)}
+    </Link>
+  );
 }
 
 type VarianceFilter = "all" | "over" | "under" | "flat";
@@ -565,11 +590,25 @@ export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { poi
   );
 }
 
+function parseAvpVariance(raw: string | null): VarianceFilter {
+  if (raw === "over" || raw === "under" || raw === "flat") return raw;
+  return "all";
+}
+
 export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   // LV-CASH-FLOW-ACTUAL-SPLIT-FILTER-APPLY — From/To + Net variance share one staged Filters draft.
+  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const columns = useMemo(() => buildAvpColumns(originHref), [originHref]);
   const defaultFrom = sevenDaysAgoIso();
   const defaultTo = todayIso();
-  const [applied, setApplied] = useState<AvpFilterDraft>({ from: defaultFrom, to: defaultTo, varianceFilter: "all" });
+  const urlVariance = parseAvpVariance(searchParams.get("avp_var"));
+  const [applied, setApplied] = useState<AvpFilterDraft>({
+    from: defaultFrom,
+    to: defaultTo,
+    varianceFilter: urlVariance,
+  });
   const [chartGrain, setChartGrain] = useState<ChartGrain>("cumulative");
   const staged = useStagedListFilters({
     applied,
@@ -577,12 +616,29 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
     onApply: (next) => {
       if (next.from > next.to) return;
       setApplied(next);
+      // ROUND 8.20 board6 — variance chip lives in URL so ret restores the cohort.
+      setSearchParams(
+        (prev) => {
+          const merged = mergeUrlBoardState(prev.toString(), {
+            avp_var: next.varianceFilter === "all" ? null : next.varianceFilter,
+          });
+          return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
+        },
+        { replace: true },
+      );
     },
   });
   const draftInvalid = staged.draft.from > staged.draft.to;
   const activeFilterCount =
     (applied.varianceFilter === "all" ? 0 : 1) +
     (applied.from !== defaultFrom || applied.to !== defaultTo ? 1 : 0);
+
+  // Keep applied variance in sync when URL changes (Back via ret).
+  useEffect(() => {
+    setApplied((prev) =>
+      prev.varianceFilter === urlVariance ? prev : { ...prev, varianceFilter: urlVariance },
+    );
+  }, [urlVariance]);
 
   const avpQ = useQuery<ActualVsProjectedResult>({
     queryKey: ["cash-flow-avp", operatingCompanyId, applied.from, applied.to],
@@ -780,6 +836,37 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
         </div>
       )}
 
+      {/* ROUND 8.20 board6 — variance chips (board: over / under / flat), URL-backed. */}
+      <div className="flex flex-wrap items-center gap-2" data-testid="cash-flow-avp-variance-chips">
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: V3.muted }}>
+          Net variance
+        </span>
+        <V3Segmented
+          value={applied.varianceFilter}
+          onChange={(next) => {
+            const varianceFilter = parseAvpVariance(next);
+            setApplied((prev) => ({ ...prev, varianceFilter }));
+            staged.setDraft({ ...staged.draft, varianceFilter });
+            setSearchParams(
+              (prev) => {
+                const merged = mergeUrlBoardState(prev.toString(), {
+                  avp_var: varianceFilter === "all" ? null : varianceFilter,
+                });
+                return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
+              },
+              { replace: true },
+            );
+          }}
+          options={[
+            { id: "all", label: "All" },
+            { id: "over", label: "Over" },
+            { id: "under", label: "Under" },
+            { id: "flat", label: "Flat" },
+          ]}
+          testId="cash-flow-avp-variance-chips-seg"
+        />
+      </div>
+
       {!isLoading && chartPoints.length > 0 && (
         <BoardSection
           title="Cumulative — projected vs actual"
@@ -821,7 +908,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       ) : (
         <ParityTable appearance="board"
           title="Actual vs projected — by date"
-          columns={COLUMNS}
+          columns={columns}
           rows={filteredGroups}
           rowKey={(g) => g.date}
           loading={isLoading}
