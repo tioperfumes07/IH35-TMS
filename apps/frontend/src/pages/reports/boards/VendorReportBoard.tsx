@@ -162,7 +162,18 @@ export function VendorReportBoard() {
     { key: "spend_cents", label: "Spend", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.spend_cents) },
     { key: "share", label: "% of spend", sortable: true, sortValue: (r) => r.spend_cents, cellClass: "text-right", className: "text-right", render: (r) => pctLabel(pct(r.spend_cents, spend)) },
     { key: "open_bills_cents", label: "Open bills", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.open_bills_cents) },
-    { key: "pays_through", label: "Pays through", sortable: true, render: (r) => r.pays_through ?? "—" },
+    {
+      key: "pays_through",
+      label: "Pays through",
+      sortable: true,
+      // ROUND 8.20 board10/31 — Pays-through is a CoA account, not plain text.
+      render: (r) =>
+        r.pays_through && r.pays_through_account_id ? (
+          <EntityLink kind="account" id={r.pays_through_account_id} label={r.pays_through} />
+        ) : (
+          (r.pays_through ?? "—")
+        ),
+    },
     { key: "last_paid", label: "Last", sortable: true, render: (r) => mmmDd(r.last_paid) || "—" },
     {
       key: "expenses",

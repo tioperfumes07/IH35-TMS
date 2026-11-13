@@ -1750,6 +1750,9 @@ export type VendorBoardReportRow = {
   avg_ticket_cents: number | null;
   last_paid: string | null;
   pays_through: string | null;
+  /** GL account id for the modal Pays-through name (EntityLink target). */
+  pays_through_account_id?: string | null;
+  category_account_id?: string | null;
   open_bills: number;
   open_bills_cents: number;
 };
