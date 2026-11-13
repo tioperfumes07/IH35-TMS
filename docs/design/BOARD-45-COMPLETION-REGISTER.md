@@ -5,6 +5,7 @@
 Cursor product MERGED (await FE `/version.json` catch-up for CERTIFY):
 - board24 Driver Files — #29332 `9c2478853ef` (formatCalendarDateUS + `?cohort=` URL SoT + ENG-60 DO DROP COLUMN consistency)
 - board11 Driver Profile Stops+miles once — #29334 `fcc59f7b361` (telematics ops drops duplicate stops-miles)
+- board31 Vendor report Pays-through EntityLink — #29338 `c086b250c84`
 Prior wave still READY for CERTIFY: reports 25–31 URL/ret tips through #29330; Safety/Maint/Banking/Legal Backs through earlier PRs.
 CERTIFIED remains **0/45** until Codex LIVE. Production writes: 0.
 
