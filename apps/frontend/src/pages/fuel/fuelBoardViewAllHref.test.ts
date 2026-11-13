@@ -10,10 +10,10 @@ describe("ROUND 8.20 board19 fuelBoardViewAllHref", () => {
     expect(decodeURIComponent(href)).toContain("/fuel");
   });
 
-  it("omits default oct period param but still attaches ret", () => {
+  it("always includes period=oct (never omit default) + ret", () => {
     const href = fuelBoardViewAllHref("oct", "/fuel?period=sep");
     expect(href.startsWith("/fuel/by-truck?")).toBe(true);
-    expect(href).not.toContain("period=oct");
+    expect(href).toContain("period=oct");
     expect(href).toContain("ret=");
   });
 });
