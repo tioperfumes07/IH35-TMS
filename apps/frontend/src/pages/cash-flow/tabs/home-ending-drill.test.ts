@@ -14,8 +14,8 @@ describe("Cash Flow Home Ending drill (board4/7)", () => {
   });
 
   it("Rolling Ledger Ending banner shows Opening + Net = Ending (not Clicked Ending = net)", () => {
-    expect(ledgerSource).toMatch(/Clicked Ending = \{formatUsdCents\(homeNetBreakdown\.ending\)\}/);
-    expect(ledgerSource).toMatch(/Opening \{formatUsdCents\(homeNetBreakdown\.opening\)\}/);
+    expect(ledgerSource).toMatch(/Clicked Ending = \$\{formatUsdCents\(homeNetBreakdown\.ending\)\}/);
+    expect(ledgerSource).toMatch(/Opening \$\{formatUsdCents\(homeNetBreakdown\.opening\)\}/);
     expect(ledgerSource).toMatch(/searchParams\.get\("rl_ending"\)/);
     // Negative control: Ending path must not label Clicked Ending with homeNetBreakdown.net alone.
     expect(ledgerSource).not.toMatch(
