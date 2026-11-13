@@ -246,3 +246,7 @@ ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-35 Cash Flow Manual — #27453 d86e35ce
 ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-37 Accounting Unexpected — BoardSection+ParityTable wired; Link→Banking Match drawer; accounting-nav guard PASS
 ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-38 Banking Home — BankingHomeBoard uses ParityTable; banking-home-boards PASS; banking-home-kpi-owner-now PASS
 ROUND 8.22 09:00Z · CC-2 DONE-LIVE: ROW-39 Factoring Home — #29230 324f3c92 ENG-17 collection summary widget; guard step 20019 PASS
+
+## ROUND 8.23 — 2026-11-13 17:00Z — CC-2 checkpoint
+
+ROUND 8.23 17:00Z · CC-2 DONE-ENGINE: ENG-17 factoring collection engine — resolver live-verified: factoring_advance_liability → account 2150 "Factoring Advance" (Liability, is_postable=true) resolves correctly for USMCA (5c854333); guard step 20019 PASS exit=0; COA role row present since 2026-07-22; no migration needed — binding was already in place; DATA-LATER: Faro replay (apply collections to live invoices)
