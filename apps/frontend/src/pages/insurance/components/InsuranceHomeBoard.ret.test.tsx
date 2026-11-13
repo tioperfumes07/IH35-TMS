@@ -32,5 +32,8 @@ describe("ROUND 8.20 board20 InsuranceHomeBoard ret", () => {
     await waitFor(() => expect(kpi.getAttribute("href") ?? "").toContain("ret="));
     expect(decodeURIComponent(kpi.getAttribute("href") ?? "")).toContain("/insurance");
     expect(screen.getByTestId("insurance-kpi-coverage-gaps").getAttribute("href") ?? "").toContain("ret=");
+    const fleet = screen.getByTestId("insurance-home-fleet-covered-link");
+    expect(fleet.getAttribute("href") ?? "").toContain("ret=");
+    expect(decodeURIComponent(fleet.getAttribute("href") ?? "")).toContain("/insurance");
   });
 });

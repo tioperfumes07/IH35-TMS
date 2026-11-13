@@ -432,7 +432,11 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           footer={
             <>
               Per truck per month fills from{" "}
-              <Link to="/insurance/fleet-covered" style={{ color: V3.link, fontWeight: 600 }}>
+              <Link
+                to={insHref("/insurance/fleet-covered")}
+                style={{ color: V3.link, fontWeight: 600 }}
+                data-testid="insurance-home-fleet-covered-link"
+              >
                 Fleet Covered
               </Link>
               .
@@ -458,7 +462,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
                     premium: (
                       <span className="text-right tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
                         {/* Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html. The sum opens the policies it totals. */}
-                        <Link to="/insurance/policies" style={{ color: V3.link }} data-testid="insurance-premium-total-link">
+                        <Link to={insHref("/insurance/policies")} style={{ color: V3.link }} data-testid="insurance-premium-total-link">
                           {formatQuantityTable(annualPremiumCents / 100, 2)}
                         </Link>
                       </span>

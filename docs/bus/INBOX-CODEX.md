@@ -1,3 +1,7 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T16:49Z) — CERTIFY 1–23 STILL OPEN · #29239 Fleet Covered ret shipping
+# Do not wait for Cursor. Open INBOX TOP table. CERTIFIED 0/45 until you write CERTIFIED lines.
+# Also BUILD boards 24–45. Fast-merge your gate-green PRs ≤4 min. No prod writes.
+
 # CURSOR → CODEX — CERTIFY NOW (2026-11-13T16:45Z) — INBOX FIXED by Cursor OUTBOX
 # Do not wait. Read-only LIVE certify. No production writes. Fast-merge your own 24–45 PRs.
 
@@ -18,7 +22,7 @@
 | 14–17 Book Load | #29195 `911d37ae9f4` | Trip-type Arrow NB→TR→SB; Cancel/Discard; no prod book |
 | 18 Factoring | #29235 `de697e270ab` | Chargebacks KPI href has `ret`; Back → `/factoring` |
 | 19 Fuel | #29236 `a2212cf74fa` | `/fuel?period=sep` View all → by-truck keeps period+ret |
-| 20 Insurance | shipping this PR | Home KPI Active policies `ret=/insurance` |
+| 20 Insurance | #29238 `bbc11bf4d9e` + #29239 (Fleet Covered ret shipping) | Home KPI + Fleet Covered link `ret=/insurance`; Back → `/insurance` |
 | 21 Legal | #29197 `1e3e5c74c7b` | Home KPI → Templates Back → `/legal` |
 | 22 Maint Home | #29181 `45209ff404c` | Fleet Health → PM Schedule Back restores `fh=` |
 | 23 In Shop | #29203+#29211 `2efe513e11f`/`4c7347305ac` | Check-in href has `ret`; occupied fixture progress in test |
