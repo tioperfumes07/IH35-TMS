@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { userFacingApiError } from "../../lib/api-error-message";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { Combobox } from "../../components/Combobox";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -90,6 +92,14 @@ export function CSAMitigationQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const mitigationBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/safety/home",
+  });
   const companyId = selectedCompanyId ?? "";
   const canMutate = ["Owner", "Administrator", "Manager", "Safety"].includes(String(auth.user?.role ?? ""));
 
@@ -203,7 +213,7 @@ export function CSAMitigationQueuePage() {
         title="CSA Mitigation Queue"
         subtitle={`Open actions sorted by urgency. Generated ${queueQuery.data?.generated_at ? new Date(queueQuery.data.generated_at).toLocaleString() : "not available"}.`}
         breadcrumb={[{ label: "Safety" }, { label: "CSA Mitigation" }]}
-        backHref="/safety"
+        backHref={mitigationBackHref}
       />
 
       <div className="rounded-sm border border-gray-200 bg-white p-3">

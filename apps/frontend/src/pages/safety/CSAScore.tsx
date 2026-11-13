@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { useAuth } from "../../auth/useAuth";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type BasicCategory =
   | "unsafe_driving"
@@ -119,6 +121,14 @@ export function CSAScorePage() {
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — Home KPI attaches ?ret=/safety/home; Back must honor it.
+  const csaBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/safety/home",
+  });
   const companyId = selectedCompanyId ?? "";
   const lifecycleGenerationRef = useRef(0);
   const canPull = ["Owner", "Administrator", "Manager", "Safety"].includes(String(auth.user?.role ?? ""));
@@ -171,7 +181,7 @@ export function CSAScorePage() {
   return (
     <div className="space-y-3">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="CSA / FMCSA Trend" breadcrumb={[{ label: "Safety" }, { label: "CSA / FMCSA Trend" }]} backHref="/safety" />
+      <PageHeader title="CSA / FMCSA Trend" breadcrumb={[{ label: "Safety" }, { label: "CSA / FMCSA Trend" }]} backHref={csaBackHref} />
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-white p-3 text-xs">
         <div className="space-y-1">
           <div className="text-xs font-semibold text-[#1F2A44]">FMCSA CSA source status</div>
