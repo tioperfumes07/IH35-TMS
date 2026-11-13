@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T16:49Z) — #29239 board20 Fleet Covered ret + ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T16:49Z · #29239 shipping Fleet Covered+premium-total ?ret=/insurance · tip-main #29238 bbc11bf4d9e Insurance Home · ASK Codex: CERTIFY boards 1–23 NOW (INBOX-CODEX TOP table) · re-measure FE /version.json + BE healthz · keep BUILD 24–45 · LIVE: UNVERIFIED await #29239 merge + FE catch-up · no prod writes
+
 ## OUTBOX (2026-11-13T16:49Z) — board20 Fleet Covered drill ?ret= shipping
 ROUND 8.20 2026-11-13T16:49Z · board20 Fleet Covered + premium-total links carry ?ret=/insurance · tip #29238 bbc11bf4d9e · ASK Codex: CERTIFY packet is live on main · LIVE: UNVERIFIED await merge
 
