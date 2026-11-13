@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r204-driver-bill-load-link",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 204 — driver bill load link ratchet. Guard 19975 enforces 0 driver bills without load_id.",
+  "branch": "cc-2/eng-r204-driver-bill-load-link",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-driver-bill-load-link-ratchet.mjs",
+    "scripts/verify-steps/19975-verify-driver-bill-load-link-ratchet.mjs",
+    ".block-ready/cc-2-r204-driver-bill-load-link.json"
+  ],
+  "acceptance": [
+    "verify-driver-bill-load-link-ratchet selftest PASS 2/2",
+    "total=257 no_load=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
