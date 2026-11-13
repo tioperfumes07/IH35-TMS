@@ -219,3 +219,7 @@ ROUND 8.20 11:00Z · CC-2 DONE-LIVE: ENG-13 trailer choice engine · PR #29161 �
 ROUND 8.20 11:30Z · CC-2 DONE-LIVE: ENG-48 fuel fill expense one-to-one ratchet engine · PR #29167 · merged 9dcaebcee1 · guards: verify-fuel-fill-expense-one-to-one (selftest 2/2 PASS, live PASS: total_fills=1088 no_je=907/907 no_expense=125/125 multi_expense=214/214 zero_je=0/0) · verify-step 19931
 
 ROUND 8.20 11:30Z · CC-2 DONE-LIVE: ENG-49 settlement line totals engine · PR #29168 · merged bc43e9454994 · guards: verify-settlement-line-totals (selftest 2/2 PASS, live PASS: total_closed=103 reimb_mismatch=0/0 deductions_mismatch=13/13) · verify-step 19935
+
+## ROUND 8.21 — 2026-11-13 05:20Z — CC-2 checkpoint (deployed SHA 250322ac9579fe3a9abfb95a14c33d66ec6c9acb)
+
+ROUND 8.21 05:20Z · CC-2 DONE-LIVE (deployed 250322a 05:12Z): ROW-77 #29145 cfd55e6f live: 228 non-void invoices (57 advanced / 171 not_factored) | ENG-50 #29152 285a9d72 live: 278 invoices 0 amount_paid mismatches | ENG-17 #29163 d0377084 live: 1090 $244,325.48 36 postings 0 missing | ENG-13 #29161 e7f3f764 live: 0/227 active loads missing trailer | ENG-48 #29167 9dcaebce live: 1088 fills no_je=907 no_expense=125 multi_expense=214 | ENG-49 #29168 bc43e945 live: 103 closed settlements reimb_mismatch=0 deductions_mismatch=13 · starting Row 76 (settlements paid ratchet 19939) → Row 97 (bank recon drift 19947) → Row 207 (guards 443.288)
