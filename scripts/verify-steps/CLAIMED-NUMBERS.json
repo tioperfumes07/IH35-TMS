@@ -17931,7 +17931,12 @@
       "996-verify-parts-vendor-link-rendered.mjs"
     ]
   },
-  "total_claimed": 1108,
+  "20153": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-3",
+    "purpose": "verify-company-settlements-report-speed-lt-2s"
+  },
+  "total_claimed": 1109,
   "10557": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cc-1",
