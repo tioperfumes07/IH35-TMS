@@ -8,7 +8,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { dispatchSubNavActiveHref } from "../../../components/dispatch/DispatchSubnav";
 import { panelTimeline } from "../../../components/dispatch/LoadHistoryDetailPanel";
-import { emptyMilesPct, loadHistoryApiParams, ratePerMileCents, LOAD_HISTORY_ALL_FROM } from "../LoadHistoryBoardPage";
+import {
+  cohortTotalsFromRows,
+  emptyMilesPct,
+  loadHistoryApiParams,
+  ratePerMileCents,
+  LOAD_HISTORY_ALL_FROM,
+} from "../LoadHistoryBoardPage";
 
 const { row, getLoadsHistory, getDispatchLoadHistory, CO } = vi.hoisted(() => {
   const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
@@ -110,6 +116,16 @@ describe("load history helpers", () => {
   });
   it("subnav highlights Load history", () => {
     expect(dispatchSubNavActiveHref("/dispatch/load-history", "")).toBe("/dispatch/load-history");
+  });
+  it("ROUND 8.20 board13 — empty search cohort totals are 0 (KPI matches table)", () => {
+    expect(cohortTotalsFromRows([])).toEqual({
+      load_count: 0,
+      revenue_cents: 0,
+      loaded_miles: 0,
+      empty_miles: 0,
+      customer_count: 0,
+      delivered_not_invoiced: 0,
+    });
   });
 });
 
