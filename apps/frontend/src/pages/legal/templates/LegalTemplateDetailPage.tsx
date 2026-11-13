@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { legalTemplatesApi, type LegalTemplateDetail } from "../../../api/legal-templates";
@@ -15,6 +15,7 @@ import { formatQuantityTable } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
+import { resolveBackHref } from "../../../lib/returnContext";
 
 function auditActorLabel(row: TemplateAuditEvent): string {
   if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
@@ -73,10 +74,18 @@ const AUDIT_LOG_COLUMNS: Array<ParityColumn<TemplateAuditEvent>> = [
 
 export function LegalTemplateDetailPage() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
+  // ROUND 8.20 board21 — Templates detail Back honors ?ret= (fallback Templates list).
+  const templatesBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/legal/templates",
+  });
 
   const [submitError, setSubmitError] = useState("");
   const [attorneyReviewUrl, setAttorneyReviewUrl] = useState("");
@@ -252,7 +261,7 @@ export function LegalTemplateDetailPage() {
         title={`${template.display_name_en} (v${formatQuantityTable(template.version, 0)})`}
         actions={
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => navigate("/legal/templates")}>
+            <Button variant="secondary" onClick={() => navigate(templatesBackHref)} data-testid="legal-template-detail-back">
               Back
             </Button>
             <Button onClick={() => void updateMutation.mutate()} disabled={!isDraft || updateMutation.isPending}>
