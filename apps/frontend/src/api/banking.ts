@@ -486,6 +486,18 @@ export function getBankingKpis(companyId: string) {
   return apiRequest<Record<string, unknown>>(`/api/v1/banking/dashboard/kpis?${q(companyId)}`);
 }
 
+/** Row 22 — GET /api/v1/banking/kpis (structured KPI array incl. relay_ingest_heartbeat). */
+export type BankingKpiEntry = {
+  key: string;
+  value: number | null;
+  primary_label?: string;
+  empty_reason: string | null;
+};
+
+export function getBankingKpiList(companyId: string) {
+  return apiRequest<{ kpis: BankingKpiEntry[] }>(`/api/v1/banking/kpis?${q(companyId)}`);
+}
+
 /** ROUND 443.267 board 3 — GET /api/v1/banking/money-map (MTD in/out + lines + pending per account). */
 export type MoneyMapOutflowGroup = {
   group: string;

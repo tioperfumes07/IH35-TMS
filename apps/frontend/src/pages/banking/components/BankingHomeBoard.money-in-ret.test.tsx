@@ -13,6 +13,7 @@ vi.mock("../../../api/banking", () => ({
   getBankingTiles: vi.fn().mockResolvedValue({ tiles: [] }),
   getDriftAlerts: vi.fn().mockResolvedValue({ alerts: [] }),
   getPlaidCompanyTransactions: vi.fn().mockResolvedValue({ transactions: [] }),
+  getBankingKpiList: vi.fn().mockResolvedValue({ kpis: [] }),
 }));
 
 vi.mock("../../../api/drift", () => ({

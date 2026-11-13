@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
+  getBankingKpiList,
   getBankingTiles,
   getDriftAlerts,
   getMoneyMap,
@@ -287,6 +288,17 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     queryFn: () => getPlaidCompanyTransactions(companyId, { limit: 5, sort: "date_desc" }),
     enabled: Boolean(companyId),
   });
+  // Row 22 — Relay ingest heartbeat: hours since last successful relay_fuel_daily_pull pull.
+  const relayKpiQuery = useQuery({
+    queryKey: ["banking", "kpis", companyId],
+    queryFn: () => getBankingKpiList(companyId),
+    enabled: Boolean(companyId),
+  });
+  const relayHeartbeat = relayKpiQuery.data?.kpis?.find((k) => k.key === "relay_ingest_heartbeat") ?? null;
+  const relayHoursAgo = relayHeartbeat?.value ?? null;
+  const relayLabel = relayHeartbeat
+    ? (relayHeartbeat.primary_label ?? (relayHoursAgo != null ? `${relayHoursAgo}h ago` : "Never"))
+    : "—";
 
   const tileById = useMemo(() => {
     const m = new Map<string, BankingTile>();
@@ -653,6 +665,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
 
   const loadError =
     moneyMapQuery.isError || tilesQuery.isError || driftQuery.isError || latestQuery.isError;
+  const relayTone = !relayKpiQuery.isError && relayHoursAgo != null && relayHoursAgo <= 24 ? "green" : "red";
 
   return (
     <div className="space-y-3" data-testid="banking-home-board" style={{ fontFamily: V3.font }}>
@@ -672,7 +685,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
       ) : null}
 
       <div
-        className="grid grid-cols-2 gap-2 md:grid-cols-4"
+        className="grid grid-cols-2 gap-2 md:grid-cols-5"
         data-testid="banking-home-board-kpis"
         style={{ gap: 8 }}
       >
@@ -708,6 +721,15 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           tone={driftCount > 0 ? "red" : "ink"}
           testId="banking-kpi-drift-alerts"
           href={BANKING_TAB_PATH.reconciliation}
+        />
+        {/* Row 22 — Relay ingest heartbeat tile: green ≤24h, red >24h or never. */}
+        <V3KpiTile
+          label="RELAY FEED"
+          value={relayKpiQuery.isError ? "—" : relayLabel}
+          sub="last pull · fuel cards"
+          tone={relayKpiQuery.isError ? "red" : relayTone}
+          testId="banking-kpi-relay-feed"
+          href="/banking/relay-card"
         />
       </div>
 
