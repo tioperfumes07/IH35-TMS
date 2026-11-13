@@ -30,5 +30,12 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src"]
+  "include": ["src"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.ret.test.ts",
+    "src/**/*.ret.test.tsx",
+    "src/**/__tests__/**"
+  ]
 }
