@@ -1861,6 +1861,24 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   </div>
                 );
               }
+
+              // Collected vs Open per Purchase summary (ENG-17)
+              const byAdvance = new Map<string, { advance_display_id: string; total_cents: number; collected_cents: number; open_cents: number; count: number; collected_count: number }>();
+              for (const row of rows) {
+                const advId = row.factoring_advance_id ?? "__none__";
+                const cents = Number(row.total_cents ?? 0);
+                const isCollected = row.factoring_status === "collected";
+                const existing = byAdvance.get(advId) ?? { advance_display_id: row.advance_display_id ?? advId.slice(0, 8), total_cents: 0, collected_cents: 0, open_cents: 0, count: 0, collected_count: 0 };
+                existing.total_cents += cents;
+                existing.count += 1;
+                if (isCollected) { existing.collected_cents += cents; existing.collected_count += 1; }
+                else { existing.open_cents += cents; }
+                byAdvance.set(advId, existing);
+              }
+              const advanceSummaryRows = [...byAdvance.entries()]
+                .filter(([k]) => k !== "__none__")
+                .sort((a, b) => b[1].total_cents - a[1].total_cents);
+
               const invoiceStatusColumns: Array<ParityColumn<FactoringInvoiceStatusRow>> = [
                 { key: "issue_date", label: "Invoiced Date", sortable: true, render: (row) => fmtDate(row.issue_date) },
                 { key: "lc_settlement_number", label: "Settlement #", alwaysVisible: true, sortable: true, render: (row) =>
@@ -1952,15 +1970,57 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 { key: "factoring_status", label: "Factoring Status", sortable: true, render: (row) => row.factoring_status ?? "—" },
               ];
               return (
-                <ParityTable appearance="board"
-                  title="Invoice status — by invoice"
-                  columns={invoiceStatusColumns}
-                  rows={rows}
-                  rowKey={(row) => row.invoice_id}
-                  storageKey="factoring-invoice-status"
-                  tableTestId="factoring-invoice-status-table"
-                  emptyText="No invoices found for the selected filters."
-                />
+                <>
+                  {/* ENG-17: Collected vs Open per Purchase summary */}
+                  {advanceSummaryRows.length > 0 ? (
+                    <div className="mb-3 px-3.5" data-testid="factoring-collection-summary">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-[#4B5563] mb-1">Collection Summary by Advance</div>
+                      <table className="w-full border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-[#E5E7EB]">
+                            <th className="py-1 text-left text-[11px] font-semibold uppercase text-[#4B5563]">Advance</th>
+                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Total Invoiced</th>
+                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Collected</th>
+                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Open</th>
+                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {advanceSummaryRows.map(([advId, s]) => {
+                            const pct = s.total_cents > 0 ? Math.round((s.collected_cents / s.total_cents) * 100) : 0;
+                            const allCollected = s.open_cents === 0 && s.count > 0;
+                            return (
+                              <tr key={advId} className="border-b border-[#E5E7EB]">
+                                <td className="py-1">
+                                  <EntityLink kind="factoring_advance" id={advId} label={s.advance_display_id} />
+                                </td>
+                                <td className="py-1 text-right font-mono">{fmtCents(s.total_cents)}</td>
+                                <td className="py-1 text-right font-mono text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
+                                <td className="py-1 text-right font-mono text-gray-700">{fmtCents(s.open_cents)}</td>
+                                <td className="py-1 text-right">
+                                  {allCollected ? (
+                                    <span className="text-[#16A34A] font-medium">Fully Collected</span>
+                                  ) : (
+                                    <span className="text-gray-500">{pct}% collected ({s.collected_count}/{s.count})</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : null}
+                  <ParityTable appearance="board"
+                    title="Invoice status — by invoice"
+                    columns={invoiceStatusColumns}
+                    rows={rows}
+                    rowKey={(row) => row.invoice_id}
+                    storageKey="factoring-invoice-status"
+                    tableTestId="factoring-invoice-status-table"
+                    emptyText="No invoices found for the selected filters."
+                  />
+                </>
               );
             })()
           ) : null}
