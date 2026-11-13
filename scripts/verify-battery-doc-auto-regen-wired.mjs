@@ -8,6 +8,8 @@
  * Rules:
  *  1. The sync workflow calls gen-usmca-battery-doc.mjs as a step.
  *  2. The sync workflow stages docs/audit/USMCA-EXHAUSTIVE-BATTERY.md in the git add line.
+ *  3. The sync workflow push trigger includes the battery doc's watch paths so a merge that adds
+ *     a POST route fires the sync within seconds (not up to 6h on cron alone).
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -24,6 +26,8 @@ function check(label, pass, detail = "") {
   console.log(`PASS [${label}]`);
 }
 
+const BATTERY_WATCH_PATHS = ["apps/backend/src/**/*.ts", "apps/frontend/src/**/*.tsx", "scripts/usmca-create-surface-inventory.mjs"];
+
 if (SELFTEST) {
   const src = readFileSync(WF_PATH, "utf8");
 
@@ -35,7 +39,11 @@ if (SELFTEST) {
   const noStage = src.replaceAll("docs/audit/USMCA-EXHAUSTIVE-BATTERY.md", "# removed");
   check("selftest:no-stage:fails", !noStage.includes("docs/audit/USMCA-EXHAUSTIVE-BATTERY.md"));
 
-  console.log("selftest: 2/2 PASS");
+  // Plant 3: the push-path YAML line removed (replaceAll so comment copies don't mask it)
+  const noPushPath = src.replaceAll(`- "${BATTERY_WATCH_PATHS[0]}"`, "# removed");
+  check("selftest:no-push-path:fails", !noPushPath.includes(`- "${BATTERY_WATCH_PATHS[0]}"`));
+
+  console.log("selftest: 3/3 PASS");
   process.exit(0);
 }
 
@@ -54,5 +62,14 @@ check(
   src.includes("docs/audit/USMCA-EXHAUSTIVE-BATTERY.md"),
   ".github/workflows/program-tracker-artifacts-sync.yml must git add docs/audit/USMCA-EXHAUSTIVE-BATTERY.md so the refreshed doc lands in the auto-sync PR"
 );
+
+// Rule 3: push trigger includes every battery watch path so a route addition fires the sync within seconds
+for (const watchPath of BATTERY_WATCH_PATHS) {
+  check(
+    `battery-regen:push-path:${watchPath}`,
+    src.includes(`- "${watchPath}"`),
+    `.github/workflows/program-tracker-artifacts-sync.yml push paths must include "${watchPath}" (battery doc watch); a merge adding a POST route would otherwise leave main red until the next 6h cron`
+  );
+}
 
 console.log("verify-battery-doc-auto-regen-wired: PASS");

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import dotenv from "dotenv";
@@ -8,6 +9,28 @@ import { createVerifyPrecommitContext } from "./verify-steps/_context.mjs";
 import { runStep } from "./verify-steps/_runner.mjs";
 
 dotenv.config();
+
+// BATTERY-AUTO-REGEN (2026-11-13): when a staged file matches the USMCA battery doc's watch
+// patterns, regenerate it and stage it so the PR that adds a POST route never leaves main red
+// on verify-derived-artifact-freshness --strict. Runs in pre-commit, not just the 6h cron.
+(function maybeRegenBatteryDoc() {
+  try {
+    const staged = execFileSync("git", ["diff", "--cached", "--name-only"], { encoding: "utf8" })
+      .split("\n")
+      .filter(Boolean);
+    const BATTERY_WATCH = [/^apps\/backend\/src\/.+\.ts$/, /^apps\/frontend\/src\/.+\.tsx$/, /^scripts\/usmca-create-surface-inventory\.mjs$/];
+    if (staged.some((f) => BATTERY_WATCH.some((re) => re.test(f)))) {
+      console.log("[verify-pre-commit] staged files match battery doc watch — regenerating docs/audit/USMCA-EXHAUSTIVE-BATTERY.md");
+      execFileSync("node", ["scripts/gen-usmca-battery-doc.mjs"], { stdio: "inherit" });
+      execFileSync("git", ["add", "docs/audit/USMCA-EXHAUSTIVE-BATTERY.md"], { stdio: "inherit" });
+      console.log("[verify-pre-commit] docs/audit/USMCA-EXHAUSTIVE-BATTERY.md regenerated and staged");
+    }
+  } catch (e) {
+    // non-fatal: if git is not available (CI pre-commit context) skip gracefully
+    console.warn("[verify-pre-commit] battery-doc auto-regen skipped:", e.message);
+  }
+})();
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
 const resolvedManifest = resolveBlockReadyManifest({
