@@ -6,6 +6,7 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { getLoadsReport, type LoadsReportRow } from "../../../api/reports";
 import { EntityMultiSelect, entityFilterIds } from "../../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -189,8 +190,47 @@ export function LoadsReportBoard() {
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [search, setSearch] = useState("");
-  const [by, setBy] = useState<GroupBy>("week");
-  const [drill, setDrill] = useState<{ by: GroupBy; key: string; label: string } | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board27 — group + drill in URL so chart/table reverse restores cohort (STATUS: local-only group state).
+  const groupFromUrl = (searchParams.get("group") ?? "week") as GroupBy;
+  const by: GroupBy = GROUP_OPTIONS.some((g) => g.id === groupFromUrl) ? groupFromUrl : "week";
+  const drillKey = searchParams.get("drill");
+  const drillLabel = searchParams.get("drill_label");
+  const drill = drillKey
+    ? { by, key: drillKey, label: drillLabel || drillKey }
+    : null;
+  const setBy = (next: GroupBy) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (next === "week") p.delete("group");
+        else p.set("group", next);
+        p.delete("drill");
+        p.delete("drill_label");
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const setDrill = (next: { by: GroupBy; key: string; label: string } | null) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        if (!next) {
+          p.delete("drill");
+          p.delete("drill_label");
+        } else {
+          p.set("drill", next.key);
+          if (next.label && next.label !== next.key) p.set("drill_label", next.label);
+          else p.delete("drill_label");
+          if (next.by === "week") p.delete("group");
+          else p.set("group", next.by);
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  };
 
   const query = useQuery({
     queryKey: ["reports", "loads-board", companyId, { ...applied, status: applied.status.join(","), tripType: applied.tripType.join(",") }],
@@ -522,10 +562,7 @@ export function LoadsReportBoard() {
           <V3Segmented
             value={by}
             options={GROUP_OPTIONS}
-            onChange={(next) => {
-              setDrill(null);
-              setBy(next);
-            }}
+            onChange={(next) => setBy(next)}
             testId="loads-report-group-by"
           />
           {entityFilterIds(applied.customerId).length + entityFilterIds(applied.driverId).length + entityFilterIds(applied.unitId).length > 0 ? (
@@ -572,14 +609,20 @@ export function LoadsReportBoard() {
           ) : (
             <div className="flex h-28 items-end gap-1" role="img" aria-label="Revenue by week chart">
               {revenueByWeek.weeks.map((g) => (
-                <div key={g.key} className="flex min-w-0 flex-1 flex-col items-center gap-1" title={`${g.label}: ${money(g.revenue)}`}>
+                <button
+                  key={g.key}
+                  type="button"
+                  className="flex min-w-0 flex-1 flex-col items-center gap-1"
+                  title={`${g.label}: ${money(g.revenue)}`}
+                  onClick={() => setDrill({ by: "week", key: g.key, label: g.label })}
+                  data-testid={`loads-report-week-bar-${g.key}`}
+                >
                   <div
                     className="w-full rounded-sm bg-[#13233F]"
                     style={{ height: `${Math.max(4, Math.round((g.revenue / revenueByWeek.max) * 100))}%` }}
-                    data-testid={`loads-report-week-bar-${g.key}`}
                   />
                   <span className="truncate text-section-header text-[#5B6576]">{g.label.replace("Week of ", "")}</span>
-                </div>
+                </button>
               ))}
             </div>
           )}
