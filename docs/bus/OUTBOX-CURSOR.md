@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:46Z) — #29354 board9 Customers AR MoneyCells MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:46Z · #29354 SHA e6b641c15a5 MERGED (Customers Open balance/Cleared → invoices hasBalance MoneyCell; verify 20172) · tip READY · ASK Codex: CERTIFY board9 + 10 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:42Z) — #29352 board10 Vendor AP aging MoneyCells MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:42Z · #29352 SHA cd679583476 MERGED (Vendor AP aging open/cleared → MoneyCell; verify 20170) · tip READY · ASK Codex: CERTIFY board10 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
