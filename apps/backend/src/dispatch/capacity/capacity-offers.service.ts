@@ -222,8 +222,8 @@ export async function readLaneStatesByCustomer(
 
 /** Today's (CT) sends keyed by lower(email): the morning truck snapshot and whether a change alert went. */
 export async function readSentToday(client: Queryable, operatingCompanyId: string, sendDate: string) {
-  const res = await client.query<{ email: string; kind: OfferKind; units: OfferTruck[] }>(
-    `SELECT lower(email) AS email, kind, units FROM dispatch.capacity_offer_sends
+  const res = await client.query<{ email: string; kind: OfferKind; units: OfferTruck[]; sent_at: string }>(
+    `SELECT lower(email) AS email, kind, units, sent_at FROM dispatch.capacity_offer_sends
       WHERE operating_company_id = $1::uuid AND send_date = $2::date`,
     [operatingCompanyId, sendDate]
   );

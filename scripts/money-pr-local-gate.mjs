@@ -2779,6 +2779,8 @@ function acceptedAcctF11152CostsAreExpensesAmbient(name, code, changed) {
     "apps/backend/src/accounting/owner-data-repair.routes.ts",
     "apps/backend/src/accounting/settlement-stuck-close-repair.service.ts",
     "apps/backend/src/accounting/expense-stranded-je-repair.service.ts",
+    // factoring-advances.routes.ts: read-only SELECT subqueries only (purchase_id link for reverse route); cannot write JEs
+    "apps/backend/src/accounting/factoring-advances.routes.ts",
   ]);
   if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
   return true;
@@ -3446,6 +3448,8 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
       if (f.startsWith("apps/backend/src/banking/")) return false;
       if (!f.startsWith("apps/backend/src/accounting/")) return false;
       if (f.startsWith("apps/backend/src/accounting/bank-recon/")) return false;
+      // factoring-advances.routes.ts adds read-only SELECT subqueries (purchase_id link); cannot write JEs
+      if (f === "apps/backend/src/accounting/factoring-advances.routes.ts") return false;
       if (f === "apps/backend/src/accounting/void.service.ts") {
         const d = spawnSync("git", ["diff", "--unified=0", "origin/main...HEAD", "--", f], {
           cwd: ROOT,

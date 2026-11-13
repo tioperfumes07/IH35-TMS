@@ -402,8 +402,7 @@ export function FuelHomePage() {
 
       <FuelBoardSection
         title="Diesel by truck"
-        // ROUND 8.17 class R/S residual — View all keeps the selected Oct/Sep/YTD period.
-        onViewAll={() => navigate(`/fuel/by-truck?period=${encodeURIComponent(period)}`)}
+        onViewAll={() => navigate("/fuel/by-truck")}
         testId="fuel-home-diesel-board"
         headerRight={
           <V3Segmented
