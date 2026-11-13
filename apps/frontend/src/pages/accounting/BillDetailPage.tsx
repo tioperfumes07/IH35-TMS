@@ -2,7 +2,8 @@ import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { ReceiptAttach } from "../../components/documents/ReceiptAttach";
 import { formatDateUS } from "../../lib/formatDate";
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   billVendorDrillId,
@@ -81,6 +82,9 @@ function accountLabel(_number: string | null | undefined, name: string | null | 
 
 export function BillDetailPage() {
   const { id = "" } = useParams();
+  const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting/bills" });
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -289,7 +293,7 @@ export function BillDetailPage() {
       ) : null}
       <PageHeader
         title={displayId}
-        backHref="/accounting/bills"
+        backHref={accountingBackHref}
         breadcrumb={[
           { label: "Accounting", href: "/accounting" },
           { label: "Bills", href: "/accounting/bills" },
