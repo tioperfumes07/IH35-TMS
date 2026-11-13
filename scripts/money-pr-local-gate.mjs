@@ -2809,25 +2809,6 @@ function acceptedAcctF11152PartyBoardsAmbient(name, code, changed) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-factoring-banking-kpis-tie-to-ledger fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod drift: banking.cleared_vs_uncleared engine 101996437 != ledger 102346437;
-// banking.unmatched_inflow engine 97349337 != ledger 97699337; banking.unmatched_outflow engine 107959938 != ledger 109570136;
-// banking.match_rate engine 4.69 != ledger 4.64 — all on origin/main. This batch82 diff does NOT touch any banking
-// match engine paths (match.service.ts, banking.routes.ts, categorization, relay-ingest). Filed BANK-F11152-BATCH82-20261111.
-// Content-based: fires only when the diff does not include banking match / categorization writers.
-function acceptedAcctF11152FactoringKpisAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-factoring-banking-kpis-tie-to-ledger") return false;
-  if (!changed) return false;
-  const BANKING_MATCH_WRITERS = [
-    "apps/backend/src/banking/match.service.ts",
-    "apps/backend/src/banking/banking.routes.ts",
-    "apps/backend/src/banking/categorization.service.ts",
-    "apps/backend/src/banking/relay-ingest.service.ts",
-  ];
-  if (changed.some((f) => BANKING_MATCH_WRITERS.includes(f) || f.startsWith("apps/backend/src/banking/"))) return false;
-  return true;
-}
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-booked-loads-save-miles fires via db/migrations/ DATA_WRITE.
 // Pre-existing prod debt: RULE 2 (loads 13716/13728) + RULE 4 (loads 13702/13704/13711/13718/13723/13725/13735)
@@ -4390,16 +4371,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff has zero party-board/billing writers; cite PARTY-F11152-BATCH82-20261111 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 party-boards ambient pre-existing drift`);
-        continue;
-      }
-      if (acceptedAcctF11152FactoringKpisAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-factoring-banking-kpis-tie-to-ledger pre-existing prod drift ` +
-            `(cleared_vs_uncleared 101996437!=102346437; unmatched_inflow 97349337!=97699337; ` +
-            `unmatched_outflow 107959938!=109570136; match_rate 4.69!=4.64 on origin/main; ` +
-            `diff has zero banking match/categorization writers; cite BANK-F11152-BATCH82-20261111 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 factoring-banking-kpis ambient pre-existing drift`);
         continue;
       }
       if (acceptedAcctF11152BookedMilesAmbient(name, code, changedForLiveDomains)) {

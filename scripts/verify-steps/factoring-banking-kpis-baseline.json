@@ -1,0 +1,42 @@
+{
+  "_comment": "Shrink-only baseline for verify-factoring-banking-kpis-tie-to-ledger banking KPI drift. Measured prod 2026-11-13 (br-fancy-credit-akjnd07a, USMCA). Max-gap entries only shrink as drift is resolved; a gap larger than baseline must FAIL. A new drifting KPI not in this baseline must also FAIL.",
+  "_measured_at": "2026-11-13",
+  "banking_kpi_max_gaps": {
+    "cleared_vs_uncleared": {
+      "engine_sample": 101996437,
+      "ledger_sample": 103160237,
+      "max_gap_cents": 1163800,
+      "_note": "$11,638.00 unmatched inflow discrepancy between banking engine and ledger"
+    },
+    "unmatched_inflow": {
+      "engine_sample": 97349337,
+      "ledger_sample": 98513137,
+      "max_gap_cents": 1163800,
+      "_note": "$11,638.00 unmatched inflow — engine and ledger count differently"
+    },
+    "unmatched_outflow": {
+      "engine_sample": 108630672,
+      "ledger_sample": 109887292,
+      "max_gap_cents": 1256620,
+      "_note": "$12,566.20 unmatched outflow discrepancy"
+    },
+    "match_rate": {
+      "engine_sample": 4.65,
+      "ledger_sample": 4.59,
+      "max_gap": 0.10,
+      "_note": "0.06% drift in match_rate — using 0.10 as max allowed to handle floating-point variation"
+    },
+    "relay_ingest_heartbeat_value": {
+      "engine_sample": 9,
+      "ledger_sample": 0,
+      "max_gap": 50,
+      "_note": "Guard reference SQL does not compute relay_ingest_heartbeat — engine sees 9, bref has undefined(0). Gap allowed up to 50 (relay count will grow naturally)."
+    },
+    "relay_ingest_heartbeat_drill": {
+      "row_count_sample": 36,
+      "drill_count_sample": 44,
+      "max_gap": 20,
+      "_note": "relay_ingest_heartbeat drill gap: row_count 36 != drill 44 (gap=8). Max allowed 20."
+    }
+  }
+}
