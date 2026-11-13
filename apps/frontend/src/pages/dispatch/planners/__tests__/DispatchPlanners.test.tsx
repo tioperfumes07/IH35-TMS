@@ -129,8 +129,8 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
     expect(within(driverFilter).getByRole("button", { name: /Driver \(2\)/i })).toBeTruthy();
     // ROUND 8.17 class R — entity filters stage until Apply; chip appears only after Apply.
     expect(screen.queryByTestId("planner-chip-driver")).toBeNull();
-    const applyBtn = screen.getByRole("button", { name: /^Apply$/i });
-    expect(applyBtn).not.toBeDisabled();
+    const applyBtn = screen.getByRole("button", { name: /^Apply$/i }) as HTMLButtonElement;
+    expect(applyBtn.disabled).toBe(false);
     await userEvent.click(applyBtn);
     expect(await screen.findByTestId("planner-chip-driver")).toBeTruthy();
     // ROUND 8.20 board 12 — applied filters land in the URL so tab NavLinks keep the cohort.
