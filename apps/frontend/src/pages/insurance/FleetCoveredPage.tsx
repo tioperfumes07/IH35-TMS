@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
@@ -12,6 +13,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { formatUsdCents } from "../../lib/money";
 import { formatQuantityTable } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 
 const POLICY_437539_TIV_CENTS = 104_054_000;
 const formatMoney = (cents: number | null) => cents == null ? "—" : formatUsdCents(cents);
@@ -37,7 +39,15 @@ function policyCell(row: InsuranceFleetCoveredUnit, type: InsuranceCoverageType)
 
 export function FleetCoveredPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
   const companyId = selectedCompanyId ?? "";
+  // ROUND 8.20 board20 — Home KPI drills attach ?ret=/insurance; Back must honor it (not hard-code Home).
+  const fleetCoveredBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/insurance",
+  });
   const query = useQuery({
     queryKey: ["insurance", "fleet-covered", companyId],
     enabled: Boolean(companyId),
@@ -132,7 +142,7 @@ export function FleetCoveredPage() {
   return (
     <div className="space-y-3" data-testid="fleet-covered-page">
       <PageHeader
-        backHref="/insurance"
+        backHref={fleetCoveredBackHref}
         breadcrumb={["Insurance", "Fleet Covered"]}
         title="Fleet Covered"
         subtitle="One row per active tractor or trailer, with current policy and allocated monthly economics."

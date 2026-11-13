@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   createInsuranceTypeCatalog,
   deactivateInsuranceTypeCatalog,
@@ -16,6 +17,7 @@ import { useToast } from "../../components/Toast";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SelectCombobox } from "../../components/Combobox";
+import { resolveBackHref } from "../../lib/returnContext";
 
 const COVERAGE_OPTIONS: InsuranceCoverageType[] = [
   "auto_liability",
@@ -37,6 +39,14 @@ const COVERAGE_OPTIONS: InsuranceCoverageType[] = [
 
 export function TypeCatalogAdmin() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board20 — honor ?ret= when opened from Insurance Home (fallback Home).
+  const typeCatalogBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/insurance",
+  });
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const companyId = selectedCompanyId ?? "";
@@ -303,7 +313,7 @@ export function TypeCatalogAdmin() {
     return (
       <div className="space-y-3" data-testid="type-catalog-admin-page">
         <PageHeader
-          backHref="/insurance"
+          backHref={typeCatalogBackHref}
           breadcrumb={["Insurance", "Type catalog"]}
           title="Type Catalog Admin"
           subtitle="Create, edit, and deactivate entries from insurance type catalog."
@@ -318,7 +328,7 @@ export function TypeCatalogAdmin() {
   return (
     <div className="space-y-3" data-testid="type-catalog-admin-page">
       <PageHeader
-        backHref="/insurance"
+        backHref={typeCatalogBackHref}
         breadcrumb={["Insurance", "Type catalog"]}
         title="Type Catalog Admin"
         subtitle="Create, edit, and deactivate entries from insurance type catalog."

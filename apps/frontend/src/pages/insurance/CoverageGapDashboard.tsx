@@ -23,11 +23,12 @@ function missingTypeLabels(codes: string[], typeNames: Map<string, string>): str
 }
 import { ListErrorState } from "../../components/ListErrorState";
 import { ApiError } from "../../api/client";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { insuranceTypeLabel } from "../../lib/insurance-type-label";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { resolveBackHref } from "../../lib/returnContext";
 
 const COVERAGE_FILTER_OPTIONS = [
   { value: "covered", label: "Covered" },
@@ -83,7 +84,14 @@ function CoverageChip({ status }: { status: CoverageCell }) {
 export function CoverageGapDashboard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board20 — Home Coverage gaps KPI attaches ?ret=/insurance; Back must honor it.
+  const coverageGapBackHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: "/insurance",
+  });
   // LST-F5170 — visible EntityPicker (URL-only clear link is not reverse chrome).
   const deepLinkUnitId = searchParams.get("unit_id") ?? "";
   const [unitPickerId, setUnitPickerId] = useState("");
@@ -201,7 +209,7 @@ export function CoverageGapDashboard() {
     return (
       <div className="space-y-3" data-testid="coverage-gap-page">
         <PageHeader
-          backHref="/insurance"
+          backHref={coverageGapBackHref}
           breadcrumb={["Insurance", "Coverage gaps"]}
           title="Tractor Coverage Gap Dashboard"
           subtitle="Scoped to tractors — trailers are tracked separately on Fleet Covered."
@@ -219,7 +227,7 @@ export function CoverageGapDashboard() {
     return (
       <div className="space-y-3" data-testid="coverage-gap-page">
         <PageHeader
-          backHref="/insurance"
+          backHref={coverageGapBackHref}
           breadcrumb={["Insurance", "Coverage gaps"]}
           title="Tractor Coverage Gap Dashboard"
           subtitle="Scoped to tractors — trailers are tracked separately on Fleet Covered."
@@ -241,7 +249,7 @@ export function CoverageGapDashboard() {
   return (
     <div className="space-y-3" data-testid="coverage-gap-page">
       <PageHeader
-        backHref="/insurance"
+        backHref={coverageGapBackHref}
         breadcrumb={["Insurance", "Coverage gaps"]}
         title="Tractor Coverage Gap Dashboard"
         subtitle="Scoped to tractors (fleet units with a Samsara-tracked unit record) — trailers are tracked separately on Fleet Covered."
