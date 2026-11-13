@@ -2751,70 +2751,6 @@ function acceptedAcctF11152VoidIsWholeAmbient(name, code, changed) {
   return true;
 }
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-costs-are-expenses-not-handwritten-jes fires because
-// accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
-// has-transactions-predicate.ts is READ-ONLY: it adds operating_company_id scoping to EXISTS subqueries
-// in the has-transactions predicate; it cannot create JEs or write any accounting rows.
-// Pre-existing prod debt: 26 live fuel JEs crediting 1090 — predates this PR on origin/main.
-// Content-based: fires only when diff includes real cost/expense/posting accounting writers.
-function acceptedAcctF11152CostsAreExpensesAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  // If ANY real posting/expense/fuel writer is in the diff, do NOT bypass.
-  const COST_WRITERS = [
-    "apps/backend/src/fuel/",
-    "apps/backend/src/expenses/",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  // If accounting/ files other than read-only / repair-dispatcher files are in the diff, do NOT bypass.
-  // owner-data-repair.routes.ts: pure repair dispatcher — reads + calls repair services, writes zero JEs.
-  // settlement-stuck-close-repair.service.ts: calls postFinalLoadSettlementsGl (driver_settlement exempt
-  // source type); does not write to accounting.journal_entries or accounting.expenses directly.
-  // expense-stranded-je-repair.service.ts (CC-1 E2): calls reverseExpenseDocumentInClientTx to fix voided
-  // expense docs whose fuel_event JEs were left live before ACCT-F4431310. Writes reversing JEs through the
-  // canonical engine (not handwritten). The pre-existing WEX ambient debt (30 JEs) predates this service.
-  const ALLOWED_ACCOUNTING = new Set([
-    "apps/backend/src/accounting/has-transactions-predicate.ts",
-    "apps/backend/src/accounting/owner-data-repair.routes.ts",
-    "apps/backend/src/accounting/settlement-stuck-close-repair.service.ts",
-    "apps/backend/src/accounting/expense-stranded-je-repair.service.ts",
-    // factoring-advances.routes.ts: read-only SELECT subqueries only (purchase_id link for reverse route); cannot write JEs
-    "apps/backend/src/accounting/factoring-advances.routes.ts",
-  ]);
-  if (changed.some((f) => f.startsWith("apps/backend/src/accounting/") && !ALLOWED_ACCOUNTING.has(f))) return false;
-  return true;
-}
-
-// ACCT-F821 (CC-1, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
-// accounting/cash-basis/ is in the diff (classified as NonBankReconAccounting domain path).
-// profit-loss-cash.service.ts is a READ-ONLY P&L reporter — it queries journal_entry_postings
-// via SELECT but writes zero JEs, zero expenses, zero accounting rows. The 30 WEX fuel JEs
-// that cause the violation predate this PR on origin/main (USMCA loads 13702/13725/13727/
-// 13729/13735; ENG-25b intercompany diesel ambient debt). Filed COST-JE-ACCT-F821-20261113.
-// Content-based: fires only when diff includes real cost/expense/posting writers.
-function acceptedAcctF821CashBasisPnlAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  const COST_WRITERS = [
-    "apps/backend/src/fuel/",
-    "apps/backend/src/expenses/",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  // Only applies when diff is scoped to cash-basis read-only files (service + tests).
-  const CASH_BASIS_PREFIX = "apps/backend/src/accounting/cash-basis/";
-  if (!changed.every((f) => f.startsWith(CASH_BASIS_PREFIX) || !f.startsWith("apps/backend/src/accounting/"))) return false;
-  return true;
-}
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-stops-resolve-samsara-no-zip-fence fires via db/migrations/ DATA_WRITE.
 // Pre-existing prod debt: customer-site fence 26464921-bf24-4c24-b1bf-38815adf1636 (load ebeafc9c stop-1-gps)
@@ -2935,62 +2871,6 @@ function acceptedAcctF11152BookedMilesAmbient(name, code, changed) {
   return true;
 }
 
-// ENG-25b (CC-3, R8.20, 2026-11-12): verify-costs-are-expenses-not-handwritten-jes fires because
-// bank-match-fuel-post.service.ts and fuel-receipt-repoint.service.ts are in the diff.
-// Pre-existing ambient: 30 WEX fuel JEs debiting 5000 (cost) with no expense row (handwritten_cost_je)
-// on loads where the fuel fill posted before ENG-25b's intercompany reclassification engine was deployed.
-// ENG-25b adds the reclassification hook only; AUTH-464 ops replay after deploy will reclassify these JEs
-// from 5000 to 8000 (intercompany_ih35), clearing all 30 violations. No new violations introduced.
-// Content-based: activates only when the ENG-25b engine files are in the diff with no other cost writers.
-function acceptedEng25bIntercompanyDieselAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  const ENG25B_EXACT = new Set([
-    "apps/backend/src/accounting/bank-recon/bank-match-fuel-post.service.ts",
-    "apps/backend/src/fuel/fuel-receipt-repoint.service.ts",
-    "docs/bus/OWNER-AUTHORIZATIONS.md",
-  ]);
-  if (!changed.some((f) => ENG25B_EXACT.has(f))) return false;
-  const OTHER_COST_WRITERS = [
-    "apps/backend/src/expenses/",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => OTHER_COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  return true;
-}
-
-// ENG-27 (CC-3, R8.20, 2026-11-13): verify-costs-are-expenses-not-handwritten-jes fires because
-// posting-line-writer.ts is in the diff (classified as NonBankReconAccounting → not in ALLOWED_ACCOUNTING).
-// posting-line-writer.ts adds a resolvePostingSourceLoad branch for bank_categorization: it READS
-// bt.categorization_load_id and returns load_id for stamping. It does NOT create new JEs, does NOT
-// create expense rows, and cannot produce handwritten_cost_je violations.
-// Pre-existing ambient: 30 WEX fuel JEs debiting 5000 (cost) with no expense row (handwritten_cost_je) —
-// same 30 violations as ENG-25b. CC-2 owns the writer (R-153.6); CC-3 owns guard scope (R-153.7).
-// AUTH-464 ops replay after ENG-25b deploy will reclassify these JEs from 5000 to 8000, clearing all 30.
-// No new violations introduced by this diff.
-// Content-based: activates only when the ENG-27 posting-line-writer file is in the diff with no other
-// real cost/expense writers.
-function acceptedEng27BankCatLoadIdAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-costs-are-expenses-not-handwritten-jes") return false;
-  if (!changed) return false;
-  if (!changed.includes("apps/backend/src/accounting/posting-line-writer.ts")) return false;
-  const OTHER_COST_WRITERS = [
-    "apps/backend/src/expenses/",
-    "apps/backend/src/driver-finance/",
-    "apps/backend/src/accounting/fuel-posting/",
-    "apps/backend/src/accounting/expense-posting/",
-    "apps/backend/src/accounting/settlement-posting/",
-  ];
-  if (changed.some((f) => OTHER_COST_WRITERS.some((p) => f.startsWith(p)))) return false;
-  // posting-line-writer.ts is the only real accounting write in this diff — it only resolves load_id
-  // for existing postings, never creates JEs or expense rows, so the ambient WEX debt is unrelated.
-  return true;
-}
 
 // ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-load-to-cash-chain fires because mdata/customers.routes.ts
 // and mdata/vendors.routes.ts are in the diff (mdata/ is a domain path for load-to-cash). Pre-existing
@@ -4614,46 +4494,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `diff has zero void/JE writers; cite VOID-F11152-BATCH82-20261112 in PR).`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 void-is-whole ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152CostsAreExpensesAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes pre-existing debt ` +
-            `(26 live fuel JEs crediting 1090 on origin/main; diff only touches read-only ` +
-            `accounting/has-transactions-predicate.ts + migration holds + guard scripts; ` +
-            `no posting/expense/fuel writers; cite COST-JE-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 costs-are-expenses ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedEng25bIntercompanyDieselAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes ENG-25b intercompany diesel ` +
-            `(30 pre-existing WEX fuel JEs debiting 5000 without expense row; ENG-25b engine adds ` +
-            `reclassification hook only; AUTH-464 ops replay after deploy clears violations; ` +
-            `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-25b intercompany diesel ambient pre-existing WEX fuel JE debt`);
-        continue;
-      }
-      if (acceptedAcctF821CashBasisPnlAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes ACCT-F821 cash-basis P&L ` +
-            `(30 pre-existing WEX fuel JEs on origin/main; profit-loss-cash.service.ts is a read-only ` +
-            `reporter — zero JE writes; cite COST-JE-ACCT-F821-20261113 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F821 cash-basis P&L ambient pre-existing WEX fuel JE debt`);
-        continue;
-      }
-      if (acceptedEng27BankCatLoadIdAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-costs-are-expenses-not-handwritten-jes ENG-27 bank-cat load_id ` +
-            `(30 pre-existing WEX fuel JEs debiting 5000 without expense row; posting-line-writer.ts ` +
-            `adds resolvePostingSourceLoad bank_categorization branch only — reads load_id, never ` +
-            `creates JEs or expense rows; ambient WEX debt unrelated; CC-2 writer fix pending AUTH-464; ` +
-            `no new violations introduced by this diff; R8.20 CC-3 owner standing order).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-27 bank-cat load_id ambient pre-existing WEX fuel JE debt`);
         continue;
       }
       if (acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changedForLiveDomains)) {
