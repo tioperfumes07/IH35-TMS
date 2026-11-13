@@ -1763,9 +1763,14 @@ export type VendorBoardReport = {
     spend_cents: number;
     fuel_share_pct: number | null;
     fuel_cents: number;
+    /** BOARD 31 — fuel-card LIABILITY (Dreamline 2510 + WEX 2520) owed now, from readCardPayableBalances. Never spend. */
+    card_payables_cents?: number;
     open_bills_cents: number | null;
     transactions: number;
   };
+  /** BOARD 31 — one row per card-payable account with an outstanding credit balance (source for the tile drill). */
+  card_payables?: Array<{ role: string; account_id: string; account_name: string; balance_cents: number; due_date: string }>;
+  card_payables_as_of?: string;
   by_category: Array<{ account_id: string | null; category: string; spend_cents: number }>;
   rows: VendorBoardReportRow[];
 };
