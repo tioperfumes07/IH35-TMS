@@ -3,11 +3,19 @@
  *
  * Guards two perf fixes:
  *
- *   ROW 124+138 — duty CTE in driver-day-summary:
+ *   ROW 124 (duty CTE index, PR #29293):
  *     Before: idx_hos_duty_status_events_driver_time (opco, driver_id, started_at)
  *             → planner scanned 15,550 index rows for 52 results (2026-11-12 prod, ~0.9s)
  *     Fix:    idx_hos_duty_status_events_duty_ended (opco, duty_status, ended_at) partial WHERE
  *             ended_at IS NOT NULL → hits only recent events (~52 rows, BitmapOr with open index)
+ *
+ *   ROW 124 finish (arrivals geofence narrowing, 11-13):
+ *     Before: stop_fence_keys regex-scanned ALL geo.geofences (26,342 on prod) → 983 stop-label fences
+ *             → ~270 ms slice under app role (warm 551–575 ms vs. 500 ms target)
+ *     Fix:    day_geofence_ids AS MATERIALIZED first collects the ~86 distinct fences that fired
+ *             'entered' events today (ix_geo_geofence_events_company_lookup); stop_fence_keys then
+ *             PK-looks up only those 86 → ~300x fewer regex calls
+ *     Result: 417–450 ms warm (2026-11-13 measured, guard reader, USMCA Freight)
  *
  *   ROW 138 — /api/v1/mdata/drivers 4,522 ms regression (ROW 197 fix, PR #28503):
  *     Before: two separate withCurrentUser pool checkouts per request (company resolve + list),
@@ -130,11 +138,27 @@ async function runSelftest() {
     }
   }
 
+  // 9. ROW 124 (CC-2 11-13): day_geofence_ids CTE narrows geofence regex from 26,342 → ~86 fences/day
+  const ddsRoutesPath = resolve(root, "apps/backend/src/telematics/driver-day-summary.routes.ts");
+  if (existsSync(ddsRoutesPath)) {
+    const ddsRoutes = readFileSync(ddsRoutesPath, "utf8");
+    if (!ddsRoutes.includes("day_geofence_ids AS MATERIALIZED")) {
+      failures.push(
+        "ROW124-NARROW: driver-day-summary.routes.ts missing day_geofence_ids AS MATERIALIZED — geofence scan regression risk"
+      );
+    }
+    if (!ddsRoutes.includes("JOIN day_geofence_ids dgi ON dgi.geofence_id = g.id")) {
+      failures.push(
+        "ROW124-JOIN: stop_fence_keys must join day_geofence_ids to narrow the regex scan"
+      );
+    }
+  }
+
   if (failures.length > 0) {
     for (const f of failures) console.error("SELFTEST FAIL:", f);
     process.exit(1);
   }
-  console.log(`SELFTEST PASS: 8/8 static checks — duty CTE index + drivers list single-checkout intact`);
+  console.log(`SELFTEST PASS: 9/9 static checks — duty CTE index + drivers single-checkout + arrivals geofence narrowing intact`);
 }
 
 async function runLive() {
