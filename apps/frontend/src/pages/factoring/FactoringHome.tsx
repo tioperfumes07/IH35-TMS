@@ -1974,15 +1974,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                   {/* ENG-17: Collected vs Open per Purchase summary */}
                   {advanceSummaryRows.length > 0 ? (
                     <div className="mb-3 px-3.5" data-testid="factoring-collection-summary">
-                      <div className="text-[11px] font-semibold uppercase tracking-wide text-[#4B5563] mb-1">Collection Summary by Advance</div>
+                      <div style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#4B5563", marginBottom: "4px" }}>Collection Summary by Advance</div>
                       <table className="w-full border-collapse text-xs">
                         <thead>
                           <tr className="border-b border-[#E5E7EB]">
-                            <th className="py-1 text-left text-[11px] font-semibold uppercase text-[#4B5563]">Advance</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Total Invoiced</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Collected</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Open</th>
-                            <th className="py-1 text-right text-[11px] font-semibold uppercase text-[#4B5563]">Status</th>
+                            <th className="py-1 text-left" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Advance</th>
+                            <th className="py-1 text-right" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Total Invoiced</th>
+                            <th className="py-1 text-right" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Collected</th>
+                            <th className="py-1 text-right" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Open</th>
+                            <th className="py-1 text-right" style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "#4B5563" }}>Status</th>
                           </tr>
                         </thead>
                         <tbody>
