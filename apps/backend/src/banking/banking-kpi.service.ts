@@ -31,6 +31,7 @@ export const BANKING_KPI_KEYS = [
   "escrow_held",
   "escrow_contributions",
   "escrow_deductions",
+  "relay_ingest_heartbeat",
 ] as const;
 export type BankingKpiKey = (typeof BANKING_KPI_KEYS)[number];
 
@@ -226,6 +227,34 @@ export async function computeBankingKpis(client: DbClient, oci: string, range: B
     out.push({ key, label, unit: "cents", value: num(r.v), source: side === "credit" ? "Escrow contributions posted in the date range" : "Escrow deductions and releases posted in the date range",
       gl_account: glLabel, row_count: r.n, empty_reason: unbound ?? (r.n === 0 ? why : null) });
   }
+  // ROW 22 — Relay ingest heartbeat: hours since last successful ingest for this company.
+  // > 24h (or no ingest ever) = stale (red). Data = integrations.integration_sync_log.
+  const hb = (await client.query<{ hours_ago: string | null; last_at: string | null; n: number }>(
+    `SELECT extract(epoch FROM (now() - max(finished_at))) / 3600.0 AS hours_ago,
+            max(finished_at)::text AS last_at,
+            count(*)::int AS n
+       FROM integrations.integration_sync_log
+      WHERE operating_company_id = $1::uuid AND integration = 'relay'
+        AND sync_kind = 'relay_fuel_daily_pull' AND success = true`,
+    [oci]
+  )).rows[0]!;
+  const hoursAgo = hb.hours_ago != null ? Math.round(Number(hb.hours_ago)) : null;
+  const isStale = hoursAgo == null || hoursAgo > 24;
+  out.push({
+    key: "relay_ingest_heartbeat",
+    label: "Relay ingest",
+    primary_label: hoursAgo != null ? `${hoursAgo}h ago` : "Never",
+    unit: "count",
+    value: hoursAgo,
+    source: "Hours since last successful Relay fuel-card transaction pull. Red = stale (> 24 h or never ingested).",
+    gl_account: null,
+    row_count: hb.n,
+    empty_reason: isStale
+      ? (hoursAgo == null
+          ? "Relay ingest has never run successfully for this company."
+          : `Relay ingest stale — last successful pull was ${hoursAgo}h ago (threshold 24h).`)
+      : null,
+  });
   return out;
 }
 
@@ -261,5 +290,16 @@ export async function getBankingKpiDrill(client: DbClient, oci: string, key: Ban
       return (await client.query(`${escrowPostings("activity", "credit")} ORDER BY je.entry_date, ca.account_number, je.id`, base)).rows;
     case "escrow_deductions":
       return (await client.query(`${escrowPostings("activity", "debit")} ORDER BY je.entry_date, ca.account_number, je.id`, base)).rows;
+    case "relay_ingest_heartbeat":
+      return (await client.query<Record<string, unknown>>(
+        `SELECT id::text AS sync_log_id, started_at, finished_at, success, rows_added,
+                error_message, payload->>'start_date' AS start_date, payload->>'end_date' AS end_date,
+                COALESCE(sync_kind, 'relay_fuel_daily_pull') AS sync_kind
+           FROM integrations.integration_sync_log
+          WHERE operating_company_id = $1::uuid AND integration = 'relay'
+            AND sync_kind = 'relay_fuel_daily_pull'
+          ORDER BY started_at DESC LIMIT 50`,
+        [oci]
+      )).rows;
   }
 }

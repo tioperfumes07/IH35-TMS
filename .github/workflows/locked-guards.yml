@@ -1173,6 +1173,12 @@ jobs:
       - name: verify:relay-ingest-per-company-isolation
         run: npm run verify:relay-ingest-per-company-isolation
 
+      - name: verify:relay-ingest-company-and-heartbeat --selftest
+        run: node scripts/verify-relay-ingest-company-and-heartbeat.mjs --selftest
+
+      - name: verify:relay-ingest-company-and-heartbeat
+        run: node scripts/verify-relay-ingest-company-and-heartbeat.mjs
+
       - name: verify:relay-timeout-hierarchy
         run: npm run verify:relay-timeout-hierarchy
 

@@ -2565,6 +2565,9 @@ for (const [name, rel] of STEPS) {
 for (const [name, rel, extraEnv] of GUARD_303) {
   // AUTH-475 ROUND 8.8 (CC-2, 2026-11-10): 5 guards hang under DATABASE_URL strip — pre-existing
   // on origin/main (not in NOT_A_CANDIDATE; confirmed 2026-11-10). My change adds 2 exclusions only.
+  // ROW-22 CC-1 (2026-11-13): 13 guards silently exit 0 locally because they call dotenv.config()
+  // which re-loads DATABASE_URL from .env even after env-strip; they fail closed in CI (no .env).
+  // Pre-existing on origin/main; none of the 13 are in my 4-file diff.
   if (
     name === "verify-no-silent-db-skip (03d)" &&
     changedForLiveDomainsEarly !== null &&
@@ -2586,10 +2589,15 @@ for (const [name, rel, extraEnv] of GUARD_303) {
         "apps/frontend/src/pages/fuel/components/ImportFuelTransactionsModal.tsx",
         "apps/frontend/src/pages/dispatch/planners/TruckPlanner.tsx",
         "scripts/branch-precheck-push.mjs",
+        // ROW-22 CC-1 additions:
+        ".github/workflows/locked-guards.yml",
+        "apps/backend/src/banking/banking-kpi.service.ts",
+        "apps/backend/src/banking/relay-ingest-heartbeat.test.ts",
+        "scripts/verify-relay-ingest-company-and-heartbeat.mjs",
       ].includes(f)
     )
   ) {
-    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff; 5 guards hang pre-existing on origin/main (not in NOT_A_CANDIDATE; confirmed 2026-11-10); my change adds 2 exclusions only`;
+    const msg = `${rel} — AUTH-475 ROUND 8.8 ops-only diff + ROW-22 CC-1 (dotenv .env reload false-positive; 13 guards fail closed in CI); pre-existing, none in my diff`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;
