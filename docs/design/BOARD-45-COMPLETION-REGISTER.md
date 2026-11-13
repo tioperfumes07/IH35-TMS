@@ -1,5 +1,13 @@
 # BOARD-45 COMPLETION REGISTER — ROUND 8.12
 
+
+## ROUND 8.20 Cursor READY overlay — 2026-11-13T22:57Z
+Cursor product MERGED (await FE `/version.json` catch-up for CERTIFY):
+- board24 Driver Files — #29332 `9c2478853ef` (formatCalendarDateUS + `?cohort=` URL SoT + ENG-60 DO DROP COLUMN consistency)
+- board11 Driver Profile Stops+miles once — #29334 `fcc59f7b361` (telematics ops drops duplicate stops-miles)
+Prior wave still READY for CERTIFY: reports 25–31 URL/ret tips through #29330; Safety/Maint/Banking/Legal Backs through earlier PRs.
+CERTIFIED remains **0/45** until Codex LIVE. Production writes: 0.
+
 ## ROUND 8.20 Cursor LIVE overlay — 2026-11-13T15:40Z
 FE+BE `41f5e0bad54` (`/version.json` + healthz). Contains Cursor wave #29181/#29183/#29186/#29195/#29197/#29203/#29211. Boards 1/13/14–17/21/22/23 MERGED-UNVERIFIED→LIVE SHA present; full CERTIFIED still Codex. board18 Factoring ret shipping this PR. Production writes: 0.
 
