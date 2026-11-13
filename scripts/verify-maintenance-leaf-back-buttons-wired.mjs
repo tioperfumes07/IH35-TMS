@@ -35,8 +35,22 @@ function auditPageHeaderFile(file, source) {
   if (!/<PageHeader\b/.test(stripped)) {
     failures.push(`${file}: must render <PageHeader ...> -- it had no back control at all`);
   }
-  if (!/backHref=["']\/maintenance["']/.test(stripped)) {
-    failures.push(`${file}: PageHeader must set backHref="/maintenance" (the module hub)`);
+  // ROUND 8.20 board22 — resolveBackHref(?ret=, fallback /maintenance) supersedes hard-coded hub.
+  if (!/resolveBackHref\s*\(/.test(stripped)) {
+    failures.push(`${file}: must call resolveBackHref so ?ret= restores Fleet Health / Home cohort`);
+  }
+  if (!/fallback:\s*(?:["']\/maintenance["']|maintenanceHomeHref)/.test(stripped) && !/const maintenanceHomeHref\s*=\s*["']\/maintenance["']/.test(stripped)) {
+    failures.push(`${file}: resolveBackHref fallback must stay /maintenance (the module hub)`);
+  }
+  // PmSchedulePage may gate resolveBehind ret; still must declare hub constant + resolveBackHref import.
+  if (file.includes("PmSchedulePage") && !/maintenanceHomeHref/.test(stripped)) {
+    failures.push(`${file}: must keep maintenanceHomeHref = "/maintenance" hub constant`);
+  }
+  if (!/backHref=\{[a-zA-Z]*[Bb]ackHref\}/.test(stripped)) {
+    failures.push(`${file}: PageHeader must set backHref={…BackHref} from resolveBackHref`);
+  }
+  if (/backHref=["']\/maintenance["']/.test(stripped)) {
+    failures.push(`${file}: must not hard-code backHref="/maintenance" (drops ?ret=)`);
   }
   return failures;
 }
