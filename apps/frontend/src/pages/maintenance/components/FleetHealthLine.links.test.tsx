@@ -21,7 +21,10 @@ describe("Maintenance Home source drill-through", () => {
     mount();
     expect(await screen.findByRole("button", { name: "All 1" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "12,000 mi" })).toHaveAttribute("href");
-    expect(screen.getByRole("link", { name: "2,000 to go" })).toHaveAttribute("href", "/maintenance/pm-schedule?schedule_id=schedule-test");
+    // ROUND 8.17/8.20 — PM drills carry ?ret= so Back restores Fleet Health cohort (fh=moving).
+    const milesHref = screen.getByRole("link", { name: "2,000 to go" }).getAttribute("href") ?? "";
+    expect(milesHref).toContain("/maintenance/pm-schedule?schedule_id=schedule-test");
+    expect(milesHref).toContain("ret=");
     expect(screen.getByRole("progressbar")).toHaveAttribute("value", "8000");
   });
   it("does not render an empty fleet on a failed read", async () => {

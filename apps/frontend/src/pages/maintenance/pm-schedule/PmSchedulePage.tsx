@@ -16,8 +16,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { useToast } from "../../../components/Toast";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { SelectCombobox } from "../../../components/Combobox";
+import { RETURN_PARAM, resolveBackHref } from "../../../lib/returnContext";
 
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 
@@ -57,6 +58,7 @@ const EMPTY_DRAFT: CreateDraft = {
 
 export function PmSchedulePage() {
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const highlightedScheduleId = searchParams.get("schedule_id")?.trim() || "";
   const requestedUnitId = searchParams.get("unit_id")?.trim() || "";
   const createRequested = searchParams.get("create") === "1";
@@ -64,6 +66,15 @@ export function PmSchedulePage() {
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
   const { pushToast } = useToast();
+  // ROUND 8.20 board22 — Fleet Health Moving (`?fh=moving`) → PM carries ret; Back must restore cohort.
+  const maintenanceHomeHref = "/maintenance";
+  const pmBackHref = searchParams.get(RETURN_PARAM)
+    ? resolveBackHref({
+        searchParams,
+        pathname: location.pathname,
+        fallback: maintenanceHomeHref,
+      })
+    : maintenanceHomeHref;
   const [formOpen, setFormOpen] = useState(false);
   const [draft, setDraft] = useState<CreateDraft>(EMPTY_DRAFT);
   const [formError, setFormError] = useState<string | null>(null);
@@ -224,7 +235,7 @@ export function PmSchedulePage() {
       <PageHeader
         title="PM Schedule"
         breadcrumb={[{ label: "Maintenance" }, { label: "PM Schedule" }]}
-        backHref="/maintenance"
+        backHref={pmBackHref}
         actions={
           <Button type="button" onClick={openCreateForm} disabled={!companyId} data-testid="pm-schedule-create-open">
             + Create
