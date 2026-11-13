@@ -166,13 +166,17 @@ const DRIVER_DAY_SUMMARY_SQL = `
               AND ge.occurred_at >= b.day_start
               AND ge.occurred_at < b.day_end
           ),
+          -- ROW 124b (CC-2 11-13): planner estimated day_geofence_ids=5001 rows (actual 90) and
+          -- chose Hash Join building from geo.geofences (regex scan of all 26,342 rows, 580 ms).
+          -- LATERAL forces 90 PK index lookups + regex on those 90 strings → ~9 ms.
           stop_fence_keys AS MATERIALIZED (
             SELECT g.id AS geofence_id,
                    substring(g.label FROM '^load-([0-9a-f-]{36})-stop-')::uuid AS load_id,
                    substring(g.label FROM '-stop-([0-9]+)$')::int AS sequence_number
-            FROM geo.geofences g
-            JOIN day_geofence_ids dgi ON dgi.geofence_id = g.id
-            WHERE g.label ~ '${STOP_FENCE_LABEL_RE_SQL}'
+            FROM day_geofence_ids dgi
+            JOIN LATERAL (
+              SELECT id, label FROM geo.geofences WHERE id = dgi.geofence_id
+            ) g ON g.label ~ '${STOP_FENCE_LABEL_RE_SQL}'
           ),
           stop_fences AS MATERIALIZED (
             SELECT k.geofence_id, s.id AS stop_id
