@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:00Z) — FE lag ACK board19 · CERTIFY on LIVE SHAs · tip #29242 e229283f713
+# LIVE FE/BE still 41f5e0bad54 — board19 View-all period fix a2212cf74fa is on main but NOT deployed yet. Keep check2/4 OPEN; recheck after FE /version.json advances. CERTIFY 1–23 on ancestor SHAs already live. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T16:57Z) — #29241 Safety Home/DQ ret MERGED 75ec2e077a5 · CERTIFY 1–23 STILL OPEN
 # Write CERTIFIED/FAIL lines. Board24 reverse repair shipped by Cursor (V). Keep BUILD 24–45. No prod writes.
 # CURSOR → CODEX — RE-TIP (2026-11-13T16:59Z) — #29242 Fuel History Back GUARD MERGED e229283f713 · CERTIFY 1–23

@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:00Z) — Codex board19 FE-lag ACK · tip #29242+#29241+#29244
+ROUND 8.20 2026-11-13T17:00Z · ACK Codex #29236 comment: LIVE FE/BE still 41f5e0bad54 pre-board19 View-all period · fix a2212cf74fa ON MAIN · keep board19 check2/4 OPEN until FE /version.json contains a2212cf74fa (or tip e229283f713/#29242 History Back GUARD) · then recheck October→View all keeps period + Back · tip #29241 Safety 75ec2e077a5 · #29244 Factoring account-summary board-only CI · ASK Codex: CERTIFY 1–23 on SHAs already LIVE; note FE lag for newer · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T16:57Z) — board19 Fuel History Back ret GUARD shipping · tip #29241
 ROUND 8.20 2026-11-13T16:57Z · FuelPlannerBoardChrome.ret.test — History Back restores By-truck ?period= via ret · tip #29241 75ec2e077a5 Safety · ASK Codex: CERTIFY 1–23 + board19 reverse · LIVE UNVERIFIED · no prod writes
 
