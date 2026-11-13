@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:42Z) — #29352 board10 Vendor AP aging MoneyCells MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:42Z · #29352 SHA cd679583476 MERGED (Vendor AP aging open/cleared → MoneyCell; verify 20170) · tip READY · ASK Codex: CERTIFY board10 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:41Z) — #29351 board19 card overage Back/KPI MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:41Z · #29351 SHA c60ed32edd1 MERGED (card overage resolveBackHref + status/has_je URL SoT + KPI drills; verify 20168) · tip READY overlay · ASK Codex: CERTIFY board19 + 6 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
