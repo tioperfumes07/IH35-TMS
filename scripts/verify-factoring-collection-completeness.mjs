@@ -15,6 +15,7 @@
  */
 
 import { requireLiveDbOrExit } from "./lib/require-live-db.mjs";
+export const ALLOW_OFFLINE_SKIP = "factoring collection engine requires a live DB; CI always has DATABASE_URL";
 
 // --- ratchet config -------------------------------------------------------
 const COLLECTION_FLOOR = 0;      // grows when real collections land
@@ -31,7 +32,7 @@ if (!isSelftest) {
 }
 
 async function runLive() {
-  const { client, pool } = await requireLiveDbOrExit({ label: "verify-factoring-collection-completeness" });
+  const { client, pool } = await requireLiveDbOrExit({ label: "verify-factoring-collection-completeness", allowOfflineSkip: ALLOW_OFFLINE_SKIP });
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'on'");
@@ -124,7 +125,7 @@ async function measureDb(client) {
 }
 
 async function runSelftest() {
-  const { client, pool } = await requireLiveDbOrExit({ label: "verify-factoring-collection-completeness (selftest)" });
+  const { client, pool } = await requireLiveDbOrExit({ label: "verify-factoring-collection-completeness (selftest)", allowOfflineSkip: ALLOW_OFFLINE_SKIP });
   try {
     await client.query("BEGIN");
     await client.query("SET LOCAL app.bypass_rls = 'on'");
