@@ -839,7 +839,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
       {/* ROUND 8.20 board6 — variance chips (board: over / under / flat), URL-backed. */}
       <div className="flex flex-wrap items-center gap-2" data-testid="cash-flow-avp-variance-chips">
         <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: V3.muted }}>
-          Net variance
+          {`Net variance`}
         </span>
         <V3Segmented
           value={applied.varianceFilter}
