@@ -3,7 +3,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { useLocation, Link, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -42,6 +43,9 @@ export function DashcamViewerPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -117,7 +121,7 @@ export function DashcamViewerPage() {
   return (
     <div className="space-y-4 p-4" data-testid="dashcam-viewer-page">
       <PageHeader
-        backHref="/safety"
+        backHref={safetyBackHref}
         breadcrumb={["Safety", "Dashcam"]}
         title="Dashcam"
         subtitle="Samsara dashcam clips by unit — harsh-event and on-demand. Clips arrive when the harsh-events poll ticks."

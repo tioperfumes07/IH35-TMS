@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest, ApiError } from "../../../api/client";
@@ -62,6 +64,10 @@ function severityWeight(severity: CertSeverity) {
 }
 
 export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashboardProps = {}) {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [certType, setCertType] = useState<"all" | CertType>("all");
@@ -132,7 +138,7 @@ export function ExpiryDashboard({ breadcrumbLabel = "Cert Expiry" }: ExpiryDashb
         title="Certificate Expiry Dashboard"
         subtitle="Track CDL, medical card, hazmat, TWIC, passport, and drug test due dates."
         breadcrumb={[{ label: "Safety" }, { label: breadcrumbLabel }]}
-        backHref="/safety"
+        backHref={safetyBackHref}
         actions={
           <span className="rounded-sm bg-[#F7F8FA] px-2 py-0.5 text-xs font-semibold text-[#1F2A44]">
             Open {alertsQuery.isError ? "—" : filteredRows.length}

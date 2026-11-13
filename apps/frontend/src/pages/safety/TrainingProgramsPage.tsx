@@ -1,3 +1,5 @@
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -35,6 +37,10 @@ function addUtcMonths(date: Date, months: number) {
 }
 
 export function TrainingProgramsPage({ operatingCompanyId }: Props) {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(false);
@@ -210,7 +216,7 @@ export function TrainingProgramsPage({ operatingCompanyId }: Props) {
         title="Training Programs"
         subtitle="Define required programs and assign drivers to completion tracking."
         breadcrumb={[{ label: "Safety" }, { label: "Training Programs" }]}
-        backHref="/safety"
+        backHref={safetyBackHref}
         actions={
           <Button size="sm" data-testid="training-programs-create-btn" onClick={() => setCreateOpen(true)}>
             + Create Training Program

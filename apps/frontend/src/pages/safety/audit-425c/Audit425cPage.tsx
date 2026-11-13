@@ -25,7 +25,7 @@
  * total counts are surfaced so a truncated page is never mistaken for a complete trail.
  */
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { listAuditEvents, type AuditEventListItem } from "../../../api/audit";
@@ -38,6 +38,7 @@ import { useStagedListFilters } from "../../../components/table";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { Combobox } from "../../../components/Combobox";
 import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 
@@ -142,6 +143,10 @@ function EventDetail({ row }: { row: AuditEventListItem }) {
 
 export default function Audit425cPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
+  const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const companyId = selectedCompanyId ?? "";
   const enabled = Boolean(companyId);
 
@@ -274,7 +279,7 @@ export default function Audit425cPage() {
         title="425C Audit Trail"
         subtitle="Append-only Form 425C filing history for the selected entity. Filter by section, action, actor, or date, and open the source record from any row."
         breadcrumb={[{ label: "Safety" }, { label: "425C Audit Trail" }]}
-        backHref="/safety"
+        backHref={safetyBackHref}
       />
 
       {!enabled ? (
