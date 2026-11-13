@@ -4,9 +4,10 @@
  * collected = payment applications). Aging detail + Open A/R KPI: GET /api/v1/reports/ar-aging (the canonical aging that ties
  * to GL 1100). Statement: each customer opens its existing statement page (/customers/:id/statement). No new engine.
  */
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getArAgingReport,
   getCustomerBoardReport,
@@ -54,10 +55,35 @@ const name = (n: string | null | undefined) => (n ? formatCompanyName(n) : "Cust
 export function CustomerReportBoard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [range, setRange] = useState<PartyBoardRange>("ytd");
-  const [view, setView] = useState<View>("sales");
-  const [customerIds, setCustomerIds] = useState("");
-  const [factored, setFactored] = useState<string[]>([]);
+  const { pathname } = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board30 — view/range/customers/factored in URL; statement links carry ret.
+  const rangeFromUrl = (searchParams.get("range") ?? "ytd") as PartyBoardRange;
+  const range: PartyBoardRange = RANGE_OPTIONS.some((r) => r.id === rangeFromUrl) ? rangeFromUrl : "ytd";
+  const viewFromUrl = (searchParams.get("view") ?? "sales") as View;
+  const view: View = VIEW_OPTIONS.some((v) => v.id === viewFromUrl) ? viewFromUrl : "sales";
+  const customerIds = searchParams.get("customers") ?? "";
+  const factored = (searchParams.get("factored") ?? "").split(",").filter(Boolean);
+  const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const patchUrl = (patch: Record<string, string | null>) => {
+    setSearchParams(
+      (prev) => {
+        const p = new URLSearchParams(prev);
+        for (const [k, v] of Object.entries(patch)) {
+          if (v == null || v === "") p.delete(k);
+          else p.set(k, v);
+        }
+        return p;
+      },
+      { replace: true },
+    );
+  };
+  const setRange = (next: PartyBoardRange) => patchUrl({ range: next === "ytd" ? null : next });
+  const setView = (next: View) => patchUrl({ view: next === "sales" ? null : next });
+  const setCustomerIds = (next: string) => patchUrl({ customers: next || null });
+  const setFactored = (next: string[]) => patchUrl({ factored: next.length ? next.join(",") : null });
+  const statementHref = (customerId: string) =>
+    withReturnContext(`/customers/${encodeURIComponent(customerId)}/statement`, originHref);
   const asOf = companyToday();
 
   const board = useQuery({
@@ -158,7 +184,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => name(r.name),
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={`/customers/${encodeURIComponent(r.id)}/statement`}>
+        <Link className="text-[#1D4ED8] hover:underline" to={statementHref(r.id)}>
           Statement
         </Link>
       ),
@@ -188,7 +214,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => name(r.name),
       render: (r) => (
-        <Link className="font-semibold text-[#1D4ED8] hover:underline" to={`/customers/${encodeURIComponent(r.id)}/statement`} data-testid={`customer-report-statement-${r.id}`}>
+        <Link className="font-semibold text-[#1D4ED8] hover:underline" to={statementHref(r.id)} data-testid={`customer-report-statement-${r.id}`}>
           Open statement →
         </Link>
       ),

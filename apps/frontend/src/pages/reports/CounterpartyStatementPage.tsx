@@ -1,7 +1,8 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { resolveBackHref } from "../../lib/returnContext";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -227,6 +228,8 @@ export function CounterpartyStatementView({
 }) {
   const { id } = useParams<{ id: string }>();
   const counterpartyId = counterpartyIdProp ?? id ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = currentMonthRange();
@@ -259,7 +262,12 @@ export function CounterpartyStatementView({
     retry: false,
   });
 
-  const backHref = kind === "customer" ? `/customers/${counterpartyId}` : `/vendors/${counterpartyId}`;
+  // ROUND 8.20 board30/31 — Statement Back honors ?ret= (Reports customer/vendor report cohort).
+  const backHref = resolveBackHref({
+    searchParams,
+    pathname,
+    fallback: kind === "customer" ? `/customers/${counterpartyId}` : `/vendors/${counterpartyId}`,
+  });
   const printPath =
     kind === "customer"
       ? `/api/v1/accounting/customers/${encodeURIComponent(counterpartyId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${appliedFilters.start}&to_date=${appliedFilters.end}`
