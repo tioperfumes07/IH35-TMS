@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r207-settlement-line-load-link",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 207 — settlement line load link ratchet. Guard 19983 enforces ceiling of 5 settlement lines without load_id.",
+  "branch": "cc-2/eng-r207-settlement-line-load-link",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-settlement-line-load-link-ratchet.mjs",
+    "scripts/verify-steps/19983-verify-settlement-line-load-link-ratchet.mjs",
+    ".block-ready/cc-2-r207-settlement-line-load-link.json"
+  ],
+  "acceptance": [
+    "verify-settlement-line-load-link-ratchet selftest PASS 2/2",
+    "total=942 no_load=5/5 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
