@@ -1,6 +1,6 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AmountLink, resolveAmountRoute, type AmountFilter } from "../../components/shared/AmountLink";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -68,6 +68,11 @@ function currentQuarterRange() {
   return quarterBoundsIso(companyToday());
 }
 
+/** ROUND 8.20 board25/26 — Reports Home Cash attaches ?basis=cash; TB must hydrate (never force Accrual). */
+function basisFromSearch(params: URLSearchParams): AccountingBasis {
+  return (params.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
+}
+
 type SortKey = keyof AccountingTrialBalanceRow;
 
 export function TrialBalancePage() {
@@ -76,9 +81,28 @@ export function TrialBalancePage() {
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as AccountingBasis };
+  const urlBasis = basisFromSearch(searchParams);
+  const emptyFilters = { ...currentQuarterRange(), basis: urlBasis };
   const [applied, setApplied] = useState(emptyFilters);
-  const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
+  const staged = useStagedListFilters({
+    applied,
+    empty: emptyFilters,
+    onApply: (next) => {
+      setApplied(next);
+      setSearchParams(
+        (prev) => {
+          const p = new URLSearchParams(prev);
+          p.set("basis", next.basis);
+          return p;
+        },
+        { replace: true },
+      );
+    },
+  });
+  // Deep-link / Back: keep applied basis aligned with ?basis= (Reports Home Cash selection).
+  useEffect(() => {
+    setApplied((prev) => (prev.basis === urlBasis ? prev : { ...prev, basis: urlBasis }));
+  }, [urlBasis]);
   const exportAction = useExportAction();
   const [reportSearch, setReportSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("account_code");
