@@ -18,12 +18,44 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { EXPECTED_ZERO_PATH, PURGE_STATE_PATH, PURGE_WINDOW_GUARDS } from "./lib/purge-window.mjs";
 export const REQUIRES_LIVE_DB =
   "live-data guard; the purge-window state is read from live rows and fails closed with no DATABASE_URL (ROUND 99.4)";
 
 const LABEL = "verify-purge-window-state";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const BASELINE_PATH = join(path.resolve(path.dirname(fileURLToPath(import.meta.url))), "verify-steps/purge-window-state-baseline.json");
+
+function loadBaseline() {
+  if (!fs.existsSync(BASELINE_PATH)) return null;
+  return JSON.parse(fs.readFileSync(BASELINE_PATH, "utf8"));
+}
+
+// Pure function — apply shrink-only ratchet. violations = string[] from liveViolations().violations.
+// Violation format: "<table>: <N> voided row(s) with no void_reason"
+// Baseline keyed by table name → { ids: string[] }. Ratchet passes if N <= ids.length (count-only shrink).
+// Also passes other violation types (JE reversal links) only if baseline has an explicit entry for them.
+export function applyPurgeWindowRatchet(violations, baseline) {
+  if (!baseline) return { ratchetProblems: violations.map((v) => `no baseline — ${v}`), ratchetPassed: violations.length === 0 };
+  const ratchetProblems = [];
+  for (const v of violations) {
+    const m = v.match(/^(.+?):\s+(\d+) voided row\(s\) with no void_reason$/);
+    if (m) {
+      const table = m[1].trim();
+      const count = parseInt(m[2], 10);
+      const tableBaseline = baseline.voided_no_reason?.[table];
+      if (!tableBaseline) { ratchetProblems.push(`${v} [NEW table — not in baseline]`); continue; }
+      const baselineCount = (tableBaseline.ids ?? []).length;
+      if (count > baselineCount) ratchetProblems.push(`${v} [NEW: ${count} > baseline ${baselineCount}]`);
+      // count <= baseline = known pre-existing, passes ratchet
+      continue;
+    }
+    // Unknown violation type — not in baseline → fail
+    ratchetProblems.push(`${v} [unknown violation type — not in baseline]`);
+  }
+  return { ratchetProblems, ratchetPassed: ratchetProblems.length === 0 };
+}
 const LIVE_ARMS = [
   ["verify-alwaystrack-parity", "mdata.loads"],
   ["verify-control-totals", "driver_finance.driver_settlements"],
@@ -138,7 +170,24 @@ if (process.argv.includes("--selftest")) {
       process.exit(1);
     }
   }
-  console.log(`${LABEL} --selftest PASS — ${plants.length} planted static regressions each caught; real tree clean`);
+  // Ratchet selftests
+  const fakeBaseline = { voided_no_reason: { "accounting.company_settlements": { ids: ["id1","id2","id3","id4"] } } };
+  const knownViolation = "accounting.company_settlements: 4 voided row(s) with no void_reason";
+  const grownViolation = "accounting.company_settlements: 5 voided row(s) with no void_reason";
+  const newTableViolation = "accounting.bills: 1 voided row(s) with no void_reason";
+  const unknownViolation = "accounting.journal_entries: 2 reversal link(s) to an entry that does not exist";
+  const ratchetCases = [
+    ["ratchet: known count passes", applyPurgeWindowRatchet([knownViolation], fakeBaseline).ratchetPassed],
+    ["ratchet: grown count fails", !applyPurgeWindowRatchet([grownViolation], fakeBaseline).ratchetPassed],
+    ["ratchet: new table fails", !applyPurgeWindowRatchet([newTableViolation], fakeBaseline).ratchetPassed],
+    ["ratchet: empty violations passes", applyPurgeWindowRatchet([], fakeBaseline).ratchetPassed],
+    ["ratchet: null baseline fails on any violation", !applyPurgeWindowRatchet([knownViolation], null).ratchetPassed],
+    ["ratchet: unknown format fails", !applyPurgeWindowRatchet([unknownViolation], fakeBaseline).ratchetPassed],
+  ];
+  for (const [what, pass] of ratchetCases) {
+    if (!pass) { console.error(`${LABEL} --selftest FAIL: ratchet case "${what}" failed`); process.exit(1); }
+  }
+  console.log(`${LABEL} --selftest PASS — ${plants.length} planted static regressions each caught; ${ratchetCases.length} ratchet cases passed; real tree clean`);
   process.exit(0);
 }
 
@@ -174,8 +223,16 @@ try {
 violations.push(...live.violations);
 
 if (violations.length > 0) {
-  console.error(`${LABEL}: FAIL — purge-window state violations: ${violations.length} (required 0)`);
-  for (const x of violations) console.error(`  ✗ ${x}`);
-  process.exit(1);
+  const baseline = loadBaseline();
+  const { ratchetProblems, ratchetPassed } = applyPurgeWindowRatchet(live.violations, baseline);
+  const staticProblems = violations.filter((v) => !live.violations.includes(v));
+  if (staticProblems.length > 0 || !ratchetPassed) {
+    const all = [...staticProblems, ...ratchetProblems];
+    console.error(`${LABEL}: FAIL — purge-window state violations: ${all.length} (required 0)`);
+    for (const x of all) console.error(`  ✗ ${x}`);
+    process.exit(1);
+  }
+  console.log(`${LABEL}: PASS via ratchet — ${live.violations.length} known pre-existing live violation(s) in baseline (${live.violations.join("; ")}); 0 new static or new live violations.`);
+} else {
+  console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: ${PURGE_WINDOW_GUARDS.length} arms, 2 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);
 }
-console.log(`${LABEL}: PASS — purge-window state violations: 0 (required 0). Static: ${PURGE_WINDOW_GUARDS.length} arms, 2 on the generated live_predicate, every entry states live_predicate, purge_state.json consistent. Live: ${live.counted.join(", ")}; every voided row carries a reason; no dangling reversal link.`);

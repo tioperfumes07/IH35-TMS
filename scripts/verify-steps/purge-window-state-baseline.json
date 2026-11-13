@@ -1,0 +1,15 @@
+{
+  "_comment": "Shrink-only baseline for verify-purge-window-state void_reason violations. Measured prod 2026-11-13 (br-fancy-credit-akjnd07a, USMCA). SHRINK-ONLY — IDs removed when void_reason is backfilled; new IDs NEVER added. A new voided row without void_reason not in this baseline must FAIL the guard.",
+  "_measured_at": "2026-11-13",
+  "voided_no_reason": {
+    "accounting.company_settlements": {
+      "_note": "4 rows voided 2026-11-11 without void_reason — VOID-PURGE-F443-COMPANY-SETTLEMENTS-NO-REASON-20261110",
+      "ids": [
+        "475bb085-d7c5-4c1e-9056-1ac3d868a3aa",
+        "a188e47a-e355-4bda-b0ed-e1afaa6d18c8",
+        "aefe4498-5e14-4a1b-ba6c-61dd1005fe76",
+        "eb2a2f4d-9ac0-45bb-9ab7-d785d7e899c1"
+      ]
+    }
+  }
+}

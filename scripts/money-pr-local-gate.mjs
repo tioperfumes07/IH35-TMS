@@ -2730,102 +2730,11 @@ function acceptedRound8_8LoadBoardsAgreeSafetyGrid(name, code) {
 
 
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-stops-resolve-samsara-no-zip-fence fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod debt: customer-site fence 26464921-bf24-4c24-b1bf-38815adf1636 (load ebeafc9c stop-1-gps)
-// is active with no street (auto_dispatch, zip/city center) on origin/main. This batch82 diff does NOT touch
-// any samsara/telematics/book-load paths. Filed SAMSARA-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes samsara/telematics/book-load writers.
-function acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-stops-resolve-samsara-no-zip-fence") return false;
-  if (!changed) return false;
-  if (
-    changed.some(
-      (f) =>
-        f.startsWith("apps/backend/src/telematics/") ||
-        f.startsWith("apps/backend/src/integrations/samsara/") ||
-        f === "apps/backend/src/dispatch/book-load.service.ts" ||
-        f === "apps/backend/src/driver-finance/settlement-creator-seed-loads.ts",
-    )
-  )
-    return false;
-  return true;
-}
-
-
-// ACCT-F11152 batch82 (CC-1, 2026-11-11): verify-booked-loads-save-miles fires via db/migrations/ DATA_WRITE.
-// Pre-existing prod debt: RULE 2 (loads 13716/13728) + RULE 4 (loads 13702/13704/13711/13718/13723/13725/13735)
-// — 9 findings over 227 USMCA loads booked since 2026-10-11 on origin/main. This batch82 diff does NOT touch
-// any miles-writing paths (book-load.service.ts, load-lane-learning.service.ts, stop-gps-verification.service.ts,
-// dispatch-relearn-load-miles.handler.ts, driver-finance/). Filed MILES-F11152-BATCH82-20261111 in GUARD-WORKORDERS.md.
-// Content-based: fires only when the diff does not include any miles writers.
-function acceptedAcctF11152BookedMilesAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-booked-loads-save-miles") return false;
-  if (!changed) return false;
-  const MILES_WRITERS = [
-    "apps/backend/src/dispatch/book-load.service.ts",
-    "apps/backend/src/dispatch/load-lane-learning.service.ts",
-    "apps/backend/src/dispatch/stop-gps-verification.service.ts",
-    "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
-  ];
-  if (changed.some((f) => MILES_WRITERS.includes(f) || f.startsWith("apps/backend/src/driver-finance/"))) return false;
-  return true;
-}
 
 
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-purge-window-state fires via db/migrations/ DATA_WRITE
-// (two held .sql migration files in the diff; .sql = always a write by definition). Pre-existing prod
-// state: accounting.company_settlements has 4 voided rows with no void_reason — same class as
-// VOID-PURGE-F443-COMPANY-SETTLEMENTS-NO-REASON-20261110. This batch82 diff does NOT touch any
-// purge-window writers (scripts/purge/, purge_state.json). Filed PURGE-F11152-BATCH82-20261112.
-// Content-based: fires only when diff includes real purge-window writers.
-function acceptedAcctF11152PurgeWindowStateAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-purge-window-state") return false;
-  if (!changed) return false;
-  const PURGE_WRITERS = [
-    "scripts/purge/",
-    "scripts/lib/purge-window.mjs",
-    "purge_state.json",
-  ];
-  if (changed.some((f) => PURGE_WRITERS.some((p) => f === p || f.startsWith(p)))) return false;
-  return true;
-}
 
 
-// ACCT-F11152 batch82 (CC-1, 2026-11-12): verify-fuel-cost-posts-exactly-once fires because
-// accounting/has-transactions-predicate.ts is in the diff (classified as NonBankReconAccounting).
-// has-transactions-predicate.ts is READ-ONLY: adds operating_company_id scoping to EXISTS subqueries;
-// it cannot create fuel JEs, post expenses, or touch any fuel/expense path.
-// ENG-53 (CC-3, R8.20, 2026-11-12): verify-booked-loads-save-miles fires because
-// dispatch-relearn-load-miles.handler.ts is in the diff (a MILES_WRITER), blocking acceptedAcctF11152BookedMilesAmbient.
-// Pre-existing ambient debt: RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735
-// — 9 findings over 227 USMCA loads on origin/main. ENG-53 adds captureGeofenceOdometerEvents BEFORE leg
-// computation and enqueues dispatch.relearn_load_miles on BOTH stop arrival AND departure (inside withSavepoint).
-// This prevents new NULL-miles on future stop events; it does NOT backfill pre-existing stale loads.
-// No new violations introduced by this diff.
-// Content-based: activates only when the ENG-53 engine files are in the diff with no other miles writers.
-function acceptedEng53BookedMilesAmbient(name, code, changed) {
-  if (code === 0) return false;
-  if (name !== "verify-booked-loads-save-miles") return false;
-  if (!changed) return false;
-  const ENG53_EXACT = new Set([
-    "apps/backend/src/dispatch/stop-stamp.service.ts",
-    "apps/backend/src/outbox/handlers/dispatch-relearn-load-miles.handler.ts",
-    "scripts/verify-booked-loads-save-miles.mjs",
-  ]);
-  if (!changed.some((f) => ENG53_EXACT.has(f))) return false;
-  const OTHER_MILES_WRITERS = [
-    "apps/backend/src/dispatch/book-load.service.ts",
-    "apps/backend/src/dispatch/load-lane-learning.service.ts",
-    "apps/backend/src/dispatch/stop-gps-verification.service.ts",
-  ];
-  if (changed.some((f) => OTHER_MILES_WRITERS.some((p) => f.startsWith(p)))) return false;
-  if (changed.some((f) => f.startsWith("apps/backend/src/driver-finance/"))) return false;
-  return true;
-}
 
 
 // GATE-SCOPE-03-REFIX (self-discovered, 2026-09-23, second occurrence) — this exact fix was already
@@ -4228,45 +4137,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
             `cite ROUND_8_8_LOAD_BOARDS_BYPASS in PR.`,
         );
         skippedLiveChecks.push(`${rel} — ACCEPTED CC-2 ROUND-8.8 load-boards-agree SafetyDriverSchedulerGrid pre-existing`);
-        continue;
-      }
-      if (acceptedAcctF11152SamsaraZipFenceAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-stops-resolve-samsara-no-zip-fence pre-existing prod debt ` +
-            `(fence 26464921.../stop-1-gps auto_dispatch zip/city center on origin/main; ` +
-            `diff has zero samsara/telematics/book-load writers; cite SAMSARA-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 samsara-zip-fence ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152BookedMilesAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-booked-loads-save-miles pre-existing prod debt ` +
-            `(RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735; ` +
-            `9 findings over 227 USMCA loads on origin/main; diff has zero miles-writing paths; ` +
-            `cite MILES-F11152-BATCH82-20261111 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 booked-miles ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedAcctF11152PurgeWindowStateAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-purge-window-state pre-existing prod debt ` +
-            `(accounting.company_settlements: 4 voided rows with no void_reason on origin/main; ` +
-            `diff has zero purge-window writers; cite PURGE-F11152-BATCH82-20261112 in PR).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ACCT-F11152 batch82 purge-window-state ambient pre-existing debt`);
-        continue;
-      }
-      if (acceptedEng53BookedMilesAmbient(name, code, changedForLiveDomains)) {
-        console.log(
-          `[${LABEL}] ACCEPTED — verify-booked-loads-save-miles ENG-53 stop-event relearn ` +
-            `(RULE 2 loads 13716/13728 + RULE 4 loads 13702/13704/13711/13718/13723/13725/13735; ` +
-            `9 pre-existing findings on origin/main; ENG-53 adds captureGeofenceOdometerEvents + stop-stamp ` +
-            `relearn enqueue — prevents new NULL-miles, does not backfill pre-existing stale loads; ` +
-            `no new violations introduced; R8.20 CC-3 owner standing order).`,
-        );
-        skippedLiveChecks.push(`${rel} — ACCEPTED ENG-53 booked-miles ambient pre-existing debt`);
         continue;
       }
       failStep(name);

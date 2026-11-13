@@ -1,0 +1,12 @@
+{
+  "_comment": "Shrink-only baseline for verify-booked-loads-save-miles. Measured prod 2026-11-13 (br-fancy-credit-akjnd07a, USMCA). SHRINK-ONLY — load numbers removed when miles are backfilled/relearned; new load numbers NEVER added. A new violating load not in the baseline for its rule must FAIL the guard.",
+  "_measured_at": "2026-11-13",
+  "rule2_loads": {
+    "_note": "Loads whose non-first stops lack leg_miles. Loads 13716 (id 24f58721) and 13728 (id 2fbd3367) booked before ENG-53 stop-stamp relearn was wired.",
+    "load_numbers": ["13716", "13728"]
+  },
+  "rule4_loads": {
+    "_note": "Loads whose first stop has no leg_miles (deadhead) but a prior unit load exists. 7 loads booked before ENG-53 / fillFirstStopDeadhead was wired.",
+    "load_numbers": ["13702", "13704", "13711", "13718", "13723", "13725", "13735"]
+  }
+}
