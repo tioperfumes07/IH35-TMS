@@ -17986,5 +17986,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1109
+  "total_claimed": 1109,
+  "20165": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-13",
+    "purpose": "verify-registry-json-parses"
+  }
 }
