@@ -709,6 +709,8 @@ export function BankingTransactionsDesignView({
       : urlType === "uncategorized"
         ? "for_review"
         : initialReviewTab ?? null;
+  // ROUND 8.20 board 3 — Money In/Out KPI uses review=all (cleared = for_review ∪ categorized; never Excluded).
+  const unionClearedReviews = urlReview === "all";
   const cohortDateFrom = urlDateFrom ?? initialDateFrom ?? "";
   const cohortDateTo = urlDateTo ?? initialDateTo ?? "";
 
@@ -1086,7 +1088,9 @@ export function BankingTransactionsDesignView({
   const onToggleSortCol = (key: string) => toggleSort(key as BankTxnSort["key"]);
 
   const tableRows = useMemo(() => {
-    const source = reviewTabBuckets[activeReviewTab];
+    const source = unionClearedReviews
+      ? [...reviewTabBuckets.for_review, ...reviewTabBuckets.categorized]
+      : reviewTabBuckets[activeReviewTab];
     // DISP-F9994 (item 24) -- dateFrom/dateTo are no longer re-filtered here: transactionsQuery's
     // queryKey already re-queries the server on every date-range edit (server-side date_from/date_to
     // predicates in link.routes.ts), so `source` already reflects the range. Re-filtering the same
@@ -1151,13 +1155,15 @@ export function BankingTransactionsDesignView({
       if (va > vb) return 1 * sortDir;
       return 0;
     });
-  }, [activeReviewTab, amountFilter, drafts, reviewTabBuckets, selectedTransactionTypes, sortBy]);
+  }, [activeReviewTab, amountFilter, drafts, reviewTabBuckets, selectedTransactionTypes, sortBy, unionClearedReviews]);
 
   // CC-3 owner instructions 2026-09-02, item 9: "Empty state names the filter, never a blank
   // panel" -- names every active filter that could be why the list is empty, instead of one
   // static sentence regardless of what's actually applied.
   const emptyStateText = useMemo(() => {
-    const reviewTabLabel = BANKING_REVIEW_TABS.find((t) => t.id === activeReviewTab)?.label ?? activeReviewTab;
+    const reviewTabLabel = unionClearedReviews
+      ? "cleared (For review + Categorized)"
+      : (BANKING_REVIEW_TABS.find((t) => t.id === activeReviewTab)?.label ?? activeReviewTab);
     const typeLabels = TRANSACTION_TYPE_FILTER_OPTIONS.filter((t) => selectedTransactionTypes.includes(t.id)).map((t) => t.label);
     const parts = [`No "${reviewTabLabel}" transactions`];
     if (typeLabels.length > 0) parts.push(`type "${typeLabels.join(', ')}"`);
@@ -1165,7 +1171,7 @@ export function BankingTransactionsDesignView({
     if (descriptionFilter.trim()) parts.push(`description containing "${descriptionFilter.trim()}"`);
     if (dateFrom || dateTo) parts.push(`date ${dateFrom || "…"} to ${dateTo || "…"}`);
     return parts.length > 1 ? `${parts[0]} matching ${parts.slice(1).join(", ")}.` : `${parts[0]}.`;
-  }, [activeReviewTab, selectedTransactionTypes, amountFilter, descriptionFilter, dateFrom, dateTo]);
+  }, [activeReviewTab, selectedTransactionTypes, amountFilter, descriptionFilter, dateFrom, dateTo, unionClearedReviews]);
 
   useEffect(() => {
     setCurrentPage(1);
