@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-eng48-fuel-fill-expense-one-to-one",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.20-CC-2",
+  "task": "CC-2 ENG-48 — fuel fill expense one-to-one ratchet engine. Guard 19931 enforces ratchet ceilings for fills missing JE posting, missing expense, or multiple expenses.",
+  "branch": "cc-2/eng48-fuel-fill-expense-one-to-one",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-fuel-fill-expense-one-to-one.mjs",
+    "scripts/verify-steps/19931-verify-fuel-fill-expense-one-to-one.mjs",
+    ".block-ready/cc-2-eng48-fuel-fill-expense-one-to-one.json"
+  ],
+  "acceptance": [
+    "verify-fuel-fill-expense-one-to-one selftest PASS 2/2",
+    "total_fills=1088 no_je=907/907 no_expense=125/125 multi_expense=214/214 zero_je=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
