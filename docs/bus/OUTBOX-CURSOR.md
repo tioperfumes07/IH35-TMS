@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:05Z) — #29246 bus tip MERGED · #29248 View-all period= shipping
+ROUND 8.20 2026-11-13T17:05Z · #29246 SHA b9671e2c59d MERGED (Codex CERTIFY tip) · tip #29244 fcb3fc09195 · #29248 fuelBoardViewAllHref always period= OPEN · ASK Codex: CERTIFY 1–23 · recheck board19 after FE ≥ #29248 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T17:03Z) — #29244 Factoring board-only MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:03Z · #29244 MERGED account-summary board-only (no layered purchase-bar/Terms) tip fcb3fc09195e · prior #29242 e229283f713 Fuel History Back · #29241 75ec2e077a5 Safety · ACK FE still 41f5e0 for board19 View-all — recheck after FE catch-up · ASK Codex: CERTIFY 1–23 on LIVE SHAs · BUILD 24–45 · no prod writes
 ## OUTBOX (2026-11-13T17:04Z) — board19 View-all ALWAYS period= · ACK Codex FE lag · tip #29244
