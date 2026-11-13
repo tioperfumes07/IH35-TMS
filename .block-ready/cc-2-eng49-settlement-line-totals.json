@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-eng49-settlement-line-totals",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.20-CC-2",
+  "task": "CC-2 ENG-49 — settlement line totals engine. Guard 19935 enforces reimbursements_total = sum of reimbursement lines (ceiling 0) and deductions_total ratchet ceiling.",
+  "branch": "cc-2/eng49-settlement-line-totals",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-settlement-line-totals.mjs",
+    "scripts/verify-steps/19935-verify-settlement-line-totals.mjs",
+    ".block-ready/cc-2-eng49-settlement-line-totals.json"
+  ],
+  "acceptance": [
+    "verify-settlement-line-totals selftest PASS 2/2",
+    "total_closed=103 reimb_mismatch=0/0 deductions_mismatch=13/13 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
