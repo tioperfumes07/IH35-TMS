@@ -1,4 +1,6 @@
 
+ROW 124 · PR #29329 · merge sha 82337f393c · DONE-ENGINE
+
 **FIX merged PR #28019:** Updated to count=9, check for factoring_reserves (1230) instead of 1296. Selftest PASS.
 
 **Live tieout still FAIL** — 7/9 accounts have real variances (tolerance 0):
