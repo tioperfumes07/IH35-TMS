@@ -2,6 +2,24 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-13 09Z — ROUND 8.22 CC-3 Chrome walk: rows 120 104 105 106 107 108 124 138
+
+**Row 120 (FuelAssignmentPopup — DONE-LIVE):** Chrome walk 2026-11-13. `bf7dadd3cf` #27311 — clicked Review on fuel question row; FuelAssignmentPopup opened showing Fill/Station/Gallons/Amount, Evidence trucks at station, Proposed truck, Confirm/Cancel buttons. No crash. Register updated DONE-LIVE.
+
+**Row 104 (Fuel card assignments — DONE-LIVE):** Chrome walk. Fuel/Cards shows ACTIVE=17 card assignments, ENDED=10, ASSIGNMENTS=27 rows. Relay issuer = "Relay (fuel payment network, TRANSP-account trucks leased to USMCA)" — not blank. Original finding "0 card assignments; Relay issuer blank" resolved by seeding. DONE-LIVE.
+
+**Row 105 (Relay unmatched fills — DISPLAY-CORRECT):** Chrome walk. 76 unmatched fills (down from 257). Unmatched page renders correctly; remaining fills are historically unassigned. DATA-GAP — no code bug visible.
+
+**Row 106 (Fuel history/savings "Not available" — DISPLAY-CORRECT):** Chrome walk. Fuel compliance shows "Not available: Loves prices were never synced." Loves-prices page shows "Upload Loves prices" button, Last sync: N/A. Code correct — DATA GAP (prices not uploaded, ops action needed).
+
+**Row 107 (MTD discrepancy — DISPLAY-CONSISTENT):** Chrome walk. Fuel Home shows DIESEL SPEND NOV 1–13 $28,296.18 (86 fills, 9 trucks), Avg $/gal $5.665. No discrepancy observed between Home and By-Truck for current period.
+
+**Row 108 (Maintenance PM unavailable — DISPLAY-CORRECT):** Chrome walk. Maintenance Home MTD COST $0.00, PM DUE SOON 0. Fleet health line: "PM reading unavailable — No last PM on file — enter it" for all trucks (odometers present — T122=927,437 mi). DATA GAP — no PM service records entered; code correct.
+
+**Row 124 (driver-day-summary perf — DONE-LIVE):** Chrome walk. driver-day-summary returned 200 in 2,564ms (was 5,071ms). Fix `fbf44f6921` #28503 (set-based query) already on main.
+
+**Row 138 (mdata/drivers perf — DONE-LIVE):** Chrome walk. Fuel/Cards → Assign card triggered mdata/drivers; returned 303ms (was 4,522ms). Same fix `fbf44f6921` #28503.
+
 ## 2026-11-13 07Z — ROUND 8.20 ENG-27 DONE-MERGED; R8.21 lead-coded rows confirmed
 
 **ENG-27 (R8.20 row 262 engine fix — MERGED):** `d406b85e` PR #29226 — `resolvePostingSourceLoad` bank_categorization branch added; reads `bt.categorization_load_id`; engine fix prospective (0 existing violations, guard ceiling 290 ratchets down). Gate exit 0.
