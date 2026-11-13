@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r99-bank-pending-duplicates",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 99 — bank pending duplicates guard. Guard 19951 enforces that no pending bank transaction has a matching posted entry for the same plaid_transaction_id (ceiling = 0).",
+  "branch": "cc-2/eng-r99-bank-pending-duplicates",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-bank-pending-duplicates.mjs",
+    "scripts/verify-steps/19951-verify-bank-pending-duplicates.mjs",
+    ".block-ready/cc-2-r99-bank-pending-duplicates.json"
+  ],
+  "acceptance": [
+    "verify-bank-pending-duplicates selftest PASS 2/2",
+    "total_pending=340 pending_with_posted_duplicate=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
