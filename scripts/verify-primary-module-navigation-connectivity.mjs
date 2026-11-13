@@ -28,7 +28,7 @@ const EXPECTED = {
   driverHub: ["overview", "scheduler", "leave_requests"],
   form425: ["profile", "form", "merge", "history"],
   tasks: ["board", "mine", "calendar", "chat", "report"],
-  program: ["scenario", "matrix", "legacy", "tracker", "modules", "final"],
+  program: ["scenario", "matrix", "tracker", "modules", "final"],
   system: ["overview", "program", "software", "claude-coder"],
 };
 
@@ -44,7 +44,7 @@ const REQUIRED_LEAVES = {
 
 const ROUTES = [
   "/compliance", "/docs", "/driver-hub", "/425c", "/tasks", "/tasks/mine", "/tasks/calendar",
-  "/tasks/chat", "/tasks/report", "/program", "/program/matrix", "/program/legacy-scoreboard",
+  "/tasks/chat", "/tasks/report", "/program", "/program/matrix",
   "/program/tracker", "/program/modules", "/program/final-additions", "/system",
 ];
 

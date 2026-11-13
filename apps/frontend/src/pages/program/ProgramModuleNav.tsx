@@ -14,7 +14,6 @@ import { structuralParentHref } from "../../lib/structuralBreadcrumb";
 export type ProgramNavTab =
   | "scenario"
   | "matrix"
-  | "legacy"
   | "tracker"
   | "modules"
   | "final";
@@ -52,19 +51,6 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
       ) : (
         <Link className="program-module-nav__tab" to="/program/matrix" data-testid="program-nav-matrix">
           Module matrix
-        </Link>
-      )}
-      {active === "legacy" ? (
-        <span className="program-module-nav__tab is-active" data-testid="program-nav-legacy">
-          Legacy certification board
-        </span>
-      ) : (
-        <Link
-          className="program-module-nav__tab"
-          to="/program/legacy-scoreboard"
-          data-testid="program-nav-legacy"
-        >
-          Legacy certification board
         </Link>
       )}
       {active === "tracker" ? (

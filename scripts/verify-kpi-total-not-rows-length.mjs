@@ -29,7 +29,7 @@ const LABEL = "verify-kpi-total-not-rows-length";
 // - samsara-config.routes.ts: config probe, not a KPI badge
 // - mdata/drivers-import.routes.ts: import batch count, not a KPI badge
 // - mdata/canonical/driver-hub.service.ts: hub summary aggregated from the full driver set
-// - program/audit-scoreboard.routes.ts: scoreboard rows — no LIMIT applies
+// - program/audit-scoreboard.routes.ts: module-matrix rows — no LIMIT applies
 // - program/program-tracker.service.ts: tracker batch — no LIMIT applies
 // - maintenance/reports.routes.ts: maintenance report — full result, no LIMIT
 // - maintenance/unit-maintenance-history.routes.ts: full unit history, no LIMIT

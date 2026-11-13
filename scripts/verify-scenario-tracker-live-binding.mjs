@@ -41,7 +41,6 @@ function latestLiveViewSql() {
 }
 const FE = "apps/frontend/src/pages/program/scenario-tracker/registry.ts";
 const CERTIFIER = "scripts/scenario-certify.mjs";
-const SCOREBOARD = "scripts/scoreboard-from-live.mjs";
 const HOME = "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx";
 const PROBE = "apps/backend/src/home/scenario-probe.service.ts";
 
@@ -595,8 +594,8 @@ function check(sources) {
     }
   }
 
-  // 4 — both live writers must refuse to write from a masked connection.
-  for (const f of [CERTIFIER, SCOREBOARD]) {
+  // 4 — the live writer must refuse to write from a masked connection.
+  for (const f of [CERTIFIER]) {
     const src = stripComments(sources[f] ?? "");
     if (!src) {
       errors.push(`${f}: missing — the tracker has no automatic writer.`);
@@ -667,7 +666,7 @@ function check(sources) {
 
 function loadAll() {
   const out = {};
-  for (const f of [BACKEND, FE, CERTIFIER, SCOREBOARD, HOME, PROBE]) {
+  for (const f of [BACKEND, FE, CERTIFIER, HOME, PROBE]) {
     try {
       out[f] = readFileSync(f, "utf8");
     } catch {
@@ -742,7 +741,6 @@ function selftest() {
     ["insurance probe drops recovery posting", (s) => ({ ...s, [BACKEND]: s[BACKEND].replace("AND rp.status = 'posted'", "") })],
     ["insurance probe accepts a voided JE", (s) => ({ ...s, [BACKEND]: s[BACKEND].split("AND je.voided_at IS NULL").join("") })],
     ["certifier loses its masking guard", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].split("assertNotMasked").join("skipCheck") })],
-    ["scoreboard loses its masking guard", (s) => ({ ...s, [SCOREBOARD]: s[SCOREBOARD].split("assertNotMasked").join("skipCheck") })],
     ["certifier bypass becomes transaction-local", (s) => ({ ...s, [CERTIFIER]: s[CERTIFIER].replace("'app.bypass_rls','lucia',false", "'app.bypass_rls','lucia',true") })],
     ["a Part B slice is dropped", (s) => ({ ...s, [BACKEND]: s[BACKEND].split('"scenario.escrow"').join('"scenario.gone"') })],
     ["hop.book loses its href", (s) => ({ ...s, [FE]: s[FE].replace('href: "/dispatch/book-load?book_load=1"', "href_missing: true") })],
@@ -773,6 +771,6 @@ if (errors.length) {
   process.exit(1);
 }
 console.log(
-    `${LABEL} PASS — all FE keys bound, money probes exclude imported rows, both live writers refuse ` +
+    `${LABEL} PASS — all FE keys bound, money probes exclude imported rows, the live writer refuses ` +
       `to publish from a masked connection, and every slice hrefs a live in-app route.`
 );

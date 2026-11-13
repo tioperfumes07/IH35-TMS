@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * MATRIX-INFINITE-PENDING-FEED (live-caught, 2026-08-20): the Program > Module Matrix's three raw
- * `fetch()` calls (fetchMatrixRecentMerged, fetchModuleMatrix in ModuleMatrixPreviewPage.tsx;
+ * MATRIX-INFINITE-PENDING-FEED (live-caught, 2026-08-20): the Program > Module Matrix's two raw
+ * `fetch()` calls (fetchModuleMatrix in ModuleMatrixPreviewPage.tsx;
  * fetchSystemMatrix in ModuleMatrixSystemView.tsx) had no client-side timeout. React Query's
  * retry/error handling (and the page's own `showUnavailableBanner = isFetched && (!liveOk ||
  * isError)` logic) only runs once a query's promise REJECTS — a hung backend connection leaves a
@@ -31,11 +31,6 @@ function assert(cond, msg) {
 
 // Each entry: [file, function name to scope the search to, expected fetch() call substring]
 const SITES = [
-  {
-    file: PREVIEW,
-    fn: "fetchMatrixRecentMerged",
-    anchor: 'fetch(resolveApiUrl("/api/v1/program/audit-scoreboard"), {',
-  },
   {
     file: PREVIEW,
     fn: "fetchModuleMatrix",
@@ -230,4 +225,4 @@ if (missing.length) {
   console.error(`${LABEL} FAIL\n${missing.map((f) => ` - ${f}`).join("\n")}`);
   process.exit(1);
 }
-console.log(`${LABEL} PASS — all 3 Module Matrix fetch() calls carry a client-side AbortSignal.timeout`);
+console.log(`${LABEL} PASS — all 2 Module Matrix fetch() calls carry a client-side AbortSignal.timeout`);

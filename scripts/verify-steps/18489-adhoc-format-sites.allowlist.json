@@ -229,7 +229,6 @@
     "apps/frontend/src/pages/payroll-integration/ClassAllocationView.tsx": 1,
     "apps/frontend/src/pages/payroll-integration/PayrollAggregateTable.tsx": 1,
     "apps/frontend/src/pages/payroll-integration/PayrollIntegrationPage.tsx": 1,
-    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx": 1,
     "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx": 1,
     "apps/frontend/src/pages/program/ModuleMatrixSystemView.tsx": 1,
     "apps/frontend/src/pages/program/ProgramBoardPage.tsx": 2,

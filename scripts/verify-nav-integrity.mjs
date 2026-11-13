@@ -217,9 +217,7 @@ const subnavPaths = new Set([
   ...extractQuotedPathsSkippingNavHidden(read("apps/frontend/src/components/safety/SAFETY_TABS_CONFIG.ts"), ["route"]),
   ...extractQuotedPaths(read("apps/frontend/src/components/layout/sidebar-config.ts"), ["to"]),
   ...extractQuotedPaths(read("apps/frontend/src/pages/program/ProgramBoardPage.tsx"), ["href"]),
-  // PROG-NAV-01: LegacyAuditScoreboardPage keeps archive tab links (tracker/modules/…).
   // Program home (/program) is Scenario Tracker only — no tab row there.
-  ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx"), ["to"]),
   ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/ProgramModuleNav.tsx"), ["to"]),
   ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx"), ["to"]),
   ...extractJsxAttrPaths(read("apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx"), ["to"]),

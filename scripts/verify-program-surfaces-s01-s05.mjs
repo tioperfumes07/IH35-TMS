@@ -44,7 +44,7 @@ export function run() {
   const boardService = read("apps/backend/src/program/program-board.service.ts");
   const required = JSON.parse(read("docs/specs/scoreboard/modules/program.required.json"));
 
-  const routes = ["/program", "/program/modules", "/program/tracker", "/program/legacy-scoreboard", "/program/matrix", "/program/final-additions"];
+  const routes = ["/program", "/program/modules", "/program/tracker", "/program/matrix", "/program/final-additions"];
   for (const r of routes) {
     assert(manifest.includes(`path="${r}"`), `manifest.tsx must route ${r}`, errors);
     assert(nav.includes(`to="${r}"`), `ProgramModuleNav must link ${r}`, errors);
@@ -98,12 +98,10 @@ export function run() {
 
   // Existing per-page guards stay green.
   const guards = [
-    "verify-program-audit-scoreboard-api-url.mjs",
     "verify-program-board-tab-render-parity.mjs",
     "verify-program-tracker-r2-live.mjs",
     "verify-program-board-tabs-url-sync.mjs",
     "verify-program-tracker-tabs-url-sync.mjs",
-    "verify-program-scoreboard-13gate-prodread.mjs",
   ];
   for (const g of guards) runGuard(g, errors);
 

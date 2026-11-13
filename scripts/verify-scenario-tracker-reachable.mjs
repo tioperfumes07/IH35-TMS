@@ -47,7 +47,6 @@ const SURFACES = [
     requireDoor: true,
     linkSources: [
       "apps/frontend/src/pages/program/ProgramModuleNav.tsx",
-      "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx",
       "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx",
       "apps/frontend/src/pages/program/scenario-tracker/ScenarioTrackerHome.tsx",
     ],

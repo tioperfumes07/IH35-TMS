@@ -69,10 +69,6 @@
       "print_table": 3,
       "reason": "print layout: HTML string handed to the print window (printLetterHtml) — not a screen table"
     },
-    "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx": {
-      "raw_table": 2,
-      "reason": "layout grid: module × class heatmap and module × entity gate matrix (grouped rowSpan/colSpan headers)"
-    },
     "apps/frontend/src/pages/program/ModuleMatrixPreviewPage.tsx": {
       "raw_table": 1,
       "reason": "layout grid: leaf × column-group status matrix (grouped colSpan headers)"

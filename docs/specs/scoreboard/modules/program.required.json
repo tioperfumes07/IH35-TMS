@@ -130,13 +130,6 @@
       "required": []
     },
     {
-      "id": "nav.legacy",
-      "tab": "Legacy certification",
-      "sub": "Legacy audit scoreboard",
-      "route_hint": "/program/legacy-scoreboard",
-      "required": []
-    },
-    {
       "id": "nav.tracker",
       "tab": "Build progress",
       "sub": "Program tracker / board",
@@ -201,15 +194,6 @@
       "tab": "Docs hop",
       "sub": "AUDIT-COVERAGE-LIVE ledger",
       "route_hint": "/program",
-      "required": []
-    },
-    {
-      "id": "program.parity.legacy_audit_scoreboard_page",
-      "tab": "Parity / side panels",
-      "sub": "ParityDrawer site: Legacy Audit Scoreboard Page",
-      "route_hint": "surface://pages/program/LegacyAuditScoreboardPage.tsx",
-      "surface_kind": "parity_site",
-      "surface_path": "pages/program/LegacyAuditScoreboardPage.tsx",
       "required": []
     },
     {
@@ -301,12 +285,6 @@
           ]
         },
         {
-          "id": "nav.legacy",
-          "removed": [
-            "reverse_link"
-          ]
-        },
-        {
           "id": "nav.tracker",
           "removed": [
             "reverse_link"
@@ -368,12 +346,6 @@
         },
         {
           "id": "nav.matrix",
-          "removed": [
-            "qbo_chrome"
-          ]
-        },
-        {
-          "id": "nav.legacy",
           "removed": [
             "qbo_chrome"
           ]
@@ -471,13 +443,6 @@
           "reason": "readFileSync/execSync only, zero Postgres"
         },
         {
-          "id": "nav.legacy",
-          "removed": [
-            "connectivity"
-          ],
-          "reason": "markdown+GitHub API, only SELECT now() freshness stamp"
-        },
-        {
           "id": "nav.tracker",
           "removed": [
             "connectivity"
@@ -524,14 +489,7 @@
           "removed": [
             "connectivity"
           ],
-          "reason": "section no longer exists on /program (moved to /program/legacy-scoreboard)"
-        },
-        {
-          "id": "program.parity.legacy_audit_scoreboard_page",
-          "removed": [
-            "connectivity"
-          ],
-          "reason": "build/git-ledger introspection, not Postgres"
+          "reason": "section no longer exists on /program (legacy scoreboard removed 2026-11-12)"
         },
         {
           "id": "chrome.toolbar_search",
@@ -574,13 +532,6 @@
             "reverse_link"
           ],
           "reason": "zero business-entity FK references, only block_id"
-        },
-        {
-          "id": "program.parity.legacy_audit_scoreboard_page",
-          "removed": [
-            "reverse_link"
-          ],
-          "reason": "static methodology page, EntityLink hit is prose not a rendered link"
         }
       ]
     }

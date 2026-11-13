@@ -26,7 +26,6 @@ const CHECKS = [
   { name: "HosTrackerSection", file: "apps/frontend/src/pages/compliance/HosTrackerSection.tsx" },
   { name: "ArApAgingPage", file: "apps/frontend/src/pages/finance/ArApAgingPage.tsx" },
   { name: "DocsHomePage", file: "apps/frontend/src/pages/docs/DocsHomePage.tsx" },
-  { name: "LegacyAuditScoreboardPage", file: "apps/frontend/src/pages/program/LegacyAuditScoreboardPage.tsx" },
 ];
 
 function run(root = ROOT) {

@@ -1,45 +1,8 @@
 {
   "note": "Every STORED derived answer in the product. Prefer recompute-on-read; anything listed here is a stored answer and must declare the deploy SHA + timestamp it was computed against. verify-derived-artifact-freshness.mjs fails when a listed artifact is missing, undatable, computed on undeployed code, or stale. This list may GROW only when recompute-on-read is genuinely impossible \u2014 and shrinks when an artifact moves to computed-on-read. Module Matrix V1\u2013V6 left this list 2026-08-29: GET /api/v1/program/module-matrix?scope=system.verifierRollup is derived at request time (same law as scenario-tracker.service.ts).",
-  "artifacts": [
-    {
-      "path": "docs/audit/program-scoreboard.json",
-      "feeds": "Program scoreboard rows",
-      "shaField": "healthzSha",
-      "timeField": "generated_at",
-      "maxAgeHours": 48,
-      "maxDeploysBehind": 80,
-      "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
-      "why": "Sat without top-level healthzSha/generated_at (unfalsifiable). deployedSha 14daeed was 59 commits behind live on 2026-08-29; maxDeploysBehind 80 is temporary until the regen command shrinks it."
-    }
-  ],
+  "artifacts": [],
   "generated_note": "ROUND 363-CC3-C \u2014 EVERY generator in scripts/ (gen-*.mjs / generate-*.mjs) declares its artifact here; verify-derived-artifact-freshness fails on any generator not listed. 'Stale' means an artifact's OUTPUT WAS NOT REBUILT AFTER MAIN MOVED \u2014 its committed content differs from what its own generator produces from the committed inputs today. It does NOT mean a PR was built wrong or never merged; nothing is lost; the fix is to run `regenerate` and commit the result. Modes: regen-diff = the guard regenerates in a scratch worktree and compares every path (a pair is several paths of ONE artifact \u2014 regenerating one member without the other fails); not-committed = gitignored, rebuilt on every use, must stay untracked; historical = a one-off whose output is a dated record, never regenerated. 'volatile' lists the only lines allowed to differ between two runs of the same generator (measured by running it twice).",
   "generated": [
-    {
-      "generator": "scripts/gen-program-scoreboard.mjs",
-      "mode": "regen-diff",
-      "paths": [
-        "apps/frontend/src/pages/program/programScoreboard.data.ts"
-      ],
-      "inputs": [
-        "docs/audit/program-scoreboard.json"
-      ],
-      "regenerate": "node scripts/gen-program-scoreboard.mjs",
-      "volatile": [],
-      "why": "PAIR with docs/audit/program-scoreboard.json (stamp entry above, written by audit-coverage-scoreboard.mjs): one artifact in two files. #24603 regenerated the json and shipped without the .ts; this entry fails that.",
-      "watch": [
-        "docs/audit/program-scoreboard.json",
-        "scripts/audit-coverage-scoreboard.mjs"
-      ]
-    },
-    {
-      "generator": "scripts/audit-coverage-scoreboard.mjs",
-      "mode": "stamp",
-      "paths": [
-        "docs/audit/program-scoreboard.json"
-      ],
-      "regenerate": "node scripts/audit-coverage-scoreboard.mjs --emit-program-json && node scripts/gen-program-scoreboard.mjs",
-      "why": "the stamp entry under 'artifacts' (healthzSha / generated_at) \u2014 its pair member is the gen-program-scoreboard entry."
-    },
     {
       "generator": "scripts/gen-block-created-dates.mjs",
       "mode": "regen-diff",

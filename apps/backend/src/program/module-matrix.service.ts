@@ -72,7 +72,6 @@ function isEconomicsMatrixColumn(colId: string): boolean {
 }
 
 const SCOREBOARD_SCRIPT = path.join(REPO_ROOT, "scripts/audit-coverage-scoreboard.mjs");
-const PROGRAM_SCOREBOARD_JSON = path.join(REPO_ROOT, "docs/audit/program-scoreboard.json");
 const LEDGER_MD = path.join(REPO_ROOT, "docs/audit/AUDIT-COVERAGE-LIVE.md");
 const LEDGER_REL = "docs/audit/AUDIT-COVERAGE-LIVE.md";
 const OUTBOX_CLICKED_FILES = [
@@ -731,45 +730,7 @@ type ModuleProbePack = {
 
 async function loadModuleProbes(moduleId: string): Promise<ModuleProbePack> {
   const out: ModuleProbe[] = [];
-  let progress: number | null = null;
-  const board = await readJson<{
-    live_scenario_probe?: {
-      modules?: Record<string, { slices?: ProbeSlice[]; progress?: number }>;
-    };
-  }>(PROGRAM_SCOREBOARD_JSON);
-  const modules = board?.live_scenario_probe?.modules ?? {};
-
-  const alias: Record<string, string[]> = {
-    accounting: ["accounting"],
-    banking: ["banking"],
-    dispatch: ["dispatch"],
-    settlements: ["driver-finance", "settlements"],
-    drivers: ["drivers"],
-    maintenance: ["maintenance"],
-    insurance: ["insurance"],
-    fuel: ["fuel"],
-    safety: ["safety"],
-    legal: ["legal"],
-    customers: ["customers"],
-    vendors: ["vendors"],
-  };
-  const keys = alias[moduleId] ?? [moduleId];
-  for (const k of keys) {
-    const block = modules[k];
-    if (!block) continue;
-    if (typeof block.progress === "number") progress = block.progress;
-    for (const slice of block.slices ?? []) {
-      if (!slice?.key) continue;
-      out.push({
-        key: slice.key,
-        holds: Boolean(slice.holds),
-        evidence: String(slice.evidence ?? ""),
-        source: `program-scoreboard live_scenario_probe.modules.${k}`,
-        progress,
-      });
-    }
-  }
-
+  const progress: number | null = null;
   for (const mod of ["maintenance", "insurance", moduleId]) {
     const j = await readJson<{ live_scenario_probe?: { slices?: ProbeSlice[] } }>(
       path.join(REPO_ROOT, `docs/module-completion/${mod}.json`),

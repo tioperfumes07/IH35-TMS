@@ -52,34 +52,6 @@ const REGISTRY = path.join(ROOT, "docs/specs/DERIVED-ARTIFACTS.json");
 const LABEL = "verify-derived-artifact-freshness";
 const SELFTEST = process.argv.includes("--selftest");
 
-export function analyseGeneratorContract(source) {
-  const text = String(source || "");
-  const problems = [];
-  if (!/out\.generated_at\s*=\s*regenerationTimestamp\(\)/.test(text)) {
-    problems.push("program scoreboard generator must stamp generated_at from regenerationTimestamp()");
-  }
-  if (/out\.generated_at\s*=.*meta\.generatedAt/.test(text)) {
-    problems.push("program scoreboard generator must not reuse the ledger as-of time as regeneration time");
-  }
-  return problems;
-}
-
-/**
- * LEAD ENG-58 (row 304): the stamp's limit is COMMITS behind live, so its regenerator must run on a clock,
- * not only when the ledger changes, and its push must survive losing the race with main.
- */
-export function analyseSyncWorkflow(yml) {
-  const text = String(yml || "");
-  const problems = [];
-  if (!/^\s*schedule:\s*$/m.test(text) || !/cron:\s*"[^"]+"/.test(text)) {
-    problems.push("program-scoreboard-sync.yml must run on a schedule — a path-only trigger lets the stamp drift past maxDeploysBehind on quiet-ledger days");
-  }
-  if (!/for attempt in/.test(text) || !/git reset --quiet --hard origin\/main/.test(text)) {
-    problems.push("program-scoreboard-sync.yml must retry the push from a fresh origin/main — a single push loses the race with main");
-  }
-  return problems;
-}
-
 /**
  * Pure decision core — no git, no network, unit-testable.
  * @returns {{problems:string[], warnings:string[], stats:object}}
@@ -201,19 +173,6 @@ function selftest() {
     const r = analyse({ artifacts: [], liveSha: "live", nowMs: NOW, ancestorOf: anc, read: () => null });
     eq(r.stats.checked, 0, "checked");
   });
-  t("scoreboard generator regeneration-time contract PASSES", () => {
-    eq(analyseGeneratorContract("out.generated_at = regenerationTimestamp();").length, 0, "expected 0");
-  });
-  t("sync workflow with schedule + fresh-main retry PASSES", () => {
-    eq(analyseSyncWorkflow('on:\n  schedule:\n    - cron: "17 */2 * * *"\nrun: |\n  for attempt in 1 2; do\n  git reset --quiet --hard origin/main').length, 0, "expected 0");
-  });
-  t("sync workflow with path-only trigger and single push FAILS twice", () => {
-    eq(analyseSyncWorkflow("on:\n  push:\n    paths: [x]\nrun: git push").length, 2, "expected 2");
-  });
-  t("planted ledger-time regression FAILS", () => {
-    const r = analyseGeneratorContract("out.generated_at = out.meta.generatedAt;");
-    if (r.length < 1) throw new Error("planted regression escaped");
-  });
 
   // ROUND 363-CC3-C — every generator declared; regen-diff; pairs; not-committed; historical.
   const G = (over = {}) => ({ entries: [], generatorsOnDisk: [], exists: () => true, isTracked: () => true, isIgnored: () => false, regen: new Map(), ...over });
@@ -318,21 +277,13 @@ function main() {
   if (SELFTEST) return selftest();
   if (!fs.existsSync(REGISTRY)) { console.error(`${LABEL} FAIL — ${REGISTRY} missing. Failing closed.`); process.exit(1); }
   const cfg = JSON.parse(fs.readFileSync(REGISTRY, "utf8"));
-  if (!Array.isArray(cfg.artifacts) || cfg.artifacts.length === 0) {
-    console.error(`${LABEL} FAIL — registry declares zero artifacts. An empty scope is not a pass.`); process.exit(1);
+  // The stored-answer ("artifacts") list may legitimately be empty — it only grows when recompute-on-read is
+  // impossible. The generated[] registry below is the part that must never be empty.
+  if (!Array.isArray(cfg.artifacts)) {
+    console.error(`${LABEL} FAIL — registry "artifacts" must be an array (it may be empty).`); process.exit(1);
   }
-
-  const generatorPath = path.join(ROOT, "scripts/audit-coverage-scoreboard.mjs");
-  const generatorProblems = analyseGeneratorContract(fs.readFileSync(generatorPath, "utf8"));
-  if (generatorProblems.length) {
-    console.error(`${LABEL} FAIL — generator contract:\n  - ${generatorProblems.join("\n  - ")}`);
-    process.exit(1);
-  }
-
-  const syncProblems = analyseSyncWorkflow(fs.readFileSync(path.join(ROOT, ".github/workflows/program-scoreboard-sync.yml"), "utf8"));
-  if (syncProblems.length) {
-    console.error(`${LABEL} FAIL — scoreboard sync:\n  - ${syncProblems.join("\n  - ")}`);
-    process.exit(1);
+  if (!Array.isArray(cfg.generated) || cfg.generated.length === 0) {
+    console.error(`${LABEL} FAIL — registry declares zero generated artifacts. An empty scope is not a pass.`); process.exit(1);
   }
 
   let liveSha;
