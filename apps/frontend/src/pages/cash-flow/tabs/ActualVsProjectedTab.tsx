@@ -113,23 +113,7 @@ function buildAvpColumns(originHref: string): Array<ParityColumn<RowGroup>> {
     sortable: true,
     className: "text-right",
     sortValue: (g) => g.income.projected_cents,
-    render: (g) => (
-      <span style={{ color: V3.ink }}>
-        {formatCents(g.income.projected_cents)}
-        {/* DEAD-SCHEMA-CASH-FLOW-SNAPSHOT-CAPTURED-AT-UNREAD — honest provenance: this figure is a
-            frozen daily snapshot, not a live recomputation. Shown only when the backend actually
-            sourced it from forecast.cash_flow_projection_snapshots. */}
-        {g.income.projected_captured_at ? (
-          <span
-            className="block text-xs"
-            style={{ color: V3.mutedSoft }}
-            title={`Frozen snapshot captured ${formatDateTimeUS(g.income.projected_captured_at)}`}
-          >
-            snapshot {formatDateUS(g.income.projected_captured_at)}
-          </span>
-        ) : null}
-      </span>
-    ),
+    render: (g) => <ProjectedCell line={g.income} originHref={originHref} />,
   },
   {
     key: "actual_income",
@@ -160,7 +144,7 @@ function buildAvpColumns(originHref: string): Array<ParityColumn<RowGroup>> {
     sortable: true,
     className: "text-right",
     sortValue: (g) => (g.expenses.projected_unavailable ? -1 : g.expenses.projected_cents),
-    render: (g) => <ProjectedExpenseCell line={g.expenses} />,
+    render: (g) => <ProjectedCell line={g.expenses} originHref={originHref} />,
   },
   {
     key: "actual_expenses",
@@ -209,10 +193,19 @@ function buildAvpColumns(originHref: string): Array<ParityColumn<RowGroup>> {
 ];
 }
 
-// E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0; a past
-// day read from the morning snapshot says so, like Projected Income does.
-export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
-  if (line.projected_unavailable) {
+/** ROUND 8.20 board6 — Projected Income/Exp → same-day Rolling Ledger cohort with ret. */
+export function buildAvpProjectedDrillHref(
+  line: Pick<AvpLineItem, "category" | "date">,
+  originHref: string,
+): string {
+  const kind = line.category === "income" ? "income" : "expenses";
+  const target = `/cash-flow?tab=rolling_ledger&rl_from=${encodeURIComponent(line.date)}&rl_to=${encodeURIComponent(line.date)}&rl_kind=${kind}`;
+  return withReturnContext(target, originHref);
+}
+
+// E8 11-03 (row 261): a past day whose expense projection was never captured is "not captured", never $0.
+export function ProjectedCell({ line, originHref }: { line: AvpLineItem; originHref: string }) {
+  if (line.category === "expenses" && line.projected_unavailable) {
     return (
       <span
         className="text-xs"
@@ -226,7 +219,14 @@ export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
   }
   return (
     <span style={{ color: V3.ink }}>
-      {formatCents(line.projected_cents)}
+      <Link
+        to={buildAvpProjectedDrillHref(line, originHref)}
+        className="font-semibold underline-offset-2 hover:underline"
+        style={{ color: V3.ink }}
+        data-testid={`cash-flow-avp-projected-${line.category}-${line.date}`}
+      >
+        {formatCents(line.projected_cents)}
+      </Link>
       {line.projected_basis === "snapshot" && line.projected_captured_at ? (
         <span
           className="block text-xs"
@@ -238,6 +238,11 @@ export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
       ) : null}
     </span>
   );
+}
+
+/** @deprecated use ProjectedCell — kept as alias for any external import */
+export function ProjectedExpenseCell({ line }: { line: AvpLineItem }) {
+  return <ProjectedCell line={line} originHref="/cash-flow?tab=actual_vs_projected" />;
 }
 
 // CASH-FLOW-01 (owner order 2026-09-06, LAW §8 "zero is a claim"): actual_unavailable means the
