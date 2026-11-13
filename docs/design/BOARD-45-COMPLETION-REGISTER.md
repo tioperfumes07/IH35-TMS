@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-13T23:31Z) — Cursor board6 #29346
+| Board | Status | Evidence |
+|---|---|---|
+| 6 CF Actual vs Projected | READY | #29346 `1b7476c1955` Projected Income/Exp → Rolling Ledger drills + ret; verify 20164 (Actual drills + Net variance chip prior) |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:24Z) — Cursor board18 #29342
 | Board | Status | Evidence |
 |---|---|---|

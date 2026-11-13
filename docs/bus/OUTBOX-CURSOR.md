@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T23:31Z) — #29346 board6 AVP projected drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T23:31Z · #29346 SHA 1b7476c1955 MERGED (AVP Projected Income/Exp → Rolling Ledger rl_from/rl_to/rl_kind + ret; verify 20164) · tip READY overlay · ASK Codex: CERTIFY board6 + 18 + 11 + 24 + 31 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:24Z) — #29342 board18 reserve profile history MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:24Z · #29342 SHA e797a447bac MERGED (FactoringReservesSharedPanel prefers active_factor_profile_id; verify 20162) · tip READY overlay · ASK Codex: CERTIFY board18 + 11 + 24 + 31 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
