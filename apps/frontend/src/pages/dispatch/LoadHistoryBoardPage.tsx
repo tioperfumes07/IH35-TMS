@@ -12,9 +12,9 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
-import { mergeUrlBoardState } from "../../lib/returnContext";
+import { mergeUrlBoardState, resolveBackHref } from "../../lib/returnContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
@@ -151,6 +151,9 @@ export default function LoadHistoryBoardPage() {
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13 — drills attach ?ret=; Back restores origin (fallback /dispatch).
+  const loadHistoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   // ROUND 8.20 board13 — `q` is URL source of truth (deep-link NO-SUCH-LOAD must zero KPIs + table).
   const search = searchParams.get("q") ?? "";
   const setSearch = (next: string) => {
@@ -372,7 +375,7 @@ export default function LoadHistoryBoardPage() {
     <div className="space-y-3 p-4" data-testid="load-history-board">
       <DispatchSubnav operatingCompanyId={companyId} />
       <PageHeader
-        backHref="/dispatch"
+        backHref={loadHistoryBackHref}
         title="Load history"
         subtitle="every load ever booked · from the load hub (mdata.loads) · money from the load-cost rollup"
         breadcrumb={["Dispatch", "Load history"]}
