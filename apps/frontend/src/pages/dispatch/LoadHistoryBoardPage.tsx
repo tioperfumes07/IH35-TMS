@@ -103,7 +103,7 @@ export function cohortTotalsFromRows(rows: LoadsHistoryRow[]) {
   const customers = new Set<string>();
   for (const r of rows) {
     revenue_cents += Number(r.revenue_cents ?? 0);
-    loaded_miles += Number(r.miles_loaded ?? 0);
+    loaded_miles += Number(r.miles_practical ?? 0);
     empty_miles += Number(r.miles_deadhead ?? 0);
     if (r.customer_id) customers.add(String(r.customer_id));
     if (String(r.status ?? "") === "delivered" && !r.invoice_id) delivered_not_invoiced += 1;
