@@ -17941,5 +17941,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cc-1",
     "purpose": "verify-settlement-close-assigns-identity (BOARD-35: settlement number assigned atomically with trip_closed_at inside close-tour route commit; status derived from payment_state paid/unpaid/open, never raw DB status on a closed tour)"
+  },
+  "20157": {
+    "seat": "LEAD",
+    "purpose": "return-context encode once (ret double-encoding)",
+    "claimed": "2026-11-13"
   }
 }
