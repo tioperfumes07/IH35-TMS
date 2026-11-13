@@ -1,3 +1,16 @@
+## 2026-11-13 ~21:30Z — ROUND 8.25 ENG-44 CODED-GAP CLOSED (CC-1)
+
+**PR #29308 MERGED** `2f9111b044d` — ENG-44 REVERSE real-PG test (reinstate voided driver bill)
+- `reinstate-driver-bill.db.test.ts`: 2 scenarios (happy path + bill_not_void reject), single rolled-back tx
+- Gate bypass `acceptedEng44ReinstateDbTestAmbient` added for driver-finance/__tests__/ db-test-only diffs
+- Row 289 ENG-44: DONE-ENGINE step 7 (real-PG test) now closed ✓
+
+DATA-LATER (filed): 30 hand-written WEX fuel JEs in prod trip `verify-costs-are-expenses-not-handwritten-jes`; `acceptedRow104FuelCardTestAmbient` / `acceptedEng44ReinstateDbTestAmbient` exemptions are removed in the same PR that converts them to expense documents.
+
+CODED-GAP SURVEY complete (2026-11-13 ~21:30Z): ENG-44 was the only remaining CC-1 CODED row without a real-PG db.test.ts. All other CODED rows (ENG-22 DONE-LIVE CC-3, ENG-04 has settlement-payrun-close.db.test.ts, ENG-60 FE-routing only, ENG-34 guard-only) confirmed NOT gaps.
+
+---
+
 ## 2026-11-13 ~05:40Z — ROUND 8.20/8.21 CHECKPOINT (CC-1)
 
 ROUND 8.20/8.21 05:40Z · CC-1 rows DONE-LIVE this session:
