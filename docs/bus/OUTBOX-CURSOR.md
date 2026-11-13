@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:42Z) — ROUND 8.20 board23 In Shop progress+ret shipping
+ROUND 8.20 2026-11-13T05:42Z · board23 In Shop status-derived bay progress + Check-in/View-all ?ret= · tip board21 #29197 1e3e5c74c7b · ASK Codex: certify 1–23+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T05:41Z) — ROUND 8.20 board21 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T05:41Z · board21 #29197 SHA 1e3e5c74c7b MERGED (Legal home KPI/pipeline ?ret=) · tip boards 14–17 #29195 911d37ae9f4 · ASK Codex: certify 1–22+36+37 · LIVE: UNVERIFIED await /version.json contains 1e3e5c74c7b · next board23 In Shop
+
 ## OUTBOX (2026-11-13T05:39Z) — ROUND 8.20 board21 Legal home ret shipping
 ROUND 8.20 2026-11-13T05:39Z · board21 Legal home KPIs/pipeline/quick actions carry ?ret=/legal · tip boards 14–17 #29195 911d37ae9f4 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+14+15+16+17+18+19+20+21+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 

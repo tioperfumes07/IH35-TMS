@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { getShopBays } from "../../../api/shopBays";
-import { InShopBoard, bayStatusLabel } from "./InShopBoard";
+import { InShopBoard, bayProgressPct, bayStatusLabel } from "./InShopBoard";
 
 // LEAD 443.301 · register row 59 — the In Shop board is bay cards + yard lane (approved V3 board).
 vi.mock("../../../components/Toast", () => ({ useToast: () => ({ pushToast: vi.fn() }) }));
@@ -23,7 +23,11 @@ vi.mock("../../../api/shopBays", () => ({
 }));
 
 const wrap = (ui: React.ReactElement) =>
-  render(<QueryClientProvider client={new QueryClient()}><MemoryRouter>{ui}</MemoryRouter></QueryClientProvider>);
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MemoryRouter initialEntries={["/maintenance/fleet-table?status=in-shop"]}>{ui}</MemoryRouter>
+    </QueryClientProvider>,
+  );
 
 describe("InShopBoard (row 59)", () => {
   it("renders one card per bay with the truck, status and work; the empty bay is open", async () => {
@@ -48,15 +52,25 @@ describe("InShopBoard (row 59)", () => {
     expect(bayStatusLabel("complete").label).toBe("Ready");
     expect(bayStatusLabel("in_progress").label).toBe("Working");
   });
-  // Kept from the pre-bay test (it guarded "no sample bays" while no bay data existed): the board still links the
-  // real truck + work order, never turns a failed read into an empty board, and invents no progress.
-  it("links the actual unit and work order, and shows no invented progress", async () => {
+  // ROUND 8.20 board23 — occupied bays show status-derived progress; empty bay has none; chrome links carry ret.
+  it("links the actual unit and work order, status progress on occupied bays, ret on chrome", async () => {
     wrap(<InShopBoard companyId="c1" />);
-    expect(await screen.findByRole("link", { name: "T124" })).toHaveAttribute("href", "/fleet/units/u1");
-    expect(screen.getByRole("link", { name: "WO-1" })).toHaveAttribute("href", "/maintenance/work-orders/w1");
-    expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "View all work orders →" })).toHaveAttribute("href", "/maintenance/active-wos");
+    const unitHref = (await screen.findByRole("link", { name: "T124" })).getAttribute("href") ?? "";
+    expect(unitHref).toContain("/fleet/units/u1");
+    const woHref = screen.getByRole("link", { name: "WO-1" }).getAttribute("href") ?? "";
+    expect(woHref).toContain("/maintenance/work-orders/w1");
+    expect(screen.getAllByRole("progressbar")).toHaveLength(3);
+    expect(screen.getByTestId("in-shop-bay-1-progress")).toHaveTextContent("65%");
+    expect(screen.queryByTestId("in-shop-bay-4-progress")).not.toBeInTheDocument();
+    const viewAll = screen.getByRole("link", { name: "View all work orders →" });
+    expect(viewAll.getAttribute("href") ?? "").toContain("ret=");
+    expect(screen.getByTestId("in-shop-check-truck-in").getAttribute("href") ?? "").toContain("ret=");
     expect(getShopBays).toHaveBeenCalledWith("c1");
+  });
+  it("maps WO status to progress pct without inventing empty-bay progress", () => {
+    expect(bayProgressPct(null)).toBeNull();
+    expect(bayProgressPct("in_progress")).toBe(65);
+    expect(bayProgressPct("complete")).toBe(100);
   });
   it("does not turn a failed read into an empty board", async () => {
     vi.mocked(getShopBays).mockRejectedValueOnce(new Error("offline"));
