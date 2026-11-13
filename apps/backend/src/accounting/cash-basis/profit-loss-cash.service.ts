@@ -57,6 +57,7 @@ import { applicationDateSql, applicationLiveSql } from "../invoice-applied-cents
 /** How the basis engine treats a posting, decided entirely by its source document's kind. */
 export type CashBasisSourceTreatment =
   | "ar_document"
+  | "load_revenue"
   | "ap_document"
   | "driver_settlement"
   | "cash_event"
@@ -79,6 +80,12 @@ export type CashBasisSourceTreatment =
  */
 export const CASH_BASIS_SOURCE_TREATMENTS: Readonly<Record<string, CashBasisSourceTreatment>> = {
   invoice: "ar_document",
+  // Revenue-recognition Event 1 (accrual earn at delivery: Dr 1150 Unbilled Revenue / Cr 4000) posts with
+  // source "load". It is AR revenue, not cash: on cash basis it is recognized in the proportion the load's
+  // invoice has been settled (customer / factor collection, credit memo), exactly like an invoice posting.
+  // Measured 2026-11-13: 84 such postings ($370,405.00) were passing through at GL date as basis_unresolved,
+  // so 100% of cash-basis revenue ($210,905.00 Jul–Nov) was accrual revenue.
+  load: "load_revenue",
   bill: "ap_document",
 
   driver_settlement: "driver_settlement",
@@ -93,6 +100,9 @@ export const CASH_BASIS_SOURCE_TREATMENTS: Readonly<Record<string, CashBasisSour
   bank_categorization: "cash_event",
   bank_reconciliation: "cash_event",
   fuel_event: "cash_event",
+  // ACCT-F821: the Relay wallet deposit poster books the card fee (5005 Fuel Card Fees) when the card is
+  // charged — cash moved that day. 49 postings / $4,285.14 were basis_unresolved.
+  relay_deposit: "cash_event",
   transfer: "cash_event",
   factoring_advance: "cash_event",
   factoring_advance_deposit: "cash_event",
@@ -217,6 +227,8 @@ export function buildCashBasisProfitLoss(input: {
   postings: readonly CashBasisPostingRow[];
   /** invoice id (text, as the posting stores it) → its total and settlements. */
   arDocuments: ReadonlyMap<string, DocumentSettlementFacts>;
+  /** load id (text) → the live invoice ids billed for it (accounting.invoices.source_load_id). */
+  loadInvoices?: ReadonlyMap<string, readonly string[]>;
   /** bill id (text) → its total and settlements. */
   apDocuments: ReadonlyMap<string, DocumentSettlementFacts>;
   /** settlement id (text) → the bank settlement date, or null when it has not settled. */
@@ -234,6 +246,7 @@ export function buildCashBasisProfitLoss(input: {
 
   const byTreatment: Record<CashBasisSourceTreatment, number> = {
     ar_document: 0,
+    load_revenue: 0,
     ap_document: 0,
     driver_settlement: 0,
     cash_event: 0,
@@ -260,6 +273,32 @@ export function buildCashBasisProfitLoss(input: {
     byTreatment[treatment] += 1;
 
     const target = sectionFor(placement) ?? unclassified;
+
+    if (treatment === "load_revenue") {
+      // The load's earned revenue follows its invoice(s): one total, every settlement event of every live
+      // invoice for the load. A delivered load not yet invoiced has received no cash — fully deferred.
+      const invoiceIds = input.loadInvoices?.get(row.source_transaction_id) ?? [];
+      const facts = invoiceIds.map((id) => input.arDocuments.get(id)).filter((f): f is DocumentSettlementFacts => Boolean(f));
+      if (facts.length === 0) {
+        addTo(target, row, 0);
+        if (signed !== 0) addTo(deferred, row, signed);
+        continue;
+      }
+      const result = recognizeCashBasis({
+        postingAmountCents: signed,
+        documentTotalCents: facts.reduce((sum, f) => sum + f.total_cents, 0),
+        settlements: facts.flatMap((f) => f.events),
+        from: input.from,
+        to: input.to,
+      });
+      if (result.reason === "undefined_proportion") {
+        addTo(undefinedProportion, row, signed);
+        continue;
+      }
+      addTo(target, row, result.recognizedCents);
+      if (result.deferredCents !== 0) addTo(deferred, row, result.deferredCents);
+      continue;
+    }
 
     if (treatment === "ar_document" || treatment === "ap_document") {
       const documents = treatment === "ar_document" ? input.arDocuments : input.apDocuments;
@@ -519,6 +558,15 @@ function groupSettlements(rows: readonly SettlementRowDb[]): Map<string, Settlem
   return out;
 }
 
+/** load id → its live invoices, for revenue-recognition Event 1 postings (source "load"). */
+const LOAD_INVOICES_SQL = `
+  SELECT i.source_load_id::text AS load_id, i.id::text AS invoice_id
+    FROM accounting.invoices i
+   WHERE i.operating_company_id = $1::uuid
+     AND i.source_load_id IS NOT NULL
+     AND i.voided_at IS NULL
+`;
+
 function joinDocuments(
   totals: readonly DocumentTotalRowDb[],
   settlements: ReadonlyMap<string, SettlementEvent[]>
@@ -555,14 +603,22 @@ export async function fetchCashBasisProfitLossInputs(
 ) {
   const scope = [input.operating_company_id];
 
-  const [postings, arSettlements, apSettlements, arTotals, apTotals, settlementDates] = await Promise.all([
+  const [postings, arSettlements, apSettlements, arTotals, apTotals, settlementDates, loadInvoiceRows] = await Promise.all([
     client.query<PostingRowDb>(POSTINGS_SQL, scope),
     client.query<SettlementRowDb>(AR_SETTLEMENTS_SQL, scope),
     client.query<SettlementRowDb>(AP_SETTLEMENTS_SQL, scope),
     client.query<DocumentTotalRowDb>(AR_TOTALS_SQL, scope),
     client.query<DocumentTotalRowDb>(AP_TOTALS_SQL, scope),
     client.query<{ document_id: string; settled_on: string | null }>(DRIVER_SETTLEMENT_DATES_SQL, scope),
+    client.query<{ load_id: string; invoice_id: string }>(LOAD_INVOICES_SQL, scope),
   ]);
+
+  const loadInvoices = new Map<string, string[]>();
+  for (const row of loadInvoiceRows.rows) {
+    const list = loadInvoices.get(row.load_id) ?? [];
+    list.push(row.invoice_id);
+    loadInvoices.set(row.load_id, list);
+  }
 
   const driverSettlementDates = new Map<string, string | null>();
   for (const row of settlementDates.rows) {
@@ -583,6 +639,7 @@ export async function fetchCashBasisProfitLossInputs(
       entry_date: row.entry_date,
     })),
     arDocuments: joinDocuments(arTotals.rows, groupSettlements(arSettlements.rows)),
+    loadInvoices,
     apDocuments: joinDocuments(apTotals.rows, groupSettlements(apSettlements.rows)),
     driverSettlementDates,
     from: input.from,
