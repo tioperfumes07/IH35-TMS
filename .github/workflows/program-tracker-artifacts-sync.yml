@@ -33,6 +33,12 @@ on:
       - ".block-ready/**"
       - "docs/blocks/**"
       - "db/migrations/.held-migrations.json"
+      # Battery doc inputs (DERIVED-ARTIFACTS.json watch for USMCA-EXHAUSTIVE-BATTERY.md):
+      # a merge that adds or removes a POST route (new create surface) must trigger a refresh so the
+      # battery doc never drifts more than one push. verify-derived-artifact-freshness --strict enforces this.
+      - "apps/backend/src/**/*.ts"
+      - "apps/frontend/src/**/*.tsx"
+      - "scripts/usmca-create-surface-inventory.mjs"
   workflow_dispatch: {}
 
 # Only one refresh in flight; a newer run supersedes a queued one.
