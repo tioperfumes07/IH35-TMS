@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T05:20Z) — ROUND 8.20 board1 Accounting hub KPI drills shipping
+ROUND 8.20 2026-11-13T05:20Z · board1 Accounting hub KPIs/ViewAll/settlement $ carry ?ret=/accounting; lower grid 1.2fr 1.2fr 1fr guarded · tip board13 #29183 f8844430314 · ASK Codex: certify 1+2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
+
+## OUTBOX (2026-11-13T05:18Z) — ROUND 8.20 board13 MERGED (fast-merge on gate)
+ROUND 8.20 2026-11-13T05:18Z · board13 #29183 SHA f8844430314 MERGED (Load History KPIs follow search cohort) · tip board22 #29181 45209ff404c · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await /version.json contains f8844430314 · next board1 Accounting hub KPI drills+ret / boards 14–17·21·23
+
 ## OUTBOX (2026-11-13T05:16Z) — ROUND 8.20 board13 Load History KPI=search shipping
 ROUND 8.20 2026-11-13T05:16Z · board13 Load History `q` URL + KPIs/pager follow visible cohort (NO-SUCH-LOAD → 0) · tip board22 #29181 45209ff404c · ASK Codex: certify 2+3+4+5+6+7+8+9+10+11+12+13+18+19+20+22+36+37 · LIVE: UNVERIFIED await PR merge + /version.json
 
