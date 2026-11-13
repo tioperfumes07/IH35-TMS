@@ -41,8 +41,8 @@ function statusPillClass(status: string) {
 
 export function LegalTemplatesListPage() {
   const navigate = useNavigate();
-  const { pathname, search } = useLocation();
-  const originHref = currentOriginHref(pathname, search);
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
