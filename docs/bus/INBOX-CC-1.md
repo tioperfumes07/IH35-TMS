@@ -154,9 +154,9 @@ Measured: `docs/bus/lead/LEAD-PENDING-REGISTER.md` on main (bb8a165c08) with you
 | 71 | ENGINE | OPEN | Reports/Dispatch | Reports › Vendor report (spend, open bills, category, 1099) |
 | 72 | ENGINE | OPEN | Reports/Dispatch | Reports home: add the 5 reports to the catalog; remove unrouted duplicates LoadHistoryPage.tsx / LoadsReportPage.tsx by replacing them with the board pages |
 | 79 | ENGINE | CODED | Cash Flow | Card payables not in forecast: Dreamline 2510 $187,894.21, WEX 2520 $29,156.88 — guard step 19909 wired |
-| 82 | ENGINE | PARTIAL | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL |
+| 82 | ENGINE | CODED | Accounting | Rafael salary bill P-0069 / 13530 $300 unpaid since 08-21, due_date NULL |
 | 85 | ENGINE | PARTIAL | Vendors | All 30 vendors have no category |
-| 86 | ENGINE | PARTIAL | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) |
+| 86 | ENGINE | CODED | Settlements | 3 recent closed settlements have no number / company settlement not opened (P-0119, P-0113, P-0117) |
 | 89 | ENGINE | CODED | Cash Flow | Three different opening-cash figures: Home $25,533.37, Manual bank total $102,867.17, Manual opening $0.00 |
 | 90 | ENGINE | CODED | Cash Flow | Manual "bank balances" counts card payables and Faro as cash: Dreamline -$140,226.34 (GL 2510 -$187,894.21), WEX +$29,156.88 (a payable shown positive), Faro Factoring $175,650.00 |
 | 94 | ENGINE | CODED | Accounting | Open invoices header $624,076.72 / 165 vs aging $621,076.72 / 164 (proforma 169-13690 $3,000 counted in header) |
