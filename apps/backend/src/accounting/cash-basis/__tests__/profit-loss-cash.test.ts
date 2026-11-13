@@ -338,6 +338,10 @@ describe("ACCT-F412 — the cash-basis P&L is computed from transactions", () =>
       "prepaid_amortization", "factoring_advance_deposit", "payment", "journal_entry",
       "factoring_reserve_release", "factoring_customer_payment", "period_close", "lease_rental",
       "finance_loan",
+      // ACCT-F821: the revenue-recognition poster (Event 1 earn / Event 2 bill) writes "load". It was missing
+      // here, so it ran as basis_unresolved for every delivered load since 2026-10-05.
+      "load",
+      "relay_deposit",
     ];
     const unclaimed = written.filter((type) => !(type in CASH_BASIS_SOURCE_TREATMENTS));
     expect(unclaimed).toEqual([]);
@@ -349,5 +353,64 @@ describe("ACCT-F412 — the cash-basis P&L is computed from transactions", () =>
       .map(([type]) => type)
       .sort();
     expect(deferring).toEqual(["bill", "invoice"]);
+  });
+});
+
+describe("ACCT-F821 — revenue-recognition Event 1 (source 'load') follows the load's invoice on cash basis", () => {
+  const loadPosting = (over: Partial<CashBasisPostingRow> = {}) =>
+    posting({ source_transaction_type: "load", source_transaction_id: "load-1", entry_date: "2026-03-02", ...over });
+
+  it("THE DEFECT: a delivered load's earned revenue was passed through at GL date as basis_unresolved", () => {
+    expect(treatCashBasisSource("load")).toBe("load_revenue");
+    const report = build({ postings: [loadPosting()], from: "2026-03-01", to: "2026-03-31" });
+    expect(report.basis_unresolved.total).toBe(0);
+    expect(report.recognition.by_treatment.load_revenue).toBe(1);
+  });
+
+  it("a delivered load with no invoice yet has received no cash: fully deferred, nothing recognized", () => {
+    const report = build({ postings: [loadPosting()], from: "2026-03-01", to: "2026-03-31" });
+    expect(report.revenue.total).toBe(0);
+    expect(report.deferred.total).toBe(100_000);
+    expect(report.undefined_proportion.total).toBe(0);
+  });
+
+  it("recognizes in the proportion — and the period — the load's invoice was collected", () => {
+    const input = {
+      postings: [loadPosting()],
+      arDocuments: docs({ "inv-9": { total_cents: 100_000, events: [{ date: "2026-04-10", amount_cents: 40_000 }] } }),
+      loadInvoices: new Map([["load-1", ["inv-9"]]]),
+    };
+    const march = build({ ...input, from: "2026-03-01", to: "2026-03-31" });
+    expect(march.revenue.total).toBe(0);
+    const april = build({ ...input, from: "2026-04-01", to: "2026-04-30" });
+    expect(april.revenue.total).toBe(40_000);
+    expect(april.deferred.total).toBe(60_000);
+  });
+
+  it("an Event 1 reversal (debit to income) nets against the same load in the same proportion", () => {
+    const report = build({
+      postings: [loadPosting(), loadPosting({ posting_id: "p2", debit_or_credit: "debit", amount_cents: 100_000 })],
+      arDocuments: docs({ "inv-9": { total_cents: 100_000, events: [{ date: "2026-03-20", amount_cents: 100_000 }] } }),
+      loadInvoices: new Map([["load-1", ["inv-9"]]]),
+      from: "2026-03-01",
+      to: "2026-03-31",
+    });
+    expect(report.revenue.total).toBe(0);
+    expect(report.deferred.total).toBe(0);
+  });
+
+  it("two live invoices for one load are one document: totals and collections combine", () => {
+    const report = build({
+      postings: [loadPosting()],
+      arDocuments: docs({
+        "inv-a": { total_cents: 60_000, events: [{ date: "2026-03-05", amount_cents: 60_000 }] },
+        "inv-b": { total_cents: 40_000, events: [] },
+      }),
+      loadInvoices: new Map([["load-1", ["inv-a", "inv-b"]]]),
+      from: "2026-03-01",
+      to: "2026-03-31",
+    });
+    expect(report.revenue.total).toBe(60_000);
+    expect(report.deferred.total).toBe(40_000);
   });
 });

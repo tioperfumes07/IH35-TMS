@@ -120,8 +120,19 @@ export function regenerateInScratch(root, entries) {
   const wt = path.join(tmp, "wt");
   execSync(`git worktree add --detach --quiet "${wt}" HEAD`, { cwd: root, stdio: "pipe" });
   try {
+    // When running from a git worktree, node_modules live only in the main checkout root.
+    // Resolve the common-dir parent so the temp worktree gets real packages, not the worktree's
+    // empty stub dirs (which only hold .vite/.vitest-cache caches, not installed packages).
+    let mainRoot = root;
+    try {
+      const commonDir = execSync("git rev-parse --git-common-dir", { cwd: root, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim();
+      const resolved = path.resolve(root, commonDir);
+      if (resolved.endsWith("/.git")) mainRoot = path.dirname(resolved);
+    } catch {}
     for (const nm of ["node_modules", "apps/backend/node_modules", "apps/frontend/node_modules"]) {
-      const src = path.join(root, nm);
+      // In a git worktree (mainRoot !== root), always use mainRoot's installed node_modules;
+      // the worktree's own node_modules stub is an empty cache dir with no packages.
+      const src = mainRoot !== root ? path.join(mainRoot, nm) : path.join(root, nm);
       if (fs.existsSync(src) && !fs.existsSync(path.join(wt, nm))) fs.symlinkSync(fs.realpathSync(src), path.join(wt, nm));
     }
     for (const e of todo) {
