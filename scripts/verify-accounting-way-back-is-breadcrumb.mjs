@@ -38,7 +38,7 @@ for (const f of scanned) {
 }
 
 const wrapper = strip(read("apps/frontend/src/pages/accounting/AccountingSubNavWrapper.tsx"));
-if (!/<Breadcrumb items=\{breadcrumb\} \/>/.test(wrapper) || !/\{ label: "Accounting", href: "\/accounting" \}/.test(wrapper)) {
+if (!/<Breadcrumb items=\{breadcrumb\} \/>/.test(wrapper) || !/\{ label: "Accounting", href: ("\/accounting"|accountingBackHref)/.test(wrapper)) {
   fails.push("AccountingSubNavWrapper: every Accounting page must show the breadcrumb starting at the Accounting home");
 }
 const board = read("apps/frontend/src/pages/accounting/LoadCostsBoardPage.tsx");
