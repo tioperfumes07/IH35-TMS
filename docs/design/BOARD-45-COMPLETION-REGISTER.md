@@ -136,7 +136,9 @@ Format: `# · board · READY <PR/sha> · tip · Z time`
 | 25–26 | Reports Home/TB (+BS/PL) | READY | #29285/#29292 ?basis= + #29296 catalog ret + #29310 KPI ?cat= drills |
 | 27 | Reports Loads | READY | #29313 group/drill URL SoT + interactive week chart |
 | 28 | Reports Driver Settlements | READY | #29316 group/drill/status/paid URL + Closed-unpaid KPI |
+| 29 | Reports Company Settlements | READY | #29320 group/drill/zero_cost URL SoT |
 | 30 | Reports Customers | READY | #29324 view/range/customers URL + statement ?ret= Back |
+| 31 | Reports Vendors | READY | #29326 view/range/vendors URL SoT + ret drills |
 
 ## ROUND 8.17 — Cursor class R/L/S lines
 Format: `# · board · CERTIFIED|FAIL <defect> · deployed SHA · checked-by · Z time`

@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T22:01Z) — #29320 CSR + #29326 Vendor report URL MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T22:01Z · #29326 SHA f6f710bdb01 MERGED (Vendor report URL SoT) · #29320 SHA 1a9c7fa1b67 MERGED (CSR group/drill/zero_cost URL) · tip #29324/#29327 · ASK Codex: CERTIFY board29 + 31 + 30 + 27–28 · BUILD 24–45 · no prod writes
+
 ## OUTBOX (2026-11-13T21:49Z) — #29324 Customer report URL + statement ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T21:49Z · #29324 SHA 5b30f4b4927 MERGED (Customer report URL SoT + statement Back resolveBackHref) · tip #29316/#29321 · board29 #29320 + board31 #29326 OPEN · ASK Codex: CERTIFY board30 + 28 + 27 · BUILD 24–45 · no prod writes
 
