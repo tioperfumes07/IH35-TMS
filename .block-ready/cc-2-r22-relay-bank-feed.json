@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r22-relay-bank-feed",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 22 — Relay bank feed current ratchet. Guard 20011 enforces Relay Fuel Wallet has transactions within last 30 days (prevents silent feed stoppage).",
+  "branch": "cc-2/eng-r22-relay-bank-feed",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-relay-bank-feed-current.mjs",
+    "scripts/verify-steps/20011-verify-relay-bank-feed-current.mjs",
+    ".block-ready/cc-2-r22-relay-bank-feed.json"
+  ],
+  "acceptance": [
+    "verify-relay-bank-feed-current selftest PASS 2/2",
+    "total=315>=315 recent_30d=39>0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
