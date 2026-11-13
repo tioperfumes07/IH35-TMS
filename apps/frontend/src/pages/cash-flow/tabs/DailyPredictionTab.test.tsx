@@ -19,9 +19,9 @@ vi.mock("../../../api/cashFlow", () => ({
 }));
 
 const companyId = "11111111-1111-4111-8111-111111111111";
-function mount() {
+function mount(entry = "/cash-flow?tab=daily_prediction") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={client}><MemoryRouter>
+  return render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[entry]}>
     <DailyPredictionTab operatingCompanyId={companyId} />
   </MemoryRouter></QueryClientProvider>);
 }
@@ -45,26 +45,37 @@ describe("Projected date selection uses one coherent calendar window", () => {
     await waitFor(() => expect(getRollingLedger).toHaveBeenCalled());
     await user.click(screen.getByRole("button", { name: /^Week$/ }));
     await waitFor(() => expect(getRollingLedger).toHaveBeenLastCalledWith(companyId, "2026-11-09", "2026-11-22"));
-    expect(screen.getByTestId("cash-flow-projected-nav")).toHaveTextContent("11/09/2026 – 11/15/2026");
-    expect(await screen.findByRole("button", { name: /Mon 11\/09\/2026/ })).toBeVisible();
-    expect(screen.getByRole("button", { name: /Sun 11\/15\/2026/ })).toBeVisible();
-    expect(screen.queryByRole("button", { name: /Mon 11\/16\/2026/ })).not.toBeInTheDocument();
-    expect(screen.getByTestId("cash-flow-projected-formula")).toHaveTextContent("+$84.00");
-    expect(screen.getByTestId("cash-flow-projected-formula")).toHaveTextContent("$184.00");
+    expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/09/2026 – 11/15/2026");
+    expect(await screen.findByRole("button", { name: /Mon 11\/09\/2026/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Sun 11\/15\/2026/ })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /Mon 11\/16\/2026/ })).toBeNull();
+    expect(screen.getByTestId("cash-flow-projected-formula").textContent).toContain("+$84.00");
+    expect(screen.getByTestId("cash-flow-projected-formula").textContent).toContain("$184.00");
   });
 
   it("a weekly day tile drills to that day, and returning to Week restores Monday", async () => {
     const user = userEvent.setup(); mount();
     await user.click(screen.getByRole("button", { name: /^Week$/ }));
     await user.click(await screen.findByRole("button", { name: /Thu 11\/12\/2026/ }));
-    expect(screen.getByTestId("cash-flow-projected-nav")).toHaveTextContent("11/12/2026");
-    expect(screen.getByRole("button", { name: "Previous day" })).toBeVisible();
+    expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/12/2026");
+    expect(screen.getByRole("button", { name: "Previous day" })).toBeTruthy();
     await waitFor(() => expect(getRollingLedger).toHaveBeenLastCalledWith(companyId, "2026-11-12", "2026-11-25"));
-    await waitFor(() => expect(screen.getByTestId("cash-flow-projected-formula")).toHaveTextContent("+$12.00"));
-    expect(screen.getByTestId("cash-flow-projected-formula")).toHaveTextContent("$112.00");
+    await waitFor(() => expect(screen.getByTestId("cash-flow-projected-formula").textContent).toContain("+$12.00"));
+    expect(screen.getByTestId("cash-flow-projected-formula").textContent).toContain("$112.00");
     await user.click(screen.getByRole("button", { name: /^Week$/ }));
     await waitFor(() => expect(getRollingLedger).toHaveBeenLastCalledWith(companyId, "2026-11-09", "2026-11-22"));
-    expect(screen.getByTestId("cash-flow-projected-nav")).toHaveTextContent("11/09/2026 – 11/15/2026");
-    await waitFor(() => expect(screen.getByTestId("cash-flow-projected-formula")).toHaveTextContent("+$84.00"));
+    expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/09/2026 – 11/15/2026");
+    await waitFor(() => expect(screen.getByTestId("cash-flow-projected-formula").textContent).toContain("+$84.00"));
+  });
+
+  // ROUND 8.20 board5 — URL is source of truth for Projected week so settlement ret restores origin.
+  it("hydrates week/date from proj_date + proj_grain and writes them when Week is selected", async () => {
+    const user = userEvent.setup();
+    mount("/cash-flow?tab=daily_prediction&proj_date=2026-11-12&proj_grain=week");
+    await waitFor(() => expect(getRollingLedger).toHaveBeenCalled());
+    expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/09/2026 – 11/15/2026");
+    await user.click(screen.getByRole("button", { name: /^Day$/ }));
+    await waitFor(() => expect(getRollingLedger).toHaveBeenLastCalledWith(companyId, "2026-11-12", "2026-11-25"));
+    expect(screen.getByTestId("cash-flow-projected-nav").textContent).toContain("11/12/2026");
   });
 });

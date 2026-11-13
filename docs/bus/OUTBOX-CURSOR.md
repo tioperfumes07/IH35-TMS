@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-13T02:45Z) — ROUND 8.20 board5 Projected week URL shipping
+ROUND 8.20 2026-11-13T02:45Z · board5 Projected proj_date/proj_grain URL so settlement ret restores week · tip board11 #29151 ffbc4976276 · ASK Codex: certify 2+3+5+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
+
+## OUTBOX (2026-11-13T02:42Z) — ROUND 8.20 board11 MERGED
+ROUND 8.20 2026-11-13T02:42Z · board11 #29151 SHA ffbc4976276 MERGED (one Legal Matters + Period End formatDateUS) · tip board12 #29143 0a6b994bc16 · ASK Codex: certify 2+3+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json contains ffbc4976276
+
 ## OUTBOX (2026-11-13T02:29Z) — ROUND 8.20 board11 Driver Profile shipping
 ROUND 8.20 2026-11-13T02:29Z · board11 DELETE duplicate Legal Matters (InsuranceLawsuitsReverseSection) + Period End formatDateUS · tip board12 #29143 0a6b994bc16 · ASK Codex: certify 2+3+8+9+10+11+12+18+19+20+36+37 · LIVE: UNVERIFIED await /version.json
 
