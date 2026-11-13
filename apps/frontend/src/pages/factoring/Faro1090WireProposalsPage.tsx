@@ -6,7 +6,8 @@
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { useLocation, useSearchParams, Link } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   dryRunAcceptFaro1090WireProposal,
   listFaro1090WireProposals,
@@ -42,6 +43,10 @@ function classTone(c: Faro1090WireProposalClass): string {
 }
 
 export function Faro1090WireProposalsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -183,7 +188,7 @@ export function Faro1090WireProposalsPage() {
     return (
       <div className="space-y-3 p-4" data-testid="faro-1090-wire-proposals-page">
         <PageHeader
-          backHref="/factoring"
+          backHref={factoringBackHref}
           breadcrumb={["Factoring", "1090 wire proposals"]}
           title="Faro 1090 wire proposals"
           subtitle="ENG-17 BUILD-ONLY — propose / pick wire candidates for unmatched purchases. Matches deferred (owner BUILD-FIRST)."
@@ -198,7 +203,7 @@ export function Faro1090WireProposalsPage() {
   return (
     <div className="space-y-3" data-testid="faro-1090-wire-proposals-page">
       <PageHeader
-        backHref="/factoring"
+        backHref={factoringBackHref}
         breadcrumb={["Factoring", "1090 wire proposals"]}
         title="Faro 1090 wire proposals"
         subtitle="ENG-17 BUILD-ONLY — propose / pick wire candidates for unmatched purchases. Matches deferred (owner BUILD-FIRST)."

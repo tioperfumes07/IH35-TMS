@@ -22,6 +22,8 @@ import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 
 
 function asMoney(cents: number) {
@@ -31,6 +33,10 @@ function asMoney(cents: number) {
 type WizardStep = 1 | 2 | 3 | 4;
 
 export function BatchWizard() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
+  const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -145,7 +151,7 @@ export function BatchWizard() {
     return (
       <div className="space-y-3">
         <PageHeader
-          backHref="/factoring"
+          backHref={factoringBackHref}
           breadcrumb={["Factoring", "Batch Wizard"]}
           title="Factoring Batch Wizard"
           subtitle="Assemble paid-ready invoices into a factoring batch"
@@ -162,7 +168,7 @@ export function BatchWizard() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/factoring"
+        backHref={factoringBackHref}
         breadcrumb={["Factoring", "Batch Wizard"]}
         title="Factoring Batch Wizard"
         subtitle="Assemble paid-ready invoices into a factoring batch"
