@@ -22,6 +22,20 @@ BEGIN
     RETURN;
   END IF;
 
+  -- Main-red 2026-11-13: on a FRESH database this file (2026163_10100) runs BEFORE 202616311200, so
+  -- legal.matters.insurance_lawsuit_id still references insurance.lawsuit and the DROP fails. Drop that FK
+  -- only while it still points at insurance.lawsuit; 202616311200 then re-creates it against legal.matters.
+  -- On production 202616311200 ran first (2026-11-03), the FK already references legal.matters, so this
+  -- block does nothing there.
+  IF EXISTS (
+    SELECT 1 FROM pg_constraint c
+     WHERE c.conname = 'matters_insurance_lawsuit_id_fkey'
+       AND c.conrelid = to_regclass('legal.matters')
+       AND c.confrelid = to_regclass('insurance.lawsuit')
+  ) THEN
+    ALTER TABLE legal.matters DROP CONSTRAINT matters_insurance_lawsuit_id_fkey;
+  END IF;
+
   -- Drop insurance.claim.lawsuit_id FK and column (added by migration 202611130000)
   ALTER TABLE insurance.claim
     DROP CONSTRAINT IF EXISTS claim_lawsuit_id_fkey;
