@@ -208,6 +208,13 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
       }
       const categorization = lineCategorizationRefusal(error);
       if (categorization) return reply.code(422).send(categorization);
+      // ROW 21 gap: invoice total edited below amount already paid fires invoices_check (23514)
+      if ((error as { code?: string }).code === "23514") {
+        return reply.code(422).send({
+          error: "invoice_total_below_paid",
+          message: "Issue a credit memo for the difference",
+        });
+      }
       throw error;
     }
     }
@@ -221,6 +228,7 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
     const query = companyQuerySchema.safeParse(req.query ?? {});
     if (!query.success) return validationError(reply, query.error);
 
+    try {
     const result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
       const guard = await ensureDraftInvoice(client, params.data.id, query.data.operating_company_id);
       if (!guard.ok) return guard;
@@ -263,6 +271,16 @@ export async function registerInvoiceLineRoutes(app: FastifyInstance) {
 
     if (!result.ok) return reply.code(result.code).send({ error: result.error, ...("message" in result && result.message ? { message: result.message } : {}) });
     return result.data;
+    } catch (error) {
+      // ROW 21 gap: soft-delete that drives total below amount paid fires invoices_check (23514)
+      if ((error as { code?: string }).code === "23514") {
+        return reply.code(422).send({
+          error: "invoice_total_below_paid",
+          message: "Issue a credit memo for the difference",
+        });
+      }
+      throw error;
+    }
   });
 }
 
