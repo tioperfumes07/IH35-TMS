@@ -1,0 +1,19 @@
+{
+  "block_id": "cc-2-r21-unapplied-credit",
+  "status": "GUARD",
+  "classification": "FINANCIAL",
+  "phase": "ROUND-8.21-CC-2",
+  "task": "CC-2 Row 21 — unapplied credit ratchet. Guard 20007 enforces 0 bills have paid_cents > amount_cents (unapplied credit scenario).",
+  "branch": "cc-2/eng-r21-unapplied-credit",
+  "lane": "CC-2-ACCOUNTING-ENGINE",
+  "allowed_files": [
+    "scripts/verify-unapplied-credit-ratchet.mjs",
+    "scripts/verify-steps/20007-verify-unapplied-credit-ratchet.mjs",
+    ".block-ready/cc-2-r21-unapplied-credit.json"
+  ],
+  "acceptance": [
+    "verify-unapplied-credit-ratchet selftest PASS 2/2",
+    "total=241 overpaid=0/0 | PASS"
+  ],
+  "created_at": "2026-11-13"
+}
