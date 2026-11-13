@@ -43,4 +43,12 @@ describe("443.280 Driver Profile replaces rather than layers the landing", () =>
       expect(parseDriverProfileTab(new URL(href, "https://example.invalid").searchParams)).toBe(tab);
     }
   });
+
+  // ROUND 8.20 board11 — InsuranceLawsuitsReverseSection is LegalMattersReverseSection under another name.
+  it("does not remount InsuranceLawsuitsReverseSection (duplicate Legal Matters)", () => {
+    expect(pageText).not.toMatch(/<InsuranceLawsuitsReverseSection\b/);
+    expect(pageText).toContain("<LegalMattersReverseSection");
+    expect(pageText).toContain("<InsuranceClaimsReverseSection");
+  });
 });
+

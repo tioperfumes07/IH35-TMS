@@ -71,7 +71,6 @@ import { DriverTempCoverReverseSection } from "../../components/safety/DriverTem
 import { DriverEquipmentTransfersReverseSection } from "../../components/dispatch/DriverEquipmentTransfersReverseSection";
 import { DriverHosViolationsReverseSection } from "../../components/safety/DriverHosViolationsReverseSection";
 import { SafetyAlertsReverseSection } from "../../components/safety/SafetyAlertsReverseSection";
-import { InsuranceLawsuitsReverseSection } from "../../components/insurance/InsuranceLawsuitsReverseSection";
 import { FuelCardOverageReverseSection } from "../../components/fuel/FuelCardOverageReverseSection";
 import { FuelCardsReverseSection } from "../../components/fuel/FuelCardsReverseSection";
 import { FuelFraudAlertsReverseSection } from "../../components/fuel/FuelFraudAlertsReverseSection";
@@ -833,7 +832,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 data-testid="driver-profile-insurance-claims"
               />
             </div>
-            <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
+            {/* ROUND 8.20 board11 — do NOT mount InsuranceLawsuitsReverseSection here: it wraps LegalMattersReverseSection (same Legal Matters chrome). Legal lives on the Legal matters tab only. */}
             <div data-testid="dp-section-expenses-reverse">
               <ExpensesReverseSection
                 operatingCompanyId={companyId}
@@ -1072,9 +1071,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
 
       {activeTab === "Legal matters" ? (
         <div className="space-y-3" data-testid="dp-tab-legal-matters">
+          {/* ROUND 8.20 board11 — ONE Legal Matters reader. InsuranceLawsuitsReverseSection was a second mount of the same LegalMattersReverseSection (duplicate section under Claims). */}
           <LegalMattersReverseSection operatingCompanyId={companyId} filter={{ related_driver_id: id }} contextLabel="this driver" />
           <InsuranceClaimsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
-          <InsuranceLawsuitsReverseSection operatingCompanyId={companyId} filter={{ driver_id: id }} contextLabel="this driver" />
         </div>
       ) : null}
 
