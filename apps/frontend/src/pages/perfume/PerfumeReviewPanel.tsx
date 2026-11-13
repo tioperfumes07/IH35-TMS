@@ -66,7 +66,7 @@ export function PerfumeReviewPanel() {
             options={["100", "300", "500"].map((x) => ({ value: x, label: x }))} />
         </label>
       </div>
-      <BulkBar selected={selected} onDone={() => setSelected([])} />
+      <BulkBar selected={selected} onDone={() => setSelected([])} rows={q.data?.rows ?? []} onSelect={setSelected} />
       <div className="text-xs text-gray-600">
         {total.toLocaleString()} {tr("perfume.review.2", "lines need you. A line links to an item only when you confirm it — then every future list from that vendor with the same spelling or SKU links by itself. Nothing here counts in any price until confirmed.")}
       </div>
@@ -120,7 +120,9 @@ export function PerfumeReviewPanel() {
 }
 
 /** Owner 2026-11-12: "we need to have multiple selector to change gender or assign …" — one action over the ticked lines. */
-function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void }) {
+/** Owner 2026-11-12: "select multiple items so we can choose 100–200 at a time and click confirm or use suggestion at
+ * once, because one by one takes very long." Picking is one click (whole page, or every line at/above a likeness). */
+function BulkBar({ selected, onDone, rows, onSelect }: { selected: string[]; onDone: () => void; rows: PerfumeReviewRow[]; onSelect: (ids: string[]) => void }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [busy, setBusy] = useState(false);
@@ -143,8 +145,26 @@ function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void 
       onDone();
     } catch (e) { pushToast(userFacingApiError(e, `${what} failed`), "error"); } finally { setBusy(false); }
   };
-  if (!n) return <div className="text-xs text-gray-500">{tr("perfume.review.bulkHint", "Tick lines to change their gender, confirm the best suggestion, link them to one item, or create them as new items — all at once.")}</div>;
+  const withSuggestion = rows.filter((r) => r.suggestions[0]);
+  const atLeast = (pct: number) => withSuggestion.filter((r) => r.suggestions[0].score * 100 >= pct).map((r) => r.id);
+  const pick = (
+    <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="perfume-review-bulk-pick">
+      <span className="text-gray-600">{tr("perfume.review.pick", "Select:")}</span>
+      <Button type="button" variant="secondary" className="h-[30px] px-2 text-xs" disabled={!rows.length} onClick={() => onSelect(rows.map((r) => r.id))}>
+        {tr("perfume.review.pickPage", "All on this page")} ({rows.length})
+      </Button>
+      {[95, 90, 80, 70].map((pct) => (
+        <Button key={pct} type="button" variant="secondary" className="h-[30px] px-2 text-xs" disabled={!atLeast(pct).length} onClick={() => onSelect(atLeast(pct))}>
+          ≥ {pct}% {tr("perfume.review.pickAlike", "alike")} ({atLeast(pct).length})
+        </Button>
+      ))}
+      <span className="text-gray-500">{tr("perfume.review.pickHint", "Sort by % alike and show 300–500 rows per page to work a whole list at once.")}</span>
+    </div>
+  );
+  if (!n) return <div className="space-y-1">{pick}<div className="text-xs text-gray-500">{tr("perfume.review.bulkHint", "Tick lines (or use Select) to change their gender, use the suggestion, link them to one item, or create them as new items — all at once.")}</div></div>;
   return (
+    <div className="space-y-1">
+    {pick}
     <div className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-gray-50 p-2 text-xs" data-testid="perfume-review-bulk-bar">
       <span className="font-semibold">{n} {tr("perfume.review.bulkSelected", "selected")}</span>
       <span className="text-gray-500">{tr("perfume.review.bulkGender", "Gender:")}</span>
@@ -155,7 +175,7 @@ function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void 
         </Button>
       ))}
       <Button type="button" className="h-[30px] px-2 text-xs" disabled={busy} onClick={() => void run({ action: "confirm_best", row_ids: selected }, "Confirmed best suggestion")}>
-        {tr("perfume.review.bulkConfirm", "Confirm best suggestion")}
+        ✓ {tr("perfume.review.bulkConfirm", "Use suggestion for all selected")} ({n})
       </Button>
       <span className="w-[240px]">
         <Combobox ariaLabel="Link selected to item" size="sm" allowClear clearCommittedOnEdit value={item} onChange={setItem} onSearch={setSearch} options={options} placeholder={tr("perfume.review.bulkSearch", "Search one item for all")} />
@@ -168,6 +188,7 @@ function BulkBar({ selected, onDone }: { selected: string[]; onDone: () => void 
         {tr("perfume.review.bulkNew", "Create as new items")}
       </Button>
       <Button type="button" variant="secondary" className="h-[30px] px-2 text-xs" disabled={busy} onClick={onDone}>{tr("perfume.review.bulkClear", "Clear")}</Button>
+    </div>
     </div>
   );
 }
