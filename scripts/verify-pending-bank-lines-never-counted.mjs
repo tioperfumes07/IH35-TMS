@@ -15,6 +15,8 @@
 // RULE 4 — retirePlaidPendingPredecessor calls retireOrphanPendingGenerations; the orphan SQL voids with
 //          merged_into, never DELETEs, never touches a financially linked row, one per posted line.
 // RULE 5 — the Plaid ingest calls retirePlaidPendingPredecessor on every inserted posted row.
+// RULE 6 — ROW 99+113: the Plaid ingest retires the older pending generation the moment a pending is RE-ISSUED
+//          (retireOlderPendingGenerationOnReissue on an inserted pending row), using the same selection SQL.
 import fs from "node:fs";
 
 const PRED = "apps/backend/src/banking/cleared-bank-line.sql.ts";
@@ -80,9 +82,10 @@ export function audit(files) {
   const dd = files[DEDUP] ?? "";
   const retire = fnBody(dd, "export async function retirePlaidPendingPredecessor");
   if (!/retireOrphanPendingGenerations\(/.test(retire)) out.push("RULE 4: retirePlaidPendingPredecessor no longer retires the older pending generation");
-  const sqlStart = dd.indexOf("export const RETIRE_ORPHAN_PENDING_GENERATION_SQL");
+  // ROW 99+113: the selection SQL lives in orphanPendingGenerationSql(reason); both retirements are built from it.
+  const sqlStart = dd.indexOf("export function orphanPendingGenerationSql");
   const sql = sqlStart < 0 ? "" : dd.slice(sqlStart, dd.indexOf("RETURNING t.id", sqlStart) + 14);
-  if (!sql) out.push("RULE 4: RETIRE_ORPHAN_PENDING_GENERATION_SQL is missing");
+  if (!sql || !/export const RETIRE_ORPHAN_PENDING_GENERATION_SQL = orphanPendingGenerationSql\("replaced_by_plaid_posted:"\)/.test(dd)) out.push("RULE 4: RETIRE_ORPHAN_PENDING_GENERATION_SQL is missing");
   else {
     if (/DELETE\s+FROM/i.test(sql)) out.push("RULE 4: the orphan retirement DELETEs a bank line (void, never delete)");
     for (const need of [
@@ -103,6 +106,8 @@ export function audit(files) {
   const pl = files[PLAID] ?? "";
   const ingest = pl.slice(pl.indexOf("for (const transaction of syncRes.data.added)"), pl.indexOf("for (const transaction of syncRes.data.modified)"));
   if (!/retirePlaidPendingPredecessor\(/.test(ingest)) out.push("RULE 5: the Plaid ingest no longer retires the pending a posted line replaces");
+  if (!/if \(transaction\.pending\) \{\s+await retireOlderPendingGenerationOnReissue\(client, \{/.test(ingest)) out.push("RULE 6: the Plaid ingest no longer retires the older pending generation when a pending is re-issued");
+  if (!/export const RETIRE_PENDING_GENERATION_ON_REISSUE_SQL = orphanPendingGenerationSql\("replaced_by_plaid_pending_reissue:"\)/.test(dd)) out.push("RULE 6: the re-issue retirement does not use the shared selection SQL");
   return out;
 }
 
@@ -137,6 +142,8 @@ if (process.argv.includes("--selftest")) {
     ["orphan generation not retired", plant(DEDUP, "const orphans = await retireOrphanPendingGenerations(client, {", "const orphans = await Promise.resolve([] as string[]) && ({")],
     ["orphan SQL touches linked rows", plant(DEDUP, "       AND o.categorization_gl_account_id IS NULL\n", "")],
     ["orphan SQL deletes", plant(DEDUP, "  UPDATE banking.bank_transactions t\n     SET voided_at = now(),", "  DELETE FROM banking.bank_transactions t\n     SET voided_at = now(),")],
+    ["re-issue retirement unwired", plant(PLAID, "await retireOlderPendingGenerationOnReissue(client, {", "await Promise.resolve({")],
+    ["re-issue SQL forked", plant(DEDUP, 'orphanPendingGenerationSql("replaced_by_plaid_pending_reissue:")', '"SELECT 1"')],
     ["For Review reader dropped", plant("apps/backend/src/banking/pending-categorization.ts", "AND ${clearedBankLine(alias)} AND", "AND")],
   ];
   let caught = 0;
