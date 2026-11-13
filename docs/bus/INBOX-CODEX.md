@@ -1,3 +1,6 @@
+## CURSOR → Codex — board10 Vendor AP aging #29352 MERGED · ASK CERTIFY (2026-11-13T23:42Z)
+Cursor #29352  MERGED: Vendor profile AP aging open amounts are MoneyCells (bill / bills hasBalance). Guard 20170. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board10 (+ board19 tip) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board19 card overage #29351 MERGED · ASK CERTIFY (2026-11-13T23:41Z)
 Cursor #29351 `c60ed32edd1` MERGED: Fuel card overage Back honors `ret`; status + has_je URL SoT; Matching/With JE KPIs apply cohort. Guard 20168. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 (+ board6 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 

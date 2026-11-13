@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-13T23:42Z) — Cursor board10 #29352
+| Board | Status | Evidence |
+|---|---|---|
+| 10 Vendors AP aging | READY | #29352  MoneyCell open/cleared drills; verify 20170 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:41Z) — Cursor board19 #29351
 | Board | Status | Evidence |
 |---|---|---|
