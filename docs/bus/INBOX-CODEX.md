@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T17:25Z) — board5 Projected proj_date stamp shipping · #29257 MERGED · CERTIFY 1–23
+# Tip main b2122665774. Board5 #29258 stamps proj_date so settlement Back restores Projected week. Recheck board3 Money In + board6 AVP + board19 View-all after FE /version.json catch-up. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T17:22Z) — #29255 board6 AVP MERGED · CERTIFY 1–23
 # Tip bfa21e6252d. Recheck board3/6/19 after FE. BUILD 24–45. No prod writes.
 

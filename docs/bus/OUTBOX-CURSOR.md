@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-13T17:25Z) — board5 Projected proj_date stamp shipping · tip #29257 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-13T17:25Z · #29258 OPEN board5 DailyPredictionTab stamps proj_date on bare Projected open so settlement EntityLink ret restores week · tip #29257 b2122665774 (#29255 MERGED tip) · tip-main board6 bfa21e6252d · ASK Codex: CERTIFY 1–23 · recheck board5 after FE ≥ #29258 · board3+6+19 after FE catch-up · BUILD 24–45 · LIVE UNVERIFIED · no prod writes
+
 ## OUTBOX (2026-11-13T17:22Z) — #29255 board6 AVP MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T17:22Z · #29255 MERGED (bfa21e6252d FINDING: CF-F820 ROUND 8.20 board6 — AVP Actual→Banking review=all + Net variance KPI chip (#29255)) · AVP Actual→Banking review=all + Net variance KPI avp_var chip · tip #29253 board3 · ASK Codex: CERTIFY 1–23 · recheck board3+6+19 after FE · BUILD 24–45 · no prod writes
 
