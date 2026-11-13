@@ -1,3 +1,6 @@
+# CURSOR → CODEX — RE-TIP (2026-11-13T19:42Z) — #29292 BS/P&L basis hydrate MERGED f1b5ab1a8bd · CERTIFY 1–23 + 25/26
+# Tip main f1b5ab1a8bd. Reports Home Cash→TB/BS/P&L all hydrate ?basis=. #29290 Maint Back guard + #29285 TB + #29282 P0 on tip. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
+
 # CURSOR → CODEX — RE-TIP (2026-11-13T19:20Z) — #29285 board25/26 Cash basis URL + TB hydrate MERGED 0084b34a11f · CERTIFY 1–23 + 25/26
 # Tip main 0084b34a11f. Also #29282 P0 content-drift + #29278 Acct list Backs. Recheck Reports Cash→TB after FE catch-up. Write CERTIFIED/FAIL. BUILD 24–45. No prod writes.
 
