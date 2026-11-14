@@ -4,6 +4,7 @@ import { ON_TRUCK_STATUSES } from "../lib/load-status";
 import { DatePicker } from "../components/forms/DatePicker";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { getEscrowDriverBalances } from "../api/banking";
 import { cashAdvanceRequestsOfficeApi } from "../api/cashAdvanceRequests";
 import { listAllDispatchLoads } from "../api/dispatch";
@@ -225,6 +226,14 @@ type DriversPageProps = {
 export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  // ROUND 8.20 board12 — settlements panel View-all shareable href+ret.
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const settlementsViewAllHref = withReturnContext(
+    location.pathname.startsWith("/driver-finance")
+      ? "/driver-finance/settlements"
+      : "/drivers/settlements",
+    originHref,
+  );
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -937,13 +946,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   isError={preSettlementsQuery.isError}
                   title="Open pre-settlements"
                   emptyText="No open pre-settlements for this company."
-                  onViewAll={() =>
-                    navigate(
-                      location.pathname.startsWith("/driver-finance")
-                        ? "/driver-finance/settlements"
-                        : "/drivers/settlements",
-                    )
-                  }
+                  viewAllHref={settlementsViewAllHref}
                 />
                 <SettlementsPreSettlementsClosesPanel
                   basePath={
