@@ -1,7 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per load IN MOTION now with its approximate cost so far; the full dated Load costs board is one click away (Open load costs →).
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listAllLoads } from "../../api/loads";
 import { EntityLink } from "../shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
@@ -33,6 +34,9 @@ type PanelRow = {
 };
 
 export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const [sortKey, setSortKey] = useState<SortKey>("margin");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
@@ -111,7 +115,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
             Margin is canonical net (revenue − costs so far − driver pay so far) — not settlement, and not the sum of wizard charges.
           </div>
         </div>
-        <Link className="dpo-link" to="/dispatch/load-costs">Open load costs →</Link>
+        <Link className="dpo-link" to={dispHref("/dispatch/load-costs")}>Open load costs →</Link>
       </div>
       {query.isError ? (
         <div className="dpo-state dpo-state--error">

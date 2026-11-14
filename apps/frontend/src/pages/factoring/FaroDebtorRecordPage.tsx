@@ -7,7 +7,7 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearchParams, Link, useParams } from "react-router-dom";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { ApiError, apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -66,7 +66,9 @@ const COLUMNS: Array<ParityColumn<FaroDebtorLine>> = [
 ];
 
 export function FaroDebtorRecordPage() {
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
   const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });
@@ -103,7 +105,7 @@ export function FaroDebtorRecordPage() {
   return (
     <div className="space-y-3 p-4 text-xs" data-testid="faro-debtor-record">
       <div>
-        <Link className="text-[#1F2A44] underline" to="/factoring">Factoring</Link> <span className="text-gray-500">› Faro debtor</span>
+        <Link className="text-[#1F2A44] underline" to={moneyHref("/factoring")}>Factoring</Link> <span className="text-gray-500">› Faro debtor</span>
       </div>
       <div>
         <h1 className="text-page-title font-semibold text-[#0F1B2D]">{name || "—"}</h1>

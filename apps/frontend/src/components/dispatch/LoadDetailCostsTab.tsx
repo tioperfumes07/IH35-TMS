@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import "../../design/ih35-design-tokens.css";
 import "../layout/board-kpi.css";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   BROKER_ADVANCE_CATEGORIES,
   createBrokerAdvance,
@@ -144,6 +145,9 @@ const acctLabel = (number: string | null | undefined, name: string | null | unde
   formatAccountDisplayLabel({ account_number: number, account_name: name });
 
 export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: LoadDetail; canEdit: boolean; canEditReason?: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
   const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
@@ -484,7 +488,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
 
       {/* WHAT THE BANK WILL DO WITH THESE */}
       <div className="ldt-card" data-testid="load-costs-bank-section">
-        <div className="ldt-ch">What the bank will do with these<Link className="ldt-open" to="/banking/transactions">open the bank feed ↗</Link></div>
+        <div className="ldt-ch">What the bank will do with these<Link className="ldt-open" to={bankHref("/banking/transactions")}>open the bank feed ↗</Link></div>
         <div className="ldt-rows">
           {liveExpenses.map((r) => <div className="ldt-row" key={r.id}><span>{(r.vendor_name ?? "Vendor").toUpperCase()} — {formatMoneyCents(num(r.total_amount_cents), currency)}<span className="ldt-sub">{acctLabel(r.payment_account_number, r.payment_account_name)} · {r.matched_bank_transaction_description ? `bank: ${r.matched_bank_transaction_description}` : "not yet in the feed"}</span></span><span className="ldt-m">{r.matched_bank_transaction_id ? <span className="ldt-pill ok">Matched to {load.load_number}</span> : <span className="ldt-pill warn">Will be offered when it lands</span>}</span></div>)}
           {liveBills.map((r) => <div className="ldt-row" key={r.id}><span>{r.vendor_name ?? "Vendor"} — {formatMoneyCents(num(r.amount_cents), currency)}<span className="ldt-sub">Bill · {num(r.paid_cents) > 0 ? `paid ${formatMoneyCents(num(r.paid_cents), currency)}` : "unpaid"}</span></span><span className="ldt-m">{num(r.paid_cents) > 0 ? <span className="ldt-pill ok">Matches on the bill payment</span> : <span className="ldt-pill warn">Matches on the bill payment, not now</span>}</span></div>)}

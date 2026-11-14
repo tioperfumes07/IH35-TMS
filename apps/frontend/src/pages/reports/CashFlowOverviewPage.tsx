@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
-import { useSearchParams, useLocation } from "react-router-dom";
+import { useSearchParams, useLocation, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import {
   Area,
   Bar,
@@ -16,7 +15,7 @@ import {
 } from "recharts";
 import { getCashFlowOverview, type CashFlowOverviewResponse } from "../../api/reports";
 import { companyToday } from "../../lib/businessDate";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -102,7 +101,9 @@ export function CashFlowOverviewPage() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { asOfDate: today, groupBy: "month" };
@@ -380,7 +381,7 @@ export function CashFlowOverviewPage() {
               <li>
                 Uncategorized transactions:{" "}
                 <strong>{query.data.current_state.uncategorized_transactions_count}</strong> —{" "}
-                <Link className="text-[#1F2A44] underline" to="/banking/categorization-rules">
+                <Link className="text-[#1F2A44] underline" to={moneyHref("/banking/categorization-rules")}>
                   Open categorization
                 </Link>
               </li>
@@ -391,7 +392,7 @@ export function CashFlowOverviewPage() {
                     disputes surface that always showed 0 for this figure). Link to the real factoring
                     chargebacks page instead. */}
                 Open chargebacks: <strong>{money(query.data.current_state.chargebacks_open_cents)}</strong> —{" "}
-                <Link className="text-[#1F2A44] underline" to="/factoring/chargebacks-fees">
+                <Link className="text-[#1F2A44] underline" to={moneyHref("/factoring/chargebacks-fees")}>
                   View chargebacks
                 </Link>
               </li>

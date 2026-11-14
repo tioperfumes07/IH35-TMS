@@ -9,7 +9,7 @@ import { getPartsAssignmentsPage, type PartsAssignmentRow } from "../../api/main
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -32,7 +32,9 @@ function formatWhen(iso: string | null | undefined) {
  */
 export function InventoryAssignmentsPage() {
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const invHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 — Inventory drills attach ?ret=; Back must restore origin.
   const inventoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/inventory" });
   const { selectedCompanyId } = useCompanyContext();
@@ -156,7 +158,7 @@ export function InventoryAssignmentsPage() {
       {unitId ? (
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
           Showing assignments for the selected unit.{" "}
-          <Link className="underline" to="/inventory/assignments">
+          <Link className="underline" to={invHref("/inventory/assignments")}>
             View all units
           </Link>
         </div>
@@ -164,11 +166,11 @@ export function InventoryAssignmentsPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Parts used on work orders appear in this assignment trail. Stock on-hand and purchase receipts stay on{" "}
-        <Link className="text-[#1F2A44] underline" to="/inventory">
+        <Link className="text-[#1F2A44] underline" to={invHref("/inventory")}>
           Parts &amp; Stock
         </Link>{" "}
         and{" "}
-        <Link className="text-[#1F2A44] underline" to="/inventory/purchases">
+        <Link className="text-[#1F2A44] underline" to={invHref("/inventory/purchases")}>
           Purchase History
         </Link>
         .

@@ -1,7 +1,8 @@
 import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
@@ -51,6 +52,9 @@ type Props = {
 };
 
 export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRevenueCents }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { enabled } = useFeatureFlag(FINANCE_HUB_SCENARIOS_FLAG, operatingCompanyId);
   const qc = useQueryClient();
   const { pushToast } = useToast();
@@ -132,7 +136,7 @@ export function BreakEvenWorkbookCreator({ operatingCompanyId, liveMiles, liveRe
             </InfoPopover>
           </h2>
         </div>
-        <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/finance/scenarios">
+        <Link className="text-xs font-semibold text-[#1F2A44] underline" to={moneyHref("/finance/scenarios")}>
           Open scenario history
         </Link>
       </div>

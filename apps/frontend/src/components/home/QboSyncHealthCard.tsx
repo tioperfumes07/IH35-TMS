@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import type { HomeQboSyncHealth, HomeQboCustomersPushStatus, HomeQboVendorsPushStatus, HomeQboAccountsPushStatus } from "../../api/home";
 import { Button } from "../Button";
 
@@ -64,6 +65,9 @@ function sourceLabel(source: HomeQboSyncHealth["last_success_source"]): string {
 }
 
 export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, accountsPushStatus, isLoading, isError, onRetry }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   if (isLoading) {
     return (
       <section className="rounded-sm border border-[#E5E7EB] bg-white">
@@ -172,7 +176,7 @@ export function QboSyncHealthCard({ data, pushStatus, vendorsPushStatus, account
         ) : null}
       </div>
       <div className="border-t border-[#E5E7EB] px-3 py-2">
-        <Link className="text-xs font-medium text-[#4B5563] hover:underline" to="/qbo/sync-dashboard">
+        <Link className="text-xs font-medium text-[#4B5563] hover:underline" to={sysHref("/qbo/sync-dashboard")}>
           Open QBO sync dashboard
         </Link>
       </div>
