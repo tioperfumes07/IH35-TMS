@@ -16132,6 +16132,11 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 tasks+admin+users+scheduler+edi Class R Backs"
   },
+  "20226": {
+    "claimed_at": "2026-11-14T02:51:59Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board9/10 Customers/Vendors + Escrow KPI href+ret"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
