@@ -890,6 +890,7 @@ export function SettlementCloseArrivalPage() {
   const boardGrossDisplay = settlement ? gross || earnings || boardGrossPay : 0;
 
   return (
+    <div data-v3-board="Settlements-Close" style={{ lineHeight: "normal" }}>
     <SettlementsSubNavWrapper
       title="Settlement Close — Driver Arrival"
       subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net"
@@ -1149,6 +1150,7 @@ export function SettlementCloseArrivalPage() {
       />
       </div>
     </SettlementsSubNavWrapper>
+    </div>
   );
 }
 

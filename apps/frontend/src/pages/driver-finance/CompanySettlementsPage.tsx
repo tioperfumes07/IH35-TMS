@@ -348,6 +348,7 @@ export function CompanySettlementsPage() {
   }
 
   return (
+    <div data-v3-board="Settlements-Company" style={{ lineHeight: "normal" }}>
     <SettlementsSubNavWrapper
       title="Company Settlements"
       subtitle="Revenue · costs · driver pay · margin per tour"
@@ -482,6 +483,7 @@ export function CompanySettlementsPage() {
         />
       ) : null}
     </SettlementsSubNavWrapper>
+    </div>
   );
 }
 

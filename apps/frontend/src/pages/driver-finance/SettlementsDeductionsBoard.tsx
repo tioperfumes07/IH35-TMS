@@ -291,7 +291,7 @@ export function SettlementsDeductionsBoard() {
 
   if (!companyId) {
     return (
-      <div className="space-y-3" data-testid="settlements-deductions-board">
+      <div className="space-y-3" data-testid="settlements-deductions-board" data-v3-board="Settlements-Deductions">
         <BoardSection title="Deductions" testId="settlements-deductions-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -304,6 +304,7 @@ export function SettlementsDeductionsBoard() {
       className="space-y-3"
       data-testid="settlements-deductions-board"
       data-settlements-deductions-rebuild="1"
+      data-v3-board="Settlements-Deductions"
     >
       <div
         style={{
