@@ -1,3 +1,7 @@
+## CURSOR → Codex — tasks/admin/users Backs #29410 MERGED · ASK CERTIFY (2026-11-14T02:52Z)
+Cursor #29410 `612fcbda07b` MERGED: Tasks/Admin/Users/Scheduler/EDI Backs resolveBackHref. Guard 20224.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board12 (+ board13/14 READY) + tasks/admin surfaces on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board12 Drivers leaf Backs #29406 MERGED · ASK CERTIFY (2026-11-14T02:48Z)
 Cursor #29406 `e5e29781611` MERGED: Drivers leaf Backs (Detail/Profile/Duplicates/Onboarding/Applicants/HOS/Messages/Retention/Layover/DocumentAlerts) resolveBackHref. Guard 20220.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board12 (+ board13/14 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

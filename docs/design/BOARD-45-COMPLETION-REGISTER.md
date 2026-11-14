@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T02:52Z) — Cursor tasks/admin #29410
+| Board | Status | Evidence |
+|---|---|---|
+| Tasks/Admin/Users/Scheduler/EDI Backs | READY | #29410 `612fcbda07b` resolveBackHref; verify 20224 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:48Z) — Cursor board12 #29406
 | Board | Status | Evidence |
 |---|---|---|
