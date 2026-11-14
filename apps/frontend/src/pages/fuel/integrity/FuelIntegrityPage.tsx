@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 /**
  * E-21/E-22 Fuel Integrity tab — per-transaction GPS verdict, fraud classification, and derived
  * pump time/state, with the "why" behind every one. Both backing endpoints are computed-on-read
@@ -5,7 +6,7 @@
  * fuel-gps-verdict.service.ts, fuel-time-derivation.service.ts) — this screen is the first UI for
  * engines E-19..E-22, which previously had live endpoints and no screen.
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFuelIntegrityVerdicts,
@@ -30,6 +31,7 @@ import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { MoneyListToolbar } from "../../../components/table/MoneyListToolbar";
 import { FuelBoardSection } from "../FuelBoardSection";
 import { formatDateTimeUS, formatDateUS } from "../../../lib/formatDate";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { formatQuantityTable, formatNumberTable } from "../../../lib/money";
 
 const LINK = "text-[#1F2A44] hover:underline";
@@ -48,6 +50,17 @@ function verdictBadgeVariant(value: GpsVerdict): "crit" | "positive" | "neutral"
 }
 
 export function FuelIntegrityPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const [searchParams] = useSearchParams();
+  const originHref = currentOriginHref(pathname, locSearch);
+  // ROUND 8.20 board19 — Integrity KPI section drills are URL SoT (?section=card|relay).
+  const sectionFromUrl = (searchParams.get("section") ?? "").toLowerCase();
+  const sectionHref = (section: "card" | "relay") => {
+    const p = new URLSearchParams(searchParams);
+    p.set("section", section);
+    const q = p.toString();
+    return withReturnContext(`${pathname}${q ? `?${q}` : ""}`, originHref);
+  };
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -62,6 +75,11 @@ export function FuelIntegrityPage() {
     queryFn: () => getFuelIntegrityVerdicts(companyId),
     enabled: Boolean(companyId),
   });
+  useEffect(() => {
+    if (sectionFromUrl !== "card" && sectionFromUrl !== "relay") return;
+    const el = sectionFromUrl === "relay" ? relaySectionRef.current : cardSectionRef.current;
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [sectionFromUrl, verdictsQuery.isPending]);
 
   const derivationsQuery = useQuery({
     queryKey: ["fuel", "integrity", "time-derivations", companyId],
@@ -291,7 +309,7 @@ export function FuelIntegrityPage() {
                   key={key}
                   label={humanizeSummaryKey(key)}
                   value={formatQuantityTable(Number(value), 0)}
-                  onClick={scrollTo(key.startsWith("relay_") ? relaySectionRef : cardSectionRef)}
+                  href={sectionHref(key.startsWith("relay_") ? "relay" : "card")}
                   testId={`fuel-integrity-kpi-${key}`}
                 />
               ))}
