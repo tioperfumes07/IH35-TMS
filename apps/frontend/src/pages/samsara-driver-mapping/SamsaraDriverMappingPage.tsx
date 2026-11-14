@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -16,6 +17,7 @@ import {
   type SamsaraProfile,
 } from "../../api/samsara-driver-mapping";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
 import "../../components/boards/party-board.css";
@@ -74,6 +76,10 @@ function mappedLabel(p: SamsaraProfile): string {
 }
 
 export function SamsaraDriverMappingPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/integrations/samsara" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -268,7 +274,7 @@ export function SamsaraDriverMappingPage() {
   return (
     <div className="sdm" data-testid="samsara-driver-mapping-page">
       <PageHeader
-        backHref="/integrations/samsara"
+        backHref={moduleBackHref}
         title="Samsara driver mapping"
         subtitle="Many Samsara usernames → one driver profile. Nothing is written to Samsara. Saving adds — it never replaces."
       />

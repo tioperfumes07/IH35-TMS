@@ -196,6 +196,20 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       { replace: true },
     );
   };
+  const cohortHref = (patch: Record<string, string | null>) => {
+    const p = new URLSearchParams(searchParams);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v == null || v === "") p.delete(k);
+      else p.set(k, v);
+    }
+    const q = p.toString();
+    return withReturnContext(`${pathname}${q ? `?${q}` : ""}`, originHref);
+  };
+  // ROUND 8.20 board25 — KPI tiles shareable href+ret (not onClick-only).
+  const financialCatHref = cohortHref({ cat: null });
+  const savedCatHref = cohortHref({ cat: "saved" });
+  const scheduledHref = withReturnContext("/reports/scheduled", originHref);
+  const iftaHref = withReturnContext("/reports/ifta-preparer", originHref);
 
   const kpiQuery = useQuery({
     queryKey: ["reports", "home-board", "kpi-summary", companyId],
@@ -328,14 +342,14 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.available_reports)}
           sub={kpiReady ? "categories live" : kpiQuery.isError ? "Failed to load" : "Loading…"}
           // ROUND 8.20 board25 — STATUS FAIL: report counts must be interactive → Financial catalog.
-          onClick={() => setActiveCategory("financial")}
+          href={financialCatHref}
         />
         <V3KpiTile
           testId="reports-kpi-schedules"
           label="Custom schedules"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.scheduled)}
           sub={kpiReady ? "auto-emailed" : kpiQuery.isError ? "Failed to load" : "Loading…"}
-          onClick={() => navigate("/reports/scheduled")}
+          href={scheduledHref}
         />
         <V3KpiTile
           testId="reports-kpi-run-7d"
@@ -343,7 +357,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.run_last_7d)}
           sub={kpiReady ? "across all users" : kpiQuery.isError ? "Failed to load" : "Loading…"}
           // ROUND 8.20 board25 — run count → Saved / Frequently run cohort.
-          onClick={() => setActiveCategory("saved")}
+          href={savedCatHref}
         />
         <V3KpiTile
           testId="reports-kpi-ifta"
@@ -355,7 +369,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           }
           sub={ifta ? `${mmmDd(ifta.dueAt)} — file before` : iftaQuery.isError ? "Failed to load" : "Loading…"}
           tone={ifta ? "amber" : "muted"}
-          onClick={() => navigate("/reports/ifta-preparer")}
+          href={iftaHref}
         />
       </div>
 

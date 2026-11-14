@@ -1,9 +1,11 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { getProgramBoard, type ProgramBoard, type ReconBlock } from "../../api/program";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 
 // Final Additions — the launch punch-list. Shows every remaining block that still has to be built,
 // and flips each to DONE as it ships. Completed blocks are NEVER removed — they stay, labelled DONE,
@@ -116,6 +118,10 @@ function CountChip({ label, value, bg, fg }: { label: string; value: number; bg:
 const RECENT_DONE_LIMIT = 60;
 
 export function FinalAdditionsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/program" });
   const { data, isLoading, isError, error } = useQuery<ProgramBoard>({
     queryKey: ["program", "board", "final-additions"],
     queryFn: getProgramBoard,
@@ -146,7 +152,7 @@ export function FinalAdditionsPage() {
     <div className="space-y-3">
       <Breadcrumb items={[{ label: "Program", href: "/program" }, { label: "Final Additions" }]} />
       <PageHeader
-        backHref="/program"
+        backHref={moduleBackHref}
         title="Final Additions"
         subtitle="The launch punch-list — every remaining block, flipped to Done as it ships. Nothing is removed; shipped work stays, labelled Done."
       />

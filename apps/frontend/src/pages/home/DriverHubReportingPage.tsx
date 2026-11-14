@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -18,6 +18,7 @@ import {
   type InboxReportingLoadRow,
 } from "../../api/driverInboxReporting";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 import { entityLabel } from "../../lib/entity-label";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 
@@ -180,6 +181,10 @@ const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
 ];
 
 export function DriverHubReportingPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/driver-hub" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const defaultRange = { from: isoDaysAgo(28), to: todayIso() };
@@ -201,7 +206,7 @@ export function DriverHubReportingPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/driver-hub"
+        backHref={moduleBackHref}
         title="Driver Inbox — Reporting"
         subtitle="Request accountability (read-only)"
         actions={
