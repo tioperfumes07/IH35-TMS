@@ -20,7 +20,6 @@ import {
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
-import { PerfumeMatchMyListPanel } from "./PerfumeMatchMyListPanel";
 import { tr } from "./perfumeI18n";
 
 type Tab = PerfumeGridView | "lists" | "review" | "match" | "rules";
@@ -107,7 +106,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "match" ? <PerfumeMatchMyListPanel /> : tab === "review" ? <PerfumeReviewPanel mine={mine ? "offer" : null} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "match" ? <GridPanel view="analysis" mine={null} matchDesk /> : tab === "review" ? <PerfumeReviewPanel mine={mine ? "offer" : null} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
@@ -226,7 +225,12 @@ function MatchCell({ row }: { row: PerfumeGridRow }) {
 const LOW_PAIR = new Set(["a:offer", "a:esp", "a:offer2", "a:esp2"]);
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
-function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) {
+/** "Match my list ↔ competitor" (owner 2026-11-14 15:10: "in match my list competitor it is practically the same
+ *  thing"): the List-analysis lines in the matching format only — the line, what the engine assigned, the
+ *  suggestion in the same format with the confirm / search box, and what it is matched to now. */
+const MATCH_DESK = /^a:(upc|sku|line_desc|as_.*|match|cand|sg_.*|m_.*|c_vendor|offer|esp)$/;
+
+function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; mine: MineChoice; matchDesk?: boolean }) {
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
@@ -242,7 +246,7 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
   // List analysis (owner 2026-11-14): whose list — mine (every line of my list) or theirs (every competitor line) — and
   // a side filter: all, matched (in common), not matched. Plus one button to hide the columns no upload fills yet.
   const [base, setBase] = useState<"mine" | "theirs">("mine");
-  const [match, setMatch] = useState<"all" | "matched" | "unmatched">("all");
+  const [match, setMatch] = useState<"all" | "matched" | "unmatched">(matchDesk ? "unmatched" : "all");
   const [hideEmpty, setHideEmpty] = useState(true);
   const [viewSeen, setViewSeen] = useState(view);
   if (viewSeen !== view) { setViewSeen(view); setCarried(view === "comp"); setPage(1); }
@@ -292,7 +296,7 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
       key: c.key,
       label: c.label,
       sortable: true,
-      defaultHidden: !defaultVisible(view, c.key, mine) || (view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(c.key)),
+      defaultHidden: matchDesk ? !MATCH_DESK.test(c.key) : !defaultVisible(view, c.key, mine) || (view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(c.key)),
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
       cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
@@ -316,7 +320,7 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view, mine, groupStart, hideEmpty],
+    [cols, view, mine, groupStart, hideEmpty, matchDesk],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
@@ -361,13 +365,13 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
         <div className="text-xs text-gray-500" data-testid="perfume-grid-loading">{query.isError ? "Couldn't load the grid" : "Loading…"}</div>
       ) : (
       <ParityTable<PerfumeGridRow>
-        key={`${view}-${mine ?? "all"}-${view === "analysis" ? (hideEmpty ? "h" : "a") : ""}`}
+        key={`${matchDesk ? "match-" : ""}${view}-${mine ?? "all"}-${view === "analysis" ? (hideEmpty ? "h" : "a") : ""}`}
         columns={columns}
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
         wrapHeaders
-        storageKey={`perfume-desk-${view}${mine ? "-mine" : ""}${view === "analysis" ? (hideEmpty ? "-h" : "-a") : ""}-v8`}
+        storageKey={`perfume-desk-${matchDesk ? "match-" : ""}${view}${mine ? "-mine" : ""}${view === "analysis" ? (hideEmpty ? "-h" : "-a") : ""}-v8`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}

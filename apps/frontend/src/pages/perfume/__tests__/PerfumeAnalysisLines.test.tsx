@@ -68,4 +68,21 @@ describe("List analysis — my list | their list, matched filter, the match box,
     fireEvent.click(screen.getByTestId("perfume-analysis-empty-toggle"));
     expect(await screen.findByRole("columnheader", { name: /Last cost/ })).toBeTruthy();
   });
+  it("Match my list ↔ competitor is the same lines in the matching format, opening on Not matched", async () => {
+    const paths: string[] = [];
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      paths.push(path);
+      if (path === "/api/v1/perfume/access") return { allowed: true };
+      if (path.startsWith("/api/v1/perfume/review")) return { rows: [], total: 0 };
+      if (path.startsWith("/api/v1/perfume/grid")) return MINE;
+      throw new Error(`unexpected ${path}`);
+    });
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(<QueryClientProvider client={client}><ToastProvider><MemoryRouter initialEntries={["/perfume?tab=match"]}><PerfumeDeskPage /></MemoryRouter></ToastProvider></QueryClientProvider>);
+    await waitFor(() => expect(paths.some((p) => p.includes("view=analysis") && p.includes("base=mine") && p.includes("match=unmatched"))).toBe(true));
+    expect(await screen.findAllByTestId("perfume-analysis-matchbox")).toHaveLength(1);
+    // Matching columns only: no purchase / cost / analysis money columns.
+    expect(screen.queryByRole("columnheader", { name: /Last cost/ })).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: /More Expensive By/ })).toBeNull();
+  });
 });
