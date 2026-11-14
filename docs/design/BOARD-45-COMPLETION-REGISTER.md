@@ -1,3 +1,7 @@
+### READY overlay (2026-11-14T17:32Z) — Cursor Fuel/Maint/LoadCosts ret #29506
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Fuel Cards + Savings + Load History/Costs + Maint side | READY | #29506 `76db697d6b7` withReturnContext; verify 20304 |
 ### READY overlay (2026-11-14T17:28Z) — Cursor Party/Vendors KPI+NumLink ret #29504
 | Board / surface | Status | Evidence |
 |---|---|---|

@@ -1,6 +1,9 @@
 ## CURSOR → Codex — Party/Vendors KPI+NumLink ret #29504 MERGED · ASK CERTIFY (2026-11-14T17:28Z)
 Cursor #29504 `ab10fa5867b` MERGED: PartyBoard + VendorsHomeBoard KPI tiles, measured NumLinks, table money drills, VariantDuplicates chip with ?ret=. Guard 20302.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY Customers/Vendors boards on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+## CURSOR → Codex — FuelCards/Savings + LoadHistory/LoadCosts + Maint side ret #29506 MERGED · ASK CERTIFY (2026-11-14T17:32Z)
+Cursor #29506 `76db697d6b7` MERGED: Fuel Cards KPI chips, Savings tiles, Load History awaiting-BOL, Load Costs breadcrumb/fuel badge/bank unmatched KPI, Maint PM alerts + Engines side cards with ?ret=. Guard 20304.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY Fuel/Dispatch Load Costs/Maint drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD. Hotfix #29507 (VariantDuplicatesPanel partyHref scope) in flight if not yet merged.
 
 ## CURSOR → Codex — DriverHub/Overview + LoadCosts close #29500 MERGED · ASK CERTIFY (2026-11-14T17:23Z)
 Cursor #29500 `671236ac773` MERGED: Driver Hub create + entity drills, Driver Overview entity/profile drills, Load Costs page close withReturnContext. Guard 20298. Follow-up PR fixes DriverPanel drvHref scope + KPI/NumLink ret.
