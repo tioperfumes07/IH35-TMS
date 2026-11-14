@@ -29,8 +29,9 @@ const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "I
 const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-800", shop: "text-slate-600", none: "text-slate-500" };
 const statusTones = { ...tones, ok: "text-green-600" };
 
-export function FleetTruck({ row, vertical = false }: { row: Pick<FleetHealthRow, "state" | "body_style">; vertical?: boolean }) {
-  return <svg aria-hidden="true" viewBox={vertical ? "60 0 180 300" : "-14 96 314 128"} className={`${vertical ? "h-full w-full" : "h-9 w-23 shrink-0"} ${tones[row.state]}`}>
+export function FleetTruck({ row, vertical = false, moving = false, alert = false, size = "sm" }: { row: Pick<FleetHealthRow, "state" | "body_style">; vertical?: boolean; moving?: boolean; alert?: boolean; size?: "sm" | "board" }) {
+  return <svg aria-hidden="true" viewBox={vertical ? "60 0 180 300" : "-14 96 314 128"} className={`${vertical ? "h-full w-full" : size === "board" ? "h-[52px] w-[122px] shrink-0" : "h-9 w-23 shrink-0"} ${tones[row.state]}`}>
+    {!vertical && moving ? <path d="M-12 130h16M-12 160h22M-12 190h16" stroke="#9AA8B8" strokeWidth="5" strokeLinecap="round" /> : null}
     <g transform={vertical ? undefined : "rotate(-90 150 160)"}>
       <g className="fill-slate-800"><rect x="128" y="18" width="7" height="186" rx="2" /><rect x="165" y="18" width="7" height="186" rx="2" /><rect x="128" y="40" width="44" height="5" /><rect x="128" y="82" width="44" height="5" /></g>
       <g className="fill-slate-900"><rect x="100" y="28" width="28" height="28" rx="5" /><rect x="172" y="28" width="28" height="28" rx="5" /><rect x="100" y="70" width="28" height="28" rx="5" /><rect x="172" y="70" width="28" height="28" rx="5" /><rect x="104" y="232" width="13" height="30" rx="4" /><rect x="183" y="232" width="13" height="30" rx="4" /></g>
@@ -44,6 +45,7 @@ export function FleetTruck({ row, vertical = false }: { row: Pick<FleetHealthRow
       <path d={row.body_style === "classic" ? "M120 214h60v74h-60z" : row.body_style === "sloped" ? "M120 214h60l-6 74h-48z" : "M120 214h60l-3 64c-1 7-6 10-12 10h-30c-6 0-11-3-12-10z"} fill="currentColor" />
       <path d="M150 218v66" className="stroke-white" strokeOpacity=".25" strokeWidth="2" /><rect x="128" y="286" width="44" height="7" rx="3" className="fill-slate-300" /><g className="fill-amber-200"><rect x="124" y="276" width="10" height="5" rx="2" /><rect x="166" y="276" width="10" height="5" rx="2" /></g>
     </g>
+    {!vertical && alert ? <g><circle cx="286" cy="110" r="13" fill="currentColor" stroke="#FFFFFF" strokeWidth="3.5" /><path d="M281 115l5.5-5.5M288 105.5a2.8 2.8 0 1 0 3.5 3.5" stroke="#FFFFFF" strokeWidth="2.6" fill="none" strokeLinecap="round" /></g> : null}
   </svg>;
 }
 
@@ -102,7 +104,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line"
     headerRight={<span className="flex items-center gap-3" data-testid="fleet-health-filters">
       <V3Segmented value={filter as (typeof chips)[number]["id"]} options={[...chips]} onChange={setFilter} testId="fleet-health-chips" />
-      <Link className="text-section-header font-semibold text-[#1D4ED8]" to={pmHref("/maintenance/fleet-table")}>View all →</Link>
+      <Link className="text-section-header font-semibold text-[#1D4ED8]" to={pmHref("/maintenance/fleet-table?view=health")}>View all →</Link>
     </span>}
     footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
