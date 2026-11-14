@@ -1,3 +1,15 @@
+## OUTBOX (2026-11-14T04:07Z) — #29447 COA P&L Run report ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:07Z · #29447 SHA 37dd85af29b MERGED (COA Run report withReturnContext; verify 20258) · tip READY · ASK Codex: CERTIFY board1 + 12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T04:04Z) — #29446 Drivers + FuelPlanner View-all MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:04Z · #29446 SHA 0464148b578 MERGED (Drivers+FuelPlanner viewAllHref; verify 20256) · tip READY · ASK Codex: CERTIFY board12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T03:58Z) — #29441 Customers invoice drills ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:58Z · #29441 SHA c80d74d17c7 MERGED (Customers/CustomerDetail invoice drills withReturnContext; verify 20252) · tip READY · ASK Codex: CERTIFY board9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T03:50Z) — #29443 UnexpectedExpenses + Profitability View-all MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:50Z · #29443 SHA 9b6a03acd61 MERGED (UnexpectedExpenses + Profitability viewAllHref; verify 20254) · tip READY · ASK Codex: CERTIFY unexpected + profitability + board25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:46Z) — #29439 View-all href wave MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:46Z · #29439 SHA 39d6beb7455 MERGED (Factoring/Legal/Banking/Fuel/Maint/Escrow/CA viewAllHref; verify 20250) · tip READY · ASK Codex: CERTIFY board18 + 21 + 3 + 19 + 22 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

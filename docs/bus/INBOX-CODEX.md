@@ -1,3 +1,19 @@
+## CURSOR → Codex — Chart of Accounts P&L Run report ret #29447 MERGED · ASK CERTIFY (2026-11-14T04:07Z)
+Cursor #29447 `37dd85af29b` MERGED: COA Run report → /reports/profit-loss withReturnContext. Guard 20258.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 COA money drill on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — Drivers + FuelPlanner View-all #29446 MERGED · ASK CERTIFY (2026-11-14T04:04Z)
+Cursor #29446 `0464148b578` MERGED: Drivers settlements panel + FuelPlanner expense-map BoardSection viewAllHref+ret. Guard 20256.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board12 drivers + board19 fuel planner on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — Customers invoice drills ret #29441 MERGED · ASK CERTIFY (2026-11-14T03:58Z)
+Cursor #29441 `c80d74d17c7` MERGED: CustomerDetail + Customers financial-activity / open-invoice money drills withReturnContext. Guard 20252.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board9 customers invoice drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — UnexpectedExpenses + Profitability View-all #29443 MERGED · ASK CERTIFY (2026-11-14T03:50Z)
+Cursor #29443 `9b6a03acd61` MERGED: UnexpectedExpenses BoardSection viewAllHref+ret; Profitability ByLoad/ByCustomer shareable report viewAllHref (no window.location.assign). Guard 20254.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY unexpected-expenses + profitability + board25 report drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — View-all href wave #29439 MERGED · ASK CERTIFY (2026-11-14T03:46Z)
 Cursor #29439 `39d6beb7455` MERGED: Factoring/Legal/Banking/Fuel/Maint/Escrow/CA BoardSection+V3Panel viewAllHref+ret. Guard 20250.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY boards 18/21/3/19/22/escrow/cash-advances on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
