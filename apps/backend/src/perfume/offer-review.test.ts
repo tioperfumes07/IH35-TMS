@@ -41,6 +41,14 @@ describe("review: only lines that can be one of my offer items", () => {
     const [god] = offerCandidates({ description: "A.GRANDE GOD IS A WOMAN 3.4oz", brand: null }, identify({ description: "A.GRANDE GOD IS A WOMAN 3.4oz" }), ITEMS);
     expect(god.why).toContain("size 100 ml");
   });
+  it("engine suggestion bypass removed: extra-word item never shown as 'my item'", () => {
+    // CDN CLUB NUIT ELITE has name words CDN+CLUB+NUIT+ELITE; line ARMAF CLUB NUIT ICONIC adds ICONIC = different bottle.
+    const withElite = [...ITEMS, item("elite", "ARMAF", "CDN CLUB NUIT ELITE", 100)];
+    const candsE = (d: string) => offerCandidates({ description: d, brand: null }, identify({ description: d }), withElite).map((c) => c.item_id);
+    expect(candsE("ARMAF CLUB NUIT ICONIC")).toEqual([]);
+    // CLUB NUIT INTENSE = different bottle than CLUB NUIT MILESTONE (extra word INTENSE vs MILESTONE).
+    expect(cands("ARMAF CLUB NUIT OUD")).toEqual([]);
+  });
   it("EDT / EDP / PARFUM differing is flagged", () => {
     const [w] = offerCandidates({ description: "AZZARO WANTED PARFUM 3.3oz", brand: null }, identify({ description: "AZZARO WANTED PARFUM 3.3oz" }), ITEMS);
     expect(w.item_id).toBe("wanted");

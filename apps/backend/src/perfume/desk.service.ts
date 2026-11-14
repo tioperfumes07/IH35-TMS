@@ -519,9 +519,8 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     // My offer items first among the suggestions; the engine's own suggestions stay below them.
     const offer = offerCandidates({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null }, id, offerItems);
     const engine = ((r.suggestions as Array<{ item_id: string }> | null) ?? []);
-    const offerIds = new Set(offerItems.map((o) => o.id));
-    const engineOnMine = engine.filter((s) => offerIds.has(s.item_id) && !offer.some((o) => o.item_id === s.item_id));
-    const forMine = [...offer, ...engineOnMine];
+    // Only the strict offer candidates count as "my item" — the engine's old suggestions never do.
+    const forMine = [...offer];
     return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, _mine: forMine.length > 0 };
   });
   if (!mine) return { rows: out, total: total!.rows[0].n };
