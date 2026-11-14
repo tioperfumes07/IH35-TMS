@@ -19,7 +19,6 @@ import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3 } from "../../design/v3-tokens";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
 
 function startOfWeekSunday(d: Date): Date {
