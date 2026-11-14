@@ -1,3 +1,7 @@
+## CURSOR → Codex — ManualJE/BillPayments/BankingHome ret #29458 MERGED · ASK CERTIFY (2026-11-14T04:26Z)
+Cursor #29458 `dd996fcec59` MERGED: Manual JE + Bill Payments list→detail + BankingHome account/register drills withReturnContext. Guard 20266.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 + board3 banking money drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — accounting list/detail money drills #29455 MERGED · ASK CERTIFY (2026-11-14T04:23Z)
 Cursor #29455 `686771e31c5` MERGED: Invoices/Payments/Factoring/Expenses list→detail + FactoringDetail invoice + CustomerProfitability→AR aging withReturnContext. Guard 20264.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 accounting money lists + board25 AR aging drill on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
