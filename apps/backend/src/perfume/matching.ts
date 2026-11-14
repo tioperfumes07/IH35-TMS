@@ -202,7 +202,13 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   const textKey = textKeyOf(line);
   const done = (itemId: string, method: LineMatch["method"]): LineMatch => ({ identity, upc, textKey, itemId, method, status: "matched", suggestions: [] });
 
-  if (upc && ix.byUpc.has(upc)) return done(ix.byUpc.get(upc)!, "upc");
+  // A barcode links the line to its item — unless the line itself says it is another KIND of product than that item
+  // (REFILL / TESTER / SET / MINI …). Measured 11-14: "AZZ WTD EDT SP100ML REFILL /MAD" rode UPC 3351500016617 onto
+  // "AZZARO WANTED 100 ml EDT" because another vendor's plain line had carried that barcode there first. The owner
+  // decides those in Review; the barcode alone never does.
+  const upcItem = upc ? ix.byUpc.get(upc) : undefined;
+  const upcKindClash = Boolean(upcItem && ix.items.get(upcItem) && productKind(ix.items.get(upcItem)!.flags) !== productKind(identity.flags));
+  if (upcItem && !upcKindClash) return done(upcItem, "upc");
   const sku = (line.sku ?? "").trim();
   if (sku && ix.vendorSku.has(`${vendorId}|${sku}`)) return done(ix.vendorSku.get(`${vendorId}|${sku}`)!, "sku");
   if (ix.vendorText.has(`${vendorId}|${textKey}`)) return done(ix.vendorText.get(`${vendorId}|${textKey}`)!, "alias");
@@ -222,6 +228,10 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // A non-fragrance item (blotter, bag, cosmetic) has no bottle size; with its barcode it is still an item.
   const sizeOk = identity.sizeMl != null || (upc !== "" && (identity.flags.includes("VARIOUS") || identity.flags.includes("BODY")));
   const strongIdentity = sizeOk && (identity.brand !== "" || upc !== "") && (identity.nameWords.length > 0 || upc !== "");
+  if (upcKindClash) {
+    const s = suggest(ix, identity);
+    return { identity, upc, textKey, itemId: null, method: null, status: "review", suggestions: s };
+  }
   if (opts.allowNewItem && strongIdentity && (upc || sku) && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }

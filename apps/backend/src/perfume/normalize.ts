@@ -245,6 +245,14 @@ function parseConc(s: string): { conc: Conc; remove: RegExp[] } {
   return { conc: "", remove: [] };
 }
 
+/** Owner 2026-11-14: "if one shows 100ml and another 105 or 120, its ok, but if one description has 100ml, it should
+ *  not suggest the 60ml or 30ml." Two known sizes are the same bottle only within 25% of the larger one
+ *  (100 ↔ 105 / 120 yes; 100 ↔ 75 / 60 / 30 no). An unknown size never blocks. */
+export function sizesFar(a: number | null | undefined, b: number | null | undefined): boolean {
+  if (a == null || b == null || a <= 0 || b <= 0) return false;
+  return Math.abs(a - b) / Math.max(a, b) > 0.25;
+}
+
 /* ---------------- flags ---------------- */
 
 const FLAG_RULES: Array<[RegExp, string]> = [

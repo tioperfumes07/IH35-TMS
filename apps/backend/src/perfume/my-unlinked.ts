@@ -14,7 +14,7 @@
  * Score = share of my name words found, lowered when the size or type differs or the line names extra words; every
  * reason is written out so the owner can see why it was proposed.
  */
-import type { Identity } from "./normalize.js";
+import { sizesFar, type Identity } from "./normalize.js";
 import { lineGender, nameKeyWords, type OfferItem } from "./offer-review.js";
 
 export type CompetitorLine = { row_id: string; vendor: string; description: string; price_cents: number; linked_to: string | null; id: Identity };
@@ -22,7 +22,7 @@ export type LineCandidate = { row_id: string; vendor: string; description: strin
 
 const NOISE = new Set(["DE", "DU", "LE", "LA", "LES", "THE", "BY", "FOR", "OF", "AND", "&", "EAU", "POUR", "A"]);
 const GENDER_WORDS = new Set(["M", "W", "U", "MAN", "MEN", "MENS", "WOMAN", "WOMEN", "WOMENS", "HOMME", "FEMME", "UNISEX", "LADIES", "LADY"]);
-const KIND_FLAGS = ["SET", "TESTER", "MINI"];
+const KIND_FLAGS = ["SET", "TESTER", "MINI", "REFILL"];
 const words = (s: string) => String(s ?? "").toUpperCase().replace(/[^A-Z0-9&]+/g, " ").split(/\s+/).filter(Boolean);
 const kind = (flags: readonly string[]) => KIND_FLAGS.filter((f) => flags.includes(f)).join(",");
 
@@ -46,6 +46,7 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
     const mine = new Set([...need, ...words(item.name), ...words(item.brand)]);
     const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !mine.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w));
     const missing = need.filter((w) => !lw.has(w));
+    if (sizesFar(id.sizeMl, item.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && item.size_ml != null && Math.abs(id.sizeMl - item.size_ml) > 5;
     const concDiffers = Boolean(id.conc && item.conc && id.conc !== item.conc);
     const score = Math.round((hit.length / need.length) * (brandSeen ? 1 : 0.85) * (sizeDiffers ? 0.7 : 1) * (concDiffers ? 0.8 : 1) * (extras.length ? 0.75 : 1) * 100) / 100;

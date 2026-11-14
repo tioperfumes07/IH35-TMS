@@ -627,12 +627,16 @@ export async function confirmRow(c: PoolClient, userId: string, rowId: string, t
        ON CONFLICT (vendor_id, sku) WHERE sku IS NOT NULL DO UPDATE SET item_id = EXCLUDED.item_id, method = 'confirmed', confirmed_by = EXCLUDED.confirmed_by, confirmed_at = now()`,
       [itemId, row.vendor_id, row.sku, userId]);
   }
-  if (row.upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO NOTHING`, [row.upc, itemId, row.list_id]);
+  // The owner's confirmation is the authority on what a barcode is (owner 2026-11-14: "AZZ WTD … REFILL … it is not the
+  // same item at all"): the barcode moves to the item he chose, so the next import links it there too.
+  if (row.upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO UPDATE SET item_id = EXCLUDED.item_id`, [row.upc, itemId, row.list_id]);
+  // This line is relinked even when it was matched (a wrong match is corrected here); other lines with the same
+  // text / SKU follow only when they are not matched yet.
   const applied = await c.query(
     `UPDATE perfume.price_list_rows r SET item_id = $1, match_method = 'confirmed', match_status = 'matched', suggestions = '[]'::jsonb
        FROM perfume.price_lists l
-      WHERE l.id = r.list_id AND l.vendor_id = $2 AND r.match_status <> 'matched'
-        AND (r.id = $3 OR (upper(regexp_replace(concat_ws(' ', coalesce(r.brand,''), r.description, coalesce(r.size_text,'')), '\\s+', ' ', 'g')) = $4)
+      WHERE l.id = r.list_id AND l.vendor_id = $2
+        AND (r.id = $3 OR r.match_status <> 'matched') AND (r.id = $3 OR (upper(regexp_replace(concat_ws(' ', coalesce(r.brand,''), r.description, coalesce(r.size_text,'')), '\\s+', ' ', 'g')) = $4)
              OR ($5::text IS NOT NULL AND r.sku = $5))`,
     [itemId, row.vendor_id, rowId, textKey, row.sku]);
   return { item_id: itemId, rows_linked: applied.rowCount ?? 0 };

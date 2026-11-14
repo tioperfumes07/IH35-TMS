@@ -9,6 +9,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBulkAction, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { itemSaysMore } from "./perfumeMatchText";
 import { ListErrorState } from "../../components/ListErrorState";
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -90,11 +91,19 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
         pageSize={Math.max(1, q.data?.rows?.length ?? PAGE)}
         emptyText="Nothing to review."
         columns={[
-          ...(mine ? [{ key: "for_my_item", label: "My item", sortable: true, allowWrap: true, minWidth: 220,
-            render: (r: PerfumeReviewRow) => <strong>{r.for_my_item ?? "—"}</strong> },
-            // Owner 2026-11-14: my own offer-list wording next to their line, to check the match.
-            { key: "for_my_desc", label: "My description", sortable: true, allowWrap: true, minWidth: 220,
-              render: (r: PerfumeReviewRow) => r.for_my_desc ?? "—" }] : []),
+          // Owner 2026-11-14: "why is my item twice? … if it's the same data then only one." One column: my own wording;
+          // the item it is filed under shows under it only when it says something my wording does not (that is how
+          // "AZZ WTD EDT SP100ML REFILL" filed as "AZZARO · WANTED · 100 ml · EDT" stands out).
+          ...(mine ? [{ key: "for_my_desc", label: "My item", sortable: true, allowWrap: true, minWidth: 260,
+            render: (r: PerfumeReviewRow) => {
+              const differs = r.for_my_item && r.for_my_desc ? itemSaysMore(r.for_my_desc, r.for_my_item) : null;
+              return (
+                <span className="block">
+                  <strong>{r.for_my_desc ?? r.for_my_item ?? "—"}</strong>
+                  {differs ? <span className="block text-[11px] text-[#9A3412]" data-testid="perfume-review-filed-as">{tr("perfume.review.filedAs", "filed as")}: {r.for_my_item} — {tr("perfume.review.differs", "differs")}: {differs}</span> : null}
+                </span>
+              );
+            } }] : []),
           { key: "vendor_name", label: "Vendor", sortable: true },
           { key: "row_no", label: "Row", sortable: true, defaultHidden: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
