@@ -10,6 +10,7 @@ import { companyToday } from "../lib/businessDate";
 import { History, Pencil } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { apiRequest, ApiError } from "../api/client";
 import { W8BenSection } from "../components/driver-profile/W8BenSection";
 import { W8BenModal } from "../components/drivers/W8BenModal";
@@ -187,6 +188,8 @@ export function DriverDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const editOnly = location.pathname.endsWith("/edit");
   const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -199,7 +202,7 @@ export function DriverDetailPage() {
 
   const onboardingLaunchMutation = useMutation({
     mutationFn: () => createOnboardingSession({ operating_company_id: companyId, driver_id: id }),
-    onSuccess: ({ session }) => navigate(`/drivers/onboarding/${session.id}`),
+    onSuccess: ({ session }) => navigate(hubHref(`/drivers/onboarding/${session.id}`)),
     onError: (error: Error) => pushToast(error.message || "Could not start driver onboarding.", "error"),
   });
 
@@ -836,7 +839,7 @@ export function DriverDetailPage() {
         <BoardSection title="Driver" testId="driver-detail-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load this driver.</p>
         </BoardSection>
-        <Button variant="secondary" onClick={() => navigate("/drivers")}>
+        <Button variant="secondary" onClick={() => navigate(hubHref("/drivers"))}>
           Back to Drivers
         </Button>
       </div>
@@ -862,7 +865,7 @@ export function DriverDetailPage() {
     return (
       <div className="space-y-3">
         <div className="text-xs text-crit">Driver not found.</div>
-        <Button variant="secondary" onClick={() => navigate("/drivers")}>
+        <Button variant="secondary" onClick={() => navigate(hubHref("/drivers"))}>
           Back to Drivers
         </Button>
       </div>

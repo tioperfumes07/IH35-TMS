@@ -3,7 +3,8 @@ import { useMemo, useState } from "react";
 import { CatalogListSearchInput } from "../../../components/lists/CatalogListSearchInput";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { ApiError } from "../../../api/client";
 import type {
   DispatchCatalogCreateBody,
@@ -97,6 +98,9 @@ const COLUMNS: Array<ParityColumn<DispatchCatalogRow>> = [
 ];
 
 export function DispatchCatalogListPage({ catalogKey, title, description, client }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
@@ -255,7 +259,7 @@ export function DispatchCatalogListPage({ catalogKey, title, description, client
           // LST-F3510: keep API search above; hide ParityTable toolbar Search
           suppressToolbarSearch
           onRowClick={(row) => {
-            navigate(`/lists/dispatch/${catalogKey}`);
+            navigate(hubHref(`/lists/dispatch/${catalogKey}`));
             setCodeError(null);
             setActiveRow(row);
             setModalMode("edit");

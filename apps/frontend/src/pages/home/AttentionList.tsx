@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircle, AlertTriangle, Info, ShieldAlert } from "lucide-react";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchHomeAttentionList, type HomeAttentionListItem, type HomeAttentionSeverity } from "../../api/home";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -38,6 +39,9 @@ type Props = {
 };
 
 export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = null }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const companyId = operatingCompanyId ?? "";
   const [expanded, setExpanded] = useState(false);
@@ -105,7 +109,7 @@ export function AttentionList({ operatingCompanyId, maxVisibleWhenCollapsed = nu
               <button
                 type="button"
                 className="flex w-full items-center gap-3 py-2.5 text-left hover:bg-[#F7F8FA]/80"
-                onClick={() => navigate(item.action_url)}
+                onClick={() => navigate(hubHref(item.action_url))}
               >
                 <Icon className={`h-5 w-5 shrink-0 ${className}`} aria-hidden />
                 <div className="min-w-0 flex-1">

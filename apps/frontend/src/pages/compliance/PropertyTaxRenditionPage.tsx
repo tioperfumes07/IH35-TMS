@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -110,7 +111,7 @@ function RenditionListView({
       setDistrictId("");
       void queryClient.invalidateQueries({ queryKey: ["property-tax-renditions", companyId] });
       pushToast("Rendition created", "success");
-      if (createdId) navigate(`/compliance/property-tax/${createdId}`);
+      if (createdId) navigate(hubHref(`/compliance/property-tax/${createdId}`));
     },
     onError: (err) => pushToast(userFacingApiError(err, "Could not create the rendition"), "error"),
   });
@@ -659,7 +660,9 @@ export function PropertyTaxRenditionPage() {
   const companyId = selectedCompanyId ?? "";
   const { id } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance" });
   const propertyTaxBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance/property-tax" });

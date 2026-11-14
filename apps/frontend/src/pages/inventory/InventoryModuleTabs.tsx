@@ -1,4 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 const tabs = [
   { id: "parts", label: "Parts & Stock", to: "/inventory" },
@@ -8,6 +9,8 @@ const tabs = [
 
 export function InventoryModuleTabs() {
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const currentPath = location.pathname;
 
@@ -19,7 +22,7 @@ export function InventoryModuleTabs() {
           return (
             <button
               key={tab.id}
-              onClick={() => navigate(tab.to)}
+              onClick={() => navigate(hubHref(tab.to))}
               className={[
                 "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
                 // §7 palette lock: active tab uses the locked --navy token (#1F2A44), matching the
