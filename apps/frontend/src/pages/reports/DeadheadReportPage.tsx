@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Line, LineChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { apiRequest } from "../../api/client";
@@ -10,6 +10,7 @@ import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -80,6 +81,9 @@ export function DeadheadReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters: DeadheadFilters = { period: "last_4_weeks", groupBy: "week", minDeadheadMiles: "", selectedUnitId: null };
   const [appliedFilters, setAppliedFilters] = useState<DeadheadFilters>(emptyFilters);
   const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
@@ -131,7 +135,7 @@ export function DeadheadReportPage() {
       <PageHeader
         title="Deadhead optimization"
         subtitle="Empty vs loaded miles by truck · backhaul planning"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Deadhead Optimization"]}
       />
       <ReportsSubNav />

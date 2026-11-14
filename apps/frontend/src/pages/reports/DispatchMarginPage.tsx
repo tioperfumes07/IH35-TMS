@@ -1,6 +1,7 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getDispatchMargin, type DispatchMarginRow } from "../../api/reports";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -38,6 +39,9 @@ export function DispatchMarginPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { ...currentQuarterRange(), basis: "accrual" as "accrual" | "cash" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
@@ -109,7 +113,7 @@ export function DispatchMarginPage() {
       <ReportsSubNav />
       <PageHeader
         title="Dispatch margin"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Dispatch Margin"]}
       />
 

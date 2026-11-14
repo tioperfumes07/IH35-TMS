@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -10,6 +10,7 @@ import { SelectCombobox } from "../../components/Combobox";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { resolveApiUrl } from "../../api/client";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 
@@ -64,6 +65,9 @@ export function BookingGapReport() {
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { period: DEFAULT_PERIOD as Period, groupBy: "week" as GroupBy, minLoads: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
@@ -143,7 +147,7 @@ export function BookingGapReport() {
     <div className="space-y-4">
       <ReportsSubNav />
       <PageHeader
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Dispatcher Booking Gap"]}
         title="Dispatcher Booking Gap"
       />

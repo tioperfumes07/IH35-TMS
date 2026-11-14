@@ -1,6 +1,7 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -48,6 +49,9 @@ export function PerTruckCpmReport() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const defaultRange = currentQuarterRange();
   const emptyFilters = { ...defaultRange, minMiles: "" };
   const [applied, setApplied] = useState(emptyFilters);
@@ -87,7 +91,7 @@ export function PerTruckCpmReport() {
       <PageHeader
         title="Per-truck CPM"
         subtitle="Cost per mile by unit (GAP-45)"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Per-Truck CPM"]}
       />
       <ReportsSubNav />
