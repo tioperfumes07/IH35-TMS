@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:40Z) — Cursor board18 #29361
+| Board | Status | Evidence |
+|---|---|---|
+| 18 Factoring chargebacks/aging by customer | READY | #29361 `cbfa2626e6e` MoneyCell drills; verify 20178 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:39Z) — Cursor board18 #29360
 | Board | Status | Evidence |
 |---|---|---|
