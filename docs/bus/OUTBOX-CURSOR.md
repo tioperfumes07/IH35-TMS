@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T18:06Z) — #29527 Home/Fuel/Drivers/Checks/Safety/Legal Link ret wave4 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:06Z · #29527 SHA 3a9c6e6ef52 MERGED (Link to= ret wave4; verify 20322) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T18:01Z) — #29523 Maint/Acct/Home/Banking/Fuel Link ret wave3 MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T18:01Z · #29523 SHA 73fa74aed81 MERGED (Link to= ret wave3; verify 20320) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
 
