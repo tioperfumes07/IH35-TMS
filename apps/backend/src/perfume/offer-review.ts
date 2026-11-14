@@ -34,6 +34,19 @@ export function nameKeyWords(name: string): string[] {
   return kept.length ? kept : w;
 }
 
+const MEN_WORDS = new Set(["MEN", "MENS", "MAN", "HOMME"]);
+const WOMEN_WORDS = new Set(["WOMEN", "WOMENS", "WOMAN", "FEMME", "LADIES", "LADY"]);
+/** The line's gender: the import engine's reading, else the vendor's own spelled-out word ("CH MEN", "CH WOMEN" —
+ *  measured live 11-13 on ESPERANZA: identify() reads MEN / WOMEN as the NAME, gender empty, so CH WOMEN was paired with
+ *  my CH Men). Both words, or neither, means unknown — never guessed. */
+export function lineGender(description: string, idGender: string | null | undefined): string {
+  if (idGender) return idGender;
+  const w = words(description);
+  const m = w.some((x) => MEN_WORDS.has(x));
+  const f = w.some((x) => WOMEN_WORDS.has(x));
+  return m && !f ? "M" : f && !m ? "W" : "";
+}
+
 function kindFlags(flags: readonly string[]): string {
   return KIND_FLAGS.filter((f) => flags.includes(f)).join(",");
 }
@@ -41,6 +54,7 @@ function kindFlags(flags: readonly string[]): string {
 export function offerCandidates(line: { description: string; brand: string | null }, id: Identity, items: readonly OfferItem[], max = 3): OfferCandidate[] {
   const lineWords = new Set([...words(line.description), ...words(line.brand ?? ""), ...id.nameWords.flatMap(words), ...words(id.brand)]);
   const lineKind = kindFlags(id.flags);
+  const gender = lineGender(line.description, id.gender);
   const out: OfferCandidate[] = [];
   for (const it of items) {
     const need = nameKeyWords(it.name);
@@ -55,7 +69,7 @@ export function offerCandidates(line: { description: string; brand: string | nul
     const sizeDiffers = id.sizeMl != null && it.size_ml != null && Math.abs(id.sizeMl - it.size_ml) > 5;
     if (lineKind !== kindFlags(it.flags)) continue;
     // Men's and women's bottles are different products; unisex or unknown on either side is not a conflict.
-    if (id.gender && it.gender && id.gender !== "U" && it.gender !== "U" && id.gender !== it.gender) continue;
+    if (gender && it.gender && gender !== "U" && it.gender !== "U" && gender !== it.gender) continue;
     // A name word the line has and my item does not is a DIFFERENT bottle (measured live 11-13 on ESPERANZA:
     // WANTED vs WANTED INTENSE, HER vs HER BLOSSOM, GOOD GIRL vs GOOD GIRL BLUSH, 212 VIP vs 212 VIP ROSE) — not
     // proposed. Gender words and noise words do not count.
