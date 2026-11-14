@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { Button } from "../../components/Button";
@@ -22,6 +23,9 @@ type Props = {
 };
 
 export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const [step, setStep] = useState<Step>("choose");
@@ -54,7 +58,7 @@ export function InvoiceCreateModal({ open, operatingCompanyId, onClose }: Props)
 
   const handleCreated = (invoiceId: string) => {
     resetAndClose();
-    navigate(`/accounting/invoices/${invoiceId}`);
+    navigate(moneyHref(`/accounting/invoices/${invoiceId}`));
   };
 
   const title =

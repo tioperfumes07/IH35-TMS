@@ -18246,5 +18246,10 @@
     "claimed_at": "2026-11-14T04:27:07Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 InvoiceDetail/CheckDetail/BankAccountDetail money drills withReturnContext"
+  },
+  "20270": {
+    "claimed_at": "2026-11-14T04:30:34Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 create/recon money drills withReturnContext (QA/Check/Lease/Invoice/Recon)"
   }
 }

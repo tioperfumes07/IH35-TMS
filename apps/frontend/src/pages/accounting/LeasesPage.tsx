@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { entityLabel } from "../../lib/entity-label";
 import { leasesApi, type LeaseListRow } from "../../api/leases";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -17,6 +18,9 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 
 /** ROUND 316 — every lease contract of this entity; + Create opens the Owner-only creator. */
 export function LeasesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
@@ -54,7 +58,7 @@ export function LeasesPage() {
       ) : (
         <ParityTable title="Lease contracts" rows={query.data?.leases ?? []} columns={columns} rowKey={(r) => r.id} loading={query.isLoading} storageKey="leases-list" exportFilename="leases" tableTestId="leases-table" emptyText="No lease contracts yet." />
       )}
-      <LeaseContractCreator open={creating} onClose={() => setCreating(false)} onCreated={(id) => navigate(`/accounting/leases/${id}`)} />
+      <LeaseContractCreator open={creating} onClose={() => setCreating(false)} onCreated={(id) => navigate(moneyHref(`/accounting/leases/${id}`))} />
     </AccountingSubNavWrapper>
   );
 }

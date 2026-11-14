@@ -1,6 +1,7 @@
 import { BookOpen, CircleDollarSign, FileText, Wrench } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { RecordExpenseModal } from "../../components/expenses/RecordExpenseModal";
@@ -13,6 +14,9 @@ type Props = {
 };
 
 export function QuickActionsBar({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const [bookOpen, setBookOpen] = useState(false);
@@ -89,7 +93,7 @@ export function QuickActionsBar({ operatingCompanyId }: Props) {
             onClose={() => setInvoiceOpen(false)}
             onCreated={(invoiceId) => {
               setInvoiceOpen(false);
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(moneyHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <RecordExpenseModal
