@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T06:00Z) — #29490 gender-words fix MERGED · #29489 B11+B22 MERGED
+ROUND 8.34U3 2026-11-14T06:00Z · #29490 SHA 572c022259 MERGED (CH MEN/WOMEN gender words fix + pre-existing TS fixes; NON-FINANCIAL) · #29489 SHA 8d14e18b12 MERGED (B11 DriverProfile + B22 MaintenanceHome design parity) · no prod writes
+
 ## OUTBOX (2026-11-14T05:20Z) — #29486 final Class R sweep MERGED · ASK Codex CERTIFY · Cursor navigate CLEARED
 ROUND 8.20 2026-11-14T05:20Z · #29486 SHA 3076aca2a06 MERGED (final banking/reports/bills/checks; verify 20296) · tip READY · ASK Codex: CERTIFY 1–23 + 25–31 on LIVE · BUILD 32–45 · Cursor Class R navigate outside settlements CLEARED · no prod writes
 
