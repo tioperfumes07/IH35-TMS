@@ -9,6 +9,11 @@ import {
   parseAgingDateBasisParam,
 } from "./agingDateBasis";
 import { buildMonthlyFeeDrillHref } from "./factoringMonthFeeDrill";
+import {
+  buildFaroImportDrillHref,
+  buildFaroImportRangeDrillHref,
+  type FaroImportMoneyKind,
+} from "./factoringFaroImportDrill";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
@@ -263,34 +268,117 @@ function buildStatementHistoryColumns(originHref: string): Array<ParityColumn<Fa
   ];
 }
 
-const FARO_IMPORT_COLUMNS: Array<ParityColumn<FaroDailyImportRow>> = [
-  { key: "statement_date", label: "Statement Date", sortable: true, render: (row) => fmtDate(row.statement_date) },
-  { key: "statement_reference", label: "Reference", sortable: true },
-  {
-    key: "gross_total_cents",
-    label: "Gross",
-    sortable: true,
-    render: (row) => fmtCurrency(Number(row.gross_total_cents ?? 0) / 100),
-  },
-  {
-    key: "advance_total_cents",
-    label: "Advance",
-    sortable: true,
-    render: (row) => fmtCurrency(Number(row.advance_total_cents ?? 0) / 100),
-  },
-  {
-    key: "reserve_total_cents",
-    label: "Reserve",
-    sortable: true,
-    render: (row) => fmtCurrency(Number(row.reserve_total_cents ?? 0) / 100),
-  },
-  {
-    key: "fee_total_cents",
-    label: "Fee",
-    sortable: true,
-    render: (row) => fmtCurrency(Number(row.fee_total_cents ?? 0) / 100),
-  },
-];
+function FaroImportMoney({
+  cents,
+  kind,
+  statementDate,
+  dateFrom,
+  dateTo,
+  originHref,
+  testId,
+}: {
+  cents: number;
+  kind: FaroImportMoneyKind;
+  statementDate?: string | null | undefined;
+  dateFrom?: string | null | undefined;
+  dateTo?: string | null | undefined;
+  originHref: string;
+  testId: string;
+}) {
+  const href = statementDate
+    ? buildFaroImportDrillHref(kind, statementDate, originHref)
+    : buildFaroImportRangeDrillHref(kind, dateFrom, dateTo, originHref);
+  const text = fmtCurrency(Number(cents ?? 0) / 100);
+  if (!href) {
+    return (
+      <span className="tabular-nums" data-testid={testId}>
+        {text}
+      </span>
+    );
+  }
+  return (
+    <Link to={href} className="tabular-nums text-[#1F2A44] hover:underline" data-testid={testId}>
+      {text}
+    </Link>
+  );
+}
+
+function buildFaroImportColumns(originHref: string): Array<ParityColumn<FaroDailyImportRow>> {
+  return [
+    { key: "statement_date", label: "Statement Date", sortable: true, render: (row) => fmtDate(row.statement_date) },
+    { key: "statement_reference", label: "Reference", sortable: true },
+    {
+      key: "gross_total_cents",
+      label: "Gross",
+      sortable: true,
+      render: (row) => (
+        <FaroImportMoney
+          cents={Number(row.gross_total_cents ?? 0)}
+          kind="gross"
+          statementDate={row.statement_date}
+          originHref={originHref}
+          testId={`factoring-faro-import-gross-${row.id}`}
+        />
+      ),
+    },
+    {
+      key: "advance_total_cents",
+      label: "Advance",
+      sortable: true,
+      render: (row) => (
+        <FaroImportMoney
+          cents={Number(row.advance_total_cents ?? 0)}
+          kind="advance"
+          statementDate={row.statement_date}
+          originHref={originHref}
+          testId={`factoring-faro-import-advance-${row.id}`}
+        />
+      ),
+    },
+    {
+      key: "reserve_total_cents",
+      label: "Reserve",
+      sortable: true,
+      render: (row) => (
+        <FaroImportMoney
+          cents={Number(row.reserve_total_cents ?? 0)}
+          kind="reserve"
+          statementDate={row.statement_date}
+          originHref={originHref}
+          testId={`factoring-faro-import-reserve-${row.id}`}
+        />
+      ),
+    },
+    {
+      key: "fee_total_cents",
+      label: "Fee",
+      sortable: true,
+      render: (row) => (
+        <FaroImportMoney
+          cents={Number(row.fee_total_cents ?? 0)}
+          kind="fee"
+          statementDate={row.statement_date}
+          originHref={originHref}
+          testId={`factoring-faro-import-fee-${row.id}`}
+        />
+      ),
+    },
+    {
+      key: "chargeback_total_cents",
+      label: "Chargebacks",
+      sortable: true,
+      render: (row) => (
+        <FaroImportMoney
+          cents={Number(row.chargeback_total_cents ?? 0)}
+          kind="chargeback"
+          statementDate={row.statement_date}
+          originHref={originHref}
+          testId={`factoring-faro-import-chargeback-${row.id}`}
+        />
+      ),
+    },
+  ];
+}
 
 const VENDOR_MERGE_COLUMNS: Array<ParityColumn<DriverVendorMergeRow>> = [
   {
@@ -371,6 +459,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
   const originHref = currentOriginHref(location.pathname, location.search);
   const monthlyFeeColumns = useMemo(() => buildMonthlyFeeColumns(originHref), [originHref]);
   const statementHistoryColumns = useMemo(() => buildStatementHistoryColumns(originHref), [originHref]);
+  const faroImportColumns = useMemo(() => buildFaroImportColumns(originHref), [originHref]);
   const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -3672,23 +3761,68 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="factoring-faro-summary-totals">
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Faro Gross</div>
-                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroGross / 100)}</div>
+                          <div className="mt-1 font-semibold text-gray-900">
+                            <FaroImportMoney
+                              cents={faroGross}
+                              kind="gross"
+                              dateFrom={applied.dateFrom || null}
+                              dateTo={applied.dateTo || null}
+                              originHref={originHref}
+                              testId="factoring-faro-summary-gross"
+                            />
+                          </div>
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Faro Advance</div>
-                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroAdvance / 100)}</div>
+                          <div className="mt-1 font-semibold text-gray-900">
+                            <FaroImportMoney
+                              cents={faroAdvance}
+                              kind="advance"
+                              dateFrom={applied.dateFrom || null}
+                              dateTo={applied.dateTo || null}
+                              originHref={originHref}
+                              testId="factoring-faro-summary-advance"
+                            />
+                          </div>
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Faro Reserve</div>
-                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroReserve / 100)}</div>
+                          <div className="mt-1 font-semibold text-gray-900">
+                            <FaroImportMoney
+                              cents={faroReserve}
+                              kind="reserve"
+                              dateFrom={applied.dateFrom || null}
+                              dateTo={applied.dateTo || null}
+                              originHref={originHref}
+                              testId="factoring-faro-summary-reserve"
+                            />
+                          </div>
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Faro Fees</div>
-                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroFees / 100)}</div>
+                          <div className="mt-1 font-semibold text-gray-900">
+                            <FaroImportMoney
+                              cents={faroFees}
+                              kind="fee"
+                              dateFrom={applied.dateFrom || null}
+                              dateTo={applied.dateTo || null}
+                              originHref={originHref}
+                              testId="factoring-faro-summary-fee"
+                            />
+                          </div>
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Faro Chargebacks</div>
-                          <div className="mt-1 font-semibold text-gray-900">{fmtCurrency(faroChargebacks / 100)}</div>
+                          <div className="mt-1 font-semibold text-gray-900">
+                            <FaroImportMoney
+                              cents={faroChargebacks}
+                              kind="chargeback"
+                              dateFrom={applied.dateFrom || null}
+                              dateTo={applied.dateTo || null}
+                              originHref={originHref}
+                              testId="factoring-faro-summary-chargeback"
+                            />
+                          </div>
                         </div>
                         <div className="border border-gray-200 p-2 text-center">
                           <div className="text-xs uppercase tracking-wide text-gray-500">Batches</div>
@@ -3731,7 +3865,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             ) : (
               <ParityTable appearance="board"
                 title="Faro statement lines — imported"
-                columns={FARO_IMPORT_COLUMNS}
+                columns={faroImportColumns}
                 rows={(faroImportsQuery.data?.rows ?? []).filter((r) => {
                   if (applied.dateFrom && r.statement_date < applied.dateFrom) return false;
                   if (applied.dateTo && r.statement_date > applied.dateTo) return false;
