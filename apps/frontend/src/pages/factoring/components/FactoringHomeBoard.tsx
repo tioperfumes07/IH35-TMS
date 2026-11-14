@@ -8,7 +8,7 @@
  */
 import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   getFactoringChargebacksFees,
   getFactoringRecoursePipeline,
@@ -36,6 +36,7 @@ function FactoringBoardCard({
   title,
   testId,
   onViewAll,
+  viewAllHref,
   headerRight,
   children,
   footer,
@@ -43,6 +44,8 @@ function FactoringBoardCard({
   title: string;
   testId: string;
   onViewAll?: () => void;
+  /** Shareable View all (Class R): a real link with ret, preferred over onViewAll. */
+  viewAllHref?: string;
   headerRight?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -73,7 +76,11 @@ function FactoringBoardCard({
         <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{title}</span>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {headerRight}
-          {onViewAll ? (
+          {viewAllHref ? (
+            <Link to={viewAllHref} style={{ fontSize: 11, fontWeight: 600, color: V3.link, textDecoration: "none", fontFamily: V3.font }}>
+              View all →
+            </Link>
+          ) : onViewAll ? (
             <button
               type="button"
               onClick={onViewAll}
@@ -289,7 +296,6 @@ export function FactoringHomeBoard({
   companyId: string;
   onEditTerms?: () => void;
 }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const originHref = currentOriginHref(location.pathname, location.search);
   const factorHref = (target: string) => withReturnContext(target, originHref);
