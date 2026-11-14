@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T17:28Z) — #29504 Party/Vendors KPI+NumLink ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T17:28Z · #29504 SHA ab10fa5867b MERGED (Party/Vendors board ret; verify 20302) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T17:23Z) — #29500 DriverHub/Overview + LoadCosts close MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T17:23Z · #29500 SHA 671236ac773 MERGED (DriverHub/Overview + LoadCosts close; verify 20298) · tip READY · ASK Codex CERTIFY Driver Hub + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

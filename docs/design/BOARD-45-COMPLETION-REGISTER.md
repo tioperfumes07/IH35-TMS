@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:28Z) — Cursor Party/Vendors KPI+NumLink ret #29504
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Customers + Vendors home KPI/NumLink drills | READY | #29504 `ab10fa5867b` withReturnContext; verify 20302 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:23Z) — Cursor DriverHub/Overview + LoadCosts close #29500
 | Board / surface | Status | Evidence |
 |---|---|---|
