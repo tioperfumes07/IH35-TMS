@@ -48,8 +48,11 @@ describe("PERFUME-DESK matching", () => {
     const ix = seed(PCA);
     const sexyMen = matchLine(ix, "esperanza", { description: "212 SEXY M 3.4oz EDT" }, { allowNewItem: false });
     expect(sexyMen.itemId).toBeNull();
-    expect(sexyMen.status).toBe("review");
-    expect(sexyMen.suggestions[0].item_id).toBe("item-0");      // 212 M is suggested, not linked
+    // Owner 2026-11-14 17:34 CT: suggestions only from the SAME brand — a line whose brand is not read gets none.
+    expect(sexyMen.suggestions).toEqual([]);
+    const chSexy = matchLine(ix, "esperanza", { brand: "CAROLINA HERRERA", description: "212 SEXY M 3.4oz EDT" }, { allowNewItem: false });
+    expect(chSexy.itemId).toBeNull();
+    expect(chSexy.suggestions.every((g) => ix.items.get(g.item_id)?.brand === "CAROLINA HERRERA")).toBe(true);
     const red = matchLine(ix, "mtz", { upc: "608940515617", brand: "PERRY ELLIS", description: "360 RED 3.4 EDT M  (100074) - USA" }, { allowNewItem: true });
     expect(red.method).toBe("new_item");                          // its own item, never "360"
   });
@@ -147,13 +150,11 @@ describe("PERFUME-DESK suggestions across a brand the item master spells another
   }
   const esp = (description: string) => matchLine(dirty(), "esp", { description }, { allowNewItem: false });
 
-  it("PINK SUGAR line is offered the AQUOLINA item (never auto-linked)", () => {
+  it("owner 2026-11-14 17:34: never a different brand — PINK SUGAR is not offered the AQUOLINA item, NARCISO RDZ not NARCISO R", () => {
     const m = esp("PINK SUGAR W 3.4oz EDT");
     expect(m.itemId).toBeNull();
-    expect(m.suggestions[0]?.item_id).toBe("aq-pink");
-  });
-  it("NARCISO RDZ VETIVER MUSC is offered NARCISO R · NR VETIVER MUSC HIM", () => {
-    expect(esp("NARCISO RDZ VETIVER MUSC M EDT 3.4oz").suggestions.map((s) => s.item_id)).toContain("nr-vet");
+    expect(m.suggestions.map((g) => g.item_id)).not.toContain("aq-pink");
+    expect(esp("NARCISO RDZ VETIVER MUSC M EDT 3.4oz").suggestions.map((g) => g.item_id)).not.toContain("nr-vet");
   });
   it("an item name that repeats its brand still pairs on the fragrance words (PERRY ELLIS 18)", () => {
     expect(esp("PERRY ELLIS 18 M 3.4oz EDT").suggestions[0]?.item_id).toBe("pe-18");
