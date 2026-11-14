@@ -446,7 +446,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "label",
                       label: "Report",
-                      sortable: false,
+                      sortable: true,
+                      sortValue: (r) => r.label,
                       render: (r) => (
                         <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-link-${r.id}`}>
                           {r.label}
@@ -456,18 +457,21 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "shows",
                       label: "What it shows",
-                      sortable: false,
+                      sortable: true,
+                      sortValue: (r) => r.shows,
                     },
                     {
                       key: "basis",
                       label: "Basis",
-                      sortable: false,
+                      sortable: true,
+                      sortValue: (r) => basisLabel(r.id),
                       render: (r) => basisLabel(r.id),
                     },
                     {
                       key: "run",
                       label: "Open in viewer",
-                      sortable: false,
+                      sortable: true,
+                      sortValue: (r) => r.label,
                       render: (r) => (
                         <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-run-${r.id}`}>
                           Run →
@@ -477,8 +481,13 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "export",
                       label: "Export",
-                      sortable: false,
-                      render: () => "PDF · XLSX",
+                      sortable: true,
+                      sortValue: (r) => r.label,
+                      render: (r) => (
+                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} muted={false} bold={false} testId={`reports-acct-export-${r.id}`}>
+                          PDF · XLSX
+                        </CatalogLink>
+                      ),
                     },
                   ]}
                 />

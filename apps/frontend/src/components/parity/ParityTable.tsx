@@ -766,7 +766,7 @@ export function ParityTable<T>({
   onPageChange,
   pageSize: controlledPageSize,
   onPageSizeChange,
-  hidePager: hidePagerProp = false,
+  hidePager = false,
   embedded: embeddedProp = false,
   panel = false,
   columnGroups,
@@ -816,7 +816,7 @@ export function ParityTable<T>({
     persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 25,
   );
   const embedded = embeddedProp || panel;
-  const hidePager = hidePagerProp || panel;
+  const suppressPager = panel;
   // A panel shows every row it is given (callers pass the few rows the board draws).
   const pageSize = panel ? Math.max(1, sourceRows.length) : isPageSizeControlled ? controlledPageSize : internalPageSize;
   // VC-LIST-02 — page-size options as rendered: append the "All" sentinel when allowed (dedup-safe).
@@ -1640,7 +1640,9 @@ export function ParityTable<T>({
               // ruling; only the COLUMN rule goes. Header and group bands keep their own outline
               // (COMPLETE-OUTLINE LAW, untouched) — the owner's ruling is about the BODY.
               // C-18: tableBodyRule is the locked #D8DEE6 divider (QBO_SURFACE.divider).
-              borderBottom: `1px solid ${v3 ? "#ECEEF2" : colors.tableBodyRule}`,
+              borderBottom: `1px solid ${colors.tableBodyRule}`,
+              // v3 boards use a lighter row divider (#ECEEF2) — overrides tableBodyRule only in v3 mode.
+              ...(v3 ? { borderBottom: "1px solid #ECEEF2" } : {}),
               // R9.3 v3 mode: 7px top/bottom, 12px left/right padding — exact spec.
               ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12 } : {}),
               // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
@@ -2035,14 +2037,15 @@ export function ParityTable<T>({
                       : undefined
                   }
                   onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
-                  className={`relative ${wrapHeaders ? "whitespace-normal break-normal align-bottom" : "whitespace-nowrap"} px-2 font-semibold uppercase ${
+                  className={`relative whitespace-nowrap px-2 font-semibold uppercase ${
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
                     // ONE-HEIGHT LAW (owner ruling 2026-09-04, ORCH-measured): 30px everywhere a
                     // ParityTable header renders — was emergent from padding/line-height alone, so
                     // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
-                    ...(wrapHeaders ? { minHeight: spacing.tableHeaderHeight, height: "auto", lineHeight: 1.15, paddingTop: 4, paddingBottom: 4 } : { height: spacing.tableHeaderHeight }),
+                    // wrapHeaders: inline style overrides whitespace-nowrap Tailwind class.
+                    ...(wrapHeaders ? { whiteSpace: "normal", wordBreak: "break-word", verticalAlign: "bottom", minHeight: spacing.tableHeaderHeight, height: "auto", lineHeight: 1.15, paddingTop: 4, paddingBottom: 4 } : { height: spacing.tableHeaderHeight }),
                     // QBO-HEADER-OUTRANKS-ROW (owner ruling 2026-09-30) / D51: "the size of the text in
                     // the row headers should be a little bit larger than the text in the rows. FOR
                     // ALL." We shipped the inverse — header 11px sitting over a 12px body — so the
@@ -2221,7 +2224,7 @@ export function ParityTable<T>({
       </div>
 
       {/* Advanced pager — hidePager (A3) suppresses the built-in chrome so an external pager can own the UI. */}
-      {hidePager ? null : (
+      {hidePager ? null : suppressPager ? null : (
       <div
         className="flex flex-wrap items-center justify-between gap-2 border-t border-gray-200 px-2 py-1.5 text-section-header"
         style={{ color: colors.mutedText }}
