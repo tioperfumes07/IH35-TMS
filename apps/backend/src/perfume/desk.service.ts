@@ -6,7 +6,7 @@ import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
-import { offerCandidates, type OfferItem } from "./offer-review.js";
+import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
@@ -711,7 +711,9 @@ export async function rematchReview(c: PoolClient) {
   return { ...out, kind_clash_to_review: kindClash };
 }
 
-export async function searchItems(c: PoolClient, q: string, limit = 25) {
+/** gender (M / W): the line being linked is that gender — the other gender's bottles are never offered (owner
+ *  2026-11-14 17:22: Light Blue Men linked by accident to Light Blue Women). Unisex / unstated items stay. */
+export async function searchItems(c: PoolClient, q: string, limit = 25, gender: "M" | "W" | null = null) {
   const s = q.trim();
   if (!s) return [];
   // Every word must appear somewhere in the item's name, in any order (owner 2026-11-12: "when searching for an
@@ -719,31 +721,35 @@ export async function searchItems(c: PoolClient, q: string, limit = 25) {
   // word also matches a UPC; the internal code still matches exactly.
   const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
   return (await c.query(
-    `SELECT i.id, i.display_name, i.internal_code, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
+    `SELECT i.id, i.display_name, i.internal_code, NULLIF(i.gender, '') AS gender, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i
       WHERE i.merged_into_id IS NULL
+        AND ($4::text IS NULL OR COALESCE(NULLIF(i.gender, ''), 'U') IN ('U', $4))
         AND (i.internal_code = $1
              OR EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = ltrim(regexp_replace($1,'\\D','','g'),'0'))
              OR (cardinality($2::text[]) > 0 AND NOT EXISTS (SELECT 1 FROM unnest($2::text[]) w WHERE upper(i.display_name) NOT LIKE '%' || w || '%')))
-      ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit])).rows;
+      ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit, gender])).rows;
 }
 
 /** Competitor lines (every current sell/both list) for the List-analysis match box: every word must be in the line,
  *  in any order; a number also matches its UPC or code. Linked lines are returned too, with what they are linked to,
  *  so a wrong link can be seen and corrected (owner 2026-11-14: "the box to search, suggestions … the correct matching engine"). */
-export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25) {
+export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25, gender: "M" | "W" | null = null) {
   const s = q.trim();
   if (!s) return [];
   const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
   if (!words.length) return [];
-  return (await c.query<{ row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null }>(
-    `SELECT r.id AS row_id, r.description, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
+  const found = (await c.query<{ row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null; brand: string | null; size_text: string | null; gender_override: string | null }>(
+    `SELECT r.id AS row_id, r.description, r.brand, r.size_text, r.gender_override, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        LEFT JOIN perfume.items i ON i.id = r.item_id
       WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w
                          WHERE upper(r.description || ' ' || coalesce(r.upc, '') || ' ' || coalesce(r.sku, '')) NOT LIKE '%' || w || '%')
-      ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, limit])).rows;
+      ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, gender ? limit * 3 : limit])).rows;
+  // My item is that gender: a line that says the other gender is never offered; each line carries the gender it says.
+  return found.map(({ brand, size_text, gender_override, ...r }) => ({ ...r, gender: lineGender(r.description, identify({ description: r.description, brand, size: size_text, gender: gender_override }).gender) || null }))
+    .filter((r) => !gender || !r.gender || r.gender === "U" || r.gender === gender).slice(0, limit);
 }
 
 export async function setInternalCode(c: PoolClient, itemId: string, code: string | null) {
@@ -792,6 +798,8 @@ type AnalysisIn = {
   upc: string | null; sku: string | null; brand: string | null; name: string | null; size: number | null; type: string | null; gender: string | null;
   purchDate: string | null; qtyPurch: number | null; cost: number | null; sold: number | null; invQty: number | null; offer: number | null;
   comp: CompBest | null; lowVendor: string | null; lowPrice: number | null; minMargin: number; myDesc: string | null;
+  /** The brand the engine read on the competitor's line (owner 17:34: "add a brand column so I can confirm the brands"). */
+  cBrand?: string | null;
 };
 /** LIST ANALYSIS — the owner's own format (11-14-2026 PERFUME_ENGINE_FORMATS.xlsx), his formulas cell for cell:
  *  Margin = (offer − last cost) ÷ offer · Markup = (offer − last cost) ÷ last cost · Esperanza price = their SALES
@@ -824,7 +832,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     // expensive"); the % to lower stays positive — how much to take off my price.
     "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
     "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
-    "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_vendor": a.comp?.vendor ?? null,
+    "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_brand": a.comp ? (a.cBrand ?? null) : null, "a:c_vendor": a.comp?.vendor ?? null,
   };
 }
 /** A one-click link for a row that is not matched yet: link competitor/my line `row_id` to item `item_id`. */
@@ -990,7 +998,10 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // and the box to confirm or correct it. Nothing else.
     // The competitor's description IS the match box: it shows the line linked now, or the suggestion, and is searched
     // and confirmed in place (owner 17:07: "shouldn't that be in the same competitor description box so it is not redundant").
-    A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
+    A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"),
+    // Owner 2026-11-14 17:34 CT: the competitor's description stays exactly as written; beside it the BRAND the engine
+    // read from it, so every brand reading can be checked (blank = the engine could not read one).
+    A("c_brand", "COMPETITOR BRAND", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
@@ -1188,6 +1199,13 @@ async function buildAnalysisLines(c: PoolClient, x: {
     row_id: l.id, vendor: vLabel.get(l.vendor_id) ?? "", description: l.description, price_cents: l.price_cents!, linked_to: l.item_id ? (itemById.get(l.item_id)?.display_name ?? null) : null,
     id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
   }));
+  const brandCache = new Map<string, string | null>();
+  const brandRead = (desc: string | null | undefined, brand: string | null = null): string | null => {
+    if (!desc) return null;
+    const k = `${brand ?? ""}|${desc}`;
+    if (!brandCache.has(k)) brandCache.set(k, identify({ description: desc, brand, brandAliases: aliases }).brand || null);
+    return brandCache.get(k)!;
+  };
   const likelyCache = new Map<string, MatchCandidate[]>();
   const likelyFor = (itemId: string): MatchCandidate[] => {
     if (likelyCache.has(itemId)) return likelyCache.get(itemId)!;
@@ -1208,7 +1226,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
       ...analysisFields({
         upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
-        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description,
+        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
@@ -1235,7 +1253,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
         upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
-        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null,
+        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,

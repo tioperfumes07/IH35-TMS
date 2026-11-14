@@ -162,12 +162,17 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
     if (id.sizeMl != null && it.sizeMl != null && Math.abs(id.sizeMl - it.sizeMl) > 0.5) continue;
     // An item filed with no gender still has the one its name says (BURBERRY BRIT HER → W, … POUR HIM → M).
     const itGender = it.gender || genderHintOf(it.name);
-    if (id.gender && itGender && id.gender !== itGender) continue;
+    // Men vs Women never; Unisex beside either is allowed. An unstated gender ranks the bottle well below (genderCheck).
+    if (id.gender && itGender && id.gender !== "U" && itGender !== "U" && id.gender !== itGender) continue;
+    const gFactor = id.gender && itGender ? (id.gender === itGender ? 1 : 0.85) : 0.6;
     // A set is never suggested for a single bottle (or the reverse), nor a tester for a boxed bottle, a mini for a
     // full bottle, a body product for a fragrance (owner 2026-11-12: "it is not separating sets" — ARMANI CODE 4.2
     // EDP was offered "ARMANI CODE 125 ml SET").
     if (productKind(id.flags) !== productKind(it.flags)) continue;
-    const sameBrand = !id.brand || !it.brand || id.brand === it.brand;
+    // Owner 2026-11-14 17:34 CT: "IT MUST BE FROM SAME BRAND." Only the line's own brand is suggested; a line whose
+    // brand was not read gets no suggestion (it shows in Review with its BRAND blank, linked by search).
+    if (!id.brand || !it.brand || id.brand !== it.brand) continue;
+    const sameBrand = true;
     let score: number;
     if (sameBrand) {
       const f = itemFacts(it);
@@ -183,7 +188,10 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
       score = similaritySets(lineFull, f.full) * 0.9;
       if (score < 0.35) continue;
     }
+    score *= gFactor;
     const why: string[] = [];
+    if (!id.gender || !itGender) why.push(!id.gender && !itGender ? "GENDER NOT STATED — check" : !id.gender ? "GENDER NOT STATED on the line — check" : "GENDER NOT STATED on the item — check");
+    else if (id.gender !== itGender) why.push(`gender ${id.gender} vs ${itGender}`);
     if (!sameBrand) why.push(`brand ${id.brand} vs ${it.brand}`);
     if (id.conc !== it.conc) why.push(`type ${id.conc || "?"} vs ${it.conc || "?"}`);
     if (id.flags.join() !== it.flags.join()) why.push(`flags ${id.flags.join("+") || "none"} vs ${it.flags.join("+") || "none"}`);
