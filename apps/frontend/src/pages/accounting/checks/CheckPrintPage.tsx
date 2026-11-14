@@ -5,7 +5,8 @@
 // refused; numbers the batch skips are listed and need a reason, recorded on each skipped number.
 import { useEffect, useMemo, useState } from "react";
 import { FORM_INPUT_CLASS } from "../../../components/forms/inputClass";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -49,6 +50,9 @@ function gapLabel(g: { from: string; to: string }): string {
 }
 
 export function CheckPrintPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -274,7 +278,7 @@ export function CheckPrintPage() {
       key: "print_on_check_name",
       label: "Payee",
       render: (row) => (
-        <Link to={`/accounting/checks/${row.id}`} className="text-[var(--accent-green)] underline">
+        <Link to={moneyHref(`/accounting/checks/${row.id}`)} className="text-[var(--accent-green)] underline">
           {row.print_on_check_name}
         </Link>
       ),
@@ -305,7 +309,7 @@ export function CheckPrintPage() {
       title="Print checks"
       subtitle="Assign numbers to checks waiting to print"
       actions={
-        <Link to="/accounting/checks" className="text-xs font-semibold text-[var(--accent-green)] hover:underline">
+        <Link to={moneyHref("/accounting/checks")} className="text-xs font-semibold text-[var(--accent-green)] hover:underline">
           ← All checks
         </Link>
       }
