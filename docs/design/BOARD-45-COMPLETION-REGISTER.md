@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:46Z) — Cursor Topbar + DriftAlertPopup ret #29514
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Topbar chrome + Drift exceptions | READY | #29514 `736fd7c18d5` withReturnContext; verify 20312 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:40Z) — Cursor WriteCheck print + AnomalyAlertBadge ret #29512
 | Board / surface | Status | Evidence |
 |---|---|---|
