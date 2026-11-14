@@ -834,28 +834,28 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             // Raw actual net stays separate — never invent variance vs an unavailable projection.
             const netVar = coverageNets.matched_variance_cents;
             const varianceUnavailable = actualsUnavailable || netVar == null;
-            // ROUND 8.20 board6 — Net variance KPI applies the matching variance chip (URL SoT) + scrolls table.
-            const applyNetVarianceChip = () => {
-              if (varianceUnavailable || netVar == null) {
-                const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
-                if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                return;
-              }
-              const varianceFilter: VarianceFilter = netVar > 0 ? "over" : netVar < 0 ? "under" : "flat";
-              setApplied((prev) => ({ ...prev, varianceFilter }));
-              staged.setDraft({ ...staged.draft, varianceFilter });
-              setSearchParams(
-                (prev) => {
-                  const merged = mergeUrlBoardState(prev.toString(), {
-                    avp_var: varianceFilter,
-                  });
-                  return new URLSearchParams(merged.startsWith("?") ? merged.slice(1) : merged);
-                },
-                { replace: true },
-              );
-              const el = document.querySelector('[data-testid="cash-flow-avp-table"]');
-              if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            };
+            // ROUND 8.20 board6 — Net variance KPI shareable avp_var cohort href+ret (not onClick-only).
+            const varianceFilter: VarianceFilter | null =
+              varianceUnavailable || netVar == null
+                ? null
+                : netVar > 0
+                  ? "over"
+                  : netVar < 0
+                    ? "under"
+                    : "flat";
+            const netVarianceHref =
+              varianceFilter == null
+                ? undefined
+                : withReturnContext(
+                    (() => {
+                      const merged = mergeUrlBoardState(searchParams.toString(), {
+                        avp_var: varianceFilter,
+                      });
+                      const q = merged.startsWith("?") ? merged.slice(1) : merged;
+                      return `${location.pathname}${q ? `?${q}` : ""}`;
+                    })(),
+                    originHref,
+                  );
             return (
               <V3KpiTile
                 label="Net variance"
@@ -873,7 +873,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   </span>
                 }
                 testId="cash-flow-avp-v3-kpi-net"
-                onClick={applyNetVarianceChip}
+                href={netVarianceHref}
               />
             );
           })()}

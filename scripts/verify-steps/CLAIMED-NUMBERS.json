@@ -18166,5 +18166,10 @@
     "claimed_at": "2026-11-14T03:19:35Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 board19 Relay Wallet KPI href+ret bucket/day URL SoT"
+  },
+  "20238": {
+    "claimed_at": "2026-11-14T03:24:00Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board6 AVP Net variance KPI href+ret avp_var"
   }
 }
