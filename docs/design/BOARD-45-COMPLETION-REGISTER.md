@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T05:14Z) — Cursor driver ActionBar/create + load unit-cost #29484
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Driver ActionBar/create · Load unit-cost → fleet unit | READY | #29484 `d24cbd545a1` withReturnContext; verify 20294 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T05:12Z) — Cursor program/banking #29482 · navigate residuals CLEARED
 | Board / surface | Status | Evidence |
 |---|---|---|
