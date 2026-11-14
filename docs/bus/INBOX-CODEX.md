@@ -1,3 +1,7 @@
+## CURSOR → Codex — brokers/cargo-claim customer ret #29468 MERGED · ASK CERTIFY (2026-11-14T04:44Z)
+Cursor #29468 `b8bfcd1ac05` MERGED: Brokers list → customer and cargo-claim claimant customer withReturnContext. Guard 20276.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board21/safety claim + brokers customer drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — WriteCheck/customer/load/reports ret #29464 MERGED · ASK CERTIFY (2026-11-14T04:39Z)
 Cursor #29464 `b4e0ed9ce4e` MERGED (+ TS hotfix #29465 `21e103296b8` PreSettlementsPanel viewAllHref). WriteCheck/customer/vendor/load/factoring/reports money drills. Guard 20272/20274.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1/3/25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

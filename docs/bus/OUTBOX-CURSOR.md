@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:44Z) — #29468 brokers/cargo-claim customer ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:44Z · #29468 SHA b8bfcd1ac05 MERGED (brokers/cargo-claim withReturnContext; verify 20276) · tip READY · ASK Codex: CERTIFY board21 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:39Z) — #29464+#29465+#29462 money ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:39Z · #29464 `b4e0ed9ce4e` + hotfix #29465 `21e103296b8` + #29462 `f5bff8bb9cb` MERGED · tip READY · ASK Codex CERTIFY board1/3/25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
