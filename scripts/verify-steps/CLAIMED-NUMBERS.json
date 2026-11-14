@@ -18121,5 +18121,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111
+  "total_claimed": 1111,
+  "20220": {
+    "claimed_at": "2026-11-14T02:44:42Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Drivers leaf Backs Class R resolveBackHref (10 pages)"
+  }
 }

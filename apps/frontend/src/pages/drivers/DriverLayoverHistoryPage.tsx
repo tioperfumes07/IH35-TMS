@@ -1,5 +1,6 @@
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { getDriver } from "../../api/mdata";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -13,6 +14,10 @@ import { ListErrorState } from "../../components/ListErrorState";
 // standard module header + company/driver context so the button lands on a real page
 // instead of dead-ending to Home.
 export function DriverLayoverHistoryPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { driverId = "" } = useParams();
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
@@ -28,7 +33,7 @@ export function DriverLayoverHistoryPage() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/drivers"
+      <PageHeader backHref={driversBackHref}
         breadcrumb={["Drivers", "Layovers"]}
         title="Driver Layover History"
         subtitle={

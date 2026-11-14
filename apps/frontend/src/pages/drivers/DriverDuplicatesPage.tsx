@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 // TABLE_DATE_OMIT: this table has no date column by design — the candidate profiles of ONE person (keep / profile / status / CDL / loads); a profile carries no event date.
 /**
  * DUPLICATE DRIVER PROFILES (owner 2026-10-06): "what we do need to merge are the drivers that have multiple profiles in
@@ -17,6 +18,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { driverMergeApi, type DuplicateCluster, type DuplicateDriver, type MergePreview } from "../../api/driverMerge";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
@@ -167,6 +169,10 @@ function ClusterCard({ cluster, companyId }: { cluster: DuplicateCluster; compan
 }
 
 export function DriverDuplicatesPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const q = useQuery({
@@ -177,7 +183,7 @@ export function DriverDuplicatesPage() {
   const clusters = q.data?.pairs ?? [];
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/drivers"
+      <PageHeader backHref={driversBackHref}
         breadcrumb={["Drivers", "Duplicate profiles"]}
         title="Duplicate driver profiles"
         subtitle="One driver profile per person — that profile can hold many Samsara users. Merging never changes Samsara."

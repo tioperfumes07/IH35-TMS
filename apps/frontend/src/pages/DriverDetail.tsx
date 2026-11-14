@@ -1,4 +1,5 @@
 import { entityLabel } from "../lib/entity-label";
+import { resolveBackHref } from "../lib/returnContext";
 import { formatDateTimeUS } from "../lib/formatDate";
 import { formatPersonName } from "../lib/formatPersonName";
 import { formatPhoneAsTyped, formatPhoneDisplay } from "../lib/formatPhoneAsTyped";
@@ -190,6 +191,8 @@ export function DriverDetailPage() {
   const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname: location.pathname, fallback: "/drivers" });
   const { pushToast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -957,7 +960,7 @@ export function DriverDetailPage() {
     <div className="space-y-3">
       <PageHeader
         title={formatPersonName(`${driver.first_name} ${driver.last_name}`)}
-        backHref="/drivers"
+        backHref={driversBackHref}
         breadcrumb={[
           { label: "Drivers", href: "/drivers" },
           { label: formatPersonName(`${driver.first_name} ${driver.last_name}`) },

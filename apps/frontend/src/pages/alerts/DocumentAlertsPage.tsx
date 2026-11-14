@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
   acknowledgeDocumentAlert,
   evaluateDocumentAlerts,
@@ -15,6 +15,7 @@ import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -151,6 +152,9 @@ export function DocumentAlertsPage() {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const [inboxPage, setInboxPage] = useState(1);
   const inboxPageSize = 50;
   const tab = parseDocumentAlertsTab(searchParams.get("tab"));
@@ -212,7 +216,7 @@ export function DocumentAlertsPage() {
         title="Document expiry alerts"
         subtitle="Central inbox for CDL, medical, training, DQF, uploads, and permits — ARCHIVE-not-DELETE; legacy DQF chips remain on profile."
         breadcrumb={[{ label: "Drivers" }, { label: "Document Alerts" }]}
-        backHref="/drivers"
+        backHref={driversBackHref}
         actions={
           <Button
             type="button"

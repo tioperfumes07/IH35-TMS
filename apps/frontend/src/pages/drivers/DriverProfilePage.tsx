@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "../../hooks/useTranslation";
 import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { AddPayLineModal } from "../../components/driver-finance/AddPayLineModal";
 import { DriverOverviewBoard } from "../../components/boards/DriverOverviewBoard";
 import { DriverLiveOverview } from "../../components/driver-profile/DriverLiveOverview";
@@ -13,6 +13,7 @@ import { apiRequest } from "../../api/client";
 import { deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { formatCalendarDateUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatQuantityTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
@@ -299,6 +300,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const id = driverIdProp ?? routeId;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -476,7 +480,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
         subtitle="Driver profile"
         breadcrumb={["Drivers", "Roster", displayName]}
         onBack={onBack}
-        backHref="/drivers"
+        backHref={driversBackHref}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {activeTab !== "Overview" && !itemsQ.isError ? <DriverDqfComplianceChip summary={summary} /> : null}
