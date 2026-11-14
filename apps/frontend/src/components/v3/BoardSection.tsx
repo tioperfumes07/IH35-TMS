@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { V3 } from "../../design/v3-tokens";
 
 const viewAllStyle: CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 600,
   color: V3.link,
   background: "transparent",
@@ -29,6 +29,7 @@ export function BoardSection({
   footer,
   children,
   testId,
+  titleDataV3,
 }: {
   title: string;
   subtitle?: string;
@@ -40,6 +41,7 @@ export function BoardSection({
   footer?: ReactNode;
   children: ReactNode;
   testId?: string;
+  titleDataV3?: string;
 }) {
   const shell: CSSProperties = {
     background: V3.surface,
@@ -63,7 +65,7 @@ export function BoardSection({
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font }}>{title}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font }} data-v3={titleDataV3}>{title}</span>
           {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
@@ -85,7 +87,7 @@ export function BoardSection({
           style={{
             padding: "8px 14px",
             borderTop: `1px solid ${V3.borderSoft}`,
-            fontSize: 12,
+            fontSize: 11,
             color: V3.muted,
             fontFamily: V3.font,
           }}

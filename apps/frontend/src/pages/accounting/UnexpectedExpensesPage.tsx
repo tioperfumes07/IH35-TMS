@@ -116,8 +116,7 @@ export function UnexpectedExpensesPage() {
 
   const duplicateSub = useMemo(() => {
     if (!kpis || kpis.duplicate_count === 0) return "none";
-    // Board CashFlow-Unexpected KPI sub: "$460.01 - $155.86" (hyphen, not middle-dot).
-    return kpis.duplicate_amounts_cents.map((c) => `$${formatPlainDollars(c)}`).join(" - ");
+    return kpis.duplicate_amounts_cents.map((c) => `$${formatPlainDollars(c)}`).join(" · ");
   }, [kpis]);
 
   // ROUND 8.20 board 2 — View all opens Banking Transactions for-review (not Home accounts).
@@ -141,7 +140,8 @@ export function UnexpectedExpensesPage() {
       <div
         className="space-y-3"
         data-testid="unexpected-expenses-page"
-        style={{ fontFamily: V3.font }}
+        data-v3-board="Accounting-Unexpected"
+        style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}
       >
         {query.isError ? (
           <p style={{ fontSize: 12, color: V3.red }} data-testid="unexpected-error">
@@ -166,6 +166,9 @@ export function UnexpectedExpensesPage() {
             href={query.isLoading || !kpis ? undefined : bankingMonthHref}
             noDrill={query.isLoading || !kpis ? "unexpected month total still loading" : undefined}
             testId="unexpected-kpi-month"
+            labelDataV3="unexpected-kpi-month-label"
+            valueDataV3="unexpected-kpi-month-value"
+            subDataV3="unexpected-kpi-month-sub"
           />
           <V3KpiTile
             label="Possible duplicates"
@@ -175,6 +178,8 @@ export function UnexpectedExpensesPage() {
             href={query.isLoading || !kpis ? undefined : bankingMonthHref}
             noDrill={query.isLoading || !kpis ? "duplicate count still loading" : undefined}
             testId="unexpected-kpi-dupes"
+            valueDataV3="unexpected-kpi-dup-value"
+            subDataV3="unexpected-kpi-dup-sub"
           />
           <V3KpiTile
             label="Linked to a truck"
@@ -186,6 +191,7 @@ export function UnexpectedExpensesPage() {
             href={query.isLoading || !kpis ? undefined : bankingMonthHref}
             noDrill={query.isLoading || !kpis ? "linked-to-truck count still loading" : undefined}
             testId="unexpected-kpi-linked"
+            valueDataV3="unexpected-kpi-linked-value"
           />
           <V3KpiTile
             label="Tows · fines"
@@ -196,6 +202,8 @@ export function UnexpectedExpensesPage() {
             href={query.isLoading || !kpis ? undefined : bankingMonthHref}
             noDrill={query.isLoading || !kpis ? "tows/fines total still loading" : undefined}
             testId="unexpected-kpi-tows"
+            valueDataV3="unexpected-kpi-tow-value"
+            subDataV3="unexpected-kpi-tow-sub"
           />
         </div>
 
@@ -212,6 +220,7 @@ export function UnexpectedExpensesPage() {
             viewAllHref={bankingMonthHref}
             footer="Found by payee name only — nothing is categorized or matched; a person confirms each line."
             testId="unexpected-candidates-panel"
+            titleDataV3="unexpected-candidates-title"
           >
             <ParityTable<(typeof candidates)[number]>
               tableTestId="unexpected-candidates-table"
@@ -258,7 +267,7 @@ export function UnexpectedExpensesPage() {
                 { key: "flag", label: "Flag", sortable: false, render: (row) => <FlagCell flag={row.flag} /> },
                 {
                   key: "link",
-                  label: "",
+                  label: "Truck / WO",
                   sortable: false,
                   render: (row) => <LinkCell row={row} originHref={originHref} />,
                 },

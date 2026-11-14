@@ -28,6 +28,9 @@ export function V3KpiTile({
   noDrill,
   testId,
   board = false,
+  labelDataV3,
+  valueDataV3,
+  subDataV3,
 }: {
   label: string;
   value: string;
@@ -49,6 +52,9 @@ export function V3KpiTile({
   testId?: string;
   /** Draw the V3 board tile (docs/design/v3) instead of the approved Home tile. */
   board?: boolean;
+  labelDataV3?: string;
+  valueDataV3?: string;
+  subDataV3?: string;
 }) {
   const Tag = onClick ? "button" : "div";
   const tooltip = title ?? (noDrill ? `${label} — ${noDrill}` : label);
@@ -88,10 +94,8 @@ export function V3KpiTile({
             letterSpacing: "0.06em",
             color: V3.muted,
             textTransform: "uppercase",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
           }}
+          data-v3={labelDataV3}
         >
           {label}
         </span>
@@ -102,8 +106,8 @@ export function V3KpiTile({
             fontWeight: 700,
             color: TONE[tone],
             fontVariantNumeric: "tabular-nums",
-            whiteSpace: "nowrap",
           }}
+          data-v3={valueDataV3}
         >
           {value}
         </span>
@@ -119,6 +123,7 @@ export function V3KpiTile({
               whiteSpace: "nowrap",
               overflow: "hidden",
             }}
+            data-v3={subDataV3}
           >
             {sub}
           </span>
