@@ -18411,5 +18411,10 @@
     "claimed_at": "2026-11-14T18:26:27Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 CashFlow/Finance/Inventory/Dispatch/Maint/Home Link to= ret wave7"
+  },
+  "20332": {
+    "claimed_at": "2026-11-14T18:36:08Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 LoadCosts/Dispatch/Posting/Reports/Maint tpl Link ret wave8"
   }
 }

@@ -65,6 +65,7 @@ export function CustomerReportBoard() {
   const customerIds = searchParams.get("customers") ?? "";
   const factored = (searchParams.get("factored") ?? "").split(",").filter(Boolean);
   const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const patchUrl = (patch: Record<string, string | null>) => {
     setSearchParams(
       (prev) => {
@@ -187,7 +188,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => r.invoices,
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={`/accounting/invoices?customer_id=${encodeURIComponent(r.id)}&live_open=true`}>
+        <Link className="text-[#1D4ED8] hover:underline" to={moneyHref(`/accounting/invoices?customer_id=${encodeURIComponent(r.id)}&live_open=true`)}>
           Open invoices
         </Link>
       ),

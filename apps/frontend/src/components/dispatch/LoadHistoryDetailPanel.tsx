@@ -10,7 +10,8 @@
  * Every item opens its record, and every record links back to this load.
  */
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getLoadCostRollup, listLoadExpenses } from "../../api/accounting";
 import { listFiles } from "../../api/docs";
 import { getDispatchLoadHistory, type LoadHistoryRow } from "../../api/loads";
@@ -85,6 +86,9 @@ export function LoadHistoryDetailPanel({
   onClose: () => void;
   onOpenLoad: (loadId: string) => void;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const loadId = row.load_id;
   const enabled = Boolean(loadId && operatingCompanyId);
   const history = useQuery({
@@ -165,7 +169,7 @@ export function LoadHistoryDetailPanel({
             </li>
           ))}
         </ol>
-        <Link to={`/dispatch/loads/${encodeURIComponent(loadId)}/history`} className="mt-1 inline-block text-xs font-semibold text-[#1F2A44] hover:underline" data-testid="load-history-panel-full-history">
+        <Link to={dispHref(`/dispatch/loads/${encodeURIComponent(loadId)}/history`)} className="mt-1 inline-block text-xs font-semibold text-[#1F2A44] hover:underline" data-testid="load-history-panel-full-history">
           Full change history →
         </Link>
       </Section>
@@ -188,7 +192,7 @@ export function LoadHistoryDetailPanel({
           <strong>{money ? formatUsdCents(money.margin_cents) : "…"}</strong>
           {money?.margin_pct != null ? <span className="ml-1 text-[#6B7280]">({money.margin_pct.toFixed(1)}%)</span> : null}
         </Row>
-        <Link to={`/dispatch/load-costs/${encodeURIComponent(loadId)}`} className="mt-1 inline-block text-xs font-semibold text-[#1F2A44] hover:underline">
+        <Link to={dispHref(`/dispatch/load-costs/${encodeURIComponent(loadId)}`)} className="mt-1 inline-block text-xs font-semibold text-[#1F2A44] hover:underline">
           Open load costs →
         </Link>
       </Section>

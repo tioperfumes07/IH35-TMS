@@ -4,7 +4,8 @@ import { formatDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import {
   billVendorDrillId,
@@ -223,6 +224,9 @@ function BillPaymentsSubTable({ billId, companyId }: { billId: string; companyId
 }
 
 export function BillsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -1064,7 +1068,7 @@ export function BillsPage() {
           setAllocationBillId(bill.id);
           const next = new URLSearchParams(searchParams);
           next.set("bill_id", bill.id);
-          void navigate(`/accounting/bills?${next.toString()}`, { replace: true });
+          void navigate(moneyHref(`/accounting/bills?${next.toString()}`), { replace: true });
         }}
         rowClassName={(bill) => (highlightedBillId === bill.id ? "bg-[#F7F8FA]" : "")}
         batchActions={(selected) => (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ComponentProps } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate , useLocation} from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
@@ -130,6 +130,14 @@ const isClosed = (r: BoardRow) => CLOSED.includes(r.status);
  *  The number when the settlement has one; PENDING while the tour is open; never a bare em dash and never
  *  a generic word when the row has a settlement destination. Status comes from the SETTLEMENT (API field
  *  settlement_status / settlement_is_open), not from the load. */
+/** ROUND 8.20 — module-level ParityColumn renders need ?ret= without a page-scoped moneyHref. */
+function RetMoneyLink({ to, className, style, children, ...rest }: ComponentProps<typeof Link> & { to: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const href = withReturnContext(to, currentOriginHref(pathname, locSearch));
+  return <Link to={href} className={className} style={style} {...rest}>{children}</Link>;
+}
+
+
 function settlementLinkLabel(s: { number: string | null | undefined; status?: string | null; is_open?: boolean | null }): string {
   const lbl = settlementLabel({ source_document_ref: s.number ?? null, status: s.status ?? undefined, is_open: s.is_open ?? undefined, is_presettlement: !s.number && s.is_open !== false });
   return lbl === DASH ? (s.status ? s.status.toUpperCase() : "PENDING") : lbl;
@@ -216,6 +224,9 @@ function serviceStatus(r: BoardRow): { label: string; style: { backgroundColor: 
 // One component, one write path (createExpense / createVendorBill) — a cost saved here IS the row Accounting →
 // Expenses / Bills lists. The legacy panel ids stay (element manifest) around the cards.
 function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const load = useDispatchLoad(row.load_id, companyId);
   const params = new URLSearchParams({ load_id: row.load_id, load_number: row.load_number }).toString();
   return <div className="ldt-body" style={{ padding: 10 }} data-testid="load-costs-expand" data-surface="load-detail">
@@ -227,9 +238,9 @@ function ExpandPanel({ row, companyId }: { row: BoardRow; companyId: string }) {
           : <p className="ldt-muted">Loading load {row.load_number}…</p>}
       </div>
       <div className="ldt-actions" style={{ padding: "0 10px 10px" }}>
-        <Link data-testid="btn-add-cost" className="ldt-btn" to={`/accounting/expenses/new?${params}`}>Open the full expense form</Link>
-        <Link data-testid="btn-receipt-photo" className="ldt-btn g" to={`/accounting/receipts?${params}`}>Receipts inbox</Link>
-        <Link data-testid="btn-fuel-advance" className="ldt-btn g" to={`/cash-advances?${params}`}>Cash advances</Link>
+        <Link data-testid="btn-add-cost" className="ldt-btn" to={moneyHref(`/accounting/expenses/new?${params}`)}>Open the full expense form</Link>
+        <Link data-testid="btn-receipt-photo" className="ldt-btn g" to={moneyHref(`/accounting/receipts?${params}`)}>Receipts inbox</Link>
+        <Link data-testid="btn-fuel-advance" className="ldt-btn g" to={moneyHref(`/cash-advances?${params}`)}>Cash advances</Link>
       </div>
     </section>
     <section className="ldt-card" data-testid="panel-approx-settlement">
@@ -268,7 +279,7 @@ const REGISTER_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold text-[#1F2A44]">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Vendor / Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <RetMoneyLink className="font-semibold text-[#1F2A44] underline" to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</RetMoneyLink> : DASH },
   { key: "detail", label: "Description", testId: "reg-col-detail", sortable: true, sortValue: r => r.detail, render: r => <span className="text-[#4B5563]">{r.detail || DASH}</span> },
   // REG-PARSE (owner 2026-09-06 05:2xZ): receipt number, address and settlement number are their own columns.
   { key: "receipt_number", label: "Receipt no.", testId: "reg-col-receipt-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.receiptNumber ?? "", render: r => r.receiptNumber ? <span className="ldt-k">{r.receiptNumber}</span> : DASH },
@@ -295,7 +306,7 @@ const DRIVER_PAY_COLUMNS: Array<ParityColumn<RegisterRow>> = [
   { key: "number", label: "Number", testId: "reg-col-number", sortable: true, className: "whitespace-nowrap", sortValue: r => r.number, render: r => <span className="font-semibold">{r.number}</span> },
   { key: "date", label: "Date", testId: "reg-col-date", sortable: true, className: "whitespace-nowrap", sortValue: r => r.date ?? "", render: r => r.date ? formatDateQboList(r.date) : DASH },
   { key: "party", label: "Driver", testId: "reg-col-party", sortable: true, sortValue: r => r.party, render: r => r.party || DASH },
-  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</Link> : DASH },
+  { key: "load", label: "Load Number", testId: "reg-col-load", sortable: true, className: "whitespace-nowrap", sortValue: r => r.loadNumber ?? "", render: r => r.loadId ? <RetMoneyLink className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{r.loadNumber ?? r.loadId}</RetMoneyLink> : DASH },
   { key: "loaded_miles", label: "Loaded miles", testId: "reg-col-loaded_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedMiles == null ? -Infinity : Number(r.loadedMiles), render: r => fmtMiles(r.loadedMiles ?? null) },
   { key: "loaded_rate", label: "Loaded rate", testId: "reg-col-loaded_rate", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.loadedRateCents == null ? -Infinity : Number(r.loadedRateCents), render: r => fmtRate(r.loadedRateCents ?? null) },
   { key: "empty_miles", label: "Empty miles", testId: "reg-col-empty_miles", sortable: true, className: `${NUM} ldt-m`, sortValue: r => r.emptyMiles == null ? -Infinity : Number(r.emptyMiles), render: r => fmtMiles(r.emptyMiles ?? null) },
@@ -319,7 +330,7 @@ function loadCell(loadsById: Map<string, string>): ParityColumn<RegisterRow> {
     render: r => {
       if (!r.loadId) return DASH;
       const label = loadsById.get(r.loadId) ?? r.loadNumber ?? r.loadId;
-      return <Link className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{label}</Link>;
+      return <RetMoneyLink className="ldt-link" style={{ display: "inline" }} to={`/dispatch/load-costs/${r.loadId}?tab=Costs`}>{label}</RetMoneyLink>;
     },
   };
 }
@@ -756,7 +767,7 @@ export function LoadCostsBoardPage() {
     deadhead_pay: visible.reduce((n, r) => n + (r.deadhead_pay_cents == null ? 0 : Number(r.deadhead_pay_cents)), 0), gross: driver,
   }), [visible, revenue, driver]);
   const columns: Array<ParityColumn<BoardRow>> = [
-    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/load-costs/${r.load_id}?tab=Costs`}>{r.load_number}</Link> },
+    { key: "load", label: "Load Number", testId: "col-load", sortable: true, alwaysVisible: true, sortValue: r => r.load_number, render: r => <Link className="font-semibold text-[#1F2A44] underline" to={moneyHref(`/dispatch/load-costs/${r.load_id}?tab=Costs`)}>{r.load_number}</Link> },
     // LOAD-COSTS-RETURN-COLS (owner 2026-09-08, item 3): "Unassigned" is a distinct, real state
     // (no unit ever booked to this load) -- a plain "—" reads as "not measured", the same dash
     // every other untracked cell on this board already uses. Named so an operator scanning the

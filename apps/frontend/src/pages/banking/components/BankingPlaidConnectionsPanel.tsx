@@ -23,7 +23,8 @@ import { MONEY_DESTRUCTIVE_CLASS } from "../../../design/money-design-system";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { filterPlaidBankAccountsForCompany } from "../../../lib/banking-company-filter";
 import { entityLabel, visibleDocumentLabel } from "../../../lib/entity-label";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { useListState } from "../../../components/list-state";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -81,6 +82,9 @@ export function BankingPlaidConnectionsPanel({
 }: {
   companyId: string;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const auth = useAuth();
   const { pushToast } = useToast();
@@ -255,7 +259,7 @@ export function BankingPlaidConnectionsPanel({
                   Accounts:{" "}
                   {g.accounts.map((a) => (
                     <span key={a.id} className="mr-2 inline-block">
-                      <Link className="text-[#1F2A44] hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]" to={`/banking/accounts/${a.id}`}>
+                      <Link className="text-[#1F2A44] hover:underline focus:outline-hidden focus-visible:ring-2 focus-visible:ring-[#6B7280]" to={bankHref(`/banking/accounts/${a.id}`)}>
                         {(a.account_name || "Account") + (a.account_mask ? ` ••••${a.account_mask}` : "")}
                       </Link>
                     </span>

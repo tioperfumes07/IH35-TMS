@@ -1,11 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
 import { ListErrorState } from "../ListErrorState";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../shared/EntityLink";
 import { listLoadTemplates } from "../../api/dispatch";
 import { formatQuantityTable } from "../../lib/money";
 
 export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, customerId }: { operatingCompanyId: string; customerId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const query = useQuery({
     queryKey: ["load-templates", "customer-profile", operatingCompanyId, customerId],
     queryFn: () => listLoadTemplates(operatingCompanyId, { customer_id: customerId }),
@@ -36,7 +40,7 @@ export function CustomerLoadTemplatesReverseSection({ operatingCompanyId, custom
         <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#4B5563]">
           <span>Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(total, 0)}</span>
           {total > preview.length ? (
-            <Link className="font-semibold text-[#1F2A44] underline" to={`/dispatch/planner?panel=templates&customer_id=${encodeURIComponent(customerId)}`}>
+            <Link className="font-semibold text-[#1F2A44] underline" to={dispHref(`/dispatch/planner?panel=templates&customer_id=${encodeURIComponent(customerId)}`)}>
               Open all {total}
             </Link>
           ) : null}

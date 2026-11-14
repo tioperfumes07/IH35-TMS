@@ -1,5 +1,5 @@
 import { companyToday, addDaysIso } from "../../lib/businessDate";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -58,7 +58,9 @@ export function SettlementSummaryPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyRange = defaultRange();
@@ -296,7 +298,7 @@ export function SettlementSummaryPage() {
               loading={query.isPending || (query.isFetching && filteredDrivers.length === 0)}
               storageKey="settlement-summary"
               emptyText="No driver settlements for this period."
-              onRowClick={(r) => navigate(`/drivers/${r.driver_id}?tab=settlements`)}
+              onRowClick={(r) => navigate(drvHref(`/drivers/${r.driver_id}?tab=settlements`))}
               renderExpanded={(r) => (
                 <div>
                   <div className="text-section-header font-semibold uppercase text-gray-500">Deduction breakdown</div>

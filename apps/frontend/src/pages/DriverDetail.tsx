@@ -190,6 +190,7 @@ export function DriverDetailPage() {
   const location = useLocation();
   const originHref = currentOriginHref(location.pathname, location.search);
   const hubHref = (target: string) => withReturnContext(target, originHref);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const editOnly = location.pathname.endsWith("/edit");
   const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -236,7 +237,7 @@ export function DriverDetailPage() {
     // Legacy /drivers/:id still forwards into the profile wizard. Retract lives on
     // DriverProfilePage.closeAssignTruck (delete assign_truck) — do not strip here or the wizard never opens.
     if (searchParams.get("assign_truck") === "1" && id) {
-      navigate(`/drivers/${id}?assign_truck=1`, { replace: true });
+      navigate(drvHref(`/drivers/${id}?assign_truck=1`), { replace: true });
     }
   }, [searchParams, id, navigate]);
   const [enableModalOpen, setEnableModalOpen] = useState(false);

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../shared/EntityLink";
 import { listForecastEntries } from "../../api/forecast";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
@@ -9,6 +10,9 @@ type Filter =
   | { ref_kind: "unit"; ref_external_id: string };
 
 export function CashForecastReverseSection({ operatingCompanyId, filter }: { operatingCompanyId: string; filter: Filter }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const query = useQuery({
     queryKey: ["cash-forecast-reverse", operatingCompanyId, filter],
     queryFn: () => listForecastEntries(operatingCompanyId, undefined, undefined, filter),
@@ -40,7 +44,7 @@ export function CashForecastReverseSection({ operatingCompanyId, filter }: { ope
         <div className="mt-2 flex items-center justify-between gap-2 text-xs text-[#4B5563]">
           <span>Showing {formatQuantityTable(preview.length, 0)} of {formatQuantityTable(entries.length, 0)}</span>
           {entries.length > preview.length ? (
-            <Link className="font-semibold text-[#1F2A44] underline" to={`/cash-flow?${allParams.toString()}`}>
+            <Link className="font-semibold text-[#1F2A44] underline" to={moneyHref(`/cash-flow?${allParams.toString()}`)}>
               Open all {formatQuantityTable(entries.length, 0)}
             </Link>
           ) : null}
