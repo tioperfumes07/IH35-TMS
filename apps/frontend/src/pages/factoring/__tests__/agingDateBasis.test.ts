@@ -4,6 +4,8 @@ import {
   AGING_DATE_BASIS_OPTIONS,
   agingDateColumnLabel,
   agingDateForBasis,
+  buildAgingDateBasisParam,
+  parseAgingDateBasisParam,
 } from "../agingDateBasis";
 
 describe("agingDateForBasis", () => {
@@ -41,5 +43,14 @@ describe("agingDateForBasis", () => {
     expect(agingDateColumnLabel("invoice")).toBe("Invoice Date");
     expect(agingDateColumnLabel("purchase")).toBe("Purchase Date");
     expect(agingDateColumnLabel("fund")).toBe("Fund Date");
+  });
+
+  it("ROUND 8.20 board18 — aging_basis URL SoT parse/build", () => {
+    expect(parseAgingDateBasisParam(null)).toBe("fund");
+    expect(parseAgingDateBasisParam("invoice")).toBe("invoice");
+    expect(parseAgingDateBasisParam("purchase")).toBe("purchase");
+    expect(parseAgingDateBasisParam("bogus")).toBe("fund");
+    expect(buildAgingDateBasisParam("fund")).toBeNull();
+    expect(buildAgingDateBasisParam("invoice")).toBe("invoice");
   });
 });

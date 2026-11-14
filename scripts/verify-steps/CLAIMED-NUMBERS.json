@@ -15967,6 +15967,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-cash-flow-avp-projected-drills-rolling-ledger board6"
   },
+  "20165": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-13",
+    "purpose": "verify-registry-json-parses"
+  },
   "20166": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
@@ -15986,6 +15991,11 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-customers-ar-open-money-cells board9"
+  },
+  "20174": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-factoring-aging-basis-url board18"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -17991,10 +18001,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1109,
-  "20165": {
-    "claimed_by": "claude",
-    "claimed_at": "2026-11-13",
-    "purpose": "verify-registry-json-parses"
-  }
+  "total_claimed": 1109
 }
