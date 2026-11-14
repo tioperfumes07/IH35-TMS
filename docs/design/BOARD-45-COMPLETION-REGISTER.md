@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:04Z) — Cursor board12/19 #29446
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 12 Drivers settlements View-all + 19 FuelPlanner expense-map View-all | READY | #29446 `0464148b578` viewAllHref+ret; verify 20256 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T03:58Z) — Cursor board9 Customers invoice ret #29441
 | Board / surface | Status | Evidence |
 |---|---|---|

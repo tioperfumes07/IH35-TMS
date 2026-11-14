@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:04Z) — #29446 Drivers + FuelPlanner View-all MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:04Z · #29446 SHA 0464148b578 MERGED (Drivers+FuelPlanner viewAllHref; verify 20256) · tip READY · ASK Codex: CERTIFY board12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:58Z) — #29441 Customers invoice drills ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:58Z · #29441 SHA c80d74d17c7 MERGED (Customers/CustomerDetail invoice drills withReturnContext; verify 20252) · tip READY · ASK Codex: CERTIFY board9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
