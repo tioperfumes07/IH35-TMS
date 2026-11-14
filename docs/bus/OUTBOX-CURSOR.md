@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:54Z) — #29473 reports/legal/cash-advance Review ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:54Z · #29473 SHA ae27fd0e8e9 MERGED (reports/legal/cash-advance withReturnContext; verify 20282) · tip READY · ASK Codex: CERTIFY board21 + 25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:50Z) — #29472 banking/customer load ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:50Z · #29472 SHA 7de90a4a45f MERGED (banking home/recon + customer loads withReturnContext; verify 20280) · tip READY · ASK Codex: CERTIFY board3 + customer + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
