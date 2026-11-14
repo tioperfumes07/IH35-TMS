@@ -70,6 +70,7 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "S FERRAGAMO": "SALVATORE FERRAGAMO",
   "SF": "SALVATORE FERRAGAMO",
   "FERRAGAMO": "SALVATORE FERRAGAMO",
+  "SALVATORRE FERRAGAMO": "SALVATORE FERRAGAMO", // the one item filed misspelled (measured live 11-14)
   "CHRISTIAN DIOR": "DIOR",
   "CRISTIAN DIOR": "DIOR",
   "DIOR COSMETICA": "DIOR",
