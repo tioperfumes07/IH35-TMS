@@ -16322,6 +16322,46 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 final Class R sweep banking/reports/bills/checks withReturnContext"
   },
+  "20298": {
+    "claimed_at": "2026-11-14T17:20:55Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 DriverHub/Overview + LoadCosts page close withReturnContext"
+  },
+  "20300": {
+    "claimed_at": "2026-11-14T17:23:16Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 DriverHubPanel drvHref scope fix + KPI/NumLink ret"
+  },
+  "20302": {
+    "claimed_at": "2026-11-14T17:25:51Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Party/Vendors board KPI+NumLink withReturnContext"
+  },
+  "20304": {
+    "claimed_at": "2026-11-14T17:29:22Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 FuelCards/Savings/LoadHistory/Maint side ret"
+  },
+  "20306": {
+    "claimed_at": "2026-11-14T17:31:18Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 hotfix VariantDuplicatesPanel partyHref scope"
+  },
+  "20308": {
+    "claimed_at": "2026-11-14T17:33:11Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Banking COA + Customer pay + Batch/Ins/Safety/Maint/Settings ret"
+  },
+  "20310": {
+    "claimed_at": "2026-11-14T17:36:17Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 WriteCheck print stock + AnomalyAlertBadge ret"
+  },
+  "20312": {
+    "claimed_at": "2026-11-14T17:39:22Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Topbar + DriftAlertPopup withReturnContext"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18326,40 +18366,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20298": {
-    "claimed_at": "2026-11-14T17:20:55Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 DriverHub/Overview + LoadCosts page close withReturnContext"
-  },
-  "20300": {
-    "claimed_at": "2026-11-14T17:23:16Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 DriverHubPanel drvHref scope fix + KPI/NumLink ret"
-  },
-  "20302": {
-    "claimed_at": "2026-11-14T17:25:51Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Party/Vendors board KPI+NumLink withReturnContext"
-  },
-  "20304": {
-    "claimed_at": "2026-11-14T17:29:22Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 FuelCards/Savings/LoadHistory/Maint side ret"
-  },
-  "20306": {
-    "claimed_at": "2026-11-14T17:31:18Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 hotfix VariantDuplicatesPanel partyHref scope"
-  },
-  "20308": {
-    "claimed_at": "2026-11-14T17:33:11Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Banking COA + Customer pay + Batch/Ins/Safety/Maint/Settings ret"
-  },
-  "20310": {
-    "claimed_at": "2026-11-14T17:36:17Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 WriteCheck print stock + AnomalyAlertBadge ret"
-  }
+  "total_claimed": 1111
 }

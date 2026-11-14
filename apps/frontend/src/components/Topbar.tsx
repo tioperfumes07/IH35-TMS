@@ -1,7 +1,8 @@
 import { ChevronDown, Menu, Plus, ClipboardList, LayoutGrid } from "lucide-react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { getQboConnectionStatus, getQboAuthorizeStartUrl } from "../api/forensic";
 import { getQboSyncHealth, postQboMasterDataSyncTriggerFull } from "../api/qbo-integration";
 import { getRelayHealth } from "../api/relay";
@@ -44,6 +45,9 @@ function formatNow(now: Date): string {
 const TASKS_PROGRAM_BANNER_ARCHIVED = true;
 
 export function Topbar({ auth, onOpenMobileNav }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [now, setNow] = useState(() => new Date());
   const [open, setOpen] = useState(false);
@@ -238,7 +242,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
           samsaraVis={samsaraVis}
           relayVis={relayVis}
           qboSyncPill={qboSyncPill}
-          onOpenQboSyncDashboard={() => navigate("/qbo/sync-dashboard")}
+          onOpenQboSyncDashboard={() => navigate(hubHref("/qbo/sync-dashboard"))}
           onReconnectQbo={() => {
             if (companyId) window.location.href = getQboAuthorizeStartUrl(companyId);
           }}
@@ -297,7 +301,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                       data-b5-create={to.includes("batch") ? "batch" : to.includes("reclassify") ? "reclassify" : undefined}
                       onClick={() => {
                         setCreateOpen(false);
-                        navigate(to);
+                        navigate(hubHref(to));
                       }}
                     >
                       {label}
@@ -326,7 +330,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             aria-label={t("topbar.tasks", "Tasks")}
             className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
             style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: 12 }}
-            onClick={() => navigate("/tasks")}
+            onClick={() => navigate(hubHref("/tasks"))}
           >
             <ClipboardList className="h-3 w-3" />
             {t("topbar.tasks", "Tasks")}
@@ -338,7 +342,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
             aria-label={t("topbar.program", "Program Board")}
             className="flex h-7 items-center gap-1 rounded-sm border px-2 hover:bg-white/10"
             style={{ borderColor: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.75)", fontSize: 12 }}
-            onClick={() => navigate("/program")}
+            onClick={() => navigate(hubHref("/program"))}
           >
             <LayoutGrid className="h-3 w-3" />
             {t("topbar.program", "Program")}
@@ -369,7 +373,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
               className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
               onClick={() => {
                 setOpen(false);
-                navigate("/settings");
+                navigate(hubHref("/settings"));
               }}
             >
               {t("common.profile", "Profile")}
@@ -380,7 +384,7 @@ export function Topbar({ auth, onOpenMobileNav }: Props) {
                 className="block w-full rounded-sm px-2 py-1 text-left text-xs hover:bg-gray-100"
                 onClick={() => {
                   setOpen(false);
-                  navigate("/admin");
+                  navigate(hubHref("/admin"));
                 }}
               >
                 {t("common.admin", "Admin")}
