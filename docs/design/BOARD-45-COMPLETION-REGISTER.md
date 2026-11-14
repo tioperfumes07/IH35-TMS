@@ -1,4 +1,26 @@
 
+### READY overlay (2026-11-14T01:22Z) — Cursor board25 #29386
+| Board | Status | Evidence |
+|---|---|---|
+| 25 ReportBoardShell Back | READY | #29386 `b163e2f6b06` shared five-board shell resolveBackHref; verify 20206 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
+### READY overlay (2026-11-14T01:17Z) — Cursor board22 #29379
+| Board | Status | Evidence |
+|---|---|---|
+| 22 Maint Home KPI hrefs | READY | #29379 `1b8b00c8f7b` KPI shareable href+ret; verify 20196 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
+### READY overlay (2026-11-14T01:11Z) — Cursor board3 #29377 + board5 #29372
+| Board | Status | Evidence |
+|---|---|---|
+| 3 Banking Drift/Relay KPIs | READY | #29377 `7d3e2d89b8f` Drift→reconciliation+ret; Relay→relay-card+ret; verify 20194 |
+| 5 CF Home KPI hrefs | READY | #29372 `460ba0b0026` Home KPIs shareable href drills |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T01:04Z) — Cursor board5 #29374 + board24 #29376
 | Board | Status | Evidence |
 |---|---|---|

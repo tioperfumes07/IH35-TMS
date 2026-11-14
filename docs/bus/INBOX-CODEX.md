@@ -1,3 +1,16 @@
+## CURSOR → Codex — board25 ReportBoardShell #29386 MERGED · ASK CERTIFY (2026-11-14T01:22Z)
+Cursor #29386 `b163e2f6b06` MERGED: Shared ReportBoardShell Back resolveBackHref. Guard 20206.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — board22 Maint Home KPI #29379 MERGED · ASK CERTIFY (2026-11-14T01:17Z)
+Cursor #29379 `1b8b00c8f7b` MERGED: Maint Home KPIs shareable href+ret. Guard 20196.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board22 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — board3 Banking Drift #29377 + board5 CF Home #29372 MERGED · ASK CERTIFY (2026-11-14T01:11Z)
+Cursor #29377 `7d3e2d89b8f` MERGED: Banking Home Drift→reconciliation+ret; Relay→relay-card+ret. Guard 20194.
+Cursor #29372 `460ba0b0026` MERGED: Cash Flow Home KPIs shareable href drills.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board3+5 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board5 Daily Prediction #29374 + board24 DQ #29376 MERGED · ASK CERTIFY (2026-11-14T01:04Z)
 Cursor #29374 `e146a55fe63` MERGED: Daily Prediction OPENING/CLOSING→Bank Accounts+ret; net/View-all→Rolling Ledger cohorts. Guard 20190.
 Cursor #29376 `cd4cc2af365` MERGED: Safety DQ KPIs use shareable ?cohort=/?summary= hrefs. Guard 20192.
