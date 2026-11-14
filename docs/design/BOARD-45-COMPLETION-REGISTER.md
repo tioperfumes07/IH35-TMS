@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:54Z) — Cursor board7 #29370
+| Board | Status | Evidence |
+|---|---|---|
+| 7 CF Rolling Ledger KPIs | READY | #29370 `c06e7c8f960` KPI drills; verify 20186 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:50Z) — Cursor board2 #29368
 | Board | Status | Evidence |
 |---|---|---|
