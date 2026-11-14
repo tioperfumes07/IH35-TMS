@@ -311,7 +311,7 @@ export function BankAccountDetailPage() {
                   void disconnectPlaidBankAccount(id, companyId)
                     .then(() => {
                       pushToast("Bank account disconnected", "success");
-                      navigate("/banking");
+                      navigate(moneyHref("/banking"));
                     })
                     .catch((error) => pushToast(userFacingApiError(error, "Disconnect failed"), "error"))
                     .finally(() => setDisconnecting(false));
@@ -395,7 +395,7 @@ export function BankAccountDetailPage() {
         accounts={accountsQuery.data?.accounts ?? []}
         selectedAccountId={id}
         onSelectAccount={(accountId) => navigate(moneyHref(`/banking/accounts/${accountId}`))}
-        onManageConnections={() => navigate("/banking")}
+        onManageConnections={() => navigate(moneyHref("/banking"))}
         onDataChanged={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });
         }}

@@ -677,7 +677,7 @@ export function ReconciliationWorkspacePage() {
                 data-testid="recon-save-for-later"
                 onClick={() => {
                   pushToast("Session saved — reopen from Reconciliation to continue", "success");
-                  navigate("/banking/reconciliation");
+                  navigate(moneyHref("/banking/reconciliation"));
                 }}
               >
                 Save for later
@@ -1573,7 +1573,7 @@ export function ReconciliationWorkspacePage() {
                     .then(() => {
                       pushToast("Session marked reconciled", "success");
                       void queryClient.invalidateQueries({ queryKey: ["banking", "reconciliation-sessions"] });
-                      navigate("/banking");
+                      navigate(moneyHref("/banking"));
                     })
                     .catch((error) => pushToast(userFacingApiError(error, "Failed to complete reconciliation"), "error"))
                     .finally(() => setCompleting(false));

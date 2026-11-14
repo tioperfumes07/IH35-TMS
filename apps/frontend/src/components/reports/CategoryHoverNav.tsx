@@ -267,11 +267,11 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
                     return;
                   }
                   if (itemId === "ar-aging") {
-                    navigate("/reports/ar-aging");
+                    navigate(moneyHref("/reports/ar-aging"));
                     return;
                   }
                   if (itemId === "ap-aging") {
-                    navigate("/reports/ap-aging");
+                    navigate(moneyHref("/reports/ap-aging"));
                     return;
                   }
                   navigate(moneyHref(`/reports/run/${encodeURIComponent(itemId)}`));
