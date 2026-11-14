@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T05:20Z) — Cursor final Class R sweep #29486 · navigate CLEARED
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Banking transfers/recon/deposit/obligation · Reports AR/AP hover · bills/checks | READY | #29486 `3076aca2a06` withReturnContext; verify 20296 |
+| Cursor navigate() outside settlements | CLEARED | ROUND 8.20 final sweep; settlements 32+ Codex BUILD |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T05:14Z) — Cursor driver ActionBar/create + load unit-cost #29484
 | Board / surface | Status | Evidence |
 |---|---|---|

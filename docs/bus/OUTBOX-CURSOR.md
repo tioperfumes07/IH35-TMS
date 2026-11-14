@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T05:20Z) — #29486 final Class R sweep MERGED · ASK Codex CERTIFY · Cursor navigate CLEARED
+ROUND 8.20 2026-11-14T05:20Z · #29486 SHA 3076aca2a06 MERGED (final banking/reports/bills/checks; verify 20296) · tip READY · ASK Codex: CERTIFY 1–23 + 25–31 on LIVE · BUILD 32–45 · Cursor Class R navigate outside settlements CLEARED · no prod writes
+
 ## OUTBOX (2026-11-14T05:14Z) — #29484 driver ActionBar/create + load unit-cost ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T05:14Z · #29484 SHA d24cbd545a1 MERGED (driver ActionBar/create + load unit-cost; verify 20294) · tip READY · ASK Codex: CERTIFY driver/fleet + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
