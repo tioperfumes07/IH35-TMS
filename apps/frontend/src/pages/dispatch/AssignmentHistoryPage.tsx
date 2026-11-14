@@ -4,7 +4,8 @@ import { resolveBackHref } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -31,6 +32,9 @@ type Filters = {
 const EMPTY_FILTERS: Filters = { driverId: "", from: "", to: "", reason: "" };
 
 export function AssignmentHistoryPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -157,7 +161,7 @@ render: (row) => {
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch Home
           </Link>
         }
