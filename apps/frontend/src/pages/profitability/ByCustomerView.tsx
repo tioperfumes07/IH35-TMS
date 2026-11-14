@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getCustomerProfitability, type CustomerProfitabilityRow } from "../../api/reports";
@@ -18,6 +20,9 @@ interface ByCustomerViewProps {
 }
 
 export function ByCustomerView({ filters }: ByCustomerViewProps) {
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  const reportViewAllHref = withReturnContext("/reports/customer-profitability", originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -105,9 +110,7 @@ export function ByCustomerView({ filters }: ByCustomerViewProps) {
       title="By Customer"
       subtitle={`${filters.dateFrom} → ${filters.dateTo}${equipNote}`}
       testId="profitability-by-customer-board"
-      onViewAll={() => {
-        window.location.assign("/reports/customer-profitability");
-      }}
+      viewAllHref={reportViewAllHref}
       viewAllLabel="Full report →"
     >
       <div className="p-4 space-y-3">
