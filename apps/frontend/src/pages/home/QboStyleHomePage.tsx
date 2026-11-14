@@ -21,7 +21,8 @@
  */
 import { unverifiableReasonText } from "../../lib/unverifiableReasonText";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import {Link, useNavigate, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp, TrendingDown, DollarSign, RefreshCw, AlertCircle, CheckCircle, X } from "lucide-react";
 import type { AuthMeResponse } from "../../types/api";
@@ -95,6 +96,9 @@ type Props = {
 };
 
 export function QboStyleHomePage({ auth }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -256,7 +260,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs md:col-span-2 xl:col-span-1">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Bank accounts</p>
-              <Link to="/banking" className="text-xs text-[#1F2A44] hover:underline">Go to registers</Link>
+              <Link to={hubHref("/banking")} className="text-xs text-[#1F2A44] hover:underline">Go to registers</Link>
             </div>
             {bankTilesQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -300,7 +304,7 @@ export function QboStyleHomePage({ auth }: Props) {
                   ))}
                 </div>
                 {totalUncategorized > 0 && (
-                  <Link to="/banking" className="mt-3 block text-xs text-[#1F2A44] hover:underline">
+                  <Link to={hubHref("/banking")} className="mt-3 block text-xs text-[#1F2A44] hover:underline">
                     {totalUncategorized} transactions need review
                   </Link>
                 )}
@@ -317,7 +321,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{revenueKpiLabel(kpiRange)}</p>
-              <Link to="/reports" className="text-xs text-[#1F2A44] hover:underline">Analyze →</Link>
+              <Link to={hubHref("/reports")} className="text-xs text-[#1F2A44] hover:underline">Analyze →</Link>
             </div>
             {revenueDisplay.kind === "loading" ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" data-testid="qbo-revenue-loading" />
@@ -378,7 +382,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Expenses</p>
-              <Link to="/accounting/expenses/list" className="text-xs text-[#1F2A44] hover:underline">View →</Link>
+              <Link to={hubHref("/accounting/expenses/list")} className="text-xs text-[#1F2A44] hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -435,7 +439,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</p>
-              <Link to="/accounting/invoices" className="text-xs text-[#1F2A44] hover:underline">View →</Link>
+              <Link to={hubHref("/accounting/invoices")} className="text-xs text-[#1F2A44] hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />
@@ -480,7 +484,7 @@ export function QboStyleHomePage({ auth }: Props) {
                     </span>
                   </div>
                 </div>
-                <Link to="/reports/ar-aging" className="mt-2 block text-xs text-[#1F2A44] hover:underline">
+                <Link to={hubHref("/reports/ar-aging")} className="mt-2 block text-xs text-[#1F2A44] hover:underline">
                   View A/R aging →
                 </Link>
               </>
@@ -491,7 +495,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">My integrations</p>
-              <Link to="/accounting/qbo-sync" className="text-xs text-[#1F2A44] hover:underline">View issues →</Link>
+              <Link to={hubHref("/accounting/qbo-sync")} className="text-xs text-[#1F2A44] hover:underline">View issues →</Link>
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="text-center">

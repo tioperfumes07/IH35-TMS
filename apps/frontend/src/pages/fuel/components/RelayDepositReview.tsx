@@ -3,7 +3,8 @@
  * getRelayDeposits engine unchanged. DISPLAY only — separates money funded INTO Relay by its funding card.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useTranslation } from "../../../hooks/useTranslation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -45,6 +46,9 @@ const CLASS_KPI_LABEL: Record<RelayDepositClassification, string> = {
  * owner. Nothing posts. The owner adds a card to the company set to reclassify its deposits.
  */
 export function RelayDepositReview({ companyId }: { companyId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const { t } = useTranslation();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -169,7 +173,7 @@ export function RelayDepositReview({ companyId }: { companyId: string }) {
         sortable: true,
         // Card-roll aggregate — same inbox list owns the deposits behind the total.
         render: (c) => (
-          <Link to="/fuel/inbox" className="tabular-nums text-[#1F2A44] hover:underline">
+          <Link to={fuelHref("/fuel/inbox")} className="tabular-nums text-[#1F2A44] hover:underline">
             {formatUsdCents(c.settled_cents)}
           </Link>
         ),
