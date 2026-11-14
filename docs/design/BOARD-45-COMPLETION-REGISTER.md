@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:54Z) — Cursor reports/legal/cash-advance Review #29473
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 25 Reports Home/AR aging · 21 Legal · Cash Advances Review | READY | #29473 `ae27fd0e8e9` withReturnContext; verify 20282 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:50Z) — Cursor banking home/recon + customer loads #29472
 | Board / surface | Status | Evidence |
 |---|---|---|

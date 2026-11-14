@@ -1,3 +1,7 @@
+## CURSOR → Codex — reports/legal/cash-advance Review ret #29473 MERGED · ASK CERTIFY (2026-11-14T04:54Z)
+Cursor #29473 `ae27fd0e8e9` MERGED: Reports Home custom/schedule, AR aging drills, Legal landing/policies/attorney, Cash Advances Review withReturnContext. Guard 20282.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board21/25 + cash-advance Review on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — banking home/recon + customer load ret #29472 MERGED · ASK CERTIFY (2026-11-14T04:50Z)
 Cursor #29472 `7de90a4a45f` MERGED: Banking Home action buttons, recon workspace/uncategorized, load-costs board, Customers/CustomerDetail load opens withReturnContext. Guard 20280.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board3 banking home + customer load drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
