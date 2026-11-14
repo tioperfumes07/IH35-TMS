@@ -18271,5 +18271,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111
+  "total_claimed": 1111,
+  "20280": {
+    "claimed_at": "2026-11-14T04:47:20Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 banking home/recon + customer load drills withReturnContext"
+  }
 }

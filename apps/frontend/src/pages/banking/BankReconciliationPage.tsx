@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useLocation, useSearchParams } from "react-router-dom";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import {
   acceptBankReconMatch,
   type BankMatchCandidateKind,
@@ -81,7 +81,9 @@ export function BankReconciliationPage() {
   const { pushToast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
 
   // 0441-mod8: honor deep link from ReconciliationWorkspace Auto-Match Suggestions
@@ -324,7 +326,7 @@ export function BankReconciliationPage() {
           Progress: {worklistQuery.data?.progress.percent ?? 0}% ({worklistQuery.data?.progress.matched_or_skipped_transactions ?? 0}/
           {worklistQuery.data?.progress.total_transactions ?? 0})
         </div>
-        <ActionButton onClick={() => navigate("/banking/reconciliation-workspace")}>
+        <ActionButton onClick={() => navigate(bankHref("/banking/reconciliation-workspace"))}>
           Start reconciliation
         </ActionButton>
         <ActionButton

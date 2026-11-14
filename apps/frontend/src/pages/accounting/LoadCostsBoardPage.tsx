@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listBills, listBrokerAdvances, listCoaRoles, listDriverBills, listExpenses, type BrokerAdvanceRow } from "../../api/accounting";
 import { listCashAdvances } from "../../api/cashAdvances";
 import { apiRequest } from "../../api/client";
@@ -498,7 +499,7 @@ function TransactionRegister({ tab, companyId, loadsById, settlementsByLoad, nav
     },
   });
   const rows = q.data ?? [];
-  const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(`/dispatch/load-costs/${r.loadId}?tab=Costs`); };
+  const goToLoad = (r: RegisterRow) => { if (r.loadId) navigate(moneyHref(`/dispatch/load-costs/${r.loadId}?tab=Costs`)); };
   // A failed fetch must never render as "No … transactions found" (LAW: empty is a question, not an answer).
   if (q.isError) return <div data-testid="load-costs-register-error"><ListErrorState title={`Couldn't load ${tab.replaceAll("_", " ")}`} status={(q.error as { status?: number })?.status ?? 0} message={q.error instanceof Error ? q.error.message : String(q.error)} onRetry={() => void q.refetch()} /></div>;
   const baseColumns =
@@ -588,6 +589,9 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
 }
 
 export function LoadCostsBoardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate(); const { selectedCompanyId } = useCompanyContext(); const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const [filter, setFilter] = useState<FilterPill>("all_open");
