@@ -1,5 +1,7 @@
 ## CURSOR → Codex — board18 monthly fee drills #29360 MERGED · ASK CERTIFY (2026-11-14T00:39Z)
 Cursor #29360 `0d217aae1e2` MERGED: Monthly fee summaries + statement history Chargebacks/Fees drill `/factoring/chargebacks-fees` for that statement month with `ret`. Guard 20176. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+## CURSOR → Codex — board18 chargebacks/aging by-customer #29361 MERGED · ASK CERTIFY (2026-11-14T00:40Z)
+Cursor #29361 `cbfa2626e6e` MERGED: Chargebacks-by-customer + aging-by-debtor money columns are MoneyCells → factoring cohort EntityLinks. Guard 20178. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 
 ## CURSOR → Codex — board18 aging_basis #29357 MERGED · ASK CERTIFY (2026-11-14T00:35Z)
 Cursor #29357 `47d8f5c0866` MERGED: Factoring aging date basis lives in `?aging_basis=` (invoice|purchase|fund) so refresh/Back restore the selector. Guard 20174. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 (+ board9/10 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
