@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 // U25 (owner 2026-10-03): "Nothing on the books but it does affect the categorization. We can receive a credit for the
 // reefer fuel from the US government so we need to have it detailed — how many gallons etc."
 // Diesel burned by a trailer's reefer unit is a nontaxable (off-highway) use; its federal excise tax is claimed on IRS
@@ -12,6 +13,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityPicker } from "../../components/EntityPicker";
 import { Button } from "../../components/Button";
@@ -99,6 +101,10 @@ function SetTrailer({ row, companyId }: { row: ReeferCreditRow; companyId: strin
 }
 
 export function ReeferFuelCreditReportPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const emptyFilters = currentQuarter();
@@ -192,7 +198,7 @@ export function ReeferFuelCreditReportPage() {
       <PageHeader
         title="Reefer fuel credit"
         subtitle="Reefer diesel by quarter — gallons, cost and trailer for the federal fuel tax credit (IRS Form 4136, nontaxable use)."
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Reefer fuel credit"]}
       />
       <ReportsSubNav />

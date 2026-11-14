@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -8,6 +8,7 @@ import { getGeofenceDwellReport, listGeofences, type GeofenceDwellRow, type Geof
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { mmmDdTime } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
@@ -46,6 +47,9 @@ export function GeofenceDwellReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters: GeofenceDwellFilters = { periodStart: monthStart(), periodEnd: today(), geofenceId: "", locationKind: "" };
   const [appliedFilters, setAppliedFilters] = useState<GeofenceDwellFilters>(emptyFilters);
   const staged = useStagedListFilters({
@@ -144,7 +148,7 @@ export function GeofenceDwellReport() {
       <PageHeader
         title="Geofence dwell report"
         subtitle="Entry/exit dwell durations by customer site, yard, and vendor geofence."
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Geofence Dwell Report"]}
         actions={
           <div className="flex items-center gap-2">

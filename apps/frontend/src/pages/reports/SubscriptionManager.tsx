@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { apiRequest, ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -15,6 +15,7 @@ import { useAuth } from "../../auth/useAuth";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { mmmDdTime } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
 // SUBSCRIPTIONS-PRESET-FILTER-SILENT-NOOP: the "Saved" category's "Owner weekly pack" /
@@ -103,6 +104,9 @@ function cadenceLabel(row: SubscriptionRow) {
 
 export function SubscriptionManager() {
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const preset = Q8_PRESETS[searchParams.get("preset") ?? ""] ?? null;
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
@@ -209,7 +213,7 @@ export function SubscriptionManager() {
       <PageHeader
         title={preset ? preset.title : "Scheduled report subscriptions"}
         subtitle={preset ? preset.subtitle : "Q8 auto-emailed reports — Owner manages cadence and recipients"}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Scheduled Subscriptions"]}
         actions={
           isOwner ? (

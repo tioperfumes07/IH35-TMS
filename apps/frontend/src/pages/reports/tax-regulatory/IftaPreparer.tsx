@@ -1,3 +1,5 @@
+import { resolveBackHref } from "../../../lib/returnContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -23,6 +25,10 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 export function IftaPreparer() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const auth = useAuth();
@@ -98,7 +104,7 @@ export function IftaPreparer() {
       <PageHeader
         title="IFTA Quarterly Preparer"
         subtitle={`${quarter} · 4-step wizard (mileage, fuel, tax, final review)`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "IFTA Quarterly Preparer"]}
       />
 

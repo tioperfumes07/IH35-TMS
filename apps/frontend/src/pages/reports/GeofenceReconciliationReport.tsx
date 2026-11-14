@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -51,6 +52,9 @@ export function GeofenceReconciliationReport() {
   const today = companyToday();
   const yesterday = addDaysIso(today, -1);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters: GeofenceReconFilters = { appliedDate: yesterday, kindFilter: "" };
   const [appliedFilters, setAppliedFilters] = useState<GeofenceReconFilters>(emptyFilters);
   const appliedDate = appliedFilters.appliedDate;
@@ -124,7 +128,7 @@ export function GeofenceReconciliationReport() {
     <div className="space-y-4">
       <ReportsSubNav />
       <PageHeader
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Geofence Reconciliation Report"]}
         title="Geofence Reconciliation Report"
       />

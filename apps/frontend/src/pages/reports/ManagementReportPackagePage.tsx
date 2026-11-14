@@ -1,4 +1,5 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account / customer / vendor aggregate; the package's period is chosen in the report header, not a column.
 import { useState } from "react";
 import { MoneyCell } from "../../components/shared/MoneyCell";
@@ -13,7 +14,7 @@ import {
   arAgingBucketFilter,
   arAgingInvoiceFilter,
 } from "./agingDrillThrough";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -622,6 +623,9 @@ export function ManagementReportPackagePage() {
   const entityName = selectedCompany?.legal_name ?? "Entity";
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const rawType = searchParams.get("type") ?? "company-overview";
   const pkgType: PackageType = rawType in PACKAGES ? (rawType as PackageType) : "company-overview";
   const pkg = PACKAGES[pkgType];
@@ -685,7 +689,7 @@ export function ManagementReportPackagePage() {
       <PageHeader
         title={pkg.label}
         subtitle={pkg.description}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Management reports", pkg.label]}
         actions={
           <div className="no-print flex gap-2">
