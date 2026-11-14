@@ -47,7 +47,6 @@ export function Faro1090WireProposalsPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const moneyHref = (target: string) => withReturnContext(target, originHref);
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
   const factoringBackHref = resolveBackHref({ searchParams, pathname, fallback: "/factoring" });

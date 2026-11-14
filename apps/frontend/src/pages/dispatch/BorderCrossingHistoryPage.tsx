@@ -38,7 +38,6 @@ export function BorderCrossingHistoryPage() {
   const originHref = currentOriginHref(pathname, locSearch);
   const dispHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const deepLinkCrossingId = searchParams.get("crossing_id")?.trim() || "";

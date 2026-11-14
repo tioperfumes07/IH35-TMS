@@ -121,7 +121,6 @@ export function PlannerCalendarPage() {
   // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
   // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const templatesOpen = searchParams.get("panel") === "templates";

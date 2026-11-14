@@ -123,7 +123,6 @@ export function FactoringQueuePage() {
   // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
   // LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
