@@ -895,7 +895,7 @@ export function SettlementCloseArrivalPage() {
       subtitle="Close ONE driver's settlement on arrival: gross, deductions, escrow, advances, net"
       kpiStrip={
         <div
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
           data-testid="settlement-close-v3-kpis"
           data-kpiStrip="1"
         >

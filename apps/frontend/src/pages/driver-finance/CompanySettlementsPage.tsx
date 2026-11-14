@@ -353,7 +353,7 @@ export function CompanySettlementsPage() {
       subtitle="Revenue · costs · driver pay · margin per tour"
       kpiStrip={
         <div
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
           data-testid="company-settlements-kpi-strip"
           data-company-settlements-v3-kpis="1"
         >

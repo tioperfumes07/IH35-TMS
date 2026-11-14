@@ -254,7 +254,7 @@ export function SettlementsEscrowBoard() {
   return (
     <div className="space-y-3" data-testid="settlements-escrow-board" data-settlements-escrow-rebuild="1">
       <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
         data-testid="escrow-home-kpi-strip"
         data-escrow-v3-kpis="1"
       >
