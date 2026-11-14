@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { getDriverHosDetail } from "../../api/hos";
 import { getDriver } from "../../api/mdata";
@@ -8,6 +8,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { titleize } from "../../lib/titleize";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
@@ -25,6 +26,10 @@ function statusClass(status: "ok" | "warning_1hr" | "warning_15min" | "violation
 }
 
 export function DriverHosDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { id = "" } = useParams();
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
@@ -48,7 +53,7 @@ export function DriverHosDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/drivers"
+        backHref={driversBackHref}
         breadcrumb={["Drivers", "HOS detail"]}
         title="Driver HOS Detail"
         subtitle={driverQuery.data ? `${driverQuery.data.first_name} ${driverQuery.data.last_name}` : "Driver timeline and FMCSA clocks"}

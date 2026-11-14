@@ -1,3 +1,5 @@
+import { resolveBackHref } from "../../lib/returnContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -77,6 +79,10 @@ function ApplicantCard({
 }
 
 export function ApplicantsPipelinePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
   const qc = useQueryClient();
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -156,7 +162,7 @@ export function ApplicantsPipelinePage() {
         title="Applicant pipeline"
         subtitle="Pre-hire applications → review → convert to driver onboarding."
         breadcrumb={["Drivers", "Applicant pipeline"]}
-        backHref="/drivers"
+        backHref={driversBackHref}
         actions={
           applyPath ? (
             <div className="rounded-sm border bg-gray-50 px-3 py-2 text-xs text-gray-700" data-testid="applicant-public-link">

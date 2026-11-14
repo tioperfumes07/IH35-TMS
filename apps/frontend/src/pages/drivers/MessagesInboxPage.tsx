@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -16,6 +17,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorState } from "../../components/ListErrorState";
 import { SendMessageModal } from "../../components/drivers/SendMessageModal";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { entityLabel } from "../../lib/entity-label";
 
 // Office-facing timestamps must render through the shared US/Central formatter (never device
@@ -157,6 +159,10 @@ function ThreadPane({
 }
 
 export function MessagesInboxPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -223,7 +229,7 @@ export function MessagesInboxPage() {
         title="Driver Messages"
         subtitle="Office inbox — threaded conversations per driver"
         breadcrumb={["Drivers", "Messages"]}
-        backHref="/drivers"
+        backHref={driversBackHref}
       />
       {markReadError ? (
         <div role="alert" className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">

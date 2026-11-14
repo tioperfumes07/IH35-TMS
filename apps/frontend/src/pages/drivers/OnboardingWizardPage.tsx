@@ -1,6 +1,7 @@
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import {
@@ -40,6 +41,10 @@ async function uploadDriverDoc(file: File, driverId: string | null | undefined, 
 }
 
 export function OnboardingWizardPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { session_id: sessionId } = useParams<{ session_id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -228,7 +233,7 @@ export function OnboardingWizardPage() {
 
   return (
     <div data-testid="onboarding-wizard-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader backHref="/drivers"
+      <PageHeader backHref={driversBackHref}
         title="Driver Onboarding Wizard"
         subtitle={`${statusLabel} · ${stepLabel} · ${driverBit} · save + resume · docs module uploads`}
         actions={

@@ -1,8 +1,10 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { AtRiskDriverCard } from "../../components/drivers/AtRiskDriverCard";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -20,6 +22,10 @@ type RetentionRow = {
 };
 
 export function RetentionDashboard() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
+  const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -44,7 +50,7 @@ export function RetentionDashboard() {
         title="Driver Retention Risk"
         subtitle="GAP-71 predictive model · at-risk and critical drivers"
         breadcrumb={["Drivers", "Retention Risk"]}
-        backHref="/drivers"
+        backHref={driversBackHref}
       />
       {!companyId ? (
         <BoardSection title="Driver Retention Risk" testId="driver-retention-need-company">
