@@ -18171,5 +18171,10 @@
     "claimed_at": "2026-11-14T03:24:00Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 board6 AVP Net variance KPI href+ret avp_var"
+  },
+  "20240": {
+    "claimed_at": "2026-11-14T03:26:53Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Fuel Home + Card Overage KPI href+ret"
   }
 }

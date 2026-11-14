@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import { resolveBackHref } from "../../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../../lib/returnContext";
 import { apiRequest } from "../../../api/client";
 import { ActionButton } from "../../../components/shared/ActionButton";
 import { useToast } from "../../../components/Toast";
@@ -135,6 +135,25 @@ export function CardOverageQueuePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 board19 — Fuel Home → Card overage carries ?ret=; Back must restore Fuel origin.
   const fuelBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fuel" });
+  const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const cohortHref = (opts: { status?: string | null; hasJe?: boolean }) => {
+    const params = new URLSearchParams(searchParams);
+    if (opts.status === undefined) {
+      /* leave */
+    } else if (opts.status === null) {
+      params.delete("status");
+    } else {
+      params.set("status", opts.status);
+    }
+    if (opts.hasJe) params.set("has_je", "1");
+    else params.delete("has_je");
+    const q = params.toString();
+    return withReturnContext(`${pathname}${q ? `?${q}` : ""}`, originHref);
+  };
+  // ROUND 8.20 board19 — KPI tiles shareable status/has_je cohort href+ret.
+  const matchingHref = cohortHref({ status: "all", hasJe: false });
+  const withJeHref = cohortHref({ status: "all", hasJe: true });
+
   // U12: multi-select status — API takes one status; 0/1 pass through; 2+ fetch all then filter.
   // URL SoT: ?status=pending_review|approved|posted|… (comma) or status=all.
   const [statusFilter, setStatusFilter] = useState<string[]>(() => parseOverageStatusParam(searchParams.get("status")));
@@ -475,21 +494,21 @@ export function CardOverageQueuePage() {
           value={kpiValue(totalMatching)}
           sub="filter total"
           testId="fuel-card-overage-kpi-matching"
-          onClick={() => applyKpiCohort({ status: "all", hasJe: false })}
+          href={matchingHref}
         />
         <V3KpiTile
           label={"Overage $"}
           value={eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : money(overageSumCents)}
           sub="rows loaded"
           testId="fuel-card-overage-kpi-dollars"
-          onClick={() => applyKpiCohort({ status: "all", hasJe: false })}
+          href={matchingHref}
         />
         <V3KpiTile
           label={"With JE"}
           value={kpiValue(withJe)}
           sub="posted recovery"
           testId="fuel-card-overage-kpi-je"
-          onClick={() => applyKpiCohort({ status: "all", hasJe: true })}
+          href={withJeHref}
         />
       </div>
 

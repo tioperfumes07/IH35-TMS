@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import type { FuelDashboard, LovesSyncStatus } from "../../../api/fuelPlanner";
 import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile, type V3KpiTone } from "../../../components/v3/V3KpiTile";
@@ -61,7 +62,13 @@ function fixed(n: number | null, digits: number, prefix = "", suffix = ""): stri
 const display = (v: string | null) => v ?? "—";
 
 export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
-  const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  // ROUND 8.20 board19 — KPI drills shareable href+ret (not onClick navigate).
+  const plannerHref = withReturnContext("/fuel/planner", originHref);
+  const historyHref = withReturnContext("/fuel/history", originHref);
+  const complianceHref = withReturnContext("/fuel/compliance", originHref);
+  const lovesHref = withReturnContext("/fuel/loves-prices", originHref);
   const lovesSyncAt = lovesSyncStatus?.last_synced_at ?? dashboard?.loves_sync_at ?? null;
   const activePlans = metric(dashboard?.active_plans);
 
@@ -80,46 +87,46 @@ export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
         label="Active Plans"
         value={display(activePlans === null ? null : String(activePlans))}
         testId="fuel-kpi-active-plans"
-        onClick={() => navigate("/fuel/planner")}
+        href={plannerHref}
       />
       <V3KpiTile
         label="MTD Spend"
         value={display(fixed(metric(dashboard?.mtd_spend), 0, "$"))}
         sub="diesel · month to date"
         testId="fuel-kpi-mtd-spend"
-        onClick={() => navigate("/fuel/history")}
+        href={historyHref}
       />
       <V3KpiTile
         label="Avg $/gal"
         // Register row 164 — same precision as the Fuel board strip (3 dp) so one figure reads identically on both.
         value={display(fixed(metric(dashboard?.avg_price_per_gallon), 3, "$"))}
         testId="fuel-kpi-avg-price"
-        onClick={() => navigate("/fuel/history")}
+        href={historyHref}
       />
       <V3KpiTile
         label="MTD Savings"
         value={display(fixed(metric(dashboard?.mtd_savings), 0, "$"))}
         testId="fuel-kpi-mtd-savings"
-        onClick={() => navigate("/fuel/planner")}
+        href={plannerHref}
       />
       <V3KpiTile
         label="Compliance %"
         value={display(fixed(metric(dashboard?.compliance_pct), 1, "", "%"))}
         testId="fuel-kpi-compliance"
-        onClick={() => navigate("/fuel/compliance")}
+        href={complianceHref}
       />
       <V3KpiTile
         label="Fleet MPG"
         value={display(fixed(metric(dashboard?.fleet_mpg), 1))}
         testId="fuel-kpi-fleet-mpg"
-        onClick={() => navigate("/fuel/history")}
+        href={historyHref}
       />
       <V3KpiTile
         label="Loves Sync"
         value={display(formatLovesSyncLabel(dashboard, lovesSyncStatus))}
         tone={lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status)}
         testId="fuel-kpi-loves-sync"
-        onClick={() => navigate("/fuel/loves-prices")}
+        href={lovesHref}
       />
     </div>
   );
