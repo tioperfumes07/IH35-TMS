@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:44Z) — Cursor brokers/cargo-claim customer drills #29468
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Brokers → customer · Cargo claim claimant | READY | #29468 `b8bfcd1ac05` withReturnContext; verify 20276 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:39Z) — Cursor #29464/#29465/#29462 money drills
 | Board / surface | Status | Evidence |
 |---|---|---|
