@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import type { FactoringKpi } from "../../../api/factoring-kpis";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 
@@ -44,6 +45,9 @@ function EngineLine({ kpi, failed, testId, to }: { kpi: FactoringKpi | null; fai
  * the old "— (see Factoring module)" deferrals were placeholders; a real zero renders $0.00 with the engine's reason.
  */
 export function FactoringSummaryCard({ reserve, outstandingLiability, lastAdvanceAt, mtd }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   return (
     <section
       className="rounded-sm border border-[#E5E7EB] bg-white p-3"
@@ -51,21 +55,21 @@ export function FactoringSummaryCard({ reserve, outstandingLiability, lastAdvanc
       data-c64-factoring-card="1"
     >
       <div className="flex items-center justify-between">
-        <Link to="/factoring" className="text-xs font-bold uppercase tracking-wide text-[#4B5563] hover:underline">
+        <Link to={bankHref("/factoring")} className="text-xs font-bold uppercase tracking-wide text-[#4B5563] hover:underline">
           Factoring · virtual bank
         </Link>
-        <Link to="/factoring" className="text-xs font-medium text-[#14314F] hover:underline">
+        <Link to={bankHref("/factoring")} className="text-xs font-medium text-[#14314F] hover:underline">
           Open Factoring
         </Link>
       </div>
       <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
         <dt className="text-[#6B7280]">Reserves held</dt>
-        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{reserve == null ? "—" : <Link to="/factoring/reserve" className="hover:underline">{formatUsd(reserve)}</Link>}</dd>
+        <dd className="text-right font-medium tabular-nums text-[#0F1219]">{reserve == null ? "—" : <Link to={bankHref("/factoring/reserve")} className="hover:underline">{formatUsd(reserve)}</Link>}</dd>
         <dt className="text-[#6B7280]" title="Gross invoice value purchased by the factor this month (posted purchases)">Purchased MTD (gross)</dt>
         <EngineLine kpi={mtd?.purchased ?? null} failed={Boolean(mtd?.failed)} testId="banking-factoring-card-purchased-mtd" to="/factoring/purchase-report" />
         <dt className="text-[#6B7280]">Outstanding liability</dt>
         <dd className="text-right font-medium tabular-nums text-[#0F1219]">
-          <Link to="/factoring/account-summary" className="hover:underline">{formatUsd(outstandingLiability)}</Link>
+          <Link to={bankHref("/factoring/account-summary")} className="hover:underline">{formatUsd(outstandingLiability)}</Link>
         </dd>
         <dt className="text-[#6B7280]" title="Faro default interest accrued this month on purchases past 30 days">+30d aging fees MTD</dt>
         <EngineLine kpi={mtd?.defaultInterest ?? null} failed={Boolean(mtd?.failed)} testId="banking-factoring-card-aging-fees-mtd" to="/factoring/fees-paid" />

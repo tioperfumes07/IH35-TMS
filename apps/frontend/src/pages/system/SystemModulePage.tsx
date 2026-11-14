@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
@@ -417,7 +418,7 @@ function QboReconTab({ data }: { data: SystemData }) {
         pill={<Pill tone="neutral">TMS ↔ QBO</Pill>}
         sub="Daily tie-out of what the TMS posted against QuickBooks (system-of-record). This is not bank reconciliation — bank statement matching stays in Banking; the two are never combined in one table."
         footer={
-          <Link to="/banking" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
+          <Link to={sysHref("/banking")} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
             Open bank reconciliation
           </Link>
         }
@@ -932,7 +933,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
+          <Link to={sysHref("/program/matrix")} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
             Open Program Matrix
           </Link>
         }
@@ -1199,6 +1200,9 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
 // ---- page shell -----------------------------------------------------------------------------------
 
 export function SystemModulePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   // TRANSP is the only QBO mirror entity. USMCA/TRK are TMS-native and must not render or query QBO.
