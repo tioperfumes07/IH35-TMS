@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T02:43Z) — Cursor board13/14 #29392
+| Board | Status | Evidence |
+|---|---|---|
+| 13/14 Dispatch misc leaf Backs | READY | #29392 `979c3721f4e` assignment/alerts/planner/POD/etc resolveBackHref; verify 20218 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:35Z) — Cursor inventory #29391
 | Board | Status | Evidence |
 |---|---|---|
