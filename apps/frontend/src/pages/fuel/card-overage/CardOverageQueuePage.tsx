@@ -448,28 +448,6 @@ export function CardOverageQueuePage() {
   const withJe = rows.filter((row) => Boolean(row.journal_entry_id)).length;
   const kpiValue = (n: number) => (eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : String(n));
 
-  const applyKpiCohort = (opts: { status?: string | null; hasJe?: boolean }) => {
-    setSearchParams(
-      (prev) => {
-        const params = new URLSearchParams(prev);
-        if (opts.status === undefined) {
-          /* leave status */
-        } else if (opts.status === null) {
-          params.delete("status");
-          setStatusFilter(["pending_review"]);
-        } else {
-          params.set("status", opts.status);
-          setStatusFilter(parseOverageStatusParam(opts.status));
-        }
-        if (opts.hasJe) params.set("has_je", "1");
-        else params.delete("has_je");
-        return params;
-      },
-      { replace: true },
-    );
-    const el = document.querySelector('[data-testid="fuel-card-overage-v3-panel"]');
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   return (
     <div className="space-y-3" data-testid="fuel-card-overage-queue">

@@ -14,7 +14,7 @@ import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
-import { mergeUrlBoardState, resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, mergeUrlBoardState, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
