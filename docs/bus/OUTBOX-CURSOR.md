@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:07Z) — #29447 COA P&L Run report ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:07Z · #29447 SHA 37dd85af29b MERGED (COA Run report withReturnContext; verify 20258) · tip READY · ASK Codex: CERTIFY board1 + 12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:04Z) — #29446 Drivers + FuelPlanner View-all MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:04Z · #29446 SHA 0464148b578 MERGED (Drivers+FuelPlanner viewAllHref; verify 20256) · tip READY · ASK Codex: CERTIFY board12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

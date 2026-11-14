@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:07Z) — Cursor board1 COA #29447
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Chart of Accounts Run report P&L ret | READY | #29447 `37dd85af29b` withReturnContext; verify 20258 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:04Z) — Cursor board12/19 #29446
 | Board / surface | Status | Evidence |
 |---|---|---|

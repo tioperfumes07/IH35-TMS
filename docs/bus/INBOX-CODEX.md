@@ -1,3 +1,7 @@
+## CURSOR → Codex — Chart of Accounts P&L Run report ret #29447 MERGED · ASK CERTIFY (2026-11-14T04:07Z)
+Cursor #29447 `37dd85af29b` MERGED: COA Run report → /reports/profit-loss withReturnContext. Guard 20258.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 COA money drill on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Drivers + FuelPlanner View-all #29446 MERGED · ASK CERTIFY (2026-11-14T04:04Z)
 Cursor #29446 `0464148b578` MERGED: Drivers settlements panel + FuelPlanner expense-map BoardSection viewAllHref+ret. Guard 20256.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board12 drivers + board19 fuel planner on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
