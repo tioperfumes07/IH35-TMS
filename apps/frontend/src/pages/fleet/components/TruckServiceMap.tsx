@@ -6,7 +6,6 @@
  */
 import type { CSSProperties } from "react";
 import { Link } from "react-router-dom";
-import { BoardSection } from "../../../components/v3/BoardSection";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { truckProfileBoardSvgHtml } from "./truckProfileBoardSvg";
 
@@ -27,18 +26,13 @@ const STATE_LABEL: Record<TruckServiceMapState, string> = {
   none: "NO RECORD",
 };
 
-const STATE_CHIP: Record<TruckServiceMapState, string> = {
-  ok: "bg-emerald-50 text-emerald-800 border-emerald-200",
-  soon: "bg-amber-50 text-amber-900 border-amber-200",
-  defect: "bg-red-50 text-red-800 border-red-200",
-  none: "bg-slate-50 text-slate-600 border-slate-200",
-};
-
-const STATE_DOT: Record<TruckServiceMapState, string> = {
-  ok: "bg-emerald-600",
-  soon: "bg-amber-500",
-  defect: "bg-red-600",
-  none: "bg-slate-400",
+/** Board 44 state colours (numbered circles, legend dots, SVG callouts). */
+const STATE_HEX: Record<TruckServiceMapState, string> = { ok: "#1F8A4C", soon: "#C76A0A", defect: "#C0262D", none: "#8A97A8" };
+const STATE_PILL: Record<TruckServiceMapState, { bg: string; fg: string }> = {
+  ok: { bg: "#DDF3E6", fg: "#1F6B3A" },
+  soon: { bg: "#FDEBD3", fg: "#8A4B06" },
+  defect: { bg: "#FBE1E1", fg: "#8E1B20" },
+  none: { bg: "#EEF1F5", fg: "#5B6B7E" },
 };
 
 const CHIP_LABEL: CSSProperties = {
@@ -158,39 +152,6 @@ export function buildTruckServiceMapSystems(input: {
   return systems;
 }
 
-function HeaderChip({
-  label,
-  value,
-  valueStyle,
-  testId,
-}: {
-  label: string;
-  value: string;
-  valueStyle?: CSSProperties;
-  testId?: string;
-}) {
-  return (
-    <div
-      data-testid={testId}
-      style={{
-        background: "#FFFFFF",
-        borderRadius: 12,
-        padding: "10px 16px",
-        display: "flex",
-        flexDirection: "column",
-        gap: 2,
-        boxShadow: "0 1px 0 #D5DCE5",
-        minWidth: 0,
-      }}
-    >
-      <span style={CHIP_LABEL}>{label}</span>
-      <span style={{ ...CHIP_VALUE, ...valueStyle, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-        {value}
-      </span>
-    </div>
-  );
-}
-
 export function TruckServiceMap(props: {
   unitId: string;
   unitNumber: string;
@@ -203,6 +164,10 @@ export function TruckServiceMap(props: {
   latestPosition?: Record<string, unknown> | null;
   currentDriver?: Record<string, unknown> | null;
   currentLoad?: Record<string, unknown> | null;
+  /** Board 44 caption — the unit's own make · model · year (never the board's Peterbilt specimen). */
+  makeModelYear?: string | null;
+  /** Board 44 header + map caption — the trailer actually attached, when the profile has one. */
+  trailerLabel?: string | null;
 }) {
   const systems = buildTruckServiceMapSystems({
     unitId: props.unitId,
@@ -248,118 +213,90 @@ export function TruckServiceMap(props: {
   const driverId = props.currentDriver?.id != null ? String(props.currentDriver.id) : null;
   const loadNumber = dash(props.currentLoad?.load_number);
 
-  const svgHtml = truckProfileBoardSvgHtml(props.unitId);
+  const svgHtml = truckProfileBoardSvgHtml(props.unitId, {
+    unitNumber: props.unitNumber,
+    caption: props.makeModelYear ? `${props.makeModelYear.toUpperCase()} · seen from above, nose right` : undefined,
+    trailerCaption: props.trailerLabel ? `Trailer ${props.trailerLabel}` : undefined,
+    callouts: systems.slice(0, 4).map((x) => x.state),
+  });
+  const loadId = props.currentLoad?.id != null ? String(props.currentLoad.id) : null;
+  const subtitle = [props.trailerLabel ? `tractor + trailer ${props.trailerLabel}` : "tractor", driverName !== "—" ? driverName : null, loadNumber !== "—" ? `load ${loadNumber}` : null].filter(Boolean).join(" · ");
 
+  // Board 44 — docs/design/v3/maintenance-vehicle-graphics/TruckProfile.dc.html: back link, unit title + subtitle,
+  // ODOMETER · SAMSARA and NOW tiles, tall New work order; then the white service-map card beside a 380px column of
+  // numbered system cards (circle in state colour, name/detail, state pill). All values live; missing stays "—".
   return (
-    <BoardSection title="SERVICE MAP · SELECT A SYSTEM" testId="truck-service-map">
-      <div className="space-y-3 px-3 py-3" data-testid="truck-service-map-body" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
-        {/* Board header chips — TruckProfile.dc.html */}
-        <div
-          className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4"
-          data-testid="truck-service-map-header-chips"
-        >
-          <HeaderChip
-            label="Odometer · Samsara"
-            value={formatOdometer(odometer)}
-            testId="truck-service-map-odometer"
-          />
-          <HeaderChip
-            label="Now"
-            value={nowLabel}
-            valueStyle={{
-              fontFamily: "Barlow, Inter, ui-sans-serif, system-ui, sans-serif",
-              fontWeight: 700,
-              fontSize: 18,
-              color: nowLabel === "—" ? "#5B6B7E" : "#1F8A4C",
-            }}
-            testId="truck-service-map-now"
-          />
-          {driverId ? (
-            <div data-testid="truck-service-map-driver" style={{ background: "#FFFFFF", borderRadius: 12, padding: "10px 16px", display: "flex", flexDirection: "column", gap: 2, boxShadow: "0 1px 0 #D5DCE5", minWidth: 0 }}>
-              <span style={CHIP_LABEL}>{"Driver"}</span>
-              <EntityLink kind="driver" id={driverId} label={driverName} />
-            </div>
-          ) : (
-            <HeaderChip label="Driver" value={driverName} testId="truck-service-map-driver" />
-          )}
-          <HeaderChip label="Load" value={loadNumber === "—" ? "—" : String(loadNumber)} testId="truck-service-map-load" />
+    <section className="flex min-w-0 flex-col gap-[18px] rounded-[14px] bg-[#E9EDF2] p-4" data-testid="truck-service-map" aria-label="Truck service map">
+      <div className="flex flex-wrap items-end justify-between gap-4" data-testid="truck-service-map-body">
+        <div className="flex min-w-0 flex-col gap-1.5">
+          <Link to="/maintenance/fleet-table?view=health" className="text-section-header font-bold tracking-[.14em] text-[#4A5A70] no-underline">‹ FLEET HEALTH LINE</Link>
+          <div className="flex min-w-0 flex-wrap items-baseline gap-3.5">
+            <h2 className="m-0 text-page-title font-extrabold leading-none text-[#14213D]">{props.unitNumber}</h2>
+            <span className="text-xs text-[#4A5A70]" data-testid="truck-service-map-subtitle">
+              {subtitle}
+              {driverId ? <> · <EntityLink kind="driver" id={driverId} label="driver profile" /></> : null}
+              {loadId ? <> · <EntityLink kind="load" id={loadId} label="open load" /></> : null}
+            </span>
+          </div>
         </div>
-
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs text-[#64748B]" data-testid="truck-service-map-legend">
-            <span className="mr-2 inline-flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${STATE_DOT.ok}`} aria-hidden /> OK
-            </span>
-            <span className="mr-2 inline-flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${STATE_DOT.soon}`} aria-hidden /> DUE SOON
-            </span>
-            <span className="mr-2 inline-flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${STATE_DOT.defect}`} aria-hidden /> DEFECT
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${STATE_DOT.none}`} aria-hidden /> NO RECORD
-            </span>
-          </p>
+        <div className="flex flex-wrap gap-2.5" data-testid="truck-service-map-header-chips">
+          <div className="flex flex-col gap-0.5 rounded-xl bg-white px-4 py-2.5 shadow-[0_1px_0_#D5DCE5]" data-testid="truck-service-map-odometer">
+            <span style={CHIP_LABEL}>Odometer · Samsara</span>
+            <span style={CHIP_VALUE}>{formatOdometer(odometer)}</span>
+          </div>
+          <div className="flex flex-col gap-0.5 rounded-xl bg-white px-4 py-2.5 shadow-[0_1px_0_#D5DCE5]" data-testid="truck-service-map-now">
+            <span style={CHIP_LABEL}>Now</span>
+            <span className="text-xs font-bold" style={{ color: nowLabel === "—" ? "#5B6B7E" : "#1F8A4C" }}>{nowLabel}</span>
+          </div>
+          <span className="sr-only" data-testid="truck-service-map-driver">{driverName}</span>
+          <span className="sr-only" data-testid="truck-service-map-load">{loadNumber === "—" ? "—" : String(loadNumber)}</span>
           <Link
             to={`/maintenance/work-orders?unit_id=${encodeURIComponent(props.unitId)}&create=1`}
-            className="rounded-sm border border-[#C6D1DC] bg-white px-3 py-1.5 text-xs font-semibold text-[#14314F] hover:bg-[#F6F9FB]"
+            className="inline-flex h-16 items-center rounded-xl bg-[#14213D] px-[22px] text-xs font-semibold text-white"
             data-testid="truck-service-map-new-wo"
           >
             New work order
           </Link>
         </div>
+      </div>
 
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
-          <div
-            className="min-w-0 flex-[1.4] overflow-hidden rounded-sm border border-[#E8EDF2] bg-[#F6F9FB]"
-            data-testid="truck-service-map-board-svg"
-            // Board SVG is static illustration; numbered cards to the right carry live state.
-            dangerouslySetInnerHTML={{ __html: svgHtml }}
-          />
-
-          <ul className="min-w-0 flex-1 space-y-2" data-testid="truck-service-map-systems">
-            {systems.map((sys) => {
-              const body = (
-                <div className="flex items-start gap-2 rounded-sm border border-[#E8EDF2] bg-white px-2.5 py-2">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-slate-300 text-xs font-bold text-slate-800">
-                    {sys.n}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-[#0F1B2D]">{sys.name}</span>
-                      <span
-                        className={`inline-flex rounded-sm border px-1.5 py-0.5 text-section-header font-semibold uppercase tracking-wide ${STATE_CHIP[sys.state]}`}
-                      >
-                        {STATE_LABEL[sys.state]}
-                      </span>
-                    </div>
-                    <div className="mt-0.5 text-xs text-[#64748B]">{sys.detail}</div>
-                  </div>
-                </div>
-              );
-              if (!sys.href) return <li key={sys.n}>{body}</li>;
-              return (
-                <li key={sys.n}>
-                  <Link to={sys.href} className="block hover:opacity-95" data-testid={`truck-service-map-system-${sys.n}`}>
-                    {body}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+      <div className="grid min-w-0 gap-[18px] xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="flex min-w-0 flex-col gap-2.5 rounded-[18px] bg-white p-5 shadow-[0_1px_0_#D5DCE5]">
+          <div className="flex flex-wrap justify-between gap-2 text-section-header font-bold tracking-[.12em] text-[#5B6B7E]" data-testid="truck-service-map-legend">
+            <span>SERVICE MAP · SELECT A SYSTEM</span>
+            <span className="flex flex-wrap gap-3">
+              {(["ok", "soon", "defect", "none"] as const).map((k) => (
+                <span key={k} className="inline-flex items-center gap-1"><span aria-hidden className="inline-block h-2 w-2 rounded-full" style={{ background: STATE_HEX[k] }} />{STATE_LABEL[k]}</span>
+              ))}
+            </span>
+          </div>
+          <div className="min-w-0 overflow-hidden" data-testid="truck-service-map-board-svg" dangerouslySetInnerHTML={{ __html: svgHtml }} />
         </div>
 
-        <p className="text-xs text-[#64748B]">
-          System states and service history bind to live PM / WO / fault / compliance for {props.unitNumber}. Missing
-          readings stay as —, never board samples.{" "}
-          <Link
-            to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(props.unitId)}`}
-            className="font-semibold text-[#14314F] underline"
-          >
-            Open PM schedules →
-          </Link>
-        </p>
+        <ul className="m-0 flex min-w-0 list-none flex-col gap-2.5 p-0" data-testid="truck-service-map-systems">
+          {systems.map((sys) => {
+            const body = (
+              <span className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-center gap-3 rounded-xl bg-white px-3.5 py-2.5 text-left shadow-[0_1px_0_#D5DCE5]">
+                <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full text-xs font-extrabold text-white" style={{ background: STATE_HEX[sys.state] }}>{sys.n}</span>
+                <span className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-xs font-bold text-[#14213D]">{sys.name}</span>
+                  <span className="text-xs text-[#4A5A70]">{sys.detail}</span>
+                </span>
+                <span className="rounded-full px-[9px] py-[3px] text-section-header font-bold" style={{ background: STATE_PILL[sys.state].bg, color: STATE_PILL[sys.state].fg }}>{STATE_LABEL[sys.state]}</span>
+              </span>
+            );
+            return (
+              <li key={sys.n}>
+                {sys.href ? <Link to={sys.href} className="block no-underline hover:opacity-95" data-testid={`truck-service-map-system-${sys.n}`}>{body}</Link> : body}
+              </li>
+            );
+          })}
+          <li className="text-xs text-[#5B6B7E]">
+            Live PM / work order / fault / compliance for {props.unitNumber}; missing readings stay —.{" "}
+            <Link to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(props.unitId)}`} className="font-semibold text-[#14213D] underline">Open PM schedules →</Link>
+          </li>
+        </ul>
       </div>
-    </BoardSection>
+    </section>
   );
 }

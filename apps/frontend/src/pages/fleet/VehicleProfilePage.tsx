@@ -383,6 +383,13 @@ export function VehicleProfilePage() {
               latestPosition={telemetry?.latest_position ?? null}
               currentDriver={profile.current_driver}
               currentLoad={profile.current_load}
+              makeModelYear={[unit?.make, unit?.model, unit?.year].filter((v) => v != null && String(v).trim() !== "").map(String).join(" ") || null}
+              trailerLabel={(() => {
+                const load = (profile.current_load ?? null) as Record<string, unknown> | null;
+                const reefer = (profile.reefer ?? null) as Record<string, unknown> | null;
+                const v = load?.trailer_number ?? load?.trailer_unit_number ?? reefer?.trailer_number ?? reefer?.unit_number ?? null;
+                return v == null || String(v).trim() === "" ? null : String(v);
+              })()}
             />
             {faultSummaryQuery.isError ? (
               <ListErrorState
