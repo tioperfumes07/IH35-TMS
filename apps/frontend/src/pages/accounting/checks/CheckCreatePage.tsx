@@ -50,7 +50,7 @@ export function CheckCreatePage() {
         operatingCompanyId={companyId}
         initialPayee={initialPayee}
         copyFromCheckId={copyFromId}
-        onClose={() => navigate("/accounting/checks")}
+        onClose={() => navigate(moneyHref("/accounting/checks"))}
         onSaved={(checkId) => {
           pushToast("Check created", "success");
           navigate(moneyHref(`/accounting/checks?created=${checkId}`));

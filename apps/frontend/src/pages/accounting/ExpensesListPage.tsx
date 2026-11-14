@@ -621,7 +621,7 @@ export function ExpensesListPage() {
                 className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
                 onClick={() => {
                   setNewTxnMenuOpen(false);
-                  navigate("/accounting/checks/new");
+                  navigate(acctHref("/accounting/checks/new"));
                 }}
               >
                 Check

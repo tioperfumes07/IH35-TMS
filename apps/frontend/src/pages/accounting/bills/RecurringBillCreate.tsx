@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../../design/tokens";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { Plus, Trash2 } from "lucide-react";
 import { createRecurringBillTemplate, type RecurringBillFrequency, type RecurringBillLineItem } from "../../../api/accounting";
 import { listCatalogAccounts } from "../../../api/catalog-accounts";
@@ -40,6 +41,9 @@ function nextMonth() {
 }
 
 export function RecurringBillCreate() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -47,7 +51,7 @@ export function RecurringBillCreate() {
   const queryClient = useQueryClient();
   // U18 (owner UI register 2026-10-03) — the way back is the parent page, never browser history: the breadcrumb above
   // (Accounting / Bills / Recurring Bills / Create) and Cancel both lead to the recurring-bill list.
-  const goBack = () => navigate("/accounting/bills/recurring");
+  const goBack = () => navigate(moneyHref("/accounting/bills/recurring"));
 
   const [vendorUuid, setVendorUuid] = useState("");
   const [templateName, setTemplateName] = useState("");
@@ -109,7 +113,7 @@ export function RecurringBillCreate() {
     onSuccess: () => {
       pushToast("Recurring bill template created", "success");
       void queryClient.invalidateQueries({ queryKey: ["accounting", "recurring-bills"] });
-      navigate("/accounting/bills/recurring");
+      navigate(moneyHref("/accounting/bills/recurring"));
     },
     onError: (err) => pushToast(err instanceof Error ? err.message : "Create failed", "error"),
   });

@@ -18311,5 +18311,10 @@
     "claimed_at": "2026-11-14T05:12:54Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 driver ActionBar/create + load unit-cost fleet drills withReturnContext"
+  },
+  "20296": {
+    "claimed_at": "2026-11-14T05:17:56Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 final Class R sweep banking/reports/bills/checks withReturnContext"
   }
 }

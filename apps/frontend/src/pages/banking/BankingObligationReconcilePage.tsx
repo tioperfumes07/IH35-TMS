@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   bulkReconcileAction,
   getPlaidBankAccounts,
@@ -44,7 +45,9 @@ const OBLIGATION_ENTITY_KIND: Record<ObligationType, EntityKind> = {
 
 export function BankingObligationReconcilePage() {
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -212,7 +215,7 @@ export function BankingObligationReconcilePage() {
           <ActionButton
             disabled={selectedRows.length === 0}
             onClick={() =>
-              navigate("/accounting/bills/multiple", {
+              navigate(bankHref("/accounting/bills/multiple"), {
                 state: { seeds: selectedRows },
               })
             }

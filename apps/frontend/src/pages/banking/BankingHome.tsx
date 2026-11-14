@@ -464,7 +464,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               },
               { key: "record-deposit", label: "+ Record Deposit", onClick: () => setRecordDepositOpen(true) },
               { key: "petty-cash", label: "+ Petty Cash", onClick: () => void handleCreatePettyCash() },
-              { key: "view-transfers", label: "View Transfers", onClick: () => navigate("/banking/transfers") },
+              { key: "view-transfers", label: "View Transfers", onClick: () => navigate(bankHref("/banking/transfers")) },
             ],
           },
           {

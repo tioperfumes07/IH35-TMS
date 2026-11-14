@@ -5,7 +5,8 @@
  */
 import { useMemo, useRef, useState, type ClipboardEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { entityLabel } from "../../lib/entity-label";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
@@ -75,6 +76,9 @@ function todayChicago(): string {
 }
 
 export function MakeDepositPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
@@ -371,7 +375,7 @@ export function MakeDepositPage() {
                 onSave={() => createMut.mutate()}
                 onSaveAndClose={async () => {
                   await createMut.mutateAsync();
-                  navigate("/banking/deposits");
+                  navigate(bankHref("/banking/deposits"));
                 }}
                 onSaveAndAddAnother={() => createMut.mutate()}
                 menuLabels={{
