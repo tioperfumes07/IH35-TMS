@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import type { ReactElement } from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -52,7 +53,8 @@ describe("ROUND 8.20 board19 FuelPlannerBoardChrome ret Back", () => {
         />,
       ),
     );
-    expect(screen.getByTestId("fuel-board-back")).toBeTruthy();
+    // ROUND 9.4 — PageHeader variant=v3 Back (aria-label Back / ← Back), not legacy fuel-board-back.
+    expect(screen.getByTestId("page-header-back")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Back" }));
     expect(screen.getByTestId("location-probe").textContent).toContain("/fuel/by-truck");
     expect(screen.getByTestId("location-probe").textContent).toContain("period=sep");
