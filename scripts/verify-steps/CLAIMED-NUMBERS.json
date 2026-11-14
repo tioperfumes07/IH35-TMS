@@ -18401,5 +18401,10 @@
     "claimed_at": "2026-11-14T18:08:59Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 SafetyLayout/Form425c/Program matrix Link to= ret wave6"
+  },
+  "20328": {
+    "claimed_at": "2026-11-14T18:17:54Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 hotfix Href wrong-scope + residual pathname redeclare after #29532"
   }
 }
