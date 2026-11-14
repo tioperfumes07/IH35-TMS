@@ -80,6 +80,7 @@ type Props = {
   showTotal?: boolean;
   emptyText?: string;
   onViewAll?: () => void;
+  viewAllHref?: string;
 };
 
 /**
@@ -271,6 +272,7 @@ export function PreSettlementsPanel({
   showTotal = true,
   emptyText = "No payment-ready pre-settlements for this company.",
   onViewAll,
+  viewAllHref,
 }: Props) {
   const totalCents = rows.reduce((sum, row) => sum + Number(row.driver_pay_cents ?? 0), 0);
   const countLabel = loading || isError ? "—" : String(rows.length);
@@ -280,6 +282,7 @@ export function PreSettlementsPanel({
       subtitle="open tours · not closed · not paid"
       testId="pre-settlements-v3-panel"
       onViewAll={onViewAll}
+      viewAllHref={viewAllHref}
     >
       <div data-settlements-presettle-v3-panel="1">
         {loading ? <p className="px-2 py-2 text-xs text-gray-500">Loading pre-settlements…</p> : null}

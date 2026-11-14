@@ -18256,5 +18256,10 @@
     "claimed_at": "2026-11-14T04:34:18Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 WriteCheck/customer/load/reports money drills withReturnContext"
+  },
+  "20274": {
+    "claimed_at": "2026-11-14T04:36:59Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 TS hotfix PreSettlementsPanel viewAllHref + unused navigate"
   }
 }
