@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
@@ -19,6 +20,9 @@ function fetchRules(companyId: string) {
 }
 
 export function FaultRulesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -141,11 +145,11 @@ export function FaultRulesPage() {
       />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-2 text-xs">
-          <Link to="/maintenance" className="text-[#1F2A44] underline">
+          <Link to={maintHref("/maintenance")} className="text-[#1F2A44] underline">
             Maintenance home
           </Link>
           <span className="text-gray-400">·</span>
-          <Link to="/maintenance/fault-drafts" className="text-[#1F2A44] underline">
+          <Link to={maintHref("/maintenance/fault-drafts")} className="text-[#1F2A44] underline">
             Fault-driven drafts
           </Link>
         </div>

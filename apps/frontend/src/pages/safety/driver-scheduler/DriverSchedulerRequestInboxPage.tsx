@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../../lib/formatDate";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -17,6 +18,9 @@ type PendingRequestRow = Record<string, unknown>;
 const PAGE_SIZE = 50;
 
 export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded?: boolean } = {}) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   // @matrix-built safety:leave_requests.list:{driver,connectivity,qbo_chrome}
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -72,7 +76,7 @@ export function DriverSchedulerRequestInboxPage({ embedded = false }: { embedded
       {!operatingCompanyId ? <div className="text-xs text-gray-500">Select an operating company to view leave requests.</div> : null}
       {!embedded ? (
         <div className="mb-2">
-          <Link to="/safety/driver-scheduler" className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={safetyHref("/safety/driver-scheduler")} className="text-xs text-[#1F2A44] hover:underline">
             ← Back to Driver Scheduler grid
           </Link>
         </div>

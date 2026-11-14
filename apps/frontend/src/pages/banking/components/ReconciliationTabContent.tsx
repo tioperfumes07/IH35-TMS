@@ -179,7 +179,7 @@ export function ReconciliationTabContent({
         testId="banking-recon-board"
         headerRight={
           <div className="flex flex-wrap items-center gap-2">
-            <Link to="/banking/reconcile" className="text-xs font-medium text-[#1F2A44] hover:underline">
+            <Link to={bankHref("/banking/reconcile")} className="text-xs font-medium text-[#1F2A44] hover:underline">
               Open Reconcile Queue
             </Link>
             <Link

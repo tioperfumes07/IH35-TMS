@@ -23,7 +23,7 @@ export function LegalMatterNewPage() {
   const navigate = useNavigate();
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
-  const drvHref = (target: string) => withReturnContext(target, originHref);
+  const legalHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board21 — Create Matter Back restores list/Home via ret (fallback Matters list).
   const matterNewBackHref = resolveBackHref({
@@ -35,7 +35,7 @@ export function LegalMatterNewPage() {
 
   const createMut = useMutation<{ matter: LegalMatterRow }, Error, void>({
     mutationFn: () => legalMattersApi.create(companyId, formStateToCreatePayload(form)),
-    onSuccess: (data) => navigate(drvHref(`/legal/matters/${String(data.matter.id ?? "")}`)),
+    onSuccess: (data) => navigate(legalHref(`/legal/matters/${String(data.matter.id ?? "")}`)),
   });
 
   return (
@@ -50,7 +50,7 @@ export function LegalMatterNewPage() {
         <div className="mx-auto max-w-3xl space-y-3 rounded-sm border border-gray-200 bg-white p-4">
           <LegalMatterFormFields form={form} setForm={setForm} mode="create" operatingCompanyId={companyId} />
           <div className="flex gap-2">
-            <Link to="/legal/matters">
+            <Link to={legalHref("/legal/matters")}>
               <Button variant="secondary">Cancel</Button>
             </Link>
             <Button

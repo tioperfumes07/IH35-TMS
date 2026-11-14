@@ -123,7 +123,7 @@ function Table({
   const ret = (to: string) => withReturnContext(to, currentOriginHref(pathname, search));
   const recentPanel = title === "Recent Work Orders";
   return (
-    <V3Panel title={recentPanel ? "Recent work orders" : "Recently completed"} headerRight={<div className="flex flex-wrap items-center gap-3">{recentPanel ? <Link to="/maintenance?create_wo=1" className="rounded-sm bg-[#13233F] px-3 py-1.5 text-xs font-semibold text-white" data-testid="maintenance-recent-create-wo">+ Create Work Order</Link> : null}<Link className="text-section-header font-semibold text-[#1D4ED8]" to={ret(title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos")}>View all →</Link></div>}>
+    <V3Panel title={recentPanel ? "Recent work orders" : "Recently completed"} headerRight={<div className="flex flex-wrap items-center gap-3">{recentPanel ? <Link to={ret("/maintenance?create_wo=1")} className="rounded-sm bg-[#13233F] px-3 py-1.5 text-xs font-semibold text-white" data-testid="maintenance-recent-create-wo">+ Create Work Order</Link> : null}<Link className="text-section-header font-semibold text-[#1D4ED8]" to={ret(title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos")}>View all →</Link></div>}>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
