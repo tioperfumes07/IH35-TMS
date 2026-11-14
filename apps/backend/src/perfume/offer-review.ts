@@ -14,13 +14,13 @@
  *  - SET / TESTER / MINI agree (a 4-piece set is never the 100 ml bottle);
  *  - EDT / EDP / PARFUM differing is proposed, scored lower, and named ("TYPE DIFFERS").
  */
-import type { Identity } from "./normalize.js";
+import { sizesFar, type Identity } from "./normalize.js";
 
 export type OfferItem = { id: string; brand: string; name: string; size_ml: number | null; conc?: string | null; gender?: string | null; flags: string[]; display_name: string };
 export type OfferCandidate = { item_id: string; display_name: string; score: number; why: string };
 
 const NOISE = new Set(["DE", "DU", "LE", "LA", "LES", "THE", "BY", "FOR", "OF", "AND", "&", "EAU", "POUR", "A"]);
-const KIND_FLAGS = ["SET", "TESTER", "MINI"];
+const KIND_FLAGS = ["SET", "TESTER", "MINI", "REFILL"];
 /** Gender words a vendor adds to a name ("CH MEN", "GOD IS A WOMAN") — never a different product. */
 const GENDER_WORDS = new Set(["M", "W", "U", "MAN", "MEN", "MENS", "WOMAN", "WOMEN", "WOMENS", "HOMME", "FEMME", "UNISEX", "LADIES"]);
 
@@ -66,6 +66,7 @@ export function offerCandidates(line: { description: string; brand: string | nul
     if (!brandSeen && need.length < 2) continue;
     // Size: proposed even when it differs (vendors round 105 / 110 ml to "3.4oz") but scored lower and both sizes
     // shown; the owner decides.
+    if (sizesFar(id.sizeMl, it.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && it.size_ml != null && Math.abs(id.sizeMl - it.size_ml) > 5;
     if (lineKind !== kindFlags(it.flags)) continue;
     // Men's and women's bottles are different products; unisex or unknown on either side is not a conflict.
