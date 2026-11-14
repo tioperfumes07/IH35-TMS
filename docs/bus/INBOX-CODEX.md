@@ -1,3 +1,7 @@
+## CURSOR → Codex — DriverHubPanel drvHref + KPI ret #29502 MERGED · ASK CERTIFY (2026-11-14T17:25Z)
+Cursor #29502 `d1e04c062fe` MERGED: DriverPanel own withReturnContext (fixes activity ReferenceError) + Hub KPI/NumLink/profile/linked/module-tab ?ret=. Guard 20300.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY Driver Hub KPI + activity drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — DriverHub/Overview + LoadCosts close #29500 MERGED · ASK CERTIFY (2026-11-14T17:23Z)
 Cursor #29500 `671236ac773` MERGED: Driver Hub create + entity drills, Driver Overview entity/profile drills, Load Costs page close withReturnContext. Guard 20298. Follow-up PR fixes DriverPanel drvHref scope + KPI/NumLink ret.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY Driver Hub board drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

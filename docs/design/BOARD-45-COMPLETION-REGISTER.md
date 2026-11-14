@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:25Z) — Cursor DriverHubPanel drvHref + KPI ret #29502
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Driver Hub KPI/NumLink/activity/profile chips | READY | #29502 `d1e04c062fe` withReturnContext; verify 20300 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:23Z) — Cursor DriverHub/Overview + LoadCosts close #29500
 | Board / surface | Status | Evidence |
 |---|---|---|
