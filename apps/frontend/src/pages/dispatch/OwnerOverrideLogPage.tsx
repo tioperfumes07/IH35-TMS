@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listOwnerOverrideLog } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -26,6 +27,9 @@ const overrideClassLabel = (row: { override_class: string | null; event_class: s
 };
 
 export function OwnerOverrideLogPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -89,7 +93,7 @@ export function OwnerOverrideLogPage() {
         title="Owner Override Log"
         subtitle="Read-only WORM audit trail of every dispatch blocker overridden by an Owner (DOT / insurer / attorney visibility)"
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch Home
           </Link>
         }

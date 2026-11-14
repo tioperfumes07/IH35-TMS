@@ -2,6 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS, formatIsoDatesInText } from "../../lib/formatDate";
@@ -65,7 +66,9 @@ export function DriftAlertPopup() {
   const { selectedCompanyId } = useCompanyContext();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const [open, setOpen] = useState(false);
   const companyId = selectedCompanyId ?? "";
   // The TIO Perfumes desk (/perfume) is not a carrier page: a USMCA load worklist must never pop up over it.
@@ -146,7 +149,7 @@ export function DriftAlertPopup() {
           />
         </div>
         <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={() => { remindLater(); navigate("/tasks/exceptions"); }}>
+          <Button type="button" variant="secondary" onClick={() => { remindLater(); navigate(hubHref("/tasks/exceptions")); }}>
             {t("topbar.driftAlert.openList", "Open the full list")}
           </Button>
           <Button type="button" variant="primary" onClick={remindLater} data-testid="drift-alert-remind">

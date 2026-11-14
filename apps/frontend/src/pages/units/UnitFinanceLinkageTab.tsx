@@ -1,6 +1,7 @@
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getUnitFinanceLinkage } from "../../api/unit-finance-linkage";
 import { listUnitLinkedFinancials } from "../../api/accounting";
 import { formatDateUS } from "../../lib/formatDate";
@@ -18,6 +19,9 @@ const fmtCents = (c: number) => formatUsdCents(c);
 const fmtDate = (s: string | null) => formatDateUS(s) || "—";
 
 export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageTabProps) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const linkageQuery = useQuery({
     queryKey: ["unit-finance-linkage", unitId, companyId],
     queryFn: () => getUnitFinanceLinkage(unitId, companyId),
@@ -57,7 +61,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3" data-testid="unit-linked-financials">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold text-[#0F1219]">Linked Bills / Expenses</h3>
-          <Link to={`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`} className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={moneyHref(`/accounting/bills?unit_id=${encodeURIComponent(unitId)}`)} className="text-xs text-[#1F2A44] hover:underline">
             Open Bills →
           </Link>
         </div>
@@ -115,7 +119,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold text-[#0F1219]">Fixed assets &amp; depreciation</h3>
-          <Link to="/accounting/fixed-assets" className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={moneyHref("/accounting/fixed-assets")} className="text-xs text-[#1F2A44] hover:underline">
             Open Fixed Assets register →
           </Link>
         </div>
@@ -148,7 +152,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold text-[#0F1219]">ASC 842 leases</h3>
-          <Link to="/finance/hub" className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={moneyHref("/finance/hub")} className="text-xs text-[#1F2A44] hover:underline">
             Open Finance Hub →
           </Link>
         </div>
@@ -178,7 +182,7 @@ export function UnitFinanceLinkageTab({ unitId, companyId }: UnitFinanceLinkageT
       <section className="rounded-sm border border-gray-200 bg-white p-3">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h3 className="text-xs font-semibold text-[#0F1219]">Equipment loans (CCG / factoring)</h3>
-          <Link to="/factoring/equipment-loans" className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={moneyHref("/factoring/equipment-loans")} className="text-xs text-[#1F2A44] hover:underline">
             Open Equipment Loans →
           </Link>
         </div>

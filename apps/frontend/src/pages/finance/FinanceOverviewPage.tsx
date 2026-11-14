@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -32,6 +33,9 @@ function Tile({
 }
 
 export function FinanceOverviewPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const finHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_SCENARIOS_FLAG, companyId);
@@ -98,7 +102,7 @@ export function FinanceOverviewPage() {
         {header}
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           No active scenario yet.{" "}
-          <Link to="/finance/scenarios" className="font-medium text-[#0F1219] underline">
+          <Link to={finHref("/finance/scenarios")} className="font-medium text-[#0F1219] underline">
             Create and activate one in Scenarios
           </Link>{" "}
           to see an overview here.
@@ -123,7 +127,7 @@ export function FinanceOverviewPage() {
                 {summary.scenario.period_start}
               </p>
             </div>
-            <Link to={`/finance/scenarios/${summary.scenario.id}`} className="text-xs font-medium text-[#1F2A44] underline">
+            <Link to={finHref(`/finance/scenarios/${summary.scenario.id}`)} className="text-xs font-medium text-[#1F2A44] underline">
               View scenario →
             </Link>
           </div>
@@ -151,7 +155,7 @@ export function FinanceOverviewPage() {
             ) : (
               <div className="col-span-2 flex items-center rounded-sm border border-dashed border-[#E5E7EB] p-4 text-xs text-[#6B7280] md:col-span-3">
                 No actuals recorded yet — record them on{" "}
-                <Link to="/finance/projections" className="ml-1 font-medium text-[#1F2A44] underline">
+                <Link to={finHref("/finance/projections")} className="ml-1 font-medium text-[#1F2A44] underline">
                   Projections
                 </Link>
                 .

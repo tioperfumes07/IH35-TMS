@@ -4,7 +4,8 @@
  * Register Edit for source_transaction_type=bank_deposit opens this page.
  */
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import {Link, useParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
@@ -26,6 +27,9 @@ import { ParityTable } from "../../components/parity/ParityTable";
 type DepositLine = NonNullable<NonNullable<Awaited<ReturnType<typeof getBankDeposit>>["deposit"]>["lines"]>[number];
 
 export function DepositDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -72,7 +76,7 @@ export function DepositDetailPage() {
           <div className="mx-auto flex max-w-4xl flex-col gap-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <Link to="/banking/deposits" className="text-xs text-[#14314F] hover:underline">
+                <Link to={bankHref("/banking/deposits")} className="text-xs text-[#14314F] hover:underline">
                   ← Deposits
                 </Link>
                 <h1 className="page-header-title">{deposit.display_id}</h1>

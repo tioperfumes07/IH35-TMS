@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import {
   createDispatchIntransitIssue,
@@ -35,6 +36,9 @@ const EMPTY_FILTERS = {
 };
 
 export function InTransitIssuesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -243,7 +247,7 @@ export function InTransitIssuesPage() {
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               + Create Issue
             </Button>
-            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+            <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch Home
             </Link>
           </div>

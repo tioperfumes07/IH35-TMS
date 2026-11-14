@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { apiRequest } from "../../api/client";
@@ -5,6 +7,9 @@ import { apiRequest } from "../../api/client";
 type Props = { operatingCompanyId: string };
 
 export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const q = useQuery({
     queryKey: ["anomaly-open-critical", operatingCompanyId],
     enabled: Boolean(operatingCompanyId),
@@ -34,7 +39,7 @@ export function AnomalyAlertBadge({ operatingCompanyId }: Props) {
 
   const count = q.data ?? 0;
   return (
-    <a href="/safety/anomaly-alerts" className="relative inline-flex items-center rounded-sm p-1 text-[#4B5563] hover:bg-gray-100" title="Anomaly alerts">
+    <a href={safetyHref("/safety/anomaly-alerts")} className="relative inline-flex items-center rounded-sm p-1 text-[#4B5563] hover:bg-gray-100" title="Anomaly alerts">
       <Bell size={18} />
       {count > 0 ? (
         <span className="absolute -right-1 -top-1 rounded-full bg-red-600 px-1 text-xs font-bold text-white">{count}</span>
