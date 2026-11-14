@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T02:35Z) — Cursor inventory #29391
+| Board | Status | Evidence |
+|---|---|---|
+| Inventory leaf Backs | READY | #29391 `852830c78ac` purchases/parts/assignments resolveBackHref; verify 20216 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:26Z) — Cursor board20 #29390
 | Board | Status | Evidence |
 |---|---|---|
