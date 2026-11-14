@@ -2,7 +2,8 @@
  * D-H1 — Load History page (/dispatch/loads/:id/history).
  * Read-only timeline: status/edits/assignments/stop stamps/linked docs with EntityLink.
  */
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useParams, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
@@ -65,6 +66,9 @@ const ENTITY_KINDS = new Set<string>([
 ]);
 
 function HistoryLink({ link }: { link: LoadHistoryLink }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   if (!ENTITY_KINDS.has(link.kind)) {
     return (
       <span className="text-xs text-[#6B7280]" title={link.id}>
@@ -195,7 +199,7 @@ export default function LoadHistoryPage() {
     return (
       <div className="p-4">
         <p className="text-xs text-[#4B5563]">Missing load id.</p>
-        <Link to="/dispatch?view=loads" className="text-xs text-[#4B5563] underline">
+        <Link to={dispHref("/dispatch?view=loads")} className="text-xs text-[#4B5563] underline">
           Open Dispatch loads
         </Link>
       </div>

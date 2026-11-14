@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatQuantityTable, formatUsd, formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -44,6 +45,9 @@ function place(city?: string | null, state?: string | null): string {
 }
 
 export function AtRiskQueuePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pathname } = useLocation();
@@ -229,7 +233,7 @@ export function AtRiskQueuePage() {
         title="At-Risk / Late Queue"
         subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal. Tile value equals this table's row count (union, not a sum)."
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch Home
           </Link>
         }

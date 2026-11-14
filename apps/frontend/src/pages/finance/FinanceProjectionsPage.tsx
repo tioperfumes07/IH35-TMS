@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -10,6 +11,9 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export function FinanceProjectionsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const finHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_SCENARIOS_FLAG, companyId);
@@ -84,7 +88,7 @@ export function FinanceProjectionsPage() {
         {header}
         <div className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4 text-xs text-[#4B5563]">
           No active scenario yet.{" "}
-          <Link to="/finance/scenarios" className="font-medium text-[#1F2A44] underline">
+          <Link to={finHref("/finance/scenarios")} className="font-medium text-[#1F2A44] underline">
             Create and activate one in Scenarios
           </Link>{" "}
           to see projections here.
@@ -119,7 +123,7 @@ export function FinanceProjectionsPage() {
                   {detailQuery.data.scenario.period_basis} · {detailQuery.data.scenario.period_count} periods
                 </p>
               </div>
-              <Link to={`/finance/scenarios/${detailQuery.data.scenario.id}`} className="text-xs font-medium text-[#1F2A44] underline">
+              <Link to={finHref(`/finance/scenarios/${detailQuery.data.scenario.id}`)} className="text-xs font-medium text-[#1F2A44] underline">
                 Full detail →
               </Link>
             </div>

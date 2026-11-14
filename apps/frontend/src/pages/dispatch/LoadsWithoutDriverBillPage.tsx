@@ -2,7 +2,8 @@ import { formatQuantityTable } from "../../lib/money";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load with no driver bill); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listLoadsWithoutDriverBill, type ExceptionQueueLoadRow } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -19,6 +20,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 // /api/v1/mdata/loads/needs-driver-bill-remint, which requires a seated driver since its own POST
 // mints a bill). Read-only — no mint action here, this is visibility, not remediation.
 export function LoadsWithoutDriverBillPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pathname } = useLocation();
@@ -85,7 +89,7 @@ export function LoadsWithoutDriverBillPage() {
         title="Loads without a driver bill"
         subtitle="Non-cancelled loads with zero driver_finance.driver_bills rows — including fully driverless orphans. Tile value equals this table's row count."
         actions={
-          <Link to="/" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/")} className="rounded-sm border px-3 py-1.5 text-xs">
             Home
           </Link>
         }

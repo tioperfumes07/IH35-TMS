@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -23,6 +24,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 const STEPS = ["Load", "Port", "Cargo", "Broker", "FAST", "Review"];
 
 export function BorderCrossingWizardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
@@ -141,7 +145,7 @@ export function BorderCrossingWizardPage() {
         title="Border Crossing Wizard"
         subtitle="Prepare northbound and southbound crossings with eManifest V1 and CBP wait times."
         actions={
-          <Link to="/dispatch/border-crossing/history" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch/border-crossing/history")} className="rounded-sm border px-3 py-1.5 text-xs">
             History
           </Link>
         }

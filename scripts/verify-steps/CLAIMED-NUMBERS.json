@@ -18371,5 +18371,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111
+  "total_claimed": 1111,
+  "20316": {
+    "claimed_at": "2026-11-14T17:49:20Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Banking/Unit/Finance/Dispatch Link to= withReturnContext"
+  }
 }

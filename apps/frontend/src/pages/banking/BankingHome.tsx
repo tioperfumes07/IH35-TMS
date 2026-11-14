@@ -593,7 +593,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <div className="mt-2 flex flex-wrap gap-2">
                 <ActionButton onClick={() => navigate(bankHref("/factoring"))}>Factoring entry</ActionButton>
                 <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
-                <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-[#1F2A44] underline">
+                <Link to={bankHref("/banking/cash-gl-setup")} className="text-xs font-medium text-[#1F2A44] underline">
                   Cash GL setup
                 </Link>
               </div>
@@ -743,10 +743,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 chargebacks, fees, and the reserve tracker.
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <Link to="/factoring" className="underline">
+                <Link to={bankHref("/factoring")} className="underline">
                   Factoring
                 </Link>
-                <Link to="/factoring/reserve-tracker" className="underline">
+                <Link to={bankHref("/factoring/reserve-tracker")} className="underline">
                   Reserve tracker
                 </Link>
                 {factoringTile ? <span className="text-[#6B7280]">{factoringTile.display_name}</span> : null}
@@ -838,7 +838,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 >
                   Focus uncategorized filter
                 </ActionButton>
-                <Link to="/banking/categorize" className="text-xs font-medium text-[#1F2A44] underline">
+                <Link to={bankHref("/banking/categorize")} className="text-xs font-medium text-[#1F2A44] underline">
                   /banking/categorize deep link
                 </Link>
               </div>
