@@ -1,4 +1,12 @@
 ### READY overlay (2026-11-14T18:08Z) — Cursor Banking/Safety/System/Maint/425c Link ret wave5 #29529
+### READY overlay (2026-11-14T18:45Z) — Cursor Class R Link/`href`/`?ret=` CLEARED
+| Surface | Status | Evidence |
+|---|---|---|
+| Cursor `Link to` / template-literal / bare `href` outside auth/portal/help/settlements | CLEARED (agent scan) | Waves through #29541 `b570ee10814` (20334) + tip #29540; Dispatch same-board `navigate(...replace)` + CarrierSwitcher `/perfume` left intentional |
+| Settlements 32–42 Link/href drills | Codex BUILD | Not Cursor |
+| CERTIFY 1–23 + reports 25–31 | ASK Codex on LIVE | CERTIFIED 0/45 until LIVE |
+| Board41 reinstate release | BLOCKED | Claude-1 AUTH+DDL for `driver_bills` reinstate columns (ENG-44/#29308); tip #29524; no Cursor fixture patch |
+
 <!-- tip 2026-11-14T18:42Z: #29541 wave9 MERGED b570ee108149b5bce443657a43b2486f0406e974; CERTIFY ASK; Cursor Link/href CLEARED -->
 <!-- tip 2026-11-14T18:39Z: #29539 wave8 MERGED 127e77a31bba3fb3800e6f1290a184a266edf715; CERTIFY ASK -->
 <!-- tip 2026-11-14T18:30Z: #29535 wave7 MERGED 77844d8420689a563743731a8564e28af89fc9d0; CERTIFY ASK -->
