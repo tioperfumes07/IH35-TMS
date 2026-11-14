@@ -981,14 +981,16 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const cGroup = `COMPETITOR · ${sellV.length === 1 ? vendorLabel(sellV[0]) : "lowest sales price"}`;
   const A = (key: string, label: string, group: string, kind: GridCol["kind"]): GridCol => ({ key: `a:${key}`, label, group, kind });
   cols.push(
-    A("upc", "UPC", "ITEM", "text"), A("sku", "SKU", "ITEM", "text"), A("brand", "BRAND", "ITEM", "text"), A("name", "NAME", "ITEM", "text"),
+    // Owner 2026-11-14 17:07 CT: one description per side, no repeats — NAME is MY description (my list's own wording).
+    A("upc", "UPC", "ITEM", "text"), A("sku", "SKU", "ITEM", "text"), A("brand", "BRAND", "ITEM", "text"), A("name", "MY DESCRIPTION", "ITEM", "text"),
     A("size", "SIZE", "ITEM", "int"), A("type", "TYPE", "ITEM", "text"), A("kind", "KIND", "ITEM", "text"),
     // Owner 2026-11-14: "after kind, show esperanza description etc so i can match here".
     // Owner 2026-11-14 16:57 CT: "my description from my list and then in 1 row the description from the competition"
     // — just the two descriptions side by side to verify the items are the same, the competitor, the match state
     // and the box to confirm or correct it. Nothing else.
-    A("my_desc", "MY DESCRIPTION", "MATCH", "text"), A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"),
-    A("match", "Match", "MATCH", "text"), A("cand", "Confirm / search", "MATCH", "text"),
+    // The competitor's description IS the match box: it shows the line linked now, or the suggestion, and is searched
+    // and confirmed in place (owner 17:07: "shouldn't that be in the same competitor description box so it is not redundant").
+    A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
@@ -1204,7 +1206,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
     return {
       id: `m:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
-        upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: (ir?.name as string) ?? l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
+        upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description,
       }),
@@ -1230,7 +1232,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
     return {
       id: `c:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
-        upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: (ir?.name as string) ?? l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
+        upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
         minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null,

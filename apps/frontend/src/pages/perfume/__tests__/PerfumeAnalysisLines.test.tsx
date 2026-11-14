@@ -11,7 +11,7 @@ vi.mock("../../../api/client", async (importOriginal) => ({ ...(await importOrig
 const cols = [
   { key: "a:name", label: "Description", group: "PRODUCT DETAILS", kind: "text" },
   { key: "a:match", label: "Match", group: "MATCH", kind: "text" },
-  { key: "a:cand", label: "Link to", group: "MATCH", kind: "text" },
+  { key: "a:c_desc", label: "COMPETITOR DESCRIPTION", group: "MATCH", kind: "text" },
   { key: "a:last_cost", label: "Last cost", group: "Purchases", kind: "money" },
   { key: "a:offer", label: "OFFER PRICE", group: "SALES", kind: "money" },
   { key: "a:esp", label: "Esperanza Price", group: "SALES", kind: "money" },
@@ -44,9 +44,9 @@ describe("List analysis — my list | their list, matched filter, the match box,
     await waitFor(() => expect(paths.some((p) => p.path.includes("base=theirs") && p.path.includes("match=unmatched"))).toBe(true));
     fireEvent.click(screen.getByLabelText("My list", { exact: false }));
 
-    // One click on the suggestion links competitor line C9 to my item I1.
+    // The competitor-description box starts on the suggestion; Confirm links competitor line C9 to my item I1.
     const box = (await screen.findAllByTestId("perfume-analysis-matchbox"))[0]!;
-    fireEvent.click(within(box).getByRole("button", { name: /Use suggestion/ }));
+    fireEvent.click(within(box).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(paths.some((p) => p.path === "/api/v1/perfume/rows/C9/confirm")).toBe(true));
 
     // Search any competitor line and confirm it.
