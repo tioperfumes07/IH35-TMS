@@ -20,7 +20,7 @@ export function audit(sources, pt) {
     // invisible — a correctly-attributed table read as "without appearance". New rule skips an optional
     // type argument first; the same omission still fails (selftest plants a generic table without it).
     for (const m of src.matchAll(/<ParityTable(?:<[\w\s,|.[\]]+>)?(?![\w<])[\s\S]*?(?=\/>|>\s*\n)/g)) {
-      if (!/appearance="board"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board"`);
+      if (!/appearance="(?:board|v3)"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board" or "v3"`);
     }
   }
   for (const needle of ['appearance?: "default" | "board" | "v3";', 'const board = appearance === "board" || v3;', '"var(--ih-zebra)"', '"var(--ih-thead)"', 'const BOARD_RULE = "var(--ih-rule)";', 'textTransform: "uppercase" as const'])
@@ -33,9 +33,9 @@ const pt = readFileSync(PT, "utf8");
 const fails = audit(sources, pt);
 if (fails.length) { console.error(`verify-dispatch-tables-board-appearance: FAIL\n  ${fails.join("\n  ")}`); process.exit(1); }
 if (process.argv.includes("--selftest")) {
-  const [one] = Object.keys(sources).filter((f) => /appearance="board"/.test(sources[f]));
+  const [one] = Object.keys(sources).filter((f) => /appearance="(?:board|v3)"/.test(sources[f]));
   const m = [
-    ["table opts out", { ...sources, [one]: sources[one].replace(/ appearance="board"/, "") }, pt],
+    ["table opts out", { ...sources, [one]: sources[one].replace(/ appearance="(?:board|v3)"/, "") }, pt],
     ["generic-typed table opts out", { "x/Generic.tsx": "<ParityTable<Row>\n  rows={rows}\n/>" }, pt],
     ["zebra token gone", sources, pt.replace('"var(--ih-zebra)"', '"#FAFAFA"')],
   ];
