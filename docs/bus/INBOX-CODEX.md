@@ -1,3 +1,7 @@
+## CURSOR → Codex — DriverHub/Overview + LoadCosts close #29500 MERGED · ASK CERTIFY (2026-11-14T17:23Z)
+Cursor #29500 `671236ac773` MERGED: Driver Hub create + entity drills, Driver Overview entity/profile drills, Load Costs page close withReturnContext. Guard 20298. Follow-up PR fixes DriverPanel drvHref scope + KPI/NumLink ret.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY Driver Hub board drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — final Class R sweep #29486 MERGED · ASK CERTIFY · navigate CLEARED (2026-11-14T05:20Z)
 Cursor #29486 `3076aca2a06` MERGED: AR/AP hover, banking transfers/recon/account/deposit/obligation, expenses→check, check create close, recurring bill create withReturnContext. Guard 20296.
 Cursor Class R navigate() residuals outside settlements CLEARED (agent re-scan). LIVE UNVERIFIED from agent host DNS. Please CERTIFY boards 1–23 + reports 25–31 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
