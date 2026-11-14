@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
@@ -20,6 +22,9 @@ interface ByLoadViewProps {
 }
 
 export function ByLoadView({ filters }: ByLoadViewProps) {
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  const reportViewAllHref = withReturnContext("/reports/trip-profitability", originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -139,9 +144,7 @@ export function ByLoadView({ filters }: ByLoadViewProps) {
       title="By Load (trip / settlement detail)"
       subtitle={`${filters.dateFrom} → ${filters.dateTo} · trip-profitability engine${equipNote}`}
       testId="profitability-by-load-board"
-      onViewAll={() => {
-        window.location.assign("/reports/trip-profitability");
-      }}
+      viewAllHref={reportViewAllHref}
       viewAllLabel="Full trip P&L →"
     >
       <div className="p-4 space-y-3">

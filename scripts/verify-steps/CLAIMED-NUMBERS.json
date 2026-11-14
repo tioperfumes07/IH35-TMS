@@ -18201,5 +18201,10 @@
     "claimed_at": "2026-11-14T03:44:09Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 View-all href wave: Factoring/Legal/Banking/Fuel/Maint/Escrow/CA + V3Panel/FuelBoardSection"
+  },
+  "20254": {
+    "claimed_at": "2026-11-14T03:47:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 UnexpectedExpenses + Profitability View-all href+ret"
   }
 }

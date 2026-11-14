@@ -6,7 +6,7 @@
  */
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -100,7 +100,6 @@ function FlagCell({ flag }: { flag: string | null }) {
 export function UnexpectedExpensesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const navigate = useNavigate();
   const { pathname, search } = useLocation();
   const originHref = currentOriginHref(pathname, search);
 
@@ -123,7 +122,6 @@ export function UnexpectedExpensesPage() {
 
   // ROUND 8.20 board 2 — View all opens Banking Transactions for-review (not Home accounts).
   const bankingMonthHref = unexpectedBankingHref(report?.month, originHref);
-  const goBanking = () => navigate(bankingMonthHref);
 
   if (!companyId) {
     return (
@@ -211,7 +209,7 @@ export function UnexpectedExpensesPage() {
         >
           <BoardSection
             title={`Candidates from the bank — ${report?.month_label ?? "Month"}`}
-            onViewAll={goBanking}
+            viewAllHref={bankingMonthHref}
             footer="Found by payee name only — nothing is categorized or matched; a person confirms each line."
             testId="unexpected-candidates-panel"
           >
@@ -282,7 +280,7 @@ export function UnexpectedExpensesPage() {
             />
           </BoardSection>
 
-          <BoardSection title="By kind" onViewAll={goBanking} testId="unexpected-by-kind-panel">
+          <BoardSection title="By kind" viewAllHref={bankingMonthHref} testId="unexpected-by-kind-panel">
             <ParityTable<{ kind: string; label: string; amount_cents: number | null; count: number }>
               tableTestId="unexpected-by-kind-table"
               appearance="board"
