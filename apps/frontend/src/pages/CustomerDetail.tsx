@@ -1085,7 +1085,7 @@ export function CustomerDetailPage() {
         actions={
           !editMode ? (
             <div className="flex items-center gap-2">
-              <Button variant="secondary" onClick={() => navigate(`/customers/${id}/statement`)}>
+              <Button variant="secondary" onClick={() => navigate(custInvHref(`/customers/${id}/statement`))}>
                 Statement
               </Button>
               {customer.deactivated_at == null ? (

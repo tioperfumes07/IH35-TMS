@@ -1,7 +1,8 @@
 import { HoverDropdown } from "../shared/HoverDropdown";
 import type { ReportCategory } from "../../api/reports";
 import { ReportFlyoutPanel } from "./ReportFlyoutPanel";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { phase6ReportHref } from "./phase6ReportLinks";
 
 const CATEGORY_LABELS: Array<{ id: ReportCategory; label: string }> = [
@@ -227,6 +228,9 @@ type Props = {
 };
 
 export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   // CATEGORY-HOVER-FLYOUT-CLIPPED-BY-SCROLL-ANCESTOR: no overflow-x-auto here -- an
   // overflow-x:auto ancestor forces overflow-y to clip too (CSS mixed-overflow rule), which
@@ -270,7 +274,7 @@ export function CategoryHoverNav({ activeCategory, onCategoryChange }: Props) {
                     navigate("/reports/ap-aging");
                     return;
                   }
-                  navigate(`/reports/run/${encodeURIComponent(itemId)}`);
+                  navigate(moneyHref(`/reports/run/${encodeURIComponent(itemId)}`));
                 }}
                 footer="Click any report to run"
               />

@@ -60,7 +60,8 @@ type ActionKind = "advance" | "reserve_held" | "release" | "recourse" | "void";
 export function FactoringDetailPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
-  const acctHref = (target: string) => withReturnContext(target, originHref);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
+  const acctHref = moneyHref;
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -249,7 +250,7 @@ export function FactoringDetailPage() {
             >
               Statement tie-out
             </Link>
-            <Button variant="secondary" onClick={() => navigate(`/vendors/${detail.factoring_company_vendor_id}`)}>
+            <Button variant="secondary" onClick={() => navigate(moneyHref(`/vendors/${detail.factoring_company_vendor_id}`))}>
               Edit factoring company profile
             </Button>
             {showAdvance ? <Button onClick={() => setAction("advance")}>Mark Advanced</Button> : null}

@@ -3,7 +3,8 @@
  * Hosted on the approved PartyBoard when ?create=1 (no legacy master-detail mount).
  */
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { Modal } from "../Modal";
 import { NewCustomerDrawerForm } from "../parity/drawers/NewCustomerDrawerForm";
 
@@ -14,6 +15,9 @@ type Props = {
 };
 
 export function CustomerCreateModal({ open, onClose, operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   if (!operatingCompanyId) return null;
@@ -33,7 +37,7 @@ export function CustomerCreateModal({ open, onClose, operatingCompanyId }: Props
           onCreated={async (result) => {
             await queryClient.invalidateQueries({ queryKey: ["party-board"] });
             await queryClient.invalidateQueries({ queryKey: ["customers"] });
-            if (result?.id) navigate(`/customers/${result.id}`);
+            if (result?.id) navigate(moneyHref(`/customers/${result.id}`));
           }}
         />
       ) : null}
