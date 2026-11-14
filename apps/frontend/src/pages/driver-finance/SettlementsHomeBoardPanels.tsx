@@ -6,14 +6,13 @@ import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
-import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { entityLabel } from "../../lib/entity-label";
 import type { SettlementListRow } from "../../api/driverFinance";
 import { companyToday } from "../../lib/businessDate";
-import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
+import { formatNumber, formatQuantityTable, formatUsd } from "../../lib/money";
 import {
   formatSettlementsUsd,
   formatWeekOfTitle,
@@ -109,19 +108,30 @@ export function weekOfBoardStatus(s: SettlementListRow, pill?: "open" | "closed"
   const phase = settlementsWeekOfStatusLabel(s);
   if (phase === "Cancelled") return { label: "Cancelled", color: V3.muted };
   // ROUND 8.17 class L — Closed panel never paints "Open"; tour-closed / terminal rows label Closed.
-  if (phase === "Closed" || settlementsRowTourClosed(s)) return { label: "Closed", color: V3.shell };
+  // R90-32-ITEM-8: Closed = slate #64748B (not V3.shell navy which renders as near-black).
+  if (phase === "Closed" || settlementsRowTourClosed(s)) return { label: "Closed", color: "#64748B" };
   // R90-32: When viewing the Closed panel, any remaining row is closed by definition.
-  if (pill === "closed") return { label: "Closed", color: V3.shell };
+  if (pill === "closed") return { label: "Closed", color: "#64748B" };
   return { label: "Open", color: V3.link };
 }
 
-const money = (n: number) => formatUsd(n);
+/** Week-of table amounts: no $ prefix, two decimals (e.g. "1,984.30"). */
+const money = (n: number) => formatNumber(n, 2);
+/** Cents → no-sign dollars string for MoneyCell format prop. */
+const fmtCentsNoSign = (cents: number | string | null | undefined): string =>
+  formatNumber(Number(cents ?? 0) / 100, 2);
 const dollarsToCents = (n: number) => Math.round(Number(n || 0) * 100);
+/** Week of MMM D format (e.g., "Week of Oct 19"). */
+function fmtWeekMmmD(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d, 12));
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {
     navigate,
-    companyId,
+    companyId: _companyId,
     weekBuckets,
     weekChartGrain,
     setWeekChartGrain,
@@ -167,6 +177,10 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
             testId="settlements-home-week-chart-panel"
           >
             <div style={{ padding: "12px 14px 8px" }}>
+              {(() => {
+                // Round axis ceiling UP to nearest $10k so ticks are always round numbers.
+                const chartCeiling = weekChartMax <= 0 ? 10000 : Math.ceil(weekChartMax / 10000) * 10000;
+                return (
               <svg
                 width="100%"
                 height={200}
@@ -178,7 +192,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               >
                 {[0, 0.5, 1].map((frac) => {
                   const y = 12 + (1 - frac) * 150;
-                  const amount = weekChartMax * frac;
+                  const amount = chartCeiling * frac;
                   const kLabel = amount === 0 ? "$0" : amount >= 1000 ? `$${Math.round(amount / 1000)}k` : `$${Math.round(amount)}`;
                   return (
                     <g key={`axis-${frac}`}>
@@ -192,7 +206,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 {weekBuckets.map((w, i) => {
                   const value =
                     weekChartGrain === "net" ? w.net : weekChartGrain === "gross" ? w.gross : w.deductions;
-                  const h = Math.max(2, (Math.abs(value) / weekChartMax) * 150);
+                  const h = Math.max(2, (Math.abs(value) / chartCeiling) * 150);
                   const x = i * 48 + 68;
                   const y = 162 - h;
                   const isSelected = thisWeekBucket?.weekStartIso === w.weekStartIso;
@@ -227,6 +241,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   );
                 })}
               </svg>
+              ); })()}
               <style>{`
                 @keyframes setl-v3-grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
                 .setl-v3-grow { transform-box: fill-box; transform-origin: bottom; animation: setl-v3-grow .9s cubic-bezier(.2,.8,.2,1) both; }
@@ -301,7 +316,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
 
       {!kpiBaseError && thisWeekBucket ? (
         <BoardSection
-          title={`Week of ${formatWeekOfTitle(thisWeekBucket.weekStartIso)}`}
+          title={`Week of ${fmtWeekMmmD(thisWeekBucket.weekStartIso)}`}
           onViewAll={() => navigate(`/driver-finance/settlements?tab=${weekOfPill === "closed" ? "closed" : "open"}`)}
           headerRight={
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
@@ -390,42 +405,28 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                     <span style={{ textAlign: "left" }}>
                       <EntityLink kind="driver" id={s.driver_id} label={entityLabel(s.driver_full_name || "Driver", s.driver_id, "Driver")} />
                     </span>
-                    <span style={{ textAlign: "left", display: "inline-flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-                      <span className="inline-flex min-w-0 flex-wrap items-center gap-1">
-                        {(s.load_links ?? []).length > 0
-                          ? (s.load_links ?? []).map((l, idx) => (
-                              <span key={l.id} className="inline-flex items-center gap-1">
-                                {idx > 0 ? <span aria-hidden>·</span> : null}
-                                <EntityLink kind="load" id={l.id} label={l.label || "Load"} />
-                              </span>
-                            ))
-                          : settlementsWeekLoadsLabel(s)}
-                      </span>
-                      {s.load_links?.[0]?.id ? (
-                        <SettlementRefCell loadId={s.load_links[0].id} operatingCompanyId={companyId} />
-                      ) : (
-                        <EntityLink kind="settlement" id={s.id} label="PENDING" />
-                      )}
+                    <span style={{ textAlign: "left" }}>
+                      {settlementsWeekLoadsLabel(s)}
                     </span>
                     <MoneyCell
                       cents={dollarsToCents(Number(s.gross_pay ?? 0))}
-                      format={formatUsdCents}
+                      format={fmtCentsNoSign}
                       drill={{ entity: { kind: "settlement", id: s.id } }}
                     />
                     <MoneyCell
                       cents={dollarsToCents(Number(s.deductions_total ?? 0))}
-                      format={formatUsdCents}
+                      format={fmtCentsNoSign}
                       drill={{ entity: { kind: "settlement", id: s.id } }}
                     />
                     <MoneyCell
                       cents={dollarsToCents(settlementsDerivedReimb(s))}
-                      format={formatUsdCents}
+                      format={fmtCentsNoSign}
                       drill={{ entity: { kind: "settlement", id: s.id } }}
                     />
                     <span style={{ fontWeight: 700 }}>
                       <MoneyCell
                         cents={dollarsToCents(Number(s.net_pay ?? 0))}
-                        format={formatUsdCents}
+                        format={fmtCentsNoSign}
                         drill={{ entity: { kind: "settlement", id: s.id } }}
                       />
                     </span>

@@ -1,7 +1,8 @@
 import { useMemo, type ReactNode } from "react";
-import { useLocation } from "react-router-dom";
-import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { HoverDropdownNav, type NavChild, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
+import { resolveBackHref } from "../../lib/returnContext";
 import { SETTLEMENTS_SUBNAV } from "./settlementsSubnav";
 
 type Props = {
@@ -13,6 +14,12 @@ type Props = {
   kpiStrip?: ReactNode;
   crumbs?: Array<{ label: string; href: string }>;
 };
+
+const PRIMARY_LABELS = new Set([
+  "Drivers", "Profiles", "Pre-Settlements", "Settlements",
+  "Batch Settlements", "Feed Gate", "Company Settlements",
+  "Settlement Close", "Cash Advances", "Liabilities", "Escrow", "Deductions",
+]);
 
 function activeHrefFor(pathname: string, search: string): string | undefined {
   const full = `${pathname}${search}`;
@@ -30,8 +37,8 @@ function activeHrefFor(pathname: string, search: string): string | undefined {
  * breadcrumb + title + createControl + HoverDropdownNav + kpiStrip. Replaces PageHeader + NavyPageSubNav.
  */
 export function SettlementsSubNavWrapper({
-  title = "Settlements",
-  subtitle,
+  title = "Driver Settlements",
+  subtitle = "List + detail settlement workflow",
   actions,
   createControl,
   children,
@@ -39,15 +46,29 @@ export function SettlementsSubNavWrapper({
   crumbs,
 }: Props) {
   const { pathname, search } = useLocation();
-  const breadcrumb =
-    pathname === "/driver-finance/settlements" && !search
-      ? [{ label: "Settlements" }]
-      : [{ label: "Settlements", href: "/driver-finance/settlements" }, ...(crumbs ?? []), { label: title }];
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const backHref = resolveBackHref({ searchParams, pathname, fallback: "/driver-finance" });
 
-  const navItems = useMemo<NavItem[]>(
-    () => SETTLEMENTS_SUBNAV.map((item) => ({ label: item.label, href: item.to })),
-    [],
-  );
+  const isRoot = pathname === "/driver-finance/settlements" && !search;
+  const breadcrumb = isRoot
+    ? [{ label: "Driver Finance", href: "/driver-finance" }, { label: "Settlements" }]
+    : [
+        { label: "Driver Finance", href: "/driver-finance" },
+        { label: "Settlements", href: "/driver-finance/settlements" },
+        ...(crumbs ?? []),
+        { label: title },
+      ];
+
+  const navItems = useMemo<NavItem[]>(() => {
+    const primary = SETTLEMENTS_SUBNAV
+      .filter((item) => PRIMARY_LABELS.has(item.label))
+      .map((item) => ({ label: item.label, href: item.to }));
+    const moreChildren: NavChild[] = SETTLEMENTS_SUBNAV
+      .filter((item) => !PRIMARY_LABELS.has(item.label))
+      .map((item) => ({ label: item.label, href: item.to }));
+    return [...primary, { label: "More ▾", children: moreChildren }];
+  }, []);
   const activeHref = useMemo(() => activeHrefFor(pathname, search), [pathname, search]);
 
   return (
@@ -57,8 +78,24 @@ export function SettlementsSubNavWrapper({
           <div data-testid="settlements-breadcrumb">
             <Breadcrumb items={breadcrumb} />
           </div>
-          <h1 className="text-page-title font-semibold text-gray-900">{title}</h1>
-          {subtitle ? <p className="text-xs text-gray-600">{subtitle}</p> : null}
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+            <button
+              type="button"
+              data-testid="settlements-back-btn"
+              onClick={() => navigate(backHref)}
+              style={{ fontSize: 12, fontWeight: 600, color: "#1D4ED8", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+            >
+              ← Back
+            </button>
+            <span style={{ color: "#9CA3AF" }}>·</span>
+            <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{title}</span>
+            {subtitle ? (
+              <>
+                <span style={{ color: "#9CA3AF" }}>·</span>
+                <span style={{ fontSize: 11, color: "#6B7280" }}>{subtitle}</span>
+              </>
+            ) : null}
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2" data-settlements-toolbar="true">
           {actions}
