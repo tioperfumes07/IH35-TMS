@@ -493,7 +493,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             items: [
               { key: "coa", label: "Chart of Accounts", onClick: () => navigate(bankHref("/lists/accounting/chart-of-accounts")) },
               { key: "cash-gl", label: "Cash GL setup", onClick: () => navigate(bankHref("/banking/cash-gl-setup")) },
-              ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate(bankHref("/banking/email-queue")) }] : []),
+              ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate("/banking/email-queue") }] : []),
             ],
           },
         ]}
@@ -1078,7 +1078,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(bankHref("/banking/categorization-rules"))}>Categorization rules</ActionButton>
               <ActionButton onClick={() => navigate(bankHref("/banking/account-visibility"))}>Account Visibility</ActionButton>
               {canSeeEmailQueue ? (
-                <ActionButton onClick={() => navigate(bankHref("/banking/email-queue"))}>Email Queue</ActionButton>
+                <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
               ) : null}
               <ActionButton onClick={() => navigate(bankHref("/banking/qbo-sync-queue"))}>QBO Sync Queue</ActionButton>
             </div>

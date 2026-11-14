@@ -528,6 +528,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               type="button"
               disabled={!href}
               onClick={href ? () => navigate(href) : undefined}
+              disabled={!href}
               data-testid={`settlements-nav-chip-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
               style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
             >
@@ -572,6 +573,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       {/* R-102-B item 5 — cancelled/reversed permanently excluded (SETL-REVERSED-HIDE) */}
       <BoardSection
         title={panelTitle}
+        subtitle={`${formatQuantityTable(filteredRows.length, 0)} rows`}
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
         headerRight={

@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
+import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
-import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
 import { resolveBackHref } from "../../lib/returnContext";
+import "../../assets/fonts/v3-maintenance/board-box.css";
+import "../../assets/fonts/v3-maintenance/fonts.css";
 
 // ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
 // (ACCT-F5053–5056). Bare list hrefs are silent no-ops when already on that list.
@@ -75,17 +77,18 @@ export function AccountingSubNavWrapper({
 }: Props) {
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
-  // ROUND 8.20 board1 — hub Open bills/expenses/invoices attach ?ret=; list chrome Back (Accounting
-  // crumb) must restore that origin (fallback stays /accounting). U18: breadcrumb IS the Back.
+  // ROUND 9.1 board1 v3parity — hub Back uses ?ret= return context, fallback /accounting.
   const accountingBackHref = resolveBackHref({
     searchParams,
     pathname,
     fallback: "/accounting",
   });
-  const breadcrumb =
-    pathname === "/accounting"
-      ? [{ label: "Accounting" }]
-      : [{ label: "Accounting", href: accountingBackHref }, ...(crumbs ?? []), { label: title }];
+  // U18 — breadcrumb: Accounting home › [parent crumbs] › page title
+  const breadcrumb = [
+    { label: "Accounting", href: accountingBackHref },
+    ...(crumbs ?? []),
+    { label: title },
+  ];
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
   const createMenuRef = useRef<HTMLDivElement | null>(null);
   const { selectedCompanyId } = useCompanyContext();
@@ -116,25 +119,25 @@ export function AccountingSubNavWrapper({
   }, []);
 
   return (
-    <div className="space-y-4" data-accounting-subnav-wrapper="true">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-baseline gap-2">
-          {/* U18 — the way back is the module path, never browser history: Accounting / [parent] / this page. */}
-          <div data-testid="accounting-breadcrumb">
-            <Breadcrumb items={breadcrumb} />
-          </div>
-          <h1 className="text-page-title text-gray-900 m-0" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>{title}</h1>
-          {subtitle ? <p className="text-xs text-gray-600 m-0">{subtitle}</p> : null}
+    // R9.1 board1 v3parity — data-v3-board scopes board-box.css; lineHeight overrides app 1.5 default.
+    <div data-v3-board="Accounting" data-accounting-subnav-wrapper="true" style={{ lineHeight: "normal" }}>
+      {/* U18 guard — Accounting breadcrumb nav; Breadcrumb claims the breadcrumb slot */}
+      <Breadcrumb items={breadcrumb} />
+
+      {/* Header row matches design: ← Back · title · subtitle | Go to vendors · create */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          {/* "← Back" navigation — spec key fontSize=11px color=#5B6576 */}
+          <Link to={accountingBackHref} style={{ fontSize: 11, color: "#5B6576", textDecoration: "none" }}>← Back</Link>
+          <h1 className="m-0" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 18, fontWeight: 700 }}>{title}</h1>
+          {subtitle ? <span style={{ fontSize: 11, color: "#5B6576" }}>{subtitle}</span> : null}
         </div>
-        {/*
-          ACCT-CHROME-UNIFORM-01 — one toolbar scale (Button md = h-8 / locked 12px body text, GO-21 J1):
-          [non-create actions] · Go to vendors · ONE create control.
-        */}
-        <div className="flex flex-wrap items-center gap-2" data-accounting-toolbar="true">
+        {/* Go to vendors (11px/600/#111827) + create control */}
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }} data-accounting-toolbar="true">
           {actions}
           <Link
             to="/vendors"
-            className="text-xs font-semibold text-[#0F1219] hover:underline underline-offset-2"
+            style={{ fontSize: 11, fontWeight: 600, color: "#111827", textDecoration: "none" }}
           >
             Go to vendors
           </Link>

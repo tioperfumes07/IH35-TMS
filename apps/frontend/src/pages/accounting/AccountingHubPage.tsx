@@ -26,7 +26,6 @@ import { getAccountingPeriods } from "../../api/my-accountant";
 import { getArAgingReport } from "../../api/reports";
 import { listTours } from "../../api/tourReadout";
 import { useAuth } from "../../auth/useAuth";
-import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -580,9 +579,31 @@ export function AccountingHubPage() {
       subtitle="Bills, expenses, invoices, settlements & transaction review"
       kpiStrip={kpiStrip}
       createControl={
-        <Button size="sm" onClick={() => setManualJeOpen(true)} disabled={!companyId}>
+        // R9.1 board1 v3parity — spec: h=28 p=0 12px r=6 fs=12 fw=600 bg=#13233F color=white
+        <button
+          type="button"
+          onClick={() => setManualJeOpen(true)}
+          disabled={!companyId}
+          style={{
+            height: 28,
+            padding: "0 12px",
+            display: "inline-flex",
+            alignItems: "center",
+            borderRadius: 6,
+            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            fontSize: 12,
+            fontWeight: 600,
+            background: "#13233F",
+            color: "#fff",
+            border: "none",
+            cursor: !companyId ? "not-allowed" : "pointer",
+            opacity: !companyId ? 0.6 : 1,
+            lineHeight: "normal",
+            boxSizing: "content-box",
+          }}
+        >
           + Create Manual JE
-        </Button>
+        </button>
       }
     >
       {!companyId ? <p style={{ fontSize: 12, color: V3.ink }}>Select an operating company.</p> : null}
