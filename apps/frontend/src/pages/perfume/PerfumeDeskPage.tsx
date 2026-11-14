@@ -25,7 +25,7 @@ import { tr } from "./perfumeI18n";
 
 type Tab = PerfumeGridView | "lists" | "review" | "match" | "rules";
 const TABS: Array<[Tab, string]> = [
-  ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["all", "All items"],
+  ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
   ["lists", "Price lists & import"], ["review", "Review"], ["match", "Match my list ↔ competitor"], ["rules", "Rules"],
 ];
 
@@ -115,10 +115,11 @@ export default function PerfumeDeskPage() {
 /* ---------------- grid ---------------- */
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
-  buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
+  buy: "Buying from your suppliers: my last cost, purchase date, qty purchased, inventory and qty sold (from my inventory file — inventory from my list until it is uploaded), who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "My offer price against each competitor's real price: their list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30). Over/under in $ and %, and the % to reduce my price (or the room to raise). Their description sits next to mine so every match can be checked.",
   comp: "Each competitor's margin if they buy from the cheapest supplier: that supplier's list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30 — change it in Rules) is their cost; their price less that is what they earn.",
+  analysis: "My list analysed in my own format: ITEM · SALES (purchase date, qty, last cost, sold, inventory, margin, markup, offer, Esperanza, lowest sales price) · Purchases (min purchase price to match La Esperanza at Min margin — the My margin % box, 15 when empty — lowest vendor and price) · Analysis (under / over, % to raise or lower, new margin) · COMPETITOR (list price, cushion, sales price). Blank = that figure is not in any upload yet.",
   all: "The whole item database.",
 };
 type MineChoice = "offer" | "inventory" | "need" | null;
@@ -133,14 +134,22 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
   // Owner 2026-11-14: no cost I never uploaded and no purchase quantities (no sales / movement data) by default.
-  if (mine && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
+  // List analysis: exactly the owner's format (a:* columns), nothing else.
+  if (view === "analysis") return key.startsWith("a:");
+  if (mine && view !== "comp" && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
     || ["my_offer_desc", "my_offer_price", "my_qty", "best_vendor"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
   // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
-  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
+  // Owner 2026-11-14: "in purchase compare vendors i need … my last cost, date, quantity purchased, current inventory,
+  // qty sold … the last price i purchased is important because prices change weekly."
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_last_cost", "my_purchase_date", "my_qty_purchased", "my_qty", "my_qty_sold"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
-  if (view === "comp") return item || /^c:.*:(price|earn|margin)$/.test(key) || ["comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
+  // Owner 2026-11-14: "in competition their margin … the vendors prices should be after all the esperanza data
+  // margins etc. i need to see their data next to mine" — mine, then the competitor (their line, list, cushion, sales
+  // price, their cost, what they earn, margin), then every supplier's list price.
+  if (view === "comp") return item || /^s:.*:(desc|price|cushion|real)$/.test(key) || /^c:.*:(earn|margin)$/.test(key) || /^v:.*:price$/.test(key)
+    || ["my_offer_desc", "my_offer_price", "my_qty", "comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
   // Wholesale (owner 2026-11-14): my description + my offer price, then per competitor their description, list price,
   // cushion, real price, and me vs their real price ($, %, reduce / raise). No cost, margin or need-to-buy columns.
   if (view === "wholesale") return item || /^s:.*:(desc|price|cushion|real|diff|diff_pct|action)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
@@ -168,6 +177,11 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
   const [mineSeen, setMineSeen] = useState(mine);
   if (mineSeen !== mine) { setMineSeen(mine); setPage(1); }
   const [pageSize, setPageSize] = useState(PAGE);
+  // Owner 2026-11-14: "i need filter so i can select only the items from the competitions list" — on by default on
+  // Competition (their margin means nothing for items they do not carry); one click on every other tab.
+  const [carried, setCarried] = useState(view === "comp");
+  const [viewSeen, setViewSeen] = useState(view);
+  if (viewSeen !== view) { setViewSeen(view); setCarried(view === "comp"); setPage(1); }
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
   const [target, setTarget] = useState<number | null>(null);
   const [targetDraft, setTargetDraft] = useState("");
@@ -185,11 +199,18 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
     if (t !== target) { setTarget(t); setPage(1); }
   };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine, carried],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
-  const cols = query.data?.cols ?? [];
+  // Competition: my columns, then the competitor's, then every supplier's list price (owner 2026-11-14: "the vendors
+  // prices should be after all the esperanza data margins etc."). Other tabs keep the server's order.
+  const cols = useMemo(() => {
+    const all = query.data?.cols ?? [];
+    if (view !== "comp") return all;
+    const rank = (k: string) => (k.startsWith("v:") ? 2 : k.startsWith("t:") || k.startsWith("a:") ? 3 : 1);
+    return all.map((c, i) => ({ c, i })).sort((a, b) => rank(a.c.key) - rank(b.c.key) || a.i - b.i).map((x) => x.c);
+  }, [query.data?.cols, view]);
   // Owner 2026-11-12: "so I don't confuse between vendors have a line noting difference." A heavy left rule on the
   // first shown column of every group (Mine, each supplier, each competitor) — header and every row.
   const groupStart = useMemo(() => {
@@ -290,6 +311,10 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
                 aria-label={tr("perfume.desk.target.aria", "Margin percent for the My target columns")}
                 className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
               />
+            </label>
+            <label className="flex items-center gap-1 text-xs text-gray-700" data-testid="perfume-carried">
+              <input type="checkbox" checked={carried} onChange={(e) => { setCarried(e.target.checked); setPage(1); }} />
+              {tr("perfume.desk.carried", "Only items on the competitor's list")}
             </label>
             {view === "trade" ? (
               <label className="flex items-center gap-1 text-xs text-gray-700">

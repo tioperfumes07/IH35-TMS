@@ -43,6 +43,11 @@ describeIntegration("perfume my offer list + my inventory (real Postgres, rolled
     const beta = g.rows.find((r) => r.name === "BETA" && r.brand === "ZZMINE")!;
     expect([alpha.my_qty, alpha.my_last_cost, alpha.my_offer_price, alpha.my_need]).toEqual([2, 1400, 2000, 3]);
     expect([beta.my_qty, beta.my_offer_price, beta.my_need]).toEqual([null, 2000, 1]);
+    // List analysis — the owner's own formulas (11-14 PERFUME_ENGINE_FORMATS.xlsx): margin (20−14)/20, markup (20−14)/14,
+    // lowest vendor = the cheapest supplier list price; no competitor here, so the competitor columns stay blank.
+    expect([alpha["a:last_cost"], alpha["a:inv_qty"], alpha["a:margin"], alpha["a:markup"], alpha["a:offer"], alpha["a:low_price"], alpha["a:esp"], alpha["a:under_by"]])
+      .toEqual([1400, 2, 30, 42.9, 2000, 1500, null, null]);
+    expect(beta["a:last_cost"]).toBeNull();
     // My lists are never a supplier or a competitor column.
     expect(g.cols.some((c) => c.key.includes(inv) || c.key.includes(off))).toBe(false);
     expect(g.cols.map((c) => c.key)).toEqual(expect.arrayContaining(["my_qty", "my_last_cost", "my_offer_price", "my_need"]));

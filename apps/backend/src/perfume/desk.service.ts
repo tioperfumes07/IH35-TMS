@@ -957,7 +957,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; myPurch = myPurch ?? o.purchase_date; myQtyPurch = myQtyPurch ?? o.qty_purchased; mySold = mySold ?? o.qty_sold; mySku = mySku ?? o.sku; } }
     let myOfferDesc: string | null = null;
     for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; mySku = mySku ?? o.sku; } }
-    const invUploaded = invV.some((v) => offersMap.has(v.id));
+    // An inventory file exists (any item): then it is the stock — an item not on it has none on hand.
+    const invUploaded = hasInv;
     // No inventory file yet: the quantity on my offer list IS my stock (owner 2026-11-14). Never a guessed number.
     if (!invUploaded && offerQty != null) myQty = offerQty;
     row.my_offer_desc = myOfferDesc;
