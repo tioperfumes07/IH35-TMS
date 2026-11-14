@@ -3,7 +3,8 @@
  * v3 spec: docs/design/v3/Reports.dc.html
  * All content (sidebar, category panel, management rows Rule 07, automation, saved) is inside ReportsHomeBoard.
  */
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -11,6 +12,9 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportsHomeBoard } from "./components/ReportsHomeBoard";
 
 export function ReportsHomePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
@@ -23,8 +27,8 @@ export function ReportsHomePage() {
         subtitle="Choose a domain category, then open a report to run"
         actions={
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate("/reports/custom")}>+ Custom report</Button>
-            <Button variant="secondary" onClick={() => navigate("/reports/scheduled")}>Schedule</Button>
+            <Button onClick={() => navigate(moneyHref("/reports/custom"))}>+ Custom report</Button>
+            <Button variant="secondary" onClick={() => navigate(moneyHref("/reports/scheduled"))}>Schedule</Button>
           </div>
         }
       />

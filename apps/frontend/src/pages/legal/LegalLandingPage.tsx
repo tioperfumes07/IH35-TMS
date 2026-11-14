@@ -1,4 +1,5 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -12,6 +13,9 @@ import { LegalModuleTabs } from "./LegalModuleTabs";
  * Keeps PageHeader + LegalModuleTabs; body is board sections (not DrillKpiCard reskin).
  */
 export function LegalLandingPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -31,7 +35,7 @@ export function LegalLandingPage() {
         title="Legal"
         subtitle="Contracts and compliance workflows"
         actions={
-          <Button onClick={() => navigate("/legal/contracts?openSend=1")}>
+          <Button onClick={() => navigate(moneyHref("/legal/contracts?openSend=1"))}>
             + Create Contract
           </Button>
         }
