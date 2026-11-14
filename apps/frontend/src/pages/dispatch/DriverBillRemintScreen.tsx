@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
 import {
   listLoadsNeedingDriverBillRemint,
   remintAllDriverBills,
@@ -8,6 +9,7 @@ import {
 } from "../../api/loads";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -26,6 +28,10 @@ import { formatQuantityTable } from "../../lib/money";
 export function DriverBillRemintScreen() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [remintingId, setRemintingId] = useState<string | null>(null);
@@ -150,7 +156,7 @@ export function DriverBillRemintScreen() {
   if (!companyId) {
     return (
       <div className="space-y-3">
-        <PageHeader backHref="/dispatch" title="Driver Bill Remint" subtitle="Select a company first" />
+        <PageHeader backHref={dispatchBackHref} title="Driver Bill Remint" subtitle="Select a company first" />
         <BoardSection title="Driver bill remint" testId="driver-bill-remint-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -160,7 +166,7 @@ export function DriverBillRemintScreen() {
 
   return (
     <div className="space-y-3">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Driver Bill Remint"
         subtitle={`${formatQuantityTable(query.data?.real_count ?? 0, 0)} real loads (of ${formatQuantityTable(query.data?.total_count ?? 0, 0)} total) delivered with no driver bill`}
         actions={

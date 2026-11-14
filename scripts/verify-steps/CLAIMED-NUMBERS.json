@@ -16062,6 +16062,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-ap-aging-back-ret board25/10"
   },
+  "20204": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-dispatch-overview-viewall-ret board13/14"
+  },
   "20206": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",

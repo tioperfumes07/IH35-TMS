@@ -3,7 +3,7 @@ import { isValidElement, useMemo, type ReactNode } from "react";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import {
@@ -27,6 +27,7 @@ import "./dispatch-board.css";
 import { addDaysIso, companyToday } from "../../lib/businessDate";
 import { DISPATCH_API_ROLLING_STATUSES, DISPATCH_API_TRUCK_COMMITTED_STATUSES, DISPATCH_WORK_STATUSES, loadStatusLabel } from "../../lib/load-status";
 import { formatQuantityTable } from "../../lib/money";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 type Props = {
   operatingCompanyId: string;
@@ -244,6 +245,10 @@ function daysIdle(unit: UnitsWithoutLoad): ReactNode {
 }
 
 export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
+  const location = useLocation();
+  // ROUND 8.20 board13/14 Class R — View-all drills are shareable hrefs with ?ret= Overview origin.
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const overviewHref = (target: string) => withReturnContext(target, originHref);
   const today = companyToday();
   const weekAgo = addDaysIso(today, -7);
   const enabled = Boolean(operatingCompanyId);
@@ -457,7 +462,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         </div>
         <div id="unassigned-units" data-testid="dispatch-unassigned-units-panel">
           <OverviewTable
-            title="Unassigned units" viewAllHref="/dispatch?view=list"
+            title="Unassigned units" viewAllHref={overviewHref("/dispatch?view=list")}
             columns={UNIT_DRIVER_LOAD}
             query={unitsWithoutLoadQ}
             errorMessage="Couldn't load unassigned units."
@@ -493,7 +498,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         </div>
         <div id="round-trip-exposure" data-testid="dispatch-round-trip-exposure-panel">
           <OverviewTable
-            title="Round-trip exposure" viewAllHref="/dispatch?view=list"
+            title="Round-trip exposure" viewAllHref={overviewHref("/dispatch?view=list")}
             hint="Dispatched or in transit, no return leg confirmed complete yet."
             columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
             query={exposureLoadsQ}
@@ -514,7 +519,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         </div>
         <OverviewTable
           title="At-risk / late loads"
-          viewAllHref="/dispatch/at-risk"
+          viewAllHref={overviewHref("/dispatch/at-risk")}
           columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
           query={atRiskLateQ}
           errorMessage="Couldn't load at-risk or late loads."
@@ -532,7 +537,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         />
         <OverviewTable
           title="Missing driver bill"
-          viewAllHref="/dispatch/driver-bill-remint"
+          viewAllHref={overviewHref("/dispatch/driver-bill-remint")}
           columns={[{ label: "Load" }, { label: "Driver" }, { label: "Status" }]}
           query={needsDriverBillRemintQ}
           errorMessage="Couldn't load the driver-bill remint queue."
@@ -551,7 +556,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         />
         <OverviewTable
           title="Detention board"
-          viewAllHref="/dispatch/detention"
+          viewAllHref={overviewHref("/dispatch/detention")}
           columns={[...UNIT_DRIVER_LOAD, { label: "Customer" }]}
           query={detentionQ}
           errorMessage="Couldn't load detention board."
@@ -570,7 +575,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         <OverviewTable
           title="Border crossings"
           hint="Last 7 days."
-          viewAllHref="/dispatch/border-crossing"
+          viewAllHref={overviewHref("/dispatch/border-crossing")}
           columns={[...UNIT_DRIVER_LOAD, { label: "Crossing" }]}
           query={borderQ}
           errorMessage="Couldn't load border crossings."
@@ -590,7 +595,7 @@ export function DispatchOverview({ operatingCompanyId, onLoadClick }: Props) {
         />
         <OverviewTable
           title="Out-of-service"
-          viewAllHref="/dispatch/in-transit-issues"
+          viewAllHref={overviewHref("/dispatch/in-transit-issues")}
           columns={[...UNIT_DRIVER_LOAD, { label: "Reason" }]}
           query={oosLoadsQ}
           errorMessage="Couldn't load out-of-service loads."

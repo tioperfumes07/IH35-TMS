@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useEffect, useMemo, useState } from "react";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   approveDetentionRequest,
   bridgeDetentionBilling,
@@ -265,6 +266,10 @@ function EventActions({
 export function DetentionBoardPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [nowMs, setNowMs] = useState(() => Date.now());
@@ -418,7 +423,7 @@ export function DetentionBoardPage() {
           renders both (dispatch-queues-subnav + dispatch-breadcrumb) and its own hooks are
           self-contained, so it does not affect this page's hook order. */}
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Detention board"
         subtitle="Operational detention and stopped, unbilled customer receivables · independent of load status"
         actions={
