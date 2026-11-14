@@ -3,10 +3,11 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -52,9 +53,12 @@ type ARAgingFilters = {
 export function ARAgingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
+  // ROUND 8.20 board1/25 — Accounting Hub View-all attaches ?ret=/accounting; Back must restore hub.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const deepLinkCustomerId = searchParams.get("customer_id")?.trim() ?? "";
   const emptyFilters: ARAgingFilters = { asOfDate: today, minBal: "", bucketFilter: "all", customerId: "" };
   const [appliedFilters, setAppliedFilters] = useState<ARAgingFilters>({ ...emptyFilters, customerId: deepLinkCustomerId });
@@ -303,7 +307,7 @@ export function ARAgingPage() {
       <PageHeader
         title="A/R aging"
         subtitle={`As of ${mmmDd(appliedFilters.asOfDate)} · open invoices by customer · Accrual basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "A/R Aging"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
