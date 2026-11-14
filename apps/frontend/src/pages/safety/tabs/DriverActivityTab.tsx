@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { DriverProfilePage } from "../../drivers/DriverProfilePage";
 import { DriversListPage } from "../../drivers/DriversListPage";
@@ -14,6 +15,9 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { Button } from "../../../components/Button";
 
 export function DriverActivityTab() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const [driverId, setDriverId] = useState<string | null>(null);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -61,10 +65,10 @@ export function DriverActivityTab() {
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h3 className="text-xs font-semibold text-[#0F1219]">Training Completions</h3>
               <span className="flex flex-wrap gap-3 text-xs">
-                <Link to="/safety/training/programs" className="font-semibold text-[#1F2A44] underline">
+                <Link to={safetyHref("/safety/training/programs")} className="font-semibold text-[#1F2A44] underline">
                   Training Programs
                 </Link>
-                <Link to="/safety/training/records" className="font-semibold text-[#1F2A44] underline">
+                <Link to={safetyHref("/safety/training/records")} className="font-semibold text-[#1F2A44] underline">
                   Training Records
                 </Link>
               </span>

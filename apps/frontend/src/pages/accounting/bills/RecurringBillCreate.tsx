@@ -139,15 +139,15 @@ export function RecurringBillCreate() {
   return (
     <div className="mx-auto max-w-2xl space-y-6 py-6" data-testid="recurring-bill-create">
       <div className="flex items-center gap-2 text-xs text-gray-500">
-        <Link to="/accounting" className="hover:underline">
+        <Link to={moneyHref("/accounting")} className="hover:underline">
           Accounting
         </Link>
         <span>/</span>
-        <Link to="/accounting/bills" className="hover:underline">
+        <Link to={moneyHref("/accounting/bills")} className="hover:underline">
           Bills
         </Link>
         <span>/</span>
-        <Link to="/accounting/bills/recurring" className="hover:underline">
+        <Link to={moneyHref("/accounting/bills/recurring")} className="hover:underline">
           Recurring Bills
         </Link>
         <span>/</span>

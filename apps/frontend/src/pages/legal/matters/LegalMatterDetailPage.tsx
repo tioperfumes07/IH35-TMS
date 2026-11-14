@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MatterReservePanel } from "../../../components/legal/MatterReservePanel";
 import { useEffect, useState } from "react";
-import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useParams, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   legalMattersApi,
   type LegalMatterDeadline,
@@ -103,6 +104,9 @@ export function formatLegalMatterEventBody(ev: { event_type?: unknown; event_bod
 }
 
 export function LegalMatterDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const legalHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -110,7 +114,6 @@ export function LegalMatterDetailPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const admin = user?.role === "Owner" || user?.role === "Administrator";
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 board21 — Matter detail Back restores list/Home via ret (fallback Matters list).
   const matterDetailBackHref = resolveBackHref({
@@ -293,7 +296,7 @@ export function LegalMatterDetailPage() {
                 Edit matter
               </Button>
             ) : null}
-            <Link to="/legal/matters">
+            <Link to={legalHref("/legal/matters")}>
               <Button variant="secondary">Back to list</Button>
             </Link>
           </div>

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 type DispatcherPendingActionsPanelProps = {
   detentionApprovals: number;
@@ -11,6 +12,9 @@ export function DispatcherPendingActionsPanel({
   incomingMessageQueue,
   bookingGapOpen,
 }: DispatcherPendingActionsPanelProps) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   return (
     <section
       data-testid="dispatcher-pending-actions-panel"
@@ -25,7 +29,7 @@ export function DispatcherPendingActionsPanel({
           </div>
           <div className="text-right">
             <div className="text-page-title font-semibold text-[#0F1219]">{detentionApprovals}</div>
-            <Link to="/dispatch" className="text-xs font-medium text-[#4B5563] underline">
+            <Link to={dispHref("/dispatch")} className="text-xs font-medium text-[#4B5563] underline">
               Open
             </Link>
           </div>
@@ -37,7 +41,7 @@ export function DispatcherPendingActionsPanel({
           </div>
           <div className="text-right">
             <div className="text-page-title font-semibold text-[#0F1219]">{incomingMessageQueue}</div>
-            <Link to="/drivers" className="text-xs font-medium text-[#4B5563] underline">
+            <Link to={dispHref("/drivers")} className="text-xs font-medium text-[#4B5563] underline">
               Open
             </Link>
           </div>
@@ -49,7 +53,7 @@ export function DispatcherPendingActionsPanel({
           </div>
           <div className="text-right">
             <div className="text-page-title font-semibold text-[#0F1219]">{bookingGapOpen}</div>
-            <Link to="/dispatch?view=loads" className="text-xs font-medium text-[#4B5563] underline">
+            <Link to={dispHref("/dispatch?view=loads")} className="text-xs font-medium text-[#4B5563] underline">
               Review
             </Link>
           </div>

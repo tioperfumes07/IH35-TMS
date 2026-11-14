@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -181,7 +182,9 @@ const LOAD_REPORTING_COLUMNS: Array<ParityColumn<InboxReportingLoadRow>> = [
 ];
 
 export function DriverHubReportingPage() {
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/driver-hub" });
@@ -228,7 +231,7 @@ export function DriverHubReportingPage() {
       ) : (
         <>
       <div className="flex justify-end rounded-sm border border-gray-200 bg-white p-3">
-        <Link to="/driver-hub" className="text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={drvHref("/driver-hub")} className="text-xs font-semibold text-[#1F2A44] underline">
           ← Back to Driver Inbox
         </Link>
       </div>

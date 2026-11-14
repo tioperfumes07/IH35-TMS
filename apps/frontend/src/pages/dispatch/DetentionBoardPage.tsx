@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useEffect, useMemo, useState } from "react";
@@ -264,9 +265,11 @@ function EventActions({
 }
 
 export function DetentionBoardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
@@ -436,7 +439,7 @@ export function DetentionBoardPage() {
             >
               Sync from arrivals
             </button>
-            <Link to="/dispatch/alerts" className="rounded-sm border px-3 py-1.5 text-xs">
+            <Link to={dispHref("/dispatch/alerts")} className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch alerts
             </Link>
           </>

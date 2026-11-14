@@ -168,7 +168,7 @@ export function BankingObligationReconcilePage() {
               when this queue is empty but uncategorized KPIs are non-zero.
             </InfoPopover>
           </p>
-          <Link to="/banking/transactions?type=uncategorized" className="mt-2 inline-block font-medium text-[#1F2A44] underline">
+          <Link to={bankHref("/banking/transactions?type=uncategorized")} className="mt-2 inline-block font-medium text-[#1F2A44] underline">
             Open for-review Match/Categorize
           </Link>
         </div>

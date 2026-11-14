@@ -3,7 +3,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, Link, useSearchParams } from "react-router-dom";
+import {useLocation, Link, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -40,10 +41,12 @@ function listDashcamClips(companyId: string, params: { unitId?: string; limit?: 
 const EMPTY = { unitId: "" };
 
 export function DashcamViewerPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
   const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
@@ -97,7 +100,7 @@ export function DashcamViewerPage() {
         label: "Harsh event",
         render: (row) =>
           row.linked_harsh_event_id ? (
-            <Link to={`/safety/safety-events?event_id=${row.linked_harsh_event_id}`} className="underline text-[#1F2A44]">
+            <Link to={safetyHref(`/safety/safety-events?event_id=${row.linked_harsh_event_id}`)} className="underline text-[#1F2A44]">
               Open
             </Link>
           ) : (
@@ -126,7 +129,7 @@ export function DashcamViewerPage() {
         title="Dashcam"
         subtitle="Samsara dashcam clips by unit — harsh-event and on-demand. Clips arrive when the harsh-events poll ticks."
         actions={
-          <Link to="/safety/safety-events" className="text-xs text-[#1F2A44] underline">
+          <Link to={safetyHref("/safety/safety-events")} className="text-xs text-[#1F2A44] underline">
             Safety events
           </Link>
         }

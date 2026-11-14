@@ -1,6 +1,7 @@
 import { overrideReasonCodeOf } from "../../components/override/reasonLine";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createForm425CReport,
@@ -141,13 +142,15 @@ function toFormState(report: Record<string, unknown>): CurrentFormState {
 }
 
 export function Form425CHome() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const companyId = selectedCompanyId ?? "";
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/425c" });
   const tab = parseForm425CTab(searchParams.get("tab"));
@@ -616,7 +619,7 @@ export function Form425CHome() {
           <div className="text-page-title font-extrabold">{profiles[activeCompany].name || "Form 425C"}</div>
           <div className="text-xs opacity-75">Official Form 425C — Monthly Operating Report System</div>
         </div>
-        <Link to="/425c/exhibits" className="shrink-0 text-xs font-semibold text-white hover:underline">
+        <Link to={moneyHref("/425c/exhibits")} className="shrink-0 text-xs font-semibold text-white hover:underline">
           Exhibits A–F →
         </Link>
       </div>

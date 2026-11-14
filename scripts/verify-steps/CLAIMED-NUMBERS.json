@@ -18376,5 +18376,30 @@
     "claimed_at": "2026-11-14T17:49:20Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Banking/Unit/Finance/Dispatch Link to= withReturnContext"
+  },
+  "20318": {
+    "claimed_at": "2026-11-14T17:53:43Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Dispatch/Driver/Reports/Fleet Link to= ret wave2"
+  },
+  "20320": {
+    "claimed_at": "2026-11-14T17:57:03Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Maint/Acct/Home/Banking/Fuel Link to= ret wave3"
+  },
+  "20322": {
+    "claimed_at": "2026-11-14T18:02:42Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Home/Fuel/Drivers/Checks/Safety/Legal Link to= ret wave4"
+  },
+  "20324": {
+    "claimed_at": "2026-11-14T18:06:42Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Banking/Safety/System/Maint/425c Link to= ret wave5"
+  },
+  "20326": {
+    "claimed_at": "2026-11-14T18:08:59Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 SafetyLayout/Form425c/Program matrix Link to= ret wave6"
   }
 }

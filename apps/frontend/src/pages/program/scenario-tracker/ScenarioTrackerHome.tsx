@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { ProgramModuleNav } from "../ProgramModuleNav";
 import { fetchScenarioTracker } from "./api";
 import { HOP_IDENTITY, SCENARIO_IDENTITY, mergeLiveItem } from "./registry";
@@ -50,6 +51,9 @@ function hopDotClass(stale: boolean, state: string, stageIdx: number): string {
 }
 
 export function ScenarioTrackerHome() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const [entity, setEntity] = useState<EntityScope>("USMCA");
   const [nowMs, setNowMs] = useState(() => Date.now());
 
@@ -133,13 +137,13 @@ export function ScenarioTrackerHome() {
           </div>
         </div>
         <div className="st-legacy-link">
-          <Link to="/home">Role home</Link>
+          <Link to={hubHref("/home")}>Role home</Link>
           {" · "}
-          <Link to="/home/ops">Role ops dashboard</Link>
+          <Link to={hubHref("/home/ops")}>Role ops dashboard</Link>
           {entity === "TRANSP" ? (
             <>
               {" · "}
-              <Link to="/app/homepage">QBO-style home</Link>
+              <Link to={hubHref("/app/homepage")}>QBO-style home</Link>
             </>
           ) : null}
         </div>

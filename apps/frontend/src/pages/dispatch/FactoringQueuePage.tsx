@@ -7,7 +7,8 @@
  * FARO Reserve summary strip reuses existing factoring summary API.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -108,6 +109,9 @@ type StageFilter = (typeof ALL_STAGES)[number];
 // ─── component ────────────────────────────────────────────────────────────────
 
 export function FactoringQueuePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -119,7 +123,6 @@ export function FactoringQueuePage() {
   // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
   // LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
@@ -332,7 +335,7 @@ export function FactoringQueuePage() {
             >
               Refresh
             </Button>
-            <Link to="/accounting/factoring" className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
+            <Link to={dispHref("/accounting/factoring")} className="rounded-sm border border-gray-300 px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-50">
               Accounting → Factoring
             </Link>
           </div>

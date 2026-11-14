@@ -883,7 +883,7 @@ export function VendorDetailPage() {
             <span className="text-xs font-semibold text-gray-600">Factor rate schedule</span>
             <p className="max-w-2xl text-xs text-gray-700" data-testid="vendor-factor-schedule-relocated">
               Advance / fee / reserve rates are edited on{" "}
-              <Link to="/factoring" className="font-medium text-[#0F1219] underline">
+              <Link to={moneyHref("/factoring")} className="font-medium text-[#0F1219] underline">
                 Factoring → active factor profile
               </Link>{" "}
               <span className="text-gray-500">Rate fields are managed on that profile, not in vendor notes.</span>
@@ -965,7 +965,7 @@ export function VendorDetailPage() {
           >
             Bills and A/P on this vendor profile are read only. Record bill payments from{" "}
             {/* ROUND 297 audit (drill): /accounting/pay-bills was never a route; pay THIS vendor's bills. */}
-            <Link to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`} className="font-semibold text-[#0F1219] underline">
+            <Link to={moneyHref(`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`)} className="font-semibold text-[#0F1219] underline">
               Accounting → Pay bills
             </Link>
             .
@@ -1099,7 +1099,7 @@ export function VendorDetailPage() {
           <div className="rounded-sm border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
               <h2 className="text-xs font-semibold text-gray-900">Vendor credits</h2>
-              <Link to={`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`} className="text-xs text-[#1F2A44] hover:underline">
+              <Link to={moneyHref(`/accounting/vendor-credits?vendor_id=${encodeURIComponent(id)}`)} className="text-xs text-[#1F2A44] hover:underline">
                 View all credits
               </Link>
             </div>

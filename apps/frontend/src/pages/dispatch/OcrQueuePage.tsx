@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   convertOcrIntakeToBookLoad,
   finalizeOcrIntakeConversion,
@@ -137,7 +138,9 @@ function RowActions({
 }
 
 export function OcrQueuePage() {
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
@@ -243,7 +246,7 @@ export function OcrQueuePage() {
         title="OCR queue"
         subtitle="Email-forwarded rate cons · async OCR · review · convert to Book Load"
         actions={
-          <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch home
           </Link>
         }

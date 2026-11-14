@@ -6,7 +6,8 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation, Link, useParams, useSearchParams } from "react-router-dom";
+import {useLocation, Link, useParams, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { listFaultCodeAlerts, type FaultCodeAlertRow } from "../../api/maintenance";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -25,11 +26,13 @@ const EMPTY_FILTERS = {
 };
 
 export function FaultCodeAlertsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { id: deepLinkFaultId } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
   const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
@@ -148,17 +151,17 @@ export function FaultCodeAlertsPage() {
         title="Faults"
         subtitle="Samsara fault codes by unit and driver-at-the-time — open alerts, history, and linked auto work orders."
         actions={
-          <Link to="/maintenance" className="text-xs text-[#4B5563] underline">
+          <Link to={maintHref("/maintenance")} className="text-xs text-[#4B5563] underline">
             Maintenance home
           </Link>
         }
       />
       <div className="flex flex-wrap gap-2 text-xs">
-        <Link to="/maintenance/fault-drafts" className="text-[#4B5563] underline">
+        <Link to={maintHref("/maintenance/fault-drafts")} className="text-[#4B5563] underline">
           Fault drafts
         </Link>
         <span className="text-gray-400">·</span>
-        <Link to="/maintenance/fault-rules" className="text-[#4B5563] underline">
+        <Link to={maintHref("/maintenance/fault-rules")} className="text-[#4B5563] underline">
           Fault rules
         </Link>
       </div>

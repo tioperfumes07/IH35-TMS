@@ -1,7 +1,8 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   getDispatchPlannerWeek,
   patchDispatchPlannerLoadStartAt,
@@ -107,6 +108,9 @@ function PlannerDayCell({
 }
 
 export function PlannerCalendarPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -117,7 +121,6 @@ export function PlannerCalendarPage() {
   // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
   // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const templatesOpen = searchParams.get("panel") === "templates";
@@ -245,7 +248,7 @@ export function PlannerCalendarPage() {
             >
               Load Templates
             </button>
-            <Link to="/dispatch" className="rounded-sm border px-3 py-1.5 text-xs">
+            <Link to={dispHref("/dispatch")} className="rounded-sm border px-3 py-1.5 text-xs">
               Dispatch Home
             </Link>
           </div>

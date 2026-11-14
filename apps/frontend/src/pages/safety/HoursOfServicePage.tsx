@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDriverHosDetail } from "../../api/hos";
 import { listAllDrivers } from "../../api/mdata";
@@ -116,6 +117,9 @@ type Props = {
 };
 
 export function HoursOfServicePage({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [fleetSearch, setFleetSearch] = useState("");
@@ -164,7 +168,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         key: "action",
         label: "Action",
         render: (row) => (
-          <Link to={`/drivers/${row.driverId}/hos`} className="font-semibold text-[#4B5563] hover:underline">
+          <Link to={safetyHref(`/drivers/${row.driverId}/hos`)} className="font-semibold text-[#4B5563] hover:underline">
             Drill-down
           </Link>
         ),
@@ -301,7 +305,7 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
         <section className="rounded-sm border border-gray-200 bg-white" data-testid="safety-hos-violations-panel">
           <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
             <div className="text-xs font-semibold text-[#1F2A44]">HOS violations (read-only){violationTotal ? ` · ${violationTotal} total` : ""}</div>
-            <Link to="/safety/hos-violations" className="text-xs font-semibold text-[#4B5563] hover:underline">
+            <Link to={safetyHref("/safety/hos-violations")} className="text-xs font-semibold text-[#4B5563] hover:underline">
               Open violations tab
             </Link>
           </div>
@@ -341,11 +345,11 @@ export function HoursOfServicePage({ operatingCompanyId }: Props) {
           </div>
           <div className="border-t border-gray-100 px-3 py-2 text-xs text-[#6B7280]">
             Log new HOS violations with <span className="font-semibold text-[#4B5563]">+ Create</span> above, or manage the full list on{" "}
-            <Link to="/safety/hos-violations" className="font-semibold text-[#4B5563] hover:underline">
+            <Link to={safetyHref("/safety/hos-violations")} className="font-semibold text-[#4B5563] hover:underline">
               /safety/hos-violations
             </Link>
             . Exception paperwork:{" "}
-            <Link to="/safety/hos/exceptions" className="font-semibold text-[#4B5563] hover:underline">
+            <Link to={safetyHref("/safety/hos/exceptions")} className="font-semibold text-[#4B5563] hover:underline">
               HOS exceptions
             </Link>
             .

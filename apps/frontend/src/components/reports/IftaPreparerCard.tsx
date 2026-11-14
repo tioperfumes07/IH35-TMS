@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import type { IftaStatus } from "../../api/reports";
 import { formatDateUS } from "../../lib/formatDate";
 import { Modal } from "../Modal";
@@ -25,6 +26,9 @@ function ReadyBadge({ label }: { label: string }) {
 }
 
 export function IftaPreparerCard({ status }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [typedConfirm, setTypedConfirm] = useState("");
   const currentYear = useMemo(() => new Date().getFullYear(), []);
@@ -88,7 +92,7 @@ export function IftaPreparerCard({ status }: Props) {
 
       <div className="flex items-center justify-between border-t border-[#E5E7EB] px-3 py-2 text-xs text-[#4B5563]">
         <span>↑ Safety officer notified {status.daysUntilDue}d before due date · expense tracked + reminder</span>
-        <Link to="/reports/ifta-preparer" className="font-semibold text-[#1F2A44] hover:underline">
+        <Link to={moneyHref("/reports/ifta-preparer")} className="font-semibold text-[#1F2A44] hover:underline">
           Open IFTA preparer →
         </Link>
       </div>
