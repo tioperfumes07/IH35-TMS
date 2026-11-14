@@ -18176,5 +18176,10 @@
     "claimed_at": "2026-11-14T03:26:53Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 board19 Fuel Home + Card Overage KPI href+ret"
+  },
+  "20242": {
+    "claimed_at": "2026-11-14T03:29:37Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Fuel Integrity KPI section= URL SoT href+ret"
   }
 }
