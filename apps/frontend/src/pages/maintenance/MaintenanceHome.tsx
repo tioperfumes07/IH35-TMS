@@ -50,6 +50,7 @@ import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { FleetHealthLine } from "./components/FleetHealthLine";
 import { InShopBoard } from "./components/InShopBoard";
+import { FleetHealthLineBoard } from "./components/FleetHealthLineBoard";
 import { MaintenanceHomeSummaryPanels } from "./components/MaintenanceHomeSummaryPanels";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
@@ -170,6 +171,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const bucketFilter = searchParams.get("bucket") ?? "";
   const workOrderStatusFilter = searchParams.get("status") ?? "";
   const showWorkflow = tab === "active_wos" && searchParams.get("view") === "workflow";
+  // Board 43 — the full Fleet Health Line (Home panel "View all →").
+  const isFleetHealthBoard = tab === "fleet_table" && searchParams.get("view") === "health";
   const isInShopBoard = tab === "fleet_table" && ["in-shop", "InMaintenance", "in-maintenance"].includes(searchParams.get("status") ?? "");
   const partInventoryId = searchParams.get("part_inventory_id")?.trim() ?? "";
   const driverReportId = searchParams.get("driver_report_id")?.trim() ?? "";
@@ -614,7 +617,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
           {isInShopBoard ? <>
             <InShopBoard companyId={companyId} />
-          </> : <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />}
+          </> : isFleetHealthBoard ? <FleetHealthLineBoard companyId={companyId} />
+            : <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />}
         </div>
       ) : null}
 
