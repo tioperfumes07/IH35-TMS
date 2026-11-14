@@ -49,7 +49,11 @@ function main() {
   if (!actionBar.includes("<SuspendConfirmModal")) failures.push("ActionBar must mount SuspendConfirmModal");
   if (!actionBar.includes("TerminateConfirmModal")) failures.push("ActionBar must mount TerminateConfirmModal");
   // DRV-F420 (#25517): the profile is /drivers/:id and Edit is its own tab there (?tab=edit) — still the driver's page.
-  if (!actionBar.includes('navigate(`/drivers/${driverId}`)') && !actionBar.includes('navigate(`/drivers/${driverId}?tab=edit`)')) {
+  // navigate may wrap URL in drvHref() (withReturnContext) — accept that pattern too.
+  const editNav = actionBar.includes('navigate(`/drivers/${driverId}`)') ||
+    actionBar.includes('navigate(`/drivers/${driverId}?tab=edit`)') ||
+    (actionBar.includes('/drivers/${driverId}?tab=edit') && actionBar.includes('navigate('));
+  if (!editNav) {
     failures.push("Edit must navigate to the driver's own page (/drivers/:id, Edit tab)");
   }
   if (!actionBar.includes("dp-action-send-message")) failures.push("Send Message button must be wired");
