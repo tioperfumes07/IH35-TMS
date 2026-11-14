@@ -74,10 +74,12 @@ export function collectFailures({
   if (!home.includes("FleetTablePage")) {
     failures.push("FleetHomePage must still mount FleetTablePage (additive create, not replace roster)");
   }
-  if (!home.includes('onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)}')) {
+  // The created unit/trailer must open its canonical profile route; #29477 wraps it in the return context
+  // (navigate(moneyHref(`/fleet/units/${unitId}`))) so Back restores the roster — same canonical target.
+  if (!/onCreated=\{\(unitId\) => navigate\((?:moneyHref\()?`\/fleet\/units\/\$\{unitId\}`\)?\)\}/.test(home)) {
     failures.push("FleetHomePage must navigate to the canonical created unit so hidden TEST rows remain verifiable");
   }
-  if (!home.includes('onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}')) {
+  if (!/onCreated=\{\(trailerId\) => navigate\((?:moneyHref\()?`\/fleet\/trailers\/\$\{trailerId\}`\)?\)\}/.test(home)) {
     failures.push("FleetHomePage must navigate to the canonical created trailer so hidden TEST rows remain verifiable");
   }
 
