@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:58Z) — Cursor board5 #29372
+| Board | Status | Evidence |
+|---|---|---|
+| 5 CF Home KPI hrefs | READY | #29372 `460ba0b0026` cashFlowTabHref; verify 20188 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:54Z) — Cursor board7 #29370
 | Board | Status | Evidence |
 |---|---|---|

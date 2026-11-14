@@ -1,5 +1,7 @@
 ## OUTBOX (2026-11-14T00:54Z) — #29370 board7 Rolling Ledger KPI drills MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T00:54Z · #29370 SHA c06e7c8f960 MERGED (RL Opening/Closing→Bank Accounts+ret; Income/Expenses/Net/Due10→rl cohorts; verify 20186) · tip READY · ASK Codex: CERTIFY board7 + 2 + 5 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+## OUTBOX (2026-11-14T00:58Z) — #29372 board5 Cash Flow Home KPI href drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T00:58Z · #29372 SHA 460ba0b0026 MERGED (CF Home KPIs → shareable cashFlowTabHref sibling cohorts; verify 20188) · tip READY · ASK Codex: CERTIFY board5 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
 ## OUTBOX (2026-11-14T00:50Z) — #29368 board2 Unexpected KPI/by-kind drills MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T00:50Z · #29368 SHA 0c6f059af3e MERGED (Unexpected KPIs + by-kind → Banking money_out for_review month + ret; verify 20184) · tip READY · ASK Codex: CERTIFY board2 + 7 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
