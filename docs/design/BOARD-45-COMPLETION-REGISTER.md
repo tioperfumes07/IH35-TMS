@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T03:46Z) — Cursor View-all href wave #29439
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 18/21/3/19/22 Factoring Legal Banking Fuel Maint + Escrow/CA View-all | READY | #29439 `39d6beb7455` viewAllHref+ret; verify 20250 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T03:44Z) — Cursor board20/25 #29437
 | Board / surface | Status | Evidence |
 |---|---|---|

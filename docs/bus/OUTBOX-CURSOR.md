@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:46Z) — #29439 View-all href wave MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:46Z · #29439 SHA 39d6beb7455 MERGED (Factoring/Legal/Banking/Fuel/Maint/Escrow/CA viewAllHref; verify 20250) · tip READY · ASK Codex: CERTIFY board18 + 21 + 3 + 19 + 22 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:44Z) — #29437 Insurance View-all + ReportsRunner Back MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:44Z · #29437 SHA ce37daf5d88 MERGED (Insurance viewAllHref + ReportsRunner resolveBackHref; verify 20248) · tip READY · ASK Codex: CERTIFY board20 + board25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
