@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:13Z) — Cursor board10/12 #29451
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 10 Vendors money drills + 12 DriverLive View-all | READY | #29451 `a2bf209eb87` withReturnContext + viewAllHref; verify 20260 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:07Z) — Cursor board1 COA #29447
 | Board / surface | Status | Evidence |
 |---|---|---|
