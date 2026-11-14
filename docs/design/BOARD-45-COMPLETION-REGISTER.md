@@ -1,4 +1,12 @@
 
+### READY overlay (2026-11-14T01:04Z) — Cursor board5 #29374 + board24 #29376
+| Board | Status | Evidence |
+|---|---|---|
+| 5 CF Daily Prediction drills | READY | #29374 `e146a55fe63` formula/View-all+ret; verify 20190 |
+| 24 Safety DQ KPI hrefs | READY | #29376 `cd4cc2af365` cohort/summary href; verify 20192 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:54Z) — Cursor board7 #29370
 | Board | Status | Evidence |
 |---|---|---|
