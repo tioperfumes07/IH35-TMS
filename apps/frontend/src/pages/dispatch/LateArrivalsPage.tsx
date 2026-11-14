@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -9,6 +9,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { StatusBadge } from "../../components/StatusBadge";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { DispatchAlertServerControls, type DispatchAlertRange } from "../../components/dispatch/DispatchAlertServerControls";
 import { serverDispatchAlertQueryFromSortState, sortDispatchAlertBoardRows } from "./dispatchAlertBoardSort";
@@ -24,6 +25,10 @@ function etaLabel(prediction: Record<string, unknown> | null | undefined): strin
 }
 
 export function LateArrivalsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
@@ -154,7 +159,7 @@ export function LateArrivalsPage() {
 
   return (
     <div data-testid="dispatch-late-arrivals-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Late arrivals"
         subtitle={`Loads past schedule + ${grace}m grace or with late ETA prediction`}
         actions={

@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 /**
  * TripProfitability — Company Settlement Report / Trip Profitability view.
  *
@@ -13,6 +14,7 @@ import { useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getTripProfitability, type TripProfitabilityRow } from "../../lib/loadProfit";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -47,6 +49,10 @@ function marginClass(pct: number) {
 }
 
 export function TripProfitability() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -199,7 +205,7 @@ export function TripProfitability() {
       <div className="space-y-3 p-4" data-testid="trip-profitability-page">
         <ReportsSubNav />
         <PageHeader
-          backHref="/dispatch"
+          backHref={dispatchBackHref}
           title="Company Settlements"
           subtitle="One settlement period, every linked load, P&L tied to the cent"
         />
@@ -250,7 +256,7 @@ export function TripProfitability() {
   return (
     <div className="space-y-3" data-testid="trip-profitability-page">
       <ReportsSubNav />
-      <PageHeader backHref="/dispatch" title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
+      <PageHeader backHref={dispatchBackHref} title="Company Settlements" subtitle="One settlement period, every linked load, P&L tied to the cent" />
 
       {/* State messages */}
       {query.isError && (

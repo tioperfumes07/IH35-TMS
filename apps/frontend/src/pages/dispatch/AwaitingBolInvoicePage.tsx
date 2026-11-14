@@ -1,8 +1,9 @@
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load still waiting for its BOL); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
 import { formatQuantityTable } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listAwaitingBolInvoice, type AwaitingBolInvoiceRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -18,6 +19,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
  * + docs upload hook fire autoInvoiceOnBol then Faro submit.
  */
 export function AwaitingBolInvoicePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -84,7 +89,7 @@ export function AwaitingBolInvoicePage() {
 
   return (
     <div data-testid="awaiting-bol-invoice-page" className="mx-auto max-w-5xl space-y-4 p-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Awaiting BOL for invoice"
         subtitle="Delivered loads with no BOL on file. Upload the BOL on the load Documents tab — invoice send and Faro submit fire automatically."
         actions={

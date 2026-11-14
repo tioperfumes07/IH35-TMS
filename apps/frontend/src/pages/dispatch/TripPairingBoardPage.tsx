@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
@@ -13,6 +13,7 @@ import { Button } from "../../components/Button";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { companyToday } from "../../lib/businessDate";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsdCentsTable } from "../../lib/money";
@@ -332,6 +333,10 @@ function buildTripPairingColumns(onBookReturn: (unitId: string) => void, trCount
 }
 
 export function TripPairingBoardPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -418,7 +423,7 @@ export function TripPairingBoardPage() {
 
   return (
     <div data-testid="dispatch-trip-pairing-page">
-      <PageHeader backHref="/dispatch" title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
+      <PageHeader backHref={dispatchBackHref} title="Trip Pairing Board" subtitle="Northbound · Triangulation(s) · Southbound — settlement closes on return to Laredo." />
 
       {data ? (
         // OWNER DESIGN LAW rule 6: board tiles across (ih-kpi-row, 6 across), 78px, left-aligned figure.

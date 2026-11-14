@@ -1,7 +1,8 @@
+import { resolveBackHref } from "../../lib/returnContext";
 /**
  * 443.288-C — Dispatch queue: Expense load confirmations (dispatcher confirms/changes proposed loads).
  */
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +10,10 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
 export function ExpenseLoadConfirmationsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -23,7 +28,7 @@ export function ExpenseLoadConfirmationsPage() {
   return (
     <div data-testid="expense-load-confirmations-page" className="mx-auto max-w-6xl space-y-4 p-4">
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Expense load confirmations"
         subtitle="Every expense-to-load assignment is proposed by the engine and confirmed by a dispatcher or closer. Empty means confirmed — never hidden."
         actions={

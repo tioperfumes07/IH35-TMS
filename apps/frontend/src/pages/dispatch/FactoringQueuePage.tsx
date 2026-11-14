@@ -7,7 +7,7 @@
  * FARO Reserve summary strip reuses existing factoring summary API.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
 import { useSettlementReferences } from "../../hooks/useSettlementReferences";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
@@ -118,6 +119,9 @@ export function FactoringQueuePage() {
   // LST-F5163O — visible EntityPicker filters (URL-only is not reverse chrome).
   // LV-DISPATCH-FACTORING-QUEUE-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const customerIdFromUrl = searchParams.get("customer_id")?.trim() ?? "";
   const loadIdFromUrl =
     (searchParams.get("queue_record_id") ?? searchParams.get("load_id"))?.trim() ?? "";
@@ -316,7 +320,7 @@ export function FactoringQueuePage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4" data-testid="factoring-queue-page">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Factoring Queue"
         subtitle="Loads ready to submit to FARO — track packet status from delivery to advance"
         actions={
