@@ -77,7 +77,15 @@ try {
     throw new Error("Accounting wrapper must render a way back (breadcrumb to the Accounting home)");
   }
   const fuelPlanner = read("apps/frontend/src/pages/fuel/FuelPlannerHome.tsx");
-  assertIncludes(fuelPlanner, 'backHref="/fuel"', "Fuel module header must stay in Fuel (ROUND 435-CUR)");
+  // ROUND 8.20 Class R — Back uses resolveBackHref({ fallback: "/fuel" }) so ?ret= restores origin;
+  // literal backHref="/fuel" alone is no longer the contract.
+  if (
+    !fuelPlanner.includes('fallback: "/fuel"') &&
+    !fuelPlanner.includes("fallback: '/fuel'") &&
+    !fuelPlanner.includes('backHref="/fuel"')
+  ) {
+    throw new Error("Fuel module header must stay in Fuel (ROUND 435-CUR)");
+  }
   const safetyLayout = read("apps/frontend/src/pages/safety/SafetyLayout.tsx");
   assertIncludes(safetyLayout, "structuralParentHref", "Safety layout Up must be structural (ROUND 367.9)");
   const customerCreate = read("apps/frontend/src/components/customers/CustomerProfileForm.tsx");
