@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { MoneyInput } from "../../../components/forms/MoneyInput";
@@ -24,6 +24,15 @@ import { ParityTable, type ParityColumn } from "../../../components/parity/Parit
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
+import { BANKING_TAB_PATH } from "../../../router/route-manifest";
+
+/** ROUND 8.20 — Daily Prediction formula/View-all → Rolling Ledger cohort (shareable). */
+function dailyPredictionRlHref(from: string, to: string, kind?: "income" | "expenses"): string {
+  const params = new URLSearchParams({ tab: "rolling_ledger", rl_from: from, rl_to: to });
+  if (kind) params.set("rl_kind", kind);
+  return `/cash-flow?${params.toString()}`;
+}
 
 // ROUND 443.250 — Projected (Auto) V3 board. ONE engine: getRollingLedger (same as Home /
 // Rolling Ledger). Day/Week grain, formula strip, 7-day outlook, Income|Expenses panels.
@@ -158,6 +167,8 @@ function parseProjGrain(raw: string | null): Grain {
 
 export function DailyPredictionTab({ operatingCompanyId }: Props) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 board5 — week/date must live in the URL so settlement EntityLink `ret` restores Projected origin.
   const [date, setDateState] = useState<string>(() => parseProjDate(searchParams.get("proj_date")));
@@ -660,6 +671,12 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       </div>
 
       {/* Formula strip: OPENING + (INCOME − EXPENSES) = PROJECTED CLOSING */}
+      {/* ROUND 8.20 — formula figures drill Bank Accounts (+ret) / Rolling Ledger day|week cohort. */}
+      {(() => {
+        const bankHref = withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref);
+        const netHref = withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo), originHref);
+        const moneyLinkStyle = { color: "inherit", textDecoration: "underline", textUnderlineOffset: 2 } as const;
+        return (
       <div
         data-testid="cash-flow-projected-formula"
         style={{
@@ -676,7 +693,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <div>
           <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>OPENING CASH</div>
           <div className="n" style={{ fontSize: 18, fontWeight: 700, color: V3.ink }}>
-            {isLoading ? "—" : opening === null ? "—" : formatCents(opening)}
+            {isLoading || opening === null ? (
+              "—"
+            ) : (
+              <Link to={bankHref} style={moneyLinkStyle} data-testid="cash-flow-projected-opening-drill">
+                {formatCents(opening)}
+              </Link>
+            )}
           </div>
         </div>
         <span style={{ color: V3.mutedSoft }}>+</span>
@@ -690,7 +713,13 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               color: isLoading ? V3.ink : netPositive ? V3.green : V3.red,
             }}
           >
-            {isLoading ? "—" : formatCents(totals.net, { sign: true })}
+            {isLoading ? (
+              "—"
+            ) : (
+              <Link to={netHref} style={moneyLinkStyle} data-testid="cash-flow-projected-net-drill">
+                {formatCents(totals.net, { sign: true })}
+              </Link>
+            )}
           </div>
         </div>
         <span style={{ color: V3.mutedSoft }}>=</span>
@@ -704,10 +733,18 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               color: projectedClosing !== null && projectedClosing < 0 ? V3.red : V3.ink,
             }}
           >
-            {isLoading || projectedClosing === null ? "—" : formatCents(projectedClosing)}
+            {isLoading || projectedClosing === null ? (
+              "—"
+            ) : (
+              <Link to={bankHref} style={moneyLinkStyle} data-testid="cash-flow-projected-closing-drill">
+                {formatCents(projectedClosing)}
+              </Link>
+            )}
           </div>
         </div>
       </div>
+        );
+      })()}
 
       {isError && (
         <div
@@ -775,7 +812,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Income"
           subtitle={`${formatQuantityTable(incomeRows.length, 0)} item${incomeRows.length === 1 ? "" : "s"}`}
-          onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
+          onViewAll={() =>
+            navigate(
+              withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "income"), originHref),
+            )
+          }
           testId="cash-flow-projected-income-panel"
         >
           {isLoading ? (
@@ -809,7 +850,11 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Expenses"
           subtitle="in payment priority order"
-          onViewAll={() => navigate("/cash-flow?tab=rolling_ledger")}
+          onViewAll={() =>
+            navigate(
+              withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "expenses"), originHref),
+            )
+          }
           testId="cash-flow-projected-expense-panel"
         >
           <>

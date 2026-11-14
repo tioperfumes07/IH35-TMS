@@ -16032,6 +16032,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-cash-flow-home-kpi-href board5"
   },
+  "20190": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-daily-prediction-formula-drills board5/CF"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
