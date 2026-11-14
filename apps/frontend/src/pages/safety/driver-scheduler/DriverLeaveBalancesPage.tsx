@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
@@ -27,6 +28,9 @@ type BalanceRow = {
 };
 
 export function DriverLeaveBalancesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -56,7 +60,7 @@ export function DriverLeaveBalancesPage() {
             kind="driver"
             id={row.driver_id}
             label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-            onClick={() => navigate(`/drivers/${row.driver_id}`)}
+            onClick={() => navigate(drvHref(`/drivers/${row.driver_id}`))}
           />
         ),
       },

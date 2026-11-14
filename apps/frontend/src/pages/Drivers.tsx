@@ -228,6 +228,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
   const location = useLocation();
   // ROUND 8.20 board12 — settlements panel View-all shareable href+ret.
   const originHref = currentOriginHref(location.pathname, location.search);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const settlementsViewAllHref = withReturnContext(
     location.pathname.startsWith("/driver-finance")
       ? "/driver-finance/settlements"
@@ -882,7 +883,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
                   storageKey="drivers-roster"
                   loading={driversQuery.isLoading}
                   rowKey={(row) => row.id}
-                  onRowClick={(row) => navigate(`/drivers/${row.id}`)}
+                  onRowClick={(row) => navigate(drvHref(`/drivers/${row.id}`))}
                   columns={driversRosterColumns}
                   emptyText="No drivers found."
                 />

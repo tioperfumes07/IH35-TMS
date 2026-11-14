@@ -3,6 +3,7 @@ import { useTranslation } from "../../hooks/useTranslation";
 import { DriverTelematicsPanel } from "../../components/telematics/DriverTelematicsPanel";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { AddPayLineModal } from "../../components/driver-finance/AddPayLineModal";
 import { DriverOverviewBoard } from "../../components/boards/DriverOverviewBoard";
 import { DriverLiveOverview } from "../../components/driver-profile/DriverLiveOverview";
@@ -13,7 +14,6 @@ import { apiRequest } from "../../api/client";
 import { deactivateDriver, reactivateDriver } from "../../api/mdata";
 import { listDriverQualificationItems } from "../../api/safety";
 import { formatCalendarDateUS } from "../../lib/formatDate";
-import { resolveBackHref } from "../../lib/returnContext";
 import { formatQuantityTable } from "../../lib/money";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ActionBar } from "../../components/driver-profile/ActionBar";
@@ -300,7 +300,9 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   const id = driverIdProp ?? routeId;
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 — Drivers drills attach ?ret=; Back must restore origin.
   const driversBackHref = resolveBackHref({ searchParams, pathname, fallback: "/drivers" });
   const { selectedCompanyId } = useCompanyContext();
@@ -489,12 +491,12 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
               setActiveTab("Operations");
               requestAnimationFrame(() => document.querySelector('[data-testid="dp-section-5-hos"]')?.scrollIntoView({ behavior: "smooth", block: "start" }));
             }}>HOS detail</Button>
-            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}?tab=edit`)} data-testid="driver-profile-edit">
+            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(drvHref(`/drivers/${id}?tab=edit`))} data-testid="driver-profile-edit">
               Edit
             </Button>
             {activeTab !== "Overview" ? <>
             {/* Rule 07 — the archived full record (Operations histories, earnings, load history) stays reachable. */}
-            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(`/drivers/${id}/record`)} data-testid="driver-profile-full-record">
+            <Button type="button" size="sm" variant="secondary" onClick={() => navigate(drvHref(`/drivers/${id}/record`))} data-testid="driver-profile-full-record">
               Full record
             </Button>
             <Button type="button" size="sm" variant="secondary" onClick={() => setAddPayOpen(true)} data-testid="driver-add-payment">

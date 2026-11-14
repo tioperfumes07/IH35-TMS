@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../../api/client";
 import { legalTemplatesApi, type LegalTemplateDetail } from "../../../api/legal-templates";
@@ -15,7 +16,6 @@ import { formatQuantityTable } from "../../../lib/money";
 import { entityLabel } from "../../../lib/entity-label";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
-import { resolveBackHref } from "../../../lib/returnContext";
 
 function auditActorLabel(row: TemplateAuditEvent): string {
   if (row.actor_user_id) return entityLabel(row.actor_name, row.actor_user_id, "User");
@@ -74,7 +74,9 @@ const AUDIT_LOG_COLUMNS: Array<ParityColumn<TemplateAuditEvent>> = [
 
 export function LegalTemplateDetailPage() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { id } = useParams<{ id: string }>();
@@ -219,7 +221,7 @@ export function LegalTemplateDetailPage() {
     },
     onSuccess: async (created) => {
       await queryClient.invalidateQueries({ queryKey: ["legal", "templates"] });
-      if (created?.id) navigate(`/legal/templates/${created.id}`);
+      if (created?.id) navigate(drvHref(`/legal/templates/${created.id}`));
     },
     onError: (error) => setSubmitError(parseError(error, "Failed to create new version.")),
   });

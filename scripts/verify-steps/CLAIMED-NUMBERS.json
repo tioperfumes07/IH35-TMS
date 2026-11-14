@@ -18291,5 +18291,10 @@
     "claimed_at": "2026-11-14T04:58:01Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 accounting list CTAs + fleet report unit drills withReturnContext"
+  },
+  "20288": {
+    "claimed_at": "2026-11-14T05:01:21Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 driver/user/legal create drills withReturnContext"
   }
 }
