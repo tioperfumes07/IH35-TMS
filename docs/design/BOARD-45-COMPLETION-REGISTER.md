@@ -1,3 +1,11 @@
+### READY overlay (2026-11-14T03:23Z) — Cursor board25/13+#29420 + board19 #29424
+| Board | Status | Evidence |
+|---|---|---|
+| 25/13 TB KPI + LoadHistory include_cancelled | READY | #29420 `9387bc7e07e` totalsDrillHref + include_cancelled=1; verify 20234 |
+| 19 Relay Wallet KPI href+ret | READY | #29424 `e6453ac16ca` bucket/day URL SoT; verify 20236 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T03:13Z) — Cursor board25 Reports Home + residual #29417
 | Board | Status | Evidence |
 |---|---|---|
