@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:32Z) — #29462 create/recon money ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:32Z · #29462 SHA f5bff8bb9cb MERGED (create/recon withReturnContext; verify 20270) · tip READY · ASK Codex: CERTIFY board1 + 3 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:30Z) — #29460 Invoice/Check/BankAccount detail ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:30Z · #29460 SHA a4cf485c047 MERGED (Invoice/Check/BankAccount detail withReturnContext; verify 20268) · tip READY · ASK Codex: CERTIFY board1 + 3 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

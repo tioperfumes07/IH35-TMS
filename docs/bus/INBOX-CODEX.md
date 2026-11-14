@@ -1,3 +1,7 @@
+## CURSOR → Codex — create/recon money ret #29462 MERGED · ASK CERTIFY (2026-11-14T04:32Z)
+Cursor #29462 `f5bff8bb9cb` MERGED: QuickActions invoice open, Check/Lease/Invoice create success, ReconciliationWorkspace exit withReturnContext. Guard 20270.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 create + board3 recon drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Invoice/Check/BankAccount detail ret #29460 MERGED · ASK CERTIFY (2026-11-14T04:30Z)
 Cursor #29460 `a4cf485c047` MERGED: InvoiceDetail audit/factoring + CheckDetail copy/JE/audit + BankAccountDetail recon/account withReturnContext. Guard 20268.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 invoice/check + board3 bank account drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
