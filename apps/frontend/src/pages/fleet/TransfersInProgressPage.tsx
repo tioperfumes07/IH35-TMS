@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -8,6 +9,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type TransferRow = {
   id: string;
@@ -22,6 +24,10 @@ type TransferRow = {
 };
 
 export function TransfersInProgressPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board20 — Fleet drills attach ?ret=; Back must restore origin.
+  const fleetBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const query = useQuery({
@@ -82,7 +88,7 @@ export function TransfersInProgressPage() {
   return (
     <div className="space-y-3" data-testid="transfers-in-progress-page">
       <PageHeader
-        backHref="/fleet"
+        backHref={fleetBackHref}
         breadcrumb={["Fleet", "Transfers in progress"]}
         title="Equipment transfers in progress"
         subtitle="Dual confirmation — pending until both drivers acknowledge."
