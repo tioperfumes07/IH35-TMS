@@ -191,6 +191,8 @@ export type ParityTableProps<T> = {
   suppressToolbarSearch?: boolean;
   /** Hide the Range popover when the page already owns date/unit filters. */
   suppressToolbarRange?: boolean;
+  /** Completely hide the toolbar row (search, range, row count, print, gear). For board tables where the design shows no toolbar. */
+  suppressToolbar?: boolean;
   /** When set, a ⤓ Export button appears that downloads the (sorted, visible-column) rows as CSV. */
   exportFilename?: string;
   /**
@@ -691,6 +693,7 @@ export function ParityTable<T>({
   appearance = "default",
   suppressToolbarSearch = false,
   suppressToolbarRange = false,
+  suppressToolbar = false,
   exportFilename,
   exportExcel = false,
   serverViewKey,
@@ -1634,7 +1637,7 @@ export function ParityTable<T>({
   return (
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
       {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+      {!suppressToolbar && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
             <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
@@ -1820,7 +1823,7 @@ export function ParityTable<T>({
             : null}
           </div>
         </div>
-      </div>
+      </div>)}
 
       {filterBar ? (
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>

@@ -29,6 +29,8 @@ export type HoverDropdownNavProps = {
   items: readonly NavItem[];
   activeHref?: string;
   openOn?: NavOpenTrigger;
+  /** Suppress the ChevronDown arrow on every dropdown group button (design parity: plain tab labels). */
+  hideChevron?: boolean;
 };
 
 const EXIT_MS = 150;
@@ -79,10 +81,12 @@ function DropdownColumn({
   item,
   activeHref,
   openOn,
+  hideChevron = false,
 }: {
   item: NavItem;
   activeHref?: string;
   openOn: NavOpenTrigger;
+  hideChevron?: boolean;
 }) {
   const menuId = useId().replace(/:/g, "");
   const [open, setOpen] = useState(false);
@@ -240,7 +244,7 @@ function DropdownColumn({
           onKeyDown={onButtonKeyDown}
         >
           {hasDefaultHref ? null : item.label}
-          <ChevronDown size={12} aria-hidden />
+          {!hideChevron && <ChevronDown size={12} aria-hidden />}
         </button>
         {open && typeof document !== "undefined"
           ? createPortal(
@@ -297,7 +301,7 @@ function LeafItem({ item, activeHref }: { item: NavItem; activeHref?: string }) 
  * Top horizontal grouped sub-nav (invariant #20). Dropdown width follows longest label (MUST 6.3.1.1).
  * `openOn` selects hover-reveal (default, legacy) vs. click-open-persistent (LOCKED top-bar rule).
  */
-export function HoverDropdownNav({ items, activeHref, openOn = "hover" }: HoverDropdownNavProps) {
+export function HoverDropdownNav({ items, activeHref, openOn = "hover", hideChevron = false }: HoverDropdownNavProps) {
   return (
     <nav
       className="hover-dropdown-nav"
@@ -310,7 +314,7 @@ export function HoverDropdownNav({ items, activeHref, openOn = "hover" }: HoverD
       <ul role="menubar">
         {items.map((item) =>
           item.children?.length ? (
-            <DropdownColumn key={item.label} item={item} activeHref={activeHref} openOn={openOn} />
+            <DropdownColumn key={item.label} item={item} activeHref={activeHref} openOn={openOn} hideChevron={hideChevron} />
           ) : (
             <LeafItem key={item.label} item={item} activeHref={activeHref} />
           ),

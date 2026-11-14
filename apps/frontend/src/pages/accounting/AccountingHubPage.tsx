@@ -7,7 +7,7 @@
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
@@ -499,7 +499,7 @@ export function AccountingHubPage() {
           label="Open bills"
           value={formatUsdCents(openBillsAmountCents)}
           sub={`${openBills.length} unpaid`}
-          tone={openBills.length ? "red" : "ink"}
+          tone="ink"
           href={hubHref("/accounting/bills")}
           testId="acct-hub-kpi-open-bills"
         />
@@ -667,8 +667,7 @@ export function AccountingHubPage() {
                     appearance="board"
                     hidePager
                     density="compact"
-                    suppressToolbarSearch
-                    suppressToolbarRange
+                    suppressToolbar
                     rows={agingBuckets.rows}
                     rowKey={(b) => b.key}
                     emptyText="No open invoices."
@@ -690,7 +689,7 @@ export function AccountingHubPage() {
                         kind: "money",
                         sortValue: (b) => b.amountCents,
                         cellClass: "text-right tabular-nums whitespace-nowrap",
-                        render: (b) => (arAgingQ.isLoading ? "…" : formatUsdCents(b.amountCents)),
+                        render: (b) => (arAgingQ.isLoading ? "…" : formatUsdCents(b.amountCents).replace(/^\$/, "")),
                       },
                       {
                         key: "share",
@@ -707,7 +706,7 @@ export function AccountingHubPage() {
                       invoices: <span className="font-semibold">{arAgingQ.isLoading ? "…" : agingBuckets.totalInv}</span>,
                       amountCents: (
                         <span className="font-semibold">
-                          {arAgingQ.isLoading ? "…" : formatUsdCents(agingBuckets.totalAmt)}
+                          {arAgingQ.isLoading ? "…" : formatUsdCents(agingBuckets.totalAmt).replace(/^\$/, "")}
                         </span>
                       ),
                     }}
@@ -776,8 +775,7 @@ export function AccountingHubPage() {
                 appearance="board"
                 hidePager
                 density="compact"
-                suppressToolbarSearch
-                suppressToolbarRange
+                suppressToolbar
                 loading={toursOpenQ.isLoading}
                 rows={settlementsOpen}
                 rowKey={(row) => `${row.driverId ?? "x"}-${row.name}`}
@@ -802,17 +800,9 @@ export function AccountingHubPage() {
                     kind: "money",
                     sortValue: (row) => row.cents,
                     render: (row) => (
-                      <Link
-                        className="underline"
-                        style={{ color: V3.ink }}
-                        to={hubHref(
-                          row.driverId
-                            ? `/driver-finance/settlement-close?driver_id=${encodeURIComponent(row.driverId)}`
-                            : "/driver-finance/settlements?state=open",
-                        )}
-                      >
+                      <span style={{ color: V3.ink }}>
                         {formatUsdCents(row.cents)}
-                      </Link>
+                      </span>
                     ),
                   },
                 ]}
