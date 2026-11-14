@@ -1,7 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per module / build block with its completion status — a current-state program matrix, not a time series.
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
@@ -394,6 +395,9 @@ function TrackerBody({ data, moved }: { data: ProgramTracker; moved: Set<string>
 }
 
 export function ProgramTrackerPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const query = useQuery({
     queryKey: ["program", "tracker"],
     queryFn: getProgramTracker,
@@ -431,9 +435,9 @@ export function ProgramTrackerPage() {
         title="Program Tracker"
         subtitle="Build Progress — live from the block registry. Pending / In Progress / Completed / Sequence / By Module. Auto-refreshes on open, focus, and every 60s."
         actions={
-          <a href="/program/legacy-board" className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-[#4B5563] hover:bg-gray-50">
+          <Link to={sysHref("/program/legacy-board")} className="rounded-sm border border-gray-300 bg-white px-3 py-1.5 text-xs text-[#4B5563] hover:bg-gray-50">
             Legacy audit board
-          </a>
+          </Link>
         }
       />
       {query.isLoading ? (

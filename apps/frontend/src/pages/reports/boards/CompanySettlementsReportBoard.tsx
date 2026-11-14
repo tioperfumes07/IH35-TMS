@@ -5,7 +5,8 @@
  */
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { listTours, type TourListRow } from "../../../api/tourReadout";
 import { EntityMultiSelect, entityFilterIds } from "../../../components/EntityMultiSelect";
 import { ListErrorState } from "../../../components/ListErrorState";
@@ -58,6 +59,9 @@ function closedDate(t: TourListRow): string {
 }
 
 export function CompanySettlementsReportBoard() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const emptyFilters: Filters = { start: `${companyToday().slice(0, 4)}-01-01`, end: companyToday(), driverId: "", unitId: "" };
@@ -395,7 +399,7 @@ export function CompanySettlementsReportBoard() {
           label="Costs"
           value={query.data ? money(totals.costs) : "…"}
           sub="fuel · tolls · maintenance on load"
-          href="/accounting/expenses"
+          href={moneyHref("/accounting/expenses")}
         />
         <V3KpiTile
           testId="csr-kpi-driver-pay"
