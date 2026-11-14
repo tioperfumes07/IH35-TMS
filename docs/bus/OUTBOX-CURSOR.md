@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T17:56Z) — #29521 Dispatch/Driver/Reports/Fleet Link ret wave2 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T17:56Z · #29521 SHA 6face581782 MERGED (Link to= ret wave2; verify 20318) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T17:46Z) — #29514 Topbar/Drift ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T17:46Z · #29514 SHA 736fd7c18d5 MERGED (Topbar + DriftAlertPopup ret; verify 20312) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
 
