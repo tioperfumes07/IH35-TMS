@@ -41,8 +41,8 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
     const hit = need.filter((w) => lw.has(w));
     if (hit.length * 2 < need.length || !hit.some((w) => w.length >= 3)) continue;
     const brandSeen = Boolean(id.brand && id.brand === item.brand) || brandWords.some((w) => lw.has(w));
-    // A line with no brand of mine on it must share 2+ of my name words ("HALLOWEEN HERO"), never one ("BLUE").
-    if (!brandSeen && hit.length < 2) continue;
+    // Owner 2026-11-14 17:34 CT: "IT MUST BE FROM SAME BRAND" — a line without my item's brand is never proposed.
+    if (!brandSeen) continue;
     const mine = new Set([...need, ...words(item.name), ...words(item.brand)]);
     const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !mine.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w));
     const missing = need.filter((w) => !lw.has(w));

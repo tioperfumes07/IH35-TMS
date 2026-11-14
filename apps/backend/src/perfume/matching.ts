@@ -169,7 +169,10 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
     // full bottle, a body product for a fragrance (owner 2026-11-12: "it is not separating sets" — ARMANI CODE 4.2
     // EDP was offered "ARMANI CODE 125 ml SET").
     if (productKind(id.flags) !== productKind(it.flags)) continue;
-    const sameBrand = !id.brand || !it.brand || id.brand === it.brand;
+    // Owner 2026-11-14 17:34 CT: "IT MUST BE FROM SAME BRAND." Only the line's own brand is suggested; a line whose
+    // brand was not read gets no suggestion (it shows in Review with its BRAND blank, linked by search).
+    if (!id.brand || !it.brand || id.brand !== it.brand) continue;
+    const sameBrand = true;
     let score: number;
     if (sameBrand) {
       const f = itemFacts(it);

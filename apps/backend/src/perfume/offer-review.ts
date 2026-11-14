@@ -78,8 +78,9 @@ export function offerCandidates(line: { description: string; brand: string | nul
     if (id.brand && it.brand && id.brand !== it.brand) continue;
     const brandWords = words(it.brand).filter((w) => w.length >= 3 && !NOISE.has(w));
     const brandSeen = id.brand === it.brand || brandWords.some((w) => lineWords.has(w));
-    // A brand-less line must carry a distinctive name: 2+ words ("HALLOWEEN HERO"), never one word ("BLUE").
-    if (!brandSeen && need.length < 2) continue;
+    // Owner 2026-11-14 17:34 CT: "THE ENGINE, WHEN RECOMMENDING, IT MUST BE FROM SAME BRAND." A line whose brand is not
+    // my item's brand — or names no brand at all — is never proposed; it is linked by search only.
+    if (!brandSeen) continue;
     // Size: proposed even when it differs (vendors round 105 / 110 ml to "3.4oz") but scored lower and both sizes
     // shown; the owner decides.
     if (sizesFar(id.sizeMl, it.size_ml)) continue;

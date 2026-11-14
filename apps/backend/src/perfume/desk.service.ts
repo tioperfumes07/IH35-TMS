@@ -798,6 +798,8 @@ type AnalysisIn = {
   upc: string | null; sku: string | null; brand: string | null; name: string | null; size: number | null; type: string | null; gender: string | null;
   purchDate: string | null; qtyPurch: number | null; cost: number | null; sold: number | null; invQty: number | null; offer: number | null;
   comp: CompBest | null; lowVendor: string | null; lowPrice: number | null; minMargin: number; myDesc: string | null;
+  /** The brand the engine read on the competitor's line (owner 17:34: "add a brand column so I can confirm the brands"). */
+  cBrand?: string | null;
 };
 /** LIST ANALYSIS — the owner's own format (11-14-2026 PERFUME_ENGINE_FORMATS.xlsx), his formulas cell for cell:
  *  Margin = (offer − last cost) ÷ offer · Markup = (offer − last cost) ÷ last cost · Esperanza price = their SALES
@@ -830,7 +832,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     // expensive"); the % to lower stays positive — how much to take off my price.
     "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
     "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
-    "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_vendor": a.comp?.vendor ?? null,
+    "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_brand": a.comp ? (a.cBrand ?? null) : null, "a:c_vendor": a.comp?.vendor ?? null,
   };
 }
 /** A one-click link for a row that is not matched yet: link competitor/my line `row_id` to item `item_id`. */
@@ -996,7 +998,10 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // and the box to confirm or correct it. Nothing else.
     // The competitor's description IS the match box: it shows the line linked now, or the suggestion, and is searched
     // and confirmed in place (owner 17:07: "shouldn't that be in the same competitor description box so it is not redundant").
-    A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
+    A("c_desc", "COMPETITOR DESCRIPTION", "MATCH", "text"),
+    // Owner 2026-11-14 17:34 CT: the competitor's description stays exactly as written; beside it the BRAND the engine
+    // read from it, so every brand reading can be checked (blank = the engine could not read one).
+    A("c_brand", "COMPETITOR BRAND", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
@@ -1194,6 +1199,13 @@ async function buildAnalysisLines(c: PoolClient, x: {
     row_id: l.id, vendor: vLabel.get(l.vendor_id) ?? "", description: l.description, price_cents: l.price_cents!, linked_to: l.item_id ? (itemById.get(l.item_id)?.display_name ?? null) : null,
     id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
   }));
+  const brandCache = new Map<string, string | null>();
+  const brandRead = (desc: string | null | undefined, brand: string | null = null): string | null => {
+    if (!desc) return null;
+    const k = `${brand ?? ""}|${desc}`;
+    if (!brandCache.has(k)) brandCache.set(k, identify({ description: desc, brand, brandAliases: aliases }).brand || null);
+    return brandCache.get(k)!;
+  };
   const likelyCache = new Map<string, MatchCandidate[]>();
   const likelyFor = (itemId: string): MatchCandidate[] => {
     if (likelyCache.has(itemId)) return likelyCache.get(itemId)!;
@@ -1214,7 +1226,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
       ...analysisFields({
         upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
-        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description,
+        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
@@ -1241,7 +1253,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
         upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
-        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null,
+        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,

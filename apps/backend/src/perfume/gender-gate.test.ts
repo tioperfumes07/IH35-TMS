@@ -46,3 +46,18 @@ describe("gender gate — no recommendation ever crosses Men / Women", () => {
     expect(said[0]!.why).toContain("gender Women = Women");
   });
 });
+
+describe("same brand only (owner 2026-11-14 17:34 CT) — FERRAGAMO / SF / S.FERRAGAMO / SALVATORE FERRAGAMO are one brand", () => {
+  it("every Ferragamo spelling reads as SALVATORE FERRAGAMO", () => {
+    for (const d of ["SALVATORE FERRAGAMO UOMO 3.4oz EDT M", "FERRAGAMO UOMO 3.4oz EDT M", "SF UOMO 3.4oz EDT M", "S.FERRAGAMO UOMO 3.4oz EDT M"]) {
+      expect(identify({ description: d }).brand).toBe("SALVATORE FERRAGAMO");
+    }
+  });
+  it("a line of another brand is never proposed, even with the same fragrance words", () => {
+    const uomo = item("uomo", "UOMO", "M", 100, "EDT", "SALVATORE FERRAGAMO");
+    const l = "VALENTINO UOMO 3.4oz EDT M";
+    expect(offerCandidates({ description: l, brand: null }, identify({ description: l }), [uomo])).toEqual([]);
+    const ok = "FERRAGAMO UOMO 3.4oz EDT M";
+    expect(offerCandidates({ description: ok, brand: null }, identify({ description: ok }), [uomo]).map((o) => o.item_id)).toEqual(["uomo"]);
+  });
+});

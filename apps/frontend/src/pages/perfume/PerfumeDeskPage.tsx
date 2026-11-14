@@ -235,7 +235,7 @@ const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex",
 /** "Match my list ↔ competitor" (owner 2026-11-14 15:10: "in match my list competitor it is practically the same
  *  thing"): the List-analysis lines in the matching format only — the line, what the engine assigned, the
  *  suggestion in the same format with the confirm / search box, and what it is matched to now. */
-const MATCH_DESK = /^a:(upc|sku|brand|name|size|c_desc|c_vendor|match|offer|esp)$/;
+const MATCH_DESK = /^a:(upc|sku|brand|name|size|kind|c_desc|c_brand|c_vendor|match|offer|esp)$/;
 
 /** Review · match (owner 2026-11-14 17:22): every linking happens here — competitor lines waiting for me, and my list ↔
  *  competitor (each of my lines with no competitor line, and each competitor line not on my list). */
