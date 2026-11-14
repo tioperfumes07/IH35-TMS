@@ -18406,5 +18406,10 @@
     "claimed_at": "2026-11-14T18:17:54Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 hotfix Href wrong-scope + residual pathname redeclare after #29532"
+  },
+  "20330": {
+    "claimed_at": "2026-11-14T18:26:27Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 CashFlow/Finance/Inventory/Dispatch/Maint/Home Link to= ret wave7"
   }
 }
