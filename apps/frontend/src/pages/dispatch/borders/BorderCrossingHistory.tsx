@@ -1,4 +1,6 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
@@ -40,6 +42,10 @@ const CROSSING_LABELS: Record<string, string> = {
 };
 
 export function BorderCrossingHistory() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   // DSP-F7280 — sessionStorage["operating_company_id"] is never written by this app. Reading it
   // kept this mounted page's query permanently disabled and rendered a false empty history. Use the
   // same reactive company source as every other entity-scoped surface so company switches refetch.
@@ -109,7 +115,7 @@ export function BorderCrossingHistory() {
     return (
       <div className="p-6" data-testid="gps-border-crossing-history-page">
         <PageHeader
-          backHref="/dispatch"
+          backHref={dispatchBackHref}
           title="GPS Border Crossing Events"
           subtitle="Geofence enter/exit events at USMCA ports"
         />
@@ -160,7 +166,7 @@ export function BorderCrossingHistory() {
   return (
     <div className="p-6 space-y-4" data-testid="gps-border-crossing-history-page">
       <PageHeader
-        backHref="/dispatch"
+        backHref={dispatchBackHref}
         title="GPS Border Crossing Events"
         subtitle="Geofence enter/exit events at USMCA ports"
       />

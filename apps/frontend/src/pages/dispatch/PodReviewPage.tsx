@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { getPodDocuments, reviewPodDocument, type PodDocumentSummary } from "../../api/dispatch";
@@ -10,6 +11,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SettlementReferenceCell } from "../../components/settlements/SettlementReferenceCell";
@@ -105,6 +107,10 @@ function PodRowActions({
 }
 
 export function PodReviewPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -220,7 +226,7 @@ export function PodReviewPage() {
   if (!companyId) {
     return (
       <div className="p-4" data-testid="dispatch-pod-review-page">
-        <PageHeader backHref="/dispatch" title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
+        <PageHeader backHref={dispatchBackHref} title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
         <BoardSection title="POD review" testId="pod-review-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -230,7 +236,7 @@ export function PodReviewPage() {
 
   return (
     <div className="p-4" data-testid="dispatch-pod-review-page">
-      <PageHeader backHref="/dispatch" title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
+      <PageHeader backHref={dispatchBackHref} title="POD review + BOL" subtitle="Review driver proof-of-delivery captures and generate bills of lading." />
 
       {loadId && !loadId.includes(",") ? <LoadBolPanel loadId={loadId} companyId={companyId} /> : null}
 

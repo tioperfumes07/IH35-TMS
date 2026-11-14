@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -7,6 +7,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CustomsTimePill } from "../../components/dispatch/CustomsTimePill";
 import { resolveApiUrl } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -33,6 +34,9 @@ type CrossingRow = {
 
 export function BorderCrossingHistoryPage() {
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const deepLinkCrossingId = searchParams.get("crossing_id")?.trim() || "";
   const { selectedCompanyId } = useCompanyContext();
   const [rows, setRows] = useState<CrossingRow[]>([]);
@@ -126,7 +130,7 @@ export function BorderCrossingHistoryPage() {
     return (
       <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4 p-4">
         <PageHeader
-          backHref="/dispatch"
+          backHref={dispatchBackHref}
           title="Border Crossing History"
           subtitle="Past wizard completions with eManifest re-download"
         />
@@ -139,7 +143,7 @@ export function BorderCrossingHistoryPage() {
 
   return (
     <div data-testid="border-crossing-history-page" className="mx-auto max-w-5xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Border Crossing History"
         subtitle="Past wizard completions with eManifest re-download"
         actions={

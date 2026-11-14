@@ -1,8 +1,9 @@
 import { formatQuantityTable } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load awaiting delivery authorization); the row carries no date from the API.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/Modal";
 import {
   createManualDeliveryAuthorization,
@@ -27,6 +28,10 @@ import { userFacingApiError } from "../../lib/api-error-message";
  * customer + factoring both true). Seat never POSTs fixtures.
  */
 export function NeedsDeliveryAuthorizationPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -156,7 +161,7 @@ export function NeedsDeliveryAuthorizationPage() {
   return (
     <div data-testid="needs-delivery-authorization-page" className="mx-auto max-w-5xl space-y-4 p-4">
       <DispatchSubnav operatingCompanyId={companyId} />
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Needs delivery authorization"
         subtitle="Issued invoices on loads still rolling (dispatched / in transit). Record customer + factoring approval before delivery — same engine as FACTOR-BUT-NOT-DELIVERED."
         actions={

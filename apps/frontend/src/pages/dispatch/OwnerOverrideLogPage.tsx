@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listOwnerOverrideLog } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -9,6 +9,7 @@ import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { formatDateTimeUS } from "../../lib/formatDate";
@@ -25,6 +26,10 @@ const overrideClassLabel = (row: { override_class: string | null; event_class: s
 };
 
 export function OwnerOverrideLogPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const pageSize = 100;
@@ -80,7 +85,7 @@ export function OwnerOverrideLogPage() {
 
   return (
     <div data-testid="dispatch-owner-override-log-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Owner Override Log"
         subtitle="Read-only WORM audit trail of every dispatch blocker overridden by an Owner (DOT / insurer / attorney visibility)"
         actions={

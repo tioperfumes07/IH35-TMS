@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -9,6 +9,7 @@ import { EquipmentTransferModal } from "../../components/dispatch/EquipmentTrans
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
@@ -30,6 +31,9 @@ export function EquipmentTransferRequests() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const transferId = searchParams.get("transfer_id")?.trim() ?? "";
   const [showModal, setShowModal] = useState(false);
 
@@ -101,7 +105,7 @@ export function EquipmentTransferRequests() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4" data-testid="dispatch-equipment-transfer-page">
-        <PageHeader backHref="/dispatch" title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
+        <PageHeader backHref={dispatchBackHref} title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
         <BoardSection title="Equipment transfers" testId="equipment-transfer-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -111,7 +115,7 @@ export function EquipmentTransferRequests() {
 
   return (
     <div className="space-y-4 p-4" data-testid="dispatch-equipment-transfer-page">
-      <PageHeader backHref="/dispatch" title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
+      <PageHeader backHref={dispatchBackHref} title="Equipment transfer requests" subtitle="Dual-confirm handoff queue" />
       <button type="button" className="rounded-sm bg-[#1F2A44] px-3 py-2 text-white" onClick={() => setShowModal(true)}>
         New transfer
       </button>

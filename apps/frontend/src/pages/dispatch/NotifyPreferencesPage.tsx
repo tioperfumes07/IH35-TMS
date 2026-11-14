@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import {
   getCustomerNotifyLog,
   getCustomerNotifyPreferences,
@@ -18,6 +18,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 
@@ -124,6 +125,10 @@ function LogTable({
 }
 
 export function NotifyPreferencesPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -184,7 +189,7 @@ export function NotifyPreferencesPage() {
     return (
       <div className="p-4" data-testid="dispatch-notify-preferences-page">
         <PageHeader
-          backHref="/dispatch"
+          backHref={dispatchBackHref}
           title="Customer ETA notify"
           subtitle="SMS/email milestone alerts with delivery confirmations (B21-D9)"
         />
@@ -199,7 +204,7 @@ export function NotifyPreferencesPage() {
     <div className="p-4 space-y-4" data-testid="dispatch-notify-preferences-page">
       <DispatchSubnav operatingCompanyId={companyId} />
       <PageHeader
-        backHref="/dispatch"
+        backHref={dispatchBackHref}
         title="Customer ETA notify"
         subtitle="SMS/email milestone alerts with delivery confirmations (B21-D9)"
       />

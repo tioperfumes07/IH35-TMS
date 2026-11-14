@@ -1,7 +1,7 @@
 import { DndContext, type DragEndEvent, useDraggable, useDroppable } from "@dnd-kit/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import {
   getDispatchPlannerWeek,
   patchDispatchPlannerLoadStartAt,
@@ -14,6 +14,7 @@ import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useToast } from "../../components/Toast";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { LoadTemplateLibrary } from "./LoadTemplateLibrary";
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -116,6 +117,9 @@ export function PlannerCalendarPage() {
   // Load Templates library — openable from the Dispatch subnav deep-link (?panel=templates) and the
   // header button. Previously the subnav "Load Templates" link landed here with no template UI (dead nav).
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const templatesOpen = searchParams.get("panel") === "templates";
   useEffect(() => {
     actionGenerationRef.current += 1;
@@ -207,7 +211,7 @@ export function PlannerCalendarPage() {
     // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- same fix as DispatchPlannersLayout.tsx: a week-at-a-
     // glance data board gets no page-level max-w[NNNpx] cap.
     <div data-testid="dispatch-planner-calendar-page" className="w-full space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Planner Calendar"
         subtitle="Week-at-a-glance driver rows with drag-drop reschedule and HOS overlay"
         actions={

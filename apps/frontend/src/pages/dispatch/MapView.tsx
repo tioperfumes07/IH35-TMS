@@ -1,8 +1,9 @@
 import { formatQuantityTable } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { MapPin } from "lucide-react";
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -43,6 +44,9 @@ export function MapView() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   // Honor both canonical load_id and legacy ?load= (LoadLivePositionCell / older queue links).
   const focusLoadId = searchParams.get("load_id") ?? searchParams.get("load");
   const focusDriverId = searchParams.get("driver");
@@ -68,7 +72,7 @@ export function MapView() {
 
   return (
     <div className="space-y-3 p-4" data-testid="dispatch-map-view">
-      <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref="/dispatch" />
+      <PageHeader title="Active Load Map" breadcrumb={[{ label: "Dispatch" }, { label: "Map" }]} backHref={dispatchBackHref} />
       {!companyId ? (
         <BoardSection title="Active Load Map" testId="dispatch-map-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">

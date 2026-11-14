@@ -1,9 +1,10 @@
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone /* LV-DISPATCH-ASSIGNMENT-HISTORY-TOMBSTONE */ } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listDispatchAssignmentHistory } from "../../api/dispatch";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -30,6 +31,10 @@ type Filters = {
 const EMPTY_FILTERS: Filters = { driverId: "", from: "", to: "", reason: "" };
 
 export function AssignmentHistoryPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [createDriverOpen, setCreateDriverOpen] = useState(false);
@@ -148,7 +153,7 @@ render: (row) => {
 
   return (
     <div data-testid="dispatch-assignment-history-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Assignment History"
         subtitle="Load driver and unit reassignment audit trail"
         actions={

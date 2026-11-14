@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   getCapacity,
   getCapacityPreview,
@@ -19,6 +19,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 
 /**
@@ -52,6 +53,10 @@ function sortRows(rows: CapacityRow[], key: SortKey, dir: "asc" | "desc"): Capac
 }
 
 export function AvailableTrucksPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
@@ -237,7 +242,7 @@ export function AvailableTrucksPage() {
   return (
     <div data-testid="dispatch-available-trucks-page" className="mx-auto max-w-7xl space-y-4">
       <PageHeader
-        backHref="/dispatch"
+        backHref={dispatchBackHref}
         title="Available trucks"
         subtitle="Where and when each in-service truck is free — from its last booked load's final stop, or its GPS position when it has no open load."
         actions={

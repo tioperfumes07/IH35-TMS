@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import {
   convertOcrIntakeToBookLoad,
   finalizeOcrIntakeConversion,
@@ -18,6 +18,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BookLoadModal } from "./components/BookLoadModal";
 import { buildTemplateJsonFromOcrItem } from "./ocr-book-load-prefill";
 import { formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
@@ -136,6 +137,10 @@ function RowActions({
 }
 
 export function OcrQueuePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const companyIdRef = useRef(companyId);
@@ -234,7 +239,7 @@ export function OcrQueuePage() {
 
   return (
     <div data-testid="dispatch-ocr-queue-page" className="mx-auto max-w-7xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="OCR queue"
         subtitle="Email-forwarded rate cons · async OCR · review · convert to Book Load"
         actions={

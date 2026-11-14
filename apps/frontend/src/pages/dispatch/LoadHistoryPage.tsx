@@ -2,7 +2,7 @@
  * D-H1 — Load History page (/dispatch/loads/:id/history).
  * Read-only timeline: status/edits/assignments/stop stamps/linked docs with EntityLink.
  */
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   getDispatchLoadHistory,
   getLoad,
@@ -78,6 +79,10 @@ export default function LoadHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
 
   const loadQuery = useQuery({
     queryKey: ["load-history-label", companyId, id],
@@ -200,7 +205,7 @@ export default function LoadHistoryPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4" data-testid="load-history-page">
-        <PageHeader backHref="/dispatch" title="Load history" breadcrumb={["Dispatch", "Loads", "History"]} />
+        <PageHeader backHref={dispatchBackHref} title="Load history" breadcrumb={["Dispatch", "Loads", "History"]} />
         <BoardSection title="Load history" testId="load-history-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -210,7 +215,7 @@ export default function LoadHistoryPage() {
 
   return (
     <div className="space-y-4 p-4" data-testid="load-history-page">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title={`Load history · ${entityLabel(loadNumber, id, "Load")}`}
         breadcrumb={["Dispatch", "Loads", entityLabel(loadNumber, id, "Load"), "History"]}
         actions={

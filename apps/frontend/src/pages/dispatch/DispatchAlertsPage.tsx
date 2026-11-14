@@ -1,5 +1,6 @@
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQueries } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
@@ -31,6 +32,10 @@ function openAccidentsCount(rows: Array<Record<string, unknown>>): number | null
 }
 
 export function DispatchAlertsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -115,7 +120,7 @@ export function DispatchAlertsPage() {
 
   return (
     <div className="space-y-4" data-testid="dispatch-alerts-page">
-      <PageHeader backHref="/dispatch" title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
+      <PageHeader backHref={dispatchBackHref} title="Dispatch alerts" subtitle="Live counts where endpoints exist · placeholders show —" />
       {!companyId ? (
         <BoardSection title="Dispatch alerts" testId="dispatch-alerts-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to load counts.</p>
