@@ -13,7 +13,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -229,9 +229,9 @@ export function SettlementsCashAdvancesBoard() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="settlements-cash-advances-board" data-v3-board="Settlements-CashAdvances">
-        <BoardSection title="Cash advances" testId="settlements-cash-advances-need-company">
+        <V3Panel board title="Cash advances" testId="settlements-cash-advances-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </BoardSection>
+        </V3Panel>
       </div>
     );
   }
@@ -306,7 +306,7 @@ export function SettlementsCashAdvancesBoard() {
         data-testid="settlements-cash-advances-board-body"
         data-settlements-cash-advances-board-1fr-2fr="1"
       >
-        <BoardSection
+        <V3Panel board
           title={S443326.cashAdvances.sectionRequests}
           testId="settlements-cash-advances-requests-panel"
           onViewAll={() => navigate(REQUESTS_PATH)}
@@ -317,7 +317,7 @@ export function SettlementsCashAdvancesBoard() {
                 {S443326.cashAdvances.requestsLoadFailed}
               </p>
             ) : (
-              <ParityTable appearance="board"
+              <ParityTable appearance="v3"
            
                 title={S443326.cashAdvances.sectionRequests}
                 storageKey="settlements-cash-advances-requests-v3"
@@ -333,9 +333,9 @@ export function SettlementsCashAdvancesBoard() {
               />
             )}
           </div>
-        </BoardSection>
+        </V3Panel>
 
-        <BoardSection
+        <V3Panel board
           title={S443326.cashAdvances.sectionAdvances}
           testId="settlements-cash-advances-advances-panel"
           onViewAll={() => navigate(BASE_PATH)}
@@ -350,7 +350,7 @@ export function SettlementsCashAdvancesBoard() {
                 onRetry={() => void listQuery.refetch()}
               />
             ) : (
-              <ParityTable appearance="board"
+              <ParityTable appearance="v3"
            
                 title={S443326.cashAdvances.sectionAdvances}
                 storageKey="settlements-cash-advances-roster-v3"
@@ -365,7 +365,7 @@ export function SettlementsCashAdvancesBoard() {
               />
             )}
           </div>
-        </BoardSection>
+        </V3Panel>
       </div>
 
       {detailOpen && detailQuery.isError ? (
