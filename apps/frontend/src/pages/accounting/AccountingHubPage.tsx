@@ -7,7 +7,7 @@
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
@@ -195,9 +195,9 @@ export function AccountingHubPage() {
   const companyId = selectedCompanyId ?? "";
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const navigate = useNavigate();
   const location = useLocation();
   const originHref = currentOriginHref(location.pathname, location.search);
+  // ROUND 8.20 board1 Class R — View-all + KPI drills are shareable hrefs with ?ret=.
   const hubHref = (target: string) => withReturnContext(target, originHref);
   const [manualJeOpen, setManualJeOpen] = useState(false);
 
@@ -593,7 +593,7 @@ export function AccountingHubPage() {
       >
         <BoardSection
           title={`${year} close — ${closedPastCount} of ${Math.max(0, pastMonthsInYear)} past months closed`}
-          onViewAll={() => navigate(hubHref("/accounting/month-close"))}
+          viewAllHref={hubHref("/accounting/month-close")}
           testId="accounting-hub-close-calendar"
         >
           <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -645,7 +645,7 @@ export function AccountingHubPage() {
         >
           <BoardSection
             title="Receivables aging"
-            onViewAll={() => navigate(hubHref("/reports/ar-aging"))}
+            viewAllHref={hubHref("/reports/ar-aging")}
             testId="accounting-hub-receivables-aging"
           >
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -719,7 +719,7 @@ export function AccountingHubPage() {
 
           <BoardSection
             title="Cash pulse · operating account"
-            onViewAll={() => navigate(hubHref("/cash-flow"))}
+            viewAllHref={hubHref("/cash-flow")}
             testId="accounting-hub-cash-pulse"
           >
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
@@ -766,7 +766,7 @@ export function AccountingHubPage() {
 
           <BoardSection
             title="Settlements open"
-            onViewAll={() => navigate(hubHref("/driver-finance/settlements?state=open"))}
+            viewAllHref={hubHref("/driver-finance/settlements?state=open")}
             testId="accounting-hub-settlements-open"
           >
             {toursOpenQ.isError ? (
