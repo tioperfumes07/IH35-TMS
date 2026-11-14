@@ -134,6 +134,9 @@ export function audit(s) {
   // R10
   need("R10", /width: "min\(1260px, calc\(100vw - 2rem\)\)",\s*maxWidth: 1260/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
   need("R10", /\[&_input\]:text-right/.test(s.idBar), "the Load # number is not right-aligned in its box");
+  // R10b (Board 15, Dispatch-BookLoad-SidePanel.dc.html) — the Truck Line pill opens the wizard as the 760 side panel
+  // with "Dispatch › Truck Line › {unit} · Assign a load".
+  need("R10b", /if \(open && entryPoint\?\.kind === "truck-line"\) setBookLoadPresentation\("side"\)/.test(s.modal) && /`Dispatch › Truck Line › \$\{entryPoint\.unitLabel \?\? "Truck"\} · Assign a load`/.test(s.modal), "Truck Line Assign a load does not open the side panel with its Truck Line breadcrumb (Board 15)");
   // R11
   need("R11", /bar\.label = `\$\{load\.load_number\} · \$\{plannerBarLane\(load\)\}`/.test(s.planner) && /bar\.detail = plannerBarMoneyDetail\(load\)/.test(s.planner), "Truck Planner bars do not carry the lane and $ · mi · $/mi");
   need("R11", /load\.miles_practical/.test(s.plannerBars) && /\/mi`/.test(s.plannerBars) && /if \(!\(miles > 0\)\) return `\$\{money\} · — mi`/.test(s.plannerBars), "planner $/mi is not rate ÷ practical miles (or divides by a missing mile)");
@@ -183,6 +186,7 @@ if (process.argv.includes("--selftest")) {
     ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
     ["Special notes leaving the Factoring · Hazmat row FAILS", plant("modal", 'data-testid="book-load-factoring-row"', 'data-testid="book-load-misc-row"')],
     ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
+    ["Truck Line opening centered FAILS (Board 15)", plant("modal", 'setBookLoadPresentation("side");\n  }, [open, entryPoint?.kind]);', 'setBookLoadPresentation("center");\n  }, [open, entryPoint?.kind]);')],
     ["the old 1120 center FAILS", plant("modal", "width: \"min(1260px, calc(100vw - 2rem))\"", "width: \"min(1120px, calc(100vw - 2rem))\"")],
     ["the old 660 side panel FAILS", plant("modal", "w-[760px] max-w-[100vw]", "w-[660px] max-w-[100vw]")],
     ["a left-aligned Load # FAILS", plant("idBar", "[&_input]:text-right", "[&_input]:text-left")],

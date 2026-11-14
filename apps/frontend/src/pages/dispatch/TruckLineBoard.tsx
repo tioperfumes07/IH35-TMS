@@ -620,7 +620,7 @@ function AvailableTruckTrack({
   onAssign,
 }: {
   row: TruckLineRow;
-  onAssign: (driverId: string | null, unitId: string | null) => void;
+  onAssign: (driverId: string | null, unitId: string | null, unitLabel?: string | null) => void;
 }) {
   const a = row.available;
   if (!a) return null;
@@ -684,7 +684,7 @@ function AvailableTruckTrack({
         type="button"
         className="absolute rounded-[13px] bg-[#16A34A] px-3 font-semibold text-white"
         style={{ right: 4, top: 18, height: 26, fontSize: 12 }}
-        onClick={() => onAssign(a.driver_id ?? null, row.unit_id)}
+        onClick={() => onAssign(a.driver_id ?? null, row.unit_id, row.unit_number ?? null)}
         data-testid={`truck-line-assign-unit-${trackKey}`}
       >
         Assign a load →
@@ -1015,7 +1015,7 @@ export function TruckLineBoard({
   // V10 (ROUND 18.6) — THE AVAILABLE TRUCK's "Assign a load →" pill opens the REAL assignment flow
   // (the same BookLoadModal every other Dispatch surface uses, prefilled by driver AND unit — a
   // dead button fails this box, per the Lead's own spec).
-  onAssignDriver: (driverId: string | null, unitId: string | null) => void;
+  onAssignDriver: (driverId: string | null, unitId: string | null, unitLabel?: string | null) => void;
 }) {
   const qc = useQueryClient();
   const query = useQuery({

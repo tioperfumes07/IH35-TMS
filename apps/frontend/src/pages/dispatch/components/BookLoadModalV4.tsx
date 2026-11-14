@@ -244,6 +244,10 @@ type Props = {
    *  lane's status. "assigned_not_dispatched" books without dispatching; nothing is written until Book. */
   prefillUnitLabel?: string | null;
   prefillLaneStatus?: "assigned_not_dispatched" | "dispatched" | null;
+  /** Board 15 (Dispatch-BookLoad-SidePanel.dc.html) — opened from the Truck Line "Assign a load →" pill: the wizard
+   *  opens as the 760px side panel (this opening only; the saved Side/Center preference is not overwritten) and the
+   *  breadcrumb reads "Dispatch › Truck Line › {unit} · Assign a load". */
+  entryPoint?: { kind: "truck-line"; unitLabel: string | null } | null;
   /** REG-023(a) — Stops-tab Edit scrolls to stops; never a blank full-wizard hunt. */
   editFocus?: "full" | "stops";
 };
@@ -351,6 +355,7 @@ export function BookLoadModalV4({
   prefillUnitId,
   prefillDriverId,
   prefillUnitLabel,
+  entryPoint,
   prefillLaneStatus,
   editFocus = "full",
 }: Props) {
@@ -396,6 +401,9 @@ export function BookLoadModalV4({
       return "center";
     }
   });
+  useEffect(() => {
+    if (open && entryPoint?.kind === "truck-line") setBookLoadPresentation("side");
+  }, [open, entryPoint?.kind]);
   const setPresentation = useCallback((next: "side" | "center") => {
     setBookLoadPresentation(next);
     try {
@@ -2015,7 +2023,11 @@ export function BookLoadModalV4({
         <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1F2A44" }}>
           <div>
             <div className="text-xs" style={{ color: "#9AA6BA" }}>
-              {isEditMode ? "Dispatch › Edit load" : "Dispatch › Book load"}
+              {isEditMode
+                ? "Dispatch › Edit load"
+                : entryPoint?.kind === "truck-line"
+                  ? `Dispatch › Truck Line › ${entryPoint.unitLabel ?? "Truck"} · Assign a load`
+                  : "Dispatch › Book load"}
             </div>
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
