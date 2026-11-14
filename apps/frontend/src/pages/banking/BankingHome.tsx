@@ -491,7 +491,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
           {
             heading: "Setup",
             items: [
-              { key: "coa", label: "Chart of Accounts", onClick: () => navigate("/lists/accounting/chart-of-accounts") },
+              { key: "coa", label: "Chart of Accounts", onClick: () => navigate(bankHref("/lists/accounting/chart-of-accounts")) },
               { key: "cash-gl", label: "Cash GL setup", onClick: () => navigate(bankHref("/banking/cash-gl-setup")) },
               ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate(bankHref("/banking/email-queue")) }] : []),
             ],
