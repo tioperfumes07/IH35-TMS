@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:39Z) — #29435 Cash Advances KPI href+ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:39Z · #29435 SHA dcd652f9a51 MERGED (Cash Advances KPI href+ret; verify 20246) · tip READY · ASK Codex: CERTIFY cash-advances + board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:34Z) — #29431 Form 425C Class R Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:34Z · #29431 SHA 35712e856fa MERGED (Form 425C Home+Exhibits resolveBackHref; verify 20244) · tip READY · ASK Codex: CERTIFY 425C + board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
