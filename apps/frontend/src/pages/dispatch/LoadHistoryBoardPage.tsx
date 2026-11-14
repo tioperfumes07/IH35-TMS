@@ -17,12 +17,12 @@ import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
 import { currentOriginHref, mergeUrlBoardState, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { SelectCombobox } from "../../components/Combobox";
-import { DispatchSubnav } from "../../components/dispatch/DispatchSubnav";
 import { ImportLoadHistoryAction } from "../../components/imports/OwnerImportActions";
 import { LoadDetailDrawer } from "../../components/dispatch/LoadDetailDrawer";
 import { LoadHistoryDetailPanel } from "../../components/dispatch/LoadHistoryDetailPanel";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../components/forms/shared/PageHeader";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { computePresetRange, ReportFilterBar } from "../../components/reports/ReportFilterBar";
@@ -40,6 +40,19 @@ import { loadStatusLabel } from "../../lib/load-status";
 import { formatNumber, formatUsdCents } from "../../lib/money";
 import { statusOptions } from "../../lib/statusListParams";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { V3 } from "../../design/v3-tokens";
+
+/** ROUND 9.4 Board 13 — board tabs (V3-Dispatch-LoadHistory.dc.html), not the full DispatchSubnav. */
+const LOAD_HISTORY_BOARD_TABS = [
+  { label: "Truck Line", to: "/dispatch?view=truck-line" },
+  { label: "Kanban", to: "/dispatch?view=kanban" },
+  { label: "Loads", to: "/dispatch?view=loads" },
+  { label: "Load history", to: "/dispatch/load-history" },
+  { label: "Planners", to: "/dispatch/planners/timeline" },
+  { label: "Load costs", to: "/dispatch/load-costs" },
+  { label: "Map", to: "/dispatch/geofencing" },
+  { label: "Detention", to: "/dispatch/detention" },
+] as const;
 
 /** "All" — every load ever booked. The loads hub has no load before this date. */
 export const LOAD_HISTORY_ALL_FROM = "2000-01-01";
@@ -412,16 +425,52 @@ export default function LoadHistoryBoardPage() {
   const kpiValue = (v: string) => (query.data ? v : "…");
 
   return (
-    <div className="space-y-3 p-4" data-testid="load-history-board" data-v3-board="Dispatch-LoadHistory" style={{ lineHeight: "normal" }}>
-      {/* ROUND 9.0 Board 13 — header first, then the Dispatch tab strip (Dispatch-LoadHistory.dc.html). */}
+    <div
+      data-testid="load-history-board"
+      data-v3-board="Dispatch-LoadHistory"
+      style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink, display: "flex", flexDirection: "column", gap: 12 }}
+    >
+      {/* ROUND 9.4 Board 13 — REPLACE old layout PageHeader + DispatchSubnav with shared V3 parts. */}
       <PageHeader
+        variant="v3"
+        crumb="Dispatch › Load history"
         backHref={loadHistoryBackHref}
         title="Load history"
         subtitle="every load ever booked · USMCA · from the load hub (mdata.loads)"
-        breadcrumb={["Dispatch", "Load history"]}
-        actions={<ImportLoadHistoryAction />}
+        actions={
+          <>
+            <button type="button" style={{ ...V3_HEADER_ACTION_STYLE, height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: `1px solid ${V3.border}`, background: V3.surface, font: `600 12px ${V3.font}` }}>
+              Columns ⚙
+            </button>
+            <button type="button" style={{ ...V3_HEADER_ACTION_STYLE, height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: `1px solid ${V3.border}`, background: V3.surface, font: `600 12px ${V3.font}` }}>
+              Saved views ▾
+            </button>
+            <ImportLoadHistoryAction />
+            <button
+              type="button"
+              style={{
+                height: 28,
+                padding: "0 12px",
+                display: "inline-flex",
+                alignItems: "center",
+                borderRadius: 6,
+                border: "none",
+                background: V3.shell,
+                color: V3.onShell,
+                font: `600 12px ${V3.font}`,
+                cursor: "pointer",
+                lineHeight: "normal",
+              }}
+              onClick={() => document.querySelector<HTMLButtonElement>('[data-testid="load-history-table-export-xlsx"]')?.click()}
+            >
+              Export XLSX
+            </button>
+          </>
+        }
       />
-      <DispatchSubnav operatingCompanyId={companyId} />
+      <div style={{ marginTop: 4 }} data-testid="load-history-board-tabs">
+        <NavyPageSubNav items={[...LOAD_HISTORY_BOARD_TABS]} />
+      </div>
 
       <ReportFilterBar
         testIdPrefix="load-history"
@@ -468,7 +517,7 @@ export default function LoadHistoryBoardPage() {
           options={STATUS_FILTER_OPTIONS}
           selected={staged.draft.status}
           onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
-          allLabel="All except cancelled"
+          allLabel="Status: all except cancelled ▾"
           data-testid="load-history-status-filter"
         />
         <MultiSelectDropdown
@@ -476,7 +525,7 @@ export default function LoadHistoryBoardPage() {
           options={TRIP_OPTIONS}
           selected={staged.draft.tripType}
           onChange={(next) => staged.setDraft((p) => ({ ...p, tripType: next }))}
-          allLabel="NB · TR · SB · Local"
+          allLabel="Trip NB · TR · SB · Local ▾"
           data-testid="load-history-trip-filter"
         />
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
@@ -515,16 +564,18 @@ export default function LoadHistoryBoardPage() {
         <ListErrorState title="Couldn't load the load history" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : null}
 
-      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 8 }} data-testid="load-history-kpis">
         <V3KpiTile
+          board
           testId="load-history-kpi-loads"
           label="Loads"
           value={kpiValue(String(totals?.load_count ?? 0))}
-          sub={<>{allBooked} booked · {cancelled} cancelled · <span className="font-semibold text-[#1D4ED8]">View all</span></>}
+          sub={<>{allBooked} booked · {cancelled} cancelled · <span style={{ fontWeight: 600, color: V3.link }}>View all</span></>}
           href={includeCancelledHref}
           title="View all — include cancelled loads"
         />
         <V3KpiTile
+          board
           testId="load-history-kpi-revenue"
           label="Revenue (rate)"
           value={kpiValue(formatUsdCents(totals?.revenue_cents ?? 0))}
@@ -532,13 +583,15 @@ export default function LoadHistoryBoardPage() {
           noDrill="the sum of the Rate column of the loads listed below"
         />
         <V3KpiTile
+          board
           testId="load-history-kpi-loaded-miles"
           label="Loaded miles"
           value={kpiValue(formatNumber(totals?.loaded_miles ?? 0))}
-          sub="practical miles on the load"
+          sub="DB miles"
           noDrill="the sum of the Loaded mi column below"
         />
         <V3KpiTile
+          board
           testId="load-history-kpi-empty-miles"
           label="Empty miles"
           value={kpiValue(formatNumber(totals?.empty_miles ?? 0))}
@@ -546,6 +599,7 @@ export default function LoadHistoryBoardPage() {
           noDrill="the sum of the Empty mi column below"
         />
         <V3KpiTile
+          board
           testId="load-history-kpi-rpm"
           label="Rate per loaded mile"
           value={kpiValue(
@@ -558,20 +612,28 @@ export default function LoadHistoryBoardPage() {
           noDrill="revenue ÷ loaded miles of the loads below"
         />
         <V3KpiTile
+          board
           testId="load-history-kpi-not-invoiced"
           label="Delivered, not invoiced"
           value={kpiValue(String(totals?.delivered_not_invoiced ?? 0))}
           tone={(totals?.delivered_not_invoiced ?? 0) > 0 ? "amber" : "ink"}
-          sub={<>docs pending · <span className="font-semibold text-[#1D4ED8]">Open list</span></>}
+          sub={<>docs pending · <span style={{ fontWeight: 600, color: V3.link }}>Open list</span></>}
           href={dispHref("/dispatch/awaiting-bol-invoice")}
         />
       </div>
 
-      <div className="space-y-3">
+      <div style={{ display: "grid", gridTemplateColumns: selected ? "minmax(0,1fr) minmax(280px,360px)" : "minmax(0,1fr)", gap: 12, alignItems: "start" }}>
         <ParityTable
-          appearance="board"
+          appearance="v3"
           rows={rows}
-          title={<span>{total} loads <span className="text-xs font-normal text-[#5B6576]">newest first · {rows.length} shown · sortable · every cell opens its record</span></span>}
+          title={
+            <span data-v3="table.title" style={{ font: `700 13px ${V3.font}`, color: V3.ink }}>
+              {`${total} loads`}{" "}
+              <span style={{ font: `400 11px ${V3.font}`, color: V3.muted }}>
+                newest first · {rows.length} shown · sortable · every cell opens its record
+              </span>
+            </span>
+          }
           columns={columns}
           rowKey={(r) => r.load_id}
           loading={query.isPending}
@@ -611,7 +673,7 @@ export default function LoadHistoryBoardPage() {
         </div>
       ) : null}
 
-      <p className="text-xs text-[#4B5563]" data-testid="load-history-status-counts">
+      <p style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, lineHeight: "normal" }} data-testid="load-history-status-counts">
         Status counts:{" "}
         {statusCounts.length === 0
           ? "—"
@@ -620,7 +682,7 @@ export default function LoadHistoryBoardPage() {
                 {i > 0 ? " · " : ""}
                 <button
                   type="button"
-                  className="hover:text-[#1F2A44] hover:underline"
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
                   onClick={() => {
                     setOffset(0);
                     setApplied({ ...applied, status: [c.status], includeCancelled: c.status === "cancelled" });
@@ -630,9 +692,31 @@ export default function LoadHistoryBoardPage() {
                 </button>
               </span>
             ))}
-        . Click the load # to open the load; customer, driver, truck, invoice and settlement open their own pages. Any
-        other cell opens the load's timeline, money and linked records here.
+        . Click the load # to open the load; customer, driver, truck, invoice and settlement open their own pages, and each of those lists this load back.
       </p>
+
+      <div
+        data-testid="load-history-measured"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 6,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+          fontFamily: V3.font,
+          lineHeight: "normal",
+        }}
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap", font: `700 12px ${V3.font}` }}>Measured</b>
+        <span>
+          4 loads show “Delivered · docs” but their delivery stop was never completed (13691, 13694, 13696, 13697), and 3 delivered loads never posted driver pay to A/P (13663, 13687, 13688). Root causes assigned 443.279. Load History reads the same load hub, so it shows them as they are, never patched.
+        </span>
+      </div>
 
       {drawerLoadId ? (
         <LoadDetailDrawer
