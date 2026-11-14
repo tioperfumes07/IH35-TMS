@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { formatPersonName } from "../../lib/formatPersonName";
 import { createPortal } from "react-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useNavigate } from "react-router-dom";
 import { type LoadDetail, type LoadStatus, updateLoad, useDispatchLoad, useLoad, useLoadAudit, useRemintDriverBill, useUpdateLoadStatus } from "../../api/loads";
 import { createInvoiceFromLoad, listLoadExpenses, listLoadInvoices } from "../../api/accounting";
@@ -215,6 +216,9 @@ function serializeFactoringPackageNotes(meta: FactoringPackageMeta, visibleNotes
 }
 
 export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, operatingCompanyId, initialTab = "Overview", openedFrom, mode = "drawer", onClose }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const isPage = mode === "page";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -1290,7 +1294,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                           // "View" keeps working and an already-broken invoice stays reachable.
                           const existingInvoiceId = loadInvoicesQuery.data?.invoices?.[0]?.id;
                           if (existingInvoiceId) {
-                            navigate(`/accounting/invoices/${existingInvoiceId}`);
+                            navigate(moneyHref(`/accounting/invoices/${existingInvoiceId}`));
                             return;
                           }
                           if (!Number(load.rate_total_cents ?? 0)) {
@@ -1309,7 +1313,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                             pushToast("Invoice create did not return an id. Nothing to open.", "error");
                             return;
                           }
-                          navigate(`/accounting/invoices/${invoiceId}`);
+                          navigate(moneyHref(`/accounting/invoices/${invoiceId}`));
                         }}
                         loading={createInvoiceMutation.isPending || invoiceLookupUnresolved}
                         disabled={!canInvoiceFromLoad || invoiceLookupFailed || invoiceLookupUnresolved}

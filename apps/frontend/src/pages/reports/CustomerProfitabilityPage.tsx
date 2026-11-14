@@ -1,7 +1,7 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
-import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import {
@@ -88,7 +88,8 @@ const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> 
 export function CustomerProfitabilityPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
-  const acctHref = (target: string) => withReturnContext(target, originHref);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
+  const acctHref = moneyHref;
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -394,7 +395,7 @@ export function CustomerProfitabilityPage() {
             exportFilename={`customer-profitability-${applied.start}-${applied.end}`}
             onRowClick={(r) => {
               if (isUnresolvedCustomerTombstone(r)) return;
-              navigate(`/customers/${r.customer_id}?tab=billing`);
+              navigate(moneyHref(`/customers/${r.customer_id}?tab=billing`));
             }}
           />
 

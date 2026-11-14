@@ -166,6 +166,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Cash/Accrual lives in URL so TB/BS drills + Back restore the Home selection.
   const basis: AccountingBasis = (searchParams.get("basis") ?? "").toLowerCase() === "cash" ? "cash" : "accrual";
   const setBasis = (next: AccountingBasis) => {
@@ -301,18 +302,18 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   function runFrequentReport(row: FrequentlyRunReport) {
     const href = PHASE_6_REPORT_HREFS[row.id];
     if (href) {
-      navigate(href);
+      navigate(moneyHref(href));
       return;
     }
     if (row.id === "ar-aging") {
-      navigate("/reports/ar-aging");
+      navigate(moneyHref("/reports/ar-aging"));
       return;
     }
     if (row.id === "ap-aging") {
-      navigate("/reports/ap-aging");
+      navigate(moneyHref("/reports/ap-aging"));
       return;
     }
-    navigate(`/reports/run/${encodeURIComponent(row.id)}`);
+    navigate(moneyHref(`/reports/run/${encodeURIComponent(row.id)}`));
   }
 
   function basisLabel(reportKey: string): string {

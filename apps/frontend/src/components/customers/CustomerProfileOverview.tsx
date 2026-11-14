@@ -7,7 +7,8 @@
 import type { ReactNode } from "react";
 import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { apiRequest } from "../../api/client";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
 import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
@@ -40,6 +41,9 @@ const Section = ProfileSection;
 const Kpi = ProfileKpi;
 
 export function CustomerProfileOverview(props: { operatingCompanyId: string; customerId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const q = useQuery({
     queryKey: ["customer-profile", props.operatingCompanyId, props.customerId],
@@ -164,7 +168,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
               [
                 "Factor",
                 f.factoring_company_vendor_id ? (
-                  <button key="factor" type="button" className="text-[color:var(--ih-green)] underline" onClick={() => navigate(`/vendors/${f.factoring_company_vendor_id}`)}>
+                  <button key="factor" type="button" className="text-[color:var(--ih-green)] underline" onClick={() => navigate(moneyHref(`/vendors/${f.factoring_company_vendor_id}`))}>
                     {f.factoring_company_name ?? "Factor"}
                   </button>
                 ) : "None assigned",
@@ -185,7 +189,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
 
       <Section title={`Payment history (${ph.payment_count} · ${formatUsdCents(ph.paid_cents)})`} testId="customer-profile-payments" reason={p.payment_history.empty_reason}>
         {ph.recent.length ? (
-          <ParityTable appearance="board" columns={payCols} rows={ph.recent} rowKey={(r) => r.id} onRowClick={(r) => navigate(`/accounting/payments/${r.id}`)} density="compact" suppressToolbarRange />
+          <ParityTable appearance="board" columns={payCols} rows={ph.recent} rowKey={(r) => r.id} onRowClick={(r) => navigate(moneyHref(`/accounting/payments/${r.id}`))} density="compact" suppressToolbarRange />
         ) : null}
       </Section>
 

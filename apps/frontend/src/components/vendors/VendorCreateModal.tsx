@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ApiError } from "../../api/client";
 import { createVendor } from "../../api/mdata";
 import { listPaymentTermOptions } from "../../api/mdata";
@@ -86,7 +87,10 @@ type Props = {
   onSaved?: (result: VendorCreateSavedResult) => void;
 };
 
-export function VendorCreateModal({
+export function VendorCreateModal({  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
+
   open,
   onClose,
   operatingCompanyId,
@@ -262,7 +266,7 @@ export function VendorCreateModal({
         onSaved({ id: String(vendor.id), label });
         return;
       }
-      if (vendor?.id && !embedded) navigate(`/vendors/${vendor.id}`);
+      if (vendor?.id && !embedded) navigate(moneyHref(`/vendors/${vendor.id}`));
     },
     onError: (error) => {
       setFormError("");

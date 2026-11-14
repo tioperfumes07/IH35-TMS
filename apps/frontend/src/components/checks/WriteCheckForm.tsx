@@ -16,7 +16,8 @@
 // own law ("no map row -> CATEGORY_UNMAPPED, never a guessed account") also means a check form is not
 // the place to mint a new mapping — that is a chart-of-accounts governance action, done elsewhere.
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { Modal } from "../Modal";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
@@ -310,6 +311,9 @@ export type WriteCheckFormProps = {
 };
 
 export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onSavedKeepOpen, initialPayee, copyFromCheckId }: WriteCheckFormProps) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const [payeeKind, setPayeeKind] = useState<CheckPayeeKind>(initialPayee?.kind ?? "vendor");
@@ -959,7 +963,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       });
       setRecurringOpen(false);
       pushToast("Recurring expense template created", "success");
-      navigate(`/accounting/recurring-templates/${created.id}`);
+      navigate(moneyHref(`/accounting/recurring-templates/${created.id}`));
       onClose();
     } catch (err) {
       pushToast(err instanceof Error ? err.message : "Could not create recurring template", "error");
@@ -1758,7 +1762,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   label: "Transaction journal",
                   disabled: !lastSavedJournalEntryId,
                   onSelect: () => {
-                    if (lastSavedJournalEntryId) navigate(`/accounting/journal-entries/${lastSavedJournalEntryId}`);
+                    if (lastSavedJournalEntryId) navigate(moneyHref(`/accounting/journal-entries/${lastSavedJournalEntryId}`));
                   },
                 },
                 {
@@ -1766,7 +1770,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   label: "Audit history",
                   disabled: !lastSavedCheckId,
                   onSelect: () => {
-                    if (lastSavedCheckId) navigate(`/accounting/audit-trail?source_type=expense&source_id=${lastSavedCheckId}`);
+                    if (lastSavedCheckId) navigate(moneyHref(`/accounting/audit-trail?source_type=expense&source_id=${lastSavedCheckId}`));
                   },
                 },
                 {
@@ -1774,7 +1778,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   label: "Copy",
                   disabled: !lastSavedCheckId,
                   onSelect: () => {
-                    if (lastSavedCheckId) navigate(`/accounting/checks/new?copy_from=${lastSavedCheckId}`);
+                    if (lastSavedCheckId) navigate(moneyHref(`/accounting/checks/new?copy_from=${lastSavedCheckId}`));
                   },
                 },
                 {

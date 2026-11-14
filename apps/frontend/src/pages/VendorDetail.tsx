@@ -2,7 +2,8 @@ import { entityLabel, visibleDocumentLabel } from "../lib/entity-label";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ParityTable } from "../components/parity/ParityTable";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { partyBoardReturnHref } from "../lib/partyBoardReturn";
 import { listExpenses, listVendorBills, type ExpenseListRow, type VendorBill } from "../api/accounting";
 import { listVendorCredits } from "../api/vendor-credits";
@@ -122,6 +123,9 @@ type VendorProfileForm = VendorProfileMeta & {
 };
 
 export function VendorDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -496,7 +500,7 @@ export function VendorDetailPage() {
             <span className={`rounded-sm px-2 py-1 text-xs font-semibold ${vendor.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"}`}>
               {vendor.deactivated_at ? "Inactive" : "Active"}
             </span>
-            <Button variant="secondary" onClick={() => navigate(`/vendors/${id}/statement`)}>
+            <Button variant="secondary" onClick={() => navigate(moneyHref(`/vendors/${id}/statement`))}>
               Statement
             </Button>
             {vendor.deactivated_at ? (
