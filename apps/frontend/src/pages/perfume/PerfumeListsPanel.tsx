@@ -189,9 +189,11 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const sheet = read?.sheets[sheetIx];
   const headers = useMemo(() => (sheet?.cells[headerRow] ?? []).map((h, i) => String(h ?? "").trim() || `Column ${i + 1}`), [sheet, headerRow]);
   const isPictures = read?.kind === "image";
+  // My own lists (offer / inventory) keep a line that names an item but has no price (owner 2026-11-14).
+  const ownList = ["offer", "inventory"].includes(vendors.find((v) => v.id === vendorId)?.kind ?? "");
   const extracted = useMemo(
-    () => (isPictures ? (lines.length ? pictureLinesToExtracted(lines) : null) : sheet ? extractRows(sheet, headerRow, map) : null),
-    [isPictures, lines, sheet, headerRow, map],
+    () => (isPictures ? (lines.length ? pictureLinesToExtracted(lines) : null) : sheet ? extractRows(sheet, headerRow, map, { keepPriceless: ownList }) : null),
+    [isPictures, lines, sheet, headerRow, map, ownList],
   );
   const needPrice = lines.filter((l) => l.include && !(Number(l.price) > 0)).length;
 

@@ -9,13 +9,13 @@ import { Button } from "../../components/Button";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { MoneyInput } from "../../components/forms/MoneyInput";
-import { SelectCombobox } from "../../components/Combobox";
+import { Combobox, SelectCombobox } from "../../components/Combobox";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
   type PerfumeFacetKey, type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
-  canonicalizePerfumeBrands, rematchPerfumeReview,
+  canonicalizePerfumeBrands, rematchPerfumeReview, confirmPerfumeRow, searchPerfumeItems, searchPerfumeLines,
 } from "../../api/perfume";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
@@ -93,7 +93,7 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "lists" || tab === "rules" || tab === "match" ? null : (
+      {tab === "lists" || tab === "rules" || tab === "match" || tab === "analysis" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
           {(tab === "review" ? REVIEW_MINE_OPTIONS : MINE_OPTIONS).map(([k, l]) => (
@@ -165,6 +165,64 @@ const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
 ];
 const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [] };
 
+/** List analysis columns no upload fills yet (purchase date, qty purchased, last cost, sold, and what needs a cost). */
+const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold", "a:margin", "a:markup", "a:new_margin"]);
+
+/** Confirm a match right on the analysis row (owner 2026-11-14: "if from my list there are no matches or confirmed or
+ *  still waiting for confirmation, then i should be able to confirm here"). Pick one of the proposed lines / items and
+ *  Link — the same confirm the Review tab uses; nothing links without this click. */
+/** List analysis · the match box (owner 2026-11-14: "in check the match, we are missing the box to search, suggestions
+ *  etc, the correct matching engine"). The same engine as Review: the best suggestion is one click, the box starts on
+ *  it, can be cleared, and searches any words in any order.
+ *   - a line of mine with no item, or a competitor line → link THAT line to one of my items (items search);
+ *   - a line of mine that has its item → link a COMPETITOR line to my item (competitor-lines search). */
+function MatchCell({ row }: { row: PerfumeGridRow }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const mode = row.link_mode === "line" ? "line" : "item";
+  const linkRow = row.link_row == null ? null : String(row.link_row);
+  const linkItem = row.link_item == null ? null : String(row.link_item);
+  const cand = (Array.isArray(row.cand) ? row.cand : []) as Array<{ row_id: string; item_id: string; label: string; price_cents: number | null; why: string }>;
+  const sugg = cand.map((x) => ({ value: mode === "line" ? x.row_id : x.item_id, label: x.label, sublabel: [x.price_cents != null ? money(x.price_cents) : "", x.why].filter(Boolean).join(" · ") }));
+  const [pick, setPick] = useState<string | null>(row.matched === 1 ? null : sugg[0]?.value ?? null);
+  const [search, setSearch] = useState("");
+  const [busy, setBusy] = useState(false);
+  const on = search.trim().length >= 2;
+  const items = useQuery({ queryKey: ["perfume", "items", search], queryFn: () => searchPerfumeItems(search), enabled: on && mode === "item" });
+  const lines = useQuery({ queryKey: ["perfume", "lines", search], queryFn: () => searchPerfumeLines(search), enabled: on && mode === "line" });
+  const found = mode === "item"
+    ? (items.data?.items ?? []).map((h) => ({ value: h.id, label: h.display_name, sublabel: h.upcs?.join(" ") ?? "" }))
+    : (lines.data?.lines ?? []).map((h) => ({ value: h.row_id, label: `${h.description} · ${h.vendor}`, sublabel: [h.price_cents != null ? money(h.price_cents) : "", h.linked_to ? `now linked to ${h.linked_to}` : "not linked"].join(" · ") }));
+  const options = [...sugg, ...found.filter((f) => !sugg.some((x) => x.value === f.value))];
+  const go = async (target: string | null, createNew = false) => {
+    setBusy(true);
+    try {
+      if (mode === "line") { if (!target || !linkItem) return; await confirmPerfumeRow(target, { item_id: linkItem }); }
+      else { if (!linkRow) return; await confirmPerfumeRow(linkRow, createNew ? { create_new: true } : { item_id: target! }); }
+      pushToast(tr("perfume.analysis.linked", "Linked."), "success");
+      await qc.invalidateQueries({ queryKey: ["perfume"] });
+    } catch (e) { pushToast(userFacingApiError(e, tr("perfume.analysis.linkfail", "Could not link")), "error"); }
+    finally { setBusy(false); }
+  };
+  const best = row.matched === 1 ? null : sugg[0] ?? null;
+  return (
+    <span className="flex items-center gap-1" data-testid="perfume-analysis-matchbox">
+      {best ? (
+        <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy} title={cand[0]?.why}
+          onClick={() => void go(best.value)}>{tr("perfume.analysis.useSuggestion", "✓ Use suggestion")}</Button>
+      ) : null}
+      <span className="w-[260px]">
+        <Combobox ariaLabel={mode === "line" ? "Competitor line" : "Item"} size="sm" value={pick} onChange={setPick} onSearch={setSearch} options={options} allowClear clearCommittedOnEdit
+          placeholder={mode === "line" ? tr("perfume.analysis.searchLine", "Search their line, UPC or code") : tr("perfume.analysis.searchItem", "Search my item, UPC or code")} />
+      </span>
+      <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={busy || !pick} onClick={() => void go(pick)}>{tr("perfume.analysis.confirm", "Confirm")}</Button>
+      {mode === "item" ? (
+        <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={busy} onClick={() => void go(null, true)}>{tr("perfume.analysis.newItem", "New item")}</Button>
+      ) : null}
+    </span>
+  );
+}
+
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
 function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) {
@@ -180,6 +238,11 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
   // Owner 2026-11-14: "i need filter so i can select only the items from the competitions list" — on by default on
   // Competition (their margin means nothing for items they do not carry); one click on every other tab.
   const [carried, setCarried] = useState(view === "comp");
+  // List analysis (owner 2026-11-14): whose list — mine (every line of my list) or theirs (every competitor line) — and
+  // a side filter: all, matched (in common), not matched. Plus one button to hide the columns no upload fills yet.
+  const [base, setBase] = useState<"mine" | "theirs">("mine");
+  const [match, setMatch] = useState<"all" | "matched" | "unmatched">("all");
+  const [hideEmpty, setHideEmpty] = useState(true);
   const [viewSeen, setViewSeen] = useState(view);
   if (viewSeen !== view) { setViewSeen(view); setCarried(view === "comp"); setPage(1); }
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
@@ -199,8 +262,8 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
     if (t !== target) { setTarget(t); setPage(1); }
   };
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine, carried],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine, carried, base, match],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   // Competition: my columns, then the competitor's, then every supplier's list price (owner 2026-11-14: "the vendors
@@ -228,22 +291,25 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
       key: c.key,
       label: c.label,
       sortable: true,
-      defaultHidden: !defaultVisible(view, c.key, mine),
+      defaultHidden: !defaultVisible(view, c.key, mine) || (view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(c.key)),
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
       cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
       sortValue: (r: PerfumeGridRow) => r[c.key] ?? null,
-      exportValue: (r: PerfumeGridRow) => r[c.key] ?? null,
+      ...(c.key === "a:cand" ? { minWidth: 600 } : {}),
+      exportValue: (r: PerfumeGridRow) => (Array.isArray(r[c.key]) ? (r[c.key] as unknown as Array<{ label: string }>).map((x) => x.label).join("; ") : r[c.key] ?? null),
       render: (r: PerfumeGridRow) => {
         const v = r[c.key];
         if (c.kind === "money") return money(v);
         if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-slate-700 font-semibold" : ""}>{pct(v)}</span>;
+        if (c.key === "a:cand") return <MatchCell row={r} />;
+        if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view, mine, groupStart],
+    [cols, view, mine, groupStart, hideEmpty],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
@@ -262,16 +328,39 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
       {/* The table mounts only once the server has sent this view's columns: ParityTable reads the default
           hidden set at mount, so mounting with no columns showed EVERY column (owner 2026-11-12: Trading still
           showed every supplier's purchase columns). Keyed by view so each tab starts from its own defaults. */}
+      <div className={view === "analysis" ? "grid grid-cols-[150px_minmax(0,1fr)] items-start gap-2" : ""}>
+      {view === "analysis" ? (
+        <aside className="space-y-3 rounded-sm border border-gray-200 bg-white p-2 text-xs" aria-label={tr("perfume.analysis.side", "Analysis filters")} data-testid="perfume-analysis-side">
+          <fieldset className="space-y-1">
+            <legend className="font-semibold text-[#1F2A44]">{tr("perfume.analysis.base", "Show list")}</legend>
+            {([["mine", "My list"], ["theirs", "Their list"]] as const).map(([k, l]) => (
+              <label key={k} className="flex items-center gap-1"><input type="radio" name="perfume-analysis-base" checked={base === k} onChange={() => { setBase(k); setPage(1); }} data-testid={`perfume-analysis-base-${k}`} />{tr(`perfume.analysis.base.${k}`, l)}</label>
+            ))}
+          </fieldset>
+          <fieldset className="space-y-1">
+            <legend className="font-semibold text-[#1F2A44]">{tr("perfume.analysis.match", "Rows")}</legend>
+            {([["all", "All"], ["matched", "Matched (in common)"], ["unmatched", "Not matched"]] as const).map(([k, l]) => (
+              <label key={k} className="flex items-center gap-1"><input type="radio" name="perfume-analysis-match" checked={match === k} onChange={() => { setMatch(k); setPage(1); }} data-testid={`perfume-analysis-match-${k}`} />{tr(`perfume.analysis.match.${k}`, l)}</label>
+            ))}
+          </fieldset>
+          <button type="button" onClick={() => setHideEmpty(!hideEmpty)} aria-pressed={!hideEmpty} data-testid="perfume-analysis-empty-toggle"
+            className="h-[30px] w-full rounded-sm border border-gray-300 bg-[var(--surface-unselected)] px-2 text-left font-semibold text-gray-700 hover:bg-[var(--surface-hover)]">
+            {hideEmpty ? tr("perfume.analysis.showEmpty", "Show purchase / cost columns") : tr("perfume.analysis.hideEmpty", "Hide purchase / cost columns")}
+          </button>
+        </aside>
+      ) : null}
+      <div className="min-w-0">
       {cols.length === 0 ? (
         <div className="text-xs text-gray-500" data-testid="perfume-grid-loading">{query.isError ? "Couldn't load the grid" : "Loading…"}</div>
       ) : (
       <ParityTable<PerfumeGridRow>
-        key={`${view}-${mine ?? "all"}`}
+        key={`${view}-${mine ?? "all"}-${view === "analysis" ? (hideEmpty ? "h" : "a") : ""}`}
         columns={columns}
         rows={query.data?.rows ?? []}
         rowKey={(r) => String(r.id)}
         loading={query.isLoading}
-        storageKey={`perfume-desk-${view}${mine ? "-mine" : ""}-v7`}
+        wrapHeaders
+        storageKey={`perfume-desk-${view}${mine ? "-mine" : ""}${view === "analysis" ? (hideEmpty ? "-h" : "-a") : ""}-v8`}
         columnGroups={columnGroups}
         sortKey={sort.key}
         sortDirection={sort.dir}
@@ -359,7 +448,7 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}
@@ -368,8 +457,10 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
         }
       />
       )}
+      </div>
+      </div>
       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
-        <span>{total.toLocaleString()} {tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
+        <span>{total.toLocaleString()} {view === "analysis" ? tr("perfume.desk.9b", "lines · page") : tr("perfume.desk.9", "items · page")} {page} {tr("perfume.desk.10", "of")} {pages}{query.data ? ` · measured ${new Date(query.data.measured_at).toLocaleTimeString()}` : ""}</span>
         <span className="flex items-center gap-1">
           <label className="flex items-center gap-1">
             {tr("perfume.desk.pagesize", "Rows per page")}

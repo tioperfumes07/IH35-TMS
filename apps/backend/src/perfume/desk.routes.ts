@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, myUnlinked, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
@@ -80,7 +80,7 @@ const rowSchema = z.object({
   gender: z.string().max(30).nullable().optional(),
   type: z.string().max(40).nullable().optional(),
   section: z.string().max(120).nullable().optional(),
-  price: z.union([z.number(), z.string().max(30)]),
+  price: z.union([z.number(), z.string().max(30)]).nullable(),
   qty: z.union([z.number(), z.string().max(30)]).nullable().optional(),
   case_pack: z.union([z.number(), z.string().max(30)]).nullable().optional(),
   // My inventory file (owner 2026-11-14): when I bought it, how many, how many sold.
@@ -107,6 +107,9 @@ const gridQuery = z.object({
   mine: z.enum(["offer", "inventory", "need"]).optional(),
   // Owner 2026-11-14: "filter so i can select only the items from the competitions list".
   carried: z.enum(["0", "1"]).optional(),
+  // List analysis: whose list (mine | theirs) and which rows (all | matched | unmatched) — owner 2026-11-14.
+  base: z.enum(["mine", "theirs"]).default("mine"),
+  match: z.enum(["all", "matched", "unmatched"]).default("all"),
   // Comma-separated facet picks; empty = all. Category is the type (Women, Men, Set Men, Tester Women, Cosmetics, Various…).
   category: z.string().max(400).default(""),
   gender: z.string().max(200).default(""),
@@ -279,6 +282,11 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = z.object({ q: z.string().max(200) }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     return { items: await withCurrentUser(uid, (c) => searchItems(c, q.data.q)) };
   });
+  app.get("/api/v1/perfume/lines/search", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = z.object({ q: z.string().max(200) }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
+    return { lines: await withCurrentUser(uid, (c) => searchCompetitorLines(c, q.data.q)) };
+  });
   app.put("/api/v1/perfume/items/:id/internal-code", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
@@ -294,7 +302,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     if (q.data.sort && !g.cols.some((c) => c.key === q.data.sort)) return reply.code(400).send({ error: "unknown_sort_column" });
     // Level-2 view cache: pre-sorted rows + zero-picks facets, cached per (version, view, mine, sort, dir).
-    const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, q.data.sort, q.data.dir);
+    const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, q.data.sort, q.data.dir, q.data.base, q.data.match);
     // Per-request: text search and facet picks only; sort is already applied in vp.sorted.
     const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
@@ -309,7 +317,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = gridQuery.extend({ cols: z.string().max(8000).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     const sortKey = q.data.sort && g.cols.some((c) => c.key === q.data.sort) ? q.data.sort : undefined;
-    const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, sortKey, q.data.dir);
+    const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, sortKey, q.data.dir, q.data.base, q.data.match);
     const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
