@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:13Z) — #29451 Vendors money + DriverLive View-all MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:13Z · #29451 SHA a2bf209eb87 MERGED (Vendors money drills + DriverLive viewAllHref; verify 20260) · tip READY · ASK Codex: CERTIFY board10 + 12 + 1 + 9 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:07Z) — #29447 COA P&L Run report ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:07Z · #29447 SHA 37dd85af29b MERGED (COA Run report withReturnContext; verify 20258) · tip READY · ASK Codex: CERTIFY board1 + 12 + 19 + 9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
