@@ -12,6 +12,8 @@ const PerfumeDeskPage = React.lazy(() => import("../pages/perfume/PerfumeDeskPag
 const LoadHistoryBoardPage = React.lazy(() => import("../pages/dispatch/LoadHistoryBoardPage"));
 // ROUND 9.4 board 16 — Book Load Spec measurement board.
 const BookLoadSpecBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadSpecBoardPage"));
+// ROUND 9.4 board 17 — Book Load TripType board.
+const BookLoadTripTypeBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadTripTypeBoardPage"));
 import React from "react";
 import { Navigate, Route, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -1683,6 +1685,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BookLoadSpecBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/book-load-trip-type"
+          element={
+            <ProtectedRoute>
+              <BookLoadTripTypeBoardPage />
             </ProtectedRoute>
           }
         />
