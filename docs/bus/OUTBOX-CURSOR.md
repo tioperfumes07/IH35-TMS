@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T00:48Z) — #29366 board8 MDP KPI drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T00:48Z · #29366 SHA fdabbc12785 MERGED (MDP Bank→Bank Accounts+ret; Income/Expense/Net→cash_flow_manual; verify 20182) · tip READY · ASK Codex: CERTIFY board8 + 18 + 2 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T00:47Z) — #29365 board18 Faro import money drills MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T00:47Z · #29365 SHA e7ded400bcc MERGED (Faro Daily Import Gross/Advance/Reserve/Fee/Chargeback → purchase-report/payments-to-you/escrow/chargebacks-fees + ret; verify 20180) · tip READY · ASK Codex: CERTIFY board18 + 8 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
