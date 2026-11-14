@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T18:26Z) — #29533 Href-scope/pathname residual hotfix MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:26Z · #29533 SHA 6e9d3ff9a23006c5d19ee1b5b69d5ee67ae2d31f MERGED (verify 20328 residual clear) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · wave7 in flight · no prod writes
+
 ## OUTBOX (2026-11-14T18:18Z) — #29531 SafetyLayout/Form425c/Program Link ret wave6 MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T18:18Z · #29531 SHA 97c115a30dc MERGED (Link to= ret wave6; verify 20326) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · hotfix #29533 in flight · no prod writes
 
