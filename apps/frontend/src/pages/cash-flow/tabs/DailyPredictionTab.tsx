@@ -812,11 +812,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Income"
           subtitle={`${formatQuantityTable(incomeRows.length, 0)} item${incomeRows.length === 1 ? "" : "s"}`}
-          onViewAll={() =>
-            navigate(
-              withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "income"), originHref),
-            )
-          }
+          viewAllHref={withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "income"), originHref)}
           testId="cash-flow-projected-income-panel"
         >
           {isLoading ? (
@@ -850,11 +846,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Expenses"
           subtitle="in payment priority order"
-          onViewAll={() =>
-            navigate(
-              withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "expenses"), originHref),
-            )
-          }
+          viewAllHref={withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "expenses"), originHref)}
           testId="cash-flow-projected-expense-panel"
         >
           <>
