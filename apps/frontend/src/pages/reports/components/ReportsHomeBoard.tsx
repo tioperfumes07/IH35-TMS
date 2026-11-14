@@ -8,6 +8,7 @@
  * IFTA preparer. Every catalog row is a real <Link> (anchor) to its route — never a button.
  */
 import "../../../assets/fonts/v3-maintenance/board-box.css";
+import "../../../assets/fonts/v3-reports/fonts.css";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
@@ -119,7 +120,7 @@ function CatalogLink({
   bold?: boolean;
   title?: string;
 }) {
-  const style = { color: muted ? V3.muted : V3.ink, fontSize: V3_TABLE.fontPx };
+  const style = { color: muted ? V3.muted : V3.link, fontSize: V3_TABLE.fontPx };
   if (!href) return <span style={style}>{children}</span>;
   return (
     <Link to={href} className={`${bold ? "font-semibold " : ""}hover:underline`} style={style} data-testid={testId} title={title}>
@@ -318,7 +319,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       data-testid="reports-home-board"
       data-reports-home-board="1"
       data-v3-board="Reports"
-      style={{ lineHeight: "normal" }}
+      style={{ lineHeight: "normal", fontFamily: "Inter, sans-serif" }}
     >
       {errored ? (
         <ListErrorBanner
@@ -336,29 +337,36 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
         data-testid="reports-home-kpi-strip"
       >
         <V3KpiTile
+          board
           testId="reports-kpi-available"
           label="Available reports"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.available_reports)}
           sub={kpiReady ? "categories live" : kpiQuery.isError ? "Failed to load" : "Loading…"}
           // ROUND 8.20 board25 — STATUS FAIL: report counts must be interactive → Financial catalog.
           href={financialCatHref}
+          valueDataV3="kpi-available-value"
         />
         <V3KpiTile
+          board
           testId="reports-kpi-schedules"
           label="Custom schedules"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.scheduled)}
           sub={kpiReady ? "auto-emailed" : kpiQuery.isError ? "Failed to load" : "Loading…"}
           href={scheduledHref}
+          valueDataV3="kpi-schedules-value"
         />
         <V3KpiTile
+          board
           testId="reports-kpi-run-7d"
           label="Run last 7 days"
           value={loading && !kpiReady ? "…" : dash(kpiQuery.data?.run_last_7d)}
           sub={kpiReady ? "across all users" : kpiQuery.isError ? "Failed to load" : "Loading…"}
           // ROUND 8.20 board25 — run count → Saved / Frequently run cohort.
           href={savedCatHref}
+          valueDataV3="kpi-run7d-value"
         />
         <V3KpiTile
+          board
           testId="reports-kpi-ifta"
           label={ifta ? `IFTA ${ifta.quarter} due` : "IFTA due"}
           value={
@@ -369,6 +377,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
           sub={ifta ? `${mmmDd(ifta.dueAt)} — file before` : iftaQuery.isError ? "Failed to load" : "Loading…"}
           tone={ifta ? "amber" : "muted"}
           href={iftaHref}
+          valueDataV3="kpi-ifta-value"
+          subDataV3="kpi-ifta-sub"
         />
       </div>
 
@@ -383,14 +393,15 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 key={cat.id}
                 type="button"
                 style={{
+                  display: "block",
                   textAlign: "left",
                   padding: "7px 10px",
                   borderRadius: 4,
                   fontSize: "12px",
                   fontWeight: 600,
-                  fontFamily: V3.font,
+                  fontFamily: "Inter, sans-serif",
                   background: activeCategory === cat.id ? "#EEF2F7" : "transparent",
-                  color: activeCategory === cat.id ? "#0F1219" : V3.muted,
+                  color: activeCategory === cat.id ? "#111827" : V3.muted,
                   border: "none",
                   cursor: "pointer",
                   width: "100%",
@@ -419,7 +430,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
               >
                 <ParityTable<CatalogRowObj>
                   tableTestId="reports-accounting-financial-table"
-                  appearance="board"
+                  appearance="v3"
                   panel
                   rows={accountingRowObjs}
                   rowKey={(r) => r.id}
@@ -427,7 +438,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                   columns={[
                     {
                       key: "fav",
-                      label: "☆",
+                      label: "",
                       alwaysVisible: true,
                       sortable: false,
                       render: () => <span style={{ color: "#8B94A3" }}>☆</span>,
@@ -435,6 +446,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "label",
                       label: "Report",
+                      sortable: false,
                       render: (r) => (
                         <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-link-${r.id}`}>
                           {r.label}
@@ -444,15 +456,18 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "shows",
                       label: "What it shows",
+                      sortable: false,
                     },
                     {
                       key: "basis",
                       label: "Basis",
+                      sortable: false,
                       render: (r) => basisLabel(r.id),
                     },
                     {
                       key: "run",
                       label: "Open in viewer",
+                      sortable: false,
                       render: (r) => (
                         <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-run-${r.id}`}>
                           Run →
@@ -462,11 +477,8 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                     {
                       key: "export",
                       label: "Export",
-                      render: (r) => (
-                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-export-${r.id}`} muted>
-                          PDF · XLSX
-                        </CatalogLink>
-                      ),
+                      sortable: false,
+                      render: () => "PDF · XLSX",
                     },
                   ]}
                 />

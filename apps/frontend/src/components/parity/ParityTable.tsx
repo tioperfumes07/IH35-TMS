@@ -451,6 +451,18 @@ export type ParityTableProps<T> = {
    * today's weight exactly. Applies to both the group-band row and the column-header row.
    */
   headerWeight?: number;
+  /**
+   * R9.3 board parity — override ALL computed th styles for boards that need a spec-exact header
+   * (e.g. Reports boards use Inter 11/600 with 7px 12px padding instead of the default token set).
+   * Spread LAST in th inline style so it wins over every computed value above it.
+   */
+  thStyle?: React.CSSProperties;
+  /**
+   * R9.3 board parity — override td styles when appearance="board" (e.g. Reports boards need 7px
+   * 12px padding, Inter font, and #ECEEF2 row divider instead of the default board token set).
+   * Spread LAST in td inline style. Only applied when appearance="board".
+   */
+  boardTdStyle?: React.CSSProperties;
 };
 
 function compareSortValues(
@@ -761,6 +773,8 @@ export function ParityTable<T>({
   headerBg,
   headerInk,
   headerWeight,
+  thStyle,
+  boardTdStyle,
   footer,
   footerCells,
 }: ParityTableProps<T>) {
@@ -1087,8 +1101,13 @@ export function ParityTable<T>({
   // #5B6576 on #F7F8FA, 7px 12px cells, 12px body, row rule #ECEEF2, head rule #DDE1E7, no zebra, line-height normal.
   const v3 = appearance === "v3";
   const board = appearance === "board" || v3;
-  const BOARD_RULE = "var(--ih-rule)";
-  const BOARD_LABEL = { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
+  const BOARD_RULE = "var(--ih-rule)"; // board mode (literal kept for verify-dispatch-tables-board-appearance)
+  // v3 boards use head rule #DDE1E7 / td rule #ECEEF2 instead of the shared board token.
+  const effectiveRule = v3 ? "#DDE1E7" : BOARD_RULE;
+  // v3 mode: Inter 11/600 #5B6576 on #F7F8FA — exact spec values shared by all v3 boards.
+  const BOARD_LABEL = v3
+    ? { fontFamily: "Inter, sans-serif" as const, fontSize: 11, fontWeight: 600, letterSpacing: "normal" as const, textTransform: "none" as const, textAlign: "left" as const, color: "#5B6576", backgroundColor: "#F7F8FA", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, height: "auto" as const, whiteSpace: "nowrap" as const }
+    : { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
   // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
   const virtualizeRows = pageRows.length > LARGE_RENDER_ROW_THRESHOLD;
 
@@ -1531,7 +1550,7 @@ export function ParityTable<T>({
         data-c04-row="true"
         style={{
           height: d.rowH,
-          borderTopColor: board ? BOARD_RULE : QBO_SURFACE.divider,
+          borderTopColor: board ? effectiveRule : QBO_SURFACE.divider,
           ...(selected.has(id) ? { backgroundColor: board ? "var(--ih-row-selected)" : QBO_SURFACE.rowSelected } : {}),
           ...(virtualizeRows ? { contentVisibility: "auto", containIntrinsicSize: `${d.rowH}px` } : {}),
         }}
@@ -1621,7 +1640,11 @@ export function ParityTable<T>({
               // ruling; only the COLUMN rule goes. Header and group bands keep their own outline
               // (COMPLETE-OUTLINE LAW, untouched) — the owner's ruling is about the BODY.
               // C-18: tableBodyRule is the locked #D8DEE6 divider (QBO_SURFACE.divider).
-              borderBottom: `1px solid ${colors.tableBodyRule}`,
+              borderBottom: `1px solid ${v3 ? "#ECEEF2" : colors.tableBodyRule}`,
+              // R9.3 v3 mode: 7px top/bottom, 12px left/right padding — exact spec.
+              ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12 } : {}),
+              // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
+              ...(board && boardTdStyle ? boardTdStyle : {}),
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
               ...(v3 ? { ...V3_TD, ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "#FFFFFF" } : {}) } : {}),
               ...(String(column.key) in stickyLeftPx
@@ -1670,8 +1693,8 @@ export function ParityTable<T>({
 
   // Per-instance header re-theme (see headerBg/headerInk prop doc) -- falls back to the shared
   // token unchanged when the caller passes neither, so every existing consumer is byte-identical.
-  const resolvedHeaderBg = headerBg ?? (board ? "var(--ih-thead)" : colors.tableHeaderBg);
-  const resolvedHeaderInk = headerInk ?? (board ? "var(--ih-muted)" : colors.tableHeaderText);
+  const resolvedHeaderBg = headerBg ?? (v3 ? "#F7F8FA" : board ? "var(--ih-thead)" : colors.tableHeaderBg);
+  const resolvedHeaderInk = headerInk ?? (v3 ? "#5B6576" : board ? "var(--ih-muted)" : colors.tableHeaderText);
 
   return (
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
@@ -1906,7 +1929,7 @@ export function ParityTable<T>({
               {renderExpanded || selectable ? (
                 <th
                   colSpan={(renderExpanded ? 1 : 0) + (selectable ? 1 : 0)}
-                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
+                  style={{ backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${effectiveRule}` } : {}) }}
                 />
               ) : null}
               {(() => {
@@ -1943,7 +1966,7 @@ export function ParityTable<T>({
                       backgroundColor: colors.tableGroupBandBg,
                       color: colors.mutedText,
                       borderBottom: `1px solid ${colors.tableColumnRule}`,
-                      ...(board ? { backgroundColor: "var(--ih-thead)", color: "var(--ih-muted)", borderBottom: `1px solid ${BOARD_RULE}`, fontWeight: 600, letterSpacing: "0.09em" } : {}),
+                      ...(board ? { backgroundColor: "var(--ih-thead)", color: "var(--ih-muted)", borderBottom: `1px solid ${effectiveRule}`, fontWeight: 600, letterSpacing: "0.09em" } : {}),
                     }}
                   >
                     {cell.label}
@@ -1953,7 +1976,7 @@ export function ParityTable<T>({
               {rowActions ? (
                 <th
                   className="px-2"
-                  style={{ width: rowActionsWidth, backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${BOARD_RULE}` } : {}) }}
+                  style={{ width: rowActionsWidth, backgroundColor: colors.tableGroupBandBg, borderBottom: `1px solid ${colors.tableColumnRule}`, ...(board ? { backgroundColor: "var(--ih-thead)", borderBottom: `1px solid ${effectiveRule}` } : {}) }}
                 />
               ) : null}
             </tr>
@@ -2037,10 +2060,12 @@ export function ParityTable<T>({
                     borderTop: `1px solid ${colors.tableColumnRule}`,
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
                     // board: the boards' column label (.hd) and rules -- overrides the defaults above.
-                    ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${BOARD_RULE}`, borderBottom: `1px solid ${BOARD_RULE}` } : {}),
+                    ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${effectiveRule}`, borderBottom: `1px solid ${effectiveRule}` } : {}),
                     ...(v3 ? V3_TH : {}),
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w, column) }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
+                    // R9.3 board parity: thStyle spreads LAST — wins over every computed value above.
+                    ...(thStyle ?? {}),
                     ...(key in stickyLeftPx
                       ? {
                           position: "sticky" as const,
