@@ -1067,7 +1067,8 @@
     "202616570100",
     "202616580100",
     "202616610100",
-    "202616620100"
+    "202616620100",
+    "202616630100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1173,5 +1174,10 @@
     "claimed_at": "2026-11-14",
     "claimed_by": "lead",
     "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows — owner 2026-11-14"
+  },
+  "202616630100": {
+    "claimed_at": "2026-11-14",
+    "claimed_by": "lead",
+    "purpose": "PERFUME my-list lines without a price (owner offer/inventory lists): perfume.price_list_rows.price_cents nullable — owner 2026-11-14"
   }
 }
