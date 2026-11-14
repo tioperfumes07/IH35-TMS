@@ -7,6 +7,9 @@ export type BayWorkOrder = {
   status: string;
   unit_id: string | null;
   unit_number: string | null;
+  /** The truck's make / model — Board 23 draws the cab shape from them (aero, classic long-hood, Volvo/Mack/Intl). */
+  unit_make?: string | null;
+  unit_model?: string | null;
   title: string | null;
   bay_number: number | null;
   bay_assigned_at: string | null;

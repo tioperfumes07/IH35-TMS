@@ -27,6 +27,9 @@ export type BayWorkOrder = {
   status: string;
   unit_id: string | null;
   unit_number: string | null;
+  /** The truck's make / model — Board 23 draws the cab shape from them (aero, classic long-hood, Volvo/Mack/Intl). */
+  unit_make?: string | null;
+  unit_model?: string | null;
   title: string | null;
   bay_number: number | null;
   bay_assigned_at: string | null;
@@ -41,7 +44,7 @@ const idParams = z.object({ id: z.string().uuid() });
 const assignBody = z.object({ bay_number: z.number().int().min(1).max(50) });
 
 const WO_COLUMNS = `
-  wo.id::text AS work_order_id, wo.display_id, wo.status, wo.unit_id::text AS unit_id, u.unit_number,
+  wo.id::text AS work_order_id, wo.display_id, wo.status, wo.unit_id::text AS unit_id, u.unit_number, u.make AS unit_make, u.model AS unit_model,
   COALESCE(NULLIF(btrim(wo.wo_title), ''), NULLIF(btrim(wo.description), ''), NULLIF(btrim(wo.repair_complaint), '')) AS title,
   wo.bay_number::int AS bay_number, wo.bay_assigned_at::text AS bay_assigned_at, wo.in_shop_at::text AS in_shop_at,
   wo.expected_release_at::text AS expected_release_at`;

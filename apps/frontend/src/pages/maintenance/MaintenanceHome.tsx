@@ -51,6 +51,7 @@ import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { FleetHealthLine } from "./components/FleetHealthLine";
 import { InShopBoard } from "./components/InShopBoard";
 import { FleetHealthLineBoard } from "./components/FleetHealthLineBoard";
+import { InShopV3Board } from "./components/InShopV3Board";
 import { MaintenanceHomeSummaryPanels } from "./components/MaintenanceHomeSummaryPanels";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { RoadServiceActivePanel } from "./components/RoadServiceActivePanel";
@@ -614,7 +615,8 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
       {tab === "fleet_table" ? (
         <div data-testid="maintenance-fleet-table-tab" data-maintenance-tab="fleet_table">
           {isInShopBoard ? <>
-            <InShopBoard companyId={companyId} />
+            {/* Board 23 = the In Shop tab (Maintenance-InShop.dc.html); Board 45 = the full floor plan + yard lane (?view=floor). */}
+            {searchParams.get("view") === "floor" ? <InShopBoard companyId={companyId} /> : <InShopV3Board companyId={companyId} />}
           </> : isFleetHealthBoard ? <FleetHealthLineBoard companyId={companyId} />
             : <FleetTablePage operatingCompanyId={companyId} showMaintenanceColumns />}
         </div>

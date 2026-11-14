@@ -197,9 +197,11 @@ export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | {
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
 /** Match my list ↔ competitor: my offer items with no competitor line linked, and the lines each most likely is. */
 export type PerfumeLineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
-export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);
-export type PerfumeLineHit = { row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null };
-export const searchPerfumeLines = (q: string) => apiRequest<{ lines: PerfumeLineHit[] }>(`/api/v1/perfume/lines/search?q=${encodeURIComponent(q)}`);
+/** gender: the line being linked is Men (M) or Women (W) — the other gender's bottles are never returned. */
+const genderParam = (g: string | null | undefined) => (g === "M" || g === "W" ? `&gender=${g}` : "");
+export const searchPerfumeItems = (q: string, gender?: string | null) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}${genderParam(gender)}`);
+export type PerfumeLineHit = { row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null; gender?: string | null };
+export const searchPerfumeLines = (q: string, gender?: string | null) => apiRequest<{ lines: PerfumeLineHit[] }>(`/api/v1/perfume/lines/search?q=${encodeURIComponent(q)}${genderParam(gender)}`);
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 

@@ -87,29 +87,28 @@ describe("Dispatch planners (DISP-PLANNERS)", () => {
   // ROUND 20.6 S6 (owner-live 2026-09-12): default range is now 7d, not 30d -- 30d put every real
   // bar in the last 2 of 30 columns (28 empty every time) because most planner data clusters near
   // "today" on this end-anchored window.
-  it("renders driver planner with shared range toolbar default 7d", async () => {
+  it("renders driver planner with V3 Filters · N (Board 12 DATE RANGE inside popover)", async () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     expect(await screen.findByTestId("dispatch-planners-layout")).toBeTruthy();
     expect(await screen.findByTestId("dispatch-driver-planner-page")).toBeTruthy();
-    // LEAD 443.251 item 4: the range lives INSIDE the Filters popover — not a button row outside it.
-    expect(screen.queryByTestId("dispatch-planner-range-toolbar")).toBeNull();
+    // ROUND 9.4: board Filters · N ▾ — DATE RANGE / SHOW DAYS / entity filters live in the panel.
+    expect(screen.getByTestId("planner-filters-toggle").textContent).toMatch(/Filters · \d+ ▾/);
     await userEvent.click(screen.getByTestId("planner-filters-toggle"));
-    expect(screen.getByTestId("dispatch-planner-range-toolbar")).toBeTruthy();
+    expect(screen.getByTestId("planner-filters-panel")).toBeTruthy();
+    expect(screen.getByText("DATE RANGE")).toBeTruthy();
     expect(screen.getByTestId("planner-show-days")).toBeTruthy();
-    // D3 — board entity filters (Status · Driver) inside the Filters popover.
     expect(screen.getByTestId("planner-entity-filters")).toBeTruthy();
     expect(screen.getByTestId("planner-filter-status")).toBeTruthy();
     expect(screen.getByTestId("planner-filter-chips")).toBeTruthy();
-    expect(screen.getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
+    expect(screen.getByRole("button", { name: "Next 7 days" })).toBeTruthy();
   });
 
-  it("switches shared range to 7d", async () => {
+  it("switches shared range via Next 7 days preset", async () => {
     wrap(<DispatchPlannersLayout><DriverPlanner /></DispatchPlannersLayout>);
     await screen.findByTestId("dispatch-driver-planner-grid");
     await userEvent.click(screen.getByTestId("planner-filters-toggle"));
-    const bar = screen.getByTestId("dispatch-planner-range-toolbar");
-    await userEvent.click(within(bar).getByRole("button", { name: "7d" }));
-    expect(within(bar).getByRole("button", { name: "7d" }).className).toContain("bg-[var(--planner-active)]");
+    await userEvent.click(screen.getByRole("button", { name: "Next 7 days" }));
+    await userEvent.click(screen.getByTestId("planner-filter-apply"));
     expect(driverSchedulerApi.driverSchedulerOfficeApi.getGrid).toHaveBeenCalled();
   });
 
