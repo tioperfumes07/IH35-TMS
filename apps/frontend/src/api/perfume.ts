@@ -64,7 +64,7 @@ export type PerfumeImportRow = {
   gender?: string | null;
   type?: string | null;
   section?: string | null;
-  price: number | string;
+  price: number | string | null;
   qty?: number | string | null;
   case_pack?: number | string | null;
   purchase_date?: string | null;
@@ -201,10 +201,12 @@ export type PerfumeMyUnlinked = { total_mine: number; linked: number; unlinked: 
   rows: Array<{ item_id: string; display_name: string; my_desc: string | null; my_price_cents: number | null; candidates: PerfumeLineCandidate[] }> };
 export const getPerfumeMyUnlinked = () => apiRequest<PerfumeMyUnlinked>("/api/v1/perfume/my-unlinked");
 export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);
+export type PerfumeLineHit = { row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null };
+export const searchPerfumeLines = (q: string) => apiRequest<{ lines: PerfumeLineHit[] }>(`/api/v1/perfume/lines/search?q=${encodeURIComponent(q)}`);
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean; base?: "mine" | "theirs"; match?: "all" | "matched" | "unmatched" }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
   for (const k of ["category", "gender", "brand", "size", "vendor"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
@@ -212,6 +214,7 @@ export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?
   if (p.earn_pct != null) s.set("earn_pct", String(p.earn_pct));
   if (p.mine) s.set("mine", p.mine);
   if (p.carried) s.set("carried", "1");
+  if (p.view === "analysis") { s.set("base", p.base ?? "mine"); s.set("match", p.match ?? "all"); }
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);
@@ -225,9 +228,14 @@ export async function downloadPerfumeExcel(p: Parameters<typeof perfumeGridQuery
   const blob = await res.blob();
   const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO-Perfumes.xlsx";
   const url = URL.createObjectURL(blob);
+  // The link must be in the page and the blob must outlive the click: revoking it in the same tick cancels the
+  // download in Chrome/Edge before it starts (owner 2026-11-14: "i am not able to export").
   const a = document.createElement("a");
   a.href = url;
   a.download = name;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
   a.click();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60_000);
 }

@@ -821,6 +821,8 @@ async function main() {
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "Idempotency-Key"],
+    // Downloads read their file name from Content-Disposition; cross-origin, the browser hides it unless exposed.
+    exposedHeaders: ["Content-Disposition"],
   });
   await app.register(cookie);
   // Multipart body limits (G3-3 hardening). Without explicit caps @fastify/multipart

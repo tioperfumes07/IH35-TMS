@@ -219,6 +219,11 @@ export type ParityTableProps<T> = {
    *  split); the auto-fit/resize width becomes a min-width floor rather than a hard width so content is
    *  never truncated. Opt-in per board. */
   columnLayout?: "fixed" | "auto";
+  /** Owner 2026-11-14 (TIO price desk): "if i reduce size of columns i need for the app to place on top of the other …
+   *  it would increase or reduce the height of the header". Opt-in: header labels wrap word by word as a column is
+   *  narrowed and the header row grows to fit them — the label is never cut. The width floor becomes the longest
+   *  single word, not the whole label. Omitted = the one-line 30px header every other table keeps. */
+  wrapHeaders?: boolean;
   /** Drag-to-resize columns (widths persist with storageKey). Default true. */
   enableColumnResize?: boolean;
   /** Sticky-left the first N columns, in current visible order, on horizontal scroll
@@ -615,6 +620,11 @@ function measureTextWidth(text: string, fontPx: number): number {
  * than the "LATE FEE" that actually renders) and a `letterSpacing:0.3` per character canvas
  * `measureText` has no concept of. All three together under-measured just enough to clip "Late
  * Fee"/"Lumper"/"Fuel"/"R&M Exp" on the Load Costs board — confirmed live, owner screenshot. */
+/** wrapHeaders: a wrapping header needs room only for its longest single word. */
+function longestWordWidth(label: string, fontPx: number, weight: number = 700, letterSpacingPx: number = 0.3): number {
+  return Math.max(0, ...label.split(/\s+/).filter(Boolean).map((w) => measureHeaderLabelWidth(w, fontPx, weight, letterSpacingPx)));
+}
+
 function measureHeaderLabelWidth(label: string, fontPx: number, weight: number = 700, letterSpacingPx: number = 0.3): number {
   const ctx = getMeasureCanvasCtx();
   const upper = label.toUpperCase();
@@ -708,6 +718,7 @@ export function ParityTable<T>({
   stickyHeader = true,
   minWidthPx,
   columnLayout = "fixed",
+  wrapHeaders = false,
   enableColumnResize = true,
   enableColumnReorder = true,
   stickyLeftCount = 0,
@@ -1080,7 +1091,7 @@ export function ParityTable<T>({
     for (const column of visibleColumns) {
       const key = String(column.key);
       if (colWidths[key] != null) continue; // manual resize already won for this column.
-      let widest = measureHeaderLabelWidth(column.label, typography.panelHeader ?? 11);
+      let widest = wrapHeaders ? longestWordWidth(column.label, typography.panelHeader ?? 11) : measureHeaderLabelWidth(column.label, typography.panelHeader ?? 11);
       for (const row of sample) {
         const text = cellTextForMeasurement(column, row);
         if (!text) continue;
@@ -1193,7 +1204,9 @@ export function ParityTable<T>({
   const renderedHeaderFontPx = board ? BOARD_LABEL.fontSize : Math.max(typography.panelHeader ?? 11, d.font + 1);
   const headerLabelFloor = (c: ParityColumn<T>) => Math.max(
     MIN_COL_WIDTH_PX, c.minWidth ?? 0,
-    measureHeaderLabelWidth(c.label, renderedHeaderFontPx, headerWeight ?? (board ? BOARD_LABEL.fontWeight : 700), board ? renderedHeaderFontPx * 0.09 : 0.3) + AUTO_FIT_CHROME_PX,
+    (wrapHeaders
+      ? longestWordWidth(c.label, renderedHeaderFontPx, headerWeight ?? (board ? BOARD_LABEL.fontWeight : 700), board ? renderedHeaderFontPx * 0.09 : 0.3)
+      : measureHeaderLabelWidth(c.label, renderedHeaderFontPx, headerWeight ?? (board ? BOARD_LABEL.fontWeight : 700), board ? renderedHeaderFontPx * 0.09 : 0.3)) + AUTO_FIT_CHROME_PX,
   );
   const proportionalMinTable = proportional
     ? Math.ceil(Math.max(
@@ -1985,14 +1998,14 @@ export function ParityTable<T>({
                       : undefined
                   }
                   onDragEnd={enableColumnReorder ? () => { setDragKey(null); setDragOverKey(null); } : undefined}
-                  className={`relative whitespace-nowrap px-2 font-semibold uppercase ${
+                  className={`relative ${wrapHeaders ? "whitespace-normal break-normal align-bottom" : "whitespace-nowrap"} px-2 font-semibold uppercase ${
                     enableColumnReorder ? "cursor-grab active:cursor-grabbing" : ""
                   } ${dragOverKey === key ? "outline outline-2 -outline-offset-2" : ""} ${column.className ?? ""}`}
                   style={{
                     // ONE-HEIGHT LAW (owner ruling 2026-09-04, ORCH-measured): 30px everywhere a
                     // ParityTable header renders — was emergent from padding/line-height alone, so
                     // two live instances (Dispatch 30px, Load Costs 34px) silently drifted apart.
-                    height: spacing.tableHeaderHeight,
+                    ...(wrapHeaders ? { minHeight: spacing.tableHeaderHeight, height: "auto", lineHeight: 1.15, paddingTop: 4, paddingBottom: 4 } : { height: spacing.tableHeaderHeight }),
                     // QBO-HEADER-OUTRANKS-ROW (owner ruling 2026-09-30) / D51: "the size of the text in
                     // the row headers should be a little bit larger than the text in the rows. FOR
                     // ALL." We shipped the inverse — header 11px sitting over a 12px body — so the

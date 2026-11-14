@@ -86,7 +86,9 @@ export type Extracted = { rows: PerfumeImportRow[]; rowsRead: number; fileTotalC
  * Rows from a sheet. A line with text but no price is a SECTION header ("WOMEN", "SETS MEN", "100.Regular");
  * the lines under it carry it. rowsRead counts every data line (sections and blanks excluded).
  */
-export function extractRows(sheet: Sheet, headerRow: number, map: Mapping): Extracted {
+/** keepPriceless: the owner's OWN lists (offer / inventory) — a line naming an item but carrying no price is still an
+ *  item he holds (owner 2026-11-14: 582 lines, 2 without a price were dropped); its price stays empty, never 0. */
+export function extractRows(sheet: Sheet, headerRow: number, map: Mapping, opts: { keepPriceless?: boolean } = {}): Extracted {
   const rows: PerfumeImportRow[] = [];
   let section = "";
   let rowsRead = 0, total = 0, sections = 0;
@@ -96,18 +98,19 @@ export function extractRows(sheet: Sheet, headerRow: number, map: Mapping): Extr
     const nonEmpty = r.filter((c) => String(c ?? "").trim() !== "");
     if (!nonEmpty.length) continue;
     const priceCents = priceToCents(get(r, "price"));
-    if (priceCents == null) {
+    const namesItem = Boolean(cellText(get(r, "desc")) || cellText(get(r, "upc")) || cellText(get(r, "sku")));
+    if (priceCents == null && !(opts.keepPriceless && namesItem && nonEmpty.length > 2)) {
       if (nonEmpty.length <= 2) { section = nonEmpty.map(cellText).join(" "); sections++; }
       continue;
     }
     rowsRead++;
-    total += priceCents;
+    total += priceCents ?? 0;
     rows.push({
       sheet: sheet.name, row_no: i + 1,
       upc: cellText(get(r, "upc")) || null, sku: cellText(get(r, "sku")) || null, brand: cellText(get(r, "brand")) || null,
       description: cellText(get(r, "desc")), size_text: cellText(get(r, "size")) || null, type: cellText(get(r, "type")) || null,
       gender: cellText(get(r, "gender")) || null, section: cellText(get(r, "section")) || section || null,
-      price: (priceCents / 100).toFixed(2), qty: cellText(get(r, "qty")) || null, case_pack: cellText(get(r, "case_pack")) || null,
+      price: priceCents == null ? null : (priceCents / 100).toFixed(2), qty: cellText(get(r, "qty")) || null, case_pack: cellText(get(r, "case_pack")) || null,
       purchase_date: cellText(get(r, "purchase_date")) || null, qty_purchased: cellText(get(r, "qty_purchased")) || null, qty_sold: cellText(get(r, "qty_sold")) || null,
       raw: Object.fromEntries(r.map((c, k) => [k, c])),
     });
@@ -139,7 +142,18 @@ export const PDF_NO_NAME = "(no name on this line in the file)";
  * Review instead of vanishing.
  */
 export function pdfLinePairs(line: string): Array<[string, string]> {
-  return [...line.matchAll(/((?:\S.*?)?)\s*\$\s?([\d,]+\.\d{2})/g)].map((m) => [m[1].trim() || PDF_NO_NAME, m[2].replace(/,/g, "")]);
+  const pairs: Array<[string, string]> = [];
+  let end = 0;
+  for (const m of line.matchAll(/((?:\S.*?)?)\s*\$\s?([\d,]+\.\d{2})/g)) {
+    pairs.push([m[1].trim() || PDF_NO_NAME, m[2].replace(/,/g, "")]);
+    end = (m.index ?? 0) + m[0].length;
+  }
+  // A price printed WITHOUT the "$" (LISTA N 5: "PRINCESS GIFT SET 3X30ML EDT   10.25" — the one line of 2,079 the
+  // reader dropped): only as the LAST thing on the line, after a name with letters, never glued to a "+" or a unit,
+  // so sizes like "3.4oz EDT+0.25oz" are never read as prices.
+  const tail = line.slice(end).match(/^\s*([^$]*?[A-Za-z][^$]*?[^+\s])\s+([\d,]+\.\d{2})\s*$/);
+  if (tail) pairs.push([tail[1].trim(), tail[2].replace(/,/g, "")]);
+  return pairs;
 }
 
 export async function readPdf(file: File): Promise<ReadFile> {

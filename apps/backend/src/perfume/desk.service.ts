@@ -215,12 +215,16 @@ function intOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? Math.trunc(n) : null;
 }
 
-function prepare(body: ImportIn) {
-  const saved = [] as Array<ImportRowIn & { price_cents: number }>;
+/** ownList: the owner's own offer / inventory list — a line that names an item but has no price is kept with an empty
+ *  price (owner 2026-11-14: 2 of his 582 lines had none). Supplier and competitor lists still need a price. */
+export function prepare(body: ImportIn, ownList = false) {
+  const saved = [] as Array<ImportRowIn & { price_cents: number | null }>;
   for (const r of body.rows) {
-    const cents = toCents(r.price);
+    const cents0 = toCents(r.price);
     const hasItem = Boolean(String(r.description ?? "").trim() || normalizeUpc(r.upc) || String(r.sku ?? "").trim());
-    if (cents == null || cents <= 0 || !hasItem) continue;
+    if (!hasItem) continue;
+    if ((cents0 == null || cents0 <= 0) && !ownList) continue;
+    const cents = cents0 != null && cents0 > 0 ? cents0 : null;
     const description = String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? "");
     // The vendor's own item code, when the list has no SKU column but prints it in the line: MTZ writes
     // "JO MALONE ENGLISH PEAR & FREESIA 1.0 EDC L UNBOXED  (137792) - France". Without it a no-barcode
@@ -230,7 +234,7 @@ function prepare(body: ImportIn) {
     const casePack = r.case_pack == null || String(r.case_pack).trim() === "" ? tail.casePack : r.case_pack;
     saved.push({ ...r, sku: sku || null, case_pack: casePack, description, price_cents: cents });
   }
-  const total = saved.reduce((t, r) => t + r.price_cents, 0);
+  const total = saved.reduce((t, r) => t + (r.price_cents ?? 0), 0);
   return { saved, total };
 }
 
@@ -238,7 +242,7 @@ function prepare(body: ImportIn) {
 export async function previewImport(c: PoolClient, body: ImportIn): Promise<ImportCheck> {
   const vendor = await vendorById(c, body.vendor_id);
   const ix = await loadIndex(c);
-  const { saved, total } = prepare(body);
+  const { saved, total } = prepare(body, vendor.kind === "offer" || vendor.kind === "inventory");
   const check = baseCheck(body, saved.length, total);
   let created = 0;
   const sharedUpcs = ambiguousUpcs(saved, ix.brandAliases);
@@ -310,7 +314,7 @@ export function ambiguousUpcs(rows: Array<{ upc?: unknown; description: string; 
 
 export async function importList(c: PoolClient, userId: string, body: ImportIn): Promise<{ list_id: string; check: ImportCheck }> {
   const vendor = await vendorById(c, body.vendor_id);
-  const { saved, total } = prepare(body);
+  const { saved, total } = prepare(body, vendor.kind === "offer" || vendor.kind === "inventory");
   const check = baseCheck(body, saved.length, total);
   if (!check.totals_match) throw new ImportCheckFailed(check);
 
@@ -334,7 +338,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   // link to them; nothing is written per line (one round-trip per 500 rows, not per row).
   const ix = await loadIndex(c);
   type Out = { sheet: string | null; row_no: number; raw: unknown; upc: string | null; sku: string | null; brand: string | null; description: string;
-    size_text: string | null; price_cents: number; qty: number | null; case_pack: number | null; identity_key: string; loose_key: string;
+    size_text: string | null; price_cents: number | null; qty: number | null; case_pack: number | null; identity_key: string; loose_key: string;
     purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null;
     item_id: string | null; match_method: string | null; match_status: string; suggestions: unknown };
   const out: Out[] = [];
@@ -738,6 +742,24 @@ export async function searchItems(c: PoolClient, q: string, limit = 25) {
       ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit])).rows;
 }
 
+/** Competitor lines (every current sell/both list) for the List-analysis match box: every word must be in the line,
+ *  in any order; a number also matches its UPC or code. Linked lines are returned too, with what they are linked to,
+ *  so a wrong link can be seen and corrected (owner 2026-11-14: "the box to search, suggestions … the correct matching engine"). */
+export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25) {
+  const s = q.trim();
+  if (!s) return [];
+  const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
+  if (!words.length) return [];
+  return (await c.query<{ row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null }>(
+    `SELECT r.id AS row_id, r.description, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+       LEFT JOIN perfume.items i ON i.id = r.item_id
+      WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w
+                         WHERE upper(r.description || ' ' || coalesce(r.upc, '') || ' ' || coalesce(r.sku, '')) NOT LIKE '%' || w || '%')
+      ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, limit])).rows;
+}
+
 export async function setInternalCode(c: PoolClient, itemId: string, code: string | null) {
   await c.query(`UPDATE perfume.items SET internal_code = NULLIF(btrim($2), ''), updated_at = now() WHERE id = $1`, [itemId, code]);
 }
@@ -762,7 +784,9 @@ export function earnPctOf(rules: DeskRules, typed: number | null | undefined): n
 }
 
 /* ROUND 8.32 — CC-2 11-14: in-process caches; Level-1 per (data version, target, earn); Level-2 per (data version, view, mine, sort, dir). */
-type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number; _vk: string };
+type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number; _vk: string;
+  /** List analysis, one row per LINE: my offer list (every line) and the competitors' full lists. */
+  myLines?: GridRow[]; theirLines?: GridRow[] };
 /** Shared collator — avoids creating a new Intl.Collator on every localeCompare call (O(comparisons) → O(1) construction). */
 const _col = new Intl.Collator("en", { numeric: true });
 const _gridCache = new Map<string, GridPayload>();
@@ -775,6 +799,48 @@ let _gridVer = 0;
 /** Clears both caches and bumps the version counter — write paths call this, so a warm HIT
  * never needs to query max(updated_at) from DB. */
 export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; }
+
+/** The competitor line a row is measured against: its list price, cushion, SALES price (list − cushion), wording. */
+export type CompBest = { list: number; cushion: number; real: number; desc: string | null; vendor: string };
+type AnalysisIn = {
+  upc: string | null; sku: string | null; brand: string | null; name: string | null; size: number | null; type: string | null; gender: string | null;
+  purchDate: string | null; qtyPurch: number | null; cost: number | null; sold: number | null; invQty: number | null; offer: number | null;
+  comp: CompBest | null; lowVendor: string | null; lowPrice: number | null; minMargin: number; myDesc: string | null;
+};
+/** LIST ANALYSIS — the owner's own format (11-14-2026 PERFUME_ENGINE_FORMATS.xlsx), his formulas cell for cell:
+ *  Margin = (offer − last cost) ÷ offer · Markup = (offer − last cost) ÷ last cost · Esperanza price = their SALES
+ *  price (list − cushion) · Lowest sales price = min(offer, Esperanza) · Min purchase price = Esperanza × (1 − min
+ *  margin) · Under by = Esperanza − offer when I am under · Under % = under ÷ Esperanza · Can increase % = under ÷ offer ·
+ *  New margin = (Esperanza − last cost) ÷ Esperanza · Over by = offer − Esperanza · Lower % = over ÷ offer.
+ *  Blank stays blank — never a guessed cost, date or price. Money in cents, percentages in %. */
+export function analysisFields(a: AnalysisIn): Record<string, string | number | null> {
+  const p1 = (x: number) => Math.round(x * 1000) / 10;
+  const esp = a.comp?.real ?? null;
+  const offer = a.offer;
+  const both = offer != null && esp != null;
+  const under = both ? (offer! < esp! ? esp! - offer! : 0) : null;
+  const over = both ? (offer! > esp! ? offer! - esp! : 0) : null;
+  return {
+    "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
+    "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[a.gender ?? ""] ?? null,
+    "a:purch_date": a.purchDate, "a:qty": a.qtyPurch, "a:last_cost": a.cost, "a:sold": a.sold, "a:inv_qty": a.invQty,
+    "a:margin": offer != null && offer > 0 && a.cost != null ? p1((offer - a.cost) / offer) : null,
+    "a:markup": offer != null && a.cost ? p1((offer - a.cost) / a.cost) : null,
+    "a:offer": offer, "a:esp": esp,
+    "a:low_sales": offer == null && esp == null ? null : Math.min(...[offer, esp].filter((x): x is number => x != null)),
+    "a:min_buy": esp != null ? Math.round(esp * (1 - a.minMargin / 100)) : null, "a:min_margin": a.minMargin,
+    "a:low_vendor": a.lowVendor, "a:low_price": a.lowPrice,
+    "a:offer2": offer, "a:esp2": esp,
+    "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
+    "a:can_inc": under != null && offer! > 0 ? p1(under / offer!) : null,
+    "a:new_margin": esp != null && esp > 0 && a.cost != null ? p1((esp - a.cost) / esp) : null,
+    "a:over_by": over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
+    "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
+    "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_vendor": a.comp?.vendor ?? null,
+  };
+}
+/** A one-click link for a row that is not matched yet: link competitor/my line `row_id` to item `item_id`. */
+export type MatchCandidate = { row_id: string; item_id: string; label: string; price_cents: number | null; why: string };
 
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
   const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
@@ -804,6 +870,24 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
+  // Every LINE of my offer list (owner 2026-11-14: "my lists there are 583 rows - 1 header, so 582 items … why does the
+  // list in list analysis only have 463"): lines, not items — the same bottle can sit on several lines (stock lots).
+  const myLineQ = await c.query<{ id: string; item_id: string | null; description: string; upc: string | null; sku: string | null; brand: string | null; size_text: string | null;
+    price_cents: number | null; qty: number | null; match_status: string; suggestions: Array<{ item_id: string; display_name: string; score: number; why?: string }> | null }>(
+    `SELECT r.id, r.item_id, r.description, r.upc, r.sku, r.brand, r.size_text, r.price_cents::int AS price_cents, r.qty, r.match_status, r.suggestions
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL ORDER BY l.list_date DESC, r.row_no`);
+  // Every LINE of every competitor's current list ("if i select their list then it will be showing all esperanzas or
+  // any other competitors full list").
+  const theirLineQ = await c.query<{ id: string; vendor_id: string; item_id: string | null; description: string; brand: string | null; size_text: string | null;
+    gender_override: string | null; price_cents: number | null; match_status: string }>(
+    `SELECT r.id, l.vendor_id, r.item_id, r.description, r.brand, r.size_text, r.gender_override, r.price_cents::int AS price_cents, r.match_status
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL ORDER BY v.name, r.row_no`);
+  // My stock with no inventory file = the SUM of every line of that bottle on my list (Blue Cielo sits on 11 lines).
+  const offerQtySum = new Map<string, number>();
+  for (const l of myLineQ.rows) if (l.item_id && l.qty != null) offerQtySum.set(l.item_id, (offerQtySum.get(l.item_id) ?? 0) + l.qty);
+  const anByItem = new Map<string, { cBest: CompBest | null; lowVendor: string | null; lowPrice: number | null }>();
   const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null; desc: string;
     purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null }>>();
   // Every current line's own text and SKU per item: the search reads them, so "CLUB DE NUIT" (the owner's list)
@@ -911,6 +995,9 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   cols.push(
     A("upc", "UPC", "ITEM", "text"), A("sku", "SKU", "ITEM", "text"), A("brand", "BRAND", "ITEM", "text"), A("name", "NAME", "ITEM", "text"),
     A("size", "SIZE", "ITEM", "int"), A("type", "TYPE", "ITEM", "text"), A("kind", "KIND", "ITEM", "text"),
+    // Owner 2026-11-14: "after kind, show esperanza description etc so i can match here".
+    A("match", "Match", "MATCH", "text"), A("cand", "Link to", "MATCH", "text"), A("my_desc", "My description", "MATCH", "text"),
+    A("c_desc", "Their description", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
@@ -920,7 +1007,6 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     A("under_pct", "Under %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
     A("over_by", "Over By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
     A("c_list", "LIST PRICE", cGroup, "money"), A("c_cushion", "CUSHION", cGroup, "money"), A("c_sales", "SALES PRICE", cGroup, "money"),
-    A("my_desc", "My description", "Check the match", "text"), A("c_desc", "Their description", "Check the match", "text"),
   );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
   const rows: GridRow[] = [];
@@ -960,7 +1046,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // An inventory file exists (any item): then it is the stock — an item not on it has none on hand.
     const invUploaded = hasInv;
     // No inventory file yet: the quantity on my offer list IS my stock (owner 2026-11-14). Never a guessed number.
-    if (!invUploaded && offerQty != null) myQty = offerQty;
+    if (!invUploaded && offerQtySum.has(it.id)) myQty = offerQtySum.get(it.id)!;
     row.my_offer_desc = myOfferDesc;
     row.my_purchase_date = myPurch;
     row.my_qty_purchased = myQtyPurch;
@@ -1009,35 +1095,18 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     //  margin) · Under by = Esperanza − offer when I am under · Under % = under ÷ Esperanza · Can increase % = under ÷
     //  offer · New margin = (Esperanza − last cost) ÷ Esperanza · Over by = offer − Esperanza · Lower % = over ÷ offer.
     //  The competitor is the one with the lowest SALES price. Blank stays blank — never a guessed cost or date.
-    let cBest: { list: number; cushion: number; real: number; desc: string | null } | null = null;
+    let cBest: CompBest | null = null;
     for (const v of sellV) {
       const real = row[`s:${v.id}:real`] as number | undefined;
       if (real == null) continue;
-      if (!cBest || real < cBest.real) cBest = { list: row[`s:${v.id}:price`] as number, cushion: row[`s:${v.id}:cushion`] as number, real, desc: (row[`s:${v.id}:desc`] as string | null) ?? null };
+      if (!cBest || real < cBest.real) cBest = { list: row[`s:${v.id}:price`] as number, cushion: row[`s:${v.id}:cushion`] as number, real, desc: (row[`s:${v.id}:desc`] as string | null) ?? null, vendor: vendorLabel(v) };
     }
-    const p1 = (x: number) => Math.round(x * 1000) / 10;
-    const esp = cBest?.real ?? null;
-    const both = myOffer != null && esp != null;
-    const under = both ? (myOffer! < esp! ? esp! - myOffer! : 0) : null;
-    const over = both ? (myOffer! > esp! ? myOffer! - esp! : 0) : null;
-    Object.assign(row, {
-      "a:upc": row.upc, "a:sku": mySku, "a:brand": it.brand, "a:name": it.name, "a:size": row.size_ml, "a:type": it.conc || null,
-      "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[it.gender] ?? null,
-      "a:purch_date": myPurch, "a:qty": myQtyPurch, "a:last_cost": myCost, "a:sold": mySold, "a:inv_qty": myQty,
-      "a:margin": myOffer != null && myOffer > 0 && myCost != null ? p1((myOffer - myCost) / myOffer) : null,
-      "a:markup": myOffer != null && myCost ? p1((myOffer - myCost) / myCost) : null,
-      "a:offer": myOffer, "a:esp": esp,
-      "a:low_sales": myOffer == null && esp == null ? null : Math.min(...[myOffer, esp].filter((x): x is number => x != null)),
-      "a:min_buy": esp != null ? Math.round(esp * (1 - minMargin / 100)) : null, "a:min_margin": minMargin,
-      "a:low_vendor": lowListAt, "a:low_price": lowList,
-      "a:offer2": myOffer, "a:esp2": esp,
-      "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
-      "a:can_inc": under != null && myOffer! > 0 ? p1(under / myOffer!) : null,
-      "a:new_margin": esp != null && esp > 0 && myCost != null ? p1((esp - myCost) / esp) : null,
-      "a:over_by": over, "a:lower_pct": over != null && myOffer! > 0 ? p1(over / myOffer!) : null,
-      "a:c_list": cBest?.list ?? null, "a:c_cushion": cBest?.cushion ?? null, "a:c_sales": esp,
-      "a:my_desc": myOfferDesc, "a:c_desc": cBest?.desc ?? null,
-    });
+    anByItem.set(it.id, { cBest, lowVendor: lowListAt, lowPrice: lowList });
+    Object.assign(row, analysisFields({
+      upc: row.upc as string | null, sku: mySku, brand: it.brand, name: it.name, size: row.size_ml as number | null, type: it.conc || null, gender: it.gender,
+      purchDate: myPurch, qtyPurch: myQtyPurch, cost: myCost, sold: mySold, invQty: myQty, offer: myOffer, comp: cBest,
+      lowVendor: lowListAt, lowPrice: lowList, minMargin, myDesc: myOfferDesc,
+    }));
     // My offer price against the lowest competitor (owner 2026-11-13: "my wholesale prices … compare in wholesale and
     // with other vendors"). Positive gap = my offer is under the cheapest competitor.
     // The margin my offer price already carries (owner 2026-11-13: "my list already has margin … 6 percent"):
@@ -1086,24 +1155,125 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey };
+  const { myLines, theirLines } = await buildAnalysisLines(c, { rows, items: items.rows, myLineQ: myLineQ.rows, theirLineQ: theirLineQ.rows, anByItem, vendors, rules, minMargin });
+  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey, myLines, theirLines };
   _gridCache.set(_cacheKey, _result);
   return _result;
 }
 
 /** Level-2 view cache: sorted+filtered rows + zero-picks facets cached per (data version, view, mine, sort, dir).
  *  After a cache hit, per-request work is: searchRows (if q) + filterFacets (if picks) + slice only. */
+/** LIST ANALYSIS lines (owner 2026-11-14): "a box to select if i want to view their list or just my list … if i select
+ *  mine then i will have all the data from only my list showing and matches to and pricing of their items … if i
+ *  select their list then it will be showing all esperanzas or any other competitors full list … a filter so it can
+ *  show only those items that are matched … or we have in common". One row per LINE on each side, each carrying its
+ *  match state and — when not matched — the one-click candidates to link it right there (the same confirmRow the
+ *  Review tab uses; nothing links without the owner's click). */
+async function buildAnalysisLines(c: PoolClient, x: {
+  rows: GridRow[]; items: Array<{ id: string; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string }>;
+  myLineQ: Array<{ id: string; item_id: string | null; description: string; upc: string | null; sku: string | null; brand: string | null; size_text: string | null; price_cents: number | null; qty: number | null; match_status: string; suggestions: Array<{ item_id: string; display_name: string; score: number; why?: string }> | null }>;
+  theirLineQ: Array<{ id: string; vendor_id: string; item_id: string | null; description: string; brand: string | null; size_text: string | null; gender_override: string | null; price_cents: number | null; match_status: string }>;
+  anByItem: Map<string, { cBest: CompBest | null; lowVendor: string | null; lowPrice: number | null }>;
+  vendors: VendorRow[]; rules: DeskRules; minMargin: number;
+}): Promise<{ myLines: GridRow[]; theirLines: GridRow[] }> {
+  const rowById = new Map(x.rows.map((r) => [String(r.id), r]));
+  const itemById = new Map(x.items.map((i) => [i.id, i]));
+  const vLabel = new Map(x.vendors.map((v) => [v.id, vendorLabel(v)]));
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
+  const toOfferItem = (i: { id: string; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string }): OfferItem => (
+    { id: i.id, brand: i.brand, name: i.name, size_ml: i.size_ml == null ? null : Number(i.size_ml), conc: i.conc || null, gender: i.gender || null, flags: i.flags, display_name: i.display_name });
+  const base = (itemId: string | null, fallbackDesc: string, brand: string | null, sizeText: string | null) => {
+    const ir = itemId ? rowById.get(itemId) : undefined;
+    if (ir) return { brand: ir.brand, name: ir.name, size_ml: ir.size_ml, conc: ir.conc, gender: ir.gender, category: ir.category };
+    const id = identify({ description: fallbackDesc, brand, size: sizeText, gender: null, brandAliases: aliases });
+    return { brand: id.brand || null, name: id.nameText || fallbackDesc, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null, category: categoryOf(id.gender, id.flags) };
+  };
+  // Competitor lines not yet linked to an item on MY list: the pool "my list" rows are proposed from.
+  const offerItemIds = new Set(x.myLineQ.map((l) => l.item_id).filter((v): v is string => Boolean(v)));
+  const compPool: CompetitorLine[] = x.theirLineQ.filter((l) => !(l.item_id && offerItemIds.has(l.item_id)) && l.price_cents != null).map((l) => ({
+    row_id: l.id, vendor: vLabel.get(l.vendor_id) ?? "", description: l.description, price_cents: l.price_cents!, linked_to: l.item_id ? (itemById.get(l.item_id)?.display_name ?? null) : null,
+    id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
+  }));
+  const likelyCache = new Map<string, MatchCandidate[]>();
+  const likelyFor = (itemId: string): MatchCandidate[] => {
+    if (likelyCache.has(itemId)) return likelyCache.get(itemId)!;
+    const it = itemById.get(itemId);
+    const out = it ? likelyLines(toOfferItem(it), compPool, 5).map((cnd) => ({ row_id: cnd.row_id, item_id: itemId, label: `${cnd.description} · ${cnd.vendor}`, price_cents: cnd.price_cents, why: cnd.why })) : [];
+    likelyCache.set(itemId, out);
+    return out;
+  };
+  const myLines: GridRow[] = x.myLineQ.map((l) => {
+    const ir = l.item_id ? rowById.get(l.item_id) : undefined;
+    const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
+    const matched = Boolean(an?.cBest);
+    const state = !l.item_id ? "Not linked to an item" : matched ? "Matched" : "No competitor line linked";
+    const cand: MatchCandidate[] = matched ? [] : l.item_id ? likelyFor(l.item_id)
+      : (l.suggestions ?? []).slice(0, 5).map((sg) => ({ row_id: l.id, item_id: sg.item_id, label: sg.display_name, price_cents: null, why: sg.why ?? "" }));
+    return {
+      id: `m:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
+      ...analysisFields({
+        upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: (ir?.name as string) ?? l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
+        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
+        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description,
+      }),
+      "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
+      // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
+      link_mode: l.item_id ? "line" : "item", link_row: l.id, link_item: l.item_id,
+    } as GridRow;
+  });
+  // Their list: my offer items proposed for each of their unmatched lines (strict rule, offer-review.ts).
+  const myOfferItems = [...offerItemIds].map((id) => itemById.get(id)).filter((i): i is NonNullable<typeof i> => Boolean(i)).map(toOfferItem);
+  const theirLines: GridRow[] = x.theirLineQ.map((l) => {
+    const ir = l.item_id ? rowById.get(l.item_id) : undefined;
+    const onMine = Boolean(l.item_id && offerItemIds.has(l.item_id));
+    const p = l.price_cents;
+    const cushion = p == null ? null : Math.min(p, tieredCushionCents(p, x.rules.competitor_cushion_tiers));
+    const comp: CompBest | null = p == null ? null : { list: p, cushion: cushion!, real: p - cushion!, desc: l.description, vendor: vLabel.get(l.vendor_id) ?? "" };
+    const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
+    let cand: MatchCandidate[] = [];
+    if (!onMine) {
+      const id = identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases });
+      cand = offerCandidates({ description: l.description, brand: l.brand }, id, myOfferItems, 5).map((o) => ({ row_id: l.id, item_id: o.item_id, label: o.display_name, price_cents: null, why: o.why }));
+    }
+    return {
+      id: `c:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
+      ...analysisFields({
+        upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: (ir?.name as string) ?? l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
+        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
+        invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
+        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null,
+      }),
+      "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
+      link_mode: "item", link_row: l.id, link_item: l.item_id,
+    } as GridRow;
+  });
+  return { myLines, theirLines };
+}
+
+export type AnalysisBase = "mine" | "theirs";
+export type AnalysisMatch = "all" | "matched" | "unmatched";
+/** List analysis rows: my list's lines or the competitors' full lists, all / matched (in common) / not matched. */
+export function analysisRowsOf(g: Pick<GridPayload, "myLines" | "theirLines">, base: AnalysisBase, match: AnalysisMatch): GridRow[] {
+  const src = (base === "theirs" ? g.theirLines : g.myLines) ?? [];
+  if (match === "matched") return src.filter((r) => r.matched === 1);
+  if (match === "unmatched") return src.filter((r) => r.matched !== 1);
+  return src;
+}
+
 export function getOrBuildView(
   g: GridPayload,
   view: GridView,
   mine: MineFilter | undefined,
   sort: string | undefined,
   dir: "asc" | "desc",
+  base: AnalysisBase = "mine",
+  match: AnalysisMatch = "all",
 ): ViewPayload {
-  const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}`;
+  const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}|${view === "analysis" ? `${base}|${match}` : ""}`;
   const hit = _viewCache.get(key);
   if (hit) return hit;
-  const baseRows = filterView(filterMine(g.rows, mine), view, mine);
+  const baseRows = view === "analysis" ? analysisRowsOf(g, base, match) : filterView(filterMine(g.rows, mine), view, mine);
   const sorted = sort ? sortRows(baseRows, sort, dir) : baseRows;
   const facets0 = gridFacets(sorted, { category: [], gender: [], brand: [], size: [], vendor: [] });
   const vp: ViewPayload = { sorted, facets0 };
@@ -1246,6 +1416,50 @@ function byBrandName(a: GridRow, b: GridRow): number {
 
 /* ---------------- Excel export ---------------- */
 
+export type ExportFormula = { target: string; deps: string[]; build: (ref: (key: string) => string) => string };
+/** The live Excel formula behind each computed column, written only when every input column is exported too.
+ *  Money cells are dollars and % cells are fractions in the workbook, so the formulas are plain arithmetic. */
+export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
+  const have = new Set(cols.map((c) => c.key));
+  const out: ExportFormula[] = [];
+  const add = (target: string, deps: string[], build: ExportFormula["build"]) => {
+    if (have.has(target) && deps.every((d) => have.has(d))) out.push({ target, deps, build });
+  };
+  // Competition · their cost = cheapest supplier list − cushion tier.
+  add("comp_cost", ["comp_low_list", "comp_cushion"], (r) => `${r("comp_low_list")}-${r("comp_cushion")}`);
+  for (const c of cols) {
+    const m = /^([sc]):([^:]+):price$/.exec(c.key);
+    if (!m) continue;
+    const id = m[2];
+    if (m[1] === "s") {
+      // Wholesale: real price = list − cushion; me vs real $ = my offer − real; % of real.
+      add(`s:${id}:real`, [`s:${id}:price`, `s:${id}:cushion`], (r) => `${r(`s:${id}:price`)}-${r(`s:${id}:cushion`)}`);
+      add(`s:${id}:diff`, ["my_offer_price", `s:${id}:real`], (r) => `${r("my_offer_price")}-${r(`s:${id}:real`)}`);
+      add(`s:${id}:diff_pct`, [`s:${id}:diff`, `s:${id}:real`], (r) => `IF(${r(`s:${id}:real`)}=0,"",${r(`s:${id}:diff`)}/${r(`s:${id}:real`)})`);
+    } else {
+      // Competition: they earn = their price − their cost; margin = earn ÷ price.
+      add(`c:${id}:earn`, [`c:${id}:price`, "comp_cost"], (r) => `${r(`c:${id}:price`)}-${r("comp_cost")}`);
+      add(`c:${id}:margin`, [`c:${id}:earn`, `c:${id}:price`], (r) => `IF(${r(`c:${id}:price`)}=0,"",${r(`c:${id}:earn`)}/${r(`c:${id}:price`)})`);
+    }
+  }
+  // List analysis — the owner's PERFUME_ENGINE_FORMATS.xlsx formulas, cell for cell.
+  add("a:c_sales", ["a:c_list", "a:c_cushion"], (r) => `${r("a:c_list")}-${r("a:c_cushion")}`);
+  add("a:esp", ["a:c_sales"], (r) => `${r("a:c_sales")}`);
+  add("a:esp2", ["a:esp"], (r) => `${r("a:esp")}`);
+  add("a:offer2", ["a:offer"], (r) => `${r("a:offer")}`);
+  add("a:low_sales", ["a:offer", "a:esp"], (r) => `MIN(${r("a:offer")},${r("a:esp")})`);
+  add("a:min_buy", ["a:esp", "a:min_margin"], (r) => `${r("a:esp")}*(1-${r("a:min_margin")})`);
+  add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:offer")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
+  add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:last_cost")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
+  add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
+  add("a:under_pct", ["a:under_by", "a:esp"], (r) => `IF(${r("a:esp")}=0,"",${r("a:under_by")}/${r("a:esp")})`);
+  add("a:can_inc", ["a:under_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:under_by")}/${r("a:offer")})`);
+  add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(${r("a:esp")}=0,"",(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")})`);
+  add("a:over_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:offer")}-${r("a:esp")},0)`);
+  add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:over_by")}/${r("a:offer")})`);
+  return out;
+}
+
 /** One sheet of the view's visible columns, values as real numbers, plus a "How computed" sheet; landed cost,
  *  margin and markup are live Excel formulas so anyone can audit them in Excel. */
 export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string): Promise<Buffer> {
@@ -1262,6 +1476,9 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     const values = cols.map((c) => {
       const v = r[c.key];
       if (v == null) return null;
+      // Link-to candidates are a list on screen; in Excel they are their labels, one cell.
+      if (Array.isArray(v)) return v.map((x) => (x && typeof x === "object" && "label" in x ? String((x as { label: unknown }).label) : String(x))).join("; ") || null;
+      if (typeof v === "object") return JSON.stringify(v);
       if (c.kind === "money") return Number(v) / 100;
       if (c.kind === "pct") return Number(v) / 100;
       return v;
@@ -1276,6 +1493,15 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
         if (mg >= 0) row.getCell(mg + 1).value = { formula: `(${L(lo)}${excelRow}-${L(lk)}${excelRow})/${L(lo)}${excelRow}`, result: Number(r.margin) / 100 };
         if (mk >= 0) row.getCell(mk + 1).value = { formula: `(${L(lo)}${excelRow}-${L(lk)}${excelRow})/${L(lk)}${excelRow}`, result: Number(r.markup) / 100 };
       }
+    }
+    // Every other computed column is a live formula too (owner 2026-11-14: "exported to excel, with formulas").
+    for (const f of exportFormulas(cols)) {
+      const t = idx(f.target);
+      if (t < 0 || r[f.target] == null || f.deps.some((k) => r[k] == null)) continue;
+      const ref = (k: string) => `${L(idx(k))}${excelRow}`;
+      const kind = cols[t]!.kind;
+      const result = kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
+      row.getCell(t + 1).value = { formula: f.build(ref), result: result as number };
     }
   });
   cols.forEach((c, i) => {

@@ -186,6 +186,12 @@ describe("PERFUME-DESK file reader", () => {
   it("PDF lines: two-column pairs, and a price with no name is kept (real LISTA N 5 line), never dropped", () => {
     expect(pdfLinePairs("CK DEFY M 3.4oz $41.00 CURVE WAVE M 4.2oz EDT $11.00")).toEqual([["CK DEFY M 3.4oz", "41.00"], ["CURVE WAVE M 4.2oz EDT", "11.00"]]);
     expect(pdfLinePairs("$41.00")).toEqual([[PDF_NO_NAME, "41.00"]]);
+    // LISTA N 5 prints one price with no "$"; sizes inside a name are never prices.
+    expect(pdfLinePairs("                 PRINCESS GIFT SET 3X30ML EDT             10.25")).toEqual([["PRINCESS GIFT SET 3X30ML EDT", "10.25"]]);
+    expect(pdfLinePairs("CK DEFY M 3.4oz $41.00 PRINCESS GIFT SET 3X30ML EDT 10.25")).toEqual([["CK DEFY M 3.4oz", "41.00"], ["PRINCESS GIFT SET 3X30ML EDT", "10.25"]]);
+    expect(pdfLinePairs("3.0EDT+3.4SGEL+0.33EDT                           3.4 EDP/3.0 GEL/MINI")).toEqual([]);
+    expect(pdfLinePairs("2.7oz EDP+0.68oz EDP")).toEqual([]);
+    expect(pdfLinePairs("3.3 EDT + 3.4SG + 0.25 EDT")).toEqual([]);
     expect(pdfLinePairs("LANCOME LA VIE EST BELLE 100ML EDP $1,105.00")).toEqual([["LANCOME LA VIE EST BELLE 100ML EDP", "1105.00"]]);
     expect(pdfLinePairs("WOMEN")).toEqual([]);
   });
