@@ -18286,5 +18286,10 @@
     "claimed_at": "2026-11-14T04:54:33Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Dispatch/TruckPlanner mechanical drills withReturnContext"
+  },
+  "20286": {
+    "claimed_at": "2026-11-14T04:58:01Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 accounting list CTAs + fleet report unit drills withReturnContext"
   }
 }

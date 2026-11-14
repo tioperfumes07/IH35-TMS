@@ -196,7 +196,7 @@ export function InvoiceDetailPage() {
   // it, so the original and the correction both stay on record (QuickBooks rule).
   const isIssued = ["sent", "partial", "paid", "factored"].includes(String(invoice?.status ?? ""));
   const creditMemoHref = invoice
-    ? `/accounting/credit-memos?${new URLSearchParams({ customer_id: String(invoice.customer_id ?? ""), invoice_id: String(invoice.id), invoice_display_id: String(invoice.display_id ?? ""), create: "1" }).toString()}`
+    ? moneyHref(`/accounting/credit-memos?${new URLSearchParams({ customer_id: String(invoice.customer_id ?? ""), invoice_id: String(invoice.id), invoice_display_id: String(invoice.display_id ?? ""), create: "1" }).toString()}`)
     : "";
   const invoiceCreditMemosQuery = useQuery({
     queryKey: ["accounting", "credit-memos", selectedCompanyId, "related-invoice", invoice?.id],

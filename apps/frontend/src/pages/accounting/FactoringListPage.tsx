@@ -213,7 +213,7 @@ export function FactoringListPage() {
       title="Factoring"
       subtitle="Track factoring submissions, reserves, and releases"
       createControl={
-        <Button type="button" data-testid="factoring-create-cta" onClick={() => navigate(FACTORING_TAB_PATH.submit_invoice)}>
+        <Button type="button" data-testid="factoring-create-cta" onClick={() => navigate(acctHref(FACTORING_TAB_PATH.submit_invoice))}>
           + Submit to Factor
         </Button>
       }

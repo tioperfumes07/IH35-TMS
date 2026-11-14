@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
@@ -74,7 +75,9 @@ function dashCount(n: number | null | undefined): string {
 export function FleetHomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const tab = parseFleetHomeTab(searchParams.get("tab"));
@@ -319,7 +322,7 @@ export function FleetHomePage() {
                                 }`}
                                 onClick={() => {
                                   if (tab === "trailers") {
-                                    navigate(`/fleet/trailers/${id}`);
+                                    navigate(moneyHref(`/fleet/trailers/${id}`));
                                     return;
                                   }
                                   setSelectedUnitId(id);
@@ -362,7 +365,7 @@ export function FleetHomePage() {
                             <dt className="text-[#6B7280]">VIN</dt>
                             <dd className="text-center text-[#0F1219]">{selected.vin ?? "—"}</dd>
                           </dl>
-                          <Button size="sm" onClick={() => navigate(`/fleet/units/${selected.id}`)}>
+                          <Button size="sm" onClick={() => navigate(moneyHref(`/fleet/units/${selected.id}`))}>
                             Open full unit profile
                           </Button>
                         </div>
@@ -382,13 +385,13 @@ export function FleetHomePage() {
             open={createUnitOpen}
             operatingCompanyId={companyId}
             onClose={() => setCreateUnitOpen(false)}
-            onCreated={(unitId) => navigate(`/fleet/units/${unitId}`)}
+            onCreated={(unitId) => navigate(moneyHref(`/fleet/units/${unitId}`))}
           />
           <CreateTrailerModal
             open={createTrailerOpen}
             operatingCompanyId={companyId}
             onClose={() => setCreateTrailerOpen(false)}
-            onCreated={(trailerId) => navigate(`/fleet/trailers/${trailerId}`)}
+            onCreated={(trailerId) => navigate(moneyHref(`/fleet/trailers/${trailerId}`))}
           />
         </>
       )}

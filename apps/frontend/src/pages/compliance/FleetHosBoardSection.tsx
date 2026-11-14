@@ -1,7 +1,8 @@
 // formatPersonName applied per Lead 443.301 (rows 155/157) — CC-1 verify scripts authorized below.
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../../components/Button";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import {
   getFleetLocationHos,
@@ -249,6 +250,9 @@ const OFFLINE_FLEET_HOS_COLUMNS: ParityColumn<FleetLocationHosRow>[] = [
 ];
 
 export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const companyId = operatingCompanyId;
   const navigate = useNavigate(); // AUTO-07: row click → unit detail (clickable sweep)
   const [searchParams, setSearchParams] = useSearchParams();
@@ -343,7 +347,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
           columns={FLEET_HOS_COLUMNS}
           rowKey={(row) => row.unit_id}
           loading={query.isLoading}
-          onRowClick={(row) => navigate(`/fleet/units/${row.unit_id}`)}
+          onRowClick={(row) => navigate(moneyHref(`/fleet/units/${row.unit_id}`))}
           rowClassName={(row) => (row.stale ? "bg-[#F7F8FA]" : "")}
           storageKey="compliance-fleet-hos"
           emptyText="No reporting vehicles."
@@ -433,7 +437,7 @@ export function FleetHosBoardSection({ operatingCompanyId }: { operatingCompanyI
                 rows={offlineRows}
                 columns={OFFLINE_FLEET_HOS_COLUMNS}
                 rowKey={(row) => row.unit_id}
-                onRowClick={(row) => navigate(`/fleet/units/${row.unit_id}`)}
+                onRowClick={(row) => navigate(moneyHref(`/fleet/units/${row.unit_id}`))}
                 storageKey="compliance-fleet-hos-offline"
                 emptyText="No offline or stale vehicles."
                 initialPageSize={50}

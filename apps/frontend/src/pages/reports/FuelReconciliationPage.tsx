@@ -3,6 +3,7 @@ import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   getFuelReconciliation,
   rematchFuelTxnToGps,
@@ -60,7 +61,9 @@ function parseFuelReconTab(searchParams: URLSearchParams): FuelReconTab {
 export function FuelReconciliationPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
@@ -350,7 +353,7 @@ export function FuelReconciliationPage() {
             emptyText="No trucks with fuel data for this period."
             exportFilename={`fuel-reconciliation-${appliedFilters.start}-${appliedFilters.end}`}
             rowClassName={(r) => (isSuspicious(r) ? "bg-red-50" : "")}
-            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
+            onRowClick={(r) => navigate(moneyHref(`/fleet/units/${r.unit_id}?tab=financial`))}
           />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">

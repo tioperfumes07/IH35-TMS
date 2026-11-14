@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ArrowRightCircle, Download } from "lucide-react";
 import { listTransactionRegister, type RegisterTransaction, type TransactionSource } from "../../api/accounting";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -71,6 +72,9 @@ function toCsv(rows: RegisterTransaction[]): string {
 }
 
 export function TransactionRegisterPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const navigate = useNavigate();
 
@@ -205,7 +209,7 @@ export function TransactionRegisterPage() {
           r.detail_path ? (
             <button
               type="button"
-              onClick={() => navigate(r.detail_path!)}
+              onClick={() => navigate(moneyHref(r.detail_path!))}
               className="inline-flex items-center gap-1 text-xs text-[#4B5563] hover:text-[#1F2A44]"
               aria-label="Open source record"
             >

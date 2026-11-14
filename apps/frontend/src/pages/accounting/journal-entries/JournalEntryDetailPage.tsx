@@ -2,6 +2,7 @@ import { formatDateUS } from "../../../lib/formatDate";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { resolveBackHref } from "../../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -180,7 +181,9 @@ function uniqueSourceRows(rows: JournalEntrySourceLink[]): Array<{
 export function JournalEntryDetailPage() {
   const { id = "" } = useParams();
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const accountingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/accounting/journal-entries" });
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -279,7 +282,7 @@ export function JournalEntryDetailPage() {
         ]}
         actions={
           <div className="flex items-center gap-2">
-            <Button type="button" variant="secondary" onClick={() => navigate("/accounting/journal-entries")}>
+            <Button type="button" variant="secondary" onClick={() => navigate(moneyHref("/accounting/journal-entries"))}>
               Back to list
             </Button>
             <Button
