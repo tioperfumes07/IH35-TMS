@@ -107,6 +107,26 @@ describe("PERFUME-DESK page", () => {
     await waitFor(() => expect(screen.getByTestId("perfume-mine-all").getAttribute("aria-pressed")).toBe("true"));
   });
 
+  it("Review with Show: My offer list asks only for my list's lines and shows the item each line can be", async () => {
+    const ROW = { id: "r1", list_id: "l1", vendor_name: "ESPERANZA", row_no: 7, upc: null, sku: null, brand: null,
+      description: "ARMAF CLUB DE NUIT MILESTONE 3.4oz", size_text: null, case_pack: null, price_cents: 2600, match_status: "review",
+      suggestions: [{ item_id: "i9", display_name: "ARMAF · CLUB NUIT MILESTONE · 110 ml", score: 0.7, why: "SIZE DIFFERS: line 100 ml, your item 110 ml" }],
+      gender_override: null, brand_name: "ARMAF", model: "CLUB DE NUIT MILESTONE", size_ml: 100, conc: null, gender: null, flags: "", category: "", country: null,
+      for_my_item: "ARMAF · CLUB NUIT MILESTONE · 110 ml" };
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/access") return { allowed: true };
+      if (path.startsWith("/api/v1/perfume/review")) return path.includes("mine=offer") ? { rows: [ROW], total: 1 } : { rows: [], total: 1744 };
+      if (path.startsWith("/api/v1/perfume/lists")) return { lists: [] };
+      throw new Error(`unexpected ${path}`);
+    });
+    renderPage("/perfume?tab=review&mine=offer");
+    expect((await screen.findAllByText("ARMAF · CLUB NUIT MILESTONE · 110 ml")).length).toBeGreaterThan(0);
+    expect(screen.getByText("My item")).toBeTruthy();
+    expect(screen.getByText("SIZE DIFFERS: line 100 ml, your item 110 ml")).toBeTruthy();
+    expect(screen.getByTestId("perfume-mine-offer").getAttribute("aria-pressed")).toBe("true");
+    expect(vi.mocked(clientApi.apiRequest).mock.calls.some(([p]) => String(p).startsWith("/api/v1/perfume/review?") && String(p).includes("mine=offer"))).toBe(true);
+  });
+
   it("another Owner-role login not listed in perfume.desk_users sees the locked notice and no data is fetched", async () => {
     vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
       if (path === "/api/v1/perfume/access") return { allowed: false };

@@ -13,7 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-export function PerfumeReviewPanel() {
+export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = {}) {
   const [page, setPage] = useState(1);
   // Owner 2026-11-12: "where do I review the Esperanza items?" — review one vendor's list at a time.
   const [listIds, setListIds] = useState<string[]>([]);
@@ -25,8 +25,11 @@ export function PerfumeReviewPanel() {
   const [status, setStatus] = useState<"review" | "unmatched" | null>(null);
   const [PAGE, setPageSize] = useState(100);
   const reset = () => { setPage(1); setSelected([]); };
-  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE],
-    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status }), placeholderData: (p) => p });
+  // Owner 2026-11-13: "just show all the items from my list and i'll confirm each. in review but only for my list."
+  const [mineSeen, setMineSeen] = useState(mine);
+  if (mineSeen !== mine) { setMineSeen(mine); setPage(1); setSelected([]); }
+  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE, mine],
+    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status, mine }), placeholderData: (p) => p });
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   // Owner 2026-11-12: "in all the tabs differentiate between vendors the lines" — a heavy rule above the first
@@ -68,6 +71,7 @@ export function PerfumeReviewPanel() {
       </div>
       <BulkBar selected={selected} onDone={() => setSelected([])} rows={q.data?.rows ?? []} onSelect={setSelected} />
       <div className="text-xs text-gray-600">
+        {mine ? <strong className="mr-1 text-[#1F2A44]">{tr("perfume.review.mine", "Only lines that can be an item on my offer list, grouped by my item.")}</strong> : null}
         {total.toLocaleString()} {tr("perfume.review.2", "lines need you. A line links to an item only when you confirm it — then every future list from that vendor with the same spelling or SKU links by itself. Nothing here counts in any price until confirmed.")}
       </div>
       {/* TABLE_DATE_OMIT: review queue is unresolved import lines waiting for owner confirm — no per-row event date. */}
@@ -76,7 +80,8 @@ export function PerfumeReviewPanel() {
         rowKey={(r) => r.id}
         rowClassName={(r) => (vendorStarts.has(r.id) ? "border-t-2 border-t-slate-500" : "")}
         loading={q.isLoading}
-        storageKey="perfume-desk-review-v3"
+        key={mine ?? "all"}
+        storageKey={mine ? "perfume-desk-review-mine-v1" : "perfume-desk-review-v3"}
         selectable
         selectedKeys={selected}
         onSelectionChange={setSelected}
@@ -85,6 +90,8 @@ export function PerfumeReviewPanel() {
         pageSize={Math.max(1, q.data?.rows?.length ?? PAGE)}
         emptyText="Nothing to review."
         columns={[
+          ...(mine ? [{ key: "for_my_item", label: "My item", sortable: true, allowWrap: true, minWidth: 220,
+            render: (r: PerfumeReviewRow) => <strong>{r.for_my_item ?? "—"}</strong> }] : []),
           { key: "vendor_name", label: "Vendor", sortable: true },
           { key: "row_no", label: "Row", sortable: true, defaultHidden: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
