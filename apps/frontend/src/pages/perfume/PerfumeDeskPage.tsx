@@ -22,10 +22,10 @@ import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 
-type Tab = PerfumeGridView | "lists" | "review" | "match" | "rules";
+type Tab = PerfumeGridView | "lists" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
   ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
-  ["lists", "Price lists & import"], ["review", "Review"], ["match", "Match my list ↔ competitor"], ["rules", "Rules"],
+  ["lists", "Price lists & import"], ["review", "Review"], ["rules", "Rules"],
 ];
 
 export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -92,7 +92,7 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "lists" || tab === "rules" || tab === "match" || tab === "analysis" ? null : (
+      {tab === "lists" || tab === "rules" || tab === "analysis" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
           {(tab === "review" ? REVIEW_MINE_OPTIONS : MINE_OPTIONS).map(([k, l]) => (
@@ -106,7 +106,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "match" ? <GridPanel view="analysis" mine={null} matchDesk /> : tab === "review" ? <PerfumeReviewPanel mine={mine ? "offer" : null} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
@@ -175,7 +175,10 @@ const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold"
  *  it, can be cleared, and searches any words in any order.
  *   - a line of mine with no item, or a competitor line → link THAT line to one of my items (items search);
  *   - a line of mine that has its item → link a COMPETITOR line to my item (competitor-lines search). */
-function MatchCell({ row }: { row: PerfumeGridRow }) {
+/** The other side's description, as ONE box (owner 2026-11-14 17:07 CT: "shouldn't that be in the same competitor
+ *  description box so it is not redundant"): it shows what the line is linked to now — or, when unlinked, the best
+ *  suggestion, pre-selected and marked — and the same box searches and confirms a different one. */
+function MatchCell({ row, current }: { row: PerfumeGridRow; current: string | null }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const mode = row.link_mode === "line" ? "line" : "item";
@@ -183,16 +186,24 @@ function MatchCell({ row }: { row: PerfumeGridRow }) {
   const linkItem = row.link_item == null ? null : String(row.link_item);
   const cand = (Array.isArray(row.cand) ? row.cand : []) as Array<{ row_id: string; item_id: string; label: string; price_cents: number | null; why: string }>;
   const sugg = cand.map((x) => ({ value: mode === "line" ? x.row_id : x.item_id, label: x.label, sublabel: [x.price_cents != null ? money(x.price_cents) : "", x.why].filter(Boolean).join(" · ") }));
-  const [pick, setPick] = useState<string | null>(row.matched === 1 ? null : sugg[0]?.value ?? null);
+  const CUR = "__current";
+  const [pick, setPick] = useState<string | null>(current ? CUR : sugg[0]?.value ?? null);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const on = search.trim().length >= 2;
-  const items = useQuery({ queryKey: ["perfume", "items", search], queryFn: () => searchPerfumeItems(search), enabled: on && mode === "item" });
-  const lines = useQuery({ queryKey: ["perfume", "lines", search], queryFn: () => searchPerfumeLines(search), enabled: on && mode === "line" });
+  // This row's gender: the search never offers the other gender (owner 2026-11-14 17:22 — Light Blue Men was linked
+  // by accident to Light Blue Women).
+  const g = row.gender === "M" || row.gender === "W" ? String(row.gender) : null;
+  const items = useQuery({ queryKey: ["perfume", "items", search, g], queryFn: () => searchPerfumeItems(search, g), enabled: on && mode === "item" });
+  const lines = useQuery({ queryKey: ["perfume", "lines", search, g], queryFn: () => searchPerfumeLines(search, g), enabled: on && mode === "line" });
   const found = mode === "item"
     ? (items.data?.items ?? []).map((h) => ({ value: h.id, label: h.display_name, sublabel: h.upcs?.join(" ") ?? "" }))
-    : (lines.data?.lines ?? []).map((h) => ({ value: h.row_id, label: `${h.description} · ${h.vendor}`, sublabel: [h.price_cents != null ? money(h.price_cents) : "", h.linked_to ? `now linked to ${h.linked_to}` : "not linked"].join(" · ") }));
-  const options = [...sugg, ...found.filter((f) => !sugg.some((x) => x.value === f.value))];
+    : (lines.data?.lines ?? []).map((h) => ({ value: h.row_id, label: `${h.description} · ${h.vendor}`, sublabel: [h.price_cents != null ? money(h.price_cents) : "", GENDER_WORD[h.gender ?? "—"] ?? "", h.linked_to ? `now linked to ${h.linked_to}` : "not linked"].filter(Boolean).join(" · ") }));
+  const options = [
+    ...(current ? [{ value: CUR, label: current, sublabel: tr("perfume.analysis.linkedNow", "linked now") }] : []),
+    ...sugg.map((x) => ({ ...x, sublabel: [tr("perfume.analysis.suggested", "suggested"), x.sublabel].filter(Boolean).join(" · ") })),
+    ...found.filter((f) => !sugg.some((x) => x.value === f.value)),
+  ];
   const go = async (target: string | null, createNew = false) => {
     setBusy(true);
     try {
@@ -203,19 +214,15 @@ function MatchCell({ row }: { row: PerfumeGridRow }) {
     } catch (e) { pushToast(userFacingApiError(e, tr("perfume.analysis.linkfail", "Could not link")), "error"); }
     finally { setBusy(false); }
   };
-  const best = row.matched === 1 ? null : sugg[0] ?? null;
+  const changed = Boolean(pick) && pick !== CUR;
   return (
     <span className="flex items-center gap-1" data-testid="perfume-analysis-matchbox">
-      {best ? (
-        <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy} title={cand[0]?.why}
-          onClick={() => void go(best.value)}>{tr("perfume.analysis.useSuggestion", "✓ Use suggestion")}</Button>
-      ) : null}
-      <span className="w-[260px]">
+      <span className="w-[320px]">
         <Combobox ariaLabel={mode === "line" ? "Competitor line" : "Item"} size="sm" value={pick} onChange={setPick} onSearch={setSearch} options={options} allowClear clearCommittedOnEdit
           placeholder={mode === "line" ? tr("perfume.analysis.searchLine", "Search their line, UPC or code") : tr("perfume.analysis.searchItem", "Search my item, UPC or code")} />
       </span>
-      <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={busy || !pick} onClick={() => void go(pick)}>{tr("perfume.analysis.confirm", "Confirm")}</Button>
-      {mode === "item" ? (
+      {changed ? <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy} onClick={() => void go(pick)}>{tr("perfume.analysis.confirm", "Confirm")}</Button> : null}
+      {mode === "item" && !current ? (
         <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={busy} onClick={() => void go(null, true)}>{tr("perfume.analysis.newItem", "New item")}</Button>
       ) : null}
     </span>
@@ -228,7 +235,26 @@ const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex",
 /** "Match my list ↔ competitor" (owner 2026-11-14 15:10: "in match my list competitor it is practically the same
  *  thing"): the List-analysis lines in the matching format only — the line, what the engine assigned, the
  *  suggestion in the same format with the confirm / search box, and what it is matched to now. */
-const MATCH_DESK = /^a:(upc|sku|line_desc|as_.*|match|cand|sg_.*|m_.*|c_vendor|offer|esp)$/;
+const MATCH_DESK = /^a:(upc|sku|brand|name|size|kind|c_desc|c_brand|c_vendor|match|offer|esp)$/;
+
+/** Review · match (owner 2026-11-14 17:22): every linking happens here — competitor lines waiting for me, and my list ↔
+ *  competitor (each of my lines with no competitor line, and each competitor line not on my list). */
+function ReviewDesk({ mine }: { mine: MineChoice }) {
+  const [part, setPart] = useState<"waiting" | "pair">("waiting");
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1" role="group" aria-label={tr("perfume.reviewDesk.aria", "Review part")} data-testid="perfume-review-part">
+        {([["waiting", "Lines waiting for me"], ["pair", "My list ↔ competitor"]] as const).map(([k, l]) => (
+          <button key={k} type="button" aria-pressed={part === k} data-testid={`perfume-review-part-${k}`} onClick={() => setPart(k)}
+            className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${part === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}>
+            {tr(`perfume.reviewDesk.${k}`, l)}
+          </button>
+        ))}
+      </div>
+      {part === "waiting" ? <PerfumeReviewPanel mine={mine ? "offer" : null} /> : <GridPanel view="analysis" mine={null} matchDesk />}
+    </div>
+  );
+}
 
 function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; mine: MineChoice; matchDesk?: boolean }) {
   const { pushToast } = useToast();
@@ -301,7 +327,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
       sortValue: (r: PerfumeGridRow) => r[c.key] ?? null,
-      ...(c.key === "a:cand" ? { minWidth: 600 } : {}),
+      ...(c.key === "a:c_desc" || (view === "analysis" && c.key === "a:name") ? { minWidth: 360 } : {}),
       exportValue: (r: PerfumeGridRow) => (Array.isArray(r[c.key]) ? (r[c.key] as unknown as Array<{ label: string }>).map((x) => x.label).join("; ") : r[c.key] ?? null),
       render: (r: PerfumeGridRow) => {
         const v = r[c.key];
@@ -313,7 +339,10 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         if (c.key === "a:over_by" && v != null && Number(v) < 0) return <span className="font-semibold text-red-700">{money(v)}</span>;
         if (c.kind === "money") return money(v);
         if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-slate-700 font-semibold" : ""}>{pct(v)}</span>;
-        if (c.key === "a:cand") return <MatchCell row={r} />;
+        // List analysis is read-only (owner 2026-11-14 17:22: "THE MATCHING SHOULD BE DONE IN THE REVIEW"). In Review ·
+        // My list ↔ competitor, the match box sits in the OTHER side's description: my line → theirs; their line → mine.
+        if (matchDesk && c.key === "a:c_desc" && String(r.id).startsWith("m:")) return <MatchCell key={String(r.id)} row={r} current={(r["a:c_desc"] as string) ?? null} />;
+        if (matchDesk && c.key === "a:name" && String(r.id).startsWith("c:")) return <MatchCell key={String(r.id)} row={r} current={(r["a:name"] as string) ?? null} />;
         if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;

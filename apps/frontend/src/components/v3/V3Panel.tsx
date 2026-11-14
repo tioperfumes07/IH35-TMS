@@ -17,6 +17,7 @@ export function V3Panel({
   testId,
   borderRadius,
   board = false,
+  titleDataV3,
 }: {
   title: string;
   subtitle?: string;
@@ -31,6 +32,8 @@ export function V3Panel({
   borderRadius?: number;
   /** Draw the V3 board panel (docs/design/v3). */
   board?: boolean;
+  /** Parity reader key for a templated title (ROUND 9.4). */
+  titleDataV3?: string;
 }) {
   const shell: CSSProperties = {
     background: V3.surface,
@@ -57,7 +60,7 @@ export function V3Panel({
         }}
       >
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{title}</span>
+          <span data-v3={titleDataV3} style={{ fontSize: 13, fontWeight: 700, color: V3.ink, lineHeight: "normal" }}>{title}</span>
           {subtitle ? <span style={{ fontSize: 11, color: V3.muted }}>{subtitle}</span> : null}
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>

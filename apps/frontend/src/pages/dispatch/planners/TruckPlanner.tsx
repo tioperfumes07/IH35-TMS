@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
@@ -9,6 +9,7 @@ import { listUnitsWithoutLoad, unitsWithoutLoadQueryKey } from "../../../api/dis
 import { listAllUnits } from "../../../api/mdata";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { V3Panel } from "../../../components/v3/V3Panel";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -16,6 +17,7 @@ import { userFacingApiError } from "../../../lib/api-error-message";
 import { isOperatorVisibleUnit } from "../../../lib/operator-fleet-visibility";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { PlannerSideTruckGlyph } from "./PlannerSideTruckGlyph";
+import { V3 } from "../../../design/v3-tokens";
 
 /** LEAD 443.244: a truck is IN USE by the load in motion (an advance booking is its next load, not a use). */
 const IN_MOTION_LOAD_STATUSES = new Set(["dispatched", "at_pickup", "in_transit", "at_delivery"]);
@@ -257,152 +259,184 @@ export function TruckPlanner() {
     );
   }
 
-  return (
-    <div data-testid="dispatch-truck-planner-page" data-v3-board="Dispatch-TruckPlanner" style={{ lineHeight: "normal" }} className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-      {/* ROUND 9.0 Board 12 — title, Grid/List and View all on one row (Dispatch-TruckPlanner.png). */}
-      <div className="flex flex-wrap items-center justify-between gap-2" data-testid="dispatch-truck-planner-head">
-        <h2 className="text-xs font-semibold text-[#111827]">Truck planner — {formatQuantityTable(days.length, 0)} selected day{days.length === 1 ? "" : "s"} fill the full width</h2>
-        <div className="flex items-center gap-3">
-          <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
-          <Link to={dispHref("/dispatch/loads")} className="text-xs font-semibold text-blue-700">View all →</Link>
-        </div>
-      </div>
-      {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}
-      {isError ? (
-        <ListErrorBanner
-          message={userFacingApiError(firstError, "Could not load truck planner grid")}
-          onRetry={() => {
-            void gridQuery.refetch();
-            void unitsQuery.refetch();
-            void reservedQuery.refetch();
-            void loadsQuery.refetch();
-          }}
-        />
-      ) : null}
+  const panelTitle = `Truck planner — ${formatQuantityTable(days.length, 0)} selected day${days.length === 1 ? "" : "s"} fill the full width`;
+  const note =
+    'Only the chosen days are drawn and they share the whole width — no empty columns. The unit/driver column is resizable (drag its edge); widths are remembered per user. Bars that run past the range show "continues". Same rules on Timeline, Driver and Loads planners.';
 
-      {!isLoading && !isError && viewMode === "list" ? (
-        (() => {
-          const listRows: TruckListRow[] = filteredTruckRows.map((row) => {
-            const bars = loadBarsByUnit.get(row.unitId) ?? [];
-            const statusLabel =
-              row.status === "assigned" ? "In Use" :
-              row.status === "available" ? "Available" :
-              row.status === "in-shop" ? "In Shop" : "Reserved";
-            return {
-              unitId: row.unitId,
-              driverId: row.driverId,
-              loadId: bars[0]?.loadId ?? null,
-              unitNumber: row.unitNumber,
-              driver: row.driverName ?? "—",
-              currentLoad: bars.length > 0 ? bars[0].label : "—",
-              status: statusLabel,
-              nextAvailable: bars.length > 0 ? formatDateUS(bars[0].endYmd) : "—",
-            };
-          });
-          const columns: Array<ParityColumn<TruckListRow>> = [
-            // ROUND 443.231 — natural unit order (T9 before T10); other keys are plain strings.
-            { key: "unitNumber", label: "Unit Number", sortable: true, sortValue: (row) => row.unitNumber ?? null,
-              render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /> },
-            { key: "driver", label: "Driver", sortable: true,
-              render: (row) => row.driverId ? <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driver} noun="Driver" /> : row.driver },
-            { key: "currentLoad", label: "Current Load", sortable: true,
-              render: (row) =>
-                row.loadId ? (
-                  <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
-                ) : (
-                  row.currentLoad
-                ),
-            },
-            { key: "status", label: "Status", sortable: true },
-            { key: "nextAvailable", label: "Next Available", sortable: true },
-          ];
-          return (
-            <div data-testid="dispatch-truck-planner-list">
-              <ParityTable<TruckListRow> appearance="board" title="Units in the planner range"
-                columns={columns}
-                rows={listRows}
-                rowKey={(row) => row.unitId}
-                emptyText="No units for this company in the planner range."
-                storageKey="dispatch-truck-planner-list"
-                exportFilename="truck-planner"
+  return (
+    <div data-testid="dispatch-truck-planner-page" style={{ display: "flex", flexDirection: "column", gap: 12, minWidth: 0, lineHeight: "normal" }}>
+      {/* ROUND 9.4 Board 12 — REPLACE old bordered card with V3Panel board (Dispatch-TruckPlanner.dc.html). */}
+      <V3Panel
+        board
+        title={panelTitle}
+        titleDataV3="panel.title"
+        viewAllHref={dispHref("/dispatch/loads")}
+        viewAllLabel="View all →"
+        headerRight={<PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />}
+        testId="dispatch-truck-planner-panel"
+        footer={
+          <span data-testid="dispatch-truck-planner-note">
+            {note}
+            {!isLoading && !isError && excludedUnitCount > 0 ? (
+              <span style={{ display: "block" }} data-testid="dispatch-truck-planner-excluded-count">
+                {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In Service / In Maintenance / Out of Service, or a test fixture).
+              </span>
+            ) : null}
+          </span>
+        }
+      >
+        <div style={{ padding: "12px 14px" }}>
+          {isLoading ? <div style={{ fontSize: 12, color: V3.muted }}>Loading truck grid…</div> : null}
+          {isError ? (
+            <ListErrorBanner
+              message={userFacingApiError(firstError, "Could not load truck planner grid")}
+              onRetry={() => {
+                void gridQuery.refetch();
+                void unitsQuery.refetch();
+                void reservedQuery.refetch();
+                void loadsQuery.refetch();
+              }}
+            />
+          ) : null}
+
+          {!isLoading && !isError && viewMode === "list" ? (
+            (() => {
+              const listRows: TruckListRow[] = filteredTruckRows.map((row) => {
+                const bars = loadBarsByUnit.get(row.unitId) ?? [];
+                const statusLabel =
+                  row.status === "assigned" ? "In Use" :
+                  row.status === "available" ? "Available" :
+                  row.status === "in-shop" ? "In Shop" : "Reserved";
+                return {
+                  unitId: row.unitId,
+                  driverId: row.driverId,
+                  loadId: bars[0]?.loadId ?? null,
+                  unitNumber: row.unitNumber,
+                  driver: row.driverName ?? "—",
+                  currentLoad: bars.length > 0 ? bars[0].label : "—",
+                  status: statusLabel,
+                  nextAvailable: bars.length > 0 ? formatDateUS(bars[0].endYmd) : "—",
+                };
+              });
+              const columns: Array<ParityColumn<TruckListRow>> = [
+                { key: "unitNumber", label: "Unit Number", sortable: true, sortValue: (row) => row.unitNumber ?? null,
+                  render: (row) => <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /> },
+                { key: "driver", label: "Driver", sortable: true,
+                  render: (row) => row.driverId ? <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driver} noun="Driver" /> : row.driver },
+                { key: "currentLoad", label: "Current Load", sortable: true,
+                  render: (row) =>
+                    row.loadId ? (
+                      <EntityLinkOrTombstone kind="load" id={row.loadId} name={row.currentLoad === "—" ? null : row.currentLoad} noun="Load" />
+                    ) : (
+                      row.currentLoad
+                    ),
+                },
+                { key: "status", label: "Status", sortable: true },
+                { key: "nextAvailable", label: "Next Available", sortable: true },
+              ];
+              return (
+                <div data-testid="dispatch-truck-planner-list">
+                  <ParityTable<TruckListRow> appearance="v3" title="Units in the planner range"
+                    columns={columns}
+                    rows={listRows}
+                    rowKey={(row) => row.unitId}
+                    emptyText="No units for this company in the planner range."
+                    storageKey="dispatch-truck-planner-list"
+                    exportFilename="truck-planner"
+                  />
+                </div>
+              );
+            })()
+          ) : null}
+
+          {!isLoading && !isError && viewMode === "grid" ? (
+            <PlannerGrid
+              days={days}
+              testId="truck-planner-v3"
+              rowPx={44}
+              frozenColumns={[
+                { key: "name", header: "Unit", minWidth: 110, maxWidth: 240, defaultWidth: 110 },
+                { key: "secondary", header: "Driver", minWidth: 170, maxWidth: 420, defaultWidth: 240 },
+              ]}
+              frozenLabel="Unit"
+              frozenPx={320}
+              onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
+              rows={filteredTruckRows
+                .filter((row) => row.status !== "in-shop")
+                .map((row) => {
+                  const status = row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved";
+                  return {
+                  id: row.unitId,
+                  idle: row.status === "available",
+                  name: <span className="flex min-w-0 items-center gap-1.5"><PlannerSideTruckGlyph className="shrink-0" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
+                  sortKey: row.unitNumber,
+                  statusSortKey: status,
+                  secondary: row.driverName ? (
+                    <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                  ) : null,
+                  bars: loadBarsByUnit.get(row.unitId) ?? [],
+                  };
+                })}
+              empty={
+                filteredTruckRows.length === 0 ? (
+                <span data-testid="dispatch-truck-planner-honest-empty">
+                  No units for this company in the planner range. Units leased/owned under Fleet appear here once listUnits
+                  / scheduler grid return rows for the active entity.
+                </span>
+                ) : null
+              }
+            />
+          ) : null}
+          {!isLoading && !isError && viewMode === "grid" && filteredTruckRows.some((row) => row.status === "in-shop") ? (
+            <div style={{ marginTop: 12 }}>
+              <PlannerGrid
+                days={days}
+                rowPx={44}
+                frozenLabel="In shop"
+                frozenPx={320}
+                rows={filteredTruckRows
+                  .filter((row) => row.status === "in-shop")
+                  .map((row) => ({
+                    id: `shop-${row.unitId}`,
+                    idle: true,
+                    name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
+                    sortKey: row.unitNumber,
+                    statusSortKey: "In Shop",
+                    secondary: row.driverName ? (
+                      <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
+                    ) : null,
+                    bars: loadBarsByUnit.get(row.unitId) ?? [],
+                  }))}
+                empty={null}
               />
             </div>
-          );
-        })()
-      ) : null}
-
-      {!isLoading && !isError && viewMode === "grid" ? (
-        <PlannerGrid
-          days={days}
-          testId="truck-planner-v3"
-          rowPx={44}
-          frozenColumns={[
-            { key: "name", header: "Unit", minWidth: 110, maxWidth: 240, defaultWidth: 110 },
-            { key: "secondary", header: "Driver", minWidth: 170, maxWidth: 420, defaultWidth: 240 },
-          ]}
-          frozenLabel="Unit"
-          frozenPx={320}
-          onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
-          rows={filteredTruckRows
-            .filter((row) => row.status !== "in-shop")
-            .map((row) => {
-              const status = row.status === "assigned" ? "In Use" : row.status === "available" ? "Available" : "Reserved";
-              return {
-              id: row.unitId,
-              idle: row.status === "available",
-              name: <span className="flex min-w-0 items-center gap-1.5"><PlannerSideTruckGlyph className="shrink-0" /><EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" /></span>,
-              // Planners lists, item 3 — plain-text keys for the sortable frozen columns.
-              sortKey: row.unitNumber,
-              statusSortKey: status,
-              // LEAD 443.251 (live 10-22): the driver sat in the 56px unit slot and clipped ("GAYTAN").
-              secondary: row.driverName ? (
-                <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
-              ) : null,
-              bars: loadBarsByUnit.get(row.unitId) ?? [],
-              };
-            })}
-          empty={
-            filteredTruckRows.length === 0 ? (
-            <span data-testid="dispatch-truck-planner-honest-empty">
-              No units for this company in the planner range. Units leased/owned under Fleet appear here once listUnits
-              / scheduler grid return rows for the active entity.
-            </span>
-            ) : null
-          }
-        />
-      ) : null}
-      {!isLoading && !isError && viewMode === "grid" && filteredTruckRows.some((row) => row.status === "in-shop") ? (
-        <div className="mt-3">
-          <PlannerGrid
-            days={days}
-            rowPx={44}
-            frozenLabel="In shop"
-            frozenPx={320}
-            rows={filteredTruckRows
-              .filter((row) => row.status === "in-shop")
-              .map((row) => ({
-                id: `shop-${row.unitId}`,
-                idle: true,
-                name: <EntityLinkOrTombstone kind="unit" id={row.unitId} name={row.unitNumber} noun="Unit" />,
-                sortKey: row.unitNumber,
-                statusSortKey: "In Shop",
-                secondary: row.driverName ? (
-                  <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
-                ) : null,
-                bars: loadBarsByUnit.get(row.unitId) ?? [],
-              }))}
-            empty={null}
-          />
+          ) : null}
         </div>
-      ) : null}
-      <p className="border-t border-[#DDE1E7] pt-2 text-xs text-[#5B6576]" data-testid="dispatch-truck-planner-note">
-        Only the chosen days are drawn and they share the whole width — no empty columns. The unit/driver column is resizable (drag its edge); widths are remembered per user. Bars that run past the range show &quot;continues&quot;. Same rules on Timeline, Driver and Loads planners.
-        {!isLoading && !isError && excludedUnitCount > 0 ? (
-          <span className="block" data-testid="dispatch-truck-planner-excluded-count">
-            {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In Service / In Maintenance / Out of Service, or a test fixture).
-          </span>
-        ) : null}
-      </p>
+      </V3Panel>
+
+      {/* Board callout (Dispatch-TruckPlanner.dc.html) — documents the autofit/resize rules the live grid now obeys. */}
+      <div
+        data-testid="dispatch-truck-planner-measured"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 6,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+          fontFamily: V3.font,
+          lineHeight: "normal",
+        }}
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap", font: `700 12px ${V3.font}` }}>Measured</b>
+        <span>
+          Measured in Chrome 6:00 PM CT on all 4 planners: a 7-day range uses about one third of the grid and the remaining columns render empty with no dates; driver names are cut off (&quot;EDUARDO AZAE…&quot;, &quot;Jorge Luis Infant…&quot;) with no resize; the range is a row of buttons outside Filters.
+        </span>
+      </div>
     </div>
   );
 }
