@@ -54,6 +54,7 @@ export function TrialBalanceBoard({
   onCustomize,
   measuredArNote,
   onTotalsDrill,
+  totalsDrillHref,
   children,
 }: {
   summary: TrialBalanceBoardSummary | null | undefined;
@@ -64,6 +65,8 @@ export function TrialBalanceBoard({
   measuredArNote?: ReactNode;
   /** Opens the ledger lines behind the grand totals; omitted when no list sums to them (e.g. cash basis). */
   onTotalsDrill?: () => void;
+  /** ROUND 8.20 — shareable href+ret preferred over onClick navigate. */
+  totalsDrillHref?: string | null;
   children: ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
@@ -78,13 +81,15 @@ export function TrialBalanceBoard({
           <V3KpiTile
             label="Grand total debits"
             value={money(summary.grand_total_debits)}
-            onClick={onTotalsDrill}
+            href={totalsDrillHref ?? undefined}
+            onClick={totalsDrillHref ? undefined : onTotalsDrill}
             testId="trial-balance-kpi-debits"
           />
           <V3KpiTile
             label="Grand total credits"
             value={money(summary.grand_total_credits)}
-            onClick={onTotalsDrill}
+            href={totalsDrillHref ?? undefined}
+            onClick={totalsDrillHref ? undefined : onTotalsDrill}
             testId="trial-balance-kpi-credits"
           />
           <V3KpiTile
