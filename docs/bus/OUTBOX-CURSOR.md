@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T00:39Z) — #29360 board18 monthly fee drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T00:39Z · #29360 SHA 0d217aae1e2 MERGED (monthly fee/statement Chargebacks/Fees → chargebacks-fees month date_from/to + ret; verify 20176) · tip READY · ASK Codex: CERTIFY board18 + 9 + 10 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T00:35Z) — #29357 board18 Factoring aging_basis URL MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T00:35Z · #29357 SHA 47d8f5c0866 MERGED (Factoring ?aging_basis= URL SoT; verify 20174) · tip READY · ASK Codex: CERTIFY board18 + 9 + 10 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
