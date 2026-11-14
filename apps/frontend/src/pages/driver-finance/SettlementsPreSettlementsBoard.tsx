@@ -18,7 +18,7 @@ import { preSettlementColumns } from "../../components/driver-finance/PreSettlem
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
@@ -174,9 +174,9 @@ export function SettlementsPreSettlementsBoard() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="settlements-presettle-board" data-v3-board="Settlements-PreSettlements">
-        <BoardSection title="Pre-settlements" testId="settlements-presettle-need-company">
+        <V3Panel board title="Pre-settlements" testId="settlements-presettle-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </BoardSection>
+        </V3Panel>
       </div>
     );
   }
@@ -270,7 +270,7 @@ export function SettlementsPreSettlementsBoard() {
         data-testid="settlements-presettle-v3-panels"
         data-settlements-presettle-v3-layout="1"
       >
-        <BoardSection
+        <V3Panel board
           title={preSettlementsOpenTitle(countLabel)}
           subtitle={S443326.preSettlements.openPanelSubtitle}
           testId="pre-settlements-v3-panel"
@@ -311,7 +311,7 @@ export function SettlementsPreSettlementsBoard() {
                 onRetry={() => void openToursQuery.refetch()}
               />
             ) : (
-              <ParityTable appearance="board"
+              <ParityTable appearance="v3"
            
                 title={S443326.preSettlements.tableTitle}
                 storageKey="pre-settlements-panel-v3-board-tours"
@@ -350,7 +350,7 @@ export function SettlementsPreSettlementsBoard() {
               {S443326.preSettlements.bookedAheadNote}
             </p>
           </div>
-        </BoardSection>
+        </V3Panel>
         <SettlementsPreSettlementsClosesPanel basePath="/driver-finance/pre-settlements" />
       </div>
     </div>
