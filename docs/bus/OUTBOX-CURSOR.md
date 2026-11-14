@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:28Z) — #29428 board19 Fuel Home + Card Overage KPI href+ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:28Z · #29428 SHA e35ead7bee9 MERGED (Fuel Home + Card Overage KPI href+ret; verify 20240) · tip READY · ASK Codex: CERTIFY board19 + 6 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:25Z) — #29426 board6 AVP Net variance KPI href+ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:25Z · #29426 SHA 7ed244466b9 MERGED (AVP Net variance KPI avp_var href+ret; verify 20238) · tip READY · ASK Codex: CERTIFY board6 + 25 + 13 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
