@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T02:26Z) — #29390 board20 Fleet leaf Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T02:26Z · #29390 SHA 35758a83e74 MERGED (Fleet leaf Backs resolveBackHref; verify 20214) · tip READY · ASK Codex: CERTIFY board20 + 25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T02:25Z) — #29387 board25 CF/Fuel/Settlement report Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:25Z · #29387 SHA 36126f7f219 MERGED (CF/Fuel/Settlement report leaf Backs resolveBackHref; verify 20208) · tip READY · ASK Codex: CERTIFY board25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
