@@ -1,3 +1,5 @@
+import { resolveBackHref } from "../../lib/returnContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -5,13 +7,17 @@ import { TasksModuleTabs } from "./TasksModuleTabs";
 import { TaskPlannerGrid } from "./TaskPlannerGrid";
 
 export function TaskBoardPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
   if (!companyId) {
     return (
       <div className="flex h-full flex-col overflow-hidden p-4">
-        <PageHeader backHref="/tasks" title="Task Board" />
+        <PageHeader backHref={moduleBackHref} title="Task Board" />
         <BoardSection title="Task board" testId="task-board-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task board.</p>
         </BoardSection>
@@ -27,7 +33,7 @@ export function TaskBoardPage() {
             below) already renders the single canonical "+ Create Task" affordance shared across
             every Tasks tab (TASKS-6), so Task Board previously showed TWO independent create-task
             buttons/modals stacked on top of each other. */}
-        <PageHeader backHref="/tasks" title="Task Board" />
+        <PageHeader backHref={moduleBackHref} title="Task Board" />
         <TasksModuleTabs />
       </div>
       <div className="flex-1 overflow-hidden">

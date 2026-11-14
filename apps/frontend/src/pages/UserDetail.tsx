@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { EntityLink } from "../components/shared/EntityLink";
 import { entityLabel } from "../lib/entity-label";
+import { resolveBackHref } from "../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../api/client";
 import { userFacingApiError } from "../lib/api-error-message";
@@ -92,6 +93,9 @@ export function UserDetailPage() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/users" });
   const tab = parseUserDetailTab(searchParams.get("tab"));
   const setTab = (next: Tab) => {
     const params = new URLSearchParams(searchParams);
@@ -286,7 +290,7 @@ export function UserDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/users"
+        backHref={moduleBackHref}
         breadcrumb={["Users"]}
         title={targetUser.email ?? "User detail"}
         subtitle={targetUser.role}

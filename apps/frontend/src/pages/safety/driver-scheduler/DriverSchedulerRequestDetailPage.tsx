@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../../lib/formatDate";
-import { useParams } from "react-router-dom";
+import { resolveBackHref } from "../../../lib/returnContext";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { driverSchedulerOfficeApi } from "../../../api/driver-scheduler";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -13,6 +14,10 @@ import { humanizeEnumLabel } from "../../../lib/humanizeEnumLabel";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 
 export function DriverSchedulerRequestDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/scheduler/pending-requests" });
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -73,7 +78,7 @@ export function DriverSchedulerRequestDetailPage() {
   return (
     <div className="space-y-3">
       <PageHeader
-        backHref="/safety/scheduler/pending-requests"
+        backHref={moduleBackHref}
         breadcrumb={["Safety", "Scheduler", "Leave request"]}
         title="Leave request"
         subtitle={req ? String(req.request_number) : "…"}

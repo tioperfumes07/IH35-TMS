@@ -1,4 +1,6 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -40,6 +42,10 @@ function taskAssigneeLabel(task: Task) {
 // TASK-4: Admin Report — team task productivity (was an unbuilt placeholder). Aggregates the
 // existing /api/v1/tasks/planner data client-side: throughput by status and per-assignee.
 export function TasksReportPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [filters, setFilters] = useState<ReportFilters>({ windowDays: 30, overdueOnly: false });
@@ -133,7 +139,7 @@ export function TasksReportPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader backHref="/tasks" title="Admin Report" subtitle="Task throughput and team productivity" />
+        <PageHeader backHref={moduleBackHref} title="Admin Report" subtitle="Task throughput and team productivity" />
         <TasksModuleTabs />
         <BoardSection title="Admin report" testId="tasks-report-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task report.</p>
@@ -144,7 +150,7 @@ export function TasksReportPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader backHref="/tasks" title="Admin Report" subtitle="Task throughput and team productivity" />
+      <PageHeader backHref={moduleBackHref} title="Admin Report" subtitle="Task throughput and team productivity" />
       <TasksModuleTabs />
 
       {query.isLoading ? <div className="text-xs text-[#6B7280]">Loading report…</div> : null}
