@@ -180,18 +180,48 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
   const drivers = roster.data?.drivers;
   const ratio = (key: Cohort) =>
     drivers ? `${drivers.filter((driver) => inCohort(driver, key)).length} of ${drivers.length}` : null;
+  // ROUND 8.20 board24 — KPI tiles use shareable href (URL SoT cohort/summary), not onClick-only.
+  const cohortHref = (next: Cohort) => {
+    const p = new URLSearchParams(searchParams);
+    p.delete("summary");
+    if (next === "all") p.delete("cohort");
+    else p.set("cohort", next);
+    const qs = p.toString();
+    return `${location.pathname}${qs ? `?${qs}` : ""}`;
+  };
+  const summaryHref = (next: "fines" | "alerts") => {
+    const p = new URLSearchParams(searchParams);
+    p.set("summary", next);
+    return `${location.pathname}?${p.toString()}`;
+  };
   return (
     <section className="min-w-0 space-y-3" aria-label="Driver qualification files">
       <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
-        <V3KpiTile label="Active drivers" value={drivers ? String(drivers.length) : "—"} onClick={() => setCohort("all")} />
+        <V3KpiTile
+          label="Active drivers"
+          value={drivers ? String(drivers.length) : "—"}
+          href={cohortHref("all")}
+          testId="dq-kpi-active-drivers"
+        />
         <V3KpiTile
           label="DOT medical on file"
           value={ratio("medical") ?? "—"}
           title="Recorded expiration date, not verified document completion"
-          onClick={() => setCohort("medical")}
+          href={cohortHref("medical")}
+          testId="dq-kpi-medical"
         />
-        <V3KpiTile label="Emergency contact" value={ratio("contact") ?? "—"} onClick={() => setCohort("contact")} />
-        <V3KpiTile label="CDL date on file" value={ratio("cdl") ?? "—"} onClick={() => setCohort("cdl")} />
+        <V3KpiTile
+          label="Emergency contact"
+          value={ratio("contact") ?? "—"}
+          href={cohortHref("contact")}
+          testId="dq-kpi-contact"
+        />
+        <V3KpiTile
+          label="CDL date on file"
+          value={ratio("cdl") ?? "—"}
+          href={cohortHref("cdl")}
+          testId="dq-kpi-cdl"
+        />
         <V3KpiTile
           label="Open fines"
           value={
@@ -199,8 +229,9 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
               ? "—"
               : `${kpis.data?.drivers_with_open_fines} drivers`
           }
-          onClick={() => setSummarySource("fines")}
+          href={summaryHref("fines")}
           title="View both fine source registers"
+          testId="dq-kpi-fines"
         />
         <V3KpiTile
           label="Critical integrity alerts"
@@ -210,8 +241,9 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
               : String(kpis.data?.critical_integrity_alerts)
           }
           tone="red"
-          onClick={() => setSummarySource("alerts")}
+          href={summaryHref("alerts")}
           title="View count definition and source"
+          testId="dq-kpi-alerts"
         />
       </div>
       {summarySource ? (
