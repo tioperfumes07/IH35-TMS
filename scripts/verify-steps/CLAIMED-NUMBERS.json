@@ -16232,6 +16232,41 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 accounting list/detail money drills withReturnContext"
   },
+  "20266": {
+    "claimed_at": "2026-11-14T04:23:47Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 ManualJE/BillPayments/BankingHome money drills withReturnContext"
+  },
+  "20268": {
+    "claimed_at": "2026-11-14T04:27:07Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 InvoiceDetail/CheckDetail/BankAccountDetail money drills withReturnContext"
+  },
+  "20270": {
+    "claimed_at": "2026-11-14T04:30:34Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 create/recon money drills withReturnContext (QA/Check/Lease/Invoice/Recon)"
+  },
+  "20272": {
+    "claimed_at": "2026-11-14T04:34:18Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 WriteCheck/customer/load/reports money drills withReturnContext"
+  },
+  "20274": {
+    "claimed_at": "2026-11-14T04:36:59Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 TS hotfix PreSettlementsPanel viewAllHref + unused navigate"
+  },
+  "20276": {
+    "claimed_at": "2026-11-14T04:40:01Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 brokers/cargo-claim customer drills withReturnContext"
+  },
+  "20278": {
+    "claimed_at": "2026-11-14T04:41:50Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 customer profile docs/loads drills withReturnContext"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18236,35 +18271,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20266": {
-    "claimed_at": "2026-11-14T04:23:47Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 ManualJE/BillPayments/BankingHome money drills withReturnContext"
-  },
-  "20268": {
-    "claimed_at": "2026-11-14T04:27:07Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 InvoiceDetail/CheckDetail/BankAccountDetail money drills withReturnContext"
-  },
-  "20270": {
-    "claimed_at": "2026-11-14T04:30:34Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 create/recon money drills withReturnContext (QA/Check/Lease/Invoice/Recon)"
-  },
-  "20272": {
-    "claimed_at": "2026-11-14T04:34:18Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 WriteCheck/customer/load/reports money drills withReturnContext"
-  },
-  "20274": {
-    "claimed_at": "2026-11-14T04:36:59Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 TS hotfix PreSettlementsPanel viewAllHref + unused navigate"
-  },
-  "20276": {
-    "claimed_at": "2026-11-14T04:40:01Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 brokers/cargo-claim customer drills withReturnContext"
-  }
+  "total_claimed": 1111
 }

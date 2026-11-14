@@ -183,7 +183,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
 
       <Section title={`Open loads (${p.open_loads.value.length})`} testId="customer-profile-open-loads" reason={p.open_loads.empty_reason}>
         {p.open_loads.value.length ? (
-          <ParityTable appearance="board" columns={loadCols} rows={p.open_loads.value} rowKey={(r) => r.id} onRowClick={(r) => navigate(`/dispatch/loads/${r.id}`)} density="compact" suppressToolbarRange />
+          <ParityTable appearance="board" columns={loadCols} rows={p.open_loads.value} rowKey={(r) => r.id} onRowClick={(r) => navigate(moneyHref(`/dispatch/loads/${r.id}`))} density="compact" suppressToolbarRange />
         ) : null}
       </Section>
 
@@ -195,7 +195,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
 
       <Section title={`Rate history (${p.rate_history.value.length})`} testId="customer-profile-rate-history" reason={p.rate_history.empty_reason}>
         {p.rate_history.value.length ? (
-          <ParityTable appearance="board" columns={rateCols} rows={p.rate_history.value} rowKey={(r) => r.load_id} onRowClick={(r) => navigate(`/dispatch/loads/${r.load_id}`)} density="compact" suppressToolbarRange />
+          <ParityTable appearance="board" columns={rateCols} rows={p.rate_history.value} rowKey={(r) => r.load_id} onRowClick={(r) => navigate(moneyHref(`/dispatch/loads/${r.load_id}`))} density="compact" suppressToolbarRange />
         ) : null}
       </Section>
 
@@ -205,7 +205,7 @@ export function CustomerProfileOverview(props: { operatingCompanyId: string; cus
         </Section>
         {/* Distinct from CustomerFinancialOverviewSection "Billing attachments" — this is the customer file vault. */}
         <Section title={`Linked files (${p.documents.value.length})`} testId="customer-profile-documents" reason={p.documents.empty_reason}>
-          {p.documents.value.length ? <ParityTable appearance="board" columns={docCols} rows={p.documents.value} rowKey={(r) => r.file_id} onRowClick={(r) => navigate(`/documents?file=${r.file_id}`)} density="compact" suppressToolbarRange /> : null}
+          {p.documents.value.length ? <ParityTable appearance="board" columns={docCols} rows={p.documents.value} rowKey={(r) => r.file_id} onRowClick={(r) => navigate(moneyHref(`/documents?file=${r.file_id}`))} density="compact" suppressToolbarRange /> : null}
         </Section>
       </div>
     </div>
