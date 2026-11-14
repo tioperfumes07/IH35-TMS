@@ -24,7 +24,7 @@ export function FactoringBoardChrome({
   subnavItems?: SubNavItem[];
   nav?: ReactNode;
 }) {
-  const { pathname, search } = useLocation();
+  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   const structuralParent = "/factoring";
   const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
