@@ -3,7 +3,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import {
   disconnectPlaidBankAccount,
   getPlaidBankAccount,
@@ -74,7 +74,9 @@ export function BankAccountDetailPage() {
   const { id = "" } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -244,7 +246,7 @@ export function BankAccountDetailPage() {
             className="text-xs font-medium text-[#1F2A44] hover:underline"
             data-testid={`bank-account-detail-reconciliation-open-${s.id}`}
             onClick={() =>
-              navigate(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`)
+              navigate(moneyHref(`/banking/reconciliation-workspace?session_id=${s.id}&bank_account_hint=${s.bank_account_id}`))
             }
           >
             Open
@@ -392,7 +394,7 @@ export function BankAccountDetailPage() {
         companyId={companyId}
         accounts={accountsQuery.data?.accounts ?? []}
         selectedAccountId={id}
-        onSelectAccount={(accountId) => navigate(`/banking/accounts/${accountId}`)}
+        onSelectAccount={(accountId) => navigate(moneyHref(`/banking/accounts/${accountId}`))}
         onManageConnections={() => navigate("/banking")}
         onDataChanged={() => {
           void queryClient.invalidateQueries({ queryKey: ["banking"] });

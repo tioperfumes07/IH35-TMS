@@ -6,7 +6,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMemo, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { RETURN_PARAM, resolveBackHref } from "../../lib/returnContext";
+import { RETURN_PARAM, currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { addInvoiceLine, deleteInvoiceLine, getAccountingSourceLineage, getInvoice, patchInvoiceLine, sendInvoice, voidInvoice, type InvoiceLine } from "../../api/accounting";
 import { listCatalogAccounts } from "../../api/catalog-accounts";
 import { listCreditMemos } from "../../api/credit-memos";
@@ -63,6 +63,8 @@ export function InvoiceDetailPage() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
@@ -627,7 +629,7 @@ export function InvoiceDetailPage() {
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                navigate(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`);
+                navigate(moneyHref(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`));
               }}
               type="button"
             >
@@ -681,7 +683,7 @@ export function InvoiceDetailPage() {
                 <span className={`ml-2 ${factoringPillClass(invoice.factoring_status)}`}>{invoice.factoring_status.replaceAll("_", " ")}</span>
               ) : null}
             </div>
-            <Button size="sm" variant="secondary" onClick={() => navigate(`/accounting/factoring/${invoice.factoring_advance_id}`)}>
+            <Button size="sm" variant="secondary" onClick={() => navigate(moneyHref(`/accounting/factoring/${invoice.factoring_advance_id}`))}>
               View batch
             </Button>
           </div>
