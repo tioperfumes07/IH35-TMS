@@ -209,7 +209,9 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // A line whose name is empty after cleaning ("DIOR HOMME COLOGNE" → brand + type only) never links by key.
   const named = identity.nameWords.length > 0;
   if (named && identity.brand && ix.byKey.has(identity.key)) return done(ix.byKey.get(identity.key)!, "key");
-  if (named && !identity.brand) {
+  // A brand-less line that carries its OWN barcode (one no known item has) is a different product until the owner
+  // says otherwise (measured 11-14: PPW "M-SP KING" UPC 819929011994 $2.95 was glued to BHARARA KING by name).
+  if (named && !identity.brand && !upc) {
     const c = ix.byLoose.get(looseKey(identity)) ?? [];
     if (c.length === 1) return done(c[0], "loose_key");
   }

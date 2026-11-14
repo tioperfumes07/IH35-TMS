@@ -168,7 +168,8 @@ export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
 
 /* ---------------- import ---------------- */
 
-export type ImportRowIn = LineIn & { sheet?: string | null; row_no: number; raw?: unknown; price: unknown; qty?: unknown; case_pack?: unknown };
+export type ImportRowIn = LineIn & { sheet?: string | null; row_no: number; raw?: unknown; price: unknown; qty?: unknown; case_pack?: unknown;
+  purchase_date?: string | null; qty_purchased?: unknown; qty_sold?: unknown };
 export type ImportIn = {
   vendor_id: string;
   list_date: string;
@@ -191,6 +192,22 @@ export type ImportCheck = {
   price_total_file_cents: number; price_total_saved_cents: number; totals_match: boolean;
   by_method: Record<string, number>; review: number; unmatched: number; items_created: number; items_renamed: number; items_merged: number; upcs_on_two_products: number;
 };
+
+/** A purchase date as the owner's file gives it: 2026-11-01, 11/1/26, 11/01/2026 or an Excel day number → YYYY-MM-DD; else null. */
+export function dateOrNull(v: unknown): string | null {
+  const t = String(v ?? "").trim();
+  if (!t) return null;
+  let y: number, m: number, d: number;
+  const iso = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  const us = t.match(/^(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})$/);
+  if (iso) { y = +iso[1]; m = +iso[2]; d = +iso[3]; }
+  else if (us) { m = +us[1]; d = +us[2]; y = +us[3]; if (y < 100) y += 2000; }
+  else if (/^\d{5}(\.\d+)?$/.test(t)) { const dt = new Date(Date.UTC(1899, 11, 30) + Math.floor(Number(t)) * 86_400_000); y = dt.getUTCFullYear(); m = dt.getUTCMonth() + 1; d = dt.getUTCDate(); }
+  else return null;
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  if (dt.getUTCFullYear() !== y || dt.getUTCMonth() !== m - 1 || dt.getUTCDate() !== d || y < 2000 || y > 2100) return null;
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
 
 function intOrNull(v: unknown): number | null {
   if (v == null || v === "") return null;
@@ -318,6 +335,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const ix = await loadIndex(c);
   type Out = { sheet: string | null; row_no: number; raw: unknown; upc: string | null; sku: string | null; brand: string | null; description: string;
     size_text: string | null; price_cents: number; qty: number | null; case_pack: number | null; identity_key: string; loose_key: string;
+    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null;
     item_id: string | null; match_method: string | null; match_status: string; suggestions: unknown };
   const out: Out[] = [];
   const newItems: Array<{ tmp: string; brand: string; name: string; size_ml: number | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }> = [];
@@ -355,6 +373,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     out.push({
       sheet: r.sheet ?? null, row_no: r.row_no, raw: r.raw ?? {}, upc: normalizeUpc(r0.upc) || null, sku: sku || null, brand: r.brand ?? null,
       description: r.description, size_text: r.size_text ?? null, price_cents: r.price_cents, qty: intOrNull(r.qty), case_pack: intOrNull(r.case_pack),
+      purchase_date: dateOrNull(r.purchase_date), qty_purchased: intOrNull(r.qty_purchased), qty_sold: intOrNull(r.qty_sold),
       identity_key: m.identity.key, loose_key: looseKey(m.identity), item_id: itemId, match_method: m.method,
       match_status: itemId ? "matched" : m.status, suggestions: m.suggestions,
     });
@@ -436,11 +455,11 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   for (let i = 0; i < out.length; i += 500) {
     await c.query(
       `INSERT INTO perfume.price_list_rows (list_id, sheet, row_no, raw, upc, sku, brand, description, size_text, price_cents, qty, case_pack,
-         identity_key, loose_key, item_id, match_method, match_status, suggestions)
+         purchase_date, qty_purchased, qty_sold, identity_key, loose_key, item_id, match_method, match_status, suggestions)
        SELECT $1, x.sheet, x.row_no, coalesce(x.raw, '{}'::jsonb), x.upc, x.sku, x.brand, x.description, x.size_text, x.price_cents, x.qty, x.case_pack,
-              x.identity_key, x.loose_key, x.item_id, x.match_method, x.match_status, coalesce(x.suggestions, '[]'::jsonb)
+              x.purchase_date, x.qty_purchased, x.qty_sold, x.identity_key, x.loose_key, x.item_id, x.match_method, x.match_status, coalesce(x.suggestions, '[]'::jsonb)
          FROM jsonb_to_recordset($2::jsonb) AS x(sheet text, row_no int, raw jsonb, upc text, sku text, brand text, description text, size_text text,
-              price_cents int, qty int, case_pack int, identity_key text, loose_key text, item_id uuid, match_method text, match_status text, suggestions jsonb)`,
+              price_cents int, qty int, case_pack int, purchase_date date, qty_purchased int, qty_sold int, identity_key text, loose_key text, item_id uuid, match_method text, match_status text, suggestions jsonb)`,
       [listId, JSON.stringify(out.slice(i, i + 500))]);
   }
   // Re-read what was stored: the check is proven against the table, not against memory.
@@ -727,7 +746,7 @@ export async function setInternalCode(c: PoolClient, itemId: string, code: strin
 
 export type ColKind = "text" | "money" | "pct" | "int";
 export type GridCol = { key: string; label: string; group: string; kind: ColKind };
-export type GridView = "buy" | "trade" | "wholesale" | "comp" | "all";
+export type GridView = "buy" | "trade" | "wholesale" | "comp" | "analysis" | "all";
 export type GridRow = Record<string, string | number | null>;
 
 /** The margin the owner types on the grid; when none is typed, the first saved wholesale target. */
@@ -772,10 +791,12 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   // Never a supplier and never a competitor; each new upload replaces the last.
   const offerV = vendors.filter((v) => v.kind === "offer");
   const invV = vendors.filter((v) => v.kind === "inventory");
-  const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null; description: string }>(
+  const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null; description: string;
+    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null }>(
     // A vendor can have several current lists (full list + new arrivals). For each item the vendor's NEWEST
     // current list that carries it sets the price (list date, then import time); within that list, the lowest line.
-    `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku, r.description
+    `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku, r.description,
+            r.purchase_date::text AS purchase_date, r.qty_purchased, r.qty_sold
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.item_id IS NOT NULL AND l.is_current AND l.voided_at IS NULL
       ORDER BY r.item_id, l.vendor_id, l.list_date DESC, l.imported_at DESC, r.price_cents ASC`);
@@ -783,7 +804,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
-  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null; desc: string }>>();
+  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null; desc: string;
+    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null }>>();
   // Every current line's own text and SKU per item: the search reads them, so "CLUB DE NUIT" (the owner's list)
   // finds the item another vendor named "CDN" first (owner 2026-11-13: compare my Book 7 + Book 8 offer list).
   const lineText = new Map<string, Set<string>>();
@@ -792,7 +814,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     t.add(String(p.description ?? "")); if (p.sku) t.add(p.sku);
     lineText.set(p.item_id, t);
     const m = byItem.get(p.item_id) ?? new Map();
-    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country, desc: String(p.description ?? "") });
+    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country, desc: String(p.description ?? ""),
+      purchase_date: p.purchase_date, qty_purchased: p.qty_purchased, qty_sold: p.qty_sold });
     byItem.set(p.item_id, m);
   }
   const close = (v: number | null) => (v == null ? null : closeCents(v, rules.round_step, rules.round_dir));
@@ -819,7 +842,16 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const hasInv = prices.rows.some((p) => invV.some((v) => v.id === p.vendor_id));
   const hasOffer = prices.rows.some((p) => offerV.some((v) => v.id === p.vendor_id));
   const mineCols: GridCol[] = [];
-  if (hasInv) mineCols.push({ key: "my_qty", label: "My stock", group: "Mine", kind: "int" }, { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" });
+  // Owner 2026-11-14: "in purchase compare vendors i need … my last cost, date, quantity purchased, current inventory,
+  // qty sold … the last price i purchased is important because prices change weekly". Stock comes from my inventory
+  // file, else the quantities on my offer list ("you uploaded my price list and quantities").
+  if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty" : "Inv qty (my list)", group: "Mine", kind: "int" });
+  mineCols.push(
+    { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+    { key: "my_purchase_date", label: "Purchase date", group: "Mine", kind: "text" },
+    { key: "my_qty_purchased", label: "Qty purchased", group: "Mine", kind: "int" },
+    { key: "my_qty_sold", label: "Qty sold", group: "Mine", kind: "int" },
+  );
   if (hasOffer) mineCols.push(
     { key: "my_offer_desc", label: "My description", group: "Mine", kind: "text" },
     { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
@@ -872,6 +904,24 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     cols.push({ key: `c:${v.id}:margin`, label: "Margin %", group: g, kind: "pct" });
   }
 
+  // LIST ANALYSIS columns — the owner's format, his groups and headers in his order.
+  const minMargin = opts.targetPct ?? 15;
+  const cGroup = `COMPETITOR · ${sellV.length === 1 ? vendorLabel(sellV[0]) : "lowest sales price"}`;
+  const A = (key: string, label: string, group: string, kind: GridCol["kind"]): GridCol => ({ key: `a:${key}`, label, group, kind });
+  cols.push(
+    A("upc", "UPC", "ITEM", "text"), A("sku", "SKU", "ITEM", "text"), A("brand", "BRAND", "ITEM", "text"), A("name", "NAME", "ITEM", "text"),
+    A("size", "SIZE", "ITEM", "int"), A("type", "TYPE", "ITEM", "text"), A("kind", "KIND", "ITEM", "text"),
+    A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
+    A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
+    A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
+    A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
+    A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
+    A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Under By", "Analysis", "money"),
+    A("under_pct", "Under %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
+    A("over_by", "Over By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
+    A("c_list", "LIST PRICE", cGroup, "money"), A("c_cushion", "CUSHION", cGroup, "money"), A("c_sales", "SALES PRICE", cGroup, "money"),
+    A("my_desc", "My description", "Check the match", "text"), A("c_desc", "Their description", "Check the match", "text"),
+  );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
   const rows: GridRow[] = [];
   for (const it of items.rows) {
@@ -903,17 +953,26 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     }
     // My lists: stock and last cost from my inventory, my offer price (and the qty I offer) from my offer list.
     let myQty: number | null = null, myCost: number | null = null, myOffer: number | null = null, offerQty: number | null = null;
-    for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; } }
+    let myPurch: string | null = null, myQtyPurch: number | null = null, mySold: number | null = null, mySku: string | null = null;
+    for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; myPurch = myPurch ?? o.purchase_date; myQtyPurch = myQtyPurch ?? o.qty_purchased; mySold = mySold ?? o.qty_sold; mySku = mySku ?? o.sku; } }
     let myOfferDesc: string | null = null;
-    for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; } }
+    for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; mySku = mySku ?? o.sku; } }
+    const invUploaded = invV.some((v) => offersMap.has(v.id));
+    // No inventory file yet: the quantity on my offer list IS my stock (owner 2026-11-14). Never a guessed number.
+    if (!invUploaded && offerQty != null) myQty = offerQty;
     row.my_offer_desc = myOfferDesc;
+    row.my_purchase_date = myPurch;
+    row.my_qty_purchased = myQtyPurch;
+    row.my_qty_sold = mySold;
+    row.my_sku = mySku;
     row.my_qty = myQty;
     row.my_last_cost = myCost;
     row.my_offer_price = myOffer;
     row.in_offer = myOffer != null ? 1 : 0;
     row.in_inventory = myQty != null ? 1 : 0;
-    // Need to buy: on my offer list and short in stock — the offered qty (or 1 when the list gives none) less my stock.
-    row.my_need = myOffer != null ? Math.max(0, (offerQty ?? 1) - (myQty ?? 0)) : null;
+    // Need to buy: on my offer list and short in stock — only when a real inventory file exists (owner 2026-11-14:
+    // no purchase quantities are recommended without stock data).
+    row.my_need = myOffer != null && invUploaded ? Math.max(0, (offerQty ?? 1) - (myQty ?? 0)) : null;
     let low: number | null = null, lowAt: string | null = null;
     // What a competitor most likely pays: the cheapest supplier list price for the item, less the tiered cushion.
     let lowList: number | null = null, lowListAt: string | null = null;
@@ -943,6 +1002,41 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     }
     row.low_sell = low;
     row.low_sell_vendor = lowAt;
+    // LIST ANALYSIS — the owner's own format (11-14-2026 PERFUME_ENGINE_FORMATS.xlsx), his formulas, cell for cell:
+    //  Margin = (offer − last cost) ÷ offer · Markup = (offer − last cost) ÷ last cost · Esperanza price = their SALES
+    //  price (list − cushion) · Lowest sales price = min(offer, Esperanza) · Min purchase price = Esperanza × (1 − min
+    //  margin) · Under by = Esperanza − offer when I am under · Under % = under ÷ Esperanza · Can increase % = under ÷
+    //  offer · New margin = (Esperanza − last cost) ÷ Esperanza · Over by = offer − Esperanza · Lower % = over ÷ offer.
+    //  The competitor is the one with the lowest SALES price. Blank stays blank — never a guessed cost or date.
+    let cBest: { list: number; cushion: number; real: number; desc: string | null } | null = null;
+    for (const v of sellV) {
+      const real = row[`s:${v.id}:real`] as number | undefined;
+      if (real == null) continue;
+      if (!cBest || real < cBest.real) cBest = { list: row[`s:${v.id}:price`] as number, cushion: row[`s:${v.id}:cushion`] as number, real, desc: (row[`s:${v.id}:desc`] as string | null) ?? null };
+    }
+    const p1 = (x: number) => Math.round(x * 1000) / 10;
+    const esp = cBest?.real ?? null;
+    const both = myOffer != null && esp != null;
+    const under = both ? (myOffer! < esp! ? esp! - myOffer! : 0) : null;
+    const over = both ? (myOffer! > esp! ? myOffer! - esp! : 0) : null;
+    Object.assign(row, {
+      "a:upc": row.upc, "a:sku": mySku, "a:brand": it.brand, "a:name": it.name, "a:size": row.size_ml, "a:type": it.conc || null,
+      "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[it.gender] ?? null,
+      "a:purch_date": myPurch, "a:qty": myQtyPurch, "a:last_cost": myCost, "a:sold": mySold, "a:inv_qty": myQty,
+      "a:margin": myOffer != null && myOffer > 0 && myCost != null ? p1((myOffer - myCost) / myOffer) : null,
+      "a:markup": myOffer != null && myCost ? p1((myOffer - myCost) / myCost) : null,
+      "a:offer": myOffer, "a:esp": esp,
+      "a:low_sales": myOffer == null && esp == null ? null : Math.min(...[myOffer, esp].filter((x): x is number => x != null)),
+      "a:min_buy": esp != null ? Math.round(esp * (1 - minMargin / 100)) : null, "a:min_margin": minMargin,
+      "a:low_vendor": lowListAt, "a:low_price": lowList,
+      "a:offer2": myOffer, "a:esp2": esp,
+      "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
+      "a:can_inc": under != null && myOffer! > 0 ? p1(under / myOffer!) : null,
+      "a:new_margin": esp != null && esp > 0 && myCost != null ? p1((esp - myCost) / esp) : null,
+      "a:over_by": over, "a:lower_pct": over != null && myOffer! > 0 ? p1(over / myOffer!) : null,
+      "a:c_list": cBest?.list ?? null, "a:c_cushion": cBest?.cushion ?? null, "a:c_sales": esp,
+      "a:my_desc": myOfferDesc, "a:c_desc": cBest?.desc ?? null,
+    });
     // My offer price against the lowest competitor (owner 2026-11-13: "my wholesale prices … compare in wholesale and
     // with other vendors"). Positive gap = my offer is under the cheapest competitor.
     // The margin my offer price already carries (owner 2026-11-13: "my list already has margin … 6 percent"):
@@ -1063,6 +1157,8 @@ export function filterView(rows: GridRow[], view: GridView, mine?: MineFilter): 
   if (view === "trade") return rows.filter((r) => buyPriced(r));
   if (view === "wholesale") return rows.filter((r) => r.low_sell != null && (r.landed_likely != null || r.my_offer_price != null));
   if (view === "comp") return rows.filter((r) => r.comp_cost != null && r.low_sell != null);
+  // List analysis is of MY list: items on my offer list or in my inventory.
+  if (view === "analysis") return rows.filter((r) => r.in_offer === 1 || r.in_inventory === 1);
   return rows;
 }
 

@@ -1167,5 +1167,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "claude",
     "purpose": "BOARD-29 perf indexes for closed-tour batch query (presettlement_link_id + settlement_lines)"
+  },
+  "202616620100": {
+    "claimed_at": "2026-11-14",
+    "claimed_by": "lead",
+    "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows — owner 2026-11-14"
   }
 }
