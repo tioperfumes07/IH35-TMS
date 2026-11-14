@@ -8,18 +8,21 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { mmmDd } from "../../lib/formatDate";
+import { mmmDd, formatDateUS } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { listTours, type TourListRow } from "../../api/tourReadout";
 import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
+import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
+import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3 } from "../../design/v3-tokens";
 import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 function startOfWeekSunday(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -111,13 +114,12 @@ const DASH = "\u2014";
 function OriginDateCell({ row, date }: { row: TourListRow; date: string | null }) {
   if (!date) return <>{DASH}</>;
   const originId = row.origin_load_number ? row.legs.find((l) => l.load_number === row.origin_load_number)?.load_id ?? null : null;
-  const label = mmmDd(date);
-  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{label}</span>;
+  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{formatDateUS(date)}</span>;
   return (
     <EntityLink
       kind="load"
       id={originId}
-      label={label}
+      label={formatDateUS(date)}
       className="ldt-link"
       title={`Original load ${row.origin_load_number}`}
       data-testid="setl-tour-origin-load-link"
@@ -317,8 +319,8 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
  */
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
   // 443.280-A — Open / Closed are own Settlements tabs (?tab=open|closed). Prefer tab over legacy tour_state.
   const tabHint =
     searchParams.get("tab") === "open" || searchParams.get("tab") === "closed"
@@ -450,26 +452,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       data-testid="settlements-tours-view"
       data-surface="load-detail"
       data-settlements-tours-v3="1"
+      data-v3-board="Settlements-Open"
+      style={{ lineHeight: "normal" }}
     >
-      {/* R90-33/34 header: ← Back · Driver Settlements · subtitle on ONE line */}
-      <div
-        style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: V3.font, paddingBottom: 2 }}
-        data-testid="settlements-tours-header"
-      >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{ color: V3.link, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: "0 4px 0 0", display: "flex", alignItems: "center", gap: 4 }}
-          data-testid="settlements-tours-back-btn"
-        >
-          ← Back
-        </button>
-        <span style={{ color: V3.borderSoft }}>·</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>Driver Settlements</span>
-        <span style={{ color: V3.borderSoft }}>·</span>
-        <span style={{ fontSize: 11, color: "#6B7280" }}>List + detail settlement workflow</span>
-      </div>
-
       <div
         style={{
           display: "grid",
@@ -525,7 +510,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         />
       </div>
 
-      {/* R90-33/34 segment row: left nav chips + right cohort pills + search + Filters + Export */}
+      {/* R90-33/34 segment row: left nav chips + right cohort pills + Filters + Export */}
       <div
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, fontFamily: V3.font }}
         data-testid="settlements-tours-segment-row"
@@ -541,9 +526,10 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             <button
               key={label}
               type="button"
+              disabled={!href}
               onClick={href ? () => navigate(href) : undefined}
               data-testid={`settlements-nav-chip-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-              style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontSize: 11, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
+              style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
             >
               {label}
             </button>
@@ -558,10 +544,11 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
                 data-testid={`settlements-tours-pill-${s}`}
                 aria-pressed={state === s}
                 onClick={() => setState(s)}
-                style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${state === s ? V3.link : V3.border}`, background: state === s ? V3.link : V3.surface, color: state === s ? "#FFFFFF" : V3.ink, fontSize: 11, fontWeight: state === s ? 700 : 500, cursor: "pointer", fontFamily: V3.font, display: "flex", alignItems: "center", gap: 4 }}
+                className="ldt-btn"
+                style={{ border: `1px solid ${state === s ? V3.link : V3.border}`, background: state === s ? V3.link : V3.surface, color: state === s ? "#FFFFFF" : V3.ink, fontWeight: state === s ? 700 : 500, fontFamily: V3.font }}
               >
                 {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
-                <span style={{ background: state === s ? "rgba(255,255,255,0.25)" : "#F3F4F6", borderRadius: 2, padding: "0 4px", color: state === s ? "#FFFFFF" : "#6B7280", fontSize: 10, fontWeight: 600, minWidth: 16, textAlign: "center" }}>
+                <span style={{ background: state === s ? "rgba(255,255,255,0.25)" : "#F3F4F6", borderRadius: 2, padding: "0 4px", color: state === s ? "#FFFFFF" : "#6B7280", fontWeight: 600, minWidth: 16, textAlign: "center" }}>
                   {(s === "open" ? openCount : closedCount) ?? "—"}
                 </span>
               </button>
@@ -576,7 +563,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             onClearAll={() => setSearch("")}
             testIdPrefix="settlements-tours"
           >
-            <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 36, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
+            <button type="button" data-testid="settlements-tours-filter-btn" className="h-9 inline-flex items-center" style={{ padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Filters ▾</button>
+            <button type="button" data-testid="settlements-tours-export-btn" className="h-9 inline-flex items-center" style={{ padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
           </MoneyListToolbar>
         </div>
       </div>
@@ -586,6 +574,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         title={panelTitle}
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
+        headerRight={
+          <button type="button" data-testid="settlements-tours-columns-btn" className="ldt-btn" style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.ink, fontFamily: V3.font }}>⚙ Columns</button>
+        }
       >
         {activeQ.isError ? (
           <div className="p-3">
@@ -596,6 +587,13 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             columns={TOUR_COLUMNS(state, companyId, filteredRows)}
             rows={filteredRows}
             rowKey={(r) => r.settlement_id}
+            renderExpanded={(r) =>
+              state === "open" ? (
+                <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
+              ) : (
+                <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
+              )
+            }
             loading={activeQ.isLoading}
             emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
             storageKey={`settlements-module-tours-${state}-v3`}

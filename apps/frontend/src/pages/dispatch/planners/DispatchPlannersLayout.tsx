@@ -487,7 +487,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
               // ROUND 8.20 board 12 — keep applied planner_* cohort query across Truck/Driver/Loads tabs.
               to={{ pathname: tab.to, search: location.search }}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex h-8 shrink-0 items-center border-b-2 px-2 text-white ${isActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85 hover:bg-white/10"}`
+                `flex h-8 shrink-0 items-center border-b-2 px-2 text-white ${isActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85 hover:bg-[rgba(255,255,255,0.1)]"}`
               }
             >
               {tab.label}

@@ -18,7 +18,8 @@ type Props = {
 const PRIMARY_LABELS = new Set([
   "Drivers", "Profiles", "Pre-Settlements", "Settlements",
   "Batch Settlements", "Feed Gate", "Company Settlements",
-  "Settlement Close", "Cash Advances", "Liabilities", "Escrow", "Deductions",
+  "Settlement Close", "Cash Advance Requests", "Cash Advances",
+  "Liabilities", "Escrow", "Pay Rate Templates", "Deductions",
 ]);
 
 function activeHrefFor(pathname: string, search: string): string | undefined {
@@ -73,31 +74,27 @@ export function SettlementsSubNavWrapper({
 
   return (
     <div className="space-y-4" data-settlements-subnav-wrapper="true">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div data-testid="settlements-breadcrumb">
             <Breadcrumb items={breadcrumb} />
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
             <button
               type="button"
               data-testid="settlements-back-btn"
               onClick={() => navigate(backHref)}
-              style={{ fontSize: 12, fontWeight: 600, color: "#1D4ED8", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              style={{ fontSize: 11, fontWeight: 400, color: "#5B6576", background: "none", border: "none", cursor: "pointer", padding: 0 }}
             >
               ← Back
             </button>
-            <span style={{ color: "#9CA3AF" }}>·</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: "#111827" }}>{title}</span>
+            <span style={{ fontFamily: "Inter, system-ui, sans-serif", fontSize: 18, fontWeight: 700, color: "#111827" }}>{title}</span>
             {subtitle ? (
-              <>
-                <span style={{ color: "#9CA3AF" }}>·</span>
-                <span style={{ fontSize: 11, color: "#6B7280" }}>{subtitle}</span>
-              </>
+              <span style={{ fontSize: 11, color: "#5B6576" }}>{subtitle}</span>
             ) : null}
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2" data-settlements-toolbar="true">
+        <div style={{ display: "flex", gap: 12, alignItems: "center", fontFamily: "Inter, system-ui, sans-serif", font: "600 11px Inter" }} data-settlements-toolbar="true">
           {actions}
           {createControl}
         </div>

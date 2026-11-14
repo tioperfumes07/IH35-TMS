@@ -1951,7 +1951,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 const advId = row.factoring_advance_id ?? "__none__";
                 const cents = Number(row.total_cents ?? 0);
                 const isCollected = row.factoring_status === "collected";
-                const existing = byAdvance.get(advId) ?? { advance_display_id: row.advance_display_id ?? advId.slice(0, 8), total_cents: 0, collected_cents: 0, open_cents: 0, count: 0, collected_count: 0 };
+                const existing = byAdvance.get(advId) ?? { advance_display_id: row.advance_display_id ?? "Advance", total_cents: 0, collected_cents: 0, open_cents: 0, count: 0, collected_count: 0 };
                 existing.total_cents += cents;
                 existing.count += 1;
                 if (isCollected) { existing.collected_cents += cents; existing.collected_count += 1; }

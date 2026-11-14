@@ -900,9 +900,6 @@ function QboSyncTab({ data }: { data: SystemData }) {
 }
 
 function ProgramTab({ data }: { data: SystemData }) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { tracker } = data;
   const t = tracker.data;
   const PHASE_FILTER_OPTIONS = [
@@ -939,7 +936,7 @@ function ProgramTab({ data }: { data: SystemData }) {
         title="Program Tracker"
         sub="Live build status — derived from merges + deploys, not a static field. Full board opens in the Program Tracker module."
         footer={
-          <Link to={sysHref("/program/matrix")} className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
+          <Link to="/program/matrix" className="inline-flex items-center gap-1.5 rounded-lg bg-[#1F2A44] px-3 py-2 text-xs font-semibold text-white hover:bg-[#0F1729]">
             Open Program Matrix
           </Link>
         }

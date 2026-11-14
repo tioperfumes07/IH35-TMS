@@ -91,7 +91,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
   const mutations = [
-    ["setl recombines margin", withField("setl", (s) => s.replace(/render: r => <span className=\{r\.margin_cents < 0 \? "text-\[#991B1B\]" : undefined\}>\{fmt\(r\.margin_cents\)\}<\/span> \},/, 'render: r => <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}</span> },'))],
+    ["setl recombines margin", withField("setl", (s) => s.replace(/<MoneyCell cents=\{r\.margin_cents\} format=\{fmtNoSign\}[^/]*\/>/, '{fmt(r.margin_cents)}{r.margin_pct == null ? "" : ` · ${r.margin_pct.toFixed(1)}%`}'))],
     ["setl re-layers Margin % column", withField("setl", (s) => s + '\n{ key: "margin_pct", label: "Margin %", testId: "setl-tour-col-margin-pct" }\n')],
     ["setl drops Margin $ column", withField("setl", (s) => s.replace(/setl-tour-col-margin/g, "gone").replace(/label: "Margin"/g, 'label: "X"'))],
     ["board drops pct testId", withField("board", (s) => s.replace(/tour-col-margin-pct/g, "gone"))],
