@@ -100,7 +100,7 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
               return (
                 <span className="block">
                   <strong>{r.for_my_desc ?? r.for_my_item ?? "—"}</strong>
-                  {differs ? <span className="block text-[11px] text-[#9A3412]" data-testid="perfume-review-filed-as">{tr("perfume.review.filedAs", "filed as")}: {r.for_my_item} — {tr("perfume.review.differs", "differs")}: {differs}</span> : null}
+                  {differs ? <span className="block text-xs text-[#9A3412]" data-testid="perfume-review-filed-as">{tr("perfume.review.filedAs", "filed as")}: {r.for_my_item} — {tr("perfume.review.differs", "differs")}: {differs}</span> : null}
                 </span>
               );
             } }] : []),
