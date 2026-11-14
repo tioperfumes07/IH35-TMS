@@ -100,8 +100,9 @@ export type SettlementsHomeBoardPanelsProps = {
 /**
  * T4 / REG-102 — Week-of Status must agree with Open/Closed pills (tour close), not payment-only.
  * Paid/Held still win when payment_state says so; otherwise tour-closed → Closed (never "Open" on the Closed pill).
+ * R90-32: pill="closed" forces non-Paid/Held/Cancelled rows to "Closed" (BOARD-45 recorded defect: closed panel labeled rows "Open").
  */
-export function weekOfBoardStatus(s: SettlementListRow): { label: "Paid" | "Open" | "Held" | "Closed" | "Cancelled"; color: string } {
+export function weekOfBoardStatus(s: SettlementListRow, pill?: "open" | "closed"): { label: "Paid" | "Open" | "Held" | "Closed" | "Cancelled"; color: string } {
   const pay = settlementPaymentLabel(s);
   if (pay === "Paid") return { label: "Paid", color: V3.green };
   if (pay === "Held") return { label: "Held", color: V3.red };
@@ -109,6 +110,8 @@ export function weekOfBoardStatus(s: SettlementListRow): { label: "Paid" | "Open
   if (phase === "Cancelled") return { label: "Cancelled", color: V3.muted };
   // ROUND 8.17 class L — Closed panel never paints "Open"; tour-closed / terminal rows label Closed.
   if (phase === "Closed" || settlementsRowTourClosed(s)) return { label: "Closed", color: V3.shell };
+  // R90-32: When viewing the Closed panel, any remaining row is closed by definition.
+  if (pill === "closed") return { label: "Closed", color: V3.shell };
   return { label: "Open", color: V3.link };
 }
 
@@ -141,7 +144,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
     <div className="space-y-3" data-testid="settlements-home-board-panels">
       {weekBuckets.length > 0 ? (
         <div
-          className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]"
+          className="grid grid-cols-1 gap-2 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"
           style={{ alignItems: "start" }}
           data-testid="settlements-home-v3-panels"
         >
@@ -232,7 +235,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
           </BoardSection>
 
           <BoardSection
-            title={`Deductions · Week of ${thisWeekBucket ? formatWeekOfTitle(thisWeekBucket.weekStartIso) : "—"} · ${formatSettlementsUsd(deductionsThisWeek)}`}
+            title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
             onViewAll={() => navigate("/driver-finance/deductions")}
             footer={
               deductionsListError
@@ -334,7 +337,6 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               </button>
             </span>
           }
-          footer={`Selected week · ${formatQuantityTable(weekOfRows.length, 0)} with pay · Gross ${money(weekOfTotals.gross)} · Deductions ${money(weekOfTotals.ded)} · Reimb. ${money(weekOfTotals.reimb)} · Net ${money(weekOfTotals.net)}`}
           testId="settlements-home-week-of-panel"
         >
           <div style={{ padding: "0 0 8px" }} data-testid="settlements-home-week-of-body">
@@ -367,8 +369,9 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 No {weekOfPill === "open" ? "open" : "closed"} settlements for this week.
               </div>
             ) : (
-              weekOfRows.map((s) => {
-                const status = weekOfBoardStatus(s);
+              <>
+              {weekOfRows.map((s) => {
+                const status = weekOfBoardStatus(s, weekOfPill);
                 return (
                   <div
                     key={s.id}
@@ -455,7 +458,34 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                     </span>
                   </div>
                 );
-              })
+              })}
+              {/* R90-32: Inline totals row (design Board 32 — gray footer row in table, not a text footer). */}
+              <div
+                data-testid="settlements-home-week-of-totals"
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1.4fr 1.2fr 0.9fr 0.9fr 0.8fr 0.9fr 0.8fr",
+                  gap: 8,
+                  padding: "8px 14px",
+                  borderTop: `1px solid ${V3.border}`,
+                  background: V3.headerBg,
+                  fontSize: 12,
+                  fontWeight: 700,
+                  fontFamily: V3.font,
+                  fontVariantNumeric: "tabular-nums",
+                  textAlign: "center",
+                  color: V3.ink,
+                }}
+              >
+                <span style={{ textAlign: "left" }}>This week · {formatQuantityTable(weekOfRows.length, 0)} with pay</span>
+                <span />
+                <span style={{ textAlign: "right" }}>{money(weekOfTotals.gross)}</span>
+                <span style={{ textAlign: "right" }}>{money(weekOfTotals.ded)}</span>
+                <span style={{ textAlign: "right" }}>{money(weekOfTotals.reimb)}</span>
+                <span style={{ textAlign: "right", fontWeight: 700 }}>{money(weekOfTotals.net)}</span>
+                <span />
+              </div>
+              </>
             )}
           </div>
         </BoardSection>

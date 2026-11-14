@@ -437,7 +437,7 @@ export function SettlementsPage() {
   const settlementsHomeKpiStrip =
     activeTab === "settlements" ? (
       <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
         data-testid="settlements-home-kpi-strip"
         data-settlements-v3-kpis="1"
       >
