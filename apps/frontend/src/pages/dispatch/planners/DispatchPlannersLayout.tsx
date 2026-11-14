@@ -480,7 +480,7 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
           subtitle="Driver availability and load timeline — shared date range"
           actions={<PlannerExportButtons />}
         />
-        <nav aria-label="Dispatch planner views" className="flex min-h-8 min-w-0 gap-0.5 overflow-x-auto bg-[#13233F] px-1.5 text-[11px] font-semibold" data-testid="dispatch-planners-tabs">
+        <nav aria-label="Dispatch planner views" className="flex min-h-8 min-w-0 gap-0.5 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold" data-testid="dispatch-planners-tabs">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}

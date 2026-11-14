@@ -118,7 +118,7 @@ export function LoadHistoryDetailPanel({
       <header className="flex items-start justify-between gap-2 px-3 py-2">
         <div className="min-w-0">
           {/* ROUND 9.0 Board 13 — full-width panel under the table: "Load 13689 — everything linked to it". */}
-          <div className="text-sm font-semibold text-[#111827]">
+          <div className="text-xs font-semibold text-[#111827]">
             Load <EntityLink kind="load" id={loadId} label={loadLabel} /> — everything linked to it{" "}
             <span className="text-xs font-normal text-[#5B6576]">
               {loadStatusLabel(row.status)} · {row.trip_type ?? "—"} · click any row to open it here; every item opens its record, and every record links back to this load
