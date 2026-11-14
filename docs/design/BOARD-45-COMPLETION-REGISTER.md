@@ -1,4 +1,26 @@
 
+### READY overlay (2026-11-14T02:15Z) — Cursor board25 #29389
+| Board | Status | Evidence |
+|---|---|---|
+| 25 misc report leaf Backs | READY | #29389 `37ef84f2db5` geofence/IFTA/custom/etc resolveBackHref; verify 20212 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
+### READY overlay (2026-11-14T02:09Z) — Cursor board25 #29388
+| Board | Status | Evidence |
+|---|---|---|
+| 25 ops report leaf Backs | READY | #29388 `180796d3461` late/booking/deadhead/margin/etc resolveBackHref; verify 20210 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
+### READY overlay (2026-11-14T02:02Z) — Cursor board1 #29382 + board13/14 #29385
+| Board | Status | Evidence |
+|---|---|---|
+| 1 Accounting Hub View-all | READY | #29382 `50bc70365a8` viewAllHref+ret; AR aging Back; verify 20200 |
+| 13/14 Dispatch Overview View-all | READY | #29385 `2bc07091eff` overviewHref+child Backs; verify 20204 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T01:48Z) — Cursor board25/10 #29384
 | Board | Status | Evidence |
 |---|---|---|
