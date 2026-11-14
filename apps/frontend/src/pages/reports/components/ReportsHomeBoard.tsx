@@ -390,35 +390,33 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       {/* Two-column: sidebar + right panel (v3 design) */}
       <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 12, alignItems: "start" }}>
 
-        {/* Left: category sidebar — v3 design: plain container, no panel title */}
-        <nav
-          aria-label="Report categories"
-          data-testid="reports-category-nav"
-          style={{ background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6, padding: 6, display: "flex", flexDirection: "column" }}
-        >
-          {SIDEBAR_CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              style={{
-                textAlign: "left",
-                padding: "7px 10px",
-                borderRadius: 4,
-                fontSize: "12px",
-                fontWeight: 600,
-                fontFamily: V3.font,
-                background: activeCategory === cat.id ? "#EEF2F7" : "transparent",
-                color: activeCategory === cat.id ? "#0F1219" : V3.muted,
-                border: "none",
-                cursor: "pointer",
-                width: "100%",
-              }}
-              onClick={() => setActiveCategory(cat.id)}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </nav>
+        {/* Left: category sidebar */}
+        <V3Panel title="Categories" testId="reports-category-nav" borderRadius={6}>
+          <nav aria-label="Report categories" style={{ display: "flex", flexDirection: "column" }}>
+            {SIDEBAR_CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                style={{
+                  textAlign: "left",
+                  padding: "7px 10px",
+                  borderRadius: 4,
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  fontFamily: V3.font,
+                  background: activeCategory === cat.id ? "#EEF2F7" : "transparent",
+                  color: activeCategory === cat.id ? "#0F1219" : V3.muted,
+                  border: "none",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
+                onClick={() => setActiveCategory(cat.id)}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </nav>
+        </V3Panel>
 
         {/* Right: category panel */}
         <div>
@@ -435,46 +433,41 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 footer="Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF / XLSX export exactly what the viewer shows with the filters applied — the QuickBooks pattern."
               >
                 <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <table data-testid="reports-accounting-financial-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr>
                         <th style={TH_STYLE}>☆</th>
                         <th style={TH_STYLE}>Report</th>
-                        <th style={TH_STYLE}>What it shows</th>
-                        <th style={TH_STYLE}>Basis</th>
-                        <th style={TH_STYLE}>Open in viewer</th>
+                        <th style={TH_STYLE}>{"What it shows"}</th>
+                        <th style={TH_STYLE}>{"Basis"}</th>
+                        <th style={TH_STYLE}>{"Open in viewer"}</th>
                         <th style={TH_STYLE}>Export</th>
                       </tr>
                     </thead>
                     <tbody>
                       {accountingRows.map(([reportKey, label, shows]) => {
-                        const href = reportCatalogHref(reportKey, basis, originHref);
                         return (
                           <tr key={reportKey} data-testid={`reports-acct-row-${reportKey}`}>
                             <td style={TD_STYLE}>
                               <span style={{ color: "#8B94A3" }}>☆</span>
                             </td>
                             <td style={TD_STYLE}>
-                              {href ? (
-                                <Link to={href} style={{ textDecoration: "none" }} data-testid={`reports-acct-link-${reportKey}`}>
-                                  <span style={{ fontWeight: 600, color: "#1D4ED8" }}>{label}</span>
-                                </Link>
-                              ) : (
-                                <span style={{ fontWeight: 600, color: "#1D4ED8" }}>{label}</span>
-                              )}
+                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-link-${reportKey}`}>
+                                {label}
+                              </CatalogLink>
                             </td>
                             <td style={TD_STYLE}>{shows}</td>
                             <td style={TD_STYLE}>{basisLabel(reportKey)}</td>
                             <td style={TD_STYLE}>
-                              {href ? (
-                                <Link to={href} style={{ textDecoration: "none" }} data-testid={`reports-acct-run-${reportKey}`}>
-                                  <span style={{ fontWeight: 600, color: "#1D4ED8" }}>Run →</span>
-                                </Link>
-                              ) : (
-                                <span style={{ fontWeight: 600, color: "#1D4ED8" }}>Run →</span>
-                              )}
+                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-run-${reportKey}`}>
+                                Run →
+                              </CatalogLink>
                             </td>
-                            <td style={TD_STYLE}>PDF · XLSX</td>
+                            <td style={TD_STYLE}>
+                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-export-${reportKey}`} muted>
+                                PDF · XLSX
+                              </CatalogLink>
+                            </td>
                           </tr>
                         );
                       })}

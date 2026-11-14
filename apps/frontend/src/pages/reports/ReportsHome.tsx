@@ -27,7 +27,7 @@ export function ReportsHomePage() {
         subtitle="Choose a domain category, then open a report to run"
         actions={
           <div className="flex items-center gap-2">
-            <Button onClick={() => navigate(moneyHref("/reports/custom"))}>+ Custom report</Button>
+            <Button onClick={() => navigate("/reports/custom")}>+ Custom report</Button>
             <Button variant="secondary" onClick={() => navigate(moneyHref("/reports/scheduled"))}>Schedule</Button>
           </div>
         }
