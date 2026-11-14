@@ -54,6 +54,9 @@ const ALLOWED_NESTED = new Set([
   "pages/maintenance/FaultDraftsPage.tsx",
   "pages/safety/PermitsPage.tsx",
   "pages/samsara-vendor-mapping/VendorMappingResolutionPage.tsx",
+  // R8.20 B9+10 — CustomerCreateModal wraps NewCustomerDrawerForm (already ALLOWED_NESTED) in a Modal;
+  // it is not a standalone leaf surface but a wrapper shell used by Customers ?create=1.
+  "components/customers/CustomerCreateModal.tsx",
 ]);
 
 /**
