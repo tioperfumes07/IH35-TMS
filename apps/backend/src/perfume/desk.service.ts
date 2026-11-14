@@ -711,23 +711,15 @@ const _gridCache = new Map<string, GridPayload>();
 /** Level-2 cache: pre-sorted filtered rows + zero-picks facets, one build per (data, view, mine, sort, dir). */
 export type ViewPayload = { sorted: GridRow[]; facets0: Record<string, GridFacet[]> };
 const _viewCache = new Map<string, ViewPayload>();
-/** Clears both caches. Call after every perfume write so the next /grid rebuild is fresh. */
-export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); }
-async function getGridVersionKey(c: PoolClient): Promise<string> {
-  const r = await c.query<{ pl_import: string; pl_void: string; items_stamp: string; vendors_stamp: string; rules_stamp: string }>(
-    `SELECT COALESCE(max(imported_at),'epoch'::timestamptz)::text AS pl_import,
-            COALESCE(max(voided_at),  'epoch'::timestamptz)::text AS pl_void,
-            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.items)    AS items_stamp,
-            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.vendors)  AS vendors_stamp,
-            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.settings) AS rules_stamp
-       FROM perfume.price_lists`);
-  const v = r.rows[0];
-  return `${v.pl_import}|${v.pl_void}|${v.items_stamp}|${v.vendors_stamp}|${v.rules_stamp}`;
-}
+/** In-process version counter. Incremented on every write so cache hits skip the DB entirely.
+ * On cold start or after invalidation the cache is empty anyway, so no seq scan is needed. */
+let _gridVer = 0;
+/** Clears both caches and bumps the version counter — write paths call this, so a warm HIT
+ * never needs to query max(updated_at) from DB. */
+export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; }
 
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
-  const _versionBase = await getGridVersionKey(c);
-  const _cacheKey = `${_versionBase}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
+  const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
   const _cached = _gridCache.get(_cacheKey);
   if (_cached) return _cached;
   const rules = await getRules(c);
@@ -937,7 +929,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _versionBase };
+  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey };
   _gridCache.set(_cacheKey, _result);
   return _result;
 }

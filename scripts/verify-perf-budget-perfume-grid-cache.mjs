@@ -29,8 +29,8 @@ const rts = readFileSync(join(root, "apps/backend/src/perfume/desk.routes.ts"), 
 // 1 — service exports invalidateGridCache
 check("service exports invalidateGridCache", /export function invalidateGridCache/.test(svc));
 
-// 2 — service has getGridVersionKey
-check("service has getGridVersionKey", /async function getGridVersionKey/.test(svc));
+// 2 — service has in-process _gridVer counter (replaces getGridVersionKey seq scans — R832.2 follow-up)
+check("service has in-process _gridVer counter", /let _gridVer\s*=\s*0/.test(svc));
 
 // 3 — service has _gridCache Map
 check("service has _gridCache Map", /_gridCache\s*=\s*new Map/.test(svc));
@@ -67,12 +67,12 @@ check("routes import getOrBuildView", /getOrBuildView/.test(rts.slice(0, 1500)))
 // 12 — service uses Intl.Collator module-level instance
 check("service has module-level Intl.Collator", /new Intl\.Collator\(/.test(svc));
 
-// === Version key covers all 5 tracked tables ===
+// === Version counter invalidated on every write (replaces 5-table seq scan) ===
 
 // 13
-check("version key covers price_lists.imported_at", /imported_at.*pl_import|pl_import.*imported_at/s.test(svc));
-check("version key covers price_lists.voided_at",   /voided_at.*pl_void|pl_void.*voided_at/s.test(svc));
-check("version key covers items.updated_at",        /perfume\.items.*items_stamp|items_stamp.*perfume\.items/s.test(svc));
+check("invalidateGridCache bumps _gridVer", /invalidateGridCache[\s\S]{0,200}_gridVer\+\+/.test(svc));
+check("buildGrid uses _gridVer as cache key prefix", /v\$\{_gridVer\}|`v\$\{_gridVer\}/.test(svc));
+check("_gridVer declared at module level", /^let _gridVer\s*=/m.test(svc));
 
 if (process.exitCode) {
   console.error("\nverify-perf-budget-perfume-grid-cache: FAIL");
