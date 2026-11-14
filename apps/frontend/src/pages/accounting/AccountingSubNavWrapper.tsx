@@ -6,7 +6,6 @@ import { ACCOUNTING_SUB_NAV_ITEMS } from "./subnav-manifest";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useAccountingNavKpis } from "./useAccountingNavKpis";
-import { formatUsdCents } from "../../lib/money";
 import { resolveBackHref } from "../../lib/returnContext";
 
 // ACCT-F6322 — hub + Create ▾ must open the same ?create=1 wizards as Topbar
@@ -100,11 +99,9 @@ export function AccountingSubNavWrapper({
   // dropdown children, and all styling are untouched.
   const navItems = useMemo(() => {
     return ACCOUNTING_SUB_NAV_ITEMS.map((item) => {
-      if (item.label === "Bills" && navKpis.bills.count > 0) {
-        return { ...item, label: `Bills (${navKpis.bills.count}) ${formatUsdCents(navKpis.bills.openAmountCents)}` };
-      }
+      // Design parity (R9.0 Board 1): Bills = plain label; Invoices = count only, no dollar amount.
       if (item.label === "Invoices" && navKpis.invoices.count > 0) {
-        return { ...item, label: `Invoices (${navKpis.invoices.count}) ${formatUsdCents(navKpis.invoices.openAmountCents)}` };
+        return { ...item, label: `Invoices (${navKpis.invoices.count})` };
       }
       return item;
     });
@@ -121,15 +118,13 @@ export function AccountingSubNavWrapper({
   return (
     <div className="space-y-4" data-accounting-subnav-wrapper="true">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-2">
-          <div>
-            {/* U18 — the way back is the module path, never browser history: Accounting / [parent] / this page. */}
-            <div data-testid="accounting-breadcrumb">
-              <Breadcrumb items={breadcrumb} />
-            </div>
-            <h1 className="text-page-title text-gray-900" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>{title}</h1>
-            {subtitle ? <p className="text-xs text-gray-600">{subtitle}</p> : null}
+        <div className="flex items-baseline gap-2">
+          {/* U18 — the way back is the module path, never browser history: Accounting / [parent] / this page. */}
+          <div data-testid="accounting-breadcrumb">
+            <Breadcrumb items={breadcrumb} />
           </div>
+          <h1 className="text-page-title text-gray-900 m-0" style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>{title}</h1>
+          {subtitle ? <p className="text-xs text-gray-600 m-0">{subtitle}</p> : null}
         </div>
         {/*
           ACCT-CHROME-UNIFORM-01 — one toolbar scale (Button md = h-8 / locked 12px body text, GO-21 J1):
@@ -139,7 +134,7 @@ export function AccountingSubNavWrapper({
           {actions}
           <Link
             to="/vendors"
-            className="inline-flex h-8 items-center rounded-sm border border-gray-300 bg-white px-3 text-xs font-medium text-[#0F1219] hover:bg-gray-50"
+            className="text-xs font-semibold text-[#0F1219] hover:underline underline-offset-2"
           >
             Go to vendors
           </Link>
@@ -170,7 +165,7 @@ export function AccountingSubNavWrapper({
       </div>
 
       <div className="relative z-10">
-        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />
+        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" hideChevron />
       </div>
 
       {kpiStrip}

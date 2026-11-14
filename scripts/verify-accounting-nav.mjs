@@ -233,6 +233,8 @@ try {
   }
 }
 
+// ─── R9.0 Board 1 census (design parity checks) run via CI step 14905 ───────
+
 // ─── Summary ─────────────────────────────────────────────────────────────────
 if (failed) {
   console.error("\nAccounting nav guard FAILED — see errors above.");

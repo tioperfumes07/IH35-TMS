@@ -284,7 +284,8 @@ export const ACCOUNTING_SUB_NAV_ITEMS: readonly NavItem[] = [
     ],
   },
   // U15 (owner, 2026-10-04) — Reclassify sits beside Work orders & bills, not inside More.
-  leafOf("/accounting/reclassify"),
+  // R9.0 Board 1 — top-level label is "Reclassify" (design shows short label); full name in SUBNAV_ITEMS.
+  { ...leafOf("/accounting/reclassify"), label: "Reclassify" },
   leafOf("/accounting/reports"), // Reports
   // More stays chevron-only (no single default destination).
   { label: GROUP_LABELS.more, children: childrenOf("more") },
