@@ -258,7 +258,7 @@ export function TruckPlanner() {
   }
 
   return (
-    <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
+    <div data-testid="dispatch-truck-planner-page" data-v3-board="Dispatch-TruckPlanner" style={{ lineHeight: "normal" }} className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
       {/* ROUND 9.0 Board 12 — title, Grid/List and View all on one row (Dispatch-TruckPlanner.png). */}
       <div className="flex flex-wrap items-center justify-between gap-2" data-testid="dispatch-truck-planner-head">
         <h2 className="text-xs font-semibold text-[#111827]">Truck planner — {formatQuantityTable(days.length, 0)} selected day{days.length === 1 ? "" : "s"} fill the full width</h2>

@@ -412,7 +412,7 @@ export default function LoadHistoryBoardPage() {
   const kpiValue = (v: string) => (query.data ? v : "…");
 
   return (
-    <div className="space-y-3 p-4" data-testid="load-history-board">
+    <div className="space-y-3 p-4" data-testid="load-history-board" data-v3-board="Dispatch-LoadHistory" style={{ lineHeight: "normal" }}>
       {/* ROUND 9.0 Board 13 — header first, then the Dispatch tab strip (Dispatch-LoadHistory.dc.html). */}
       <PageHeader
         backHref={loadHistoryBackHref}
