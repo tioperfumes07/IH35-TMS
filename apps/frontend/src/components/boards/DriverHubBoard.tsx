@@ -87,6 +87,9 @@ const ACTIVITY_COLUMNS: Array<ParityColumn<Panel["activity"][number]>> = [
 
 function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: string; driverId: string }) {
   const navigate = useNavigate();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const q = useQuery({
     queryKey: ["driver-hub-panel", operatingCompanyId, driverId],
     queryFn: () => apiRequest<Panel>(`/api/v1/mdata/boards/drivers/${driverId}?operating_company_id=${operatingCompanyId}`),
@@ -108,15 +111,15 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
             Unit {p.driver.unit ?? "—"} · CDL {p.driver.cdl_state ?? "—"} · hired {p.driver.hire_date ? formatCalendarDateUS(p.driver.hire_date) : "—"} · <b>{p.driver.status}</b>
           </div>
         </div>
-        <Link className="pb-link" to={`/drivers/${p.driver.id}`}>Open full profile →</Link>
+        <Link className="pb-link" to={drvHref(`/drivers/${p.driver.id}`)}>Open full profile →</Link>
       </div>
       <div className="pb-panel-body">
         <div className="pb-figs">
           {/* Each figure opens the driver's tab that lists what it sums. */}
-          <div><div className="ih-hd">Settlement due</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Settlements")}>{money(p.figures.settlement_due_cents)}</NumLink></div></div>
-          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Pay & escrow")}>{money(p.figures.escrow_held_cents)}</NumLink>}</div></div>
-          <div><div className="ih-hd">Advances open</div><div className="pb-fig"><NumLink to={driverProfileTabHref(p.driver.id, "Cash advances")}>{money(p.figures.advances_open_cents)}</NumLink></div></div>
-          <div><div className="ih-hd">Miles, 30 days</div><div className="pb-fig">{p.figures.miles_30d == null ? "—" : <NumLink to={driverProfileTabHref(p.driver.id, "Loads")}>{int(p.figures.miles_30d)}</NumLink>}</div></div>
+          <div><div className="ih-hd">Settlement due</div><div className="pb-fig"><NumLink to={drvHref(driverProfileTabHref(p.driver.id, "Settlements"))}>{money(p.figures.settlement_due_cents)}</NumLink></div></div>
+          <div><div className="ih-hd">Escrow held</div><div className="pb-fig">{p.figures.escrow_held_cents == null ? "—" : <NumLink to={drvHref(driverProfileTabHref(p.driver.id, "Pay & escrow"))}>{money(p.figures.escrow_held_cents)}</NumLink>}</div></div>
+          <div><div className="ih-hd">Advances open</div><div className="pb-fig"><NumLink to={drvHref(driverProfileTabHref(p.driver.id, "Cash advances"))}>{money(p.figures.advances_open_cents)}</NumLink></div></div>
+          <div><div className="ih-hd">Miles, 30 days</div><div className="pb-fig">{p.figures.miles_30d == null ? "—" : <NumLink to={drvHref(driverProfileTabHref(p.driver.id, "Loads"))}>{int(p.figures.miles_30d)}</NumLink>}</div></div>
           <div className={`pb-integrity${flag ? " pb-integrity--flag" : ""}`}>
             <div className="ih-hd">Integrity</div>
             <div className="pb-fig">{flag ? "Flagged" : "Clear"}</div>
@@ -146,7 +149,7 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
           <div className="ih-hd" style={{ marginBottom: 6 }}>Linked</div>
           <div className="pb-chips">
             {LINKED.map((l) => (
-              <Link key={l.key} className="pb-linkchip" to={`/drivers/${p.driver.id}${l.tab ? `?tab=${l.tab}` : ""}`}>{l.label} ({int(p.linked[l.key] ?? 0)})</Link>
+              <Link key={l.key} className="pb-linkchip" to={drvHref(`/drivers/${p.driver.id}${l.tab ? `?tab=${l.tab}` : ""}`)}>{l.label} ({int(p.linked[l.key] ?? 0)})</Link>
             ))}
           </div>
         </div>
@@ -214,7 +217,7 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
     { key: "due", label: "Due", kind: "money", minWidth: 96, sortValue: (r) => r.due_cents, render: (r) => (
       <span className="ih-num pb-strong">
         <MoneyCell cents={r.due_cents} format={money} drill={{ entity: { kind: "driver", id: r.id } }} />
-        {r.due_count > 0 ? <span className="pb-sub-sm"> (<NumLink to={driverProfileTabHref(r.id, "Settlements")}>{int(r.due_count)}</NumLink>)</span> : null}
+        {r.due_count > 0 ? <span className="pb-sub-sm"> (<NumLink to={drvHref(driverProfileTabHref(r.id, "Settlements"))}>{int(r.due_count)}</NumLink>)</span> : null}
       </span>
     ) },
   ];
@@ -229,8 +232,8 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
             <div className="pb-sub">
               {h ? (
                 <>
-                  <NumLink to="/drivers?view=board&status=All">{int(h.kpis.total)} drivers</NumLink> ·{" "}
-                  <NumLink to="/drivers?view=board&status=Active">{int(h.kpis.active)} active</NumLink> · {h.company_name ?? ""}
+                  <NumLink to={drvHref("/drivers?view=board&status=All")}>{int(h.kpis.total)} drivers</NumLink> ·{" "}
+                  <NumLink to={drvHref("/drivers?view=board&status=Active")}>{int(h.kpis.active)} active</NumLink> · {h.company_name ?? ""}
                 </>
               ) : "Loading drivers…"}
             </div>
@@ -242,19 +245,19 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
         </div>
         <div className="pb-kpis" data-testid="driver-hub-kpis">
           {/* One tile format (V3KpiTile); each opens the exact drivers (or balances) it counts. */}
-          <V3KpiTile label="Active" value={h ? `${int(h.kpis.active)} / ${int(h.kpis.total)}` : "…"} href="/drivers?view=board&status=Active" />
-          <V3KpiTile label="On loads" value={h ? int(h.kpis.on_loads) : "…"} href="/drivers?view=board&load=on" />
-          <V3KpiTile label="Available" value={h ? int(h.kpis.available) : "…"} href="/drivers?view=board&load=available" />
-          <V3KpiTile label="On leave" value={h ? int(h.kpis.on_leave) : "…"} href="/drivers?view=board&status=OnLeave" />
-          <V3KpiTile label="Settle due" value={h ? int(h.kpis.settle_due) : "…"} tone={h && h.kpis.settle_due ? "amber" : "ink"} href="/drivers?view=board&settle=due" />
+          <V3KpiTile label="Active" value={h ? `${int(h.kpis.active)} / ${int(h.kpis.total)}` : "…"} href={drvHref("/drivers?view=board&status=Active")} />
+          <V3KpiTile label="On loads" value={h ? int(h.kpis.on_loads) : "…"} href={drvHref("/drivers?view=board&load=on")} />
+          <V3KpiTile label="Available" value={h ? int(h.kpis.available) : "…"} href={drvHref("/drivers?view=board&load=available")} />
+          <V3KpiTile label="On leave" value={h ? int(h.kpis.on_leave) : "…"} href={drvHref("/drivers?view=board&status=OnLeave")} />
+          <V3KpiTile label="Settle due" value={h ? int(h.kpis.settle_due) : "…"} tone={h && h.kpis.settle_due ? "amber" : "ink"} href={drvHref("/drivers?view=board&settle=due")} />
           {/* The Escrow page lists every driver holding an escrow balance — its total is this figure. */}
-          <V3KpiTile label="Escrow held" value={h ? money(h.kpis.escrow_held_cents) : "…"} href="/driver-finance/escrow" />
+          <V3KpiTile label="Escrow held" value={h ? money(h.kpis.escrow_held_cents) : "…"} href={drvHref("/driver-finance/escrow")} />
         </div>
       </div>
 
       <nav className="pb-tabs" aria-label="Drivers module">
         {DRIVER_HUB_TABS.map((t) => (
-          <Link key={t.to} className="pb-tab" to={t.to} aria-current={t.to === "/drivers/profiles" ? "page" : undefined}>{t.label}</Link>
+          <Link key={t.to} className="pb-tab" to={drvHref(t.to)} aria-current={t.to === "/drivers/profiles" ? "page" : undefined}>{t.label}</Link>
         ))}
       </nav>
 
