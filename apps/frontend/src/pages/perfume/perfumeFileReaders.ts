@@ -142,7 +142,18 @@ export const PDF_NO_NAME = "(no name on this line in the file)";
  * Review instead of vanishing.
  */
 export function pdfLinePairs(line: string): Array<[string, string]> {
-  return [...line.matchAll(/((?:\S.*?)?)\s*\$\s?([\d,]+\.\d{2})/g)].map((m) => [m[1].trim() || PDF_NO_NAME, m[2].replace(/,/g, "")]);
+  const pairs: Array<[string, string]> = [];
+  let end = 0;
+  for (const m of line.matchAll(/((?:\S.*?)?)\s*\$\s?([\d,]+\.\d{2})/g)) {
+    pairs.push([m[1].trim() || PDF_NO_NAME, m[2].replace(/,/g, "")]);
+    end = (m.index ?? 0) + m[0].length;
+  }
+  // A price printed WITHOUT the "$" (LISTA N 5: "PRINCESS GIFT SET 3X30ML EDT   10.25" — the one line of 2,079 the
+  // reader dropped): only as the LAST thing on the line, after a name with letters, never glued to a "+" or a unit,
+  // so sizes like "3.4oz EDT+0.25oz" are never read as prices.
+  const tail = line.slice(end).match(/^\s*([^$]*?[A-Za-z][^$]*?[^+\s])\s+([\d,]+\.\d{2})\s*$/);
+  if (tail) pairs.push([tail[1].trim(), tail[2].replace(/,/g, "")]);
+  return pairs;
 }
 
 export async function readPdf(file: File): Promise<ReadFile> {
