@@ -158,6 +158,7 @@ export function UnexpectedExpensesPage() {
           data-testid="unexpected-kpi-strip"
         >
           <V3KpiTile
+            board
             label={`${report?.month_label ?? "Month"} so far`}
             value={
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.month_total_cents)
@@ -171,6 +172,7 @@ export function UnexpectedExpensesPage() {
             subDataV3="unexpected-kpi-month-sub"
           />
           <V3KpiTile
+            board
             label="Possible duplicates"
             value={query.isLoading || !kpis ? "—" : String(kpis.duplicate_count)}
             sub={duplicateSub}
@@ -182,6 +184,7 @@ export function UnexpectedExpensesPage() {
             subDataV3="unexpected-kpi-dup-sub"
           />
           <V3KpiTile
+            board
             label="Linked to a truck"
             value={
               query.isLoading || !kpis
@@ -194,6 +197,7 @@ export function UnexpectedExpensesPage() {
             valueDataV3="unexpected-kpi-linked-value"
           />
           <V3KpiTile
+            board
             label="Tows · fines"
             value={
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.tows_fines_cents)
@@ -224,7 +228,7 @@ export function UnexpectedExpensesPage() {
           >
             <ParityTable<(typeof candidates)[number]>
               tableTestId="unexpected-candidates-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
@@ -292,7 +296,7 @@ export function UnexpectedExpensesPage() {
           <BoardSection title="By kind" viewAllHref={bankingMonthHref} testId="unexpected-by-kind-panel">
             <ParityTable<{ kind: string; label: string; amount_cents: number | null; count: number }>
               tableTestId="unexpected-by-kind-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
