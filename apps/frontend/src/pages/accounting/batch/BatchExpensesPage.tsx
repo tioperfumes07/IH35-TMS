@@ -28,7 +28,8 @@ import { listCatalogAccounts } from "../../../api/catalog-accounts";
 import { classesCatalogClient } from "../../../api/catalogs-accounting";
 import { listVendors } from "../../../api/mdata";
 import { createExpense } from "../../../api/accounting";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { isExpenseAccount, isPaymentAccount } from "../../../lib/account-picker-scope";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { SelectCombobox } from "../../../components/Combobox";
@@ -44,6 +45,9 @@ type IndexedRow = BatchExpenseRow & { rowIndex: number };
 const VENDOR_PICKER_LIMIT = 1000;
 
 export function BatchExpensesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -163,7 +167,7 @@ export function BatchExpensesPage() {
           <button type="button" className="h-7 rounded-sm border border-[#14314F] bg-[#14314F] px-2 text-white" data-b5-batch-type-expenses="1">
             Expenses / Checks
           </button>
-          <a href="/accounting/bills/vendor?create=1" className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]" data-b5-batch-type-bills="1">
+          <a href={moneyHref("/accounting/bills/vendor?create=1")} className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44] hover:bg-[#F7F8FA]" data-b5-batch-type-bills="1">
             Bills (Create Multiple Bills)
           </a>
           {/* B-5 §23 — deposit + settlement batch grids already exist on their engines; type strip must hop, never claim unwired. */}

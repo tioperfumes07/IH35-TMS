@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { formatCalendarDateUS, formatDateUS } from "../../lib/formatDate";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {useLocation, useNavigate, useParams, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   archiveInsurancePolicy,
   getInsurancePolicy,
@@ -38,6 +39,9 @@ import { resolveBackHref } from "../../lib/returnContext";
 const POLICY_LAWSUITS_PER_CLAIM_LIMIT = 200;
 
 export function PolicyDetail() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const insHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -147,7 +151,7 @@ export function PolicyDetail() {
       if (input.generation !== policyActionGenerationRef.current) return;
       await queryClient.invalidateQueries({ queryKey: ["insurance", "policies", input.companyId] });
       pushToast("Policy archived", "success");
-      navigate("/insurance/policies");
+      navigate(insHref("/insurance/policies"));
     },
     onError: (_error, input) => {
       if (input.generation === policyActionGenerationRef.current) pushToast("Failed to archive policy", "error");

@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {useNavigate, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   getNotificationPreferences,
   patchNotificationPreferences,
@@ -24,9 +25,12 @@ function labelForChannel(ch: NotificationChannelKey): string {
 }
 
 export function NotificationPreferencesPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const setHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   // ROUND 367.9: Up is structural — /settings/notifications' route-derived parent is /settings.
-  const goBack = () => navigate("/settings");
+  const goBack = () => navigate(setHref("/settings"));
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const prefsQuery = useQuery({

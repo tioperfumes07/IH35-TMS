@@ -2186,7 +2186,7 @@ export function CustomerDetailPage() {
         <div className="space-y-3" data-testid="customer-billing-ar-readonly" data-cust-ar-readonly="1">
           <p className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-2 py-1.5 text-xs text-[#1F2A44]">
             Invoices and A/R on this customer profile are read only. Record payments from{" "}
-            <a href="/accounting/payments?create=1" className="font-semibold text-[#0F1219] underline">
+            <a href={custInvHref("/accounting/payments?create=1")} className="font-semibold text-[#0F1219] underline">
               Accounting → Receive payment
             </a>
             .

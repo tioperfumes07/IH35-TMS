@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import {useNavigate, useParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getSafetyDvirDetail } from "../../api/safety";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -9,13 +10,16 @@ import { DvirMaintenanceInspectionsReverseSection } from "../../components/maint
 type DefectRow = Record<string, unknown>;
 
 export function IdvrDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   // ROUND 367.9 — structural Up to the IDVR list, never navigate(-1).
   const goBack = () => {
-    navigate("/safety/idvr");
+    navigate(safetyHref("/safety/idvr"));
   };
 
   const detailQ = useQuery({

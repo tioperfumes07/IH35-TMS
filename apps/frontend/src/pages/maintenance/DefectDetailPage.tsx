@@ -1,4 +1,5 @@
-import { useNavigate, useParams } from "react-router-dom";
+import {useNavigate, useParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getMaintenanceDvirDefect, triageMaintenanceDvirDefect } from "../../api/maintenance";
@@ -9,6 +10,9 @@ import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 
 export function DefectDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { defectId = "" } = useParams();
   const navigate = useNavigate();
   const { selectedCompanyId, companies } = useCompanyContext();
@@ -95,7 +99,7 @@ export function DefectDetailPage() {
           type="button"
           aria-label="Back"
           onClick={() => {
-            navigate("/maintenance/defects");
+            navigate(maintHref("/maintenance/defects"));
           }}
           className="border-0 bg-transparent p-0 text-[#1F2A44] hover:underline"
         >
