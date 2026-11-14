@@ -1,3 +1,21 @@
+### READY overlay (2026-11-14T04:37Z) — Cursor WriteCheck/customer/load/reports #29464
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 WriteCheck/customer/vendor · 3 factoring vendor · 25 reports frequent-run | READY | #29464 `b4e0ed9ce4e` withReturnContext; verify 20272 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T04:37Z) — Cursor board1/3 create+recon drills #29462
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Check/Lease/Invoice create + QuickActions · 3 ReconWorkspace | READY | #29462 `f5bff8bb9cb` withReturnContext; verify 20270 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T04:32Z) — Cursor board1/3 create+recon drills #29462
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Check/Lease/Invoice create + QuickActions · 3 ReconWorkspace | READY | #29462 `f5bff8bb9cb` withReturnContext; verify 20270 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:30Z) — Cursor board1/3 detail drills #29460
 | Board / surface | Status | Evidence |
 |---|---|---|
