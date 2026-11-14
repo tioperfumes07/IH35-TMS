@@ -10,7 +10,8 @@ import { customerQualityKind, customerQualityClass } from "../lib/quality-badge"
 import { formatQuantityTable, formatUsdCents } from "../lib/money";
 import { clearPartyCreateParams } from "../lib/partyBoardReturn";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { listAllInvoices, listAllCustomerInvoices, type Invoice } from "../api/accounting";
 import { getCustomerActivity, type CustomerActivityRow } from "../api/customers";
 import { CounterpartyStatementView } from "./reports/CounterpartyStatementPage";
@@ -592,6 +593,16 @@ export function CustomersPage() {
     params.delete("txn"); // C-31 — tab owns the predicate; retire the buried ?txn= control.
     setSearchParams(params, { replace: true });
   };
+  const { pathname, search } = useLocation();
+  const customersOriginHref = currentOriginHref(pathname, search);
+  // ROUND 8.20 board9 — KPI drills shareable href+ret (not onClick-only).
+  const customersWithTxHref = withReturnContext("/customers", customersOriginHref);
+  const customersAllHref = withReturnContext("/customers?listTab=all", customersOriginHref);
+  const customersOpenInvoicesHref = withReturnContext(
+    "/accounting/invoices?has_balance=true",
+    customersOriginHref,
+  );
+
   const listStatus: "active" | "inactive" | "all" =
     listTab === "inactive" ? "inactive" : listTab === "active" ? "active" : "all";
   // A-21 server predicate only when the With-transactions tab is selected (default).
@@ -1399,28 +1410,28 @@ export function CustomersPage() {
           value={formatQuantityTable(customerHomeKpis.withTransactions, 0)}
           sub="customers with activity"
           testId="customers-kpi-with-transactions"
-          onClick={() => setListTab("with_transactions")}
+          href={customersWithTxHref}
         />
         <V3KpiTile
           label="In the book"
           value={formatQuantityTable(customerHomeKpis.inTheBook, 0)}
           sub="full customer roster"
           testId="customers-kpi-in-the-book"
-          onClick={() => setListTab("all")}
+          href={customersAllHref}
         />
         <V3KpiTile
           label="Open invoices"
           value={customerHomeKpis.openInvoices == null ? "—" : formatQuantityTable(customerHomeKpis.openInvoices, 0)}
           sub="sent/partial with balance"
           testId="customers-kpi-open-invoices"
-          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+          href={customersOpenInvoicesHref}
         />
         <V3KpiTile
           label="Billed"
           value={customerHomeKpis.billedCents == null ? "—" : fmtMoney(customerHomeKpis.billedCents)}
           sub="open invoice totals"
           testId="customers-kpi-billed"
-          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+          href={customersOpenInvoicesHref}
         />
         <V3KpiTile
           label="A/R open"
@@ -1431,7 +1442,7 @@ export function CustomersPage() {
               : `${customerHomeKpis.pastDuePct}% past due`
           }
           testId="customers-kpi-ar-open"
-          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+          href={customersOpenInvoicesHref}
         />
         <V3KpiTile
           label="Collected"
@@ -1441,7 +1452,7 @@ export function CustomersPage() {
             customerHomeKpis.collectedCents != null && customerHomeKpis.collectedCents === 0 ? "red" : "ink"
           }
           testId="customers-kpi-collected"
-          onClick={() => navigate("/accounting/invoices?has_balance=true")}
+          href={customersOpenInvoicesHref}
         />
       </div>
       <MoneyListToolbar

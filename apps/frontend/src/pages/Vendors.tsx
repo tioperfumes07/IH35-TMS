@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../components/forms/DatePicker";
 import { ParityTable, type ParityColumn } from "../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { listBills, listVendorBalances, listExpenses, type ExpenseListRow } from "../api/accounting";
 import { listAllVendors, listVendorPaymentMethods, getVendorRollups, getVendorRosterCounts, type VendorPaymentMethod, type VendorRollup } from "../api/mdata";
 import { vendorQualityKind, vendorQualityClass } from "../lib/quality-badge";
@@ -158,6 +159,12 @@ export function VendorsPage() {
     onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname, search } = useLocation();
+  const vendorsOriginHref = currentOriginHref(pathname, search);
+  // ROUND 8.20 board10 — KPI drills shareable href+ret (not onClick-only).
+  const vendorsWithTxHref = withReturnContext("/vendors", vendorsOriginHref);
+  const vendorsAllHref = withReturnContext("/vendors?listTab=all", vendorsOriginHref);
+  const vendorsOpenBillsHref = withReturnContext("/accounting/bills?status=unpaid", vendorsOriginHref);
   const activeTab = parseVendorDetailTab(searchParams.get("tab"));
   const setActiveTab = (next: VendorTabId) => {
     const params = new URLSearchParams(searchParams);
@@ -880,14 +887,14 @@ export function VendorsPage() {
           value={formatQuantityTable(vendorHomeKpis.withTransactions, 0)}
           sub="vendors with activity"
           testId="vendors-kpi-with-transactions"
-          onClick={() => setListStatus("with_transactions")}
+          href={vendorsWithTxHref}
         />
         <V3KpiTile
           label="In the book"
           value={formatQuantityTable(vendorHomeKpis.inTheBook, 0)}
           sub="full vendor roster"
           testId="vendors-kpi-in-the-book"
-          onClick={() => setListStatus("all")}
+          href={vendorsAllHref}
         />
         <V3KpiTile
           label="Open bills"
@@ -898,14 +905,14 @@ export function VendorsPage() {
               : `${formatQuantityTable(vendorHomeKpis.vendorsWithOpen, 0)} with open balance`
           }
           testId="vendors-kpi-open-bills"
-          onClick={() => navigate("/accounting/bills?status=unpaid")}
+          href={vendorsOpenBillsHref}
         />
         <V3KpiTile
           label="Spend YTD"
           value={vendorHomeKpis.spendYtdCents == null ? "—" : fmtMoney(vendorHomeKpis.spendYtdCents)}
           sub="purchases year to date"
           testId="vendors-kpi-spend-ytd"
-          onClick={() => setListStatus("with_transactions")}
+          href={vendorsWithTxHref}
         />
       </div>
       <MoneyListToolbar

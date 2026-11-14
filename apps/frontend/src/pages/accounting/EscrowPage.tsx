@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatDateTimeUS, formatDateUS } from "../../lib/formatDate";
@@ -105,12 +106,26 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname, search } = useLocation();
+  const escrowOriginHref = currentOriginHref(pathname, search);
   const [selectedAccountId, setSelectedAccountId] = useState<string>("");
   // orphan-triage F1: "Pending Review" surfaces EscrowDeductionsPendingTab (auto-proposed
   // abandonment deductions awaiting Owner decision) — distinct from the accounts/postings ledger
   // below (EscrowPage's original content, kept byte-for-byte under the "Accounts" tab).
-  const [viewTab, setViewTab] = useState<EscrowViewTab>("accounts");
+  // ROUND 8.20 — view tab is URL SoT so KPI href+ret drills are shareable/refresh-safe.
+  const viewTab: EscrowViewTab = searchParams.get("view") === "pending" ? "pending" : "accounts";
+  const setViewTab = (next: EscrowViewTab) => {
+    const params = new URLSearchParams(searchParams);
+    if (next === "accounts") params.delete("view");
+    else params.set("view", next);
+    setSearchParams(params, { replace: true });
+  };
+  const escrowBase = pathname.startsWith("/driver-finance")
+    ? "/driver-finance/escrow"
+    : "/accounting/escrow";
+  const escrowAccountsHref = withReturnContext(escrowBase, escrowOriginHref);
+  const escrowPendingHref = withReturnContext(`${escrowBase}?view=pending`, escrowOriginHref);
   const [accountSearch, setAccountSearch] = useState("");
   // BANK-SORT-ROLLOUT-ACCT — accounts + postings tables persist sort in URL via useUrlSort.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -281,7 +296,7 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
           }
           sub="active bonds with a balance"
           testId="escrow-kpi-drivers-holding"
-          onClick={() => setViewTab("accounts")}
+          href={escrowAccountsHref}
         />
         <V3KpiTile
           label="Total held"
@@ -290,7 +305,7 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
           }
           sub="active escrow balances"
           testId="escrow-kpi-total-held"
-          onClick={() => setViewTab("accounts")}
+          href={escrowAccountsHref}
         />
         <V3KpiTile
           label="Release window"
@@ -303,7 +318,7 @@ export function EscrowPage({ settlementsMount = false }: EscrowPageProps = {}) {
           value="—"
           sub="no schedule feed"
           testId="escrow-kpi-scheduled-releases"
-          onClick={() => setViewTab("pending")}
+          href={escrowPendingHref}
         />
       </div>
 
