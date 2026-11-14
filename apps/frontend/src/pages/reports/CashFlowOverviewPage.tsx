@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import {
@@ -16,6 +16,7 @@ import {
 } from "recharts";
 import { getCashFlowOverview, type CashFlowOverviewResponse } from "../../api/reports";
 import { companyToday } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -101,6 +102,9 @@ export function CashFlowOverviewPage() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { asOfDate: today, groupBy: "month" };
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
@@ -216,7 +220,7 @@ export function CashFlowOverviewPage() {
       <PageHeader
         title="Cash flow overview"
         subtitle="Operating liquidity, 30-day projection, and treasury posture"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Cash Flow Overview"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

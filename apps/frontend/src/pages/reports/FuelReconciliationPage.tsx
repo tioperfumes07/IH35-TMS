@@ -1,7 +1,8 @@
 import { companyToday, addDaysIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import {
   getFuelReconciliation,
   rematchFuelTxnToGps,
@@ -59,6 +60,9 @@ function parseFuelReconTab(searchParams: URLSearchParams): FuelReconTab {
 export function FuelReconciliationPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -268,7 +272,7 @@ export function FuelReconciliationPage() {
       <PageHeader
         title="Fuel reconciliation"
         subtitle="Card spend vs work order fuel attribution"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Fuel Reconciliation"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

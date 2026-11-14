@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -9,6 +9,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { useStagedListFilters } from "../../components/table";
 import { companyToday } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type CashFlowReportResponse = {
   operating_company_id: string;
@@ -32,6 +33,9 @@ export function CashFlowReport() {
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { asOfDate: today, groupBy: "month" };
   const [appliedFilters, setAppliedFilters] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied: appliedFilters, empty: emptyFilters, onApply: setAppliedFilters });
@@ -60,7 +64,7 @@ export function CashFlowReport() {
       <PageHeader
         title="Cash flow"
         subtitle="Tenant-scoped liquidity snapshot (GAP-45)"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Cash Flow"]}
       />
       <ReportsSubNav />

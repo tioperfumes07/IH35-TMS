@@ -16077,6 +16077,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-report-board-shell-ret board25"
   },
+  "20208": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-leaf-back-ret board25 CF/fuel/settlement"
+  },
   "20210": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
