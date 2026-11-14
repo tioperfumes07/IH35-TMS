@@ -16027,6 +16027,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-rolling-ledger-kpi-drills board7"
   },
+  "20188": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-cash-flow-home-kpi-href board5"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
