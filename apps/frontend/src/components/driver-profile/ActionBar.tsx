@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { SendMessageModal } from "../drivers/SendMessageModal";
 import { SuspendConfirmModal } from "../drivers/SuspendConfirmModal";
 import { TerminateConfirmModal } from "../drivers/TerminateConfirmModal";
@@ -30,6 +31,9 @@ export function ActionBar({
   onActionComplete?: () => void;
   onAssignTruck?: () => void;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [messageOpen, setMessageOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
@@ -46,7 +50,7 @@ export function ActionBar({
         className="sticky bottom-0 z-10 flex flex-wrap gap-2 border-t border-gray-200 bg-white/95 p-3 backdrop-blur-sm"
         data-testid="dp-action-bar"
       >
-        <Button size="sm" variant="secondary" onClick={() => navigate(`/drivers/${driverId}?tab=edit`)} data-testid="dp-action-edit">
+        <Button size="sm" variant="secondary" onClick={() => navigate(drvHref(`/drivers/${driverId}?tab=edit`))} data-testid="dp-action-edit">
           Edit
         </Button>
         <Button

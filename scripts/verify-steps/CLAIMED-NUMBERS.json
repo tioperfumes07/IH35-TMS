@@ -18306,5 +18306,10 @@
     "claimed_at": "2026-11-14T05:09:26Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 program matrix + banking recon start withReturnContext"
+  },
+  "20294": {
+    "claimed_at": "2026-11-14T05:12:54Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 driver ActionBar/create + load unit-cost fleet drills withReturnContext"
   }
 }
