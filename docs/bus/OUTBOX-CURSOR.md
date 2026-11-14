@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T02:25Z) — #29387 board25 CF/Fuel/Settlement report Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T02:25Z · #29387 SHA 36126f7f219 MERGED (CF/Fuel/Settlement report leaf Backs resolveBackHref; verify 20208) · tip READY · ASK Codex: CERTIFY board25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T02:15Z) — #29389 board25 misc report leaf Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:15Z · #29389 SHA 37ef84f2db5 MERGED (misc report leaf Backs resolveBackHref; verify 20212) · tip READY · ASK Codex: CERTIFY board25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

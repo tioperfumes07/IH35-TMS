@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T02:25Z) — Cursor board25 #29387
+| Board | Status | Evidence |
+|---|---|---|
+| 25 CF/Fuel/Settlement report Backs | READY | #29387 `36126f7f219` CashFlow/FuelRecon/SettlementSummary resolveBackHref; verify 20208 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:15Z) — Cursor board25 #29389
 | Board | Status | Evidence |
 |---|---|---|
