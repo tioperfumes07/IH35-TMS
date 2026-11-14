@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T03:50Z) — Cursor Unexpected/Profitability #29443
+| Board / surface | Status | Evidence |
+|---|---|---|
+| UnexpectedExpenses + Profitability ByLoad/ByCustomer View-all | READY | #29443 `9b6a03acd61` viewAllHref+ret; verify 20254 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T03:46Z) — Cursor View-all href wave #29439
 | Board / surface | Status | Evidence |
 |---|---|---|
