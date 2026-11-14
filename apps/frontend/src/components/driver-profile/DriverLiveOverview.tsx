@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { V3Panel } from "../v3/V3Panel";
 import { getUnit } from "../../api/mdata";
 import { listAllDispatchLoads, type DispatchLoad } from "../../api/dispatch";
@@ -22,7 +23,9 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   companyId: string; driverId: string; aggregate: DriverProfileAggregate; dqf: DqfComplianceSummary; dqfUnavailable: boolean;
   onReviewDqf: () => void;
 }) {
-  const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const liveOriginHref = currentOriginHref(pathname, search);
+  const liveHref = (target: string) => withReturnContext(target, liveOriginHref);
   const assignment = aggregate.current_assignment.currently_driving_truck as Record<string, unknown> | null;
   const currentLoad = aggregate.current_assignment.current_load as Record<string, unknown> | null;
   const unitId = text(assignment?.unit_id);
@@ -83,7 +86,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
           {position ? <p className="text-xs text-slate-600">Location: {Number.isFinite(position.lat) && Number.isFinite(position.lng) ? `${position.lat.toFixed(5)}, ${position.lng.toFixed(5)}` : "Unavailable"}. Speed is the last reported value, not a current movement assertion.</p> : null}
         </div>
       </V3Panel>
-      <V3Panel title="Pay this week · open pre-settlement" onViewAll={() => navigate(driverProfileTabHref(driverId, "Settlements"))}>
+      <V3Panel title="Pay this week · open pre-settlement" viewAllHref={liveHref(driverProfileTabHref(driverId, "Settlements"))}>
         <div className="space-y-1.5 p-3 text-xs">
           {pay.isError ? <ListErrorState title="Couldn't load open pre-settlement" status={0} onRetry={() => void pay.refetch()} /> : pay.isPending ? <p>Loading open pre-settlement…</p> : settlement ? <>
             <div className="text-page-title font-bold tabular-nums leading-none">
@@ -98,10 +101,10 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
       </V3Panel>
     </div>
     <div className="grid min-w-0 items-start gap-3 xl:grid-cols-2">
-      <V3Panel title="Trip — now and booked ahead" onViewAll={() => navigate(driverProfileTabHref(driverId, "Loads"))}>
+      <V3Panel title="Trip — now and booked ahead" viewAllHref={liveHref(driverProfileTabHref(driverId, "Loads"))}>
         {trips.isError ? <ListErrorState title="Couldn't load assigned trips" status={0} onRetry={() => void trips.refetch()} /> : <ParityTable appearance="board" columns={tripColumns} rows={trips.data?.loads ?? []} rowKey={(row) => row.id} loading={trips.isPending} emptyText="No live assigned loads." />}
       </V3Panel>
-      <V3Panel title="Documents" onViewAll={() => navigate(driverProfileTabHref(driverId, "Documents"))}>
+      <V3Panel title="Documents" viewAllHref={liveHref(driverProfileTabHref(driverId, "Documents"))}>
         <ParityTable
           appearance="board"
           rows={[...documents]}

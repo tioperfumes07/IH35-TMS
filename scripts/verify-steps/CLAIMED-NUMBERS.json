@@ -16217,6 +16217,11 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Chart of Accounts Run report P&L withReturnContext"
   },
+  "20260": {
+    "claimed_at": "2026-11-14T04:05:20Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Vendors money drills + DriverLiveOverview View-all href+ret"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

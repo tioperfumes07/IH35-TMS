@@ -161,6 +161,7 @@ export function VendorsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search: locationSearch } = useLocation();
   const vendorsOriginHref = currentOriginHref(pathname, locationSearch);
+  const vendMoneyHref = (target: string) => withReturnContext(target, vendorsOriginHref);
   // ROUND 8.20 board10 — KPI drills shareable href+ret (not onClick-only).
   const vendorsWithTxHref = withReturnContext("/vendors", vendorsOriginHref);
   const vendorsAllHref = withReturnContext("/vendors?listTab=all", vendorsOriginHref);
@@ -1024,7 +1025,7 @@ export function VendorsPage() {
                               className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
                               onClick={() => {
                                 setVendorNewTxnMenuOpen(false);
-                                navigate(`/accounting/bills?vendor_id=${selectedVendor.id}`);
+                                navigate(vendMoneyHref(`/accounting/bills?vendor_id=${selectedVendor.id}`));
                               }}
                             >
                               Bill
@@ -1034,7 +1035,7 @@ export function VendorsPage() {
                               className="block w-full px-4 py-2 text-left text-xs text-gray-800 hover:bg-gray-50"
                               onClick={() => {
                                 setVendorNewTxnMenuOpen(false);
-                                navigate(`/accounting/checks/new?vendor_id=${selectedVendor.id}`);
+                                navigate(vendMoneyHref(`/accounting/checks/new?vendor_id=${selectedVendor.id}`));
                               }}
                             >
                               Check
@@ -1190,7 +1191,7 @@ export function VendorsPage() {
                         rows={expensesQuery.data?.rows ?? []}
                         columns={expenseColumns}
                         rowKey={(expense) => expense.id}
-                        onRowClick={(expense) => navigate(`/accounting/expenses/${expense.id}`)}
+                        onRowClick={(expense) => navigate(vendMoneyHref(`/accounting/expenses/${expense.id}`))}
                         loading={expensesQuery.isPending}
                         storageKey="vendor-expenses"
                         emptyText="No expenses for this vendor."
