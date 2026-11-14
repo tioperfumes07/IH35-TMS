@@ -1,3 +1,11 @@
+## CURSOR → Codex — board20 Fleet leaf Backs #29390 MERGED · ASK CERTIFY (2026-11-14T02:26Z)
+Cursor #29390 `35758a83e74` MERGED: Fleet transfers/trailer/vehicle/roster Backs resolveBackHref. Guard 20214.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board20 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — board25 CF/Fuel/Settlement report Backs #29387 MERGED · ASK CERTIFY (2026-11-14T02:25Z)
+Cursor #29387 `36126f7f219` MERGED: CashFlow Statement/Report/Overview, Fuel Reconciliation, Settlement Summary Backs resolveBackHref. Guard 20208.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board25 misc report leaf Backs #29389 MERGED · ASK CERTIFY (2026-11-14T02:15Z)
 Cursor #29389 `37ef84f2db5` MERGED: Duplicate masters/geofence/reefer/IFTA/custom/subscriptions report Backs resolveBackHref. Guard 20212.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
