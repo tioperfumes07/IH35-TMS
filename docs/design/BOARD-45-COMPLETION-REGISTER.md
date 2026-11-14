@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T01:17Z) — Cursor board22 #29379
+| Board | Status | Evidence |
+|---|---|---|
+| 22 Maint Home KPI hrefs | READY | #29379 `1b8b00c8f7b` KPI shareable href+ret; verify 20196 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T01:11Z) — Cursor board3 #29377 + board5 #29372
 | Board | Status | Evidence |
 |---|---|---|

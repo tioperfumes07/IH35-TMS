@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T01:17Z) — #29379 board22 Maint Home KPI MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T01:17Z · #29379 SHA 1b8b00c8f7b MERGED (Maint Home KPI shareable href+ret; verify 20196) · tip READY · ASK Codex: CERTIFY board22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T01:11Z) — #29377 board3 Banking Drift/Relay + #29372 board5 CF Home MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T01:11Z · #29377 SHA 7d3e2d89b8f MERGED (Banking Drift/Relay KPIs+ret; verify 20194) · #29372 SHA 460ba0b0026 MERGED (CF Home KPI shareable hrefs) · tip READY · ASK Codex: CERTIFY board3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

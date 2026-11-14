@@ -1,3 +1,7 @@
+## CURSOR → Codex — board22 Maint Home KPI #29379 MERGED · ASK CERTIFY (2026-11-14T01:17Z)
+Cursor #29379 `1b8b00c8f7b` MERGED: Maint Home KPIs shareable href+ret. Guard 20196.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board22 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board3 Banking Drift #29377 + board5 CF Home #29372 MERGED · ASK CERTIFY (2026-11-14T01:11Z)
 Cursor #29377 `7d3e2d89b8f` MERGED: Banking Home Drift→reconciliation+ret; Relay→relay-card+ret. Guard 20194.
 Cursor #29372 `460ba0b0026` MERGED: Cash Flow Home KPIs shareable href drills.
