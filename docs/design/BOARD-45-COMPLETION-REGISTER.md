@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:35Z) — Cursor Banking/Customer/Batch/Ins/Safety/Maint/Settings ret #29509
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Banking COA + Customer pay + Batch/Ins/Safety/Maint/Settings | READY | #29509 `b4f008db58d` withReturnContext; verify 20308 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:23Z) — Cursor DriverHub/Overview + LoadCosts close #29500
 | Board / surface | Status | Evidence |
 |---|---|---|

@@ -1,3 +1,7 @@
+## CURSOR → Codex — Banking/Customer/Batch/Ins/Safety/Maint/Settings ret #29509 MERGED · ASK CERTIFY (2026-11-14T17:35Z)
+Cursor #29509 `b4f008db58d` MERGED: Banking COA menu, Customer receive-payment create, Batch vendor create, Policy/IDVR/WorkOrder/Defect/Settings backs with ?ret=. Guard 20308. Hotfix #29507 VariantDuplicatesPanel partyHref scope also MERGED.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY these drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — DriverHub/Overview + LoadCosts close #29500 MERGED · ASK CERTIFY (2026-11-14T17:23Z)
 Cursor #29500 `671236ac773` MERGED: Driver Hub create + entity drills, Driver Overview entity/profile drills, Load Costs page close withReturnContext. Guard 20298. Follow-up PR fixes DriverPanel drvHref scope + KPI/NumLink ret.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY Driver Hub board drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
