@@ -10,6 +10,7 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { rememberPartyBoardReturn } from "../../lib/partyBoardReturn";
 import { inModuleBackHref } from "../../lib/structuralBreadcrumb";
 import { ApiError, apiRequest } from "../../api/client";
@@ -57,6 +58,8 @@ const TOP_CATEGORIES = 3;
 export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const partyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams, setSearchParams] = useSearchParams();
   const chip = parseChip(searchParams.get("chip"));
   const setChip = (next: Chip) =>
@@ -113,14 +116,14 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
     { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
     {
       key: "txns", label: "Transactions", num: true, width: 100, sort: (r) => r.txns,
-      cell: (r) => (r.txns ? <NumLink to={`/vendors/${r.id}`}>{int(r.txns)}</NumLink> : <span>—</span>),
+      cell: (r) => (r.txns ? <NumLink to={partyHref(`/vendors/${r.id}`)}>{int(r.txns)}</NumLink> : <span>—</span>),
     },
     {
       key: "spend", label: "Spend YTD", num: true, width: 130, sort: (r) => r.spend_cents,
-      cell: (r) => (r.spend_cents ? <NumLink to={`/vendors/${r.id}`}>{usd(r.spend_cents)}</NumLink> : <span>—</span>),
+      cell: (r) => (r.spend_cents ? <NumLink to={partyHref(`/vendors/${r.id}`)}>{usd(r.spend_cents)}</NumLink> : <span>—</span>),
     },
     { key: "bar", label: "", width: 130, sortable: false, sort: (r) => r.spend_cents, cell: (r) => <SpendBar pct={(r.spend_cents / maxSpend) * 100} width={110} /> },
-    { key: "avg", label: "Avg ticket", num: true, width: 110, sort: (r) => r.avg_ticket_cents ?? 0, cell: (r) => (r.avg_ticket_cents == null ? <span>—</span> : <NumLink to={`/vendors/${r.id}`}>{usd(r.avg_ticket_cents)}</NumLink>) },
+    { key: "avg", label: "Avg ticket", num: true, width: 110, sort: (r) => r.avg_ticket_cents ?? 0, cell: (r) => (r.avg_ticket_cents == null ? <span>—</span> : <NumLink to={partyHref(`/vendors/${r.id}`)}>{usd(r.avg_ticket_cents)}</NumLink>) },
     { key: "last", label: "Last paid", width: 104, sort: (r) => r.last_paid ?? "", cell: (r) => <span>{day(r.last_paid)}</span> },
     { key: "pays", label: "Pays through", width: 190, sort: (r) => r.pays_through ?? "", cell: (r) => (r.pays_through && r.pays_through_account_id ? <EntityLink kind="account" id={r.pays_through_account_id} label={r.pays_through} /> : <span>{r.pays_through ?? "—"}</span>) },
   ];
@@ -147,7 +150,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
       sort: (r) => r.vendors,
       cell: (r) =>
         r.vendors ? (
-          <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>
+          <NumLink to={partyHref(`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`)}>
             {int(r.vendors)}
           </NumLink>
         ) : (
@@ -159,7 +162,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             // The vendor expenses paid through this account (or with none recorded) since the board's first day — that list's
       // total is this figure (LEAD 10-25 FINAL-4: payment_account_id filter on the expenses list).
       cell: (r) => (
-        <NumLink to={`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`}>{usd(r.spend_cents)}</NumLink>
+        <NumLink to={partyHref(`/accounting/expenses?payment_account_id=${r.account_id ?? "none"}&has_vendor=true&date_from=${from}`)}>{usd(r.spend_cents)}</NumLink>
       ),
     },
   ];
@@ -182,19 +185,19 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
           {/* Each tile opens the exact rows it counts: the board's own ?chip= list (whose column foots sum to the tile). */}
-          <V3KpiTile label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} href="/vendors?chip=with_transactions" />
-          <V3KpiTile label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} href="/vendors?chip=all" />
-          <V3KpiTile label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} href="/vendors?chip=with_transactions" />
+          <V3KpiTile label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} href={partyHref("/vendors?chip=with_transactions")} />
+          <V3KpiTile label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} href={partyHref("/vendors?chip=all")} />
+          <V3KpiTile label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} href={partyHref("/vendors?chip=with_transactions")} />
           {/* Opens the fuel-account expense lines (the share's numerator; the list's "Total on these accounts" is it). */}
           <V3KpiTile label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"}
             sub={b && b.kpis.fuel_share_pct != null ? `${usd(b.kpis.fuel_cents)} of ${usd(b.kpis.fuel_lines_total_cents)} lines` : undefined}
             href={b && b.kpis.fuel_account_ids?.length
               ? `/accounting/expenses?expense_account_id=${b.kpis.fuel_account_ids.join(",")}&has_vendor=true&date_from=${from}`
               : "/vendors?chip=with_transactions"} />
-          <V3KpiTile label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} href="/vendors?chip=open_bills" />
+          <V3KpiTile label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} href={partyHref("/vendors?chip=open_bills")} />
           <V3KpiTile label={"Unposted fuel"} value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
             sub={b ? (b.kpis.unposted_fuel_count > 0 ? `${int(b.kpis.unposted_fuel_count)} since ${day(b.kpis.unposted_fuel_since)}` : "None") : undefined}
-            href="/fuel/relay-unmatched?unposted=true" />
+            href={partyHref("/fuel/relay-unmatched?unposted=true")} />
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 12, alignItems: "start" }}>
@@ -207,7 +210,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
                     <span>{c.category}</span>
                     <SpendBar pct={share} width="100%" />
                     <span style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
-                      <NumLink to={`/accounting/expenses?expense_account_id=${c.ids}&has_vendor=true&date_from=${from}`}>{usd(c.spend_cents)}</NumLink>
+                      <NumLink to={partyHref(`/accounting/expenses?expense_account_id=${c.ids}&has_vendor=true&date_from=${from}`)}>{usd(c.spend_cents)}</NumLink>
                     </span>
                     <span style={{ textAlign: "right", color: V3.muted, fontVariantNumeric: "tabular-nums" }}>{share.toFixed(1)}%</span>
                   </div>
@@ -247,15 +250,15 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
           <MeasuredNote testId="party-board-note">
             {agree ? (
               <>
-                Open bills agree across definitions: <NumLink to="/vendors?chip=open_bills">{usd(boardOpen)}</NumLink>{" "}
+                Open bills agree across definitions: <NumLink to={partyHref("/vendors?chip=open_bills")}>{usd(boardOpen)}</NumLink>{" "}
                 (<Link to="/accounting/bills?has_balance=true">{int(chk.remainder_count)} bills with an unpaid remainder</Link>).
               </>
             ) : (
               <>
-                Open bills disagree across definitions: this screen <NumLink to="/vendors?chip=open_bills">{usd(boardOpen)}</NumLink>{" "}
+                Open bills disagree across definitions: this screen <NumLink to={partyHref("/vendors?chip=open_bills")}>{usd(boardOpen)}</NumLink>{" "}
                 (vendor-linked bills with an unpaid remainder) · all bills with an unpaid remainder{" "}
-                <NumLink to="/accounting/bills?has_balance=true">{usd(chk.remainder_cents)} ({int(chk.remainder_count)})</NumLink> · bills in an open status{" "}
-                <NumLink to="/accounting/bills?status=unpaid,partial">{usd(chk.status_open_cents)} ({int(chk.status_open_count)})</NumLink>. One AP service must feed every screen.
+                <NumLink to={partyHref("/accounting/bills?has_balance=true")}>{usd(chk.remainder_cents)} ({int(chk.remainder_count)})</NumLink> · bills in an open status{" "}
+                <NumLink to={partyHref("/accounting/bills?status=unpaid,partial")}>{usd(chk.status_open_cents)} ({int(chk.status_open_count)})</NumLink>. One AP service must feed every screen.
               </>
             )}
             {/* The amount and count are on the Unposted fuel tile above; the note does not restate them. */}

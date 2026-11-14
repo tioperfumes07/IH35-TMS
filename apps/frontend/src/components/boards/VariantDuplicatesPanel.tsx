@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per candidate duplicate PAIR of parties (match score, the two records, the merge action); a pair has no date of its own.
 import { useState } from "react";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -41,6 +43,9 @@ export function variantPairsFor(pairs: Pair[], board: "customers" | "vendors"): 
 }
 
 export function useVariantCandidates(operatingCompanyId: string) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const partyHref = (target: string) => withReturnContext(target, originHref);
   return useQuery({
     queryKey: ["variant-candidates", operatingCompanyId],
     queryFn: () => apiRequest<{ parties: number; pairs: Pair[]; rule?: string; name_only_hidden?: number }>(`/api/v1/mdata/canonical/variant-candidates?operating_company_id=${operatingCompanyId}`),
@@ -113,7 +118,7 @@ export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; 
     <div className="pb-card" data-testid="variant-duplicates-panel">
       {q.data?.rule ? (
         <div className="pb-sub-sm" data-testid="variant-duplicates-rule">
-          {q.data.rule}{q.data.name_only_hidden ? <> <NumLink to="/customers?chip=duplicates">{q.data.name_only_hidden}</NumLink>{` name-only lead${q.data.name_only_hidden === 1 ? "" : "s"} not shown.`}</> : ""}
+          {q.data.rule}{q.data.name_only_hidden ? <> <NumLink to={partyHref("/customers?chip=duplicates")}>{q.data.name_only_hidden}</NumLink>{` name-only lead${q.data.name_only_hidden === 1 ? "" : "s"} not shown.`}</> : ""}
         </div>
       ) : null}
       <ParityTable<Pair>
