@@ -16107,6 +16107,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-fleet-leaf-back-ret board20"
   },
+  "20216": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-inventory-leaf-back-ret"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

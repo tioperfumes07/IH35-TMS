@@ -1,4 +1,5 @@
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useEffect, useMemo, useState } from "react";
 import { listMaintenanceParts, type MaintenancePartRow } from "../../api/maintenance";
 import { useQuery } from "@tanstack/react-query";
@@ -12,7 +13,7 @@ import { PartCreateDrawer } from "./PartCreateDrawer";
 import { PartEditDrawer } from "./PartEditDrawer";
 import { inventoryPartsStockQueryKey } from "./partsStockQueryKeys";
 import { useCompanyContext } from "../../contexts/CompanyContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { partNeedsReorder } from "../maintenance/parts-low-stock";
 import { displayPartInventoryCategory } from "./partInventoryCategories";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -156,6 +157,9 @@ export function InventoryPartsStockPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<MaintenancePartRow | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — Inventory drills attach ?ret=; Back must restore origin.
+  const inventoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/inventory" });
   const [categoryFilter, setCategoryFilter] = useState("");
   const [stockFilter, setStockFilter] = useState<"" | "in_stock" | "reorder" | "out_of_stock" | "voided">("");
   const stagedFilters = useStagedListFilters({
@@ -206,7 +210,7 @@ export function InventoryPartsStockPage() {
     <div className="space-y-4">
       <PageHeader
         title="Parts & Stock"
-        backHref="/inventory"
+        backHref={inventoryBackHref}
         breadcrumb={["Inventory", "Parts & Stock"]}
         actions={
           <Button onClick={() => setIsCreateOpen(true)}>
