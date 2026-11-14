@@ -900,9 +900,6 @@ function QboSyncTab({ data }: { data: SystemData }) {
 }
 
 function ProgramTab({ data }: { data: SystemData }) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { tracker } = data;
   const t = tracker.data;
   const PHASE_FILTER_OPTIONS = [
