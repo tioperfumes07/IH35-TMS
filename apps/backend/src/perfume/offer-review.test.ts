@@ -14,6 +14,7 @@ const ITEMS: OfferItem[] = [
   item("coachblue", "COACH", "BLUE", 100),
   item("vip", "CAROLINA HERRERA", "212 VIP", 125),
   { ...item("wanted", "AZZARO", "WANTED", 100), conc: "EDP" },
+  { ...item("cdni", "ARMAF", "CLUB NUIT INTENSE", 110), gender: "M" },
 ];
 const cands = (description: string) => offerCandidates({ description, brand: null }, identify({ description }), ITEMS).map((c) => c.item_id);
 
@@ -48,6 +49,12 @@ describe("review: only lines that can be one of my offer items", () => {
     expect(candsE("ARMAF CLUB NUIT ICONIC")).toEqual([]);
     // CLUB NUIT INTENSE = different bottle than CLUB NUIT MILESTONE (extra word INTENSE vs MILESTONE).
     expect(cands("ARMAF CLUB NUIT OUD")).toEqual([]);
+  });
+  it("men vs women bottles are never paired; unisex or unknown on either side is not a conflict", () => {
+    // my item is M; line is W → rejected
+    expect(cands("ARMAF CLUB DE NUIT INTENSE W 3.6oz")).toEqual([]);
+    // my item is M; line is M → accepted
+    expect(cands("ARMAF CLUB DE NUIT INTENSE M 3.6oz")).toEqual(["cdni"]);
   });
   it("EDT / EDP / PARFUM differing is flagged", () => {
     const [w] = offerCandidates({ description: "AZZARO WANTED PARFUM 3.3oz", brand: null }, identify({ description: "AZZARO WANTED PARFUM 3.3oz" }), ITEMS);

@@ -16,7 +16,7 @@
  */
 import type { Identity } from "./normalize.js";
 
-export type OfferItem = { id: string; brand: string; name: string; size_ml: number | null; conc?: string | null; flags: string[]; display_name: string };
+export type OfferItem = { id: string; brand: string; name: string; size_ml: number | null; conc?: string | null; gender?: string | null; flags: string[]; display_name: string };
 export type OfferCandidate = { item_id: string; display_name: string; score: number; why: string };
 
 const NOISE = new Set(["DE", "DU", "LE", "LA", "LES", "THE", "BY", "FOR", "OF", "AND", "&", "EAU", "POUR", "A"]);
@@ -54,6 +54,8 @@ export function offerCandidates(line: { description: string; brand: string | nul
     // shown; the owner decides.
     const sizeDiffers = id.sizeMl != null && it.size_ml != null && Math.abs(id.sizeMl - it.size_ml) > 5;
     if (lineKind !== kindFlags(it.flags)) continue;
+    // Men's and women's bottles are different products; unisex or unknown on either side is not a conflict.
+    if (id.gender && it.gender && id.gender !== "U" && it.gender !== "U" && id.gender !== it.gender) continue;
     // A name word the line has and my item does not is a DIFFERENT bottle (measured live 11-13 on ESPERANZA:
     // WANTED vs WANTED INTENSE, HER vs HER BLOSSOM, GOOD GIRL vs GOOD GIRL BLUSH, 212 VIP vs 212 VIP ROSE) — not
     // proposed. Gender words and noise words do not count.

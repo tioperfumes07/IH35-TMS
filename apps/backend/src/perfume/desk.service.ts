@@ -502,7 +502,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
        ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
   const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
-    `SELECT DISTINCT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, i.flags, i.display_name
+    `SELECT DISTINCT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, NULLIF(i.gender, '') AS gender, i.flags, i.display_name
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        JOIN perfume.items i ON i.id = r.item_id
       WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL AND i.merged_into_id IS NULL`)).rows : [];
