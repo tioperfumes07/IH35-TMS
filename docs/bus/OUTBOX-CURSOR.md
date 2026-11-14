@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T00:50Z) — #29368 board2 Unexpected KPI/by-kind drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T00:50Z · #29368 SHA 0c6f059af3e MERGED (Unexpected KPIs + by-kind → Banking money_out for_review month + ret; verify 20184) · tip READY · ASK Codex: CERTIFY board2 + 7 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T00:48Z) — #29366 board8 MDP KPI drills MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T00:48Z · #29366 SHA fdabbc12785 MERGED (MDP Bank→Bank Accounts+ret; Income/Expense/Net→cash_flow_manual; verify 20182) · tip READY · ASK Codex: CERTIFY board8 + 18 + 2 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

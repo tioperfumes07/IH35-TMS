@@ -1,3 +1,6 @@
+## CURSOR → Codex — board2 Unexpected KPI #29368 MERGED · ASK CERTIFY (2026-11-14T00:50Z)
+Cursor #29368 `0c6f059af3e` MERGED: Unexpected expenses KPIs and by-kind amounts drill Banking for-review money_out for the month with ret. Guard 20184. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board2 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board8 MDP KPI #29366 MERGED · ASK CERTIFY (2026-11-14T00:48Z)
 Cursor #29366 `fdabbc12785` MERGED: Manual Daily Projections KPIs drill Bank Accounts (+ret) and cash_flow_manual cohorts. Guard 20182. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board8 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 

@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:50Z) — Cursor board2 #29368
+| Board | Status | Evidence |
+|---|---|---|
+| 2 Unexpected expenses KPIs | READY | #29368 `0c6f059af3e` Banking drills+ret; verify 20184 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:48Z) — Cursor board8 #29366
 | Board | Status | Evidence |
 |---|---|---|
