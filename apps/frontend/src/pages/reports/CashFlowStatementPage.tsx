@@ -1,7 +1,8 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -47,6 +48,9 @@ export function CashFlowStatementPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const defaultRange = currentMonthRange();
   // Q7 precedent (cash-basis/engine.ts, already locked for every other basis-enabled report in this
   // app): basis defaults to accrual, frontend-only, no per-user memory.
@@ -190,7 +194,7 @@ export function CashFlowStatementPage() {
       <PageHeader
         title="Cash flow statement"
         subtitle={`Operating, investing, and financing movements · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Cash Flow Statement"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
