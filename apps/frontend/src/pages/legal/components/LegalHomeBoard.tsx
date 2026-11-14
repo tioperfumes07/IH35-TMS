@@ -300,7 +300,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
       >
         <BoardSection
           title="Contract pipeline"
-          onViewAll={() => navigate(legalHref("/legal/contracts"))}
+          viewAllHref={legalHref("/legal/contracts")}
           testId="legal-home-contract-pipeline"
         >
           <div style={{ overflowX: "auto" }}>
@@ -369,7 +369,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Matters & deadlines"
-          onViewAll={() => navigate(legalHref("/legal/matters"))}
+          viewAllHref={legalHref("/legal/matters")}
           testId="legal-home-matters-deadlines"
         >
           {/* ROUND 8.5 L2 — empty state keeps Matter / Next date / At risk headers (board table). */}
@@ -437,7 +437,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Quick actions"
-          onViewAll={() => navigate(legalHref("/legal/contracts"))}
+          viewAllHref={legalHref("/legal/contracts")}
           testId="legal-home-quick-actions"
         >
           <div style={{ padding: "4px 14px 12px", fontFamily: V3.font }}>

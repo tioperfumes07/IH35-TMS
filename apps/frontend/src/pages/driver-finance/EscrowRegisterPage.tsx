@@ -6,7 +6,8 @@
  * Engine unchanged: getEscrowDriverBalances + getEscrowDriverTimeline.
  */
 import { useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom"; // Link: register source → settlement/JE
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext"; // Link: register source → settlement/JE
 import { useQuery } from "@tanstack/react-query";
 import { getEscrowDriverBalances, getEscrowDriverTimeline } from "../../api/banking";
 import { getDriverEscrowTarget } from "../../api/driverFinance";
@@ -101,6 +102,9 @@ export function EscrowRegisterPage() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
   const navigate = useNavigate();
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
+  const escrowViewAllHref = withReturnContext("/accounting/escrow", originHref);
   const { driverId = "" } = useParams<{ driverId: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -487,7 +491,7 @@ export function EscrowRegisterPage() {
         ) : (
           <BoardSection
             title={`Escrow register — ${driverName}`}
-            onViewAll={() => navigate("/accounting/escrow")}
+            viewAllHref={escrowViewAllHref}
             testId="escrow-register-board-section"
             footer="Each line opens its settlement or journal entry."
           >
