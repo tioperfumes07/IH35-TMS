@@ -1,3 +1,7 @@
+## CURSOR → Codex — board19 Fuel Home + Card Overage KPI href+ret #29428 MERGED · ASK CERTIFY (2026-11-14T03:28Z)
+Cursor #29428 `e35ead7bee9` MERGED: Fuel Home KPI strip + Card Overage Matching/Overage$/With JE shareable href+withReturnContext. Guard 20240.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board6 AVP Net variance KPI href+ret #29426 MERGED · ASK CERTIFY (2026-11-14T03:25Z)
 Cursor #29426 `7ed244466b9` MERGED: Actual Vs Projected Net variance KPI shareable avp_var href+withReturnContext. Guard 20238.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board6 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

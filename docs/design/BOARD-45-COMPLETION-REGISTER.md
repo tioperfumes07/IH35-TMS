@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T03:28Z) — Cursor board19 #29428
+| Board | Status | Evidence |
+|---|---|---|
+| 19 Fuel Home + Card Overage KPI href+ret | READY | #29428 `e35ead7bee9` planner/history/compliance + status/has_je cohorts; verify 20240 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T03:25Z) — Cursor board6 #29426
 | Board | Status | Evidence |
 |---|---|---|
