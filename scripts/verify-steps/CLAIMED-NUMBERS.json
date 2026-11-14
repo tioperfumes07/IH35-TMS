@@ -18331,5 +18331,10 @@
     "claimed_at": "2026-11-14T17:20:55Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 DriverHub/Overview + LoadCosts page close withReturnContext"
+  },
+  "20300": {
+    "claimed_at": "2026-11-14T17:23:16Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 DriverHubPanel drvHref scope fix + KPI/NumLink ret"
   }
 }
