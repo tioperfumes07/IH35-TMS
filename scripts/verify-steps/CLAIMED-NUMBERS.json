@@ -18276,5 +18276,10 @@
     "claimed_at": "2026-11-14T04:47:20Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 banking home/recon + customer load drills withReturnContext"
+  },
+  "20282": {
+    "claimed_at": "2026-11-14T04:51:07Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 reports/legal/cash-advance Review drills withReturnContext"
   }
 }

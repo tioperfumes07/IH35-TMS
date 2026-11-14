@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { legalTemplatesApi, type LegalTemplateSummary } from "../../api/legal-templates";
 import { Button } from "../../components/Button";
@@ -15,7 +16,9 @@ import { LegalModuleTabs } from "./LegalModuleTabs";
 
 export function LegalPoliciesPage() {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board21 — honor ?ret= from Legal Home (fallback /legal).
   const policiesBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
@@ -56,7 +59,7 @@ export function LegalPoliciesPage() {
         label: "",
         alwaysVisible: true,
         render: (row) => (
-          <Button size="sm" variant="secondary" onClick={() => navigate(`/legal/templates/${row.id}`)}>
+          <Button size="sm" variant="secondary" onClick={() => navigate(moneyHref(`/legal/templates/${row.id}`))}>
             Open
           </Button>
         ),

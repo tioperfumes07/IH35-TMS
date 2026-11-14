@@ -176,7 +176,7 @@ export function CashAdvancesKpiRow({
         render: () => (
           <button
             type="button"
-            onClick={() => navigate(REQUESTS_PATH)}
+            onClick={() => navigate(requestsViewAllHref)}
             className="bg-transparent p-0 text-xs font-semibold underline"
             style={{ color: V3.link, fontFamily: V3.font }}
           >
@@ -185,7 +185,7 @@ export function CashAdvancesKpiRow({
         ),
       },
     ],
-    [navigate],
+    [navigate, requestsViewAllHref],
   );
 
   const advanceColumns = useMemo<ParityColumn<Record<string, unknown>>[]>(

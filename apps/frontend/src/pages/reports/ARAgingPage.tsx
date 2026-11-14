@@ -4,6 +4,7 @@ import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { exportArAging, getArAgingReport, type ARAgingRow } from "../../api/reports";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
@@ -53,7 +54,9 @@ type ARAgingFilters = {
 export function ARAgingPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const today = companyToday();
@@ -463,14 +466,14 @@ export function ARAgingPage() {
         emptyText="No rows"
         // RPT-PAR-1: row drill → open invoices for this customer (server has_balance).
         // Open invoices + Customer profile kept as keyboard-reachable additive row actions.
-        onRowClick={(r) => navigate(arAgingInvoiceListHref(r.customer_id))}
+        onRowClick={(r) => navigate(moneyHref(arAgingInvoiceListHref(r.customer_id)))}
         rowActions={(r) => (
           <div className="flex flex-nowrap justify-end gap-1">
             <Button
               size="sm"
               variant="secondary"
               aria-label={`Open invoices for ${entityLabel(r.customer_name, r.customer_id, "Customer")}`}
-              onClick={() => navigate(arAgingInvoiceListHref(r.customer_id))}
+              onClick={() => navigate(moneyHref(arAgingInvoiceListHref(r.customer_id)))}
             >
               Open invoices
             </Button>
@@ -478,7 +481,7 @@ export function ARAgingPage() {
               size="sm"
               variant="secondary"
               aria-label={`Open customer profile for ${entityLabel(r.customer_name, r.customer_id, "Customer")}`}
-              onClick={() => navigate(arAgingCustomerProfileHref(r.customer_id))}
+              onClick={() => navigate(moneyHref(arAgingCustomerProfileHref(r.customer_id)))}
             >
               Customer profile
             </Button>

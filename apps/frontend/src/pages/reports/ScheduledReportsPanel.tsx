@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   deleteScheduledReport,
   listScheduledReportsV2,
@@ -11,6 +12,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 
 export function ScheduledReportsPanel() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -76,7 +80,7 @@ export function ScheduledReportsPanel() {
           <button
             type="button"
             className="text-xs font-semibold text-[#1F2A44] hover:underline"
-            onClick={() => navigate("/reports/scheduled-custom")}
+            onClick={() => navigate(moneyHref("/reports/scheduled-custom"))}
           >
             + Schedule new
           </button>
