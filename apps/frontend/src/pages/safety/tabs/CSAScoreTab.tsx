@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../../../auth/useAuth";
@@ -26,6 +27,9 @@ function toNullableNumber(value: unknown) {
 }
 
 export function CSAScoreTab() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
   const companyId = selectedCompanyId ?? "";
@@ -136,7 +140,7 @@ export function CSAScoreTab() {
             Public SAFER is not authoritative for Hazmat BASIC. Authenticated carrier SMS access is required.
           </span>
         ) : null}
-        <Link to="/safety/csa-fmcsa-trend" className="ml-auto text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={safetyHref("/safety/csa-fmcsa-trend")} className="ml-auto text-xs font-semibold text-[#1F2A44] underline">
           View FMCSA live trend &amp; projections &rarr;
         </Link>
       </div>

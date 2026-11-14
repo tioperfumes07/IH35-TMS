@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 const BANKING_RELEVANT_REPORTS = [
@@ -35,6 +36,9 @@ const BANKING_RELEVANT_REPORTS = [
 ] as const;
 
 export function BankingReportsTabContent() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   return (
     <div className="space-y-3">
       <div
@@ -50,10 +54,10 @@ export function BankingReportsTabContent() {
           </InfoPopover>
         </p>
         <div className="mt-2 flex flex-wrap gap-3">
-          <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">
+          <Link to={bankHref("/banking/transactions?type=uncategorized")} className="font-medium text-[#1F2A44] underline">
             For-review Match/Categorize
           </Link>
-          <Link to="/banking/reconciliation" className="font-medium text-[#1F2A44] underline">
+          <Link to={bankHref("/banking/reconciliation")} className="font-medium text-[#1F2A44] underline">
             Reconciliation
           </Link>
         </div>

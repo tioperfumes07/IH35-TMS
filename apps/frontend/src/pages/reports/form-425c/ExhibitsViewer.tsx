@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation } from "@tanstack/react-query";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { apiRequest } from "../../../api/client";
 import { ExhibitCard } from "../../../components/form-425c/ExhibitCard";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -48,6 +49,9 @@ function defaultPeriod() {
 }
 
 export function ExhibitsViewer() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
@@ -97,12 +101,12 @@ export function ExhibitsViewer() {
         backHref={moduleBackHref}
         actions={
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#1F2A44]">
-            <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>
-            <Link to="/425c?tab=merge" className="hover:underline">Merge & Export</Link>
-            <Link to="/425c?tab=history" className="hover:underline">History</Link>
-            <Link to="/accounting/reconciliation" className="hover:underline">Bank reconciliation</Link>
-            <Link to="/finance/statements" className="hover:underline">Accounting statements</Link>
-            <Link to="/legal/reports" className="hover:underline">Legal reports</Link>
+            <Link to={moneyHref("/425c?tab=qb")} className="hover:underline">Deposit Import</Link>
+            <Link to={moneyHref("/425c?tab=merge")} className="hover:underline">Merge & Export</Link>
+            <Link to={moneyHref("/425c?tab=history")} className="hover:underline">History</Link>
+            <Link to={moneyHref("/accounting/reconciliation")} className="hover:underline">Bank reconciliation</Link>
+            <Link to={moneyHref("/finance/statements")} className="hover:underline">Accounting statements</Link>
+            <Link to={moneyHref("/legal/reports")} className="hover:underline">Legal reports</Link>
           </div>
         }
       />

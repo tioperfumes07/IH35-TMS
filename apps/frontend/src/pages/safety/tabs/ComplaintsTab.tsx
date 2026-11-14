@@ -1,5 +1,6 @@
 import { Lock } from "lucide-react";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
 import { formatDateUS } from "../../../lib/formatDate";
@@ -54,6 +55,9 @@ const EMPTY_COMPLAINT_FORM = {
 };
 
 export function ComplaintsTab() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams, setSearchParams] = useSearchParams();
   const highlightedComplaintId = searchParams.get("complaint_id")?.trim() ?? "";
   const driverIdFromUrl = searchParams.get("driver_id")?.trim() ?? "";
@@ -591,7 +595,7 @@ export function ComplaintsTab() {
             ) : (
               <span className="text-[#6B7280]">Ready to file.</span>
             )}
-            <Link to="/lists/safety/complaint-types" className="text-[#4B5563] underline">
+            <Link to={safetyHref("/lists/safety/complaint-types")} className="text-[#4B5563] underline">
               Manage types
             </Link>
           </div>

@@ -3,7 +3,8 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { getIntercompanyTransferGroup, getPlaidBankAccounts, getTransfer, listTransfers, revokeTransfer, type Transfer, type TransferType } from "../../api/banking";
 import { useAuth } from "../../auth/useAuth";
@@ -104,6 +105,9 @@ function TransferDetailModalBody({
 }
 
 export function TransfersListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const auth = useAuth();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -390,7 +394,7 @@ export function TransfersListPage() {
             >
               + Record Transfer
             </ActionButton>
-            <Link to="/banking" className="text-xs text-[#1F2A44] hover:underline">
+            <Link to={bankHref("/banking")} className="text-xs text-[#1F2A44] hover:underline">
               Back to Banking Home
             </Link>
           </div>
@@ -467,7 +471,7 @@ export function TransfersListPage() {
             >
               + Record Transfer
             </button>
-            <Link to="/banking/transactions?type=uncategorized" className="text-xs font-medium text-[#1F2A44] underline">
+            <Link to={bankHref("/banking/transactions?type=uncategorized")} className="text-xs font-medium text-[#1F2A44] underline">
               Open for-review queue
             </Link>
           </div>
