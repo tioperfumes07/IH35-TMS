@@ -60,10 +60,12 @@ export function plannerBarLane(load: Pick<DispatchLoadRow, "first_pickup_city" |
  *  No practical miles = "— mi" and no $/mi (never a divide by a guess). */
 export function plannerBarMoneyDetail(load: Pick<DispatchLoadRow, "rate_total_cents" | "currency_code" | "miles_practical">): string {
   const cents = Number(load.rate_total_cents ?? 0);
+  // Board 12: whole-dollar rates print "$3,000" (no ".00"); any cents stay visible.
+  const rate = cents % 100 === 0 ? formatUsdCents(cents).replace(/\.00$/, "") : formatUsdCents(cents);
   const money =
     load.currency_code === "USD" || !load.currency_code
-      ? formatUsdCents(cents)
-      : `${load.currency_code} ${formatUsdCents(cents).replace(/^\$/, "")}`;
+      ? rate
+      : `${load.currency_code} ${rate.replace(/^\$/, "")}`;
   const miles = Number(load.miles_practical ?? 0);
   if (!(miles > 0)) return `${money} · — mi`;
   const perMileCents = Math.round(cents / miles);

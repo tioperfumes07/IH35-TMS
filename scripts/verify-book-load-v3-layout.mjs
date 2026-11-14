@@ -97,7 +97,10 @@ export function audit(s) {
   need("R5", /"--ih-w-date": "150px", "--ih-h-field": "32px"/.test(s.stops) && /style=\{APPT_BOX_VARS\}/.test(s.stops), "the appointment date box is not 150 × 32");
   // R7
   need("R7", /grid grid-cols-1 items-stretch gap-3 lg:grid-cols-\[1\.05fr_1fr\]/.test(s.modal) && /blw-sec flex flex-col" data-testid="book-load-section-a"/.test(s.modal), "column A does not stretch to column B's height");
-  need("R7", /flex min-h-\[64px\] flex-1 flex-col gap-0\.5" data-testid="book-load-special-notes"/.test(s.modal), "column A leaves a white block under Special notes (the last field does not fill)");
+  // ROUND 9.0 Board 14 (owner 11-13-2026 "designs identical"): old: Special notes was a stretching textarea filling A's
+  //   tail. new: Dispatch-BookLoad-Modal.png puts Factoring company · Hazmat · Special notes on one row, notes as
+  //   "+ Add (optional)" that opens the textarea. Still fails when the notes control leaves that row.
+  need("R7", /data-testid="book-load-factoring-row"/.test(s.modal) && /data-testid="book-load-special-notes"/.test(s.modal) && /\+ Add \(optional\)/.test(s.modal), "Special notes is not the design's Factoring · Hazmat · Special notes (+ Add) row");
   need("R7", /inline-flex h-8 shrink-0 cursor-pointer items-center whitespace-nowrap/.test(s.ratecon), "Upload Rate Con wraps (not a one-line button)");
   // R6
   need("R6", /<div className="w-\[390px\] max-w-full shrink-0">\s*<SelectCombobox/.test(s.border), "the port-of-entry select shrinks to its content (not the 390px board width)");
@@ -178,7 +181,7 @@ if (process.argv.includes("--selftest")) {
     ["On Loads by driver name FAILS", plant("drivers", "ids.add(String(id))", "ids.add(String(load.driver_short_name))")],
     ["Available = all active FAILS", plant("drivers", 'd.status === "Active" && !onLoadDriverIds.has(String(d.id))', 'd.status === "Active"')],
     ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
-    ["white block under Special notes FAILS", plant("modal", 'flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes"', 'flex flex-col gap-0.5" data-testid="book-load-special-notes"')],
+    ["Special notes leaving the Factoring · Hazmat row FAILS", plant("modal", 'data-testid="book-load-factoring-row"', 'data-testid="book-load-misc-row"')],
     ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
     ["the old 1120 center FAILS", plant("modal", "max-w-[min(1260px,calc(100vw-2rem))]", "max-w-[min(1120px,calc(100vw-2rem))]")],
     ["the old 660 side panel FAILS", plant("modal", "w-[760px] max-w-[100vw]", "w-[660px] max-w-[100vw]")],

@@ -135,7 +135,7 @@ describe("LoadHistoryBoardPage", () => {
     wrap(<LoadHistoryBoardPage />);
     const kpi = await screen.findByTestId("load-history-kpi-loads");
     expect(await within(kpi).findByText("194")).toBeTruthy();
-    expect(within(kpi).getByText("198 booked · 4 cancelled")).toBeTruthy();
+    expect(kpi.textContent).toContain("198 booked · 4 cancelled · View all");
     expect(getLoadsHistory).toHaveBeenCalledWith(expect.objectContaining({ operating_company_id: CO, from: LOAD_HISTORY_ALL_FROM, include_cancelled: false, limit: 200 }));
     expect(within(screen.getByTestId("load-history-kpi-empty-miles")).getByText("7.2% of all miles")).toBeTruthy();
 
