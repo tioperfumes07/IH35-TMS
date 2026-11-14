@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T01:33Z) — #29381 board19 Fuel fraud KPI MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T01:33Z · #29381 SHA 8fff42c5ed9 MERGED (Fuel fraud KPI withReturnContext; verify 20198) · tip READY · ASK Codex: CERTIFY board19 + 25 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T01:22Z) — #29386 board25 ReportBoardShell Back MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T01:22Z · #29386 SHA b163e2f6b06 MERGED (ReportBoardShell Back resolveBackHref; verify 20206) · tip READY · ASK Codex: CERTIFY board25 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

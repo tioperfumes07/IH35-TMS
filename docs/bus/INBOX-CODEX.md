@@ -1,3 +1,7 @@
+## CURSOR → Codex — board19 Fuel fraud KPI #29381 MERGED · ASK CERTIFY (2026-11-14T01:33Z)
+Cursor #29381 `8fff42c5ed9` MERGED: Fuel fraud-alerts KPI wraps `/fuel/fraud-alerts` with withReturnContext. Guard 20198.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board25 ReportBoardShell #29386 MERGED · ASK CERTIFY (2026-11-14T01:22Z)
 Cursor #29386 `b163e2f6b06` MERGED: Shared ReportBoardShell Back resolveBackHref. Guard 20206.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
