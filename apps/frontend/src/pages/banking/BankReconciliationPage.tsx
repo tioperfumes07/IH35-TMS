@@ -280,7 +280,7 @@ export function BankReconciliationPage() {
             >
               Start reconciliation
             </Link>
-            <Link to="/banking/transactions?type=uncategorized" className="font-medium text-[#1F2A44] underline">
+            <Link to={bankHref("/banking/transactions?type=uncategorized")} className="font-medium text-[#1F2A44] underline">
               For-review Match/Categorize
             </Link>
           </div>

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -71,6 +72,9 @@ const COLUMNS: Array<ParityColumn<AccountTypeCatalogEntry>> = [
 ];
 
 export function AccountTypeCatalogPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [search, setSearch] = useState("");
@@ -115,7 +119,7 @@ export function AccountTypeCatalogPage() {
       title="Account Type Catalog"
       subtitle="QBO-parity account type → detail-type taxonomy (read-only). Account types are universal; account instances are per-entity (see Chart of Accounts)."
       createControl={
-        <Link to="/lists/accounting/detail-types?create=1">
+        <Link to={moneyHref("/lists/accounting/detail-types?create=1")}>
           <Button size="sm" disabled={!companyId} data-testid="account-type-catalog-create-detail-type">
             + Create
           </Button>
@@ -131,7 +135,7 @@ export function AccountTypeCatalogPage() {
       </Link>
       <div className="mb-3 rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] px-3 py-2 text-xs text-[#1F2A44]">
         Account types are a fixed read-only taxonomy. To add or edit custom detail types, open{" "}
-        <Link to="/lists/accounting/detail-types" className="font-semibold text-[#1F2A44] underline">
+        <Link to={moneyHref("/lists/accounting/detail-types")} className="font-semibold text-[#1F2A44] underline">
           Lists → Detail Type
         </Link>
         .

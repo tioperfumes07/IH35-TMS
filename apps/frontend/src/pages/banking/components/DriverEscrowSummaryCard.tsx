@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import type { BankingKpi } from "../../../api/banking-kpis";
 import { formatUsdCents } from "../../../lib/money";
 
@@ -33,20 +34,23 @@ function Line({ kpi, failed, testId }: { kpi: BankingKpi | null; failed: boolean
       className={quiet ? "text-right text-[#6B7280]" : "text-right font-medium tabular-nums text-[#0F1219]"}
     >
       {/* ROUND 433.2 — the board lists every driver's escrow; its total ties to this figure. */}
-      {quiet ? formatUsdCents(kpi.value ?? 0) : <Link to="/banking/driver-escrow" className="hover:underline">{formatUsdCents(kpi.value ?? 0)}</Link>}
+      {quiet ? formatUsdCents(kpi.value ?? 0) : <Link to={bankHref("/banking/driver-escrow")} className="hover:underline">{formatUsdCents(kpi.value ?? 0)}</Link>}
     </dd>
   );
 }
 
 export function DriverEscrowSummaryCard({ held, contributions, deductions, failed }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const accounts = held?.compare_value;
   return (
     <section className="rounded-sm border border-[#E5E7EB] bg-white p-3" data-testid="banking-driver-escrow-summary-card">
       <div className="flex items-center justify-between">
-        <Link to="/banking/driver-escrow" className="text-xs font-bold uppercase tracking-wide text-[#4B5563] hover:underline">
+        <Link to={bankHref("/banking/driver-escrow")} className="text-xs font-bold uppercase tracking-wide text-[#4B5563] hover:underline">
           Driver escrow
         </Link>
-        <Link to="/banking/driver-escrow" className="text-xs font-medium text-[#14314F] hover:underline" data-testid="banking-driver-escrow-summary-filter">
+        <Link to={bankHref("/banking/driver-escrow")} className="text-xs font-medium text-[#14314F] hover:underline" data-testid="banking-driver-escrow-summary-filter">
           Filter →
         </Link>
       </div>

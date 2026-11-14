@@ -251,7 +251,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             {agree ? (
               <>
                 Open bills agree across definitions: <NumLink to={partyHref("/vendors?chip=open_bills")}>{usd(boardOpen)}</NumLink>{" "}
-                (<Link to="/accounting/bills?has_balance=true">{int(chk.remainder_count)} bills with an unpaid remainder</Link>).
+                (<Link to={partyHref("/accounting/bills?has_balance=true")}>{int(chk.remainder_count)} bills with an unpaid remainder</Link>).
               </>
             ) : (
               <>

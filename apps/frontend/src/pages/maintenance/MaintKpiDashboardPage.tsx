@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
-import { useSearchParams, useLocation, Link } from "react-router-dom";
+import {useSearchParams, useLocation, Link} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -93,6 +94,9 @@ function KpiTile({
 }
 
 export function MaintKpiDashboardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
@@ -225,7 +229,7 @@ export function MaintKpiDashboardPage() {
       />
       <p className="-mt-2 text-xs text-gray-500">
         Cross-link:{" "}
-        <Link to="/reports/maintenance-cost-per-unit" className="font-semibold text-[#1F2A44] underline">
+        <Link to={maintHref("/reports/maintenance-cost-per-unit")} className="font-semibold text-[#1F2A44] underline">
           maintenance cost per unit report
         </Link>
       </p>

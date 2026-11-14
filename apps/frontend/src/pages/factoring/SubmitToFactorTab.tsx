@@ -7,7 +7,8 @@
 // the invoices + their documents to the factor. Owner-only: the server refuses everyone else (403).
 import { OverrideButton } from "../../components/override/OverrideButton";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
@@ -351,6 +352,9 @@ type Props = {
 };
 
 export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, onEditDone, onEditCancel }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const editing = Boolean(editPurchaseId);
   const queryClient = useQueryClient();
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
@@ -1343,7 +1347,7 @@ function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: 
               {" · "}
             </>
           ) : null}
-          <Link to="/banking" className="underline">
+          <Link to={moneyHref("/banking")} className="underline">
             Banking
           </Link>
         </span>

@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../shared/EntityLink";
 import { EntityLinkOrTombstone } from "../shared/EntityLinkOrTombstone";
 import { Button } from "../Button";
@@ -23,6 +24,9 @@ export function MaintenanceSnapshotSection({
   /** Complete canonical open-WO range for this unit (wo_id · display_id · status). */
   workOrders?: Array<Record<string, unknown>>;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const pmEntries = Object.entries(nextPmDue ?? {}).slice(0, 4);
   const openWorkOrders = workOrders.filter((wo) =>
     OPEN_WO_STATUSES.has(String(wo.status ?? "").toLowerCase()),
@@ -67,7 +71,7 @@ export function MaintenanceSnapshotSection({
           ) : null}
         </p>
       ) : null}
-      <Link to="/maintenance" className="text-xs text-[#1F2A44] underline">
+      <Link to={maintHref("/maintenance")} className="text-xs text-[#1F2A44] underline">
         Open maintenance console
       </Link>
       <div className="mt-3 grid gap-2 md:grid-cols-4">
@@ -116,7 +120,7 @@ export function MaintenanceSnapshotSection({
           )}
         </p>
       ) : null}
-      <Link to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}`}>
+      <Link to={maintHref(`/maintenance?create_wo=1&unit_id=${encodeURIComponent(unitId)}`)}>
         <Button size="sm" variant="secondary" className="mt-2">
           Create work order
         </Button>
