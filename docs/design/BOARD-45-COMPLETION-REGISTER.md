@@ -1,3 +1,11 @@
+### READY overlay (2026-11-14T02:58Z) — Cursor board9/10+#29411 + hub/legal #29414
+| Board | Status | Evidence |
+|---|---|---|
+| 9/10 Customers/Vendors/Escrow KPI href+ret | READY | #29411 `3fccdb6fad0` withReturnContext KPIs; Escrow view= SoT; verify 20226 |
+| Reports hub / Fleet / Legal portal Backs | READY | #29414 `85a64c415af` resolveBackHref; verify 20230 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:54Z) — Cursor finance/compliance/fuel #29407
 | Board | Status | Evidence |
 |---|---|---|

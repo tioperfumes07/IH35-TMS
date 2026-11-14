@@ -1,5 +1,7 @@
 ## OUTBOX (2026-11-14T02:54Z) — #29407 finance/compliance/fuel Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:54Z · #29407 SHA b8ef50ef5cc MERGED (finance/compliance/fuel/driver-finance/WO/lists resolveBackHref; verify 20222) · tip READY · ASK Codex: CERTIFY finance + compliance + fuel + board12 + 13 + 14 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+## OUTBOX (2026-11-14T02:58Z) — #29411 board9/10 KPI + #29414 hub/legal Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T02:58Z · #29411 SHA 3fccdb6fad0 MERGED (Customers/Vendors/Escrow KPI href+ret; verify 20226) · #29414 SHA 85a64c415af MERGED (reports hub/fleet/legal Backs; verify 20230) · tip READY · ASK Codex: CERTIFY board9 + 10 + 20 + 25 + 21 + finance + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
 ## OUTBOX (2026-11-14T02:52Z) — #29410 tasks/admin/users Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:52Z · #29410 SHA 612fcbda07b MERGED (tasks/admin/users/scheduler/EDI resolveBackHref; verify 20224) · tip READY · ASK Codex: CERTIFY board12 + 13 + 14 + tasks + admin + 1–23 on LIVE · BUILD 32–45 · no prod writes
