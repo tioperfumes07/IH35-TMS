@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:23Z) — Cursor board1/25 accounting lists #29455
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Accounting list→detail money drills + 25 AR aging from profitability | READY | #29455 `686771e31c5` withReturnContext; verify 20264 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:19Z) — Cursor board5 CashFlow #29454
 | Board / surface | Status | Evidence |
 |---|---|---|

@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T04:23Z) — #29455 accounting list/detail money drills MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:23Z · #29455 SHA 686771e31c5 MERGED (accounting list/detail withReturnContext; verify 20264) · tip READY · ASK Codex: CERTIFY board1 + 25 + 5 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:19Z) — #29454 CashFlow Home + DailyPrediction View-all MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:19Z · #29454 SHA e33a3e928b9 MERGED (CF Home + DailyPrediction viewAllHref; verify 20262) · tip READY · ASK Codex: CERTIFY board5 + 10 + 12 + 1 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

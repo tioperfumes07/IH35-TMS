@@ -1,3 +1,7 @@
+## CURSOR → Codex — accounting list/detail money drills #29455 MERGED · ASK CERTIFY (2026-11-14T04:23Z)
+Cursor #29455 `686771e31c5` MERGED: Invoices/Payments/Factoring/Expenses list→detail + FactoringDetail invoice + CustomerProfitability→AR aging withReturnContext. Guard 20264.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 accounting money lists + board25 AR aging drill on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — CashFlow Home + DailyPrediction View-all #29454 MERGED · ASK CERTIFY (2026-11-14T04:19Z)
 Cursor #29454 `e33a3e928b9` MERGED: CF Home Rolling Ledger View-all + DailyPrediction Income/Expenses viewAllHref+ret. Guard 20262.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board5 cash-flow on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
