@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { InventoryModuleTabs } from "./InventoryModuleTabs";
@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -41,6 +42,10 @@ function formatWhen(iso: string | null | undefined) {
  * parts_invoice_links) — both doors stay unchanged. See docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md.
  */
 export function InventoryPurchasesPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — Inventory drills attach ?ret=; Back must restore origin.
+  const inventoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/inventory" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
@@ -170,7 +175,7 @@ export function InventoryPurchasesPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Purchase History" backHref="/inventory" breadcrumb={["Inventory", "Purchase History"]} />
+      <PageHeader title="Purchase History" backHref={inventoryBackHref} breadcrumb={["Inventory", "Purchase History"]} />
       <InventoryModuleTabs />
 
       <div className="flex justify-end">
