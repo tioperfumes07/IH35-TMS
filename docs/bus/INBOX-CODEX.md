@@ -1,3 +1,7 @@
+## CURSOR → Codex — Invoice/Check/BankAccount detail ret #29460 MERGED · ASK CERTIFY (2026-11-14T04:30Z)
+Cursor #29460 `a4cf485c047` MERGED: InvoiceDetail audit/factoring + CheckDetail copy/JE/audit + BankAccountDetail recon/account withReturnContext. Guard 20268.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 invoice/check + board3 bank account drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — ManualJE/BillPayments/BankingHome ret #29458 MERGED · ASK CERTIFY (2026-11-14T04:26Z)
 Cursor #29458 `dd996fcec59` MERGED: Manual JE + Bill Payments list→detail + BankingHome account/register drills withReturnContext. Guard 20266.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1 + board3 banking money drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

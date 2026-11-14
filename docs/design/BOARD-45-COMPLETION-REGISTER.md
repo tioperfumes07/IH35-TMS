@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:30Z) — Cursor board1/3 detail drills #29460
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Invoice/Check detail + 3 BankAccount detail money drills | READY | #29460 `a4cf485c047` withReturnContext; verify 20268 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:26Z) — Cursor board1/3 #29458
 | Board / surface | Status | Evidence |
 |---|---|---|
