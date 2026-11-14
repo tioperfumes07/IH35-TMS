@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-14T18:42Z) — #29541 ProgramTracker + CSR expenses href ret wave9 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:42Z · #29541 SHA b570ee108149b5bce443657a43b2486f0406e974 MERGED (href ret wave9; verify 20334) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · Cursor Link/href residuals CLEARED · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T18:39Z) — #29539 LoadCosts/Dispatch/Posting/Reports/Maint tpl Link ret wave8 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:39Z · #29539 SHA 127e77a31bba3fb3800e6f1290a184a266edf715 MERGED (tpl Link to= ret wave8; verify 20332) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T18:30Z) — #29535 CashFlow/Finance/Inventory/Dispatch/Maint/Home Link ret wave7 MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T18:30Z · #29535 SHA 77844d8420689a563743731a8564e28af89fc9d0 MERGED (Link to= ret wave7; verify 20330) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
 
