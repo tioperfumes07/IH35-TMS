@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:58Z) — #29441 Customers invoice drills ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:58Z · #29441 SHA c80d74d17c7 MERGED (Customers/CustomerDetail invoice drills withReturnContext; verify 20252) · tip READY · ASK Codex: CERTIFY board9 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:50Z) — #29443 UnexpectedExpenses + Profitability View-all MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:50Z · #29443 SHA 9b6a03acd61 MERGED (UnexpectedExpenses + Profitability viewAllHref; verify 20254) · tip READY · ASK Codex: CERTIFY unexpected + profitability + board25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

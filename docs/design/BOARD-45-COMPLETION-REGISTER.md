@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T03:58Z) — Cursor board9 Customers invoice ret #29441
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 9 Customers/CustomerDetail invoice money drills | READY | #29441 `c80d74d17c7` withReturnContext; verify 20252 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T03:50Z) — Cursor Unexpected/Profitability #29443
 | Board / surface | Status | Evidence |
 |---|---|---|
