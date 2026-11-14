@@ -53,7 +53,9 @@ export function run(root = process.cwd()) {
 
   // Accounts summary card — Rule 07 additive, never delete.
   if (!home.includes("Factoring · virtual bank")) failures.push("Accounts home Factoring card must remain (never delete)");
-  if (!home.includes('to="/factoring"')) failures.push("Accounts home Factoring card must still deep-link into /factoring");
+  // Accept both bare `to="/factoring"` and the bankHref wrapper form added in ROUND 8.20.
+  if (!home.includes('to="/factoring"') && !home.includes('to={bankHref("/factoring")}'))
+    failures.push("Accounts home Factoring card must still deep-link into /factoring");
 
   return failures;
 }
@@ -63,7 +65,7 @@ if (process.argv.includes("--selftest")) {
   const files = {
     [NAV]: `id: "relay_card"\n`,
     [PATHS]: `relay_card: "/banking/relay"\npathname === "/banking/relay"\n`,
-    [HOME]: `activeTab === "relay_card"\nto="/factoring"\nFactoring · virtual bank\n`,
+    [HOME]: `activeTab === "relay_card"\nto={bankHref("/factoring")}\nFactoring · virtual bank\n`,
     [MANIFEST]: `path="/banking/relay"\npath="/banking/factoring"\n<Navigate to="/banking" replace />\n`,
     [SIDEBAR]: `/banking/relay\n`,
   };
@@ -88,9 +90,14 @@ if (process.argv.includes("--selftest")) {
   // MUTATION — the Accounts summary card is deleted.
   mk(HOME, `activeTab === "relay_card"\n`);
   if (!run(tmp).length) throw new Error("expected FAIL when the Accounts Factoring card is removed");
+  mk(HOME, files[HOME]);
+
+  // MUTATION — neither bare nor bankHref form is present (deep-link removed).
+  mk(HOME, `activeTab === "relay_card"\nFactoring · virtual bank\n`);
+  if (!run(tmp).length) throw new Error("expected FAIL when Factoring card has no deep-link");
 
   fs.rmSync(tmp, { recursive: true, force: true });
-  console.log("verify-banking-factoring-relay-tabs --selftest OK (3/3 mutations caught)");
+  console.log("verify-banking-factoring-relay-tabs --selftest OK (4/4 mutations caught)");
 } else {
   const failures = run();
   if (failures.length) {

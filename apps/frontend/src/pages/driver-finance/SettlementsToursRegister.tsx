@@ -542,6 +542,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               key={label}
               type="button"
               onClick={href ? () => navigate(href) : undefined}
+              disabled={!href}
               data-testid={`settlements-nav-chip-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
               style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontSize: 11, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
             >
