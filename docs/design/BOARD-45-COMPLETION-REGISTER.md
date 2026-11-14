@@ -1,3 +1,15 @@
+### READY overlay (2026-11-14T04:50Z) — Cursor banking home/recon + customer loads #29472
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 3 Banking Home/recon · Customers load opens · LoadCosts | READY | #29472 `7de90a4a45f` withReturnContext; verify 20280 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T04:50Z) — Cursor customer profile docs/loads drills #29469
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Customer overview loads/docs/rate-history | READY | #29469 `85128438049` withReturnContext; verify 20278 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:44Z) — Cursor brokers/cargo-claim customer drills #29468
 | Board / surface | Status | Evidence |
 |---|---|---|
