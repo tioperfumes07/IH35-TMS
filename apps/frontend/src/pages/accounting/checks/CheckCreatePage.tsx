@@ -1,4 +1,5 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { WriteCheckForm } from "../../../components/checks/WriteCheckForm";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -14,6 +15,9 @@ import type { CheckPayeeKind } from "../../../api/checks";
  * query param so Write Check opens with that payee already selected (real UUIDs, not memo text).
  */
 export function CheckCreatePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -49,7 +53,7 @@ export function CheckCreatePage() {
         onClose={() => navigate("/accounting/checks")}
         onSaved={(checkId) => {
           pushToast("Check created", "success");
-          navigate(`/accounting/checks?created=${checkId}`);
+          navigate(moneyHref(`/accounting/checks?created=${checkId}`));
         }}
         // R-172 step 6 -- Save / Save and new keep the Write Check drawer open (spec §6) rather than
         // navigating away like Save and close/onSaved does.

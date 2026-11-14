@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams, useLocation, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel, visibleDocumentLabel } from "../../lib/entity-label";
@@ -304,7 +305,9 @@ function varianceClass(varianceCents: number) {
 export function ReconciliationWorkspacePage() {
   const { bankAccountId = "" } = useParams<{ bankAccountId?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const sessionId = searchParams.get("session_id") ?? "";
   const bankAccountHint = searchParams.get("bank_account_hint") ?? "";
@@ -695,7 +698,7 @@ export function ReconciliationWorkspacePage() {
                     period_start: session.period_start,
                     period_end: session.period_end,
                   });
-                  navigate(`/banking/reconciliation?${qs.toString()}`);
+                  navigate(moneyHref(`/banking/reconciliation?${qs.toString()}`));
                 }}
               >
                 Auto-Match Suggestions
