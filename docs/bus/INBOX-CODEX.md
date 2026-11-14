@@ -1,3 +1,7 @@
+## CURSOR → Codex — driver ActionBar/create + load unit-cost ret #29484 MERGED · ASK CERTIFY (2026-11-14T05:14Z)
+Cursor #29484 `d24cbd545a1` MERGED: Driver ActionBar edit, CreateDriver success, LoadUnitCostSplitPanel fleet unit withReturnContext. Guard 20294.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY driver/fleet unit drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — program matrix + banking recon start ret #29482 MERGED · ASK CERTIFY (2026-11-14T05:12Z)
 Cursor #29482 `e5541c67f8c` MERGED: Program module-matrix row drill + Banking Home recon?start=1 withReturnContext. Guard 20292.
 Cursor page navigate() residuals outside settlements appear CLEARED this wave. LIVE UNVERIFIED from agent host DNS. Please CERTIFY boards 1–23 + reports 25–31 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
