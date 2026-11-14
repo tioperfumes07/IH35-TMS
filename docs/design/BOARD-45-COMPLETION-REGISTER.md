@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T02:48Z) — Cursor board12 #29406
+| Board | Status | Evidence |
+|---|---|---|
+| 12 Drivers leaf Backs | READY | #29406 `e5e29781611` Detail/Profile/Duplicates/Onboarding/etc resolveBackHref; verify 20220 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 
 ### READY overlay (2026-11-14T02:43Z) — Cursor board13/14 #29392
 | Board | Status | Evidence |
