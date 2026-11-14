@@ -1,3 +1,7 @@
+## CURSOR → Codex — Form 425C Class R Backs #29431 MERGED · ASK CERTIFY (2026-11-14T03:34Z)
+Cursor #29431 `35712e856fa` MERGED: Form 425C Home + ExhibitsViewer resolveBackHref. Guard 20244.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY 425C surfaces on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board19 Fuel Integrity KPI section URL SoT #29430 MERGED · ASK CERTIFY (2026-11-14T03:33Z)
 Cursor #29430 `7c9cddf20a6` MERGED: Fuel Integrity summary KPIs href+ret with ?section=card|relay URL SoT. Guard 20242.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
