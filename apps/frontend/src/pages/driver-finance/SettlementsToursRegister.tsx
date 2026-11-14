@@ -548,7 +548,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
                 style={{ border: `1px solid ${state === s ? V3.link : V3.border}`, background: state === s ? V3.link : V3.surface, color: state === s ? "#FFFFFF" : V3.ink, fontWeight: state === s ? 700 : 500, fontFamily: V3.font }}
               >
                 {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
-                <span className="text-[10px]" style={{ background: state === s ? "rgba(255,255,255,0.25)" : "#F3F4F6", borderRadius: 2, padding: "0 4px", color: state === s ? "#FFFFFF" : "#6B7280", fontWeight: 600, minWidth: 16, textAlign: "center" }}>
+                <span style={{ background: state === s ? "rgba(255,255,255,0.25)" : "#F3F4F6", borderRadius: 2, padding: "0 4px", color: state === s ? "#FFFFFF" : "#6B7280", fontWeight: 600, minWidth: 16, textAlign: "center" }}>
                   {(s === "open" ? openCount : closedCount) ?? "—"}
                 </span>
               </button>
