@@ -6,6 +6,7 @@ import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { offerCandidates, type OfferItem } from "./offer-review.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
 /* ---------------- rules ---------------- */
@@ -479,7 +480,7 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
-export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; limit: number; offset: number }) {
+export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number }) {
   // Filters (owner 2026-11-12: "1788 items, lets have the filters"): one vendor list, words in the vendor's line,
   // and "has a suggestion" (review) vs "nothing close" (unmatched).
   const cond: string[] = [];
@@ -493,10 +494,18 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
+  // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
+  // of my offer items; paging happens after that filter.
+  const mine = opts.mine === "offer";
   const rows = await c.query(
     `SELECT r.id, r.list_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
-       ${base} ORDER BY v.name, r.row_no LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`, [...fp, opts.limit, opts.offset]);
-  const total = await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
+       ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
+  const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
+  const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
+    `SELECT DISTINCT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, i.flags, i.display_name
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+       JOIN perfume.items i ON i.id = r.item_id
+      WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL AND i.merged_into_id IS NULL`)).rows : [];
   // The vendor's line split into the owner's columns: brand (canonical — CK → CALVIN KLEIN), model, size, type,
   // gender, tester/set, country, pieces per box, the vendor's code — the same reading the import engine used.
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
@@ -504,10 +513,24 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const out = rows.rows.map((r: Record<string, unknown>) => {
     const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null, brandAliases: aliases });
     const tail = vendorLineTail(String(r.description ?? ""));
-    return { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
+    const base = { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
       flags: id.flags.join(" "), category: categoryOf(id.gender, id.flags), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
+    if (!mine) return base;
+    // My offer items first among the suggestions; the engine's own suggestions stay below them.
+    const offer = offerCandidates({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null }, id, offerItems);
+    const engine = ((r.suggestions as Array<{ item_id: string }> | null) ?? []);
+    const offerIds = new Set(offerItems.map((o) => o.id));
+    const engineOnMine = engine.filter((s) => offerIds.has(s.item_id) && !offer.some((o) => o.item_id === s.item_id));
+    const forMine = [...offer, ...engineOnMine];
+    return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, _mine: forMine.length > 0 };
   });
-  return { rows: out, total: total.rows[0].n };
+  if (!mine) return { rows: out, total: total!.rows[0].n };
+  // Grouped by my item, then vendor, so the owner confirms item by item.
+  type MineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown };
+  const kept = (out as MineRow[]).filter((r) => r._mine)
+    .sort((a, b) => String(a.for_my_item).localeCompare(String(b.for_my_item)) || String(a.vendor_name).localeCompare(String(b.vendor_name)))
+    .map(({ _mine: _drop, ...rest }) => rest);
+  return { rows: kept.slice(opts.offset, opts.offset + opts.limit), total: kept.length };
 }
 
 /**

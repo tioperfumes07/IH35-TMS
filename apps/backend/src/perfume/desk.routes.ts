@@ -219,7 +219,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ list_id: z.string().uuid().optional(),
       list_ids: z.string().max(4000).optional().transform((v) => (v ? v.split(",").filter(Boolean) : undefined)).pipe(z.array(z.string().uuid()).max(50).optional()),
-      q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
+      q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });

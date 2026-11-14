@@ -92,21 +92,21 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "lists" || tab === "review" || tab === "rules" ? null : (
+      {tab === "lists" || tab === "rules" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
-          {MINE_OPTIONS.map(([k, l]) => (
+          {(tab === "review" ? REVIEW_MINE_OPTIONS : MINE_OPTIONS).map(([k, l]) => (
             <button key={String(k)} type="button" aria-pressed={mine === k} data-testid={`perfume-mine-${k ?? "all"}`} onClick={() => go({ mine: k })}
               className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${mine === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]"}`}>
               {tr(`perfume.desk.mine.${k ?? "all"}`, l)}
             </button>
           ))}
           <span className="text-xs text-gray-600">
-            {mine ? tr("perfume.desk.mine.help.on", "Only items on this list — every supplier's and every competitor's price shown for them, on every tab.") : tr("perfume.desk.mine.help.off", "Every item this tab can price.")}
+            {tab === "review" ? (mine ? tr("perfume.desk.mine.help.review", "Only lines that can be an item on my offer list — confirm each one.") : tr("perfume.desk.mine.help.reviewOff", "Every line waiting for you.")) : mine ? tr("perfume.desk.mine.help.on", "Only items on this list — every supplier's and every competitor's price shown for them, on every tab.") : tr("perfume.desk.mine.help.off", "Every item this tab can price.")}
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "review" ? <PerfumeReviewPanel mine={mine ? "offer" : null} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
@@ -122,6 +122,7 @@ const VIEW_HELP: Record<PerfumeGridView, string> = {
 };
 type MineChoice = "offer" | "inventory" | "need" | null;
 const MINE_OPTIONS: ReadonlyArray<readonly [MineChoice, string]> = [[null, "All items"], ["offer", "My offer list"], ["inventory", "My inventory"], ["need", "Need to buy"]];
+const REVIEW_MINE_OPTIONS: ReadonlyArray<readonly [MineChoice, string]> = [[null, "All lines"], ["offer", "My offer list"]];
 const PAGE = 200;
 const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 
