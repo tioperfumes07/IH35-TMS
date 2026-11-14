@@ -1,4 +1,5 @@
 ### READY overlay (2026-11-14T18:08Z) — Cursor Banking/Safety/System/Maint/425c Link ret wave5 #29529
+<!-- tip 2026-11-14T18:30Z: #29535 wave7 MERGED 77844d8420689a563743731a8564e28af89fc9d0; CERTIFY ASK -->
 <!-- tip 2026-11-14T18:26Z: #29533 MERGED 6e9d3ff9a23006c5d19ee1b5b69d5ee67ae2d31f; CERTIFY ASK; wave7 20330 in flight -->
 
 <!-- tip 2026-11-14T18:18Z: #29531 wave6 MERGED 97c115a30dc; CERTIFY ASK; hotfix #29533 20328 in flight -->
