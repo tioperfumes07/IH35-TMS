@@ -13,9 +13,12 @@ const cols = [
   { key: "a:match", label: "Match", group: "MATCH", kind: "text" },
   { key: "a:cand", label: "Link to", group: "MATCH", kind: "text" },
   { key: "a:last_cost", label: "Last cost", group: "Purchases", kind: "money" },
+  { key: "a:offer", label: "OFFER PRICE", group: "SALES", kind: "money" },
+  { key: "a:esp", label: "Esperanza Price", group: "SALES", kind: "money" },
+  { key: "a:over_by", label: "More Expensive By", group: "Analysis", kind: "money" },
 ];
 // One line of mine with its item and no competitor line; one competitor line not on my list.
-const MINE = { cols, rows: [{ id: "m:L1", "a:name": "CIELO BLUE", "a:match": "No competitor line linked", matched: 0, link_mode: "line", link_row: "L1", link_item: "I1",
+const MINE = { cols, rows: [{ id: "m:L1", "a:name": "CIELO BLUE", "a:match": "No competitor line linked", matched: 0, link_mode: "line", link_row: "L1", link_item: "I1", "a:offer": 2050, "a:esp": 2000, "a:over_by": -50,
   cand: [{ row_id: "C9", item_id: "I1", label: "CIELO BLUE 3.3 · ESPERANZA", price_cents: 450, why: "brand on the line" }] }], total: 582, facets: {}, rules: {}, vendors: [], measured_at: "x" };
 
 describe("List analysis — my list | their list, matched filter, the match box, Excel (owner 2026-11-14)", () => {
@@ -54,6 +57,11 @@ describe("List analysis — my list | their list, matched filter, the match box,
     fireEvent.click(await screen.findByText("CIELO BLUE EDT 100ML · ESPERANZA"));
     fireEvent.click(within(box).getByRole("button", { name: "Confirm" }));
     await waitFor(() => expect(paths.some((p) => p.path === "/api/v1/perfume/rows/C7/confirm")).toBe(true));
+
+    // The lower of my offer and their price is shaded — that box only; more expensive by is negative.
+    const low = screen.getAllByTestId("perfume-analysis-lowest");
+    expect(low.map((e) => e.textContent)).toEqual(["$20.00"]);
+    expect(screen.getByText("−$0.50")).toBeTruthy();
 
     // Purchase / cost columns hidden by default (no data uploaded); one click shows them.
     expect(screen.queryByRole("columnheader", { name: /Last cost/ })).toBeNull();

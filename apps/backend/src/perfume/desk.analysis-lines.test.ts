@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import ExcelJS from "exceljs";
-import { analysisRowsOf, exportFormulas, exportWorkbook, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
+import { analysisFields, analysisRowsOf, exportFormulas, exportWorkbook, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
 
 // Owner 2026-11-14: "my lists there are 583 rows - 1 header, so 582 items. why does the list in list analysis only have 463";
 // "a box to select if i want to view their list or just my list … a little filter … only those items that are matched";
@@ -53,7 +53,8 @@ describe("Excel export — every computed column is a live formula", () => {
     expect(at("a:low_sales")).toMatchObject({ formula: "MIN(C2,G2)" });
     expect(at("a:min_buy")).toMatchObject({ formula: "G2*(1-K2)", result: 16 });
     expect(at("a:under_by")).toMatchObject({ formula: "MAX(G2-C2,0)" });
-    expect(at("a:over_by")).toMatchObject({ formula: "MAX(C2-G2,0)" });
+    expect(at("a:over_by")).toMatchObject({ formula: "MIN(G2-C2,0)" });
+    expect(at("a:lower_pct")).toMatchObject({ formula: 'IF(C2=0,"",-P2/C2)' });
     expect(at("a:new_margin")).toMatchObject({ formula: 'IF(G2=0,"",(G2-B2)/G2)' });
     // The match candidates are text in Excel, never an object.
     expect(at("a:cand")).toBe("CIELO BLUE 3.3 · LA ESPERANZA; CIELO 3.4 · LA ESPERANZA");
@@ -63,5 +64,20 @@ describe("Excel export — every computed column is a live formula", () => {
     const full = exportFormulas([w("my_offer_price"), w("s:v1:price"), w("s:v1:cushion"), w("s:v1:real"), w("s:v1:diff"), w("s:v1:diff_pct", "pct"), w("comp_low_list"), w("comp_cushion"), w("comp_cost"), w("c:v1:price"), w("c:v1:earn"), w("c:v1:margin", "pct")]);
     expect(full.map((f) => f.target).sort()).toEqual(["c:v1:earn", "c:v1:margin", "comp_cost", "s:v1:diff", "s:v1:diff_pct", "s:v1:real"]);
     expect(exportFormulas([w("s:v1:price"), w("s:v1:real")]).map((f) => f.target)).toEqual([]);
+  });
+});
+
+describe("Cheaper by / more expensive by (owner 2026-11-14 15:10: over by should be negative)", () => {
+  const base = { upc: null, sku: null, brand: null, name: null, size: null, type: null, gender: null, purchDate: null, qtyPurch: null, cost: null, sold: null, invQty: null, lowVendor: null, lowPrice: null, minMargin: 20, myDesc: null };
+  it("my offer above their real price → more expensive by is negative, % to lower positive", () => {
+    const f = analysisFields({ ...base, offer: 2050, comp: { list: 2050, cushion: 50, real: 2000, desc: "X", vendor: "ESP" } });
+    expect(f["a:over_by"]).toBe(-50);
+    expect(f["a:lower_pct"]).toBe(2.4);
+    expect(f["a:under_by"]).toBe(0);
+  });
+  it("my offer below → cheaper by positive, more expensive by 0", () => {
+    const f = analysisFields({ ...base, offer: 1900, comp: { list: 2050, cushion: 50, real: 2000, desc: "X", vendor: "ESP" } });
+    expect(f["a:under_by"]).toBe(100);
+    expect(f["a:over_by"]).toBe(0);
   });
 });
