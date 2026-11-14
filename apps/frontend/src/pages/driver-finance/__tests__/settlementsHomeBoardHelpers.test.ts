@@ -80,4 +80,14 @@ describe("settlementsHomeBoardHelpers company-calendar weeks (Codex batch91/92)"
     const paid = { id: "s-paid", status: "paid", payment_state: "cleared", trip_closed_at: "2026-10-20T12:00:00.000Z" } as SettlementListRow;
     expect(weekOfBoardStatus(paid).label).toBe("Paid");
   });
+
+  // R90-32: Closed panel pill forces non-Paid/Held/Cancelled rows to "Closed" (BOARD-45 recorded defect).
+  it("weekOfBoardStatus pill=closed labels open-tour row as Closed (never Open)", () => {
+    const openTour = { id: "s-open", status: "open", payment_state: "unpaid" } as SettlementListRow;
+    expect(weekOfBoardStatus(openTour, "closed").label).toBe("Closed");
+    expect(weekOfBoardStatus(openTour, "open").label).toBe("Open");
+    // Paid is still Paid regardless of pill.
+    const paid = { id: "s-paid", status: "paid", payment_state: "cleared" } as SettlementListRow;
+    expect(weekOfBoardStatus(paid, "closed").label).toBe("Paid");
+  });
 });
