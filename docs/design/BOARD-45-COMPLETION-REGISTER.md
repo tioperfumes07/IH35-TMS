@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:19Z) — Cursor board5 CashFlow #29454
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 5 CashFlow Home + DailyPrediction View-all | READY | #29454 `e33a3e928b9` viewAllHref+ret; verify 20262 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:13Z) — Cursor board10/12 #29451
 | Board / surface | Status | Evidence |
 |---|---|---|
