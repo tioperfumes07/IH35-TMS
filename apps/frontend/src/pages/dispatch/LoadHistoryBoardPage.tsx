@@ -154,6 +154,15 @@ export default function LoadHistoryBoardPage() {
   const { pathname } = useLocation();
   // ROUND 8.20 board13 — drills attach ?ret=; Back restores origin (fallback /dispatch).
   const loadHistoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
+  const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  // ROUND 8.20 board13 — Loads KPI → shareable include_cancelled=1 cohort (URL SoT).
+  const includeCancelledFromUrl = searchParams.get("include_cancelled") === "1";
+  const includeCancelledHref = (() => {
+    const p = new URLSearchParams(searchParams);
+    p.set("include_cancelled", "1");
+    const q = p.toString();
+    return withReturnContext(`${pathname}${q ? `?${q}` : ""}`, originHref);
+  })();
   // ROUND 8.20 board13 — `q` is URL source of truth (deep-link NO-SUCH-LOAD must zero KPIs + table).
   const search = searchParams.get("q") ?? "";
   const setSearch = (next: string) => {
@@ -171,7 +180,11 @@ export default function LoadHistoryBoardPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [drawerLoadId, setDrawerLoadId] = useState<string | null>(null);
 
-  const params = loadHistoryApiParams(applied);
+  const effectiveFilters: Filters = {
+    ...applied,
+    includeCancelled: applied.includeCancelled || includeCancelledFromUrl,
+  };
+  const params = loadHistoryApiParams(effectiveFilters);
   const query = useQuery({
     queryKey: ["dispatch", "load-history-board", companyId, params, offset],
     queryFn: () => getLoadsHistory({ operating_company_id: companyId, ...params, limit: PAGE, offset }),
@@ -480,11 +493,7 @@ export default function LoadHistoryBoardPage() {
           label="Loads"
           value={kpiValue(String(totals?.load_count ?? 0))}
           sub={`${allBooked} booked · ${cancelled} cancelled`}
-          onClick={() => {
-            const next = { ...applied, includeCancelled: true, status: [] };
-            setOffset(0);
-            setApplied(next);
-          }}
+          href={includeCancelledHref}
           title="View all — include cancelled loads"
         />
         <V3KpiTile

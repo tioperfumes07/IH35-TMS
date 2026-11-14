@@ -16152,6 +16152,11 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Reports Home KPI href+ret + qbo/samsara/program/driver-hub/settings Backs"
   },
+  "20234": {
+    "claimed_at": "2026-11-14T03:02:02Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 TB KPI href+ret + LoadHistory include_cancelled KPI"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
