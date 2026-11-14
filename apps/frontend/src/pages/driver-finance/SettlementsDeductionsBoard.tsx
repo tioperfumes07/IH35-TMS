@@ -18,7 +18,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
@@ -292,9 +292,9 @@ export function SettlementsDeductionsBoard() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="settlements-deductions-board" data-v3-board="Settlements-Deductions">
-        <BoardSection title="Deductions" testId="settlements-deductions-need-company">
+        <V3Panel board title="Deductions" testId="settlements-deductions-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </BoardSection>
+        </V3Panel>
       </div>
     );
   }
@@ -384,13 +384,13 @@ export function SettlementsDeductionsBoard() {
         data-testid="settlements-deductions-board-body"
         data-settlements-deductions-board-2col="1"
       >
-        <BoardSection
+        <V3Panel board
           title={S443326.deductions.sectionByType}
           testId="settlements-deductions-by-type-panel"
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-by-type-body">
-            <ParityTable<(typeof TYPE_ROWS)[number]> appearance="board"
+            <ParityTable<(typeof TYPE_ROWS)[number]> appearance="v3"
               tableTestId="settlements-deductions-by-type-table"
               hidePager
               density="compact"
@@ -453,15 +453,15 @@ export function SettlementsDeductionsBoard() {
               }}
             />
           </div>
-        </BoardSection>
+        </V3Panel>
 
-        <BoardSection
+        <V3Panel board
           title={S443326.deductions.sectionSchedule}
           testId="settlements-deductions-schedule-panel"
           onViewAll={() => navigate(root)}
           footer={S443326.deductions.scheduleFooter}
         >
-          <ParityTable<ScheduleRow> appearance="board"
+          <ParityTable<ScheduleRow> appearance="v3"
             columns={scheduleColumns}
             rows={filteredSchedule}
             rowKey={(r) => r.id}
@@ -472,7 +472,7 @@ export function SettlementsDeductionsBoard() {
             hidePager
             pageSize={Math.max(1, filteredSchedule.length || 1)}
           />
-        </BoardSection>
+        </V3Panel>
       </div>
 
       {companyId ? (
