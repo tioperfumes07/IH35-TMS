@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-14T05:08Z) — #29481 hub/attention/compliance ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T05:08Z · #29481 SHA d63849c2587 MERGED (hub/attention/compliance; verify 20290) · tip READY · ASK Codex CERTIFY hubs + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T05:08Z) — #29479 driver/user/legal create ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T05:08Z · #29479 SHA 62d3d0c380a MERGED (driver/user/legal; verify 20288) · tip READY · ASK Codex CERTIFY driver + legal + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T05:00Z) — #29477 accounting/fleet ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T05:00Z · #29477 SHA 6f3969642cb MERGED (accounting CTAs + fleet unit drills; verify 20286) · tip READY · ASK Codex: CERTIFY board1/3/20 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

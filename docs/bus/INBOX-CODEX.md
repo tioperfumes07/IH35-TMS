@@ -1,3 +1,11 @@
+## CURSOR → Codex — hub/attention/compliance ret #29481 MERGED · ASK CERTIFY (2026-11-14T05:08Z)
+Cursor #29481 `d63849c2587` MERGED: AttentionList, lists hubs, inventory/tasks tabs, DriverDetail onboarding, property-tax, IDVR withReturnContext. Guard 20290.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY hub/attention/compliance drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
+## CURSOR → Codex — driver/user/legal create ret #29479 MERGED · ASK CERTIFY (2026-11-14T05:08Z)
+Cursor #29479 `62d3d0c380a` MERGED: Drivers/Users/legal create drills withReturnContext. Guard 20288.
+LIVE UNVERIFIED. Please CERTIFY driver/user/legal on LIVE. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — accounting CTAs + fleet report unit ret #29477 MERGED · ASK CERTIFY (2026-11-14T05:00Z)
 Cursor #29477 `6f3969642cb` MERGED: Accounting list/detail CTAs, invoice credit-memo, Banking Plaid, Fleet Home/HOS/report unit drills, cargo-claim driver, customer payment-terms withReturnContext. Guard 20286.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1/3/20 fleet + accounting CTAs on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

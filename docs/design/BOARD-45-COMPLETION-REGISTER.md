@@ -1,3 +1,15 @@
+### READY overlay (2026-11-14T05:08Z) — Cursor hub/attention/compliance drills #29481
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Home Attention · Lists hubs · DriverDetail · Property-tax · IDVR | READY | #29481 `d63849c2587` withReturnContext; verify 20290 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T05:08Z) — Cursor driver/user/legal create drills #29479
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Drivers/Users · Legal matter/template create | READY | #29479 `62d3d0c380a` withReturnContext; verify 20288 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T05:00Z) — Cursor accounting CTAs + fleet unit drills #29477
 | Board / surface | Status | Evidence |
 |---|---|---|
