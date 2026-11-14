@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 /**
  * ROUND 443.326 — bordered board section for Fuel tabs (no V3Panel; DoD forbids panel-stack chrome).
  * Same visual shell as SettlementsHomeBoardPanels BoardSection.
@@ -9,6 +10,7 @@ export function FuelBoardSection({
   title,
   subtitle,
   onViewAll,
+  viewAllHref,
   viewAllLabel = "View all →",
   headerRight,
   children,
@@ -18,6 +20,8 @@ export function FuelBoardSection({
   title: string;
   subtitle?: string;
   onViewAll?: () => void;
+  /** Prefer over onViewAll — shareable drill with ?ret= (Class R). */
+  viewAllHref?: string;
   viewAllLabel?: string;
   headerRight?: ReactNode;
   children: ReactNode;
@@ -51,7 +55,11 @@ export function FuelBoardSection({
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {headerRight}
-          {onViewAll ? (
+          {viewAllHref ? (
+            <Link to={viewAllHref} style={{ fontSize: 11, fontWeight: 600, color: V3.link, textDecoration: "none", padding: 0, fontFamily: V3.font }} data-testid={testId ? `${testId}-view-all` : undefined}>
+              {viewAllLabel}
+            </Link>
+          ) : onViewAll ? (
             <button
               type="button"
               onClick={onViewAll}

@@ -489,7 +489,7 @@ export function FactoringHomeBoard({
       >
         <FactoringBoardCard
           title="Each purchase — net to bank vs kept by Faro"
-          onViewAll={() => navigate(factorHref(FACTORING_TAB_PATH.purchase_report))}
+          viewAllHref={factorHref(FACTORING_TAB_PATH.purchase_report)}
           testId="factoring-home-purchase-panel"
         >
           {chartPurchasesQuery.isError ? (
@@ -506,7 +506,7 @@ export function FactoringHomeBoard({
 
         <FactoringBoardCard
           title="Terms on file"
-          onViewAll={() => navigate(factorHref(FACTORING_TAB_PATH.statements_settings))}
+          viewAllHref={factorHref(FACTORING_TAB_PATH.statements_settings)}
           headerRight={
             onEditTerms ? (
               <button

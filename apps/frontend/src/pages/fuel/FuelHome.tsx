@@ -1,6 +1,6 @@
 // TABLE_DATE_OMIT: this table has no date column by design — Diesel by truck is one row per TRUCK aggregated over the period chosen in the board's Oct / Sep / YTD period control — the period is the filter, not a column.
 import { useCallback, useMemo } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -133,7 +133,6 @@ type DieselBoardRow = DieselByTruckRow & { id: string };
  * No metric-as-rows theater, no panel-stack chrome.
  */
 export function FuelHomePage() {
-  const navigate = useNavigate();
   const { pathname, search: locationSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locationSearch);
   const { selectedCompanyId } = useCompanyContext();
@@ -408,7 +407,7 @@ export function FuelHomePage() {
 
       <FuelBoardSection
         title="Diesel by truck"
-        onViewAll={() => navigate(fuelBoardViewAllHref(period, originHref))}
+        viewAllHref={fuelBoardViewAllHref(period, originHref)}
         testId="fuel-home-diesel-board"
         headerRight={
           <V3Segmented

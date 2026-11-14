@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getArrivingSoon,
   listMaintenancePredictiveAlerts,
@@ -82,7 +83,10 @@ const riskColumns: ParityColumn<PredictiveAlertRow>[] = [
 
 /** Read-only board summaries, not embedded workflow pages or mutation modals. */
 export function MaintenanceHomeSummaryPanels({ companyId }: { companyId: string }) {
-  const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  const arrivingHref = withReturnContext("/maintenance/arriving-soon", originHref);
+  const alertsHref = withReturnContext("/maintenance/predictive-alerts", originHref);
   const arrivals = useQuery({
     queryKey: ["maintenance", "home-arrivals", companyId],
     queryFn: () => getArrivingSoon({ operating_company_id: companyId, within_hours: 48, severity_min: "info", include_already_arrived: true, include_non_yard_destination: false, limit: 5, offset: 0, recent_limit: 1, recent_offset: 0 }),
@@ -101,10 +105,10 @@ export function MaintenanceHomeSummaryPanels({ companyId }: { companyId: string 
     enabled: Boolean(companyId),
   });
   return <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-summary-panels">
-    <V3Panel title="Arriving soon — to the Laredo yard" onViewAll={() => navigate("/maintenance/arriving-soon")} footer="First 5 yard arrivals in the next 48 hours with their open issues and PM state; View all for the complete inbound roster.">
+    <V3Panel title="Arriving soon — to the Laredo yard" viewAllHref={arrivingHref} footer="First 5 yard arrivals in the next 48 hours with their open issues and PM state; View all for the complete inbound roster.">
       {arrivals.isError ? <ListErrorState title="Couldn't load arrivals" status={0} onRetry={() => void arrivals.refetch()} /> : <ParityTable appearance="board" rows={arrivals.data?.cards ?? []} columns={arrivalsColumns(pmDue.data?.rows ?? [], pmDue.isError ? "error" : pmDue.isLoading ? "loading" : "ready")} rowKey={row => row.load_id} loading={arrivals.isLoading} storageKey="maintenance-home-arrivals-summary" emptyText="No arrivals returned by the yard / 48-hour source." />}
     </V3Panel>
-    <V3Panel title="At risk — brakes & tires" onViewAll={() => navigate("/maintenance/predictive-alerts")} footer={risk.data ? `${risk.data.total_count} open alerts; showing up to 5. View all for the complete register and work-order actions.` : "Source register retains all work-order actions."}>
+    <V3Panel title="At risk — brakes & tires" viewAllHref={alertsHref} footer={risk.data ? `${risk.data.total_count} open alerts; showing up to 5. View all for the complete register and work-order actions.` : "Source register retains all work-order actions."}>
       {risk.isError ? <ListErrorState title="Couldn't load projected wear" status={0} onRetry={() => void risk.refetch()} /> : <ParityTable appearance="board" rows={risk.data?.alerts ?? []} columns={riskColumns} rowKey={row => row.id} loading={risk.isLoading} storageKey="maintenance-home-risk-summary" emptyText="No open brake or tire projections." />}
     </V3Panel>
   </div>;

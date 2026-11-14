@@ -121,6 +121,8 @@ export function CashAdvancesKpiRow({
   const awaitingHref = withReturnContext(`${root}?tab=pending_approval`, originHref);
   const outstandingHref = withReturnContext(`${root}?tab=outstanding`, originHref);
   const recoveredHref = withReturnContext(`${root}?tab=paid_off`, originHref);
+  const requestsViewAllHref = withReturnContext(REQUESTS_PATH, originHref);
+  const advancesViewAllHref = withReturnContext(root, originHref);
   const onFile = amount(kpis, "advances_on_file");
   const awaiting = amount(kpis, "pending_approval");
   const outstanding = money(amount(kpis, "total_outstanding"));
@@ -325,7 +327,7 @@ export function CashAdvancesKpiRow({
         <BoardSection
           title="Requests"
           testId="settlements-cash-advances-requests-panel"
-          onViewAll={() => navigate(REQUESTS_PATH)}
+          viewAllHref={requestsViewAllHref}
         >
           <div data-testid="settlements-cash-advances-requests-body">
             {requestsFailed ? (
@@ -353,7 +355,7 @@ export function CashAdvancesKpiRow({
         <BoardSection
           title="Advances"
           testId="settlements-cash-advances-advances-panel"
-          onViewAll={() => navigate(root)}
+          viewAllHref={advancesViewAllHref}
           footer="Each advance links to its bank line (Zelle) and to the tour that recovers it."
         >
           <div data-testid="settlements-cash-advances-advances-body">

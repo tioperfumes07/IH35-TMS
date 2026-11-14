@@ -267,6 +267,9 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
   );
   // ROUND 8.20 board3 — Drift / Relay KPIs must carry ret so Back restores Banking Home.
   const driftHref = withReturnContext(BANKING_TAB_PATH.reconciliation, originHref);
+  const accountsViewAllHref = withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref);
+  const reconViewAllHref = withReturnContext(BANKING_TAB_PATH.reconciliation, originHref);
+  const latestViewAllHref = withReturnContext(BANKING_TAB_PATH.transactions, originHref);
   const relayHref = withReturnContext(BANKING_TAB_PATH.relay_card, originHref);
 
   const moneyMapQuery = useQuery({
@@ -752,7 +755,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
       >
         <BoardSection
           title="Accounts"
-          onViewAll={() => navigate(BANKING_TAB_PATH.bank_accounts)}
+          viewAllHref={accountsViewAllHref}
           testId="banking-home-board-accounts"
         >
           <ParityTable<AccountBoardRow>
@@ -774,24 +777,22 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Reconciliation drift — bank vs book"
-          onViewAll={() => navigate(BANKING_TAB_PATH.reconciliation)}
+          viewAllHref={reconViewAllHref}
           headerRight={
-            <button
-              type="button"
-              onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}
+            <Link
+              to={reconViewAllHref}
               style={{
                 fontSize: 11,
                 fontWeight: 600,
                 color: V3.link,
-                background: "transparent",
-                border: "none",
-                cursor: "pointer",
+                textDecoration: "none",
                 padding: 0,
                 fontFamily: V3.font,
               }}
+              data-testid="banking-home-board-drift-resolve"
             >
               Resolve
-            </button>
+            </Link>
           }
           footer={
             driftCount > 0
@@ -823,7 +824,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           Pending stays fully reachable (all rows) in a bounded scroll region after Latest. */}
       <BoardSection
         title="Latest lines"
-        onViewAll={() => navigate(BANKING_TAB_PATH.transactions)}
+        viewAllHref={latestViewAllHref}
         footer="Nothing is matched automatically — a person links each line."
         testId="banking-home-board-latest"
       >

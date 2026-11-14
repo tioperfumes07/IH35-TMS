@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 /**
  * ROUND 443.250 — shared panel (title + optional View all →).
  */
@@ -9,6 +10,7 @@ export function V3Panel({
   subtitle,
   viewAllLabel = "View all →",
   onViewAll,
+  viewAllHref,
   headerRight,
   children,
   footer,
@@ -18,6 +20,8 @@ export function V3Panel({
   subtitle?: string;
   viewAllLabel?: string;
   onViewAll?: () => void;
+  /** Prefer over onViewAll — shareable drill with ?ret= (Class R). */
+  viewAllHref?: string;
   headerRight?: ReactNode;
   children: ReactNode;
   footer?: ReactNode;
@@ -51,7 +55,24 @@ export function V3Panel({
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {headerRight}
-          {onViewAll ? (
+          {viewAllHref ? (
+            <Link
+              to={viewAllHref}
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: V3.link,
+                textDecoration: "none",
+                background: "transparent",
+                border: "none",
+                padding: 0,
+                fontFamily: V3.font,
+              }}
+              data-testid={testId ? `${testId}-view-all` : undefined}
+            >
+              {viewAllLabel}
+            </Link>
+          ) : onViewAll ? (
             <button
               type="button"
               onClick={onViewAll}
