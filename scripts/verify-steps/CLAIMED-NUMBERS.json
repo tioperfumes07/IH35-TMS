@@ -18241,5 +18241,10 @@
     "claimed_at": "2026-11-14T04:23:47Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 ManualJE/BillPayments/BankingHome money drills withReturnContext"
+  },
+  "20268": {
+    "claimed_at": "2026-11-14T04:27:07Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 InvoiceDetail/CheckDetail/BankAccountDetail money drills withReturnContext"
   }
 }

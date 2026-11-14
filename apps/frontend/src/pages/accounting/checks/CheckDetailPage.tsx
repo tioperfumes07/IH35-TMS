@@ -4,7 +4,8 @@
 // the CHECK-specific voidCheck() (check_number_registry stamping, print_status, etc.) -- reusing
 // ExpenseDetailPage's generic void would silently skip that, so this is its own page, not a shared one.
 import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { BoardSection } from "../../../components/v3/BoardSection";
@@ -25,6 +26,9 @@ function formatMoneyCents(cents: number): string {
 }
 
 export function CheckDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -105,19 +109,19 @@ export function CheckDetailPage() {
             </button>
           )}
           items={[
-            { key: "copy", label: "Copy", onSelect: () => navigate(`/accounting/checks/new?copy_from=${check.id}`) },
+            { key: "copy", label: "Copy", onSelect: () => navigate(moneyHref(`/accounting/checks/new?copy_from=${check.id}`)) },
             {
               key: "journal",
               label: "Transaction journal",
               disabled: !check.journal_entry_id,
               onSelect: () => {
-                if (check.journal_entry_id) navigate(`/accounting/journal-entries/${check.journal_entry_id}`);
+                if (check.journal_entry_id) navigate(moneyHref(`/accounting/journal-entries/${check.journal_entry_id}`));
               },
             },
             {
               key: "audit",
               label: "Audit history",
-              onSelect: () => navigate(`/accounting/audit-trail?source_type=expense&source_id=${check.id}`),
+              onSelect: () => navigate(moneyHref(`/accounting/audit-trail?source_type=expense&source_id=${check.id}`)),
             },
             { key: "void", label: isVoided ? "Voided" : "Void", disabled: isVoided, onSelect: () => setVoidOpen(true) },
             {
