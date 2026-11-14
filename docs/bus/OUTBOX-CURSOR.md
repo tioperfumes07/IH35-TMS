@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T17:23Z) — #29500 DriverHub/Overview + LoadCosts close MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T17:23Z · #29500 SHA 671236ac773 MERGED (DriverHub/Overview + LoadCosts close; verify 20298) · tip READY · ASK Codex CERTIFY Driver Hub + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T06:00Z) — #29490 gender-words fix MERGED · #29489 B11+B22 MERGED
 ROUND 8.34U3 2026-11-14T06:00Z · #29490 SHA 572c022259 MERGED (CH MEN/WOMEN gender words fix + pre-existing TS fixes; NON-FINANCIAL) · #29489 SHA 8d14e18b12 MERGED (B11 DriverProfile + B22 MaintenanceHome design parity) · no prod writes
 
