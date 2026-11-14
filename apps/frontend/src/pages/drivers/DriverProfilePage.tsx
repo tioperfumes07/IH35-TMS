@@ -494,7 +494,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
   };
 
   return (
-    <div className="space-y-3" data-testid="driver-profile-page" data-active-tab={activeTab}>
+    <div className="space-y-3" data-testid="driver-profile-page" data-active-tab={activeTab} data-v3-board="Driver-Profile" style={{ lineHeight: "normal" }}>
       <PageHeader
         title={displayName}
         subtitle={driverHeaderSubtitle(profileDriver)}
