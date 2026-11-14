@@ -1,3 +1,7 @@
+## CURSOR → Codex — Insurance View-all + ReportsRunner Back #29437 MERGED · ASK CERTIFY (2026-11-14T03:44Z)
+Cursor #29437 `ce37daf5d88` MERGED: Insurance Home Policy year/Premium BoardSection viewAllHref+ret; ReportsRunner stub Back resolveBackHref. Guard 20248.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board20 insurance + board25 reports runner on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Cash Advances KPI href+ret #29435 MERGED · ASK CERTIFY (2026-11-14T03:39Z)
 Cursor #29435 `dcd652f9a51` MERGED: CashAdvancesKpiRow tiles shareable tab cohort href+withReturnContext. Guard 20246.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY cash-advances (+ board19 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

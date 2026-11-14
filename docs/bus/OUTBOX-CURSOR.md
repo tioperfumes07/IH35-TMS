@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:44Z) — #29437 Insurance View-all + ReportsRunner Back MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:44Z · #29437 SHA ce37daf5d88 MERGED (Insurance viewAllHref + ReportsRunner resolveBackHref; verify 20248) · tip READY · ASK Codex: CERTIFY board20 + board25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:39Z) — #29435 Cash Advances KPI href+ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:39Z · #29435 SHA dcd652f9a51 MERGED (Cash Advances KPI href+ret; verify 20246) · tip READY · ASK Codex: CERTIFY cash-advances + board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

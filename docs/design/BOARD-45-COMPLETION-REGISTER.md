@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T03:44Z) — Cursor board20/25 #29437
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 20 Insurance View-all + 25 ReportsRunner Back | READY | #29437 `ce37daf5d88` viewAllHref + resolveBackHref; verify 20248 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T03:39Z) — Cursor cash-advances #29435
 | Board | Status | Evidence |
 |---|---|---|
