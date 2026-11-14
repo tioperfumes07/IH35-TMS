@@ -1,8 +1,8 @@
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import {
   Bar,
@@ -86,6 +86,9 @@ const FLAG_UI: Record<CustomerProfitFlag, { className: string; label: string }> 
 };
 
 export function CustomerProfitabilityPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -167,7 +170,7 @@ export function CustomerProfitabilityPage() {
               className="cursor-pointer text-[#1F2A44] underline"
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`);
+                navigate(acctHref(`/reports/ar-aging?customer_id=${encodeURIComponent(r.customer_id)}`));
               }}
             >
               {money(r.ar_aging_balance_cents)}

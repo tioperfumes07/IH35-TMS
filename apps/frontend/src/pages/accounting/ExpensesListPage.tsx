@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -96,6 +97,9 @@ function MatchPill({ matched }: { matched: boolean }) {
 }
 
 export function ExpensesListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { selectedCompanyId } = useCompanyContext();
@@ -785,7 +789,7 @@ export function ExpensesListPage() {
           rowKey={(r) => r.id}
           loading={query.isLoading}
           onRowClick={(r) => {
-            void navigate(`/accounting/expenses/${r.id}`);
+            void navigate(acctHref(`/accounting/expenses/${r.id}`));
           }}
           rowClassName={(r) => (highlightedExpenseId === r.id ? "bg-[#F7F8FA]" : "")}
           filterBar={filterBar}
