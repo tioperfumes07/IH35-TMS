@@ -181,6 +181,7 @@ export default function LoadHistoryBoardPage() {
   // ROUND 8.20 board13 — drills attach ?ret=; Back restores origin (fallback /dispatch).
   const loadHistoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board13 — Loads KPI → shareable include_cancelled=1 cohort (URL SoT).
   const includeCancelledFromUrl = searchParams.get("include_cancelled") === "1";
   const includeCancelledHref = (() => {
@@ -562,7 +563,7 @@ export default function LoadHistoryBoardPage() {
           value={kpiValue(String(totals?.delivered_not_invoiced ?? 0))}
           tone={(totals?.delivered_not_invoiced ?? 0) > 0 ? "amber" : "ink"}
           sub={<>docs pending · <span className="font-semibold text-[#1D4ED8]">Open list</span></>}
-          href="/dispatch/awaiting-bol-invoice"
+          href={dispHref("/dispatch/awaiting-bol-invoice")}
         />
       </div>
 

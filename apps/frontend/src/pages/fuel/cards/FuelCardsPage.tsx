@@ -4,7 +4,8 @@
  * migration 202615140600, PR #23695). Backend-only until now; this is the first screen.
  */
 import { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   endFuelCardAssignment,
@@ -265,6 +266,9 @@ function CardIssuersPanel({ companyId, canWrite, onChanged }: { companyId: strin
 }
 
 export function FuelCardsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const canWrite = useCanVoidCancel();
@@ -405,28 +409,28 @@ export function FuelCardsPage() {
           value={kpiValue(kpis.active)}
           sub="current assignment"
           testId="fuel-cards-kpi-active"
-          href="/fuel/cards?status=active"
+          href={fuelHref("/fuel/cards?status=active")}
         />
         <V3KpiTile
           label="Ended"
           value={kpiValue(kpis.ended)}
           sub="past effective to"
           testId="fuel-cards-kpi-ended"
-          href="/fuel/cards?status=ended"
+          href={fuelHref("/fuel/cards?status=ended")}
         />
         <V3KpiTile
           label="Voided"
           value={kpiValue(kpis.voided)}
           sub={includeVoided ? "in this list" : "show voided to count"}
           testId="fuel-cards-kpi-voided"
-          href="/fuel/cards?status=voided&include_voided=1"
+          href={fuelHref("/fuel/cards?status=voided&include_voided=1")}
         />
         <V3KpiTile
           label="Assignments"
           value={kpiValue(kpis.total)}
           sub="rows in filter"
           testId="fuel-cards-kpi-assignments"
-          href="/fuel/cards"
+          href={fuelHref("/fuel/cards")}
         />
       </div>
       <MoneyListToolbar
