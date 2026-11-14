@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:34Z) — #29431 Form 425C Class R Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:34Z · #29431 SHA 35712e856fa MERGED (Form 425C Home+Exhibits resolveBackHref; verify 20244) · tip READY · ASK Codex: CERTIFY 425C + board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:33Z) — #29430 board19 Fuel Integrity KPI section URL SoT MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:33Z · #29430 SHA 7c9cddf20a6 MERGED (Fuel Integrity KPI section=card|relay href+ret; verify 20242) · tip READY · ASK Codex: CERTIFY board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
