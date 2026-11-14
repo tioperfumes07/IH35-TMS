@@ -3,10 +3,11 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { AmountLink } from "../../components/shared/AmountLink";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { exportApAging, getApAgingReport, type APAgingRow } from "../../api/reports";
 import { mmmDd, mmmDdTime } from "../../lib/formatDate";
 import { companyToday } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { Button } from "../../components/Button";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -59,8 +60,11 @@ export function APAgingPage() {
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  // ROUND 8.20 board25/10 — Vendors/Reports drills attach ?ret=; Back must restore origin (not bare /reports).
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   // BANK-SORT-ROLLOUT-ACCT (A/P Aging follow-up): every visible column header sorts ASC/DESC;
   // sort persists in the URL (?sort=&dir=) so it survives reload / is shareable.
   const { sortKey, sortDirection, onSortChange } = useUrlSort();
@@ -335,7 +339,7 @@ export function APAgingPage() {
       <PageHeader
         title="A/P aging"
         subtitle={`As of ${mmmDd(appliedFilters.asOfDate)} · open bills by vendor · Accrual basis`}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "A/P Aging"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

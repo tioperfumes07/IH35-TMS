@@ -16057,6 +16057,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-fuel-fraud-kpi-ret board19"
   },
+  "20202": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-ap-aging-back-ret board25/10"
+  },
   "20206": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
