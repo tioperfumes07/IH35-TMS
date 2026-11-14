@@ -10,15 +10,16 @@ import { createRequire } from "node:module";
 const require = createRequire(new URL("../apps/frontend/package.json", import.meta.url));
 const ts = require("typescript");
 const HOME_PANELS = ["MaintenancePmCountdownCards", "MaintEnginesStatusWidget", "MaintenanceAlertsCard", "InTransitTriageBand", "SevereAlertsBand"];
+// ROUND 9.0 (owner 2026-11-13): right-column monitors are design's side cards (V3SideCard), superseding the 443.280 V3Panel rule.
 export function validateHomePanel(name, text) {
   const source = ts.createSourceFile(`${name}.tsx`, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-  let panels = 0;
+  let cards = 0;
   function visit(node) {
-    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.tagName.getText(source) === "V3Panel") panels++;
+    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.tagName.getText(source) === "V3SideCard") cards++;
     ts.forEachChild(node, visit);
   }
   visit(source);
-  return panels ? [] : [`Home panel ${name} must mount the shared V3Panel`];
+  return cards ? [] : [`Home panel ${name} must mount the shared V3SideCard`];
 }
 
 // 443.280: preserve capabilities on dedicated routes, not mounted below Home.
@@ -276,7 +277,7 @@ export function boardLayoutSelftest(home, routes) {
   for (const name of HOME_PANELS) {
     const original = readIfExists(path.join(ROOT, `apps/frontend/src/pages/maintenance/components/${name}.tsx`));
     if (validateHomePanel(name, original).length) throw new Error(`clean panel rejected: ${name}`);
-    if (!validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel")).length) throw new Error(`legacy panel plant escaped: ${name}`);
+    if (!validateHomePanel(name, original.replaceAll("V3SideCard", "LegacySideCard")).length) throw new Error(`legacy panel plant escaped: ${name}`);
   }
   console.log("Home panel selftest 10/10 (five real panels + five legacy replacements)");
 }
