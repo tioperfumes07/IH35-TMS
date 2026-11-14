@@ -12,6 +12,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ApiError, apiRequest } from "../../api/client";
 import { V3 } from "../../design/v3-tokens";
 import { rememberPartyBoardReturn } from "../../lib/partyBoardReturn";
@@ -81,6 +82,8 @@ const parseChip = (v: string | null): Chip => (CHIPS.includes(v as Chip) ? (v as
 export function PartyBoard(props: { kind: "customers"; operatingCompanyId: string; onMasterDetail: () => void; onCreate: () => void }) {
   const navigate = useNavigate();
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const partyHref = (target: string) => withReturnContext(target, originHref);
   // Chip and range live in the URL (?chip=, ?range=) so every tile and figure links to the exact rows it sums.
   const [searchParams, setSearchParams] = useSearchParams();
   const rangeParam = searchParams.get("range");
@@ -130,14 +133,14 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     },
     {
       key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices,
-      cell: (r) => (r.invoices ? <NumLink to={`/accounting/invoices?customer_id=${r.id}`}>{int(r.invoices)}</NumLink> : <span>—</span>),
+      cell: (r) => (r.invoices ? <NumLink to={partyHref(`/accounting/invoices?customer_id=${r.id}`)}>{int(r.invoices)}</NumLink> : <span>—</span>),
     },
-    { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => <NumLink to={`/customers/${r.id}`}>{money(r.billed_cents)}</NumLink> },
+    { key: "billed", label: "Billed", num: true, width: 122, sort: (r) => r.billed_cents, cell: (r) => <NumLink to={partyHref(`/customers/${r.id}`)}>{money(r.billed_cents)}</NumLink> },
     // Codex batch46 row 55: collected is a MEASURED sum — a real $0.00 renders as $0.00, never "—".
-    { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => <NumLink to={`/customers/${r.id}`}>{money(r.collected_cents)}</NumLink> },
+    { key: "collected", label: "Collected", num: true, width: 122, sort: (r) => r.collected_cents, cell: (r) => <NumLink to={partyHref(`/customers/${r.id}`)}>{money(r.collected_cents)}</NumLink> },
     {
       key: "open", label: "Open balance", num: true, width: 130, sort: (r) => r.open_cents,
-      cell: (r) => <NumLink to={`/accounting/invoices?customer_id=${r.id}&has_balance=true`}>{money(r.open_cents)}</NumLink>,
+      cell: (r) => <NumLink to={partyHref(`/accounting/invoices?customer_id=${r.id}&has_balance=true`)}>{money(r.open_cents)}</NumLink>,
     },
     { key: "aging", label: "Aging", width: 160, sortable: false, sort: (r) => pastDue(r.aging), cell: (r) => <AgingBar aging={r.aging} maxOpen={maxOpen} /> },
     { key: "last_invoice_date", label: "Last invoice", width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span>{day(r.last_invoice)}</span> },
@@ -165,18 +168,18 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
   if (b && b.kpis.invoices > 0) {
     note = (
       <MeasuredNote testId="party-board-note">
-        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{int(b.kpis.invoices)}</NumLink> invoices issued (open and paid) since {day(b.range_from)},{" "}
-        <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed (issued invoices only){(b.kpis.proforma_cents ?? 0) > 0 ? <>, plus <NumLink to={`/customers?chip=with_transactions&range=${range}`} data-testid="party-board-proforma">{tileUsd(b.kpis.proforma_cents ?? 0)}</NumLink> of draft / proforma invoices not yet billed</> : null}.{" "}
+        <NumLink to={partyHref(`/customers?chip=with_transactions&range=${range}`)}>{int(b.kpis.invoices)}</NumLink> invoices issued (open and paid) since {day(b.range_from)},{" "}
+        <NumLink to={partyHref(`/customers?chip=with_transactions&range=${range}`)}>{tileUsd(b.kpis.billed_cents)}</NumLink> billed (issued invoices only){(b.kpis.proforma_cents ?? 0) > 0 ? <>, plus <NumLink to={partyHref(`/customers?chip=with_transactions&range=${range}`)} data-testid="party-board-proforma">{tileUsd(b.kpis.proforma_cents ?? 0)}</NumLink> of draft / proforma invoices not yet billed</> : null}.{" "}
         {b.kpis.collected_cents === 0 ? (
           <>
-            Collected is <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(0)}</NumLink> for every customer: no payment has been
-            applied to any of them, so open balance <NumLink to={`/customers?chip=open_balance&range=${range}`}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> = billed{(b.kpis.proforma_cents ?? 0) > 0 ? " + proforma" : ""}.
+            Collected is <NumLink to={partyHref(`/customers?chip=with_transactions&range=${range}`)}>{tileUsd(0)}</NumLink> for every customer: no payment has been
+            applied to any of them, so open balance <NumLink to={partyHref(`/customers?chip=open_balance&range=${range}`)}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> = billed{(b.kpis.proforma_cents ?? 0) > 0 ? " + proforma" : ""}.
           </>
         ) : (
           <>
             {int(b.kpis.invoices_with_payment)} invoice{b.kpis.invoices_with_payment === 1 ? "" : "s"} carry a payment,{" "}
-            <NumLink to={`/customers?chip=with_transactions&range=${range}`}>{tileUsd(b.kpis.collected_cents)}</NumLink> collected. Cash not applied to an
-            invoice does not relieve A/R, so the <NumLink to={`/customers?chip=open_balance&range=${range}`}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> open
+            <NumLink to={partyHref(`/customers?chip=with_transactions&range=${range}`)}>{tileUsd(b.kpis.collected_cents)}</NumLink> collected. Cash not applied to an
+            invoice does not relieve A/R, so the <NumLink to={partyHref(`/customers?chip=open_balance&range=${range}`)}>{tileUsd(b.kpis.ar_open_cents)}</NumLink> open
             balance includes anything paid but not applied.
           </>
         )}
@@ -193,14 +196,14 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
           {/* One tile format (V3KpiTile). Each tile opens the exact rows it counts: the board's own ?chip=&range= list
               (whose column foots equal the tile) or, for Open invoices, the invoices list's live_open filter. */}
-          <V3KpiTile label="With transactions" value={b ? int(b.kpis.with_transactions) : "…"} href={`/customers?chip=with_transactions&range=${range}`} />
-          <V3KpiTile label="In the book" value={b ? int(b.kpis.in_the_book) : "…"} href={`/customers?chip=all&range=${range}`} />
+          <V3KpiTile label="With transactions" value={b ? int(b.kpis.with_transactions) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
+          <V3KpiTile label="In the book" value={b ? int(b.kpis.in_the_book) : "…"} href={partyHref(`/customers?chip=all&range=${range}`)} />
           {/* ROUND 297: "open" = live, not void, balance above $0 -- the same definition Factoring's candidates use. */}
-          <V3KpiTile label="Open invoices" value={b ? int(b.kpis.open_invoices) : "…"} href={`/accounting/invoices?live_open=true&date_from=${b?.range_from ?? ""}`} />
-          <V3KpiTile label="Billed" value={b ? tileUsd(b.kpis.billed_cents) : "…"} href={`/customers?chip=with_transactions&range=${range}`} />
-          <V3KpiTile label="A/R open" value={b ? tileUsd(b.kpis.ar_open_cents) : "…"} href={`/customers?chip=open_balance&range=${range}`}
+          <V3KpiTile label="Open invoices" value={b ? int(b.kpis.open_invoices) : "…"} href={partyHref(`/accounting/invoices?live_open=true&date_from=${b?.range_from ?? ""}`)} />
+          <V3KpiTile label="Billed" value={b ? tileUsd(b.kpis.billed_cents) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
+          <V3KpiTile label="A/R open" value={b ? tileUsd(b.kpis.ar_open_cents) : "…"} href={partyHref(`/customers?chip=open_balance&range=${range}`)}
             sub={pastDuePct != null ? `${pastDuePct}% past due` : undefined} />
-          <V3KpiTile label="Collected" value={b ? tileUsd(b.kpis.collected_cents) : "…"} href={`/customers?chip=with_transactions&range=${range}`}
+          <V3KpiTile label="Collected" value={b ? tileUsd(b.kpis.collected_cents) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)}
             tone={b && b.kpis.collected_cents === 0 && b.kpis.billed_cents > 0 ? "red" : "ink"}
             sub={b && b.kpis.invoices_with_payment === 0 ? "no payments applied" : b ? `${int(b.kpis.invoices_with_payment)} invoices paid` : undefined} />
         </div>
