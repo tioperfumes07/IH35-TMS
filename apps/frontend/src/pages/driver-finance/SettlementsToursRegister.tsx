@@ -584,6 +584,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       {/* R-102-B item 5 — cancelled/reversed permanently excluded (SETL-REVERSED-HIDE) */}
       <BoardSection
         title={panelTitle}
+        subtitle={`${formatQuantityTable(filteredRows.length, 0)} rows`}
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
       >
