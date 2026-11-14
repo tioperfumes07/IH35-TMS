@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { ReportFilterBar } from "../../components/reports/ReportFilterBar";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useStagedListFilters } from "../../components/table";
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
@@ -65,6 +66,9 @@ export function LateArrivalReport() {
   const { selectedCompanyId, companies } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? companies[0]?.id ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters: LateArrivalFilters = { from: monthStart(), to: today(), groupBy: "driver" as GroupBy, minDelayHours: "" };
   const [appliedFilters, setAppliedFilters] = useState<LateArrivalFilters>(emptyFilters);
   const staged = useStagedListFilters({
@@ -110,7 +114,7 @@ export function LateArrivalReport() {
       <PageHeader
         title="Late arrival analytics"
         subtitle="Completed stop late rates by driver, customer, and lane (30-minute grace)."
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Late Arrival Analytics"]}
       />
 
