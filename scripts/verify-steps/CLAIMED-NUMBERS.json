@@ -16052,6 +16052,16 @@
     "claimed_by": "cursor",
     "purpose": "verify-maint-home-kpi-href board22"
   },
+  "20198": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-fuel-fraud-kpi-ret board19"
+  },
+  "20206": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-report-board-shell-ret board25"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18056,10 +18066,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20206": {
-    "claimed_at": "2026-11-13",
-    "claimed_by": "cursor",
-    "purpose": "verify-report-board-shell-ret board25"
-  }
+  "total_claimed": 1111
 }
