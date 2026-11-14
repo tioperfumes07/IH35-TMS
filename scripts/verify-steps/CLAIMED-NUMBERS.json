@@ -16157,6 +16157,56 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 TB KPI href+ret + LoadHistory include_cancelled KPI"
   },
+  "20236": {
+    "claimed_at": "2026-11-14T03:19:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Relay Wallet KPI href+ret bucket/day URL SoT"
+  },
+  "20238": {
+    "claimed_at": "2026-11-14T03:24:00Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board6 AVP Net variance KPI href+ret avp_var"
+  },
+  "20240": {
+    "claimed_at": "2026-11-14T03:26:53Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Fuel Home + Card Overage KPI href+ret"
+  },
+  "20242": {
+    "claimed_at": "2026-11-14T03:29:37Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Fuel Integrity KPI section= URL SoT href+ret"
+  },
+  "20244": {
+    "claimed_at": "2026-11-14T03:32:52Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Form 425C Home+Exhibits Class R Backs"
+  },
+  "20246": {
+    "claimed_at": "2026-11-14T03:37:47Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Cash Advances KPI strip href+ret"
+  },
+  "20248": {
+    "claimed_at": "2026-11-14T03:42:15Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Insurance View-all href + ReportsRunner Back resolveBackHref"
+  },
+  "20250": {
+    "claimed_at": "2026-11-14T03:44:09Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 View-all href wave: Factoring/Legal/Banking/Fuel/Maint/Escrow/CA + V3Panel/FuelBoardSection"
+  },
+  "20252": {
+    "claimed_at": "2026-11-14T03:45:33Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Customers/CustomerDetail invoice drills withReturnContext"
+  },
+  "20254": {
+    "claimed_at": "2026-11-14T03:47:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 UnexpectedExpenses + Profitability View-all href+ret"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18161,50 +18211,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20236": {
-    "claimed_at": "2026-11-14T03:19:35Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 board19 Relay Wallet KPI href+ret bucket/day URL SoT"
-  },
-  "20238": {
-    "claimed_at": "2026-11-14T03:24:00Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 board6 AVP Net variance KPI href+ret avp_var"
-  },
-  "20240": {
-    "claimed_at": "2026-11-14T03:26:53Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 board19 Fuel Home + Card Overage KPI href+ret"
-  },
-  "20242": {
-    "claimed_at": "2026-11-14T03:29:37Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 board19 Fuel Integrity KPI section= URL SoT href+ret"
-  },
-  "20244": {
-    "claimed_at": "2026-11-14T03:32:52Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Form 425C Home+Exhibits Class R Backs"
-  },
-  "20246": {
-    "claimed_at": "2026-11-14T03:37:47Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Cash Advances KPI strip href+ret"
-  },
-  "20248": {
-    "claimed_at": "2026-11-14T03:42:15Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Insurance View-all href + ReportsRunner Back resolveBackHref"
-  },
-  "20250": {
-    "claimed_at": "2026-11-14T03:44:09Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 View-all href wave: Factoring/Legal/Banking/Fuel/Maint/Escrow/CA + V3Panel/FuelBoardSection"
-  },
-  "20254": {
-    "claimed_at": "2026-11-14T03:47:35Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 UnexpectedExpenses + Profitability View-all href+ret"
-  }
+  "total_claimed": 1111
 }

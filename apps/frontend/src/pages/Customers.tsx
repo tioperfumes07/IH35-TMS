@@ -401,6 +401,9 @@ function CustomerFinancialActivityTab({
   customerId: string;
 }) {
   const navigate = useNavigate();
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
+  const custInvHref = (target: string) => withReturnContext(target, originHref);
   const query = useQuery({
     queryKey: ["customers", "financial-activity", operatingCompanyId, customerId],
     queryFn: () => getCustomerActivity({ operating_company_id: operatingCompanyId, customer_id: customerId }),
@@ -478,19 +481,19 @@ function CustomerFinancialActivityTab({
         onRowClick={(r) => {
           switch (r.type) {
             case "invoice":
-              navigate(`/accounting/invoices/${r.id}`);
+              navigate(custInvHref(`/accounting/invoices/${r.id}`));
               break;
             case "payment":
-              navigate(`/accounting/payments/${r.id}`);
+              navigate(custInvHref(`/accounting/payments/${r.id}`));
               break;
             case "credit_memo":
-              navigate(`/accounting/credit-memos/${r.id}`);
+              navigate(custInvHref(`/accounting/credit-memos/${r.id}`));
               break;
             case "broker_advance":
-              navigate(`/accounting/broker-advances/${r.id}`);
+              navigate(custInvHref(`/accounting/broker-advances/${r.id}`));
               break;
             case "factoring_advance":
-              navigate(`/accounting/factoring-advances/${r.id}`);
+              navigate(custInvHref(`/accounting/factoring-advances/${r.id}`));
               break;
           }
         }}
@@ -595,6 +598,7 @@ export function CustomersPage() {
   };
   const { pathname, search: locationSearch } = useLocation();
   const customersOriginHref = currentOriginHref(pathname, locationSearch);
+  const custInvHref = (target: string) => withReturnContext(target, customersOriginHref);
   // ROUND 8.20 board9 — KPI drills shareable href+ret (not onClick-only).
   const customersWithTxHref = withReturnContext("/customers", customersOriginHref);
   const customersAllHref = withReturnContext("/customers?listTab=all", customersOriginHref);
@@ -1566,7 +1570,7 @@ export function CustomersPage() {
                       </Button>
                       <Button
                         type="button"
-                        onClick={() => navigate(`/accounting/invoices?customer_id=${selectedCustomer.id}`)}
+                        onClick={() => navigate(custInvHref(`/accounting/invoices?customer_id=${selectedCustomer.id}`))}
                         data-testid="customer-header-new-transaction"
                       >
                         New transaction
@@ -1655,7 +1659,7 @@ export function CustomersPage() {
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
-                  onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+                  onRowClick={(invoice) => navigate(custInvHref(`/accounting/invoices/${invoice.id}`))}
                   // Settled-only empty (LIST-EMPTY-1 invariant): show the loading state while pending
                   // OR while a refetch is in flight with zero current rows, so ParityTable's emptyText
                   // never flashes mid-fetch — the same guarantee the shared list-state primitive gives.
