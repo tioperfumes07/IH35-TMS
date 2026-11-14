@@ -3,7 +3,8 @@
  * (preview screen 2 / canvas board 6). 12 groups + Notes, 3 across, 34px controls.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Combobox } from "../../components/Combobox";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -114,6 +115,9 @@ export function DriverEditForm({
   driverId: string;
   operatingCompanyId: string;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [form, setForm] = useState<Record<string, string>>({});
@@ -544,7 +548,7 @@ export function DriverEditForm({
           <W8BenSection
             w8ben={{ status: "missing", on_file: false }}
             unavailable={false}
-            onCapture={() => navigate(`/drivers/${driverId}?tab=documents`)}
+            onCapture={() => navigate(drvHref(`/drivers/${driverId}?tab=documents`))}
           />
         </Group>
 

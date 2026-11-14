@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getEscrowDriverBalances,
   getEscrowLedger,
@@ -86,6 +87,9 @@ function dollarsToCents(dollars: number | null): number | undefined {
 }
 
 export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBalance }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -579,7 +583,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
             storageKey="banking-driver-escrow-ledger"
             tableTestId="driver-escrow-ledger-table"
             emptyText={listState.isEmpty ? "No escrow ledger rows found for this filter." : undefined}
-            onRowClick={(row) => navigate(`/drivers/${row.driver_id}`)}
+            onRowClick={(row) => navigate(drvHref(`/drivers/${row.driver_id}`))}
           />
         </div>
       </div>

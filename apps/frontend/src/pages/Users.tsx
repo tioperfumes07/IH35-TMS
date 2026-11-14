@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { ApiError } from "../api/client";
 import { useAuth } from "../auth/useAuth";
 import { useCompanyContext } from "../contexts/CompanyContext";
@@ -133,6 +134,9 @@ function PasswordChecklist({ password }: { password: string }) {
 }
 
 export function UsersPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const auth = useAuth();
@@ -694,7 +698,7 @@ export function UsersPage() {
         emptyText="No users found."
         storageKey="users-list"
         tableTestId="users-list-table"
-        onRowClick={(row) => navigate(`/users/${row.id}`)}
+        onRowClick={(row) => navigate(drvHref(`/users/${row.id}`))}
         sortKey={sortKey}
         sortDirection={sortDirection}
         onSortChange={onSortChange}
@@ -814,7 +818,7 @@ export function UsersPage() {
                   <dt className="text-[#6B7280]">Last login</dt>
                   <dd className="text-center text-[#0F1219]">{formatLastLoginAt(selected.last_login_at)}</dd>
                 </dl>
-                <ActionButton onClick={() => navigate(`/users/${selected.id}`)}>Open full user profile</ActionButton>
+                <ActionButton onClick={() => navigate(drvHref(`/users/${selected.id}`))}>Open full user profile</ActionButton>
               </div>
             );
           })()}

@@ -1,6 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { legalMattersApi, type LegalMatterRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -20,7 +21,9 @@ export function LegalMatterNewPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board21 — Create Matter Back restores list/Home via ret (fallback Matters list).
   const matterNewBackHref = resolveBackHref({
@@ -32,7 +35,7 @@ export function LegalMatterNewPage() {
 
   const createMut = useMutation<{ matter: LegalMatterRow }, Error, void>({
     mutationFn: () => legalMattersApi.create(companyId, formStateToCreatePayload(form)),
-    onSuccess: (data) => navigate(`/legal/matters/${String(data.matter.id ?? "")}`),
+    onSuccess: (data) => navigate(drvHref(`/legal/matters/${String(data.matter.id ?? "")}`)),
   });
 
   return (
