@@ -4,10 +4,11 @@
  * board's table shows (same exceljs writer the ParityTable uses); Export PDF opens the print dialog (Save as PDF).
  */
 import type { ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { downloadXlsx } from "../../../components/parity/useParityServerView";
 import { V3 } from "../../../design/v3-tokens";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { REPORT_BOARDS, type ReportBoardId } from "./reportBoardCatalog";
 
 export type ReportBoardXlsx = { filename: string; header: string[]; body: Array<Array<string | number>> };
@@ -26,6 +27,10 @@ export function ReportBoardShell({
   children: ReactNode;
 }) {
   const entry = REPORT_BOARDS.find((b) => b.id === id)!;
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; board shell Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const exportXlsx = () => {
     const sheet = xlsx();
     if (sheet) void downloadXlsx(sheet.filename, sheet.header, sheet.body);
@@ -36,7 +41,7 @@ export function ReportBoardShell({
       <PageHeader
         title={entry.label}
         subtitle={subtitle}
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", entry.tab]}
         actions={
           <div className="flex items-center gap-2 print:hidden">
