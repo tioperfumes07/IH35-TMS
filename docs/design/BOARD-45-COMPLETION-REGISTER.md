@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T03:07Z) — Cursor board25/30/31 #29413
+| Board | Status | Evidence |
+|---|---|---|
+| 25/30/31 Customer+Vendor report KPI href+ret | READY | #29413 `5b882a3c9c1` cohort href+withReturnContext; verify 20228 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:58Z) — Cursor board9/10+#29411 + hub/legal #29414
 | Board | Status | Evidence |
 |---|---|---|
