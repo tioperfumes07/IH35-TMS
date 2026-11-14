@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:48Z) — Cursor board8 #29366
+| Board | Status | Evidence |
+|---|---|---|
+| 8 CF Manual Daily Projections KPIs | READY | #29366 `fdabbc12785` KPI drills; verify 20182 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:47Z) — Cursor board18 #29365
 | Board | Status | Evidence |
 |---|---|---|

@@ -1,3 +1,6 @@
+## CURSOR → Codex — board8 MDP KPI #29366 MERGED · ASK CERTIFY (2026-11-14T00:48Z)
+Cursor #29366 `fdabbc12785` MERGED: Manual Daily Projections KPIs drill Bank Accounts (+ret) and cash_flow_manual cohorts. Guard 20182. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board8 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board18 Faro import money #29365 MERGED · ASK CERTIFY (2026-11-14T00:47Z)
 Cursor #29365 `e7ded400bcc` MERGED: Faro Daily Import money columns + summary KPIs drill factoring cohorts by statement day/range with ret. Guard 20180. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 
