@@ -278,33 +278,18 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       ? userFacingApiError(iftaQuery.error, "Failed to load IFTA status.")
       : null;
 
-  const accountingRows = useMemo(
-    () => (showAll ? ACCOUNTING_FINANCIAL_ROWS : ACCOUNTING_FINANCIAL_ROWS.filter((r) => r[3])),
+  const accountingRowObjs = useMemo<CatalogRowObj[]>(
+    () =>
+      (showAll ? ACCOUNTING_FINANCIAL_ROWS : ACCOUNTING_FINANCIAL_ROWS.filter((r) => r[3])).map(
+        ([id, label, shows]) => ({ id, label, shows }),
+      ),
     [showAll],
   );
 
   const dash = (v: number | null | undefined) =>
     v == null || (typeof v === "number" && !Number.isFinite(v)) ? "—" : String(v);
 
-  // v3 board table — plain <table> matching docs/design/v3/Reports.dc.html exactly
-  const TH_STYLE: CSSProperties = {
-    textAlign: "left",
-    fontSize: "11px",
-    fontWeight: 600,
-    fontFamily: V3.font,
-    color: "#5B6576",
-    padding: "7px 12px",
-    borderBottom: "1px solid #DDE1E7",
-    background: "#F7F8FA",
-    whiteSpace: "nowrap",
-  };
-  const TD_STYLE: CSSProperties = {
-    textAlign: "left",
-    padding: "7px 12px",
-    borderBottom: "1px solid #ECEEF2",
-    fontSize: "12px",
-    whiteSpace: "nowrap",
-  };
+  type CatalogRowObj = { id: string; label: string; shows: string };
 
   function runFrequentReport(row: FrequentlyRunReport) {
     const href = PHASE_6_REPORT_HREFS[row.id];
@@ -432,48 +417,59 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 borderRadius={6}
                 footer="Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF / XLSX export exactly what the viewer shows with the filters applied — the QuickBooks pattern."
               >
-                <div style={{ overflowX: "auto" }}>
-                  <table data-testid="reports-accounting-financial-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                    <thead>
-                      <tr>
-                        <th style={TH_STYLE}>☆</th>
-                        <th style={TH_STYLE}>Report</th>
-                        <th style={TH_STYLE}>{"What it shows"}</th>
-                        <th style={TH_STYLE}>{"Basis"}</th>
-                        <th style={TH_STYLE}>{"Open in viewer"}</th>
-                        <th style={TH_STYLE}>Export</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {accountingRows.map(([reportKey, label, shows]) => {
-                        return (
-                          <tr key={reportKey} data-testid={`reports-acct-row-${reportKey}`}>
-                            <td style={TD_STYLE}>
-                              <span style={{ color: "#8B94A3" }}>☆</span>
-                            </td>
-                            <td style={TD_STYLE}>
-                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-link-${reportKey}`}>
-                                {label}
-                              </CatalogLink>
-                            </td>
-                            <td style={TD_STYLE}>{shows}</td>
-                            <td style={TD_STYLE}>{basisLabel(reportKey)}</td>
-                            <td style={TD_STYLE}>
-                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-run-${reportKey}`}>
-                                Run →
-                              </CatalogLink>
-                            </td>
-                            <td style={TD_STYLE}>
-                              <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-export-${reportKey}`} muted>
-                                PDF · XLSX
-                              </CatalogLink>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <ParityTable<CatalogRowObj>
+                  tableTestId="reports-accounting-financial-table"
+                  appearance="board"
+                  panel
+                  rows={accountingRowObjs}
+                  rowKey={(r) => r.id}
+                  rowTestId={(r) => `reports-acct-row-${r.id}`}
+                  columns={[
+                    {
+                      key: "fav",
+                      label: "☆",
+                      alwaysVisible: true,
+                      sortable: false,
+                      render: () => <span style={{ color: "#8B94A3" }}>☆</span>,
+                    },
+                    {
+                      key: "label",
+                      label: "Report",
+                      render: (r) => (
+                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-link-${r.id}`}>
+                          {r.label}
+                        </CatalogLink>
+                      ),
+                    },
+                    {
+                      key: "shows",
+                      label: "What it shows",
+                    },
+                    {
+                      key: "basis",
+                      label: "Basis",
+                      render: (r) => basisLabel(r.id),
+                    },
+                    {
+                      key: "run",
+                      label: "Open in viewer",
+                      render: (r) => (
+                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-run-${r.id}`}>
+                          Run →
+                        </CatalogLink>
+                      ),
+                    },
+                    {
+                      key: "export",
+                      label: "Export",
+                      render: (r) => (
+                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} testId={`reports-acct-export-${r.id}`} muted>
+                          PDF · XLSX
+                        </CatalogLink>
+                      ),
+                    },
+                  ]}
+                />
               </V3Panel>
 
             </>
