@@ -9,14 +9,11 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { formatDateUS, mmmDd } from "../../lib/formatDate";
+import { mmmDd } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { listTours, type TourListRow } from "../../api/tourReadout";
-import { TourPreSettlementTab } from "../../components/dispatch/TourPreSettlementTab";
-import { TourSettlementTab } from "../../components/dispatch/TourSettlementTab";
 import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
@@ -102,7 +99,9 @@ function waitingOnReason(r: TourListRow): string {
 // per tour, expanded to the SAME TourPreSettlementTab / TourSettlementTab keyed by settlement_id.
 // Columns and palette (.ldt-*) mirror LoadCostsBoardPage's TourRegister so the two surfaces show one
 // truth; the Tour link routes to /driver-finance/settlements?settlement_id= so the existing detail view keeps working.
-const fmt = (c: number) => formatUsdCents(c);
+// R90-33/34: no "$" prefix on money columns per design census.
+const fmtNoSign = (c: number) => formatUsdCents(c).replace(/^\$/, "");
+const fmt = (c: number) => fmtNoSign(c);
 const DASH = "\u2014";
 
 /** Closed board: "No number" is red when a closed row still lacks AlwaysTrack (443.252 measured). */
@@ -111,12 +110,13 @@ const DASH = "\u2014";
 function OriginDateCell({ row, date }: { row: TourListRow; date: string | null }) {
   if (!date) return <>{DASH}</>;
   const originId = row.origin_load_number ? row.legs.find((l) => l.load_number === row.origin_load_number)?.load_id ?? null : null;
-  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{formatDateUS(date)}</span>;
+  const label = mmmDd(date);
+  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{label}</span>;
   return (
     <EntityLink
       kind="load"
       id={originId}
-      label={formatDateUS(date)}
+      label={label}
       className="ldt-link"
       title={`Original load ${row.origin_load_number}`}
       data-testid="setl-tour-origin-load-link"
@@ -207,9 +207,8 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
     exportValue: (r) => (r.legs ?? []).map((l) => `${l.trip_type ?? "?"} ${l.load_number}`).join(" → "),
     render: (r) => <TourLegsCell legs={r.legs} />,
   },
-  { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? formatDateUS(r.origin_pickup_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_pickup_date} /> },
-  { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? formatDateUS(r.origin_delivery_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_delivery_date} /> },
-  { key: "tour_started", label: "Tour started", testId: "setl-tour-col-tour-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: r => r.trip_started_at ?? "", exportValue: r => r.trip_started_at ? formatDateUS(r.trip_started_at) : "", render: r => r.trip_started_at ? formatDateUS(r.trip_started_at) : DASH },
+  { key: "origin_started", label: "PU date", testId: "setl-tour-col-origin-started", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Pickup date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_pickup_date ?? "", exportValue: r => (r.origin_pickup_date ? mmmDd(r.origin_pickup_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_pickup_date} /> },
+  { key: "origin_delivered", label: "DEL date", testId: "setl-tour-col-origin-delivered", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, headerTitle: "Delivery date of the ORIGINAL load that created this settlement", sortValue: r => r.origin_delivery_date ?? "", exportValue: r => (r.origin_delivery_date ? mmmDd(r.origin_delivery_date) : ""), render: r => <OriginDateCell row={r} date={r.origin_delivery_date} /> },
   ...(state === "closed"
     ? [{ key: "closed", label: "Ended", testId: "setl-tour-col-closed", sortable: true, className: "whitespace-nowrap", minWidth: 88, maxWidth: 112, sortValue: (r: TourListRow) => r.trip_closed_at ?? "", render: (r: TourListRow) => (r.trip_closed_at ? mmmDd(r.trip_closed_at) : DASH) } as ParityColumn<TourListRow>]
     : []),
@@ -223,7 +222,7 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
     maxWidth: 140,
     sortValue: (r) => r.revenue_cents,
     // ROUND 8.17 class S — money opens the settlement statement source.
-    render: (r) => <MoneyCell cents={r.revenue_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+    render: (r) => <MoneyCell cents={r.revenue_cents} format={fmtNoSign} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
   },
   {
     key: "costs",
@@ -234,7 +233,7 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
     minWidth: 100,
     maxWidth: 140,
     sortValue: (r) => r.costs_cents,
-    render: (r) => <MoneyCell cents={r.costs_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+    render: (r) => <MoneyCell cents={r.costs_cents} format={fmtNoSign} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
   },
   {
     key: "driver_pay",
@@ -245,20 +244,20 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
     minWidth: 100,
     maxWidth: 140,
     sortValue: (r) => r.driver_pay_cents,
-    render: (r) => <MoneyCell cents={r.driver_pay_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
+    render: (r) => <MoneyCell cents={r.driver_pay_cents} format={fmtNoSign} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />,
   },
   {
     key: "margin",
     label: "Margin",
     testId: "setl-tour-col-margin",
     sortable: true,
-    cellClass: "whitespace-nowrap text-right tabular-nums",
+    cellClass: "whitespace-nowrap text-right tabular-nums font-bold",
     minWidth: 100,
     maxWidth: 140,
     sortValue: (r) => r.margin_cents,
     render: (r) => (
-      <span className={r.margin_cents < 0 ? "text-[#991B1B]" : undefined}>
-        <MoneyCell cents={r.margin_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
+      <span className={r.margin_cents < 0 ? "font-bold text-[#991B1B]" : "font-bold"}>
+        <MoneyCell cents={r.margin_cents} format={fmtNoSign} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
       </span>
     ),
   },
@@ -302,7 +301,7 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
               DASH
             ) : (
               <span className="font-bold tabular-nums">
-                <MoneyCell cents={r.driver_net_cents} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
+                <MoneyCell cents={r.driver_net_cents} format={fmtNoSign} drill={{ entity: { kind: "settlement", id: r.settlement_id } }} />
               </span>
             ),
         } as ParityColumn<TourListRow>,
@@ -443,10 +442,6 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   }, [rows, search]);
 
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
-  const panelSubtitle =
-    typeof activeQ.data?.voided_count === "number"
-      ? `${formatQuantityTable(filteredRows.length, 0)} live · ${formatQuantityTable(activeQ.data.voided_count, 0)} voided/cancelled (not shown)`
-      : undefined;
 
   return (
     <div
@@ -455,6 +450,25 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       data-surface="load-detail"
       data-settlements-tours-v3="1"
     >
+      {/* R90-33/34 header: ← Back · Driver Settlements · subtitle on ONE line */}
+      <div
+        style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: V3.font, paddingBottom: 2 }}
+        data-testid="settlements-tours-header"
+      >
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          style={{ color: V3.link, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: "0 4px 0 0", display: "flex", alignItems: "center", gap: 4 }}
+          data-testid="settlements-tours-back-btn"
+        >
+          ← Back
+        </button>
+        <span style={{ color: V3.borderSoft }}>·</span>
+        <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>Driver Settlements</span>
+        <span style={{ color: V3.borderSoft }}>·</span>
+        <span style={{ fontSize: 11, color: "#6B7280" }}>List + detail settlement workflow</span>
+      </div>
+
       <div
         style={{
           display: "grid",
@@ -510,38 +524,64 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         />
       </div>
 
-      <MoneyListToolbar
-        search={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search settlement, driver, unit, load…"
-        searchTestId="settlements-tours-search-input"
-        onClearAll={() => setSearch("")}
-        activeFilterCount={0}
-        testIdPrefix="settlements-tours"
+      {/* R90-33/34 segment row: left nav chips + right cohort pills + search + Filters + Export */}
+      <div
+        style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, fontFamily: V3.font }}
+        data-testid="settlements-tours-segment-row"
       >
-        <div className="flex flex-wrap items-center gap-1" data-testid="settlements-tours-pills">
-          {(["open", "closed"] as const).map((s) => (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }} data-testid="settlements-tours-nav-chips">
+          {[
+            { label: "Company & Driver", href: "/driver-finance/settlements?view=company_driver" },
+            { label: "Driver settlements", href: null as string | null, active: true },
+            { label: "Company settlements", href: "/driver-finance/company-settlements" },
+            { label: "Settlement Disputes", href: "/driver-finance/settlements?view=disputes" },
+            { label: "Needs Review", href: "/driver-finance/settlements?view=needs_review" },
+          ].map(({ label, href, active }) => (
             <button
-              key={s}
+              key={label}
               type="button"
-              data-testid={`settlements-tours-pill-${s}`}
-              aria-pressed={state === s}
-              onClick={() => setState(s)}
-              className={`ldt-btn ${state === s ? "p" : "g"}`}
+              onClick={href ? () => navigate(href) : undefined}
+              data-testid={`settlements-nav-chip-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+              style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontSize: 11, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
             >
-              {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
-              <span className={`ml-1 inline-flex min-w-[16px] items-center justify-center rounded-sm px-1 text-section-header ${state === s ? "bg-white/20 text-white" : "bg-gray-100 text-[#6B7280]"}`}>
-                {(s === "open" ? openCount : closedCount) ?? "\u2014"}
-              </span>
+              {label}
             </button>
           ))}
         </div>
-      </MoneyListToolbar>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 4 }} data-testid="settlements-tours-pills">
+            {(["open", "closed"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                data-testid={`settlements-tours-pill-${s}`}
+                aria-pressed={state === s}
+                onClick={() => setState(s)}
+                style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${state === s ? V3.link : V3.border}`, background: state === s ? V3.link : V3.surface, color: state === s ? "#FFFFFF" : V3.ink, fontSize: 11, fontWeight: state === s ? 700 : 500, cursor: "pointer", fontFamily: V3.font, display: "flex", alignItems: "center", gap: 4 }}
+              >
+                {s === "open" ? "Pre-Settlement (Open)" : "Settlement (Closed)"}
+                <span style={{ background: state === s ? "rgba(255,255,255,0.25)" : "#F3F4F6", borderRadius: 2, padding: "0 4px", color: state === s ? "#FFFFFF" : "#6B7280", fontSize: 10, fontWeight: 600, minWidth: 16, textAlign: "center" }}>
+                  {(s === "open" ? openCount : closedCount) ?? "—"}
+                </span>
+              </button>
+            ))}
+          </div>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search…"
+            data-testid="settlements-tours-search-input"
+            style={{ height: 26, padding: "0 8px", border: `1px solid ${V3.border}`, borderRadius: 3, fontSize: 11, fontFamily: V3.font, minWidth: 120 }}
+          />
+          <button type="button" data-testid="settlements-tours-filters-btn" style={{ height: 26, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Filters ▾</button>
+          <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 26, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
+        </div>
+      </div>
 
-      {/* R-102-B item 5 — cancelled/reversed permanently excluded (SETL-REVERSED-HIDE); subtitle discloses. */}
+      {/* R-102-B item 5 — cancelled/reversed permanently excluded (SETL-REVERSED-HIDE) */}
       <BoardSection
         title={panelTitle}
-        subtitle={panelSubtitle}
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
       >
@@ -551,7 +591,6 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           </div>
         ) : (
           <ParityTable appearance="board"
-           
             columns={TOUR_COLUMNS(state, companyId, filteredRows)}
             rows={filteredRows}
             rowKey={(r) => r.settlement_id}
@@ -563,16 +602,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             suppressToolbarSearch
             enableColumnReorder
             enableColumnResize
-            expandMode="single"
-            renderExpanded={(r) => (
-              <div className="p-3" data-testid={`settlements-tour-expand-${state}`}>
-                {state === "open"
-                  ? <TourPreSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />
-                  : <TourSettlementTab settlementId={r.settlement_id} operatingCompanyId={companyId} />}
-              </div>
-            )}
+            hidePager
             footerCells={{
-              tour: (v: TourListRow[]) => <span className="font-semibold uppercase tracking-[0.4px] text-gray-600 text-section-header" data-testid="settlements-tour-totals-label">Totals ({formatQuantityTable(v.length, 0)})</span>,
+              tour: (v: TourListRow[]) => <span className="font-semibold text-gray-600 text-section-header" data-testid="settlements-tour-totals-label">Totals ({formatQuantityTable(v.length, 0)})</span>,
               revenue: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.revenue_cents, 0)),
               costs: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.costs_cents, 0)),
               driver_pay: (v: TourListRow[]) => fmt(v.reduce((n, r) => n + r.driver_pay_cents, 0)),
