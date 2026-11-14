@@ -242,12 +242,14 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
         data-testid="insurance-home-kpi-strip"
       >
         <V3KpiTile
+          board
           testId="insurance-kpi-active-policies"
           label="Active policies"
           value={loading && activeCount == null ? "…" : dash(activeCount)}
           href={insHref("/insurance/policies")}
         />
         <V3KpiTile
+          board
           testId="insurance-kpi-annual-premium"
           label="Annual premium"
           value={
@@ -260,6 +262,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           href={insHref("/insurance/policies")}
         />
         <V3KpiTile
+          board
           testId="insurance-kpi-renewal"
           label="Renewal"
           value={
@@ -273,12 +276,14 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
           href={insHref("/insurance/policies")}
         />
         <V3KpiTile
+          board
           testId="insurance-kpi-open-claims"
           label="Open claims"
           value={loading && openClaims == null ? "…" : dash(openClaims)}
           href={insHref("/insurance/claims")}
         />
         <V3KpiTile
+          board
           testId="insurance-kpi-coverage-gaps"
           label="Coverage gaps"
           value={loading && gapCount == null ? "…" : dash(gapCount)}
@@ -444,7 +449,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
         >
           <ParityTable<PremiumShareRow>
             tableTestId="insurance-home-premium-table"
-            appearance="board"
+            appearance="v3"
             hidePager
             density="compact"
             suppressToolbarSearch
