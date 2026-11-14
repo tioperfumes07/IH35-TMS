@@ -192,6 +192,11 @@ export const rematchPerfumeReview = () => apiRequest<Record<string, number>>("/a
 export const bulkPerfumeReview = (b: PerfumeBulkAction) => apiRequest<PerfumeBulkResult>("/api/v1/perfume/rows/bulk", { method: "POST", body: b });
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
+/** Match my list ↔ competitor: my offer items with no competitor line linked, and the lines each most likely is. */
+export type PerfumeLineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
+export type PerfumeMyUnlinked = { total_mine: number; linked: number; unlinked: number;
+  rows: Array<{ item_id: string; display_name: string; my_desc: string | null; my_price_cents: number | null; candidates: PerfumeLineCandidate[] }> };
+export const getPerfumeMyUnlinked = () => apiRequest<PerfumeMyUnlinked>("/api/v1/perfume/my-unlinked");
 export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });

@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, filterMine, confirmRow, myUnlinked, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
   canonicalizeItemBrands, reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -222,6 +222,11 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
+  });
+  // Match my list ↔ competitor (owner 2026-11-14): my unlinked items with their likely competitor lines.
+  app.get("/api/v1/perfume/my-unlinked", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => myUnlinked(c));
   });
   app.post("/api/v1/perfume/rows/:id/confirm", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
