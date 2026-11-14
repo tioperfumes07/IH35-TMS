@@ -229,8 +229,8 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
             <div className="pb-sub">
               {h ? (
                 <>
-                  <NumLink to="/drivers?view=board&status=All">{int(h.kpis.total)} drivers</NumLink> ·{" "}
-                  <NumLink to="/drivers?view=board&status=Active">{int(h.kpis.active)} active</NumLink> · {h.company_name ?? ""}
+                  <NumLink to={drvHref("/drivers?view=board&status=All")}>{int(h.kpis.total)} drivers</NumLink> ·{" "}
+                  <NumLink to={drvHref("/drivers?view=board&status=Active")}>{int(h.kpis.active)} active</NumLink> · {h.company_name ?? ""}
                 </>
               ) : "Loading drivers…"}
             </div>
@@ -242,13 +242,13 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
         </div>
         <div className="pb-kpis" data-testid="driver-hub-kpis">
           {/* One tile format (V3KpiTile); each opens the exact drivers (or balances) it counts. */}
-          <V3KpiTile label="Active" value={h ? `${int(h.kpis.active)} / ${int(h.kpis.total)}` : "…"} href="/drivers?view=board&status=Active" />
-          <V3KpiTile label="On loads" value={h ? int(h.kpis.on_loads) : "…"} href="/drivers?view=board&load=on" />
-          <V3KpiTile label="Available" value={h ? int(h.kpis.available) : "…"} href="/drivers?view=board&load=available" />
-          <V3KpiTile label="On leave" value={h ? int(h.kpis.on_leave) : "…"} href="/drivers?view=board&status=OnLeave" />
-          <V3KpiTile label="Settle due" value={h ? int(h.kpis.settle_due) : "…"} tone={h && h.kpis.settle_due ? "amber" : "ink"} href="/drivers?view=board&settle=due" />
+          <V3KpiTile label="Active" value={h ? `${int(h.kpis.active)} / ${int(h.kpis.total)}` : "…"} href={drvHref("/drivers?view=board&status=Active")} />
+          <V3KpiTile label="On loads" value={h ? int(h.kpis.on_loads) : "…"} href={drvHref("/drivers?view=board&load=on")} />
+          <V3KpiTile label="Available" value={h ? int(h.kpis.available) : "…"} href={drvHref("/drivers?view=board&load=available")} />
+          <V3KpiTile label="On leave" value={h ? int(h.kpis.on_leave) : "…"} href={drvHref("/drivers?view=board&status=OnLeave")} />
+          <V3KpiTile label="Settle due" value={h ? int(h.kpis.settle_due) : "…"} tone={h && h.kpis.settle_due ? "amber" : "ink"} href={drvHref("/drivers?view=board&settle=due")} />
           {/* The Escrow page lists every driver holding an escrow balance — its total is this figure. */}
-          <V3KpiTile label="Escrow held" value={h ? money(h.kpis.escrow_held_cents) : "…"} href="/driver-finance/escrow" />
+          <V3KpiTile label="Escrow held" value={h ? money(h.kpis.escrow_held_cents) : "…"} href={drvHref("/driver-finance/escrow")} />
         </div>
       </div>
 
