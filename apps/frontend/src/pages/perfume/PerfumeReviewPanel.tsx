@@ -147,7 +147,10 @@ function BulkBar({ selected, onDone, rows, onSelect }: { selected: string[]; onD
   const [busy, setBusy] = useState(false);
   const [item, setItem] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const hits = useQuery({ queryKey: ["perfume", "items", search], queryFn: () => searchPerfumeItems(search), enabled: search.trim().length >= 2 });
+  // Every ticked line one gender (Men or Women): the search offers only that gender's bottles (and unisex).
+  const gs = new Set(rows.filter((r) => selected.includes(r.id)).map((r) => r.gender || ""));
+  const selG = gs.size === 1 && (gs.has("M") || gs.has("W")) ? [...gs][0] : null;
+  const hits = useQuery({ queryKey: ["perfume", "items", search, selG], queryFn: () => searchPerfumeItems(search, selG), enabled: search.trim().length >= 2 });
   const options = (hits.data?.items ?? []).map((h) => ({ value: h.id, label: h.display_name, sublabel: h.upcs?.join(" ") ?? "" }));
   const n = selected.length;
   const run = async (b: PerfumeBulkAction, what: string) => {
@@ -222,9 +225,11 @@ function ConfirmControls({ row }: { row: PerfumeReviewRow }) {
   const [pick, setPick] = useState<string | null>(best?.item_id ?? null);
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
-  const hits = useQuery({ queryKey: ["perfume", "items", search], queryFn: () => searchPerfumeItems(search), enabled: search.trim().length >= 2 });
+  // The line's gender: the search never offers the other gender's bottles (owner 2026-11-14 17:22).
+  const g = row.gender === "M" || row.gender === "W" ? row.gender : null;
+  const hits = useQuery({ queryKey: ["perfume", "items", search, g], queryFn: () => searchPerfumeItems(search, g), enabled: search.trim().length >= 2 });
   const options = [
-    ...row.suggestions.map((s) => ({ value: s.item_id, label: s.display_name, sublabel: `${Math.round(s.score * 100)}% alike` })),
+    ...row.suggestions.map((s) => ({ value: s.item_id, label: s.display_name, sublabel: [`${Math.round(s.score * 100)}% alike`, s.why].filter(Boolean).join(" · ") })),
     ...(hits.data?.items ?? []).filter((h) => !row.suggestions.some((s) => s.item_id === h.id)).map((h) => ({ value: h.id, label: h.display_name, sublabel: h.upcs?.join(" ") ?? "" })),
   ];
   const go = async (target: { item_id: string } | { create_new: true }) => {

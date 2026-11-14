@@ -274,13 +274,13 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/perfume/items/search", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const q = z.object({ q: z.string().max(200) }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
-    return { items: await withCurrentUser(uid, (c) => searchItems(c, q.data.q)) };
+    const q = z.object({ q: z.string().max(200), gender: z.enum(["M", "W"]).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
+    return { items: await withCurrentUser(uid, (c) => searchItems(c, q.data.q, 25, q.data.gender ?? null)) };
   });
   app.get("/api/v1/perfume/lines/search", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const q = z.object({ q: z.string().max(200) }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
-    return { lines: await withCurrentUser(uid, (c) => searchCompetitorLines(c, q.data.q)) };
+    const q = z.object({ q: z.string().max(200), gender: z.enum(["M", "W"]).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
+    return { lines: await withCurrentUser(uid, (c) => searchCompetitorLines(c, q.data.q, 25, q.data.gender ?? null)) };
   });
   app.put("/api/v1/perfume/items/:id/internal-code", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

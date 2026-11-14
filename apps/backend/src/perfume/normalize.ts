@@ -64,8 +64,13 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "JC": "JUICY COUTURE",
   "TOMFORD": "TOM FORD",
   "HUGO B": "HUGO BOSS",
+  // Owner 2026-11-14 17:34 CT: "SALVATORE FERRAGAMO, FERRAGAMO, OR SF AS BRAND IS THE SAME FERRAGAMO".
   "S.F": "SALVATORE FERRAGAMO",
   "S.FERRAGAMO": "SALVATORE FERRAGAMO",
+  "S FERRAGAMO": "SALVATORE FERRAGAMO",
+  "SF": "SALVATORE FERRAGAMO",
+  "FERRAGAMO": "SALVATORE FERRAGAMO",
+  "SALVATORRE FERRAGAMO": "SALVATORE FERRAGAMO", // the one item filed misspelled (measured live 11-14)
   "CHRISTIAN DIOR": "DIOR",
   "CRISTIAN DIOR": "DIOR",
   "DIOR COSMETICA": "DIOR",
@@ -342,6 +347,8 @@ export function identify(input: IdentityInput): Identity {
     .replace(/(\d)\s*(PCS?)\s*(SET)\b/g, "$1$2 $3").replace(/(\d)(PCS?)(SET)\b/g, "$1$2 $3");
   // "STRONGER W YOU" / "W/YOU" means WITH YOU, not women.
   s = s.replace(/\bW\/?\s*(?=YOU\b)/g, "WITH ");
+  // "TESTER W/CAP", "W/BOX", "W/AIRBAG": W/ is "with" — never Women (measured live 11-14, JIZAN / PPW lines).
+  s = s.replace(/\bW\/(?=\s*[A-Z])/g, " ");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);

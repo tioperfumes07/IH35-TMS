@@ -36,7 +36,6 @@ import { heldEntityIsSelectable, heldEntityMergedMessage } from "../../../lib/re
 import { useAuth } from "../../../auth/useAuth";
 import { Button } from "../../../components/Button";
 import { ConfirmDiscardDialog } from "../../../components/dialogs/ConfirmDiscardDialog";
-import { ModalCloseButton } from "../../../components/ModalCloseButton";
 import { useEscapeKey } from "../../../hooks/useEscapeKey";
 import { useToast } from "../../../components/Toast";
 import { EntityPicker } from "../../../components/EntityPicker";
@@ -2005,34 +2004,42 @@ export function BookLoadModalV4({
         // can keep the units / dispatch board visible behind it. Native `resize: both` grip; floors keep it
         // usable. ROUND 8.20 board14/16: Center MUST be 1260px (FAIL was w-full → ~1408 at 1440×900);
         // Side panel = 760px drawer. maxWidth locks resize so drag cannot exceed Spec.
+        // ROUND 9.4 boards 14/15 — data-v3-board scopes the parity reader to Modal (Center 1260) or SidePanel (760).
+        data-v3-board={bookLoadPresentation === "side" ? "Dispatch-BookLoad-SidePanel" : "Dispatch-BookLoad-Modal"}
         data-testid="book-load-dialog-panel"
         data-board-width={bookLoadPresentation === "side" ? "760" : "1260"}
         style={
           bookLoadPresentation === "side"
-            ? { width: "min(760px, 100vw)", minWidth: 440, minHeight: "100%" }
+            ? { width: "min(760px, 100vw)", minWidth: 440, minHeight: "100%", lineHeight: "normal", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }
             : {
                 width: "min(1260px, calc(100vw - 2rem))",
                 maxWidth: 1260,
                 resize: "both",
                 minWidth: "440px",
                 minHeight: "340px",
+                lineHeight: "normal",
+                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
               }
         }
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <header className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white" style={{ background: "#1F2A44" }}>
+        {/* ROUND 9.4 Board 14 — header identical to Dispatch-BookLoad-Modal.dc.html (#13233F, Side/Center 600 11px). */}
+        <header
+          className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white"
+          style={{ background: "#13233F", lineHeight: "normal", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
+        >
           <div>
-            <div className="text-xs" style={{ color: "#9AA6BA" }}>
+            <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: "normal" }}>
               {isEditMode
                 ? "Dispatch › Edit load"
                 : entryPoint?.kind === "truck-line"
-                  ? `Dispatch › Truck Line › ${entryPoint.unitLabel ?? "Truck"} · Assign a load`
+                  ? `Dispatch › Truck Line › ${entryPoint.unitLabel ?? "Truck"}`
                   : "Dispatch › Book load"}
             </div>
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div id="book-load-dialog-title" className="flex items-center gap-1.5 text-page-title font-bold">
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Edit load</span>
                 {editLoad?.id ? (
                   <EntityLink
@@ -2045,7 +2052,7 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div id="book-load-dialog-title" className="flex items-center gap-1.5 text-page-title font-bold">
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Book load</span>
                 {prefillUnitLabel ? <span data-testid="book-load-header-unit">for {prefillUnitLabel}</span> : null}
                 {prefillLaneStatus ? (
@@ -2056,17 +2063,26 @@ export function BookLoadModalV4({
               </div>
             )}
           </div>
-          <div className="flex items-center gap-3 text-section-header" style={{ color: "#9AA6BA" }}>
-            <span>{headerTime}</span>
-            <div
-              className="inline-flex h-7 overflow-hidden rounded-sm border border-white/30 font-semibold"
+          <div style={{ display: "flex", alignItems: "center", gap: 12, color: "rgba(255,255,255,0.75)", fontSize: 11 }}>
+            <span data-v3="header.time">{headerTime}</span>
+            <span
+              style={{ display: "inline-flex", background: "rgba(255,255,255,0.12)", borderRadius: 6, padding: 2, gap: 2 }}
               role="group"
               aria-label="Book load layout"
               data-testid="book-load-presentation-toggle"
             >
               <button
                 type="button"
-                className={`px-2 ${bookLoadPresentation === "side" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-[rgba(255,255,255,0.1)]"}`}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 4,
+                  font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif",
+                  border: "none",
+                  cursor: "pointer",
+                  lineHeight: "normal",
+                  background: bookLoadPresentation === "side" ? "#fff" : "transparent",
+                  color: bookLoadPresentation === "side" ? "#13233F" : "#fff",
+                }}
                 aria-pressed={bookLoadPresentation === "side"}
                 onClick={() => setPresentation("side")}
                 data-testid="book-load-presentation-side"
@@ -2075,19 +2091,33 @@ export function BookLoadModalV4({
               </button>
               <button
                 type="button"
-                className={`border-l border-white/30 px-2 ${bookLoadPresentation === "center" ? "bg-white text-[#1F2A44]" : "text-white/90 hover:bg-[rgba(255,255,255,0.1)]"}`}
+                style={{
+                  padding: "4px 10px",
+                  borderRadius: 4,
+                  font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif",
+                  border: "none",
+                  cursor: "pointer",
+                  lineHeight: "normal",
+                  background: bookLoadPresentation === "center" ? "#fff" : "transparent",
+                  color: bookLoadPresentation === "center" ? "#13233F" : "#fff",
+                }}
                 aria-pressed={bookLoadPresentation === "center"}
                 onClick={() => setPresentation("center")}
                 data-testid="book-load-presentation-center"
               >
                 Center
               </button>
-            </div>
-            <ModalCloseButton
+            </span>
+            <button
+              type="button"
+              onClick={attemptBookLoadClose}
+              aria-label="Close"
               title={isEditMode ? "Edit load" : "Book load"}
-              onClose={attemptBookLoadClose}
-              className="h-6 w-6 rounded-sm text-xs text-gray-200 hover:bg-[#2E3C5A]"
-            />
+              data-testid="book-load-close"
+              style={{ font: "600 16px Inter, ui-sans-serif, system-ui, sans-serif", paddingLeft: 6, background: "none", border: "none", color: "#fff", cursor: "pointer", lineHeight: "normal" }}
+            >
+              ×
+            </button>
           </div>
         </header>
 

@@ -1102,18 +1102,19 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     [],
   );
   const factoringHeaderActions = (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3" style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
       <ImportFaroPurchaseReportAction />
       <Link
         to={FACTORING_TAB_PATH.submit_invoice}
-        className="inline-flex items-center rounded-sm border border-[#E5E7EB] bg-[#14314F] px-2.5 py-2 text-xs font-medium text-white hover:bg-[#1F2A44]"
+        style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textDecoration: "none", lineHeight: "normal" }}
         data-testid="factoring-submit-to-factor-link"
       >
         Submit to Factor
       </Link>
       <details className="relative inline-block">
         <summary
-          className="flex cursor-pointer list-none items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2.5 py-2 text-xs font-medium text-[#1F2A44] hover:bg-[#F7F8FA] [&::-webkit-details-marker]:hidden"
+          style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", cursor: "pointer", listStyle: "none", lineHeight: "normal" }}
+          className="[&::-webkit-details-marker]:hidden"
           data-testid="factoring-header-related-menu"
         >
           Related ▾
@@ -1195,11 +1196,15 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     );
   }
 
+  const factoringBoardTitle = activeFactor?.name
+    ? `Factoring (${activeFactor.name})`
+    : "Factoring";
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-v3-board="Factoring" data-testid="factoring-home-board-root" style={{ lineHeight: "normal" }}>
       <FactoringBoardChrome
-        // Board title is "Factoring"; active factor identity lives on FactoringHomeBoard (ROUND 8.5 FA1).
-        title="Factoring"
+        // ROUND 9.4 Board 18 — title matches Factoring.dc.html "Factoring (Faro Factoring)".
+        title={factoringBoardTitle}
         subtitle={factoringChromeSubtitle}
         actions={factoringHeaderActions}
         subnavItems={factoringSubnavItems}
