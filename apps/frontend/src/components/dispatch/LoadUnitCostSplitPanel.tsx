@@ -1,7 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per truck that ran the load (miles / share / cost), not a time series.
 import { useQuery } from "@tanstack/react-query";
 import { getLoadUnitCostSplit } from "../../api/accounting";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import type { UnitCostShare } from "../../api/accounting";
 import { formatMoneyCents } from "./constants";
 import { formatQuantityTable } from "../../lib/money";
@@ -35,6 +36,9 @@ export function LoadUnitCostSplitPanel({
   operatingCompanyId: string;
   currency?: string;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const q = useQuery({
     queryKey: ["load-unit-cost-split", loadId, operatingCompanyId],
@@ -71,7 +75,7 @@ export function LoadUnitCostSplitPanel({
         rows={data.units}
         rowKey={(u) => u.unit_id}
         rowTestId={() => "load-unit-cost-split-row"}
-        onRowClick={(u) => navigate(`/fleet/units/${encodeURIComponent(u.unit_id)}`)}
+        onRowClick={(u) => navigate(drvHref(`/fleet/units/${encodeURIComponent(u.unit_id)}`))}
         pageSize={Math.max(1, data.units.length)}
         hidePager
         suppressToolbarSearch

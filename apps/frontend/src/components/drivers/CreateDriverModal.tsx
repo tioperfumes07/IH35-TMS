@@ -2,7 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
 import { properPersonOrPlaceName } from "../../lib/properDisplayText";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { z } from "zod";
 import { listMexicoStates, listUsStates } from "../../api/catalogs";
 import { ApiError } from "../../api/client";
@@ -239,6 +240,9 @@ type CreateDriverModalProps = {
 };
 
 export function CreateDriverModal({ open, companyId, onClose, onCreated, shell = "modal" }: CreateDriverModalProps) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -1745,7 +1749,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
             const nextDriverId = createSummary.driver_id;
             closeCreateSummary();
             if (onCreated) onCreated(nextDriverId, createSummary.display_name);
-            else navigate(`/drivers/${nextDriverId}`);
+            else navigate(drvHref(`/drivers/${nextDriverId}`));
           }}
         >
           View Driver
@@ -1833,7 +1837,7 @@ export function CreateDriverModal({ open, companyId, onClose, onCreated, shell =
       onOpenExisting={(driverId) => {
         setRosterDuplicates(null);
         onClose();
-        navigate(`/drivers/${driverId}`);
+        navigate(drvHref(`/drivers/${driverId}`));
       }}
       onCreateAnyway={() => {
         setRosterDuplicates(null);
