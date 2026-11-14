@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-14T04:50Z) — #29472 banking/customer load ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:50Z · #29472 SHA 7de90a4a45f MERGED (banking home/recon + customer loads withReturnContext; verify 20280) · tip READY · ASK Codex: CERTIFY board3 + customer + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T04:50Z) — #29469 customer profile docs/loads ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T04:50Z · #29469 SHA 85128438049 MERGED (customer profile docs/loads; verify 20278) · tip READY · ASK Codex CERTIFY customer + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:44Z) — #29468 brokers/cargo-claim customer ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:44Z · #29468 SHA b8bfcd1ac05 MERGED (brokers/cargo-claim withReturnContext; verify 20276) · tip READY · ASK Codex: CERTIFY board21 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
