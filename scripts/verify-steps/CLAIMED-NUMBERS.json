@@ -16002,6 +16002,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-factoring-monthly-fee-drills board18"
   },
+  "20178": {
+    "claimed_at": "2026-11-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-factoring-chargebacks-by-customer-money board18"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18006,5 +18011,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1110
+  "total_claimed": 1111
 }

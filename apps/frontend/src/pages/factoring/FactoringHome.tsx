@@ -2481,7 +2481,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 {chargebacksOverpaymentsView === "summary" ? (
                   <ParityTable appearance="board"
                     title="Chargebacks & overpayments — by customer"
-                    columns={CHARGEBACKS_BY_CUSTOMER_COLUMNS(fmtCurrency)}
+                    columns={CHARGEBACKS_BY_CUSTOMER_COLUMNS()}
                     rows={chargebacksByCustomer}
                     rowKey={(r) => r.key}
                     loading={feesQuery.isLoading}
@@ -3060,7 +3060,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 {agingView === "summary" ? (
                 <ParityTable appearance="board"
                   title="Aging — by debtor"
-                  columns={AGING_BY_DEBTOR_COLUMNS(fmtCurrency)}
+                  columns={AGING_BY_DEBTOR_COLUMNS()}
                   rows={agingByDebtor}
                   rowKey={(r) => r.key}
                   loading={recourseQuery.isLoading}

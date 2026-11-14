@@ -1,6 +1,7 @@
 // LEAD 443.174 — Summary and Detail must be different views (owner: "it has summary and detail. but it shows the same
 // data"). Detail is one row per invoice / fee record; Summary is one row per debtor / customer with totals.
 import { EntityLink } from "../../components/shared/EntityLink";
+import { MoneyCell } from "../../components/shared/MoneyCell";
 import { companyLabel } from "../../lib/formatCompanyName";
 import type { ParityColumn } from "../../components/parity/ParityTable";
 import type { FactoringChargebackFeeRow } from "../../api/factoring";
@@ -41,14 +42,64 @@ const num = { className: "text-right", cellClass: "text-right" } as const;
 const debtorCell = (r: { customer_id: string | null; customer_name: string }) =>
   r.customer_id ? <EntityLink kind="customer" id={r.customer_id} label={companyLabel(r.customer_name, r.customer_id, "Customer")} /> : r.customer_name;
 
-export const AGING_BY_DEBTOR_COLUMNS = (money: Money): ParityColumn<AgingByDebtorRow>[] => [
+function debtorMoneyCell(
+  dollars: number,
+  customerId: string | null,
+  kind: "factoring_recourse_customer" | "factoring_chargebacks_customer",
+  testId: string,
+) {
+  return (
+    <MoneyCell
+      cents={Math.round(Number(dollars ?? 0) * 100)}
+      drill={
+        customerId
+          ? { entity: { kind, id: customerId } }
+          : { none: "no customer linked — cannot open factoring cohort" }
+      }
+      data-testid={testId}
+    />
+  );
+}
+
+/** ROUND 8.20 board18 — aging bucket/balance amounts open recourse pipeline for that debtor. */
+export const AGING_BY_DEBTOR_COLUMNS = (_money?: Money): ParityColumn<AgingByDebtorRow>[] => [
   { key: "customer_name", label: "Debtor", sortable: true, render: debtorCell },
   { key: "invoices", label: "Invoices", sortable: true, ...num, render: (r) => r.invoices },
-  { key: "b0_30", label: "0-30", sortable: true, ...num, render: (r) => money(r.b0_30) },
-  { key: "b31_60", label: "31-60", sortable: true, ...num, render: (r) => money(r.b31_60) },
-  { key: "b61_90", label: "61-90", sortable: true, ...num, render: (r) => money(r.b61_90) },
-  { key: "b90", label: "90+", sortable: true, ...num, render: (r) => money(r.b90) },
-  { key: "balance", label: "Balance", sortable: true, ...num, render: (r) => money(r.balance) },
+  {
+    key: "b0_30",
+    label: "0-30",
+    sortable: true,
+    ...num,
+    render: (r) => debtorMoneyCell(r.b0_30, r.customer_id, "factoring_recourse_customer", `factoring-aging-debtor-0-30-${r.key}`),
+  },
+  {
+    key: "b31_60",
+    label: "31-60",
+    sortable: true,
+    ...num,
+    render: (r) => debtorMoneyCell(r.b31_60, r.customer_id, "factoring_recourse_customer", `factoring-aging-debtor-31-60-${r.key}`),
+  },
+  {
+    key: "b61_90",
+    label: "61-90",
+    sortable: true,
+    ...num,
+    render: (r) => debtorMoneyCell(r.b61_90, r.customer_id, "factoring_recourse_customer", `factoring-aging-debtor-61-90-${r.key}`),
+  },
+  {
+    key: "b90",
+    label: "90+",
+    sortable: true,
+    ...num,
+    render: (r) => debtorMoneyCell(r.b90, r.customer_id, "factoring_recourse_customer", `factoring-aging-debtor-90-${r.key}`),
+  },
+  {
+    key: "balance",
+    label: "Balance",
+    sortable: true,
+    ...num,
+    render: (r) => debtorMoneyCell(r.balance, r.customer_id, "factoring_recourse_customer", `factoring-aging-debtor-balance-${r.key}`),
+  },
 ];
 
 export type ChargebacksByCustomerRow = {
@@ -74,9 +125,24 @@ export function groupChargebacksByCustomer(rows: FactoringChargebackFeeRow[]): C
   return [...by.values()].sort((a, b) => b.chargebacks - a.chargebacks);
 }
 
-export const CHARGEBACKS_BY_CUSTOMER_COLUMNS = (money: Money): ParityColumn<ChargebacksByCustomerRow>[] => [
+/** ROUND 8.20 board18 — chargeback/fee totals by customer open Chargebacks & Fees for that debtor. */
+export const CHARGEBACKS_BY_CUSTOMER_COLUMNS = (_money?: Money): ParityColumn<ChargebacksByCustomerRow>[] => [
   { key: "customer_name", label: "Customer", sortable: true, render: debtorCell },
   { key: "records", label: "Records", sortable: true, ...num, render: (r) => r.records },
-  { key: "chargebacks", label: "Chargebacks / overpayments", sortable: true, ...num, render: (r) => money(r.chargebacks) },
-  { key: "fees", label: "Factor fees", sortable: true, ...num, render: (r) => money(r.fees) },
+  {
+    key: "chargebacks",
+    label: "Chargebacks / overpayments",
+    sortable: true,
+    ...num,
+    render: (r) =>
+      debtorMoneyCell(r.chargebacks, r.customer_id, "factoring_chargebacks_customer", `factoring-chargebacks-by-customer-${r.key}`),
+  },
+  {
+    key: "fees",
+    label: "Factor fees",
+    sortable: true,
+    ...num,
+    render: (r) =>
+      debtorMoneyCell(r.fees, r.customer_id, "factoring_chargebacks_customer", `factoring-fees-by-customer-${r.key}`),
+  },
 ];
