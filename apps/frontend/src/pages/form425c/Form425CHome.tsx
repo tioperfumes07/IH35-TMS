@@ -151,7 +151,6 @@ export function Form425CHome() {
   const companyId = selectedCompanyId ?? "";
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/425c" });
   const tab = parseForm425CTab(searchParams.get("tab"));
