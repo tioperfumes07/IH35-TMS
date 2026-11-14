@@ -87,10 +87,7 @@ type Props = {
   onSaved?: (result: VendorCreateSavedResult) => void;
 };
 
-export function VendorCreateModal({  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const moneyHref = (target: string) => withReturnContext(target, originHref);
-
+export function VendorCreateModal({
   open,
   onClose,
   operatingCompanyId,
@@ -98,6 +95,9 @@ export function VendorCreateModal({  const { pathname, search: locSearch } = use
   onSaved,
 }: Props) {
   const navigate = useNavigate();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
 
