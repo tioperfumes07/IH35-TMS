@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
 import { getSafetyDvirSubmissions } from "../../api/safety";
@@ -21,6 +22,9 @@ type DvirRow = Record<string, unknown>;
 const EMPTY_FILTERS = { driverId: "", unitId: "", trailerId: "", from: "", to: "" };
 
 export function IdvrPage({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // LST-F5188 — EntityPicker filters must write URL params (on Apply, not silent draft).
@@ -183,7 +187,7 @@ export function IdvrPage({ operatingCompanyId }: Props) {
         hidePager
         onRowClick={(row) => {
           const id = String(row.id ?? "").trim();
-          if (id) navigate(`/safety/idvr/${encodeURIComponent(id)}`);
+          if (id) navigate(hubHref(`/safety/idvr/${encodeURIComponent(id)}`));
         }}
         filterBar={
           <div className="flex flex-wrap items-end gap-3" data-testid="idvr-filters">

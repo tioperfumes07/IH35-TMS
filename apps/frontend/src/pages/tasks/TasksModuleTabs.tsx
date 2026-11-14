@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { CreateTaskModal } from "../../components/tasks/CreateTaskModal";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
@@ -16,6 +17,8 @@ const tabs = [
 
 export function TasksModuleTabs() {
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const { selectedCompanyId } = useCompanyContext();
@@ -35,7 +38,7 @@ export function TasksModuleTabs() {
             return (
               <button
                 key={tab.id}
-                onClick={() => navigate(tab.to)}
+                onClick={() => navigate(hubHref(tab.to))}
                 className={[
                   "whitespace-nowrap border-b-2 px-1 py-3 text-xs font-medium",
                   isActive

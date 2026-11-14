@@ -18296,5 +18296,10 @@
     "claimed_at": "2026-11-14T05:01:21Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 driver/user/legal create drills withReturnContext"
+  },
+  "20290": {
+    "claimed_at": "2026-11-14T05:06:13Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 hub/attention/driver-detail/compliance drills withReturnContext"
   }
 }

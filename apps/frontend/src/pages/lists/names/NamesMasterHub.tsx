@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { ApiError } from "../../../api/client";
 import {
   getNamesMasterCounts,
@@ -61,6 +62,9 @@ export function namesMasterLabel(row: Pick<NamesMasterRow, "entity_type" | "disp
 }
 
 export function NamesMasterHub() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -172,7 +176,7 @@ export function NamesMasterHub() {
             <button
               type="button"
               className="rounded-sm border border-[#E5E7EB] px-2 py-1 text-xs font-semibold hover:bg-[#F7F8FA]"
-              onClick={() => navigate(row.link_to_module_page)}
+              onClick={() => navigate(hubHref(row.link_to_module_page))}
             >
               Open
             </button>

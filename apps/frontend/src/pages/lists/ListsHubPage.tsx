@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useNavigationType } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getListsInventory, getListsQboSyncHealth, getListsRecentActivity, postForceListsQboSync } from "../../api/listsHub";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useToast } from "../../components/Toast";
@@ -37,6 +38,8 @@ export function readScrollPosition(storage: Pick<Storage, "getItem">, pathname: 
 export function ListsHubPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navType = useNavigationType();
   const { pushToast } = useToast();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
@@ -101,7 +104,7 @@ export function ListsHubPage() {
   }
 
   function openDomainHub(domainKey: string) {
-    navigate(`/lists/hub/${domainKey}`);
+    navigate(hubHref(`/lists/hub/${domainKey}`));
   }
 
   const inventory = inventoryQuery.data?.inventory ?? [];
