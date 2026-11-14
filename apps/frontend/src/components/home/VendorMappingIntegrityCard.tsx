@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import type { HomeVendorMappingIntegrity } from "../../api/home";
 import { Button } from "../Button";
 
@@ -22,6 +23,9 @@ function statusLabel(status: "green" | "yellow" | "red") {
 }
 
 export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   if (isLoading) {
     return (
       <section className="rounded-sm border border-[#E5E7EB] bg-white">
@@ -83,7 +87,7 @@ export function VendorMappingIntegrityCard({ data, isLoading, isError, onRetry }
         </div>
       </div>
       <div className="border-t border-[#E5E7EB] px-3 py-2">
-        <Link className="text-xs font-medium text-[#4B5563] hover:underline" to="/samsara/vendor-mapping-integrity">
+        <Link className="text-xs font-medium text-[#4B5563] hover:underline" to={sysHref("/samsara/vendor-mapping-integrity")}>
           Open mapping integrity details
         </Link>
       </div>

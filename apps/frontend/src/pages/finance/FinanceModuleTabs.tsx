@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_LOAN_WIZARD_FLAG } from "../../api/financeLoanWizard";
@@ -22,6 +23,9 @@ const baseTabs = [
 ];
 
 export function FinanceModuleTabs() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const { enabled: loanWizardEnabled } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, selectedCompanyId ?? undefined);
   const { enabled: calculatorEnabled } = useFeatureFlag(FINANCE_HUB_CALCULATOR_FLAG, selectedCompanyId ?? undefined);
@@ -47,16 +51,16 @@ export function FinanceModuleTabs() {
         data-testid="finance-cross-module-links"
       >
         <span className="font-semibold text-[#6B7280]">Related:</span>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/accounting">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/accounting")}>
           Accounting
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/dispatch/load-costs">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/dispatch/load-costs")}>
           Load costs
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/cash-flow">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/cash-flow")}>
           Cash Flow
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/profit-loss">
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/reports/profit-loss")}>
           Profit &amp; Loss
         </Link>
       </nav>

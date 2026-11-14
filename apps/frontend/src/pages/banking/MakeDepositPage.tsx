@@ -256,7 +256,7 @@ export function MakeDepositPage() {
             <Button type="button" variant={mode === "batch" ? "primary" : "secondary"} onClick={() => setMode("batch")}>
               Batch grid
             </Button>
-            <Link className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44]" to="/banking/register">
+            <Link className="inline-flex h-7 items-center rounded-sm border border-[#E5E7EB] bg-white px-2 text-[#1F2A44]" to={bankHref("/banking/register")}>
               Register
             </Link>
           </div>

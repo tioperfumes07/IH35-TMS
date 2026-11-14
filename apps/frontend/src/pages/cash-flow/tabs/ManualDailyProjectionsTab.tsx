@@ -471,6 +471,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   const qc = useQueryClient();
   const location = useLocation();
   const originHref = currentOriginHref(location.pathname, location.search);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const entryId = searchParams.get("entry_id") ?? undefined;
   const partyRefKindParam = searchParams.get("party_ref_kind");
@@ -610,7 +611,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   return (
     <div className="space-y-3" style={{ fontFamily: V3.font }} data-testid="cash-flow-mdp-v3-tab">
       {hasReverseFilter ? (
-        <Link className="text-xs font-semibold underline" style={{ color: V3.link }} to="/cash-flow?tab=manual_daily_projections">
+        <Link className="text-xs font-semibold underline" style={{ color: V3.link }} to={moneyHref("/cash-flow?tab=manual_daily_projections")}>
           Clear projection filter
         </Link>
       ) : null}

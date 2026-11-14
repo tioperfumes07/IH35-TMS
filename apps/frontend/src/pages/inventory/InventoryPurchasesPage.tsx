@@ -10,7 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
@@ -42,7 +42,9 @@ function formatWhen(iso: string | null | undefined) {
  * parts_invoice_links) — both doors stay unchanged. See docs/blocks/HOLD-INVENTORY-PURCHASE-HISTORY-SOR.md.
  */
 export function InventoryPurchasesPage() {
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const invHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — Inventory drills attach ?ret=; Back must restore origin.
   const inventoryBackHref = resolveBackHref({ searchParams, pathname, fallback: "/inventory" });
@@ -181,7 +183,7 @@ export function InventoryPurchasesPage() {
       <div className="flex justify-end">
         <Link
           className="inline-flex min-h-11 items-center rounded-sm bg-[#0F1219] px-3 text-xs font-semibold text-white hover:bg-[#1F2A44] sm:min-h-[32px]"
-          to="/maintenance/parts-inventory?create=purchase"
+          to={invHref("/maintenance/parts-inventory?create=purchase")}
         >
           + Record Purchase
         </Link>
@@ -189,11 +191,11 @@ export function InventoryPurchasesPage() {
 
       <div className="rounded-sm border border-gray-200 bg-white px-3 py-2 text-xs text-gray-600">
         Purchase receipts are preserved as an append-only history. Stock on-hand lives on{" "}
-        <Link className="text-[#1F2A44] underline" to="/maintenance/parts-inventory?create=purchase">
+        <Link className="text-[#1F2A44] underline" to={invHref("/maintenance/parts-inventory?create=purchase")}>
           Maintenance Parts Inventory
         </Link>{" "}
         (upserted by part on each purchase); WO part consumption lives on{" "}
-        <Link className="text-[#1F2A44] underline" to="/inventory/assignments">
+        <Link className="text-[#1F2A44] underline" to={invHref("/inventory/assignments")}>
           Assignments
         </Link>
         .

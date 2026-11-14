@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -55,6 +56,9 @@ const EMPTY_DRAFT: VendorDraft = {
 };
 
 export function VendorsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const highlightedVendorId = searchParams.get("maintenance_vendor_id")?.trim() ?? "";
   const { selectedCompanyId } = useCompanyContext();
@@ -291,7 +295,7 @@ export function VendorsPage() {
           <h2 className="text-xs font-semibold text-gray-900">Maintenance Vendors</h2>
           <p className="text-xs text-gray-600">
             Canonical vendor master linked to{" "}
-            <Link className="text-[#4B5563] underline" to="/lists/maintenance/vendors">
+            <Link className="text-[#4B5563] underline" to={maintHref("/lists/maintenance/vendors")}>
               Lists & Catalogs
             </Link>
             .

@@ -1,7 +1,8 @@
 import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMaintenanceVendorDetail } from "../../api/maintenance";
@@ -13,6 +14,9 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 type VendorHistoryRow = Record<string, unknown>;
 
 export function VendorDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { vendorId = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -111,7 +115,7 @@ export function VendorDetailPage() {
             </dl>
             <p className="mt-2 text-xs text-gray-500">
               Catalog record in{" "}
-              <Link className="text-[#4B5563] underline" to="/lists/maintenance/vendors">
+              <Link className="text-[#4B5563] underline" to={maintHref("/lists/maintenance/vendors")}>
                 Lists & Catalogs / Maintenance Vendors
               </Link>
               .

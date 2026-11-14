@@ -219,6 +219,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const moneyHref = (target: string) => withReturnContext(target, originHref);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const isPage = mode === "page";
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -715,8 +716,8 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
           {isPage ? (
             <nav className="mb-2 text-xs text-gray-500" data-testid="load-costs-load-breadcrumb" aria-label="Breadcrumb">
               {/* U18 + U3 — Load costs lives in Dispatch; the breadcrumb parent is the module home, Dispatch. */}
-              <Link className="hover:underline" to="/dispatch">Dispatch</Link> <span aria-hidden="true">›</span>{" "}
-              <Link className="hover:underline" to="/dispatch/load-costs">Load costs</Link> <span aria-hidden="true">›</span>{" "}
+              <Link className="hover:underline" to={dispHref("/dispatch")}>Dispatch</Link> <span aria-hidden="true">›</span>{" "}
+              <Link className="hover:underline" to={dispHref("/dispatch/load-costs")}>Load costs</Link> <span aria-hidden="true">›</span>{" "}
               <span className="font-semibold text-gray-800">{load?.load_number ?? "…"}</span>
             </nav>
           ) : null}
@@ -819,7 +820,7 @@ export function LoadDetailDrawer({ loadId, isOpen, canEdit, canEditReason, opera
                 Record expense
               </Button>
               {isPage ? (
-                <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/dispatch/load-costs" data-testid="load-costs-load-back">← Load costs</Link>
+                <Link className="text-xs font-semibold text-[#1F2A44] underline" to={dispHref("/dispatch/load-costs")} data-testid="load-costs-load-back">← Load costs</Link>
               ) : (
                 <Button type="button" variant="secondary" size="sm" onClick={onClose}>
                   Close

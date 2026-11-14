@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ParityDrawer } from "../parity/ParityDrawer";
 import { RecordExpenseForm } from "./RecordExpenseForm";
 
@@ -34,6 +35,9 @@ export function RecordExpenseModal({
   attachmentCategory,
   stackAboveModal = false,
 }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   return (
     <ParityDrawer open={open} onClose={onClose} title={title} size="wide" stackAboveModal={stackAboveModal}>
       <div className="space-y-4">
@@ -58,7 +62,7 @@ export function RecordExpenseModal({
           }}
         />
         <p className="text-xs text-gray-600">
-          <Link className="text-[#1F2A44] underline" to="/accounting/expenses/list">
+          <Link className="text-[#1F2A44] underline" to={moneyHref("/accounting/expenses/list")}>
             View all expenses
           </Link>
         </p>
