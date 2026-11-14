@@ -1,3 +1,15 @@
+### READY overlay (2026-11-14T05:00Z) — Cursor accounting CTAs + fleet unit drills #29477
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 Accounting CTAs/credit-memo · 3 Plaid · 20 Fleet unit drills | READY | #29477 `6f3969642cb` withReturnContext; verify 20286 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T05:00Z) — Cursor Dispatch/TruckPlanner mechanical drills #29475
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Dispatch load-history/planner/trip-pairing/load-costs · TruckPlanner | READY | #29475 `e0d59bb7a42` withReturnContext; verify 20284 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:54Z) — Cursor reports/legal/cash-advance Review #29473
 | Board / surface | Status | Evidence |
 |---|---|---|
