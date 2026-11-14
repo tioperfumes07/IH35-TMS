@@ -97,7 +97,6 @@ export function MaintKpiDashboardPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const maintHref = (target: string) => withReturnContext(target, originHref);
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
   const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });

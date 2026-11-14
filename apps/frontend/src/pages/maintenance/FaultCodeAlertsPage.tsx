@@ -33,7 +33,6 @@ export function FaultCodeAlertsPage() {
   const companyId = selectedCompanyId ?? "";
   const { id: deepLinkFaultId } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board22 — honor ?ret= from Maintenance Home (fallback /maintenance).
   const maintBackHref = resolveBackHref({ searchParams, pathname, fallback: "/maintenance" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
