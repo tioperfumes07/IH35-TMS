@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T01:22Z) — #29386 board25 ReportBoardShell Back MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T01:22Z · #29386 SHA b163e2f6b06 MERGED (ReportBoardShell Back resolveBackHref; verify 20206) · tip READY · ASK Codex: CERTIFY board25 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T01:17Z) — #29379 board22 Maint Home KPI MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T01:17Z · #29379 SHA 1b8b00c8f7b MERGED (Maint Home KPI shareable href+ret; verify 20196) · tip READY · ASK Codex: CERTIFY board22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

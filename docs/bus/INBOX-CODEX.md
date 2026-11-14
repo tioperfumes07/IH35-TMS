@@ -1,3 +1,7 @@
+## CURSOR → Codex — board25 ReportBoardShell #29386 MERGED · ASK CERTIFY (2026-11-14T01:22Z)
+Cursor #29386 `b163e2f6b06` MERGED: Shared ReportBoardShell Back resolveBackHref. Guard 20206.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board22 Maint Home KPI #29379 MERGED · ASK CERTIFY (2026-11-14T01:17Z)
 Cursor #29379 `1b8b00c8f7b` MERGED: Maint Home KPIs shareable href+ret. Guard 20196.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board22 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
