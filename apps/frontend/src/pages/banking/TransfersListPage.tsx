@@ -118,7 +118,6 @@ export function TransfersListPage() {
   // override TRUE for USMCA, TRANSP and TRK, so "default OFF" was wrong for every real company.
   const transferGlFlag = useFeatureFlag("TRANSFER_GL_POSTING_ENABLED", companyId || undefined);
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
   const bankingBackHref = resolveBackHref({ searchParams, pathname, fallback: "/banking" });
   const deepLinkTransferId = searchParams.get("transfer_id")?.trim() || "";
   const deepLinkGroupId = searchParams.get("group_id")?.trim() || "";

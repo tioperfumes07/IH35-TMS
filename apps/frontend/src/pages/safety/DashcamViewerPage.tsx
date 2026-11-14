@@ -47,7 +47,6 @@ export function DashcamViewerPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
   const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";

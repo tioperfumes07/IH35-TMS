@@ -114,7 +114,6 @@ export function LegalMatterDetailPage() {
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const admin = user?.role === "Owner" || user?.role === "Administrator";
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 board21 — Matter detail Back restores list/Home via ret (fallback Matters list).
   const matterDetailBackHref = resolveBackHref({
