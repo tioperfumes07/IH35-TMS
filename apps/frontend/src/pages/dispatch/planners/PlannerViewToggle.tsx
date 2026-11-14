@@ -1,9 +1,7 @@
 /**
- * PlannerViewToggle — shared [Grid] [List] button group for the planner pages.
- *
- * Each planner page (Driver/Truck/Loads/Timeline) renders a grid/calendar view by
- * default and offers a ParityTable list view with sortable columns, pagination,
- * CSV export, and Print. This toggle switches between them.
+ * PlannerViewToggle — Grid / List segmented control.
+ * ROUND 9.4 Board 12 — identical to docs/design/v3/Dispatch-TruckPlanner.dc.html:
+ * outer 6px shell, inner 4px pads, active #13233F / 600 11px Inter.
  */
 export type PlannerViewMode = "grid" | "list";
 
@@ -12,42 +10,50 @@ type PlannerViewToggleProps = {
   onChange: (mode: PlannerViewMode) => void;
 };
 
+const FONT = "Inter, ui-sans-serif, system-ui, sans-serif";
+
 export function PlannerViewToggle({ viewMode, onChange }: PlannerViewToggleProps) {
-  const base =
-    "flex h-7 items-center rounded-sm px-3 text-xs font-medium transition-colors";
   return (
-    <div
+    <span
       data-testid="planner-view-toggle"
-      className="flex items-center gap-1 rounded-sm border border-[var(--border-default)] bg-[var(--surface-unselected)] p-1"
       role="group"
       aria-label="Planner view mode"
+      style={{
+        display: "inline-flex",
+        background: "#fff",
+        border: "1px solid #DDE1E7",
+        borderRadius: 6,
+        padding: 2,
+        gap: 2,
+      }}
     >
-      <button
-        type="button"
-        data-testid="planner-view-grid"
-        aria-pressed={viewMode === "grid"}
-        onClick={() => onChange("grid")}
-        className={`${base} ${
-          viewMode === "grid"
-            ? "bg-[var(--planner-active)] text-white"
-            : "text-gray-700 hover:bg-[var(--surface-hover)]"
-        }`}
-      >
-        Grid
-      </button>
-      <button
-        type="button"
-        data-testid="planner-view-list"
-        aria-pressed={viewMode === "list"}
-        onClick={() => onChange("list")}
-        className={`${base} ${
-          viewMode === "list"
-            ? "bg-[var(--planner-active)] text-white"
-            : "text-gray-700 hover:bg-[var(--surface-hover)]"
-        }`}
-      >
-        List
-      </button>
-    </div>
+      {([
+        ["grid", "Grid"],
+        ["list", "List"],
+      ] as const).map(([id, label]) => {
+        const on = viewMode === id;
+        return (
+          <button
+            key={id}
+            type="button"
+            data-testid={`planner-view-${id}`}
+            aria-pressed={on}
+            onClick={() => onChange(id)}
+            style={{
+              padding: "4px 10px",
+              borderRadius: 4,
+              font: `600 11px ${FONT}`,
+              background: on ? "#13233F" : "transparent",
+              color: on ? "#fff" : "#5B6576",
+              border: "none",
+              cursor: "pointer",
+              lineHeight: "normal",
+            }}
+          >
+            {label}
+          </button>
+        );
+      })}
+    </span>
   );
 }
