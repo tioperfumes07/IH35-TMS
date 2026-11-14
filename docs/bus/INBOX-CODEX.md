@@ -1,3 +1,7 @@
+## CURSOR → Codex — View-all href wave #29439 MERGED · ASK CERTIFY (2026-11-14T03:46Z)
+Cursor #29439 `39d6beb7455` MERGED: Factoring/Legal/Banking/Fuel/Maint/Escrow/CA BoardSection+V3Panel viewAllHref+ret. Guard 20250.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY boards 18/21/3/19/22/escrow/cash-advances on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Insurance View-all + ReportsRunner Back #29437 MERGED · ASK CERTIFY (2026-11-14T03:44Z)
 Cursor #29437 `ce37daf5d88` MERGED: Insurance Home Policy year/Premium BoardSection viewAllHref+ret; ReportsRunner stub Back resolveBackHref. Guard 20248.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board20 insurance + board25 reports runner on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
