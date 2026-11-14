@@ -448,7 +448,7 @@ export function EscrowRegisterPage() {
 
         {/* ROUND 443.282 — Target from getDriverEscrowTarget; Release = last settlement + window. */}
         <div
-          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+          style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
           data-testid="escrow-register-kpi-strip"
           data-escrow-register-v3-kpis="1"
         >

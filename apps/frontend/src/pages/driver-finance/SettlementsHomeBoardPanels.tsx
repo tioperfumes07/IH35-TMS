@@ -169,21 +169,22 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
             <div style={{ padding: "12px 14px 8px" }}>
               <svg
                 width="100%"
-                height={160}
-                viewBox={`0 0 ${weekBuckets.length * 48 + 56} 160`}
+                height={200}
+                viewBox={`0 0 ${weekBuckets.length * 48 + 56} 200`}
                 preserveAspectRatio="none"
                 role="img"
                 aria-label="Net driver pay by week"
                 data-testid="settlements-home-week-chart"
               >
-                {[0, 0.25, 0.5, 0.75, 1].map((frac) => {
-                  const y = 12 + (1 - frac) * 110;
+                {[0, 0.5, 1].map((frac) => {
+                  const y = 12 + (1 - frac) * 150;
                   const amount = weekChartMax * frac;
+                  const kLabel = amount === 0 ? "$0" : amount >= 1000 ? `$${Math.round(amount / 1000)}k` : `$${Math.round(amount)}`;
                   return (
                     <g key={`axis-${frac}`}>
                       <line x1={56} x2={weekBuckets.length * 48 + 56} y1={y} y2={y} stroke={V3.chartGrid} strokeWidth={1} />
                       <text x={52} y={y + 3} textAnchor="end" style={{ fontSize: 11, fill: V3.muted, fontFamily: V3.font }}>
-                        {formatSettlementsUsd(amount)}
+                        {kLabel}
                       </text>
                     </g>
                   );
@@ -191,9 +192,9 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 {weekBuckets.map((w, i) => {
                   const value =
                     weekChartGrain === "net" ? w.net : weekChartGrain === "gross" ? w.gross : w.deductions;
-                  const h = Math.max(2, (Math.abs(value) / weekChartMax) * 110);
+                  const h = Math.max(2, (Math.abs(value) / weekChartMax) * 150);
                   const x = i * 48 + 68;
-                  const y = 122 - h;
+                  const y = 162 - h;
                   const isSelected = thisWeekBucket?.weekStartIso === w.weekStartIso;
                   return (
                     <g key={w.weekStartMs}>
@@ -204,8 +205,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                         width={24}
                         height={h}
                         rx={1}
-                        fill={value < 0 ? V3.red : isSelected ? V3.shell : V3.data}
-                        opacity={isSelected || value < 0 ? 1 : 0.72}
+                        fill={value < 0 ? V3.red : isSelected ? V3.shell : "#94A3B8"}
                         style={{ transformOrigin: `${x + 12}px 122px`, cursor: "pointer" } as CSSProperties}
                         role="button"
                         tabIndex={0}
@@ -220,7 +220,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                           }
                         }}
                       />
-                      <text x={x + 12} y={148} textAnchor="middle" style={{ fontSize: 11, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
+                      <text x={x + 12} y={184} textAnchor="middle" style={{ fontSize: 11, fill: isSelected ? V3.ink : V3.muted, fontFamily: V3.font }}>
                         {w.label}
                       </text>
                     </g>
@@ -257,9 +257,9 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                   borderBottom: `1px solid ${V3.borderSoft}`,
                 }}
               >
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase" }}>Type</span>
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "center" }}>Drivers</span>
-                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", textAlign: "right" }}>Amount</span>
+                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 600 }}>Type</span>
+                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 600, textAlign: "center" }}>Drivers</span>
+                <span style={{ color: V3.muted, fontSize: 11, fontWeight: 600, textAlign: "right" }}>Amount</span>
               </div>
               {(
                 [
@@ -317,20 +317,19 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
               <button
                 type="button"
                 data-testid="settlements-home-week-of-export"
-                disabled={weekOfRows.length === 0}
                 onClick={() =>
-                  exportWeekOfSettlementsCsv(thisWeekBucket.weekStartIso, weekOfPill, weekOfRows)
+                  weekOfRows.length > 0 && exportWeekOfSettlementsCsv(thisWeekBucket.weekStartIso, weekOfPill, weekOfRows)
                 }
                 style={{
                   fontSize: 11,
                   fontWeight: 600,
-                  color: V3.link,
-                  background: "transparent",
-                  border: "none",
-                  cursor: weekOfRows.length === 0 ? "not-allowed" : "pointer",
-                  padding: 0,
+                  color: V3.ink,
+                  background: "#FFFFFF",
+                  border: `1px solid ${V3.border}`,
+                  borderRadius: 4,
+                  cursor: "pointer",
+                  padding: "2px 10px",
                   fontFamily: V3.font,
-                  opacity: weekOfRows.length === 0 ? 0.5 : 1,
                 }}
               >
                 Export
@@ -348,9 +347,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                 padding: "8px 14px",
                 borderBottom: `1px solid ${V3.borderSoft}`,
                 fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: "0.04em",
-                textTransform: "uppercase",
+                fontWeight: 600,
                 color: V3.muted,
                 fontFamily: V3.font,
                 textAlign: "center",

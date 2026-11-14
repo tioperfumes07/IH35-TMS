@@ -436,7 +436,7 @@ export function SettlementDetailPage() {
         </div>
       ) : null}
       <div
-        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 8 }}
+        style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
         data-testid="settlements-statement-v3-kpis"
         data-settlements-statement-v3-kpis="1"
       >

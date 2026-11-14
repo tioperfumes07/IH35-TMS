@@ -1,5 +1,5 @@
 import { settlementLabel } from "../../lib/settlementNumber";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { listAllSettlements, getOpenDriverBills, listAllSettlementDeductions, type OpenDriverBill, type SettlementListRow, type SettlementReference } from "../../api/driverFinance";
@@ -105,6 +105,8 @@ export function SettlementsPage() {
   const [weekChartGrain, setWeekChartGrain] = useState<"net" | "gross" | "deductions">("net");
   /** ROUND 443.267 — Week-of panel Open/Closed filter (board Settlements.dc.html). */
   const [weekOfPill, setWeekOfPill] = useState<"open" | "closed">("open");
+  // R90-32: auto-switch to closed pill when open count is 0 and closed has rows.
+  // Computed below; this effect fires after weekOfOpenCount/weekOfClosedCount stabilize.
   // ROUND 16.3 + 443.280-A — Company & Driver / Disputes / Needs Review / Open / Closed / Payments
   // are own SETTLEMENTS_SUBNAV tabs (not a Button row under the home board).
   const tabParam = searchParams.get("tab");
@@ -353,6 +355,13 @@ export function SettlementsPage() {
   const isEmptyRow = (s: SettlementListRow) => Number(s.gross_pay ?? 0) === 0 && Number(s.net_pay ?? 0) === 0;
   const weekOfOpenCount = thisWeekSettlements.filter((s) => !settlementsRowTourClosed(s) && !isEmptyRow(s)).length;
   const weekOfClosedCount = thisWeekSettlements.filter((s) => settlementsRowTourClosed(s) && !isEmptyRow(s)).length;
+  // R90-32: auto-switch to "closed" when open=0 and closed>0 so the week-of table shows rows.
+  useEffect(() => {
+    if (weekOfOpenCount === 0 && weekOfClosedCount > 0 && weekOfPill === "open") {
+      setWeekOfPill("closed");
+    }
+  }, [weekOfOpenCount, weekOfClosedCount, weekOfPill]);
+
   const weekOfRows = thisWeekSettlements.filter((s) => {
     if (isEmptyRow(s)) return false;
     if (weekOfPill === "open") return !settlementsRowTourClosed(s);
