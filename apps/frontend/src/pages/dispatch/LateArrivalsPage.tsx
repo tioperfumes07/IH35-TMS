@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listLateArrivalDispatchLoads } from "../../api/dispatch";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -25,6 +26,9 @@ function etaLabel(prediction: Record<string, unknown> | null | undefined): strin
 }
 
 export function LateArrivalsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -163,7 +167,7 @@ export function LateArrivalsPage() {
         title="Late arrivals"
         subtitle={`Loads past schedule + ${grace}m grace or with late ETA prediction`}
         actions={
-          <Link to="/dispatch/alerts" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch/alerts")} className="rounded-sm border px-3 py-1.5 text-xs">
             Dispatch alerts
           </Link>
         }

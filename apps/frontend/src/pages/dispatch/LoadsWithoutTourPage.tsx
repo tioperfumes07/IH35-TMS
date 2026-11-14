@@ -3,7 +3,8 @@ import { resolveBackHref } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load with no tour); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listLoadsWithoutTour, type ExceptionQueueLoadRow } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -19,6 +20,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 // checked: a load can carry a tour_id while still lacking the presettlement link that is the
 // actual settlement anchor. Read-only — no auto-link action here, this is visibility only.
 export function LoadsWithoutTourPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -85,7 +89,7 @@ export function LoadsWithoutTourPage() {
         title="Loads without a tour"
         subtitle="Non-cancelled loads with presettlement_link_id IS NULL. Tile value equals this table's row count."
         actions={
-          <Link to="/" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/")} className="rounded-sm border px-3 py-1.5 text-xs">
             Home
           </Link>
         }

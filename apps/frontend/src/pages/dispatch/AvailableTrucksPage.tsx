@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import {
   getCapacity,
   getCapacityPreview,
@@ -53,6 +54,9 @@ function sortRows(rows: CapacityRow[], key: SortKey, dir: "asc" | "desc"): Capac
 }
 
 export function AvailableTrucksPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -250,7 +254,7 @@ export function AvailableTrucksPage() {
             <button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => setPreviewKind("morning")} data-testid="capacity-preview-open">
               Preview today's email
             </button>
-            <Link to="/customers" className="rounded-sm border px-3 py-1.5 text-xs">Customer contacts</Link>
+            <Link to={dispHref("/customers")} className="rounded-sm border px-3 py-1.5 text-xs">Customer contacts</Link>
           </div>
         }
       />
