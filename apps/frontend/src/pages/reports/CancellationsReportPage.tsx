@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getCancellationsReport, type CancellationBucket } from "../../api/reports";
@@ -8,6 +8,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { entityLabel, isUnresolvedEntityTombstone } from "../../lib/entity-label";
 import { mmmDd } from "../../lib/formatDate";
@@ -132,6 +133,9 @@ export function CancellationsReportPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { from: "", to: "", reason: "" };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
@@ -164,7 +168,7 @@ export function CancellationsReportPage() {
       <PageHeader
         title="Cancellations"
         subtitle="Reports"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Cancellations"]}
       />
       <ReportsSubNav />

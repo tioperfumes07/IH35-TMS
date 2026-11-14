@@ -1,7 +1,8 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -77,6 +78,9 @@ export function ProfitPerTruckPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { ...currentQuarterRange(), flagFilter: "all" as FlagFilter };
   const [applied, setApplied] = useState(emptyFilters);
   const staged = useStagedListFilters({ applied, empty: emptyFilters, onApply: setApplied });
@@ -319,7 +323,7 @@ export function ProfitPerTruckPage() {
       <PageHeader
         title="Per-truck CPM dashboard"
         subtitle="Cost, revenue and profit per mile by truck — practical (billed) and real driven (odometer) miles, each labelled"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Per-Truck CPM Dashboard"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

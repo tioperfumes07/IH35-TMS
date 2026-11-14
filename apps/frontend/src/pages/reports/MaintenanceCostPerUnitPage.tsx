@@ -1,7 +1,8 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -58,6 +59,9 @@ export function MaintenanceCostPerUnitPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyRange = currentQuarterRange();
   const emptyFilters: MaintenanceCostFilters = { ...emptyRange, unitFilter: "" };
   const [appliedFilters, setAppliedFilters] = useState<MaintenanceCostFilters>(emptyFilters);
@@ -258,7 +262,7 @@ export function MaintenanceCostPerUnitPage() {
       <PageHeader
         title="Maintenance cost per unit"
         subtitle="WO parts, labor, and outsourced spend by truck"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Maintenance Cost Per Unit"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">

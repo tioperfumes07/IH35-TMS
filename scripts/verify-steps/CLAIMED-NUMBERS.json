@@ -16067,6 +16067,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-report-board-shell-ret board25"
   },
+  "20210": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-reports-ops-leaf-back-ret board25 ops reports"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
