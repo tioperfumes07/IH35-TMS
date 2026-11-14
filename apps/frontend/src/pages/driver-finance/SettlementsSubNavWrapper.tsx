@@ -73,7 +73,7 @@ export function SettlementsSubNavWrapper({
   const activeHref = useMemo(() => activeHrefFor(pathname, search), [pathname, search]);
 
   return (
-    <div className="space-y-4" data-settlements-subnav-wrapper="true">
+    <div className="space-y-4" data-settlements-subnav-wrapper="true" data-v3-board="Settlements" style={{ lineHeight: "normal" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div data-testid="settlements-breadcrumb">
