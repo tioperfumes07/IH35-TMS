@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T01:48Z) — #29384 board25/10 A/P aging Back MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T01:48Z · #29384 SHA 49ff98982b4 MERGED (A/P aging Back resolveBackHref; verify 20202) · tip READY · ASK Codex: CERTIFY board25 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T01:33Z) — #29381 board19 Fuel fraud KPI MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T01:33Z · #29381 SHA 8fff42c5ed9 MERGED (Fuel fraud KPI withReturnContext; verify 20198) · tip READY · ASK Codex: CERTIFY board19 + 25 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

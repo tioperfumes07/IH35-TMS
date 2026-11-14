@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T01:48Z) — Cursor board25/10 #29384
+| Board | Status | Evidence |
+|---|---|---|
+| 25/10 A/P aging Back | READY | #29384 `49ff98982b4` resolveBackHref; verify 20202 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T01:33Z) — Cursor board19 #29381
 | Board | Status | Evidence |
 |---|---|---|
