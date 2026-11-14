@@ -965,7 +965,7 @@ export function VendorDetailPage() {
           >
             Bills and A/P on this vendor profile are read only. Record bill payments from{" "}
             {/* ROUND 297 audit (drill): /accounting/pay-bills was never a route; pay THIS vendor's bills. */}
-            <Link to={moneyHref(`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`)} className="font-semibold text-[#0F1219] underline">
+            <Link to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`} className="font-semibold text-[#0F1219] underline">
               Accounting → Pay bills
             </Link>
             .

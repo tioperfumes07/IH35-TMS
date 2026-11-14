@@ -11,7 +11,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { mmmDd } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { listTours, type TourListRow } from "../../api/tourReadout";
@@ -20,6 +19,7 @@ import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money"
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3 } from "../../design/v3-tokens";
 import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 function startOfWeekSunday(d: Date): Date {
   const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -318,7 +318,6 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [search, setSearch] = useState("");
   // 443.280-A — Open / Closed are own Settlements tabs (?tab=open|closed). Prefer tab over legacy tour_state.
   const tabHint =
     searchParams.get("tab") === "open" || searchParams.get("tab") === "closed"
@@ -422,26 +421,6 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
     );
   }, [c.kpiDriverPaySubDown, c.kpiDriverPaySubFlat, c.kpiDriverPaySubSum, c.kpiDriverPaySubUp, kpiBaseQuery.isError, kpiSettlements, periodStart]);
 
-  const filteredRows = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => {
-      const hay = [
-        r.driver_name,
-        r.unit_number,
-        r.display_id,
-        r.settlement_id,
-        tourLabel(r),
-        waitingOnReason(r),
-        ...(r.legs ?? []).map((l) => l.load_number),
-      ]
-        .filter(Boolean)
-        .join(" ")
-        .toLowerCase();
-      return hay.includes(q);
-    });
-  }, [rows, search]);
-
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
 
   return (
@@ -450,26 +429,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       data-testid="settlements-tours-view"
       data-surface="load-detail"
       data-settlements-tours-v3="1"
+      data-v3-board="Settlements-Open"
+      style={{ lineHeight: "normal" }}
     >
-      {/* R90-33/34 header: ← Back · Driver Settlements · subtitle on ONE line */}
-      <div
-        style={{ display: "flex", alignItems: "center", gap: 8, fontFamily: V3.font, paddingBottom: 2 }}
-        data-testid="settlements-tours-header"
-      >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          style={{ color: V3.link, background: "none", border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, padding: "0 4px 0 0", display: "flex", alignItems: "center", gap: 4 }}
-          data-testid="settlements-tours-back-btn"
-        >
-          ← Back
-        </button>
-        <span style={{ color: V3.borderSoft }}>·</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>Driver Settlements</span>
-        <span style={{ color: V3.borderSoft }}>·</span>
-        <span style={{ fontSize: 11, color: "#6B7280" }}>List + detail settlement workflow</span>
-      </div>
-
       <div
         style={{
           display: "grid",
@@ -525,7 +487,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         />
       </div>
 
-      {/* R90-33/34 segment row: left nav chips + right cohort pills + search + Filters + Export */}
+      {/* R90-33/34 segment row: left nav chips + right cohort pills + Filters + Export */}
       <div
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, fontFamily: V3.font }}
         data-testid="settlements-tours-segment-row"
@@ -567,17 +529,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               </button>
             ))}
           </div>
-          <MoneyListToolbar
-            search={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Search settlements…"
-            searchTestId="settlements-tours-search-input"
-            activeFilterCount={0}
-            onClearAll={() => setSearch("")}
-            testIdPrefix="settlements-tours"
-          >
-            <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 36, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
-          </MoneyListToolbar>
+          <button type="button" data-testid="settlements-tours-filter-btn" style={{ height: 28, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Filters ▾</button>
+          <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 28, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Export</button>
         </div>
       </div>
 
@@ -586,6 +539,9 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         title={panelTitle}
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
+        headerRight={
+          <button type="button" data-testid="settlements-tours-columns-btn" style={{ height: 28, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>⚙ Columns</button>
+        }
       >
         {activeQ.isError ? (
           <div className="p-3">
@@ -593,8 +549,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           </div>
         ) : (
           <ParityTable appearance="board"
-            columns={TOUR_COLUMNS(state, companyId, filteredRows)}
-            rows={filteredRows}
+            columns={TOUR_COLUMNS(state, companyId, rows)}
+            rows={rows}
             rowKey={(r) => r.settlement_id}
             loading={activeQ.isLoading}
             emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
