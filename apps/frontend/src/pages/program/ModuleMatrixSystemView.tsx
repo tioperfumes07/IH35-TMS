@@ -7,7 +7,8 @@
 import { Fragment, useMemo, createContext, useContext } from "react";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ParityTable } from "../../components/parity/ParityTable";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import { ctDateTime } from "../../lib/businessDate";
@@ -533,6 +534,9 @@ function proofMissC(row: SystemModuleRow): number {
 }
 
 export function ModuleMatrixSystemView() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   // Distinct from per-module boards (esp. moduleId "system") — see LV-SYSTEM-MATRIX-LEAVES-NOT-ITERABLE.
   const { data, error, isError, isFetched, dataUpdatedAt, isFetching } = useQuery({
@@ -1018,7 +1022,7 @@ export function ModuleMatrixSystemView() {
           rowTestId={(row) => `proof-row-${row.module}`}
           rows={orderedRows.filter((r) => isUrgent6Module(r.module) || isUrgent14Module(r.module))}
           rowKey={(row) => `proof-${row.module}`}
-          onRowClick={(row) => navigate(`/program/matrix?module=${row.module}`)}
+          onRowClick={(row) => navigate(hubHref(`/program/matrix?module=${row.module}`))}
           allowAllPageSize
           columns={[
             {

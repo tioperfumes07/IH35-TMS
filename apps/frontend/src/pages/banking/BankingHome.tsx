@@ -418,7 +418,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // C-53 — start opener lives on the Reconciliation shell (SAVE+CLOSE). Home / attention strip deep-link here.
   const openStartReconciliation = () => {
     setActiveTab("reconciliation");
-    navigate(`${BANKING_TAB_PATH.reconciliation}?start=1`);
+    navigate(bankHref(`${BANKING_TAB_PATH.reconciliation}?start=1`));
   };
 
   // Doc-18 — Bank Register MUST pre-bind the selected bank's Cash GL.

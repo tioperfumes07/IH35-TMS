@@ -18301,5 +18301,10 @@
     "claimed_at": "2026-11-14T05:06:13Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 hub/attention/driver-detail/compliance drills withReturnContext"
+  },
+  "20292": {
+    "claimed_at": "2026-11-14T05:09:26Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 program matrix + banking recon start withReturnContext"
   }
 }
