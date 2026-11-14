@@ -1,7 +1,21 @@
-/** Board SVG from docs/design/v3/maintenance-vehicle-graphics/TruckProfile.dc.html (viewBox 0 0 990 520). */
-export function truckProfileBoardSvgHtml(prefix: string): string {
+/** Board SVG from docs/design/v3/maintenance-vehicle-graphics/TruckProfile.dc.html (viewBox 0 0 990 520).
+ *  Board 44 honesty: the unit number, make/model/year caption, trailer caption and the four numbered
+ *  callouts are the REAL unit's — never the board's T177 / Peterbilt / trailer 10202 specimen. */
+export type TruckSvgCalloutState = "ok" | "soon" | "defect" | "none";
+const CALLOUT_FILL: Record<TruckSvgCalloutState, string> = { ok: "#1F8A4C", soon: "#C76A0A", defect: "#C0262D", none: "#8A97A8" };
+const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+export function truckProfileBoardSvgHtml(
+  prefix: string,
+  opts: { unitNumber?: string; caption?: string; trailerCaption?: string; callouts?: TruckSvgCalloutState[] } = {},
+): string {
   const p = prefix.replace(/[^a-zA-Z0-9_-]/g, "") || "u";
-  return `<svg width="100%" viewBox="0 0 990 520" role="img" aria-label="T177 side view with numbered service points">
+  const unit = esc((opts.unitNumber ?? "").slice(0, 10));
+  const caption = esc(opts.caption || "Make / model not on file · seen from above, nose right");
+  const trailer = esc(opts.trailerCaption || "No trailer attached");
+  const c = opts.callouts ?? [];
+  const pin = (i: number, d: string, cx: number, cy: number) =>
+    c[i] ? `<path d="${d}" stroke="${CALLOUT_FILL[c[i]!]}" stroke-width="2.5"></path><circle cx="${cx}" cy="${cy}" r="17" fill="${CALLOUT_FILL[c[i]!]}"></circle><text x="${cx}" y="${cy + 6}" fill="#FFFFFF">${i + 1}</text>` : "";
+  return `<svg width="100%" viewBox="0 0 990 520" role="img" aria-label="${unit || "Truck"} side view with numbered service points">
 <defs>
 <linearGradient id="${p}-pcab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3DB06E"></stop><stop offset="1" stop-color="#1A7440"></stop></linearGradient>
 <linearGradient id="${p}-pbox" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"></stop><stop offset=".6" stop-color="#F1F4F8"></stop><stop offset="1" stop-color="#D6DEE8"></stop></linearGradient>
@@ -54,15 +68,15 @@ export function truckProfileBoardSvgHtml(prefix: string): string {
 </sc-if>
 </g>
 </g></g>
-<rect x="226" y="132" width="84" height="84" rx="14" fill="none" stroke="#C0262D" stroke-width="5"></rect>
-<text x="382" y="291" text-anchor="middle" font-family="Barlow Semi Condensed" font-weight="800" font-size="30" fill="#FFFFFF">T177</text>
+${c[3] === "defect" ? `<rect x="226" y="132" width="84" height="84" rx="14" fill="none" stroke="#C0262D" stroke-width="5"></rect>` : ""}
+<text x="382" y="291" text-anchor="middle" font-family="Barlow Semi Condensed" font-weight="800" font-size="30" fill="#FFFFFF">${unit}</text>
 <g font-family="Barlow Semi Condensed" font-weight="800" font-size="16" text-anchor="middle">
-<path d="M766 282 L820 64" stroke="#C76A0A" stroke-width="2.5"></path><circle cx="820" cy="50" r="17" fill="#C76A0A"></circle><text x="820" y="56" fill="#FFFFFF">1</text>
-<path d="M631 282 L630 64" stroke="#1F8A4C" stroke-width="2.5"></path><circle cx="630" cy="50" r="17" fill="#1F8A4C"></circle><text x="630" y="56" fill="#FFFFFF">2</text>
-<path d="M757 402 L880 476" stroke="#1F8A4C" stroke-width="2.5"></path><circle cx="880" cy="490" r="17" fill="#1F8A4C"></circle><text x="880" y="496" fill="#FFFFFF">3</text>
-<path d="M268 132 L300 64" stroke="#C0262D" stroke-width="2.5"></path><circle cx="300" cy="50" r="17" fill="#C0262D"></circle><text x="300" y="56" fill="#FFFFFF">4</text>
+${pin(0, "M766 282 L820 64", 820, 50)}
+${pin(1, "M631 282 L630 64", 630, 50)}
+${pin(2, "M757 402 L880 476", 880, 490)}
+${pin(3, "M268 132 L300 64", 300, 50)}
 </g>
-<text x="40" y="490" font-family="Barlow Semi Condensed" font-weight="800" font-size="20" fill="#14213D">PETERBILT 579 · 2024 · seen from above, nose right</text>
-<text x="40" y="512" font-family="Barlow" font-size="14" fill="#5B6B7E">Trailer 10202 items 5 · 6 · 7 listed at right</text>
+<text x="40" y="490" font-family="Barlow Semi Condensed" font-weight="800" font-size="20" fill="#14213D">${caption}</text>
+<text x="40" y="512" font-family="Barlow" font-size="14" fill="#5B6B7E">${trailer}</text>
 </svg>`;
 }
