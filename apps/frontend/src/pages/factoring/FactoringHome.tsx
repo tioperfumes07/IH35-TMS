@@ -8,6 +8,7 @@ import {
   buildAgingDateBasisParam,
   parseAgingDateBasisParam,
 } from "./agingDateBasis";
+import { buildMonthlyFeeDrillHref } from "./factoringMonthFeeDrill";
 import { companyToday } from "../../lib/businessDate";
 import { useEffect, useMemo, useState } from "react";
 import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
@@ -19,6 +20,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { companyLabel } from "../../lib/formatCompanyName";
+import { currentOriginHref } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   deactivateFactoring,
@@ -173,29 +175,93 @@ function fmtDate(value: unknown) {
   return formatDateUS(value);
 }
 
-// ParityTable migration (display-only): column order, labels, and cell formatting
-// preserved 1:1 from the former hand-rolled table markup for each tab.
-const MONTHLY_FEE_COLUMNS: Array<ParityColumn<FactoringMonthlyFeeSummary>> = [
-  { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month) },
-  { key: "chargeback_total", label: "Chargebacks", sortable: true, render: (row) => fmtCurrency(row.chargeback_total) },
-  { key: "factor_fee_total", label: "Fees", sortable: true, render: (row) => fmtCurrency(row.factor_fee_total) },
-];
+/** ROUND 8.20 board18 — monthly fee totals open Chargebacks & Fees for that month (+ ret). */
+function MonthlyFeeMoney({
+  dollars,
+  statementMonth,
+  originHref,
+  testId,
+}: {
+  dollars: number;
+  statementMonth: string | null | undefined;
+  originHref: string;
+  testId: string;
+}) {
+  const href = buildMonthlyFeeDrillHref(statementMonth, originHref);
+  const text = fmtCurrency(dollars);
+  if (!href) {
+    return <span className="tabular-nums" data-testid={testId}>{text}</span>;
+  }
+  return (
+    <Link to={href} className="tabular-nums text-[#1F2A44] hover:underline" data-testid={testId}>
+      {text}
+    </Link>
+  );
+}
 
-const STATEMENT_HISTORY_COLUMNS: Array<ParityColumn<FactoringSettingsRow>> = [
-  { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month ?? null) },
-  {
-    key: "month_chargebacks_total",
-    label: "Chargebacks",
-    sortable: true,
-    render: (row) => fmtCurrency(row.month_chargebacks_total ?? 0),
-  },
-  {
-    key: "month_factor_fees_total",
-    label: "Fees",
-    sortable: true,
-    render: (row) => fmtCurrency(row.month_factor_fees_total ?? 0),
-  },
-];
+function buildMonthlyFeeColumns(originHref: string): Array<ParityColumn<FactoringMonthlyFeeSummary>> {
+  return [
+    { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month) },
+    {
+      key: "chargeback_total",
+      label: "Chargebacks",
+      sortable: true,
+      render: (row) => (
+        <MonthlyFeeMoney
+          dollars={Number(row.chargeback_total ?? 0)}
+          statementMonth={row.statement_month}
+          originHref={originHref}
+          testId={`factoring-monthly-fee-chargebacks-${row.statement_month ?? "none"}`}
+        />
+      ),
+    },
+    {
+      key: "factor_fee_total",
+      label: "Fees",
+      sortable: true,
+      render: (row) => (
+        <MonthlyFeeMoney
+          dollars={Number(row.factor_fee_total ?? 0)}
+          statementMonth={row.statement_month}
+          originHref={originHref}
+          testId={`factoring-monthly-fee-fees-${row.statement_month ?? "none"}`}
+        />
+      ),
+    },
+  ];
+}
+
+function buildStatementHistoryColumns(originHref: string): Array<ParityColumn<FactoringSettingsRow>> {
+  return [
+    { key: "statement_month", label: "Month", sortable: true, render: (row) => fmtDate(row.statement_month ?? null) },
+    {
+      key: "month_chargebacks_total",
+      label: "Chargebacks",
+      sortable: true,
+      render: (row) => (
+        <MonthlyFeeMoney
+          dollars={Number(row.month_chargebacks_total ?? 0)}
+          statementMonth={row.statement_month}
+          originHref={originHref}
+          testId={`factoring-statement-chargebacks-${row.statement_month ?? "none"}`}
+        />
+      ),
+    },
+    {
+      key: "month_factor_fees_total",
+      label: "Fees",
+      sortable: true,
+      render: (row) => (
+        <MonthlyFeeMoney
+          dollars={Number(row.month_factor_fees_total ?? 0)}
+          statementMonth={row.statement_month}
+          originHref={originHref}
+          testId={`factoring-statement-fees-${row.statement_month ?? "none"}`}
+        />
+      ),
+    },
+  ];
+}
 
 const FARO_IMPORT_COLUMNS: Array<ParityColumn<FaroDailyImportRow>> = [
   { key: "statement_date", label: "Statement Date", sortable: true, render: (row) => fmtDate(row.statement_date) },
@@ -302,6 +368,9 @@ export function filterPurchaseReportByDebtors(
 
 export function FactoringHomePage({ initialTab = "account_summary" }: FactoringHomeProps = {}) {
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const monthlyFeeColumns = useMemo(() => buildMonthlyFeeColumns(originHref), [originHref]);
+  const statementHistoryColumns = useMemo(() => buildStatementHistoryColumns(originHref), [originHref]);
   const { selectedCompanyId, isLoading: companyContextLoading } = useCompanyContext();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -3291,7 +3360,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
             ) : (
               <ParityTable appearance="board"
                 title="Monthly fee summaries"
-                columns={MONTHLY_FEE_COLUMNS}
+                columns={monthlyFeeColumns}
                 rows={feesQuery.data?.monthly_summary ?? []}
                 rowKey={(row) => String(row.statement_month)}
                 loading={feesQuery.isLoading}
@@ -3419,7 +3488,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                 />
               ) : (
                 <ParityTable appearance="board"
-                  columns={STATEMENT_HISTORY_COLUMNS}
+                  columns={statementHistoryColumns}
                   title="Statement history"
                   rows={settingsQuery.data?.statements ?? []}
                   rowKey={(row) => String(row.statement_month)}
