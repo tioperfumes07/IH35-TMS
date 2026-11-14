@@ -228,7 +228,7 @@ const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex",
 /** "Match my list ↔ competitor" (owner 2026-11-14 15:10: "in match my list competitor it is practically the same
  *  thing"): the List-analysis lines in the matching format only — the line, what the engine assigned, the
  *  suggestion in the same format with the confirm / search box, and what it is matched to now. */
-const MATCH_DESK = /^a:(upc|sku|line_desc|as_.*|match|cand|sg_.*|m_.*|c_vendor|offer|esp)$/;
+const MATCH_DESK = /^a:(upc|sku|brand|name|size|my_desc|c_desc|c_vendor|match|cand|offer|esp)$/;
 
 function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; mine: MineChoice; matchDesk?: boolean }) {
   const { pushToast } = useToast();
