@@ -12,7 +12,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
-import { mmmDd } from "../../lib/formatDate";
+import { mmmDd, formatDateUS } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { listTours, type TourListRow } from "../../api/tourReadout";
 import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
@@ -114,13 +114,12 @@ const DASH = "\u2014";
 function OriginDateCell({ row, date }: { row: TourListRow; date: string | null }) {
   if (!date) return <>{DASH}</>;
   const originId = row.origin_load_number ? row.legs.find((l) => l.load_number === row.origin_load_number)?.load_id ?? null : null;
-  const label = mmmDd(date);
-  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{label}</span>;
+  if (!originId) return <span title={row.origin_load_number ? `Load ${row.origin_load_number}` : undefined}>{formatDateUS(date)}</span>;
   return (
     <EntityLink
       kind="load"
       id={originId}
-      label={label}
+      label={formatDateUS(date)}
       className="ldt-link"
       title={`Original load ${row.origin_load_number}`}
       data-testid="setl-tour-origin-load-link"

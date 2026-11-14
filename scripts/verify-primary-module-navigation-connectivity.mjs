@@ -65,7 +65,7 @@ export function verify(source) {
   need("form425Exhibits", "for the selected operating company", "form 425C exhibits must describe the active company scope");
   if (/\bTRANSP\b/.test(source.form425Exhibits)) failures.push("form 425C exhibits must not hardcode TRANSP while another company is active");
   for (const id of EXPECTED.tasks) need("tasks", `id: "${id}"`, `tasks nav ${id} must remain visible`);
-  need("tasks", "onClick={() => navigate(tab.to)}", "tasks navigation must open its mounted routes");
+  need("tasks", "onClick={() => navigate(hubHref(tab.to))}", "tasks navigation must open its mounted routes");
   for (const id of EXPECTED.program) need("program", `program-nav-${id}`, `program nav ${id} must remain visible`);
   for (const id of EXPECTED.system) need("system", `id: "${id}"`, `system tab ${id} must remain visible`);
   need("system", "SYSTEM_TABS", "system tabs must retain the feature-aware visible-tab projection");
@@ -103,7 +103,7 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["form425", "<NavyPageSubNav", "<BrokenPageSubNav"],
     ["form425Exhibits", "for the selected operating company", "for TRANSP monthly DIP filings"],
     ["tasks", 'id: "board"', 'id: "board-broken"'],
-    ["tasks", "onClick={() => navigate(tab.to)}", "onClick={() => undefined}"],
+    ["tasks", "onClick={() => navigate(hubHref(tab.to))}", "onClick={() => undefined}"],
     ["program", "program-nav-matrix", "broken-program-matrix"],
     ["program", "program-nav-final", "broken-program-final"],
     ["system", 'id: "program"', 'id: "program-broken"'],
