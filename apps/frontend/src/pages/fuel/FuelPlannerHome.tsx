@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getFuelActiveRoutes,
@@ -81,7 +81,6 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   // ROUND 8.20 board19 — expense-map View-all shareable href+ret.
   const expenseOriginHref = currentOriginHref(location.pathname, location.search);
   const expenseMapViewAllHref = withReturnContext("/accounting/settings/expense-category-map", expenseOriginHref);
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({
