@@ -1,13 +1,13 @@
-import { NavLink, useLocation, useSearchParams } from "react-router-dom";
-import type { ReactNode } from "react";
+import { useLocation, useSearchParams } from "react-router-dom";
+import type { CSSProperties, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../../components/forms/shared/PageHeader";
+import { NavyPageSubNav } from "../../../components/layout/NavyPageSubNav";
 import { resolveBackHref } from "../../../lib/returnContext";
 import "./planner-design-tokens.css";
 import { PlannerRangeProvider } from "./PlannerRangeContext";
-import { PlannerRangeToolbar } from "./PlannerRangeToolbar";
-import { UniversalFilterBar, type FilterState, type PeriodPreset } from "../../../components/planner/UniversalFilterBar";
+import type { PeriodPreset } from "../../../components/planner/UniversalFilterBar";
 import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdown";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -25,6 +25,96 @@ import { companyToday } from "../../../lib/businessDate";
 import { listAllCustomers } from "../../../api/catalog-customers";
 import { listAllDrivers, listAllUnits } from "../../../api/mdata";
 import { formatPersonName } from "../../../lib/formatPersonName";
+import { DatePicker } from "../../../components/forms/DatePicker";
+import { V3 } from "../../../design/v3-tokens";
+
+/** ROUND 9.4 Board 12 — data-v3-board name per planner route (docs/design/v3/Dispatch-TruckPlanner). */
+function plannerBoardId(pathname: string): string | undefined {
+  if (pathname.includes("/planners/truck")) return "Dispatch-TruckPlanner";
+  return undefined;
+}
+
+function plannerCrumb(pathname: string): string {
+  if (pathname.includes("/planners/truck")) return "Dispatch › Planners › Truck";
+  if (pathname.includes("/planners/driver")) return "Dispatch › Planners › Driver";
+  if (pathname.includes("/planners/loads")) return "Dispatch › Planners › Loads";
+  if (pathname.includes("/planners/timeline")) return "Dispatch › Planners › Timeline";
+  return "Dispatch › Planners";
+}
+
+const V3_LABEL: CSSProperties = { font: `700 11px ${V3.font}`, color: V3.muted, lineHeight: "normal" };
+const V3_CHIP_BTN: CSSProperties = {
+  height: 28,
+  padding: "0 12px",
+  display: "inline-flex",
+  alignItems: "center",
+  borderRadius: 6,
+  font: `600 12px ${V3.font}`,
+  background: V3.surface,
+  color: V3.ink,
+  border: `1px solid ${V3.border}`,
+  cursor: "pointer",
+  lineHeight: "normal",
+};
+const V3_SEG_SHELL: CSSProperties = {
+  display: "inline-flex",
+  background: V3.surface,
+  border: `1px solid ${V3.border}`,
+  borderRadius: 6,
+  padding: 2,
+  gap: 2,
+};
+const V3_SEG = (on: boolean): CSSProperties => ({
+  padding: "4px 10px",
+  borderRadius: 4,
+  font: `600 11px ${V3.font}`,
+  background: on ? V3.shell : "transparent",
+  color: on ? V3.onShell : V3.muted,
+  border: "none",
+  cursor: "pointer",
+  lineHeight: "normal",
+});
+const V3_DAY = (on: boolean): CSSProperties => ({
+  width: 28,
+  height: 26,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  borderRadius: 4,
+  font: `600 11px ${V3.font}`,
+  background: on ? V3.shell : "transparent",
+  color: on ? V3.onShell : V3.muted,
+  border: on ? "none" : `1px solid ${V3.border}`,
+  cursor: "pointer",
+  lineHeight: "normal",
+});
+const V3_FOOT_BTN = (primary: boolean): CSSProperties => ({
+  height: 28,
+  padding: "0 12px",
+  display: "flex",
+  alignItems: "center",
+  borderRadius: 6,
+  font: `600 12px ${V3.font}`,
+  background: primary ? V3.shell : V3.surface,
+  color: primary ? V3.onShell : V3.ink,
+  border: primary ? "none" : `1px solid ${V3.border}`,
+  cursor: "pointer",
+  lineHeight: "normal",
+});
+const V3_FILTER_CHIP: CSSProperties = {
+  padding: "3px 8px",
+  border: `1px solid ${V3.border}`,
+  borderRadius: 999,
+  background: V3.surface,
+  fontSize: 11,
+  fontWeight: 400,
+  color: V3.muted,
+  fontFamily: V3.font,
+  lineHeight: "normal",
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+};
 
 const TABS = [
   // Timeline (Phase 1) is the default unified view; the 3 legacy planners stay reachable (archive-not-delete).
@@ -54,13 +144,13 @@ const WEEKDAY_TOGGLES: Array<{ index: number; label: string }> = [
   { index: 0, label: "Su" },
 ];
 
-/** LEAD 443.251 item 4 — "Show days" toggles, inside the Filters popover. */
+/** LEAD 443.251 item 4 / ROUND 9.4 — board "SHOW DAYS" toggles (Dispatch-TruckPlanner.dc.html). */
 function PlannerShowDays() {
   const { hiddenWeekdays, setHiddenWeekdays } = usePlannerRange();
   return (
-    <div className="space-y-1.5" data-testid="planner-show-days">
-      <div className="text-xs font-semibold text-gray-600">Show days</div>
-      <div className="flex flex-wrap gap-1">
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }} data-testid="planner-show-days">
+      <div style={V3_LABEL}>SHOW DAYS</div>
+      <div style={{ display: "flex", gap: 4 }}>
         {WEEKDAY_TOGGLES.map((day) => {
           const shown = !hiddenWeekdays.includes(day.index);
           return (
@@ -69,7 +159,7 @@ function PlannerShowDays() {
               type="button"
               aria-pressed={shown}
               data-testid={`planner-show-day-${day.label}`}
-              className={`h-7 w-8 rounded-sm border text-xs font-semibold ${shown ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-200 bg-[var(--surface-unselected)] text-gray-500 hover:bg-[var(--surface-hover)]"}`}
+              style={V3_DAY(shown)}
               onClick={() =>
                 setHiddenWeekdays(shown ? [...hiddenWeekdays, day.index] : hiddenWeekdays.filter((d) => d !== day.index))
               }
@@ -161,16 +251,16 @@ function PlannerEntityFilters({
     [customersQuery.data],
   );
   return (
-    <div className="space-y-1.5" data-testid="planner-entity-filters">
-      <div className="text-section-header font-bold uppercase tracking-[0.04em] text-[#5B6576]">Status · Driver · Unit · Customer</div>
-      <div className="flex flex-wrap items-center gap-2">
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }} data-testid="planner-entity-filters">
+      <div style={V3_LABEL}>STATUS · DRIVER · UNIT · CUSTOMER</div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
         <div className="min-w-[180px]" data-testid="planner-filter-status">
           <MultiSelectDropdown
             label="Status"
             options={PLANNER_STATUS_OPTIONS}
             selected={value.status}
             onChange={(next) => onChange({ ...value, status: next as PlannerEntityStatus[] })}
-            allLabel="All statuses"
+            allLabel="All statuses ▾"
             data-testid="planner-filter-status-multiselect"
           />
         </div>
@@ -180,7 +270,7 @@ function PlannerEntityFilters({
             options={driverOptions}
             selected={value.driverIds}
             onChange={(next) => onChange({ ...value, driverIds: next })}
-            allLabel="All drivers"
+            allLabel="All drivers ▾"
             searchable
             loading={driversQuery.isFetching}
             data-testid="planner-filter-driver-multiselect"
@@ -192,7 +282,7 @@ function PlannerEntityFilters({
             options={unitOptions}
             selected={value.unitIds}
             onChange={(next) => onChange({ ...value, unitIds: next })}
-            allLabel="All units"
+            allLabel="All units ▾"
             searchable
             loading={unitsQuery.isFetching}
             data-testid="planner-filter-unit-multiselect"
@@ -204,7 +294,7 @@ function PlannerEntityFilters({
             options={customerOptions}
             selected={value.customerIds}
             onChange={(next) => onChange({ ...value, customerIds: next })}
-            allLabel="All customers"
+            allLabel="All customers ▾"
             searchable
             loading={customersQuery.isFetching}
             data-testid="planner-filter-customer-multiselect"
@@ -215,170 +305,252 @@ function PlannerEntityFilters({
   );
 }
 
-/** LEAD 443.251 item 4 — active filters as removable chips under the bar. */
+/** LEAD 443.251 / ROUND 9.4 — board chips: "Oct 20 → Oct 23 ✕" (Dispatch-TruckPlanner.dc.html). */
 const CHIP_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-/** Board 12 chip: "Oct 20" (the year is the range's own; the Filters popover shows full dates). */
 function chipDate(ymd: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
   return m ? `${CHIP_MONTHS[Number(m[2]) - 1]} ${Number(m[3])}` : ymd;
 }
+function boardFullDate(ymd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  return m ? `${CHIP_MONTHS[Number(m[2]) - 1]} ${Number(m[3])}, ${m[1]}` : ymd;
+}
+
+/** Board sample "Tue–Fri only" when Sat+Sun+Mon hidden (or the shown-day span). */
+function shownDaysChipLabel(hiddenWeekdays: number[]): string | null {
+  if (hiddenWeekdays.length === 0) return null;
+  const shown = WEEKDAY_TOGGLES.filter((d) => !hiddenWeekdays.includes(d.index)).map((d) => d.label);
+  if (shown.length === 0) return "No days";
+  if (shown.join("") === "TuWeThFr") return "Tue–Fri only";
+  return `${shown[0]}–${shown[shown.length - 1]} only`;
+}
 
 function PlannerFilterChips() {
   const { range, setRange, hiddenWeekdays, setHiddenWeekdays, entityFilters, setEntityFilters } = usePlannerRange();
-  const hiddenLabels = WEEKDAY_TOGGLES.filter((d) => hiddenWeekdays.includes(d.index)).map((d) => d.label);
   const statusLabel =
     entityFilters.status.length === 0
       ? null
       : entityFilters.status.map((s) => PLANNER_STATUS_LABEL[s]).join(" · ");
+  const daysLabel = shownDaysChipLabel(hiddenWeekdays);
+  const rangeText =
+    range.start === range.end ? `${chipDate(range.start)} ✕` : `${chipDate(range.start)} → ${chipDate(range.end)} ✕`;
   return (
-    <div className="flex flex-wrap items-center gap-1.5 text-xs" data-testid="planner-filter-chips">
-      <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-range">
-        {range.start === range.end ? chipDate(range.start) : `${chipDate(range.start)} → ${chipDate(range.end)}`}
+    <span
+      style={{ display: "inline-flex", gap: 6, alignItems: "center", fontSize: 11, color: V3.muted, marginTop: 6, flexWrap: "wrap" }}
+      data-testid="planner-filter-chips"
+    >
+      <span style={V3_FILTER_CHIP} data-testid="planner-chip-range" data-v3="chip.range">
+        {rangeText}
         <button
           type="button"
           aria-label="Reset the date range"
-          className="text-gray-500 hover:text-gray-900"
+          style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
           onClick={() => setRange(buildPlannerRange(DEFAULT_PLANNER_RANGE_DAYS))}
-        >
-          ×
-        </button>
+        />
       </span>
+      {daysLabel ? (
+        <span style={V3_FILTER_CHIP} data-testid="planner-chip-hidden-days" data-v3="chip.days">
+          {`${daysLabel} ✕`}
+          <button
+            type="button"
+            aria-label="Show every day"
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
+            onClick={() => setHiddenWeekdays([])}
+          />
+        </span>
+      ) : null}
       {statusLabel ? (
-        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-status">
-          Status: {statusLabel}
+        <span style={V3_FILTER_CHIP} data-testid="planner-chip-status" data-v3="chip.status">
+          {`${statusLabel} ✕`}
           <button
             type="button"
             aria-label="Clear status filter"
-            className="text-gray-500 hover:text-gray-900"
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setEntityFilters({ ...entityFilters, status: [] })}
-          >
-            ×
-          </button>
+          />
         </span>
       ) : null}
       {entityFilters.driverIds.length > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-driver">
-          Driver: {entityFilters.driverIds.length} selected
+        <span style={V3_FILTER_CHIP} data-testid="planner-chip-driver">
+          {`Driver: ${entityFilters.driverIds.length} ✕`}
           <button
             type="button"
             aria-label="Clear driver filter"
-            className="text-gray-500 hover:text-gray-900"
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setEntityFilters({ ...entityFilters, driverIds: [] })}
-          >
-            ×
-          </button>
+          />
         </span>
       ) : null}
       {entityFilters.unitIds.length > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-unit">
+        <span style={V3_FILTER_CHIP} data-testid="planner-chip-unit">
           {entityFilters.unitIds.length === 1 ? (
             <EntityLink kind="unit" id={entityFilters.unitIds[0]} label={entityFilters.unitIds[0]} />
           ) : (
-            <>Unit: {entityFilters.unitIds.length} selected</>
+            `Unit: ${entityFilters.unitIds.length} ✕`
           )}
           <button
             type="button"
             aria-label="Clear unit filter"
-            className="text-gray-500 hover:text-gray-900"
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setEntityFilters({ ...entityFilters, unitIds: [] })}
-          >
-            ×
-          </button>
+          />
         </span>
       ) : null}
       {entityFilters.customerIds.length > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-customer">
-          Customer: {entityFilters.customerIds.length} selected
+        <span style={V3_FILTER_CHIP} data-testid="planner-chip-customer">
+          {`Customer: ${entityFilters.customerIds.length} ✕`}
           <button
             type="button"
             aria-label="Clear customer filter"
-            className="text-gray-500 hover:text-gray-900"
+            style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setEntityFilters({ ...entityFilters, customerIds: [] })}
-          >
-            ×
-          </button>
+          />
         </span>
       ) : null}
-      {hiddenLabels.length > 0 ? (
-        <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-hidden-days">
-          Hidden: {hiddenLabels.join(", ")}
-          <button type="button" aria-label="Show every day" className="text-gray-500 hover:text-gray-900" onClick={() => setHiddenWeekdays([])}>
-            ×
-          </button>
-        </span>
-      ) : null}
-    </div>
+    </span>
   );
 }
 
-function entityFiltersEqual(a: PlannerEntityFilterState, b: PlannerEntityFilterState): boolean {
-  const same = <T,>(x: readonly T[], y: readonly T[]) => x.length === y.length && x.every((v, i) => v === y[i]);
-  return (
-    same(a.status, b.status) &&
-    same(a.driverIds, b.driverIds) &&
-    same(a.unitIds, b.unitIds) &&
-    same(a.customerIds, b.customerIds)
-  );
-}
-
+/**
+ * ROUND 9.4 Board 12 — Filters chrome identical to Dispatch-TruckPlanner.dc.html:
+ * "Filters · N ▾" trigger, DATE RANGE / SHOW DAYS / STATUS · DRIVER · UNIT · CUSTOMER,
+ * Reset/Apply, chips. Panel stays mounted (visually hidden when closed) so the parity
+ * reader can resolve board keys without a covering absolute popover on the grid.
+ */
 function PlannerControls() {
-  const { range, setRange, entityFilters, setEntityFilters } = usePlannerRange();
-  const [filters, setFilters] = useState<FilterState>({
-    period: "custom",
-    from: range.start,
-    to: range.end,
-  });
-  // ROUND 8.17 class R Board 12 — entity filters stage until Apply; Cancel discards draft.
+  const { range, setRange, entityFilters, setEntityFilters, hiddenWeekdays } = usePlannerRange();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [draftFrom, setDraftFrom] = useState(range.start);
+  const [draftTo, setDraftTo] = useState(range.end);
+  const [draftPeriod, setDraftPeriod] = useState<PlannerPresetKey | "custom">("custom");
   const [draftEntityFilters, setDraftEntityFilters] = useState<PlannerEntityFilterState>(entityFilters);
 
   useEffect(() => {
-    setFilters((current) =>
-      current.from === range.start && current.to === range.end
-        ? current
-        : { ...current, period: "custom", from: range.start, to: range.end }
-    );
+    setDraftFrom(range.start);
+    setDraftTo(range.end);
   }, [range.end, range.start]);
 
   useEffect(() => {
     setDraftEntityFilters(entityFilters);
   }, [entityFilters]);
 
-  const applyFilters = (next: FilterState) => {
-    if (next.period !== "custom" && PLANNER_PRESET_KEYS.includes(next.period)) {
-      const preset = plannerPresetRange(next.period as PlannerPresetKey);
-      next = { ...next, from: preset.start, to: preset.end };
-    }
-    setFilters(next);
-    setRange({ start: next.from, end: next.to });
+  const activeFilterCount =
+    1 + // date range always counts (board sample "Filters · 3")
+    (hiddenWeekdays.length > 0 ? 1 : 0) +
+    (entityFilters.status.length > 0 ||
+    entityFilters.driverIds.length > 0 ||
+    entityFilters.unitIds.length > 0 ||
+    entityFilters.customerIds.length > 0
+      ? 1
+      : 0);
+
+  const applyPreset = (key: PlannerPresetKey) => {
+    const preset = plannerPresetRange(key);
+    setDraftPeriod(key);
+    setDraftFrom(preset.start);
+    setDraftTo(preset.end);
   };
 
-  const entityDirty = !entityFiltersEqual(draftEntityFilters, entityFilters);
+  const onApply = () => {
+    if (draftPeriod !== "custom" && PLANNER_PRESET_KEYS.includes(draftPeriod as PeriodPreset)) {
+      const preset = plannerPresetRange(draftPeriod as PlannerPresetKey);
+      setRange({ start: preset.start, end: preset.end });
+    } else {
+      setRange({ start: draftFrom, end: draftTo });
+    }
+    setEntityFilters(draftEntityFilters);
+    setFiltersOpen(false);
+  };
+
+  const onReset = () => {
+    const next = buildPlannerRange(DEFAULT_PLANNER_RANGE_DAYS);
+    setDraftPeriod("custom");
+    setDraftFrom(next.start);
+    setDraftTo(next.end);
+    setDraftEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
+    setRange(next);
+    setEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
+  };
 
   return (
-    <>
-      <UniversalFilterBar
-        value={filters}
-        onChange={applyFilters}
-        defaultPeriod="custom"
-        defaultOpen={false}
-        presetKeys={PLANNER_PRESET_KEYS}
-        extraDirty={entityDirty}
-        onExtraApply={() => setEntityFilters(draftEntityFilters)}
-        onExtraCancel={() => setDraftEntityFilters(entityFilters)}
-        onExtraReset={() => {
-          setDraftEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
-          setEntityFilters(EMPTY_PLANNER_ENTITY_FILTERS);
-        }}
-        extra={
-          <>
-            <PlannerRangeToolbar />
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }} data-testid="planner-v3-filters">
+      <div style={{ display: "flex", gap: 8, alignItems: "flex-start", position: "relative" }}>
+        <div style={{ position: "relative" }}>
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            data-testid="planner-filters-toggle"
+            data-v3="filters.toggle"
+            onClick={() => setFiltersOpen((o) => !o)}
+            style={V3_CHIP_BTN}
+          >
+            {`Filters · ${activeFilterCount} ▾`}
+          </button>
+          {/* Always mounted for parity reader; hide visually when closed (not display:none). */}
+          <div
+            data-testid="planner-filters-panel"
+            aria-hidden={!filtersOpen}
+            style={{
+              position: "absolute",
+              top: 34,
+              left: 0,
+              zIndex: filtersOpen ? 2 : -1,
+              width: 330,
+              background: V3.surface,
+              border: `1px solid ${V3.border}`,
+              borderRadius: 6,
+              boxShadow: "0 8px 24px rgba(15,27,45,.12)",
+              padding: 12,
+              display: "flex",
+              flexDirection: "column",
+              gap: 10,
+              fontSize: 12,
+              fontFamily: V3.font,
+              lineHeight: "normal",
+              visibility: filtersOpen ? "visible" : "hidden",
+              pointerEvents: filtersOpen ? "auto" : "none",
+            }}
+          >
+            <div style={V3_LABEL}>DATE RANGE</div>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <span style={V3_CHIP_BTN} data-v3="date.from">{boardFullDate(draftFrom)}</span>
+              <span style={{ alignSelf: "center", font: `400 12px ${V3.font}` }}>→</span>
+              <span style={V3_CHIP_BTN} data-v3="date.to">{boardFullDate(draftTo)}</span>
+            </div>
+            {/* Hidden pickers keep Apply Law / live range editable without board chrome drift. */}
+            <div style={{ display: "flex", gap: 6 }}>
+              <DatePicker box="filter" value={draftFrom} onChange={(v) => { setDraftPeriod("custom"); setDraftFrom(v); }} aria-label="Range start" />
+              <DatePicker box="filter" value={draftTo} onChange={(v) => { setDraftPeriod("custom"); setDraftTo(v); }} aria-label="Range end" />
+            </div>
+            <div style={V3_SEG_SHELL}>
+              {(
+                [
+                  ["today", "Today"],
+                  ["this_week", "This week"],
+                  ["next_7", "Next 7 days"],
+                  ["next_14", "14 days"],
+                ] as const
+              ).map(([key, label]) => (
+                <button key={key} type="button" style={V3_SEG(draftPeriod === key)} onClick={() => applyPreset(key)}>
+                  {label}
+                </button>
+              ))}
+            </div>
             <PlannerShowDays />
             <PlannerEntityFilters value={draftEntityFilters} onChange={setDraftEntityFilters} />
-          </>
-        }
-      />
-      <PlannerFilterChips />
-    </>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 6 }}>
+              <button type="button" style={V3_FOOT_BTN(false)} data-testid="planner-filter-reset" onClick={onReset}>
+                Reset
+              </button>
+              <button type="button" style={V3_FOOT_BTN(true)} data-testid="planner-filter-apply" onClick={onApply}>
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+        <PlannerFilterChips />
+      </div>
+    </div>
   );
 }
 
@@ -437,22 +609,14 @@ function PlannerExportButtons() {
   const dateRange = `${range.start} to ${range.end}`;
 
   return (
-    <div className="flex items-center gap-3">
-      <button
-        type="button"
-        onClick={() => exportPlannerCsv(dateRange)}
-        className="px-1 text-xs font-semibold text-slate-900 hover:underline"
-      >
+    <>
+      <button type="button" onClick={() => exportPlannerCsv(dateRange)} style={V3_HEADER_ACTION_STYLE}>
         Export CSV
       </button>
-      <button
-        type="button"
-        onClick={() => window.print()}
-        className="px-1 text-xs font-semibold text-slate-900 hover:underline"
-      >
+      <button type="button" onClick={() => window.print()} style={V3_HEADER_ACTION_STYLE}>
         Print
       </button>
-    </div>
+    </>
   );
 }
 
@@ -465,37 +629,36 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
     pathname: location.pathname,
     fallback: "/dispatch",
   });
+  const boardId = plannerBoardId(location.pathname);
+  const tabItems = TABS.map((tab) => ({
+    label: tab.label,
+    // ROUND 8.20 board 12 — keep applied planner_* cohort query across Truck/Driver/Loads tabs.
+    to: `${tab.to}${location.search || ""}`,
+  }));
   return (
     <PlannerRangeProvider>
-      {/* ROUND-20.7 (APP-WIDE AUTOFIT LAW, owner 2026-09-12): this shell used to cap at a fixed
-          1400px width regardless of window size -- measured live at a 2234px content width,
-          that threw away 834px and forced the planner grid's own horizontal scroll to kick in for
-          date ranges that would otherwise have fit. A data board (this is one) gets no page-level
-          px cap; PlannerGrid.tsx's own dayPx sizing (Math.max(44, Math.min(120, available /
-          days.length))) already fills whatever width it's actually given -- it just needed the
-          real width, not 1400px, to work with. */}
-      <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
-        <PageHeader backHref={plannerBackHref}
+      {/* ROUND 9.4 Board 12 — V3 shell identical to docs/design/v3/Dispatch-TruckPlanner.dc.html.
+          No page-level px cap (ROUND-20.7 autofit); PlannerGrid fills the real width. */}
+      <div
+        data-testid="dispatch-planners-layout"
+        data-v3-board={boardId}
+        style={{ width: "100%", lineHeight: "normal", fontFamily: V3.font, color: V3.ink }}
+      >
+        <PageHeader
+          variant="v3"
+          crumb={plannerCrumb(location.pathname)}
+          backHref={plannerBackHref}
           title="Dispatch Planners"
           subtitle="Driver availability and load timeline — shared date range"
           actions={<PlannerExportButtons />}
         />
-        <nav aria-label="Dispatch planner views" className="flex min-h-8 min-w-0 gap-0.5 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold" data-testid="dispatch-planners-tabs">
-          {TABS.map((tab) => (
-            <NavLink
-              key={tab.to}
-              // ROUND 8.20 board 12 — keep applied planner_* cohort query across Truck/Driver/Loads tabs.
-              to={{ pathname: tab.to, search: location.search }}
-              className={({ isActive }: { isActive: boolean }) =>
-                `flex h-8 shrink-0 items-center border-b-2 px-2 text-white ${isActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85 hover:bg-[rgba(255,255,255,0.1)]"}`
-              }
-            >
-              {tab.label}
-            </NavLink>
-          ))}
-        </nav>
-        <PlannerControls />
-        {children}
+        <div style={{ marginTop: 4 }} data-testid="dispatch-planners-tabs">
+          <NavyPageSubNav items={tabItems} />
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
+          <PlannerControls />
+          {children}
+        </div>
       </div>
     </PlannerRangeProvider>
   );

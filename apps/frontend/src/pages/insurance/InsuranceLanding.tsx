@@ -1,13 +1,13 @@
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { InsuranceHomeBoard } from "./components/InsuranceHomeBoard";
 import { InsuranceModuleTabs } from "./InsuranceModuleTabs";
+import { V3 } from "../../design/v3-tokens";
 
 /**
- * ROUND 443.267 — board-faithful Landing mounts InsuranceHomeBoard.
- * getInsuranceSummary + fleet-covered drill: board file (dashboard routes guard retargeted).
- * COI company-wide list still absent (C8 / wave-a string retained below).
+ * ROUND 9.4 Board 20 — docs/design/v3/Insurance.dc.html
+ * PageHeader variant=v3 + NavyPageSubNav tabs + InsuranceHomeBoard (real summary data).
  */
 export function InsuranceLanding() {
   const { selectedCompanyId } = useCompanyContext();
@@ -15,9 +15,15 @@ export function InsuranceLanding() {
 
   if (!companyId) {
     return (
-      <div className="min-w-0 space-y-3 overflow-x-hidden" data-testid="insurance-landing-page">
+      <div
+        className="min-w-0 space-y-3 overflow-x-hidden"
+        data-testid="insurance-landing-page"
+        data-v3-board="Insurance"
+        style={{ lineHeight: "normal", fontFamily: V3.font }}
+      >
         <PageHeader
-          breadcrumb={["Insurance"]}
+          variant="v3"
+          crumb="Safety › Compliance Docs & Monitoring › Insurance"
           title="Insurance"
           subtitle="Policies · fleet covered · claims · coverage gaps"
         />
@@ -29,9 +35,15 @@ export function InsuranceLanding() {
   }
 
   return (
-    <div className="min-w-0 space-y-3 overflow-x-hidden" data-testid="insurance-landing-page">
+    <div
+      className="min-w-0 space-y-3 overflow-x-hidden"
+      data-testid="insurance-landing-page"
+      data-v3-board="Insurance"
+      style={{ lineHeight: "normal", fontFamily: V3.font }}
+    >
       <PageHeader
-        breadcrumb={["Insurance"]}
+        variant="v3"
+        crumb="Safety › Compliance Docs & Monitoring › Insurance"
         title="Insurance"
         subtitle="Policies · fleet covered · claims · coverage gaps"
       />

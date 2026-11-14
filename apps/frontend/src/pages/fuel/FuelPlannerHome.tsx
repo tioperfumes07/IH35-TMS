@@ -465,7 +465,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
   if (!companyId) {
     return (
-      <div className="space-y-3 p-4">
+      <div className="space-y-3 p-4" data-v3-board="Fuel" style={{ lineHeight: "normal" }}>
         <FuelPlannerBoardChrome
           title="Fuel"
           subtitle="Overview"
@@ -482,7 +482,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-v3-board="Fuel" data-testid="fuel-planner-home-root" style={{ lineHeight: "normal" }}>
       <FuelPlannerBoardChrome
         title="Fuel"
         subtitle={FUEL_BOARD_SUBTITLE}
