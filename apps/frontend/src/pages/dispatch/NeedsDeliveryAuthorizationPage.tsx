@@ -3,7 +3,8 @@ import { resolveBackHref } from "../../lib/returnContext";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load awaiting delivery authorization); the row carries no date from the API.
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { Modal } from "../../components/Modal";
 import {
   createManualDeliveryAuthorization,
@@ -28,6 +29,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
  * customer + factoring both true). Seat never POSTs fixtures.
  */
 export function NeedsDeliveryAuthorizationPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -165,7 +169,7 @@ export function NeedsDeliveryAuthorizationPage() {
         title="Needs delivery authorization"
         subtitle="Issued invoices on loads still rolling (dispatched / in transit). Record customer + factoring approval before delivery — same engine as FACTOR-BUT-NOT-DELIVERED."
         actions={
-          <Link to="/dispatch/awaiting-bol-invoice" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch/awaiting-bol-invoice")} className="rounded-sm border px-3 py-1.5 text-xs">
             Awaiting BOL
           </Link>
         }

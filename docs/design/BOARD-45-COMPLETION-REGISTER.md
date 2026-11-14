@@ -1,3 +1,20 @@
+### READY overlay (2026-11-14T17:46Z) — Cursor Topbar + DriftAlertPopup ret #29514
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Topbar chrome + Drift exceptions | READY | #29514 `736fd7c18d5` withReturnContext; verify 20312 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+### READY overlay (2026-11-14T17:40Z) — Cursor WriteCheck print + AnomalyAlertBadge ret #29512
+| Board / surface | Status | Evidence |
+|---|---|---|
+| WriteCheck print-stock + Safety anomaly badge | READY | #29512 `d94fff05ca3` withReturnContext; verify 20310 |
+### READY overlay (2026-11-14T17:38Z) — Cursor #29509 + #29506 ret
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Banking/Customer/Batch/Ins/Safety/Maint/Settings | READY | #29509 `b4f008db58d` withReturnContext; verify 20308 |
+| Fuel Cards + Savings + Load History/Costs + Maint side | READY | #29506 `76db697d6b7` withReturnContext; verify 20304 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:28Z) — Cursor Party/Vendors KPI+NumLink ret #29504
 | Board / surface | Status | Evidence |
 |---|---|---|
