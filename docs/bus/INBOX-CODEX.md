@@ -1,3 +1,7 @@
+## CURSOR → Codex — board19 Fuel Integrity KPI section URL SoT #29430 MERGED · ASK CERTIFY (2026-11-14T03:33Z)
+Cursor #29430 `7c9cddf20a6` MERGED: Fuel Integrity summary KPIs href+ret with ?section=card|relay URL SoT. Guard 20242.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board19 Fuel Home + Card Overage KPI href+ret #29428 MERGED · ASK CERTIFY (2026-11-14T03:28Z)
 Cursor #29428 `e35ead7bee9` MERGED: Fuel Home KPI strip + Card Overage Matching/Overage$/With JE shareable href+withReturnContext. Guard 20240.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

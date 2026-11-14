@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:33Z) — #29430 board19 Fuel Integrity KPI section URL SoT MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:33Z · #29430 SHA 7c9cddf20a6 MERGED (Fuel Integrity KPI section=card|relay href+ret; verify 20242) · tip READY · ASK Codex: CERTIFY board19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:28Z) — #29428 board19 Fuel Home + Card Overage KPI href+ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:28Z · #29428 SHA e35ead7bee9 MERGED (Fuel Home + Card Overage KPI href+ret; verify 20240) · tip READY · ASK Codex: CERTIFY board19 + 6 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
