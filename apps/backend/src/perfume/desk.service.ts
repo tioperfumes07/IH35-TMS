@@ -681,11 +681,16 @@ export function earnPctOf(rules: DeskRules, typed: number | null | undefined): n
   return Math.min(95, Math.max(0, t));
 }
 
-/* ROUND 8.32 — CC-2 11-14: in-process cache; one full build per data version + (target, earn). */
-type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number };
+/* ROUND 8.32 — CC-2 11-14: in-process caches; Level-1 per (data version, target, earn); Level-2 per (data version, view, mine, sort, dir). */
+type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number; _vk: string };
+/** Shared collator — avoids creating a new Intl.Collator on every localeCompare call (O(comparisons) → O(1) construction). */
+const _col = new Intl.Collator("en", { numeric: true });
 const _gridCache = new Map<string, GridPayload>();
-/** Clears the grid cache. Call after every perfume write so the next /grid rebuild is fresh. */
-export function invalidateGridCache(): void { _gridCache.clear(); }
+/** Level-2 cache: pre-sorted filtered rows + zero-picks facets, one build per (data, view, mine, sort, dir). */
+export type ViewPayload = { sorted: GridRow[]; facets0: Record<string, GridFacet[]> };
+const _viewCache = new Map<string, ViewPayload>();
+/** Clears both caches. Call after every perfume write so the next /grid rebuild is fresh. */
+export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); }
 async function getGridVersionKey(c: PoolClient): Promise<string> {
   const r = await c.query<{ pl_import: string; pl_void: string; items_stamp: string; vendors_stamp: string; rules_stamp: string }>(
     `SELECT COALESCE(max(imported_at),'epoch'::timestamptz)::text AS pl_import,
@@ -910,9 +915,29 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct };
+  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _versionBase };
   _gridCache.set(_cacheKey, _result);
   return _result;
+}
+
+/** Level-2 view cache: sorted+filtered rows + zero-picks facets cached per (data version, view, mine, sort, dir).
+ *  After a cache hit, per-request work is: searchRows (if q) + filterFacets (if picks) + slice only. */
+export function getOrBuildView(
+  g: GridPayload,
+  view: GridView,
+  mine: MineFilter | undefined,
+  sort: string | undefined,
+  dir: "asc" | "desc",
+): ViewPayload {
+  const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}`;
+  const hit = _viewCache.get(key);
+  if (hit) return hit;
+  const baseRows = filterView(filterMine(g.rows, mine), view, mine);
+  const sorted = sort ? sortRows(baseRows, sort, dir) : baseRows;
+  const facets0 = gridFacets(sorted, { category: [], gender: [], brand: [], size: [], vendor: [] });
+  const vp: ViewPayload = { sorted, facets0 };
+  _viewCache.set(key, vp);
+  return vp;
 }
 
 /** Wholesale: positive gap = my price is under the lowest competitor (room to raise); negative = I am over it. */
@@ -1005,7 +1030,7 @@ export function gridFacets(rows: GridRow[], picks: FacetPicks): Record<FacetKey,
     for (const r of scoped) for (const v of facetValues(r, k)) counts.set(v, (counts.get(v) ?? 0) + 1);
     for (const v of picks[k] ?? []) if (!counts.has(v)) counts.set(v, 0);
     out[k] = [...counts].map(([value, count]) => ({ value, count }))
-      .sort((a, b) => (a.value === "—" ? 1 : b.value === "—" ? -1 : a.value.localeCompare(b.value, "en", { numeric: true })));
+      .sort((a, b) => (a.value === "—" ? 1 : b.value === "—" ? -1 : _col.compare(a.value, b.value)));
   }
   return out;
 }
@@ -1019,7 +1044,7 @@ export function sortRows(rows: GridRow[], key: string, dir: "asc" | "desc"): Gri
     if (xe && ye) return byBrandName(a, b);
     if (xe) return 1;
     if (ye) return -1;
-    const c = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y), "en", { numeric: true });
+    const c = typeof x === "number" && typeof y === "number" ? x - y : _col.compare(String(x), String(y));
     return c === 0 ? byBrandName(a, b) : c * sign;
   });
 }
@@ -1027,10 +1052,10 @@ export function sortRows(rows: GridRow[], key: string, dir: "asc" | "desc"): Gri
 /** The standing tie-break under every sort: brand, then name, then size, then the full display name. */
 function byBrandName(a: GridRow, b: GridRow): number {
   const t = (x: unknown) => String(x ?? "");
-  return t(a.brand).localeCompare(t(b.brand), "en", { numeric: true })
-    || t(a.name).localeCompare(t(b.name), "en", { numeric: true })
+  return _col.compare(t(a.brand), t(b.brand))
+    || _col.compare(t(a.name), t(b.name))
     || (Number(a.size_ml ?? 0) - Number(b.size_ml ?? 0))
-    || t(a.display_name).localeCompare(t(b.display_name), "en", { numeric: true });
+    || _col.compare(t(a.display_name), t(b.display_name));
 }
 
 /* ---------------- Excel export ---------------- */

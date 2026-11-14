@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { InTransitIssue, MaintenancePartRow, WorkOrderType } from "../../api/maintenance";
 import {
@@ -137,7 +137,6 @@ type Props = {
 
 export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const location = useLocation();
-  const navigate = useNavigate();
   // ROUND 8.20 board22 — KPI href drills carry ret so destination Back restores Maintenance Home.
   const originHref = currentOriginHref(location.pathname, location.search);
   const { selectedCompanyId } = useCompanyContext();
