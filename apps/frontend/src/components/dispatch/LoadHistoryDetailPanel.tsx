@@ -67,7 +67,7 @@ function Row({ label, children, testId }: { label: string; children: React.React
 
 function Section({ title, children, testId }: { title: string; children: React.ReactNode; testId: string }) {
   return (
-    <section className="border-t border-[#E5E7EB] px-3 py-2" data-testid={testId}>
+    <section className="min-w-0 border-t border-[#E5E7EB] px-3.5 py-2.5 lg:border-l lg:border-t-0 lg:first:border-l-0" data-testid={testId}>
       <h3 className="mb-1 text-section-header font-semibold uppercase tracking-wide text-[#6B7280]">{title}</h3>
       {children}
     </section>
@@ -117,11 +117,12 @@ export function LoadHistoryDetailPanel({
     <aside className="flex min-w-0 flex-col rounded-sm border border-[#E5E7EB] bg-white" data-testid="load-history-detail-panel" aria-label={`Load ${loadLabel}`}>
       <header className="flex items-start justify-between gap-2 px-3 py-2">
         <div className="min-w-0">
+          {/* ROUND 9.0 Board 13 — full-width panel under the table: "Load 13689 — everything linked to it". */}
           <div className="text-xs font-semibold text-[#111827]">
-            Load <EntityLink kind="load" id={loadId} label={loadLabel} /> — everything linked to it
-          </div>
-          <div className="text-xs text-[#6B7280]">
-            {loadStatusLabel(row.status)} · {row.trip_type ?? "—"} · every item opens its record
+            Load <EntityLink kind="load" id={loadId} label={loadLabel} /> — everything linked to it{" "}
+            <span className="text-xs font-normal text-[#5B6576]">
+              {loadStatusLabel(row.status)} · {row.trip_type ?? "—"} · click any row to open it here; every item opens its record, and every record links back to this load
+            </span>
           </div>
         </div>
         <div className="flex shrink-0 gap-1">
@@ -139,6 +140,7 @@ export function LoadHistoryDetailPanel({
         </div>
       </header>
 
+      <div className="grid min-w-0 lg:grid-cols-3">
       <Section title="Timeline" testId="load-history-panel-timeline">
         {history.isError ? <p className="text-xs text-[#B91C1C]">Could not load this load's history.</p> : null}
         {history.isPending ? <p className="text-xs text-[#6B7280]">Loading…</p> : null}
@@ -240,6 +242,7 @@ export function LoadHistoryDetailPanel({
           )}
         </Row>
       </Section>
+      </div>
     </aside>
   );
 }

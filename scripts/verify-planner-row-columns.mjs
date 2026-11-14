@@ -45,10 +45,15 @@ const contracts = [
         .replace(/planner-row-action/g, "planner-row-action-missing"),
   ],
   [
-    "TruckPlanner supplies status and action per row",
+    // ROUND 9.0 Board 12 (owner 11-13-2026: "designs identical"): Dispatch-TruckPlanner.png draws the grid with
+    //   Unit | Driver only — no Status / Book columns. old: grid rows carried status + PlannerAction "Book".
+    //   new: the unit status is still supplied — as the List view's Status column ("In Use" / "Available" /
+    //   "In Shop" / "Reserved") and as the grid's statusSortKey; booking stays on Dispatch → Book load (Boards 14/15).
+    //   Still fails when the truck planner stops exposing a unit's status anywhere.
+    "TruckPlanner supplies status per unit (List view Status column + grid sort key)",
     "truck",
-    (s) => /status:\s*"In Use"|status:\s*"Available"|status:\s*"Reserved"|status:\s*"In Shop"/.test(s) && s.includes("PlannerAction"),
-    (s) => s.replace(/status:\s*"[^"]+"/g, 'status: undefined'),
+    (s) => /"In Use"/.test(s) && /"Available"/.test(s) && /"In Shop"/.test(s) && /key: "status", label: "Status"/.test(s) && /statusSortKey:/.test(s),
+    (s) => s.replace(/key: "status", label: "Status"/g, 'key: "x", label: "X"'),
   ],
   [
     "Driver scheduler grid supplies status and action per row",

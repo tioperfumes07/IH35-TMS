@@ -3,7 +3,7 @@
 //
 // Parity census (5 elements):
 //   1. SettlementsHomeBoardPanels.tsx — chart panel uses 1.6fr ratio in grid
-//   2. SettlementsHomeBoardPanels.tsx — deductions panel title is "Deductions this week"
+//   2. SettlementsHomeBoardPanels.tsx — deductions panel title is the selected-week caption "Deductions · Week of …" (board shows "Deductions this week" for the current week; honesty guard verify-settlement-fe-honesty forbids the hard-wired phrase)
 //   3. SettlementsHomeBoardPanels.tsx — inline totals row testId (settlements-home-week-of-totals)
 //   4. SettlementsHomeBoardPanels.tsx — weekOfBoardStatus accepts pill param
 //   5. SettlementsPage.tsx — KPI tiles minmax(150px,1fr)
@@ -39,8 +39,8 @@ export function collectProblems(root = ROOT) {
       problems.push(`${PANELS}: chart panel must use 1.6fr column ratio (R90-32 parity)`);
     }
     // 2. Deductions panel title prefix
-    if (!panels.includes("Deductions this week")) {
-      problems.push(`${PANELS}: deductions panel title must include "Deductions this week" (R90-32 parity)`);
+    if (!panels.includes("Deductions · Week of")) {
+      problems.push(`${PANELS}: deductions panel title must include "Deductions · Week of" (R90-32 parity, selected-week caption)`);
     }
     // 3. Inline totals row test ID
     if (!panels.includes("settlements-home-week-of-totals")) {
@@ -77,7 +77,7 @@ export function weekOfBoardStatus(s: SettlementListRow, pill?: "open" | "closed"
   return { label: "Open", color: "#1D4ED8" };
 }
 // className="grid lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]"
-// Deductions this week · $500
+// Deductions · Week of Nov 9 · $500
 // data-testid="settlements-home-week-of-totals"
 `;
   const pageGood = `
@@ -88,11 +88,11 @@ style={{ gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))" }}
     // [desc, panelsSrc, pageSrc, expectProblems]
     ["all good → 0 problems", panelsGood, pageGood, 0],
     ["missing 1.6fr → 1 problem", panelsGood.replace("1.6fr", "2fr"), pageGood, 1],
-    ["missing deductions title → 1 problem", panelsGood.replace("Deductions this week", "Deductions"), pageGood, 1],
+    ["missing deductions title → 1 problem", panelsGood.replace("Deductions · Week of", "Deductions"), pageGood, 1],
     ["missing totals testid → 1 problem", panelsGood.replace("settlements-home-week-of-totals", "settlements-home-totals-REMOVED"), pageGood, 1],
     ['missing pill param → 1 problem', panelsGood.replace('pill?: "open" | "closed"', "// removed"), pageGood, 1],
     ["missing 150px KPI → 1 problem", panelsGood, pageGood.replace("minmax(150px,1fr)", "minmax(140px,1fr)"), 1],
-    ["all missing → 5 problems", panelsGood.replace("1.6fr","2fr").replace("Deductions this week","Ded").replace("settlements-home-week-of-totals","x").replace('pill?: "open" | "closed"',"// rm"), pageGood.replace("minmax(150px,1fr)","minmax(140px,1fr)"), 5],
+    ["all missing → 5 problems", panelsGood.replace("1.6fr","2fr").replace("Deductions · Week of","Ded").replace("settlements-home-week-of-totals","x").replace('pill?: "open" | "closed"',"// rm"), pageGood.replace("minmax(150px,1fr)","minmax(140px,1fr)"), 5],
   ];
 
   let passed = 0;

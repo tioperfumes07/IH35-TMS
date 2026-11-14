@@ -642,7 +642,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
         </summary>
         <div className="space-y-2 border-t border-gray-200 p-2">
           <div>
-            <div className="mb-1 text-section-header font-semibold uppercase tracking-[0.4px] text-gray-600">Equipment</div>
+            <div className="mb-1 text-section-header font-semibold text-[#5B6576]">Equipment</div>
             <div className="flex flex-wrap gap-1.5">
               {toggles.map((toggle) => (
                 <label key={toggle.field} className="cursor-pointer">
@@ -680,7 +680,7 @@ export function BookLoadEquipmentSection({ register, watch, setValue, operatingC
 function Field({ label, input, hint, htmlFor }: { label: string; input: JSX.Element; hint?: string; htmlFor?: string }) {
   return (
     <div className="min-w-0 space-y-0.5">
-      <label htmlFor={htmlFor} className="block whitespace-nowrap text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
+      <label htmlFor={htmlFor} className="block whitespace-nowrap text-section-header font-semibold text-[#5B6576]">{label}</label>
       {input}
       {hint ? <p className="mt-1 text-xs text-gray-600">{hint}</p> : null}
     </div>

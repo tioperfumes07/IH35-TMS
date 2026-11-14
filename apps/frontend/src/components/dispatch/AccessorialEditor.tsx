@@ -207,6 +207,8 @@ export function AccessorialEditor({ operatingCompanyId, rows, onRowsChange, onDe
       ) : null}
 
       <ParityTable appearance="board"
+        // ROUND 9.0 Board 14 — a bare board table (no Range / print / gear), as Dispatch-BookLoad-Modal.png draws it.
+        panel
         storageKey="dispatch-accessorial-editor"
         tableTestId="accessorial-editor-table"
         columns={columns}

@@ -93,11 +93,14 @@ export function audit(s) {
   }
   // R5
   need("R5", /\.blw-sec input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\):not\(\[type="hidden"\]\):not\(\[type="file"\]\):not\(\.dp-input\),\n\.blw-sec select\{height:32px\}/.test(s.modal), "wizard inputs are not 32px");
-  need("R5", /lg:grid-cols-\[minmax\(0,1fr\)_64px_88px_150px_104px_minmax\(0,0\.9fr\)\]/.test(s.stops), "stop row 2 is not City · State 64 · ZIP 88 · Appt 150 · Time · Time window");
+  need("R5", /lg:grid-cols-\[minmax\(0,1fr\)_64px_88px_150px_104px_150px\]/.test(s.stops), "stop row 2 is not City · State 64 · ZIP 88 · Appt 150 · Time 104 · Time window 150 (Spec board, #29394)");
   need("R5", /"--ih-w-date": "150px", "--ih-h-field": "32px"/.test(s.stops) && /style=\{APPT_BOX_VARS\}/.test(s.stops), "the appointment date box is not 150 × 32");
   // R7
   need("R7", /grid grid-cols-1 items-stretch gap-3 lg:grid-cols-\[1\.05fr_1fr\]/.test(s.modal) && /blw-sec flex flex-col" data-testid="book-load-section-a"/.test(s.modal), "column A does not stretch to column B's height");
-  need("R7", /flex min-h-\[64px\] flex-1 flex-col gap-0\.5" data-testid="book-load-special-notes"/.test(s.modal), "column A leaves a white block under Special notes (the last field does not fill)");
+  // ROUND 9.0 Board 14 (owner 11-13-2026 "designs identical"): old: Special notes was a stretching textarea filling A's
+  //   tail. new: Dispatch-BookLoad-Modal.png puts Factoring company · Hazmat · Special notes on one row, notes as
+  //   "+ Add (optional)" that opens the textarea. Still fails when the notes control leaves that row.
+  need("R7", /data-testid="book-load-factoring-row"/.test(s.modal) && /data-testid="book-load-special-notes"/.test(s.modal) && /\+ Add \(optional\)/.test(s.modal), "Special notes is not the design's Factoring · Hazmat · Special notes (+ Add) row");
   need("R7", /inline-flex h-8 shrink-0 cursor-pointer items-center whitespace-nowrap/.test(s.ratecon), "Upload Rate Con wraps (not a one-line button)");
   // R6
   need("R6", /<div className="w-\[390px\] max-w-full shrink-0">\s*<SelectCombobox/.test(s.border), "the port-of-entry select shrinks to its content (not the 390px board width)");
@@ -129,7 +132,7 @@ export function audit(s) {
     "On Loads / Available do not click through to a filtered roster",
   );
   // R10
-  need("R10", /max-w-\[min\(1260px,calc\(100vw-2rem\)\)\]/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
+  need("R10", /width: "min\(1260px, calc\(100vw - 2rem\)\)",\s*maxWidth: 1260/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
   need("R10", /\[&_input\]:text-right/.test(s.idBar), "the Load # number is not right-aligned in its box");
   // R11
   need("R11", /bar\.label = `\$\{load\.load_number\} · \$\{plannerBarLane\(load\)\}`/.test(s.planner) && /bar\.detail = plannerBarMoneyDetail\(load\)/.test(s.planner), "Truck Planner bars do not carry the lane and $ · mi · $/mi");
@@ -161,7 +164,7 @@ if (process.argv.includes("--selftest")) {
     ["short miles offered from the catalog FAIL", plant("service", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, n_practical, confidence", "id, origin_city, origin_state, dest_city, dest_state, practical_miles, short_miles, n_practical, confidence")],
     ["Google line moved below the strip FAILS", plant("strip", '<div className="grid grid-cols-2 md:grid-cols-4">', '<div className="grid grid-cols-2 md:grid-cols-4 x">')],
     ["28px inputs FAIL", plant("modal", ".blw-sec select{height:32px}", ".blw-sec select{height:28px}")],
-    ["equal City / State / ZIP FAIL", plant("stops", "lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_minmax(0,0.9fr)]", "lg:grid-cols-6")],
+    ["equal City / State / ZIP FAIL", plant("stops", "lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_150px]", "lg:grid-cols-6")],
     ["port select back in a shrinking wrapper FAILS", plant("border", '<div className="w-[390px] max-w-full shrink-0">', "<div>")],
     ["State without compact FAILS", plant("stops", 'className="w-full" compact />', 'className="w-full" />')],
     ["bottom-aligned Location / Address FAILS", plant("stops", "items-start gap-2 sm:grid-cols-[1fr_1.4fr]", "items-end gap-2 sm:grid-cols-[1fr_1.4fr]")],
@@ -178,9 +181,9 @@ if (process.argv.includes("--selftest")) {
     ["On Loads by driver name FAILS", plant("drivers", "ids.add(String(id))", "ids.add(String(load.driver_short_name))")],
     ["Available = all active FAILS", plant("drivers", 'd.status === "Active" && !onLoadDriverIds.has(String(d.id))', 'd.status === "Active"')],
     ["column A ending above column B FAILS", plant("modal", "grid grid-cols-1 items-stretch gap-3 lg:grid-cols-[1.05fr_1fr]", "grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.05fr_1fr]")],
-    ["white block under Special notes FAILS", plant("modal", 'flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes"', 'flex flex-col gap-0.5" data-testid="book-load-special-notes"')],
+    ["Special notes leaving the Factoring · Hazmat row FAILS", plant("modal", 'data-testid="book-load-factoring-row"', 'data-testid="book-load-misc-row"')],
     ["wrapping Upload Rate Con FAILS", plant("ratecon", "items-center whitespace-nowrap", "items-center")],
-    ["the old 1120 center FAILS", plant("modal", "max-w-[min(1260px,calc(100vw-2rem))]", "max-w-[min(1120px,calc(100vw-2rem))]")],
+    ["the old 1120 center FAILS", plant("modal", "width: \"min(1260px, calc(100vw - 2rem))\"", "width: \"min(1120px, calc(100vw - 2rem))\"")],
     ["the old 660 side panel FAILS", plant("modal", "w-[760px] max-w-[100vw]", "w-[660px] max-w-[100vw]")],
     ["a left-aligned Load # FAILS", plant("idBar", "[&_input]:text-right", "[&_input]:text-left")],
     ["planner bar without the lane FAILS", plant("planner", "bar.label = `${load.load_number} · ${plannerBarLane(load)}`", "bar.label = load.load_number")],

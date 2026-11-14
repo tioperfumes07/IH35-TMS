@@ -23,7 +23,6 @@ import { widenPlannerRange } from "./planner-range";
 import { PlannerAxisHead } from "./PlannerAxisHead";
 import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, plannerBarLane, plannerBarMoneyDetail, usePlannerLoads } from "./planner-bars";
-import { PlannerAction, PlannerActionDisabled } from "./PlannerRowActions";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 import { formatQuantityTable } from "../../../lib/money";
 
@@ -260,17 +259,13 @@ export function TruckPlanner() {
 
   return (
     <div data-testid="dispatch-truck-planner-page" className="min-w-0 space-y-2 rounded-sm border border-gray-200 bg-white p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-xs font-bold">Truck planner — {formatQuantityTable(days.length, 0)} selected days</h2><Link to="/dispatch/loads" className="text-xs">View all loads →</Link></div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {!isLoading && !isError && excludedUnitCount > 0 ? (
-          <span className="text-xs text-[#6B7280]" data-testid="dispatch-truck-planner-excluded-count">
-            {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In
-            Service / In Maintenance / Out of Service, or a test fixture)
-          </span>
-        ) : (
-          <span />
-        )}
-        <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
+      {/* ROUND 9.0 Board 12 — title, Grid/List and View all on one row (Dispatch-TruckPlanner.png). */}
+      <div className="flex flex-wrap items-center justify-between gap-2" data-testid="dispatch-truck-planner-head">
+        <h2 className="text-xs font-semibold text-[#111827]">Truck planner — {formatQuantityTable(days.length, 0)} selected day{days.length === 1 ? "" : "s"} fill the full width</h2>
+        <div className="flex items-center gap-3">
+          <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
+          <Link to="/dispatch/loads" className="text-xs font-semibold text-blue-700">View all →</Link>
+        </div>
       </div>
       {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}
       {isError ? (
@@ -344,13 +339,9 @@ export function TruckPlanner() {
           frozenColumns={[
             { key: "name", header: "Unit", minWidth: 110, maxWidth: 240, defaultWidth: 110 },
             { key: "secondary", header: "Driver", minWidth: 170, maxWidth: 420, defaultWidth: 240 },
-            { key: "status", header: "Status", minWidth: 64, maxWidth: 160, defaultWidth: 64 },
-            { key: "action", header: "Action", minWidth: 56, maxWidth: 120, defaultWidth: 56 },
           ]}
           frozenLabel="Unit"
           frozenPx={320}
-          statusLabel="Status"
-          actionLabel="Action"
           onExpandRange={(minYmd, maxYmd) => setRange(widenPlannerRange(range, minYmd, maxYmd))}
           rows={filteredTruckRows
             .filter((row) => row.status !== "in-shop")
@@ -367,10 +358,6 @@ export function TruckPlanner() {
               secondary: row.driverName ? (
                 <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
               ) : null,
-              status,
-              action: (
-                <PlannerAction to={`/dispatch/loads?unit_id=${encodeURIComponent(row.unitId)}`} label="Book" />
-              ),
               bars: loadBarsByUnit.get(row.unitId) ?? [],
               };
             })}
@@ -391,8 +378,6 @@ export function TruckPlanner() {
             rowPx={44}
             frozenLabel="In shop"
             frozenPx={320}
-            statusLabel="Status"
-            actionLabel="Action"
             rows={filteredTruckRows
               .filter((row) => row.status === "in-shop")
               .map((row) => ({
@@ -404,16 +389,20 @@ export function TruckPlanner() {
                 secondary: row.driverName ? (
                   <EntityLinkOrTombstone kind="driver" id={row.driverId} name={row.driverName} noun="Driver" />
                 ) : null,
-                status: "In Shop",
-                action: (
-                  <PlannerActionDisabled label="Book" title="Cannot book a load onto a unit that is in the shop" />
-                ),
                 bars: loadBarsByUnit.get(row.unitId) ?? [],
               }))}
             empty={null}
           />
         </div>
       ) : null}
+      <p className="border-t border-[#DDE1E7] pt-2 text-xs text-[#5B6576]" data-testid="dispatch-truck-planner-note">
+        Only the chosen days are drawn and they share the whole width — no empty columns. The unit/driver column is resizable (drag its edge); widths are remembered per user. Bars that run past the range show &quot;continues&quot;. Same rules on Timeline, Driver and Loads planners.
+        {!isLoading && !isError && excludedUnitCount > 0 ? (
+          <span className="block" data-testid="dispatch-truck-planner-excluded-count">
+            {excludedUnitCount} unit{excludedUnitCount === 1 ? "" : "s"} not shown (status outside In Service / In Maintenance / Out of Service, or a test fixture).
+          </span>
+        ) : null}
+      </p>
     </div>
   );
 }

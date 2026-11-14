@@ -412,7 +412,7 @@ export function BookLoadStopsSection({
 function Field({ label, input }: { label: string; input: JSX.Element }) {
   return (
     <div className="min-w-0 w-full space-y-0.5">
-      <label className="block whitespace-nowrap text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">{label}</label>
+      <label className="block whitespace-nowrap text-section-header font-semibold text-[#5B6576]">{label}</label>
       {input}
     </div>
   );

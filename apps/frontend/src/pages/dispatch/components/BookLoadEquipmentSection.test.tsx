@@ -99,42 +99,21 @@ function PayRateHarness({ driverId, companyId }: { driverId: string; companyId?:
   );
 }
 
-describe("BookLoadEquipmentSection — WIZ-32 driver pay rate contract", () => {
-  // Target the input the SAME way orch does: resolve it from its LABEL "Driver pay rate / mi", not from
-  // a testid or a class. On the pre-fix shape the label was unassociated and the first input under it was
-  // a hidden register field carrying value="0" (readOnly=false) — that is exactly what orch measured and
-  // reported as WIZ-32 failing. This guard fails on that shape and passes only when the labelled control
-  // is the visible read-only display.
-  it("the input labelled 'Driver pay rate / mi' is blank AND read-only with no driver (never a 0)", () => {
+describe("BookLoadEquipmentSection — ROUND 443.258-B (D024): no driver pay rate in Book Load", () => {
+  // Owner ruling D024: the driver's per-mile rate resolves at settlement, not in Book Load. The old
+  // WIZ-32 "Driver pay rate / mi" box was removed; these assertions keep it from coming back and keep
+  // any hidden 0-valued pay field out of the wizard.
+  it("renders no 'Driver pay rate' label or input with no driver", () => {
     render(<PayRateHarness driverId="" companyId={undefined} />);
-    const input = screen.getByLabelText("Driver pay rate / mi") as HTMLInputElement;
-    expect(input.type).not.toBe("hidden");
-    expect(input.value).not.toBe("0");
-    expect(input.value).toBe("");
-    expect(input.readOnly).toBe(true);
+    expect(screen.queryByText(/driver pay rate/i)).toBeNull();
+    expect(screen.queryByLabelText(/driver pay rate/i)).toBeNull();
   });
 
-  // Faithful reproduction of orch's proximity selection (label -> first input under it). No hidden
-  // "0"-valued field may sit under the label, or a label-target measures readOnly=false / value=0.
-  it("has no hidden 0-valued input as the label's first control (orch's measured shape)", () => {
-    render(<PayRateHarness driverId="" companyId={undefined} />);
-    const label = screen.getByText("Driver pay rate / mi");
-    const scope = (label.closest("div") ?? label.parentElement) as HTMLElement;
-    const first = scope.querySelector("input") as HTMLInputElement | null;
-    expect(first).toBeTruthy();
-    expect(first?.type).not.toBe("hidden");
-    expect(first?.readOnly).toBe(true);
-    expect(first?.value).toBe("");
-  });
-
-  it("shows the driver's resolved per-mile rate (read-only) once a driver is selected", async () => {
+  it("renders no 'Driver pay rate' and never fetches the driver pay card when a driver is selected", () => {
     render(
       <PayRateHarness driverId="11111111-1111-1111-1111-111111111111" companyId="00000000-0000-0000-0000-000000000000" />,
     );
-    const input = screen.getByLabelText("Driver pay rate / mi") as HTMLInputElement;
-    expect(input.readOnly).toBe(true);
-    // Resolved from the driver pay card (55c => 0.55). Fails on pre-fix code where value is hardcoded "".
-    await waitFor(() => expect(input.value).toBe("0.55"));
-    expect(getDriverPayCardMock).toHaveBeenCalled();
+    expect(screen.queryByText(/driver pay rate/i)).toBeNull();
+    expect(getDriverPayCardMock).not.toHaveBeenCalled();
   });
 });
