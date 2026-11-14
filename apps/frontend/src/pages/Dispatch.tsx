@@ -144,6 +144,7 @@ export function DispatchPage({
     setBookUnitId(null);
     setBookDriverId(null);
     setBookLanePreset(null);
+    setBookEntry(null);
     setEditLoadId(null);
   }, []);
   // ROUND 24.2 (owner 2026-09-14) — a draft row's click resumes it in the wizard's EXISTING edit
@@ -156,6 +157,8 @@ export function DispatchPage({
   const [bookDriverId, setBookDriverId] = useState<string | null>(null);
   // LEAD 443.251 item 1b — a truck dropped on a Kanban lane opens Book with that lane's status pre-set.
   const [bookLanePreset, setBookLanePreset] = useState<KanbanBookPreset | null>(null);
+  // Board 15 — where the wizard was opened from (Truck Line "Assign a load →" → side panel + breadcrumb).
+  const [bookEntry, setBookEntry] = useState<{ kind: "truck-line"; unitLabel: string | null } | null>(null);
   const [subTab, setSubTab] = useState<DispatchSubTabId>(initialSubTab ?? (dispatchSecondaryTabFromPath(location.pathname) as DispatchSubTabId));
   const onLoadDetailPath = Boolean(pathLoadId);
   const loadsRoute = loadsDeepLink || onLoadDetailPath || location.pathname === "/dispatch/loads";
@@ -636,9 +639,11 @@ export function DispatchPage({
             selectedUnitId={filters.unitId}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
             onLoadClick={(loadId) => navigate(dispHref(`/dispatch/load-costs/${loadId}`))}
-            onAssignDriver={(assignDriverId, assignUnitId) => {
+            onAssignDriver={(assignDriverId, assignUnitId, assignUnitLabel) => {
               setBookDriverId(assignDriverId);
               setBookUnitId(assignUnitId);
+              // Board 15 — the Truck Line pill opens the wizard as the 760px side panel with its own breadcrumb.
+              setBookEntry({ kind: "truck-line", unitLabel: assignUnitLabel ?? null });
               openBookLoadModal();
             }}
           />
@@ -871,6 +876,7 @@ export function DispatchPage({
         prefillDriverId={bookDriverId}
         prefillUnitLabel={bookLanePreset?.unitLabel ?? null}
         prefillLaneStatus={bookLanePreset?.laneStatus ?? null}
+        entryPoint={bookEntry}
         editLoadId={editLoadId}
         onClose={() => {
           dismissBookLoadModal();

@@ -279,7 +279,8 @@ describe("TruckLineBoard.sort (443.231)", () => {
     const assignBtns = screen.getAllByTestId("truck-line-assign-unit-u-avail");
     expect(assignBtns).toHaveLength(1);
     fireEvent.click(assignBtns[0]!);
-    expect(onAssign).toHaveBeenCalledWith(null, "u-avail");
+    // LEAD 443.257-A: the usual driver (history) is passed as an editable suggestion; T99 is the unit label (Board 15 breadcrumb).
+    expect(onAssign).toHaveBeenCalledWith("drv-avail-1", "u-avail", "T99");
     expect(screen.getByTestId("truck-line-assign-note-u-avail").textContent).toMatch(/usual:/i);
   });
 
@@ -290,6 +291,6 @@ describe("TruckLineBoard.sort (443.231)", () => {
     expect(screen.queryByText(/No driver on file/)).not.toBeInTheDocument();
     expect(screen.getByTestId("truck-line-assign-note-u-nodrv")).toHaveTextContent("no driver yet — choose in the wizard");
     fireEvent.click(screen.getByTestId("truck-line-assign-unit-u-nodrv"));
-    expect(onAssign).toHaveBeenCalledWith(null, "u-nodrv");
+    expect(onAssign).toHaveBeenCalledWith(null, "u-nodrv", "T122");
   });
 });
