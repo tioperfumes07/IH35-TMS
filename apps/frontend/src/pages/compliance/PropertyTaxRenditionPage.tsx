@@ -81,6 +81,9 @@ function RenditionListView({
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const navigate = useNavigate();
+  // Class R — a created rendition opens with ret back to this list.
+  const { pathname: listPath, search: listSearch } = useLocation();
+  const hubHref = (target: string) => withReturnContext(target, currentOriginHref(listPath, listSearch));
   const now = new Date();
   const [taxYear, setTaxYear] = useState<number>(now.getUTCMonth() < 3 ? now.getUTCFullYear() : now.getUTCFullYear());
   const [districtId, setDistrictId] = useState("");
@@ -660,9 +663,7 @@ export function PropertyTaxRenditionPage() {
   const companyId = selectedCompanyId ?? "";
   const { id } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const hubHref = (target: string) => withReturnContext(target, originHref);
+  const { pathname } = useLocation();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance" });
   const propertyTaxBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance/property-tax" });
