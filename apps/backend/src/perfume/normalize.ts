@@ -342,6 +342,8 @@ export function identify(input: IdentityInput): Identity {
     .replace(/(\d)\s*(PCS?)\s*(SET)\b/g, "$1$2 $3").replace(/(\d)(PCS?)(SET)\b/g, "$1$2 $3");
   // "STRONGER W YOU" / "W/YOU" means WITH YOU, not women.
   s = s.replace(/\bW\/?\s*(?=YOU\b)/g, "WITH ");
+  // "TESTER W/CAP", "W/BOX", "W/AIRBAG": W/ is "with" — never Women (measured live 11-14, JIZAN / PPW lines).
+  s = s.replace(/\bW\/(?=\s*[A-Z])/g, " ");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);

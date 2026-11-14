@@ -15,7 +15,7 @@
  * reason is written out so the owner can see why it was proposed.
  */
 import { sizesFar, type Identity } from "./normalize.js";
-import { lineGender, nameKeyWords, type OfferItem } from "./offer-review.js";
+import { genderCheck, lineGender, nameKeyWords, type OfferItem } from "./offer-review.js";
 
 export type CompetitorLine = { row_id: string; vendor: string; description: string; price_cents: number; linked_to: string | null; id: Identity };
 export type LineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
@@ -35,8 +35,8 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
     const id = ln.id;
     if (id.brand && item.brand && id.brand !== item.brand) continue;
     if (kind(id.flags) !== kind(item.flags)) continue;
-    const g = lineGender(ln.description, id.gender);
-    if (g && item.gender && g !== "U" && item.gender !== "U" && g !== item.gender) continue;
+    const gc = genderCheck(lineGender(ln.description, id.gender), item.gender, item.name);
+    if (!gc.ok) continue;
     const lw = new Set([...words(ln.description), ...id.nameWords.flatMap(words), ...words(id.brand)]);
     const hit = need.filter((w) => lw.has(w));
     if (hit.length * 2 < need.length || !hit.some((w) => w.length >= 3)) continue;
@@ -49,7 +49,7 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
     if (sizesFar(id.sizeMl, item.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && item.size_ml != null && Math.abs(id.sizeMl - item.size_ml) > 5;
     const concDiffers = Boolean(id.conc && item.conc && id.conc !== item.conc);
-    const score = Math.round((hit.length / need.length) * (brandSeen ? 1 : 0.85) * (sizeDiffers ? 0.7 : 1) * (concDiffers ? 0.8 : 1) * (extras.length ? 0.75 : 1) * 100) / 100;
+    const score = Math.round(gc.factor * (hit.length / need.length) * (brandSeen ? 1 : 0.85) * (sizeDiffers ? 0.7 : 1) * (concDiffers ? 0.8 : 1) * (extras.length ? 0.75 : 1) * 100) / 100;
     const why = [
       brandSeen ? "brand on the line" : "no brand on the line",
       `${hit.length}/${need.length} name words`,
@@ -57,6 +57,7 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
       ...(extras.length ? [`EXTRA WORDS: ${extras.join(" ")}`] : []),
       sizeDiffers ? `SIZE DIFFERS: line ${id.sizeMl} ml, mine ${item.size_ml} ml` : id.sizeMl != null && item.size_ml != null ? `size ${item.size_ml} ml` : "size not compared",
       ...(concDiffers ? [`TYPE DIFFERS: line ${id.conc}, mine ${item.conc}`] : []),
+      gc.note,
       ...(ln.linked_to ? [`now linked to: ${ln.linked_to}`] : []),
     ].join(" · ");
     out.push({ row_id: ln.row_id, vendor: ln.vendor, description: ln.description, price_cents: ln.price_cents, score, why, linked_to: ln.linked_to });

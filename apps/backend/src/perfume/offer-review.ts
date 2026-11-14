@@ -14,7 +14,7 @@
  *  - SET / TESTER / MINI agree (a 4-piece set is never the 100 ml bottle);
  *  - EDT / EDP / PARFUM differing is proposed, scored lower, and named ("TYPE DIFFERS").
  */
-import { sizesFar, type Identity } from "./normalize.js";
+import { genderHintOf, sizesFar, type Identity } from "./normalize.js";
 
 export type OfferItem = { id: string; brand: string; name: string; size_ml: number | null; conc?: string | null; gender?: string | null; flags: string[]; display_name: string };
 export type OfferCandidate = { item_id: string; display_name: string; score: number; why: string };
@@ -47,6 +47,22 @@ export function lineGender(description: string, idGender: string | null | undefi
   return m && !f ? "M" : f && !m ? "W" : "";
 }
 
+const GENDER_NAME: Record<string, string> = { M: "Men", W: "Women", U: "Unisex" };
+/** The gender rule every recommendation uses (owner 2026-11-14 17:22 CT: "LIGHT BLUE MAN I MATCHED BY ACCIDENT TO
+ *  LIGHT BLUE WOMAN … WHY IS IT RECOMMENDING FROM OTHER GENDERS"). An item with no gender filed still has the one its
+ *  name says (HER / POUR HOMME). Men vs Women = never proposed. Unisex beside Men or Women = proposed, named. When
+ *  either side does not say, the bottle is proposed ranked well below, and the reason says so plainly — Light Blue
+ *  exists for men and for women, so an unstated gender is never passed off as a match. */
+export function genderCheck(lineG: string | null | undefined, itemG: string | null | undefined, itemName = ""): { ok: boolean; factor: number; note: string } {
+  const l = lineG || "";
+  const i = itemG || genderHintOf(itemName) || "";
+  if (l && i && l !== "U" && i !== "U" && l !== i) return { ok: false, factor: 0, note: `GENDER: line ${GENDER_NAME[l]}, item ${GENDER_NAME[i]}` };
+  if (l && i && l === i) return { ok: true, factor: 1, note: `gender ${GENDER_NAME[i]} = ${GENDER_NAME[l]}` };
+  if (l && i) return { ok: true, factor: 0.85, note: `GENDER: line ${GENDER_NAME[l]}, item ${GENDER_NAME[i]}` };
+  if (!l && !i) return { ok: true, factor: 0.6, note: "GENDER NOT STATED on the line or the item — check" };
+  return { ok: true, factor: 0.6, note: l ? `GENDER NOT STATED on the item (line says ${GENDER_NAME[l]}) — check` : `GENDER NOT STATED on the line (item is ${GENDER_NAME[i]}) — check` };
+}
+
 function kindFlags(flags: readonly string[]): string {
   return KIND_FLAGS.filter((f) => flags.includes(f)).join(",");
 }
@@ -69,8 +85,9 @@ export function offerCandidates(line: { description: string; brand: string | nul
     if (sizesFar(id.sizeMl, it.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && it.size_ml != null && Math.abs(id.sizeMl - it.size_ml) > 5;
     if (lineKind !== kindFlags(it.flags)) continue;
-    // Men's and women's bottles are different products; unisex or unknown on either side is not a conflict.
-    if (gender && it.gender && gender !== "U" && it.gender !== "U" && gender !== it.gender) continue;
+    // Men's and women's bottles are different products (genderCheck).
+    const gc = genderCheck(gender, it.gender, it.name);
+    if (!gc.ok) continue;
     // A name word the line has and my item does not is a DIFFERENT bottle (measured live 11-13 on ESPERANZA:
     // WANTED vs WANTED INTENSE, HER vs HER BLOSSOM, GOOD GIRL vs GOOD GIRL BLUSH, 212 VIP vs 212 VIP ROSE) — not
     // proposed. Gender words and noise words do not count.
@@ -80,10 +97,10 @@ export function offerCandidates(line: { description: string; brand: string | nul
     const sizeOk = id.sizeMl != null && it.size_ml != null;
     // Type (EDT / EDP / PARFUM / EXTRAIT) differing is usually a different bottle: proposed, scored lower, named.
     const concDiffers = Boolean(id.conc && it.conc && id.conc !== it.conc);
-    const score = Math.round(Math.min(1, (concDiffers ? 0.7 : 1) * (sizeDiffers ? 0.7 : 1) * (brandSeen ? 1 : 0.9) * (sizeOk ? 1 : 0.95)) * 100) / 100;
+    const score = Math.round(Math.min(1, gc.factor * (concDiffers ? 0.7 : 1) * (sizeDiffers ? 0.7 : 1) * (brandSeen ? 1 : 0.9) * (sizeOk ? 1 : 0.95)) * 100) / 100;
     const why = [brandSeen ? "brand + name words match" : "name words match (no brand on the line)",
       sizeDiffers ? `SIZE DIFFERS: line ${id.sizeMl} ml, your item ${it.size_ml} ml` : sizeOk ? `size ${it.size_ml} ml` : "size not on the line",
-      ...(concDiffers ? [`TYPE DIFFERS: line ${id.conc}, your item ${it.conc}`] : [])].join(" · ");
+      ...(concDiffers ? [`TYPE DIFFERS: line ${id.conc}, your item ${it.conc}`] : []), gc.note].join(" · ");
     out.push({ item_id: it.id, display_name: it.display_name, score, why });
   }
   return out.sort((a, b) => b.score - a.score || a.display_name.localeCompare(b.display_name)).slice(0, max);

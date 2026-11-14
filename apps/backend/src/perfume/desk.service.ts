@@ -6,7 +6,7 @@ import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
-import { offerCandidates, type OfferItem } from "./offer-review.js";
+import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
 
@@ -711,7 +711,9 @@ export async function rematchReview(c: PoolClient) {
   return { ...out, kind_clash_to_review: kindClash };
 }
 
-export async function searchItems(c: PoolClient, q: string, limit = 25) {
+/** gender (M / W): the line being linked is that gender — the other gender's bottles are never offered (owner
+ *  2026-11-14 17:22: Light Blue Men linked by accident to Light Blue Women). Unisex / unstated items stay. */
+export async function searchItems(c: PoolClient, q: string, limit = 25, gender: "M" | "W" | null = null) {
   const s = q.trim();
   if (!s) return [];
   // Every word must appear somewhere in the item's name, in any order (owner 2026-11-12: "when searching for an
@@ -719,31 +721,35 @@ export async function searchItems(c: PoolClient, q: string, limit = 25) {
   // word also matches a UPC; the internal code still matches exactly.
   const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
   return (await c.query(
-    `SELECT i.id, i.display_name, i.internal_code, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
+    `SELECT i.id, i.display_name, i.internal_code, NULLIF(i.gender, '') AS gender, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i
       WHERE i.merged_into_id IS NULL
+        AND ($4::text IS NULL OR COALESCE(NULLIF(i.gender, ''), 'U') IN ('U', $4))
         AND (i.internal_code = $1
              OR EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = ltrim(regexp_replace($1,'\\D','','g'),'0'))
              OR (cardinality($2::text[]) > 0 AND NOT EXISTS (SELECT 1 FROM unnest($2::text[]) w WHERE upper(i.display_name) NOT LIKE '%' || w || '%')))
-      ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit])).rows;
+      ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit, gender])).rows;
 }
 
 /** Competitor lines (every current sell/both list) for the List-analysis match box: every word must be in the line,
  *  in any order; a number also matches its UPC or code. Linked lines are returned too, with what they are linked to,
  *  so a wrong link can be seen and corrected (owner 2026-11-14: "the box to search, suggestions … the correct matching engine"). */
-export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25) {
+export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25, gender: "M" | "W" | null = null) {
   const s = q.trim();
   if (!s) return [];
   const words = s.toUpperCase().replace(/[^A-Z0-9.&' ]+/g, " ").split(/\s+/).filter(Boolean).slice(0, 8);
   if (!words.length) return [];
-  return (await c.query<{ row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null }>(
-    `SELECT r.id AS row_id, r.description, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
+  const found = (await c.query<{ row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null; brand: string | null; size_text: string | null; gender_override: string | null }>(
+    `SELECT r.id AS row_id, r.description, r.brand, r.size_text, r.gender_override, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        LEFT JOIN perfume.items i ON i.id = r.item_id
       WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w
                          WHERE upper(r.description || ' ' || coalesce(r.upc, '') || ' ' || coalesce(r.sku, '')) NOT LIKE '%' || w || '%')
-      ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, limit])).rows;
+      ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, gender ? limit * 3 : limit])).rows;
+  // My item is that gender: a line that says the other gender is never offered; each line carries the gender it says.
+  return found.map(({ brand, size_text, gender_override, ...r }) => ({ ...r, gender: lineGender(r.description, identify({ description: r.description, brand, size: size_text, gender: gender_override }).gender) || null }))
+    .filter((r) => !gender || !r.gender || r.gender === "U" || r.gender === gender).slice(0, limit);
 }
 
 export async function setInternalCode(c: PoolClient, itemId: string, code: string | null) {
