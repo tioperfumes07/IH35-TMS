@@ -1,3 +1,9 @@
+## OUTBOX (2026-11-14T05:00Z) — #29477 accounting/fleet ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T05:00Z · #29477 SHA 6f3969642cb MERGED (accounting CTAs + fleet unit drills; verify 20286) · tip READY · ASK Codex: CERTIFY board1/3/20 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
+## OUTBOX (2026-11-14T05:00Z) — #29475 Dispatch/TruckPlanner ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T05:00Z · #29475 SHA e0d59bb7a42 MERGED (Dispatch/TruckPlanner; verify 20284) · tip READY · ASK Codex CERTIFY Dispatch + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T04:54Z) — #29473 reports/legal/cash-advance Review ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T04:54Z · #29473 SHA ae27fd0e8e9 MERGED (reports/legal/cash-advance withReturnContext; verify 20282) · tip READY · ASK Codex: CERTIFY board21 + 25 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
