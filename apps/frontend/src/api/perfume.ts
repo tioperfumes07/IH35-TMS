@@ -197,9 +197,6 @@ export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | {
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
 /** Match my list ↔ competitor: my offer items with no competitor line linked, and the lines each most likely is. */
 export type PerfumeLineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
-export type PerfumeMyUnlinked = { total_mine: number; linked: number; unlinked: number;
-  rows: Array<{ item_id: string; display_name: string; my_desc: string | null; my_price_cents: number | null; candidates: PerfumeLineCandidate[] }> };
-export const getPerfumeMyUnlinked = () => apiRequest<PerfumeMyUnlinked>("/api/v1/perfume/my-unlinked");
 export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItemHit[] }>(`/api/v1/perfume/items/search?q=${encodeURIComponent(q)}`);
 export type PerfumeLineHit = { row_id: string; description: string; vendor: string; price_cents: number | null; linked_to: string | null };
 export const searchPerfumeLines = (q: string) => apiRequest<{ lines: PerfumeLineHit[] }>(`/api/v1/perfume/lines/search?q=${encodeURIComponent(q)}`);

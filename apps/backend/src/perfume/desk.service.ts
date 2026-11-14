@@ -4,7 +4,7 @@
  */
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
-import { addItem, displayNameOf, emptyIndex, matchLine, type LineIn, type MatchIndex } from "./matching.js";
+import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
@@ -565,38 +565,6 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
  * Owner confirms a line: it IS this item (or a new item). Remembered as this vendor's spelling and SKU, attaches
  * the line's UPC to the item, and applies to every other unconfirmed line of that vendor with the same spelling or SKU.
  */
-/** "Match my list ↔ competitor" (owner 2026-11-13/14): every item on my offer list with NO competitor line linked,
- *  my own wording and price, and the competitor lines it most likely is (likelyLines). Proposes only — the owner
- *  links each one with confirmRow. Counts are returned so the screen states how many are left. */
-export async function myUnlinked(c: PoolClient): Promise<{ total_mine: number; linked: number; unlinked: number; rows: Array<{ item_id: string; display_name: string; my_desc: string | null; my_price_cents: number | null; candidates: LineCandidate[] }> }> {
-  const offer = await c.query<OfferItem & { my_desc: string | null; my_price_cents: number | null }>(
-    `SELECT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, NULLIF(i.gender, '') AS gender, i.flags, i.display_name,
-            string_agg(DISTINCT r.description, ' | ') AS my_desc, min(r.price_cents)::int AS my_price_cents
-       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-       JOIN perfume.items i ON i.id = r.item_id
-      WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL AND i.merged_into_id IS NULL
-      GROUP BY i.id`);
-  const comp = await c.query<{ id: string; vendor: string; description: string; brand: string | null; size_text: string | null; gender_override: string | null; price_cents: number; item_id: string | null; linked_to: string | null }>(
-    `SELECT r.id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor, r.description, r.brand, r.size_text, r.gender_override,
-            r.price_cents::int AS price_cents, r.item_id, i.display_name AS linked_to
-       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-       LEFT JOIN perfume.items i ON i.id = r.item_id
-      WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL`);
-  const linkedItems = new Set(comp.rows.map((r) => r.item_id).filter((x): x is string => Boolean(x)));
-  const offerIds = new Set(offer.rows.map((o) => o.id));
-  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
-  const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
-  // Lines already linked to an item on my list are spoken for; every other competitor line can be proposed
-  // (unlinked, waiting in Review, or linked to an item that is not on my list — shown as "now linked to").
-  const lines: CompetitorLine[] = comp.rows.filter((r) => !(r.item_id && offerIds.has(r.item_id))).map((r) => ({
-    row_id: r.id, vendor: r.vendor, description: r.description, price_cents: r.price_cents, linked_to: r.linked_to,
-    id: identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: aliases }),
-  }));
-  const missing = offer.rows.filter((o) => !linkedItems.has(o.id));
-  const rows = missing.map((o) => ({ item_id: o.id, display_name: o.display_name, my_desc: o.my_desc, my_price_cents: o.my_price_cents, candidates: likelyLines(o, lines) }))
-    .sort((a, b) => (b.candidates[0]?.score ?? 0) - (a.candidates[0]?.score ?? 0) || a.display_name.localeCompare(b.display_name));
-  return { total_mine: offer.rows.length, linked: offer.rows.length - missing.length, unlinked: missing.length, rows };
-}
 
 export async function confirmRow(c: PoolClient, userId: string, rowId: string, target: { item_id?: string; create_new?: boolean }) {
   const row = (await c.query<{ id: string; list_id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; identity_key: string; loose_key: string; gender_override: string | null }>(
@@ -726,7 +694,21 @@ export async function rematchReview(c: PoolClient) {
       if (m.status === "review") out.review++; else out.unmatched++;
     }
   }
-  return out;
+  // Links made by barcode BEFORE the kind rule (2026-11-14): a line that says REFILL / TESTER / SET / MINI … sitting
+  // on an item of another kind goes back to Review for the owner. Owner-confirmed links are never touched.
+  const linked = await c.query<{ id: string; brand: string | null; description: string; size_text: string | null; gender_override: string | null; flags: string[] }>(
+    `SELECT r.id, r.brand, r.description, r.size_text, r.gender_override, i.flags
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id
+      WHERE r.match_status = 'matched' AND r.match_method = 'upc' AND l.is_current AND l.voided_at IS NULL`);
+  let kindClash = 0;
+  for (const r of linked.rows) {
+    const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
+    if (productKind(id.flags) === productKind(r.flags)) continue;
+    await c.query(`UPDATE perfume.price_list_rows SET item_id = NULL, match_method = NULL, match_status = 'review', suggestions = $2::jsonb WHERE id = $1`,
+      [r.id, JSON.stringify(suggest(ix, id))]);
+    kindClash++;
+  }
+  return { ...out, kind_clash_to_review: kindClash };
 }
 
 export async function searchItems(c: PoolClient, q: string, limit = 25) {
