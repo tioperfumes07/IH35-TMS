@@ -2222,8 +2222,8 @@ export function BookLoadModalV4({
               SB → the tour line AND Border crossing *. §7 navy family only. TR/SB auto-join the unit's tour
               (tour_id derived server-side). */}
           <div className="border-b border-[#E5E7EB] bg-white px-4 py-3" data-testid="trip-type-banner">
-            <span className="text-section-header font-bold text-[#4B5563]">
-              Trip type <span className="text-red-500">*</span>
+            <span className="whitespace-nowrap text-section-header font-semibold text-[#5B6576]">
+              Trip type <span className="text-[#B91C1C]">*</span>
             </span>
             <div
               className="mt-1 grid grid-cols-1 gap-2 sm:grid-cols-3"
@@ -2257,23 +2257,24 @@ export function BookLoadModalV4({
                       form.setValue("trip_type", code, { shouldDirty: true });
                       form.clearErrors("trip_type");
                     }}
-                    className={`flex min-w-0 items-center gap-2.5 rounded-sm border px-2.5 py-2 text-left transition-colors ${
-                      active ? "border-2 border-[#13233F] bg-white" : "border-[#DDE1E7] bg-white hover:bg-[#F7F8FA]"
+                    // Boards 14 + 17: selected = 2px #13233F border on #EEF2F7, navy 26px icon tile; others 1px #DDE1E7 on white, #F7F8FA tile.
+                    className={`flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors ${
+                      active ? "border-2 border-[#13233F] bg-[#EEF2F7]" : "border border-[#DDE1E7] bg-white hover:bg-[#F7F8FA]"
                     }`}
                   >
                     <span
                       aria-hidden
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-xs ${
-                        active ? "bg-[#13233F] text-white" : "bg-white text-[#13233F]"
+                      className={`flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-md text-xs font-bold ${
+                        active ? "bg-[#13233F] text-white" : "bg-[#F7F8FA] text-[#5B6576]"
                       }`}
                     >
                       {icon}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-xs font-semibold text-[#0F1219]">
+                      <span className="block text-xs font-bold text-[#111827]">
                         {code} · {label}
                       </span>
-                      <span className="block truncate text-section-header text-[#4B5563]">{desc}</span>
+                      <span className="block text-section-header text-[#5B6576]">{desc}</span>
                     </span>
                   </button>
                 );
