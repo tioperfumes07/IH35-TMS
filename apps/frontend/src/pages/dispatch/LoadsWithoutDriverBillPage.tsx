@@ -2,10 +2,11 @@ import { formatQuantityTable } from "../../lib/money";
 // TABLE_DATE_OMIT: this table has no date column by design — a current-state exception queue (one row per load with no driver bill); the row carries no date from the API.
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listLoadsWithoutDriverBill, type ExceptionQueueLoadRow } from "../../api/reports";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -20,6 +21,10 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 export function LoadsWithoutDriverBillPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
 
   const loadsQ = useQuery({
     queryKey: ["reports", "loads-without-driver-bill", companyId],
@@ -76,7 +81,7 @@ export function LoadsWithoutDriverBillPage() {
 
   return (
     <div data-testid="loads-without-driver-bill-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Loads without a driver bill"
         subtitle="Non-cancelled loads with zero driver_finance.driver_bills rows — including fully driverless orphans. Tile value equals this table's row count."
         actions={

@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import {
   createDispatchIntransitIssue,
   listDispatchIntransitIssues,
@@ -37,7 +38,10 @@ export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
+  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   // LST-F5186 + LV-DISPATCH-INTRANSIT-ISSUES-FILTER-SILENT-APPLY — stage until Apply;
   // URL driver_id/load_id/unit_id sync on Apply/Reset. issue_id remains deep-link only.
   const reverseIssueId = searchParams.get("issue_id")?.trim() || "";
@@ -231,7 +235,7 @@ export function InTransitIssuesPage() {
 
   return (
     <div data-testid="dispatch-intransit-issues-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="In-Transit Issues"
         subtitle="Driver-reported and office-created in-flight problems"
         actions={

@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { formatQuantityTable, formatUsd, formatUsdCentsTable } from "../../lib/money";
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { listAtRiskOrLateDispatchLoads, type DispatchAlertLoadRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
@@ -45,6 +46,10 @@ function place(city?: string | null, state?: string | null): string {
 export function AtRiskQueuePage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const [range, setRange] = useState<DispatchAlertRange>({ from: "", to: "" });
   const [paritySortKey, setParitySortKey] = useState("load_number");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -220,7 +225,7 @@ export function AtRiskQueuePage() {
 
   return (
     <div data-testid="dispatch-at-risk-page" className="mx-auto max-w-6xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="At-Risk / Late Queue"
         subtitle="Active dispatched, pickup, in-transit, or delivery loads with an at-risk or late ETA signal. Tile value equals this table's row count (union, not a sum)."
         actions={

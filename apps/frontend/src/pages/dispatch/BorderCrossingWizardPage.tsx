@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { resolveApiUrl } from "../../api/client";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -23,6 +24,10 @@ const STEPS = ["Load", "Port", "Cargo", "Broker", "FAST", "Review"];
 
 export function BorderCrossingWizardPage() {
   const { selectedCompanyId } = useCompanyContext();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
+  const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const { ports, brokers, portsLoading, brokersLoading, portsError, brokersError } = useBorderCrossingApi(
     selectedCompanyId ?? undefined,
   );
@@ -132,7 +137,7 @@ export function BorderCrossingWizardPage() {
 
   return (
     <div data-testid="border-crossing-wizard-page" className="mx-auto max-w-4xl space-y-4">
-      <PageHeader backHref="/dispatch"
+      <PageHeader backHref={dispatchBackHref}
         title="Border Crossing Wizard"
         subtitle="Prepare northbound and southbound crossings with eManifest V1 and CBP wait times."
         actions={
