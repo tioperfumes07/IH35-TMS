@@ -91,7 +91,10 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
         emptyText="Nothing to review."
         columns={[
           ...(mine ? [{ key: "for_my_item", label: "My item", sortable: true, allowWrap: true, minWidth: 220,
-            render: (r: PerfumeReviewRow) => <strong>{r.for_my_item ?? "—"}</strong> }] : []),
+            render: (r: PerfumeReviewRow) => <strong>{r.for_my_item ?? "—"}</strong> },
+            // Owner 2026-11-14: my own offer-list wording next to their line, to check the match.
+            { key: "for_my_desc", label: "My description", sortable: true, allowWrap: true, minWidth: 220,
+              render: (r: PerfumeReviewRow) => r.for_my_desc ?? "—" }] : []),
           { key: "vendor_name", label: "Vendor", sortable: true },
           { key: "row_no", label: "Row", sortable: true, defaultHidden: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
