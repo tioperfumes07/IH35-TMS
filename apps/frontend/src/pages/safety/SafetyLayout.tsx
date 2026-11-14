@@ -2,7 +2,8 @@ import { createContext, useContext, useMemo, useState } from "react";
 import { useEffect } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
-import { Link, Outlet, matchPath, useLocation, useNavigate } from "react-router-dom";
+import {Link, Outlet, matchPath, useLocation, useNavigate} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getLatestCsa, getSafetyKpis, getUserPreferences, patchUserPreferences } from "../../api/safety";
 import { AnomalyAlertBadge } from "../../components/safety/AnomalyAlertBadge";
 import { SAFETY_GROUPS, findSafetyTab, findSafetyTabByPath } from "../../components/safety/SAFETY_TABS_CONFIG";
@@ -48,6 +49,9 @@ export function useSafetyUiContext() {
 }
 
 export function SafetyLayout() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const location = useLocation();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
@@ -188,7 +192,7 @@ export function SafetyLayout() {
                   </button>
                   <span>Modules</span>
                   <span>&gt;</span>
-                  <Link to="/safety/home" className="hover:text-[#4B5563]">
+                  <Link to={safetyHref("/safety/home")} className="hover:text-[#4B5563]">
                     Safety
                   </Link>
                   {activeTabId === "home" ? null : (
