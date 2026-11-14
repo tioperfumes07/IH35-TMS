@@ -7,8 +7,8 @@
  *      with the same stagger would race for the same slot again (the 2026-09-06 defect, 3×);
  *   2. the bands match scripts/verify-verify-step-lane-band.mjs (cc-1 ≡1, cc-2 ≡3, cursor EVEN);
  *   3. the helper reads origin/main (git show / ls-tree) AND the local tree before picking;
- *   4. the registry write is a TEXTUAL append — JSON.stringify of the whole registry is forbidden
- *      (the file carries historical duplicate keys + non-ASCII that a re-serialize destroys);
+ *   4. appendEntry round-trips via JSON.parse(text) → add key → JSON.stringify(sorted) — no
+ *      string-splice and no re-serialize of the raw localRegistry/text/registry variable;
  *   5. the pure functions still behave (imports the module and runs the arithmetic).
  *
  * Usage: node scripts/verify-claim-helper-stagger.mjs [--selftest]
@@ -45,8 +45,8 @@ export function problemsForSource(src) {
   if (!/git\(\["show", `origin\/main:\$\{REGISTRY_REL\}`\]/.test(src)) p.push("helper must read CLAIMED-NUMBERS.json from origin/main (git show)");
   if (!/git\(\["ls-tree", "--name-only", "origin\/main"/.test(src)) p.push("helper must list origin/main verify-steps (git ls-tree)");
   if (!/fs\.readdirSync\(path\.join\(root, STEPS_DIR_REL\)\)/.test(src)) p.push("helper must also count local verify-step files");
-  if (/JSON\.stringify\((localRegistry|text|registry)\b/.test(src)) p.push("registry must never be re-serialized with JSON.stringify — textual append only");
-  if (!/export function appendEntry\(/.test(src) || !/text\.lastIndexOf\("\}"\)/.test(src)) p.push("appendEntry must append textually before the final brace");
+  if (/JSON\.stringify\((localRegistry|text|registry)\b/.test(src)) p.push("registry must never be re-serialized with JSON.stringify of the raw variable — use appendEntry");
+  if (!/export function appendEntry\(/.test(src) || !/JSON\.parse\(text\)/.test(src)) p.push("appendEntry must round-trip via JSON.parse(text) to prevent malformed key injection");
   return p;
 }
 
@@ -77,6 +77,7 @@ async function main() {
       ["origin/main file listing removed", src.replace('git(["ls-tree", "--name-only", "origin/main", `${STEPS_DIR_REL}/`], root)', '""')],
       ["local step files ignored", src.replace("fs.readdirSync(path.join(root, STEPS_DIR_REL))", "[]")],
       ["registry re-serialized", src.replace("fs.writeFileSync(path.join(root, REGISTRY_REL), appendEntry(localRegistry, n, s.claimedBy, purpose, date));", "fs.writeFileSync(path.join(root, REGISTRY_REL), JSON.stringify(localRegistry));")],
+      ["appendEntry reverts to string-splice", src.replace("const obj = JSON.parse(text);", 'const close = text.lastIndexOf("}");')],
       ["cursor band flipped", src.replace('cursor: { band: "even"', 'cursor: { band: "odd1"')],
     ];
     let caught = 0;
@@ -90,6 +91,6 @@ async function main() {
   }
   const problems = [...problemsForSource(src), ...(await behaviourProblems())];
   if (problems.length) { console.error(`FAIL ${LABEL}:`); for (const x of problems) console.error(`  - ${x}`); process.exit(1); }
-  console.log(`PASS ${LABEL} — every ≡1 seat has its own stagger; helper reads origin/main + local; registry append is textual`);
+  console.log(`PASS ${LABEL} — every ≡1 seat has its own stagger; helper reads origin/main + local; appendEntry round-trips via JSON.parse`);
 }
 main();

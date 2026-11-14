@@ -18,6 +18,13 @@ fi
 
 CHANGED_FILES=$(git diff --cached --name-only)
 
+# JSON-UNION-PARSE-GUARD (HARD BLOCK — 2026-11-13 Round 8.31)
+# Any staged file with merge=json-union that is not valid JSON breaks every seat's push.
+# GitHub's merge ignores the json-union driver so this is the first hard gate.
+if command -v node >/dev/null 2>&1 && [ -f scripts/verify-registry-json-parses.mjs ]; then
+  node scripts/verify-registry-json-parses.mjs --staged || exit 1
+fi
+
 # Migration rename/edit guard (HARD BLOCK — GAP-MIGRATION-RENAME-CI-GUARD)
 #
 # Rejects commits that rename or edit content of already-applied migrations.

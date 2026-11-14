@@ -78,15 +78,14 @@ export function pickNumber(seat, used) {
   while (used.has(n)) n += st;
   return n;
 }
-/** Pure: textual append before the final closing brace; never re-serializes the registry. */
+/** Pure: JSON.parse → add key (sorted) → JSON.stringify. Never string-splices the registry. */
 export function appendEntry(text, n, claimedBy, purpose, date) {
-  const close = text.lastIndexOf("}");
-  if (close < 0) throw new Error("registry has no closing brace");
-  const body = text.slice(0, close).replace(/\s+$/, "");
-  const needsComma = !body.endsWith("{") && !body.endsWith(",");
-  const entry =
-    `${needsComma ? "," : ""}\n  "${n}": {\n    "claimed_by": "${claimedBy}",\n    "claimed_at": "${date}",\n    "purpose": ${JSON.stringify(purpose)}\n  }\n}\n`;
-  return body + entry;
+  const obj = JSON.parse(text);
+  obj[String(n)] = { claimed_by: claimedBy, claimed_at: date, purpose };
+  const sorted = Object.fromEntries(
+    Object.entries(obj).sort(([a], [b]) => Number(a) - Number(b)),
+  );
+  return JSON.stringify(sorted, null, 2) + "\n";
 }
 
 function git(args, cwd) {
