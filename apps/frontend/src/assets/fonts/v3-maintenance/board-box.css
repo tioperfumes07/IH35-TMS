@@ -1,0 +1,5 @@
+/* V3 maintenance boards (docs/design/v3/maintenance-vehicle-graphics/*.dc.html) are authored on the browser's
+   default box model. The app's preflight sets border-box on every element; restore the board's content-box
+   inside board surfaces so a 56px row + 1px border renders 57px, exactly as on the board. The board root keeps
+   its own inline box-sizing: border-box; buttons keep the browser default border-box, as on the board. */
+[data-v3-board] *:not(button), [data-v3-board] *::before, [data-v3-board] *::after { box-sizing: content-box; }

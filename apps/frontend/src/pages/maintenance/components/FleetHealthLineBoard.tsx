@@ -7,12 +7,13 @@
 // TABLE_DATE_OMIT: one row per UNIT with its current health; NEXT PM is the projected PM date, not a record date.
 import type { CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { readFleetHealth } from "./fleet-health-source";
 import { toBoardRow, type BoardRow, type K } from "./fleet-health-board-rows";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import "../../../assets/fonts/v3-maintenance/fonts.css";
+import "../../../assets/fonts/v3-maintenance/board-box.css";
 
 const BSC = "'Barlow Semi Condensed'";
 
@@ -77,6 +78,7 @@ export function BoardTractor({ r }: { r: Pick<BoardRow, "cab" | "body" | "moving
 
 export function FleetHealthLineBoard({ companyId }: { companyId: string }) {
   const { pathname, search } = useLocation();
+  const navigate = useNavigate();
   const origin = currentOriginHref(pathname, search);
   const ret = (href: string) => withReturnContext(href, origin);
   const health = useQuery({ queryKey: ["maintenance", "fleet-health", companyId], queryFn: () => readFleetHealth(companyId), enabled: Boolean(companyId), staleTime: 60_000, refetchInterval: 180_000 });
@@ -91,7 +93,7 @@ export function FleetHealthLineBoard({ companyId }: { companyId: string }) {
   ];
   return (
     <div data-testid="fleet-health-line-board" data-v3-board="maintenance-vehicle-graphics/Main"
-      style={{ fontFamily: "'Barlow', system-ui, sans-serif", color: "#101828", background: "#E9EDF2", boxSizing: "border-box", padding: "20px 28px 28px" }}>
+      style={{ fontFamily: "'Barlow', system-ui, sans-serif", lineHeight: "normal", color: "#101828", background: "#E9EDF2", boxSizing: "border-box", padding: "20px 28px 28px" }}>
       <div style={{ maxWidth: 1440, margin: "0 auto", display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 14, flexWrap: "wrap" }}>
@@ -105,7 +107,7 @@ export function FleetHealthLineBoard({ companyId }: { companyId: string }) {
                 <span data-v3="t.label" style={{ font: `700 11px ${BSC}`, letterSpacing: ".08em", color: "#33415A" }}>{t.label}</span>
               </span>
             ))}
-            <Link data-v3="newWo" to={ret("/maintenance/work-orders/new")} style={{ display: "inline-flex", alignItems: "center", height: 36, padding: "0 16px", borderRadius: 9, border: 0, background: "#14213D", font: "600 13px 'Barlow'", color: "#FFFFFF", textDecoration: "none" }}>New work order</Link>
+            <button type="button" data-v3="newWo" onClick={() => navigate(ret("/maintenance/work-orders/new"))} style={{ height: 36, padding: "0 16px", borderRadius: 9, border: 0, background: "#14213D", font: "600 13px 'Barlow'", color: "#FFFFFF", cursor: "pointer" }}>New work order</button>
           </div>
         </div>
         {health.isError ? (
