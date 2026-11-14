@@ -90,6 +90,19 @@ export function VendorReportBoard() {
   const setCategories = (next: string[]) => patchUrl({ categories: next.length ? next.join(",") : null });
   const setUnitIds = (next: string[]) => patchUrl({ units: next.length ? next.join(",") : null });
   const withRet = (href: string) => withReturnContext(href, originHref);
+  const cohortHref = (patch: Record<string, string | null>) => {
+    const p = new URLSearchParams(searchParams);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v == null || v === "") p.delete(k);
+      else p.set(k, v);
+    }
+    const q = p.toString();
+    return withRet(`${pathname}${q ? `?${q}` : ""}`);
+  };
+  // ROUND 8.20 board25/31 — KPI tiles shareable href+ret (not onClick-only).
+  const spendViewHref = cohortHref({ view: null });
+  const categoryViewHref = cohortHref({ view: "category" });
+  const openViewHref = cohortHref({ view: "open" });
   const asOf = companyToday();
 
   const unitsQ = useQuery({
@@ -318,27 +331,27 @@ export function VendorReportBoard() {
       {ap.isError ? <ListErrorState title="Couldn't load A/P aging" {...formatQueryErrorDetail(ap.error)} onRetry={() => void ap.refetch()} /> : null}
 
       <ReportKpiGrid>
-        <V3KpiTile testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} onClick={() => setView("spend")} />
+        <V3KpiTile testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} href={spendViewHref} />
         <V3KpiTile
           testId="vr-kpi-spend"
           label="Spend"
           value={board.data ? money(spend) : "…"}
           sub={`${sumBy(spendRows, (r) => r.txns)} expenses`}
-          onClick={() => setView("spend")}
+          href={spendViewHref}
         />
         <V3KpiTile
           testId="vr-kpi-fuel-share"
           label="Fuel share"
           value={board.data ? pctLabel(board.data.kpis.fuel_share_pct) : "…"}
           sub={board.data ? `${money(board.data.kpis.fuel_cents)} on fuel accounts` : undefined}
-          onClick={() => setView("category")}
+          href={categoryViewHref}
         />
         <V3KpiTile
           testId="vr-kpi-open-bills"
           label="Open vendor bills"
           value={ap.data ? money(apTotal) : "…"}
           sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${mmmDd(asOf)}`}
-          onClick={() => setView("open")}
+          href={openViewHref}
         />
         {/* BOARD 31 (LEAD ROUND 8.25) — Card payables = what the company OWES the fuel-card issuers now (Dreamline 2510,
             WEX 2520 credit balances from readCardPayableBalances), never fuel SPEND. Fail-old (live): the tile showed
