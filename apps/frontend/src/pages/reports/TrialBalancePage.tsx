@@ -84,8 +84,7 @@ export function TrialBalancePage() {
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search } = useLocation();
-  const tbOriginHref = currentOriginHref(pathname, search);
+  const tbOriginHref = currentOriginHref(pathname, locSearch);
   // ROUND 8.20 board25 — Home Cash attaches ret=/reports?basis=cash; Back must restore it.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);

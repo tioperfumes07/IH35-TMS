@@ -28,7 +28,6 @@ export function BorderCrossingWizardPage() {
   const originHref = currentOriginHref(pathname, locSearch);
   const dispHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });

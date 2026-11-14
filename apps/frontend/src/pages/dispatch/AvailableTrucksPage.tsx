@@ -57,7 +57,6 @@ export function AvailableTrucksPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const dispHref = (target: string) => withReturnContext(target, originHref);
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
