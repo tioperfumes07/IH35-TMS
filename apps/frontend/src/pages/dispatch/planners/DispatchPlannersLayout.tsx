@@ -22,7 +22,6 @@ import {
 } from "./planner-range";
 import { usePlannerRange } from "./PlannerRangeContext";
 import { companyToday } from "../../../lib/businessDate";
-import { formatDateUS } from "../../../lib/formatDate";
 import { listAllCustomers } from "../../../api/catalog-customers";
 import { listAllDrivers, listAllUnits } from "../../../api/mdata";
 import { formatPersonName } from "../../../lib/formatPersonName";
@@ -54,11 +53,6 @@ const WEEKDAY_TOGGLES: Array<{ index: number; label: string }> = [
   { index: 6, label: "Sa" },
   { index: 0, label: "Su" },
 ];
-
-function shortDate(ymd: string): string {
-  // Round 7.6 — MM/DD/YYYY (not browser short month-day without year).
-  return formatDateUS(ymd) || "—";
-}
 
 /** LEAD 443.251 item 4 — "Show days" toggles, inside the Filters popover. */
 function PlannerShowDays() {
@@ -222,6 +216,13 @@ function PlannerEntityFilters({
 }
 
 /** LEAD 443.251 item 4 — active filters as removable chips under the bar. */
+const CHIP_MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** Board 12 chip: "Oct 20" (the year is the range's own; the Filters popover shows full dates). */
+function chipDate(ymd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  return m ? `${CHIP_MONTHS[Number(m[2]) - 1]} ${Number(m[3])}` : ymd;
+}
+
 function PlannerFilterChips() {
   const { range, setRange, hiddenWeekdays, setHiddenWeekdays, entityFilters, setEntityFilters } = usePlannerRange();
   const hiddenLabels = WEEKDAY_TOGGLES.filter((d) => hiddenWeekdays.includes(d.index)).map((d) => d.label);
@@ -232,7 +233,7 @@ function PlannerFilterChips() {
   return (
     <div className="flex flex-wrap items-center gap-1.5 text-xs" data-testid="planner-filter-chips">
       <span className="inline-flex items-center gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 py-0.5" data-testid="planner-chip-range">
-        {range.start === range.end ? shortDate(range.start) : `${shortDate(range.start)} – ${shortDate(range.end)}`}
+        {range.start === range.end ? chipDate(range.start) : `${chipDate(range.start)} → ${chipDate(range.end)}`}
         <button
           type="button"
           aria-label="Reset the date range"
@@ -436,18 +437,18 @@ function PlannerExportButtons() {
   const dateRange = `${range.start} to ${range.end}`;
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <button
         type="button"
         onClick={() => exportPlannerCsv(dateRange)}
-        className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        className="px-1 text-xs font-semibold text-slate-900 hover:underline"
       >
         Export CSV
       </button>
       <button
         type="button"
         onClick={() => window.print()}
-        className="rounded-sm border border-gray-300 bg-white px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        className="px-1 text-xs font-semibold text-slate-900 hover:underline"
       >
         Print
       </button>
@@ -476,17 +477,17 @@ export function DispatchPlannersLayout({ children }: { children?: ReactNode }) {
       <div data-testid="dispatch-planners-layout" className="w-full space-y-3">
         <PageHeader backHref={plannerBackHref}
           title="Dispatch Planners"
-          subtitle="Driver leave, truck availability, and load timeline — shared date range"
+          subtitle="Driver availability and load timeline — shared date range"
           actions={<PlannerExportButtons />}
         />
-        <nav aria-label="Dispatch planner views" className="flex min-w-0 gap-1 overflow-x-auto rounded-sm bg-[var(--planner-active)] p-1 text-xs">
+        <nav aria-label="Dispatch planner views" className="flex min-h-8 min-w-0 gap-0.5 overflow-x-auto bg-[#13233F] px-1.5 text-[11px] font-semibold" data-testid="dispatch-planners-tabs">
           {TABS.map((tab) => (
             <NavLink
               key={tab.to}
               // ROUND 8.20 board 12 — keep applied planner_* cohort query across Truck/Driver/Loads tabs.
               to={{ pathname: tab.to, search: location.search }}
               className={({ isActive }: { isActive: boolean }) =>
-                `flex h-7 shrink-0 items-center rounded-sm px-3 text-xs font-medium text-white ${isActive ? "bg-[var(--planner-tab-selected)]" : "hover:bg-[var(--planner-tab-hover)]"}`
+                `flex h-8 shrink-0 items-center border-b-2 px-2 text-white ${isActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85 hover:bg-white/10"}`
               }
             >
               {tab.label}

@@ -384,3 +384,10 @@
 .planner-grid-canonical .pg-col-resize:hover { background: #4B5563; opacity: 0.35; }
 /* LEAD 443.251 item 7 — "← started" / "continues →" inside a bar cut by the range. */
 .planner-grid-canonical .pg-bar-mark { font-size: 10px; font-weight: 600; opacity: 0.85; margin: 0 4px; white-space: nowrap; }
+
+/* ROUND 9.0 Board 12 (Dispatch-TruckPlanner.png): one header row "TUE OCT 20", red NOW line with its time. */
+.planner-grid-canonical .pg-dh.pg-dh-one { text-align: left; padding: 8px 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; }
+.planner-grid-canonical .pg-dh.pg-dh-one.today { color: var(--ink); }
+.planner-grid-canonical .pg-resize-overlay .pg-col-resize { pointer-events: auto; }
+.planner-grid-canonical .pg-tnow { background: #DC2626; width: 1.5px; z-index: 2; }
+.planner-grid-canonical .pg-tnow-label { position: absolute; top: 0; left: 4px; font-size: 9px; font-weight: 600; color: #DC2626; white-space: nowrap; line-height: 1; }

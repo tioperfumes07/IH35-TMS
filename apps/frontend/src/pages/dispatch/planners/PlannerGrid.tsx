@@ -8,8 +8,6 @@ import {
   isPlannerMonday,
   isPlannerMonthStart,
   isPlannerWeekend,
-  plannerMonthBands,
-  plannerWeekdayShort,
   todayYmdAmericaChicago,
 } from "./plannerTimeAxis";
 
@@ -199,7 +197,27 @@ export function dwellsFromDayMap(
   return out;
 }
 
-function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; dayPx: number }) {
+/** Minutes since local midnight in America/Chicago — where the red NOW line sits inside today's column. */
+function nowMinutesCentral(now = new Date()): number {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(now);
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  return h * 60 + m;
+}
+function nowClockCentral(now = new Date()): string {
+  return new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit", hour12: true }).format(now).replace(/\s?[AP]M$/, "");
+}
+const MONTH_SHORT = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const DOW_THREE = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+/** "TUE OCT 20" — the board's day header. */
+export function plannerDayHeaderLabel(isoYmd: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoYmd.trim());
+  if (!m) return isoYmd;
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
+  return `${DOW_THREE[d.getUTCDay()]} ${MONTH_SHORT[Number(m[2]) - 1]} ${Number(m[3])}`;
+}
+
+function TrackOverlays({ days, today, dayPx, showNowLabel = false }: { days: string[]; today: string; dayPx: number; showNowLabel?: boolean }) {
   return (
     <>
       {days.map((s, i) => {
@@ -215,7 +233,11 @@ function TrackOverlays({ days, today, dayPx }: { days: string[]; today: string; 
             ) : isPlannerMonday(s) ? (
               <div className="pg-wrule" style={{ left }} />
             ) : null}
-            {s === today ? <div className="pg-tnow" style={{ left }} /> : null}
+            {s === today ? (
+              <div className="pg-tnow" data-testid="planner-now-line" style={{ left: left + (dayPx * nowMinutesCentral()) / 1440 }}>
+                {showNowLabel ? <span className="pg-tnow-label">NOW {nowClockCentral()}</span> : null}
+              </div>
+            ) : null}
           </span>
         );
       })}
@@ -314,7 +336,6 @@ export function PlannerGrid({
   rowPx = PLANNER_ROW_PX,
 }: Props) {
   const today = todayYmdAmericaChicago();
-  const bands = plannerMonthBands(days);
   const scrollRef = useRef<HTMLDivElement>(null);
   // LEAD 443.251 item 6: left columns resizable by dragging their edge, persisted per user + planner.
   const plannerCtx = useOptionalPlannerRange();
@@ -542,58 +563,42 @@ export function PlannerGrid({
                   </span>
                 ) : null}
                 {hasActionColumn ? <span className="pg-frz-action" role="columnheader">{actionLabel ?? "Action"}</span> : null}
+                {/* Resize handles sit on the header row itself (the old second axis row is gone). */}
+                <div className="pg-resize-overlay" style={{ position: "absolute", inset: 0, pointerEvents: "none", display: "grid", gridTemplateColumns: frozenGridTemplate(hasSecondaryColumn, hasUnitColumn, hasStatusColumn, hasActionColumn, widths) }}>
+                  {shownColumns.map((c) => (
+                    <span key={c.key} className="pg-col-resize-cell">
+                      <span
+                        role="separator"
+                        aria-orientation="vertical"
+                        aria-label={`Resize ${c.header} column`}
+                        className="pg-col-resize"
+                        data-testid={`planner-col-resize-${c.key}`}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          startResize(c.key)(e);
+                        }}
+                      />
+                    </span>
+                  ))}
+                </div>
               </div>
-              {bands.map((b) => (
+              {/* ROUND 9.0 Board 12 — ONE header row: "TUE OCT 20" per drawn day (Dispatch-TruckPlanner.png). */}
+              {days.map((s) => (
                 <div
-                  key={b.key}
-                  className="pg-mon"
-                  style={{ width: b.span * dayPx, flex: `0 0 ${b.span * dayPx}px` }}
+                  key={s}
+                  className={`pg-dh pg-dh-one${isPlannerMonthStart(s) ? " mo" : isPlannerMonday(s) ? " wk" : ""}${isPlannerWeekend(s) ? " we" : ""}${s === today ? " today" : ""}`}
+                  data-testid="planner-axis-day"
                 >
-                  {b.label}
+                  {plannerDayHeaderLabel(s)}
                 </div>
               ))}
-            </div>
-            <div className="pg-arow" data-testid="planner-axis-day-row">
-              <div
-                className="pg-frz pg-frz-cols"
-                style={{ display: "grid", gridTemplateColumns: frozenGridTemplate(hasSecondaryColumn, hasUnitColumn, hasStatusColumn, hasActionColumn, widths) }}
-              >
-                {shownColumns.map((c) => (
-                  <span key={c.key} className="pg-col-resize-cell">
-                    <span
-                      role="separator"
-                      aria-orientation="vertical"
-                      aria-label={`Resize ${c.header} column`}
-                      className="pg-col-resize"
-                      data-testid={`planner-col-resize-${c.key}`}
-                      onMouseDown={(e) => {
-                        e.stopPropagation();
-                        startResize(c.key)(e);
-                      }}
-                    />
-                  </span>
-                ))}
-              </div>
-              {days.map((s) => {
-                const mo = isPlannerMonthStart(s);
-                const wk = isPlannerMonday(s);
-                return (
-                  <div
-                    key={s}
-                    className={`pg-dh${mo ? " mo" : wk ? " wk" : ""}${isPlannerWeekend(s) ? " we" : ""}${s === today ? " today" : ""}`}
-                  >
-                    <span className="w">{plannerWeekdayShort(s)}</span>
-                    <span className="n">{Number(s.slice(8, 10))}</span>
-                  </div>
-                );
-              })}
             </div>
           </div>
           ) : null}
           {sortedRows.length === 0 ? (
             <div className="pg-empty">{empty}</div>
           ) : (
-            sortedRows.map((row) => {
+            sortedRows.map((row, rowIndex) => {
               const stacked = stackPlannerBars(days, row.bars);
               return (
               <div
@@ -613,7 +618,7 @@ export function PlannerGrid({
                       "repeating-linear-gradient(to right, var(--rule-day) 0 1px, transparent 1px var(--day))",
                   }}
                 >
-                  <TrackOverlays days={days} today={today} dayPx={dayPx} />
+                  <TrackOverlays days={days} today={today} dayPx={dayPx} showNowLabel={rowIndex === 0} />
                   {(row.dwells ?? []).map((w) => {
                     const a = clampDayIndex(days, w.startYmd, "start");
                     const b = clampDayIndex(days, w.endYmd, "end");

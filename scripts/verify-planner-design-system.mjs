@@ -22,10 +22,13 @@ const original = Object.fromEntries(
 // contract tests themselves are unchanged.
 const contracts = [
   [
-    "DispatchPlannersLayout tabs use CSS variable active fill and 28px height",
+    // ROUND 9.0 Board 12 (owner 11-13-2026 "designs identical"): old: tabs on a CSS-variable fill, 28px.
+    //   new: the planner tab strip is the v3 design strip — navy #13233F, 32px (h-8) tabs, active rgba(255,255,255,.16)
+    //   box + white underline (Dispatch-TruckPlanner.dc.html). Still fails when the strip drifts from that source.
+    "DispatchPlannersLayout tabs use the v3 design strip (#13233F, 32px, white/16 active)",
     "layout",
-    (source) => source.includes("bg-[var(--planner-active)]") && source.includes("h-7") && source.includes("text-xs") && !source.includes("#14314F"),
-    (source) => source.replaceAll("bg-[var(--planner-active)]", "bg-slate-800"),
+    (source) => source.includes("bg-[#13233F]") && source.includes("h-8") && source.includes("bg-white/[.16]") && !source.includes("#14314F"),
+    (source) => source.replaceAll("bg-[#13233F]", "bg-slate-800"),
   ],
   [
     "PlannerRangeToolbar active range button uses CSS variable and 28px height",

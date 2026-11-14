@@ -81,6 +81,32 @@ function place(city: string | null, state: string | null) {
   return v || "—";
 }
 
+/** Board 13 table dates: "10/21" — the year is the filter's; exports keep MM/DD/YYYY. */
+export function monthDay(ymd: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd ?? ""));
+  return m ? `${m[2]}/${m[3]}` : "—";
+}
+
+const PILL: Record<string, string> = {
+  dispatched: "bg-[#EEF2FF] text-[#1D4ED8]",
+  in_transit: "bg-[#EEF2FF] text-[#1D4ED8]",
+  at_pickup: "bg-[#EEF2FF] text-[#1D4ED8]",
+  at_delivery: "bg-[#EEF2FF] text-[#1D4ED8]",
+  delivered: "bg-[#FFF7ED] text-[#C2410C]",
+  delivered_pending_docs: "bg-[#FFF7ED] text-[#C2410C]",
+  invoiced: "bg-[#ECFDF5] text-[#15803D]",
+  paid: "bg-[#ECFDF5] text-[#15803D]",
+  closed: "bg-[#ECFDF5] text-[#15803D]",
+  completed_docs_received: "bg-[#ECFDF5] text-[#15803D]",
+  cancelled: "bg-[#FEF2F2] text-[#B91C1C]",
+};
+/** Board 13 status pill — the load's own status, colored by stage (blue moving, amber docs, green billed). */
+function StatusPill({ status }: { status: string | null | undefined }) {
+  const key = String(status ?? "");
+  const label = key === "delivered_pending_docs" ? "Delivered · docs" : loadStatusLabel(status);
+  return <span className={`inline-flex rounded-sm px-1.5 py-0.5 text-xs font-medium ${PILL[key] ?? "bg-[#F1F3F6] text-[#374151]"}`}>{label}</span>;
+}
+
 /** Rate per loaded mile, in cents. */
 export function ratePerMileCents(revenueCents: number, miles: number | null | undefined): number | null {
   if (!miles || miles <= 0) return null;
@@ -239,7 +265,7 @@ export default function LoadHistoryBoardPage() {
         sortable: true,
         render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} data-testid={`load-history-load-${r.load_id}`} />,
       },
-      { key: "status", label: "Status", sortable: true, sortValue: (r) => r.status ?? "", render: (r) => cellButton(r, loadStatusLabel(r.status), `load-history-status-${r.load_id}`) },
+      { key: "status", label: "Status", sortable: true, sortValue: (r) => r.status ?? "", exportValue: (r) => loadStatusLabel(r.status), render: (r) => cellButton(r, <StatusPill status={r.status} />, `load-history-status-${r.load_id}`) },
       { key: "trip_type", label: "Trip", sortable: true, render: (r) => cellButton(r, r.trip_type ?? "—") },
       {
         key: "customer_name",
@@ -255,7 +281,7 @@ export default function LoadHistoryBoardPage() {
           ),
       },
       { key: "origin", label: "Origin", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", sortValue: (r) => place(r.origin_city, r.origin_state), render: (r) => cellButton(r, place(r.origin_city, r.origin_state)) },
-      { key: "pickup_date", label: "PU", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", render: (r) => cellButton(r, formatDateUS(r.pickup_date) || "—") },
+      { key: "pickup_date", label: "PU", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", exportValue: (r) => formatDateUS(r.pickup_date) || "", render: (r) => cellButton(r, monthDay(r.pickup_date)) },
       {
         key: "destination",
         label: "Destination",
@@ -265,7 +291,7 @@ export default function LoadHistoryBoardPage() {
         sortValue: (r) => place(r.destination_city, r.destination_state),
         render: (r) => cellButton(r, place(r.destination_city, r.destination_state)),
       },
-      { key: "delivery_date", label: "DEL", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", render: (r) => cellButton(r, formatDateUS(r.delivery_date) || "—") },
+      { key: "delivery_date", label: "DEL", sortable: true, className: "whitespace-nowrap text-left", cellClass: "whitespace-nowrap text-left", exportValue: (r) => formatDateUS(r.delivery_date) || "", render: (r) => cellButton(r, monthDay(r.delivery_date)) },
       {
         key: "driver_name",
         label: "Driver",
@@ -386,14 +412,15 @@ export default function LoadHistoryBoardPage() {
 
   return (
     <div className="space-y-3 p-4" data-testid="load-history-board">
-      <DispatchSubnav operatingCompanyId={companyId} />
+      {/* ROUND 9.0 Board 13 — header first, then the Dispatch tab strip (Dispatch-LoadHistory.dc.html). */}
       <PageHeader
         backHref={loadHistoryBackHref}
         title="Load history"
-        subtitle="every load ever booked · from the load hub (mdata.loads) · money from the load-cost rollup"
+        subtitle="every load ever booked · USMCA · from the load hub (mdata.loads)"
         breadcrumb={["Dispatch", "Load history"]}
         actions={<ImportLoadHistoryAction />}
       />
+      <DispatchSubnav operatingCompanyId={companyId} />
 
       <ReportFilterBar
         testIdPrefix="load-history"
@@ -492,7 +519,7 @@ export default function LoadHistoryBoardPage() {
           testId="load-history-kpi-loads"
           label="Loads"
           value={kpiValue(String(totals?.load_count ?? 0))}
-          sub={`${allBooked} booked · ${cancelled} cancelled`}
+          sub={<>{allBooked} booked · {cancelled} cancelled · <span className="font-semibold text-[#1D4ED8]">View all</span></>}
           href={includeCancelledHref}
           title="View all — include cancelled loads"
         />
@@ -533,16 +560,17 @@ export default function LoadHistoryBoardPage() {
           testId="load-history-kpi-not-invoiced"
           label="Delivered, not invoiced"
           value={kpiValue(String(totals?.delivered_not_invoiced ?? 0))}
-          sub="open list"
+          tone={(totals?.delivered_not_invoiced ?? 0) > 0 ? "amber" : "ink"}
+          sub={<>docs pending · <span className="font-semibold text-[#1D4ED8]">Open list</span></>}
           href="/dispatch/awaiting-bol-invoice"
         />
       </div>
 
-      <div className={selected ? "grid gap-3 xl:grid-cols-[minmax(0,1fr)_420px]" : ""}>
+      <div className="space-y-3">
         <ParityTable
           appearance="board"
           rows={rows}
-          title={`${total} loads · newest first · every cell opens its record`}
+          title={<span>{total} loads <span className="text-xs font-normal text-[#5B6576]">newest first · {rows.length} shown · sortable · every cell opens its record</span></span>}
           columns={columns}
           rowKey={(r) => r.load_id}
           loading={query.isPending}

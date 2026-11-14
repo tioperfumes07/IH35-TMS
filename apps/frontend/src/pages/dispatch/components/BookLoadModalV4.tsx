@@ -702,6 +702,18 @@ export function BookLoadModalV4({
   const mileageSource = form.watch("mileage_source");
   const reservedLoadNumber = form.watch("reserved_load_number");
   const factoringCompanyVendorId = form.watch("factoring_company_vendor_id");
+  const [notesOpen, setNotesOpen] = useState(false);
+  /** Board 14 rail: a section is complete when its required facts are on the form (A customer + linehaul,
+   *  B truck + driver, C practical miles + every stop's appointment date). D runs on save; E is optional. */
+  const sectionDone = (letter: string): boolean => {
+    if (letter === "A") return Boolean(watchedCustomerId) && Number(linehaul ?? 0) > 0;
+    if (letter === "B") return Boolean(assignedUnitId) && Boolean(assignedPrimaryDriverId);
+    if (letter === "C") {
+      const list = (stops as Array<{ appointment_start_at?: string | null }> | undefined) ?? [];
+      return Number(milesPractical ?? 0) > 0 && list.length >= 2 && list.every((st) => Boolean(st?.appointment_start_at));
+    }
+    return false;
+  };
   const pickupStop = (stops ?? []).find((s) => s.stop_type === "pickup") ?? (stops ?? [])[0];
   const deliveryStop = (stops ?? []).find((s) => s.stop_type === "delivery") ?? (stops ?? [])[1];
   const originCity = String(pickupStop?.city ?? "").trim();
@@ -2246,13 +2258,13 @@ export function BookLoadModalV4({
                       form.clearErrors("trip_type");
                     }}
                     className={`flex min-w-0 items-center gap-2.5 rounded-sm border px-2.5 py-2 text-left transition-colors ${
-                      active ? "border-2 border-[#1F2A44] bg-[#EEF1F6]" : "border-[#E5E7EB] bg-[var(--surface-unselected)] hover:bg-[var(--surface-hover)]"
+                      active ? "border-2 border-[#13233F] bg-white" : "border-[#DDE1E7] bg-white hover:bg-[#F7F8FA]"
                     }`}
                   >
                     <span
                       aria-hidden
                       className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-sm text-xs ${
-                        active ? "bg-[#1F2A44] text-white" : "bg-[#F3F4F6] text-[#4B5563]"
+                        active ? "bg-[#13233F] text-white" : "bg-white text-[#13233F]"
                       }`}
                     >
                       {icon}
@@ -2383,6 +2395,9 @@ export function BookLoadModalV4({
               >
                 {BOOK_LOAD_SECTION_RAIL.map((sec) => {
                   const active = activeBookLoadSection === sec.id;
+                  // ROUND 9.0 Board 14 — rail state from the form itself: ✓ + green dot when the section's required
+                  // facts are entered, amber dot while it is the open section, plain letter otherwise (never guessed).
+                  const done = sectionDone(sec.letter);
                   return (
                     <button
                       key={sec.id}
@@ -2394,10 +2409,16 @@ export function BookLoadModalV4({
                         active ? "border border-[#DDE1E7] bg-white" : "border border-transparent"
                       }`}
                     >
-                      <span className="inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] bg-[#13233F] text-section-header font-bold text-white">
-                        {sec.letter}
+                      <span
+                        className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] text-section-header font-bold ${
+                          done || active ? "bg-[#13233F] text-white" : "border border-[#DDE1E7] bg-white text-[#5B6576]"
+                        }`}
+                        data-testid={`book-load-rail-${sec.letter.toLowerCase()}-${done ? "done" : "open"}`}
+                      >
+                        {done ? "✓" : sec.letter}
                       </span>
                       <span className="min-w-0 flex-1 leading-snug text-[#0F1219]">{sec.label}</span>
+                      {done ? <span aria-label="complete" className="h-2 w-2 shrink-0 rounded-full bg-[#15803D]" /> : active ? <span aria-label="in progress" className="h-2 w-2 shrink-0 rounded-full bg-[#C2410C]" /> : null}
                     </button>
                   );
                 })}
@@ -2433,7 +2454,7 @@ export function BookLoadModalV4({
                       Both share the ONE extraction path and fill the same editable draft. */}
                   {!editLoadId ? (
                     <div className="space-y-1">
-                      <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">Upload rate confirmation (auto-fills this load)</label>
+                      <label className="text-section-header font-semibold text-[#5B6576]">Upload rate confirmation (auto-fills this load)</label>
                       <RateConUploadPanel
                         operatingCompanyId={operatingCompanyId}
                         onPrefill={(prefill, _response, uploadedFile) => {
@@ -2481,7 +2502,7 @@ export function BookLoadModalV4({
                       block in §E (Documents). The duplicate button-panel affordance was removed here. */}
 
                   <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563] md:col-span-2">
+                    <label className="text-section-header font-semibold text-[#5B6576] md:col-span-2">
                       Customer
                       <input type="hidden" {...form.register("customer_id", { required: "Select a customer from the list" })} />
                       <div className="mt-0.5">
@@ -2529,11 +2550,11 @@ export function BookLoadModalV4({
                       </div>
                       {form.formState.errors.customer_id?.message ? <span className="mt-0.5 block normal-case tracking-normal text-red-600">{form.formState.errors.customer_id.message}</span> : null}
                     </label>
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Customer WO #
                       <input {...form.register("customer_wo_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Pickup #
                       <input {...form.register("pickup_number")} className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs" />
                     </label>
@@ -2554,7 +2575,7 @@ export function BookLoadModalV4({
                     {/* Customer type + freight identity — belong in §A with the customer/charges.
                         Restored 2026-09-03 after an unauthorized move into §B. Pieces is on this
                         same row as Weight (v4 mockup + owner 2026-09-03). */}
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Broker / Direct
                       <div className="mt-0.5 flex h-8 w-max shrink-0 overflow-hidden rounded-sm border border-gray-300 bg-white text-section-header">
                         <label className={`flex cursor-pointer items-center px-3 ${loadType === "broker" ? "bg-[#1F2A44] text-white" : "text-gray-700"}`}>
@@ -2567,7 +2588,7 @@ export function BookLoadModalV4({
                         </label>
                       </div>
                     </label>
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Commodity
                       <div className="mt-0.5" data-testid="book-load-commodity-picker">
                         <ReferenceSelect
@@ -2597,7 +2618,7 @@ export function BookLoadModalV4({
                       </div>
                       <input type="hidden" {...form.register("commodity")} />
                     </label>
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Weight (lbs)
                       <NumberInput
                         value={form.watch("weight_lbs")}
@@ -2607,7 +2628,7 @@ export function BookLoadModalV4({
                         className="mt-0.5 w-full"
                       />
                     </label>
-                    <label className="text-section-header font-bold uppercase tracking-[0.4px] text-[#4B5563]">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Pieces
                       <input
                         {...form.register("pieces")}
@@ -2620,7 +2641,7 @@ export function BookLoadModalV4({
                         the normal create path (owner 2026-09-03). Gate: editLoadId only. */}
                     {editLoadId ? (
                       <>
-                        <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        <label className="text-section-header font-semibold text-[#5B6576]">
                           Historical driver import (inactive drivers only)
                           <input
                             {...form.register("historical_import_driver_id")}
@@ -2629,7 +2650,7 @@ export function BookLoadModalV4({
                             className="mt-0.5 h-8 w-full rounded-sm border border-gray-300 px-2 text-xs normal-case"
                           />
                         </label>
-                        <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
+                        <label className="text-section-header font-semibold text-[#5B6576]">
                           Historical import reason
                           <div className="mt-0.5">
                             <ReferenceSelect
@@ -2770,7 +2791,7 @@ export function BookLoadModalV4({
                     if (stopsForExtraRates.length <= 2) return null;
                     return (
                       <div data-testid="section-a-extra-rates" className="space-y-1">
-                        <p className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Per-stop extra rates</p>
+                        <p className="text-section-header font-semibold text-[#5B6576]">Per-stop extra rates</p>
                         {stopsForExtraRates.map((stopRow, i) => (
                           <div key={i} className="border-b border-gray-200 p-1">
                             <div className="text-xs font-semibold text-gray-600">
@@ -2792,14 +2813,14 @@ export function BookLoadModalV4({
                     if (withLumper.length === 0) return null;
                     return (
                       <div data-testid="section-a-lumper-responsibility" className="space-y-1">
-                        <p className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">Lumper responsibility</p>
+                        <p className="text-section-header font-semibold text-[#5B6576]">Lumper responsibility</p>
                         {lumperProvidersQuery.isError ? <ListErrorBanner message="Could not load lumper providers." onRetry={() => void lumperProvidersQuery.refetch()} /> : null}
                         {withLumper.map(({ s, i }) => (
                           <div key={i} className="grid grid-cols-1 items-end gap-2 border-b border-gray-200 p-1 md:grid-cols-4">
                             <div className="text-xs font-semibold text-gray-600">
                               Stop {i + 1} · {s?.stop_type === "delivery" ? "Delivery" : "Pickup"}
                             </div>
-                            <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-section-header font-semibold text-[#5B6576]">
                               Lumper paid by
                               <SelectCombobox {...form.register(`stops.${i}.lumper_paid_by`)} className="mt-0.5 h-8 w-full text-xs">
                                 <option value="carrier">Carrier</option>
@@ -2809,7 +2830,7 @@ export function BookLoadModalV4({
                                 <option value="unknown">Unknown</option>
                               </SelectCombobox>
                             </label>
-                            <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
+                            <label className="text-section-header font-semibold text-[#5B6576]">
                               Lumper provider
                               <ReferenceSelect
                                 size="sm"
@@ -2837,8 +2858,9 @@ export function BookLoadModalV4({
                       removed from the wizard — a broker advance is diesel, driver pay, or a repair (three
                       categories, three accounts) and belongs in Load Costs, not one box at booking. Factoring
                       company stays. */}
-                  <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                    <label className="text-section-header font-semibold uppercase tracking-[0.4px] text-gray-500">
+                  {/* ROUND 9.0 Board 14 — one row: Factoring company · Hazmat · Special notes (+ Add, optional). */}
+                  <div className="grid grid-cols-1 items-start gap-2 md:grid-cols-3" data-testid="book-load-factoring-row">
+                    <label className="text-section-header font-semibold text-[#5B6576]">
                       Factoring company
                       {/*
                         LST-PICKER-01 / CLS-SILENT-CAP: EntityPicker server-search + allowCreate →
@@ -2861,22 +2883,28 @@ export function BookLoadModalV4({
                         />
                       </div>
                     </label>
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-section-header font-semibold text-[#5B6576]">Hazmat</span>
+                      <label className="mt-1 flex items-center gap-2 text-xs text-[#111827]">
+                        <input type="checkbox" {...form.register("hazmat")} data-testid="book-load-hazmat" />
+                        {form.watch("hazmat") ? "Yes" : "No"}
+                      </label>
+                    </div>
+                    <div className="flex flex-col gap-0.5" data-testid="book-load-special-notes">
+                      <span className="text-section-header font-semibold text-[#5B6576]">Special notes</span>
+                      {notesOpen || String(form.watch("notes") ?? "").trim() ? (
+                        <textarea
+                          {...form.register("notes")}
+                          aria-label="Special notes"
+                          className="min-h-[48px] w-full resize-y rounded-sm border border-gray-300 px-2 py-1 text-xs"
+                        />
+                      ) : (
+                        <button type="button" className="mt-1 text-left text-xs font-semibold text-[#1D4ED8]" onClick={() => setNotesOpen(true)} data-testid="book-load-special-notes-add">
+                          + Add (optional)
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <label className="flex items-center gap-2 text-section-header text-gray-700">
-                    <input type="checkbox" {...form.register("hazmat")} />
-                    Hazmat
-                  </label>
-
-                  <label className="flex min-h-[64px] flex-1 flex-col gap-0.5" data-testid="book-load-special-notes">
-                    <span className="text-section-header font-bold text-[#1F2733]">
-                      Special notes <span className="font-normal text-[#8A93A1]">optional</span>
-                    </span>
-                    <textarea
-                      {...form.register("notes")}
-                      className="min-h-[48px] w-full flex-1 resize-none rounded-sm border border-gray-300 px-2 py-1 text-xs"
-                    />
-                  </label>
                 </div>
               </section>
 
@@ -3052,6 +3080,8 @@ export function BookLoadModalV4({
               </div>
             </section>
 
+            {/* ROUND 9.0 Board 14 — D and E side by side (Dispatch-BookLoad-Modal.png). */}
+            <div className="grid grid-cols-1 items-start gap-3 lg:grid-cols-[1.35fr_1fr]" data-testid="book-load-de-grid">
             <section className="blw-sec" data-testid="book-load-section-d">
               <div className="blw-sec-hd">
                 <span className="blw-sec-chip">D</span>
@@ -3200,6 +3230,7 @@ export function BookLoadModalV4({
                 </p>
               </div>
             </section>
+            </div>
             </div>
           </div>
 
