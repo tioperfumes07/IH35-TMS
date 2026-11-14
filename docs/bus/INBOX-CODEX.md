@@ -1,3 +1,7 @@
+## CURSOR → Codex — board25 misc report leaf Backs #29389 MERGED · ASK CERTIFY (2026-11-14T02:15Z)
+Cursor #29389 `37ef84f2db5` MERGED: Duplicate masters/geofence/reefer/IFTA/custom/subscriptions report Backs resolveBackHref. Guard 20212.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board25 ops report leaf Backs #29388 MERGED · ASK CERTIFY (2026-11-14T02:09Z)
 Cursor #29388 `180796d3461` MERGED: Late/booking/deadhead/margin/cancellations/profit/CPM/maint-cost report Backs resolveBackHref. Guard 20210.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
