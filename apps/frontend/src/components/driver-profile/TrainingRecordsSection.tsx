@@ -1,7 +1,8 @@
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatQuantityTable } from "../../lib/money";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 
 function statusClass(status: string | undefined) {
   if (status === "red") return "text-red-700";
@@ -25,6 +26,9 @@ export function TrainingRecordsSection({
   unavailable?: boolean;
   onAddTraining?: () => void;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const rows: TrainingRecordRow[] = records.map((row, index) => ({
     ...row,
     __rowKey: `${String(row.type ?? "training")}-${index}`,
@@ -74,7 +78,7 @@ export function TrainingRecordsSection({
         {totalCount > rows.length ? (
           <div className="mt-2 flex items-center justify-between text-xs" data-testid="driver-training-records-range-disclosure">
             <span className="text-gray-600">Showing {formatQuantityTable(rows.length, 0)} of {formatQuantityTable(totalCount, 0)} records.</span>
-            <Link className="font-medium text-[#1F2A44] underline" to={`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`}>
+            <Link className="font-medium text-[#1F2A44] underline" to={safetyHref(`/safety/training-records?driver_id=${encodeURIComponent(driverId)}`)}>
               Open full training history
             </Link>
           </div>

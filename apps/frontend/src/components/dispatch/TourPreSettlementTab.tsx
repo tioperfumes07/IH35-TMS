@@ -2,7 +2,14 @@ import { settlementLabel } from "../../lib/settlementNumber";
 import { formatPersonName } from "../../lib/formatPersonName";
 import { useRef, useState, type ReactNode } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
+
+function RetDispLink({ to, className, children, ...rest }: { to: string; className?: string; children?: React.ReactNode; [key: string]: unknown }) {
+  const { pathname, search: locSearch } = useLocation();
+  const href = withReturnContext(to, currentOriginHref(pathname, locSearch));
+  return <Link to={href} className={className} {...rest}>{children}</Link>;
+}
 import { TourMilesPanel } from "./TourMilesPanel";
 import { closeTour, getTourReadout, getTourReadoutForLoad, type TourReadout } from "../../api/tourReadout";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -36,6 +43,9 @@ const periodLabel = (t: TourReadout["tour"]): string | null => {
 
 /** Keyed by a load (drawer) OR by a settlement (Load costs board → Pre-Settlement tab, LDT-TABS). Same readout either way. */
 export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId, currencyCode = "USD" }: { loadId?: string; settlementId?: string; operatingCompanyId: string; currencyCode?: "USD" | "MXN" }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
@@ -75,15 +85,15 @@ export function TourPreSettlementTab({ loadId, settlementId, operatingCompanyId,
   const readyTarget = (key: string): { kind: string; title: string; go: () => void } => {
     switch (key) {
       case "has_nb":
-        return { kind: "nb-load", title: `Open the NB load ${nbLeg?.load_number ?? ""}`, go: () => navigate(loadUrl(nbLeg?.load_id)) };
+        return { kind: "nb-load", title: `Open the NB load ${nbLeg?.load_number ?? ""}`, go: () => navigate(dispHref(loadUrl(nbLeg?.load_id))) };
       case "sb_delivered":
-        return { kind: "truck-line-assign", title: `Assign / attach the SB return load (Truck Line, ${t.unit_number ?? "this truck"})`, go: () => navigate(`/dispatch?view=truck-line${t.unit_number ? `&q=${encodeURIComponent(t.unit_number)}` : ""}`) };
+        return { kind: "truck-line-assign", title: `Assign / attach the SB return load (Truck Line, ${t.unit_number ?? "this truck"})`, go: () => navigate(dispHref(`/dispatch?view=truck-line${t.unit_number ? `&q=${encodeURIComponent(t.unit_number)}` : ""}`)) };
       case "pods":
-        return { kind: "pod-documents", title: `POD documents for load ${podLeg?.load_number ?? ""} (view + upload)`, go: () => navigate(loadUrl(podLeg?.load_id, "Documents")) };
+        return { kind: "pod-documents", title: `POD documents for load ${podLeg?.load_number ?? ""} (view + upload)`, go: () => navigate(dispHref(loadUrl(podLeg?.load_id, "Documents"))) };
       case "costs_complete":
         return { kind: "tour-costs", title: "The costs on these loads (account · vendor · receipt)", go: () => setPopup({ title: "Costs on this tour", body: <CostsPop r={r} cur={currencyCode} /> }) };
       case "driver_pay":
-        return { kind: "driver-bills", title: `Driver bills for the tour (load ${payLeg?.load_number ?? ""})`, go: () => navigate(loadUrl(payLeg?.load_id, "Costs")) };
+        return { kind: "driver-bills", title: `Driver bills for the tour (load ${payLeg?.load_number ?? ""})`, go: () => navigate(dispHref(loadUrl(payLeg?.load_id, "Costs"))) };
       case "real_miles":
         return { kind: "miles-panel", title: "Our database miles, Google shortest + practical, real driven, and which one the bill uses", go: () => setPopup({ title: "Miles on this tour", body: <TourMilesPanel legs={r.legs} operatingCompanyId={operatingCompanyId} /> }) };
       default:
@@ -241,7 +251,7 @@ function LegPop({ leg, cur }: { leg: TourReadout["legs"][number]; cur: string })
     {([["Load", <EntityLink kind="load" id={leg.load_id} label={leg.load_number} />], ["Leg", leg.trip_type ?? DASH], ["Lane", leg.lane || DASH], ["Status", `${leg.status}${leg.is_delivered ? " · delivered" : ""}`],
       ["Revenue (rate)", money(leg.revenue_cents, cur)], ["Costs", `${money(leg.costs_cents, cur)} · ${leg.cost_count} entries`], ["Driver pay", money(leg.driver_pay_cents, cur)], ["Margin", money(leg.margin_cents, cur)], ["Margin %", pct(leg.margin_pct)],
       ["Practical · short · deadhead · real miles", `${miles(leg.miles_practical)} · ${miles(leg.miles_shortest)} · ${miles(leg.miles_deadhead)} · ${miles(leg.miles_real)}`], ["PODs on file", String(leg.pod_count)]] as Array<[string, ReactNode]>).map(([k, v]) => <div key={k} className="ldt-row"><span>{k}</span><span className="ldt-m">{v}</span></div>)}
-    <div className="ldt-row"><span /><span className="ldt-m"><Link className="ldt-link" to={`/dispatch/loads/${leg.load_id}?tab=Costs`}>open the load's costs ↗</Link></span></div>
+    <div className="ldt-row"><span /><span className="ldt-m"><RetDispLink className="ldt-link" to={`/dispatch/loads/${leg.load_id}?tab=Costs`}>open the load's costs ↗</RetDispLink></span></div>
   </div>;
 }
 
@@ -252,7 +262,7 @@ function CostsPop({ r, cur }: { r: TourReadout; cur: string }) {
   return <div className="ldt-rows ldt-rows-4">
     <div className="ldt-note" data-testid="tour-entries-readonly">
       Entries are read-only here — a tour's costs are the expenses and bills on its loads. Add or fix one on the load:{" "}
-      {legs.map((l, i) => <span key={l.load_id}>{i ? " · " : ""}<Link className="ldt-link" data-testid="tour-entries-add-link" to={`/dispatch/loads/${encodeURIComponent(l.load_id)}?tab=Costs`}>+ Add on load {l.load_number}</Link></span>)}
+      {legs.map((l, i) => <span key={l.load_id}>{i ? " · " : ""}<RetDispLink className="ldt-link" data-testid="tour-entries-add-link" to={`/dispatch/loads/${encodeURIComponent(l.load_id)}?tab=Costs`}>+ Add on load {l.load_number}</RetDispLink></span>)}
     </div>
     <div className="ldt-row head"><span>Number · vendor · category</span><span>Load</span><span>State</span><span className="ldt-m">Amount</span></div>
     {r.costs.map((c) => <div key={`${c.kind}:${c.id}`} className="ldt-row"><span><EntityLink kind={c.kind} id={c.id} label={c.number} /> · {c.vendor_name ?? "no vendor"} · {c.category ?? "no account"}</span><span className="ldt-k">{c.load_number ?? DASH}</span><span><span className={`ldt-pill ${c.receipt_count ? "ok" : "warn"}`}>{c.posting_status}{c.receipt_count ? "" : " · no receipt"}</span></span><span className="ldt-m">{money(c.amount_cents, cur)}</span></div>)}

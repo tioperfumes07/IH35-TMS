@@ -150,7 +150,7 @@ export function DispatchLoadCostsPanel({ operatingCompanyId }: Props) {
               render: (row) => (
                 <>
                   <EntityLink kind="load" id={row.load.id} label={entityLabel(row.load.load_number, row.load.id, "Load")} />{" "}
-                  <Link className="dpo-link" to={`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`}>Costs</Link>
+                  <Link className="dpo-link" to={dispHref(`/dispatch/loads/${encodeURIComponent(row.load.id)}?tab=Costs`)}>Costs</Link>
                 </>
               ),
             },

@@ -8,6 +8,7 @@
  * prove the door exists with a static regex — same pattern as PROG-NAV-01's original fix.
  */
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import "./program-module-nav.css";
 import { structuralParentHref } from "../../lib/structuralBreadcrumb";
 
@@ -20,7 +21,9 @@ export type ProgramNavTab =
 
 export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
   const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   return (
     <nav className="program-module-nav" data-testid="program-module-nav" aria-label="Program module">
       {/* ROUND 367.9 — Up is structural; Shell owns the breadcrumb trail. */}
@@ -40,7 +43,7 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
           Scenario tracker
         </span>
       ) : (
-        <Link className="program-module-nav__tab" to="/program" data-testid="program-nav-scenario">
+        <Link className="program-module-nav__tab" to={sysHref("/program")} data-testid="program-nav-scenario">
           Scenario tracker
         </Link>
       )}
@@ -49,7 +52,7 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
           Module matrix
         </span>
       ) : (
-        <Link className="program-module-nav__tab" to="/program/matrix" data-testid="program-nav-matrix">
+        <Link className="program-module-nav__tab" to={sysHref("/program/matrix")} data-testid="program-nav-matrix">
           Module matrix
         </Link>
       )}
@@ -58,7 +61,7 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
           Build progress
         </span>
       ) : (
-        <Link className="program-module-nav__tab" to="/program/tracker" data-testid="program-nav-tracker">
+        <Link className="program-module-nav__tab" to={sysHref("/program/tracker")} data-testid="program-nav-tracker">
           Build progress
         </Link>
       )}
@@ -67,7 +70,7 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
           Module completion
         </span>
       ) : (
-        <Link className="program-module-nav__tab" to="/program/modules" data-testid="program-nav-modules">
+        <Link className="program-module-nav__tab" to={sysHref("/program/modules")} data-testid="program-nav-modules">
           Module completion
         </Link>
       )}
@@ -78,7 +81,7 @@ export function ProgramModuleNav({ active }: { active: ProgramNavTab }) {
       ) : (
         <Link
           className="program-module-nav__tab"
-          to="/program/final-additions"
+          to={sysHref("/program/final-additions")}
           data-testid="program-nav-final"
         >
           Final additions

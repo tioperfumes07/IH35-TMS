@@ -1,6 +1,7 @@
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../parity/ParityTable";
 import { StatusBadge } from "../layout/StatusBadge";
@@ -45,6 +46,9 @@ export type PostingGridRow = {
  * gear toggle) rather than removed — Rule "remove nothing."
  */
 export function PostingGrid({ postings, storageKey }: { postings: PostingGridRow[]; storageKey: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   let debitTotalCents = 0;
   let creditTotalCents = 0;
   for (const p of postings) {
@@ -67,7 +71,7 @@ export function PostingGrid({ postings, storageKey }: { postings: PostingGridRow
       sortable: true,
       sortValue: (p) => p.account_name || "",
       render: (p) => (
-        <Link to={`/accounting/chart-of-accounts/register/${p.account_id}`} className="text-[#1F2A44] hover:underline" onClick={(e) => e.stopPropagation()}>
+        <Link to={moneyHref(`/accounting/chart-of-accounts/register/${p.account_id}`)} className="text-[#1F2A44] hover:underline" onClick={(e) => e.stopPropagation()}>
           {entityLabel(p.account_name, p.account_id, "Account")}
         </Link>
       ),
@@ -157,6 +161,9 @@ export function JournalPostingsPanel({
   sourceTransactionId: string;
   operatingCompanyId: string | null | undefined;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const query = useQuery({
     queryKey: ["accounting", "journal-entry-postings-by-source", operatingCompanyId, sourceTransactionType, sourceTransactionId],
     queryFn: () => getJournalEntryPostingsBySource(sourceTransactionType, sourceTransactionId, operatingCompanyId!),
@@ -175,7 +182,7 @@ export function JournalPostingsPanel({
         {groups.map((group) => (
           <div key={group.journal_entry_id} className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-gray-600">
-              <Link to={`/accounting/journal-entries/${group.journal_entry_id}`} className="text-[#1F2A44] hover:underline">
+              <Link to={moneyHref(`/accounting/journal-entries/${group.journal_entry_id}`)} className="text-[#1F2A44] hover:underline">
                 JE {formatDateUS(group.entry_date)}
               </Link>
               {group.status === "voided" ? <StatusBadge variant="neutral">Voided</StatusBadge> : null}

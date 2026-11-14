@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { DUTY_LABEL, fetchEldLiveDutyRoster, type HosRosterDriver } from "../../../api/eld";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
@@ -19,6 +20,9 @@ function formatMinutes(min: number | null | undefined): string {
 type Props = { operatingCompanyId: string };
 
 export function LiveDutyTab({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const date = companyToday();
   const query = useQuery({
     queryKey: ["eld", "live-duty", operatingCompanyId, date],
@@ -81,7 +85,7 @@ export function LiveDutyTab({ operatingCompanyId }: Props) {
         key: "action",
         label: "Action",
         render: (row) => (
-          <Link to={`/drivers/${row.driver_id}/hos`} className="font-semibold text-[#1F2A44] hover:underline">
+          <Link to={drvHref(`/drivers/${row.driver_id}/hos`)} className="font-semibold text-[#1F2A44] hover:underline">
             Drill-down
           </Link>
         ),

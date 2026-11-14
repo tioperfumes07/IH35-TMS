@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getEscrowDriverBalances,
   getEscrowDriverTimeline,
@@ -49,6 +50,9 @@ function dash(v: string | number | null | undefined) {
  * Right rail: Both sides of the entry (display only) + Release rules (Save + Close).
  */
 export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalance }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const { pushToast } = useToast();
   const [selectedDriverId, setSelectedDriverId] = useState<string | null>(null);
   const [releaseDriverId, setReleaseDriverId] = useState<string | null>(null);
@@ -124,7 +128,7 @@ export function DriverEscrowBoardSection({ operatingCompanyId, driverEscrowBalan
       sortable: true,
       sortValue: (row) => entityLabel(row.driver_name, row.driver_id, "Driver"),
       render: (row) => (
-        <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
+        <Link to={drvHref(`/drivers/${row.driver_id}`)} className="text-[#1F2A44] hover:underline">
           {entityLabel(row.driver_name, row.driver_id, "Driver")}
         </Link>
       ),

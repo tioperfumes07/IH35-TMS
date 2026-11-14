@@ -1,4 +1,4 @@
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getIdentityProfile, patchIdentityOnboarding } from "../../api/identity";
@@ -7,7 +7,9 @@ import { useToast } from "../../components/Toast";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 export function UserProfileSettingsPage() {
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/settings" });
@@ -56,7 +58,7 @@ export function UserProfileSettingsPage() {
         <h2 className="text-xs font-semibold text-[#0F1219]">Notifications</h2>
         <p className="mt-1 text-xs text-[#4B5563]">Control email, SMS, WhatsApp, in-app, and quiet hours.</p>
         <div className="mt-3">
-          <Link className="text-xs font-medium text-[#1F2A44] hover:underline" to="/settings/notifications">
+          <Link className="text-xs font-medium text-[#1F2A44] hover:underline" to={sysHref("/settings/notifications")}>
             Open notification preferences →
           </Link>
         </div>

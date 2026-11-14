@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -50,6 +51,9 @@ function emptyLine(): LineDraft {
 }
 
 export function FinanceScenariosPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_SCENARIOS_FLAG, companyId);
@@ -160,7 +164,7 @@ export function FinanceScenariosPage() {
         key: "name",
         label: "Name",
         render: (row) => (
-          <Link to={`/finance/scenarios/${row.id}`} className="font-medium text-[#1F2A44] hover:underline">
+          <Link to={moneyHref(`/finance/scenarios/${row.id}`)} className="font-medium text-[#1F2A44] hover:underline">
             {row.name}
           </Link>
         ),

@@ -10,7 +10,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { type EntityKind } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useStagedListFilters } from "../../components/table";
 import { SelectCombobox } from "../../components/Combobox";
 
@@ -187,6 +188,9 @@ function ExpandedEventDetail({ row }: { row: SpineEvent }) {
 }
 
 export function AuditTrailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams] = useSearchParams();
@@ -268,7 +272,7 @@ export function AuditTrailPage() {
         <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-3" data-testid="audit-trail-exact-event">
           <div className="flex items-center justify-between gap-2">
             <h2 className="text-xs font-semibold text-[#0F1219]">Selected audit event</h2>
-            <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/audit/trail">Clear event target</Link>
+            <Link className="text-xs font-semibold text-[#1F2A44] underline" to={sysHref("/audit/trail")}>Clear event target</Link>
           </div>
           {exactAuditQuery.isLoading ? <p className="mt-2 text-xs text-gray-500">Loading selected audit event…</p> : null}
           {exactAuditQuery.isError ? (

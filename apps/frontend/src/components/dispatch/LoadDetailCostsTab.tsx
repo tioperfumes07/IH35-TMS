@@ -148,6 +148,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const bankHref = (target: string) => withReturnContext(target, originHref);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const [drafts, setDrafts] = useState<Draft[]>([blankDraft()]);
   const [popup, setPopup] = useState<null | { title: string; body: ReactNode }>(null);
   const [fuelAssignmentQuestion, setFuelAssignmentQuestion] = useState<FuelAssignmentQuestion | null>(null);
@@ -470,7 +471,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
 
       {canEdit ? <div className="ldt-actions">
         <button type="button" className="ldt-btn p" data-testid="load-costs-add-another" onClick={() => addDraft("expense")}>+ Add another cost</button>
-        <Link className="ldt-btn" data-testid="load-costs-add-from-receipt" to={`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`}>+ Add from a receipt photo</Link>
+        <Link className="ldt-btn" data-testid="load-costs-add-from-receipt" to={moneyHref(`/accounting/receipts?load_id=${encodeURIComponent(load.id)}`)}>+ Add from a receipt photo</Link>
         <button type="button" className="ldt-btn g" data-testid="load-costs-add-fuel-advance" onClick={() => addDraft("fuel_advance")}>+ Fuel advance (company expense)</button>
       </div> : null}
 
@@ -495,7 +496,7 @@ export function LoadDetailCostsTab({ load, canEdit, canEditReason }: { load: Loa
           {!liveExpenses.length && !liveBills.length ? <div className="ldt-row"><span className="ldt-muted">Nothing for the bank yet — save a cost and it becomes a candidate for the match.</span><span /></div> : null}
         </div>
       </div>
-      {savedCount || savedAdvances.length ? <Link className="ldt-link" to={`/accounting/expenses?load_id=${encodeURIComponent(load.id)}`}>Open saved costs</Link> : null}
+      {savedCount || savedAdvances.length ? <Link className="ldt-link" to={moneyHref(`/accounting/expenses?load_id=${encodeURIComponent(load.id)}`)}>Open saved costs</Link> : null}
     </>
 
     {popup ? <div className="ldt-modal-backdrop" onClick={() => setPopup(null)} data-testid="load-costs-popup">

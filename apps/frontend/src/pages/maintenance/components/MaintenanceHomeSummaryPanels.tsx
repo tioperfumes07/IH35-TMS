@@ -1,6 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
+
+function RetMaintLink({ to, className, children }: { to: string; className?: string; children?: React.ReactNode }) {
+  const { pathname, search: locSearch } = useLocation();
+  const href = withReturnContext(to, currentOriginHref(pathname, locSearch));
+  return <Link to={href} className={className}>{children}</Link>;
+}
 import {
   getArrivingSoon,
   listMaintenancePredictiveAlerts,
@@ -67,9 +73,9 @@ function arrivalsColumns(pmRows: MaintPmDueRow[], pmSource: "ready" | "loading" 
       label: "",
       render: row => (
         // D24 deep link: MaintenanceHome opens Create Work Order as a modal for this unit.
-        <Link to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(row.unit_id)}`} className="text-xs font-semibold text-[#1D4ED8]" data-testid={`maintenance-home-arrival-schedule-${row.unit_id}`}>
+        <RetMaintLink to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(row.unit_id)}`} className="text-xs font-semibold text-[#1D4ED8]" data-testid={`maintenance-home-arrival-schedule-${row.unit_id}`}>
           Schedule WO
-        </Link>
+        </RetMaintLink>
       ),
     },
   ];

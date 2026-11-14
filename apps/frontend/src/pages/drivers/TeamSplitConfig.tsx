@@ -10,7 +10,8 @@ import { entityLabel } from "../../lib/entity-label";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
 import { useStagedListFilters } from "../../components/table";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { FORM_LABEL_CLASS } from "../../components/forms/inputClass";
 
 type Props = {
@@ -40,6 +41,9 @@ export function TeamSplitConfigPanel() {
 }
 
 export function TeamSplitConfig({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams, setSearchParams] = useSearchParams();
   const teamId = searchParams.get("team_id");
   // LST-F5185 — visible EntityPicker (URL-only ?driver_id= is not reverse chrome).
@@ -212,7 +216,7 @@ export function TeamSplitConfig({ operatingCompanyId }: Props) {
         </Button>
       </div>
       {teamId || driverId || staged.dirty ? (
-        <Link className="text-xs font-semibold text-[#1F2A44] underline" to="/drivers/team-splits">
+        <Link className="text-xs font-semibold text-[#1F2A44] underline" to={drvHref("/drivers/team-splits")}>
           Clear driver/config target
         </Link>
       ) : null}

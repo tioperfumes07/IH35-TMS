@@ -283,7 +283,7 @@ export function InvoiceDetailPage() {
             : entityLabel(line.income_account_name, line.account_id, "Account");
         return (
           <Link
-            to={`/accounting/chart-of-accounts/register/${line.account_id}`}
+            to={moneyHref(`/accounting/chart-of-accounts/register/${line.account_id}`)}
             className="text-[#1F2A44] hover:underline"
             onClick={(event) => event.stopPropagation()}
           >
@@ -703,7 +703,7 @@ export function InvoiceDetailPage() {
                 {(invoiceCreditMemosQuery.data?.credit_memos ?? []).map((cm, i) => (
                   <span key={cm.id}>
                     {i ? ", " : ""}
-                    <Link to={`/accounting/credit-memos?credit_memo_id=${encodeURIComponent(cm.id)}`} className="underline">{cm.display_id}</Link>{" "}
+                    <Link to={moneyHref(`/accounting/credit-memos?credit_memo_id=${encodeURIComponent(cm.id)}`)} className="underline">{cm.display_id}</Link>{" "}
                     {formatUsdCents(cm.amount_cents)} ({cm.status})
                   </span>
                 ))}
