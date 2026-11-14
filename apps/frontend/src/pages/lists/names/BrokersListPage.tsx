@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { catalogListSearchQueryOptions } from "../../../hooks/catalogListSearchQueryOptions";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { listAllCustomers, type Customer } from "../../../api/mdata";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable } from "../../../components/parity/ParityTable";
@@ -33,6 +34,9 @@ function statusPillClass(status: string) {
 }
 
 export function BrokersListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -135,7 +139,7 @@ export function BrokersListPage() {
           columns={columns}
           rows={rows}
           rowKey={(row) => row.id}
-          onRowClick={(row) => navigate(`/customers/${row.id}`)}
+          onRowClick={(row) => navigate(moneyHref(`/customers/${row.id}`))}
           loading={query.isLoading}
           storageKey="names-brokers"
           title={status.length !== 1 ? "All entries" : status[0] === "inactive" ? "Inactive entries" : "Active entries"}

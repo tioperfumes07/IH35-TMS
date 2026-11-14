@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createSafetyIncident,
@@ -116,6 +117,9 @@ export function CargoClaimIntakeSurface({
   title,
   subtitle,
 }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { user } = useAuth();
@@ -370,7 +374,7 @@ export function CargoClaimIntakeSurface({
               kind="customer"
               id={String(row.claimant_customer_id)}
               label={entityLabel(row.claimant_customer_name ?? customerNameById.get(String(row.claimant_customer_id)), row.claimant_customer_id, "Customer")}
-              onClick={() => navigate(`/customers/${String(row.claimant_customer_id)}`)}
+              onClick={() => navigate(moneyHref(`/customers/${String(row.claimant_customer_id)}`))}
             />
           ) : (
             "—"
@@ -1106,7 +1110,7 @@ export function CargoClaimIntakeSurface({
                     kind="customer"
                     id={String(detail.claimant_customer_id)}
                     label={entityLabel(customerNameById.get(String(detail.claimant_customer_id)), detail.claimant_customer_id, "Customer")}
-                    onClick={() => navigate(`/customers/${String(detail.claimant_customer_id)}`)}
+                    onClick={() => navigate(moneyHref(`/customers/${String(detail.claimant_customer_id)}`))}
                   />
                 ) : (
                   "—"

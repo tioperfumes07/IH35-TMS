@@ -18261,5 +18261,10 @@
     "claimed_at": "2026-11-14T04:36:59Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 TS hotfix PreSettlementsPanel viewAllHref + unused navigate"
+  },
+  "20276": {
+    "claimed_at": "2026-11-14T04:40:01Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 brokers/cargo-claim customer drills withReturnContext"
   }
 }
