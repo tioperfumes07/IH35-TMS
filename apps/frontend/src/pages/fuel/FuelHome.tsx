@@ -39,6 +39,8 @@ async function fetchFraudSummary(companyId: string): Promise<FraudSummary> {
 export function FuelFraudAlertsKpiCard() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
 
   const summaryQuery = useQuery({
     queryKey: ["fuel", "fraud-alerts", "summary", companyId],
@@ -66,7 +68,8 @@ export function FuelFraudAlertsKpiCard() {
       spark={<FuelFraudBadge hasOpenCritical={openCritical > 0} />}
       tone={openCritical > 0 ? "red" : "ink"}
       testId="fuel-fraud-alerts-kpi"
-      href="/fuel/fraud-alerts"
+      // ROUND 8.20 board19 — fraud KPI must carry ret (parity with card-overage KPI).
+      href={withReturnContext("/fuel/fraud-alerts", originHref)}
     />
   );
 }
