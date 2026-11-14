@@ -20,7 +20,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMultiSelect";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -78,6 +78,9 @@ type Props = {
 
 export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const location = useLocation();
+  // ROUND 8.20 board19 — expense-map View-all shareable href+ret.
+  const expenseOriginHref = currentOriginHref(location.pathname, location.search);
+  const expenseMapViewAllHref = withReturnContext("/accounting/settings/expense-category-map", expenseOriginHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
@@ -565,7 +568,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             title="Expense mapping"
             subtitle="Map fuel card spend to GL expense categories for posting"
             testId="fuel-expense-map-open-v3-panel"
-            onViewAll={() => navigate("/accounting/settings/expense-category-map")}
+            viewAllHref={expenseMapViewAllHref}
             viewAllLabel="Open expense category map →"
           >
             <div className="px-3 py-3 text-xs text-gray-700">

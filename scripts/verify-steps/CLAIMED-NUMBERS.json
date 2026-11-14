@@ -16207,6 +16207,11 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 UnexpectedExpenses + Profitability View-all href+ret"
   },
+  "20256": {
+    "claimed_at": "2026-11-14T03:51:31Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Drivers settlements View-all + FuelPlanner expense-map View-all href+ret"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
