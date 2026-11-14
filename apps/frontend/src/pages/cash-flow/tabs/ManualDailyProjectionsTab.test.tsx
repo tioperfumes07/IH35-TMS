@@ -181,4 +181,26 @@ describe("ManualDailyProjectionsTab opening cash (443.283)", () => {
     releaseOpening?.();
     await waitFor(() => expect(screen.getByTestId("cash-flow-mdp-save-projection")).not.toBeDisabled());
   });
+
+  it("ROUND 8.20 board8: Bank/Income/Expense/Net KPIs drill bank accounts + cash_flow_manual cohorts", async () => {
+    listForecastEntries.mockResolvedValue({ entries: [] });
+    getForecastOpeningBalance.mockResolvedValue({ operating_company_id: COMPANY_ID, amount_cents: 0, as_of_date: null });
+    getBankingTiles.mockResolvedValue({ tiles: [] });
+    getCashFlowOpeningCash.mockResolvedValue({
+      opening_cash_cents: 100,
+      accounts: [{ id: "bofa", display_name: "USMCA FREIGHT", source: "plaid", cents: 100 }],
+    });
+    renderTab();
+    const bank = await screen.findByTestId("cash-flow-mdp-v3-kpi-bank");
+    expect(bank.getAttribute("href")).toContain("/banking/bank-accounts");
+    expect(bank.getAttribute("href")).toContain("ret=");
+    const income = screen.getByTestId("cash-flow-mdp-v3-kpi-income");
+    expect(income.getAttribute("href")).toContain("tab=manual_daily_projections");
+    expect(income.getAttribute("href")).toContain("direction=income");
+    const expense = screen.getByTestId("cash-flow-mdp-v3-kpi-expense");
+    expect(expense.getAttribute("href")).toContain("direction=expense");
+    const net = screen.getByTestId("cash-flow-mdp-v3-kpi-net");
+    expect(net.getAttribute("href")).toContain("tab=manual_daily_projections");
+    expect(net.getAttribute("href")).not.toContain("direction=");
+  });
 });

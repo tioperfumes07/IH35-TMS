@@ -18016,5 +18016,10 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-factoring-faro-import-money-drills board18"
+  },
+  "20182": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-mdp-kpi-money-drills board8"
   }
 }
