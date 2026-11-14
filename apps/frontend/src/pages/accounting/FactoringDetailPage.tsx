@@ -33,7 +33,7 @@ import { OnlineBankingMatchBanner } from "../../components/accounting/OnlineBank
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
 
 import { formatUsdCents } from "../../lib/money";
-import { resolveBackHref } from "../../lib/returnContext";
+import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -58,9 +58,11 @@ type ActionKind = "advance" | "reserve_held" | "release" | "recourse" | "void";
 // footer. Presentational only — every mutationFn branch and payload field above is untouched.
 
 export function FactoringDetailPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.17 class R — fee/Fees-tab drills attach `ret`; Back must restore Fees origin, not Home.
   const factoringBackHref = resolveBackHref({
@@ -368,7 +370,7 @@ export function FactoringDetailPage() {
           columns={invoiceColumns}
           rows={detail.invoices}
           rowKey={(invoice) => invoice.id}
-          onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+          onRowClick={(invoice) => navigate(acctHref(`/accounting/invoices/${invoice.id}`))}
           loading={query.isFetching && !query.data}
           emptyText="No invoices linked to this factoring batch."
           density="compact"

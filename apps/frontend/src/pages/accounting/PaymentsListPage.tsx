@@ -3,7 +3,8 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listPayments, type Payment, type PaymentMethod } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { BulkProgressDialog } from "../../components/bulk";
@@ -79,6 +80,9 @@ const METHOD_OPTIONS: Array<{ value: "" | PaymentMethod | "factoring"; label: st
 ];
 
 export function PaymentsListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -375,7 +379,7 @@ export function PaymentsListPage() {
           rows={rows}
           rowKey={(row) => row.id}
           loading={query.isPending || (query.isFetching && rows.length === 0)}
-          onRowClick={(row) => navigate(`/accounting/payments/${row.id}`)}
+          onRowClick={(row) => navigate(acctHref(`/accounting/payments/${row.id}`))}
           filterBar={filterBar}
           suppressToolbarSearch
           exportFilename="payments"
@@ -451,7 +455,7 @@ export function PaymentsListPage() {
           onClose={() => setRecordOpen(false)}
           onRecorded={(paymentId) => {
             setRecordOpen(false);
-            navigate(`/accounting/payments/${paymentId}`);
+            navigate(acctHref(`/accounting/payments/${paymentId}`));
           }}
         />
       ) : null}

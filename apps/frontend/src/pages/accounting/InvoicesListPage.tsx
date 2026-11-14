@@ -1,7 +1,8 @@
 import { formatDateUS, formatCalendarDateUS } from "../../lib/formatDate";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { ArrowRightCircle } from "lucide-react";
@@ -173,6 +174,9 @@ function invoiceFilterFromSearchParams(searchParams: URLSearchParams): {
 }
 
 export function InvoicesListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -767,7 +771,7 @@ export function InvoicesListPage() {
           rows={invoices}
           rowKey={(row) => row.id}
           loading={query.isPending || (query.isFetching && invoices.length === 0)}
-          onRowClick={(row) => navigate(`/accounting/invoices/${row.id}`)}
+          onRowClick={(row) => navigate(acctHref(`/accounting/invoices/${row.id}`))}
           filterBar={filterBar}
           suppressToolbarSearch
           suppressToolbarRange
@@ -906,7 +910,7 @@ export function InvoicesListPage() {
               setOpenModalType(null);
               clearCreateDeepLink();
               void query.refetch();
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(acctHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <DriverMiscInvoiceModal
@@ -920,7 +924,7 @@ export function InvoicesListPage() {
               setOpenModalType(null);
               clearCreateDeepLink();
               void query.refetch();
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(acctHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <VendorChargebackModal
@@ -934,7 +938,7 @@ export function InvoicesListPage() {
               setOpenModalType(null);
               clearCreateDeepLink();
               void query.refetch();
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(acctHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <CustomerAdjustmentModal
@@ -948,7 +952,7 @@ export function InvoicesListPage() {
               setOpenModalType(null);
               clearCreateDeepLink();
               void query.refetch();
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(acctHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <ManualInvoiceModal
@@ -962,7 +966,7 @@ export function InvoicesListPage() {
               setOpenModalType(null);
               clearCreateDeepLink();
               void query.refetch();
-              navigate(`/accounting/invoices/${invoiceId}`);
+              navigate(acctHref(`/accounting/invoices/${invoiceId}`));
             }}
           />
           <InvoiceCreateModal

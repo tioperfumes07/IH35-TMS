@@ -3,7 +3,8 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { formatDateUS } from "../../lib/formatDate";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listFactoringAdvances, type FactoringAdvance } from "../../api/accounting";
 import { Button } from "../../components/Button";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -52,6 +53,9 @@ function statusPill(status: FactoringAdvance["status"]) {
 }
 
 export function FactoringListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   // LINK-F5171/LINK-F5184: factoring:accounting.list reverse — a load can drill into its own
@@ -265,7 +269,7 @@ export function FactoringListPage() {
             rows={rows}
             rowKey={(row) => row.id}
             loading={query.isPending || (query.isFetching && rows.length === 0)}
-            onRowClick={(row) => navigate(`/accounting/factoring/${row.id}`)}
+            onRowClick={(row) => navigate(acctHref(`/accounting/factoring/${row.id}`))}
             suppressToolbarSearch
             exportFilename="factoring-advances"
             storageKey="factoring-list"
@@ -287,7 +291,7 @@ export function FactoringListPage() {
           onCreated={(batchId) => {
             setSubmitOpen(false);
             void query.refetch();
-            navigate(`/accounting/factoring/${batchId}`);
+            navigate(acctHref(`/accounting/factoring/${batchId}`));
           }}
         />
       ) : null}
