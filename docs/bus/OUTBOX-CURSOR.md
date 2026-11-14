@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T23:20Z) — ROUND 9.4 boards 12–20 PRs shipped · LIVE reader pending deploy
+ROUND 9.4 2026-11-14T23:20Z · boards DONE (reader 0/0): none yet (LIVE PROOF pending deploy) · shipped PRs: 12 #29562 MERGED · 13 #29563 MERGED · 14/15 #29565 MERGED · 16 #29568 · 17 #29569 · 18 #29575 · 19 #29576 · 20 Insurance PR opening · next: Chrome LIVE proofs at 1440×900 missing:0 mismatches:0 + SHA in each PR · no link waves · no prod writes
+
 ## OUTBOX (2026-11-14T23:30Z) — ROUND 9.4 checkpoint · Board 12 Truck Planner identical port shipping
 ROUND 9.4 2026-11-14T23:30Z · boards DONE (reader 0/0): none yet · in progress: 12 Truck Planner — V3 shell (PageHeader v3 + NavyPageSubNav + Filters · N + V3Panel board + Measured) on branch cursor/r94-board12-truck-planner; PR opening next; reader pending deploy LIVE PROOF · next 13 Load History · no link waves · no prod writes
 ## OUTBOX (2026-11-14T23:30Z) — ROUND 9.4 · Board 12+#13 PRs open · reader LIVE pending deploy
