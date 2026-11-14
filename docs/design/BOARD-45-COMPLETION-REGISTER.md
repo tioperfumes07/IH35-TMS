@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:35Z) — Cursor board18 #29357
+| Board | Status | Evidence |
+|---|---|---|
+| 18 Factoring aging_basis | READY | #29357 `47d8f5c0866` ?aging_basis= URL SoT; verify 20174 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-13T23:46Z) — Cursor board9 #29354
 | Board | Status | Evidence |
 |---|---|---|
