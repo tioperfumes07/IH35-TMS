@@ -8,6 +8,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
@@ -317,6 +318,7 @@ const TOUR_COLUMNS = (state: "open" | "closed", _companyId: string, _rows: reado
  */
 export function SettlementsToursRegister({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
+  const [search, setSearch] = useState("");
   const [searchParams, setSearchParams] = useSearchParams();
   // 443.280-A — Open / Closed are own Settlements tabs (?tab=open|closed). Prefer tab over legacy tour_state.
   const tabHint =
@@ -420,6 +422,26 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
       </span>
     );
   }, [c.kpiDriverPaySubDown, c.kpiDriverPaySubFlat, c.kpiDriverPaySubSum, c.kpiDriverPaySubUp, kpiBaseQuery.isError, kpiSettlements, periodStart]);
+
+  const filteredRows = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return rows;
+    return rows.filter((r) => {
+      const hay = [
+        r.driver_name,
+        r.unit_number,
+        r.display_id,
+        r.settlement_id,
+        tourLabel(r),
+        waitingOnReason(r),
+        ...(r.legs ?? []).map((l) => l.load_number),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      return hay.includes(q);
+    });
+  }, [rows, search]);
 
   const panelTitle = state === "closed" ? "Closed settlements" : "Open tours · pre-settlements";
 
@@ -529,8 +551,18 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               </button>
             ))}
           </div>
-          <button type="button" data-testid="settlements-tours-filter-btn" style={{ height: 28, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Filters ▾</button>
-          <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 28, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Export</button>
+          <MoneyListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search settlements…"
+            searchTestId="settlements-tours-search-input"
+            activeFilterCount={0}
+            onClearAll={() => setSearch("")}
+            testIdPrefix="settlements-tours"
+          >
+            <button type="button" data-testid="settlements-tours-filter-btn" style={{ height: 36, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Filters ▾</button>
+            <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 36, padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", display: "inline-flex", alignItems: "center" }}>Export</button>
+          </MoneyListToolbar>
         </div>
       </div>
 
@@ -549,8 +581,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           </div>
         ) : (
           <ParityTable appearance="board"
-            columns={TOUR_COLUMNS(state, companyId, rows)}
-            rows={rows}
+            columns={TOUR_COLUMNS(state, companyId, filteredRows)}
+            rows={filteredRows}
             rowKey={(r) => r.settlement_id}
             loading={activeQ.isLoading}
             emptyText={state === "open" ? "No open tours — a tour opens when a driver is assigned to a load." : "No closed tours yet — close a tour from the Pre-Settlement tab."}
