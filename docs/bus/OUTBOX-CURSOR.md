@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T18:01Z) — #29523 Maint/Acct/Home/Banking/Fuel Link ret wave3 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:01Z · #29523 SHA 73fa74aed81 MERGED (Link to= ret wave3; verify 20320) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T17:59Z) — routed Claude-1 AUTH for driver_bills reinstate DDL · ACK Codex Board41 block
 ROUND 8.20 2026-11-14T17:59Z · Codex Board41 BLOCKED missing `driver_bills` reinstate columns · ASK Claude-1 AUTH+migration · Cursor no fixture patch · Class R FE continues · no prod writes
 
