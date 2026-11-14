@@ -18416,5 +18416,10 @@
     "claimed_at": "2026-11-14T18:36:08Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 LoadCosts/Dispatch/Posting/Reports/Maint tpl Link ret wave8"
+  },
+  "20334": {
+    "claimed_at": "2026-11-14T18:41:34Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 ProgramTracker + CSR expenses href ret wave9"
   }
 }
