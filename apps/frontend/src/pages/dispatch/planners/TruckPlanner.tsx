@@ -264,7 +264,7 @@ export function TruckPlanner() {
         <h2 className="text-xs font-semibold text-[#111827]">Truck planner — {formatQuantityTable(days.length, 0)} selected day{days.length === 1 ? "" : "s"} fill the full width</h2>
         <div className="flex items-center gap-3">
           <PlannerViewToggle viewMode={viewMode} onChange={setViewMode} />
-          <Link to="/dispatch/loads" className="text-xs font-semibold text-blue-700">View all →</Link>
+          <Link to={dispHref("/dispatch/loads")} className="text-xs font-semibold text-blue-700">View all →</Link>
         </div>
       </div>
       {isLoading ? <div className="text-xs text-gray-500">Loading truck grid…</div> : null}

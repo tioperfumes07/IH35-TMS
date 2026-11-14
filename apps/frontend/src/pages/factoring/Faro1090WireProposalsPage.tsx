@@ -6,7 +6,8 @@
  */
 import { useMemo, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useLocation, useSearchParams, Link } from "react-router-dom";
+import {useLocation, useSearchParams, Link} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { resolveBackHref } from "../../lib/returnContext";
 import {
   dryRunAcceptFaro1090WireProposal,
@@ -43,6 +44,9 @@ function classTone(c: Faro1090WireProposalClass): string {
 }
 
 export function Faro1090WireProposalsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board18 — honor ?ret= from Factoring Home (fallback /factoring).
@@ -208,7 +212,7 @@ export function Faro1090WireProposalsPage() {
         title="Faro 1090 wire proposals"
         subtitle="ENG-17 BUILD-ONLY — propose / pick wire candidates for unmatched purchases. Matches deferred (owner BUILD-FIRST)."
         actions={
-          <Link to="/factoring/payments-to-you" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+          <Link to={moneyHref("/factoring/payments-to-you")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             Payments to You →
           </Link>
         }

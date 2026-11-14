@@ -469,7 +469,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
             ← Back to driver list
           </button>
         ) : (
-          <Link to="/drivers?subtab=profiles" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+          <Link to={drvHref("/drivers?subtab=profiles")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             ← Back to DQF profiles
           </Link>
         )}
@@ -556,7 +556,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
                 Back to list
               </button>
             ) : (
-              <Link to="/drivers/roster" className="text-xs font-semibold text-[#4B5563] hover:underline">
+              <Link to={drvHref("/drivers/roster")} className="text-xs font-semibold text-[#4B5563] hover:underline">
                 All drivers
               </Link>
             )}
@@ -981,7 +981,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Complaints" ? (
         <div className="space-y-3" data-testid="dp-tab-complaints">
           <div className="flex justify-end">
-            <Link to={`/safety/complaints?driver_id=${id}`} className="text-xs font-semibold text-[#1F2A44] hover:underline">
+            <Link to={drvHref(`/safety/complaints?driver_id=${id}`)} className="text-xs font-semibold text-[#1F2A44] hover:underline">
               View all
             </Link>
           </div>
@@ -1046,7 +1046,7 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
       {activeTab === "Driver disputes" ? (
         <div className="space-y-3" data-testid="dp-tab-driver-disputes">
           <div className="flex justify-end">
-            <Link to="/drivers/disputes" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+            <Link to={drvHref("/drivers/disputes")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
               View all
             </Link>
           </div>
