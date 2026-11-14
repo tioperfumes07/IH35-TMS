@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 // TABLE_DATE_OMIT: this table has no date column by design (not a time-series view).
 
 import { useMemo } from "react";
@@ -9,6 +10,7 @@ import { ReportsSubNav } from "./ReportsSubNav";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { formatQueryErrorDetail } from "../../lib/tableError";
+import { resolveBackHref } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { entityLabel } from "../../lib/entity-label";
 import { formatUsdCents } from "../../lib/money";
@@ -27,6 +29,10 @@ function money(cents: number) {
 }
 
 export function PostedWhileTourOpenReportPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -101,7 +107,7 @@ export function PostedWhileTourOpenReportPage() {
       <PageHeader
         title="Posted while tour open"
         subtitle="LAW §2 — documents that posted before their load's tour closed. Read-only: the owner confirms before any reversal runs."
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Posted while tour open"]}
         actions={
           <Button size="sm" variant="secondary" onClick={() => window.print()}>

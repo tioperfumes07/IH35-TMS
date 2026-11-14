@@ -1,3 +1,5 @@
+import { resolveBackHref } from "../../lib/returnContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
@@ -24,6 +26,10 @@ function withCompany(path: string, companyId: string) {
 }
 
 export function CustomReportBuilder() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -98,7 +104,7 @@ export function CustomReportBuilder() {
       <PageHeader
         title="Custom report builder"
         subtitle="Drag fields, choose filters, save to your Saved list"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Custom Report Builder"]}
       />
 

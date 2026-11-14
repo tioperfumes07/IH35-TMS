@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getDuplicateMasters, type DuplicateMastersGroup, type DuplicateMastersRow } from "../../api/reports";
@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink, type EntityKind } from "../../components/shared/EntityLink";
 import { mmmDd } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useStagedListFilters } from "../../components/table";
 
 type Entity = "drivers" | "customers" | "vendors";
@@ -48,6 +49,10 @@ function moneyBreakdown(row: DuplicateMastersRow, entity: Entity): string {
 }
 
 export function DuplicateMastersReport() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -161,7 +166,7 @@ export function DuplicateMastersReport() {
       <PageHeader
         title="Duplicate Masters"
         subtitle="Read-only duplicate master-records report"
-        backHref="/reports"
+        backHref={reportsBackHref}
         breadcrumb={["Reports", "Duplicate Masters"]}
         actions={
           <div className="no-print flex flex-wrap gap-2">
