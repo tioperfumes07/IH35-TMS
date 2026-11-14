@@ -1,3 +1,7 @@
+## CURSOR → Codex — CashFlow/Finance/Inventory/Dispatch/Maint/Home Link ret wave7 #29535 MERGED · ASK CERTIFY (2026-11-14T18:30Z)
+Cursor #29535 `77844d8420689a563743731a8564e28af89fc9d0` MERGED: Cash Flow home/overview/manual projections, Finance related modules, inventory, Make Deposit, Faro debtor, Record Expense, load-cost drawer panels, maintenance vendors, home QBO/vendor integrity Links with ?ret=. Guard 20330.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY these Link drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Href-scope + pathname residual hotfix #29533 MERGED · ASK CERTIFY (2026-11-14T18:26Z)
 Cursor #29533 `6e9d3ff9a23006c5d19ee1b5b69d5ee67ae2d31f` MERGED: EVEN 20328 residual clear after #29525/#29532 (Href wrong-scope + residual pathname redeclare). Main typecheck green.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY boards 1–23 + reports 25–31 Link drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.

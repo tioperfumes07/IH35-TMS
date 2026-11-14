@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T18:30Z) — #29535 CashFlow/Finance/Inventory/Dispatch/Maint/Home Link ret wave7 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:30Z · #29535 SHA 77844d8420689a563743731a8564e28af89fc9d0 MERGED (Link to= ret wave7; verify 20330) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T18:26Z) — #29533 Href-scope/pathname residual hotfix MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T18:26Z · #29533 SHA 6e9d3ff9a23006c5d19ee1b5b69d5ee67ae2d31f MERGED (verify 20328 residual clear) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · wave7 in flight · no prod writes
 
