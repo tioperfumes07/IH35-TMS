@@ -681,7 +681,28 @@ export function earnPctOf(rules: DeskRules, typed: number | null | undefined): n
   return Math.min(95, Math.max(0, t));
 }
 
-export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<{ cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number }> {
+/* ROUND 8.32 — CC-2 11-14: in-process cache; one full build per data version + (target, earn). */
+type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number };
+const _gridCache = new Map<string, GridPayload>();
+/** Clears the grid cache. Call after every perfume write so the next /grid rebuild is fresh. */
+export function invalidateGridCache(): void { _gridCache.clear(); }
+async function getGridVersionKey(c: PoolClient): Promise<string> {
+  const r = await c.query<{ pl_import: string; pl_void: string; items_stamp: string; vendors_stamp: string; rules_stamp: string }>(
+    `SELECT COALESCE(max(imported_at),'epoch'::timestamptz)::text AS pl_import,
+            COALESCE(max(voided_at),  'epoch'::timestamptz)::text AS pl_void,
+            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.items)    AS items_stamp,
+            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.vendors)  AS vendors_stamp,
+            (SELECT COALESCE(max(updated_at),'epoch'::timestamptz)::text FROM perfume.settings) AS rules_stamp
+       FROM perfume.price_lists`);
+  const v = r.rows[0];
+  return `${v.pl_import}|${v.pl_void}|${v.items_stamp}|${v.vendors_stamp}|${v.rules_stamp}`;
+}
+
+export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
+  const _versionBase = await getGridVersionKey(c);
+  const _cacheKey = `${_versionBase}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
+  const _cached = _gridCache.get(_cacheKey);
+  if (_cached) return _cached;
   const rules = await getRules(c);
   const target = targetPctOf(rules, opts.targetPct);
   // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.
@@ -889,7 +910,9 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
-  return { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct };
+  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct };
+  _gridCache.set(_cacheKey, _result);
+  return _result;
 }
 
 /** Wholesale: positive gap = my price is under the lowest competitor (room to raise); negative = I am over it. */

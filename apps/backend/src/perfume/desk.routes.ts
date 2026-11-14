@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
   canonicalizeItemBrands, reviewQueue, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -143,7 +143,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   app.put("/api/v1/perfume/rules", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = rulesSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
-    return withCurrentUser(uid, (c) => putRules(c, uid, p.data));
+    const result = await withCurrentUser(uid, (c) => putRules(c, uid, p.data));
+    invalidateGridCache();
+    return result;
   });
 
   app.get("/api/v1/perfume/vendors", RL_READ, async (req, reply) => {
@@ -153,7 +155,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   app.post("/api/v1/perfume/vendors", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = vendorSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
-    return withCurrentUser(uid, (c) => upsertVendor(c, uid, p.data));
+    const result = await withCurrentUser(uid, (c) => upsertVendor(c, uid, p.data));
+    invalidateGridCache();
+    return result;
   });
 
   app.get("/api/v1/perfume/lists", RL_READ, async (req, reply) => {
@@ -185,7 +189,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = importSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     try {
-      return await withCurrentUser(uid, (c) => importList(c, uid, p.data));
+      const result = await withCurrentUser(uid, (c) => importList(c, uid, p.data));
+      invalidateGridCache();
+      return result;
     } catch (e) {
       if (e instanceof ImportCheckFailed) return reply.code(422).send({ error: "import_check_failed", check: e.check });
       throw e;
@@ -196,6 +202,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ reason: z.string().trim().min(3).max(500) }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason));
+    invalidateGridCache();
     return { ok: true };
   });
 
@@ -204,6 +211,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ current: z.boolean() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => setListCurrent(c, params.data.id, body.data.current));
+    invalidateGridCache();
     return { ok: true };
   });
 
@@ -221,17 +229,23 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const body = z.object({ item_id: z.string().uuid().optional(), create_new: z.boolean().optional() })
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
-    return withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+    const result = await withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+    invalidateGridCache();
+    return result;
   });
 
   app.post("/api/v1/perfume/items/canonicalize-brands", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    return withCurrentUser(uid, (c) => canonicalizeItemBrands(c));
+    const result = await withCurrentUser(uid, (c) => canonicalizeItemBrands(c));
+    invalidateGridCache();
+    return result;
   });
 
   app.post("/api/v1/perfume/review/rematch", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    return withCurrentUser(uid, (c) => rematchReview(c));
+    const result = await withCurrentUser(uid, (c) => rematchReview(c));
+    invalidateGridCache();
+    return result;
   });
 
   app.post("/api/v1/perfume/rows/bulk", RL_WRITE, async (req, reply) => {
@@ -244,7 +258,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       z.object({ action: z.literal("set_gender"), row_ids: ids, gender: z.enum(["M", "W", "U"]) }),
     ]).safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
-    return withCurrentUser(uid, (c) => bulkReview(c, uid, body.data));
+    const result = await withCurrentUser(uid, (c) => bulkReview(c, uid, body.data));
+    invalidateGridCache();
+    return result;
   });
 
   app.get("/api/v1/perfume/items/search", RL_READ, async (req, reply) => {
@@ -257,6 +273,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ internal_code: z.string().max(60).nullable() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => setInternalCode(c, params.data.id, body.data.internal_code));
+    invalidateGridCache();
     return { ok: true };
   });
 
