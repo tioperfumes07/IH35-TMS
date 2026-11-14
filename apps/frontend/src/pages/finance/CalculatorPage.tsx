@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { formatDateUS } from "../../lib/formatDate";
-import { Link } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -33,6 +34,10 @@ const AMORT_COLUMNS: Array<ParityColumn<CalcPreviewRow>> = [
 ];
 
 export function CalculatorPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_CALCULATOR_FLAG, companyId);
@@ -89,7 +94,7 @@ export function CalculatorPage() {
   }
 
   // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
-  const header = <PageHeader backHref="/finance/overview" title="Finance Calculator" subtitle="Model a financed purchase before committing. Pure calculation — nothing is saved or posted." />;
+  const header = <PageHeader backHref={moduleBackHref} title="Finance Calculator" subtitle="Model a financed purchase before committing. Pure calculation — nothing is saved or posted." />;
   if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-[#6B7280]">Loading…</p></div>;
   if (!enabled)
     return (

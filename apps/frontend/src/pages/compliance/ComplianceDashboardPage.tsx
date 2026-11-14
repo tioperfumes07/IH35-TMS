@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   archiveComplianceRule,
@@ -32,6 +32,7 @@ import { HOSViolationsTab } from "../safety/tabs/HOSViolationsTab";
 import { SectionErrorBoundary } from "../../components/SectionErrorBoundary";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatCalendarDateUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { RelatedModuleLinks } from "../../components/shared/RelatedModuleLinks";
 import { Modal } from "../../components/Modal";
 import { Button } from "../../components/Button";
@@ -79,6 +80,9 @@ export function ComplianceDashboardPage() {
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance" });
   const [severityFilter, setSeverityFilter] = useState<ComplianceSeverity | null>(null);
   const [typeFilter, setTypeFilter] = useState("");
   const [ownerTypeFilter, setOwnerTypeFilter] = useState("");
@@ -184,7 +188,7 @@ export function ComplianceDashboardPage() {
   return (
     <div className="space-y-6 p-4" data-testid="compliance-dashboard-page">
       <PageHeader
-        backHref="/compliance"
+        backHref={moduleBackHref}
         breadcrumb={["Compliance"]}
         title="Compliance Dashboard"
         subtitle="Expiring credentials across trucks, trailers, drivers, and carrier"

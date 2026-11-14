@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
@@ -14,6 +14,7 @@ import {
   type LoanWizardPreview,
 } from "../../api/financeLoanWizard";
 import { formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 
 // GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
 // unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
@@ -71,10 +72,17 @@ type LoanWizardIncomingState = {
 };
 
 export function LoanWizardPage() {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({
+    searchParams,
+    pathname: location.pathname,
+    fallback: "/finance/overview",
+  });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_LOAN_WIZARD_FLAG, companyId);
-  const location = useLocation();
   const incoming = (location.state ?? {}) as LoanWizardIncomingState;
 
   const [form, setForm] = useState({
@@ -159,7 +167,7 @@ export function LoanWizardPage() {
   // every Finance page) has no back control of its own -- 6 of the 10 Finance pages already carry
   // their own PageHeader (backHref="/finance/overview", the module hub) alongside it; this page
   // didn't. Matched to the same established convention instead of inventing a new one.
-  const header = <PageHeader backHref="/finance/overview" title="Loan Wizard" subtitle="One form → preview every entry the loan would create. Nothing posts — preview only." />;
+  const header = <PageHeader backHref={moduleBackHref} title="Loan Wizard" subtitle="One form → preview every entry the loan would create. Nothing posts — preview only." />;
 
   if (flagLoading) {
     return (

@@ -1,15 +1,20 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useLocation, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { FinanceModuleTabs } from "./FinanceModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 import { activateScenario, getScenarioDetail } from "../../api/financeScenarios";
 import { ScenarioLinesTable } from "./components/ScenarioLinesTable";
 import { ListErrorState } from "../../components/ListErrorState";
 
 export function FinanceScenarioDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/scenarios" });
   const { scenarioId = "" } = useParams<{ scenarioId: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -37,7 +42,7 @@ export function FinanceScenarioDetailPage() {
     <div className="p-6">
       <FinanceModuleTabs />
       <PageHeader
-        backHref="/finance/scenarios"
+        backHref={moduleBackHref}
         breadcrumb={["Finance", "Scenarios", "Detail"]}
         title="Scenario"
       />

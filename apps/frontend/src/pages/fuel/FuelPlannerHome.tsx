@@ -20,6 +20,7 @@ import { ActionButton } from "../../components/shared/ActionButton";
 import { EntityMultiSelect, entityFilterIds } from "../../components/EntityMultiSelect";
 import { useDriverLabels } from "../../hooks/useDriverLabels";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import { formatQuantityTable, formatUsd } from "../../lib/money";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -79,6 +80,12 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({
+    searchParams,
+    pathname: location.pathname,
+    fallback: "/fuel",
+  });
   const { selectedCompanyId } = useCompanyContext();
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
@@ -460,7 +467,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
         <FuelPlannerBoardChrome
           title="Fuel"
           subtitle="Overview"
-          backHref="/fuel"
+          backHref={moduleBackHref}
           subnavItems={fuelBoardSubnav}
         />
         <FuelBoardSection title="Fuel" testId="fuel-planner-need-company">
@@ -477,7 +484,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
       <FuelPlannerBoardChrome
         title="Fuel"
         subtitle={FUEL_BOARD_SUBTITLE}
-        backHref="/fuel"
+        backHref={moduleBackHref}
         actions={fuelHeaderActions}
         subnavItems={fuelBoardSubnav}
       />

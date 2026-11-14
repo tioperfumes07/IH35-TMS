@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -8,6 +8,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { FINANCE_HUB_UI_FLAG, getFinanceHubOverview, type FinanceHubKpi } from "../../api/financeHub";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 
@@ -45,6 +46,10 @@ function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
 }
 
 export function FinanceHubPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_UI_FLAG, companyId);
@@ -60,7 +65,7 @@ export function FinanceHubPage() {
 
   const header = (
     <PageHeader
-      backHref="/finance/overview"
+      backHref={moduleBackHref}
       title="Finance Hub"
       subtitle="Finance · Hub — read-only overview, nothing is posted"
     />

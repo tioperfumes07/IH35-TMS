@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -17,6 +17,7 @@ import {
   type AmortRow,
 } from "../../api/financeAmortization";
 import { formatQuantityTable, formatUsdCents } from "../../lib/money";
+import { resolveBackHref } from "../../lib/returnContext";
 
 // GLB-05 — delegates to the canonical formatter instead of reimplementing it (the old body used an
 // unpinned toLocaleString(undefined, ...) locale, not guaranteed QBO "$1,234.56").
@@ -65,6 +66,9 @@ export function AmortizationPage() {
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_HUB_AMORTIZATION_FLAG, companyId);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
   const requestedLoanId = searchParams.get("loan_id");
 
   const [loans, setLoans] = useState<AmortLoan[]>([]);
@@ -135,7 +139,7 @@ export function AmortizationPage() {
   }
 
   // UI-BACK-BUTTON-MISSING-ENTIRELY: see LoanWizardPage.tsx sibling comment.
-  const header = <PageHeader backHref="/finance/overview" title="Amortization" subtitle="Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step." />;
+  const header = <PageHeader backHref={moduleBackHref} title="Amortization" subtitle="Create a loan and generate its amortization schedule. Schedules are stored; posting is a separate step." />;
   if (flagLoading) return <div className="p-6"><FinanceModuleTabs />{header}<p className="text-xs text-[#6B7280]">Loading…</p></div>;
   if (!enabled)
     return (

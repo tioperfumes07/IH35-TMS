@@ -16117,6 +16117,21 @@
     "claimed_by": "cursor",
     "purpose": "verify-dispatch-misc-back-ret board13/14"
   },
+  "20220": {
+    "claimed_at": "2026-11-14T02:44:42Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Drivers leaf Backs Class R resolveBackHref (10 pages)"
+  },
+  "20222": {
+    "claimed_at": "2026-11-14T02:48:01Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 finance+compliance+fuel+driver-finance+WO+lists Class R Backs"
+  },
+  "20224": {
+    "claimed_at": "2026-11-14T02:49:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 tasks+admin+users+scheduler+edi Class R Backs"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18121,15 +18136,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20220": {
-    "claimed_at": "2026-11-14T02:44:42Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Drivers leaf Backs Class R resolveBackHref (10 pages)"
-  },
-  "20224": {
-    "claimed_at": "2026-11-14T02:49:35Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 tasks+admin+users+scheduler+edi Class R Backs"
-  }
+  "total_claimed": 1111
 }
