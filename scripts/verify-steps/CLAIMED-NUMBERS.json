@@ -18341,5 +18341,10 @@
     "claimed_at": "2026-11-14T17:25:51Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Party/Vendors board KPI+NumLink withReturnContext"
+  },
+  "20304": {
+    "claimed_at": "2026-11-14T17:29:22Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 FuelCards/Savings/LoadHistory/Maint side ret"
   }
 }

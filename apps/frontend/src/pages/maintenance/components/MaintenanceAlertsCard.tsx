@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,6 +22,9 @@ type Props = {
 };
 
 export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [schedulingAlertId, setSchedulingAlertId] = useState<string | null>(null);
@@ -104,7 +109,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
   if (compact) {
     return (
       // ROUND 9.0 board 22 — the design's side card: PM ALERTS · "n open" · "No PM alerts" or the alert lines.
-      <V3SideCard title="PM alerts" count={`${openTotalCount} open`} href="/maintenance/pm-schedule" testId="maint-side-pm-alerts">
+      <V3SideCard title="PM alerts" count={`${openTotalCount} open`} href={maintHref("/maintenance/pm-schedule")} testId="maint-side-pm-alerts">
         <div id="maintenance-open-pm-alerts">
         {alerts.length === 0 ? (
           <div>No PM alerts</div>

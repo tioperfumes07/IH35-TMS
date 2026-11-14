@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 /**
  * ORDERS-2026-10-01 MAINTENANCE row 1 — E-41 engines-only widget for Maintenance domain.
  * Full board remains at /system/engine-status.
@@ -11,6 +13,9 @@ import { V3SideCard } from "../../../components/v3/V3SideCard";
 import { V3Panel } from "../../../components/v3/V3Panel";
 
 function healthLabel(row: EngineStatusRow) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   switch (row.health) {
     case "ok":
       return "OK";
@@ -60,7 +65,7 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
   // ROUND 9.0 board 22 — compact = the design's side card: ENGINES · "n red" · one line of engine states.
   if (compact) {
     return (
-      <V3SideCard title="Engines" count={q.isLoading ? "…" : `${redCount} red`} href="/system/engine-status" testId="maint-engines-status-widget" countTestId="maint-engines-full-board-link">
+      <V3SideCard title="Engines" count={q.isLoading ? "…" : `${redCount} red`} href={maintHref("/system/engine-status")} testId="maint-engines-status-widget" countTestId="maint-engines-full-board-link">
         <span data-testid="maint-engines-red-count" className="sr-only">{q.isLoading ? "…" : `${redCount} red · ${rows.length} maintenance`}</span>
         {q.isLoading ? "…" : rows.length === 0 ? "No maintenance engines in catalog." : rows.map((row, i) => (
           <span key={row.id} data-testid={`maint-engine-row-${row.id}`} data-health={row.health} title={row.health_reason}>

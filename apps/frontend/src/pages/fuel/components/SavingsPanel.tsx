@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 /**
  * ROUND 443.326 — KPI strip + bordered FuelBoardSection (no V3Panel).
  * getFuelSavingsSummary values unchanged.
@@ -35,6 +37,9 @@ export function SavingsPanel({
   topDriverName,
   topDriverAmount,
 }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const highestSub =
     sourceAvailable && topDriverName && topDriverAmount !== null
       ? `${topDriverName} · ${money(topDriverAmount)}`
@@ -56,14 +61,14 @@ export function SavingsPanel({
           sub="planner compliance savings"
           tone={sourceAvailable && fleetSavings != null && fleetSavings > 0 ? "green" : "ink"}
           testId="fuel-savings-kpi-fleet"
-          href="/fuel"
+          href={fuelHref("/fuel")}
         />
         <V3KpiTile
           label="Driver savings YTD"
           value={kpiMoney(sourceAvailable, driverSavings)}
           sub="top driver YTD"
           testId="fuel-savings-kpi-driver"
-          href="/fuel"
+          href={fuelHref("/fuel")}
         />
         <V3KpiTile
           label="Lost savings YTD"
@@ -71,14 +76,14 @@ export function SavingsPanel({
           sub="from non-compliance"
           tone={sourceAvailable && lostSavings != null && lostSavings > 0 ? "red" : "ink"}
           testId="fuel-savings-kpi-lost"
-          href="/fuel"
+          href={fuelHref("/fuel")}
         />
         <V3KpiTile
           label="Highest saver"
           value={sourceAvailable && topDriverName ? topDriverName : "—"}
           sub={highestSub}
           testId="fuel-savings-kpi-highest"
-          href="/fuel"
+          href={fuelHref("/fuel")}
         />
       </div>
       {!sourceAvailable ? (
