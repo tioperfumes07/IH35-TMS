@@ -16032,6 +16032,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-unexpected-kpi-drills board2"
   },
+  "20185": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-14",
+    "purpose": "verify-settlements-home-board32-parity"
+  },
   "20186": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
@@ -16061,6 +16066,11 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-maint-home-kpi-href board22"
+  },
+  "20197": {
+    "claimed_by": "claude",
+    "claimed_at": "2026-11-14",
+    "purpose": "verify-settlements-open-closed-board33-34-parity"
   },
   "20198": {
     "claimed_at": "2026-11-13",
@@ -16266,6 +16276,51 @@
     "claimed_at": "2026-11-14T04:41:50Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 customer profile docs/loads drills withReturnContext"
+  },
+  "20280": {
+    "claimed_at": "2026-11-14T04:47:20Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 banking home/recon + customer load drills withReturnContext"
+  },
+  "20282": {
+    "claimed_at": "2026-11-14T04:51:07Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 reports/legal/cash-advance Review drills withReturnContext"
+  },
+  "20284": {
+    "claimed_at": "2026-11-14T04:54:33Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Dispatch/TruckPlanner mechanical drills withReturnContext"
+  },
+  "20286": {
+    "claimed_at": "2026-11-14T04:58:01Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 accounting list CTAs + fleet report unit drills withReturnContext"
+  },
+  "20288": {
+    "claimed_at": "2026-11-14T05:01:21Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 driver/user/legal create drills withReturnContext"
+  },
+  "20290": {
+    "claimed_at": "2026-11-14T05:06:13Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 hub/attention/driver-detail/compliance drills withReturnContext"
+  },
+  "20292": {
+    "claimed_at": "2026-11-14T05:09:26Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 program matrix + banking recon start withReturnContext"
+  },
+  "20294": {
+    "claimed_at": "2026-11-14T05:12:54Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 driver ActionBar/create + load unit-cost fleet drills withReturnContext"
+  },
+  "20296": {
+    "claimed_at": "2026-11-14T05:17:56Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 final Class R sweep banking/reports/bills/checks withReturnContext"
   },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
@@ -18271,50 +18326,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20280": {
-    "claimed_at": "2026-11-14T04:47:20Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 banking home/recon + customer load drills withReturnContext"
-  },
-  "20282": {
-    "claimed_at": "2026-11-14T04:51:07Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 reports/legal/cash-advance Review drills withReturnContext"
-  },
-  "20284": {
-    "claimed_at": "2026-11-14T04:54:33Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 Dispatch/TruckPlanner mechanical drills withReturnContext"
-  },
-  "20286": {
-    "claimed_at": "2026-11-14T04:58:01Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 accounting list CTAs + fleet report unit drills withReturnContext"
-  },
-  "20288": {
-    "claimed_at": "2026-11-14T05:01:21Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 driver/user/legal create drills withReturnContext"
-  },
-  "20290": {
-    "claimed_at": "2026-11-14T05:06:13Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 hub/attention/driver-detail/compliance drills withReturnContext"
-  },
-  "20292": {
-    "claimed_at": "2026-11-14T05:09:26Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 program matrix + banking recon start withReturnContext"
-  },
-  "20294": {
-    "claimed_at": "2026-11-14T05:12:54Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 driver ActionBar/create + load unit-cost fleet drills withReturnContext"
-  },
-  "20296": {
-    "claimed_at": "2026-11-14T05:17:56Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 final Class R sweep banking/reports/bills/checks withReturnContext"
-  }
+  "total_claimed": 1111
 }
