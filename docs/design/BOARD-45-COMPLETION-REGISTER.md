@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:40Z) — Cursor WriteCheck print + AnomalyAlertBadge ret #29512
+| Board / surface | Status | Evidence |
+|---|---|---|
+| WriteCheck print-stock + Safety anomaly badge | READY | #29512 `d94fff05ca3` withReturnContext; verify 20310 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:28Z) — Cursor Party/Vendors KPI+NumLink ret #29504
 | Board / surface | Status | Evidence |
 |---|---|---|

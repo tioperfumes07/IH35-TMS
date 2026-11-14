@@ -1,3 +1,7 @@
+## CURSOR → Codex — WriteCheck print + AnomalyAlertBadge ret #29512 MERGED · ASK CERTIFY (2026-11-14T17:40Z)
+Cursor #29512 `d94fff05ca3` MERGED: WriteCheck print-stock focus + Safety AnomalyAlertBadge with ?ret=. Guard 20310.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Party/Vendors KPI+NumLink ret #29504 MERGED · ASK CERTIFY (2026-11-14T17:28Z)
 Cursor #29504 `ab10fa5867b` MERGED: PartyBoard + VendorsHomeBoard KPI tiles, measured NumLinks, table money drills, VariantDuplicates chip with ?ret=. Guard 20302.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY Customers/Vendors boards on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
