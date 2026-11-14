@@ -120,7 +120,7 @@ export function auditMasterDataCreateTargets(sources) {
     errors.push("D5-1 REGRESSION: InventoryPartsStockPage must route the created part id to ?part_id= for row selection.");
   }
   const customerCreateModal = sources[CUSTOMER_CREATORS[0]] ?? "";
-  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\] \}\)/.test(customerCreateModal) || !/navigate\(`\/customers\/\$\{result\.id\}`\)/.test(customerCreateModal)) {
+  if (!/await queryClient\.invalidateQueries\(\{ queryKey: \["customers"\] \}\)/.test(customerCreateModal) || !/navigate\((?:\w+Href\()?`\/customers\/\$\{result\.id\}`\)?\)/.test(customerCreateModal)) {
     errors.push("D1-1 REGRESSION: Customers create must reload then navigate to the returned customer id.");
   }
   if (!/<CustomerCreateModal\b/.test(sources[CUSTOMERS_PAGE] ?? "")) {
@@ -153,7 +153,7 @@ if (process.argv.includes("--selftest")) {
   const cases = [
     ["shared invoice email removed", CUSTOMER_PAYLOAD_HELPER, /\bap_email:\s*apEmail/, "ap_email"],
     ["quick create targets mirror", CUSTOMER_CREATORS[2], /<NewCustomerDrawerForm/, "<QboCustomerDrawerForm"],
-    ["page create stops navigating", CUSTOMER_CREATORS[0], /navigate\(`\/customers\/\$\{result\.id\}`\)/, "void result"],
+    ["page create stops navigating", CUSTOMER_CREATORS[0], /navigate\((?:\w+Href\()?`\/customers\/\$\{result\.id\}`\)?\)/, "void result"],
     ["page drops the create modal", CUSTOMERS_PAGE, /<CustomerCreateModal\b/g, "<NoCreate"],
     ["part create bypasses helper", PART_CREATE_DRAWER, /apiRequest\s*[<(]/, "fetch(resolveApiUrl("],
     ["part returned id dropped", PART_CREATE_DRAWER, /onCreated\?\.\(created\.id\)/, "void created.id"],

@@ -66,7 +66,8 @@ export function run(srcOverride) {
   if (!/registered_total/.test(src) || !/view_counts/.test(src)) {
     failures.push(`${FILE}: must render program tracker registered_total and view_counts`);
   }
-  if (!/to="\/program(\/[a-z-]+)?"/.test(src)) {
+  // ROUND 8.20 wraps it in the return context: to={sysHref("/program")} — same target.
+  if (!/to="\/program(\/[a-z-]+)?"/.test(src) && !/to=\{\w+Href\("\/program(\/[a-z-]+)?"\)\}/.test(src)) {
     failures.push(`${FILE}: must link from system Program Tracker card to /program board`);
   }
 

@@ -20,7 +20,8 @@ export function run(root = process.cwd()) {
   const sidebar = read(`${root}/${SIDEBAR}`);
   const nav = read(`${root}/${NAV}`);
 
-  if (!home.includes('navigate("/banking/cash-gl-setup")')) {
+  // ROUND 8.20 (#29518) wraps it in the return context: navigate(bankHref("/banking/cash-gl-setup")) — same target.
+  if (!home.includes('navigate("/banking/cash-gl-setup")') && !home.includes('navigate(bankHref("/banking/cash-gl-setup"))')) {
     failures.push("BankingHome must navigate to /banking/cash-gl-setup (Cash GL action or unbound-register path)");
   }
   if (!home.includes("Cash GL setup")) {
