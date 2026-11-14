@@ -69,14 +69,14 @@ export function truckProfileBoardSvgHtml(
 </g>
 </g></g>
 ${c[3] === "defect" ? `<rect x="226" y="132" width="84" height="84" rx="14" fill="none" stroke="#C0262D" stroke-width="5"></rect>` : ""}
-<text x="382" y="291" text-anchor="middle" font-family="Barlow Semi Condensed" font-weight="800" font-size="30" fill="#FFFFFF">${unit}</text>
-<g font-family="Barlow Semi Condensed" font-weight="800" font-size="16" text-anchor="middle">
+<text x="382" y="291" text-anchor="middle" font-family="Barlow Semi Condensed, Inter, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="30" fill="#FFFFFF">${unit}</text>
+<g font-family="Barlow Semi Condensed, Inter, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="16" text-anchor="middle">
 ${pin(0, "M766 282 L820 64", 820, 50)}
 ${pin(1, "M631 282 L630 64", 630, 50)}
 ${pin(2, "M757 402 L880 476", 880, 490)}
 ${pin(3, "M268 132 L300 64", 300, 50)}
 </g>
-<text x="40" y="490" font-family="Barlow Semi Condensed" font-weight="800" font-size="20" fill="#14213D">${caption}</text>
-<text x="40" y="512" font-family="Barlow" font-size="14" fill="#5B6B7E">${trailer}</text>
+<text x="40" y="490" font-family="Barlow Semi Condensed, Inter, ui-sans-serif, system-ui, sans-serif" font-weight="800" font-size="20" fill="#14213D">${caption}</text>
+<text x="40" y="512" font-family="Barlow, Inter, ui-sans-serif, system-ui, sans-serif" font-size="14" fill="#5B6B7E">${trailer}</text>
 </svg>`;
 }
