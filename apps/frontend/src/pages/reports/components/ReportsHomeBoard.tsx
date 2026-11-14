@@ -7,16 +7,14 @@
  * Automation = ScheduledReportsPanel. Saved = Frequently run + Custom report entry. Compliance = report rows + the
  * IFTA preparer. Every catalog row is a real <Link> (anchor) to its route — never a button.
  */
-import { useMemo, useState, type ReactNode } from "react";
+import "../../../assets/fonts/v3-maintenance/board-box.css";
+import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { getFrequentlyRun, getIftaStatus, getKpiSummary, type FrequentlyRunReport } from "../../../api/reports";
 import { FrequentlyRunTable } from "../../../components/reports/FrequentlyRunTable";
-import {
-  BasisSelector,
-  type AccountingBasis,
-} from "../../../components/accounting/BasisSelector";
+import { type AccountingBasis } from "../../../components/accounting/BasisSelector";
 import { PHASE_6_REPORT_HREFS } from "../../../components/reports/phase6ReportLinks";
 import { IftaPreparerCard } from "../../../components/reports/IftaPreparerCard";
 import { ListErrorBanner } from "../../../components/shared/ListErrorBanner";
@@ -27,7 +25,7 @@ import { mmmDd } from "../../../lib/formatDate";
 import { userFacingApiError } from "../../../lib/api-error-message";
 import { ScheduledReportsPanel } from "../ScheduledReportsPanel";
 import { REPORT_BOARDS } from "../boards/reportBoardCatalog";
-import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
+import { ParityTable } from "../../../components/parity/ParityTable";
 
 // ── Sidebar categories (v3 design) ──────────────────────────────────────────
 const SIDEBAR_CATEGORIES = [
@@ -159,7 +157,40 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
   ],
 };
 
-// ── Styles ────────────────────────────────────────────────────────────────────
+// ── Inline BasisSelector (v3 board spec — 6px container, 4px buttons, #13233F active) ──
+function InlineBasisSelector({ value, onChange }: { value: AccountingBasis; onChange: (v: AccountingBasis) => void }) {
+  const container: CSSProperties = {
+    display: "inline-flex",
+    background: "#fff",
+    border: "1px solid #DDE1E7",
+    borderRadius: 6,
+    padding: 2,
+    gap: 2,
+  };
+  const btn = (opt: AccountingBasis): CSSProperties => ({
+    padding: "4px 10px",
+    borderRadius: 4,
+    fontSize: 11,
+    fontWeight: 600,
+    fontFamily: V3.font,
+    background: value === opt ? "#13233F" : "transparent",
+    color: value === opt ? "#fff" : V3.muted,
+    border: "none",
+    cursor: "pointer",
+  });
+  return (
+    <div style={container}>
+      {(["accrual", "cash"] as const).map((opt) => (
+        <button key={opt} type="button" style={btn(opt)} onClick={() => onChange(opt)}>
+          <span style={{ fontWeight: 600, color: value === opt ? "#fff" : V3.muted, fontSize: 11, fontFamily: V3.font }}>
+            {opt === "accrual" ? "Accrual" : "Cash"}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const navigate = useNavigate();
@@ -255,49 +286,25 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   const dash = (v: number | null | undefined) =>
     v == null || (typeof v === "number" && !Number.isFinite(v)) ? "—" : String(v);
 
-  const accountingColumns: ParityColumn<(typeof accountingRows)[number]>[] = [
-    { key: "favorite", label: "☆", sortable: true, sortValue: ([, label]) => label, render: () => <span style={{ color: V3.muted }}>☆</span> },
-    {
-      key: "report",
-      label: "Report",
-      sortable: true,
-      sortValue: ([, label]) => label,
-      render: ([reportKey, label]) => (
-        <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-link-${reportKey}`}>
-          {label}
-        </CatalogLink>
-      ),
-    },
-    { key: "shows", label: "What it shows", sortable: true, sortValue: ([, , shows]) => shows, render: ([, , shows]) => <span style={{ color: V3.muted }}>{shows}</span> },
-    { key: "basis", label: "Basis", sortable: true, sortValue: ([reportKey]) => basisLabel(reportKey), render: ([reportKey]) => basisLabel(reportKey) },
-    {
-      key: "open",
-      label: "Open in viewer",
-      sortable: true,
-      sortValue: ([, label]) => label,
-      render: ([reportKey]) => (
-        <CatalogLink href={reportCatalogHref(reportKey, basis, originHref)} testId={`reports-acct-run-${reportKey}`}>
-          Run →
-        </CatalogLink>
-      ),
-    },
-    {
-      key: "export",
-      label: "Export",
-      sortable: true,
-      sortValue: ([, label]) => label,
-      render: ([reportKey]) => (
-        <CatalogLink
-          href={reportCatalogHref(reportKey, basis, originHref)}
-          muted
-          bold={false}
-          title="Opens the live viewer — export PDF / XLSX from the report with filters applied"
-        >
-          PDF · XLSX
-        </CatalogLink>
-      ),
-    },
-  ];
+  // v3 board table — plain <table> matching docs/design/v3/Reports.dc.html exactly
+  const TH_STYLE: CSSProperties = {
+    textAlign: "left",
+    fontSize: "11px",
+    fontWeight: 600,
+    fontFamily: V3.font,
+    color: "#5B6576",
+    padding: "7px 12px",
+    borderBottom: "1px solid #DDE1E7",
+    background: "#F7F8FA",
+    whiteSpace: "nowrap",
+  };
+  const TD_STYLE: CSSProperties = {
+    textAlign: "left",
+    padding: "7px 12px",
+    borderBottom: "1px solid #ECEEF2",
+    fontSize: "12px",
+    whiteSpace: "nowrap",
+  };
 
   function runFrequentReport(row: FrequentlyRunReport) {
     const href = PHASE_6_REPORT_HREFS[row.id];
@@ -321,7 +328,13 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
   }
 
   return (
-    <div className="min-w-0 space-y-3" data-testid="reports-home-board" data-reports-home-board="1">
+    <div
+      className="min-w-0 space-y-3"
+      data-testid="reports-home-board"
+      data-reports-home-board="1"
+      data-v3-board="Reports"
+      style={{ lineHeight: "normal" }}
+    >
       {errored ? (
         <ListErrorBanner
           message={errorMsg ?? "Reports data could not be loaded."}
@@ -377,25 +390,35 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
       {/* Two-column: sidebar + right panel (v3 design) */}
       <div style={{ display: "grid", gridTemplateColumns: "200px 1fr", gap: 12, alignItems: "start" }}>
 
-        {/* Left: category sidebar — the report-catalog category nav (v3 spec replaces the old hover nav). */}
-        <V3Panel title="Categories" testId="reports-category-nav">
-          <nav aria-label="Report categories" className="p-1.5">
+        {/* Left: category sidebar — v3 design: plain container, no panel title */}
+        <nav
+          aria-label="Report categories"
+          data-testid="reports-category-nav"
+          style={{ background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6, padding: 6, display: "flex", flexDirection: "column" }}
+        >
           {SIDEBAR_CATEGORIES.map((cat) => (
             <button
               key={cat.id}
               type="button"
-              className="w-full rounded-sm px-2.5 py-1.5 text-left text-xs font-semibold transition-colors"
               style={{
+                textAlign: "left",
+                padding: "7px 10px",
+                borderRadius: 4,
+                fontSize: "12px",
+                fontWeight: 600,
+                fontFamily: V3.font,
                 background: activeCategory === cat.id ? "#EEF2F7" : "transparent",
-                color: activeCategory === cat.id ? "#0F1219" : "#374151",
+                color: activeCategory === cat.id ? "#0F1219" : V3.muted,
+                border: "none",
+                cursor: "pointer",
+                width: "100%",
               }}
               onClick={() => setActiveCategory(cat.id)}
             >
               {cat.label}
             </button>
           ))}
-          </nav>
-        </V3Panel>
+        </nav>
 
         {/* Right: category panel */}
         <div>
@@ -406,28 +429,58 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 subtitle="Core accounting statements plus operational finance views"
                 onViewAll={() => setShowAll((v) => !v)}
                 viewAllLabel={showAll ? "Show primary →" : "View all →"}
-                headerRight={<BasisSelector value={basis} onChange={setBasis} />}
+                headerRight={<InlineBasisSelector value={basis} onChange={setBasis} />}
                 testId="reports-home-accounting-financial"
+                borderRadius={6}
+                footer="Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF / XLSX export exactly what the viewer shows with the filters applied — the QuickBooks pattern."
               >
                 <div style={{ overflowX: "auto" }}>
-                  <ParityTable<(typeof accountingRows)[number]>
-                    tableTestId="reports-accounting-financial-table"
-                    storageKey="ih35.reports.home.accounting-financial.v1"
-                    appearance="board"
-                    hidePager
-                    density="compact"
-                    suppressToolbarSearch
-                    suppressToolbarRange
-                    rows={[...accountingRows]}
-                    rowKey={([reportKey]) => reportKey}
-                    rowTestId={([reportKey]) => `reports-acct-row-${reportKey}`}
-                    emptyText="No reports."
-                    columns={accountingColumns}
-                  />
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr>
+                        <th style={TH_STYLE}>☆</th>
+                        <th style={TH_STYLE}>Report</th>
+                        <th style={TH_STYLE}>What it shows</th>
+                        <th style={TH_STYLE}>Basis</th>
+                        <th style={TH_STYLE}>Open in viewer</th>
+                        <th style={TH_STYLE}>Export</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accountingRows.map(([reportKey, label, shows]) => {
+                        const href = reportCatalogHref(reportKey, basis, originHref);
+                        return (
+                          <tr key={reportKey} data-testid={`reports-acct-row-${reportKey}`}>
+                            <td style={TD_STYLE}>
+                              <span style={{ color: "#8B94A3" }}>☆</span>
+                            </td>
+                            <td style={TD_STYLE}>
+                              {href ? (
+                                <Link to={href} style={{ textDecoration: "none" }} data-testid={`reports-acct-link-${reportKey}`}>
+                                  <span style={{ fontWeight: 600, color: "#1D4ED8" }}>{label}</span>
+                                </Link>
+                              ) : (
+                                <span style={{ fontWeight: 600, color: "#1D4ED8" }}>{label}</span>
+                              )}
+                            </td>
+                            <td style={TD_STYLE}>{shows}</td>
+                            <td style={TD_STYLE}>{basisLabel(reportKey)}</td>
+                            <td style={TD_STYLE}>
+                              {href ? (
+                                <Link to={href} style={{ textDecoration: "none" }} data-testid={`reports-acct-run-${reportKey}`}>
+                                  <span style={{ fontWeight: 600, color: "#1D4ED8" }}>Run →</span>
+                                </Link>
+                              ) : (
+                                <span style={{ fontWeight: 600, color: "#1D4ED8" }}>Run →</span>
+                              )}
+                            </td>
+                            <td style={TD_STYLE}>PDF · XLSX</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
-                <p className="px-3 py-2 text-xs" style={{ color: V3.muted, borderTop: `1px solid ${V3.borderSoft}` }}>
-                  Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF · XLSX export exactly what the viewer shows with the filters applied.
-                </p>
               </V3Panel>
 
             </>

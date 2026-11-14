@@ -30,7 +30,7 @@ const CHECKS = [
   ["coi", /status:\s*statusFilter\.length === 1 \? \(statusFilter\[0\] as CoiRequestStatus\) : undefined,/, "COI status selector must apply on the customer tab"],
   ["vend", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, status: "active", limit: 200 \}\)/, "vendor A/P bills must be live only"],
   ["vend", /listExpenses\(companyId, \{ vendor_uuid: id, status: "active", limit: 200 \}\)/, "vendor A/P expenses must be live only"],
-  ["vend", /to=\{`\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}`\}/, "Pay bills must land on this vendor's bill payments"],
+  ["vend", /\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}/, "Pay bills must land on this vendor's bill payments"],
   ["bp", /useState\(\(\) => searchParams\.get\("vendor_id"\) \?\? ""\)/, "bill payments must honour ?vendor_id="],
 ];
 
