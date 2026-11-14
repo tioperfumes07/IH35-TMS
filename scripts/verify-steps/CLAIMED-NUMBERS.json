@@ -15982,6 +15982,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-fuel-card-overage-status-url-ret board19"
   },
+  "20169": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlements-statement-board35-parity"
+  },
   "20170": {
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
@@ -15991,6 +15996,11 @@
     "claimed_at": "2026-11-13",
     "claimed_by": "cursor",
     "purpose": "verify-customers-ar-open-money-cells board9"
+  },
+  "20173": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cc-1",
+    "purpose": "verify-settlements-boards36-42-parity"
   },
   "20174": {
     "claimed_at": "2026-11-13",
