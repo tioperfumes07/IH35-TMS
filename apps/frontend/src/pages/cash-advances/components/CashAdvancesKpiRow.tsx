@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { V3 } from "../../../design/v3-tokens";
@@ -112,7 +113,14 @@ export function CashAdvancesKpiRow({
   onOpenAdvance,
 }: Props) {
   const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
   const root = basePath.replace(/\/+$/, "") || "/cash-advances";
+  // ROUND 8.20 — KPI drills shareable href+ret (not onClick navigate).
+  const onFileHref = withReturnContext(root, originHref);
+  const awaitingHref = withReturnContext(`${root}?tab=pending_approval`, originHref);
+  const outstandingHref = withReturnContext(`${root}?tab=outstanding`, originHref);
+  const recoveredHref = withReturnContext(`${root}?tab=paid_off`, originHref);
   const onFile = amount(kpis, "advances_on_file");
   const awaiting = amount(kpis, "pending_approval");
   const outstanding = money(amount(kpis, "total_outstanding"));
@@ -286,26 +294,26 @@ export function CashAdvancesKpiRow({
           label="Advances on file"
           value={display(onFile === null ? null : Math.round(onFile))}
           testId="cash-advances-kpi-on-file"
-          onClick={() => navigate(root)}
+          href={onFileHref}
         />
         <V3KpiTile
           label="Requests awaiting owner"
           value={display(awaiting === null ? null : Math.round(awaiting))}
           testId="cash-advances-kpi-awaiting"
-          onClick={() => navigate(`${root}?tab=pending_approval`)}
+          href={awaitingHref}
         />
         <V3KpiTile
           label="Outstanding to recover"
           value={display(outstanding)}
           testId="cash-advances-kpi-outstanding"
-          onClick={() => navigate(`${root}?tab=outstanding`)}
+          href={outstandingHref}
         />
         <V3KpiTile
           label="Recovered this period"
           value={display(recovered)}
           sub="Sunday week advance_recovery lines"
           testId="cash-advances-kpi-recovered"
-          onClick={() => navigate(`${root}?tab=paid_off`)}
+          href={recoveredHref}
         />
       </div>
 
