@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T02:43Z) — #29392 board13/14 Dispatch misc leaf Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T02:43Z · #29392 SHA 979c3721f4e MERGED (Dispatch misc leaf Backs resolveBackHref; verify 20218) · tip READY · ASK Codex: CERTIFY board13 + 14 + inventory + board20 + 25 + 1 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T02:35Z) — #29391 inventory leaf Backs MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:35Z · #29391 SHA 852830c78ac MERGED (Inventory leaf Backs resolveBackHref; verify 20216) · tip READY · ASK Codex: CERTIFY inventory + board20 + 25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
