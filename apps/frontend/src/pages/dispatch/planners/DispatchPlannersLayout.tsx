@@ -411,16 +411,6 @@ function PlannerFilterChips() {
   );
 }
 
-function entityFiltersEqual(a: PlannerEntityFilterState, b: PlannerEntityFilterState): boolean {
-  const same = <T,>(x: readonly T[], y: readonly T[]) => x.length === y.length && x.every((v, i) => v === y[i]);
-  return (
-    same(a.status, b.status) &&
-    same(a.driverIds, b.driverIds) &&
-    same(a.unitIds, b.unitIds) &&
-    same(a.customerIds, b.customerIds)
-  );
-}
-
 /**
  * ROUND 9.4 Board 12 — Filters chrome identical to Dispatch-TruckPlanner.dc.html:
  * "Filters · N ▾" trigger, DATE RANGE / SHOW DAYS / STATUS · DRIVER · UNIT · CUSTOMER,
