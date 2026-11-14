@@ -18356,5 +18356,10 @@
     "claimed_at": "2026-11-14T17:33:11Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Banking COA + Customer pay + Batch/Ins/Safety/Maint/Settings ret"
+  },
+  "20310": {
+    "claimed_at": "2026-11-14T17:36:17Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 WriteCheck print stock + AnomalyAlertBadge ret"
   }
 }
