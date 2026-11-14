@@ -8,11 +8,14 @@
  */
 import type { PerfumeExtractedLine, PerfumeImportRow, PerfumePicture } from "../../api/perfume";
 
-export type Field = "code" | "sku" | "upc" | "brand" | "desc" | "size" | "type" | "gender" | "section" | "price" | "qty" | "case_pack";
+export type Field = "code" | "sku" | "upc" | "brand" | "desc" | "size" | "type" | "gender" | "section" | "price" | "qty" | "case_pack"
+  | "purchase_date" | "qty_purchased" | "qty_sold";
 export const FIELDS: Array<[Field, string]> = [
   ["sku", "SKU / item #"], ["upc", "UPC / barcode"], ["brand", "Brand"], ["desc", "Description / name"], ["size", "Size"],
   ["type", "Type (EDT/EDP)"], ["gender", "Gender"], ["section", "Department / section"], ["price", "Price"], ["qty", "Qty available"],
   ["case_pack", "Box / case qty"],
+  // My inventory file (owner 2026-11-14): last purchase date, how many I bought, how many I sold.
+  ["purchase_date", "Purchase date"], ["qty_purchased", "Qty purchased"], ["qty_sold", "Qty sold"],
 ];
 export type Mapping = Partial<Record<Field, number>>;
 export type Sheet = { name: string; cells: Array<Array<string | number | null>> };
@@ -32,12 +35,15 @@ const GUESS: Record<Field, RegExp[]> = {
   price: [/price/, /precio/, /cost/, /costo/, /wholesale/, /\bwhs\b/, /^special$/, /mayoreo/, /\bnet\b/, /\bunit\b/, /\$/],
   qty: [/qty/, /quantity/, /cantidad/, /stock/, /avail/, /inventory/, /existencia/, /on hand/],
   case_pack: [/case\s*pack/, /casepack/, /full box/, /box qty/, /master/, /\bpack\b/],
+  purchase_date: [/purch.*date/, /date.*purch/, /fecha.*compra/, /last.*date/, /^date$/, /^fecha$/],
+  qty_purchased: [/qty.*purch/, /purch.*qty/, /purchased/, /cantidad.*compra/, /comprad/],
+  qty_sold: [/sold/, /vendid/, /qty.*sale/, /sales.*qty/],
 };
 
 export function guessMapping(headers: string[]): Mapping {
   const m: Mapping = {};
   const used = new Set<number>();
-  const order: Field[] = ["upc", "code", "price", "case_pack", "qty", "brand", "size", "type", "gender", "section", "sku", "desc"];
+  const order: Field[] = ["upc", "code", "purchase_date", "qty_purchased", "qty_sold", "price", "case_pack", "qty", "brand", "size", "type", "gender", "section", "sku", "desc"];
   for (const f of order) {
     for (const re of GUESS[f]) {
       const i = headers.findIndex((h, idx) => !used.has(idx) && re.test(String(h).toLowerCase().trim()));
@@ -102,6 +108,7 @@ export function extractRows(sheet: Sheet, headerRow: number, map: Mapping): Extr
       description: cellText(get(r, "desc")), size_text: cellText(get(r, "size")) || null, type: cellText(get(r, "type")) || null,
       gender: cellText(get(r, "gender")) || null, section: cellText(get(r, "section")) || section || null,
       price: (priceCents / 100).toFixed(2), qty: cellText(get(r, "qty")) || null, case_pack: cellText(get(r, "case_pack")) || null,
+      purchase_date: cellText(get(r, "purchase_date")) || null, qty_purchased: cellText(get(r, "qty_purchased")) || null, qty_sold: cellText(get(r, "qty_sold")) || null,
       raw: Object.fromEntries(r.map((c, k) => [k, c])),
     });
   }

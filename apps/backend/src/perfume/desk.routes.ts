@@ -83,6 +83,10 @@ const rowSchema = z.object({
   price: z.union([z.number(), z.string().max(30)]),
   qty: z.union([z.number(), z.string().max(30)]).nullable().optional(),
   case_pack: z.union([z.number(), z.string().max(30)]).nullable().optional(),
+  // My inventory file (owner 2026-11-14): when I bought it, how many, how many sold.
+  purchase_date: z.string().max(30).nullable().optional(),
+  qty_purchased: z.union([z.number(), z.string().max(30)]).nullable().optional(),
+  qty_sold: z.union([z.number(), z.string().max(30)]).nullable().optional(),
 });
 const importSchema = z.object({
   vendor_id: z.string().uuid(),
@@ -96,11 +100,13 @@ const importSchema = z.object({
   replaces_current: z.boolean().optional(),
 });
 const gridQuery = z.object({
-  view: z.enum(["buy", "trade", "wholesale", "comp", "all"]).default("buy"),
+  view: z.enum(["buy", "trade", "wholesale", "comp", "analysis", "all"]).default("buy"),
   sort: z.string().max(120).optional(),
   dir: z.enum(["asc", "desc"]).default("asc"),
   q: z.string().max(200).default(""),
   mine: z.enum(["offer", "inventory", "need"]).optional(),
+  // Owner 2026-11-14: "filter so i can select only the items from the competitions list".
+  carried: z.enum(["0", "1"]).optional(),
   // Comma-separated facet picks; empty = all. Category is the type (Women, Men, Set Men, Tester Women, Cosmetics, Various…).
   category: z.string().max(400).default(""),
   gender: z.string().max(200).default(""),
@@ -290,7 +296,8 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     // Level-2 view cache: pre-sorted rows + zero-picks facets, cached per (version, view, mine, sort, dir).
     const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, q.data.sort, q.data.dir);
     // Per-request: text search and facet picks only; sort is already applied in vp.sorted.
-    const viewRows = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
     const hasPicksArr = [...picks.category, ...picks.gender, ...picks.brand, ...(picks.size ?? []), ...(picks.vendor ?? [])];
     const rows = hasPicksArr.length > 0 ? filterFacets(viewRows, picks) : viewRows;
@@ -303,7 +310,8 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     const sortKey = q.data.sort && g.cols.some((c) => c.key === q.data.sort) ? q.data.sort : undefined;
     const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, sortKey, q.data.dir);
-    const viewRows = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
     const cols = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;

@@ -36,7 +36,7 @@ export type PerfumeRules = {
 };
 export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int" };
 export type PerfumeGridRow = Record<string, string | number | null>;
-export type PerfumeGridView = "buy" | "trade" | "wholesale" | "comp" | "all";
+export type PerfumeGridView = "buy" | "trade" | "wholesale" | "comp" | "analysis" | "all";
 export type PerfumeGrid = {
   cols: PerfumeGridCol[];
   rows: PerfumeGridRow[];
@@ -67,6 +67,9 @@ export type PerfumeImportRow = {
   price: number | string;
   qty?: number | string | null;
   case_pack?: number | string | null;
+  purchase_date?: string | null;
+  qty_purchased?: number | string | null;
+  qty_sold?: number | string | null;
 };
 export type PerfumeImportBody = {
   vendor_id: string;
@@ -201,13 +204,14 @@ export const searchPerfumeItems = (q: string) => apiRequest<{ items: PerfumeItem
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
   for (const k of ["category", "gender", "brand", "size", "vendor"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
   if (p.target_pct != null) s.set("target_pct", String(p.target_pct));
   if (p.earn_pct != null) s.set("earn_pct", String(p.earn_pct));
   if (p.mine) s.set("mine", p.mine);
+  if (p.carried) s.set("carried", "1");
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);
