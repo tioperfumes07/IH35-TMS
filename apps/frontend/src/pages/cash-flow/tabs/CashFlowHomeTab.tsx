@@ -1,3 +1,5 @@
+import { useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useMemo, useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -907,6 +909,10 @@ export function CashFlowHomeTab({
   // manual_daily_projections stays wired even when the flag hides the visible control.
   const openSibling = (tab: Exclude<CashFlowTabId, "home">, opts?: CashFlowNavOpts) =>
     onNavigateToTab(tab, opts);
+  const { pathname, search } = useLocation();
+  const originHref = currentOriginHref(pathname, search);
+  // ROUND 8.20 board5 — View-all Rolling Ledger shareable href+ret.
+  const rlViewAllHref = withReturnContext(cashFlowTabHref("rolling_ledger"), originHref);
 
   const next4WeeksEnd = addDaysIso(today, 27);
 
@@ -1034,7 +1040,7 @@ export function CashFlowHomeTab({
       {forecastWeeks.length > 0 && (
         <BoardSection
           title="Cash position — 4 weeks actual · 13 weeks forecast"
-          onViewAll={() => openSibling("rolling_ledger")}
+          viewAllHref={rlViewAllHref}
           headerRight={
             <span style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <V3Segmented
@@ -1094,7 +1100,7 @@ export function CashFlowHomeTab({
       {forecastWeeks.length > 0 && (
         <BoardSection
           title="13-week cash flow"
-          onViewAll={() => openSibling("rolling_ledger")}
+          viewAllHref={rlViewAllHref}
           headerRight={
             <V3Segmented
               value={tableUnit}
