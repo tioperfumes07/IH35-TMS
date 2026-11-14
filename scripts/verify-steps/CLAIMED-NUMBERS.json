@@ -15997,6 +15997,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-factoring-aging-basis-url board18"
   },
+  "20176": {
+    "claimed_at": "2026-11-14",
+    "claimed_by": "cursor",
+    "purpose": "verify-factoring-monthly-fee-drills board18"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18001,5 +18006,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1109
+  "total_claimed": 1110
 }
