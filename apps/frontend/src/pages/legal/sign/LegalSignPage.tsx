@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import {
   completePublicLegalSign,
   confirmPublicLegalSignVerification,
@@ -10,6 +10,7 @@ import {
 import { ApiError } from "../../../api/client";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { formatQuantityTable } from "../../../lib/money";
+import { resolveBackHref } from "../../../lib/returnContext";
 
 function renderTemplate(html: string, fields: Record<string, unknown>) {
   return html.replace(/\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g, (_match, key: string) => {
@@ -19,6 +20,10 @@ function renderTemplate(html: string, fields: Record<string, unknown>) {
 }
 
 export function LegalSignPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { token = "" } = useParams();
   const [details, setDetails] = useState<PublicLegalSignDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -202,7 +207,7 @@ export function LegalSignPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl p-4 md:p-6">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Sign"]} title="Sign contract" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Sign"]} title="Sign contract" />
         <p className="text-xs text-gray-500">Loading contract...</p>
       </div>
     );
@@ -211,7 +216,7 @@ export function LegalSignPage() {
   if (submitted) {
     return (
       <div className="mx-auto max-w-3xl p-6">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Sign"]} title="Signature recorded" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Sign"]} title="Signature recorded" />
         <p className="mt-2 text-xs text-gray-700">Your electronic signature was captured successfully. You may close this page.</p>
       </div>
     );
@@ -220,7 +225,7 @@ export function LegalSignPage() {
   if (!details) {
     return (
       <div className="mx-auto max-w-2xl p-6">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Sign"]} title="Link unavailable" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Sign"]} title="Link unavailable" />
         <p className="mt-2 text-xs text-gray-700">{error ?? "This signing link is invalid or expired."}</p>
       </div>
     );
@@ -228,7 +233,7 @@ export function LegalSignPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-4 p-4 md:p-6">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={moduleBackHref}
         breadcrumb={["Legal", "Sign"]}
         title={details.display_name_en}
         subtitle={`Signer: ${details.signer_name} · Template ${details.template_code} v${formatQuantityTable(details.template_version, 0)}`}

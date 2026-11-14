@@ -1,12 +1,18 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ReportCard } from "../../../components/reports/ReportCard";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { ReportsSubNav } from "../ReportsSubNav";
 import { fetchReportCategoryCatalog } from "./catalog-api";
 
 export function ReportCategoryPage({ categoryId }: { categoryId: string }) {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports/hub" });
   const catalogQuery = useQuery({
     queryKey: ["reports", "category-catalog"],
     queryFn: fetchReportCategoryCatalog,
@@ -19,7 +25,7 @@ export function ReportCategoryPage({ categoryId }: { categoryId: string }) {
       <PageHeader
         title={category?.label ?? "Report category"}
         subtitle="Canonical report catalog"
-        backHref="/reports/hub"
+        backHref={moduleBackHref}
         breadcrumb={["Reports", category?.label ?? categoryId]}
       />
       {catalogQuery.isPending ? <p className="text-xs text-[#6B7280]">Loading report category…</p> : null}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { ApiError } from "../../../api/client";
 import {
   attorneyPortalApprove,
@@ -12,9 +12,14 @@ import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { FORM_LABEL_CLASS } from "../../../components/forms/inputClass";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { formatQuantityTable } from "../../../lib/money";
 
 export function LegalAttorneyReviewPortalPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/legal" });
   const { token = "" } = useParams();
   const [details, setDetails] = useState<AttorneyReviewTemplateDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -117,7 +122,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (isLoading) {
     return (
       <div className="mx-auto max-w-4xl p-4">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="text-xs text-gray-600">Loading review…</p>
       </div>
     );
@@ -126,7 +131,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (error && !details) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-2 text-xs text-red-700">This review link is invalid, expired, or already used ({error}).</p>
       </div>
     );
@@ -137,7 +142,7 @@ export function LegalAttorneyReviewPortalPage() {
   if (doneMessage) {
     return (
       <div className="mx-auto max-w-lg p-6">
-        <PageHeader backHref="/legal" breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
+        <PageHeader backHref={moduleBackHref} breadcrumb={["Legal", "Attorney Review"]} title="Attorney review" />
         <p className="mt-3 text-xs text-gray-800">{doneMessage}</p>
       </div>
     );
@@ -145,7 +150,7 @@ export function LegalAttorneyReviewPortalPage() {
 
   return (
     <div className="mx-auto min-h-screen max-w-4xl space-y-4 p-4 pb-24">
-      <PageHeader backHref="/legal"
+      <PageHeader backHref={moduleBackHref}
         breadcrumb={["Legal", "Attorney Review"]}
         title="Attorney review"
         subtitle={`${details.display_name_en} · ${details.template_code} v${formatQuantityTable(details.version, 0)}`}
