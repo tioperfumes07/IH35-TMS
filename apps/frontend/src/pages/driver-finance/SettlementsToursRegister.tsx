@@ -11,6 +11,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { ListErrorState } from "../../components/ListErrorState";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { mmmDd } from "../../lib/formatDate";
 import { getOpenDriverBills, listSettlements, type SettlementListRow } from "../../api/driverFinance";
 import { listTours, type TourListRow } from "../../api/tourReadout";
