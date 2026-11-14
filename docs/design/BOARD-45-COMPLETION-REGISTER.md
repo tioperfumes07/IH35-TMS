@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T05:12Z) — Cursor program/banking #29482 · navigate residuals CLEARED
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Program matrix · Banking recon start | READY | #29482 `e5541c67f8c` withReturnContext; verify 20292 |
+| Cursor page navigate() outside settlements | CLEARED (agent scan) | ROUND 8.20 wave; settlements 32+ Codex BUILD |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T05:08Z) — Cursor hub/attention/compliance drills #29481
 | Board / surface | Status | Evidence |
 |---|---|---|
