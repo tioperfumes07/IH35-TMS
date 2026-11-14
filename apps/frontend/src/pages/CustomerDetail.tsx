@@ -13,7 +13,8 @@ import { formatQuantityTable, formatUsd, formatUsdCents } from "../lib/money";
 import { companyToday } from "../lib/businessDate";
 import { partyBoardReturnHref } from "../lib/partyBoardReturn";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { z } from "zod";
 import { listInvoices, type Invoice } from "../api/accounting";
@@ -394,6 +395,9 @@ type SaferEntityStatus = {
 };
 
 export function CustomerDetailPage() {
+  const { pathname, search: locationSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locationSearch);
+  const custInvHref = (target: string) => withReturnContext(target, originHref);
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -2376,7 +2380,7 @@ export function CustomerDetailPage() {
                     type="button"
                     className="font-medium text-gray-900 underline"
                     data-testid="customer-billing-open-invoices-drill"
-                    onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&has_balance=true`)}
+                    onClick={() => navigate(custInvHref(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&has_balance=true`))}
                   >
                     {Number(aging?.open_invoice_count ?? 0)}
                   </button>
@@ -2394,7 +2398,7 @@ export function CustomerDetailPage() {
               <button
                 type="button"
                 className="text-xs font-semibold text-[#1F2A44] underline"
-                onClick={() => navigate(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&status=active`)}
+                onClick={() => navigate(custInvHref(`/accounting/invoices?customer_id=${encodeURIComponent(id)}&status=active`))}
               >
                 View all
               </button>
@@ -2424,7 +2428,7 @@ export function CustomerDetailPage() {
               emptyText="No invoices yet for this customer."
               exportFilename="customer-recent-invoices"
               tableTestId="customer-detail-recent-invoices-table"
-              onRowClick={(invoice) => navigate(`/accounting/invoices/${invoice.id}`)}
+              onRowClick={(invoice) => navigate(custInvHref(`/accounting/invoices/${invoice.id}`))}
               sortKey={invoiceSortKey}
               sortDirection={invoiceSortDirection}
               onSortChange={onInvoiceSortChange}
