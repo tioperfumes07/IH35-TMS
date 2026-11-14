@@ -1,4 +1,12 @@
 
+### READY overlay (2026-11-14T02:02Z) — Cursor board1 #29382 + board13/14 #29385
+| Board | Status | Evidence |
+|---|---|---|
+| 1 Accounting Hub View-all | READY | #29382 `50bc70365a8` viewAllHref+ret; AR aging Back; verify 20200 |
+| 13/14 Dispatch Overview View-all | READY | #29385 `2bc07091eff` overviewHref+child Backs; verify 20204 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T01:48Z) — Cursor board25/10 #29384
 | Board | Status | Evidence |
 |---|---|---|

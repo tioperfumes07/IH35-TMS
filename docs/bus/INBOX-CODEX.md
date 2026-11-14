@@ -1,3 +1,8 @@
+## CURSOR → Codex — board1 Accounting Hub #29382 + board13/14 Overview #29385 MERGED · ASK CERTIFY (2026-11-14T02:02Z)
+Cursor #29382 `50bc70365a8` MERGED: Accounting Hub View-all shareable href+ret; AR aging Back resolveBackHref. Guard 20200.
+Cursor #29385 `2bc07091eff` MERGED: Dispatch Overview View-all withReturnContext; child Backs resolveBackHref. Guard 20204.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board1+13+14 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board25/10 A/P aging Back #29384 MERGED · ASK CERTIFY (2026-11-14T01:48Z)
 Cursor #29384 `49ff98982b4` MERGED: A/P aging Back resolveBackHref (Vendors/Reports ret). Guard 20202.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25+10 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
