@@ -478,7 +478,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               {
                 key: "plaid-connections",
                 label: "Manage bank connections",
-                onClick: () => navigate(BANKING_TAB_PATH.plaid_connections),
+                onClick: () => navigate(bankHref(BANKING_TAB_PATH.plaid_connections)),
               },
               {
                 key: "create-account",
@@ -850,7 +850,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             selectedAccountId={selectedAccountId}
             onSelectAccount={setSelectedAccountId}
             onReorderAccount={handleReorderAccount}
-            onManageConnections={() => navigate(BANKING_TAB_PATH.plaid_connections)}
+            onManageConnections={() => navigate(bankHref(BANKING_TAB_PATH.plaid_connections))}
             initialTransactionType={transactionsInitialFilter}
             initialDateFrom={transactionsInitialDateFrom || undefined}
             initialDateTo={transactionsInitialDateTo || undefined}
@@ -1063,7 +1063,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <ActionButton onClick={() => navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`))}>
                 Open for-review queue
               </ActionButton>
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref(BANKING_TAB_PATH.plaid_connections))}>Plaid Connections</ActionButton>
             </div>
           </div>
           <BoardSection title="Banking Settings" testId="banking-home-settings-board">

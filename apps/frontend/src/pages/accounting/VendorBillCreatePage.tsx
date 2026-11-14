@@ -1,6 +1,7 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one confirmation row for the bill just saved in this session (bill / status); the bill's dates live on the bill itself one click away.
 import { useMemo, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { createVendorBill } from "../../api/accounting";
 import { generateIdempotencyKey } from "../../api/client";
 import { VendorBillForm } from "../../components/accounting/VendorBillForm";
@@ -35,6 +36,9 @@ function vendorCreateKpiCard(label: string, value: string, sublabel: string) {
  * Route stays reachable; close returns to the bills list.
  */
 export function VendorBillCreatePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -99,7 +103,7 @@ export function VendorBillCreatePage() {
       subtitle="Vendor bill in the side panel — same fields as QuickBooks bill entry"
       crumbs={[{ label: "Bills", href: "/accounting/bills" }]}
       createControl={
-        <Button type="button" size="sm" variant="secondary" data-testid="vendor-bill-create-back" onClick={() => navigate("/accounting/bills")}>
+        <Button type="button" size="sm" variant="secondary" data-testid="vendor-bill-create-back" onClick={() => navigate(moneyHref("/accounting/bills"))}>
           Back to bills
         </Button>
       }
@@ -153,7 +157,7 @@ export function VendorBillCreatePage() {
         title="Create vendor bill"
         subtitle="Locked 12×6 header grid and cost breakdown"
         size="wide"
-        onClose={() => navigate("/accounting/bills")}
+        onClose={() => navigate(moneyHref("/accounting/bills"))}
       >
         {companyId ? (
           <div className="space-y-4">

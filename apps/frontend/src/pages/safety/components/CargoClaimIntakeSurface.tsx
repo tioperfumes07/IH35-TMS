@@ -414,7 +414,7 @@ export function CargoClaimIntakeSurface({
               kind="driver"
               id={String(row.driver_id)}
               label={entityLabel(row.driver_name, row.driver_id, "Driver")}
-              onClick={() => navigate(`/drivers/${String(row.driver_id)}`)}
+              onClick={() => navigate(moneyHref(`/drivers/${String(row.driver_id)}`))}
             />
           ) : (
             "—"
@@ -1135,7 +1135,7 @@ export function CargoClaimIntakeSurface({
                     kind="driver"
                     id={String(detail.driver_id)}
                     label={entityLabel(detail.driver_name, detail.driver_id, "Driver")}
-                    onClick={() => navigate(`/drivers/${String(detail.driver_id)}`)}
+                    onClick={() => navigate(moneyHref(`/drivers/${String(detail.driver_id)}`))}
                   />
                 ) : (
                   "—"

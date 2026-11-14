@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { RecordExpenseForm } from "../../components/expenses/RecordExpenseForm";
 import { ParityDrawer } from "../../components/parity/ParityDrawer";
 import { TaskLinkPicker } from "../../components/tasks/TaskLinkPicker";
@@ -15,6 +16,9 @@ import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
  * Close returns to the list.
  */
 export function ExpenseCreatePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { pushToast } = useToast();
   const { selectedCompanyId } = useCompanyContext();
@@ -36,7 +40,7 @@ export function ExpenseCreatePage() {
         <button
           type="button"
           className="text-[#1F2A44] underline"
-          onClick={() => navigate("/accounting/expenses/list")}
+          onClick={() => navigate(moneyHref("/accounting/expenses/list"))}
         >
           Open expenses list
         </button>
@@ -46,7 +50,7 @@ export function ExpenseCreatePage() {
         title="Record expense"
         subtitle="Expense capture"
         size="wide"
-        onClose={() => navigate("/accounting/expenses/list")}
+        onClose={() => navigate(moneyHref("/accounting/expenses/list"))}
       >
         {companyId ? (
           <div className="space-y-4">

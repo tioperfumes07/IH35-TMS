@@ -1390,7 +1390,7 @@ export function CustomerDetailPage() {
               <button
                 type="button"
                 className="self-start text-xs font-medium text-[#1F2A44] underline underline-offset-2"
-                onClick={() => navigate("/lists/accounting/payment-terms")}
+                onClick={() => navigate(custInvHref("/lists/accounting/payment-terms"))}
               >
                 Manage Payment Terms
               </button>

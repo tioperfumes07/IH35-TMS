@@ -3,6 +3,7 @@ import { resolveBackHref } from "../../lib/returnContext";
 import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
@@ -59,7 +60,9 @@ export function MaintenanceCostPerUnitPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyRange = currentQuarterRange();
@@ -341,7 +344,7 @@ export function MaintenanceCostPerUnitPage() {
             storageKey="maintenance-cost-per-unit"
             emptyText="No trucks match the current filters for this period."
             exportFilename={`maintenance-cost-per-unit-${appliedFilters.start}-${appliedFilters.end}`}
-            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=maintenance`)}
+            onRowClick={(r) => navigate(moneyHref(`/fleet/units/${r.unit_id}?tab=maintenance`))}
           />
 
           {pieData.length > 0 ? (

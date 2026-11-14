@@ -3,6 +3,7 @@ import { resolveBackHref } from "../../lib/returnContext";
 import { formatNumberTable } from "../../lib/money";
 import { useMemo, useState } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -78,7 +79,9 @@ export function ProfitPerTruckPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname } = useLocation();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board25 — Reports Home attaches ?ret=; Back must restore origin.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const emptyFilters = { ...currentQuarterRange(), flagFilter: "all" as FlagFilter };
@@ -414,7 +417,7 @@ export function ProfitPerTruckPage() {
             storageKey="profit-per-truck"
             emptyText="No trucks match the current filters for this period."
             exportFilename={`profit-per-truck-${applied.start}-${applied.end}`}
-            onRowClick={(r) => navigate(`/fleet/units/${r.unit_id}?tab=financial`)}
+            onRowClick={(r) => navigate(moneyHref(`/fleet/units/${r.unit_id}?tab=financial`))}
           />
 
           <div className="rounded-sm border border-gray-200 bg-white p-3">

@@ -1,7 +1,8 @@
 import { formatDateUS } from "../../../lib/formatDate";
 import { useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
+import { useNavigate , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { entityLabel } from "../../../lib/entity-label";
 import { ConfirmModal } from "../../../components/shared/ConfirmModal";
@@ -59,6 +60,9 @@ function recurringKpiCard(label: string, value: string, sublabel: string, tone: 
 }
 
 export function RecurringBillList() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -298,7 +302,7 @@ export function RecurringBillList() {
         <Button
           type="button"
           data-testid="recurring-bills-create-cta"
-          onClick={() => navigate("/accounting/bills/recurring/create")}
+          onClick={() => navigate(moneyHref("/accounting/bills/recurring/create"))}
           disabled={!companyId}
         >
           + Create
@@ -379,7 +383,7 @@ export function RecurringBillList() {
         <div className="rounded-sm border border-dashed border-gray-300 bg-gray-50 px-6 py-10 text-center">
           <p className="text-xs text-gray-500">No recurring bill templates yet.</p>
           <button
-            onClick={() => navigate("/accounting/bills/recurring/create")}
+            onClick={() => navigate(moneyHref("/accounting/bills/recurring/create"))}
             className="mt-3 text-xs font-medium text-[#1F2A44] hover:underline"
           >
             Create your first template →

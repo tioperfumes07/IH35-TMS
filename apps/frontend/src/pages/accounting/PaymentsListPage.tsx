@@ -339,7 +339,7 @@ export function PaymentsListPage() {
     <AccountingSubNavWrapper
       title="Payments"
       subtitle="Customer payment recording and application"
-      actions={<Button variant="secondary" onClick={() => navigate("/accounting/invoices")}>Invoices</Button>}
+      actions={<Button variant="secondary" onClick={() => navigate(acctHref("/accounting/invoices"))}>Invoices</Button>}
       createControl={<Button onClick={() => setRecordOpen(true)}>+ Record Payment</Button>}
       kpiStrip={
         <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4" data-testid="payments-kpi-strip">
