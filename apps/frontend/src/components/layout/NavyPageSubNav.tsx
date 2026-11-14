@@ -195,7 +195,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
       {hasDefaultHref ? (
         <NavLink
           to={item.to}
-          className={`inline-flex h-7 items-center ${parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}`}
+          className={`inline-flex h-8 items-center whitespace-nowrap border-b-2 px-2 ${parentActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`}
         >
           {item.label}
         </NavLink>
@@ -206,7 +206,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
-        className={`inline-flex h-7 items-center ${hasDefaultHref ? "" : parentActive ? "border-b border-white pb-0.5 font-semibold" : ""}`}
+        className={`inline-flex h-8 items-center whitespace-nowrap border-b-2 px-2 ${!hasDefaultHref && parentActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`}
         onClick={toggleFromClick}
         onKeyDown={onButtonKeyDown}
       >
@@ -281,17 +281,19 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
     search,
   );
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
-  // C-22 — locked tab-row height (28px clickable boxes law): every module's NavyPageSubNav is h-7.
+  // ROUND 9.0 (owner 2026-11-13: screens identical to docs/design/v3) — measured on Banking.png / Settlements.png:
+  // the bar is 32 px tall, #13233F, square; the active tab is a full-height rgba(255,255,255,.16) box (#38465D on the navy) with a 2 px white rule
+  // under it; tabs are 8 px padded, 4 px apart. Replaces the C-22 28 px underline style.
   const tabClass = (active: boolean) =>
-    `inline-flex h-7 items-center gap-1 whitespace-nowrap ${active ? "border-b border-white pb-0.5 font-semibold" : ""}`;
+    `inline-flex h-8 items-center gap-1 whitespace-nowrap border-b-2 px-2 ${active ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`;
   return (
     <nav
       aria-label="Section navigation"
       data-testid="navy-page-subnav"
-      data-c22-tab-height="h-7"
-      className="min-h-9 min-w-0 max-w-full shrink-0 overflow-x-auto rounded-sm bg-[#14314F] px-2 py-1 text-section-header text-white"
+      data-c22-tab-height="h-8"
+      className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold text-white"
     >
-      <div className="flex min-w-max items-center gap-4">
+      <div className="flex h-8 min-w-max items-stretch gap-1">
         {items.map((item, index) => {
           if (item.children?.length) {
             return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;

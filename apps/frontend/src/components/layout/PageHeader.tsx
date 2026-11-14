@@ -28,7 +28,7 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
   return (
     <div className="mb-2 shrink-0">
       {breadcrumb && breadcrumb.length > 0 ? (
-        <div className="mb-1 text-xs uppercase tracking-wide text-gray-500">
+        <div className="mb-1 text-xs text-gray-500" data-testid="page-header-breadcrumb">
           {breadcrumb.map((item, index) => (
             <Fragment key={`${item}-${index}`}>
               <span>{item}</span>

@@ -1,6 +1,7 @@
 import type { MaintPmDueRow } from "../../../api/maintenance";
-import { Link } from "react-router-dom";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { Link, useLocation } from "react-router-dom";
+import { V3SideCard } from "../../../components/v3/V3SideCard";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { formatMilesRemainingHonest } from "../../../lib/odometerHonesty";
 
 type Props = {
@@ -83,11 +84,14 @@ function pmCardMetrics(rows: MaintPmDueRow[], card: PmCardType) {
 }
 
 export function MaintenancePmCountdownCards({ rows, loading = false, compact = false, board = false }: Props) {
+  const { pathname, search } = useLocation();
+  const hrefWithRet = (to: string) => withReturnContext(to, currentOriginHref(pathname, search));
   if (board) {
     const due = rows.filter((row) => row.is_due).length;
-    return <V3Panel title="PM countdown" headerRight={<Link to="/maintenance/pm-schedule" aria-label="PM countdown — view schedules" className="text-xs font-semibold">{loading ? "…" : due}</Link>}>
-      <Link to="/maintenance/pm-schedule" className="block p-3 text-xs text-gray-500">{loading ? "Loading schedules…" : rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due. Open countdowns →`}</Link>
-    </V3Panel>;
+    // ROUND 9.0 board 22 — the design's side card: PM COUNTDOWN · count right · one grey line.
+    return <V3SideCard title="PM countdown" count={loading ? "…" : due} href={hrefWithRet("/maintenance/pm-schedule")} countLabel="PM countdown — view schedules" testId="maint-side-pm-countdown">
+      {loading ? "Loading schedules…" : <Link to={hrefWithRet("/maintenance/pm-schedule")}>{rows.length === 0 ? "Oil · tires · DOT · brake — no active schedule" : `${rows.length} schedules · ${due} due — open countdowns →`}</Link>}
+    </V3SideCard>;
   }
   if (compact) {
     return (

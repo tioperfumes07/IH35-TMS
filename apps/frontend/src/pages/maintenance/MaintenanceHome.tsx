@@ -431,10 +431,16 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         }
       />
 
-      {isHomeTab || isInShopBoard ? <NavyPageSubNav items={[
-        { label: "Master Data", to: "/maintenance/vehicles", children: MAINTENANCE_MASTER_DATA_LINKS.map(item => ({ label: item.label, to: item.path })) },
-        ...maintenancePrimarySubNavItems(),
-      ]} /> : <><MaintenanceSubNav /><NavyPageSubNav items={maintenancePrimarySubNavItems()} /></>}
+      {/* ROUND 9.0 board 22 (docs/design/v3/Maintenance-Home.png): MASTER DATA ▾ is its own strip directly above
+          the section tabs, joined to them — not a tab inside the bar. */}
+      {isHomeTab || isInShopBoard ? (
+        <div data-testid="maintenance-board-nav">
+          <div className="flex min-h-6 items-center bg-[#13233F] px-3 text-section-header font-bold uppercase tracking-wide text-white" data-testid="maintenance-master-data-strip">
+            <NavyPageSubNav items={[{ label: "Master data", to: "/maintenance/vehicles", children: MAINTENANCE_MASTER_DATA_LINKS.map(item => ({ label: item.label, to: item.path })) }]} />
+          </div>
+          <NavyPageSubNav items={maintenancePrimarySubNavItems()} />
+        </div>
+      ) : <><MaintenanceSubNav /><NavyPageSubNav items={maintenancePrimarySubNavItems()} /></>}
 
       {/* MAINT-F7528 — Home owns RMStatStrip (non-kanban tiles only, C-36). */}
       {!isHomeTab && !isInShopBoard && tab !== "settings" ? (
@@ -577,6 +583,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               />
             ) : (
               <InTransitTriageBand
+                viewAllHref={withReturnContext("/maintenance/driver-reports?kind=in_transit", originHref)}
                 issues={triageQuery.data?.issues ?? []}
                 totalCount={triageQuery.data?.total_count ?? triageQuery.data?.issues?.length ?? 0}
                 onTriage={(issue) => setTriageIssue(issue)}
@@ -591,6 +598,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               />
             ) : (
               <SevereAlertsBand
+                viewAllHref={withReturnContext("/maintenance/severe-repairs", originHref)}
                 alerts={severeAlertsQuery.data?.alerts ?? []}
                 totalCount={severeAlertsQuery.data?.total_count ?? severeAlertsQuery.data?.alerts?.length ?? 0}
                 totalEstimatedCostAll={severeAlertsQuery.data?.total_estimated_cost_all}

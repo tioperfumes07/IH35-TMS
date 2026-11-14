@@ -43,11 +43,12 @@ describe("responsive navigation containment", () => {
   it("lets the scroll container grow around fixed-height tabs and a classic scrollbar", () => {
     render(wrap(<NavyPageSubNav items={[{ label: "Accounts", to: "/banking/accounts" }]} />));
     const nav = screen.getByRole("navigation", { name: "Section navigation" });
-    expect(nav.className).toContain("min-h-9");
-    expect(nav.className.split(/\s+/)).not.toContain("h-9");
+    // ROUND 9.0 design bar: 32 px tall, still free to grow around a classic scrollbar.
+    expect(nav.className).toContain("min-h-8");
+    expect(nav.className.split(/\s+/)).not.toContain("h-8");
     expect(nav.className).toContain("shrink-0");
     expect(nav.className).toContain("overflow-x-auto");
-    expect(screen.getByRole("link", { name: "Accounts" }).className).toContain("h-7");
+    expect(screen.getByRole("link", { name: "Accounts" }).className).toContain("h-8");
   });
 });
 

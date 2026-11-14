@@ -25,7 +25,7 @@ describe("Maintenance Home source drill-through", () => {
     const milesHref = screen.getByRole("link", { name: "2,000 to go" }).getAttribute("href") ?? "";
     expect(milesHref).toContain("/maintenance/pm-schedule?schedule_id=schedule-test");
     expect(milesHref).toContain("ret=");
-    expect(screen.getByRole("progressbar")).toHaveAttribute("value", "8000");
+    expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "8000");
   });
   it("does not render an empty fleet on a failed read", async () => {
     vi.mocked(readFleetHealth).mockRejectedValue(new Error("offline"));

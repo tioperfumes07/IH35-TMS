@@ -3,3 +3,4 @@ export { V3KpiTile, type V3KpiTone } from "./V3KpiTile";
 export { V3Panel } from "./V3Panel";
 export { V3Segmented, type V3SegmentOption } from "./V3Segmented";
 export { formatDisplayName } from "./formatDisplayName";
+export { V3SideCard } from "./V3SideCard";

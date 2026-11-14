@@ -39,8 +39,8 @@ function assertMaintKpiRowsLeftover(src) {
 function runLive() {
   assertIncludes(
     "apps/frontend/src/components/layout/NavyPageSubNav.tsx",
-    ["data-c22-tab-height=\"h-7\"", "bg-[#14314F]", "h-7 items-center"],
-    "C-22 NavyPageSubNav locked height + navy",
+    ["data-c22-tab-height=\"h-8\"", "bg-[#13233F]", "h-8 items-center", "bg-white/[.16]"],
+    "C-22 / ROUND 9.0 NavyPageSubNav: 32 px design bar #13233F, active box white/16 (= #38465D on navy, design rgba(255,255,255,.16))",
   );
 
   assertIncludes(

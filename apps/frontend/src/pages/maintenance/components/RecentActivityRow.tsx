@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import type { WorkOrder } from "../../../api/maintenance";
 import { Button } from "../../../components/Button";
 import { entityLabel } from "../../../lib/entity-label";
@@ -116,8 +117,13 @@ function Table({
     [onOpen],
   );
 
+  // ROUND 9.0 board 22 (docs/design/v3/Maintenance-Home.png): sentence-case titles, a dark "+ Create Work Order"
+  // button on Recent work orders, View all → with ?ret back to the board, bare panel tables.
+  const { pathname, search } = useLocation();
+  const ret = (to: string) => withReturnContext(to, currentOriginHref(pathname, search));
+  const recentPanel = title === "Recent Work Orders";
   return (
-    <V3Panel title={title} headerRight={<div className="flex flex-wrap items-center gap-2">{title === "Recent Work Orders" ? <Link to="/maintenance?create_wo=1">+ Create Work Order</Link> : null}<Link to={title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos"}>View all →</Link></div>}>
+    <V3Panel title={recentPanel ? "Recent work orders" : "Recently completed"} headerRight={<div className="flex flex-wrap items-center gap-3">{recentPanel ? <Link to="/maintenance?create_wo=1" className="rounded-sm bg-[#13233F] px-3 py-1.5 text-xs font-semibold text-white" data-testid="maintenance-recent-create-wo">+ Create Work Order</Link> : null}<Link className="text-section-header font-semibold text-[#1D4ED8]" to={ret(title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos")}>View all →</Link></div>}>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
@@ -125,7 +131,8 @@ function Table({
           </div>
         ) : null}
         <ParityTable
-          title="Recent work order activity"
+          appearance="board"
+          panel
           rows={rows}
           columns={(() => {
             const visible = title === "Recently Completed"

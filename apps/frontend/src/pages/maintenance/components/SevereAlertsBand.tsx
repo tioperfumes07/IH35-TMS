@@ -1,5 +1,5 @@
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3SideCard } from "../../../components/v3/V3SideCard";
 import { formatUsd } from "../../../lib/money";
 
 type Props = {
@@ -8,16 +8,19 @@ type Props = {
   /** MAINT-MONEY-F6943 — true SUM(total_actual_cost) across every matching WO, not just the
    * visible page (server-computed, unbounded by the LIMIT 50 the alert list itself uses). */
   totalEstimatedCostAll?: number;
+  /** Severe repair / out-of-service list, with ?ret back to the board. */
+  viewAllHref?: string;
 };
 
-export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: Props) {
+export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll, viewAllHref }: Props) {
   const visibleTotal = alerts.reduce((sum, row) => sum + Number(row.total_estimated_cost ?? 0), 0);
   const isTruncated = totalCount > alerts.length;
   // Fall back to the visible sum only when the server didn't send the full-population total at all
   // (an older/dev backend) -- never silently prefer a truncated number once the real one exists.
   const trueTotal = totalEstimatedCostAll ?? visibleTotal;
   return (
-    <V3Panel title="Severe Repair / Out of Service">
+    // ROUND 9.0 board 22 — the design's side card: SEVERE / OUT OF SERVICE · count · grey line when none.
+    <V3SideCard title="Severe / out of service" count={totalCount} href={viewAllHref} testId="maint-side-severe">
       <div className="max-h-40 overflow-y-auto">
         {isTruncated ? (
           <div className="border-b border-red-100 px-2 py-1 text-xs text-red-700" data-testid="severe-alerts-range">
@@ -35,7 +38,7 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
             <span className="font-semibold">{alert.total_estimated_cost == null ? "—" : formatUsd(Number(alert.total_estimated_cost))}</span>
           </div>
         ))}
-        {alerts.length === 0 ? <div className="px-2 py-2 text-xs text-red-600">No severe alerts.</div> : null}
+        {alerts.length === 0 ? <div>No severe alerts</div> : null}
       </div>
       {/* MAINT-MONEY-F6943 — "Visible total" alone silently understated real exposure once
           totalCount exceeded the LIMIT-50 alert list: it summed only the rows shown, never the WOs
@@ -47,9 +50,9 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll }: 
           <div data-testid="severe-alerts-total-all">Total exposure (all {totalCount}): {formatUsd(trueTotal)}</div>
           <div className="font-normal text-red-600">Visible subtotal ({alerts.length} shown): {formatUsd(visibleTotal)}</div>
         </div>
-      ) : (
-        <div className="px-2 py-1 text-xs font-semibold text-red-700">Total: {formatUsd(trueTotal)}</div>
-      )}
-    </V3Panel>
+      ) : alerts.length > 0 ? (
+        <div className="pt-1 text-xs font-semibold text-red-700">Total: {formatUsd(trueTotal)}</div>
+      ) : null}
+    </V3SideCard>
   );
 }

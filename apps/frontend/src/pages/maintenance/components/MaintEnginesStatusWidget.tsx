@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { getEngineStatusBoard, type EngineStatusRow } from "../../../api/engine-status";
 import { ListErrorState } from "../../../components/ListErrorState";
+import { V3SideCard } from "../../../components/v3/V3SideCard";
 import { V3Panel } from "../../../components/v3/V3Panel";
 
 function healthLabel(row: EngineStatusRow) {
@@ -56,6 +57,20 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
     );
   }
 
+  // ROUND 9.0 board 22 — compact = the design's side card: ENGINES · "n red" · one line of engine states.
+  if (compact) {
+    return (
+      <V3SideCard title="Engines" count={q.isLoading ? "…" : `${redCount} red`} href="/system/engine-status" testId="maint-engines-status-widget" countTestId="maint-engines-full-board-link">
+        <span data-testid="maint-engines-red-count" className="sr-only">{q.isLoading ? "…" : `${redCount} red · ${rows.length} maintenance`}</span>
+        {q.isLoading ? "…" : rows.length === 0 ? "No maintenance engines in catalog." : rows.map((row, i) => (
+          <span key={row.id} data-testid={`maint-engine-row-${row.id}`} data-health={row.health} title={row.health_reason}>
+            {i > 0 ? " · " : ""}
+            <Link to={`/system/engine-status#${row.id}`} data-testid={`maint-engine-link-${row.id}`} aria-label={`${row.id} ${row.name} — ${healthLabel(row)}`}>{row.id} {healthLabel(row)}</Link>
+          </span>
+        ))}
+      </V3SideCard>
+    );
+  }
   return (
     <V3Panel title="Engines" testId="maint-engines-status-widget" headerRight={
         <Link to="/system/engine-status" className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
