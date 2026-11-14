@@ -45,7 +45,8 @@ assertIncludes(dropdown, "notification-item", "Dropdown must render notification
 assertIncludes(dropdown, "Mark all read", "Dropdown must offer mark-all-read action");
 assertIncludes(dropdown, "Mark read", "Dropdown must offer per-item mark-read");
 assertIncludes(dropdown, "Dismiss", "Dropdown must offer dismiss");
-assertIncludes(dropdown, 'to="/notifications"', "Dropdown must link to /notifications view-all");
+// ROUND 8.20 (#29521) wraps the view-all link in the return context (to={hubHref("/notifications")}); same target.
+if (!dropdown.includes('to="/notifications"') && !dropdown.includes('to={hubHref("/notifications")}')) assertIncludes(dropdown, 'to="/notifications"', "Dropdown must link to /notifications view-all");
 assertIncludes(dropdown, "action_link", "Dropdown must deep-link via action_link");
 assertIncludes(hook, 'fetchNotifications({ limit: 20 })', "Hook must fetch first page (limit 20)");
 assertIncludes(hook, "/api/v1/notifications/unread-count", "Hook must call unread-count endpoint");

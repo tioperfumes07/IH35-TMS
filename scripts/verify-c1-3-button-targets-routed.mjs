@@ -45,7 +45,8 @@ const CHECKS = [
     name: "Fuel Home → Fraud Alerts",
     file: "apps/frontend/src/pages/fuel/FuelHome.tsx",
     // ROUND 8.15b: FuelCard/Fraud KPIs may use href (V3KpiTile → Link to=) or onClick navigate.
-    linkMustContainAny: ['href="/fuel/fraud-alerts"', 'to="/fuel/fraud-alerts"', 'onClick={() => navigate("/fuel/fraud-alerts")}'],
+    // ROUND 8.20 board19 wraps the KPI target in the return context: href={withReturnContext("/fuel/fraud-alerts", originHref)}.
+    linkMustContainAny: ['href="/fuel/fraud-alerts"', 'to="/fuel/fraud-alerts"', 'onClick={() => navigate("/fuel/fraud-alerts")}', 'href={withReturnContext("/fuel/fraud-alerts", originHref)}'],
     route: "/fuel/fraud-alerts",
   },
   {
@@ -114,7 +115,8 @@ function selftest() {
     mkdirAndWrite(fuelAbs, readFileSync(path.join(ROOT, CHECKS[0].file), "utf8")
       .replaceAll('href="/fuel/fraud-alerts"', 'href="/fuel/x"')
       .replaceAll('to="/fuel/fraud-alerts"', 'to="/fuel/x"')
-      .replaceAll('navigate("/fuel/fraud-alerts")', 'navigate("/fuel/x")'));
+      .replaceAll('navigate("/fuel/fraud-alerts")', 'navigate("/fuel/x")')
+      .replaceAll('withReturnContext("/fuel/fraud-alerts"', 'withReturnContext("/fuel/x"'));
     const poisonedFuel = runChecks(tmp);
     if (!poisonedFuel.some((e) => e.includes("Fuel Home → Fraud Alerts"))) {
       console.error(`${LABEL} SELFTEST FAIL — a Fuel Home tile pointing nowhere was not caught`);
