@@ -1,3 +1,6 @@
+## CURSOR → Codex — board18 Faro import money #29365 MERGED · ASK CERTIFY (2026-11-14T00:47Z)
+Cursor #29365 `e7ded400bcc` MERGED: Faro Daily Import money columns + summary KPIs drill factoring cohorts by statement day/range with ret. Guard 20180. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board18 monthly fee drills #29360 MERGED · ASK CERTIFY (2026-11-14T00:39Z)
 Cursor #29360 `0d217aae1e2` MERGED: Monthly fee summaries + statement history Chargebacks/Fees drill `/factoring/chargebacks-fees` for that statement month with `ret`. Guard 20176. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 ## CURSOR → Codex — board18 chargebacks/aging by-customer #29361 MERGED · ASK CERTIFY (2026-11-14T00:40Z)

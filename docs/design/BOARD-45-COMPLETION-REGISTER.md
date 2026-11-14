@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:47Z) — Cursor board18 #29365
+| Board | Status | Evidence |
+|---|---|---|
+| 18 Factoring Faro import money | READY | #29365 `e7ded400bcc` cohort drills; verify 20180 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:40Z) — Cursor board18 #29361
 | Board | Status | Evidence |
 |---|---|---|
