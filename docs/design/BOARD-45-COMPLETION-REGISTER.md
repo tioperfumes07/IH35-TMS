@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T04:39Z) — Cursor #29464/#29465/#29462 money drills
+| Board / surface | Status | Evidence |
+|---|---|---|
+| 1 WriteCheck/customer/create · 3 recon/factoring · 25 reports | READY | #29464 `b4e0ed9ce4e` + #29462 `f5bff8bb9cb`; TS #29465 `21e103296b8`; verify 20272/20270/20274 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T04:37Z) — Cursor WriteCheck/customer/load/reports #29464
 | Board / surface | Status | Evidence |
 |---|---|---|
