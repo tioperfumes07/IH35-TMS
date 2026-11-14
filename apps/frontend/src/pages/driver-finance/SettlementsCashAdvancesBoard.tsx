@@ -228,7 +228,7 @@ export function SettlementsCashAdvancesBoard() {
 
   if (!companyId) {
     return (
-      <div className="space-y-3" data-testid="settlements-cash-advances-board">
+      <div className="space-y-3" data-testid="settlements-cash-advances-board" data-v3-board="Settlements-CashAdvances">
         <BoardSection title="Cash advances" testId="settlements-cash-advances-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -241,6 +241,7 @@ export function SettlementsCashAdvancesBoard() {
       className="space-y-3"
       data-testid="settlements-cash-advances-board"
       data-settlements-cash-advances-rebuild="1"
+      data-v3-board="Settlements-CashAdvances"
     >
       {kpisQuery.isError ? (
         <ListErrorState

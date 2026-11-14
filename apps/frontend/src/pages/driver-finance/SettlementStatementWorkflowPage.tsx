@@ -532,7 +532,7 @@ export function SettlementStatementWorkflowPage() {
     typeof settlement.matched_bank_transaction_id === "string" ? settlement.matched_bank_transaction_id : null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-v3-board="Settlements-Statement" style={{ lineHeight: "normal" }}>
       <BackButton label="Driver Settlements" fallbackTo="/driver-finance/settlements" />
       <Breadcrumb
         items={[

@@ -173,7 +173,7 @@ export function SettlementsPreSettlementsBoard() {
 
   if (!companyId) {
     return (
-      <div className="space-y-3" data-testid="settlements-presettle-board">
+      <div className="space-y-3" data-testid="settlements-presettle-board" data-v3-board="Settlements-PreSettlements">
         <BoardSection title="Pre-settlements" testId="settlements-presettle-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -182,7 +182,7 @@ export function SettlementsPreSettlementsBoard() {
   }
 
   return (
-    <div className="space-y-3" data-testid="settlements-presettle-board" data-settlements-presettle-rebuild="1">
+    <div className="space-y-3" data-testid="settlements-presettle-board" data-settlements-presettle-rebuild="1" data-v3-board="Settlements-PreSettlements">
       <div
         style={{
           display: "grid",

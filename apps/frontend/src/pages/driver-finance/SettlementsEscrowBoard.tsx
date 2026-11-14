@@ -252,7 +252,7 @@ export function SettlementsEscrowBoard() {
   const totalHeldCents = driverRows.reduce((s, r) => s + r.heldCents, 0);
 
   return (
-    <div className="space-y-3" data-testid="settlements-escrow-board" data-settlements-escrow-rebuild="1">
+    <div className="space-y-3" data-testid="settlements-escrow-board" data-settlements-escrow-rebuild="1" data-v3-board="Settlements-Escrow">
       <div
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}
         data-testid="escrow-home-kpi-strip"
