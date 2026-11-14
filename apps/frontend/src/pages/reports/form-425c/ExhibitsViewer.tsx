@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { DatePicker } from "../../../components/forms/DatePicker";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../../api/client";
 import { ExhibitCard } from "../../../components/form-425c/ExhibitCard";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { useToast } from "../../../components/Toast";
 import { userFacingApiError } from "../../../lib/api-error-message";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { printLetterHtml } from "../../../lib/openPrintableDocument";
 import { buildExhibitsPrintBodyHtml } from "./exhibitsPrintHtml";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
@@ -47,6 +48,10 @@ function defaultPeriod() {
 }
 
 export function ExhibitsViewer() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/425c" });
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -89,7 +94,7 @@ export function ExhibitsViewer() {
         title="Form 425C Exhibits A–F"
         subtitle="Auto-build court-ready supporting exhibits for the selected operating company."
         breadcrumb={[{ label: "425C" }, { label: "Exhibits" }]}
-        backHref="/425c"
+        backHref={moduleBackHref}
         actions={
           <div className="flex flex-wrap items-center gap-3 text-xs font-semibold text-[#1F2A44]">
             <Link to="/425c?tab=qb" className="hover:underline">Deposit Import</Link>

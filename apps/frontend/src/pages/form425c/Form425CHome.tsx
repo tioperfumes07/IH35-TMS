@@ -1,6 +1,6 @@
 import { overrideReasonCodeOf } from "../../components/override/reasonLine";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams, useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createForm425CReport,
@@ -38,6 +38,7 @@ import { MergeExportTab } from "./tabs/MergeExportTab";
 import { ProfilesTab } from "./tabs/ProfilesTab";
 import { QBImportTab } from "./tabs/QBImportTab";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { resolveBackHref } from "../../lib/returnContext";
 
 type TabId = "profile" | "qb" | "form" | "merge" | "history";
 const FORM425C_TAB_IDS = new Set<string>(["profile", "qb", "form", "merge", "history"]);
@@ -146,6 +147,9 @@ export function Form425CHome() {
   const companyId = selectedCompanyId ?? "";
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/425c" });
   const tab = parseForm425CTab(searchParams.get("tab"));
   const setTab = (next: TabId) => {
     const params = new URLSearchParams(searchParams);
@@ -598,7 +602,7 @@ export function Form425CHome() {
   return (
     <div className="min-h-screen bg-[#F7F8FA]" data-form425c-page="true">
       <div className="px-4 pt-4">
-        <PageHeader title="Form 425C" backHref="/425c" breadcrumb={["425C"]} />
+        <PageHeader title="Form 425C" backHref={moduleBackHref} breadcrumb={["425C"]} />
       </div>
       {!companyId ? (
         <div className="mx-4 mt-3">
