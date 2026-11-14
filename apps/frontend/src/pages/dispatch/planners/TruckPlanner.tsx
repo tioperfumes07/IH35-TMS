@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { formatDateUS } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +58,9 @@ type TruckListRow = {
 };
 
 export function TruckPlanner() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
@@ -241,7 +245,7 @@ export function TruckPlanner() {
       bar.label = `${load.load_number} · ${plannerBarLane(load)}`;
       bar.shortLabel = load.load_number;
       bar.detail = plannerBarMoneyDetail(load);
-      bar.onClick = () => navigate(`/dispatch/loads/${encodeURIComponent(load.id)}`);
+      bar.onClick = () => navigate(dispHref(`/dispatch/loads/${encodeURIComponent(load.id)}`));
     }
     return groups;
   }, [loadsQuery.data, days, navigate]);

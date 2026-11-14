@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { type LoadStatus, listAllLoads, listLoads, useUpdateLoadStatus } from "../api/loads";
 import { listOpenPreSettlementsByDriver } from "../api/driverFinance";
@@ -107,6 +108,8 @@ export function DispatchPage({
   roundTripsDeepLink?: boolean;
 } = {}) {
   const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   // C5 — the canonical load address is the PATH `/dispatch/loads/:id`, which this page is mounted
@@ -444,7 +447,7 @@ export function DispatchPage({
               size="sm"
               className={location.pathname.startsWith("/dispatch/load-history") ? "border-b-2 border-b-[#1F2A44] font-semibold" : ""}
               data-testid="dispatch-board-scope-history"
-              onClick={() => navigate("/dispatch/load-history")}
+              onClick={() => navigate(dispHref("/dispatch/load-history"))}
             >
               Loads history
             </Button>
@@ -453,7 +456,7 @@ export function DispatchPage({
               variant="secondary"
               size="sm"
               data-testid="dispatch-open-planners"
-              onClick={() => navigate("/dispatch/planners/driver")}
+              onClick={() => navigate(dispHref("/dispatch/planners/driver"))}
             >
               Planners
             </Button>
@@ -514,7 +517,7 @@ export function DispatchPage({
                 next.set("view", "units");
                 setSearchParams(next);
               } },
-              { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate("/dispatch/trip-pairing") },
+              { id: "trip-pairing", label: "Trip Pairing", active: location.pathname === "/dispatch/trip-pairing", liveOnly: false, onClick: () => navigate(dispHref("/dispatch/trip-pairing")) },
               { id: "truck-line", label: "Truck Line", active: view === "truck-line", liveOnly: true, onClick: () => {
                 const next = new URLSearchParams(searchParams);
                 next.set("view", "truck-line");
@@ -632,7 +635,7 @@ export function DispatchPage({
           <TruckLineBoard
             selectedUnitId={filters.unitId}
             operatingCompanyId={defaultCompanyIds[0] ?? ""}
-            onLoadClick={(loadId) => navigate(`/dispatch/load-costs/${loadId}`)}
+            onLoadClick={(loadId) => navigate(dispHref(`/dispatch/load-costs/${loadId}`))}
             onAssignDriver={(assignDriverId, assignUnitId) => {
               setBookDriverId(assignDriverId);
               setBookUnitId(assignUnitId);
