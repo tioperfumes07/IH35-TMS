@@ -1,7 +1,7 @@
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { AmountLink, resolveAmountRoute, type AmountFilter } from "../../components/shared/AmountLink";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -83,7 +83,6 @@ export function TrialBalancePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search } = useLocation();
   const tbOriginHref = currentOriginHref(pathname, search);
-  const navigate = useNavigate();
   // ROUND 8.20 board25 — Home Cash attaches ret=/reports?basis=cash; Back must restore it.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);

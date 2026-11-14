@@ -593,8 +593,8 @@ export function CustomersPage() {
     params.delete("txn"); // C-31 — tab owns the predicate; retire the buried ?txn= control.
     setSearchParams(params, { replace: true });
   };
-  const { pathname, search } = useLocation();
-  const customersOriginHref = currentOriginHref(pathname, search);
+  const { pathname, search: locationSearch } = useLocation();
+  const customersOriginHref = currentOriginHref(pathname, locationSearch);
   // ROUND 8.20 board9 — KPI drills shareable href+ret (not onClick-only).
   const customersWithTxHref = withReturnContext("/customers", customersOriginHref);
   const customersAllHref = withReturnContext("/customers?listTab=all", customersOriginHref);

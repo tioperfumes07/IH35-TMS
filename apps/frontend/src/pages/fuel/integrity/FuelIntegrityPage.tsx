@@ -68,8 +68,6 @@ export function FuelIntegrityPage() {
   const cardSectionRef = useRef<HTMLDivElement | null>(null);
   const relaySectionRef = useRef<HTMLDivElement | null>(null);
   const derivedSectionRef = useRef<HTMLDivElement | null>(null);
-  const scrollTo = (ref: typeof cardSectionRef) => () => ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-
   const verdictsQuery = useQuery({
     queryKey: ["fuel", "integrity", "verdicts", companyId],
     queryFn: () => getFuelIntegrityVerdicts(companyId),

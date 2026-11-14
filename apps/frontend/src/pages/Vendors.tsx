@@ -159,8 +159,8 @@ export function VendorsPage() {
     onUrlSortChange("name", value === "name_desc" ? "desc" : "asc");
   };
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search } = useLocation();
-  const vendorsOriginHref = currentOriginHref(pathname, search);
+  const { pathname, search: locationSearch } = useLocation();
+  const vendorsOriginHref = currentOriginHref(pathname, locationSearch);
   // ROUND 8.20 board10 — KPI drills shareable href+ret (not onClick-only).
   const vendorsWithTxHref = withReturnContext("/vendors", vendorsOriginHref);
   const vendorsAllHref = withReturnContext("/vendors?listTab=all", vendorsOriginHref);
