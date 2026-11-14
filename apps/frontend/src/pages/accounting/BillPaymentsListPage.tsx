@@ -3,7 +3,8 @@ import { FILTER_CONTROL_SIZE_CLASS } from "../../design/tokens";
 import { humanMemo } from "./ManualJEListPage";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,6 +65,9 @@ function displayBillLabel(bill: VendorBill) {
 }
 
 export function BillPaymentsListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -487,7 +491,7 @@ export function BillPaymentsListPage() {
           sortDirection={sortDirection}
           onSortChange={onSortChange}
           sortMode="external"
-          onRowClick={(row) => navigate(`/accounting/bill-payments/${row.id}`)}
+          onRowClick={(row) => navigate(acctHref(`/accounting/bill-payments/${row.id}`))}
           selectable={canVoid}
           maxSelectable={200}
           onSelectionCapExceeded={() => pushToast("You can select up to 200 bill payments at once.", "error")}

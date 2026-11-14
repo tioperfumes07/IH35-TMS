@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { formatDateUS } from "../../lib/formatDate";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { listCoaAccountsForJe, listJournalEntries, voidJournalEntry, type JournalEntry, type JournalEntrySource, type JournalEntryStatus } from "../../api/accounting";
@@ -118,6 +119,9 @@ function journalEntryListLabel(entry: {
 }
 
 export function ManualJEListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const acctHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
@@ -433,7 +437,7 @@ export function ManualJEListPage() {
           rowKey={(entry) => entry.id}
           rowClassName={(entry) => voidedRowClassName(entry.voided_at)}
           loading={entriesQuery.isPending || (entriesQuery.isFetching && allPageRows.length === 0)}
-          onRowClick={(entry) => navigate(`/accounting/journal-entries/${entry.id}`)}
+          onRowClick={(entry) => navigate(acctHref(`/accounting/journal-entries/${entry.id}`))}
           filterBar={filterBar}
           suppressToolbarSearch
           suppressToolbarRange

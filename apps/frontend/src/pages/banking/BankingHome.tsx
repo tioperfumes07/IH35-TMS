@@ -60,7 +60,7 @@ import { SelectCombobox } from "../../components/Combobox";
 
 
 import { InfoPopover } from "../../components/shared/InfoPopover";
-import { RETURN_PARAM, resolveBackHref } from "../../lib/returnContext";
+import { RETURN_PARAM, currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 type BankingTabId = BankingModuleTabId;
 
 type Props = {
@@ -96,6 +96,9 @@ function virtualTileRoute(tile: { tile_kind?: string; account_type?: string } | 
 export function BankingHomePage({ initialTab }: Props = {}) {
   const navigate = useNavigate();
   const location = useLocation();
+  // ROUND 8.20 board3 — account/register drills shareable href+ret.
+  const originHref = currentOriginHref(location.pathname, location.search);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const deepLinkTxnId = searchParams.get("txn_id");
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
@@ -423,7 +426,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     const bankRow = (allAccountsQuery.data?.accounts ?? []).find((a) => String(a.id) === String(selectedId ?? ""));
     const ledgerAccountId = bankRow?.ledger_account_id ? String(bankRow.ledger_account_id) : null;
     if (ledgerAccountId) {
-      navigate(`/accounting/chart-of-accounts/register/${ledgerAccountId}`);
+      navigate(bankHref(`/accounting/chart-of-accounts/register/${ledgerAccountId}`));
       return;
     }
     if (selectedId) {
@@ -630,7 +633,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 return;
               }
               setSelectedAccountId(id);
-              navigate(`/banking/accounts/${id}`);
+              navigate(bankHref(`/banking/accounts/${id}`));
             }}
             onView={(id) => {
               const virtualPath = virtualTileRoute(sortedBankTiles.find((t) => t.id === id));
@@ -925,7 +928,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <ActionButton
                   onClick={() => {
                     const first = relayWalletTiles[0];
-                    if (first?.id) navigate(`/banking/accounts/${first.id}`);
+                    if (first?.id) navigate(bankHref(`/banking/accounts/${first.id}`));
                   }}
                 >
                   Open wallet register
@@ -936,9 +939,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 selectedId={selectedAccountId}
                 onSelect={(id) => {
                   setSelectedAccountId(id);
-                  navigate(`/banking/accounts/${id}`);
+                  navigate(bankHref(`/banking/accounts/${id}`));
                 }}
-                onView={(id) => navigate(`/banking/accounts/${id}`)}
+                onView={(id) => navigate(bankHref(`/banking/accounts/${id}`))}
                 onInspect={(id) => setInspectTileId(id)}
                 onManageAccounts={() => setManageOpen(true)}
               />
