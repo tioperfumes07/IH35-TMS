@@ -1,4 +1,4 @@
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 /**
  * ORDERS-2026-10-01 MAINTENANCE row 1 — E-41 engines-only widget for Maintenance domain.
@@ -6,16 +6,12 @@ import { currentOriginHref, withReturnContext } from "../../../lib/returnContext
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { getEngineStatusBoard, type EngineStatusRow } from "../../../api/engine-status";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { V3SideCard } from "../../../components/v3/V3SideCard";
 import { V3Panel } from "../../../components/v3/V3Panel";
 
 function healthLabel(row: EngineStatusRow) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const maintHref = (target: string) => withReturnContext(target, originHref);
   switch (row.health) {
     case "ok":
       return "OK";
@@ -38,6 +34,9 @@ type Props = {
 };
 
 export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const q = useQuery({
     queryKey: ["system", "engine-status", "maint-widget", operatingCompanyId],
     queryFn: () => getEngineStatusBoard(operatingCompanyId),
@@ -70,7 +69,7 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
         {q.isLoading ? "…" : rows.length === 0 ? "No maintenance engines in catalog." : rows.map((row, i) => (
           <span key={row.id} data-testid={`maint-engine-row-${row.id}`} data-health={row.health} title={row.health_reason}>
             {i > 0 ? " · " : ""}
-            <Link to={`/system/engine-status#${row.id}`} data-testid={`maint-engine-link-${row.id}`} aria-label={`${row.id} ${row.name} — ${healthLabel(row)}`}>{row.id} {healthLabel(row)}</Link>
+            <Link to={maintHref(`/system/engine-status#${row.id}`)} data-testid={`maint-engine-link-${row.id}`} aria-label={`${row.id} ${row.name} — ${healthLabel(row)}`}>{row.id} {healthLabel(row)}</Link>
           </span>
         ))}
       </V3SideCard>
@@ -78,7 +77,7 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
   }
   return (
     <V3Panel title="Engines" testId="maint-engines-status-widget" headerRight={
-        <Link to="/system/engine-status" className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
+        <Link to={maintHref("/system/engine-status")} className="text-xs text-[#1F2A44] underline" data-testid="maint-engines-full-board-link">
           {compact ? (q.isLoading ? "…" : `${redCount} red`) : "Full board"}
         </Link>
     }>
@@ -96,7 +95,7 @@ export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }
             title={row.health_reason}
           >
             <Link
-              to={`/system/engine-status#${row.id}`}
+              to={maintHref(`/system/engine-status#${row.id}`)}
               aria-label={`${row.id} ${row.name} — ${healthLabel(row)}`}
               className="min-w-0 truncate text-[#0F1219] underline-offset-2 hover:underline"
               data-testid={`maint-engine-link-${row.id}`}
