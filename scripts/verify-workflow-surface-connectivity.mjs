@@ -116,7 +116,7 @@ const ROUTE_PROOFS = [
   ["fleet", "map.redirect", "routes/manifest.tsx", 'path="/fleet/map"'],
   ["form_425", "exhibits", "routes/manifest.tsx", 'path="/425c/exhibits"'],
   ["system", "system.samsara_hos_driver_map", "routes/manifest.tsx", 'path="/samsara/hos-driver-map"'],
-  ["system", "hop.program_matrix", "pages/system/SystemModulePage.tsx", 'to="/program/matrix"'],
+  ["system", "hop.program_matrix", "pages/system/SystemModulePage.tsx", '/program/matrix"'],
   ["system", "system.wizard.edi_setup", "routes/manifest.tsx", 'path="/integrations/edi"'],
   ["system", "system.panel.usmcaactivation", "routes/manifest.tsx", 'path="/admin/usmca-activation"'],
 ];

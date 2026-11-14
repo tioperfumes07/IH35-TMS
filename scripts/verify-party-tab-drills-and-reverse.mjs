@@ -30,7 +30,7 @@ const CHECKS = [
   ["coi", /status:\s*statusFilter\.length === 1 \? \(statusFilter\[0\] as CoiRequestStatus\) : undefined,/, "COI status selector must apply on the customer tab"],
   ["vend", /listVendorBills\(companyId, \{ vendor_id: id, include_balance: true, status: "active", limit: 200 \}\)/, "vendor A/P bills must be live only"],
   ["vend", /listExpenses\(companyId, \{ vendor_uuid: id, status: "active", limit: 200 \}\)/, "vendor A/P expenses must be live only"],
-  ["vend", /to=\{`\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}`\}/, "Pay bills must land on this vendor's bill payments"],
+  ["vend", /\/accounting\/bill-payments\?vendor_id=\$\{encodeURIComponent\(id\)\}/, "Pay bills must land on this vendor's bill payments"],
   ["bp", /useState\(\(\) => searchParams\.get\("vendor_id"\) \?\? ""\)/, "bill payments must honour ?vendor_id="],
 ];
 
@@ -56,7 +56,7 @@ if (fails.length) { console.error(`verify-party-tab-drills-and-reverse: FAIL\n  
 if (process.argv.includes("--selftest")) {
   const m = [
     ["voided invoices back", { ...src, cust: src.cust.replace('{ customer_id: id, status: "active" }', "{ customer_id: id }") }],
-    ["dead pay-bills link", { ...src, vend: src.vend.replace("to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`}", 'to="/accounting/pay-bills"') }],
+    ["dead pay-bills link", { ...src, vend: src.vend.replace("to={moneyHref(`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`)}", 'to="/accounting/pay-bills"') }],
     ["report drops customer", { ...src, prof: src.prof.replace("rows.filter((r) => r.customer_id === deepCustomerId)", "rows") }],
     ["customer need-company bare", { ...src, cust: src.cust.replace(/testId="customer-detail-need-company"/g, 'testId="x"') }],
     ["vendor need-company bare", { ...src, vend: src.vend.replace(/testId="vendor-detail-need-company"/g, 'testId="x"') }],

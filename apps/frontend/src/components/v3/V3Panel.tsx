@@ -15,6 +15,7 @@ export function V3Panel({
   children,
   footer,
   testId,
+  borderRadius,
 }: {
   title: string;
   subtitle?: string;
@@ -26,11 +27,12 @@ export function V3Panel({
   children: ReactNode;
   footer?: ReactNode;
   testId?: string;
+  borderRadius?: number;
 }) {
   const shell: CSSProperties = {
     background: V3.surface,
     border: `1px solid ${V3.border}`,
-    borderRadius: 2,
+    borderRadius: borderRadius ?? 2,
     display: "flex",
     flexDirection: "column",
     minWidth: 0,

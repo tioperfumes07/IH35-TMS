@@ -53,6 +53,11 @@ const RAISED_SURFACES = [
     needle: "relative flex flex-col rounded-lg",
     reason: "the centred modal PANEL — it floats above a dimmed page, so white is the raised surface, not an unselected box",
   },
+  {
+    file: "apps/frontend/src/pages/dispatch/planners/DispatchPlannersLayout.tsx",
+    needle: "border-transparent text-white/85 hover:bg-white/10",
+    reason: "dark nav-rail tab (#1B2333 background) — hover:bg-white/10 is 10% opacity white on a dark surface, not a pure-white unselected box",
+  },
 ];
 
 // Every ternary inside a className={...} expression, however it is wrapped.

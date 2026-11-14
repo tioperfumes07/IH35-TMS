@@ -2271,7 +2271,7 @@ export function BookLoadModalV4({
                     }}
                     // Boards 14 + 17: selected = 2px #13233F border on #EEF2F7, navy 26px icon tile; others 1px #DDE1E7 on white, #F7F8FA tile.
                     className={`flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-colors ${
-                      active ? "border-2 border-[#13233F] bg-[#EEF2F7]" : "border border-[#DDE1E7] bg-white hover:bg-[#F7F8FA]"
+                      active ? "border-2 border-[#13233F] bg-[#EEF2F7]" : "border border-[#DDE1E7] bg-[#F5F6F8] hover:bg-[#F7F8FA]"
                     }`}
                   >
                     <span
@@ -2424,7 +2424,7 @@ export function BookLoadModalV4({
                     >
                       <span
                         className={`inline-flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[4px] text-section-header font-bold ${
-                          done || active ? "bg-[#13233F] text-white" : "border border-[#DDE1E7] bg-white text-[#5B6576]"
+                          done || active ? "bg-[#13233F] text-white" : "border border-[#DDE1E7] bg-[#F5F6F8] text-[#5B6576]"
                         }`}
                         data-testid={`book-load-rail-${sec.letter.toLowerCase()}-${done ? "done" : "open"}`}
                       >
