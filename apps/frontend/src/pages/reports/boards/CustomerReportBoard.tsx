@@ -84,6 +84,20 @@ export function CustomerReportBoard() {
   const setFactored = (next: string[]) => patchUrl({ factored: next.length ? next.join(",") : null });
   const statementHref = (customerId: string) =>
     withReturnContext(`/customers/${encodeURIComponent(customerId)}/statement`, originHref);
+  const cohortHref = (patch: Record<string, string | null>) => {
+    const p = new URLSearchParams(searchParams);
+    for (const [k, v] of Object.entries(patch)) {
+      if (v == null || v === "") p.delete(k);
+      else p.set(k, v);
+    }
+    const q = p.toString();
+    return withReturnContext(`${pathname}${q ? `?${q}` : ""}`, originHref);
+  };
+  // ROUND 8.20 board25/30 — KPI tiles shareable href+ret (not onClick-only).
+  const salesViewHref = cohortHref({ view: null });
+  const agingViewHref = cohortHref({ view: "aging" });
+  const statementViewHref = cohortHref({ view: "statement" });
+  const factoredHref = cohortHref({ factored: "factored" });
   const asOf = companyToday();
 
   const board = useQuery({
@@ -292,15 +306,15 @@ export function CustomerReportBoard() {
           label="Customers billed"
           value={board.data ? String(billedRows.length) : "…"}
           sub={`${sumBy(billedRows, (r) => r.invoices)} invoices`}
-          onClick={() => setView("sales")}
+          href={salesViewHref}
         />
-        <V3KpiTile testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} onClick={() => setView("sales")} />
+        <V3KpiTile testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} href={salesViewHref} />
         <V3KpiTile
           testId="cr-kpi-open-ar"
           label="Open A/R"
           value={aging.data ? money(agingTotals.total) : "…"}
           sub={`${agingTotals.invoices} invoices · as of ${mmmDd(asOf)}`}
-          onClick={() => setView("aging")}
+          href={agingViewHref}
         />
         <V3KpiTile
           testId="cr-kpi-past-due"
@@ -308,15 +322,15 @@ export function CustomerReportBoard() {
           value={aging.data ? money(pastDueAr) : "…"}
           sub={`${pctLabel(pct(pastDueAr, agingTotals.total))} of open`}
           tone={pastDueAr ? "amber" : "muted"}
-          onClick={() => setView("aging")}
+          href={agingViewHref}
         />
-        <V3KpiTile testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} onClick={() => setFactored(["factored"])} />
+        <V3KpiTile testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} href={factoredHref} />
         <V3KpiTile
           testId="cr-kpi-collected"
           label="Payments recorded"
           value={board.data ? money(sumBy(billedRows, (r) => r.collected_cents)) : "…"}
           sub={`${sumBy(billedRows, (r) => r.paid_invoices)} invoices with a payment`}
-          onClick={() => setView("statement")}
+          href={statementViewHref}
         />
       </ReportKpiGrid>
 

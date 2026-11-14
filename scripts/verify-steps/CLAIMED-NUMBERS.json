@@ -16137,6 +16137,16 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 board9/10 Customers/Vendors + Escrow KPI href+ret"
   },
+  "20228": {
+    "claimed_at": "2026-11-14T02:53:41Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Customer/Vendor report board KPI href+ret"
+  },
+  "20230": {
+    "claimed_at": "2026-11-14T02:54:36Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 reports hub + fleet home + legal portal Class R Backs"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
@@ -18141,10 +18151,5 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111,
-  "20230": {
-    "claimed_at": "2026-11-14T02:54:36Z",
-    "claimed_by": "cursor",
-    "purpose": "ROUND 8.20 reports hub + fleet home + legal portal Class R Backs"
-  }
+  "total_claimed": 1111
 }
