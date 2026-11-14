@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:52Z) — Cursor Banking/Unit/Finance/Dispatch Link ret #29518
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Banking/Unit/Finance/Dispatch Link drills | READY | #29518 `0a6e4722d57` withReturnContext; verify 20316 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:46Z) — Cursor Topbar + DriftAlertPopup ret #29514
 | Board / surface | Status | Evidence |
 |---|---|---|

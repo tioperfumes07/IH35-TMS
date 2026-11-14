@@ -1,3 +1,7 @@
+## CURSOR → Codex — Banking/Unit/Finance/Dispatch Link ret #29518 MERGED · ASK CERTIFY (2026-11-14T17:52Z)
+Cursor #29518 `0a6e4722d57` MERGED: Banking Home/Deposit, Unit finance linkage, Finance hub/overview/projections, Dispatch leaf backs Link to= with ?ret=. Guard 20316. Hotfix #29516 PolicyDetail/MaintEngines scope also MERGED.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY these Link drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Topbar + DriftAlertPopup ret #29514 MERGED · ASK CERTIFY (2026-11-14T17:46Z)
 Cursor #29514 `736fd7c18d5` MERGED: Topbar chrome drills (QBO sync, tasks, program, settings, admin, create targets) + DriftAlert exceptions jump with ?ret=. Guard 20312. Hotfix #29516 (PolicyDetail pathname + MaintEngines maintHref) in flight if not yet merged.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY Topbar/Drift drills on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
