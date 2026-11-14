@@ -19,14 +19,16 @@ import { formatDateUS } from "../../../lib/formatDate";
 import { formatUsd, formatUsdCents } from "../../../lib/money";
 import { DriverPickerWithCreate } from "../../../components/drivers/DriverPickerWithCreate";
 import { EntityLinkOrTombstone } from "../../../components/shared/EntityLinkOrTombstone";
-import { AmountLink } from "../../../components/shared/AmountLink";
+import { AmountLink, resolveAmountRoute } from "../../../components/shared/AmountLink";
 import { SelectCombobox } from "../../../components/Combobox";
 import { EntityPicker } from "../../../components/EntityPicker";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getCashFlowOpeningCash, pullManualTransactions } from "../../../api/cashFlow";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { BoardSection } from "../../../components/v3/BoardSection";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
+import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 
 // ROUND 443.250 — Manual Daily Projections V3 board: same forecast engine + MDP field
 // contracts; chrome via v3-tokens / V3KpiTile / BoardSection; expenses by V3_EXPENSE_GROUPS.
@@ -467,6 +469,8 @@ function ProjectionPanel({
 
 export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCompanyId: string }) {
   const qc = useQueryClient();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
   const [searchParams] = useSearchParams();
   const entryId = searchParams.get("entry_id") ?? undefined;
   const partyRefKindParam = searchParams.get("party_ref_kind");
@@ -756,6 +760,19 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       ) : null}
 
       {/* KPI cards — board order: Bank · Income · Expenses · Net; MDP markers + min-h preserved. */}
+      {/* ROUND 8.20 board8 — KPI tiles drill: bank→Bank Accounts (+ret); income/expense→same-day MDP cohort. */}
+      {(() => {
+        const bankHref = withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref);
+        const incomeRoute = projectionDate
+          ? resolveAmountRoute({ target: "cash_flow_manual", date: projectionDate, direction: "income" })
+          : null;
+        const expenseRoute = projectionDate
+          ? resolveAmountRoute({ target: "cash_flow_manual", date: projectionDate, direction: "expense" })
+          : null;
+        const netRoute = projectionDate
+          ? resolveAmountRoute({ target: "cash_flow_manual", date: projectionDate })
+          : null;
+        return (
       <div
         className="grid gap-2"
         style={{ gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))" }}
@@ -778,6 +795,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
               )
             }
             tone="ink"
+            href={banksQuery.isError ? undefined : bankHref}
+            noDrill={banksQuery.isError ? "opening cash failed to load — cannot open bank accounts" : undefined}
             testId="cash-flow-mdp-v3-kpi-bank"
           />
         </div>
@@ -787,6 +806,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             value={fmtCents(totalIncome)}
             sub="manual + automatic"
             tone="ink"
+            href={incomeRoute ?? undefined}
+            noDrill={!incomeRoute ? "pick a projection date to open the income cohort" : undefined}
             testId="cash-flow-mdp-v3-kpi-income"
           />
           <span className="sr-only" data-mdp-kpi-total="income">
@@ -799,6 +820,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             value={fmtCents(totalExpense)}
             sub="manual + automatic"
             tone="ink"
+            href={expenseRoute ?? undefined}
+            noDrill={!expenseRoute ? "pick a projection date to open the expense cohort" : undefined}
             testId="cash-flow-mdp-v3-kpi-expense"
           />
           <span className="sr-only" data-mdp-kpi-total="expense">
@@ -811,6 +834,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
             value={fmtCents(net)}
             tone={netPositive ? "green" : "red"}
             sub={`closing ${fmtCents(projectedClosing)}`}
+            href={netRoute ?? undefined}
+            noDrill={!netRoute ? "pick a projection date to open the day's projections" : undefined}
             testId="cash-flow-mdp-v3-kpi-net"
           />
           <span className="sr-only" data-mdp-kpi-total="net">
@@ -818,6 +843,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           </span>
         </div>
       </div>
+        );
+      })()}
 
       {/* Income (left) / Expenses (right) — equal-height stretch panels. Board has no Opening-cash editor. */}
       <div className="grid grid-cols-1 items-stretch gap-3 lg:grid-cols-2" data-mdp-panels="equal-height">
