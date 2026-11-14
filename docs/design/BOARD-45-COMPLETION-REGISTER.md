@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T02:54Z) — Cursor finance/compliance/fuel #29407
+| Board | Status | Evidence |
+|---|---|---|
+| Finance/Compliance/Fuel/Driver-finance/WO/Lists Backs | READY | #29407 `b8ef50ef5cc` resolveBackHref; verify 20222 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:52Z) — Cursor tasks/admin #29410
 | Board | Status | Evidence |
 |---|---|---|
