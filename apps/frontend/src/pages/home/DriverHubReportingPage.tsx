@@ -185,7 +185,6 @@ export function DriverHubReportingPage() {
   const { pathname, search: locSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locSearch);
   const drvHref = (target: string) => withReturnContext(target, originHref);
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/driver-hub" });

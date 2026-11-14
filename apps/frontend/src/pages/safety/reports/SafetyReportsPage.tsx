@@ -71,7 +71,6 @@ export default function SafetyReportsPage() {
   const originHref = currentOriginHref(pathname, locSearch);
   const safetyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
   const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });

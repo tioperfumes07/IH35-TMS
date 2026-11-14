@@ -388,6 +388,9 @@ function OverviewTab({ data, onOpen, qboAvailable }: { data: SystemData; onOpen:
 }
 
 function QboReconTab({ data }: { data: SystemData }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { recon } = data;
   const apObj = findApObject(recon.data);
   const entities = recon.data?.objects?.map((o) => o.label).join(" · ");
@@ -897,6 +900,9 @@ function QboSyncTab({ data }: { data: SystemData }) {
 }
 
 function ProgramTab({ data }: { data: SystemData }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { tracker } = data;
   const t = tracker.data;
   const PHASE_FILTER_OPTIONS = [
@@ -1200,9 +1206,6 @@ function ClaudeCoderTab({ data, qboAvailable }: { data: SystemData; qboAvailable
 // ---- page shell -----------------------------------------------------------------------------------
 
 export function SystemModulePage() {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const sysHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId, selectedCompany } = useCompanyContext();
   // TRANSP is the only QBO mirror entity. USMCA/TRK are TMS-native and must not render or query QBO.

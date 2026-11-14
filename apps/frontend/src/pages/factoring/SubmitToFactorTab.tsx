@@ -352,9 +352,6 @@ type Props = {
 };
 
 export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, onEditDone, onEditCancel }: Props) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const editing = Boolean(editPurchaseId);
   const queryClient = useQueryClient();
   const [applied, setApplied] = useState<Filters>(EMPTY_FILTERS);
@@ -1333,6 +1330,9 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
 }
 
 function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: Map<string, PurchaseCandidate>; prefix?: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const label = (invoiceId: string) => rows.get(invoiceId)?.invoice_display_id ?? invoiceId;
   return (
     <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert" data-testid="submit-factor-error">

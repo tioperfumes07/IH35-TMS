@@ -31,7 +31,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 // Column order preserved 1:1 from the pre-migration hand-rolled table.
-const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
+// Columns take the return-context helper so the closing-entries drill carries ?ret= (hooks run in the panel).
+function periodColumns(moneyHref: (target: string) => string): Array<ParityColumn<AccountingPeriod>> {
+  return [
   {
     key: "period_label",
     label: "Period",
@@ -96,8 +98,12 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
       ),
   },
 ];
+}
 
 function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   if (periods.length === 0) {
     return (
       <div className="py-8 text-center">
@@ -116,7 +122,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
         </p>
       )}
       <ParityTable title="Accounting periods"
-        columns={PERIOD_COLUMNS}
+        columns={periodColumns(moneyHref)}
         rows={periods}
         rowKey={(p) => p.id}
         storageKey="my-accountant-periods"
@@ -137,9 +143,6 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
 }
 
 export function MyAccountantPage() {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("MY_ACCOUNTANT_ENABLED", operatingCompanyId || undefined);

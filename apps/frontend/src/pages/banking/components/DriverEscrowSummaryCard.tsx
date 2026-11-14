@@ -18,6 +18,9 @@ type Props = {
  * A zero says why (the engine's empty_reason); a failed read says so.
  */
 function Line({ kpi, failed, testId }: { kpi: BankingKpi | null; failed: boolean; testId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   if (failed) {
     return (
       <dd className="text-right text-[#B91C1C]" data-testid={testId} title="The banking KPI engine could not be read">

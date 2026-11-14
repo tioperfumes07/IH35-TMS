@@ -75,7 +75,6 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
   const originHref = currentOriginHref(pathname, locSearch);
   const legalHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
