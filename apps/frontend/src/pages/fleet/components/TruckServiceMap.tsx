@@ -5,7 +5,8 @@
  * numbered system cards. Live engines only — never board sample tread/miles.
  */
 import type { CSSProperties } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { truckProfileBoardSvgHtml } from "./truckProfileBoardSvg";
 
@@ -169,6 +170,9 @@ export function TruckServiceMap(props: {
   /** Board 44 header + map caption — the trailer actually attached, when the profile has one. */
   trailerLabel?: string | null;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fleetHref = (target: string) => withReturnContext(target, originHref);
   const systems = buildTruckServiceMapSystems({
     unitId: props.unitId,
     nextPmDue: props.nextPmDue,
@@ -229,7 +233,7 @@ export function TruckServiceMap(props: {
     <section className="flex min-w-0 flex-col gap-[18px] rounded-[14px] bg-[#E9EDF2] p-4" data-testid="truck-service-map" aria-label="Truck service map">
       <div className="flex flex-wrap items-end justify-between gap-4" data-testid="truck-service-map-body">
         <div className="flex min-w-0 flex-col gap-1.5">
-          <Link to="/maintenance/fleet-table?view=health" className="text-section-header font-bold tracking-[.14em] text-[#4A5A70] no-underline">‹ FLEET HEALTH LINE</Link>
+          <Link to={fleetHref("/maintenance/fleet-table?view=health")} className="text-section-header font-bold tracking-[.14em] text-[#4A5A70] no-underline">‹ FLEET HEALTH LINE</Link>
           <div className="flex min-w-0 flex-wrap items-baseline gap-3.5">
             <h2 className="m-0 text-page-title font-extrabold leading-none text-[#14213D]">{props.unitNumber}</h2>
             <span className="text-xs text-[#4A5A70]" data-testid="truck-service-map-subtitle">
@@ -293,7 +297,7 @@ export function TruckServiceMap(props: {
           })}
           <li className="text-xs text-[#5B6B7E]">
             Live PM / work order / fault / compliance for {props.unitNumber}; missing readings stay —.{" "}
-            <Link to={`/maintenance/pm-schedule?unit_id=${encodeURIComponent(props.unitId)}`} className="font-semibold text-[#14213D] underline">Open PM schedules →</Link>
+            <Link to={fleetHref(`/maintenance/pm-schedule?unit_id=${encodeURIComponent(props.unitId)}`)} className="font-semibold text-[#14213D] underline">Open PM schedules →</Link>
           </li>
         </ul>
       </div>

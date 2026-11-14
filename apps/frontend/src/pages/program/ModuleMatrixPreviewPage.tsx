@@ -7,7 +7,8 @@
  * Design lock: docs/specs/scoreboard/MODULE-MATRIX-SCOREBOARD-LOCKED.md
  */
 import { useMemo } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { resolveApiUrl } from "../../api/client";
 import {
@@ -396,6 +397,9 @@ async function fetchModuleMatrix(moduleId: MatrixModuleId): Promise<LiveMatrix |
 }
 
 export function ModuleMatrixPreviewPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const [params, setParams] = useSearchParams();
   const scopeParam = params.get("scope");
   const moduleParam = params.get("module");
@@ -852,9 +856,9 @@ export function ModuleMatrixPreviewPage() {
         {" · "}
         API: <code>GET /api/v1/program/module-matrix?module={moduleId}</code>
         {" · "}
-        <Link to="/program/matrix?scope=system">All modules rollup</Link>
+        <Link to={hubHref("/program/matrix?scope=system")}>All modules rollup</Link>
         {" · "}
-        <Link to="/program">Scenario tracker</Link>
+        <Link to={hubHref("/program")}>Scenario tracker</Link>
       </div>
         </>
       )}

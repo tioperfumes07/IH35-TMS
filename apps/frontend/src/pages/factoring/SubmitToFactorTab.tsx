@@ -7,7 +7,8 @@
 // the invoices + their documents to the factor. Owner-only: the server refuses everyone else (403).
 import { OverrideButton } from "../../components/override/OverrideButton";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../../api/client";
 import {
@@ -1329,6 +1330,9 @@ export function SubmitToFactorTab({ companyId, isOwner, editPurchaseId = null, o
 }
 
 function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: Map<string, PurchaseCandidate>; prefix?: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const label = (invoiceId: string) => rows.get(invoiceId)?.invoice_display_id ?? invoiceId;
   return (
     <div className="rounded-sm border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-800" role="alert" data-testid="submit-factor-error">
@@ -1343,7 +1347,7 @@ function SaveErrorPanel({ error, rows, prefix = "" }: { error: SaveError; rows: 
               {" · "}
             </>
           ) : null}
-          <Link to="/banking" className="underline">
+          <Link to={moneyHref("/banking")} className="underline">
             Banking
           </Link>
         </span>

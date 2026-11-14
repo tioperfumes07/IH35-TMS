@@ -32,11 +32,11 @@ function kpiMoney(cents: number | undefined, loading: boolean): string {
   return money(cents);
 }
 
-function docRefLink(bucket: Bucket, d: RelayRollForwardDoc) {
+function docRefLink(bucket: Bucket, d: RelayRollForwardDoc, inboxHref: string) {
   if (bucket === "deposits") {
     // Deposit detail lives on the Relay inbox (no dedicated EntityLink route for relay_topup yet).
     return (
-      <Link to="/fuel/inbox" className="text-[#1F4E9D] underline" data-testid="relay-wallet-doc-deposit-link">
+      <Link to={inboxHref} className="text-[#1F4E9D] underline" data-testid="relay-wallet-doc-deposit-link">
         {d.ref || d.id}
       </Link>
     );
@@ -57,6 +57,7 @@ export function RelayWalletRollForwardPage() {
   const { pathname, search: locSearch } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board19 — docs drill open state is URL SoT (bucket+day) so KPI href+ret works.
   const bucketFromUrl = searchParams.get("bucket");
   const dayFromUrl = searchParams.get("day");
@@ -207,7 +208,7 @@ export function RelayWalletRollForwardPage() {
           key: "ref",
           label: "Relay reference",
           sortable: true,
-          render: (d) => docRefLink(open.bucket, d),
+          render: (d) => docRefLink(open.bucket, d, fuelHref("/fuel/inbox")),
         },
         { key: "cents", label: "Amount", sortable: true, render: (d) => docAmount(open.bucket, d) },
       ]

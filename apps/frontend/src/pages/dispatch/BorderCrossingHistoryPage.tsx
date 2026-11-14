@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useSearchParams, useLocation } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -33,8 +34,10 @@ type CrossingRow = {
 };
 
 export function BorderCrossingHistoryPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
-  const { pathname } = useLocation();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
   const deepLinkCrossingId = searchParams.get("crossing_id")?.trim() || "";
@@ -147,7 +150,7 @@ export function BorderCrossingHistoryPage() {
         title="Border Crossing History"
         subtitle="Past wizard completions with eManifest re-download"
         actions={
-          <Link to="/dispatch/border-crossing" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch/border-crossing")} className="rounded-sm border px-3 py-1.5 text-xs">
             New crossing
           </Link>
         }

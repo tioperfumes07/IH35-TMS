@@ -5,7 +5,8 @@
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { getEngineStatusBoard, type EngineStatusRow } from "../../api/engine-status";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -34,6 +35,9 @@ function healthLabel(row: EngineStatusRow) {
 }
 
 export function EngineStatusBoardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const sysHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -112,7 +116,7 @@ export function EngineStatusBoardPage() {
         subtitle="Every registry engine — last run, rows written in 24 hours, last error, next run. Red = should produce and wrote nothing in its window."
       />
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <Link to="/system" className="text-[#1F2A44] underline">
+        <Link to={sysHref("/system")} className="text-[#1F2A44] underline">
           System home
         </Link>
         <span className="text-gray-400">·</span>

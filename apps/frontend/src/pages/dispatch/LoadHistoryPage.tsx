@@ -66,9 +66,6 @@ const ENTITY_KINDS = new Set<string>([
 ]);
 
 function HistoryLink({ link }: { link: LoadHistoryLink }) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const dispHref = (target: string) => withReturnContext(target, originHref);
   if (!ENTITY_KINDS.has(link.kind)) {
     return (
       <span className="text-xs text-[#6B7280]" title={link.id}>
@@ -83,8 +80,10 @@ export default function LoadHistoryPage() {
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });
 

@@ -1,5 +1,6 @@
 import { AlertTriangle, Bell, Info, Link as LinkIcon, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import type { UserNotification } from "../../hooks/useNotifications";
 
 type Props = {
@@ -29,6 +30,9 @@ function SeverityIcon({ severity }: { severity: string }) {
 }
 
 export function NotificationDropdown({ notifications, onClose, onMarkRead, onDismiss, onMarkAllRead }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   return (
     <div
       className="absolute right-0 top-9 z-40 w-[min(420px,92vw)] rounded-sm border border-gray-200 bg-white shadow-lg"
@@ -102,7 +106,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onDis
         )}
       </ul>
       <div className="border-t px-3 py-2 text-right">
-        <Link to="/notifications" className="text-xs font-medium text-[#1F2A44] hover:underline" onClick={onClose}>
+        <Link to={hubHref("/notifications")} className="text-xs font-medium text-[#1F2A44] hover:underline" onClick={onClose}>
           View all
         </Link>
       </div>

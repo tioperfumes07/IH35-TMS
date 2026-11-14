@@ -5,7 +5,8 @@
  * existing home stack, doesn't touch any other widget.
  */
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchFilingsDashboard } from "../../api/compliance";
 import { formatDateUS } from "../../lib/formatDate";
 
@@ -14,6 +15,9 @@ type Props = {
 };
 
 export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const hubHref = (target: string) => withReturnContext(target, originHref);
   const cid = operatingCompanyId ?? "";
   const dashboardQ = useQuery({
     queryKey: ["home", "compliance-filings-due", cid],
@@ -34,7 +38,7 @@ export function ComplianceFilingsDueWidget({ operatingCompanyId }: Props) {
     <section className="rounded-sm border border-[#E5E7EB] bg-white" aria-label="Filings and compliance due" data-testid="home-compliance-filings-widget">
       <div className="flex items-center justify-between border-b border-[#E5E7EB] px-3 py-2">
         <h2 className="text-section-header font-semibold uppercase tracking-wide text-[#1F2A44]">Filings / Compliance Due</h2>
-        <Link to="/compliance" className="text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={hubHref("/compliance")} className="text-xs font-semibold text-[#1F2A44] underline">
           Open full dashboard
         </Link>
       </div>

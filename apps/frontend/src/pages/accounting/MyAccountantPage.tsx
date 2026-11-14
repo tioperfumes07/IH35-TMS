@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -30,7 +31,9 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 // Column order preserved 1:1 from the pre-migration hand-rolled table.
-const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
+// Columns take the return-context helper so the closing-entries drill carries ?ret= (hooks run in the panel).
+function periodColumns(moneyHref: (target: string) => string): Array<ParityColumn<AccountingPeriod>> {
+  return [
   {
     key: "period_label",
     label: "Period",
@@ -87,7 +90,7 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
           className="text-xs font-semibold text-[#1F2A44] underline"
         />
       ) : p.status === "closed" || p.status === "locked" ? (
-        <Link to="/accounting/month-close" className="text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={moneyHref("/accounting/month-close")} className="text-xs font-semibold text-[#1F2A44] underline">
           View closing entries →
         </Link>
       ) : (
@@ -95,8 +98,12 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
       ),
   },
 ];
+}
 
 function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   if (periods.length === 0) {
     return (
       <div className="py-8 text-center">
@@ -115,7 +122,7 @@ function PeriodStatusPanel({ periods }: { periods: AccountingPeriod[] }) {
         </p>
       )}
       <ParityTable title="Accounting periods"
-        columns={PERIOD_COLUMNS}
+        columns={periodColumns(moneyHref)}
         rows={periods}
         rowKey={(p) => p.id}
         storageKey="my-accountant-periods"

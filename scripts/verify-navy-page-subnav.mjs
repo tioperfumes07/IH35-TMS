@@ -12,7 +12,8 @@ function responsiveNavigationErrors(source) {
   const nav = source.match(/<nav\s+aria-label="Section navigation"[\s\S]*?>/)?.[0] ?? "";
   const classes = nav.match(/className="([^"]*)"/)?.[1]?.split(/\s+/) ?? [];
   return [
-    ...(!classes.includes("min-h-9") ? ["nav must reserve its minimum height without capping scrollbar space"] : []),
+    // V3 (docs/design/v3 Banking.png / Settlements.png, #29489): the bar reserves 32 px (min-h-8), never a fixed h-*.
+    ...(!classes.includes("min-h-8") ? ["nav must reserve its minimum height without capping scrollbar space"] : []),
     ...(classes.some(c => /^h-/.test(c)) ? ["fixed nav height clips tabs when scrollbars are visible"] : []),
     ...(!classes.includes("shrink-0") ? ["nav must not shrink beneath its contents"] : []),
   ];
@@ -21,7 +22,7 @@ function responsiveNavigationErrors(source) {
 if (process.argv.includes("--selftest")) {
   const good = fs.readFileSync("apps/frontend/src/components/layout/NavyPageSubNav.tsx", "utf8");
   assert.equal(responsiveNavigationErrors(good).length, 0);
-  assert.ok(responsiveNavigationErrors(good.replace("min-h-9", "h-9")).length > 0);
+  assert.ok(responsiveNavigationErrors(good.replace("min-h-8", "h-8")).length > 0);
   assert.ok(responsiveNavigationErrors(good.replace("shrink-0", "")).length > 0);
   console.log("verify-navy-page-subnav selftest: 3/3 passed (fixed-height and shrink plants rejected)");
   process.exit(0);
@@ -48,8 +49,9 @@ const settlements = read(SETTLEMENTS);
 for (const error of responsiveNavigationErrors(component)) fail(error);
 
 // Locked visual tokens
-if (!component.includes("bg-[#14314F]")) fail("NavyPageSubNav missing locked token: bg-[#14314F]");
-else pass("bg-[#14314F] present");
+// V3 bar navy #13233F (owner 2026-11-13: screens identical to docs/design/v3; replaces the pre-V3 #14314F).
+if (!component.includes("bg-[#13233F]")) fail("NavyPageSubNav missing locked V3 token: bg-[#13233F]");
+else pass("bg-[#13233F] present");
 
 // ROUND 8.12 — locked 11px is .text-section-header (raw text-[11px] raises ui-design-system-ratchet).
 if (!component.includes("text-section-header") && !component.includes("text-[11px]")) {
@@ -62,8 +64,9 @@ else pass("text-white present");
 if (!component.includes("overflow-x-auto")) fail("NavyPageSubNav missing locked token: overflow-x-auto");
 else pass("overflow-x-auto present");
 
-if (!component.includes("border-b border-white")) fail("NavyPageSubNav missing locked active class: border-b border-white");
-else pass("active class border-b border-white present");
+// V3 active tab: full-height rgba(255,255,255,.16) box with a 2 px white rule (border-b-2 … border-white bg-white/[.16]).
+if (!component.includes("border-b-2") || !component.includes("border-white bg-white/[.16]")) fail("NavyPageSubNav missing locked V3 active class: border-b-2 + border-white bg-white/[.16]");
+else pass("V3 active class border-b-2 + border-white bg-white/[.16] present");
 
 // NavLink usage
 if (!component.includes("NavLink")) fail("NavyPageSubNav must use NavLink (not plain <a> or <span>)");

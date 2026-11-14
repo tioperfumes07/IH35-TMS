@@ -22,7 +22,8 @@
  * Those claims are stated as "not yet available" rather than faked.
  */
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
 import { DrillKpiCard } from "../../../components/layout/DrillKpiCard";
@@ -66,8 +67,10 @@ function MetricCard({ label, value, detail, to }: { label: string; value: string
 }
 
 export default function SafetyReportsPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const safetyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 Safety — honor ?ret= from Safety Home (fallback /safety/home).
   const safetyBackHref = resolveBackHref({ searchParams, pathname, fallback: "/safety/home" });
@@ -306,14 +309,14 @@ export default function SafetyReportsPage() {
         <ul className="mt-1 list-disc space-y-1 pl-4">
           <li>
             Crash rate per million miles: no reader exposes fleet mileage alongside crash counts. Accident records live on{" "}
-            <Link to="/safety/accidents" className="font-semibold text-[#1F2A44] underline">
+            <Link to={safetyHref("/safety/accidents")} className="font-semibold text-[#1F2A44] underline">
               Accidents &amp; Incidents
             </Link>
             .
           </li>
           <li>
             Training and credential reports: per-driver readers exist, but there is no company-wide report endpoint. See{" "}
-            <Link to="/safety/training/records" className="font-semibold text-[#1F2A44] underline">
+            <Link to={safetyHref("/safety/training/records")} className="font-semibold text-[#1F2A44] underline">
               Training Records
             </Link>
             .

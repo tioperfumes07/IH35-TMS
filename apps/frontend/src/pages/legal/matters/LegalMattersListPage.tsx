@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useNavigate, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { legalMattersApi, type LegalMatterListRow } from "../../../api/legal-matters";
 import { Button } from "../../../components/Button";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -70,8 +71,10 @@ export function daysUntil(dateStr: unknown) {
 export type LegalMattersListPageProps = { fixedType?: "lawsuit" };
 
 export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = {}) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const legalHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -227,7 +230,7 @@ export function LegalMattersListPage({ fixedType }: LegalMattersListPageProps = 
         title={fixedType ? "Lawsuits" : "Legal matters"}
         subtitle={fixedType ? "Lawsuits where the company is a party — reserve, driver, unit, load and claim links" : "Lawsuits, claims, and regulatory matters"}
         actions={
-          <Link to="/legal/matters/new">
+          <Link to={legalHref("/legal/matters/new")}>
             <Button>+ Create Matter</Button>
           </Link>
         }

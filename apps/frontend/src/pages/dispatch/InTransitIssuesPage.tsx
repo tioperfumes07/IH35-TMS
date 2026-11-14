@@ -42,7 +42,6 @@ export function InTransitIssuesPage() {
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const queryClient = useQueryClient();
-  const { pathname } = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Overview View-all attaches ?ret=; Back restores Overview.
   const dispatchBackHref = resolveBackHref({ searchParams, pathname, fallback: "/dispatch" });

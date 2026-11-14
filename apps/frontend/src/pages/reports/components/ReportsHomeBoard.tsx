@@ -454,7 +454,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
               </div>
               <p className="px-3 py-2 text-xs text-[#4B5563]" style={{ borderTop: `1px solid ${V3.borderSoft}` }}>
                 Build and save your own reports in the{" "}
-                <Link to="/reports/custom" className="font-semibold text-blue-700 hover:underline" data-testid="reports-saved-builder-link">
+                <Link to={moneyHref("/reports/custom")} className="font-semibold text-blue-700 hover:underline" data-testid="reports-saved-builder-link">
                   report builder →
                 </Link>
               </p>

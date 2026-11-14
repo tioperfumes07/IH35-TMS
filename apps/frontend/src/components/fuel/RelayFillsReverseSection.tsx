@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listRelayFills } from "../../api/relay-fills";
 import { formatDateUS } from "../../lib/formatDate";
 import { formatMoneyCents } from "../dispatch/constants";
@@ -31,6 +32,9 @@ export function RelayFillsReverseSection({
   contextLabel,
   "data-testid": testId = "relay-fills-reverse",
 }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const entityId = "unit_id" in filter ? filter.unit_id : filter.driver_id;
   const query = useQuery({
     queryKey: ["fuel", "relay-fills", "reverse", operatingCompanyId, filter],
@@ -46,7 +50,7 @@ export function RelayFillsReverseSection({
       subtitle={rows.length > 0 ? `(${rows.length})` : undefined}
       testId={testId}
       headerRight={
-        <Link to="/fuel/relay-unmatched" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+        <Link to={fuelHref("/fuel/relay-unmatched")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Open Relay — unmatched
         </Link>
       }

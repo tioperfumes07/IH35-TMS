@@ -140,6 +140,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
   const location = useLocation();
   // ROUND 8.20 board22 — KPI href drills carry ret so destination Back restores Maintenance Home.
   const originHref = currentOriginHref(location.pathname, location.search);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -477,7 +478,7 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "active_wos" ? (
         <div data-testid="maintenance-active-wos-tab" data-maintenance-tab="active_wos">
-        <div className="mb-2 flex gap-3 text-xs"><Link to="/maintenance/active-wos">Work-order register</Link><Link to="/maintenance/active-wos?view=workflow">Work-order workflow</Link></div>
+        <div className="mb-2 flex gap-3 text-xs"><Link to={maintHref("/maintenance/active-wos")}>Work-order register</Link><Link to={maintHref("/maintenance/active-wos?view=workflow")}>Work-order workflow</Link></div>
         {showWorkflow ? (rmStatusQuery.isError ? (
           <ListErrorState title="Couldn't load R&M status board" status={0} onRetry={() => void rmStatusQuery.refetch()} />
         ) : (

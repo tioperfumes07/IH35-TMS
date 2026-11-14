@@ -668,7 +668,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
         + Create Driver
       </Button>
       {!underSettlements ? (
-        <Link to="/drivers/duplicates" className="text-xs font-semibold text-[#14314F] hover:underline" data-testid="drivers-duplicates-link">
+        <Link to={drvHref("/drivers/duplicates")} className="text-xs font-semibold text-[#14314F] hover:underline" data-testid="drivers-duplicates-link">
           Duplicate profiles
         </Link>
       ) : null}
@@ -1000,7 +1000,7 @@ export function DriversPage({ initialSubnav }: DriversPageProps = {}) {
               <p className="text-xs text-[#4B5563]">
                 Office cash-advance request queue lives in Driver Finance.
               </p>
-              <Link to="/driver-finance/cash-advance-requests" className="text-xs font-semibold text-[#1F2A44] underline">
+              <Link to={drvHref("/driver-finance/cash-advance-requests")} className="text-xs font-semibold text-[#1F2A44] underline">
                 Open cash advance requests →
               </Link>
             </div>

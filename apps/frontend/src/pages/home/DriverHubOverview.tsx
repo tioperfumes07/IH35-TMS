@@ -1,5 +1,6 @@
 import { useQueries } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { cashAdvanceRequestsOfficeApi } from "../../api/cashAdvanceRequests";
 import { getDocumentAlertsInbox } from "../../api/document-alerts";
 import { getDriverMessagesInbox } from "../../api/driver-messages";
@@ -26,6 +27,9 @@ type AlertCard = {
 };
 
 export function DriverHubOverview({ companyId, canReview }: { companyId: string; canReview: boolean }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [leaveQ, cashQ, roadQ, messagesQ, docAlertsQ] = useQueries({
     queries: [
       {
@@ -169,7 +173,7 @@ export function DriverHubOverview({ companyId, canReview }: { companyId: string;
       <section className="space-y-2" data-testid="driver-hub-leave-preview">
         <div className="flex items-baseline justify-between gap-2">
           <h2 className="text-xs font-semibold text-[#1A1F36]">Leave requests queue</h2>
-          <Link to="/driver-hub?tab=leave_requests" className="text-xs text-[#1F2A44] hover:underline">
+          <Link to={drvHref("/driver-hub?tab=leave_requests")} className="text-xs text-[#1F2A44] hover:underline">
             Open full queue →
           </Link>
         </div>

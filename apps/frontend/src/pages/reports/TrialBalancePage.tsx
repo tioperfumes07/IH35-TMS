@@ -77,12 +77,14 @@ function basisFromSearch(params: URLSearchParams): AccountingBasis {
 type SortKey = keyof AccountingTrialBalanceRow;
 
 export function TrialBalancePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [showCodes] = useShowAccountNumbers();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search } = useLocation();
-  const tbOriginHref = currentOriginHref(pathname, search);
+  const tbOriginHref = currentOriginHref(pathname, locSearch);
   // ROUND 8.20 board25 — Home Cash attaches ret=/reports?basis=cash; Back must restore it.
   const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const urlBasis = basisFromSearch(searchParams);
@@ -204,7 +206,7 @@ export function TrialBalancePage() {
       );
     }
     const subNode = (
-      <Link to="/reports/ar-aging" style={{ color: V3.link }} className="hover:underline" data-testid="tb-measured-subledger">
+      <Link to={moneyHref("/reports/ar-aging")} style={{ color: V3.link }} className="hover:underline" data-testid="tb-measured-subledger">
         {formatUsdCents(sub.total_open_cents)}
       </Link>
     );

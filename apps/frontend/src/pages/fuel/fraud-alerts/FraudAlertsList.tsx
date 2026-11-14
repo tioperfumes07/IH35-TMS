@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import {Link, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { apiRequest } from "../../../api/client";
 import { Modal } from "../../../components/Modal";
 import { Button } from "../../../components/Button";
@@ -129,6 +130,9 @@ async function listAlerts(companyId: string, status?: string, severity?: string,
 }
 
 export function FraudAlertsListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -390,7 +394,7 @@ export function FraudAlertsListPage() {
           <h1 className="text-page-title font-semibold text-gray-900">{"Fuel fraud alerts"}</h1>
           <p className="text-xs text-gray-600">{"Real-time fuel card fraud monitoring"}</p>
         </div>
-        <Link to="/fuel" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+        <Link to={fuelHref("/fuel")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
           Back to Fuel Home
         </Link>
       </div>

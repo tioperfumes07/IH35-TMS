@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { listAllChecks, type AllChecksRow } from "../../../api/checks";
 import { AccountingSubNavWrapper } from "../AccountingSubNavWrapper";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -38,6 +39,9 @@ function documentHref(row: AllChecksRow): string {
 }
 
 export function CheckListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [dateFrom, setDateFrom] = useState("");
@@ -181,10 +185,10 @@ export function CheckListPage() {
       subtitle="Every check written — expenses, bill payments and driver settlements"
       createControl={
         <div className="flex items-center gap-2">
-          <Link to="/accounting/checks/print">
+          <Link to={moneyHref("/accounting/checks/print")}>
             <Button variant="tertiary">Print checks</Button>
           </Link>
-          <Link to="/accounting/checks/new">
+          <Link to={moneyHref("/accounting/checks/new")}>
             <Button variant="primary">+ Check</Button>
           </Link>
         </div>
