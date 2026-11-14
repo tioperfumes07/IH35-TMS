@@ -10,6 +10,8 @@ const LoadHistoryPage = React.lazy(() => import("../pages/dispatch/LoadHistoryPa
 const PerfumeDeskPage = React.lazy(() => import("../pages/perfume/PerfumeDeskPage"));
 // Row 78 — Dispatch › Load history list board (every load; the per-load change timeline stays at /dispatch/loads/:id/history).
 const LoadHistoryBoardPage = React.lazy(() => import("../pages/dispatch/LoadHistoryBoardPage"));
+// ROUND 9.4 board 16 — Book Load Spec measurement board.
+const BookLoadSpecBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadSpecBoardPage"));
 import React from "react";
 import { Navigate, Route, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -1676,6 +1678,14 @@ export const ROUTES = React.Children.toArray(
           }
         />
         <Route path="/dispatch/book_load" element={<Navigate to="/dispatch/book-load?book_load=1" replace />} />
+        <Route
+          path="/dispatch/book-load-spec"
+          element={
+            <ProtectedRoute>
+              <BookLoadSpecBoardPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/dispatch/assignments"
           element={
