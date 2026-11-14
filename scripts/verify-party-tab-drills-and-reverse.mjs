@@ -56,7 +56,7 @@ if (fails.length) { console.error(`verify-party-tab-drills-and-reverse: FAIL\n  
 if (process.argv.includes("--selftest")) {
   const m = [
     ["voided invoices back", { ...src, cust: src.cust.replace('{ customer_id: id, status: "active" }', "{ customer_id: id }") }],
-    ["dead pay-bills link", { ...src, vend: src.vend.replace("to={moneyHref(`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`)}", 'to="/accounting/pay-bills"') }],
+    ["dead pay-bills link", { ...src, vend: src.vend.replace("to={`/accounting/bill-payments?vendor_id=${encodeURIComponent(id)}`}", 'to="/accounting/pay-bills"') }],
     ["report drops customer", { ...src, prof: src.prof.replace("rows.filter((r) => r.customer_id === deepCustomerId)", "rows") }],
     ["customer need-company bare", { ...src, cust: src.cust.replace(/testId="customer-detail-need-company"/g, 'testId="x"') }],
     ["vendor need-company bare", { ...src, vend: src.vend.replace(/testId="vendor-detail-need-company"/g, 'testId="x"') }],
