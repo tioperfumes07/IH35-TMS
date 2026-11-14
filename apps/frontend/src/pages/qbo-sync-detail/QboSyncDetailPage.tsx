@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
@@ -14,6 +15,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { ReportBlockVPendingBanner } from "../reports/ReportBlockVPendingBanner";
 import { useListState } from "../../components/list-state";
 import { formatDateTimeUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 
 const KIND_OPTIONS: Array<{ value: "all" | QboSyncEventKind; label: string }> = [
   { value: "all", label: "All kinds" },
@@ -46,6 +48,10 @@ function formatTimestamp(iso: string) {
 }
 
 export function QboSyncDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/qbo/sync-dashboard" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [kind, setKind] = useState<"all" | QboSyncEventKind>("all");
@@ -114,7 +120,7 @@ export function QboSyncDetailPage() {
   return (
     <div className="space-y-4 p-4">
       <PageHeader
-        backHref="/qbo/sync-dashboard"
+        backHref={moduleBackHref}
         breadcrumb={["Integrations", "QBO event log"]}
         title="QBO Sync Event Log"
         subtitle="Read-only tenant-scoped observability across runs, alerts, and outbox events"

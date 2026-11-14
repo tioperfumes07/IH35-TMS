@@ -16147,6 +16147,11 @@
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 reports hub + fleet home + legal portal Class R Backs"
   },
+  "20232": {
+    "claimed_at": "2026-11-14T02:57:17Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Reports Home KPI href+ret + qbo/samsara/program/driver-hub/settings Backs"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",

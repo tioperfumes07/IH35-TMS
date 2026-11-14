@@ -1,11 +1,16 @@
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getIdentityProfile, patchIdentityOnboarding } from "../../api/identity";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { PageHeader } from "../../components/forms/shared/PageHeader";
 
 export function UserProfileSettingsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/settings" });
   const { pushToast } = useToast();
   const qc = useQueryClient();
   const profileQuery = useQuery({
@@ -33,7 +38,7 @@ export function UserProfileSettingsPage() {
   return (
     <div className="mx-auto max-w-xl space-y-6">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="Your profile" subtitle={`Account preferences for ${u.email ?? "your account"}.`} backHref="/settings" />
+      <PageHeader title="Your profile" subtitle={`Account preferences for ${u.email ?? "your account"}.`} backHref={moduleBackHref} />
 
       <section className="rounded-sm border border-[#E5E7EB] bg-white p-4 shadow-xs">
         <h2 className="text-xs font-semibold text-[#0F1219]">Guided tour</h2>
