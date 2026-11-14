@@ -222,7 +222,7 @@ export function BookLoadStopsSection({
                 {/* ROUND 443.265-A item 5 (V3-Dispatch-BookLoad-Modal) — Row 2: City fills · State 64 · ZIP 88 ·
                     Appointment date 150 (MM/DD/YYYY + calendar) · Time · Time window. */}
                 <div
-                  className="grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_minmax(0,0.9fr)]"
+                  className="grid min-w-0 grid-cols-1 items-start gap-2 sm:grid-cols-3 lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_150px]"
                   data-testid={`stop-cityrow-${index}`}
                 >
                   <Field
