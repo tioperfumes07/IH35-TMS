@@ -138,3 +138,9 @@
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
 }
+
+/* ROUND 9.0 — Accounting.dc.html: CAPS tab labels (the only v3 board that spells them so). */
+.hover-dropdown-nav.is-upper a[role="menuitem"],
+.hover-dropdown-nav.is-upper .nav-item-with-dropdown button {
+  text-transform: uppercase;
+}

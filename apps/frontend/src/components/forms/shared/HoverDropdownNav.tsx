@@ -31,6 +31,8 @@ export type HoverDropdownNavProps = {
   openOn?: NavOpenTrigger;
   /** Suppress the ChevronDown arrow on every dropdown group button (design parity: plain tab labels). */
   hideChevron?: boolean;
+  /** ROUND 9.0 — Accounting.dc.html spells its tabs in CAPS; every other v3 board is sentence case. */
+  uppercase?: boolean;
 };
 
 const EXIT_MS = 150;
@@ -301,10 +303,10 @@ function LeafItem({ item, activeHref }: { item: NavItem; activeHref?: string }) 
  * Top horizontal grouped sub-nav (invariant #20). Dropdown width follows longest label (MUST 6.3.1.1).
  * `openOn` selects hover-reveal (default, legacy) vs. click-open-persistent (LOCKED top-bar rule).
  */
-export function HoverDropdownNav({ items, activeHref, openOn = "hover", hideChevron = false }: HoverDropdownNavProps) {
+export function HoverDropdownNav({ items, activeHref, openOn = "hover", hideChevron = false, uppercase = false }: HoverDropdownNavProps) {
   return (
     <nav
-      className="hover-dropdown-nav"
+      className={uppercase ? "hover-dropdown-nav is-upper" : "hover-dropdown-nav"}
       aria-label={
         openOn === "click"
           ? "Module sub-navigation (click dropdown)"
