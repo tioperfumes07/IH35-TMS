@@ -23,7 +23,7 @@ export function audit(sources, pt) {
       if (!/appearance="board"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board"`);
     }
   }
-  for (const needle of ['appearance?: "default" | "board";', 'const board = appearance === "board";', '"var(--ih-zebra)"', '"var(--ih-thead)"', 'const BOARD_RULE = "var(--ih-rule)";', 'textTransform: "uppercase" as const'])
+  for (const needle of ['appearance?: "default" | "board" | "v3";', 'const board = appearance === "board" || v3;', '"var(--ih-zebra)"', '"var(--ih-thead)"', 'const BOARD_RULE = "var(--ih-rule)";', 'textTransform: "uppercase" as const'])
     if (!pt.includes(needle)) f.push(`${PT}: board appearance lost ${needle}`);
   return f;
 }

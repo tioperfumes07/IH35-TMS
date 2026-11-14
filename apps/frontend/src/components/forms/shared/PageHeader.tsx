@@ -22,19 +22,48 @@ export type PageHeaderProps = {
   breadcrumb?: Array<string | BreadcrumbItem>;
   subtitle?: string;
   actions?: ReactNode;
+  /** "v3": the header every V3 board draws (docs/design/v3/*.dc.html): module crumb 11px, then "← Back" · title 700 18px
+   *  Inter · subtitle 11px on one baseline, actions 600 11px on the right. */
+  variant?: "v3";
+  /** v3 only: the module crumb line above the title (the board prints the module name). */
+  crumb?: string;
 };
+
+const V3_INK = "#111827";
+const V3_MUTED = "#5B6576";
+const V3_FONT = "Inter, ui-sans-serif, system-ui, sans-serif";
+/** A V3 board header action: plain 600 11px text, no box (the boards draw "+ Create Bill" as text). */
+export const V3_HEADER_ACTION_STYLE = { font: `600 11px ${V3_FONT}`, color: V3_INK, background: "none", border: "none", padding: 0, cursor: "pointer", lineHeight: "normal" } as const;
 
 /**
  * Drill-in page header (invariant #21): optional back control, breadcrumb row, single-line H1.
  * Not wired to routes in Phase 6 primitive block — import from this path explicitly
  * (`components/forms/shared/PageHeader`), not `components/layout/PageHeader`.
  */
-export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: PageHeaderProps) {
+export function PageHeader({ title, backHref, breadcrumb, subtitle, actions, variant, crumb }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const showBreadcrumb = breadcrumb != null && breadcrumb.length > 1;
   useClaimBreadcrumb(showBreadcrumb);
+  const goBack = () => navigate(resolveBackHref({ searchParams, pathname: location.pathname, fallback: backHref }));
+
+  if (variant === "v3") {
+    return (
+      <header data-testid="page-header-v3" style={{ fontFamily: V3_FONT, lineHeight: "normal", color: V3_INK }}>
+        <div style={{ fontSize: 11, color: V3_MUTED }}>{crumb ?? title}</div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+            <button type="button" aria-label="Back" data-testid="page-header-back" onClick={goBack}
+              style={{ fontSize: 11, color: V3_MUTED, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: V3_FONT, lineHeight: "normal" }}>← Back</button>
+            <h1 style={{ margin: 0, font: `700 18px ${V3_FONT}`, color: V3_INK }}>{title}</h1>
+            {subtitle ? <span style={{ fontSize: 11, color: V3_MUTED }}>{subtitle}</span> : null}
+          </div>
+          {actions ? <div style={{ display: "flex", gap: 12, alignItems: "center", font: `600 11px ${V3_FONT}` }}>{actions}</div> : null}
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="page-header">
@@ -59,16 +88,8 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions }: P
             className="page-header-back"
             aria-label="Back"
             data-testid="page-header-back"
-            onClick={() => {
-              // ROUND 8.17 class R — `ret` restores origin board; else in-module structural parent.
-              navigate(
-                resolveBackHref({
-                  searchParams,
-                  pathname: location.pathname,
-                  fallback: backHref,
-                }),
-              );
-            }}
+            // ROUND 8.17 class R — `ret` restores origin board; else in-module structural parent.
+            onClick={goBack}
           >
               <ArrowLeft size={18} aria-hidden />
               <span className="page-header-back-label">Back</span>

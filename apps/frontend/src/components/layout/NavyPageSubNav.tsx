@@ -292,8 +292,10 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
       data-testid="navy-page-subnav"
       data-c22-tab-height="h-8"
       className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold text-white"
+      // Every V3 board (42 of 42 .dc.html): tabs 2 px apart, 600 11px Inter, line-height normal.
+      style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}
     >
-      <div className="flex h-8 min-w-max items-stretch gap-1">
+      <div className="flex h-8 min-w-max items-stretch gap-0.5">
         {items.map((item, index) => {
           if (item.children?.length) {
             return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;

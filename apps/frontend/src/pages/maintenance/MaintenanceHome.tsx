@@ -18,8 +18,9 @@ import {
   transitionWorkOrder,
 } from "../../api/maintenance";
 import { apiRequest } from "../../api/client";
-import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../components/forms/shared/PageHeader";
 import { ActionButton } from "../../components/shared/ActionButton";
+import { QuickActionsBar } from "./components/QuickActionsBar";
 import { HoverDropdownNav, type NavItem } from "../../components/forms/shared/HoverDropdownNav";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { useToast } from "../../components/Toast";
@@ -46,7 +47,6 @@ import { MaintenancePmCountdownCards } from "./components/MaintenancePmCountdown
 import { MaintEnginesStatusWidget } from "./components/MaintEnginesStatusWidget";
 import { MaintenanceAlertsCard } from "./components/MaintenanceAlertsCard";
 import { PartsInventoryTable } from "./components/PartsInventoryTable";
-import { QuickActionsBar } from "./components/QuickActionsBar";
 import { RMBucketsGrid } from "./components/RMBucketsGrid";
 import { FleetHealthLine } from "./components/FleetHealthLine";
 import { InShopBoard } from "./components/InShopBoard";
@@ -413,25 +413,18 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
   return (
     <div className="min-w-0 max-w-full space-y-3" data-c06-page="maintenance">
+      {/* Board 22 (docs/design/v3/Maintenance-Home.dc.html): the V3 header — crumb, ← Back · title · subtitle, text actions. */}
       <PageHeader
+        variant="v3"
+        crumb="Maintenance"
         title="Maintenance"
         subtitle="Work orders, fleet maintenance, parts inventory, and PM scheduling"
         actions={
-          <div className="flex items-center gap-2">
-            <ActionButton type="button" onClick={() => setCreateBillOpen(true)}>
-              + Create Bill
-            </ActionButton>
-            <ActionButton type="button" onClick={() => setCreateExpenseOpen(true)}>
-              + Create Expense
-            </ActionButton>
-            <QuickActionsBar
-              onCreate={(type) => {
-                setCreateWoType(type);
-                setPrefillFromIssue(null);
-                setCreateWoOpen(true);
-              }}
-            />
-          </div>
+          <>
+            <ActionButton type="button" style={V3_HEADER_ACTION_STYLE} onClick={() => setCreateBillOpen(true)}>+ Create Bill</ActionButton>
+            <ActionButton type="button" style={V3_HEADER_ACTION_STYLE} onClick={() => setCreateExpenseOpen(true)}>+ Create Expense</ActionButton>
+            <QuickActionsBar style={V3_HEADER_ACTION_STYLE} onCreate={(type) => { setCreateWoType(type); setPrefillFromIssue(null); setCreateWoOpen(true); }} />
+          </>
         }
       />
 
@@ -535,24 +528,28 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
         >
           <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="maintenance-board-kpis">
             <V3KpiTile
+              board
               label="PM due soon"
               value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.pm_due ?? "—")}
               href={withReturnContext("/maintenance/pm-schedule", originHref)}
               testId="maintenance-kpi-pm-due"
             />
             <V3KpiTile
+              board
               label="Road service"
               value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.road_service ?? "—")}
               href={withReturnContext("/maintenance/road-service", originHref)}
               testId="maintenance-kpi-road-service"
             />
             <V3KpiTile
+              board
               label="Parts low-stock"
               value={kpisQuery.isError || kpisQuery.isPending ? "Unavailable" : String(kpis.parts_low_stock ?? "—")}
               href={withReturnContext("/maintenance/parts-inventory", originHref)}
               testId="maintenance-kpi-parts-low"
             />
             <V3KpiTile
+              board
               label="MTD cost"
               value={kpisQuery.isError || kpisQuery.isPending || kpis.mtd_repair_cost == null ? "Unavailable" : Number(kpis.mtd_repair_cost).toLocaleString("en-US", { style: "currency", currency: "USD" })}
               href={withReturnContext("/maintenance/work-orders", originHref)}

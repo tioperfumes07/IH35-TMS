@@ -90,11 +90,13 @@ function checkFindings() {
   if (!/filter === "moving"/.test(fleetHealth) || !/speed_mph/.test(fleetHealth)) {
     fails.push("M1: FleetHealthLine must filter Moving via speed_mph > 3");
   }
-  if (!/max-h-\[420px\]/.test(fleetHealth) || !/appearance=["']board["']/.test(fleetHealth)) {
+  // ROUND 9.4 (owner 11-14 "100% identical"): the V3 board table (appearance="v3") is the board's own table.
+  if (!/max-h-\[420px\]/.test(fleetHealth) || !/appearance=["'](board|v3)["']/.test(fleetHealth)) {
     fails.push("M3/M4: FleetHealthLine must use board table inside 420px scroll");
   }
-  if (!/FleetTruck row=\{row\}/.test(fleetHealth) || !/flex min-w-0 items-center gap-2/.test(fleetHealth)) {
-    fails.push("M2: FleetHealthLine unit cell must be horizontal unit+truck");
+  // Board 22 (docs/design/v3/Maintenance-Home.dc.html): the truck drawing sits in its own first column, left of Unit.
+  if (!/key: "truck"[^\n]*FleetTruck row=\{row\}/.test(fleetHealth) || !/key: "unit_number", label: "Unit"/.test(fleetHealth)) {
+    fails.push("M2: FleetHealthLine truck column then Unit (Board 22)");
   }
 
   const crumbs = read("apps/frontend/src/lib/structuralBreadcrumb.ts");

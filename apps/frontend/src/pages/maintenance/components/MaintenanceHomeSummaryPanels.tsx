@@ -54,15 +54,8 @@ function arrivalsColumns(pmRows: MaintPmDueRow[], pmSource: "ready" | "loading" 
     { key: "load_display_id", label: "Arriving", render: row => <EntityLink kind="load" id={row.load_id} label={[row.final_dest_city, row.load_display_id].filter(Boolean).join(" · ")} /> },
     { key: "predicted_yard_arrival_at", label: "ETA", render: row => row.predicted_yard_arrival_at ? formatDateTimeUS(row.predicted_yard_arrival_at) : "Not available" },
     {
-      key: "total_open_issues",
-      label: "Issues",
-      render: row => row.total_open_issues > 0
-        ? `${row.total_open_issues}${row.severe_count > 0 ? ` (${row.severe_count} severe)` : ""}`
-        : "None open",
-    },
-    {
       key: "pm",
-      label: "PM",
+      label: "PM status",
       render: row => {
         const pm = pmStatusForUnit(pmRows, row.unit_id, pmSource);
         return <span data-testid={`maintenance-home-arrival-pm-${row.unit_id}`} className={pm.due ? "font-semibold text-[#A32D2D]" : undefined}>{pm.text}</span>;
@@ -70,11 +63,11 @@ function arrivalsColumns(pmRows: MaintPmDueRow[], pmSource: "ready" | "loading" 
     },
     {
       key: "schedule",
-      label: "",
+      label: "Action",
       render: row => (
         // D24 deep link: MaintenanceHome opens Create Work Order as a modal for this unit.
-        <RetMaintLink to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(row.unit_id)}`} className="text-xs font-semibold text-[#1D4ED8]" data-testid={`maintenance-home-arrival-schedule-${row.unit_id}`}>
-          Schedule WO
+        <RetMaintLink to={`/maintenance?create_wo=1&unit_id=${encodeURIComponent(row.unit_id)}`} className="font-semibold text-[#1D4ED8]" data-testid={`maintenance-home-arrival-schedule-${row.unit_id}`}>
+          Schedule shop slot →
         </RetMaintLink>
       ),
     },
@@ -111,11 +104,11 @@ export function MaintenanceHomeSummaryPanels({ companyId }: { companyId: string 
     enabled: Boolean(companyId),
   });
   return <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2" data-testid="maintenance-home-summary-panels">
-    <V3Panel title="Arriving soon — to the Laredo yard" viewAllHref={arrivingHref} footer="First 5 yard arrivals in the next 48 hours with their open issues and PM state; View all for the complete inbound roster.">
-      {arrivals.isError ? <ListErrorState title="Couldn't load arrivals" status={0} onRetry={() => void arrivals.refetch()} /> : <ParityTable appearance="board" panel rows={arrivals.data?.cards ?? []} columns={arrivalsColumns(pmDue.data?.rows ?? [], pmDue.isError ? "error" : pmDue.isLoading ? "loading" : "ready")} rowKey={row => row.load_id} loading={arrivals.isLoading} storageKey="maintenance-home-arrivals-summary" emptyText="No arrivals returned by the yard / 48-hour source." />}
+    <V3Panel board title="Arriving soon — to the Laredo yard" viewAllHref={arrivingHref} footer="First 5 yard arrivals in the next 48 hours with their open issues and PM state; View all for the complete inbound roster.">
+      {arrivals.isError ? <ListErrorState title="Couldn't load arrivals" status={0} onRetry={() => void arrivals.refetch()} /> : <ParityTable appearance="v3" panel rows={arrivals.data?.cards ?? []} columns={arrivalsColumns(pmDue.data?.rows ?? [], pmDue.isError ? "error" : pmDue.isLoading ? "loading" : "ready")} rowKey={row => row.load_id} loading={arrivals.isLoading} storageKey="maintenance-home-arrivals-summary" emptyText="No arrivals returned by the yard / 48-hour source." />}
     </V3Panel>
-    <V3Panel title="At risk — brakes & tires" viewAllHref={alertsHref} footer={risk.data ? `${risk.data.total_count} open alerts; showing up to 5. View all for the complete register and work-order actions.` : "Source register retains all work-order actions."}>
-      {risk.isError ? <ListErrorState title="Couldn't load projected wear" status={0} onRetry={() => void risk.refetch()} /> : <ParityTable appearance="board" panel rows={risk.data?.alerts ?? []} columns={riskColumns} rowKey={row => row.id} loading={risk.isLoading} storageKey="maintenance-home-risk-summary" emptyText="No open brake or tire projections." />}
+    <V3Panel board title="At risk — brakes & tires" viewAllHref={alertsHref} footer={risk.data ? `${risk.data.total_count} open alerts; showing up to 5. View all for the complete register and work-order actions.` : "Source register retains all work-order actions."}>
+      {risk.isError ? <ListErrorState title="Couldn't load projected wear" status={0} onRetry={() => void risk.refetch()} /> : <ParityTable appearance="v3" panel rows={risk.data?.alerts ?? []} columns={riskColumns} rowKey={row => row.id} loading={risk.isLoading} storageKey="maintenance-home-risk-summary" emptyText="No open brake or tire projections." />}
     </V3Panel>
   </div>;
 }
