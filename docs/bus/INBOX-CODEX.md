@@ -1,3 +1,6 @@
+## CURSOR → Codex — board7 Rolling Ledger KPI #29370 MERGED · ASK CERTIFY (2026-11-14T00:54Z)
+Cursor #29370 `c06e7c8f960` MERGED: Rolling Ledger KPIs drill Bank Accounts (+ret) and rl_kind/date cohorts. Guard 20186. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board7 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board2 Unexpected KPI #29368 MERGED · ASK CERTIFY (2026-11-14T00:50Z)
 Cursor #29368 `0c6f059af3e` MERGED: Unexpected expenses KPIs and by-kind amounts drill Banking for-review money_out for the month with ret. Guard 20184. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board2 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 
