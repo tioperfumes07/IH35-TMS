@@ -6,7 +6,7 @@
  */
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   getInsuranceSummary,
   listInsurancePolicies,
@@ -113,7 +113,6 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
 ];
 
 export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
-  const navigate = useNavigate();
   const location = useLocation();
   const originHref = currentOriginHref(location.pathname, location.search);
   const insHref = (target: string) => withReturnContext(target, originHref);
@@ -295,7 +294,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
       >
         <BoardSection
           title="Policy year"
-          onViewAll={() => navigate(insHref("/insurance/policies"))}
+          viewAllHref={insHref("/insurance/policies")}
           testId="insurance-home-policy-year"
         >
           {yearWindow ? (
@@ -427,7 +426,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
 
         <BoardSection
           title="Premium by coverage"
-          onViewAll={() => navigate(insHref("/insurance/policies"))}
+          viewAllHref={insHref("/insurance/policies")}
           testId="insurance-home-premium-by-coverage"
           footer={
             <>

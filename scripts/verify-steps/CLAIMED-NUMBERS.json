@@ -18191,5 +18191,10 @@
     "claimed_at": "2026-11-14T03:37:47Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Cash Advances KPI strip href+ret"
+  },
+  "20248": {
+    "claimed_at": "2026-11-14T03:42:15Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Insurance View-all href + ReportsRunner Back resolveBackHref"
   }
 }

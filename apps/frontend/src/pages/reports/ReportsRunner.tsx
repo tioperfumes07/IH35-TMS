@@ -1,7 +1,8 @@
 import { companyToday } from "../../lib/businessDate";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useLocation, useParams, useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { ReportsSubNav } from "./ReportsSubNav";
 import { apiRequest } from "../../api/client";
@@ -106,7 +107,10 @@ const CANONICAL_REPORT_ALIASES: Record<string, string> = {
 
 export function ReportsRunnerPage() {
   const { reportId = "" } = useParams<{ reportId: string }>();
-  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board25 — stub Back restores ret (fallback /reports).
+  const reportsBackHref = resolveBackHref({ searchParams, pathname, fallback: "/reports" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [error, setError] = useState<string | null>(null);
@@ -200,7 +204,7 @@ export function ReportsRunnerPage() {
     return (
       <div className="space-y-3">
         <ReportsSubNav />
-        <PageHeader title={`Reports / ${reportMeta.name}`} actions={<button type="button" className="rounded-sm border px-3 py-1.5 text-xs" onClick={() => navigate("/reports")}>Back</button>} />
+        <PageHeader title={`Reports / ${reportMeta.name}`} backHref={reportsBackHref} />
         <section className="rounded-sm border border-[#E5E7EB] bg-[#F7F8FA] p-4">
           <h2 className="text-page-title font-semibold text-[#0F1219]">Report unavailable in this phase</h2>
           <p className="mt-1 text-xs text-[#0F1219]">
