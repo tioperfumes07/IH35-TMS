@@ -265,6 +265,9 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
     `${BANKING_TAB_PATH.transactions}?type=uncategorized&review=for_review`,
     originHref,
   );
+  // ROUND 8.20 board3 — Drift / Relay KPIs must carry ret so Back restores Banking Home.
+  const driftHref = withReturnContext(BANKING_TAB_PATH.reconciliation, originHref);
+  const relayHref = withReturnContext(BANKING_TAB_PATH.relay_card, originHref);
 
   const moneyMapQuery = useQuery({
     queryKey: ["banking", "money-map", companyId, bounds.start, today],
@@ -728,7 +731,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="accounts · bank vs book"
           tone={driftCount > 0 ? "red" : "ink"}
           testId="banking-kpi-drift-alerts"
-          href={BANKING_TAB_PATH.reconciliation}
+          href={driftHref}
         />
         {/* Row 22 — Relay ingest heartbeat tile: green ≤24h, red >24h or never. */}
         <V3KpiTile
@@ -737,7 +740,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           sub="last pull · fuel cards"
           tone={relayKpiQuery.isError ? "red" : relayTone}
           testId="banking-kpi-relay-feed"
-          href="/banking/relay-card"
+          href={relayHref}
         />
       </div>
 
