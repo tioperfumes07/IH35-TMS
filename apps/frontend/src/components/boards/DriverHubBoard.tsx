@@ -7,7 +7,8 @@
 import { MoneyCell } from "../shared/MoneyCell";
 import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import { NumLink } from "./partyBoardKit";
 import { V3KpiTile } from "../v3";
@@ -96,7 +97,7 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
   const flag = p.integrity.flags_90d > 0;
   const go = (kind: string, id: string | null) => {
     const to = id ? resolveEntityRoute(kind as EntityKind, id) : null;
-    if (to) navigate(to);
+    if (to) navigate(drvHref(to));
   };
   return (
     <>
@@ -155,6 +156,9 @@ function DriverPanel({ operatingCompanyId, driverId }: { operatingCompanyId: str
 }
 
 export function DriverHubBoard(props: { operatingCompanyId: string; onList: () => void }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const qc = useQueryClient();
   const navigate = useNavigate();
   // Status lives in the URL (?status=) so the header counts link to the exact drivers they count.
@@ -233,7 +237,7 @@ export function DriverHubBoard(props: { operatingCompanyId: string; onList: () =
           </div>
           <div className="pb-head-actions">
             <button type="button" className="pb-refresh" onClick={() => void qc.invalidateQueries({ queryKey: ["driver-hub"] }).then(() => qc.invalidateQueries({ queryKey: ["driver-hub-panel"] }))}>Refresh</button>
-            <button type="button" className="pb-create" onClick={() => navigate("/drivers/profiles?view=list&create=1")}>+ Create Driver</button>
+            <button type="button" className="pb-create" onClick={() => navigate(drvHref("/drivers/profiles?view=list&create=1"))}>+ Create Driver</button>
           </div>
         </div>
         <div className="pb-kpis" data-testid="driver-hub-kpis">

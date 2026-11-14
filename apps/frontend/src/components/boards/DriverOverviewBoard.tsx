@@ -5,7 +5,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AddPayLineModal } from "../driver-finance/AddPayLineModal";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams , useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { ApiError, apiRequest } from "../../api/client";
 import { formatDateUS } from "../../lib/formatDate";
 import { ListErrorState } from "../ListErrorState";
@@ -133,6 +134,9 @@ export function DriverOverviewBoard(props: {
   compactOverview?: ReactNode;
   children?: ReactNode;
 }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const drvHref = (target: string) => withReturnContext(target, originHref);
   const [addPayOpen, setAddPayOpen] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -172,7 +176,7 @@ export function DriverOverviewBoard(props: {
   if (!q.data) return <div className="pb"><div className="dd-body pb-muted">Loading driver…</div></div>;
   const o = q.data;
   const t = o.tiles;
-  const go = (kind: Parameters<typeof resolveEntityRoute>[0], id: string | null) => { const to = id ? resolveEntityRoute(kind, id) : null; if (to) navigate(to); };
+  const go = (kind: Parameters<typeof resolveEntityRoute>[0], id: string | null) => { const to = id ? resolveEntityRoute(kind, id) : null; if (to) navigate(drvHref(to)); };
   const runSettlement = () => navigate(`/driver-finance/settlement-creator?driver_id=${o.driver.id}`);
   const flagged = t.integrity_flags_90d > 0;
   const sum = (k: "loads" | "miles" | "line_haul_cents" | "additional_cents" | "deductions_cents" | "net_cents") => o.settlements.reduce((s, r) => s + r[k], 0);
@@ -331,7 +335,7 @@ export function DriverOverviewBoard(props: {
                   <button
                     type="button"
                     className="dd-add"
-                    onClick={() => navigate(driverProfileTabHref(o.driver.id, "Complaints"))}
+                    onClick={() => navigate(drvHref(driverProfileTabHref(o.driver.id, "Complaints")))}
                     data-testid="driver-log-complaint"
                   >
                     + Log complaint

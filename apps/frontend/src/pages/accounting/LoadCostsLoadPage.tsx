@@ -1,4 +1,5 @@
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { LoadDetailDrawer } from "../../components/dispatch/LoadDetailDrawer";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 
@@ -17,6 +18,9 @@ export function LoadCostsLoadPage() {
   const { loadId = "" } = useParams<{ loadId: string }>();
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const raw = params.get("tab") ?? "Costs";
   const initialTab = (TABS.has(raw) ? raw : "Costs") as Tab;
@@ -31,7 +35,7 @@ export function LoadCostsLoadPage() {
         operatingCompanyId={selectedCompanyId ?? undefined}
         initialTab={initialTab}
         openedFrom="accounting"
-        onClose={() => navigate("/dispatch/load-costs")}
+        onClose={() => navigate(moneyHref("/dispatch/load-costs"))}
       />
     </div>
   );
