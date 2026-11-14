@@ -18,10 +18,25 @@ import { V3 } from "../../design/v3-tokens";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
+import { statementMonthBounds } from "../factoring/factoringMonthFeeDrill";
 
 function mmDd(iso: string): string {
   const [, m, d] = iso.split("-");
   return `${m}-${d}`;
+}
+
+/** Banking for-review money-out cohort for the Unexpected month (board2 KPI/by-kind drills). */
+function unexpectedBankingHref(month: string | null | undefined, originHref: string): string {
+  const bounds = statementMonthBounds(month);
+  const params = new URLSearchParams({
+    types: "money_out",
+    review: "for_review",
+  });
+  if (bounds) {
+    params.set("date_from", bounds.from);
+    params.set("date_to", bounds.to);
+  }
+  return withReturnContext(`/banking/transactions?${params.toString()}`, originHref);
 }
 
 function formatPlainDollars(cents: number): string {
@@ -107,8 +122,8 @@ export function UnexpectedExpensesPage() {
   }, [kpis]);
 
   // ROUND 8.20 board 2 — View all opens Banking Transactions for-review (not Home accounts).
-  const goBanking = () =>
-    navigate(withReturnContext("/banking/transactions?type=uncategorized&review=for_review", originHref));
+  const bankingMonthHref = unexpectedBankingHref(report?.month, originHref);
+  const goBanking = () => navigate(bankingMonthHref);
 
   if (!companyId) {
     return (
@@ -150,6 +165,8 @@ export function UnexpectedExpensesPage() {
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.month_total_cents)
             }
             sub={kpis?.month_sub ?? (query.isLoading ? "Loading…" : "0 shop / tire bank lines")}
+            href={query.isLoading || !kpis ? undefined : bankingMonthHref}
+            noDrill={query.isLoading || !kpis ? "unexpected month total still loading" : undefined}
             testId="unexpected-kpi-month"
           />
           <V3KpiTile
@@ -157,6 +174,8 @@ export function UnexpectedExpensesPage() {
             value={query.isLoading || !kpis ? "—" : String(kpis.duplicate_count)}
             sub={duplicateSub}
             tone="amber"
+            href={query.isLoading || !kpis ? undefined : bankingMonthHref}
+            noDrill={query.isLoading || !kpis ? "duplicate count still loading" : undefined}
             testId="unexpected-kpi-dupes"
           />
           <V3KpiTile
@@ -166,6 +185,8 @@ export function UnexpectedExpensesPage() {
                 ? "—"
                 : `${kpis.linked_to_truck} of ${kpis.candidate_count}`
             }
+            href={query.isLoading || !kpis ? undefined : bankingMonthHref}
+            noDrill={query.isLoading || !kpis ? "linked-to-truck count still loading" : undefined}
             testId="unexpected-kpi-linked"
           />
           <V3KpiTile
@@ -174,6 +195,8 @@ export function UnexpectedExpensesPage() {
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.tows_fines_cents)
             }
             sub={kpis?.tows_fines_sub ?? ""}
+            href={query.isLoading || !kpis ? undefined : bankingMonthHref}
+            noDrill={query.isLoading || !kpis ? "tows/fines total still loading" : undefined}
             testId="unexpected-kpi-tows"
           />
         </div>
@@ -289,7 +312,18 @@ export function UnexpectedExpensesPage() {
                   sortable: true,
                   kind: "money",
                   sortValue: (row) => row.amount_cents ?? -1,
-                  render: (row) => (row.amount_cents == null ? "—" : formatPlainDollars(row.amount_cents)),
+                  render: (row) =>
+                    row.amount_cents == null ? (
+                      "—"
+                    ) : (
+                      <Link
+                        to={bankingMonthHref}
+                        className="tabular-nums text-[#1F2A44] hover:underline"
+                        data-testid={`unexpected-kind-amount-${row.kind}`}
+                      >
+                        {formatPlainDollars(row.amount_cents)}
+                      </Link>
+                    ),
                 },
               ]}
             />
