@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { apiRequest } from "../../api/client";
 import { ApiError } from "../../api/client";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -32,6 +32,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { TrailerTiresReverseSection } from "../../components/maintenance/TrailerTiresReverseSection";
 import { EquipmentTransfersReverseSection } from "../../components/dispatch/EquipmentTransfersReverseSection";
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { ListErrorState } from "../../components/ListErrorState";
 import { QuickAssignModal } from "../../components/fleet/QuickAssignModal";
 import { quicksaveEquipmentAssignment } from "../../api/mdata";
@@ -84,6 +85,10 @@ async function fetchTrailerProfile(equipmentId: string, operatingCompanyId: stri
 }
 
 export function TrailerProfilePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 board20 — Fleet drills attach ?ret=; Back must restore origin.
+  const fleetBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const { id = "" } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -174,7 +179,7 @@ export function TrailerProfilePage() {
     // ROUND-20.7 (APP-WIDE AUTOFIT LAW) -- profile/detail layout, not a data board; comfort cap
     // stays, expressed in rem per the law's own §1 exception, never a raw px cap.
     <div className="mx-auto w-full max-w-[100rem] space-y-3 p-4 pb-20">
-      <PageHeader backHref="/fleet" breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" actions={
+      <PageHeader backHref={fleetBackHref} breadcrumb={["Fleet", trailerLabel]} title={trailerLabel} subtitle="Trailer profile" actions={
         <button type="button" data-testid="trailer-profile-edit" className="inline-flex h-7 items-center rounded-sm border border-gray-300 bg-white px-2 text-xs font-semibold text-gray-800 hover:bg-gray-50" onClick={() => setEditModalOpen(true)}>Edit trailer</button>
       } />
       <div data-testid="trailer-profile-grid" className="grid grid-cols-1 items-start gap-3 xl:grid-cols-2">

@@ -1,7 +1,8 @@
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useParams, useSearchParams, useLocation } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ApiError, apiRequest } from "../../api/client";
 import { patchUnit, quicksaveEquipmentAssignment } from "../../api/mdata";
@@ -145,6 +146,9 @@ function postQuickAvailability(unitId: string, operatingCompanyId: string, value
 export function VehicleProfilePage() {
   const { id = "" } = useParams();
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 board20 — Fleet drills attach ?ret=; Back must restore origin.
+  const fleetBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const { selectedCompanyId, isLoading: companyLoading } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -287,7 +291,7 @@ export function VehicleProfilePage() {
     // stays, expressed in rem per the law's own §1 exception, never a raw px cap.
     <div className="mx-auto w-full max-w-[100rem] space-y-3 p-4 pb-24">
       <div className="flex items-start justify-between gap-2">
-        <PageHeader backHref="/fleet" breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" actions={profile ? (
+        <PageHeader backHref={fleetBackHref} breadcrumb={["Fleet", `Unit ${unitNumber}`]} title={`Unit ${unitNumber}`} subtitle="Vehicle profile" actions={profile ? (
           <Button size="sm" variant="secondary" data-testid="vehicle-profile-edit" onClick={() => setEditModalOpen(true)}>Edit unit</Button>
         ) : null} />
         {unit ? <MissingRequiredChip operatingCompanyId={companyId} entityKind="unit" entityId={id} /> : null}
