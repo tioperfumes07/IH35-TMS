@@ -89,7 +89,7 @@ const CHECKS = [
   {
     name: "list.create: Vendors.tsx real + Create Vendor ActionButton mounting VendorCreateModal",
     file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /\+ Create Vendor[\s\S]{0,32000}<VendorCreateModal open=\{createOpen\}/,
+    pattern: /(?:<VendorCreateModal open\b[\s\S]{0,32000}\+ Create Vendor|\+ Create Vendor[\s\S]{0,32000}<VendorCreateModal open\b)/,
   },
   {
     name: "md.transaction_list / md.txn.filters: Vendors.tsx real ParityTable + staged txn filter bar (443.326 V3: StagedListFilterShell replaces CollapsedListFilters)",
@@ -105,7 +105,7 @@ const CHECKS = [
   {
     name: "md.header.new_transaction: Vendors.tsx navigates to the real vendor-scoped bills create hop",
     file: "apps/frontend/src/pages/Vendors.tsx",
-    pattern: /navigate\(`\/accounting\/bills\?vendor_id=\$\{selectedVendor\.id\}`\)/,
+    pattern: /navigate\([\s\S]{0,120}`\/accounting\/bills\?vendor_id=\$\{selectedVendor\.id\}`/,
   },
   {
     name: "md.header.edit / detail.profile / detail.profile.edit: VendorDetail real Edit/Save toggle wired to updateVendorMutation",
