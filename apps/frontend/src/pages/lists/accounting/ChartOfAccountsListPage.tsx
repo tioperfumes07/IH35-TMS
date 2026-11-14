@@ -1,7 +1,8 @@
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account in the chart (name / type / balance as of today), a current-state list, not a time series.
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { chartOfAccountsCatalogClient } from "../../../api/catalogs-accounting";
 import type { AccountingCatalogRow } from "../../../api/catalogs-accounting";
 import type { CatalogAccount } from "../../../api/catalog-accounts";
@@ -114,7 +115,8 @@ function buildColumns(
   onEditRow: (row: CoaListRow) => void,
   onMakeInactive: (row: CoaListRow) => void,
   showAccountNumbers: boolean,
-  asOfDate: string
+  asOfDate: string,
+  plReportHref: string,
 ): ParityColumn<CoaListRow>[] {
   // The statement + sync badges sit in the first visible column (NUMBER when shown, else NAME) — same place
   // ListView's badgeSlot put them.
@@ -276,7 +278,7 @@ function buildColumns(
                   key: "run-report",
                   label: "Run report",
                   onSelect: () => {
-                    window.location.assign("/reports/profit-loss");
+                    window.location.assign(plReportHref);
                   },
                 },
               ]
@@ -335,6 +337,9 @@ function buildColumns(
 }
 
 export function ChartOfAccountsListPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const plReportHref = withReturnContext("/reports/profit-loss", originHref);
   const { selectedCompanyId } = useCompanyContext();
   const { user } = useAuth();
   const { pushToast } = useToast();
@@ -469,9 +474,10 @@ export function ChartOfAccountsListPage() {
         },
         (coaRow) => setMakeInactiveRow(coaRow),
         showAccountNumbers,
-        asOfDate
+        asOfDate,
+        plReportHref,
       ),
-    [collapsedParentIds, catalogQuery.data, showAccountNumbers, asOfDate]
+    [collapsedParentIds, catalogQuery.data, showAccountNumbers, asOfDate, plReportHref]
   );
 
   // The page sorts and pages its own full row set (Round 296: every account, filtered + sorted before paging);
@@ -554,7 +560,7 @@ export function ChartOfAccountsListPage() {
                   key: "run-report",
                   label: "Run report",
                   onSelect: () => {
-                    window.location.assign("/reports/profit-loss");
+                    window.location.assign(plReportHref);
                   },
                 },
               ]}
