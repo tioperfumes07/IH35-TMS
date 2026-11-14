@@ -1,3 +1,9 @@
+### READY overlay (2026-11-14T17:56Z) — Cursor Dispatch/Driver/Reports/Fleet Link ret wave2 #29521
+| Board / surface | Status | Evidence |
+|---|---|---|
+| Dispatch/Driver/Reports/Fleet Link drills | READY | #29521 `6face581782` withReturnContext; verify 20318 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
 ### READY overlay (2026-11-14T17:46Z) — Cursor Topbar + DriftAlertPopup ret #29514
 | Board / surface | Status | Evidence |
 |---|---|---|
