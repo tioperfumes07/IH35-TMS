@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T03:13Z) — Cursor board25 Reports Home + residual #29417
+| Board | Status | Evidence |
+|---|---|---|
+| 25 Reports Home KPI href+ret + residual Backs | READY | #29417 `bb6ebd012ff` cat/scheduled/IFTA hrefs + QBO/Program/Samsara/DriverHub/Settings Backs; verify 20232 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T03:07Z) — Cursor board25/30/31 #29413
 | Board | Status | Evidence |
 |---|---|---|
