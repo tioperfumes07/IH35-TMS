@@ -18351,5 +18351,10 @@
     "claimed_at": "2026-11-14T17:31:18Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 hotfix VariantDuplicatesPanel partyHref scope"
+  },
+  "20308": {
+    "claimed_at": "2026-11-14T17:33:11Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Banking COA + Customer pay + Batch/Ins/Safety/Maint/Settings ret"
   }
 }

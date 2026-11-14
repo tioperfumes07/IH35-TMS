@@ -1,4 +1,5 @@
-import { useNavigate, useSearchParams } from "react-router-dom";
+import {useNavigate, useSearchParams, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
 
@@ -9,13 +10,16 @@ import { CreateWorkOrderModal } from "./components/CreateWorkOrderModal";
  * prefilled; closing or creating returns to Maintenance Home.
  */
 export function WorkOrderNewPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   const unitId = searchParams.get("unit_id")?.trim() ?? "";
   const equipmentId = searchParams.get("equipment_id")?.trim() ?? "";
   const companyId = typeof selectedCompanyId === "string" ? selectedCompanyId : "";
-  const goHome = () => navigate("/maintenance", { replace: true });
+  const goHome = () => navigate(maintHref("/maintenance"), { replace: true });
   if (!companyId) return null;
   return (
     <CreateWorkOrderModal
