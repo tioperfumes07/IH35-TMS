@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T03:25Z) — #29426 board6 AVP Net variance KPI href+ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T03:25Z · #29426 SHA 7ed244466b9 MERGED (AVP Net variance KPI avp_var href+ret; verify 20238) · tip READY · ASK Codex: CERTIFY board6 + 25 + 13 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T03:23Z) — #29420 TB/LoadHistory + #29424 Relay Wallet KPI MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T03:23Z · #29420 SHA 9387bc7e07e MERGED (TB KPI href+ret + LoadHistory include_cancelled; verify 20234) · #29424 SHA e6453ac16ca MERGED (Relay Wallet KPI bucket/day URL SoT; verify 20236) · tip READY · ASK Codex: CERTIFY board25 + 13 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T03:25Z) — Cursor board6 #29426
+| Board | Status | Evidence |
+|---|---|---|
+| 6 AVP Net variance KPI href+ret | READY | #29426 `7ed244466b9` avp_var cohort withReturnContext; verify 20238 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T03:23Z) — Cursor board25/13+#29420 + board19 #29424
 | Board | Status | Evidence |
 |---|---|---|
