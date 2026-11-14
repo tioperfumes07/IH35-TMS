@@ -223,6 +223,7 @@ function MatchCell({ row }: { row: PerfumeGridRow }) {
   );
 }
 
+const LOW_PAIR = new Set(["a:offer", "a:esp", "a:offer2", "a:esp2"]);
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
 function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) {
@@ -300,6 +301,12 @@ function GridPanel({ view, mine }: { view: PerfumeGridView; mine: MineChoice }) 
       exportValue: (r: PerfumeGridRow) => (Array.isArray(r[c.key]) ? (r[c.key] as unknown as Array<{ label: string }>).map((x) => x.label).join("; ") : r[c.key] ?? null),
       render: (r: PerfumeGridRow) => {
         const v = r[c.key];
+        // List analysis (owner 2026-11-14): the lower of my offer and their price gets its own shade, that box only;
+        // "more expensive by" is negative and red.
+        if (c.kind === "money" && LOW_PAIR.has(c.key) && v != null && r["a:offer"] != null && r["a:esp"] != null && Number(v) === Math.min(Number(r["a:offer"]), Number(r["a:esp"]))) {
+          return <span data-testid="perfume-analysis-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
+        }
+        if (c.key === "a:over_by" && v != null && Number(v) < 0) return <span className="font-semibold text-red-700">{money(v)}</span>;
         if (c.kind === "money") return money(v);
         if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-slate-700 font-semibold" : ""}>{pct(v)}</span>;
         if (c.key === "a:cand") return <MatchCell row={r} />;

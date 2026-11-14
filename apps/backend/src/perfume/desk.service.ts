@@ -834,7 +834,9 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
     "a:can_inc": under != null && offer! > 0 ? p1(under / offer!) : null,
     "a:new_margin": esp != null && esp > 0 && a.cost != null ? p1((esp - a.cost) / esp) : null,
-    "a:over_by": over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
+    // Over by is NEGATIVE (owner 2026-11-14: "the over by should be negatives so we can really see we are selling more
+    // expensive"); the % to lower stays positive — how much to take off my price.
+    "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
     "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
     "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_vendor": a.comp?.vendor ?? null,
   };
@@ -992,20 +994,27 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const minMargin = opts.targetPct ?? 15;
   const cGroup = `COMPETITOR · ${sellV.length === 1 ? vendorLabel(sellV[0]) : "lowest sales price"}`;
   const A = (key: string, label: string, group: string, kind: GridCol["kind"]): GridCol => ({ key: `a:${key}`, label, group, kind });
+  const SIX = (p: string, lead: string, group: string): GridCol[] => [
+    A(`${p}_brand`, `${lead ? `${lead} ` : ""}BRAND`, group, "text"), A(`${p}_name`, `${lead ? `${lead} ` : ""}DESCRIPTION`, group, "text"), A(`${p}_size`, "SIZE", group, "int"),
+    A(`${p}_type`, "TYPE", group, "text"), A(`${p}_kind`, "KIND", group, "text"), A(`${p}_cat`, "CATEGORY", group, "text"),
+  ];
   cols.push(
     A("upc", "UPC", "ITEM", "text"), A("sku", "SKU", "ITEM", "text"), A("brand", "BRAND", "ITEM", "text"), A("name", "NAME", "ITEM", "text"),
     A("size", "SIZE", "ITEM", "int"), A("type", "TYPE", "ITEM", "text"), A("kind", "KIND", "ITEM", "text"),
     // Owner 2026-11-14: "after kind, show esperanza description etc so i can match here".
-    A("match", "Match", "MATCH", "text"), A("cand", "Link to", "MATCH", "text"), A("my_desc", "My description", "MATCH", "text"),
-    A("c_desc", "Their description", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"),
+    // Owner 2026-11-14 15:10: after the line's description, the brand / description / size / type / kind / category the
+    // engine assigned; then the suggestion in the same format; then, to the right, what it is matched to already.
+    A("line_desc", "LINE DESCRIPTION", "THE LINE", "text"), ...SIX("as", "ASSIGNED", "THE LINE"),
+    A("match", "Match", "SUGGESTED", "text"), A("cand", "Confirm / search", "SUGGESTED", "text"), A("sg_desc", "SUGGESTED", "SUGGESTED", "text"), ...SIX("sg", "", "SUGGESTED"),
+    A("m_desc", "MATCHED TO", "MATCHED TO", "text"), ...SIX("m", "", "MATCHED TO"), A("c_vendor", "Competitor", "MATCHED TO", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
-    A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Under By", "Analysis", "money"),
-    A("under_pct", "Under %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
-    A("over_by", "Over By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
+    A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Cheaper By", "Analysis", "money"),
+    A("under_pct", "Cheaper %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
+    A("over_by", "More Expensive By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
     A("c_list", "LIST PRICE", cGroup, "money"), A("c_cushion", "CUSHION", cGroup, "money"), A("c_sales", "SALES PRICE", cGroup, "money"),
   );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
@@ -1195,6 +1204,19 @@ async function buildAnalysisLines(c: PoolClient, x: {
     row_id: l.id, vendor: vLabel.get(l.vendor_id) ?? "", description: l.description, price_cents: l.price_cents!, linked_to: l.item_id ? (itemById.get(l.item_id)?.display_name ?? null) : null,
     id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
   }));
+  const poolById = new Map(compPool.map((l) => [l.row_id, l]));
+  const KIND: Record<string, string> = { M: "Men", W: "Women", U: "Unisex" };
+  type Six = { brand: string | null; name: string | null; size: number | null; type: string | null; gender: string | null; flags: readonly string[] } | null;
+  const six = (p: string, v: Six): Record<string, string | number | null> => ({
+    [`a:${p}_brand`]: v?.brand || null, [`a:${p}_name`]: v?.name || null, [`a:${p}_size`]: v?.size ?? null, [`a:${p}_type`]: v?.type || null,
+    [`a:${p}_kind`]: v ? KIND[v.gender ?? ""] ?? null : null, [`a:${p}_cat`]: v ? categoryOf(v.gender, v.flags) : null,
+  });
+  const ofId = (id: Identity): Six => ({ brand: id.brand, name: id.nameText, size: id.sizeMl, type: id.conc, gender: id.gender, flags: id.flags });
+  const ofItem = (itemId: string | null | undefined): Six => {
+    const i = itemId ? itemById.get(itemId) : undefined;
+    return i ? { brand: i.brand, name: i.name, size: i.size_ml == null ? null : Number(i.size_ml), type: i.conc, gender: i.gender, flags: i.flags } : null;
+  };
+  const idOf = (description: string, brand: string | null, size: string | null, gender: string | null) => identify({ description, brand, size, gender, brandAliases: aliases });
   const likelyCache = new Map<string, MatchCandidate[]>();
   const likelyFor = (itemId: string): MatchCandidate[] => {
     if (likelyCache.has(itemId)) return likelyCache.get(itemId)!;
@@ -1217,6 +1239,9 @@ async function buildAnalysisLines(c: PoolClient, x: {
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description,
       }),
+      "a:line_desc": l.description, ...six("as", ofId(idOf(l.description, l.brand, l.size_text, null))),
+      "a:sg_desc": cand[0]?.label ?? null, ...six("sg", !cand[0] ? null : l.item_id ? (poolById.get(cand[0].row_id) ? ofId(poolById.get(cand[0].row_id)!.id) : null) : ofItem(cand[0].item_id)),
+      "a:m_desc": an?.cBest?.desc ?? null, ...six("m", an?.cBest?.desc ? ofId(idOf(an.cBest.desc, null, null, null)) : null),
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
       link_mode: l.item_id ? "line" : "item", link_row: l.id, link_item: l.item_id,
@@ -1244,6 +1269,9 @@ async function buildAnalysisLines(c: PoolClient, x: {
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
         minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null,
       }),
+      "a:line_desc": l.description, ...six("as", ofId(idOf(l.description, l.brand, l.size_text, l.gender_override))),
+      "a:sg_desc": cand[0]?.label ?? null, ...six("sg", cand[0] ? ofItem(cand[0].item_id) : null),
+      "a:m_desc": l.item_id ? ((onMine ? (ir?.my_offer_desc as string) : null) ?? itemById.get(l.item_id)?.display_name ?? null) : null, ...six("m", ofItem(l.item_id)),
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,
     } as GridRow;
@@ -1455,8 +1483,8 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:under_pct", ["a:under_by", "a:esp"], (r) => `IF(${r("a:esp")}=0,"",${r("a:under_by")}/${r("a:esp")})`);
   add("a:can_inc", ["a:under_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:under_by")}/${r("a:offer")})`);
   add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(${r("a:esp")}=0,"",(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")})`);
-  add("a:over_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:offer")}-${r("a:esp")},0)`);
-  add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:over_by")}/${r("a:offer")})`);
+  add("a:over_by", ["a:offer", "a:esp"], (r) => `MIN(${r("a:esp")}-${r("a:offer")},0)`);
+  add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",-${r("a:over_by")}/${r("a:offer")})`);
   return out;
 }
 
