@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { Button } from "../../components/Button";
 import { CreateUnitModal } from "../../components/fleet/CreateUnitModal";
@@ -20,6 +20,7 @@ import { KpiStrip } from "../../components/layout/KpiStrip";
 import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { colors } from "../../design/tokens";
 import { humanizeEnumLabel } from "../../lib/humanizeEnumLabel";
+import { resolveBackHref } from "../../lib/returnContext";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatQuantityTable } from "../../lib/money";
 
@@ -73,6 +74,9 @@ function dashCount(n: number | null | undefined): string {
 export function FleetHomePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const tab = parseFleetHomeTab(searchParams.get("tab"));
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -147,7 +151,7 @@ export function FleetHomePage() {
       <PageHeader
         title="Fleet"
         subtitle="Trucks, trailers, and what needs attention."
-        backHref="/fleet"
+        backHref={moduleBackHref}
         actions={
           companyId ? (
             <div className="flex flex-wrap items-center gap-2" data-testid="fleet-roster-create-actions">

@@ -18141,5 +18141,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111
+  "total_claimed": 1111,
+  "20230": {
+    "claimed_at": "2026-11-14T02:54:36Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 reports hub + fleet home + legal portal Class R Backs"
+  }
 }
