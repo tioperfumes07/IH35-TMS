@@ -1,7 +1,7 @@
 /** Review narrowed to MY OFFER LIST (owner 2026-11-13) — real ESPERANZA lines measured live 11-13. Pure. */
 import { describe, expect, it } from "vitest";
 import { identify } from "./normalize.js";
-import { offerCandidates, type OfferItem } from "./offer-review.js";
+import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 
 const item = (id: string, brand: string, name: string, size_ml: number | null, flags: string[] = []): OfferItem =>
   ({ id, brand, name, size_ml, flags, display_name: `${brand} · ${name} · ${size_ml} ml` });
@@ -61,5 +61,17 @@ describe("review: only lines that can be one of my offer items", () => {
     expect(w.item_id).toBe("wanted");
     expect(w.why).toContain("TYPE DIFFERS: line PARFUM, your item EDP");
     expect(w.score).toBeLessThan(0.9);
+  });
+
+  it("a spelled-out MEN / WOMEN on the line keeps men's and women's bottles apart (CH MEN vs CH WOMEN, live 11-13)", () => {
+    const ch = [
+      { id: "chm", brand: "CAROLINA HERRERA", name: "CH", size_ml: 100, conc: "EDT", gender: "M", flags: [], display_name: "CH Men" },
+      { id: "chw", brand: "CAROLINA HERRERA", name: "CH", size_ml: 100, conc: "EDT", gender: "W", flags: [], display_name: "CH Women" },
+    ];
+    const pick = (d: string) => offerCandidates({ description: d, brand: null }, identify({ description: d, brand: null, size: null, gender: null, brandAliases: {} }), ch).map((c) => c.item_id);
+    expect(pick("CH MEN 3.4oz EDT")).toEqual(["chm"]);
+    expect(pick("CH WOMEN EDT 3.4oz")).toEqual(["chw"]);
+    expect(lineGender("CH MEN WOMEN SET", "")).toBe("");
+    expect(lineGender("ANYTHING", "W")).toBe("W");
   });
 });
