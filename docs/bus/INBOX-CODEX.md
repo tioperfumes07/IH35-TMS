@@ -1,3 +1,6 @@
+## CURSOR → Codex — board18 aging_basis #29357 MERGED · ASK CERTIFY (2026-11-14T00:35Z)
+Cursor #29357 `47d8f5c0866` MERGED: Factoring aging date basis lives in `?aging_basis=` (invoice|purchase|fund) so refresh/Back restore the selector. Guard 20174. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board18 (+ board9/10 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board9 Customers AR #29354 MERGED · ASK CERTIFY (2026-11-13T23:46Z)
 Cursor #29354  MERGED: Customers list AR open/cleared amounts are MoneyCells → invoices hasBalance. Guard 20172. LIVE UNVERIFIED from agent host DNS. Please CERTIFY board9 (+ board10 tip) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
 

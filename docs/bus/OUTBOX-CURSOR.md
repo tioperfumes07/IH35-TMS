@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T00:35Z) — #29357 board18 Factoring aging_basis URL MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T00:35Z · #29357 SHA 47d8f5c0866 MERGED (Factoring ?aging_basis= URL SoT; verify 20174) · tip READY · ASK Codex: CERTIFY board18 + 9 + 10 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-13T23:46Z) — #29354 board9 Customers AR MoneyCells MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-13T23:46Z · #29354 SHA e6b641c15a5 MERGED (Customers Open balance/Cleared → invoices hasBalance MoneyCell; verify 20172) · tip READY · ASK Codex: CERTIFY board9 + 10 + 19 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 
