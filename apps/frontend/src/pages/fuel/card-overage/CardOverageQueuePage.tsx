@@ -448,7 +448,6 @@ export function CardOverageQueuePage() {
   const withJe = rows.filter((row) => Boolean(row.journal_entry_id)).length;
   const kpiValue = (n: number) => (eventsQuery.isPending ? "…" : eventsQuery.isError ? "—" : String(n));
 
-
   return (
     <div className="space-y-3" data-testid="fuel-card-overage-queue">
       {/* ROUND 443.326 — KPI + MoneyListToolbar + FuelBoardSection (no PageHeader). */}

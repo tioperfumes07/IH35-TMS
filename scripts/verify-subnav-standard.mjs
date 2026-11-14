@@ -2,7 +2,8 @@
 /**
  * GO-UI-CONSISTENCY-WHOLE-APP-2026-08-31 guard.
  * All subnav strips must use the navy standard (matching NavyPageSubNav):
- *   - background: #1A1F36 (navy)
+ *   - background: #1A1F36 / #14314F (navy) or #13233F — the exact strip color in the approved
+ *     ROUND 9.0 v3 design sources (docs/design/v3/*.dc.html `background:#13233F`).
  *   - text: white
  *   - no wrapping (overflow-x: auto)
  *   - compact height (~28-42px)
@@ -23,9 +24,10 @@ const failures = [];
 const cssPath = path.join(root, "apps/frontend/src/components/forms/shared/HoverDropdownNav.css");
 const css = readFileSync(cssPath, "utf8");
 
-const cssNavyBg = css.includes("background: #1A1F36") || css.includes("background:#1A1F36") || css.includes("background: #14314F") || css.includes("background:#14314F");
+const NAVY = ["#1A1F36", "#14314F", "#13233F"];
+const cssNavyBg = NAVY.some((c) => css.includes(`background: ${c}`) || css.includes(`background:${c}`));
 if (!cssNavyBg) {
-  failures.push("HoverDropdownNav.css .hover-dropdown-nav must use background: #1A1F36 or #14314F (navy standard)");
+  failures.push("HoverDropdownNav.css .hover-dropdown-nav must use background: #1A1F36, #14314F or #13233F (navy standard / v3 design)");
 }
 
 // Check that the nav strip text is white (not the dropdown)
@@ -43,8 +45,8 @@ if (navStripBgMatch && navStripBgMatch[1].includes("var(--color-bg-surface)")) {
 // 2. NavyPageSubNav.tsx must use navy bg (standard reference — should not regress)
 const navyPath = path.join(root, "apps/frontend/src/components/layout/NavyPageSubNav.tsx");
 const navy = readFileSync(navyPath, "utf8");
-if (!navy.includes("bg-[#1A1F36]") && !navy.includes("bg-[#14314F]")) {
-  failures.push("NavyPageSubNav.tsx must use bg-[#1A1F36] or bg-[#14314F] (navy standard reference)");
+if (!NAVY.some((c) => navy.includes(`bg-[${c}]`))) {
+  failures.push("NavyPageSubNav.tsx must use bg-[#1A1F36], bg-[#14314F] or bg-[#13233F] (navy standard reference)");
 }
 
 // 3. Nav strip must not clip tabs: either horizontal scroll (overflow-x: auto) or explicit
@@ -56,8 +58,8 @@ if (!hasOverflowAuto && !hasWrapping) {
 }
 
 if (process.argv.includes("--selftest")) {
-  const bad = css.replace("background: #1A1F36", "background: #ffffff").replace("background: #14314F", "background: #ffffff");
-  if (bad.includes("background: #1A1F36") || bad.includes("background: #14314F")) {
+  const bad = NAVY.reduce((acc, c) => acc.split(`background: ${c}`).join("background: #ffffff"), css);
+  if (NAVY.some((c) => bad.includes(`background: ${c}`))) {
     console.error("selftest: could not plant failure");
     process.exit(1);
   }

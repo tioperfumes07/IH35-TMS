@@ -10,6 +10,20 @@ import { ListErrorState } from "../../../components/ListErrorState";
 import { formatDateTimeUS } from "../../../lib/formatDate";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3Segmented } from "../../../components/v3/V3Segmented";
+
+/** ROUND 9.0 board 22 (docs/design/v3/Maintenance-Home.png): the road to the next PM is a solid bar in the
+ *  unit's state colour (navy healthy · amber PM soon · red overdue) with a tick at the 80 % warning mark. */
+const barFill = { ok: "#1F3A5F", soon: "#B45309", overdue: "#991B1B", shop: "#64748B", none: "#94A3B8" } as const;
+function PmRoad({ interval, used, state }: { interval: number; used: number; state: FleetHealthRow["state"] }) {
+  const pct = Math.max(0, Math.min(100, (used / interval) * 100));
+  return (
+    <span className="relative block h-[8px] w-full min-w-[180px] rounded-full bg-[#E5E7EB]" role="progressbar" aria-valuemin={0} aria-valuemax={interval} aria-valuenow={Math.round(used)} data-testid="fleet-health-pm-bar">
+      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${pct}%`, background: barFill[state] }} />
+      <span aria-hidden="true" className="absolute -top-[3px] left-[80%] h-[14px] border-l border-slate-400" />
+    </span>
+  );
+}
 
 const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "In shop", none: "No PM clock" };
 const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-800", shop: "text-slate-600", none: "text-slate-500" };
@@ -64,10 +78,10 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   };
   const columns: ParityColumn<FleetHealthRow>[] = [
     { key: "unit_number", label: "Unit", minWidth: 260, render: (row) => <div className="flex min-w-0 items-center gap-2"><FleetTruck row={row} /><div className="min-w-0"><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /><div className="truncate text-xs text-slate-500">{[row.make, row.model, row.year].filter(Boolean).join(" · ") || "—"}</div></div></div> },
-    { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Number(row.odometer_mi).toLocaleString("en-US")} mi`} /> },
+    { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Math.round(Number(row.odometer_mi)).toLocaleString("en-US")} mi`} /> },
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM", render: (row) => row.pm_schedule_id
-      ? <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <span className={`relative block ${tones[row.state]}`}><progress className="h-2 w-full" style={{ accentColor: "currentColor" }} max={row.pm_interval} value={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} /><span aria-hidden="true" className="absolute left-[80%] top-0 h-3 border-l border-slate-400" /></span> : "PM reading unavailable"}</Link>
+      ? <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <PmRoad interval={row.pm_interval} used={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} state={row.state} /> : "PM reading unavailable"}</Link>
       : <Link to={pmHref(`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`)}>Start PM clock →</Link> },
     { key: "miles_left", label: "Miles", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
     { key: "state", label: "Status", sortable: true, sortValue: (row) => row.state, render: (row) => statusCell(row) },
@@ -78,20 +92,20 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
       if (filter === "soon") return ["soon", "overdue"].includes(row.state);
       return row.state === filter;
     });
-  return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line" footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
-    <div className="flex flex-wrap items-center justify-end gap-2 px-3 py-2" data-testid="fleet-health-filters">{(
-      [
-        ["all", health.data ? `All ${health.data.kpi.total}` : "All"],
-        ["moving", "Moving"],
-        ["soon", "PM soon"],
-        ["none", "No clock"],
-      ] as const
-    ).map(([value, label]) => (
-      <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className="rounded-sm border border-slate-200 px-2 py-1 text-xs aria-pressed:bg-slate-100">
-        {label}
-      </button>
-    ))}<Link className="text-xs" to="/maintenance/fleet-table">View all →</Link></div>
+  // ROUND 9.0 board 22: chips + View all sit in the panel header (design), the table is a bare panel table.
+  const chips = [
+    { id: "all", label: health.data ? `All ${health.data.kpi.total}` : "All" },
+    { id: "moving", label: "Moving" },
+    { id: "soon", label: "PM soon" },
+    { id: "none", label: "No clock" },
+  ] as const;
+  return <V3Panel title="Fleet health line — road to the next PM" testId="maintenance-fleet-health-line"
+    headerRight={<span className="flex items-center gap-3" data-testid="fleet-health-filters">
+      <V3Segmented value={filter as (typeof chips)[number]["id"]} options={[...chips]} onChange={setFilter} testId="fleet-health-chips" />
+      <Link className="text-section-header font-semibold text-[#1D4ED8]" to={pmHref("/maintenance/fleet-table")}>View all →</Link>
+    </span>}
+    footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
-      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="board" rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." hidePager initialPageSize={50} /></div>}
+      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="board" panel rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." /></div>}
   </V3Panel>;
 }

@@ -4,10 +4,13 @@
    never wrapped (flex-wrap: nowrap + min-width: max-content) inside a horizontally scrolling strip, so every tab past
    the window's width was hidden off the right edge. The tabs now WRAP onto a second row — every tab visible at any
    width — and the strip no longer scrolls. */
+/* ROUND 9.0 design parity (DriverProfile/Settlements/Banking .png): one navy 32px strip,
+   #13233F, sentence-case labels, active tab = #38465D box + 2px white underline. */
 .hover-dropdown-nav {
-  background: #1A1F36;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 0 var(--space-7);
+  background: #13233F;
+  border-bottom: 0;
+  padding: 0 6px;
+  min-height: 32px;
   overflow-x: visible;
 }
 
@@ -43,11 +46,12 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-5);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
+  height: 32px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
   color: rgba(255, 255, 255, 0.85);
   background: none;
   border: none;
@@ -64,6 +68,7 @@
 .hover-dropdown-nav a[role="menuitem"].active,
 .nav-item-with-dropdown button.active {
   color: #ffffff;
+  background: rgba(255, 255, 255, 0.16);
   border-bottom-color: #ffffff;
 }
 
@@ -132,4 +137,10 @@
 .nav-dropdown li a.active {
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
+}
+
+/* ROUND 9.0 — Accounting.dc.html: CAPS tab labels (the only v3 board that spells them so). */
+.hover-dropdown-nav.is-upper a[role="menuitem"],
+.hover-dropdown-nav.is-upper .nav-item-with-dropdown button {
+  text-transform: uppercase;
 }

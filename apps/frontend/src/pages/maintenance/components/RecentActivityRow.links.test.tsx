@@ -10,8 +10,11 @@ describe("Maintenance Home recent activity source links", () => {
       pageSize={25} recentPage={0} completedPage={0} fetching={false}
       onRecentPageChange={vi.fn()} onCompletedPageChange={vi.fn()} onOpen={vi.fn()} /></MemoryRouter>);
     expect(screen.getByRole("link", { name: "+ Create Work Order" })).toHaveAttribute("href", "/maintenance?create_wo=1");
-    expect(screen.getAllByRole("link", { name: "View all →" }).map((link) => link.getAttribute("href")))
-      .toEqual(["/maintenance/active-wos", "/maintenance/active-wos?status=complete"]);
+    // ROUND 9.0 — View all carries ?ret back to the board (path + status unchanged).
+    const hrefs = screen.getAllByRole("link", { name: "View all →" }).map((link) => new URL(link.getAttribute("href") ?? "", "http://x"));
+    expect(hrefs.map((u) => u.pathname)).toEqual(["/maintenance/active-wos", "/maintenance/active-wos"]);
+    expect(hrefs[1].searchParams.get("status")).toBe("complete");
+    expect(hrefs.every((u) => u.searchParams.has("ret"))).toBe(true);
   });
 
   it("opens the exact completed work order from its cost", () => {

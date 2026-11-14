@@ -165,7 +165,7 @@ export function AccountingSubNavWrapper({
       </div>
 
       <div className="relative z-10">
-        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" hideChevron />
+        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" hideChevron uppercase />
       </div>
 
       {kpiStrip}

@@ -290,6 +290,24 @@ function formatSamsaraLogin(value: unknown): string {
   }).format(date);
 }
 
+/** Board 11 header line — "Active · paid on short miles · Samsara linked (last login 4:02 AM CT)". Every part is a recorded fact. */
+export function driverHeaderSubtitle(driver: Record<string, unknown>): string {
+  const status = typeof driver.status === "string" && driver.status ? driver.status : "Status not recorded";
+  const basis = typeof driver.pay_basis === "string" && driver.pay_basis ? `paid on ${driver.pay_basis.replace(/_/g, " ")}` : "pay basis not recorded";
+  let samsara = "Samsara not linked";
+  if (driver.samsara_driver_id) {
+    const at = typeof driver.last_samsara_login_at === "string" ? new Date(driver.last_samsara_login_at) : null;
+    if (!at || Number.isNaN(at.getTime())) samsara = "Samsara linked (no login observed)";
+    else {
+      const day = (d: Date) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Chicago" }).format(d);
+      const time = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", hour: "numeric", minute: "2-digit" }).format(at);
+      const date = new Intl.DateTimeFormat("en-US", { timeZone: "America/Chicago", month: "2-digit", day: "2-digit" }).format(at).replace("/", "-");
+      samsara = `Samsara linked (last login ${day(at) === day(new Date()) ? "" : `${date} `}${time} CT)`;
+    }
+  }
+  return [status, basis, samsara].join(" · ");
+}
+
 type DriverProfilePageProps = {
   driverId?: string;
   onBack?: () => void;
@@ -479,8 +497,8 @@ export function DriverProfilePage({ driverId: driverIdProp, onBack }: DriverProf
     <div className="space-y-3" data-testid="driver-profile-page" data-active-tab={activeTab}>
       <PageHeader
         title={displayName}
-        subtitle="Driver profile"
-        breadcrumb={["Drivers", "Roster", displayName]}
+        subtitle={driverHeaderSubtitle(profileDriver)}
+        breadcrumb={["Drivers", displayName]}
         onBack={onBack}
         backHref={driversBackHref}
         actions={

@@ -695,6 +695,18 @@
       ]
     },
     {
+      "id": "customers.modal.customer_create",
+      "tab": "Modals",
+      "sub": "Modal: Customer Create Modal",
+      "route_hint": "surface://components/customers/CustomerCreateModal.tsx",
+      "surface_kind": "modal",
+      "surface_path": "components/customers/CustomerCreateModal.tsx",
+      "required": [
+        "connectivity",
+        "qbo_chrome"
+      ]
+    },
+    {
       "id": "customers.modal.customer_edit",
       "tab": "Modals",
       "sub": "Modal: Customer Edit Modal",

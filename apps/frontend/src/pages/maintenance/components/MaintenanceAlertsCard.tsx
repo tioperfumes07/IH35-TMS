@@ -11,7 +11,7 @@ import { entityLabel } from "../../../lib/entity-label";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { EntityPicker } from "../../../components/EntityPicker";
 import { ListErrorState } from "../../../components/ListErrorState";
-import { V3Panel } from "../../../components/v3/V3Panel";
+import { V3SideCard } from "../../../components/v3/V3SideCard";
 
 type Props = {
   operatingCompanyId: string;
@@ -103,10 +103,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
 
   if (compact) {
     return (
-      <V3Panel title="PM Alerts" headerRight={<a className="text-xs font-semibold" href="#maintenance-open-pm-alerts">{openTotalCount} open</a>}>
+      // ROUND 9.0 board 22 — the design's side card: PM ALERTS · "n open" · "No PM alerts" or the alert lines.
+      <V3SideCard title="PM alerts" count={`${openTotalCount} open`} href="/maintenance/pm-schedule" testId="maint-side-pm-alerts">
         <div id="maintenance-open-pm-alerts">
         {alerts.length === 0 ? (
-          <div className="px-2 py-1.5 text-xs text-gray-400">No PM alerts</div>
+          <div>No PM alerts</div>
         ) : (
           <div>
           <ul className="flex flex-col">
@@ -129,7 +130,7 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
           </div>
         )}
         </div>
-      </V3Panel>
+      </V3SideCard>
     );
   }
 

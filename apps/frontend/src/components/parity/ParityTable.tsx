@@ -403,6 +403,14 @@ export type ParityTableProps<T> = {
    */
   embedded?: boolean;
   /**
+   * ROUND 9.0 (owner 2026-11-13: "the designs … are not identical in the app"): a SUMMARY PANEL on an approved
+   * design board (docs/design/v3). The approved boards draw these as a bare table inside the card — no search,
+   * no Range, no row count, no print / export / gear, no pager — with "View all →" in the card header opening the
+   * full list (which keeps the full toolbar). panel = embedded + no toolbar row + no pager + every passed row shown.
+   * Full list pages must NOT use it (verify-all-module-list-toolbar-* still hold them to the toolbar).
+   */
+  panel?: boolean;
+  /**
    * OPTIONAL grouped column-band row (owner design law, 2026-09-04: "the piece the owner keeps
    * pointing at" -- Load Costs Board GROUPED render). Additive: omitting it keeps every existing
    * consumer byte-identical (no second header row). When provided, renders ONE extra <tr> above the
@@ -725,8 +733,9 @@ export function ParityTable<T>({
   onPageChange,
   pageSize: controlledPageSize,
   onPageSizeChange,
-  hidePager = false,
-  embedded = false,
+  hidePager: hidePagerProp = false,
+  embedded: embeddedProp = false,
+  panel = false,
   columnGroups,
   headerBg,
   headerInk,
@@ -771,7 +780,10 @@ export function ParityTable<T>({
   const [internalPageSize, setInternalPageSize] = useState<number>(
     persisted.pageSize ?? initialPageSize ?? pageSizeOptions[0] ?? 25,
   );
-  const pageSize = isPageSizeControlled ? controlledPageSize : internalPageSize;
+  const embedded = embeddedProp || panel;
+  const hidePager = hidePagerProp || panel;
+  // A panel shows every row it is given (callers pass the few rows the board draws).
+  const pageSize = panel ? Math.max(1, sourceRows.length) : isPageSizeControlled ? controlledPageSize : internalPageSize;
   // VC-LIST-02 — page-size options as rendered: append the "All" sentinel when allowed (dedup-safe).
   const renderedPageSizeOptions =
     allowAllPageSize && !pageSizeOptions.includes(ALL_PAGE_SIZE)
@@ -1636,8 +1648,8 @@ export function ParityTable<T>({
 
   return (
     <div className={shellClass} style={frameColor ? { borderColor: frameColor } : undefined} data-testid={tableTestId}>
-      {/* Canonical list toolbar: search + applied range filter + optional slot + gear. */}
-      {!suppressToolbar && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
+      {/* Canonical list toolbar: search + applied range filter + optional slot + gear. A design-board panel has none. */}
+      {!suppressToolbar && !panel && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
             <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
