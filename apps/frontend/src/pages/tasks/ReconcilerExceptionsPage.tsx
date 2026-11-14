@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -10,6 +10,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchReconcilerExceptions, type ReconcilerException } from "../../api/reconciler";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { formatDateTimeUS, formatDateUS, formatIsoDatesInText } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatUsdCents } from "../../lib/money";
 
 type Row = ReconcilerException & { rule: string };
@@ -38,6 +39,10 @@ function scrollToQueue() {
 }
 
 export function ReconcilerExceptionsPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -83,7 +88,7 @@ export function ReconcilerExceptionsPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line" />
+        <PageHeader backHref={moduleBackHref} title="Exceptions" subtitle="Records the reconciler found out of line" />
         <TasksModuleTabs />
         <BoardSection title="Exceptions" testId="reconciler-exceptions-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view its exceptions.</p>
@@ -94,7 +99,7 @@ export function ReconcilerExceptionsPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader backHref="/tasks" title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
+      <PageHeader backHref={moduleBackHref} title="Exceptions" subtitle="Records the reconciler found out of line, checked live each time this page loads" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}

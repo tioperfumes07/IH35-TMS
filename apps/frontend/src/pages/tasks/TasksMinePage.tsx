@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -7,6 +8,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { CollapsedListFilters, useStagedListFilters } from "../../components/table";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { statusOptions } from "../../lib/statusListParams";
+import { resolveBackHref } from "../../lib/returnContext";
 import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { getMe } from "../../api/identity";
@@ -26,6 +28,10 @@ const STATUS_FILTER_OPTIONS = statusOptions({
 // CODEX-ZERO-REMAINDER-PROTECTED-CHROME-7 — staged Filters Apply triad (chrome.toolbar_filter).
 // U12 — Status is MultiSelectDropdown (0 = all; open / completed multi-filter client-side).
 export function TasksMinePage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const meQuery = useQuery({ queryKey: ["identity", "me"], queryFn: ({ signal }) => getMe(signal) });
@@ -97,7 +103,7 @@ export function TasksMinePage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader backHref="/tasks" title="My Tasks" subtitle="Tasks assigned to you" />
+        <PageHeader backHref={moduleBackHref} title="My Tasks" subtitle="Tasks assigned to you" />
         <TasksModuleTabs />
         <BoardSection title="My tasks" testId="tasks-mine-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view your tasks.</p>
@@ -108,7 +114,7 @@ export function TasksMinePage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader backHref="/tasks" title="My Tasks" subtitle="Tasks assigned to you" />
+      <PageHeader backHref={moduleBackHref} title="My Tasks" subtitle="Tasks assigned to you" />
       <TasksModuleTabs />
 
       <div className="grid grid-cols-3 gap-3">

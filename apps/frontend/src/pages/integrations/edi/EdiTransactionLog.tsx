@@ -1,5 +1,7 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateTimeUS } from "../../../lib/formatDate";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { resolveApiUrl } from "../../../api/client";
 import { useMemo, useState } from "react";
 import { PageHeader } from "../../../components/layout/PageHeader";
@@ -82,6 +84,10 @@ const COLUMNS: Array<ParityColumn<EdiMessage>> = [
 ];
 
 export function EdiTransactionLog() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/integrations/edi" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   // U12: status multi-selector — API takes one status; 0/1 pass through; 2+ fetch all then filter.
@@ -106,7 +112,7 @@ export function EdiTransactionLog() {
 
   return (
     <div data-testid="edi-transaction-log">
-      <PageHeader backHref="/integrations/edi" title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
+      <PageHeader backHref={moduleBackHref} title="EDI Transaction Log" subtitle="Inbound/outbound 204 · 214 · 210 · 990 messages" />
       <div className="space-y-4 p-4">
         <div className="flex flex-wrap items-end gap-3" data-testid="edi-status-filter">
           <div className="text-xs font-semibold text-[#4B5563]">

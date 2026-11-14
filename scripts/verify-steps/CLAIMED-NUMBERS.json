@@ -18126,5 +18126,10 @@
     "claimed_at": "2026-11-14T02:44:42Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Drivers leaf Backs Class R resolveBackHref (10 pages)"
+  },
+  "20224": {
+    "claimed_at": "2026-11-14T02:49:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 tasks+admin+users+scheduler+edi Class R Backs"
   }
 }

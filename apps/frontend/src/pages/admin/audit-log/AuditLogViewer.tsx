@@ -1,5 +1,7 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { entityLabel } from "../../../lib/entity-label";
+import { resolveBackHref } from "../../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { listAuditViewerEvents, type AuditViewerEvent } from "../../../api/audit";
 import { useAuth } from "../../../auth/useAuth";
@@ -73,6 +75,10 @@ const COLUMNS: Array<ParityColumn<AuditViewerEvent>> = [
 ];
 
 export function AuditLogViewer() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/admin" });
   const auth = useAuth();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -162,7 +168,7 @@ export function AuditLogViewer() {
       <div className="space-y-3 p-4">
         <SuperAdminNav />
         <PageHeader
-          backHref="/admin"
+          backHref={moduleBackHref}
           breadcrumb={["Admin", "Audit log"]}
           title="Audit log"
           subtitle="Universal read-only viewer"
@@ -180,7 +186,7 @@ export function AuditLogViewer() {
     <div className="space-y-4 p-4">
       <SuperAdminNav />
       <PageHeader
-        backHref="/admin"
+        backHref={moduleBackHref}
         breadcrumb={["Admin", "Audit log"]}
         title="Audit log"
         subtitle="Universal read-only viewer — compliance &amp; forensics"

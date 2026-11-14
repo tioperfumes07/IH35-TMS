@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { formatPersonName } from "../../lib/formatPersonName";
-import { useSearchParams } from "react-router-dom";
+import { resolveBackHref } from "../../lib/returnContext";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -75,6 +76,9 @@ export function TasksChatPage() {
   const queryClient = useQueryClient();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const paramTaskId = searchParams.get("taskId") ?? "";
   const [selectedTaskId, setSelectedTaskId] = useState<string>(paramTaskId);
   const activeTaskId = selectedTaskId || paramTaskId;
@@ -197,7 +201,7 @@ export function TasksChatPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4" data-testid="tasks-chat-page">
-        <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+        <PageHeader backHref={moduleBackHref} title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
         <TasksModuleTabs />
         <BoardSection title="Team chat" testId="tasks-chat-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view team chat.</p>
@@ -208,7 +212,7 @@ export function TasksChatPage() {
 
   return (
     <div className="space-y-4" data-testid="tasks-chat-page">
-      <PageHeader backHref="/tasks" title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
+      <PageHeader backHref={moduleBackHref} title="Team Chat" subtitle="Task-scoped comments, @mentions, and activity" />
       <TasksModuleTabs />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[300px_1fr]">

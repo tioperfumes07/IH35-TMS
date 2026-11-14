@@ -1,3 +1,4 @@
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -7,6 +8,7 @@ import { TasksModuleTabs } from "./TasksModuleTabs";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { fetchPlannerTasks, type Task } from "../../api/tasks";
 import { addDaysIso, companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { TaskSubjectLink } from "../../components/tasks/TaskSubjectLink";
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -36,6 +38,10 @@ function monthLabel(iso: string): string {
 // TASK-1: Calendar — month grid of tasks by scheduled_date (was an unbuilt placeholder). Reads the
 // existing /api/v1/tasks/planner endpoint over the visible month range.
 export function TasksCalendarPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/tasks" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [anchor, setAnchor] = useState(() => companyToday()); // any date within the shown month
@@ -75,7 +81,7 @@ export function TasksCalendarPage() {
   if (!companyId) {
     return (
       <div className="space-y-4 p-4">
-        <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
+        <PageHeader backHref={moduleBackHref} title="Calendar" subtitle="Scheduled tasks by day" />
         <TasksModuleTabs />
         <BoardSection title="Calendar" testId="tasks-calendar-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company to view the task calendar.</p>
@@ -86,7 +92,7 @@ export function TasksCalendarPage() {
 
   return (
     <div className="space-y-4">
-      <PageHeader backHref="/tasks" title="Calendar" subtitle="Scheduled tasks by day" />
+      <PageHeader backHref={moduleBackHref} title="Calendar" subtitle="Scheduled tasks by day" />
       <TasksModuleTabs />
 
       {query.isError ? <ListErrorBanner onRetry={() => void query.refetch()} /> : null}

@@ -1,3 +1,5 @@
+import { resolveBackHref } from "../../lib/returnContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 /**
  * CLOSURE-13 — USMCA Activation Panel (admin-only).
  * Shows current state, 16-item checklist, transition button, emergency rollback.
@@ -45,6 +47,10 @@ function useActivationState() {
 }
 
 export function USMCAActivationPanel() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/admin" });
   const auth = useAuth();
   const { pushToast } = useToast();
   const qc = useQueryClient();
@@ -92,7 +98,7 @@ export function USMCAActivationPanel() {
   return (
     <div className="flex flex-col gap-4 p-4">
       {/* UI-BACK-BUTTON-MISSING-ENTIRELY: see TrainingProgramsPage.tsx sibling comment. */}
-      <PageHeader title="USMCA Activation" breadcrumb={[{ label: "Admin" }, { label: "USMCA Activation" }]} backHref="/admin" />
+      <PageHeader title="USMCA Activation" breadcrumb={[{ label: "Admin" }, { label: "USMCA Activation" }]} backHref={moduleBackHref} />
       <div className="flex items-center gap-3">
         <span className={`rounded-sm px-3 py-1 text-xs font-semibold ${STATE_BADGE[currentState]}`}>
           {currentState.replace(/_/g, " ").toUpperCase()}
