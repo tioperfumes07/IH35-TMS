@@ -16,6 +16,7 @@ import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { formatCashFlowCents } from "./CashFlowKpiStrip";
 import type { CashFlowNavOpts, CashFlowTabId } from "../CashFlowPage";
 import { expenseBucket } from "./expenseBucket";
+import { cashFlowTabHref } from "./cashFlowTabHref";
 
 // ROUND 443.280-A #7 — Cash Flow Home board (docs/design/v3/CashFlow-Home):
 // V3KpiTile strip ONLY (no layered CashFlowKpiStrip), no tab-card-theater theater,
@@ -939,23 +940,21 @@ export function CashFlowHomeTab({
             value={data.opening_cash_cents === null ? "—" : formatUsdCents(data.opening_cash_cents)}
             sub="live · as shown in the app today"
             testId="cash-flow-home-v3-kpi-opening"
-            onClick={() =>
-              openSibling("rolling_ledger", { rl_from: today, rl_to: addDaysIso(today, 13) })
-            }
+            href={cashFlowTabHref("rolling_ledger", { rl_from: today, rl_to: addDaysIso(today, 13) })}
           />
           <V3KpiTile
             label="Income due today"
             value={formatUsdCents(incomeToday)}
             sub={`${todayIncomeCount} item${todayIncomeCount === 1 ? "" : "s"}`}
             testId="cash-flow-home-v3-kpi-income"
-            onClick={() => openSibling("daily_prediction")}
+            href={cashFlowTabHref("daily_prediction")}
           />
           <V3KpiTile
             label="Expenses due today"
             value={formatUsdCents(expensesToday)}
             sub={`${todayExpenseCount} item${todayExpenseCount === 1 ? "" : "s"}`}
             testId="cash-flow-home-v3-kpi-expenses"
-            onClick={() => openSibling("daily_prediction")}
+            href={cashFlowTabHref("daily_prediction")}
           />
           <V3KpiTile
             label="Next 4 weeks in"
@@ -978,14 +977,12 @@ export function CashFlowHomeTab({
               ) : undefined
             }
             testId="cash-flow-home-v3-kpi-4w"
-            onClick={() =>
-              openSibling("rolling_ledger", {
-                rl_from: today,
-                rl_to: next4WeeksEnd,
-                rl_kind: "income",
-                rl_types: "Invoice,Factor advance,Load (not invoiced)",
-              })
-            }
+            href={cashFlowTabHref("rolling_ledger", {
+              rl_from: today,
+              rl_to: next4WeeksEnd,
+              rl_kind: "income",
+              rl_types: "Invoice,Factor advance,Load (not invoiced)",
+            })}
           />
           <V3KpiTile
             label="Weekly run-rate"
@@ -1016,7 +1013,7 @@ export function CashFlowHomeTab({
               ) : undefined
             }
             testId="cash-flow-home-v3-kpi-runrate"
-            onClick={() => openSibling("actual_vs_projected")}
+            href={cashFlowTabHref("actual_vs_projected")}
           />
           <V3KpiTile
             label="Lowest balance"
@@ -1024,14 +1021,12 @@ export function CashFlowHomeTab({
             tone={lowest && lowest.cents < 0 ? "red" : "ink"}
             sub={lowest?.label ?? "no projected days"}
             testId="cash-flow-home-v3-kpi-lowest"
-            onClick={() =>
-              openSibling(
-                "rolling_ledger",
-                lowest
-                  ? { rl_from: lowest.weekStart, rl_to: addDaysIso(lowest.weekStart, 6) }
-                  : { rl_from: today, rl_to: addDaysIso(today, 13) },
-              )
-            }
+            href={cashFlowTabHref(
+              "rolling_ledger",
+              lowest
+                ? { rl_from: lowest.weekStart, rl_to: addDaysIso(lowest.weekStart, 6) }
+                : { rl_from: today, rl_to: addDaysIso(today, 13) },
+            )}
           />
         </div>
       )}
