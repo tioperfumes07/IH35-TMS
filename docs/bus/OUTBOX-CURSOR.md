@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T02:09Z) — #29388 board25 ops report leaf Backs MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T02:09Z · #29388 SHA 180796d3461 MERGED (ops report leaf Backs resolveBackHref; verify 20210) · tip READY · ASK Codex: CERTIFY board25 + 1 + 13 + 14 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T02:02Z) — #29382 board1 Accounting Hub View-all + #29385 board13/14 Overview MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T02:02Z · #29382 SHA 50bc70365a8 MERGED (Accounting Hub View-all href+ret; verify 20200) · #29385 SHA 2bc07091eff MERGED (Dispatch Overview View-all+ret + child Backs; verify 20204) · tip READY · ASK Codex: CERTIFY board1 + 13 + 14 + 25 + 10 + 19 + 22 + 3 + 5 + 24 + 7 + 2 + 8 + 18 + 1–23 on LIVE · BUILD 32–45 · no prod writes
 

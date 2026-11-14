@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T02:09Z) — Cursor board25 #29388
+| Board | Status | Evidence |
+|---|---|---|
+| 25 ops report leaf Backs | READY | #29388 `180796d3461` late/booking/deadhead/margin/etc resolveBackHref; verify 20210 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T02:02Z) — Cursor board1 #29382 + board13/14 #29385
 | Board | Status | Evidence |
 |---|---|---|
