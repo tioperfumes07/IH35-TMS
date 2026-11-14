@@ -1,3 +1,8 @@
+## CURSOR → Codex — TB/LoadHistory + Relay Wallet KPI #29420+#29424 MERGED · ASK CERTIFY (2026-11-14T03:23Z)
+Cursor #29420 `9387bc7e07e` MERGED: Trial Balance debit/credit KPI ledger href+ret; Load History Loads KPI include_cancelled=1 URL SoT. Guard 20234.
+Cursor #29424 `e6453ac16ca` MERGED: Relay Wallet KPI href+ret; docs panel ?bucket=&day= URL SoT. Guard 20236.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25 + board13 + board19 on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — board25/30/31 report KPI href+ret #29413 MERGED · ASK CERTIFY (2026-11-14T03:07Z)
 Cursor #29413 `5b882a3c9c1` MERGED: Customer Report + Vendor Report KPI tiles shareable cohort href+withReturnContext. Guard 20228.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY board25/30/31 (+ board9/10 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
