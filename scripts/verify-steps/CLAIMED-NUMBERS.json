@@ -18156,5 +18156,10 @@
       "1445-verify-expense-category-picker-canonical.mjs"
     ]
   },
-  "total_claimed": 1111
+  "total_claimed": 1111,
+  "20236": {
+    "claimed_at": "2026-11-14T03:19:35Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 board19 Relay Wallet KPI href+ret bucket/day URL SoT"
+  }
 }
