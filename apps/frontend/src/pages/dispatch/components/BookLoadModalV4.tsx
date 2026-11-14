@@ -300,6 +300,9 @@ const BOOK_LOAD_CORRECT_DESIGN_CSS = `
    The date picker's inner text input sits inside its own 32px box, so it is excluded. */
 .blw-sec input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not(.dp-input),
 .blw-sec select{height:32px}
+/* R832-board16: SelectCombobox in fixed 150px stop-row col — Combobox inner div h-8.5 and min-w-[10rem] to spec 150×32. */
+.blw-sec .min-w-\\[10rem\\]{min-width:0}
+.blw-sec .h-8\\.5{height:32px}
 [data-wizard-v5="on"] .blw-sec input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="file"]):not(.dp-input){height:24px}
 /* Load Wizard V5 — compact density (visual only; gated by LOAD_WIZARD_V5). */
 [data-wizard-v5="on"] .blw-sec-hd{padding:4px 9px}

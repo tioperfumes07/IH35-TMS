@@ -105,6 +105,10 @@ function violations(lib, editor, wizard, equipment, timeWindow, moneyInput, numb
   if (!/className="h-8 w-full max-w-\[150px\] text-xs"/.test(timeWindow)) {
     errors.push("Time window dropdown must be h-8 max-w-[150px] (Book Load Spec 150×32)");
   }
+  // R832-board16: Combobox inner div overrides in BookLoadModalV4 CSS (measured 142×40 live; spec 150×32).
+  if (!wizard.includes("R832-board16")) {
+    errors.push("R832-board16: BookLoadModalV4 CSS must override Combobox h-8.5/min-w-[10rem] inside .blw-sec (ROUND 8.32.1)");
+  }
   // ROUND 8.20 board14 — center dialog locks 1260 (FAIL was ~1408 from w-full at 1440).
   if (!/maxWidth:\s*1260/.test(wizard) || !/min\(1260px/.test(wizard)) {
     errors.push("Book Load center dialog must lock maxWidth 1260 (Spec)");
@@ -181,6 +185,11 @@ const combo = fs.readFileSync("apps/frontend/src/components/Combobox.tsx", "utf8
 if (!combo.includes("formFieldChrome") || !combo.includes("h-10 w-full min-w-0 rounded-sm border")) {
   throw new Error("Combobox size=sm must paint the h-10 bordered input itself (IH35-347-A / owner design law rule 2 / 40px form fields)");
 }
+// R832-board16: stop-row-2 last grid column must be fixed 150px, not minmax(0,0.9fr) (live 142×40, spec 150×32).
+const stopsSection = fs.readFileSync("apps/frontend/src/pages/dispatch/components/BookLoadStopsSection.tsx", "utf8");
+if (!stopsSection.includes("lg:grid-cols-[minmax(0,1fr)_64px_88px_150px_104px_150px]")) {
+  throw new Error("R832-board16: BookLoadStopsSection stop-row-2 must use fixed 150px for the time-window column (not minmax(0,0.9fr))");
+}
 
 if (process.argv.includes("--selftest")) {
   const base = [lib, editor, wizard, equipment, timeWindow, moneyInput, numberInput];
@@ -203,6 +212,7 @@ if (process.argv.includes("--selftest")) {
     [lib, editor, wizard.replace('data-testid="book-load-section-rail"', 'data-testid="book-load-section-rail-REMOVED"').replace("BOOK_LOAD_SECTION_RAIL", "BOOK_LOAD_SECTION_RAIL_REMOVED"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('data-testid="book-load-charges-grid"', 'data-testid="book-load-charges-REMOVED"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('role="dialog"', 'role="region"').replace('aria-modal="true"', 'aria-modal="false"'), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace("R832-board16", "BOARD16-REMOVED"), equipment, timeWindow, moneyInput, numberInput],
   ];
   let caught = 0;
   for (const [index, args] of mutations.entries()) {
