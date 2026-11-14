@@ -116,7 +116,7 @@ export default function PerfumeDeskPage() {
 const VIEW_HELP: Record<PerfumeGridView, string> = {
   buy: "Buying from your suppliers: who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
   trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
-  wholesale: "Your price at My margin % against each competitor's price, with how much to raise or lower.",
+  wholesale: "My offer price against each competitor's real price: their list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30). Over/under in $ and %, and the % to reduce my price (or the room to raise). Their description sits next to mine so every match can be checked.",
   comp: "Each competitor's margin if they buy from the cheapest supplier: that supplier's list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30 — change it in Rules) is their cost; their price less that is what they earn.",
   all: "The whole item database.",
 };
@@ -131,15 +131,18 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
+  // Owner 2026-11-14: no cost I never uploaded and no purchase quantities (no sales / movement data) by default.
   if (mine && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
-    || ["my_offer_price", "offer_action", "offer_margin_pct", "my_qty", "my_last_cost", "my_need", "best_vendor", "low_sell"].includes(key))) return true;
+    || ["my_offer_desc", "my_offer_price", "my_qty", "best_vendor"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
   // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
   if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_qty", "my_need"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   if (view === "comp") return item || /^c:.*:(price|earn|margin)$/.test(key) || ["comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
-  if (view === "wholesale") return item || /^s:.*:price$/.test(key) || ["landed_likely", "my_last_cost", "my_offer_price", "offer_action", "offer_margin_pct", "target_price_margin", "low_sell", "target_action"].includes(key);
+  // Wholesale (owner 2026-11-14): my description + my offer price, then per competitor their description, list price,
+  // cushion, real price, and me vs their real price ($, %, reduce / raise). No cost, margin or need-to-buy columns.
+  if (view === "wholesale") return item || /^s:.*:(desc|price|cushion|real|diff|diff_pct|action)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
 

@@ -122,6 +122,8 @@ export type PerfumeReviewRow = {
   id: string;
   /** Narrowed to my offer list: the offer item this line most likely is. */
   for_my_item?: string | null;
+  /** My own offer-list wording for that item. */
+  for_my_desc?: string | null;
   list_id: string;
   vendor_name: string;
   row_no: number;

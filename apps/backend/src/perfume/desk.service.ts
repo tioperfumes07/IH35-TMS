@@ -502,10 +502,15 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
        ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
   const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
-    `SELECT DISTINCT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, NULLIF(i.gender, '') AS gender, i.flags, i.display_name
+    // my_desc: my own offer-list wording for the item (owner 2026-11-14: "showing my description name and la
+    // esperanza description name … so i can verify they are matched correctly").
+    `SELECT i.id, i.brand, i.name, i.size_ml::float8 AS size_ml, NULLIF(i.conc, '') AS conc, NULLIF(i.gender, '') AS gender, i.flags, i.display_name,
+            string_agg(DISTINCT r.description, ' | ') AS my_desc
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        JOIN perfume.items i ON i.id = r.item_id
-      WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL AND i.merged_into_id IS NULL`)).rows : [];
+      WHERE v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL AND i.merged_into_id IS NULL
+      GROUP BY i.id`)).rows : [];
+  const myDesc = new Map(offerItems.map((o) => [o.id, (o as OfferItem & { my_desc?: string | null }).my_desc ?? null]));
   // The vendor's line split into the owner's columns: brand (canonical — CK → CALVIN KLEIN), model, size, type,
   // gender, tester/set, country, pieces per box, the vendor's code — the same reading the import engine used.
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
@@ -521,7 +526,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     const engine = ((r.suggestions as Array<{ item_id: string }> | null) ?? []);
     // Only the strict offer candidates count as "my item" — the engine's old suggestions never do.
     const forMine = [...offer];
-    return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, _mine: forMine.length > 0 };
+    return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, for_my_desc: forMine[0] ? myDesc.get(forMine[0].item_id) ?? null : null, _mine: forMine.length > 0 };
   });
   if (!mine) return { rows: out, total: total!.rows[0].n };
   // Grouped by my item, then vendor, so the owner confirms item by item.
@@ -744,7 +749,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
-  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null }>>();
+  const byItem = new Map<string, Map<string, { price: number; qty: number | null; case_pack: number | null; sku: string | null; country: string | null; desc: string }>>();
   // Every current line's own text and SKU per item: the search reads them, so "CLUB DE NUIT" (the owner's list)
   // finds the item another vendor named "CDN" first (owner 2026-11-13: compare my Book 7 + Book 8 offer list).
   const lineText = new Map<string, Set<string>>();
@@ -753,7 +758,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     t.add(String(p.description ?? "")); if (p.sku) t.add(p.sku);
     lineText.set(p.item_id, t);
     const m = byItem.get(p.item_id) ?? new Map();
-    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country });
+    m.set(p.vendor_id, { price: p.price_cents, qty: p.qty, case_pack: p.case_pack, sku: p.sku, country: vendorLineTail(p.description).country, desc: String(p.description ?? "") });
     byItem.set(p.item_id, m);
   }
   const close = (v: number | null) => (v == null ? null : closeCents(v, rules.round_step, rules.round_dir));
@@ -782,6 +787,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const mineCols: GridCol[] = [];
   if (hasInv) mineCols.push({ key: "my_qty", label: "My stock", group: "Mine", kind: "int" }, { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" });
   if (hasOffer) mineCols.push(
+    { key: "my_offer_desc", label: "My description", group: "Mine", kind: "text" },
     { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
     { key: "offer_vs_low", label: "Offer vs lowest", group: "Mine", kind: "money" },
     { key: "offer_action", label: "My offer: raise / lower", group: "Mine", kind: "text" },
@@ -803,9 +809,19 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     cols.push({ key: `t:${v.id}:earn`, label: "They earn ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
     cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
   }
-  // WHOLESALE — one column per competitor: its selling price.
-  // WHOLESALE — one column per competitor: its selling price.
-  for (const v of sellV) cols.push({ key: `s:${v.id}:price`, label: "Their price", group: `Competitor · ${vendorLabel(v)}`, kind: "money" });
+  // WHOLESALE — per competitor (owner 2026-11-14): their description (to check the match against mine), their list
+  // price, the cushion (tiers: .25 / .50 over $10 / 1.00 over $30), their real price (list − cushion), and my offer
+  // price against that real price: over/under $ and %, and the % to reduce (or room to raise) my price.
+  for (const v of sellV) {
+    const g = `Competitor · ${vendorLabel(v)}`;
+    cols.push({ key: `s:${v.id}:desc`, label: "Their description", group: g, kind: "text" });
+    cols.push({ key: `s:${v.id}:price`, label: "List price", group: g, kind: "money" });
+    cols.push({ key: `s:${v.id}:cushion`, label: "Cushion", group: g, kind: "money" });
+    cols.push({ key: `s:${v.id}:real`, label: "Real price", group: g, kind: "money" });
+    cols.push({ key: `s:${v.id}:diff`, label: "Me vs real $", group: g, kind: "money" });
+    cols.push({ key: `s:${v.id}:diff_pct`, label: "Me vs real %", group: g, kind: "pct" });
+    cols.push({ key: `s:${v.id}:action`, label: "Reduce / raise", group: g, kind: "text" });
+  }
   // COMPETITION MARGIN — owner 2026-11-12: "a tab … an engine, check the margin of the competition if purchasing from
   // the same vendors, the lowest cost vendors … the vendors' prices − the cushion (.25 under $10, .50 over $10, 1.00
   // over $30) … so I can measure their margin." Their cost ≈ cheapest supplier list price − that tiered cushion.
@@ -854,7 +870,9 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // My lists: stock and last cost from my inventory, my offer price (and the qty I offer) from my offer list.
     let myQty: number | null = null, myCost: number | null = null, myOffer: number | null = null, offerQty: number | null = null;
     for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; } }
-    for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; offerQty = o.qty ?? offerQty; } }
+    let myOfferDesc: string | null = null;
+    for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; } }
+    row.my_offer_desc = myOfferDesc;
     row.my_qty = myQty;
     row.my_last_cost = myCost;
     row.my_offer_price = myOffer;
@@ -873,6 +891,15 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       const p = offersMap.get(v.id)?.price;
       if (p == null) continue;
       row[`s:${v.id}:price`] = p;
+      row[`s:${v.id}:desc`] = offersMap.get(v.id)?.desc ?? null;
+      const cushion = Math.min(p, tieredCushionCents(p, rules.competitor_cushion_tiers));
+      const real = p - cushion;
+      row[`s:${v.id}:cushion`] = cushion;
+      row[`s:${v.id}:real`] = real;
+      const cmp = myOffer != null ? offerVsReal(myOffer, real) : null;
+      row[`s:${v.id}:diff`] = cmp?.diffCents ?? null;
+      row[`s:${v.id}:diff_pct`] = cmp?.diffPct ?? null;
+      row[`s:${v.id}:action`] = cmp?.action ?? null;
       row[`c:${v.id}:price`] = p;
       if (compCost != null) {
         row[`c:${v.id}:earn`] = p - compCost;
@@ -887,8 +914,9 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // The margin my offer price already carries (owner 2026-11-13: "my list already has margin … 6 percent"):
     // (offer − my cost) ÷ offer, my cost = my inventory's last cost, else the cheapest supplier landed cost.
     // Measured, never assumed — no margin is added on top of my offer price anywhere.
-    const offerCost = (myCost ?? (row.landed_likely as number | null)) ?? null;
-    row.offer_margin_pct = myOffer != null && myOffer > 0 && offerCost != null ? Math.round(((myOffer - offerCost) / myOffer) * 1000) / 10 : null;
+    // Owner 2026-11-14: "where are you getting my cost from? i never uploaded my current cost." Only my inventory's
+    // last cost counts as my cost — never a supplier price standing in for it.
+    row.offer_margin_pct = myOffer != null && myOffer > 0 && myCost != null ? Math.round(((myOffer - myCost) / myOffer) * 1000) / 10 : null;
     if (myOffer != null && low != null) {
       row.offer_vs_low = low - myOffer;
       row.offer_action = wholesaleAction(low - myOffer);
@@ -955,6 +983,19 @@ export function getOrBuildView(
 }
 
 /** Wholesale: positive gap = my price is under the lowest competitor (room to raise); negative = I am over it. */
+/** My offer price against a competitor's real price (list − cushion). diff > 0 = I am over them.
+ *  diffPct = diff ÷ their real price; the action gives the % to cut MY price to meet theirs (or the room to raise). */
+export function offerVsReal(myOfferCents: number, realCents: number): { diffCents: number; diffPct: number | null; action: string } {
+  const diff = myOfferCents - realCents;
+  const d = (Math.abs(diff) / 100).toFixed(2);
+  const diffPct = realCents > 0 ? Math.round((diff / realCents) * 1000) / 10 : null;
+  const ofMine = myOfferCents > 0 ? (Math.round((Math.abs(diff) / myOfferCents) * 1000) / 10).toFixed(1) : null;
+  const pctTxt = diffPct == null ? "" : ` (${Math.abs(diffPct).toFixed(1)}%)`;
+  if (diff > 0) return { diffCents: diff, diffPct, action: `Over by $${d}${pctTxt} — reduce${ofMine ? ` ${ofMine}%` : ""}` };
+  if (diff < 0) return { diffCents: diff, diffPct, action: `Under by $${d}${pctTxt} — room to raise${ofMine ? ` ${ofMine}%` : ""}` };
+  return { diffCents: 0, diffPct: 0, action: "Same as their real price" };
+}
+
 export function wholesaleAction(gapCents: number): string {
   const d = (Math.abs(gapCents) / 100).toFixed(2);
   if (gapCents > 0) return `Under by $${d} — can raise`;
