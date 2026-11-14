@@ -13,9 +13,6 @@ import { V3SideCard } from "../../../components/v3/V3SideCard";
 import { V3Panel } from "../../../components/v3/V3Panel";
 
 function healthLabel(row: EngineStatusRow) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const maintHref = (target: string) => withReturnContext(target, originHref);
   switch (row.health) {
     case "ok":
       return "OK";
@@ -38,6 +35,9 @@ type Props = {
 };
 
 export function MaintEnginesStatusWidget({ operatingCompanyId, compact = false }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const maintHref = (target: string) => withReturnContext(target, originHref);
   const q = useQuery({
     queryKey: ["system", "engine-status", "maint-widget", operatingCompanyId],
     queryFn: () => getEngineStatusBoard(operatingCompanyId),

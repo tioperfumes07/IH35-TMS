@@ -46,7 +46,6 @@ export function PolicyDetail() {
   const { pushToast } = useToast();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.17 class R — Home/Fleet Covered drills attach `ret`; fallback is Insurance Home (not Policies-only).
   const insuranceBackHref = resolveBackHref({
