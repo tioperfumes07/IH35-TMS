@@ -28,6 +28,18 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
+import { BANKING_TAB_PATH } from "../../../router/route-manifest";
+
+/** ROUND 8.20 board7 — Rolling Ledger KPI → same-tab cohort URL (shareable + Back-safe). */
+function rollingLedgerKpiHref(opts: {
+  kind?: "income" | "expenses" | null;
+  from: string;
+  to: string;
+}): string {
+  const params = new URLSearchParams({ tab: "rolling_ledger", rl_from: opts.from, rl_to: opts.to });
+  if (opts.kind) params.set("rl_kind", opts.kind);
+  return `/cash-flow?${params.toString()}`;
+}
 
 // Non-EntityLink ledger kinds: card_payable / relay_topup have no record page yet; fuel_forecast is a
 // synthetic 4-wk avg projection (CASH-T03) — never drill it as accounting.expenses (Validation failed).
@@ -712,6 +724,8 @@ type Props = {
 
 export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const { t } = useTranslation();
+  const location = useLocation();
+  const originHref = currentOriginHref(location.pathname, location.search);
   const today = companyToday();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
@@ -1513,6 +1527,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
 
       {data && boardKpis && (
         <>
+          {/* ROUND 8.20 board7 — KPIs drill Bank Accounts (+ret) or Rolling Ledger income/expense cohorts. */}
           <div
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8 }}
             data-testid="rolling-ledger-v3-kpis"
@@ -1520,18 +1535,21 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             <V3KpiTile
               label="Opening cash"
               value={boardKpis.opening === null ? "—" : formatUsdCents(boardKpis.opening)}
+              href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-opening"
             />
             <V3KpiTile
               label="Income due today"
               value={formatUsdCents(boardKpis.incomeDue)}
               sub={`${formatQuantityTable(boardKpis.incomeCount, 0)} item${boardKpis.incomeCount === 1 ? "" : "s"}`}
+              href={rollingLedgerKpiHref({ kind: "income", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-income"
             />
             <V3KpiTile
               label="Expenses due today"
               value={formatUsdCents(boardKpis.expensesDue)}
               sub={boardKpis.expenseSub}
+              href={rollingLedgerKpiHref({ kind: "expenses", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-expenses"
             />
             <V3KpiTile
@@ -1539,16 +1557,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               value={formatCents(boardKpis.net, { sign: true })}
               tone={boardKpis.net > 0 ? "green" : boardKpis.net < 0 ? "red" : "ink"}
               sub="None"
+              href={rollingLedgerKpiHref({ from: today, to: today })}
               testId="rolling-ledger-v3-kpi-net"
             />
             <V3KpiTile
               label="Projected closing"
               value={boardKpis.projectedClosing === null ? "—" : formatUsdCents(boardKpis.projectedClosing)}
+              href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-closing"
             />
             <V3KpiTile
               label="Due next 10 days"
               value={formatUsdCents(boardKpis.dueNext10)}
+              href={rollingLedgerKpiHref({ from: today, to: addDaysIso(today, 9) })}
               testId="rolling-ledger-v3-kpi-due10"
             />
           </div>
