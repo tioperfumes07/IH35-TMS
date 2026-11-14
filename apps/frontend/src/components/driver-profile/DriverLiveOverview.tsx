@@ -115,7 +115,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   return <section aria-label="Driver live overview" className="min-w-0 space-y-3 py-3">
     {/* DP2 — Live unit wider; pay panel compact (board asymmetric widths). */}
     <div className="grid min-w-0 items-start gap-3 lg:grid-cols-[minmax(0,1.6fr)_minmax(220px,1fr)]">
-      <V3Panel title={unitTitle} testId="driver-live-unit" onViewAll={unitId ? () => navigate(withReturnContext(`/fleet/units/${encodeURIComponent(unitId)}`, currentOriginHref(pathname, search))) : undefined}>
+      <V3Panel title={unitTitle} testId="driver-live-unit" viewAllHref={unitId ? liveHref(`/fleet/units/${encodeURIComponent(unitId)}`) : undefined}>
         <div className="px-3.5 pb-3 pt-2" data-testid="driver-live-unit-road">
           <div className="flex justify-center pb-1 text-page-title font-semibold tabular-nums text-slate-900" data-testid="driver-live-unit-speed">
             {speed != null && unitId ? <EntityLink kind="unit" id={unitId} label={`${formatQuantityTable(speed, 0)} mph`} /> : <span className="text-xs font-normal text-slate-500">{positions.isError ? "Position source unavailable" : positions.isFetching ? "Loading last reported position…" : "Speed unavailable"}</span>}

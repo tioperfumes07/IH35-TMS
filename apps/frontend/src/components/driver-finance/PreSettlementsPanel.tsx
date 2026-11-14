@@ -80,6 +80,7 @@ type Props = {
   showTotal?: boolean;
   emptyText?: string;
   onViewAll?: () => void;
+  /** Class R — shareable href preferred over onViewAll; passed through to BoardSection. */
   viewAllHref?: string;
 };
 
