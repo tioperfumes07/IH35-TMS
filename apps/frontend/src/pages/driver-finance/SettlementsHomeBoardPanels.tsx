@@ -251,7 +251,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
           </BoardSection>
 
           <BoardSection
-            title={`Deductions · Week of ${thisWeekBucket ? fmtWeekMmmD(thisWeekBucket.weekStartIso) : "..."} · ${formatSettlementsUsd(deductionsThisWeek)}`}
+            title={`Deductions · Week of ${thisWeekBucket ? formatWeekOfTitle(thisWeekBucket.weekStartIso) : "..."} · ${formatSettlementsUsd(deductionsThisWeek)}`}
             onViewAll={() => navigate("/driver-finance/deductions")}
             footer={
               deductionsListError

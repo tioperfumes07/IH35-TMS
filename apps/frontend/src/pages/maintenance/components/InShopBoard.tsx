@@ -5,7 +5,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { assignWorkOrderBay, getShopBays, releaseWorkOrderBay, type BayWorkOrder, type ShopBaysPayload } from "../../../api/shopBays";
+import { assignWorkOrderBay, getShopBays, releaseWorkOrderBay, type ShopBaysPayload } from "../../../api/shopBays";
 import { ListErrorState } from "../../../components/ListErrorState";
 import { EntityLink } from "../../../components/shared/EntityLink";
 import { useToast } from "../../../components/Toast";
@@ -49,12 +49,20 @@ export function bayProgressPct(status: string | null | undefined): number | null
 
 const DRAG_TYPE = "application/x-ih35-work-order";
 
-function WoLine({ wo }: { wo: BayWorkOrder }) {
-  return <div className="min-w-0 space-y-1 text-xs">
-    <p className="break-words text-slate-700">{wo.title || "Work not described"}</p>
-    <EntityLink kind="work_order" id={wo.work_order_id} label={wo.display_id || "Work order"} />
-  </div>;
+/** ShopBays.dc.html chip + bar colors per bay state (chipBg / chipFg / bar). */
+export function bayChip(status: string | null): { bg: string; fg: string; bar: string } {
+  switch (status) {
+    case "in_progress": return { bg: "#D7E4F5", fg: "#14213D", bar: "#2456C7" };
+    case "waiting_parts":
+    case "awaiting_parts": return { bg: "#FDE7C2", fg: "#854F0B", bar: "#D98E04" };
+    case "complete":
+    case "completed": return { bg: "#D9F2E3", fg: "#1F6B3A", bar: "#2E9E5B" };
+    case "open": return { bg: "#E3E8EF", fg: "#33415A", bar: "#8A97A8" };
+    case null: return { bg: "#465770", fg: "#C9D3DF", bar: "#8A97A8" };
+    default: return { bg: "#E3E8EF", fg: "#33415A", bar: "#8A97A8" };
+  }
 }
+
 
 export function InShopBoard({ companyId }: { companyId: string }) {
   const qc = useQueryClient();
@@ -84,27 +92,34 @@ export function InShopBoard({ companyId }: { companyId: string }) {
   const openBays = bays.filter((b) => !b.work_order).map((b) => b.bay_number);
   const busy = assign.isPending || release.isPending;
 
-  // ShopBays.dc.html — floor plan SVG per bay (300×330) + chrome + yard lane. Live shop-bays only.
-  return <section className="min-w-0 space-y-3" aria-label="Shop floor plan" data-testid="in-shop-bay-board">
-    <header className="flex flex-wrap items-start justify-between gap-2" data-testid="in-shop-floor-chrome">
-      <div>
-        <h2 className="text-xs font-bold uppercase tracking-wide text-[#0F1B2D]">MAINTENANCE · SHOP FLOOR</h2>
-        <p className="mt-0.5 text-xs text-[#64748B]">
-          The shop, from above — {bay_count} bay{bay_count === 1 ? "" : "s"}
-        </p>
+  // ShopBays.dc.html (Board 45) — the shop from above: dark floor (#2C3A4E), one bay tile (#3B4A5E) per bay with
+  // its BAY n + status chip, the 300×330 top-down graphic, and a white job ticket (job · who · progress · release);
+  // then the white YARD LANE card. Live shop-bays only — empty bays render OPEN BAY, never a sample truck.
+  return <section className="min-w-0 space-y-4" aria-label="Shop floor plan" data-testid="in-shop-bay-board">
+    <header className="flex flex-wrap items-end justify-between gap-4" data-testid="in-shop-floor-chrome">
+      <div className="flex min-w-0 flex-col gap-1.5">
+        <div className="text-section-header font-bold tracking-[.16em] text-[#4A5A70]">MAINTENANCE · SHOP FLOOR</div>
+        <h1 className="m-0 text-page-title font-extrabold leading-none text-[#14213D]">
+          The shop, from above — {bay_count} bay{bay_count === 1 ? "" : "s"}{bay_count === 4 ? ", 60 × 30 ft" : ""}
+        </h1>
+        <p className="m-0 text-xs text-[#4A5A70]">Each bay holds the truck that is in it, nose to the door, with its job ticket. Drag a truck from the yard lane into an open bay.</p>
       </div>
       <Link
         to={shopHref("/maintenance/arriving-soon")}
-        className="rounded-sm border border-[#C6D1DC] bg-[#2C3A4E] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-95"
+        className="inline-flex h-11 items-center rounded-[10px] bg-[#14213D] px-5 text-xs font-semibold text-white hover:opacity-95"
         data-testid="in-shop-check-truck-in"
       >
         Check a truck in
       </Link>
     </header>
-    <div className="grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4" data-testid="in-shop-bays">
+
+    <div className="grid min-w-0 gap-3 rounded-[18px] bg-[#2C3A4E] p-4 [grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr))]" data-testid="in-shop-bays">
       {bays.map(({ bay_number, work_order: wo }) => {
         const st = wo ? bayStatusLabel(wo.status) : null;
+        const chip = bayChip(wo?.status ?? null);
         const unitLabel = wo?.unit_number ?? (wo ? "Truck" : "");
+        const pct = wo ? bayProgressPct(wo.status) : null;
+        const overdue = Boolean(wo?.expected_release_at && new Date(wo.expected_release_at).getTime() < Date.now() && wo.status !== "complete" && wo.status !== "completed");
         return <article
           key={bay_number}
           data-testid={`in-shop-bay-${bay_number}`}
@@ -112,75 +127,63 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           onDragOver={(e) => { if (!wo && e.dataTransfer.types.includes(DRAG_TYPE)) { e.preventDefault(); setDragOver(bay_number); } }}
           onDragLeave={() => setDragOver((v) => (v === bay_number ? null : v))}
           onDrop={(e) => { e.preventDefault(); setDragOver(null); const id = e.dataTransfer.getData(DRAG_TYPE); if (id && !wo) assign.mutate({ woId: id, bay: bay_number }); }}
-          className={`flex min-w-0 flex-col gap-2 rounded-sm border bg-white p-2 ${wo ? "border-slate-200" : "border-dashed border-slate-300"} ${dragOver === bay_number ? "ring-2 ring-[#14314F]" : ""}`}
+          className={`flex min-w-0 flex-col gap-2.5 rounded-xl bg-[#3B4A5E] p-3 ${dragOver === bay_number ? "ring-2 ring-[#F2C230]" : ""}`}
         >
-          <header className="flex flex-wrap items-center justify-between gap-2 text-xs">
-            <span className="font-bold uppercase tracking-wide text-slate-700">
-              BAY {bay_number}{wo ? <> · {wo.unit_id ? <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} /> : (wo.unit_number ?? "No truck")}</> : null}
+          <header className="flex items-center justify-between gap-2">
+            <span className="text-xs font-extrabold tracking-[.06em] text-white">
+              BAY {bay_number}{wo?.unit_id ? <> · <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} className="text-white underline underline-offset-2" /></> : null}
             </span>
-            {st ? <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span> : <span className="text-slate-500">OPEN BAY</span>}
+            <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: chip.bg, color: chip.fg }}>{st ? st.label : "OPEN BAY"}</span>
           </header>
-          <ShopBayFloorSvg
-            bayNumber={bay_number}
-            occupied={Boolean(wo)}
-            unitLabel={unitLabel}
-            status={wo?.status ?? null}
-          />
-          {wo ? <>
-            <WoLine wo={wo} />
-            {(() => {
-              const pct = bayProgressPct(wo.status);
-              if (pct == null) return null;
-              return (
-                <div className="space-y-1" data-testid={`in-shop-bay-${bay_number}-progress`}>
-                  <div className="flex justify-between text-section-header font-semibold uppercase tracking-wide text-slate-500">
-                    <span>Progress</span>
-                    <span>{pct}%</span>
-                  </div>
-                  <div
-                    role="progressbar"
-                    aria-valuenow={pct}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-label={`Bay ${bay_number} progress ${pct}%`}
-                    className="h-1.5 overflow-hidden rounded-sm bg-slate-200"
-                  >
-                    <div className="h-full bg-[#14314F]" style={{ width: `${pct}%` }} />
-                  </div>
+          <ShopBayFloorSvg bayNumber={bay_number} occupied={Boolean(wo)} unitLabel={unitLabel} status={wo?.status ?? null} />
+          <div className="flex min-w-0 flex-col gap-1.5 rounded-[10px] bg-white px-3 py-2.5">
+            {wo ? <>
+              <div className="break-words text-xs font-bold text-[#14213D]">{wo.title || "Work not described"}</div>
+              <div className="flex flex-wrap items-center gap-x-2 text-xs text-[#4A5A70]">
+                <EntityLink kind="work_order" id={wo.work_order_id} label={wo.display_id || "Work order"} />
+                <span>· in shop since {wo.in_shop_at ? formatDateUS(wo.in_shop_at) : "—"}</span>
+              </div>
+              {pct != null ? <div data-testid={`in-shop-bay-${bay_number}-progress`} className="flex flex-col gap-1.5">
+                <div role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={`Bay ${bay_number} progress ${pct}%`} className="h-2 overflow-hidden rounded bg-[#E3E8EF]">
+                  <div className="h-2" style={{ width: `${pct}%`, background: chip.bar }} />
                 </div>
-              );
-            })()}
-            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-2 gap-y-1 text-xs text-slate-600">
-              <dt>In shop</dt><dd>{wo.in_shop_at ? formatDateUS(wo.in_shop_at) : "—"}</dd>
-              <dt>Expected release</dt><dd>{wo.expected_release_at ? formatDateUS(wo.expected_release_at) : "—"}</dd>
-            </dl>
-            <button type="button" disabled={busy} onClick={() => release.mutate(wo.work_order_id)}
-              className="mt-auto self-start rounded-sm border border-slate-300 bg-white px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-50"
-              data-testid={`in-shop-bay-${bay_number}-release`}>Release bay</button>
-          </> : <p className="text-center text-xs text-slate-500">Drag a truck in from the yard lane</p>}
+                <div className="flex justify-between gap-2 text-xs text-[#33415A]">
+                  <span>{st?.label} · {pct}%</span>
+                  <span className="font-bold" style={{ color: overdue ? "#B42318" : "#33415A" }}>
+                    {wo.expected_release_at ? `${overdue ? "Overdue · " : "Release "}${formatDateUS(wo.expected_release_at)}` : "No release date"}
+                  </span>
+                </div>
+              </div> : null}
+              <button type="button" disabled={busy} onClick={() => release.mutate(wo.work_order_id)}
+                className="self-start rounded-md border border-[#D5DCE5] bg-[#F6F8FB] px-2 py-1 text-xs text-[#14213D] hover:bg-white disabled:opacity-50"
+                data-testid={`in-shop-bay-${bay_number}-release`}>Release bay</button>
+            </> : <>
+              <div className="text-xs font-bold text-[#14213D]">Open bay</div>
+              <div className="text-xs text-[#4A5A70]">Drag a truck in from the yard lane.</div>
+            </>}
+          </div>
         </article>;
       })}
     </div>
 
-    <section aria-label="Yard lane" className="min-w-0 space-y-2" data-testid="in-shop-yard-lane">
+    <section aria-label="Yard lane" className="flex min-w-0 flex-col gap-2.5 rounded-[14px] bg-white px-4 py-3.5 shadow-[0_1px_0_#D5DCE5]" data-testid="in-shop-yard-lane">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-xs font-bold uppercase text-slate-700">YARD LANE · NEXT IN, BY PM URGENCY ({yard.length})</h2>
+        <h2 className="m-0 text-section-header font-bold tracking-[.12em] text-[#5B6B7E]">YARD LANE · NEXT IN, BY PM URGENCY ({yard.length})</h2>
         <Link className="text-xs" to={shopHref("/maintenance/active-wos")}>View all work orders →</Link>
       </div>
-      {yard.length === 0 ? <p className="rounded-sm border border-slate-200 bg-white p-3 text-xs text-slate-600">No active work orders are waiting for a bay.</p> :
-        <div className="flex min-w-0 flex-wrap gap-2">
+      {yard.length === 0 ? <p className="m-0 text-xs text-[#4A5A70]">No active work orders are waiting for a bay.</p> :
+        <div className="flex min-w-0 flex-wrap gap-2.5">
           {yard.map((wo) => {
             const st = bayStatusLabel(wo.status);
+            const chip = bayChip(wo.status);
             return <article key={wo.work_order_id} draggable={!busy}
               onDragStart={(e) => { e.dataTransfer.setData(DRAG_TYPE, wo.work_order_id); e.dataTransfer.effectAllowed = "move"; }}
-              className="flex w-64 min-w-0 cursor-grab flex-col gap-2 rounded-sm border border-slate-200 bg-white p-2"
+              className="flex min-h-11 min-w-0 cursor-grab flex-wrap items-center gap-2.5 rounded-[10px] border border-[#D5DCE5] bg-[#F6F8FB] px-3.5 py-1.5"
               data-testid={`in-shop-yard-${wo.work_order_id}`}>
-              <div className="flex items-center justify-between gap-2 text-xs">
-                <span className="font-semibold">{wo.unit_id ? <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} /> : (wo.unit_number ?? "No truck")}</span>
-                <span className="inline-flex items-center gap-1"><span aria-hidden="true" className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span>
-              </div>
-              <WoLine wo={wo} />
-              <label className="flex flex-col gap-1 text-xs text-slate-600">
+              <span aria-hidden="true" className="h-[26px] w-2.5 rounded-[3px]" style={{ background: chip.bar }} />
+              <span className="text-xs font-extrabold text-[#14213D]">{wo.unit_id ? <EntityLink kind="unit" id={wo.unit_id} label={wo.unit_number ?? "Truck"} /> : (wo.unit_number ?? "No truck")}</span>
+              <span className="min-w-0 text-xs text-[#4A5A70]">{st.label} · {wo.title || "Work not described"} · <EntityLink kind="work_order" id={wo.work_order_id} label={wo.display_id || "Work order"} /></span>
+              <label className="flex items-center gap-1.5 text-xs text-[#4A5A70]">
                 Move to bay
                 <SelectCombobox
                   aria-label={`Move ${wo.unit_number ?? "truck"} to a bay`}
@@ -202,6 +205,5 @@ export function InShopBoard({ companyId }: { companyId: string }) {
           })}
         </div>}
     </section>
-    <p className="text-xs text-slate-500">{bay_count} bays (Maintenance › Settings). A finished truck stays "Ready" in its bay until the bay is released.</p>
   </section>;
 }
