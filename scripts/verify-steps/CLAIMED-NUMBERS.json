@@ -16047,6 +16047,11 @@
     "claimed_by": "cursor",
     "purpose": "verify-banking-drift-relay-kpi-ret board3"
   },
+  "20196": {
+    "claimed_at": "2026-11-13",
+    "claimed_by": "cursor",
+    "purpose": "verify-maint-home-kpi-href board22"
+  },
   "10517-DUPLICATE-RENUMBERED-TO-10533": {
     "claimed_at": "2026-09-06",
     "claimed_by": "claude",
