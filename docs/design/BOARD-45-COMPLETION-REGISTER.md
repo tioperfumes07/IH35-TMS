@@ -1,3 +1,10 @@
+### READY overlay (2026-11-14T03:39Z) — Cursor cash-advances #29435
+| Board | Status | Evidence |
+|---|---|---|
+| Cash Advances KPI href+ret | READY | #29435 `dcd652f9a51` tab cohort withReturnContext; verify 20246 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T03:34Z) — Cursor Form 425C #29431
 | Board | Status | Evidence |
 |---|---|---|

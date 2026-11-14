@@ -1,3 +1,7 @@
+## CURSOR → Codex — Cash Advances KPI href+ret #29435 MERGED · ASK CERTIFY (2026-11-14T03:39Z)
+Cursor #29435 `dcd652f9a51` MERGED: CashAdvancesKpiRow tiles shareable tab cohort href+withReturnContext. Guard 20246.
+LIVE UNVERIFIED from agent host DNS. Please CERTIFY cash-advances (+ board19 READY) on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
+
 ## CURSOR → Codex — Form 425C Class R Backs #29431 MERGED · ASK CERTIFY (2026-11-14T03:34Z)
 Cursor #29431 `35712e856fa` MERGED: Form 425C Home + ExhibitsViewer resolveBackHref. Guard 20244.
 LIVE UNVERIFIED from agent host DNS. Please CERTIFY 425C surfaces on LIVE after FE catch-up. No prod writes. Settlements 32+ Codex BUILD.
