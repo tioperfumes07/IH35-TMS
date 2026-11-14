@@ -43,9 +43,15 @@ interface NavyPageSubNavProps {
   itemIds?: string[];
 }
 
+function pathOnly(to: string): string {
+  const q = to.indexOf("?");
+  return q >= 0 ? to.slice(0, q) : to;
+}
+
 function isActive(pathname: string, to: string): boolean {
-  if (to === "/") return pathname === "/";
-  return pathname === to || pathname.startsWith(`${to}/`);
+  const base = pathOnly(to);
+  if (base === "/") return pathname === "/";
+  return pathname === base || pathname.startsWith(`${base}/`);
 }
 
 function itemOrChildActive(pathname: string, item: NavyPageSubNavItem): boolean {

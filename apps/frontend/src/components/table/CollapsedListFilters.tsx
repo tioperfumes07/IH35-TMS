@@ -14,6 +14,12 @@ type BaseProps = {
   className?: string;
   /** Open the filter panel on first render (K.9 pattern — 0 clicks to see controls). */
   defaultOpen?: boolean;
+  /**
+   * ROUND 9.4 — V3 board Filters trigger (docs/design/v3/Dispatch-TruckPlanner.dc.html):
+   * "Filters · N ▾" as one text node, 600 12px Inter, 28px × 6px radius white chip.
+   * When set, replaces the SlidersHorizontal + "Filters" + badge chrome.
+   */
+  boardToggleLabel?: string;
   /** e.g. { "data-customers-filter-toolbar": "collapsed" } */
   dataAttributes?: Record<string, string>;
   /**
@@ -45,6 +51,7 @@ export function CollapsedListFilters({
   testIdPrefix = "list",
   className = "",
   defaultOpen = false,
+  boardToggleLabel,
   dataAttributes,
   style,
   onApply = () => {},
@@ -108,22 +115,47 @@ export function CollapsedListFilters({
     <div ref={ref} className={`relative ${layoutClassName ?? ""}`} style={style} {...dataAttributes}>
       <div className="flex flex-wrap items-center gap-2">
         {searchSlot}
-        <Button
-          type="button"
-          variant="secondary"
-          aria-expanded={filtersOpen}
-          data-testid={`${testIdPrefix}-filters-toggle`}
-          onClick={() => setFiltersOpen((o) => !o)}
-          className="font-semibold"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
-          Filters
-          {activeFilterCount > 0 ? (
-            <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-[#1F2A44] px-1 text-xs font-bold text-white">
-              {activeFilterCount}
-            </span>
-          ) : null}
-        </Button>
+        {boardToggleLabel != null ? (
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            data-testid={`${testIdPrefix}-filters-toggle`}
+            data-v3="filters.toggle"
+            onClick={() => setFiltersOpen((o) => !o)}
+            style={{
+              height: 28,
+              padding: "0 12px",
+              display: "inline-flex",
+              alignItems: "center",
+              borderRadius: 6,
+              font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif",
+              background: "#fff",
+              color: "#111827",
+              border: "1px solid #DDE1E7",
+              cursor: "pointer",
+              lineHeight: "normal",
+            }}
+          >
+            {boardToggleLabel}
+          </button>
+        ) : (
+          <Button
+            type="button"
+            variant="secondary"
+            aria-expanded={filtersOpen}
+            data-testid={`${testIdPrefix}-filters-toggle`}
+            onClick={() => setFiltersOpen((o) => !o)}
+            className="font-semibold"
+          >
+            <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden />
+            Filters
+            {activeFilterCount > 0 ? (
+              <span className="ml-1 inline-flex min-w-[16px] items-center justify-center rounded-full bg-[#1F2A44] px-1 text-xs font-bold text-white">
+                {activeFilterCount}
+              </span>
+            ) : null}
+          </Button>
+        )}
       </div>
 
       {filtersOpen ? (
