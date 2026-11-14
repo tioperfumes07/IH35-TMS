@@ -589,6 +589,9 @@ function TourRegister({ state, companyId, onCount }: { state: "open" | "closed";
 }
 
 export function LoadCostsBoardPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate(); const { selectedCompanyId } = useCompanyContext(); const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
   const [filter, setFilter] = useState<FilterPill>("all_open");
