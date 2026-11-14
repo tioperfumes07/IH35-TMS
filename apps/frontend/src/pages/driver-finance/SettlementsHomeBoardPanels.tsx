@@ -6,6 +6,7 @@ import type { CSSProperties, Dispatch, SetStateAction } from "react";
 import type { NavigateFunction } from "react-router-dom";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
+import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3 } from "../../design/v3-tokens";
 import { V3Segmented } from "../../components/v3/V3Segmented";
@@ -131,7 +132,7 @@ function fmtWeekMmmD(iso: string): string {
 export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProps) {
   const {
     navigate,
-    companyId: _companyId,
+    companyId,
     weekBuckets,
     weekChartGrain,
     setWeekChartGrain,
@@ -250,7 +251,7 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
           </BoardSection>
 
           <BoardSection
-            title={`Deductions this week · ${formatSettlementsUsd(deductionsThisWeek)}`}
+            title={`Deductions · Week of ${thisWeekBucket ? fmtWeekMmmD(thisWeekBucket.weekStartIso) : "..."} · ${formatSettlementsUsd(deductionsThisWeek)}`}
             onViewAll={() => navigate("/driver-finance/deductions")}
             footer={
               deductionsListError
@@ -405,8 +406,16 @@ export function SettlementsHomeBoardPanels(props: SettlementsHomeBoardPanelsProp
                     <span style={{ textAlign: "left" }}>
                       <EntityLink kind="driver" id={s.driver_id} label={entityLabel(s.driver_full_name || "Driver", s.driver_id, "Driver")} />
                     </span>
-                    <span style={{ textAlign: "left" }}>
-                      {settlementsWeekLoadsLabel(s)}
+                    <span style={{ textAlign: "left", display: "flex", flexDirection: "column", gap: 2 }}>
+                      {(s.load_links ?? []).length > 0
+                        ? s.load_links!.map((link) => (
+                            <span key={link.id} style={{ display: "flex", alignItems: "center", gap: 4, flexWrap: "wrap" }}>
+                              <EntityLink kind="load" id={link.id} label={link.label} />
+                              <SettlementRefCell loadId={link.id} operatingCompanyId={companyId} />
+                            </span>
+                          ))
+                        : <span>{settlementsWeekLoadsLabel(s)}</span>
+                      }
                     </span>
                     <MoneyCell
                       cents={dollarsToCents(Number(s.gross_pay ?? 0))}

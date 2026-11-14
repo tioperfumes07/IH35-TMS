@@ -18,6 +18,7 @@ import { TourLegsCell } from "../../components/dispatch/TourLegsCell";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3 } from "../../design/v3-tokens";
+import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { preSettlementsYtdSub, S443326 } from "./settlementsV3BoardStrings";
 
 function startOfWeekSunday(d: Date): Date {
@@ -566,16 +567,17 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               </button>
             ))}
           </div>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search…"
-            data-testid="settlements-tours-search-input"
-            style={{ height: 26, padding: "0 8px", border: `1px solid ${V3.border}`, borderRadius: 3, fontSize: 11, fontFamily: V3.font, minWidth: 120 }}
-          />
-          <button type="button" data-testid="settlements-tours-filters-btn" style={{ height: 26, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Filters ▾</button>
-          <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 26, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
+          <MoneyListToolbar
+            search={search}
+            onSearchChange={setSearch}
+            searchPlaceholder="Search settlements…"
+            searchTestId="settlements-tours-search-input"
+            activeFilterCount={0}
+            onClearAll={() => setSearch("")}
+            testIdPrefix="settlements-tours"
+          >
+            <button type="button" data-testid="settlements-tours-export-btn" style={{ height: 36, padding: "0 10px", border: `1px solid ${V3.border}`, borderRadius: 3, background: V3.surface, color: V3.ink, fontSize: 11, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
+          </MoneyListToolbar>
         </div>
       </div>
 
