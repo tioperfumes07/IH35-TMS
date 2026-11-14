@@ -136,6 +136,7 @@ export function CardOverageQueuePage() {
   // ROUND 8.20 board19 — Fuel Home → Card overage carries ?ret=; Back must restore Fuel origin.
   const fuelBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fuel" });
   const originHref = currentOriginHref(pathname, searchParams.toString() ? `?${searchParams.toString()}` : "");
+  const fuelHref = (target: string) => withReturnContext(target, originHref);
   const cohortHref = (opts: { status?: string | null; hasJe?: boolean }) => {
     const params = new URLSearchParams(searchParams);
     if (opts.status === undefined) {
@@ -566,7 +567,7 @@ export function CardOverageQueuePage() {
       </MoneyListToolbar>
 
       {hasEntityTarget ? (
-        <Link to="/fuel/card-overage" className="text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={fuelHref("/fuel/card-overage")} className="text-xs font-semibold text-[#1F2A44] underline">
           Clear profile/event target
         </Link>
       ) : null}

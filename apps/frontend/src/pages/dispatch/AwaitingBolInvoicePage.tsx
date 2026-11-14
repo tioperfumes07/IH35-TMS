@@ -3,7 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { formatQuantityTable } from "../../lib/money";
 import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { listAwaitingBolInvoice, type AwaitingBolInvoiceRow } from "../../api/dispatch";
 import { ListErrorState } from "../../components/ListErrorState";
 import { PageHeader } from "../../components/layout/PageHeader";
@@ -19,6 +20,9 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
  * + docs upload hook fire autoInvoiceOnBol then Faro submit.
  */
 export function AwaitingBolInvoicePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -93,7 +97,7 @@ export function AwaitingBolInvoicePage() {
         title="Awaiting BOL for invoice"
         subtitle="Delivered loads with no BOL on file. Upload the BOL on the load Documents tab — invoice send and Faro submit fire automatically."
         actions={
-          <Link to="/dispatch/pod-review" className="rounded-sm border px-3 py-1.5 text-xs">
+          <Link to={dispHref("/dispatch/pod-review")} className="rounded-sm border px-3 py-1.5 text-xs">
             POD Review
           </Link>
         }

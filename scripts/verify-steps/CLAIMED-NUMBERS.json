@@ -18376,5 +18376,15 @@
     "claimed_at": "2026-11-14T17:49:20Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 Banking/Unit/Finance/Dispatch Link to= withReturnContext"
+  },
+  "20318": {
+    "claimed_at": "2026-11-14T17:53:43Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Dispatch/Driver/Reports/Fleet Link to= ret wave2"
+  },
+  "20320": {
+    "claimed_at": "2026-11-14T17:57:03Z",
+    "claimed_by": "cursor",
+    "purpose": "ROUND 8.20 Maint/Acct/Home/Banking/Fuel Link to= ret wave3"
   }
 }

@@ -1,4 +1,5 @@
-import { Link, useParams, useLocation, useSearchParams } from "react-router-dom";
+import {Link, useParams, useLocation, useSearchParams} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useQuery } from "@tanstack/react-query";
 import { InfoPopover } from "../../components/shared/InfoPopover";
 import { LinkedBankTransactionsPanel } from "../../components/banking/LinkedBankTransactionsPanel";
@@ -19,6 +20,9 @@ import { getLoad } from "../../api/loads";
  * Never hijack the load-detail EntityLink target with this surface.
  */
 export function LoadBankingLinkagePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const dispHref = (target: string) => withReturnContext(target, originHref);
   const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 board13/14 — Dispatch drills attach ?ret=; Back must restore origin.
@@ -37,7 +41,7 @@ export function LoadBankingLinkagePage() {
     return (
       <div className="p-4">
         <p className="text-xs text-gray-600">Missing load id.</p>
-        <Link to="/dispatch?view=loads" className="text-xs text-[#1F2A44] underline">
+        <Link to={dispHref("/dispatch?view=loads")} className="text-xs text-[#1F2A44] underline">
           Open Dispatch loads
         </Link>
       </div>

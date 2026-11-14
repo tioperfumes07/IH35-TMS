@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDateUS } from "../../lib/formatDate";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -87,7 +88,7 @@ const PERIOD_COLUMNS: Array<ParityColumn<AccountingPeriod>> = [
           className="text-xs font-semibold text-[#1F2A44] underline"
         />
       ) : p.status === "closed" || p.status === "locked" ? (
-        <Link to="/accounting/month-close" className="text-xs font-semibold text-[#1F2A44] underline">
+        <Link to={moneyHref("/accounting/month-close")} className="text-xs font-semibold text-[#1F2A44] underline">
           View closing entries →
         </Link>
       ) : (
@@ -136,6 +137,9 @@ function SectionCard({ title, subtitle, children }: { title: string; subtitle?: 
 }
 
 export function MyAccountantPage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const operatingCompanyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag("MY_ACCOUNTANT_ENABLED", operatingCompanyId || undefined);

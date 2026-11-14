@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { acknowledgeMonthCloseChecklist, closeMonth, getMonthCloseStatus } from "../../api/accounting";
 import { Button } from "../../components/Button";
@@ -33,6 +34,9 @@ type ChecklistRow = {
 };
 
 export function MonthClosePage() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const [period, setPeriod] = useState(currentPeriodIso);
@@ -232,7 +236,7 @@ export function MonthClosePage() {
       ) : null}
 
       <div className="mb-3 flex flex-wrap items-center gap-3 text-xs">
-        <Link to="/reports/audit/period-close-history" className="font-medium text-[#1F2A44] hover:underline">
+        <Link to={moneyHref("/reports/audit/period-close-history")} className="font-medium text-[#1F2A44] hover:underline">
           Period close history
         </Link>
         <span className="text-gray-400">·</span>

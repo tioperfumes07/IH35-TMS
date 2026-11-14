@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { createIftaPreparation } from "../../../api/ifta";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { useToast } from "../../../components/Toast";
@@ -15,6 +16,9 @@ import { SelectCombobox } from "../../../components/Combobox";
 import { InfoPopover } from "../../../components/shared/InfoPopover";
 
 export function IFTAPreparer() {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { pushToast } = useToast();
@@ -39,7 +43,7 @@ export function IFTAPreparer() {
         title="IFTA Quarterly Preparer"
         subtitle={`Q${quarter} ${year} · Steps 1–4 (miles, gallons, tax, CSV)`}
         actions={
-          <Link to="/reports" className="text-xs font-semibold text-[#1F2A44] hover:underline">
+          <Link to={moneyHref("/reports")} className="text-xs font-semibold text-[#1F2A44] hover:underline">
             ← Reports
           </Link>
         }

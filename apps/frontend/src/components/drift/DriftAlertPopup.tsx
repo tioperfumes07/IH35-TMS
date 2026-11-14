@@ -130,7 +130,7 @@ export function DriftAlertPopup() {
                 sortValue: (r) => r.entity_label,
                 render: (r) =>
                   r.entity_type === "load" ? (
-                    <Link to={`/dispatch/loads/${r.entity_id}`} onClick={remindLater} className="text-blue-700 hover:underline">
+                    <Link to={hubHref(`/dispatch/loads/${r.entity_id}`)} onClick={remindLater} className="text-blue-700 hover:underline">
                       {r.entity_label}
                     </Link>
                   ) : (

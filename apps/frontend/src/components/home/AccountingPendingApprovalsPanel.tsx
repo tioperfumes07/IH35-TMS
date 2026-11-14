@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import {Link, useLocation} from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { MoneyCell } from "../shared/MoneyCell";
 import { useQuery } from "@tanstack/react-query";
 import type { AccountingHomeData } from "../../api/accountingHome";
@@ -23,6 +24,9 @@ function accountLabel(account: {
 }
 
 export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const moneyHref = (target: string) => withReturnContext(target, originHref);
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
 
@@ -177,13 +181,13 @@ export function AccountingPendingApprovalsPanel({ data, isLoading }: Props) {
       </div>
 
       <div className="flex flex-wrap gap-2 border-t border-[#E5E7EB] px-3 py-2">
-        <Link to="/accounting/journal-entries" className="text-xs font-medium text-[#4B5563] hover:underline">
+        <Link to={moneyHref("/accounting/journal-entries")} className="text-xs font-medium text-[#4B5563] hover:underline">
           Journal entries
         </Link>
-        <Link to="/accounting/invoices" className="text-xs font-medium text-[#4B5563] hover:underline">
+        <Link to={moneyHref("/accounting/invoices")} className="text-xs font-medium text-[#4B5563] hover:underline">
           Accounting home
         </Link>
-        <Link to="/reports/ar-aging" className="text-xs font-medium text-[#4B5563] hover:underline">
+        <Link to={moneyHref("/reports/ar-aging")} className="text-xs font-medium text-[#4B5563] hover:underline">
           AR aging report
         </Link>
       </div>
