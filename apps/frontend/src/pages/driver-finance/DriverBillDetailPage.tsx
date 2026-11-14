@@ -1,4 +1,4 @@
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -7,6 +7,7 @@ import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { LoadDetailDriverPayTab } from "../../components/dispatch/LoadDetailDriverPayTab";
 import { SettlementRefCell } from "../../components/shared/SettlementRefCell";
 import { visibleDocumentLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { formatUsdCents } from "../../lib/money";
 import { VoidedBanner } from "../../components/accounting/VoidedBanner";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -45,6 +46,10 @@ function statusLabel(status: string): string {
 }
 
 export function DriverBillDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/driver-finance" });
   const { id } = useParams<{ id: string }>();
   const { selectedCompanyId } = useCompanyContext();
   const auth = useAuth();
@@ -62,7 +67,7 @@ export function DriverBillDetailPage() {
   if (!selectedCompanyId) {
     return (
       <div className="mx-auto max-w-5xl space-y-3 p-4">
-        <PageHeader backHref="/driver-finance" title="Driver bill" breadcrumb={[{ label: "Driver Finance", href: "/driver-finance" }, { label: "Driver bill" }]} />
+        <PageHeader backHref={moduleBackHref} title="Driver bill" breadcrumb={[{ label: "Driver Finance", href: "/driver-finance" }, { label: "Driver bill" }]} />
         <BoardSection title="Driver bill" testId="driver-bill-detail-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
         </BoardSection>
@@ -98,7 +103,7 @@ export function DriverBillDetailPage() {
   return (
     <div className="mx-auto max-w-5xl p-4">
       <PageHeader
-        backHref="/driver-finance"
+        backHref={moduleBackHref}
         title={`Driver bill ${label}`}
         subtitle={subtitle}
         actions={

@@ -1,7 +1,8 @@
 import { companyToday, monthBoundsIso } from "../../lib/businessDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { AmountLink } from "../../components/shared/AmountLink";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { Button } from "../../components/Button";
@@ -241,6 +242,9 @@ export function FinancialStatementsPage() {
   const [showCodes] = useShowAccountNumbers();
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
   const tab = parseFinancialStatementsTab(searchParams.get("tab"));
   const setTab = (next: ReportTab) => {
     const params = new URLSearchParams(searchParams);
@@ -308,7 +312,7 @@ export function FinancialStatementsPage() {
   const bsEquity = useMemo(() => sortByCode(bsQuery.data?.equity.lines ?? []), [bsQuery.data?.equity.lines]);
   const tbRows = useMemo(() => sortByCode(tbQuery.data?.rows ?? []), [tbQuery.data?.rows]);
 
-  const header = <PageHeader backHref="/finance/overview" title="Financial statements" subtitle="Profit & loss, balance sheet, and trial balance for the selected entity. Read-only — nothing is posted." />;
+  const header = <PageHeader backHref={moduleBackHref} title="Financial statements" subtitle="Profit & loss, balance sheet, and trial balance for the selected entity. Read-only — nothing is posted." />;
 
   if (flagLoading) {
     return (

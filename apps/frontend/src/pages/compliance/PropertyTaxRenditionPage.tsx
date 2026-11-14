@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { formatDateUS } from "../../lib/formatDate";
+import { resolveBackHref } from "../../lib/returnContext";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { Combobox } from "../../components/Combobox";
 import { EntityLink } from "../../components/shared/EntityLink";
@@ -64,6 +65,7 @@ function RenditionListView({
   onApplyFilters,
   onCancelFilters,
   onResetFilters,
+  backHref,
 }: {
   companyId: string;
   unitId?: string;
@@ -73,6 +75,7 @@ function RenditionListView({
   onApplyFilters: () => void;
   onCancelFilters: () => void;
   onResetFilters: () => void;
+  backHref: string;
 }) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -139,7 +142,7 @@ function RenditionListView({
     return (
       <div className="space-y-4" data-testid="property-tax-list">
         <PageHeader
-          backHref="/compliance"
+          backHref={backHref}
           breadcrumb={BREADCRUMB}
           title="Business Property Tax"
           subtitle="Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"
@@ -198,7 +201,7 @@ function RenditionListView({
   return (
     <div className="space-y-4" data-testid="property-tax-list">
       <PageHeader
-        backHref="/compliance"
+        backHref={backHref}
         breadcrumb={BREADCRUMB}
         title="Business Property Tax"
         subtitle={unitId ? "Renditions containing this unit" : "Texas business personal-property tax renditions (Form 50-144) per entity + appraisal district"}
@@ -317,7 +320,15 @@ function RenditionListView({
 }
 
 // ── DETAIL VIEW ───────────────────────────────────────────────────────────────────────────────────
-function RenditionDetailView({ companyId, renditionId }: { companyId: string; renditionId: string }) {
+function RenditionDetailView({
+  companyId,
+  renditionId,
+  backHref,
+}: {
+  companyId: string;
+  renditionId: string;
+  backHref: string;
+}) {
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
   const [assessedInput, setAssessedInput] = useState<number | null>(null);
@@ -396,7 +407,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
   if (detailQ.isError || assetsQ.isError) {
     return (
       <div className="space-y-4" data-testid="property-tax-detail">
-        <PageHeader backHref="/compliance/property-tax" breadcrumb={BREADCRUMB} title="Rendition" />
+        <PageHeader backHref={backHref} breadcrumb={BREADCRUMB} title="Rendition" />
         <ListErrorBanner
           onRetry={() => {
             void detailQ.refetch();
@@ -433,7 +444,7 @@ function RenditionDetailView({ companyId, renditionId }: { companyId: string; re
   return (
     <div className="space-y-4" data-testid="property-tax-detail">
       <PageHeader
-        backHref="/compliance/property-tax"
+        backHref={backHref}
         breadcrumb={[...BREADCRUMB, `${rendition.tax_year} — ${rendition.county}`]}
         title={`${rendition.tax_year} Rendition — ${rendition.cad_name}`}
         subtitle={`Status: ${STATUS_LABEL[rendition.status]} · Due ${formatDateUS(rendition.effective_due_date)}`}
@@ -648,6 +659,10 @@ export function PropertyTaxRenditionPage() {
   const companyId = selectedCompanyId ?? "";
   const { id } = useParams<{ id?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { pathname } = useLocation();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance" });
+  const propertyTaxBackHref = resolveBackHref({ searchParams, pathname, fallback: "/compliance/property-tax" });
   // LST-F5180 — visible EntityPicker (URL-only unit_id is not reverse chrome).
   // LV-COMPLIANCE-PROPERTY-TAX-FILTER-SILENT-APPLY — stage until Apply; URL on Apply/Reset.
   const unitIdFromUrl = searchParams.get("unit_id")?.trim() ?? "";
@@ -691,7 +706,7 @@ export function PropertyTaxRenditionPage() {
       );
     }
     return id ? (
-      <RenditionDetailView companyId={companyId} renditionId={id} />
+      <RenditionDetailView companyId={companyId} renditionId={id} backHref={propertyTaxBackHref} />
     ) : (
       <RenditionListView
         companyId={companyId}
@@ -706,9 +721,10 @@ export function PropertyTaxRenditionPage() {
           setApplied(EMPTY_FILTERS);
           patchListSearchParam(EMPTY_FILTERS);
         }}
+        backHref={moduleBackHref}
       />
     );
-  }, [companyId, id, effectiveUnitId, staged.draft.unitId, staged.dirty, staged.apply, staged.cancel]);
+  }, [companyId, id, effectiveUnitId, staged.draft.unitId, staged.dirty, staged.apply, staged.cancel, moduleBackHref, propertyTaxBackHref]);
 
   return <div className="space-y-4 p-4">{content}</div>;
 }

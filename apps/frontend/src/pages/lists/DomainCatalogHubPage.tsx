@@ -1,7 +1,8 @@
+import { resolveBackHref } from "../../lib/returnContext";
 import type { ListsModule } from "../../api/listsHub";
 import { ModuleHeader } from "../../components/layout/ModuleHeader";
 import { ComingSoonPage } from "../ComingSoonPage";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { DomainCatalogSection, buildCatalogPath, buildDomainModulePath, sortDomainsForDisplay } from "./components/AllCatalogsMap";
 
 // domain.key -> ListsModule, same mapping DomainRowCountBadge uses so this hub's header count and the
@@ -23,6 +24,10 @@ const DOMAIN_MODULE: Record<string, ListsModule> = {
 // hub (its own route), not the bottom of the mega-list.
 
 export function DomainCatalogHubPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/lists" });
   const { domain: domainKey } = useParams();
   const navigate = useNavigate();
 
@@ -38,7 +43,7 @@ export function DomainCatalogHubPage() {
   return (
     <div className="space-y-4">
       <ModuleHeader
-        backHref="/lists"
+        backHref={moduleBackHref}
         breadcrumb={["Lists & Catalogs", domain.label]}
         title={`${domain.label} catalogs`}
         subtitle="Catalogs in this domain"

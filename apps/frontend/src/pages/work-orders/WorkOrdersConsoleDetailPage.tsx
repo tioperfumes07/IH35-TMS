@@ -1,7 +1,8 @@
 import { entityLabel } from "../../lib/entity-label";
+import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation, useSearchParams } from "react-router-dom";
 import { Modal } from "../../components/Modal";
 import {
   appendWorkOrderPhotoKey,
@@ -27,6 +28,10 @@ import { WOTimeTrackingPanel } from "./WOTimeTrackingPanel";
 import { userFacingApiError } from "../../lib/api-error-message";
 
 export function WorkOrdersConsoleDetailPage() {
+  const { pathname } = useLocation();
+  const [searchParams] = useSearchParams();
+  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
+  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/work-orders" });
   const { id } = useParams();
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
@@ -172,7 +177,7 @@ export function WorkOrdersConsoleDetailPage() {
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
       <PageHeader
-        backHref="/work-orders"
+        backHref={moduleBackHref}
         breadcrumb={["Work orders", entityLabel(wo?.display_id, id, "Work order")]}
         title={title}
         subtitle={String(wo?.description ?? "").slice(0, 160)}
