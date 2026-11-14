@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T18:18Z) — #29531 SafetyLayout/Form425c/Program Link ret wave6 MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T18:18Z · #29531 SHA 97c115a30dc MERGED (Link to= ret wave6; verify 20326) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · hotfix #29533 in flight · no prod writes
+
 ## OUTBOX (2026-11-14T18:08Z) — #29529 Banking/Safety/System/Maint/425c Link ret wave5 MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T18:08Z · #29529 SHA 476d41e3b4c MERGED (Link to= ret wave5; verify 20324) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
 
