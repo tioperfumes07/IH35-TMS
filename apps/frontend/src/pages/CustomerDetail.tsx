@@ -1912,7 +1912,7 @@ export function CustomerDetailPage() {
             storageKey="customer-detail-loads"
             emptyText="No loads for this customer yet."
             exportFilename="customer-loads"
-            onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+            onRowClick={(load) => navigate(custInvHref(`/dispatch/loads/${load.id}`))}
             sortKey={loadSortKey}
             sortDirection={loadSortDirection}
             onSortChange={onLoadSortChange}

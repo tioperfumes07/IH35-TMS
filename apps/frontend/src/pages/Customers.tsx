@@ -1752,7 +1752,7 @@ export function CustomersPage() {
                         rows={loadsQuery.data?.loads ?? []}
                         columns={loadColumns}
                         rowKey={(load) => load.id}
-                        onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+                        onRowClick={(load) => navigate(custInvHref(`/dispatch/loads/${load.id}`))}
                         loading={loadsQuery.isPending}
                         storageKey="customer-loads"
                         emptyText="No loads for this customer."
@@ -1867,7 +1867,7 @@ export function CustomersPage() {
                       rows={loadsQuery.data?.loads ?? []}
                       columns={loadColumns}
                       rowKey={(load) => load.id}
-                      onRowClick={(load) => navigate(`/dispatch/loads/${load.id}`)}
+                      onRowClick={(load) => navigate(custInvHref(`/dispatch/loads/${load.id}`))}
                       loading={loadsQuery.isPending}
                       storageKey="customer-projects-loads"
                       emptyText="No loads for this customer."

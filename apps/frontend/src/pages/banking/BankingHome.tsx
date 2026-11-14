@@ -430,7 +430,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       return;
     }
     if (selectedId) {
-      navigate("/banking/cash-gl-setup");
+      navigate(bankHref("/banking/cash-gl-setup"));
       pushToast("This bank has no Cash GL mapping. Map it here, then open Bank Register.", "error");
       return;
     }
@@ -492,8 +492,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
             heading: "Setup",
             items: [
               { key: "coa", label: "Chart of Accounts", onClick: () => navigate("/lists/accounting/chart-of-accounts") },
-              { key: "cash-gl", label: "Cash GL setup", onClick: () => navigate("/banking/cash-gl-setup") },
-              ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate("/banking/email-queue") }] : []),
+              { key: "cash-gl", label: "Cash GL setup", onClick: () => navigate(bankHref("/banking/cash-gl-setup")) },
+              ...(canSeeEmailQueue ? [{ key: "email-queue", label: "Email Queue", onClick: () => navigate(bankHref("/banking/email-queue")) }] : []),
             ],
           },
         ]}
@@ -510,7 +510,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     ) : activeTab === "reconciliation" ? (
       <>
         <ActionButton onClick={openStartReconciliation}>+ Reconcile</ActionButton>
-        <ActionButton onClick={() => navigate("/banking/reconcile")}>Open Reconcile Queue</ActionButton>
+        <ActionButton onClick={() => navigate(bankHref("/banking/reconcile"))}>Open Reconcile Queue</ActionButton>
       </>
     ) : null;
 
@@ -591,7 +591,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <ActionButton onClick={() => navigate("/factoring")}>Factoring entry</ActionButton>
+                <ActionButton onClick={() => navigate(bankHref("/factoring"))}>Factoring entry</ActionButton>
                 <ActionButton onClick={() => setActiveTab("driver_escrow")}>Driver Escrow</ActionButton>
                 <Link to="/banking/cash-gl-setup" className="text-xs font-medium text-[#1F2A44] underline">
                   Cash GL setup
@@ -618,7 +618,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                   cannot post — do not treat Accounts home as posting-ready.
                 </p>
                 <div className="mt-2">
-                  <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Map Cash GL</ActionButton>
+                  <ActionButton onClick={() => navigate(bankHref("/banking/cash-gl-setup"))}>Map Cash GL</ActionButton>
                 </div>
               </div>
             );
@@ -644,7 +644,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               setSelectedAccountId(id);
               setTransactionsInitialFilter("all");
               setActiveTab("transactions");
-              navigate(BANKING_TAB_PATH.transactions);
+              navigate(bankHref(BANKING_TAB_PATH.transactions));
             }}
             onInspect={(id) => setInspectTileId(id)}
             onManageAccounts={() => setManageOpen(true)}
@@ -788,7 +788,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                           }
                           setSelectedAccountId(inspectTileId);
                           setActiveTab("transactions");
-                          navigate(BANKING_TAB_PATH.transactions);
+                          navigate(bankHref(BANKING_TAB_PATH.transactions));
                           setInspectTileId(null);
                         }}
                       >
@@ -833,7 +833,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 <ActionButton
                   onClick={() => {
                     setTransactionsInitialFilter("uncategorized");
-                    navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`);
+                    navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`));
                   }}
                 >
                   Focus uncategorized filter
@@ -914,10 +914,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
                 </InfoPopover>
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+                <ActionButton onClick={() => navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`))}>
                   Open for-review queue
                 </ActionButton>
-                <ActionButton onClick={() => navigate(BANKING_TAB_PATH.transactions)}>Open Transactions</ActionButton>
+                <ActionButton onClick={() => navigate(bankHref(BANKING_TAB_PATH.transactions))}>Open Transactions</ActionButton>
               </div>
             </div>
           ) : (
@@ -980,10 +980,10 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               </InfoPopover>
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+              <ActionButton onClick={() => navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`))}>
                 Open for-review queue
               </ActionButton>
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref(BANKING_TAB_PATH.reconciliation))}>Open Reconciliation</ActionButton>
             </div>
           </div>
           <BoardSection title="Bank Statement Import" testId="banking-home-statement-import-board">
@@ -1022,7 +1022,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               <p className="text-xs text-gray-500">Select a bank account to enable CSV upload.</p>
             )}
             <div className="mt-3">
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.reconciliation)}>Open Reconciliation</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref(BANKING_TAB_PATH.reconciliation))}>Open Reconciliation</ActionButton>
             </div>
           </div>
           </BoardSection>
@@ -1039,8 +1039,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               (additive; never removed).
             </p>
             <div className="flex flex-wrap gap-2">
-              <ActionButton onClick={() => navigate(BANKING_TAB_PATH.settings)}>Open Banking Settings</ActionButton>
-              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref(BANKING_TAB_PATH.settings))}>Open Banking Settings</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref("/banking/cash-gl-setup"))}>Cash GL setup</ActionButton>
             </div>
           </div>
           </BoardSection>
@@ -1060,7 +1060,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               → For review and Reconciliation sessions.
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <ActionButton onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}>
+              <ActionButton onClick={() => navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`))}>
                 Open for-review queue
               </ActionButton>
               <ActionButton onClick={() => navigate(BANKING_TAB_PATH.plaid_connections)}>Plaid Connections</ActionButton>
@@ -1074,13 +1074,13 @@ export function BankingHomePage({ initialTab }: Props = {}) {
               role-gated on their pages.
             </p>
             <div className="flex flex-wrap gap-2">
-              <ActionButton onClick={() => navigate("/banking/cash-gl-setup")}>Cash GL setup</ActionButton>
-              <ActionButton onClick={() => navigate("/banking/categorization-rules")}>Categorization rules</ActionButton>
-              <ActionButton onClick={() => navigate("/banking/account-visibility")}>Account Visibility</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref("/banking/cash-gl-setup"))}>Cash GL setup</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref("/banking/categorization-rules"))}>Categorization rules</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref("/banking/account-visibility"))}>Account Visibility</ActionButton>
               {canSeeEmailQueue ? (
-                <ActionButton onClick={() => navigate("/banking/email-queue")}>Email Queue</ActionButton>
+                <ActionButton onClick={() => navigate(bankHref("/banking/email-queue"))}>Email Queue</ActionButton>
               ) : null}
-              <ActionButton onClick={() => navigate("/banking/qbo-sync-queue")}>QBO Sync Queue</ActionButton>
+              <ActionButton onClick={() => navigate(bankHref("/banking/qbo-sync-queue"))}>QBO Sync Queue</ActionButton>
             </div>
           </div>
           </BoardSection>

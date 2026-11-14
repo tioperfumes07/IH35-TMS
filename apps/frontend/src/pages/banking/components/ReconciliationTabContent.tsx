@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import {
   getReconciliationSessions,
   getReconciliationWorkspace,
@@ -60,6 +61,9 @@ export function ReconciliationTabContent({
   uncategorizedCount,
   preferStartOpen = false,
 }: Props) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const bankHref = (target: string) => withReturnContext(target, originHref);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { pushToast } = useToast();
@@ -221,7 +225,7 @@ export function ReconciliationTabContent({
             <div className="mt-2 flex flex-wrap gap-2">
               <ActionButton onClick={() => setStartOpen(true)}>+ Start first reconciliation</ActionButton>
               <ActionButton
-                onClick={() => navigate(`${BANKING_TAB_PATH.transactions}?type=uncategorized`)}
+                onClick={() => navigate(bankHref(`${BANKING_TAB_PATH.transactions}?type=uncategorized`))}
               >
                 Open for-review queue
               </ActionButton>
