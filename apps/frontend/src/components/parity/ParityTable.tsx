@@ -183,7 +183,7 @@ export type ParityTableProps<T> = {
    * uppercase muted column labels, left-aligned text (numbers stay right). Opt-in: surfaces move one by one; the
    * default keeps every other table exactly as it is.
    */
-  appearance?: "default" | "board";
+  appearance?: "default" | "board" | "v3";
   /**
    * When true, hide UniversalListToolbar TableSearch (page owns server-side search in filterBar).
    * Prevents competing client search over a single page of server results (LV-WORK-ORDERS-CONSOLE-DUPLICATE-SEARCH).
@@ -529,6 +529,16 @@ export const ALL_PAGE_SIZE = 1_000_000;
 const LARGE_RENDER_ROW_THRESHOLD = 1000;
 const AUTO_FIT_MIN_WIDTH = 64;
 const AUTO_FIT_MAX_WIDTH = 320;
+/** V3 board table cells (docs/design/v3/*.dc.html: th/td inline styles, identical on all 30 boards that draw a table). */
+const V3_TH: CSSProperties = {
+  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600, color: "#5B6576", backgroundColor: "#F7F8FA",
+  letterSpacing: "normal", textTransform: "none", lineHeight: "normal", height: "auto",
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
+};
+const V3_TD: CSSProperties = {
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+};
+
 // COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
 // already clamps to this floor so a user can never shrink a column to unusable/invisible. The one
 // path that did NOT clamp was the initial load from localStorage (`persisted.colWidths`): a value
@@ -1073,7 +1083,10 @@ export function ParityTable<T>({
   const pageRows = sortedRows.slice(offset, offset + pageSize);
   const d = DENSITY[density];
   // OWNER DESIGN LAW 2026-10-02 — the boards' table palette (appearance="board"); default = the existing tokens.
-  const board = appearance === "board";
+  // "v3": the V3 boards' own table (docs/design/v3/*.dc.html — every board draws the same one): head 600 11px Inter
+  // #5B6576 on #F7F8FA, 7px 12px cells, 12px body, row rule #ECEEF2, head rule #DDE1E7, no zebra, line-height normal.
+  const v3 = appearance === "v3";
+  const board = appearance === "board" || v3;
   const BOARD_RULE = "var(--ih-rule)";
   const BOARD_LABEL = { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
   // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
@@ -1610,6 +1623,7 @@ export function ParityTable<T>({
               // C-18: tableBodyRule is the locked #D8DEE6 divider (QBO_SURFACE.divider).
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
+              ...(v3 ? { ...V3_TD, ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "#FFFFFF" } : {}) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
@@ -1864,7 +1878,7 @@ export function ParityTable<T>({
           money / number cell aligns its digits even when its column key escapes PARITY_NUMERIC_KEY. */}
       <table
         className={`w-full ${columnLayout === "auto" ? "table-auto" : "table-fixed"} ${board ? "text-left" : "text-center"} tabular-nums`}
-        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(minWidthPx ? { minWidth: Math.max(minWidthPx, proportionalMinTable) } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
+        style={{ fontSize: d.font, ...(board ? { fontSize: 12.5, fontFamily: "var(--ih-font)", color: "var(--ih-ink)" } : {}), ...(v3 ? { fontSize: 12, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", lineHeight: "normal" } : {}), ...(minWidthPx ? { minWidth: Math.max(minWidthPx, proportionalMinTable) } : proportionalMinTable ? { minWidth: proportionalMinTable } : {}) }}
         data-table-appearance={appearance}
       >
         {/* GROUPED-WIDTH FIX (owner 2026-11-12, perfume desk: every column rendered 117px): under table-layout:fixed
@@ -2024,6 +2038,7 @@ export function ParityTable<T>({
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
                     // board: the boards' column label (.hd) and rules -- overrides the defaults above.
                     ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${BOARD_RULE}`, borderBottom: `1px solid ${BOARD_RULE}` } : {}),
+                    ...(v3 ? V3_TH : {}),
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w, column) }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     ...(key in stickyLeftPx

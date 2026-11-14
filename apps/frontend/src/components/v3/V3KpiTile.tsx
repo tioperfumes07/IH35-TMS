@@ -27,6 +27,7 @@ export function V3KpiTile({
   href,
   noDrill,
   testId,
+  board = false,
 }: {
   label: string;
   value: string;
@@ -46,23 +47,29 @@ export function V3KpiTile({
    */
   noDrill?: string;
   testId?: string;
+  /** Draw the V3 board tile (docs/design/v3) instead of the approved Home tile. */
+  board?: boolean;
 }) {
   const Tag = onClick ? "button" : "div";
   const tooltip = title ?? (noDrill ? `${label} — ${noDrill}` : label);
   const style: CSSProperties = {
     background: V3.surface,
     border: `1px solid ${V3.border}`,
-    borderRadius: 2,
+    // board: a V3 board's tile (docs/design/v3/*.dc.html, owner 11-14 "100% identical"): 6px corners, height from its
+    // content (61px), line-height normal. Without it: the approved Home tile (OWNER DESIGN LAW rule 6, 78px, 2px).
+    borderRadius: board ? 6 : 2,
     padding: "10px 12px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "flex-end",
     gap: 8,
     minWidth: 0,
-    // OWNER DESIGN LAW rule 6 / ROUND 8.4 — KPI tiles are 78px across, never bars down.
-    minHeight: V3_KPI.heightPx,
-    height: V3_KPI.heightPx,
-    boxSizing: "border-box",
+    ...(board ? { lineHeight: "normal" } : {
+      // OWNER DESIGN LAW rule 6 / ROUND 8.4 — KPI tiles are 78px across, never bars down.
+      minHeight: V3_KPI.heightPx,
+      height: V3_KPI.heightPx,
+      boxSizing: "border-box" as const,
+    }),
     textAlign: "left",
     width: "100%",
     cursor: onClick || href ? "pointer" : undefined,
@@ -100,7 +107,8 @@ export function V3KpiTile({
         >
           {value}
         </span>
-        {sub != null && sub !== "" && (
+        {/* A V3 board always draws the sub line, empty or not (its 3px gap is part of the tile's height). */}
+        {(board || (sub != null && sub !== "")) && (
           <span
             style={{
               fontSize: V3_KPI.subPx,

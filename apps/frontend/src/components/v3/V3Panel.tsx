@@ -16,6 +16,7 @@ export function V3Panel({
   footer,
   testId,
   borderRadius,
+  board = false,
 }: {
   title: string;
   subtitle?: string;
@@ -28,11 +29,15 @@ export function V3Panel({
   footer?: ReactNode;
   testId?: string;
   borderRadius?: number;
+  /** Draw the V3 board panel (docs/design/v3). */
+  board?: boolean;
 }) {
   const shell: CSSProperties = {
     background: V3.surface,
     border: `1px solid ${V3.border}`,
-    borderRadius: borderRadius ?? 2,
+    // board: a V3 board's panel (docs/design/v3/*.dc.html) — 6px corners, line-height normal.
+    borderRadius: borderRadius ?? (board ? 6 : 2),
+    ...(board ? { lineHeight: "normal" } : {}),
     display: "flex",
     flexDirection: "column",
     minWidth: 0,

@@ -94,7 +94,8 @@ function Table({
       { key: "status", label: "Status", sortable: true, render: (row) => row.status ?? "—" },
       {
         key: "total_actual_cost",
-        label: "Total Cost",
+        // Board 22: "Cost" on Recently completed.
+        label: title === "Recently Completed" ? "Cost" : "Total Cost",
         numeric: true,
         render: (row) => <EntityLink kind="work_order" id={row.id} label={money((row as Record<string, unknown>).total_actual_cost)} onClick={(event) => { event.preventDefault(); onOpen(row.id); }} />,
       },
@@ -123,7 +124,7 @@ function Table({
   const ret = (to: string) => withReturnContext(to, currentOriginHref(pathname, search));
   const recentPanel = title === "Recent Work Orders";
   return (
-    <V3Panel title={recentPanel ? "Recent work orders" : "Recently completed"} headerRight={<div className="flex flex-wrap items-center gap-3">{recentPanel ? <Link to={ret("/maintenance?create_wo=1")} className="rounded-sm bg-[#13233F] px-3 py-1.5 text-xs font-semibold text-white" data-testid="maintenance-recent-create-wo">+ Create Work Order</Link> : null}<Link className="text-section-header font-semibold text-[#1D4ED8]" to={ret(title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos")}>View all →</Link></div>}>
+    <V3Panel board title={recentPanel ? "Recent work orders" : "Recently completed"} headerRight={<div style={{ display: "flex", gap: 8, alignItems: "center" }}>{recentPanel ? <Link to={ret("/maintenance?create_wo=1")} style={{ height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", background: "#13233F", color: "#fff", textDecoration: "none" }} data-testid="maintenance-recent-create-wo">+ Create Work Order</Link> : null}<Link style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#1D4ED8", textDecoration: "none" }} to={ret(title === "Recently Completed" ? "/maintenance/active-wos?status=complete" : "/maintenance/active-wos")}>View all →</Link></div>}>
       <div>
         {totalCount > rows.length ? (
           <div className="border-b border-gray-100 px-2 py-1 text-xs text-[#6B7280]" data-testid="maintenance-recent-activity-range">
@@ -131,7 +132,7 @@ function Table({
           </div>
         ) : null}
         <ParityTable
-          appearance="board"
+          appearance="v3"
           panel
           rows={rows}
           columns={(() => {
