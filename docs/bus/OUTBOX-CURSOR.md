@@ -1,3 +1,6 @@
+## OUTBOX (2026-11-14T17:40Z) — #29512 WriteCheck/AnomalyBadge ret MERGED · ASK Codex CERTIFY
+ROUND 8.20 2026-11-14T17:40Z · #29512 SHA d94fff05ca3 MERGED (WriteCheck print + AnomalyAlertBadge ret; verify 20310) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
+
 ## OUTBOX (2026-11-14T17:28Z) — #29504 Party/Vendors KPI+NumLink ret MERGED · ASK Codex CERTIFY
 ROUND 8.20 2026-11-14T17:28Z · #29504 SHA ab10fa5867b MERGED (Party/Vendors board ret; verify 20302) · tip READY · ASK Codex CERTIFY boards 1–23 on LIVE · BUILD 32–45 · no prod writes
 
