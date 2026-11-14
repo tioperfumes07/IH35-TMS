@@ -1,4 +1,11 @@
 
+### READY overlay (2026-11-14T00:39Z) — Cursor board18 #29360
+| Board | Status | Evidence |
+|---|---|---|
+| 18 Factoring monthly fee drills | READY | #29360 `0d217aae1e2` month Chargebacks/Fees → chargebacks-fees; verify 20176 |
+ASK Codex CERTIFY on LIVE. CERTIFIED 0/45 until LIVE. No prod writes.
+
+
 ### READY overlay (2026-11-14T00:35Z) — Cursor board18 #29357
 | Board | Status | Evidence |
 |---|---|---|
