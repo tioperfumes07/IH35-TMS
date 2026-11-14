@@ -43,9 +43,6 @@ export function variantPairsFor(pairs: Pair[], board: "customers" | "vendors"): 
 }
 
 export function useVariantCandidates(operatingCompanyId: string) {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const partyHref = (target: string) => withReturnContext(target, originHref);
   return useQuery({
     queryKey: ["variant-candidates", operatingCompanyId],
     queryFn: () => apiRequest<{ parties: number; pairs: Pair[]; rule?: string; name_only_hidden?: number }>(`/api/v1/mdata/canonical/variant-candidates?operating_company_id=${operatingCompanyId}`),
@@ -74,6 +71,9 @@ function PartyCell({ p }: { p: Party }) {
 }
 
 export function VariantDuplicatesPanel(props: { board: "customers" | "vendors"; operatingCompanyId: string }) {
+  const { pathname, search: locSearch } = useLocation();
+  const originHref = currentOriginHref(pathname, locSearch);
+  const partyHref = (target: string) => withReturnContext(target, originHref);
   const { user } = useAuth();
   const isOwner = user?.role === "Owner";
   const qc = useQueryClient();
