@@ -79,7 +79,8 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     }
     if (row.odometer_mi == null && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.odometerUnavailable");
     if ((row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.pmReadingUnavailable");
-    return <span className="inline-flex items-center gap-2"><span aria-hidden="true" className={`h-2 w-2 rounded-full bg-current ${statusTones[row.state]}`} />{labels[row.state]}</span>;
+    // Maintenance-Home.dc.html status: inline-flex · gap 6 · 500 12px #111827 · nowrap, a 7px tone dot.
+    return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", whiteSpace: "nowrap" }}><span aria-hidden="true" className={`rounded-full bg-current ${statusTones[row.state]}`} style={{ width: 7, height: 7, display: "inline-block" }} />{labels[row.state]}</span>;
   };
   const columns: ParityColumn<FleetHealthRow>[] = [
     // Board 22: the truck drawing in its own unlabeled first column, then Unit (700 13px) over make · model · year (11px).
@@ -89,7 +90,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM · 0 / 20k / 25k", render: (row) => row.pm_schedule_id
       ? <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} aria-label={`${row.unit_number}: PM schedule`}>{row.pm_interval && row.miles_left != null && row.odometer_mi != null ? <PmRoad interval={row.pm_interval} used={Math.max(0, Math.min(row.pm_interval, row.pm_interval - row.miles_left))} state={row.state} /> : "PM reading unavailable"}</Link>
-      : <Link to={pmHref(`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`)}>Start PM clock →</Link> },
+      : <Link to={pmHref(`/maintenance/pm-schedule?unit_id=${encodeURIComponent(row.unit_id)}&create=1`)} style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#1D4ED8", textDecoration: "none" }}>Start PM clock →</Link> },
     { key: "miles_left", label: "Miles", className: "text-right", cellClass: "text-right", render: (row) => row.miles_left == null || row.odometer_mi == null || !row.pm_schedule_id ? "—" : <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)}>{Math.abs(row.miles_left).toLocaleString("en-US")} {row.miles_left < 0 ? "over" : "to go"}</Link> },
     { key: "state", label: "Status", sortable: true, sortValue: (row) => row.state, render: (row) => statusCell(row) },
   ];
@@ -113,6 +114,6 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     </span>}
     footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
-      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="v3" panel boardTdStyle={FLEET_TD} rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." /></div>}
+      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="v3" panel boardTdStyle={FLEET_TD} thStyle={{ whiteSpace: "normal" }} rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." /></div>}
   </V3Panel>;
 }
