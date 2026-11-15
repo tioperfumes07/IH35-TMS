@@ -460,7 +460,7 @@ export type ParityTableProps<T> = {
   /**
    * R9.3 board parity — override td styles when appearance="board" (e.g. Reports boards need 7px
    * 12px padding, Inter font, and #ECEEF2 row divider instead of the default board token set).
-   * Spread LAST in td inline style. Only applied when appearance="board".
+   * Spread LAST in td inline style. Applied when appearance="board" or "v3" (a board whose table draws other cell padding than the register table).
    */
   boardTdStyle?: React.CSSProperties;
 };
@@ -1655,7 +1655,7 @@ export function ParityTable<T>({
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
               // V3 boards: the cell is transparent over its row (the board draws no zebra) — only a group /
               // selection tint shows.
-              ...(v3 ? { ...V3_TD, whiteSpace: column.allowWrap && !isParityMoneyColumn(column) ? "normal" : "nowrap", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}) } : {}),
+              ...(v3 ? { ...V3_TD, whiteSpace: column.allowWrap && !isParityMoneyColumn(column) ? "normal" : "nowrap", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}), ...(boardTdStyle ?? {}) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
