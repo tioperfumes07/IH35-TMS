@@ -1,14 +1,15 @@
 import { useMemo, type ReactNode } from "react";
-import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
+import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
 type SubNavItem = { label: string; to: string };
 
 /**
- * ROUND 9.4 Board 18 / ROUND 443.326 — Factoring chrome: breadcrumb + V3 header + tab strip.
- * Uses inline header + NavLink tab strip (board grammar only — legacy chrome removed).
+ * ROUND 9.4 Board 18 / ROUND 443.326 — Factoring chrome: breadcrumb + V3 header + HoverDropdownNav tab strip.
+ * Board grammar only — legacy chrome removed per verify-v3-board-grammar-every-surface.
  */
 export function FactoringBoardChrome({
   title,
@@ -30,19 +31,13 @@ export function FactoringBoardChrome({
   const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
 
   const navItems = useMemo(
-    () => subnavItems.map((item) => ({ label: item.label, to: item.to })),
+    () => subnavItems.map((item) => ({ label: item.label, href: item.to })),
     [subnavItems],
   );
 
   return (
     <>
       <Breadcrumb items={[{ label: "Factoring" }]} />
-      <div
-        data-testid="page-header-v3"
-        style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, lineHeight: "normal" }}
-      >
-        Factoring
-      </div>
       <div
         style={{
           display: "flex",
@@ -59,7 +54,6 @@ export function FactoringBoardChrome({
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <button
             type="button"
-            aria-label="Back"
             data-testid="page-header-back"
             onClick={() => void navigate(resolvedBack)}
             style={{
@@ -73,7 +67,7 @@ export function FactoringBoardChrome({
               lineHeight: "normal",
             }}
           >
-            ← Back
+            {"←"}
           </button>
           <h1 style={{ margin: 0, font: `700 18px ${V3.font}`, color: V3.ink, lineHeight: "normal", height: 22 }}>
             {title}
@@ -95,29 +89,7 @@ export function FactoringBoardChrome({
         data-factoring-board-tabs-wrap="1"
       >
         <div data-testid="factoring-board-tabs">
-          {nav ?? (
-            <nav style={{ display: "flex", gap: 2 }}>
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  style={({ isActive }) => ({
-                    padding: "6px 12px",
-                    fontSize: 12,
-                    fontWeight: isActive ? 600 : 400,
-                    color: V3.ink,
-                    background: isActive ? V3.surface : "transparent",
-                    border: `1px solid ${isActive ? V3.border : "transparent"}`,
-                    borderRadius: 2,
-                    textDecoration: "none",
-                    lineHeight: "normal",
-                  })}
-                >
-                  {item.label}
-                </NavLink>
-              ))}
-            </nav>
-          )}
+          {nav ?? <HoverDropdownNav items={navItems} />}
         </div>
       </div>
     </>
