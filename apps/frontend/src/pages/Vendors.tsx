@@ -755,7 +755,7 @@ export function VendorsPage() {
   }
 
   return (
-    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="vendors" data-c06-page="vendors">
+    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="vendors" data-c06-page="vendors" data-v3-board="Vendors" style={{ lineHeight: "normal", fontFamily: "Inter, sans-serif" }}>
       {viewModeSaveError ? (
         <div
           role="alert"
@@ -884,34 +884,46 @@ export function VendorsPage() {
         data-vendors-v3-kpis="1"
       >
         <V3KpiTile
+          board
           label="With transactions"
           value={formatQuantityTable(vendorHomeKpis.withTransactions, 0)}
+          valueDataV3="vendors-kpi-with-transactions-value"
           sub="vendors with activity"
+          subDataV3="vendors-kpi-with-transactions-sub"
           testId="vendors-kpi-with-transactions"
           href={vendorsWithTxHref}
         />
         <V3KpiTile
+          board
           label="In the book"
           value={formatQuantityTable(vendorHomeKpis.inTheBook, 0)}
+          valueDataV3="vendors-kpi-in-the-book-value"
           sub="full vendor roster"
+          subDataV3="vendors-kpi-in-the-book-sub"
           testId="vendors-kpi-in-the-book"
           href={vendorsAllHref}
         />
         <V3KpiTile
+          board
           label="Open bills"
           value={vendorHomeKpis.openBillsCents == null ? "—" : fmtMoney(vendorHomeKpis.openBillsCents)}
+          valueDataV3="vendors-kpi-open-bills-value"
           sub={
             vendorHomeKpis.vendorsWithOpen == null
               ? "vendor open balance"
               : `${formatQuantityTable(vendorHomeKpis.vendorsWithOpen, 0)} with open balance`
           }
+          subDataV3="vendors-kpi-open-bills-sub"
           testId="vendors-kpi-open-bills"
           href={vendorsOpenBillsHref}
         />
         <V3KpiTile
+          board
           label="Spend YTD"
           value={vendorHomeKpis.spendYtdCents == null ? "—" : fmtMoney(vendorHomeKpis.spendYtdCents)}
+          valueDataV3="vendors-kpi-spend-ytd-value"
           sub="purchases year to date"
+          subDataV3="vendors-kpi-spend-ytd-sub"
           testId="vendors-kpi-spend-ytd"
           href={vendorsWithTxHref}
         />
@@ -1099,7 +1111,7 @@ export function VendorsPage() {
                         Balance), sortable, exportable. The detailed Bills / Expenses breakdowns
                         below are preserved (§7, additive). */}
                     <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Transactions</h4>
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                       rows={vendorTransactions}
                       columns={vendorTransactionColumns}
                       rowKey={(r) => r.key}
@@ -1110,7 +1122,7 @@ export function VendorsPage() {
                       allowAllPageSize
                     />
                     <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Bills</h4>
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(bill) => bill.id}
@@ -1187,7 +1199,7 @@ export function VendorsPage() {
                     {expensesQuery.isError ? (
                       <ListErrorState title="Couldn't load vendor expenses" status={0} message={(expensesQuery.error as Error)?.message} onRetry={() => void expensesQuery.refetch()} />
                     ) : (
-                      <ParityTable appearance="board"
+                      <ParityTable appearance="v3"
                         rows={expensesQuery.data?.rows ?? []}
                         columns={expenseColumns}
                         rowKey={(expense) => expense.id}
