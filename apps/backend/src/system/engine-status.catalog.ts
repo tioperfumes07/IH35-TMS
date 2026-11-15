@@ -340,7 +340,12 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     domain: "Dispatch",
     schedule: "Worker",
     expectedWindowHours: 24,
-    shouldProduce: true,
+    // Event-driven output: a row exists only when a driver's gap between truck release and the next load start
+    // exceeds 8 h. Measured live 2026-11-15 20:10Z: the worker ticks every 6 h and logs "0 layover(s) from 239
+    // evaluable deliveries"; 88 rows exist (last 11-05); the newest delivery release is 11-09. "0 rows in 24 h" is a
+    // data state, not a fault — the worker's own tick log (FAIL LOUD: DID NOT RUN / PARTIAL / NO EVALUABLE DATA) is
+    // where a fault shows.
+    shouldProduce: false,
     syncKinds: [],
     output: { relation: "dispatch.driver_layovers", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "Lead",
