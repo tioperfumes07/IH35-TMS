@@ -52,10 +52,10 @@ describe("List analysis — my list | their list, matched filter, the match box,
     expect(low.map((e) => e.textContent)).toEqual(["$20.00"]);
     expect(screen.getByText("−$0.50")).toBeTruthy();
 
-    // Purchase / cost columns hidden by default (no data uploaded); one click shows them.
-    expect(screen.queryByRole("columnheader", { name: /Last cost/ })).toBeNull();
-    fireEvent.click(screen.getByTestId("perfume-analysis-empty-toggle"));
+    // Owner 2026-11-15: the engine's purchase / cost columns (Last cost, Margin, Markup …) show by default; one click hides them.
     expect(await screen.findByRole("columnheader", { name: /Last cost/ })).toBeTruthy();
+    fireEvent.click(screen.getByTestId("perfume-analysis-empty-toggle"));
+    await waitFor(() => expect(screen.queryByRole("columnheader", { name: /Last cost/ })).toBeNull());
   });
   it("Review · My list ↔ competitor: the match box links a suggestion and a searched line, the search carries the row's gender", async () => {
     const paths: Array<{ path: string; method?: string }> = [];

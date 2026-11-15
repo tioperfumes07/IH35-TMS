@@ -273,7 +273,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   // a side filter: all, matched (in common), not matched. Plus one button to hide the columns no upload fills yet.
   const [base, setBase] = useState<"mine" | "theirs">("mine");
   const [match, setMatch] = useState<"all" | "matched" | "unmatched">(matchDesk ? "unmatched" : "all");
-  const [hideEmpty, setHideEmpty] = useState(true);
+  const [hideEmpty, setHideEmpty] = useState(false);
   const [viewSeen, setViewSeen] = useState(view);
   if (viewSeen !== view) { setViewSeen(view); setCarried(view === "comp"); setPage(1); }
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.

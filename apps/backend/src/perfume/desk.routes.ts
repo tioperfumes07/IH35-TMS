@@ -142,6 +142,8 @@ const extractSchema = z.object({
   })).min(1).max(PERFUME_EXTRACT_MAX_IMAGES),
 });
 
+const ANALYSIS_ENGINE_KEYS = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold", "a:inv_qty", "a:margin", "a:markup", "a:offer", "a:esp", "a:low_sales", "a:min_buy", "a:min_margin", "a:low_vendor", "a:low_price", "a:offer2", "a:esp2", "a:under_by", "a:under_pct", "a:can_inc", "a:new_margin", "a:over_by", "a:lower_pct", "a:c_list", "a:c_cushion", "a:c_sales"]);
+
 export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
   // Lets the company selector show the TIO Perfumes entry only to the desk user. Never 403s an Owner.
   app.get("/api/v1/perfume/access", RL_READ, async (req, reply) => {
@@ -352,7 +354,14 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
-    const shown = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
+    const picked = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
+    // List analysis = the owner's PERFUME ENGINE FORMATS.xlsx, every column of it, always (owner 2026-11-15 13:17 CT:
+    // "the engines i uploaded … what did you remove? i am also missing the markup etc."). The screen hides the
+    // purchase / cost columns while no inventory upload fills them; the workbook never drops them — they carry the
+    // Margin / Markup / New Margin formulas, live as soon as a LAST COST is typed.
+    const shown = q.data.view === "analysis"
+      ? g.cols.filter((c) => picked.some((p) => p.key === c.key) || ANALYSIS_ENGINE_KEYS.has(c.key))
+      : picked;
     const { cols, added } = exportColumnsWithInputs(shown, g.cols);
     const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`, added);
     const stamp = new Date().toISOString().slice(0, 10);
