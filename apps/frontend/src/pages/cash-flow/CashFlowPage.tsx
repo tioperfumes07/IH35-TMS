@@ -89,6 +89,14 @@ function parseCashFlowTab(raw: string | null, allowManual: boolean): CashFlowTab
   return "home";
 }
 
+const CASH_FLOW_BOARD: Record<string, string> = {
+  home: "CashFlow-Home",
+  daily_prediction: "CashFlow-Projected",
+  actual_vs_projected: "CashFlow-ActualVsProjected",
+  rolling_ledger: "CashFlow-RollingLedger",
+  manual_daily_projections: "CashFlow-Manual",
+};
+
 export function CashFlowPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname, search: locSearch } = useLocation();
@@ -152,7 +160,15 @@ export function CashFlowPage() {
   }
 
   return (
-    <div className="min-w-0 max-w-full space-y-4" data-testid="cash-flow-page" data-c06-page="cash-flow">
+    <div
+      className="min-w-0 max-w-full space-y-4"
+      data-testid="cash-flow-page"
+      data-c06-page="cash-flow"
+      // docs/design/v3/CashFlow-*.dc.html — one board per tab; naming the root puts it on the board box model and
+      // lets the live reader measure it (17:51Z it fell back to <main>).
+      data-v3-board={CASH_FLOW_BOARD[activeTab] ?? "CashFlow-Home"}
+      style={{ lineHeight: "normal" }}
+    >
       <PageHeader
         backHref={cashFlowBackHref}
         title="Cash Flow"

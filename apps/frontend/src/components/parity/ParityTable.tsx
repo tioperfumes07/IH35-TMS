@@ -460,7 +460,7 @@ export type ParityTableProps<T> = {
   /**
    * R9.3 board parity — override td styles when appearance="board" (e.g. Reports boards need 7px
    * 12px padding, Inter font, and #ECEEF2 row divider instead of the default board token set).
-   * Spread LAST in td inline style. Only applied when appearance="board".
+   * Spread LAST in td inline style. Applied when appearance="board" or "v3" (a board whose table draws other cell padding than the register table).
    */
   boardTdStyle?: React.CSSProperties;
 };
@@ -1623,9 +1623,10 @@ export function ParityTable<T>({
             className={`${column.overflowVisible || isParityMoneyColumn(column) ? "overflow-visible" : "overflow-hidden"} px-2 align-top text-gray-800 ${
               // COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 B1 — moneyNeverEllipsis: kind:"money" (and *_cents)
               // cells must show full amounts. Ellipsis on money is a board FAIL.
-              // V3 boards: cells wrap like the board (white-space normal, no ellipsis) — money stays on one line.
+              // V3 boards: cells stay on one line like the board (docs/design/v3: 2,900+ of 3,050 standard td are white-space:nowrap;
+              // measured 11-15) — only an allowWrap column wraps. No ellipsis.
               v3
-                ? isParityMoneyColumn(column) ? "whitespace-nowrap" : ""
+                ? column.allowWrap ? "" : "whitespace-nowrap"
                 : column.allowWrap
                   ? "wrap-break-word"
                   : isParityMoneyColumn(column)
@@ -1654,7 +1655,7 @@ export function ParityTable<T>({
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
               // V3 boards: the cell is transparent over its row (the board draws no zebra) — only a group /
               // selection tint shows.
-              ...(v3 ? { ...V3_TD, whiteSpace: isParityMoneyColumn(column) ? "nowrap" : "normal", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}) } : {}),
+              ...(v3 ? { ...V3_TD, whiteSpace: column.allowWrap && !isParityMoneyColumn(column) ? "normal" : "nowrap", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}), ...(boardTdStyle ?? {}) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,

@@ -13,6 +13,8 @@ import { initFrontendSentry } from "./observability/sentry-client";
 import "./index.css";
 import "./design/design-tokens.css";
 import "./styles/tokens-load-detail.css";
+import "./styles/v3-board-box-sizing.css";
+import "./assets/fonts/inter/inter.css";
 import i18n from "./i18n";
 
 void i18n;

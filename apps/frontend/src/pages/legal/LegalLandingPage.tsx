@@ -29,7 +29,8 @@ export function LegalLandingPage() {
   }
 
   return (
-    <div className="min-w-0 space-y-3 overflow-x-hidden">
+    // docs/design/v3/Legal.dc.html — the board root, so the board box model + live reader reach it.
+    <div className="min-w-0 space-y-3 overflow-x-hidden" data-v3-board="Legal" style={{ lineHeight: "normal" }}>
       <PageHeader
         breadcrumb={["Legal", "Contracts"]}
         title="Legal"

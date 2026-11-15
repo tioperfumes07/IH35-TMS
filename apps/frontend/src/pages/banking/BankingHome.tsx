@@ -531,7 +531,7 @@ export function BankingHomePage({ initialTab }: Props = {}) {
     : undefined;
 
   return (
-    <div className="min-w-0 max-w-full space-y-3" data-c06-page="banking">
+    <div className="min-w-0 max-w-full space-y-3" data-c06-page="banking" data-v3-board="Banking" style={{ lineHeight: "normal" }}>
       <PageHeader
         title="Banking Home"
         subtitle="QBO mirrored accounts + categorization"

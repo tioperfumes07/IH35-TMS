@@ -48,7 +48,8 @@ describe("responsive navigation containment", () => {
     expect(nav.className.split(/\s+/)).not.toContain("h-8");
     expect(nav.className).toContain("shrink-0");
     expect(nav.className).toContain("overflow-x-auto");
-    expect(screen.getByRole("link", { name: "Accounts" }).className).toContain("h-8");
+    // ROUND 10.1: the tab is 32 px from the design's own box — 16 px line + 8 px padding top and bottom.
+    expect(screen.getByRole("link", { name: "Accounts" }).style.padding).toBe("8px");
   });
 });
 

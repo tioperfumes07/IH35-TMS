@@ -7,7 +7,7 @@
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo, useState, type CSSProperties } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AccountingSubNavWrapper } from "./AccountingSubNavWrapper";
 import { invoiceOpenCentsForDisplay, isVoidInvoice } from "./InvoicesListPage";
 import { ManualJEModal } from "./ManualJEModal";
@@ -685,7 +685,7 @@ export function AccountingHubPage() {
                     ) : null}
                   </div>
                   <ParityTable<(typeof agingBuckets.rows)[number]>
-                    appearance="board"
+                    appearance="v3"
                     hidePager
                     density="compact"
                     suppressToolbar
@@ -793,7 +793,7 @@ export function AccountingHubPage() {
               <p style={{ ...tdStyle, color: V3.red, margin: 0 }}>Could not load open settlements.</p>
             ) : (
               <ParityTable<(typeof settlementsOpen)[number]>
-                appearance="board"
+                appearance="v3"
                 hidePager
                 density="compact"
                 suppressToolbar
@@ -820,11 +820,18 @@ export function AccountingHubPage() {
                     sortable: true,
                     kind: "money",
                     sortValue: (row) => row.cents,
-                    render: (row) => (
-                      <span style={{ color: V3.ink }}>
-                        {formatUsdCents(row.cents)}
-                      </span>
-                    ),
+                    // The figure IS that driver's open settlements — it opens them (driver_id filter), with ret.
+                    render: (row) =>
+                      row.driverId ? (
+                        <Link
+                          to={hubHref(`/driver-finance/settlements?tab=open&driver_id=${encodeURIComponent(row.driverId)}`)}
+                          style={{ color: V3.ink, textDecoration: "none" }}
+                        >
+                          {formatUsdCents(row.cents)}
+                        </Link>
+                      ) : (
+                        <span style={{ color: V3.ink }}>{formatUsdCents(row.cents)}</span>
+                      ),
                   },
                 ]}
               />
