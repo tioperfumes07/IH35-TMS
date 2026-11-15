@@ -1,6 +1,17 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
+- **FACTORING-HOME-BOARD-PURCHASES-CONNECTIVITY-GAP — OPEN (CC-1/CC-3 lane, filed by CC-2, 2026-11-15):**
+  `verify-codex-vertical-nonmoney-zero-remainder.mjs` fails with "unowned canonical-column gaps:
+  connectivity  factoring:factoring.panel.factoring_home_board_purchases". The factoring module's
+  required matrix (`docs/specs/scoreboard/modules/factoring.required.json`) has a `connectivity`
+  column requirement for leaf `factoring.panel.factoring_home_board_purchases` with no Evidence
+  entry and no existing guard covering it. Confirmed pre-existing on origin/main (guard fails even
+  with main's own script on main's own data). Protected in `scripts/verify-codex-vertical-nonmoney-zero-remainder.mjs`
+  PROTECTED set until the factoring lane adds the Evidence entry and a connectivity guard.
+  Fix: add Evidence row for `factoring.panel.factoring_home_board_purchases` in the factoring
+  required matrix + a connectivity guard, then remove the PROTECTED entry. OPEN | CC-1/CC-3 owns fix.
+
 - **REPORTS-FILTER-BAR-GUARD-SELFTEST-BROKEN — OPEN (CC-3 lane, filed by CC-2, 2026-11-15):**
   `verify-report-landing-filter-bar.mjs` selftest mutation 3 fails: "guard passed after poisoning
   ReportFilterBar component (should have failed)". Root cause: PR #29663 / `44e16edbb5` added a
