@@ -43,6 +43,8 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "B SPEARS": "BRITNEY SPEARS",
   "GLORIA VANDERVILT": "GLORIA VANDERBILT",
   "HERRERA": "CAROLINA HERRERA",
+  "JEAN PAUL G": "JEAN PAUL GAULTIER",
+  "JEAN PAUL G.": "JEAN PAUL GAULTIER",
   "CH": "CAROLINA HERRERA",
   "C.H": "CAROLINA HERRERA",
   "C HERRERA": "CAROLINA HERRERA",
@@ -673,7 +675,13 @@ export function identify(input: IdentityInput): Identity {
   const shownWords = kept.filter((w, i) => (w === "EAU" || !(noise(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w)))) && w !== ".");
   // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
   // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
-  const nameWords = keyWords.map((w) => SAME_NAME_WORD[w] ?? w);
+  // The item master files some names with the house trailing or glued ("IDOLE LANCOME", "ED HARDY LOVE&LUCK",
+  // "FRENCH PANACHE S" — S = spray); vendors write "LANCOME IDOLE", "LOVE LUCK" (measured live 11-15: score-1 review
+  // lines held only by "name differs"). The KEY drops a trailing one-word house, a trailing lone S, and splits X&Y.
+  let kw = keyWords.flatMap((w) => (/^[A-Z0-9]+&[A-Z0-9]+$/.test(w) ? w.split("&") : [w]));
+  if (kw.length >= 2 && kw[kw.length - 1] === "S") kw = kw.slice(0, -1);
+  if (brand && !brand.includes(" ") && kw.length >= 2 && kw[kw.length - 1] === brand && kw.slice(0, -1).some((w) => !GENERIC_NAME_WORDS.has(w))) kw = kw.slice(0, -1);
+  const nameWords = kw.map((w) => SAME_NAME_WORD[w] ?? w);
   if (sizeMl != null && sizeMl <= 15 && !flags.has("SET")) flags.add("MINI");
 
   const flagList = [...flags].sort();
