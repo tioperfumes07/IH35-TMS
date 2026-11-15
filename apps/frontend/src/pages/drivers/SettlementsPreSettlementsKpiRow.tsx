@@ -251,8 +251,6 @@ export function SettlementsPreSettlementsClosesPanel({
       testId="settlements-presettle-closes-panel"
       onViewAll={() => navigate(root)}
     >
-      {/* Settlements-PreSettlements.dc.html "What closes a tour": the V3 table — th 600 11px #5B6576 on #F7F8FA,
-          td 7px 12px 12px ink, nowrap. */}
       <div data-testid="settlements-presettle-closes-body">
         <ParityTable<{ check: string; how: string }>
           appearance="v3"
