@@ -427,8 +427,11 @@ export function FuelHomePage() {
             />
           </div>
         ) : (
+          // Fuel.dc.html: the V3 table — 5px 12px cells, no nowrap on th/td (this board's own table).
           <ParityTable<DieselBoardRow>
-            appearance="board"
+            appearance="v3"
+            boardTdStyle={{ paddingTop: 5, paddingBottom: 5, whiteSpace: "normal" }}
+            thStyle={{ whiteSpace: "normal" }}
             title="Diesel by truck"
             columns={dieselColumns}
             rows={dieselRows}
