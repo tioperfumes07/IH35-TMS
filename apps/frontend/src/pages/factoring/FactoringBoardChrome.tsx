@@ -1,5 +1,6 @@
 import { useMemo, type ReactNode } from "react";
 import { NavLink, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Breadcrumb } from "../../components/shared/Breadcrumb";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
@@ -35,6 +36,7 @@ export function FactoringBoardChrome({
 
   return (
     <>
+      <Breadcrumb items={[{ label: "Factoring" }]} />
       <div
         data-testid="page-header-v3"
         style={{ fontSize: 11, color: V3.muted, fontFamily: V3.font, lineHeight: "normal" }}
