@@ -143,13 +143,16 @@ export function FuelDieselByTruckPanel({
         render: (r) => {
           const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) : undefined;
           return (
+            // Fuel.dc.html: <b style="font-size:13px">T173</b><div style="font-size:11px;color:#5B6576">Volvo Vnr</div>
             <div className="min-w-0" data-testid="fuel-diesel-unit-identity">
               {r.unit_id ? (
-                <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="font-semibold text-[#1F2A44]" />
+                <b style={{ fontSize: 13, color: "#111827" }}>
+                  <EntityLink kind="unit" id={r.unit_id} label={r.unit_number} className="[color:inherit] [font:inherit] no-underline hover:underline" />
+                </b>
               ) : (
-                <span className="font-semibold">{r.unit_number}</span>
+                <b style={{ fontSize: 13, color: "#111827" }}>{r.unit_number}</b>
               )}
-              <div className="truncate text-xs text-[#5B6576]">{identity || "—"}</div>
+              <div className="truncate" style={{ fontSize: 11, color: "#5B6576" }}>{identity || "—"}</div>
             </div>
           );
         },
