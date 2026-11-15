@@ -2223,10 +2223,10 @@ export function ParityTable<T>({
             className="sticky bottom-0 z-[5]"
           >
             <tr
-              className="border-t-2 border-[#1F2A44] font-semibold"
+              className={v3 ? "font-semibold" : "border-t-2 border-[#1F2A44] font-semibold"}
               // Same shade as the group-band row (colors.tableGroupBandBg, --grp-bg) — a totals
               // row reads as its own "band" of the same visual language, not a plain data row.
-              style={{ backgroundColor: colors.tableGroupBandBg, ...(board ? { backgroundColor: "var(--ih-thead)", borderTop: "2px solid var(--ih-border)" } : {}) }}
+              style={{ backgroundColor: colors.tableGroupBandBg, ...(board ? { backgroundColor: "var(--ih-thead)", borderTop: "2px solid var(--ih-border)" } : {}), ...(v3 ? { backgroundColor: "#F7F8FA", borderTop: "1px solid #DDE1E7" } : {}) }}
             >
               {renderExpanded ? <td className="w-8 px-2" /> : null}
               {selectable ? <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX }} /> : null}
@@ -2240,7 +2240,8 @@ export function ParityTable<T>({
                     data-testid={column.testId ? `${column.testId}-footer` : undefined}
                     // Same alignment class as this column's own body cells — money/right-aligned totals
                     // inherit C-37 tabular-nums + text-right without extra config.
-                    className={`px-2 py-1.5 font-mono ${parityMergedCellClass(column)}`}
+                    className={v3 ? parityMergedCellClass(column) : `px-2 py-1.5 font-mono ${parityMergedCellClass(column)}`}
+                    style={v3 ? { padding: "8px 12px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" } : undefined}
                   >
                     {content ?? null}
                   </td>

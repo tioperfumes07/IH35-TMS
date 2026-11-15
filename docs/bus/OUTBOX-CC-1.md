@@ -421,3 +421,10 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 - Original finding "0 card assignments; Relay issuer blank" resolved by seeding (pre-existing code correct)
 - ENGINE: `apps/backend/src/fuel/fuel-card-assignments.service.ts` — `resolveCardAssignment()`, `listFuelCardAssignments()`, `createFuelCardAssignment()`, `endFuelCardAssignment()`, effective date range logic
 - STATUS: DONE-LIVE per CC-3 OUTBOX 2026-11-13; no CC-1 code change needed
+
+---
+
+## 2026-11-15 — ROUND 10.0 CC-1 BOARD PROGRESS
+
+### Settlements-CashAdvances
+READER PLEASE Settlements-CashAdvances 70ae3ba4 — PR #29633 auto-merge enabled, CI running
