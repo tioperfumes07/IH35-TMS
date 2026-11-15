@@ -699,7 +699,10 @@ export async function rematchReview(c: PoolClient) {
   // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
   // request died with a 502). Same values, same rules.
   const upd: Array<{ id: string; item_id: string | null; method: string | null; status: string; suggestions: unknown; identity_key: string; loose_key: string }> = [];
+  let n = 0;
   for (const r of rows.rows) {
+    // Let the server answer its health checks while a few thousand lines are read.
+    if (++n % 100 === 0) await new Promise((res) => setImmediate(res));
     const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
     if (m.itemId) {
       upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
@@ -725,7 +728,9 @@ export async function rematchReview(c: PoolClient) {
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id
       WHERE r.match_status = 'matched' AND r.match_method = 'upc' AND l.is_current AND l.voided_at IS NULL`);
   let kindClash = 0;
+  let k = 0;
   for (const r of linked.rows) {
+    if (++k % 200 === 0) await new Promise((res) => setImmediate(res));
     const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
     if (productKind(id.flags) === productKind(r.flags)) continue;
     await c.query(`UPDATE perfume.price_list_rows SET item_id = NULL, match_method = NULL, match_status = 'review', suggestions = $2::jsonb WHERE id = $1`,
