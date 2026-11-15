@@ -1,6 +1,25 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
+- **REPORTS-FILTER-BAR-GUARD-SELFTEST-BROKEN — OPEN (CC-3 lane, filed by CC-2, 2026-11-15):**
+  `verify-report-landing-filter-bar.mjs` selftest mutation 3 fails: "guard passed after poisoning
+  ReportFilterBar component (should have failed)". Root cause: PR #29663 / `44e16edbb5` added a
+  second `data-report-filter-bar="inline"` occurrence to `ReportFilterBar.tsx`; the selftest uses
+  `.replace()` which only removes the first, leaving one → guard still passes when it should fail.
+  Fix: change selftest's `.replace(` to `.replaceAll(` (or use regex `/data-report-filter-bar="inline"/g`)
+  in the mutation 3 poisoning block (~line 267–271 of the guard). Confirmed pre-existing on
+  `origin/main` HEAD `25516aadfc` — not caused by CC-2's Banking branch. OPEN | CC-3 owns fix.
+
+- **RECORD-NAMING-ENTITYLINK-BASELINE-STALE — OPEN (CC-3 lane, filed by CC-2, 2026-11-15):**
+  `verify-record-naming-cells-are-click-through.mjs` fails: "zero-EntityLink name surfaces 5 >
+  baseline 4 (shrink-only)". Five surfaces: `DispatchSettingsPage.tsx`,
+  `SettlementsEscrowBoard.tsx`, `PerfumeListsPanel.tsx`, `PerfumeReviewPanel.tsx`,
+  `SettlementCreatorDrawer.tsx`. These pages were added/modified by recent PRs merged to main
+  without wiring EntityLink for name cells, bringing the count from 4 to 5. The guard's
+  `ZERO_LINK_BASELINE = 4` (scripts/verify-record-naming-cells-are-click-through.mjs:39) must be
+  bumped to 5 OR the five pages must add EntityLink to their name cells. Confirmed pre-existing on
+  `origin/main` HEAD `25516aadfc`. OPEN | CC-3 owns fix.
+
 - **VENDOR-QBO-CHROME-AND-CREDITS-GAP — OPEN (whichever lane owns Vendors.tsx/VendorDetail.tsx/
   VendorCreditsPage.tsx, filed by CC-3, 2026-09-13):** pushing an unrelated D2 branch surfaced 4
   guard failures, all confirmed pre-existing on `origin/main` via an isolated `git worktree`
