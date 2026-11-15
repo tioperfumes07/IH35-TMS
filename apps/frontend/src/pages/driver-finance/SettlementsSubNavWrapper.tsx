@@ -53,7 +53,7 @@ export function SettlementsSubNavWrapper({
 
   const isRoot = pathname === "/driver-finance/settlements" && !search;
   const breadcrumb = isRoot
-    ? [{ label: "Driver Finance", href: "/driver-finance" }, { label: "Settlements" }]
+    ? [{ label: "Driver Finance", href: "/driver-finance" }, { label: "Driver Settlements" }]
     : [
         { label: "Driver Finance", href: "/driver-finance" },
         { label: "Settlements", href: "/driver-finance/settlements" },
