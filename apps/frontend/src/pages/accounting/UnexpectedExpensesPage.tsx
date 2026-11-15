@@ -215,7 +215,7 @@ export function UnexpectedExpensesPage() {
           >
             <ParityTable<(typeof candidates)[number]>
               tableTestId="unexpected-candidates-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
@@ -283,7 +283,7 @@ export function UnexpectedExpensesPage() {
           <BoardSection title="By kind" viewAllHref={bankingMonthHref} testId="unexpected-by-kind-panel">
             <ParityTable<{ kind: string; label: string; amount_cents: number | null; count: number }>
               tableTestId="unexpected-by-kind-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
