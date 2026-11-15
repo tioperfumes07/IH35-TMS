@@ -26,7 +26,7 @@ import { CreateDriverModal } from "../../components/drivers/CreateDriverModal";
 import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/ExpenseLoadConfirmationsBoard";
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import { settlementCloseNetPay } from "./settlementCloseNet";
@@ -53,9 +53,9 @@ function CloseBoardPanel({
       data-close-step-title={stepTitle}
       data-close-step-title-dynamic={stepTitleDynamic ? "1" : undefined}
     >
-      <BoardSection title={title} onViewAll={onViewAll} testId={testId}>
+      <V3Panel board title={title} onViewAll={onViewAll} testId={testId}>
         <div className="space-y-2 p-3">{children}</div>
-      </BoardSection>
+      </V3Panel>
     </div>
   );
 }
@@ -679,7 +679,7 @@ export function SettlementCloseArrivalPage() {
               </button>
             </p>
           ) : null}
-          <ParityTable<LoadBoardRow> appearance="board"
+          <ParityTable<LoadBoardRow> appearance="v3"
             title={wizardStep === 3 ? "Gross — loads on arrival" : "Loads & miles"}
             columns={loadBoardColumns}
             rows={loadBoardRows}
@@ -700,7 +700,7 @@ export function SettlementCloseArrivalPage() {
     if (wizardStep === 4) {
       return (
         <CloseBoardPanel title="Deductions" stepTitle="Deductions">
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Other deductions"
             columns={lineColumns}
             rows={deductionRows}
@@ -730,7 +730,7 @@ export function SettlementCloseArrivalPage() {
             <span>Escrow contribution</span>
             <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
           </div>
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Escrow this settlement"
             columns={lineColumns}
             rows={escrowRows}
@@ -786,7 +786,7 @@ export function SettlementCloseArrivalPage() {
     if (wizardStep === 6) {
       return (
         <CloseBoardPanel title="Advances" stepTitle="Advances">
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Advance recoveries"
             columns={lineColumns}
             rows={advanceRows}
@@ -846,7 +846,7 @@ export function SettlementCloseArrivalPage() {
               />
             </div>
           </div>
-          <ParityTable<DraftJeRow> appearance="board"
+          <ParityTable<DraftJeRow> appearance="v3"
             title="Draft JE preview — not posted"
             titleInfo={
               <InfoPopover label="About the draft JE preview">
@@ -1000,9 +1000,9 @@ export function SettlementCloseArrivalPage() {
       </div>
 
       {!companyId ? (
-        <BoardSection title="Settlement close" testId="settlement-close-need-company">
+        <V3Panel board title="Settlement close" testId="settlement-close-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company first.</p>
-        </BoardSection>
+        </V3Panel>
       ) : (
         <div className="space-y-3" data-testid="settlement-close-panel">
           <label className="block max-w-xl">
@@ -1097,7 +1097,7 @@ export function SettlementCloseArrivalPage() {
           </div>
 
           {settlement ? (
-            <BoardSection
+            <V3Panel board
               title="Expense load confirmations"
               testId="settlement-close-expense-load-confirmations"
             >
@@ -1135,7 +1135,7 @@ export function SettlementCloseArrivalPage() {
                   />
                 ) : null}
               </div>
-            </BoardSection>
+            </V3Panel>
           ) : null}
         </div>
       )}
