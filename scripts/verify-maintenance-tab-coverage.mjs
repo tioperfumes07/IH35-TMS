@@ -14,11 +14,13 @@ export function validateHomePanel(name, text) {
   const source = ts.createSourceFile(`${name}.tsx`, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let panels = 0;
   function visit(node) {
-    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && node.tagName.getText(source) === "V3Panel") panels++;
+    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) && /^(V3Panel|V3SideCard)$/.test(node.tagName.getText(source))) panels++;
     ts.forEachChild(node, visit);
   }
   visit(source);
-  return panels ? [] : [`Home panel ${name} must mount the shared V3Panel`];
+  // ROUND 9.0 Board 22: the Maintenance Home side cards mount the shared V3SideCard (#29489 / 8d14e18b); the
+  // status widget mounts V3Panel. Either shared board chrome passes; a hand-built panel does not.
+  return panels ? [] : [`Home panel ${name} must mount the shared V3Panel or V3SideCard`];
 }
 
 // 443.280: preserve capabilities on dedicated routes, not mounted below Home.
@@ -276,7 +278,7 @@ export function boardLayoutSelftest(home, routes) {
   for (const name of HOME_PANELS) {
     const original = readIfExists(path.join(ROOT, `apps/frontend/src/pages/maintenance/components/${name}.tsx`));
     if (validateHomePanel(name, original).length) throw new Error(`clean panel rejected: ${name}`);
-    if (!validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel")).length) throw new Error(`legacy panel plant escaped: ${name}`);
+    if (!validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel").replaceAll("V3SideCard", "LegacySideCard")).length) throw new Error(`legacy panel plant escaped: ${name}`);
   }
   console.log("Home panel selftest 10/10 (five real panels + five legacy replacements)");
 }
