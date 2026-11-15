@@ -42,7 +42,8 @@ export function loadStatusTone(status: string | null | undefined): V3PillTone {
 export function V3StatusPill({ tone, children, testId }: { tone: V3PillTone; children: ReactNode; testId?: string }) {
   const t = V3_PILL_TONES[tone];
   const style: CSSProperties = {
-    display: "inline-block",
+    // The design's pill is a plain inline <span> (no display) inside the <td>.
+    display: "inline",
     background: t.bg,
     color: t.ink,
     font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif",

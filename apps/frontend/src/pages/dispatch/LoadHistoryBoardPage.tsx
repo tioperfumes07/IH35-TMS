@@ -107,10 +107,10 @@ export function monthDay(ymd: string | null | undefined): string {
 }
 
 /** Board 13 status pill — the V3 pill (600 11px, 2px 7px, radius 10), colored by stage. */
-function StatusPill({ status }: { status: string | null | undefined }) {
+function StatusPill({ status, testId }: { status: string | null | undefined; testId?: string }) {
   const key = String(status ?? "");
   const label = key === "delivered_pending_docs" ? "Delivered · docs" : loadStatusLabel(status);
-  return <V3StatusPill tone={loadStatusTone(key)}>{label}</V3StatusPill>;
+  return <V3StatusPill tone={loadStatusTone(key)} testId={testId}>{label}</V3StatusPill>;
 }
 
 /** Rate per loaded mile, in cents. */
@@ -265,7 +265,7 @@ export default function LoadHistoryBoardPage() {
         sortable: true,
         render: (r) => <EntityLink className={V3_TABLE_LINK_CLASS} kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} data-testid={`load-history-load-${r.load_id}`} />,
       },
-      { key: "status", label: "Status", sortable: true, sortValue: (r) => r.status ?? "", exportValue: (r) => loadStatusLabel(r.status), render: (r) => cellButton(r, <StatusPill status={r.status} />, `load-history-status-${r.load_id}`) },
+      { key: "status", label: "Status", sortable: true, sortValue: (r) => r.status ?? "", exportValue: (r) => loadStatusLabel(r.status), render: (r) => <StatusPill status={r.status} testId={`load-history-status-${r.load_id}`} /> },
       { key: "trip_type", label: "Trip", sortable: true, render: (r) => cellButton(r, r.trip_type ?? "—") },
       {
         key: "customer_name",
@@ -513,36 +513,33 @@ export default function LoadHistoryBoardPage() {
           board
           data-testid="load-history-trip-filter"
         />
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
-          <span className="font-semibold">Customer</span>
+        <div className="min-w-[8rem]" aria-label="Customer">
           <EntityMultiSelect
             kind="customer"
             operatingCompanyId={companyId}
             value={staged.draft.customerId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, customerId: next ?? "" }))}
-            placeholder="All customers"
+            placeholder="Customer ▾"
           />
-        </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
-          <span className="font-semibold">Driver</span>
+        </div>
+        <div className="min-w-[8rem]" aria-label="Driver">
           <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={staged.draft.driverId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, driverId: next ?? "" }))}
-            placeholder="All drivers"
+            placeholder="Driver ▾"
           />
-        </label>
-        <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
-          <span className="font-semibold">Truck</span>
+        </div>
+        <div className="min-w-[8rem]" aria-label="Truck">
           <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={staged.draft.unitId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, unitId: next ?? "" }))}
-            placeholder="All trucks"
+            placeholder="Truck ▾"
           />
-        </label>
+        </div>
       </ReportFilterBar>
 
       {query.isError ? (

@@ -182,7 +182,9 @@ export function MultiSelectDropdown({
           ) : null}
         </div>
       ) : null}
-      <span className="sr-only">{label}</span>
+      {/* Board mode: the trigger's own text ("Status ▾") names it — a second, hidden "Status" would be a stray node the
+          V3 board does not draw. */}
+      {board ? null : <span className="sr-only">{label}</span>}
     </div>
   );
 }
