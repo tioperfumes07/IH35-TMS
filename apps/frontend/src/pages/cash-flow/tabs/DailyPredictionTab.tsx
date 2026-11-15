@@ -822,7 +822,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             </div>
           ) : (
             <ParityTable
-              appearance="board"
+              appearance="v3"
               title="Income"
               columns={incomeColumns}
               rows={incomeFlatRows}
@@ -850,7 +850,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         >
           <>
             <ParityTable
-              appearance="board"
+              appearance="v3"
               title="Expenses"
               columns={expenseColumns}
               rows={expenseFlatRows}

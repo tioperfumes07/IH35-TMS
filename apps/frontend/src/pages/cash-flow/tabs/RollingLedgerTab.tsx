@@ -1586,7 +1586,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-income-panel"
               >
-                <ParityTable appearance="board"
+                <ParityTable appearance="v3"
                   rows={incomeRows}
                   columns={incomeColumns}
                   rowKey={rowKeyOf}
@@ -1620,7 +1620,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-expense-panel"
               >
-                <ParityTable appearance="board"
+                <ParityTable appearance="v3"
                   rows={expenseRowsForTable}
                   columns={expenseColumns}
                   rowKey={rowKeyOf}
@@ -1643,7 +1643,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 }}
                 testId="rolling-ledger-carried-income-panel"
               >
-                <ParityTable appearance="board"
+                <ParityTable appearance="v3"
                   rows={incomeCarriedAgg}
                   columns={carriedColumns}
                   rowKey={(r) => r.key}
@@ -1664,7 +1664,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
                 }}
                 testId="rolling-ledger-carried-expense-panel"
               >
-                <ParityTable appearance="board"
+                <ParityTable appearance="v3"
                   rows={expenseCarriedAgg}
                   columns={carriedColumns}
                   rowKey={(r) => r.key}
@@ -1692,7 +1692,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             footer="Click a day → both sides above switch to that day."
             testId="rolling-ledger-day-grid-panel"
           >
-            <ParityTable appearance="board"
+            <ParityTable appearance="v3"
               rows={dayGridRows}
               columns={dayGridColumns}
               rowKey={(day) => day.date}
