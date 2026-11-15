@@ -1773,7 +1773,12 @@ export async function exportListWorkbook(c: PoolClient, listId: string): Promise
   if (!head.rows[0]) return null;
   await loadNameBrands(c);
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
-  const aliases = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  const aliases: Record<string, string> = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  // Read the line exactly as the match index does: every item-master brand is a known spelling (addItem puts them in
+  // the index's alias object), so "RAYHAAN AZUL" reads RAYHAAN here too (measured live 11-15: brand column empty).
+  for (const b of (await c.query<{ brand: string }>(`SELECT DISTINCT brand FROM perfume.items WHERE merged_into_id IS NULL AND brand <> ''`)).rows) {
+    if (!(b.brand in aliases)) aliases[b.brand] = b.brand;
+  }
   const q = await c.query<{
     sheet: string | null; row_no: number | null; description: string; brand: string | null; upc: string | null; sku: string | null; size_text: string | null;
     price_cents: number | null; match_status: string; gender_override: string | null; item_id: string | null; display_name: string | null; item_brand: string | null;
@@ -1827,8 +1832,11 @@ export async function exportListWorkbook(c: PoolClient, listId: string): Promise
   const yellow = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFF3CD" } };
   q.rows.forEach((r, n) => {
     const x = n + 3;
-    const brand = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: aliases }).brand;
+    const read = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: aliases }).brand;
     const itemBrand = r.item_brand ? canonicalBrand(r.item_brand, aliases) : null;
+    // A line that names no brand but is linked (by UPC, SKU or the brand-free key) carries its item's brand — shown in
+    // italics so the owner sees it came from the link, not from the line's own words.
+    const brand = read || itemBrand || "";
     const row = ws.addRow([
       r.row_no ?? n + 1, r.description, r.upc ?? null, r.sku ?? null, r.price_cents == null ? null : r.price_cents / 100,
       brand || null, r.item_id ? "linked" : r.match_status, r.display_name ?? null, itemBrand, null,
@@ -1844,6 +1852,7 @@ export async function exportListWorkbook(c: PoolClient, listId: string): Promise
       formula: `IF(OR(E${x}="",L${x}=""),"",IF(E${x}<L${x},"YES",IF(E${x}=L${x},"SAME","NO")))`,
       result: r.price_cents == null || r.low_other_cents == null ? "" : r.price_cents < r.low_other_cents ? "YES" : r.price_cents === r.low_other_cents ? "SAME" : "NO",
     };
+    if (!read && brand) row.getCell(6).font = { italic: true, color: { argb: "FF6B7280" } };
     if (!brand) row.getCell(6).fill = yellow;
     if (itemBrand && brand !== itemBrand) { row.getCell(6).fill = red; row.getCell(9).fill = red; row.getCell(10).fill = red; }
     if (!r.item_id) row.getCell(7).fill = yellow;
