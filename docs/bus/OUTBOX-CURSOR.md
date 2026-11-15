@@ -718,6 +718,24 @@ OPEN FIX PRs (not merged — CI red on B18 stack):
 - B20 #29595 `cursor/r96-fix-b20-insurance` — stacked on B19 (height + mirrors)
 
 B12–B17: prior R9.5 ports merged earlier round; **Lead has not posted 0/0** for any. Routes ready for Lead reader (aliases for data cells):
+## ROUND 9.6 — 2026-11-15T00:44Z
+
+FIX PRs (one per board):
+- B18 Factoring: #29591 `cursor/r96-fix-b18-factoring` — navy tabs + v3 terms + data-v3 mirrors
+- B19 Fuel: (opening) `cursor/r96-fix-b19-fuel` — v3 by-truck + mirrors (stacked on B18)
+- B20 Insurance: (opening) `cursor/r96-fix-b20-insurance` — height + mirrors (stacked on B19)
+
+ALIASES (identity `key` → `data-v3=key` on clipped mirrors inside board roots):
+- Factoring: /tmp/v3parity-r94/aliases/Factoring.alias.json (also mirrored in board)
+- Fuel: /tmp/v3parity-r94/aliases/Fuel.alias.json
+- Insurance: /tmp/v3parity-r94/aliases/Insurance.alias.json
+
+READER PLEASE (post once FE serves the merge SHA — not before):
+- READER PLEASE: Factoring /factoring
+- READER PLEASE: Fuel /fuel
+- READER PLEASE: Insurance /insurance
+
+B12–B17 routes for Lead reader (same aliases pattern as Round 9.5):
 - READER PLEASE: Dispatch-TruckPlanner /dispatch/planners/truck
 - READER PLEASE: Dispatch-LoadHistory /dispatch/load-history
 - READER PLEASE: Dispatch-BookLoad-Modal /dispatch/book-load?presentation=center
