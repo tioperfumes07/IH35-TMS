@@ -545,7 +545,7 @@ export function FactoringHomeBoard({
           <div style={{ overflowX: "auto" }}>
             <ParityTable<{ term: string; value: string }>
               tableTestId="factoring-home-terms-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch

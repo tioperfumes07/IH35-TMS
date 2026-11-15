@@ -51,6 +51,10 @@ function pathOnly(to: string): string {
 function isActive(pathname: string, to: string): boolean {
   const base = pathOnly(to);
   if (base === "/") return pathname === "/";
+  // ROUND 9.6 — Factoring index URL is Account summary (docs/design/v3/Factoring.dc.html).
+  if (base === "/factoring/account-summary" && (pathname === "/factoring" || pathname === "/factoring/account-summary")) {
+    return true;
+  }
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
@@ -281,62 +285,86 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
-  const activeTo = mostSpecificActiveTo(
-    pathname,
-    items.filter((i) => !i.children?.length).map((i) => i.to),
-    search,
-  );
+  const plainTos = items.filter((i) => !i.children?.length).map((i) => i.to);
+  // Treat /factoring as account-summary so mostSpecificActiveTo can select it.
+  const activeProbePath = pathname === "/factoring" ? "/factoring/account-summary" : pathname;
+  const activeTo = mostSpecificActiveTo(activeProbePath, plainTos, search);
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
-  // ROUND 9.0 (owner 2026-11-13: screens identical to docs/design/v3) — measured on Banking.png / Settlements.png:
-  // the bar is 32 px tall, #13233F, square; the active tab is a full-height rgba(255,255,255,.16) box (#38465D on the navy) with a 2 px white rule
-  // under it; tabs are 8 px padded, 4 px apart. Replaces the C-22 28 px underline style.
-  const tabClass = (active: boolean) =>
-    `inline-flex h-8 items-center gap-1 whitespace-nowrap border-b-2 px-2 ${active ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`;
+  // ROUND 9.6 — identical to docs/design/v3/*.dc.html navy tab strip:
+  // parent: background #13233F; display flex; gap 2px; padding 0 6px; height 31
+  // tab: display block; padding 8px 8px; font 600 11px Inter; color #fff; whiteSpace normal
+  // active: background rgba(255,255,255,.16); border-bottom 2px solid #fff
+  // inactive: opacity .85 (keeps computed color rgb(255,255,255) — never text-white/85)
+  const tabStyle = (active: boolean): CSSProperties => ({
+    display: "block",
+    padding: "8px 8px",
+    font: '600 11px Inter, ui-sans-serif, system-ui, sans-serif',
+    lineHeight: "normal",
+    color: "#fff",
+    whiteSpace: "normal",
+    textDecoration: "none",
+    border: "none",
+    borderBottom: active ? "2px solid #fff" : "2px solid transparent",
+    background: active ? "rgba(255,255,255,0.16)" : "transparent",
+    opacity: active ? 1 : 0.85,
+    cursor: "pointer",
+    boxSizing: "content-box",
+  });
   return (
     <nav
       aria-label="Section navigation"
       data-testid="navy-page-subnav"
       data-c22-tab-height="h-8"
-      className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold text-white"
-      // Every V3 board (42 of 42 .dc.html): tabs 2 px apart, 600 11px Inter, line-height normal.
-      style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}
+      style={{
+        background: "#13233F",
+        display: "flex",
+        gap: 2,
+        padding: "0 6px",
+        marginTop: 4,
+        minWidth: 0,
+        maxWidth: "100%",
+        overflowX: "auto",
+        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+        lineHeight: "normal",
+        color: "#fff",
+        boxSizing: "content-box",
+      }}
     >
-      <div className="flex h-8 min-w-max items-stretch gap-0.5">
-        {items.map((item, index) => {
-          if (item.children?.length) {
-            return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
-          }
-          const id = itemIds?.[index] ?? item.to;
-          if (useLocalState) {
-            const active = activeId === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                data-testid={item.testId}
-                aria-current={active ? "page" : undefined}
-                className={tabClass(active)}
-                onClick={() => onTabChange(id)}
-              >
-                {item.label}
-                {item.hasData ? <DataDot /> : null}
-              </button>
-            );
-          }
+      {items.map((item, index) => {
+        if (item.children?.length) {
+          return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
+        }
+        const id = itemIds?.[index] ?? item.to;
+        if (useLocalState) {
+          const active = activeId === id;
           return (
-            <Link
-              key={item.to}
-              to={item.to}
+            <button
+              key={id}
+              type="button"
               data-testid={item.testId}
-              aria-current={activeTo === item.to ? "page" : undefined}
-              className={tabClass(activeTo === item.to)}
+              aria-current={active ? "page" : undefined}
+              style={tabStyle(active)}
+              onClick={() => onTabChange(id)}
             >
               {item.label}
               {item.hasData ? <DataDot /> : null}
-            </Link>
+            </button>
           );
-        })}
-      </div>
+        }
+        const isActiveTab = activeTo === item.to;
+        return (
+          <Link
+            key={item.to}
+            to={item.to}
+            data-testid={item.testId}
+            aria-current={isActiveTab ? "page" : undefined}
+            style={tabStyle(isActiveTab)}
+          >
+            {item.label}
+            {item.hasData ? <DataDot /> : null}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

@@ -242,7 +242,7 @@ export const FACTORING_TAB_PATH: Record<string, string> = {
 };
 
 // ROUND 435 (owner, verbatim): THE TEN FARO TABS and no others — "Submit invoice · Debtor receipts · Account summary ·
-// Aging · Chargeback and overpayments · Unapplied cash · Payments to us · Purchase report · Fees paid · Reserve".
+// Aging · Chargebacks & overpayments · Unapplied cash · Payments to us · Purchase report · Fees paid · Reserve".
 // Every other factoring surface is a SECTION rendered inside exactly one of these (visible, never hidden in a
 // dropdown), and its old URL redirects to the parent tab with ?section=<id>. No eleventh tab: the guard
 // scripts/verify-faro-ten-tabs.mjs fails on a label outside this list. Ids keep their existing paths so links work.
@@ -251,7 +251,7 @@ export const FARO_TABS = [
   { id: "debtor_receipts", label: "Debtor receipts" },
   { id: "account_summary", label: "Account summary" },
   { id: "aging", label: "Aging" },
-  { id: "chargebacks_overpayments", label: "Chargeback and overpayments" },
+  { id: "chargebacks_overpayments", label: "Chargebacks & overpayments" },
   { id: "unapplied_cash", label: "Unapplied cash" },
   { id: "payments_to_you", label: "Payments to us" },
   { id: "purchase_report", label: "Purchase report" },

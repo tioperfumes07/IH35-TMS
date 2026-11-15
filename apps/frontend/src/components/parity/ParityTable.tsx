@@ -549,6 +549,8 @@ const V3_TH: CSSProperties = {
 };
 const V3_TD: CSSProperties = {
   paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", backgroundColor: "transparent",
+  whiteSpace: "nowrap", textOverflow: "clip", boxSizing: "content-box",
 };
 
 // COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
@@ -1648,7 +1650,7 @@ export function ParityTable<T>({
               // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
               ...(board && boardTdStyle ? boardTdStyle : {}),
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
-              ...(v3 ? { ...V3_TD, ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "#FFFFFF" } : {}) } : {}),
+              ...(v3 ? { ...V3_TD, ...(resolvedCellBg && cellBg !== QBO_SURFACE.rowStripe ? { backgroundColor: resolvedCellBg } : { backgroundColor: "transparent" }) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
