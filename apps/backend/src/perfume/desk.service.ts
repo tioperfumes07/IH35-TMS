@@ -1169,7 +1169,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // read from it, so every brand reading can be checked (blank = the engine could not read one).
     A("c_brand", "COMPETITOR BRAND", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
-    A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
+    A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("stores", "STORES", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
@@ -1394,7 +1394,11 @@ async function buildAnalysisLines(c: PoolClient, x: {
     likelyCache.set(itemId, out);
     return out;
   };
-  const myLines: GridRow[] = x.myLineQ.map((l) => {
+  // My list carries the same bottle once per store (owner 2026-11-14 21:43 CT: "some might be various times because
+  // they are in different stores"; measured live: 582 lines = 465 items, 78 items on 2–11 lines). The analysis shows
+  // ONE row per item: its stock is the sum of every store's qty, its offer price the lowest line, STORES how many lines.
+  const { lines: myOne, storesByItem } = onePerItem(x.myLineQ);
+  const myLines: GridRow[] = myOne.map((l) => {
     const ir = l.item_id ? rowById.get(l.item_id) : undefined;
     const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
     const matched = Boolean(an?.cBest);
@@ -1408,6 +1412,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
+      "a:stores": l.stores,
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
       link_mode: l.item_id ? "line" : "item", link_row: l.id, link_item: l.item_id,
@@ -1435,11 +1440,35 @@ async function buildAnalysisLines(c: PoolClient, x: {
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
         minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
+      "a:stores": onMine && l.item_id ? (storesByItem.get(l.item_id) ?? null) : null,
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,
     } as GridRow;
   });
   return { myLines, theirLines };
+}
+
+/** My list carries the same bottle once per store (owner 2026-11-14 21:43 CT: "some might be various times because
+ *  they are in different stores"; measured live: 582 lines = 465 items, 78 items on 2–11 lines). One row per item:
+ *  stock = the sum of every store's qty, offer = the lowest line price, stores = how many lines. A line not linked to an
+ *  item stays its own row. */
+export function onePerItem<L extends { id: string; item_id: string | null; qty: number | null; price_cents: number | null }>(lines: readonly L[]):
+  { lines: Array<L & { stores: number }>; storesByItem: Map<string, number> } {
+  const groups = new Map<string, L[]>();
+  for (const l of lines) {
+    const k = l.item_id ?? `line:${l.id}`;
+    const g = groups.get(k);
+    if (g) g.push(l); else groups.set(k, [l]);
+  }
+  const storesByItem = new Map<string, number>();
+  const out: Array<L & { stores: number }> = [];
+  for (const [k, g] of groups) {
+    if (!k.startsWith("line:")) storesByItem.set(k, g.length);
+    const qtys = g.map((l) => l.qty).filter((q): q is number => q != null);
+    const prices = g.map((l) => l.price_cents).filter((p): p is number => p != null);
+    out.push({ ...g[0]!, qty: qtys.length ? qtys.reduce((a, b) => a + b, 0) : null, price_cents: prices.length ? Math.min(...prices) : null, stores: g.length });
+  }
+  return { lines: out, storesByItem };
 }
 
 export type AnalysisBase = "mine" | "theirs";

@@ -120,3 +120,22 @@ describe("owner 2026-11-14 19:03 CT — min purchase only where Esperanza is che
     expect(f["a:advice"]).toBe("RAISE up to $35.00 (+$5.00) · buy from MTZ at $24.00 (your last cost $26.00)");
   });
 });
+
+describe("owner 2026-11-14 21:43 CT — my list repeats a bottle per store; the analysis shows it once", () => {
+  it("one row per item: stock summed, lowest price, store count; an unlinked line stays its own row", async () => {
+    const { onePerItem } = await import("./desk.service");
+    const lines = [
+      { id: "1", item_id: "hero", qty: 300, price_cents: 2200 },
+      { id: "2", item_id: "hero", qty: 120, price_cents: 2200 },
+      { id: "3", item_id: "hero", qty: 86, price_cents: 2100 },
+      { id: "4", item_id: "vip", qty: null, price_cents: 7200 },
+      { id: "5", item_id: null, qty: 4, price_cents: 1000 },
+    ];
+    const r = onePerItem(lines);
+    expect(r.lines).toHaveLength(3);
+    expect(r.lines.find((l) => l.item_id === "hero")).toMatchObject({ id: "1", qty: 506, price_cents: 2100, stores: 3 });
+    expect(r.lines.find((l) => l.item_id === "vip")).toMatchObject({ qty: null, stores: 1 });
+    expect(r.storesByItem.get("hero")).toBe(3);
+    expect(r.lines.find((l) => l.item_id === null)).toMatchObject({ id: "5", stores: 1 });
+  });
+});
