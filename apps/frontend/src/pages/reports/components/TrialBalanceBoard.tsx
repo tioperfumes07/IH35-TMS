@@ -20,11 +20,13 @@ export type TrialBalanceBoardSummary = {
 };
 
 const chromeBtn: CSSProperties = {
-  height: 28,
+  height: 30,
   padding: "0 12px",
   display: "inline-flex",
   alignItems: "center",
-  borderRadius: 2,
+  borderRadius: 6,
+  lineHeight: "normal",
+  boxSizing: "content-box",
   fontSize: 12,
   fontWeight: 600,
   fontFamily: V3.font,
@@ -123,6 +125,7 @@ export function TrialBalanceBoard({
       ) : null}
 
       <V3Panel
+        board
         title={`${accountCount} account${accountCount === 1 ? "" : "s"}`}
         testId="trial-balance-accounts-panel"
         headerRight={
@@ -174,7 +177,7 @@ export function TrialBalanceBoard({
             background: V3.surface,
             border: `1px solid ${V3.border}`,
             borderLeft: `3px solid ${V3.amber}`,
-            borderRadius: 2,
+            borderRadius: 6,
             padding: "8px 12px",
             fontSize: 12,
             color: V3.ink,
@@ -182,7 +185,7 @@ export function TrialBalanceBoard({
           }}
           data-testid="trial-balance-measured-ar"
         >
-          <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>Measured</b>
+          <b style={{ color: V3.amber, whiteSpace: "nowrap", lineHeight: "normal" }}>Measured</b>
           <span>{measuredArNote}</span>
         </div>
       ) : null}

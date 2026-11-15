@@ -1,3 +1,4 @@
+import type React from "react";
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -30,6 +31,23 @@ import { useExportAction } from "../../hooks/useExportAction";
 import { formatUsdCents } from "../../lib/money";
 import { TrialBalanceBoard, trialBalanceMeasuredArNote } from "./components/TrialBalanceBoard";
 import { V3 } from "../../design/v3-tokens";
+
+const chromeBtnTB: React.CSSProperties = {
+  height: 30,
+  padding: "0 12px",
+  display: "inline-flex",
+  alignItems: "center",
+  borderRadius: 6,
+  lineHeight: "normal",
+  boxSizing: "content-box",
+  fontSize: 12,
+  fontWeight: 600,
+  fontFamily: V3.font,
+  background: V3.surface,
+  color: V3.ink,
+  border: `1px solid ${V3.border}`,
+  cursor: "pointer",
+};
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -243,7 +261,7 @@ export function TrialBalancePage() {
         render: (row) => (
           <AmountLink
             filter={tbFilter(canDrill(row), row.account_id, applied)}
-            className="text-[#1F2A44] underline-offset-2 hover:underline"
+            className="text-[#111827] underline-offset-2 hover:underline"
             data-testid={`tb-name-${row.account_id}`}
           >
             {row.account_name || "—"}
@@ -363,10 +381,10 @@ export function TrialBalancePage() {
         backHref={reportsBackHref}
         breadcrumb={["Reports", "Trial Balance"]}
         actions={
-          <div className="no-print flex flex-wrap gap-2">
-            <Button size="sm" variant="secondary" onClick={printLetter} disabled={!query.data}>
+          <div className="no-print flex flex-wrap gap-3">
+            <button type="button" style={{ ...chromeBtnTB, opacity: !query.data ? 0.6 : 1, cursor: !query.data ? "not-allowed" : "pointer" }} onClick={printLetter} disabled={!query.data}>
               Print
-            </Button>
+            </button>
             <Button
               size="sm"
               variant="secondary"
