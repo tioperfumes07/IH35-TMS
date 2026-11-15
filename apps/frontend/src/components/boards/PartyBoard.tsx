@@ -129,8 +129,8 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       label: "Customer",
       sort: (r) => r.name,
       // Codex cert residual: Customer column must EntityLink (renderFirst also links).
-      // Customers.dc.html: the name is 600 #111827, square (no 2px focus radius box).
-      cell: (r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} className="font-semibold text-[#111827] no-underline hover:underline" />,
+      // Customers.dc.html: the name is 600 in the cell ink (#111827, inherited from the v3 td), square (no 2px focus radius box).
+      cell: (r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} className="font-semibold [color:inherit] no-underline hover:underline" />,
     },
     {
       key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices,
