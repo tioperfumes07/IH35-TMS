@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
@@ -90,6 +90,11 @@ type MdpColKey = "ref_label" | "invoice_no" | "party_name" | "category";
 type MdpCol = { key: MdpColKey; label: string; w: string };
 // 443.280 board: Party/Payee · Doc / load · Due · Amount.
 // Editable keys party_name + invoice_no; ref_label/category stay in "+ more" (engine intact).
+const MDP_TH = { textAlign: "left", fontFamily: V3.font, fontSize: 11, fontWeight: 600, color: "#5B6576", padding: "7px 12px", borderBottom: "1px solid #DDE1E7", background: "#F7F8FA", whiteSpace: "nowrap" } as const;
+const MDP_TD = { textAlign: "left", padding: "7px 12px", borderBottom: "1px solid #ECEEF2", fontSize: 12, color: "#111827", whiteSpace: "nowrap" } as const;
+const MDP_BAND = { padding: "7px 12px", background: "#F3F5F8", fontFamily: V3.font, fontSize: 11, fontWeight: 700, letterSpacing: "0.04em", textTransform: "uppercase", color: "#111827", borderBottom: "1px solid #ECEEF2" } as const;
+const MDP_BAND_AMT = { padding: "7px 12px", background: "#F3F5F8", fontFamily: V3.font, fontSize: 12, fontWeight: 700, textAlign: "right", borderBottom: "1px solid #ECEEF2" } as const;
+const MDP_TOTAL = { textAlign: "left", padding: "8px 12px", fontFamily: V3.font, fontSize: 12, fontWeight: 700, borderTop: "1px solid #DDE1E7", background: "#F7F8FA" } as const;
 const MDP_COLUMNS: Record<Direction, MdpCol[]> = {
   income: [
     { key: "party_name", label: "Party", w: "flex-1 min-w-0" },
@@ -145,14 +150,6 @@ function groupExpenseEntries(
   return opts?.keepEmpty ? groups : groups.filter((g) => g.rows.length > 0);
 }
 
-const thStyle: CSSProperties = {
-  fontSize: V3_TABLE.headerPx,
-  fontWeight: 600,
-  color: V3.muted,
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
-  fontFamily: V3.font,
-};
 
 function ProjectionPanel({
   direction,
@@ -253,15 +250,12 @@ function ProjectionPanel({
 
   const cellValue = (e: ForecastEntry, key: MdpColKey) => (e[key] ?? "") || "—";
 
+  // CashFlow-Manual.dc.html — the panel list is the V3 table: th 600 11px on #F7F8FA, td 7px 12px 12px nowrap,
+  // group bands #F3F5F8 700 11px uppercase, Total row 700 12px on #F7F8FA. Edit / Del stay as the last cell.
   const renderRow = (e: ForecastEntry) => (
-    <div
-      key={e.id}
-      className="flex items-center gap-2 px-3 py-1.5 text-xs"
-      style={{ borderBottom: `1px solid ${V3.borderSoft}`, color: V3.ink, fontFamily: V3.font, fontSize: V3_TABLE.fontPx }}
-      data-mdp-row={direction}
-    >
+    <tr key={e.id} data-mdp-row={direction}>
       {columns.map((c) => (
-        <span key={c.key} className={`${c.w} shrink-0 truncate ${c.key === columns[0].key ? "font-medium" : ""}`} title={String(cellValue(e, c.key))}>
+        <td key={c.key} className="n" style={{ ...MDP_TD, ...(c.key === columns[0].key ? { fontWeight: 500 } : {}) }} title={String(cellValue(e, c.key))}>
           {c.key === "ref_label" && e.ref_kind === "unit" && e.ref_external_id ? (
             <EntityLinkOrTombstone kind="unit" id={e.ref_external_id} name={e.ref_label} noun="Unit" />
           ) : c.key === "party_name" && (e.party_ref_kind === "driver" || e.party_ref_kind === "customer" || e.party_ref_kind === "vendor") && e.party_ref_id ? (
@@ -272,18 +266,19 @@ function ProjectionPanel({
               noun={e.party_ref_kind === "driver" ? "Driver" : e.party_ref_kind === "vendor" ? "Vendor" : "Customer"}
             />
           ) : cellValue(e, c.key)}
-        </span>
+        </td>
       ))}
-      <span className="w-24 shrink-0 truncate" style={{ color: V3.muted }} title={formatDateUS(String(e.entry_date).slice(0, 10))}>
-        {formatDateUS(String(e.entry_date).slice(0, 10))}
-      </span>
-      <span className="w-24 shrink-0 text-right font-semibold tabular-nums" style={{ color: accentColor }}><AmountLink filter={{ target: "cash_flow_manual", date: String(e.entry_date).slice(0, 10), direction: e.direction, entryId: e.id }}>{fmtCents(toCents(e.amount_cents))}</AmountLink></span>
-      <span className="flex w-16 shrink-0 justify-end gap-2">
-        <button type="button" className="hover:underline" style={{ color: V3.muted }} onClick={() => editRow(e)}>Edit</button>
-        <button type="button" className="hover:underline" style={{ color: V3.red }} onClick={() => deleteMutation.mutate(e.id)}>Del</button>
-      </span>
-    </div>
+      <td className="n" style={MDP_TD}>{formatDateUS(String(e.entry_date).slice(0, 10))}</td>
+      <td className="n" style={{ ...MDP_TD, textAlign: "right", fontWeight: 600, color: accentColor }}><AmountLink filter={{ target: "cash_flow_manual", date: String(e.entry_date).slice(0, 10), direction: e.direction, entryId: e.id }}>{fmtCents(toCents(e.amount_cents))}</AmountLink></td>
+      <td style={{ ...MDP_TD, textAlign: "right" }}>
+        <span style={{ display: "inline-flex", gap: 8 }}>
+          <button type="button" className="hover:underline" style={{ color: V3.muted, background: "transparent", border: 0, padding: 0, cursor: "pointer" }} onClick={() => editRow(e)}>Edit</button>
+          <button type="button" className="hover:underline" style={{ color: V3.red, background: "transparent", border: 0, padding: 0, cursor: "pointer" }} onClick={() => deleteMutation.mutate(e.id)}>Del</button>
+        </span>
+      </td>
+    </tr>
   );
+  const span = columns.length + 1; // label cells before Amount (columns + Due)
 
   const panelShell: CSSProperties = {
     background: V3.surface,
@@ -315,59 +310,56 @@ function ProjectionPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto" data-mdp-panel-list={direction}>
-        <div>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font, lineHeight: "normal" }}>
           {/* CF6 — column headers always present, including empty panels. */}
-          <div className="flex items-center gap-2 px-3 py-1.5" style={{ ...thStyle, background: V3.headerBg, borderBottom: `1px solid ${V3.border}` }}>
-            {columns.map((c) => (
-              <span key={c.key} className={`${c.w} shrink-0 truncate`}>{c.label}</span>
-            ))}
-            <span className="w-24 shrink-0 truncate">Due</span>
-            <span className="w-24 shrink-0 text-right">Amount</span>
-            <span className="w-16 shrink-0" />
-          </div>
-          {expenseGroups
-            ? expenseGroups.map((group) => (
-                <div key={group.key} data-mdp-expense-group={group.key}>
-                  <div
-                    className="flex items-center gap-2 px-3 py-1.5"
-                    style={{ background: V3.band, borderBottom: `1px solid ${V3.borderSoft}` }}
-                  >
-                    <span className="flex-1 font-bold uppercase tracking-wide" style={{ color: V3.ink, fontSize: V3_TABLE.headerPx, letterSpacing: "0.04em" }}>
-                      {group.label}
-                    </span>
-                    <span className="w-24 shrink-0 text-right text-xs font-bold tabular-nums" style={{ color: V3.ink }}>
-                      <AmountLink filter={{ target: "cash_flow_manual", date: projectionDate, direction: "expense", group: group.key }}>
-                        {fmtCents(group.rows.reduce((s, r) => s + toCents(r.amount_cents), 0))}
-                      </AmountLink>
-                    </span>
-                    <span className="w-16 shrink-0" />
-                  </div>
-                  {group.rows.length === 0 ? (
-                    <div className="px-3 py-1.5 text-xs" style={{ color: V3.mutedSoft, borderBottom: `1px solid ${V3.borderSoft}` }}>
-                      No lines in this group yet.
-                    </div>
-                  ) : (
-                    group.rows.map(renderRow)
-                  )}
-                </div>
-              ))
-            : entries.length === 0
-              ? (
-                <div className="px-3 py-4 text-xs" style={{ color: V3.mutedSoft }}>No {direction} lines yet.</div>
-              )
-              : entries.map(renderRow)}
-          {/* DEFECT 1 — explicit summed Total footer (recomputes live with the rows). */}
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold"
-            style={{ borderTop: `1px solid ${V3.border}`, background: V3.headerBg }}
-          >
-            <span className="flex-1 text-right uppercase tracking-wide" style={{ color: V3.muted }}>
-              {direction === "income" ? "Total income" : "Total expenses"}
-            </span>
-            <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: accentColor }} data-mdp-footer-total={direction}><AmountLink filter={panelDrill}>{fmtCents(panelTotalCents)}</AmountLink></span>
-            <span className="w-16 shrink-0" />
-          </div>
-        </div>
+          <thead>
+            <tr>
+              {columns.map((c) => (
+                <th key={c.key} style={MDP_TH}>{c.label}</th>
+              ))}
+              <th style={MDP_TH}>Due</th>
+              <th style={{ ...MDP_TH, textAlign: "right" }}>Amount</th>
+              <th style={MDP_TH} aria-label="Row actions" />
+            </tr>
+          </thead>
+          <tbody>
+            {expenseGroups
+              ? expenseGroups.map((group) => (
+                  <Fragment key={group.key}>
+                    <tr data-mdp-expense-group={group.key}>
+                      <td colSpan={span} style={MDP_BAND}>{group.label}</td>
+                      <td className="n" style={{ ...MDP_BAND_AMT }}>
+                        <AmountLink filter={{ target: "cash_flow_manual", date: projectionDate, direction: "expense", group: group.key }}>
+                          {fmtCents(group.rows.reduce((sum, r) => sum + toCents(r.amount_cents), 0))}
+                        </AmountLink>
+                      </td>
+                      <td style={{ ...MDP_BAND_AMT }} />
+                    </tr>
+                    {group.rows.length === 0 ? (
+                      <tr>
+                        <td colSpan={span + 2} style={{ ...MDP_TD, color: V3.mutedSoft }}>No lines in this group yet.</td>
+                      </tr>
+                    ) : (
+                      group.rows.map(renderRow)
+                    )}
+                  </Fragment>
+                ))
+              : entries.length === 0
+                ? (
+                  <tr>
+                    <td colSpan={span + 2} style={{ ...MDP_TD, color: V3.mutedSoft }}>No {direction} lines yet.</td>
+                  </tr>
+                )
+                : entries.map(renderRow)}
+            {/* DEFECT 1 — explicit summed Total footer (recomputes live with the rows). */}
+            <tr>
+              <td className="n" style={MDP_TOTAL}>{direction === "income" ? "Total income" : "Total expenses"}</td>
+              {Array.from({ length: span - 1 }, (_, i) => <td key={i} className="n" style={MDP_TOTAL} />)}
+              <td className="n" style={{ ...MDP_TOTAL, textAlign: "right", color: accentColor }} data-mdp-footer-total={direction}><AmountLink filter={panelDrill}>{fmtCents(panelTotalCents)}</AmountLink></td>
+              <td style={MDP_TOTAL} />
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       {/* Single horizontal add / edit row: the named columns, then optional "+ more". */}
