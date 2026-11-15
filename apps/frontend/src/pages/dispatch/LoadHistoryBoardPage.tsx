@@ -520,6 +520,7 @@ export default function LoadHistoryBoardPage() {
           selected={staged.draft.status}
           onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
           allLabel="Status: all except cancelled ▾"
+          board
           data-testid="load-history-status-filter"
         />
         <MultiSelectDropdown
@@ -528,6 +529,7 @@ export default function LoadHistoryBoardPage() {
           selected={staged.draft.tripType}
           onChange={(next) => staged.setDraft((p) => ({ ...p, tripType: next }))}
           allLabel="Trip NB · TR · SB · Local ▾"
+          board
           data-testid="load-history-trip-filter"
         />
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
