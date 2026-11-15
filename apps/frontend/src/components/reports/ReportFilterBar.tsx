@@ -206,9 +206,9 @@ export function ReportFilterBar({
     return (
       <div data-report-filter-bar="inline" data-testid={`${testIdPrefix}-report-filter-bar`} style={B_BAR}>
         <span style={B_LABEL}>From</span>
-        <DatePicker className="h-7 w-[120px]" value={fromDate ?? ""} onChange={handleFromDateChange} aria-label="From date" data-testid={`${testIdPrefix}-filter-from`} />
+        <DatePicker board className="w-[124px]" value={fromDate ?? ""} onChange={handleFromDateChange} aria-label="From date" data-testid={`${testIdPrefix}-filter-from`} />
         <span style={B_LABEL}>To</span>
-        <DatePicker className="h-7 w-[120px]" value={toDate ?? ""} onChange={handleToDateChange} aria-label="To date" data-testid={`${testIdPrefix}-filter-to`} />
+        <DatePicker board className="w-[124px]" value={toDate ?? ""} onChange={handleToDateChange} aria-label="To date" data-testid={`${testIdPrefix}-filter-to`} />
         <span style={B_SEG}>
           {PRESET_BUTTONS.map((btn) => {
             // The selected period is the one whose range the bar holds right now (no separate state to drift).
