@@ -30,6 +30,7 @@
   display: flex;
   background: #13233F;
   gap: 2px;
+  padding: 0 6px;
 }
 
 /* COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 A1 — board-viewport-single-row:
@@ -72,7 +73,7 @@
 }
 
 /* ROUND 10.0 — v3 parity: block layout, 8px padding all sides, Inter font,
-   full-white color with 0.85 opacity, content-box, no border-bottom stub. */
+   full-white color (no opacity reduction), content-box, no border-bottom stub. */
 .hover-dropdown-nav a[role="menuitem"] {
   display: block;
   height: auto;
@@ -83,7 +84,7 @@
   text-transform: none;
   letter-spacing: 0;
   color: #fff;
-  opacity: 0.85;
+  opacity: 1;
   background: none;
   border: none;
   border-bottom: none;
