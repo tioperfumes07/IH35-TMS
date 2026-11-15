@@ -8,6 +8,7 @@ import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../components/forms/share
 import { V3Panel } from "../../components/v3/V3Panel";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 type TripCode = "NB" | "TR" | "SB";
 

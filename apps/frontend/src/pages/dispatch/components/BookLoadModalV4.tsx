@@ -2056,7 +2056,7 @@ export function BookLoadModalV4({
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: bookLoadPresentation === "side" ? "700 16px Inter, ui-sans-serif, system-ui, sans-serif" : "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 16px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Edit load</span>
                 {editLoad?.id ? (
                   <EntityLink
@@ -2069,7 +2069,7 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: bookLoadPresentation === "side" ? "700 16px Inter, ui-sans-serif, system-ui, sans-serif" : "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 16px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Book load</span>
                 {prefillUnitLabel ? <span data-testid="book-load-header-unit">for {prefillUnitLabel}</span> : null}
                 {prefillLaneStatus ? (
