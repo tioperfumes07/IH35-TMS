@@ -57,7 +57,7 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions, var
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap", fontFamily: V3_FONT, lineHeight: "normal", color: V3_INK }}>
           <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
             <button type="button" aria-label="Back" data-testid="page-header-back" onClick={goBack}
-              style={{ fontSize: 11, color: V3_MUTED, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: V3_FONT, lineHeight: "normal", boxSizing: "content-box", height: 22 }}>← Back</button>
+              style={{ fontSize: 11, color: V3_MUTED, background: "none", border: "none", padding: 0, cursor: "pointer", fontFamily: V3_FONT, lineHeight: "normal", boxSizing: "content-box" }}>← Back</button>
             <h1 style={{ margin: 0, font: `700 18px ${V3_FONT}`, color: V3_INK, lineHeight: "normal", height: 22 }}>{title}</h1>
             {subtitle ? <span style={{ fontSize: 11, color: V3_MUTED, lineHeight: "normal" }}>{subtitle}</span> : null}
           </div>
