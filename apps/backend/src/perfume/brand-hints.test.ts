@@ -109,3 +109,29 @@ describe("ESPERANZA unmatched lines measured live 11-15", () => {
     expect(identify({ description: "CAPITAN AMERICA 3.4 EDT" }).brand).toBe("MARVEL");
   });
 });
+describe("ESPERANZA sets list pieces first, fragrance last (measured live 11-15)", () => {
+  it("brand and name come from after the last piece; size/type from the main bottle", () => {
+    const cases: Array<[string, string]> = [
+      ["100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP", "DOLCE & GABBANA|QUEEN 3PC SET|100|EDP|W|SET"],
+      ["6.7EDT+6.7BL+3.4SGEL+0.50EDT D&G LIGHT BLUE MEN 2PC SET", "DOLCE & GABBANA|LIGHT BLUE 2PC SET|200|EDT|M|SET"],
+      ["3.4OZ+BL+0.5OZ TRAVEL SPRAY J CHOO L'EAU W 4PC SET", "JIMMY CHOO|LEAU 4PC SET|100|?|W|SET"],
+      ["100ML EDP+100ML A/SHAVE+POUCH CRISTIANO R. CR7 GAME ON M 3PC SET", "CRISTIANO RONALDO|CR7 GAME ON 3PC SET|100|EDP|M|SET"],
+    ];
+    for (const [d, k] of cases) expect(identify({ description: d }).key.startsWith(k)).toBe(true);
+  });
+  it("a set that names its main bottle first is unchanged", () => {
+    expect(identify({ description: "100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML" }).key.startsWith("?|100% PASSION|100|EDT|M|SET")).toBe(true);
+  });
+});
+describe("HALLOWEEN is a JESUS DEL POZO line (owner 11-14)", () => {
+  it("leading word or brand column — the house is the brand, HALLOWEEN stays in the name", () => {
+    expect(identify({ description: "HALLOWEEN BLOSSOM W 3.4oz EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN BLOSSOM|100|EDT|W")).toBe(true);
+    expect(identify({ description: "BLOSSOM", brand: "HALLOWEEN" }).brand).toBe("JESUS DEL POZO");
+    expect(identify({ description: "JESUS DEL POZO HALLOWEEN KISS W 3.4 EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN KISS|")).toBe(true);
+  });
+  it("ESPERANZA short brand forms", () => {
+    expect(identify({ description: "MAISON A SALVO M EDP 3.4oz" }).brand).toBe("MAISON ALHAMBRA");
+    expect(identify({ description: "B.SPEARS PREROGATIVE 8OZ BMIST" }).brand).toBe("BRITNEY SPEARS");
+    expect(identify({ description: "GLORIA VANDERVILT W 3.4 EDT" }).brand).toBe("GLORIA VANDERBILT");
+  });
+});
