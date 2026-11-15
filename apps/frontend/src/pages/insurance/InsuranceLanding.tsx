@@ -4,6 +4,7 @@ import { useCompanyContext } from "../../contexts/CompanyContext";
 import { InsuranceHomeBoard } from "./components/InsuranceHomeBoard";
 import { InsuranceModuleTabs } from "./InsuranceModuleTabs";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 /**
  * ROUND 9.4 Board 20 — docs/design/v3/Insurance.dc.html
