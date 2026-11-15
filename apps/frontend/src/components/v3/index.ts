@@ -4,4 +4,4 @@ export { V3Panel } from "./V3Panel";
 export { V3Segmented, type V3SegmentOption } from "./V3Segmented";
 export { formatDisplayName } from "./formatDisplayName";
 export { V3SideCard } from "./V3SideCard";
-export { V3StatusPill, V3_PILL_TONES, V3_TABLE_LINK_CLASS, loadStatusTone, type V3PillTone } from "./V3StatusPill";
+export { V3StatusPill, V3_PILL_TONES, V3_TABLE_LINK_CLASS, V3_HEADER_BTN, V3_HEADER_BTN_PRIMARY, loadStatusTone, type V3PillTone } from "./V3StatusPill";
