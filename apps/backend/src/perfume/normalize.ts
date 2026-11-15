@@ -394,8 +394,13 @@ export function nameBrandIndex(items: ReadonlyArray<{ brand: string; name: strin
   }
   const out: Record<string, string> = {};
   for (const [ph, m] of seen) {
-    if (m.size !== 1) continue;
-    const [b, n] = [...m][0]!;
+    // One brand owns the phrase — or so dominates it that the others are a different product line sharing a
+    // word ("DAISY": MARC JACOBS 47 items, DISNEY "Daisy Duck" 2 — measured live 11-15): 5+ items and at least
+    // ten times every other brand together.
+    const ranked = [...m].sort((a, b) => b[1] - a[1]);
+    const rest = ranked.slice(1).reduce((t, [, k]) => t + k, 0);
+    if (m.size !== 1 && !(ranked[0]![1] >= 5 && ranked[0]![1] >= 10 * rest)) continue;
+    const [b, n] = ranked[0]!;
     if (!ph.includes(" ") && n < 2) continue; // one word must be seen on 2+ items of that brand
     out[ph] = b;
   }
@@ -495,6 +500,9 @@ export function identify(input: IdentityInput): Identity {
   // "JUICY C GLISTENING") — spelled out so the brand reads (owner 2026-11-14 18:23 CT, ESPERANZA list).
   s = s.replace(/\bJESSICA S\.\s*/g, "JESSICA SIMPSON ").replace(/\bSABRINA C\.\s*/g, "SABRINA CARPENTER ")
     .replace(/\bRALPH L\.?\s+/g, "RALPH LAUREN ").replace(/^\s*JUICY C\s+/, "JUICY COUTURE ");
+  // Vendor shorthand for a body mist ("HEIRESS BMIST 236", "THANK YOU NEXT B.M 236", "B/MIST") and the Spanish
+  // spelling "CAPITAN AMERICA" (ESPERANZA list, measured live 11-15) — spelled out so type and name read.
+  s = s.replace(/\bB\s*[./]\s*MIST\b|\bBMIST\b|\bB\.\s*M\b\.?|\bB\/M\b/g, " BODY MIST ").replace(/\bCAPITAN\b/g, "CAPTAIN");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);
