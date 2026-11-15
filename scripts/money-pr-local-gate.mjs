@@ -3921,20 +3921,6 @@ for (const [name, domainPaths] of LIVE_DOMAIN_GUARDS) {
     skippedLiveChecks.push(msg);
     continue;
   }
-  // CC-3 R11.0 (2026-11-15): FE-only appearance fix — PartyBoard/VendorsHomeBoard V3Panel board prop +
-  // appearance="v3" on PartyTable. No backend service, no SQL, no KPI computation changed.
-  // Fixes pre-existing UI-F443329-PARTYBOARD-HANDROLLED-20261110 (hand-rolled table).
-  // Live data check still runs in CI with PROD_READONLY_DATABASE_URL.
-  if (
-    name === "verify-party-boards-bound-live" &&
-    changedForLiveDomains !== null &&
-    changedForLiveDomains.every((f) => f.startsWith("apps/frontend/src/components/boards/"))
-  ) {
-    const msg = `${rel} — CC-3 R11.0 FE-only appearance fix (V3Panel board prop + appearance=v3); no backend/service/KPI change; pre-existing engine!=recompute debt on main (2026-11-10); CI runs live check`;
-    console.log(`[${LABEL}] SKIP ${msg}`);
-    skippedLiveChecks.push(msg);
-    continue;
-  }
   const touched =
     changedForLiveDomains === null ||
     changedForLiveDomains.some((f) => {

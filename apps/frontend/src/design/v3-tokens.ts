@@ -30,6 +30,14 @@ export const V3 = {
   /** Text on shell / navy controls. */
   onShell: "#FFFFFF",
   font: "Inter, ui-sans-serif, system-ui, sans-serif",
+  /** Status pill tone backgrounds (board chips). */
+  pillBlueBg: "#EFF6FF",
+  pillAmberBg: "#FFFBEB",
+  pillGreenBg: "#ECFDF3",
+  pillSlateBg: "#F1F5F9",
+  pillRedBg: "#FEF2F2",
+  /** Slate/muted ink for slate pills (#475569 = Tailwind slate-600). */
+  pillSlateInk: "#475569",
 } as const;
 
 /** Expense groups in owner order for two-sided cash views. */

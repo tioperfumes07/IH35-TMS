@@ -86,7 +86,9 @@ for (const snapshot of ["Angel Sosa", "$1,842.60", "S-2026-5819", "$1,140.00", "
 //   why: the table law sends every list through ParityTable (centered sortable headers, one gear, export,
 //        pager); the two guards demanded opposite markup. The property this rule protects — rules for rows,
 //        never for columns — is kept and still checked below on party-board.css.
-if (!/<ParityTable<R>\s+appearance="board"/.test(ui) || /<table[\s>]/.test(ui)) fails.push("board table must be <ParityTable appearance=\"board\"> (rules for rows, never for columns), not a hand-rolled <table>");
+// R11.0 (2026-11-15): appearance="v3" is valid on V3 board pages (Lead instruction); "board" remains valid
+// for legacy non-V3 contexts. Guard still prohibits hand-rolled <table>.
+if (!/<ParityTable<R>\s+appearance="(board|v3)"/.test(ui) || /<table[\s>]/.test(ui)) fails.push("board table must be <ParityTable appearance=\"board\"> or appearance=\"v3\" (rules for rows, never for columns), not a hand-rolled <table>");
 if (/border-(left|right)\s*:/.test(css)) fails.push("party-board.css declares a column border");
 if (!/cents \? usd\(cents\) : "—"/.test(ui)) fails.push("missing money must render — (never $0.00)");
 if (!process.env.DATABASE_URL) { console.error("verify-party-boards-bound-live: FAIL — DATABASE_URL not set (live guard fails closed)."); process.exit(1); }
