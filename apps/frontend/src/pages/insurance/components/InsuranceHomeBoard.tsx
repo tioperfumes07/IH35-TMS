@@ -106,6 +106,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
   {
     key: "expiry_date",
     label: "Expires",
+    defaultHidden: true,
     sortable: true,
     sortValue: (row) => row.expiry_date ?? "",
     render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) || "—" : "—"),
@@ -220,7 +221,7 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
     v == null || v === "" || (typeof v === "number" && !Number.isFinite(v)) ? "—" : String(v);
 
   return (
-    <div className="min-w-0 space-y-3" data-testid="insurance-home-board" data-insurance-home-board="1">
+    <div className="min-w-0" style={{ display: "flex", flexDirection: "column", gap: 12 }} data-testid="insurance-home-board" data-insurance-home-board="1">
       {/* The summary feeds the KPI strip: when it fails, the strip is not drawn under the error (no "—" wall). */}
       {summaryQuery.isError ? (
         <ListErrorState
