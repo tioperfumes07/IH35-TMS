@@ -30,6 +30,8 @@ const inCohort = (driver: Driver, cohort: Cohort) =>
       : cohort === "contact"
         ? hasContact(driver)
         : true;
+const STATUS_LINK =
+  "inline-flex items-center gap-[6px] whitespace-nowrap font-[Inter] text-xs font-medium leading-[normal] text-[#111827] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
 const INHERIT_LINK = "text-inherit hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
 /** Calendar date → MM/YYYY (Safety-DriverFiles.dc.html), cut from the canonical calendar-only MM/DD/YYYY. */
 const monthYear = (value: string) => {
@@ -97,23 +99,19 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         }}
       />
     );
+    // The status IS the link (td > a.inline-flex > dot + text), exactly the board's td > span.inline-flex shape.
     const statusCell = (row: Driver, label: string, tone: "ok" | "missing" | "unknown") => (
-      <span
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif",
-          color: "#111827",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {statusDot(tone)}
-        <EntityLink kind="driver" id={row.id} label={label} className={INHERIT_LINK} />
-      </span>
-    );
-    const record = (row: Driver, label: string) => (
-      <EntityLink kind="driver" id={row.id} label={label} className={INHERIT_LINK} />
+      <EntityLink
+        kind="driver"
+        id={row.id}
+        label={
+          <>
+            {statusDot(tone)}
+            {label}
+          </>
+        }
+        className={STATUS_LINK}
+      />
     );
     // N24 / ROW 167 — expiry is a calendar day; the board shows it as MM/YYYY (calendar month, no TZ shift).
     const date = (row: Driver, value: string | null, missing: string) =>
@@ -126,9 +124,13 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         // Safety-DriverFiles.dc.html lists drivers by their given names ("Carlos Mauricio", "Jorge Luis");
         // the full legal name stays on the link's title, in sort and in export.
         render: (row) => (
-          <span title={formatPersonName(`${row.first_name} ${row.last_name}`)}>
-            {record(row, formatPersonName(row.first_name))}
-          </span>
+          <EntityLink
+            kind="driver"
+            id={row.id}
+            label={formatPersonName(row.first_name)}
+            title={formatPersonName(`${row.first_name} ${row.last_name}`)}
+            className={INHERIT_LINK}
+          />
         ),
         sortValue: (row) => `${row.first_name} ${row.last_name}`,
         exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`),
