@@ -1,4 +1,4 @@
-## 2026-11-15 — R11.0 #29675 merged origin/main (#29726 settlements-sidebar fix); CI re-running; faro-no-purchased-account red on main (owner decision, not ours)
+## 2026-11-15 — R11.0 #29675 re-push: merged origin/main (#29727 driver-onboarding guard fix, #29728 CC-3 boards); verify-navy-page-subnav guard fix (border-b-2 tokens); ready to merge on required checks
 
 ## 2026-11-15 — READER PLEASE Settlements-CashAdvances 06016f38 — PR #29643 lineHeight:normal on board root; KPI/emptyText/viewAll/colHeader fixes from #29635-#29641 already on main
 
