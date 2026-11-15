@@ -51,7 +51,8 @@ describe("Excel export — every computed column is a live formula", () => {
     expect(at("a:margin")).toMatchObject({ formula: 'IF(C3=0,"",(C3-B3)/C3)', result: 0.3 });
     expect(at("a:markup")).toMatchObject({ formula: 'IF(B3=0,"",(C3-B3)/B3)' });
     expect(at("a:low_sales")).toMatchObject({ formula: "MIN(C3,G3)" });
-    expect(at("a:min_buy")).toMatchObject({ formula: "G3*(1-K3)", result: 16 });
+    // Owner 19:03 CT: a min purchase price only where Esperanza is cheaper — a formula on every row, blank otherwise.
+    expect(at("a:min_buy")).toMatchObject({ formula: 'IF(AND(G3<>"",C3<>"",G3<C3),G3*(1-K3),"")' });
     expect(at("a:under_by")).toMatchObject({ formula: "MAX(G3-C3,0)" });
     expect(at("a:over_by")).toMatchObject({ formula: "MIN(G3-C3,0)" });
     expect(at("a:lower_pct")).toMatchObject({ formula: 'IF(C3=0,"",-P3/C3)' });
@@ -95,5 +96,27 @@ describe("Cheaper by / more expensive by (owner 2026-11-14 15:10: over by should
     const f = analysisFields({ ...base, offer: 1900, comp: { list: 2050, cushion: 50, real: 2000, desc: "X", vendor: "ESP" } });
     expect(f["a:under_by"]).toBe(100);
     expect(f["a:over_by"]).toBe(0);
+  });
+});
+
+describe("owner 2026-11-14 19:03 CT — min purchase only where Esperanza is cheaper; the recommendation", () => {
+  const base = { upc: null, sku: null, brand: null, name: null, size: null, type: null, gender: null, purchDate: null, qtyPurch: null, sold: null, invQty: null, myDesc: null, minMargin: 15 };
+  const comp = (real: number) => ({ list: real + 50, cushion: 50, real, desc: "X", vendor: "ESPERANZA" });
+  it("Esperanza cheaper + a supplier at or under the min purchase price → LOWER, buy there", () => {
+    const f = analysisFields({ ...base, offer: 4000, cost: 3600, comp: comp(3500), lowVendor: "PCA", lowPrice: 2900 });
+    expect(f["a:min_buy"]).toBe(2975);
+    expect(f["a:buy_check"]).toMatch(/^YES — PCA \$29\.00/);
+    expect(f["a:advice"]).toBe("LOWER to $35.00 — buy from PCA at $29.00 keeps 15%+");
+  });
+  it("Esperanza cheaper, no supplier cheap enough → CAN'T MATCH", () => {
+    const f = analysisFields({ ...base, offer: 4000, cost: 3600, comp: comp(3500), lowVendor: "PCA", lowPrice: 3200 });
+    expect(f["a:buy_check"]).toBe("NO — lowest $32.00 is $2.25 over");
+    expect(f["a:advice"]).toBe("CAN'T MATCH at 15% — need cost ≤ $29.75, lowest supplier $32.00");
+  });
+  it("I am cheaper → no min purchase price, RAISE, and a cheaper supplier is named", () => {
+    const f = analysisFields({ ...base, offer: 3000, cost: 2600, comp: comp(3500), lowVendor: "MTZ", lowPrice: 2400 });
+    expect(f["a:min_buy"]).toBeNull();
+    expect(f["a:buy_check"]).toBeNull();
+    expect(f["a:advice"]).toBe("RAISE up to $35.00 (+$5.00) · buy from MTZ at $24.00 (your last cost $26.00)");
   });
 });
