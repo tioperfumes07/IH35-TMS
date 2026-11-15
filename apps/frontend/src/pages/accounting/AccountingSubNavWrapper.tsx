@@ -120,7 +120,8 @@ export function AccountingSubNavWrapper({
 
   return (
     // R9.1 board1 v3parity — data-v3-board scopes board-box.css; lineHeight overrides app 1.5 default.
-    <div data-v3-board="Accounting" data-accounting-subnav-wrapper="true" style={{ lineHeight: "normal" }}>
+    // The Unexpected tab is its own board (docs/design/v3/Accounting-Unexpected.dc.html) — name it so it is measured.
+    <div data-v3-board={pathname === "/accounting/unexpected" ? "Accounting-Unexpected" : "Accounting"} data-accounting-subnav-wrapper="true" style={{ lineHeight: "normal" }}>
       {/* U18 guard — Accounting breadcrumb nav; Breadcrumb claims the breadcrumb slot */}
       <Breadcrumb items={breadcrumb} />
 
