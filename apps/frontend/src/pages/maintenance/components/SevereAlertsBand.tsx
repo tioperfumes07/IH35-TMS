@@ -21,6 +21,9 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll, vi
   return (
     // ROUND 9.0 board 22 — the design's side card: SEVERE / OUT OF SERVICE · count · grey line when none.
     <V3SideCard title="Severe / out of service" count={totalCount} href={viewAllHref} testId="maint-side-severe">
+      {/* Maintenance-Home.dc.html: with none open the card's grey line IS the text ("No severe alerts"). */}
+      {alerts.length === 0 && !isTruncated ? "No severe alerts" : (
+      <>
       <div className="max-h-40 overflow-y-auto">
         {isTruncated ? (
           <div className="border-b border-red-100 px-2 py-1 text-xs text-red-700" data-testid="severe-alerts-range">
@@ -38,7 +41,6 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll, vi
             <span className="font-semibold">{alert.total_estimated_cost == null ? "—" : formatUsd(Number(alert.total_estimated_cost))}</span>
           </div>
         ))}
-        {alerts.length === 0 ? <div>No severe alerts</div> : null}
       </div>
       {/* MAINT-MONEY-F6943 — "Visible total" alone silently understated real exposure once
           totalCount exceeded the LIMIT-50 alert list: it summed only the rows shown, never the WOs
@@ -53,6 +55,8 @@ export function SevereAlertsBand({ alerts, totalCount, totalEstimatedCostAll, vi
       ) : alerts.length > 0 ? (
         <div className="pt-1 text-xs font-semibold text-red-700">Total: {formatUsd(trueTotal)}</div>
       ) : null}
+      </>
+      )}
     </V3SideCard>
   );
 }

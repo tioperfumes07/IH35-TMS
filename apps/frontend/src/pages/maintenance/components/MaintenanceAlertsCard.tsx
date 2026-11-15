@@ -110,10 +110,11 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
     return (
       // ROUND 9.0 board 22 — the design's side card: PM ALERTS · "n open" · "No PM alerts" or the alert lines.
       <V3SideCard title="PM alerts" count={`${openTotalCount} open`} href={maintHref("/maintenance/pm-schedule")} testId="maint-side-pm-alerts">
-        <div id="maintenance-open-pm-alerts">
+        {/* Maintenance-Home.dc.html: with none open the card's grey line IS the text ("No PM alerts"). */}
         {alerts.length === 0 ? (
-          <div>No PM alerts</div>
+          "No PM alerts"
         ) : (
+        <div id="maintenance-open-pm-alerts">
           <div>
           <ul className="flex flex-col">
             {alerts.map((alert: MaintenancePmAlert) => (
@@ -133,8 +134,8 @@ export function MaintenanceAlertsCard({ operatingCompanyId, compact = false }: P
             </div>
           ) : null}
           </div>
-        )}
         </div>
+        )}
       </V3SideCard>
     );
   }
