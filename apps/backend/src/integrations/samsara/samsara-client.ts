@@ -773,7 +773,11 @@ export class SamsaraClient {
       throw new SamsaraApiError(`samsara_network_error:${String((error as Error)?.message ?? error)}`, null, null, true);
     }
     const json = await readJsonResponse(res);
-    if (!res.ok) throw new SamsaraApiError(`samsara_fuel_purchase_http_${res.status}`, res.status, json, res.status === 429 || res.status >= 500);
+    if (!res.ok) {
+      const retryable = res.status === 429 || res.status >= 500;
+      // E-23 443.49: keep Samsara's body reason so the rejection is diagnosable (bare samsara_fuel_purchase_http_400 hid 3,894 errors)
+      throw new SamsaraApiError(`samsara_fuel_purchase_http_${res.status}${samsaraReason(json)}`, res.status, json, retryable);
+    }
     const data = (json.data ?? json) as Record<string, unknown>;
     const id = data.uuid ?? data.id;
     return { samsara_fuel_purchase_id: id == null ? null : String(id) };

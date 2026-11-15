@@ -37,7 +37,8 @@ export type FuelPushSkipReason =
   | "ambiguous_samsara_vehicle"
   | "no_location"
   | "no_price"
-  | "derived_time_not_high_confidence";
+  | "derived_time_not_high_confidence"
+  | "samsara_rejected_permanent";
 
 export type FuelPushRow = {
   id: string;
@@ -65,10 +66,13 @@ export type FuelPushPlanItem =
 export function planFuelPurchasePushes(
   rows: FuelPushRow[],
   samsaraVehicleIdsByUnit: Map<string, string[]>,
-  pushedIds: Set<string>
+  pushedIds: Set<string>,
+  permanentlyFailed: Set<string> = new Set()
 ): FuelPushPlanItem[] {
   return rows.map((row): FuelPushPlanItem => {
     if (pushedIds.has(row.id)) return { fuel_transaction_id: row.id, action: "already_pushed" };
+    // E-23: row that Samsara already rejected with a non-retryable 400 — do not re-send until the row changes
+    if (permanentlyFailed.has(row.id)) return { fuel_transaction_id: row.id, action: "skip", reason: "samsara_rejected_permanent" };
     // A date-only row may still be pushed with CC-2's DERIVED pump time -- the start of the one stop the
     // truck made inside a fuel-stop fence that day (confidence 'high' only: one fill, one stop). Never
     // the import time, never a medium-confidence time shared by several fills.
@@ -137,7 +141,7 @@ export async function loadSamsaraVehicleIdsByUnit(client: PgClient, operatingCom
   return out;
 }
 
-type LedgerState = { pushed: Set<string>; lastSkipReason: Map<string, string> };
+type LedgerState = { pushed: Set<string>; lastSkipReason: Map<string, string>; permanentlyFailed: Set<string> };
 
 async function loadLedger(client: PgClient, operatingCompanyId: string): Promise<LedgerState> {
   const res = await client.query(
@@ -151,11 +155,16 @@ async function loadLedger(client: PgClient, operatingCompanyId: string): Promise
   );
   const pushed = new Set<string>();
   const lastSkipReason = new Map<string, string>();
+  // E-23: a row whose most recent outcome was failed with a 400 (non-retryable) is permanently failed — do not
+  // re-send it. 429/5xx are retryable: they will be re-tried next run. The same ~280 rows were re-sent every run
+  // because failed outcomes are not in pushedIds.
+  const permanentlyFailed = new Set<string>();
   for (const r of res.rows) {
     if (r.ever_pushed) pushed.add(String(r.id));
     else if (r.outcome === "skipped" && r.reason) lastSkipReason.set(String(r.id), String(r.reason));
+    else if (r.outcome === "failed" && r.reason && /http_4(?!29)\d\d/.test(String(r.reason))) permanentlyFailed.add(String(r.id));
   }
-  return { pushed, lastSkipReason };
+  return { pushed, lastSkipReason, permanentlyFailed };
 }
 
 async function recordOutcome(
@@ -242,7 +251,7 @@ export async function runFuelPurchasePush(
   }
   const ledger = await loadLedger(client, operatingCompanyId);
   const vehicles = await loadSamsaraVehicleIdsByUnit(client, operatingCompanyId);
-  const plan = planFuelPurchasePushes(rows, vehicles, ledger.pushed);
+  const plan = planFuelPurchasePushes(rows, vehicles, ledger.pushed, ledger.permanentlyFailed);
 
   const result: FuelPushRunResult = {
     operating_company_id: operatingCompanyId,
@@ -295,6 +304,8 @@ export async function runFuelPurchasePush(
           : String((error as Error)?.message ?? error);
       await recordOutcome(client, operatingCompanyId, { fuel_transaction_id: item.fuel_transaction_id, outcome: "failed", reason: message });
       result.failed += 1;
+      // E-23: 429 rate-limit — stop sending more rows this run; cron retries on next tick
+      if (error instanceof SamsaraApiError && error.statusCode === 429) break;
     }
   }
   return result;

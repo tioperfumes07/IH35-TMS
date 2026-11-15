@@ -114,7 +114,7 @@ export type RoutePlanItem =
       body: { loadId: string; name: string; unitId: string; driverId: string | null; samsaraVehicleId: string; samsaraDriverId: string | null; stops: SamsaraRouteStopInput[] };
       driver_note: string | null; body_hash: string;
     }
-  | { load_id: string; load_number: string; action: "skip"; reason: "no_samsara_vehicle" | "ambiguous_samsara_vehicle" | "stop_without_coordinates" };
+  | { load_id: string; load_number: string; action: "skip"; reason: "no_samsara_vehicle" | "ambiguous_samsara_vehicle" | "stop_without_coordinates" | "first_stop_missing_scheduled_time" };
 
 /** Pure. */
 export function planRoutePushes(rows: EligibleRouteRow[], vehicles: Map<string, string[]>, drivers: Map<string, Set<string>>): RoutePlanItem[] {
@@ -137,6 +137,10 @@ export function planRoutePushes(rows: EligibleRouteRow[], vehicles: Map<string, 
         scheduledDepartureTime: st.scheduled_departure_at ? new Date(String(st.scheduled_departure_at)).toISOString() : undefined,
         notes: st.notes ? String(st.notes) : undefined,
       });
+    }
+    // E-31: Samsara requires a scheduled time on the first stop (pickup); skip and surface the reason
+    if (built.length > 0 && !built[0]!.scheduledArrivalTime && !built[0]!.scheduledDepartureTime) {
+      return { load_id: r.load_id, load_number: r.load_number, action: "skip", reason: "first_stop_missing_scheduled_time" };
     }
     const sids = r.driver_id ? [...(drivers.get(r.driver_id) ?? [])] : [];
     // A route takes one Samsara driver: the driver's most recently logged-in account (canonical map order).
