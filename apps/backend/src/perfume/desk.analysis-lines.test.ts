@@ -78,8 +78,13 @@ describe("Excel export — every computed column is a live formula", () => {
   });
   it("wholesale and competition formulas only when their input columns are exported too", () => {
     const w = (k: string, kind: GridCol["kind"] = "money"): GridCol => ({ key: k, label: k, group: "s", kind });
-    const full = exportFormulas([w("my_offer_price"), w("s:v1:price"), w("s:v1:cushion"), w("s:v1:real"), w("s:v1:diff"), w("s:v1:diff_pct", "pct"), w("comp_low_list"), w("comp_cushion"), w("comp_cost"), w("c:v1:price"), w("c:v1:earn"), w("c:v1:margin", "pct")]);
-    expect(full.map((f) => f.target).sort()).toEqual(["c:v1:earn", "c:v1:margin", "comp_cost", "s:v1:diff", "s:v1:diff_pct", "s:v1:real"]);
+    const full = exportFormulas([w("my_offer_price"), w("s:v1:price"), w("s:v1:cushion"), w("s:v1:real"), w("s:v1:diff"), w("s:v1:diff_pct", "pct"), w("c:v1:price"), w("c:v1:cushion"), w("c:v1:sales"), w("c:v1:margin", "pct"), w("c:v1:cost"), w("c:v1:earn")]);
+    expect(full.map((f) => f.target).sort()).toEqual(["c:v1:cost", "c:v1:earn", "c:v1:sales", "s:v1:diff", "s:v1:diff_pct", "s:v1:real"]);
+    // Owner 2026-11-15 13:32 CT: competition reverse-engineers THEIR cost from THEIR list — sales × (1 − my margin estimate).
+    const ref = (k: string) => k;
+    expect(full.find((f) => f.target === "c:v1:cost")!.build(ref)).toBe("c:v1:sales*(1-c:v1:margin)");
+    // Wholesale: negative = I am more expensive than their real price.
+    expect(full.find((f) => f.target === "s:v1:diff")!.build(ref)).toBe("s:v1:real-my_offer_price");
     expect(exportFormulas([w("s:v1:price"), w("s:v1:real")]).map((f) => f.target)).toEqual([]);
   });
 });

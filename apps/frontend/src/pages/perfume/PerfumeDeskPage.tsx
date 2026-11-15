@@ -149,8 +149,10 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // Owner 2026-11-14: "in competition their margin … the vendors prices should be after all the esperanza data
   // margins etc. i need to see their data next to mine" — mine, then the competitor (their line, list, cushion, sales
   // price, their cost, what they earn, margin), then every supplier's list price.
-  if (view === "comp") return item || /^s:.*:(desc|price|cushion|real)$/.test(key) || /^c:.*:(earn|margin)$/.test(key) || /^v:.*:price$/.test(key)
-    || ["my_offer_desc", "my_offer_price", "my_qty", "comp_low_vendor", "comp_low_list", "comp_cushion", "comp_cost"].includes(key);
+  // Owner 2026-11-15 13:32 CT: their cost is reverse-engineered from THEIR list (list − cushion = sales; × (1 − my
+  // margin estimate) = cost ≈), not from where they buy — so no supplier columns here.
+  if (view === "comp") return item || /^s:.*:desc$/.test(key) || /^c:.*:(price|cushion|sales|margin|cost|earn)$/.test(key)
+    || ["my_offer_desc", "my_offer_price", "my_qty"].includes(key);
   // Wholesale (owner 2026-11-14): my description + my offer price, then per competitor their description, list price,
   // cushion, real price, and me vs their real price ($, %, reduce / raise). No cost, margin or need-to-buy columns.
   if (view === "wholesale") return item || /^s:.*:(desc|price|cushion|real|diff|diff_pct|action)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
@@ -339,7 +341,8 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
           return <span data-testid="perfume-analysis-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
         }
         if (c.key === "a:over_by" && v != null && Number(v) < 0) return <span className="font-semibold text-red-700">{money(v)}</span>;
-        if (c.kind === "money") return money(v);
+        // Owner 2026-11-15 13:32 CT: in every view a negative figure (I'm more expensive / must lower) is red.
+        if (c.kind === "money") return v != null && Number(v) < 0 ? <span className="font-semibold text-red-700">{money(v)}</span> : money(v);
         if (c.kind === "pct") return <span className={v == null ? "" : Number(v) < 0 ? "text-red-700" : Number(v) >= 20 ? "text-slate-700 font-semibold" : ""}>{pct(v)}</span>;
         // List analysis is read-only (owner 2026-11-14 17:22: "THE MATCHING SHOULD BE DONE IN THE REVIEW"). In Review ·
         // My list ↔ competitor, the match box sits in the OTHER side's description: my line → theirs; their line → mine.
@@ -348,6 +351,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
+        if (typeof v === "string" && /reduce|lower to compete|more expensive/i.test(v)) return <span className="font-semibold text-red-700">{v}</span>;
         return v == null || v === "" ? "—" : String(v);
       },
     })),
@@ -447,7 +451,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               <input type="checkbox" checked={carried} onChange={(e) => { setCarried(e.target.checked); setPage(1); }} />
               {tr("perfume.desk.carried", "Only items on the competitor's list")}
             </label>
-            {view === "trade" ? (
+            {view === "trade" || view === "comp" ? (
               <label className="flex items-center gap-1 text-xs text-gray-700">
                 {tr("perfume.desk.earn.label", "Their earn %")}
                 <input
@@ -462,7 +466,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                   onChange={(e) => setEarnDraft(e.target.value)}
                   onBlur={applyEarn}
                   onKeyDown={(e) => { if (e.key === "Enter") applyEarn(); }}
-                  aria-label={tr("perfume.desk.earn.aria", "Percent your suppliers earn, for the Trading offer")}
+                  aria-label={view === "comp" ? tr("perfume.desk.earn.ariaComp", "Margin I estimate the competitor earns — sets their cost ≈") : tr("perfume.desk.earn.aria", "Percent your suppliers earn, for the Trading offer")}
                   className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
                 />
               </label>
