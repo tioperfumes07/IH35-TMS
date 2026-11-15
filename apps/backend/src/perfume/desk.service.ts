@@ -722,7 +722,62 @@ export async function rematchReview(c: PoolClient) {
       [r.id, JSON.stringify(suggest(ix, id))]);
     kindClash++;
   }
-  return { ...out, kind_clash_to_review: kindClash };
+  const split = await relinkSplitItems(c, ix);
+  return { ...out, kind_clash_to_review: kindClash, ...split };
+}
+
+/**
+ * Owner 2026-11-14 18:50 CT: "almost all my items should be linked to items from pca, mtz and those companies as well …
+ * keep the mapping engine correct so every time i upload a new list it matches and assigns correctly". Measured 18:52:
+ * 163 of the 463 items on his offer list had no supplier line — his list's brand codes (CALVI, NAUTI, LACOS, JEAN …)
+ * and brand words left in the name ("CK DEFY", "JPG DIVINE") had made a second item for the same bottle.
+ *
+ * Every line the engine linked (never one the owner confirmed) whose item no OTHER vendor carries is read again with
+ * today's brand rules. When that reading is exactly an item another vendor carries — same identity key: brand, name,
+ * size, type, gender, kind — the line moves to it, its barcodes follow, and the emptied item is merged into it.
+ */
+export async function relinkSplitItems(c: PoolClient, ix: MatchIndex): Promise<{ split_lines_relinked: number; split_items_merged: number }> {
+  const rows = (await c.query<{ id: string; item_id: string; vendor_id: string; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
+    `WITH cur AS (
+       SELECT r.id, r.item_id, l.vendor_id, r.brand, r.description, r.size_text, r.gender_override, r.match_method
+         FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+        WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.match_status = 'matched')
+     SELECT a.id, a.item_id, a.vendor_id, a.brand, a.description, a.size_text, a.gender_override FROM cur a
+      WHERE coalesce(a.match_method, '') <> 'confirmed'
+        AND NOT EXISTS (SELECT 1 FROM cur b WHERE b.item_id = a.item_id AND b.vendor_id <> a.vendor_id)`)).rows;
+  const carriedBy = new Map<string, Set<string>>();
+  for (const r of (await c.query<{ item_id: string; vendor_id: string }>(
+    `SELECT DISTINCT r.item_id, l.vendor_id FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+      WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL`)).rows) {
+    const s = carriedBy.get(r.item_id) ?? new Set<string>(); s.add(r.vendor_id); carriedBy.set(r.item_id, s);
+  }
+  let relinked = 0;
+  const emptied = new Map<string, string>();
+  for (const r of rows) {
+    const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
+    if (!id.brand || !id.nameWords.length) continue;
+    const target = ix.byKey.get(id.key);
+    if (!target || target === r.item_id) continue;
+    const others = carriedBy.get(target);
+    if (!others || ![...others].some((v) => v !== r.vendor_id)) continue;
+    const t = ix.items.get(target);
+    if (!t || productKind(t.flags) !== productKind(id.flags)) continue;
+    await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = 'key', identity_key = $3, loose_key = $4 WHERE id = $1`,
+      [r.id, target, id.key, looseKey(id)]);
+    relinked++;
+    emptied.set(r.item_id, target);
+  }
+  let merged = 0;
+  for (const [from, to] of emptied) {
+    const left = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.price_list_rows WHERE item_id = $1`, [from])).rows[0]!.n;
+    if (left > 0) continue;
+    await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1 AND NOT EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = $2 AND u.upc = perfume.item_upcs.upc)`, [from, to]);
+    await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [from, to]);
+    await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1 AND merged_into_id IS NULL`, [from, to]);
+    merged++;
+  }
+  if (relinked) invalidateGridCache();
+  return { split_lines_relinked: relinked, split_items_merged: merged };
 }
 
 /** gender (M / W): the line being linked is that gender — the other gender's bottles are never offered (owner
