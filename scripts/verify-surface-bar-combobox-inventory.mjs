@@ -31,6 +31,8 @@ const ALLOWED_NESTED = new Set([
   "components/forms/StateSelect.tsx",
   "pages/perfume/PerfumeListsPanel.tsx",
   "pages/perfume/PerfumeReviewPanel.tsx",
+  // #29581 moved the Review "link to" picker (MatchCell) into the desk page itself — same perfume desk shell as the two above.
+  "pages/perfume/PerfumeDeskPage.tsx",
 ]);
 
 /** Combobox hosts owned by an existing matrix leaf (page/section nests). */
