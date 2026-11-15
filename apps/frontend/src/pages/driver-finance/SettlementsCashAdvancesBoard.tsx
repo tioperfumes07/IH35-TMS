@@ -261,28 +261,27 @@ export function SettlementsCashAdvancesBoard() {
           data-testid="cash-advances-kpi-strip"
           data-cash-advances-v3-kpis="1"
         >
-          <V3KpiTile
+          <V3KpiTile board
             label={S443326.cashAdvances.kpiOnFile}
             value={display(onFile === null ? null : Math.round(onFile))}
             testId="cash-advances-kpi-on-file"
             onClick={() => navigate(BASE_PATH)}
           />
-          <V3KpiTile
+          <V3KpiTile board
             label={S443326.cashAdvances.kpiAwaiting}
             value={display(awaiting === null ? null : Math.round(awaiting))}
             testId="cash-advances-kpi-awaiting"
             onClick={() => navigate(`${BASE_PATH}?tab=pending_approval`)}
           />
-          <V3KpiTile
+          <V3KpiTile board
             label={S443326.cashAdvances.kpiOutstanding}
             value={display(outstanding)}
             testId="cash-advances-kpi-outstanding"
             onClick={() => navigate(`${BASE_PATH}?tab=outstanding`)}
           />
-          <V3KpiTile
+          <V3KpiTile board
             label={S443326.cashAdvances.kpiRecovered}
             value={display(recovered)}
-            sub={S443326.cashAdvances.kpiRecoveredSub}
             testId="cash-advances-kpi-recovered"
             onClick={() => navigate(`${BASE_PATH}?tab=paid_off`)}
           />
