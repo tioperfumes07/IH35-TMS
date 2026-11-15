@@ -208,7 +208,23 @@ export async function rekeyItems(c: PoolClient, opts: { dryRun: boolean }): Prom
 
 /** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
  *  reading of a line — import, Review, List analysis — uses it. Re-read on every call: one cheap query. */
+/**
+ * Speed (owner 2026-11-15 16:44 CT, measured live 22:33Z: every Review reload 5.7 s): the brand index was rebuilt from
+ * all 14,414 items on EVERY request. It is now rebuilt only when the items' brand/name or the brand aliases changed —
+ * a fingerprint read in one small query (count + hash of every brand|name and alias|brand). Any edit on any server
+ * changes the fingerprint, so no instance ever reads with a stale index.
+ */
+let nameBrandsSig: string | null = null;
+export function currentNameBrandsSig(): string | null { return nameBrandsSig; }
 export async function loadNameBrands(c: PoolClient): Promise<void> {
+  const sig = (await c.query<{ s: string }>(
+    `SELECT concat_ws('|',
+       (SELECT count(*) FROM perfume.items WHERE merged_into_id IS NULL),
+       (SELECT coalesce(sum(hashtext(coalesce(brand,'') || '|' || coalesce(name,''))::bigint), 0) FROM perfume.items WHERE merged_into_id IS NULL),
+       (SELECT count(*) FROM perfume.brand_aliases),
+       (SELECT coalesce(sum(hashtext(coalesce(alias,'') || '|' || coalesce(brand,''))::bigint), 0) FROM perfume.brand_aliases)) AS s`)).rows[0]?.s ?? null;
+  // No fingerprint read → never trust a remembered index (rebuild every time).
+  if (sig !== null && sig === nameBrandsSig) return;
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const it = await c.query<{ brand: string; name: string }>(`SELECT brand, name FROM perfume.items WHERE merged_into_id IS NULL`);
   const al = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
@@ -216,6 +232,7 @@ export async function loadNameBrands(c: PoolClient): Promise<void> {
   const n = new Map<string, number>();
   for (const r of it.rows) { const b = canonicalBrand(r.brand, al); if (b) n.set(b, (n.get(b) ?? 0) + 1); }
   setDeskBrands([...n].filter(([, c]) => c >= 5).map(([b]) => b));
+  nameBrandsSig = sig;
 }
 
 export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
@@ -573,6 +590,20 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
+/** The engine's reading of a Review line, remembered per exact input and per brand fingerprint (same input, same
+ * brand index → same reading). Dropped whole when the fingerprint changes. */
+const identityCache = new Map<string, Identity>();
+let identityCacheSig: string | null = null;
+function cachedIdentity(line: { description: string; brand: string | null; size: string | null; gender: string | null }, aliases: Record<string, string>): Identity {
+  const sig = currentNameBrandsSig();
+  if (sig === null) return identify({ ...line, brandAliases: aliases });
+  if (sig !== identityCacheSig || identityCache.size > 50_000) { identityCache.clear(); identityCacheSig = sig; }
+  const key = JSON.stringify([line.description, line.brand, line.size, line.gender]);
+  let id = identityCache.get(key);
+  if (!id) { id = identify({ ...line, brandAliases: aliases }); identityCache.set(key, id); }
+  return id;
+}
+
 /** Review filters read from the line itself (owner 2026-11-15: "filter by men or women, or by gender or by type, or set
  * or tester or those with suggestions"). Values are the engine's own reading of the vendor line: gender M / W / U / none,
  * type (EDT, EDP, PARFUM …), kind (SET, TESTER, MINI, REFILL … or NONE for a regular bottle), category, brand. */
@@ -617,7 +648,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
   const out = rows.rows.map((r: Record<string, unknown>) => {
-    const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null, brandAliases: aliases });
+    const id = cachedIdentity({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null }, aliases);
     const tail = vendorLineTail(String(r.description ?? ""));
     const base = { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
       flags: id.flags.join(" "), category: categoryOf(id.gender, id.flags), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
