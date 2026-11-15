@@ -1,3 +1,19 @@
+
+## ROUND 9.5 · 2026-11-15T00:30Z (checkpoint) · Cursor
+- Deployed FE/API tip at read: `ae71c2b8232218171e2dcde8c34a107ca1b167f6` (healthz/shallow); FE bundle already carries B12–20 markers.
+- B15 PR: https://github.com/tioperfumes07/IH35-TMS/pull/29584 (SidePanel port + measurement route) — LIVE PROOF pending deploy.
+- LIVE reader @ 1440×900 on app.ih35dispatch.com (chrome keys filtered; data not aliased yet):
+  - **Dispatch-TruckPlanner**: missing=7 mismatches=227 checked=1354
+  - **Dispatch-LoadHistory**: missing=190 mismatches=1209 checked=3299
+  - **Dispatch-BookLoad-Spec**: missing=0 mismatches=218 checked=2180
+  - **Dispatch-BookLoad-TripType**: missing=5 mismatches=135 checked=844
+  - **Factoring**: missing=9 mismatches=433 checked=1510
+  - **Fuel**: missing=57 mismatches=537 checked=1596
+  - **Insurance**: missing=7 mismatches=438 checked=1473
+  - **Dispatch-BookLoad-Modal**: missing=140 mismatches=1257 checked=4901
+- DONE (reader 0/0): none yet.
+- in progress: B15 #29584 merge+deploy; fix PRs for every board above 0/0 by 01:40Z (aliases + Side/Center title 16px Modal design + parent/boxSizing).
+
 ## OUTBOX (2026-11-14T23:20Z) — ROUND 9.4 boards 12–20 PRs shipped · LIVE reader pending deploy
 ROUND 9.4 2026-11-14T23:20Z · boards DONE (reader 0/0): none yet (LIVE PROOF pending deploy) · shipped PRs: 12 #29562 MERGED · 13 #29563 MERGED · 14/15 #29565 MERGED · 16 #29568 · 17 #29569 · 18 #29575 · 19 #29576 · 20 Insurance PR opening · next: Chrome LIVE proofs at 1440×900 missing:0 mismatches:0 + SHA in each PR · no link waves · no prod writes
 
