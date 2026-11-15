@@ -19,6 +19,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ParityTable } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
@@ -174,9 +175,9 @@ export function SettlementsPreSettlementsBoard() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="settlements-presettle-board" data-v3-board="Settlements-PreSettlements">
-        <V3Panel board title="Pre-settlements" testId="settlements-presettle-need-company">
+        <BoardSection title="Pre-settlements" testId="settlements-presettle-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </V3Panel>
+        </BoardSection>
       </div>
     );
   }

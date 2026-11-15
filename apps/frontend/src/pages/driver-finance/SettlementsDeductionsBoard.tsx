@@ -19,6 +19,7 @@ import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { V3 } from "../../design/v3-tokens";
@@ -292,9 +293,9 @@ export function SettlementsDeductionsBoard() {
   if (!companyId) {
     return (
       <div className="space-y-3" data-testid="settlements-deductions-board" data-v3-board="Settlements-Deductions">
-        <V3Panel board title="Deductions" testId="settlements-deductions-need-company">
+        <BoardSection title="Deductions" testId="settlements-deductions-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </V3Panel>
+        </BoardSection>
       </div>
     );
   }

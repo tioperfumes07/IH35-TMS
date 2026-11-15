@@ -27,6 +27,7 @@ import { ExpenseLoadConfirmationsBoard } from "../../components/expenses/Expense
 import { PaymentMethodPicker } from "../../components/driver-finance/PaymentMethodPicker";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
 import { settlementCloseNetPay } from "./settlementCloseNet";
@@ -1000,9 +1001,9 @@ export function SettlementCloseArrivalPage() {
       </div>
 
       {!companyId ? (
-        <V3Panel board title="Settlement close" testId="settlement-close-need-company">
+        <BoardSection title="Settlement close" testId="settlement-close-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company first.</p>
-        </V3Panel>
+        </BoardSection>
       ) : (
         <div className="space-y-3" data-testid="settlement-close-panel">
           <label className="block max-w-xl">

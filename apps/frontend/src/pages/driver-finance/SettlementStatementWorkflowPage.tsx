@@ -33,6 +33,7 @@ import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { openCanonicalDocument, openPrintableDocument } from "../../lib/openPrintableDocument";
@@ -470,9 +471,9 @@ export function SettlementStatementWorkflowPage() {
     return (
       <div className="space-y-3">
         <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Select an operating company" />
-        <V3Panel board title="Settlement workflow" testId="settlement-workflow-need-company">
+        <BoardSection title="Settlement workflow" testId="settlement-workflow-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </V3Panel>
+        </BoardSection>
       </div>
     );
   }

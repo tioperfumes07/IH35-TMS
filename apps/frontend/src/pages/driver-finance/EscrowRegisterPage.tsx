@@ -22,6 +22,7 @@ import { entityLabel } from "../../lib/entity-label";
 import { useTranslation } from "react-i18next";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsd, formatUsdCents, formatUsdTable, formatQuantityTable } from "../../lib/money";
 import { formatCalendarDateUS, formatDateUS } from "../../lib/formatDate";
@@ -395,9 +396,9 @@ export function EscrowRegisterPage() {
     return (
       <SettlementsModuleShell showBack backLabel="Escrow" backTo="/driver-finance/escrow">
         <div className="space-y-3 px-1" data-testid="escrow-register-page" data-v3-board="Settlements-EscrowRegister">
-          <V3Panel board title="Escrow register" testId="escrow-register-need-company">
+          <BoardSection title="Escrow register" testId="escrow-register-need-company">
             <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-          </V3Panel>
+          </BoardSection>
         </div>
       </SettlementsModuleShell>
     );

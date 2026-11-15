@@ -14,6 +14,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3Panel } from "../../components/v3/V3Panel";
+import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
@@ -318,9 +319,9 @@ export function SettlementsEscrowBoard() {
       </MoneyListToolbar>
 
       {!companyId ? (
-        <V3Panel board title="Escrow" testId="settlements-escrow-need-company">
+        <BoardSection title="Escrow" testId="settlements-escrow-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </V3Panel>
+        </BoardSection>
       ) : null}
 
       {accountsQuery.isError ? (
