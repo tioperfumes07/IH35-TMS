@@ -32,9 +32,14 @@ describe("brands the owner named on the ESPERANZA list", () => {
     expect(b("STALLION 53 BLUE")).toBe("EMPER");
   });
   it("cross-reference: a name only one brand owns across every vendor's items gives that brand", () => {
-    const idx = nameBrandIndex([{ brand: "LATTAFA", name: "ASAD" }, { brand: "LATTAFA", name: "ASAD ZANZIBAR" }, { brand: "ARMAF", name: "BLUE HOMME" }, { brand: "DIOR", name: "BLUE" }]);
+    const idx = nameBrandIndex([{ brand: "LATTAFA", name: "ASAD" }, { brand: "LATTAFA", name: "ASAD ZANZIBAR" }, { brand: "LATTAFA", name: "YARA" },
+      { brand: "ARMAF", name: "BLUE HOMME" }, { brand: "DIOR", name: "BLUE" },
+      // live 11-14: misspelled item brands must not teach a brand — "BURBERRY HER" under "BURBE", "GUESS UOMO" under a Ferragamo misspelling
+      { brand: "XBURB", name: "BURBERRY HER" }, { brand: "XBURB", name: "BURBERRY HERO" }, { brand: "XBURB", name: "BURBERRY GODDESS" },
+      { brand: "BURBERRY", name: "TOUCH" }, { brand: "GUESS", name: "SEDUCTIVE" }]);
     expect(b("ASAD 3.4oz EDP M", idx)).toBe("LATTAFA");
     expect(idx.BLUE).toBeUndefined(); // generic word, never a brand
+    expect(idx.BURBERRY).toBeUndefined(); // a name that starts with a brand never teaches another brand
   });
 });
 describe("sets the owner said were missed", () => {

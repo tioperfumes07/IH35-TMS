@@ -149,6 +149,13 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "J DEL POZO": "JESUS DEL POZO", "J. DEL POZO": "JESUS DEL POZO", "JESUS DEL POZO": "JESUS DEL POZO",
   "UNITED COLORS OF BENETTON": "BENETTON", "BENETTON": "BENETTON", "BENNETON": "BENETTON",
   "ARDEN": "ELIZABETH ARDEN", "NINA": "NINA RICCI", "DONNA": "DONNA KARAN",
+  // Measured live 11-14 6:45 PM CT on the 209 ESPERANZA lines still without a brand, and on misspelled item brands.
+  "BURBE": "BURBERRY", "BEILISH": "BILLIE EILISH", "SALVATORE FERREGAMO": "SALVATORE FERRAGAMO", "CHRISTIAN AUDIGIER": "ED HARDY",
+  "G.ARMANI": "GIORGIO ARMANI", "G ARMANI": "GIORGIO ARMANI", "H.B": "HUGO BOSS", "J.CHOO": "JIMMY CHOO", "J CHOO": "JIMMY CHOO",
+  "JIMMI CHOO": "JIMMY CHOO", "JINNY CHOO": "JIMMY CHOO", "MER-BENZ": "MERCEDES BENZ", "MER BENZ": "MERCEDES BENZ", "MERCEDES-BENZ": "MERCEDES BENZ",
+  "BENETON": "BENETTON", "TOOMY": "TOMMY HILFIGER", "BVLGARY": "BVLGARI", "CAROLINA H": "CAROLINA HERRERA", "A.GRAND": "ARIANA GRANDE",
+  "A. GRANDE": "ARIANA GRANDE", "A GRANDE": "ARIANA GRANDE", "ARIANA G": "ARIANA GRANDE", "CRISTIANO R": "CRISTIANO RONALDO",
+  "CRITIANO RONALDO": "CRISTIANO RONALDO", "B. S": "BRITNEY SPEARS", "LOLITA LEMPICK": "LOLITA LEMPICA",
 };
 
 export function canonicalBrand(raw: string, extra: Record<string, string> = {}): string {
@@ -328,7 +335,9 @@ export const NAME_BRAND_HINTS: Record<string, string> = {
   "STALLION": "EMPER", "UNFORGIVABLE": "SEAN JOHN", "UNTOLD": "ARMAF", "YOUTH DEW": "ESTEE LAUDER", "Z 14": "HALSTON",
   "SUNG": "ALFRED SUNG", "VIVA LA JUICY": "JUICY COUTURE", "VOLUPTE": "OSCAR DE LA RENTA", "MR BURBERRY": "BURBERRY",
   "MY BURBERRY": "BURBERRY", "PASHA": "CARTIER", "FANCY": "JESSICA SIMPSON", "HOT": "BENETTON", "COLD": "BENETTON",
-  "HALLOWEEN": "JESUS DEL POZO",
+  "HALLOWEEN": "JESUS DEL POZO", "HALOWEEN": "JESUS DEL POZO", "ACQUA DI GIO": "GIORGIO ARMANI", "ACQUA DI GIOIA": "GIORGIO ARMANI",
+  "CURIOUS": "BRITNEY SPEARS", "CURIOS": "BRITNEY SPEARS", "FANTASY": "BRITNEY SPEARS", "DRAKKAR": "GUY LAROCHE", "ANGEL": "MUGLER",
+  "ALIEN": "MUGLER", "GREY FLANNEL": "GEOFFREY BEENE", "AMAZING": "BILL BLASS",
 };
 let DESK_NAME_BRANDS: Record<string, string> = {};
 /** The desk's cross-reference, loaded from every vendor's items (PCA, MTZ, JIZAN, NANDANSONS …). */
@@ -344,23 +353,38 @@ const GENERIC_NAME_WORDS = new Set(["BLUE", "BLACK", "WHITE", "RED", "GOLD", "PI
  * when ONE brand owns them across the whole item master. A single word must be 3+ characters and not a generic word.
  */
 export function nameBrandIndex(items: ReadonlyArray<{ brand: string; name: string }>, aliases: Record<string, string> = {}): Record<string, string> {
-  const seen = new Map<string, Set<string>>();
-  for (const it of items) {
-    const brand = canonicalBrand(it.brand, aliases);
-    if (!brand) continue;
-    const bw = new Set(brand.split(" "));
-    const w = String(it.name ?? "").toUpperCase().replace(/'/g, "").replace(/[^A-Z0-9&]+/g, " ").trim().split(" ").filter((x) => x && !bw.has(x));
+  const canon = items.map((it) => ({ brand: canonicalBrand(it.brand, aliases), name: it.name }));
+  const count = new Map<string, number>();
+  for (const c of canon) if (c.brand) count.set(c.brand, (count.get(c.brand) ?? 0) + 1);
+  // A name that starts with ANY brand's first word ("BURBERRY HER" filed under a misspelled "BURBE", "GUESS UOMO"
+  // filed under "SALVATORE FERREGAMO" — measured live 11-14) never teaches a brand: the line's own brand reads it.
+  const brandFirst = new Set<string>([...count.keys(), ...Object.keys(BUILTIN_BRAND_ALIASES), ...Object.values(BUILTIN_BRAND_ALIASES)]
+    .map((b) => b.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim().split(" ")[0]!).filter((w) => w.length >= 3));
+  const seen = new Map<string, Map<string, number>>();
+  for (const c of canon) {
+    if (!c.brand || (count.get(c.brand) ?? 0) < 3) continue; // a brand on 1–2 items is too thin to teach anything
+    const bw = new Set(c.brand.split(" "));
+    const w = String(c.name ?? "").toUpperCase().replace(/'/g, "").replace(/[^A-Z0-9&]+/g, " ").trim().split(" ").filter((x) => x && !bw.has(x));
+    if (!w.length || brandFirst.has(w[0]!)) continue;
     for (let n = 1; n <= Math.min(3, w.length); n++) {
       const ph = w.slice(0, n).join(" ");
       if (n === 1 && (ph.length < 3 || GENERIC_NAME_WORDS.has(ph))) continue;
-      const s = seen.get(ph) ?? new Set<string>();
-      s.add(brand); seen.set(ph, s);
+      const m = seen.get(ph) ?? new Map<string, number>();
+      m.set(c.brand, (m.get(c.brand) ?? 0) + 1); seen.set(ph, m);
     }
   }
   const out: Record<string, string> = {};
-  for (const [ph, s] of seen) if (s.size === 1) out[ph] = [...s][0];
+  for (const [ph, m] of seen) {
+    if (m.size !== 1) continue;
+    const [b, n] = [...m][0]!;
+    if (!ph.includes(" ") && n < 2) continue; // one word must be seen on 2+ items of that brand
+    out[ph] = b;
+  }
   return out;
 }
+let DESK_BRANDS: string[] = [];
+/** Every brand the item master carries on 5+ items — read wherever it sits in a line that names no other brand. */
+export function setDeskBrands(b: string[]): void { DESK_BRANDS = b; }
 function brandFromName(words: readonly string[], idx: Record<string, string>): string {
   for (let n = Math.min(3, words.length); n >= 1; n--) {
     const ph = words.slice(0, n).join(" ");
@@ -487,7 +511,7 @@ export function identify(input: IdentityInput): Identity {
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
   let brand = canonicalBrand(input.brand ?? "", aliases);
-  const known = Object.keys({ ...BUILTIN_BRAND_ALIASES, ...aliases });
+  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...aliases }), ...DESK_BRANDS];
   const brandValues = new Set(Object.values({ ...BUILTIN_BRAND_ALIASES, ...aliases }));
   if (brand) brandValues.add(brand);
   // Remove the brand's words wherever they lead the line, in any of its spellings.
@@ -504,6 +528,11 @@ export function identify(input: IdentityInput): Identity {
   if (!brand) {
     const inside = spellings.filter((sp) => sp.length >= 2).find((sp) => words.some((_, i) => sp.every((w, j) => words[i + j] === w)));
     if (inside) brand = canonicalBrand(inside.join(" "), aliases);
+  }
+  // One-word brand of the item master anywhere in the line ("3.4oz EDT+3oz GEL+MINI AZZARO CHROME M 3PC SET").
+  if (!brand) {
+    const one = DESK_BRANDS.find((b) => !b.includes(" ") && b.length >= 4 && words.includes(b));
+    if (one) brand = canonicalBrand(one, aliases);
   }
   if (!brand) brand = canonicalBrand(brandFromName(words, input.nameBrands ?? DESK_NAME_BRANDS), aliases);
   // A dash after a brand prefix ("GA-AQUA DE GIO") leaves the brand glued on; handled by punctuation step above.
