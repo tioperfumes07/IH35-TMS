@@ -111,7 +111,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
       key: "name",
       label: "Vendor",
       sort: (r) => r.name,
-      cell: (r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} />,
+      cell: (r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} className="font-semibold text-[#111827] no-underline hover:underline" />,
     },
     { key: "category", label: "Category", width: 130, sort: (r) => r.category ?? "", cell: (r) => (r.category && r.category_account_id ? <EntityLink kind="account" id={r.category_account_id} label={r.category} /> : <span>{r.category ?? "—"}</span>) },
     {
