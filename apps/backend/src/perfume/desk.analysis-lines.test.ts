@@ -82,10 +82,45 @@ describe("Excel export — every computed column is a live formula", () => {
     expect(full.map((f) => f.target).sort()).toEqual(["c:v1:cost", "c:v1:earn", "c:v1:sales", "s:v1:diff", "s:v1:diff_pct", "s:v1:real"]);
     // Owner 2026-11-15 13:32 CT: competition reverse-engineers THEIR cost from THEIR list — sales × (1 − my margin estimate).
     const ref = (k: string) => k;
-    expect(full.find((f) => f.target === "c:v1:cost")!.build(ref)).toBe("c:v1:sales*(1-c:v1:margin)");
+    expect(full.find((f) => f.target === "c:v1:cost")!.build(ref)).toBe("ROUND(c:v1:sales*(1-c:v1:margin),2)");
     // Wholesale: negative = I am more expensive than their real price.
     expect(full.find((f) => f.target === "s:v1:diff")!.build(ref)).toBe("s:v1:real-my_offer_price");
     expect(exportFormulas([w("s:v1:price"), w("s:v1:real")]).map((f) => f.target)).toEqual([]);
+  });
+  // Owner 2026-11-15 13:44 CT: "fix all my perfumes and exports and colors and formulas in the excels it exports".
+  it("every computed column of every view is a live formula: purchase, trading, mine, wholesale sentence", () => {
+    const w = (k: string, kind: GridCol["kind"] = "money"): GridCol => ({ key: k, label: k, group: "x", kind });
+    const ref = (k: string) => k;
+    const f = exportFormulas([w("v:b1:price"), w("v:b1:net"), w("v:b1:cush"), w("t:b1:list"), w("t:b1:earn"), w("t:b1:cost"), w("t:b1:cushion"), w("t:b1:pct", "pct"),
+      w("my_offer_price"), w("my_last_cost"), w("low_sell"), w("offer_vs_low"), w("offer_action", "text"), w("offer_margin_pct", "pct"), w("landed_likely"), w("target_price_margin"), w("target_profit"), w("target_action", "text"),
+      w("s:v1:price"), w("s:v1:cushion"), w("s:v1:real"), w("s:v1:diff"), w("s:v1:diff_pct", "pct"), w("s:v1:action", "text")]);
+    const by = (t: string) => f.find((x) => x.target === t)!.build(ref);
+    expect(by("v:b1:net")).toBe("MAX(0,v:b1:price-v:b1:cush)");
+    expect(by("t:b1:cost")).toBe("ROUND(MAX(0,t:b1:list-t:b1:cushion)*(1-t:b1:pct),2)");
+    expect(by("t:b1:earn")).toBe("MAX(0,t:b1:list-t:b1:cushion)-t:b1:cost");
+    expect(by("offer_vs_low")).toBe("low_sell-my_offer_price");
+    expect(by("offer_margin_pct")).toBe('IF(my_offer_price=0,"",(my_offer_price-my_last_cost)/my_offer_price)');
+    expect(by("target_profit")).toBe("target_price_margin-landed_likely");
+    expect(by("offer_action")).toContain('"Over by "&TEXT(-(offer_vs_low),"$0.00")&" — lower to compete"');
+    expect(by("s:v1:action")).toContain('" — reduce"&IF(my_offer_price>0," "&TEXT(ABS(s:v1:diff)/my_offer_price,"0.0%"),"")');
+  });
+  it("the workbook: trade cost follows the % typed, advice in red, and the trade inputs ride along as FORMULA INPUTS", async () => {
+    const cols: GridCol[] = [
+      { key: "t:b1:list", label: "Their list price", group: "Trade · B", kind: "money" }, { key: "t:b1:earn", label: "They earn ≈", group: "Trade · B", kind: "money" },
+      { key: "t:b1:cost", label: "Sell to them ≈", group: "Trade · B", kind: "money" }, { key: "t:b1:cushion", label: "Their cushion", group: "Trade · B", kind: "money" },
+      { key: "t:b1:pct", label: "They earn %", group: "Trade · B", kind: "pct" }, { key: "s:v1:action", label: "Reduce / raise", group: "Competitor · E", kind: "text" },
+    ];
+    const { cols: out, added } = exportColumnsWithInputs(cols.slice(0, 3), cols);
+    expect([...added].sort()).toEqual(["t:b1:cushion", "t:b1:pct"]);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await exportWorkbook([...out, cols[5]!], [{ "t:b1:list": 5000, "t:b1:cushion": 100, "t:b1:pct": 10, "t:b1:cost": 4410, "t:b1:earn": 490, "s:v1:action": "Over by $1.00 (2.0%) — reduce 2.0%" } as GridRow], DEFAULT_RULES, "TIO trade", added));
+    const ws = wb.worksheets[0]!;
+    expect(ws.getRow(3).getCell(3).value).toMatchObject({ formula: "ROUND(MAX(0,A3-D3)*(1-E3),2)", result: 44.1 });
+    expect(ws.getRow(3).getCell(2).value).toMatchObject({ formula: "MAX(0,A3-D3)-C3", result: 4.9 });
+    expect(ws.getRow(1).getCell(4).value).toBe("FORMULA INPUTS");
+    const red = (ws as unknown as { conditionalFormattings: Array<{ ref: string; rules: Array<{ formulae?: string[]; style?: { font?: { color?: { argb?: string } } } }> }> }).conditionalFormattings
+      .find((cf) => cf.ref.startsWith("F3") && cf.rules.some((r) => r.formulae?.[0]?.includes('SEARCH("reduce"')));
+    expect(red?.rules[0]?.style?.font?.color?.argb).toBe("FFB91C1C");
   });
 });
 

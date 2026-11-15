@@ -1114,6 +1114,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   for (const v of buyV) {
     cols.push({ key: `v:${v.id}:price`, label: "List price", group: vendorLabel(v), kind: "money" });
     cols.push({ key: `v:${v.id}:net`, label: "Cushion", group: vendorLabel(v), kind: "money" });
+    // Formula input (never on screen by default): the $ cushion, so "Cushion" (list − cushion) is a live Excel formula.
+    cols.push({ key: `v:${v.id}:cush`, label: "Cushion $", group: vendorLabel(v), kind: "money" });
   }
   // TRADING — two columns per supplier: their price, and their cost = (their price − cushion) less the % they earn.
   for (const v of buyV) {
@@ -1122,6 +1124,10 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     cols.push({ key: `t:${v.id}:list`, label: "Their list price", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
     cols.push({ key: `t:${v.id}:earn`, label: "They earn ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
     cols.push({ key: `t:${v.id}:cost`, label: "Sell to them ≈", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
+    // Formula inputs (never on screen by default): their cushion and the % I estimate they earn, so "Sell to them ≈"
+    // and "They earn ≈" are live Excel formulas — change the % in Excel and their cost follows (owner 2026-11-15).
+    cols.push({ key: `t:${v.id}:cushion`, label: "Their cushion", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
+    cols.push({ key: `t:${v.id}:pct`, label: "They earn % (my estimate)", group: `Trade · ${vendorLabel(v)}`, kind: "pct" });
   }
   // WHOLESALE — per competitor (owner 2026-11-14): their description (to check the match against mine), their list
   // price, the cushion (tiers: .25 / .50 over $10 / 1.00 over $30), their real price (list − cushion), and my offer
@@ -1200,6 +1206,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     for (const o of ranked) {
       row[`v:${o.vendorId}:price`] = o.listedCents;
       row[`v:${o.vendorId}:net`] = Math.max(0, o.listedCents - o.cushionLoCents);
+      row[`v:${o.vendorId}:cush`] = o.cushionLoCents;
     }
     const best = ranked[0];
     if (best) {
@@ -1320,6 +1327,8 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       row[`t:${v.id}:cost`] = theirCost;
       // What they make on it: their list price less the cushion they give, less what they pay (= what I sell at).
       row[`t:${v.id}:earn`] = Math.max(0, theirs - cushion) - theirCost;
+      row[`t:${v.id}:cushion`] = cushion;
+      row[`t:${v.id}:pct`] = earn;
       const mine = row.target_price_margin as number | undefined;
       if (mine != null && mine <= theirCost) beats.push(vendorLabel(v));
     }
@@ -1651,22 +1660,44 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   const add = (target: string, deps: string[], build: ExportFormula["build"]) => {
     if (have.has(target) && deps.every((d) => have.has(d))) out.push({ target, deps, build });
   };
+  // Server money is whole cents (Math.round); ROUND(…,2) keeps the workbook to the cent the screen shows.
   for (const c of cols) {
-    const m = /^([sc]):([^:]+):price$/.exec(c.key);
+    const m = /^([sctv]):([^:]+):(price|list)$/.exec(c.key);
     if (!m) continue;
     const id = m[2];
-    if (m[1] === "s") {
+    if (m[1] === "v") {
+      // Purchase: "Cushion" = their list price − the cushion that vendor gives.
+      add(`v:${id}:net`, [`v:${id}:price`, `v:${id}:cush`], (r) => `MAX(0,${r(`v:${id}:price`)}-${r(`v:${id}:cush`)})`);
+    } else if (m[1] === "t") {
+      // Trading: sell to them ≈ = (their list − their cushion) × (1 − the % I estimate they earn); they earn = the rest.
+      add(`t:${id}:cost`, [`t:${id}:list`, `t:${id}:cushion`, `t:${id}:pct`], (r) => `ROUND(MAX(0,${r(`t:${id}:list`)}-${r(`t:${id}:cushion`)})*(1-${r(`t:${id}:pct`)}),2)`);
+      add(`t:${id}:earn`, [`t:${id}:list`, `t:${id}:cushion`, `t:${id}:cost`], (r) => `MAX(0,${r(`t:${id}:list`)}-${r(`t:${id}:cushion`)})-${r(`t:${id}:cost`)}`);
+    } else if (m[1] === "s") {
       // Wholesale: real price = list − cushion; me vs real $ = my offer − real; % of real.
       add(`s:${id}:real`, [`s:${id}:price`, `s:${id}:cushion`], (r) => `${r(`s:${id}:price`)}-${r(`s:${id}:cushion`)}`);
       add(`s:${id}:diff`, ["my_offer_price", `s:${id}:real`], (r) => `${r(`s:${id}:real`)}-${r("my_offer_price")}`);
       add(`s:${id}:diff_pct`, [`s:${id}:diff`, `s:${id}:real`], (r) => `IF(${r(`s:${id}:real`)}=0,"",${r(`s:${id}:diff`)}/${r(`s:${id}:real`)})`);
+      // Reduce / raise — the screen's sentence (offerVsReal), rebuilt from the cells so it follows a price typed in Excel.
+      add(`s:${id}:action`, [`s:${id}:diff`, `s:${id}:real`, "my_offer_price"], (r) => {
+        const d = r(`s:${id}:diff`), re = r(`s:${id}:real`), o = r("my_offer_price");
+        const pctTxt = `IF(${re}>0," ("&TEXT(ABS(${d})/${re},"0.0%")&")","")`;
+        const ofMine = `IF(${o}>0," "&TEXT(ABS(${d})/${o},"0.0%"),"")`;
+        return `IF(${d}<0,"Over by "&TEXT(-${d},"$0.00")&${pctTxt}&" — reduce"&${ofMine},IF(${d}>0,"Under by "&TEXT(${d},"$0.00")&${pctTxt}&" — room to raise"&${ofMine},"Same as their real price"))`;
+      });
     } else {
       // Competition: sales = their list − cushion; their cost ≈ = sales × (1 − my margin estimate); they earn = sales − cost.
       add(`c:${id}:sales`, [`c:${id}:price`, `c:${id}:cushion`], (r) => `${r(`c:${id}:price`)}-${r(`c:${id}:cushion`)}`);
-      add(`c:${id}:cost`, [`c:${id}:sales`, `c:${id}:margin`], (r) => `${r(`c:${id}:sales`)}*(1-${r(`c:${id}:margin`)})`);
+      add(`c:${id}:cost`, [`c:${id}:sales`, `c:${id}:margin`], (r) => `ROUND(${r(`c:${id}:sales`)}*(1-${r(`c:${id}:margin`)}),2)`);
       add(`c:${id}:earn`, [`c:${id}:sales`, `c:${id}:cost`], (r) => `${r(`c:${id}:sales`)}-${r(`c:${id}:cost`)}`);
     }
   }
+  // Mine: my offer against the lowest competitor, my offer margin, my profit at X%, and the raise / lower sentences.
+  const action = (gap: string, same: string) => `IF(${gap}>0,"Under by "&TEXT(${gap},"$0.00")&" — can raise",IF(${gap}<0,"Over by "&TEXT(-(${gap}),"$0.00")&" — lower to compete","${same}"))`;
+  add("offer_vs_low", ["low_sell", "my_offer_price"], (r) => `${r("low_sell")}-${r("my_offer_price")}`);
+  add("offer_action", ["offer_vs_low"], (r) => action(r("offer_vs_low"), "Same as lowest competitor"));
+  add("offer_margin_pct", ["my_offer_price", "my_last_cost"], (r) => `IF(${r("my_offer_price")}=0,"",(${r("my_offer_price")}-${r("my_last_cost")})/${r("my_offer_price")})`);
+  add("target_profit", ["target_price_margin", "landed_likely"], (r) => `${r("target_price_margin")}-${r("landed_likely")}`);
+  add("target_action", ["low_sell", "target_price_margin"], (r) => action(`(${r("low_sell")}-${r("target_price_margin")})`, "Same as lowest competitor"));
   // List analysis — the owner's PERFUME_ENGINE_FORMATS.xlsx formulas, cell for cell.
   add("a:c_sales", ["a:c_list", "a:c_cushion"], (r) => `${r("a:c_list")}-${r("a:c_cushion")}`);
   add("a:esp", ["a:c_sales"], (r) => `${r("a:c_sales")}`);
@@ -1830,6 +1861,14 @@ export function paintGridLikeTheDesk(ws: ExcelJS.Worksheet, cols: GridCol[], row
     if (c.kind !== "money" && c.kind !== "pct") return;
     ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "cellIs", operator: "lessThan", formulae: ["0"], priority: priority++, style: { font: { bold: c.kind === "money", color: { argb: "FFB91C1C" } } } }] });
     if (c.kind === "pct") ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "expression", formulae: [`AND(ISNUMBER(${L(i)}${first}),${L(i)}${first}>=0.2)`], priority: priority++, style: { font: { bold: true, color: { argb: "FF334155" } } } }] });
+  });
+  // Advice that says I am more expensive / must lower: bold red, as on screen (PerfumeDeskPage: /reduce|lower to
+  // compete|more expensive/i) — a live rule, so a formula sentence that flips in Excel flips colour too.
+  cols.forEach((c, i) => {
+    if (c.kind !== "text") return;
+    if (!/action$/.test(c.key) && !rows.some((r) => typeof r[c.key] === "string" && /reduce|lower to compete|more expensive/i.test(r[c.key] as string))) return;
+    const x = `${L(i)}${first}`;
+    ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "expression", priority: priority++, formulae: [`OR(ISNUMBER(SEARCH("reduce",${x})),ISNUMBER(SEARCH("lower to compete",${x})),ISNUMBER(SEARCH("more expensive",${x})))`], style: { font: { bold: true, color: { argb: "FFB91C1C" } } } }] });
   });
   const match = idx("a:match"), best = idx("best_vendor");
   rows.forEach((r, n) => {
