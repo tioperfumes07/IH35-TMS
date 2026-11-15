@@ -4,8 +4,8 @@
  */
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
-import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
-import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { addItem, compactKey, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
+import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
@@ -150,7 +150,20 @@ export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: 
 
 /* ---------------- index ---------------- */
 
+/** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
+ *  reading of a line — import, Review, List analysis — uses it. Re-read on every call: one cheap query. */
+export async function loadNameBrands(c: PoolClient): Promise<void> {
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const it = await c.query<{ brand: string; name: string }>(`SELECT brand, name FROM perfume.items WHERE merged_into_id IS NULL`);
+  const al = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  setNameBrands(nameBrandIndex(it.rows, al));
+  const n = new Map<string, number>();
+  for (const r of it.rows) { const b = canonicalBrand(r.brand, al); if (b) n.set(b, (n.get(b) ?? 0) + 1); }
+  setDeskBrands([...n].filter(([, c]) => c >= 5).map(([b]) => b));
+}
+
 export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
+  await loadNameBrands(c);
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const ix = emptyIndex(Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand])));
   const items = await c.query<{ id: string; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }>(
@@ -516,6 +529,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
   }
   const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
+  await loadNameBrands(c);
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
@@ -682,17 +696,30 @@ export async function rematchReview(c: PoolClient) {
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL`);
   const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0 };
+  // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
+  // request died with a 502). Same values, same rules.
+  const upd: Array<{ id: string; item_id: string | null; method: string | null; status: string; suggestions: unknown; identity_key: string; loose_key: string }> = [];
+  let n = 0;
   for (const r of rows.rows) {
+    // Let the server answer its health checks while a few thousand lines are read.
+    if (++n % 100 === 0) await new Promise((res) => setImmediate(res));
     const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
     if (m.itemId) {
-      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = $3, match_status = 'matched', suggestions = '[]'::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
-        [r.id, m.itemId, m.method, m.identity.key, looseKey(m.identity)]);
+      upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       out.now_matched++;
     } else {
-      await c.query(`UPDATE perfume.price_list_rows SET match_status = $2, suggestions = $3::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
-        [r.id, m.status, JSON.stringify(m.suggestions), m.identity.key, looseKey(m.identity)]);
+      upd.push({ id: r.id, item_id: null, method: null, status: m.status, suggestions: m.suggestions, identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       if (m.status === "review") out.review++; else out.unmatched++;
     }
+  }
+  for (let i = 0; i < upd.length; i += 500) {
+    await c.query(
+      `UPDATE perfume.price_list_rows r
+          SET item_id = CASE WHEN x.status = 'matched' THEN x.item_id ELSE r.item_id END,
+              match_method = CASE WHEN x.status = 'matched' THEN x.method ELSE r.match_method END,
+              match_status = x.status, suggestions = x.suggestions, identity_key = x.identity_key, loose_key = x.loose_key
+         FROM jsonb_to_recordset($1::jsonb) AS x(id uuid, item_id uuid, method text, status text, suggestions jsonb, identity_key text, loose_key text)
+        WHERE r.id = x.id`, [JSON.stringify(upd.slice(i, i + 500))]);
   }
   // Links made by barcode BEFORE the kind rule (2026-11-14): a line that says REFILL / TESTER / SET / MINI … sitting
   // on an item of another kind goes back to Review for the owner. Owner-confirmed links are never touched.
@@ -701,14 +728,73 @@ export async function rematchReview(c: PoolClient) {
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id
       WHERE r.match_status = 'matched' AND r.match_method = 'upc' AND l.is_current AND l.voided_at IS NULL`);
   let kindClash = 0;
+  let k = 0;
   for (const r of linked.rows) {
+    if (++k % 200 === 0) await new Promise((res) => setImmediate(res));
     const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
     if (productKind(id.flags) === productKind(r.flags)) continue;
     await c.query(`UPDATE perfume.price_list_rows SET item_id = NULL, match_method = NULL, match_status = 'review', suggestions = $2::jsonb WHERE id = $1`,
       [r.id, JSON.stringify(suggest(ix, id))]);
     kindClash++;
   }
-  return { ...out, kind_clash_to_review: kindClash };
+  const split = await relinkSplitItems(c, ix);
+  return { ...out, kind_clash_to_review: kindClash, ...split };
+}
+
+/**
+ * Owner 2026-11-14 18:50 CT: "almost all my items should be linked to items from pca, mtz and those companies as well …
+ * keep the mapping engine correct so every time i upload a new list it matches and assigns correctly". Measured 18:52:
+ * 163 of the 463 items on his offer list had no supplier line — his list's brand codes (CALVI, NAUTI, LACOS, JEAN …)
+ * and brand words left in the name ("CK DEFY", "JPG DIVINE") had made a second item for the same bottle.
+ *
+ * Every line the engine linked (never one the owner confirmed) whose item no OTHER vendor carries is read again with
+ * today's brand rules. When that reading is exactly an item another vendor carries — same identity key: brand, name,
+ * size, type, gender, kind — the line moves to it, its barcodes follow, and the emptied item is merged into it.
+ */
+export async function relinkSplitItems(c: PoolClient, ix: MatchIndex): Promise<{ split_lines_relinked: number; split_items_merged: number }> {
+  const rows = (await c.query<{ id: string; item_id: string; vendor_id: string; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
+    `WITH cur AS (
+       SELECT r.id, r.item_id, l.vendor_id, r.brand, r.description, r.size_text, r.gender_override, r.match_method
+         FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+        WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.match_status = 'matched')
+     SELECT a.id, a.item_id, a.vendor_id, a.brand, a.description, a.size_text, a.gender_override FROM cur a
+      WHERE coalesce(a.match_method, '') <> 'confirmed'
+        AND NOT EXISTS (SELECT 1 FROM cur b WHERE b.item_id = a.item_id AND b.vendor_id <> a.vendor_id)`)).rows;
+  const carriedBy = new Map<string, Set<string>>();
+  for (const r of (await c.query<{ item_id: string; vendor_id: string }>(
+    `SELECT DISTINCT r.item_id, l.vendor_id FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+      WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL`)).rows) {
+    const s = carriedBy.get(r.item_id) ?? new Set<string>(); s.add(r.vendor_id); carriedBy.set(r.item_id, s);
+  }
+  let relinked = 0;
+  const emptied = new Map<string, string>();
+  for (const r of rows) {
+    const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
+    if (!id.brand || !id.nameWords.length) continue;
+    const ck = compactKey(id.key);
+    const cc = ck ? ix.byCompact.get(ck) ?? [] : [];
+    const target = ix.byKey.get(id.key) ?? (cc.length === 1 ? cc[0] : undefined);
+    if (!target || target === r.item_id) continue;
+    const others = carriedBy.get(target);
+    if (!others || ![...others].some((v) => v !== r.vendor_id)) continue;
+    const t = ix.items.get(target);
+    if (!t || productKind(t.flags) !== productKind(id.flags)) continue;
+    await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = 'key', identity_key = $3, loose_key = $4 WHERE id = $1`,
+      [r.id, target, id.key, looseKey(id)]);
+    relinked++;
+    emptied.set(r.item_id, target);
+  }
+  let merged = 0;
+  for (const [from, to] of emptied) {
+    const left = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.price_list_rows WHERE item_id = $1`, [from])).rows[0]!.n;
+    if (left > 0) continue;
+    await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1 AND NOT EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = $2 AND u.upc = perfume.item_upcs.upc)`, [from, to]);
+    await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [from, to]);
+    await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1 AND merged_into_id IS NULL`, [from, to]);
+    merged++;
+  }
+  if (relinked) invalidateGridCache();
+  return { split_lines_relinked: relinked, split_items_merged: merged };
 }
 
 /** gender (M / W): the line being linked is that gender — the other gender's bottles are never offered (owner
@@ -814,6 +900,23 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
   const both = offer != null && esp != null;
   const under = both ? (offer! < esp! ? esp! - offer! : 0) : null;
   const over = both ? (offer! > esp! ? offer! - esp! : 0) : null;
+  const minBuy = both && esp! < offer! ? Math.round(esp! * (1 - a.minMargin / 100)) : null;
+  const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+  // The recommendation, from the same numbers (owner 19:03 CT: "check the logic, if i am purchasing cheaper and selling
+  // cheaper. then the recommendations"): Esperanza cheaper → lower to their price only if I can buy at or under the
+  // min purchase price; I am cheaper → room to raise to their price; a supplier under my last cost → buy there.
+  const advice = (() => {
+    if (offer == null) return esp == null ? null : "Not on my list";
+    if (esp == null) return "Not on Esperanza's list";
+    const cheaperBuy = a.lowPrice != null && a.cost != null && a.lowPrice < a.cost ? ` · buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} (your last cost ${money(a.cost)})` : "";
+    if (offer > esp) {
+      if (a.lowPrice != null && minBuy != null && a.lowPrice <= minBuy) return `LOWER to ${money(esp)} — buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} keeps ${a.minMargin}%+`;
+      if (a.cost != null && minBuy != null && a.cost <= minBuy) return `LOWER to ${money(esp)} — your last cost ${money(a.cost)} keeps ${a.minMargin}%+`;
+      return `CAN'T MATCH at ${a.minMargin}% — need cost ≤ ${money(minBuy ?? 0)}${a.lowPrice != null ? `, lowest supplier ${money(a.lowPrice)}` : ""}`;
+    }
+    if (offer < esp) return `RAISE up to ${money(esp)} (+${money(esp - offer)})${cheaperBuy}`;
+    return `SAME as Esperanza${cheaperBuy}`;
+  })();
   return {
     "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
     "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[a.gender ?? ""] ?? null,
@@ -822,8 +925,13 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     "a:markup": offer != null && a.cost ? p1((offer - a.cost) / a.cost) : null,
     "a:offer": offer, "a:esp": esp,
     "a:low_sales": offer == null && esp == null ? null : Math.min(...[offer, esp].filter((x): x is number => x != null)),
-    "a:min_buy": esp != null ? Math.round(esp * (1 - a.minMargin / 100)) : null, "a:min_margin": a.minMargin,
+    // Owner 2026-11-14 19:03 CT: "the min purchase price to match esperanza should only have items that esperanza is
+    // cheaper". Only where Esperanza sells for less than my offer is there a price to match.
+    "a:min_buy": minBuy, "a:min_margin": a.minMargin,
     "a:low_vendor": a.lowVendor, "a:low_price": a.lowPrice,
+    // Can I buy it cheap enough to match? The lowest supplier price against the most I can pay.
+    "a:buy_check": minBuy == null ? null : a.lowPrice == null ? "No supplier price"
+      : a.lowPrice <= minBuy ? `YES — ${a.lowVendor ?? "supplier"} ${money(a.lowPrice)} ≤ ${money(minBuy)}` : `NO — lowest ${money(a.lowPrice)} is ${money(a.lowPrice - minBuy)} over`,
     "a:offer2": offer, "a:esp2": esp,
     "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
     "a:can_inc": under != null && offer! > 0 ? p1(under / offer!) : null,
@@ -831,6 +939,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     // Over by is NEGATIVE (owner 2026-11-14: "the over by should be negatives so we can really see we are selling more
     // expensive"); the % to lower stays positive — how much to take off my price.
     "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
+    "a:advice": advice,
     "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
     "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_brand": a.comp ? (a.cBrand ?? null) : null, "a:c_vendor": a.comp?.vendor ?? null,
   };
@@ -842,6 +951,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
   const _cached = _gridCache.get(_cacheKey);
   if (_cached) return _cached;
+  await loadNameBrands(c);
   const rules = await getRules(c);
   const target = targetPctOf(rules, opts.targetPct);
   // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.
@@ -1007,9 +1117,11 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
+    A("buy_check", "Lowest vendor ≤ min purchase?", "Purchases", "text"),
     A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Cheaper By", "Analysis", "money"),
     A("under_pct", "Cheaper %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
     A("over_by", "More Expensive By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
+    A("advice", "RECOMMENDATION", "Analysis", "text"),
     A("c_list", "LIST PRICE", cGroup, "money"), A("c_cushion", "CUSHION", cGroup, "money"), A("c_sales", "SALES PRICE", cGroup, "money"),
   );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
@@ -1471,7 +1583,8 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:esp2", ["a:esp"], (r) => `${r("a:esp")}`);
   add("a:offer2", ["a:offer"], (r) => `${r("a:offer")}`);
   add("a:low_sales", ["a:offer", "a:esp"], (r) => `MIN(${r("a:offer")},${r("a:esp")})`);
-  add("a:min_buy", ["a:esp", "a:min_margin"], (r) => `${r("a:esp")}*(1-${r("a:min_margin")})`);
+  add("a:min_buy", ["a:esp", "a:min_margin", "a:offer"], (r) => `IF(AND(${r("a:esp")}<>"",${r("a:offer")}<>"",${r("a:esp")}<${r("a:offer")}),${r("a:esp")}*(1-${r("a:min_margin")}),"")`);
+  add("a:buy_check", ["a:min_buy", "a:low_price"], (r) => `IF(${r("a:min_buy")}="","",IF(${r("a:low_price")}="","No supplier price",IF(${r("a:low_price")}<=${r("a:min_buy")},"YES","NO — "&TEXT(${r("a:low_price")}-${r("a:min_buy")},"$0.00")&" over")))`);
   add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:offer")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
   add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:last_cost")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
   add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
@@ -1485,17 +1598,48 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
 
 /** One sheet of the view's visible columns, values as real numbers, plus a "How computed" sheet; landed cost,
  *  margin and markup are live Excel formulas so anyone can audit them in Excel. */
-export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string): Promise<Buffer> {
+/** The columns a set of shown columns needs so every computed one stays a live formula: each formula's inputs,
+ *  then their inputs, kept in the grid's own order. Owner 2026-11-14 18:37 CT: "export to excel in the same format
+ *  … with the formula in case i need to change anything" — the screen's columns showed computed numbers whose
+ *  inputs were hidden, so they exported as plain numbers. */
+export function exportColumnsWithInputs(shown: readonly GridCol[], all: readonly GridCol[]): { cols: GridCol[]; added: Set<string> } {
+  const want = new Set(shown.map((c) => c.key));
+  const forms = exportFormulas(all);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const f of forms) if (want.has(f.target)) for (const d of f.deps) if (!want.has(d)) { want.add(d); changed = true; }
+    for (const [t, deps] of [["landed_likely", ["best_price", "cushion", "freight"]], ["margin", ["low_sell", "landed_likely"]], ["markup", ["low_sell", "landed_likely"]], ["profit", ["low_sell", "landed_likely"]]] as const) {
+      if (want.has(t)) for (const d of deps) if (!want.has(d) && all.some((c) => c.key === d)) { want.add(d); changed = true; }
+    }
+  }
+  const shownKeys = new Set(shown.map((c) => c.key));
+  const added = new Set([...want].filter((k) => !shownKeys.has(k)));
+  // Shown columns first, in the screen's order; the inputs the formulas need after them, in the grid's order.
+  return { cols: [...shown, ...all.filter((c) => added.has(c.key))], added };
+}
+
+export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string, added: ReadonlySet<string> = new Set()): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "TIO Perfumes price desk";
   const ws = wb.addWorksheet(title.slice(0, 31));
-  ws.addRow(cols.map((c) => (c.group && c.group !== "Item" ? `${c.group} · ${c.label}` : c.label)));
+  // The owner's format (PERFUME_ENGINE_FORMATS.xlsx): row 1 the group over its columns, row 2 the column names.
+  const groupOf = (c: GridCol) => (added.has(c.key) ? "FORMULA INPUTS" : (c.group || "ITEM").toUpperCase());
+  ws.addRow(cols.map(groupOf));
+  ws.addRow(cols.map((c) => c.label));
+  for (let i = 0; i < cols.length;) {
+    let j = i;
+    while (j + 1 < cols.length && groupOf(cols[j + 1]!) === groupOf(cols[i]!)) j++;
+    if (j > i) ws.mergeCells(1, i + 1, 1, j + 1);
+    ws.getCell(1, i + 1).alignment = { horizontal: "center" };
+    i = j + 1;
+  }
   ws.getRow(1).font = { bold: true };
-  ws.views = [{ state: "frozen", ySplit: 1 }];
+  ws.getRow(2).font = { bold: true };
+  ws.views = [{ state: "frozen", ySplit: 2 }];
   const idx = (k: string) => cols.findIndex((c) => c.key === k);
   const L = (i: number) => ws.getColumn(i + 1).letter;
   rows.forEach((r, n) => {
-    const excelRow = n + 2;
+    const excelRow = n + 3;
     const values = cols.map((c) => {
       const v = r[c.key];
       if (v == null) return null;
@@ -1520,10 +1664,13 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     // Every other computed column is a live formula too (owner 2026-11-14: "exported to excel, with formulas").
     for (const f of exportFormulas(cols)) {
       const t = idx(f.target);
-      if (t < 0 || r[f.target] == null || f.deps.some((k) => r[k] == null)) continue;
+      // min purchase / its check are formulas on EVERY row with an offer and an Esperanza price, blank when I am the
+      // cheaper one — so changing a price or the margin in Excel brings them in and out (owner 19:03 CT).
+      const always = f.target === "a:min_buy" || f.target === "a:buy_check";
+      if (t < 0 || (r[f.target] == null && !always) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")))) continue;
       const ref = (k: string) => `${L(idx(k))}${excelRow}`;
       const kind = cols[t]!.kind;
-      const result = kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
+      const result = r[f.target] == null ? "" : kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
       row.getCell(t + 1).value = { formula: f.build(ref), result: result as number };
     }
   });
@@ -1533,7 +1680,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     if (c.kind === "pct") col.numFmt = "0.0%";
     col.width = c.key === "name" ? 40 : c.kind === "text" ? 18 : 13;
   });
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2, column: cols.length } };
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],

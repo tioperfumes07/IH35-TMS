@@ -74,7 +74,9 @@ export function offerCandidates(line: { description: string; brand: string | nul
   const out: OfferCandidate[] = [];
   for (const it of items) {
     const need = nameKeyWords(it.name);
-    if (!need.length || !need.every((w) => lineWords.has(w))) continue;
+    // Spacing typos count as the same words ("LOVEME AMETHYST" = "LOVE ME AMETHYST", owner 19:03 CT).
+    const lineCompact = [...words(line.description), ...id.nameWords.flatMap(words)].join("");
+    if (!need.length || !(need.every((w) => lineWords.has(w)) || lineCompact.includes(need.join("")))) continue;
     if (id.brand && it.brand && id.brand !== it.brand) continue;
     const brandWords = words(it.brand).filter((w) => w.length >= 3 && !NOISE.has(w));
     const brandSeen = id.brand === it.brand || brandWords.some((w) => lineWords.has(w));
@@ -93,7 +95,8 @@ export function offerCandidates(line: { description: string; brand: string | nul
     // WANTED vs WANTED INTENSE, HER vs HER BLOSSOM, GOOD GIRL vs GOOD GIRL BLUSH, 212 VIP vs 212 VIP ROSE) — not
     // proposed. Gender words and noise words do not count.
     const itemAll = new Set([...need, ...words(it.brand), ...words(it.name)]);
-    const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !itemAll.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w));
+    const itemCompact = [...itemAll].join("") + need.join("");
+    const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !itemAll.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w) && !need.join("").includes(w) && !itemCompact.includes(w));
     if (extras.length) continue;
     const sizeOk = id.sizeMl != null && it.size_ml != null;
     // Type (EDT / EDP / PARFUM / EXTRAIT) differing is usually a different bottle: proposed, scored lower, named.
