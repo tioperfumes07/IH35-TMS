@@ -1496,17 +1496,48 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
 
 /** One sheet of the view's visible columns, values as real numbers, plus a "How computed" sheet; landed cost,
  *  margin and markup are live Excel formulas so anyone can audit them in Excel. */
-export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string): Promise<Buffer> {
+/** The columns a set of shown columns needs so every computed one stays a live formula: each formula's inputs,
+ *  then their inputs, kept in the grid's own order. Owner 2026-11-14 18:37 CT: "export to excel in the same format
+ *  … with the formula in case i need to change anything" — the screen's columns showed computed numbers whose
+ *  inputs were hidden, so they exported as plain numbers. */
+export function exportColumnsWithInputs(shown: readonly GridCol[], all: readonly GridCol[]): { cols: GridCol[]; added: Set<string> } {
+  const want = new Set(shown.map((c) => c.key));
+  const forms = exportFormulas(all);
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const f of forms) if (want.has(f.target)) for (const d of f.deps) if (!want.has(d)) { want.add(d); changed = true; }
+    for (const [t, deps] of [["landed_likely", ["best_price", "cushion", "freight"]], ["margin", ["low_sell", "landed_likely"]], ["markup", ["low_sell", "landed_likely"]], ["profit", ["low_sell", "landed_likely"]]] as const) {
+      if (want.has(t)) for (const d of deps) if (!want.has(d) && all.some((c) => c.key === d)) { want.add(d); changed = true; }
+    }
+  }
+  const shownKeys = new Set(shown.map((c) => c.key));
+  const added = new Set([...want].filter((k) => !shownKeys.has(k)));
+  // Shown columns first, in the screen's order; the inputs the formulas need after them, in the grid's order.
+  return { cols: [...shown, ...all.filter((c) => added.has(c.key))], added };
+}
+
+export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string, added: ReadonlySet<string> = new Set()): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "TIO Perfumes price desk";
   const ws = wb.addWorksheet(title.slice(0, 31));
-  ws.addRow(cols.map((c) => (c.group && c.group !== "Item" ? `${c.group} · ${c.label}` : c.label)));
+  // The owner's format (PERFUME_ENGINE_FORMATS.xlsx): row 1 the group over its columns, row 2 the column names.
+  const groupOf = (c: GridCol) => (added.has(c.key) ? "FORMULA INPUTS" : (c.group || "ITEM").toUpperCase());
+  ws.addRow(cols.map(groupOf));
+  ws.addRow(cols.map((c) => c.label));
+  for (let i = 0; i < cols.length;) {
+    let j = i;
+    while (j + 1 < cols.length && groupOf(cols[j + 1]!) === groupOf(cols[i]!)) j++;
+    if (j > i) ws.mergeCells(1, i + 1, 1, j + 1);
+    ws.getCell(1, i + 1).alignment = { horizontal: "center" };
+    i = j + 1;
+  }
   ws.getRow(1).font = { bold: true };
-  ws.views = [{ state: "frozen", ySplit: 1 }];
+  ws.getRow(2).font = { bold: true };
+  ws.views = [{ state: "frozen", ySplit: 2 }];
   const idx = (k: string) => cols.findIndex((c) => c.key === k);
   const L = (i: number) => ws.getColumn(i + 1).letter;
   rows.forEach((r, n) => {
-    const excelRow = n + 2;
+    const excelRow = n + 3;
     const values = cols.map((c) => {
       const v = r[c.key];
       if (v == null) return null;
@@ -1544,7 +1575,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     if (c.kind === "pct") col.numFmt = "0.0%";
     col.width = c.key === "name" ? 40 : c.kind === "text" ? 18 : 13;
   });
-  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: cols.length } };
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2, column: cols.length } };
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],

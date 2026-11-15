@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
@@ -317,8 +317,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
-    const cols = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
-    const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`);
+    const shown = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
+    const { cols, added } = exportColumnsWithInputs(shown, g.cols);
+    const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`, added);
     const stamp = new Date().toISOString().slice(0, 10);
     return reply
       .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
