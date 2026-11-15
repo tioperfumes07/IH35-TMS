@@ -1,4 +1,3 @@
-import type React from "react";
 import { companyToday, quarterBoundsIso } from "../../lib/businessDate";
 // TABLE_DATE_OMIT: this table has no date column by design — one row per account; the statement's as-of date / period is chosen in the report header, not a column.
 import { useEffect, useMemo, useState, type ReactNode } from "react";
@@ -7,8 +6,8 @@ import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib
 import { AmountLink, resolveAmountRoute, type AmountFilter } from "../../components/shared/AmountLink";
 import { ALL_PAGE_SIZE, ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
+import { V3_HEADER_BTN, V3_HEADER_BTN_PRIMARY } from "../../components/v3/V3StatusPill";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { BasisSelector, type AccountingBasis } from "../../components/accounting/BasisSelector";
 import {
@@ -32,22 +31,6 @@ import { formatUsdCents } from "../../lib/money";
 import { TrialBalanceBoard, trialBalanceMeasuredArNote } from "./components/TrialBalanceBoard";
 import { V3 } from "../../design/v3-tokens";
 
-const chromeBtnTB: React.CSSProperties = {
-  height: 30,
-  padding: "0 12px",
-  display: "inline-flex",
-  alignItems: "center",
-  borderRadius: 6,
-  lineHeight: "normal",
-  boxSizing: "content-box",
-  fontSize: 12,
-  fontWeight: 600,
-  fontFamily: V3.font,
-  background: V3.surface,
-  color: V3.ink,
-  border: `1px solid ${V3.border}`,
-  cursor: "pointer",
-};
 
 // GLB-05 -- delegates to the canonical formatter instead of reimplementing an identical
 // local currency formatter (same shape lib/money.ts already covers).
@@ -370,24 +353,26 @@ export function TrialBalancePage() {
   }
 
   return (
-    <div className="space-y-3 print:space-y-2">
+    // Reports-Viewer-TrialBalance.dc.html is the WHOLE page (header, navy bar, filter bar, KPIs, accounts) — the board root.
+    <div data-v3-board="Reports-Viewer-TrialBalance" style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: "Inter, sans-serif" }}>
       <style>{`
         @media print { .no-print { display: none !important; } body { background: white; } }
       `}</style>
       {/* R1 — title before navy Reports navigation. */}
       <PageHeader
+        variant="v3"
+        crumb="Reports › Trial balance"
         title="Trial balance"
         subtitle={`Ledger debits and credits by account · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref={reportsBackHref}
-        breadcrumb={["Reports", "Trial Balance"]}
         actions={
-          <div className="no-print flex flex-wrap gap-3">
-            <button type="button" style={{ ...chromeBtnTB, opacity: !query.data ? 0.6 : 1, cursor: !query.data ? "not-allowed" : "pointer" }} onClick={printLetter} disabled={!query.data}>
+          <div className="no-print" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+            <button type="button" style={{ ...V3_HEADER_BTN, opacity: !query.data ? 0.6 : 1, cursor: !query.data ? "not-allowed" : "pointer" }} onClick={printLetter} disabled={!query.data}>
               Print
             </button>
-            <Button
-              size="sm"
-              variant="secondary"
+            <button
+              type="button"
+              style={{ ...V3_HEADER_BTN, opacity: !companyId || exportAction.pending || !exportMatchesScreen ? 0.6 : 1 }}
               disabled={!companyId || exportAction.pending || !exportMatchesScreen}
               title={exportMatchesScreen ? undefined : EXPORT_ACCRUAL_ONLY_TITLE}
               onClick={() =>
@@ -404,10 +389,10 @@ export function TrialBalancePage() {
               }
             >
               Export PDF
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
+            </button>
+            <button
+              type="button"
+              style={{ ...V3_HEADER_BTN_PRIMARY, opacity: !companyId || exportAction.pending || !exportMatchesScreen ? 0.6 : 1 }}
               disabled={!companyId || exportAction.pending || !exportMatchesScreen}
               title={exportMatchesScreen ? undefined : EXPORT_ACCRUAL_ONLY_TITLE}
               onClick={() =>
@@ -424,7 +409,7 @@ export function TrialBalancePage() {
               }
             >
               Export XLSX
-            </Button>
+            </button>
           </div>
         }
       />
@@ -439,6 +424,7 @@ export function TrialBalancePage() {
       ) : null}
 
       <ReportFilterBar
+        board
         testIdPrefix="reports-trial-balance"
         fromDate={staged.draft.start}
         toDate={staged.draft.end}
