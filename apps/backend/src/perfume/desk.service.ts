@@ -696,17 +696,27 @@ export async function rematchReview(c: PoolClient) {
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL`);
   const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0 };
+  // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
+  // request died with a 502). Same values, same rules.
+  const upd: Array<{ id: string; item_id: string | null; method: string | null; status: string; suggestions: unknown; identity_key: string; loose_key: string }> = [];
   for (const r of rows.rows) {
     const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
     if (m.itemId) {
-      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2, match_method = $3, match_status = 'matched', suggestions = '[]'::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
-        [r.id, m.itemId, m.method, m.identity.key, looseKey(m.identity)]);
+      upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       out.now_matched++;
     } else {
-      await c.query(`UPDATE perfume.price_list_rows SET match_status = $2, suggestions = $3::jsonb, identity_key = $4, loose_key = $5 WHERE id = $1`,
-        [r.id, m.status, JSON.stringify(m.suggestions), m.identity.key, looseKey(m.identity)]);
+      upd.push({ id: r.id, item_id: null, method: null, status: m.status, suggestions: m.suggestions, identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       if (m.status === "review") out.review++; else out.unmatched++;
     }
+  }
+  for (let i = 0; i < upd.length; i += 500) {
+    await c.query(
+      `UPDATE perfume.price_list_rows r
+          SET item_id = CASE WHEN x.status = 'matched' THEN x.item_id ELSE r.item_id END,
+              match_method = CASE WHEN x.status = 'matched' THEN x.method ELSE r.match_method END,
+              match_status = x.status, suggestions = x.suggestions, identity_key = x.identity_key, loose_key = x.loose_key
+         FROM jsonb_to_recordset($1::jsonb) AS x(id uuid, item_id uuid, method text, status text, suggestions jsonb, identity_key text, loose_key text)
+        WHERE r.id = x.id`, [JSON.stringify(upd.slice(i, i + 500))]);
   }
   // Links made by barcode BEFORE the kind rule (2026-11-14): a line that says REFILL / TESTER / SET / MINI … sitting
   // on an item of another kind goes back to Review for the owner. Owner-confirmed links are never touched.
