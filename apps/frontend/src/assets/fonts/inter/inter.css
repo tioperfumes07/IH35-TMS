@@ -1,0 +1,7 @@
+/* Inter (SIL OFL 1.1, @fontsource/inter 5.0.20 latin) — the V3 boards' typeface (docs/design/v3/*.dc.html load
+   Inter 400/500/600/700). Live 11-15: the app declared "Inter" everywhere but shipped no Inter face, so every board
+   drew in the OS fallback (13px line boxes for 11px text where the board draws 14px). Self-hosted, no CDN. */
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap; src: url("./inter-latin-400-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap; src: url("./inter-latin-500-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap; src: url("./inter-latin-600-normal.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap; src: url("./inter-latin-700-normal.woff2") format("woff2"); }
