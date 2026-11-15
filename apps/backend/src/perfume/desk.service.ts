@@ -1200,10 +1200,22 @@ async function buildAnalysisLines(c: PoolClient, x: {
     id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
   }));
   const brandCache = new Map<string, string | null>();
+  // A line that starts with a brand the item master knows ("ANIMALE BLACK M 3.4oz") reads as that brand even when the
+  // alias list does not carry it (measured live 11-14: 0 of the first 8 ESPERANZA lines had a brand read). Longest
+  // brand first; the line's own words only — never the linked item's brand, so a wrong read stays visible.
+  const knownBrands = [...new Set([...x.items.map((i) => i.brand), ...Object.values(aliases)].filter(Boolean))]
+    .map((b) => ({ b, w: b.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim() })).filter((o) => o.w.length >= 2)
+    .concat(Object.entries(aliases).map(([a, b]) => ({ b, w: a.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim() })).filter((o) => o.w.length >= 2))
+    .sort((a, b) => b.w.length - a.w.length);
+  const brandByName = (desc: string): string | null => {
+    const d = ` ${desc.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim()} `;
+    const hit = knownBrands.find((o) => d.startsWith(` ${o.w} `));
+    return hit ? canonicalBrand(hit.b, aliases) || hit.b : null;
+  };
   const brandRead = (desc: string | null | undefined, brand: string | null = null): string | null => {
     if (!desc) return null;
     const k = `${brand ?? ""}|${desc}`;
-    if (!brandCache.has(k)) brandCache.set(k, identify({ description: desc, brand, brandAliases: aliases }).brand || null);
+    if (!brandCache.has(k)) brandCache.set(k, identify({ description: desc, brand, brandAliases: aliases }).brand || brandByName(desc));
     return brandCache.get(k)!;
   };
   const likelyCache = new Map<string, MatchCandidate[]>();

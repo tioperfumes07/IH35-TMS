@@ -109,6 +109,7 @@ import { FactoringStagedFilters } from "./FactoringStagedFilters";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
 // primary Faro-parity tab strip (parked under Internal Tools — Rule 07, never delete surfaces).

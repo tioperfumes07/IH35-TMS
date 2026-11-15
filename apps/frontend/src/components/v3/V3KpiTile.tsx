@@ -101,19 +101,21 @@ export function V3KpiTile({
         </span>
         <span
           className="n"
+          data-v3={valueDataV3}
           style={{
             fontSize: V3_KPI.valuePx,
             fontWeight: 700,
             color: TONE[tone],
             fontVariantNumeric: "tabular-nums",
+            whiteSpace: "nowrap",
           }}
-          data-v3={valueDataV3}
         >
           {value}
         </span>
         {/* A V3 board always draws the sub line, empty or not (its 3px gap is part of the tile's height). */}
         {(board || (sub != null && sub !== "")) && (
           <span
+            data-v3={subDataV3}
             style={{
               fontSize: V3_KPI.subPx,
               color: V3.muted,
@@ -123,7 +125,6 @@ export function V3KpiTile({
               whiteSpace: "nowrap",
               overflow: "hidden",
             }}
-            data-v3={subDataV3}
           >
             {sub}
           </span>
