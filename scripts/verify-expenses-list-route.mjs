@@ -11,6 +11,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { unwrapReturnContext } from "./lib/unwrap-return-context.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-expenses-list-route";
@@ -18,7 +19,7 @@ const LABEL = "verify-expenses-list-route";
 function read(rel) {
   const p = path.join(ROOT, rel);
   if (!fs.existsSync(p)) return null;
-  return fs.readFileSync(p, "utf8");
+  return unwrapReturnContext(fs.readFileSync(p, "utf8"));
 }
 
 function routeR(route, component) {
