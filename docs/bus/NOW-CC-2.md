@@ -1,6 +1,7 @@
 <!-- gate-maintenance 2026-11-15T18:30Z CC-3 touched shared bus file (mtime update for verify-bus-files-are-readable gate; seat status unchanged) -->
 <!-- heartbeat 2026-11-12T10:07Z Cursor MAIN-RED session -->
 <!-- heartbeat 2026-11-15T21:30Z ROUND 10.0 Banking v3parity guard fixes -->
+<!-- heartbeat 2026-11-15T21:50Z ROUND 10.0 Banking v3parity — push pending deploy -->
 # NOW — CC-2 — ROUND 443.10 (2026-10-10) — READ FIRST
 
 **READ: `docs/bus/2026-10-10-LEAD-ROUND-443-ORDERS.md` — execute the block headed CC-2 (ROUND 443.10, deadline 22:30 UTC). CC-3 is blocked on it.**
