@@ -522,12 +522,15 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
 
       {tab === "rm_status_board" ? (
         // 443.267 V3: fleet health left; compact maintenance monitors on the right.
+        // Maintenance-Home.dc.html — board root: flex column · gap 12; KPI grid auto-fit minmax(200px,1fr) · gap 8;
+        // fleet line + side cards 1fr 230px · gap 12 · align start. board-box.css restores the board's content-box.
         <div
-          className="space-y-2"
           data-testid="rm-status-board"
           data-maintenance-tab="rm_status_board"
+          data-v3-board="Maintenance-Home"
+          style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0 }}
         >
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4" data-testid="maintenance-board-kpis">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(200px,1fr))", gap: 8 }} data-testid="maintenance-board-kpis">
             <V3KpiTile
               board
               label="PM due soon"
@@ -557,11 +560,11 @@ export function MaintenanceHomePage({ initialTab = "rm_status_board" }: Props) {
               testId="maintenance-kpi-mtd-cost"
             />
           </div>
-          <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_230px]">
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr) 230px", gap: 12, alignItems: "start" }}>
           <div className="min-w-0">
             <FleetHealthLine companyId={companyId} />
           </div>
-          <aside className="flex flex-col gap-2">
+          <aside style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {companyId ? (
               pmDueQuery.isError ? (
                 <ListErrorState
