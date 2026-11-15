@@ -1,4 +1,4 @@
-import { V3_HEADER_BTN_PRIMARY } from "../../../components/v3";
+import { V3_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
