@@ -29,6 +29,7 @@ const ALLOWED_NESTED = new Set([
   "components/Combobox.tsx",
   "pages/cash-flow/tabs/RollingLedgerTab.tsx",
   "components/forms/StateSelect.tsx",
+  "pages/perfume/PerfumeDeskPage.tsx",
   "pages/perfume/PerfumeListsPanel.tsx",
   "pages/perfume/PerfumeReviewPanel.tsx",
 ]);
