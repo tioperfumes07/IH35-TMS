@@ -91,3 +91,21 @@ describe("DONNA, DKNY and DONNA KARAN are one brand (owner 19:11 CT)", () => {
     expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DKNY" }).brand).toBe("DONNA KARAN");
   });
 });
+describe("ESPERANZA unmatched lines measured live 11-15", () => {
+  it("a phrase one brand dominates teaches that brand (DAISY: MARC JACOBS 47, DISNEY Daisy Duck 2)", () => {
+    const items = [...Array(47)].map((_, i) => ({ brand: "MARC JACOBS", name: `DAISY ${["LOVE", "WILD", "DREAM", ""][i % 4]}` }))
+      .concat([{ brand: "DISNEY", name: "DAISY DUCK" }, { brand: "DISNEY", name: "DAISY DUCK 2" }, { brand: "DISNEY", name: "MICKEY" }]);
+    const idx = nameBrandIndex(items);
+    expect(idx["DAISY"]).toBe("MARC JACOBS");
+    expect(identify({ description: "DAISY 3.4 EDT", nameBrands: idx }).brand).toBe("MARC JACOBS");
+  });
+  it("a phrase two brands really share teaches nothing", () => {
+    const items = [...Array(6)].map(() => ({ brand: "RAVE", name: "NOW BLACK" })).concat([...Array(4)].map(() => ({ brand: "TOMMY HILFIGER", name: "NOW MEN" })));
+    expect(nameBrandIndex(items)["NOW"]).toBeUndefined();
+  });
+  it("BMIST / B.M / B/MIST are a body mist; CAPITAN is CAPTAIN", () => {
+    for (const d of ["PARIS HILTON HEIRESS BMIST 8OZ", "ARIANA GRANDE THANK YOU NEXT B.M 8OZ", "PARIS HILTON HEIRESS B/MIST 8OZ"])
+      expect(identify({ description: d }).conc).toBe("MIST");
+    expect(identify({ description: "CAPITAN AMERICA 3.4 EDT" }).brand).toBe("MARVEL");
+  });
+});

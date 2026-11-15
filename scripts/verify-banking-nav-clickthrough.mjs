@@ -25,6 +25,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import process from "node:process";
+import { unwrapReturnContext } from "./lib/unwrap-return-context.mjs";
 
 const BANKING_HOME_REL = "apps/frontend/src/pages/banking/BankingHome.tsx";
 const ESCROW_TAB_REL = "apps/frontend/src/pages/banking/components/DriverEscrowLedgerSection.tsx";
@@ -86,7 +87,7 @@ export function assertGuard({ bankingHomeSrc, escrowTabSrc }) {
 }
 
 function readRepo(rel) {
-  return fs.readFileSync(path.join(process.cwd(), rel), "utf8");
+  return unwrapReturnContext(fs.readFileSync(path.join(process.cwd(), rel), "utf8"));
 }
 
 function runReal() {

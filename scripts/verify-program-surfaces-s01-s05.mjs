@@ -47,7 +47,7 @@ export function run() {
   const routes = ["/program", "/program/modules", "/program/tracker", "/program/matrix", "/program/final-additions"];
   for (const r of routes) {
     assert(manifest.includes(`path="${r}"`), `manifest.tsx must route ${r}`, errors);
-    assert(nav.includes(`to="${r}"`), `ProgramModuleNav must link ${r}`, errors);
+    assert(nav.includes(`to="${r}"`) || nav.includes(`sysHref("${r}")`), `ProgramModuleNav must link ${r}`, errors);
   }
 
   // S01: /program home is the live Scenario Tracker.
