@@ -36,12 +36,14 @@ export function downloadCsv(filename: string, header: string[], rows: Array<Arra
   URL.revokeObjectURL(a.href);
 }
 
+// Customers.dc.html / Vendors.dc.html: height 28 content-box — the outline one's 1px rule makes it 30 tall, the navy
+// primary draws no rule (28).
 const button: CSSProperties = {
-  height: 30, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6,
+  height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6,
   fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", lineHeight: "normal", boxSizing: "content-box",
 };
 export const outlineButton: CSSProperties = { ...button, background: V3.surface, color: V3.ink, border: `1px solid ${V3.border}` };
-export const primaryButton: CSSProperties = { ...button, background: V3.shell, color: V3.onShell, border: `1px solid ${V3.shell}` };
+export const primaryButton: CSSProperties = { ...button, background: V3.shell, color: V3.onShell, border: "none" };
 
 export function PartyHomeHeader(props: { crumb: string; title: string; subtitle: string; createLabel: string; onBack: () => void; onCreate: () => void }) {
   return (

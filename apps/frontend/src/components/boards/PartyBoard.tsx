@@ -129,7 +129,8 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
       label: "Customer",
       sort: (r) => r.name,
       // Codex cert residual: Customer column must EntityLink (renderFirst also links).
-      cell: (r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} />,
+      // Customers.dc.html: the name is 600 #111827, square (no 2px focus radius box).
+      cell: (r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} className="font-semibold text-[#111827] no-underline hover:underline" />,
     },
     {
       key: "invoices", label: "Invoices", num: true, width: 82, sort: (r) => r.invoices,
@@ -147,8 +148,8 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     {
       key: "factored", label: "Factored", width: 150, sort: (r) => r.factored ?? "",
       cell: (r) => (r.factored ? (
-        <DotLabel color={V3.link}>{r.factor_vendor_id ? <EntityLink kind="vendor" id={r.factor_vendor_id} label={formatCompanyName(r.factored)} /> : formatCompanyName(r.factored)}</DotLabel>
-      ) : <DotLabel color={V3.slate}>—</DotLabel>),
+        <DotLabel color={V3.link}>{r.factor_vendor_id ? <EntityLink kind="vendor" id={r.factor_vendor_id} label={formatCompanyName(r.factored)} className="[color:inherit] [font:inherit] no-underline hover:underline" /> : formatCompanyName(r.factored)}</DotLabel>
+      ) : "—"),
     },
     {
       key: "status", label: "Status", width: 96, sort: (r) => r.status,
