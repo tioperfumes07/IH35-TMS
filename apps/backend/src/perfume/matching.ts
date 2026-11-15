@@ -36,6 +36,8 @@ export type MatchIndex = {
   /** The identity key with the name's spaces removed — "LOVEME AMETHYST" = "LOVE ME AMETHYST" (owner 19:03 CT: "loveme
    *  amethyst is love me amethyst, it is a typo in their list"). Item ids; one id = an exact bottle. */
   byCompact: Map<string, string[]>;
+  /** Item ids per brand — suggestions are same-brand only, so they never scan the other 13,000 items. */
+  byBrand: Map<string, string[]>;
   byLoose: Map<string, string[]>;
   /** `${nameWords}|${size}|${flags}` → items with that name, size and flags (any brand, type, gender). */
   byName: Map<string, string[]>;
@@ -67,12 +69,13 @@ export type LineMatch = {
 };
 
 export function emptyIndex(brandAliases: Record<string, string> = {}): MatchIndex {
-  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byCompact: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
+  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byCompact: new Map(), byBrand: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
 }
 
 export function addItem(ix: MatchIndex, it: IndexItem) {
   ix.items.set(it.id, it);
   ix.byKey.set(it.identityKey, it.id);
+  if (it.brand) { const bl = ix.byBrand.get(it.brand) ?? []; if (!bl.includes(it.id)) bl.push(it.id); ix.byBrand.set(it.brand, bl); }
   const ck = compactKey(it.identityKey);
   if (ck) { const l0 = ix.byCompact.get(ck) ?? []; if (!l0.includes(it.id)) l0.push(it.id); ix.byCompact.set(ck, l0); }
   const l = ix.byLoose.get(it.looseKey) ?? [];
@@ -171,7 +174,11 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
   const lineBrandWords = new Set(wordsOf(id.brand));
   const lineNameWords = wordsOf(id.nameText).filter((w) => !lineBrandWords.has(w));
   const lineFull = trigrams(`${id.brand} ${id.nameText}`);
-  for (const it of ix.items.values()) {
+  // Same brand only (owner 2026-11-14 17:34 CT) — read just that brand's items (measured 01:38Z: scanning all 14,000
+  // items per line kept the server busy past its health check and the rematch died with a 502).
+  for (const iid of id.brand ? ix.byBrand.get(id.brand) ?? [] : []) {
+    const it = ix.items.get(iid);
+    if (!it) continue;
     if (id.sizeMl != null && it.sizeMl != null && Math.abs(id.sizeMl - it.sizeMl) > 0.5) continue;
     // An item filed with no gender still has the one its name says (BURBERRY BRIT HER → W, … POUR HIM → M).
     const itGender = it.gender || genderHintOf(it.name);
