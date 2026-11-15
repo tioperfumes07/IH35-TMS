@@ -573,7 +573,13 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
-export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number }) {
+/** Review filters read from the line itself (owner 2026-11-15: "filter by men or women, or by gender or by type, or set
+ * or tester or those with suggestions"). Values are the engine's own reading of the vendor line: gender M / W / U / none,
+ * type (EDT, EDP, PARFUM …), kind (SET, TESTER, MINI, REFILL … or NONE for a regular bottle), category, brand. */
+export type ReviewLineFilters = { gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[] };
+export type ReviewFacet = { value: string; count: number };
+
+export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number } & ReviewLineFilters) {
   // Filters (owner 2026-11-12: "1788 items, lets have the filters"): one vendor list, words in the vendor's line,
   // and "has a suggestion" (review) vs "nothing close" (unmatched).
   const cond: string[] = [];
@@ -591,10 +597,11 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
   // of my offer items; paging happens after that filter.
   const mine = opts.mine === "offer";
+  // Every waiting line is read (measured 2026-11-15: 1,496 on current lists) so the line filters — which come from the
+  // engine's reading of the text, not from a column — and their counts are exact; paging happens after the filters.
   const rows = await c.query(
     `SELECT r.id, r.list_id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
-       ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
-  const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
+       ${base} ORDER BY v.name, r.row_no`, fp);
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
     // my_desc: my own offer-list wording for the item (owner 2026-11-14: "showing my description name and la
     // esperanza description name … so i can verify they are matched correctly").
@@ -622,13 +629,37 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     const forMine = [...offer];
     return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, for_my_desc: forMine[0] ? myDesc.get(forMine[0].item_id) ?? null : null, _mine: forMine.length > 0 };
   });
-  if (!mine) return { rows: out, total: total!.rows[0].n };
+  type LineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown; gender?: string | null; conc?: string | null; flags?: string; category?: string; brand_name?: string | null };
   // Grouped by my item, then vendor, so the owner confirms item by item.
-  type MineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown };
-  const kept = (out as MineRow[]).filter((r) => r._mine)
+  const scoped: LineRow[] = !mine ? (out as LineRow[]) : (out as LineRow[]).filter((r) => r._mine)
     .sort((a, b) => String(a.for_my_item).localeCompare(String(b.for_my_item)) || String(a.vendor_name).localeCompare(String(b.vendor_name)))
     .map(({ _mine: _drop, ...rest }) => rest);
-  return { rows: kept.slice(opts.offset, opts.offset + opts.limit), total: kept.length };
+  const genderOf = (r: LineRow) => (r.gender ? String(r.gender) : "none");
+  const concOf = (r: LineRow) => (r.conc ? String(r.conc) : "none");
+  const kindsOf = (r: LineRow) => { const f = String(r.flags ?? "").split(/\s+/).filter(Boolean); return f.length ? f : ["NONE"]; };
+  const catOf = (r: LineRow) => String(r.category ?? "Unknown");
+  const brandOf = (r: LineRow) => (r.brand_name ? String(r.brand_name) : "none");
+  const want = (vals: string[] | undefined) => (vals?.length ? new Set(vals) : null);
+  const wG = want(opts.gender), wC = want(opts.conc), wK = want(opts.kind), wCat = want(opts.category), wB = want(opts.brand);
+  const pass = (r: LineRow, skip?: "gender" | "conc" | "kind" | "category" | "brand") =>
+    (skip === "gender" || !wG || wG.has(genderOf(r))) && (skip === "conc" || !wC || wC.has(concOf(r))) &&
+    (skip === "kind" || !wK || kindsOf(r).some((k) => wK.has(k))) && (skip === "category" || !wCat || wCat.has(catOf(r))) &&
+    (skip === "brand" || !wB || wB.has(brandOf(r)));
+  // Each filter's counts are measured with every OTHER filter applied, so a count is the number of lines that choice shows.
+  const facet = (key: "gender" | "conc" | "kind" | "category" | "brand", read: (r: LineRow) => string[]): ReviewFacet[] => {
+    const n = new Map<string, number>();
+    for (const r of scoped) if (pass(r, key)) for (const v of read(r)) n.set(v, (n.get(v) ?? 0) + 1);
+    return [...n].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  };
+  const kept = scoped.filter((r) => pass(r));
+  return {
+    rows: kept.slice(opts.offset, opts.offset + opts.limit),
+    total: kept.length,
+    facets: {
+      gender: facet("gender", (r) => [genderOf(r)]), conc: facet("conc", (r) => [concOf(r)]), kind: facet("kind", kindsOf),
+      category: facet("category", (r) => [catOf(r)]), brand: facet("brand", (r) => [brandOf(r)]),
+    },
+  };
 }
 
 /**
