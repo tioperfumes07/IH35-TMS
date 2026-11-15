@@ -143,6 +143,9 @@ export async function loadSamsaraVehicleIdsByUnit(client: PgClient, operatingCom
 
 type LedgerState = { pushed: Set<string>; lastSkipReason: Map<string, string>; permanentlyFailed: Set<string> };
 
+/** The pre-#29687 failure text: status code only, Samsara's body reason dropped. */
+export const BARE_HTTP_REASON = /^samsara_fuel_purchase_http_\d{3}(:http_\d{3})?$/;
+
 async function loadLedger(client: PgClient, operatingCompanyId: string): Promise<LedgerState> {
   const res = await client.query(
     `SELECT DISTINCT ON (payload->>'fuel_transaction_id')
@@ -162,7 +165,10 @@ async function loadLedger(client: PgClient, operatingCompanyId: string): Promise
   for (const r of res.rows) {
     if (r.ever_pushed) pushed.add(String(r.id));
     else if (r.outcome === "skipped" && r.reason) lastSkipReason.set(String(r.id), String(r.reason));
-    else if (r.outcome === "failed" && r.reason && /http_4(?!29)\d\d/.test(String(r.reason))) permanentlyFailed.add(String(r.id));
+    // Permanent ONLY when Samsara's own reason was recorded. The 3,894 pre-#29687 failures carry the bare
+    // "samsara_fuel_purchase_http_400:http_400" (reason dropped) — those rows get ONE more send so the rejection
+    // is finally readable, instead of being parked forever without knowing why (owner law: root cause, not a skip).
+    else if (r.outcome === "failed" && r.reason && /http_4(?!29)\d\d/.test(String(r.reason)) && !BARE_HTTP_REASON.test(String(r.reason))) permanentlyFailed.add(String(r.id));
   }
   return { pushed, lastSkipReason, permanentlyFailed };
 }
