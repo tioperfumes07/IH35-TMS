@@ -15,12 +15,14 @@ export type EntityMultiSelectProps = {
   className?: string;
   disabled?: boolean;
   driverRoster?: "active_only" | "active_or_probation";
+  /** V3 board filter: the "Customer ▾" 28px button (MultiSelectDropdown board), no chip row under it. */
+  board?: boolean;
 };
 
 export const entityFilterIds = (value: string | null | undefined): string[] => [...new Set((value ?? "").split(",").map(id => id.trim()).filter(Boolean))];
 
 /** Read-only filter; uses the same scoped roster as EntityPicker and the one multi-select UI. */
-export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, placeholder, ariaLabel, dataTestId, className, disabled, driverRoster = "active_only" }: EntityMultiSelectProps) {
+export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, placeholder, ariaLabel, dataTestId, className, disabled, driverRoster = "active_only", board = false }: EntityMultiSelectProps) {
   const config = getEntityPickerConfig(kind);
   const [search, setSearch] = useState("");
   const [held, setHeld] = useState<EntityPickerOption[]>([]);
@@ -60,7 +62,7 @@ export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, p
         setSelectionError(undefined);
         setHeld(options.filter(option => ids.includes(option.value)));
         onChange(ids.length ? ids.join(",") : null);
-      }} searchable selectedChips onSearch={setSearch} serverSearch={config.serverSearch} disabled={disabled || !operatingCompanyId} loading={roster.isFetching} listNotice={notice} data-testid={dataTestId} />
+      }} searchable selectedChips={!board} board={board} onSearch={setSearch} serverSearch={config.serverSearch} disabled={disabled || !operatingCompanyId} loading={roster.isFetching} listNotice={notice} data-testid={dataTestId} />
     {selectionError ? <p role="alert">{selectionError}</p> : null}
   </div>;
 }
