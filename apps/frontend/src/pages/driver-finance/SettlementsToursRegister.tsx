@@ -471,6 +471,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={c.kpiTotalUnpaidSub}
           testId="settlements-tours-kpi-total-unpaid"
           href="/driver-finance/settlements?tab=payments&payment_state=unpaid"
+          board={true}
         />
         <V3KpiTile
           label={c.kpiThisPeriod}
@@ -478,6 +479,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={c.kpiThisPeriodSub}
           testId="settlements-tours-kpi-this-period"
           href="/driver-finance/settlements"
+          board={true}
         />
         <V3KpiTile
           label={c.kpiDriverPay}
@@ -485,6 +487,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={driverPaySub}
           testId="settlements-tours-kpi-driver-pay"
           href="/driver-finance/settlements?tab=payments"
+          board={true}
         />
         <V3KpiTile
           label={c.kpiDriversDebt}
@@ -493,6 +496,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           tone={typeof driversWithDebt === "number" && driversWithDebt > 0 ? "red" : "ink"}
           testId="settlements-tours-kpi-debt"
           href="/driver-finance/settlements?tab=payments&focus=debt"
+          board={true}
         />
         <V3KpiTile
           label={c.kpiYtd}
@@ -500,6 +504,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={preSettlementsYtdSub(ytdYear)}
           testId="settlements-tours-kpi-ytd"
           href="/driver-finance/settlements"
+          board={true}
         />
         <V3KpiTile
           label={c.kpiOpenBills}
@@ -507,6 +512,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           sub={c.kpiOpenBillsSub}
           testId="settlements-tours-kpi-open-bills"
           href="/driver-finance/settlements?tab=payments"
+          board={true}
         />
       </div>
 
@@ -515,7 +521,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 6, fontFamily: V3.font }}
         data-testid="settlements-tours-segment-row"
       >
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }} data-testid="settlements-tours-nav-chips">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }} data-testid="settlements-tours-nav-chips">
           {[
             { label: "Company & Driver", href: "/driver-finance/settlements?view=company_driver" },
             { label: "Driver settlements", href: null as string | null, active: true },
@@ -529,7 +535,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
               disabled={!href}
               onClick={href ? () => navigate(href) : undefined}
               data-testid={`settlements-nav-chip-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
-              style={{ padding: "3px 10px", borderRadius: 3, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontWeight: active ? 700 : 500, cursor: href ? "pointer" : "default", fontFamily: V3.font }}
+              style={{ fontSize: 11, fontFamily: V3.font, padding: "5px 10px", boxSizing: "content-box", borderRadius: 4, border: `1px solid ${active ? V3.shell : V3.border}`, background: active ? V3.shell : V3.surface, color: active ? "#FFFFFF" : V3.ink, fontWeight: 600, cursor: href ? "pointer" : "default" }}
             >
               {label}
             </button>
@@ -563,8 +569,8 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             onClearAll={() => setSearch("")}
             testIdPrefix="settlements-tours"
           >
-            <button type="button" data-testid="settlements-tours-filter-btn" className="h-9 inline-flex items-center" style={{ padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Filters ▾</button>
-            <button type="button" data-testid="settlements-tours-export-btn" className="h-9 inline-flex items-center" style={{ padding: "0 12px", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
+            <button type="button" data-testid="settlements-tours-filter-btn" style={{ boxSizing: "content-box", height: 18, padding: "5px 12px", display: "inline-flex", alignItems: "center", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Filters ▾</button>
+            <button type="button" data-testid="settlements-tours-export-btn" style={{ boxSizing: "content-box", height: 18, padding: "5px 12px", display: "inline-flex", alignItems: "center", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>Export</button>
           </MoneyListToolbar>
         </div>
       </div>
@@ -576,7 +582,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         testId="settlements-tours-v3-panel"
         onViewAll={() => navigate(state === "closed" ? "/driver-finance/settlements?tab=closed" : "/driver-finance/settlements?tab=open")}
         headerRight={
-          <button type="button" data-testid="settlements-tours-columns-btn" className="ldt-btn" style={{ border: `1px solid ${V3.border}`, background: V3.surface, color: V3.ink, fontFamily: V3.font }}>⚙ Columns</button>
+          <button type="button" data-testid="settlements-tours-columns-btn" style={{ boxSizing: "content-box", height: 18, padding: "5px 12px", display: "inline-flex", alignItems: "center", whiteSpace: "normal", border: `1px solid ${V3.border}`, borderRadius: 6, background: V3.surface, color: V3.ink, fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer" }}>⚙ Columns</button>
         }
       >
         {activeQ.isError ? (
@@ -584,7 +590,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
             <ListErrorState status={0} message={activeQ.error instanceof Error ? activeQ.error.message : String(activeQ.error)} onRetry={() => void activeQ.refetch()} />
           </div>
         ) : (
-          <ParityTable appearance="board"
+          <ParityTable appearance="v3"
             columns={TOUR_COLUMNS(state, companyId, filteredRows)}
             rows={filteredRows}
             rowKey={(r) => r.settlement_id}
@@ -615,7 +621,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
         )}
       </BoardSection>
       {state === "open" ? (
-        <p className="text-xs text-[#6B7280]" data-testid="settlements-open-board-footnote">
+        <p style={{ fontFamily: V3.font, fontSize: 11, lineHeight: "normal", color: V3.muted }} data-testid="settlements-open-board-footnote">
           The Settlement column shows the P-number; click it to open the tour statement. Ready uses the engine
           readiness checklist for each row (ready_ok / ready_total — do not hard-code six). Canonical checks include
           all loads delivered · documents · miles locked · fuel attributed · advances matched · deductions confirmed,
@@ -623,7 +629,7 @@ export function SettlementsToursRegister({ companyId }: { companyId: string }) {
           Extra load columns and check counts stay in the table gear.
         </p>
       ) : (
-        <p className="text-xs text-[#6B7280]" data-testid="settlements-closed-board-footnote">
+        <p style={{ fontFamily: V3.font, fontSize: 11, lineHeight: "normal", color: V3.muted }} data-testid="settlements-closed-board-footnote">
           Settlement number and company settlement number both open their statements.
         </p>
       )}
