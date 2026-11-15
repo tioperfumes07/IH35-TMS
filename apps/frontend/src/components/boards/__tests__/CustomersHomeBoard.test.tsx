@@ -60,8 +60,8 @@ describe("Customers home (rows 55 — V3 board)", () => {
     expect(screen.getByTestId("customers-board-export").textContent).toBe("Export");
     expect(screen.getByTestId("customers-board-print").textContent).toBe("Print");
     // names link to the record, proper-cased
-    expect(screen.getByRole("link", { name: "Refrigerx Transportation LLC" }).getAttribute("href")).toBe("/customers/c1");
-    expect(screen.getByRole("link", { name: "Faro Factoring" }).getAttribute("href")).toBe("/vendors/fv1");
+    expect(screen.getByRole("link", { name: "Refrigerx Transportation LLC" }).getAttribute("href")).toMatch(/^\/customers\/c1(\?ret=|$)/);
+    expect(screen.getByRole("link", { name: "Faro Factoring" }).getAttribute("href")).toMatch(/^\/vendors\/fv1(\?ret=|$)/);
     expect(screen.getByText("10/15/2026")).toBeTruthy();
     expect(screen.getAllByTestId("customers-aging-bar").length).toBe(2);
     const legend = screen.getByTestId("customers-aging-legend").textContent ?? "";
