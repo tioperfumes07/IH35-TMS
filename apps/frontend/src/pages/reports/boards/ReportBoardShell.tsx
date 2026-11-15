@@ -4,18 +4,29 @@
  * board's table shows (same exceljs writer the ParityTable uses); Export PDF opens the print dialog (Save as PDF).
  */
 import React, { type ReactNode } from "react";
-import { NavLink, useLocation, useSearchParams } from "react-router-dom";
-import { PageHeader } from "../../../components/layout/PageHeader";
+import { useLocation, useSearchParams } from "react-router-dom";
+import { PageHeader } from "../../../components/forms/shared/PageHeader";
+import { NavyPageSubNav, type NavyPageSubNavItem } from "../../../components/layout/NavyPageSubNav";
+import { V3_HEADER_BTN, V3_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
+import { REPORTS_SUB_NAV_ITEMS } from "../ReportsSubNav";
 import { downloadXlsx } from "../../../components/parity/useParityServerView";
-import { V3 } from "../../../design/v3-tokens";
 import { resolveBackHref } from "../../../lib/returnContext";
 import { REPORT_BOARDS, type ReportBoardId } from "./reportBoardCatalog";
 
 export type ReportBoardXlsx = { filename: string; header: string[]; body: Array<Array<string | number>> };
 
-const BTN_BASE: React.CSSProperties = { height: 30, padding: "0 10px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontSize: 12, fontWeight: 600, fontFamily: "Inter, sans-serif", lineHeight: "normal", boxSizing: "content-box", cursor: "pointer" };
-const BTN_OUTLINE: React.CSSProperties = { ...BTN_BASE, background: "#fff", color: "#111827", border: "1px solid #DDE1E7" };
-const BTN_PRIMARY: React.CSSProperties = { ...BTN_BASE, background: "#13233F", color: "#fff", border: "none" };
+// V3-Reports-*.dc.html header buttons: 28px · 0 12px · radius 6 · 600 12px (border-box — the button's 28px includes its rule).
+const BTN_OUTLINE: React.CSSProperties = V3_HEADER_BTN;
+const BTN_PRIMARY: React.CSSProperties = V3_HEADER_BTN_PRIMARY;
+
+/** The report boards' navy bar, as drawn: Reports · Category hub · Run report · the five boards · Cancellations ·
+ *  Invoice Search · Scheduled (custom) · Audit (V3-Reports-Loads.dc.html). Built from the Reports nav's own entries. */
+function reportBoardNavItems(): NavyPageSubNavItem[] {
+  const by = (label: string) => REPORTS_SUB_NAV_ITEMS.find((i) => i.label === label);
+  const head = ["Reports", "Category hub", "Run report"].map(by).filter((i): i is NavyPageSubNavItem => Boolean(i));
+  const tail = ["Cancellations", "Invoice Search", "Scheduled (custom)", "Audit"].map(by).filter((i): i is NavyPageSubNavItem => Boolean(i));
+  return [...head, ...REPORT_BOARDS.map((b) => ({ label: b.tab, to: b.href })), ...tail];
+}
 
 export function ReportBoardShell({
   id,
@@ -38,15 +49,21 @@ export function ReportBoardShell({
     if (sheet) void downloadXlsx(sheet.filename, sheet.header, sheet.body);
   };
   return (
-    <div className="space-y-3" data-testid={`${id}-board`} data-report-board={id} data-v3-board={entry.v3Board} style={{ fontFamily: "Inter, sans-serif" }}>
-      {/* R1 — title before navy strip; board five-tab strip is the only reports nav (no second ReportsSubNav). */}
+    <div
+      data-testid={`${id}-board`}
+      data-report-board={id}
+      data-v3-board={entry.v3Board}
+      style={{ fontFamily: "Inter, sans-serif", display: "flex", flexDirection: "column", gap: 12 }}
+    >
+      {/* V3-Reports-*.dc.html: crumb "Reports › <tab>", ← Back · title 700 18px · source line, then the navy bar. */}
       <PageHeader
+        variant="v3"
+        crumb={`Reports › ${entry.tab}`}
         title={entry.label}
         subtitle={subtitle}
         backHref={reportsBackHref}
-        breadcrumb={["Reports", entry.tab]}
         actions={
-          <div className="flex items-center gap-2 print:hidden">
+          <div className="print:hidden" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
             <button type="button" style={BTN_OUTLINE} onClick={() => window.print()} data-testid={`${id}-print`}>
               Print
             </button>
@@ -65,29 +82,9 @@ export function ReportBoardShell({
           </div>
         }
       />
-      <nav
-        aria-label="Reports"
-        className="flex flex-wrap gap-0 print:hidden"
-        data-testid="report-board-tabs"
-        style={{ background: V3.shell, borderRadius: 2, padding: "0 4px" }}
-      >
-        {REPORT_BOARDS.map((b) => (
-          <NavLink
-            key={b.id}
-            to={b.href}
-            className="px-3 py-2 text-xs font-semibold"
-            style={({ isActive }) => ({
-              color: "#FFFFFF",
-              opacity: isActive ? 1 : 0.85,
-              borderBottom: isActive ? "2px solid #fff" : "2px solid transparent",
-              background: isActive ? "rgba(255,255,255,0.16)" : "transparent",
-              textDecoration: "none",
-            })}
-          >
-            {b.tab}
-          </NavLink>
-        ))}
-      </nav>
+      <div className="print:hidden" data-testid="report-board-tabs" style={{ marginTop: -8 }}>
+        <NavyPageSubNav items={reportBoardNavItems()} />
+      </div>
       {children}
     </div>
   );
