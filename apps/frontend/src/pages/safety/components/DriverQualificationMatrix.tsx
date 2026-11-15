@@ -30,6 +30,12 @@ const inCohort = (driver: Driver, cohort: Cohort) =>
       : cohort === "contact"
         ? hasContact(driver)
         : true;
+const INHERIT_LINK = "text-inherit hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
+/** Calendar date → MM/YYYY (Safety-DriverFiles.dc.html), cut from the canonical calendar-only MM/DD/YYYY. */
+const monthYear = (value: string) => {
+  const m = /^(\d{2})\/\d{2}\/(\d{4})$/.exec(formatCalendarDateUS(value));
+  return m ? `${m[1]}/${m[2]}` : "";
+};
 const countValue = (value: unknown) => (typeof value === "number" && Number.isFinite(value) ? value : null);
 
 /** Read-only qualification inventory, not a dispatch-eligibility engine. */
@@ -77,6 +83,8 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
   });
   const columns = useMemo<ParityColumn<Driver>[]>(() => {
     // SF2 — board status dots (green on file / amber missing / slate unknown). Never invent dates.
+    // Safety-DriverFiles.dc.html — status span: inline-flex · gap 6 · 500 12px Inter · ink, 7px dot (green on file /
+    // amber to add later / slate paper). The label is the driver link, inheriting the span's ink and weight.
     const statusDot = (tone: "ok" | "missing" | "unknown") => (
       <span
         aria-hidden
@@ -86,26 +94,42 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
           borderRadius: "50%",
           display: "inline-block",
           background: tone === "ok" ? "#15803D" : tone === "missing" ? "#B45309" : "#94A3B8",
-          flexShrink: 0,
         }}
       />
     );
     const statusCell = (row: Driver, label: string, tone: "ok" | "missing" | "unknown") => (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, whiteSpace: "nowrap", textAlign: "left" }}>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif",
+          color: "#111827",
+          whiteSpace: "nowrap",
+        }}
+      >
         {statusDot(tone)}
-        <EntityLink kind="driver" id={row.id} label={label} />
+        <EntityLink kind="driver" id={row.id} label={label} className={INHERIT_LINK} />
       </span>
     );
-    const record = (row: Driver, label: string) => <EntityLink kind="driver" id={row.id} label={label} />;
-    // N24 / ROW 167 — expiry is a calendar day; midnight-UTC timestamps must not shift Central.
-    const date = (row: Driver, value: string | null) =>
-      statusCell(row, value ? formatCalendarDateUS(value) || "Add date" : "Add date", value ? "ok" : "missing");
+    const record = (row: Driver, label: string) => (
+      <EntityLink kind="driver" id={row.id} label={label} className={INHERIT_LINK} />
+    );
+    // N24 / ROW 167 — expiry is a calendar day; the board shows it as MM/YYYY (calendar month, no TZ shift).
+    const date = (row: Driver, value: string | null, missing: string) =>
+      statusCell(row, value ? monthYear(value) || missing : missing, value ? "ok" : "missing");
     return [
       {
         key: "first_name",
         label: "Driver",
         className: "text-left",
-        render: (row) => record(row, formatPersonName(`${row.first_name} ${row.last_name}`)),
+        // Safety-DriverFiles.dc.html lists drivers by their given names ("Carlos Mauricio", "Jorge Luis");
+        // the full legal name stays on the link's title, in sort and in export.
+        render: (row) => (
+          <span title={formatPersonName(`${row.first_name} ${row.last_name}`)}>
+            {record(row, formatPersonName(row.first_name))}
+          </span>
+        ),
         sortValue: (row) => `${row.first_name} ${row.last_name}`,
         exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`),
       },
@@ -115,7 +139,7 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         className: "text-left",
         sortable: true,
         sortValue: (row) => row.cdl_expires_at ?? "",
-        render: (row) => date(row, row.cdl_expires_at),
+        render: (row) => date(row, row.cdl_expires_at, "add date"),
       },
       {
         key: "dot_medical_expires_at",
@@ -123,7 +147,7 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         className: "text-left",
         sortable: true,
         sortValue: (row) => row.dot_medical_expires_at ?? "",
-        render: (row) => date(row, row.dot_medical_expires_at),
+        render: (row) => date(row, row.dot_medical_expires_at, "add"),
       },
       {
         key: "visa_expires_at",
@@ -137,6 +161,7 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
             row.has_b1_visa || /^b[- ]?1$/i.test(row.visa_type ?? "")
               ? row.visa_expires_at || row.b1_visa_expires_date
               : null,
+            "add date",
           ),
       },
       {
@@ -144,26 +169,26 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         label: "Emergency contact",
         className: "text-left",
         sortable: true,
-        sortValue: (row) => (hasContact(row) ? "On file" : "Add contact"),
+        sortValue: (row) => (hasContact(row) ? "on file" : "add"),
         render: (row) =>
-          statusCell(row, hasContact(row) ? "On file" : "Add contact", hasContact(row) ? "ok" : "missing"),
+          statusCell(row, hasContact(row) ? "on file" : "add", hasContact(row) ? "ok" : "missing"),
       },
       {
         key: "samsara_driver_id",
         label: "Samsara",
         className: "text-left",
         sortable: true,
-        sortValue: (row) => (row.samsara_driver_id ? "Linked" : "Link driver"),
+        sortValue: (row) => (row.samsara_driver_id ? "linked" : "link"),
         render: (row) =>
-          statusCell(row, row.samsara_driver_id ? "Linked" : "Link driver", row.samsara_driver_id ? "ok" : "missing"),
+          statusCell(row, row.samsara_driver_id ? "linked" : "link", row.samsara_driver_id ? "ok" : "missing"),
       },
       {
         key: "dq_file",
         label: "DQ file",
         className: "text-left",
-        render: (row) => statusCell(row, "Review records", "unknown"),
+        render: (row) => statusCell(row, "paper", "unknown"),
         sortable: false,
-        exportValue: () => "Status not supplied by roster",
+        exportValue: () => "paper",
       },
     ];
   }, []);
@@ -195,15 +220,17 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
     return `${location.pathname}?${p.toString()}`;
   };
   return (
-    <section className="min-w-0 space-y-3" aria-label="Driver qualification files">
-      <div className="grid min-w-0 grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6">
+    <section className="min-w-0" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 0 }} aria-label="Driver qualification files" data-v3-board="Safety-DriverFiles">
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 8 }}>
         <V3KpiTile
+          board
           label="Active drivers"
           value={drivers ? String(drivers.length) : "—"}
           href={cohortHref("all")}
           testId="dq-kpi-active-drivers"
         />
         <V3KpiTile
+          board
           label="DOT medical on file"
           value={ratio("medical") ?? "—"}
           title="Recorded expiration date, not verified document completion"
@@ -211,18 +238,21 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
           testId="dq-kpi-medical"
         />
         <V3KpiTile
+          board
           label="Emergency contact"
           value={ratio("contact") ?? "—"}
           href={cohortHref("contact")}
           testId="dq-kpi-contact"
         />
         <V3KpiTile
+          board
           label="CDL date on file"
           value={ratio("cdl") ?? "—"}
           href={cohortHref("cdl")}
           testId="dq-kpi-cdl"
         />
         <V3KpiTile
+          board
           label="Open fines"
           value={
             kpis.isError || countValue(kpis.data?.drivers_with_open_fines) == null
@@ -234,6 +264,7 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
           testId="dq-kpi-fines"
         />
         <V3KpiTile
+          board
           label="Critical integrity alerts"
           value={
             kpis.isError || countValue(kpis.data?.critical_integrity_alerts) == null
@@ -241,6 +272,7 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
               : String(kpis.data?.critical_integrity_alerts)
           }
           tone="red"
+          sub="None"
           href={summaryHref("alerts")}
           title="View count definition and source"
           testId="dq-kpi-alerts"
@@ -291,13 +323,14 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
       ) : null}
       <V3Panel
         title="Driver qualification matrix"
-        viewAllLabel="View all active drivers →"
+        viewAllLabel="View all →"
         onViewAll={() => setCohort("all")}
-        footer="Dates indicate recorded expirations, not verified document completion. Missing information can be added in the driver record. This read-only view does not block dispatch, booking, settlement or pay. DQ-file completion is not supplied by the roster; review the source records."
+        board
+        footer={'Amber = to add later — never blocks dispatch, booking, settlement or pay. "?" = date to double-check against the document.'}
       >
         <ParityTable
           key={`${companyId}:${cohort}`}
-          appearance="board"
+          appearance="v3"
           columns={columns}
           rows={(drivers ?? []).filter((driver) => inCohort(driver, cohort))}
           rowKey={(row) => row.id}

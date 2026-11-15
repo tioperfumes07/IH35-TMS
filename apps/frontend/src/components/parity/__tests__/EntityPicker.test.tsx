@@ -40,6 +40,8 @@ vi.mock("../../../api/mdata", () => ({
   getUnit: (...args: unknown[]) => getUnit(...args),
   getCustomerDetail: (...args: unknown[]) => getCustomerDetail(...args),
 }));
+const listLegalMatters = vi.fn();
+vi.mock("../../../api/legal-matters", () => ({ legalMattersApi: { list: (...args: unknown[]) => listLegalMatters(...args) } }));
 vi.mock("../../../api/loads", () => ({ listLoads: (...args: unknown[]) => listLoads(...args) }));
 vi.mock("../../../api/maintenance", () => ({ listWorkOrders: vi.fn().mockResolvedValue({ work_orders: [] }) }));
 vi.mock("../../../api/insurance", () => ({
@@ -126,6 +128,8 @@ describe("EntityPicker (C1 picker law)", () => {
     listInsuranceLawsuits.mockResolvedValue({
       lawsuits: [{ id: "ls-1", case_number: "CASE-1", status: "active" }],
     });
+    listLegalMatters.mockReset();
+    listLegalMatters.mockResolvedValue({ matters: [{ id: "lm-1", case_number: "MAT-LS-1", status: "open" }] });
     getDriver.mockReset();
     getDriver.mockResolvedValue({ id: "drv-archived", status: "Active", deactivated_at: null });
     getUnit.mockReset();
@@ -290,17 +294,13 @@ describe("EntityPicker (C1 picker law)", () => {
     expect(onChange).toHaveBeenCalledWith("policy-created", { value: "policy-created", label: "TEST-POLICY" });
   });
 
-  it("creates a lawsuit through the canonical creator and auto-selects the returned row", async () => {
-    const onChange = vi.fn();
+  it("ENG-60: lawsuit picker reads legal.matters type=lawsuit and offers no inline create (insurance.lawsuit retired)", async () => {
     const user = userEvent.setup();
-    wrap(<EntityPicker kind="insurance_lawsuit" operatingCompanyId={COMPANY} value={null} onChange={onChange} />);
-    await user.click(await screen.findByPlaceholderText("Select insurance lawsuit"));
-    const createRow = await screen.findByText("+ Add new insurance lawsuit");
-    const rosterRow = await screen.findByText("CASE-1");
-    expect(createRow.compareDocumentPosition(rosterRow) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    await user.click(createRow);
-    await user.click(await screen.findByText("Complete lawsuit create"));
-    expect(onChange).toHaveBeenCalledWith("lawsuit-created", { value: "lawsuit-created", label: "CASE-CREATED" });
+    wrap(<EntityPicker kind="insurance_lawsuit" operatingCompanyId={COMPANY} value={null} onChange={vi.fn()} />);
+    await user.click(await screen.findByPlaceholderText("Select lawsuit (legal matter)"));
+    expect(await screen.findByText(/MAT-LS-1/)).toBeInTheDocument();
+    expect(listLegalMatters).toHaveBeenCalledWith(COMPANY, { type: "lawsuit", limit: 200 });
+    expect(screen.queryByText(/\+ Add new/)).toBeNull();
   });
 
   it("a TRANSACTION kind offers no create row even by default", async () => {
