@@ -2,6 +2,14 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-15 R10.2 Reports-Customers / -Vendors / Customers / Vendors parity — READER PLEASE
+
+**R10.2 parity:** branch `cc-3/r10-parity-reports-customers-vendors` — gate_exit=0 — pending push/merge.
+
+Changes: CustomerReportBoard + VendorReportBoard filter div → ReportFilterBar board; partyBoardKit button height 30/radius 6/boxSizing; V3Segmented container radius 6/button radius 4; EntityLink #1F2A44 → #111827; ReportBoardShell Print+ExportPDF → BTN_OUTLINE / ExportXLSX → BTN_PRIMARY; partyBoardKit appearance="v3" → "board".
+
+READER PLEASE: Reports-Customers · Reports-Vendors · Customers · Vendors — reader should show reduced mismatches after deploy.
+
 ## 2026-11-15 R10.0 Reports-Viewer-TrialBalance board parity — READER PLEASE
 
 **R10.0 Reports-Viewer-TrialBalance board parity:** squash SHA `6a40f4a2f9abb8156acf1353505b84b9f2912af8` PR #29665 — MERGED.
@@ -13,6 +21,13 @@ READER PLEASE Reports-Viewer-TrialBalance 6a40f4a2f9abb8156acf1353505b84b9f2912a
 **R10.0 Reports board parity:** squash SHA `408f24b3d72c44e657ad435cc6efbe49eac25c0c` PR #29655 — MERGED.
 
 READER PLEASE: Reports — V3 reader should now show 0 mismatches / 0 missing for sidebar nav, InlineBasisSelector, CatalogLink, V3Panel viewAll (was 192 mismatches at Lead sweep 17:26Z 11-15-2026).
+## 2026-11-15 07Z — R9.6-B9 MERGED — Customers V3 parity + R9.6-B10 MERGED — Vendors V3 parity
+
+**B9 Customers V3 parity:** `0a138891d3860a28550c5627e023cb6e5acf473a` PR #29629 — MERGED.
+**B10 Vendors V3 parity:** `9b3c70d548090de41bf8d16231200b8b55440f76` PR #29630 — MERGED.
+
+READER PLEASE: Customers /customers — V3 reader should now show 0 missing / 0 mismatch (data-v3-board="Customers", 6 KpiTile board props, 3 ParityTable v3).
+READER PLEASE: Vendors /vendors — V3 reader should now show 0 missing / 0 mismatch (data-v3-board="Vendors", 4 KpiTile board props, 3 ParityTable v3).
 
 ## 2026-11-15 05Z — R9.6-B25 MERGED — Reports /reports parity 0/0
 
