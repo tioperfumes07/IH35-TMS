@@ -286,15 +286,49 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   // Trading: the % the owner believes his suppliers earn — their price less this is what he can offer them.
   const [earn, setEarn] = useState<number | null>(null);
   const [earnDraft, setEarnDraft] = useState("");
-  const applyEarn = () => {
-    const t = earnDraft.trim() === "" ? null : Number(earnDraft);
-    if (t != null && !(Number.isFinite(t) && t >= 0 && t <= 95)) { pushToast(tr("perfume.desk.earn.bad", "Earn % must be between 0 and 95%."), "error"); return; }
-    if (t !== earn) { setEarn(t); setPage(1); }
+  // Owner 2026-11-15 13:49 CT: "in all reports in the perfumes i need to have a confirm or save so i can know the
+  // changes are taking effect." A typed % no longer applies silently on leaving the box: Apply (or Enter) runs it,
+  // the line beside it says "Not applied yet" until then, and "✓ Applied … N recomputed at <time>" once the server has
+  // recomputed the grid with it. "Save as default" writes it to Rules so every view and every export keeps it.
+  const qc = useQueryClient();
+  const parsePct = (d: string): number | null | "bad" => {
+    if (d.trim() === "") return null;
+    const t = Number(d);
+    return Number.isFinite(t) && t >= 0 && t <= 95 ? t : "bad";
   };
-  const applyTarget = () => {
-    const t = targetDraft.trim() === "" ? null : Number(targetDraft);
-    if (t != null && !(Number.isFinite(t) && t >= 0 && t <= 95)) { pushToast(tr("perfume.desk.target.bad", "Margin must be between 0 and 95%."), "error"); return; }
-    if (t !== target) { setTarget(t); setPage(1); }
+  const showEarn = view === "trade" || view === "comp";
+  const draftTarget = parsePct(targetDraft), draftEarn = parsePct(earnDraft);
+  const pending = (targetDraft.trim() !== "" && draftTarget !== target) || (showEarn && earnDraft.trim() !== "" && draftEarn !== earn);
+  const [awaiting, setAwaiting] = useState(false);
+  const [confirmed, setConfirmed] = useState<{ at: string; text: string; saved: boolean } | null>(null);
+  const [savingDefault, setSavingDefault] = useState(false);
+  const applyAll = () => {
+    if (draftTarget === "bad") { pushToast(tr("perfume.desk.target.bad", "Margin must be between 0 and 95%."), "error"); return; }
+    if (showEarn && draftEarn === "bad") { pushToast(tr("perfume.desk.earn.bad", "Earn % must be between 0 and 95%."), "error"); return; }
+    const nt = targetDraft.trim() === "" ? target : draftTarget;
+    const ne = !showEarn || earnDraft.trim() === "" ? earn : draftEarn;
+    if (nt === target && ne === earn) return;
+    setConfirmed(null);
+    setAwaiting(true);
+    setTarget(nt); setEarn(ne); setPage(1);
+  };
+  const saveDefault = async () => {
+    const t = targetDraft.trim() === "" ? target : draftTarget;
+    const e = !showEarn || earnDraft.trim() === "" ? earn : draftEarn;
+    if (t === "bad" || e === "bad") { applyAll(); return; }
+    const rules = await getPerfumeRules();
+    const patch: Partial<PerfumeRules> = {};
+    if (t != null) patch.wholesale_targets_pct = [t, ...(rules.wholesale_targets_pct ?? []).slice(1)];
+    if (showEarn && e != null) { if (view === "comp") patch.store_earn_pct = e; else patch.vendor_earn_pct = e; }
+    if (!Object.keys(patch).length) return;
+    setSavingDefault(true);
+    try {
+      await putPerfumeRules(patch);
+      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      const parts = [t != null ? `My margin ${t}%` : null, showEarn && e != null ? `${view === "comp" ? "Their margin" : "Their earn"} ${e}%` : null].filter(Boolean);
+      setConfirmed({ at: new Date().toLocaleTimeString(), text: `${parts.join(" · ")} saved as the default for every view and export`, saved: true });
+      pushToast(tr("perfume.desk.saved", "Saved as default"), "success");
+    } catch (err) { pushToast(userFacingApiError(err, "Not saved"), "error"); } finally { setSavingDefault(false); }
   };
   const query = useQuery({
     queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine, carried, base, match],
@@ -366,6 +400,15 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     return groups;
   }, [cols]);
   const total = query.data?.total ?? 0;
+  // Confirm only once the server has recomputed with the applied numbers (the grid's own measured_at, not the click):
+  // the new key's own data, never the previous page held as placeholder.
+  if (awaiting && !query.isFetching && !query.isPlaceholderData && (query.data || query.isError)) {
+    setAwaiting(false);
+    if (query.data && !query.isError) {
+      const parts = [`My margin ${query.data.target_pct}%`, showEarn ? `${view === "comp" ? "Their margin" : "Their earn"} ${earn ?? query.data.earn_pct}%` : null].filter(Boolean);
+      setConfirmed({ at: new Date(query.data.measured_at).toLocaleTimeString(), text: `${parts.join(" · ")} — ${query.data.total.toLocaleString()} ${view === "analysis" ? "lines" : "items"} recomputed`, saved: false });
+    }
+  }
   const pages = Math.max(1, Math.ceil(total / pageSize));
   return (
     <section className="space-y-2" aria-label={`${view} view`}>
@@ -441,8 +484,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                 value={targetDraft}
                 placeholder={query.data?.target_pct != null ? String(query.data.target_pct) : ""}
                 onChange={(e) => setTargetDraft(e.target.value)}
-                onBlur={applyTarget}
-                onKeyDown={(e) => { if (e.key === "Enter") applyTarget(); }}
+                onKeyDown={(e) => { if (e.key === "Enter") applyAll(); }}
                 aria-label={tr("perfume.desk.target.aria", "Margin percent for the My target columns")}
                 className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
               />
@@ -464,13 +506,27 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                   value={earnDraft}
                   placeholder={query.data?.earn_pct != null ? String(query.data.earn_pct) : ""}
                   onChange={(e) => setEarnDraft(e.target.value)}
-                  onBlur={applyEarn}
-                  onKeyDown={(e) => { if (e.key === "Enter") applyEarn(); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") applyAll(); }}
                   aria-label={view === "comp" ? tr("perfume.desk.earn.ariaComp", "Margin I estimate the competitor earns — sets their cost ≈") : tr("perfume.desk.earn.aria", "Percent your suppliers earn, for the Trading offer")}
                   className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
                 />
               </label>
             ) : null}
+            <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-apply" disabled={!pending || awaiting} onClick={applyAll}>
+              {awaiting ? tr("perfume.desk.applying", "Applying…") : tr("perfume.desk.apply", "Apply")}
+            </Button>
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-save-default" disabled={savingDefault || (targetDraft.trim() === "" && (!showEarn || earnDraft.trim() === "") && target == null && earn == null)} onClick={() => void saveDefault()}>
+              {savingDefault ? tr("perfume.desk.saving", "Saving…") : tr("perfume.desk.saveDefault", "Save as default")}
+            </Button>
+            <span data-testid="perfume-apply-status" role="status" aria-live="polite" className="text-xs">
+              {pending
+                ? <span className="font-semibold text-[#B45309]">{tr("perfume.desk.pending", "Not applied yet — press Apply")}</span>
+                : awaiting
+                  ? <span className="text-gray-600">{tr("perfume.desk.recomputing", "Recomputing…")}</span>
+                  : confirmed
+                    ? <span className="font-semibold text-[#14532D]">✓ {confirmed.saved ? tr("perfume.desk.savedAt", "Saved") : tr("perfume.desk.appliedAt", "Applied")} {confirmed.at} — {confirmed.text}</span>
+                    : null}
+            </span>
             {FACETS.map((f) => (
               <MultiSelectDropdown
                 key={f.key}
@@ -494,7 +550,9 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match }, visible).catch((e) => pushToast(String(e?.message ?? e), "error"));
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match }, visible)
+                  .then(() => pushToast(`Exported ${total.toLocaleString()} ${view === "analysis" ? "lines" : "items"} to Excel — with the formulas and colours`, "success"))
+                  .catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}
             >
               {tr("perfume.desk.8", "Export to Excel")}
@@ -573,6 +631,7 @@ function RulesPanel() {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
   const lists = useQuery({ queryKey: ["perfume", "lists"], queryFn: listPerfumeLists });
   const [draft, setDraft] = useState<Partial<PerfumeRules>>({});
+  const [savedAt, setSavedAt] = useState<string | null>(null);
   const r = { ...(rules.data ?? {}), ...draft } as PerfumeRules;
   if (!rules.data) return <div className="text-xs text-gray-500">{tr("perfume.desk.15", "Loading rules…")}</div>;
   const dollars = (k: keyof PerfumeRules) => (
@@ -584,7 +643,7 @@ function RulesPanel() {
       value={r[k]} onChange={(e) => setDraft({ ...draft, [k]: Number(e.target.value) })} />
   );
   const save = async () => {
-    try { await putPerfumeRules(draft); setDraft({}); await qc.invalidateQueries({ queryKey: ["perfume"] }); pushToast("Rules saved — every view recomputed", "success"); }
+    try { await putPerfumeRules(draft); setDraft({}); await qc.invalidateQueries({ queryKey: ["perfume"] }); setSavedAt(new Date().toLocaleTimeString()); pushToast("Rules saved — every view recomputed", "success"); }
     catch (e) { pushToast(userFacingApiError(e, "Rules not saved"), "error"); }
   };
   const seg = <T extends string>(opts: Array<[T, string]>, value: T, set: (v: T) => void) => (
@@ -620,13 +679,18 @@ function RulesPanel() {
                 onChangeCents={(c) => setDraft({ ...draft, competitor_cushion_tiers: (r.competitor_cushion_tiers ?? []).map((x, j) => (j === i ? { ...x, cushion_cents: c ?? 0 } : x)) })} />
             </span>
           ))}
-          <span className="text-gray-600">{tr("perfume.desk.37", "— the Competition tab takes the cheapest supplier's list price less this as each competitor's cost")}</span>
+          <span className="text-gray-600">{tr("perfume.desk.37", "— the Competition tab takes each competitor's list price less this as their sales price; × (1 − their margin %) = their cost ≈")}</span>
         </div>
       </div>
       <MatchCleanup />
       <div className="flex gap-2">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => void save()}>{tr("perfume.desk.30", "Save")}</Button>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!Object.keys(draft).length} onClick={() => setDraft({})}>{tr("perfume.desk.31", "Cancel")}</Button>
+        <span data-testid="perfume-rules-status" role="status" aria-live="polite" className="self-center text-xs">
+          {Object.keys(draft).length
+            ? <span className="font-semibold text-[#B45309]">{tr("perfume.desk.rulesPending", "Changes not saved yet — press Save")}</span>
+            : savedAt ? <span className="font-semibold text-[#14532D]">✓ {tr("perfume.desk.rulesSaved", "Saved")} {savedAt} — {tr("perfume.desk.rulesSavedTail", "every view and export recomputed")}</span> : null}
+        </span>
       </div>
       <div className="text-xs text-gray-600">
         {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost = vendor price − low cushion + high freight (the safe number); best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
