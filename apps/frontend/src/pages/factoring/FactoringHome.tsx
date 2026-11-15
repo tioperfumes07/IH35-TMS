@@ -1105,7 +1105,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     [],
   );
   const factoringHeaderActions = (
-    <div className="flex items-center gap-3" style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+    <div style={{ display: "flex", gap: 12, alignItems: "center", font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
       <ImportFaroPurchaseReportAction />
       <Link
         to={FACTORING_TAB_PATH.submit_invoice}
