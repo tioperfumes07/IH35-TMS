@@ -1304,5 +1304,12 @@
     "source_file": "apps/backend/src/telematics/stops-geocode-backfill.service.ts",
     "guard": "scripts/verify-stops-geocoded.mjs",
     "type": "enforced"
+  },
+  {
+    "id": "LAW-R11-NO-BOARD-APPEARANCE-V3-TABLES",
+    "title": "V3 board tables must use appearance=\"v3\", not appearance=\"board\" (IBM Plex Sans). Lead explicit instruction 2026-11-15: regression from #29677 must not recur.",
+    "source_file": "apps/frontend/src/components/boards/PartyBoard.tsx",
+    "guard": "scripts/verify-no-board-appearance-on-v3-tables.mjs",
+    "type": "enforced"
   }
 ]

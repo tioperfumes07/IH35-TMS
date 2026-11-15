@@ -205,7 +205,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 12, alignItems: "start" }}>
-          <V3Panel title={"Spend by category · YTD"} onViewAll={props.onMasterDetail} testId="party-board-categories">
+          <V3Panel board title={"Spend by category · YTD"} onViewAll={props.onMasterDetail} testId="party-board-categories">
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
               {q.isLoading ? <span style={{ fontSize: 12, color: V3.muted }}>{"Loading…"}</span> : catLines.length === 0 ? <span style={{ fontSize: 12, color: V3.muted }}>{"No vendor spend in range."}</span> : catLines.map((c) => {
                 const share = pct(c.spend_cents);
@@ -222,7 +222,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
               })}
             </div>
           </V3Panel>
-          <V3Panel title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
+          <V3Panel board title={"Pays through"} onViewAll={props.onMasterDetail} testId="party-board-pays-through">
             <PartyTable<PaysRow> storageKey="party-board-pays-through-table" testId="party-board-pays-table"
               cols={paysCols} rows={paysRows} exportRef={paysExportRef}
               exportName="pays-through.csv" emptyText="No payments in range."
@@ -235,7 +235,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             <VariantDuplicatesPanel board="vendors" operatingCompanyId={props.operatingCompanyId} />
           </V3Panel>
         ) : (
-          <V3Panel title={`Vendors · ${int(rows.length)}`} onViewAll={props.onMasterDetail} testId="party-board-panel"
+          <V3Panel board title={`Vendors · ${int(rows.length)}`} onViewAll={props.onMasterDetail} testId="party-board-panel"
             headerRight={
               <>
                 <V3Segmented<Chip> testId="party-board-chips" value={chip} options={chipOptions} onChange={setChip} />
