@@ -210,19 +210,20 @@ export async function rekeyItems(c: PoolClient, opts: { dryRun: boolean }): Prom
  *  reading of a line — import, Review, List analysis — uses it. Re-read on every call: one cheap query. */
 /**
  * Speed (owner 2026-11-15 16:44 CT, measured live 22:33Z: every Review reload 5.7 s): the brand index was rebuilt from
- * all 14,414 items on EVERY request. It is now rebuilt only when the items' brand/name or the brand aliases changed —
- * a fingerprint read in one small query (count + hash of every brand|name and alias|brand). Any edit on any server
- * changes the fingerprint, so no instance ever reads with a stale index.
+ * all 14,414 items on EVERY request. It is now rebuilt only when perfume.items or perfume.brand_aliases were written —
+ * read from Postgres's write counters (one catalog row per table). A write on THIS server also drops the remembered
+ * index at once (invalidateGridCache runs after every desk write).
  */
 let nameBrandsSig: string | null = null;
 export function currentNameBrandsSig(): string | null { return nameBrandsSig; }
 export async function loadNameBrands(c: PoolClient): Promise<void> {
+  // Fingerprint = Postgres's own write counters for the two tables (inserts / updates / deletes since stats reset).
+  // Measured live 23:05Z: hashing every item row under RLS cost 1.1–4.8 s per Review read; these counters cost one
+  // catalog row each. Any write to perfume.items or perfume.brand_aliases, from any server, moves them (stats flush
+  // within about a second); a stats reset only forces one rebuild.
   const sig = (await c.query<{ s: string }>(
-    `SELECT concat_ws('|', i.n, i.h, a.n, a.h) AS s
-       FROM (SELECT count(*) AS n, coalesce(sum(hashtext(coalesce(brand,'') || '|' || coalesce(name,''))::bigint), 0) AS h
-               FROM perfume.items WHERE merged_into_id IS NULL) i,
-            (SELECT count(*) AS n, coalesce(sum(hashtext(coalesce(alias,'') || '|' || coalesce(brand,''))::bigint), 0) AS h
-               FROM perfume.brand_aliases) a`)).rows[0]?.s ?? null;
+    `SELECT string_agg(relname || ':' || n_tup_ins || ':' || n_tup_upd || ':' || n_tup_del, '|' ORDER BY relname) AS s
+       FROM pg_stat_user_tables WHERE schemaname = 'perfume' AND relname IN ('items', 'brand_aliases')`)).rows[0]?.s ?? null;
   // No fingerprint read → never trust a remembered index (rebuild every time).
   if (sig !== null && sig === nameBrandsSig) return;
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
@@ -1000,7 +1001,7 @@ const _viewCache = new Map<string, ViewPayload>();
 let _gridVer = 0;
 /** Clears both caches and bumps the version counter — write paths call this, so a warm HIT
  * never needs to query max(updated_at) from DB. */
-export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; }
+export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; nameBrandsSig = null; }
 
 /** The competitor line a row is measured against: its list price, cushion, SALES price (list − cushion), wording. */
 export type CompBest = { list: number; cushion: number; real: number; desc: string | null; vendor: string };
