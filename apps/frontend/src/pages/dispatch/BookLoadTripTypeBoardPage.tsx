@@ -43,7 +43,7 @@ export default function BookLoadTripTypeBoardPage() {
   const active = CARDS.find((c) => c.code === selected)!;
 
   return (
-    <div data-v3-board="Dispatch-BookLoad-TripType" data-testid="book-load-trip-type-board" style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink, display: "flex", flexDirection: "column", gap: 12 }}>
+    <div data-v3-board="Dispatch-BookLoad-TripType" data-testid="book-load-trip-type-board" style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink, display: "flex", flexDirection: "column", gap: 12, padding: "12px 20px 30px", boxSizing: "content-box" }}>
       <PageHeader
         variant="v3"
         crumb="Dispatch › Book load"
