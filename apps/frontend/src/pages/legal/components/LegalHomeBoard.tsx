@@ -306,7 +306,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           <div style={{ overflowX: "auto" }}>
             <ParityTable<PipelineRow>
               tableTestId="legal-home-pipeline-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
@@ -376,7 +376,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           <div style={{ overflowX: "auto" }}>
             <ParityTable<(typeof matterRows)[number]>
               tableTestId="legal-home-matters-table"
-              appearance="board"
+              appearance="v3"
               hidePager
               density="compact"
               suppressToolbarSearch
