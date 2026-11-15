@@ -264,7 +264,7 @@ function runSelftest() {
   // Selftest 3: Poison the ReportFilterBar component marker → guard must FAIL
   const componentOriginal = read(COMPONENT_PATH);
   mutationsTotal += 1;
-  const poisonedComponent = componentOriginal.replace(
+  const poisonedComponent = componentOriginal.replaceAll(
     'data-report-filter-bar="inline"',
     'data-report-filter-bar="poisoned"',
   );
