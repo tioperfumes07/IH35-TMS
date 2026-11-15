@@ -15,6 +15,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3 } from "../../design/v3-tokens";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { SettlementsSubNavWrapper } from "./SettlementsSubNavWrapper";
@@ -435,6 +436,7 @@ export function CompanySettlementsPage() {
             navigate("/driver-finance/company-settlements");
           }}
           testId="company-settlements-board-section"
+          titleStyle={{ fontSize: 11, fontWeight: 600, color: V3.onShell, backgroundColor: V3.shell, padding: "5px 10px", borderTopLeftRadius: 4, borderBottomWidth: 1, borderBottomStyle: "solid", borderBottomColor: V3.border }}
         >
           <ParityTable appearance="v3"
            
