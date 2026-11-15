@@ -121,7 +121,7 @@ export function MultiSelectDropdown({
         aria-expanded={open}
       >
         {board ? (
-          <>{selected.length === 0 ? label : `${label} (${selected.length})`} ▾</>
+          <>{selected.length === 0 ? (allLabel?.endsWith("▾") ? allLabel.replace(/\s*▾$/, "") : label) : `${label} (${selected.length})`} ▾</>
         ) : (
           <>
             <span className="max-w-[10rem] truncate">{summary}</span>
