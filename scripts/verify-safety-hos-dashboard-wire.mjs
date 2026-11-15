@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { linksToRoute, selftestReturnContextRoutes } from "./lib/return-context-routes.mjs";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -46,7 +47,7 @@ export function collectFailures({ hosPage, hosTab, orphanExceptions, tabsConfig,
   if (!orphanExceptions.includes("ARCHIVE (A23-6)")) {
     failures.push("HosExceptionsPage.tsx must carry ARCHIVE (A23-6) header");
   }
-  if (!orphanExceptions.includes('to="/safety/hos"')) {
+  if (!linksToRoute(orphanExceptions, "/safety/hos")) {
     failures.push("HosExceptionsPage.tsx must link to canonical /safety/hos dashboard");
   }
 
@@ -88,6 +89,7 @@ function main() {
       manifest: '<Route path="hos" element={<HoursOfServiceTab />} />',
       tests: 'it("one", () => {}); it("two", () => {}); it("three", () => {});',
     };
+    selftestReturnContextRoutes();
     if (collectFailures(good).length) throw new Error(`good fixture rejected: ${collectFailures(good).join("; ")}`);
     const mutations = [
       ["hosPage", "export function HoursOfServicePage", "function LegacyHos", "missing canonical export"],
