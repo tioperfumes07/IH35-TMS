@@ -760,7 +760,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         >
           <ParityTable<AccountBoardRow>
             embedded
-            appearance="board"
+            appearance="v3"
             rows={accountRows}
             rowKey={(row) => row.id}
             columns={accountColumns}
@@ -803,7 +803,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         >
           <ParityTable<DriftBoardRow>
             embedded
-            appearance="board"
+            appearance="v3"
             rows={driftRows}
             rowKey={(row) => row.bank_account_id}
             columns={driftColumns}
@@ -830,7 +830,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
       >
         <ParityTable<PlaidBankTransaction>
           embedded
-          appearance="board"
+          appearance="v3"
           rows={latest}
           rowKey={(row) => row.id}
           columns={latestColumns}
@@ -859,7 +859,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         <div style={{ maxHeight: 280, overflowY: "auto" }} data-testid="banking-home-pending-scroll">
           <ParityTable<MoneyMapPendingLine>
             embedded
-            appearance="board"
+            appearance="v3"
             rows={pendingLines}
             rowKey={(row) => row.bank_transaction_id}
             columns={pendingColumns}

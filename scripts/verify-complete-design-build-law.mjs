@@ -55,8 +55,10 @@ function checkFindings() {
   if (!/190px/.test(insuranceBoard)) fails.push("I1: Policy year label column 190px missing");
 
   const banking = read("apps/frontend/src/pages/banking/components/BankingHomeBoard.tsx");
-  if (!/appearance=["']board["']/.test(banking)) {
-    fails.push("B3: BankingHomeBoard ParityTables must use appearance=\"board\" (left body)");
+  // R10.1 (Lead 11-15): Banking.dc.html draws the V3 table (th 600 11px #5B6576 on #F7F8FA, td 7/12) — live reader
+  // 18:03Z: 12 headers x 14 checks failed on the old "board" table.
+  if (!/appearance=["']v3["']/.test(banking) || /appearance=["']board["']/.test(banking)) {
+    fails.push("B3: BankingHomeBoard ParityTables must use appearance=\"v3\" (Banking.dc.html V3 table)");
   }
   if (!/minWidth:\s*120/.test(banking)) {
     fails.push("B1: Banking drift money columns need minWidth 120 (no money ellipsis)");
