@@ -1713,7 +1713,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
  */
 export async function exportListWorkbook(c: PoolClient, listId: string): Promise<{ buf: Buffer; fileName: string } | null> {
   const head = await c.query<{ vendor: string; created_at: string }>(
-    `SELECT v.name AS vendor, l.created_at::text FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id WHERE l.id = $1`, [listId]);
+    `SELECT v.name AS vendor, l.list_date::text AS created_at FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id WHERE l.id = $1`, [listId]);
   if (!head.rows[0]) return null;
   await loadNameBrands(c);
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
