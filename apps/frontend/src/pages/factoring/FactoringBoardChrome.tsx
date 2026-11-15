@@ -1,7 +1,7 @@
 import { useMemo, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
+import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
@@ -30,9 +30,8 @@ export function FactoringBoardChrome({
   const structuralParent = "/factoring";
   const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
 
-  // Factoring.dc.html draws the same navy tab bar as every V3 board (#13233F, 600 11px, active .16 box + 2px rule).
   const navItems = useMemo(
-    () => subnavItems.map((item) => ({ label: item.label, to: item.to })),
+    () => subnavItems.map((item) => ({ label: item.label, href: item.to })),
     [subnavItems],
   );
 
@@ -90,7 +89,7 @@ export function FactoringBoardChrome({
         data-factoring-board-tabs-wrap="1"
       >
         <div data-testid="factoring-board-tabs">
-          {nav ?? <NavyPageSubNav items={navItems} />}
+          {nav ?? <HoverDropdownNav items={navItems} />}
         </div>
       </div>
     </>

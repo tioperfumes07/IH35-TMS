@@ -5,15 +5,16 @@
  * #B45309, Invoiced = #ECFDF3 on #15803D, Assigned = #F1F5F9 on #475569.
  */
 import type { CSSProperties, ReactNode } from "react";
+import { V3 } from "../../design/v3-tokens";
 
 export type V3PillTone = "blue" | "amber" | "green" | "slate" | "red";
 
 export const V3_PILL_TONES: Record<V3PillTone, { bg: string; ink: string }> = {
-  blue: { bg: "#EFF6FF", ink: "#1D4ED8" },
-  amber: { bg: "#FFFBEB", ink: "#B45309" },
-  green: { bg: "#ECFDF3", ink: "#15803D" },
-  slate: { bg: "#F1F5F9", ink: "#475569" },
-  red: { bg: "#FEF2F2", ink: "#B91C1C" },
+  blue: { bg: V3.pillBlueBg, ink: V3.link },
+  amber: { bg: V3.pillAmberBg, ink: V3.amber },
+  green: { bg: V3.pillGreenBg, ink: V3.green },
+  slate: { bg: V3.pillSlateBg, ink: V3.pillSlateInk },
+  red: { bg: V3.pillRedBg, ink: V3.red },
 };
 
 /** Load status → tone (blue moving, amber docs owed, green billed/closed, red cancelled, slate the rest). */
@@ -59,9 +60,9 @@ export function V3StatusPill({ tone, children, testId }: { tone: V3PillTone; chi
   );
 }
 
-/** A record link inside a V3 board table: #1D4ED8, 600, no underline until hover (design: <a style="color:#1D4ED8;font-weight:600">). */
+/** A record link inside a V3 board table: V3.link (#1D4ED8), 600, no underline until hover. */
 export const V3_TABLE_LINK_CLASS =
-  "font-semibold text-[#1D4ED8] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-1";
+  "font-semibold text-blue-700 no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
 
 /** V3 board header actions (every .dc.html header): 28px · 0 12px · radius 6 · 600 12px Inter. */
 export const V3_HEADER_BTN: CSSProperties = {
@@ -74,11 +75,11 @@ export const V3_HEADER_BTN: CSSProperties = {
   borderRadius: 6,
   font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif",
   lineHeight: "normal",
-  background: "#fff",
-  color: "#111827",
-  border: "1px solid #DDE1E7",
+  background: V3.surface,
+  color: V3.ink,
+  border: `1px solid ${V3.border}`,
   cursor: "pointer",
   textDecoration: "none",
 };
 /** The navy primary header action. */
-export const V3_HEADER_BTN_PRIMARY: CSSProperties = { ...V3_HEADER_BTN, background: "#13233F", color: "#fff", border: "none" };
+export const V3_HEADER_BTN_PRIMARY: CSSProperties = { ...V3_HEADER_BTN, background: V3.shell, color: V3.onShell, border: "none" };

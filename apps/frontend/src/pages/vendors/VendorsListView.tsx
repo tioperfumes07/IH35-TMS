@@ -172,7 +172,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
 
   return (
     <div className="space-y-2" data-vendors-list-view="true" data-bulk-selectable="true" data-entity-type="vendors">
-      <ParityTable<VendorRow> appearance="board"
+      <ParityTable<VendorRow> appearance="v3"
         key={tableResetKey}
         rows={filteredRows}
         rowKey={(row) => row.id}
@@ -257,7 +257,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
             key: "name",
             label: "Name",
             sortable: true,
-            cellClass: "font-medium",
+            cellClass: "font-semibold",
             render: (row) => (
               <span className="inline-flex min-w-0" title={row.name}>
                 <EntityLinkOrTombstone
@@ -266,7 +266,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
                   id={row.id}
                   name={row.name}
                   noun="Vendor"
-                  className="single-line-name text-[#1F2A44] hover:underline"
+                  className="single-line-name text-[#1F2A44] hover:underline rounded-none"
                 />
               </span>
             ),

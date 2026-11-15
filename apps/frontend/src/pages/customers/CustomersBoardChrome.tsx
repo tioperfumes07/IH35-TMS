@@ -59,7 +59,8 @@ export function CustomersBoardChrome({
               aria-selected={active}
               data-testid={`customers-list-tab-${id}`}
               onClick={() => onListTabChange(id)}
-              className={`inline-flex h-7 items-center rounded-sm border px-2 text-xs font-medium ${
+              style={{ boxSizing: "content-box" }}
+            className={`inline-flex h-7 items-center rounded-sm border px-2 text-xs font-medium ${
                 active
                   ? "border-[#14314F] bg-[#14314F] text-white"
                   : "border-[#E5E7EB] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"
