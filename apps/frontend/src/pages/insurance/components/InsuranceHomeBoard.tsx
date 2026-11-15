@@ -60,7 +60,7 @@ type PremiumShareRow = {
 const premiumColumns: ParityColumn<PremiumShareRow>[] = [
   {
     key: "coverage",
-    label: "Coverage",
+    label: "Coverage", sortable: false,
     sortable: true,
     cellClass: "whitespace-nowrap",
     sortValue: (row) => row.coverage,
@@ -69,7 +69,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
   },
   {
     key: "carrier",
-    label: "Carrier",
+    label: "Carrier", sortable: false,
     sortable: true,
     cellClass: "whitespace-nowrap",
     sortValue: (row) => row.carrier,
@@ -77,7 +77,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
   },
   {
     key: "premium",
-    label: "Premium",
+    label: "Premium", sortable: false,
     sortable: true,
     className: "text-right",
     // Board: white-space:nowrap + plain dollars (206,372.39) — no $ glyph, no wrap/truncation.
@@ -94,7 +94,7 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
   },
   {
     key: "share",
-    label: "Share",
+    label: "Share", sortable: false,
     sortable: true,
     className: "text-right",
     cellClass: "text-right tabular-nums whitespace-nowrap",

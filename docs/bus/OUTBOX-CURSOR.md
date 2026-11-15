@@ -718,6 +718,17 @@ OPEN FIX PRs (not merged — CI red on B18 stack):
 - B20 #29595 `cursor/r96-fix-b20-insurance` — stacked on B19 (height + mirrors)
 
 B12–B17: prior R9.5 ports merged earlier round; **Lead has not posted 0/0** for any. Routes ready for Lead reader (aliases for data cells):
+## ROUND 9.6 — 2026-11-15T00:44Z
+## ROUND 9.6 — 2026-11-15T00:49Z
+
+FIX PRs (one per board, stacked):
+- B18 Factoring #29591 `cursor/r96-fix-b18-factoring` — navy tabs + v3 terms + data-v3 mirrors + CI unlock
+- B19 Fuel #29593 `cursor/r96-fix-b19-fuel` — v3 by-truck + mirrors (base B18)
+- B20 Insurance #29595 `cursor/r96-fix-b20-insurance` — height + mirrors (base B19)
+
+ALIASES: identity map key→data-v3=key on clipped mirrors inside each board root (Lead: with aliases).
+
+B12–B17 routes (Lead reader):
 - READER PLEASE: Dispatch-TruckPlanner /dispatch/planners/truck
 - READER PLEASE: Dispatch-LoadHistory /dispatch/load-history
 - READER PLEASE: Dispatch-BookLoad-Modal /dispatch/book-load?presentation=center
@@ -728,4 +739,5 @@ B12–B17: prior R9.5 ports merged earlier round; **Lead has not posted 0/0** fo
 API/FE tip at checkpoint: api SHA 681ced58a76a (B18–B20 fixes NOT on prod yet).
 
 NEXT: green #29591 → merge-async stack → FE deploy → `READER PLEASE: Factoring /factoring` · `Fuel /fuel` · `Insurance /insurance`.
+B18–B20 READER PLEASE will be posted the moment FE serves the merge SHAs (not before).
 
