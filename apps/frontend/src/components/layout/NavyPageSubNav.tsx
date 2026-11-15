@@ -286,9 +286,8 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
   const plainTos = items.filter((i) => !i.children?.length).map((i) => i.to);
-  // Treat /factoring as account-summary so mostSpecificActiveTo can select it.
-  const activeProbePath = pathname === "/factoring" ? "/factoring/account-summary" : pathname;
-  const activeTo = mostSpecificActiveTo(activeProbePath, plainTos, search);
+  // isActive maps /factoring → account-summary so mostSpecificActiveTo still keys off pathname.
+  const activeTo = mostSpecificActiveTo(pathname, plainTos, search);
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
   // ROUND 9.6 — identical to docs/design/v3/*.dc.html navy tab strip:
   // parent: background #13233F; display flex; gap 2px; padding 0 6px; height 31
@@ -315,6 +314,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
       aria-label="Section navigation"
       data-testid="navy-page-subnav"
       data-c22-tab-height="h-8"
+      className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] text-section-header font-semibold text-white"
       style={{
         background: "#13233F",
         display: "flex",
@@ -343,6 +343,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               type="button"
               data-testid={item.testId}
               aria-current={active ? "page" : undefined}
+              className={active ? "border-b-2 border-white bg-white/[.16]" : "border-b-2 border-transparent"}
               style={tabStyle(active)}
               onClick={() => onTabChange(id)}
             >
@@ -351,14 +352,14 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
             </button>
           );
         }
-        const isActiveTab = activeTo === item.to;
         return (
           <Link
             key={item.to}
             to={item.to}
             data-testid={item.testId}
-            aria-current={isActiveTab ? "page" : undefined}
-            style={tabStyle(isActiveTab)}
+            aria-current={activeTo === item.to ? "page" : undefined}
+            className={activeTo === item.to ? "border-b-2 border-white bg-white/[.16]" : "border-b-2 border-transparent"}
+            style={tabStyle(activeTo === item.to)}
           >
             {item.label}
             {item.hasData ? <DataDot /> : null}
