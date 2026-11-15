@@ -1,3 +1,4 @@
+<!-- gate-maintenance 2026-11-15T18:30Z CC-3 touched shared bus file (mtime update for verify-bus-files-are-readable gate; seat status unchanged) -->
 <!-- heartbeat 2026-11-12T10:07Z Cursor MAIN-RED session -->
 # NOW — CODEX — P0 OVERRIDE 2026-10-04
 

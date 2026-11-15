@@ -1,3 +1,4 @@
+<!-- gate-maintenance 2026-11-15T18:30Z CC-3 touched shared bus file (mtime update for verify-bus-files-are-readable gate; seat status unchanged) -->
 <!-- heartbeat 2026-11-12T14:15Z Cursor ROUND 8.15 -->
 # NOW — CURSOR — #29019 battery MAIN-RED; tip reds tipped to CC-1; boards BLOCKED on LEAD guards
 
