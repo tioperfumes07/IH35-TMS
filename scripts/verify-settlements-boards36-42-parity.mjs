@@ -85,8 +85,8 @@ export function collectProblems(root = ROOT) {
 // ── selftest ───────────────────────────────────────────────────────────────
 function runSelftest() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "r9036-parity-"));
-  const dir = path.join(tmpDir, DF);
-  fs.mkdirSync(dir, { recursive: true });
+  const tmpTargetDir = path.join(tmpDir, DF);
+  fs.mkdirSync(tmpTargetDir, { recursive: true });
 
   // Write good versions
   const files = {
@@ -99,7 +99,7 @@ function runSelftest() {
     "CompanySettlementsPage.tsx": `minmax(150px,1fr)\nMargin %`,
   };
   for (const [f, c] of Object.entries(files)) {
-    fs.writeFileSync(path.join(dir, f), c);
+    fs.writeFileSync(path.join(tmpTargetDir, f), c);
   }
 
   const good0 = collectProblems(tmpDir);
@@ -115,7 +115,7 @@ function runSelftest() {
   }
 
   // Test: missing 150px in one file
-  fs.writeFileSync(path.join(dir, "SettlementsEscrowBoard.tsx"), `minmax(140px,1fr)\nOpen register →\nholder_type !== "driver"`);
+  fs.writeFileSync(path.join(tmpTargetDir, "SettlementsEscrowBoard.tsx"), `minmax(140px,1fr)\nOpen register →\nholder_type !== "driver"`);
   const p1 = collectProblems(tmpDir);
   if (p1.length !== 1) {
     console.error(`  FAIL [EscrowBoard 140px → 1 problem]: got ${p1.length}`);
@@ -123,11 +123,11 @@ function runSelftest() {
   } else {
     console.log(`  PASS [EscrowBoard 140px → 1 problem]`);
     passed++;
-    fs.writeFileSync(path.join(dir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nOpen register →\nholder_type !== "driver"`);
+    fs.writeFileSync(path.join(tmpTargetDir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nOpen register →\nholder_type !== "driver"`);
   }
 
   // Test: missing "Open register →" in Escrow
-  fs.writeFileSync(path.join(dir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nholder_type !== "driver"`);
+  fs.writeFileSync(path.join(tmpTargetDir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nholder_type !== "driver"`);
   const p2 = collectProblems(tmpDir);
   if (p2.length !== 1) {
     console.error(`  FAIL [Escrow missing Open register → 1 problem]: got ${p2.length}`);
@@ -135,11 +135,11 @@ function runSelftest() {
   } else {
     console.log(`  PASS [Escrow missing "Open register →" → 1 problem]`);
     passed++;
-    fs.writeFileSync(path.join(dir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nOpen register →\nholder_type !== "driver"`);
+    fs.writeFileSync(path.join(tmpTargetDir, "SettlementsEscrowBoard.tsx"), `minmax(150px,1fr)\nOpen register →\nholder_type !== "driver"`);
   }
 
   // Test: missing closes panel in PreSettlements
-  fs.writeFileSync(path.join(dir, "SettlementsPreSettlementsBoard.tsx"), `minmax(150px,1fr)\nSomethingElse`);
+  fs.writeFileSync(path.join(tmpTargetDir, "SettlementsPreSettlementsBoard.tsx"), `minmax(150px,1fr)\nSomethingElse`);
   const p3 = collectProblems(tmpDir);
   if (p3.length !== 1) {
     console.error(`  FAIL [PreSettlements missing closes panel → 1 problem]: got ${p3.length}`);
@@ -147,11 +147,11 @@ function runSelftest() {
   } else {
     console.log(`  PASS [PreSettlements missing closes panel → 1 problem]`);
     passed++;
-    fs.writeFileSync(path.join(dir, "SettlementsPreSettlementsBoard.tsx"), `minmax(150px,1fr)\nSettlementsPreSettlementsClosesPanel`);
+    fs.writeFileSync(path.join(tmpTargetDir, "SettlementsPreSettlementsBoard.tsx"), `minmax(150px,1fr)\nSettlementsPreSettlementsClosesPanel`);
   }
 
   // Test: missing Margin % in CompanySettlements
-  fs.writeFileSync(path.join(dir, "CompanySettlementsPage.tsx"), `minmax(150px,1fr)`);
+  fs.writeFileSync(path.join(tmpTargetDir, "CompanySettlementsPage.tsx"), `minmax(150px,1fr)`);
   const p4 = collectProblems(tmpDir);
   if (p4.length !== 1) {
     console.error(`  FAIL [CompanySettlements missing Margin % → 1 problem]: got ${p4.length}`);
@@ -159,7 +159,7 @@ function runSelftest() {
   } else {
     console.log(`  PASS [CompanySettlements missing Margin % → 1 problem]`);
     passed++;
-    fs.writeFileSync(path.join(dir, "CompanySettlementsPage.tsx"), `minmax(150px,1fr)\nMargin %`);
+    fs.writeFileSync(path.join(tmpTargetDir, "CompanySettlementsPage.tsx"), `minmax(150px,1fr)\nMargin %`);
   }
 
   fs.rmSync(tmpDir, { recursive: true, force: true });

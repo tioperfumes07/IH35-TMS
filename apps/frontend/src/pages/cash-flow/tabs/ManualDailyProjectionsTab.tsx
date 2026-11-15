@@ -599,7 +599,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
   };
 
   return (
-    <div className="space-y-3" style={{ fontFamily: V3.font }} data-testid="cash-flow-mdp-v3-tab">
+    <div className="space-y-3" data-testid="cash-flow-mdp-v3-tab" data-v3-board="CashFlow-Manual" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {hasReverseFilter ? (
         <Link className="text-xs font-semibold underline" style={{ color: V3.link }} to={moneyHref("/cash-flow?tab=manual_daily_projections")}>
           Clear projection filter
@@ -772,6 +772,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
       >
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="bank" data-testid="mdp-bank-balances">
           <V3KpiTile
+            board
+            valueDataV3="cf-manual-kpi-bank"
+            subDataV3="cf-manual-kpi-bank-sub"
             label="Bank balances (live TMS)"
             value={banksQuery.isError ? "—" : formatUsd(bankTotalDollars)}
             // LEAD 11-03: name the accounts this opening cash is (443.283 — the authoritative bank list; never a card
@@ -793,6 +796,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="income">
           <V3KpiTile
+            board
+            valueDataV3="cf-manual-kpi-income"
+            subDataV3="cf-manual-kpi-income-sub"
             label="Expected income"
             value={fmtCents(totalIncome)}
             sub="manual + automatic"
@@ -807,6 +813,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="expense">
           <V3KpiTile
+            board
+            valueDataV3="cf-manual-kpi-expense"
+            subDataV3="cf-manual-kpi-expense-sub"
             label="Expected expenses"
             value={fmtCents(totalExpense)}
             sub="manual + automatic"
@@ -821,6 +830,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="net">
           <V3KpiTile
+            board
+            valueDataV3="cf-manual-kpi-net"
+            subDataV3="cf-manual-kpi-net-sub"
             label="Predicted net"
             value={fmtCents(net)}
             tone={netPositive ? "green" : "red"}

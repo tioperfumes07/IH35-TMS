@@ -616,7 +616,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       : `${fmtLongDate(date)}${date === todayIso() ? " · Today" : ""}`;
 
   return (
-    <div className="space-y-3" data-testid="cash-flow-projected-v3" style={{ fontFamily: V3.font }}>
+    <div className="space-y-3" data-testid="cash-flow-projected-v3" data-v3-board="CashFlow-Projected" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {unknownAmountCount > 0 && (
         <p role="status" style={{ fontSize: 12, color: V3.muted }}>
           {unknownAmountCount} expense line{unknownAmountCount === 1 ? "" : "s"} awaiting short miles.

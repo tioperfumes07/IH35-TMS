@@ -123,6 +123,10 @@ export function destinationProblem(value) {
 }
 
 export function scanSource(source, file = 'board.tsx') {
+  // Local return-context wrappers declared in THIS file: `const partyHref = (target: string) => withReturnContext(target, originHref);`
+  const RETURN_CONTEXT_WRAPPERS = new Set(
+    [...source.matchAll(/\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*\(\s*([A-Za-z_$][\w$]*)\s*(?::\s*string)?\s*\)\s*=>\s*withReturnContext\(\s*\2\s*,/g)].map((m) => m[1]),
+  );
   const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   const problems = [];
   const declared = [];
@@ -182,6 +186,13 @@ export function scanSource(source, file = 'board.tsx') {
     // existence/consumer behavior still requires live parity; do not invent their value.
     // A route helper whose return values helperProblems() checks every run.
     if (ts.isCallExpression(node) && ROUTE_HELPERS.has(node.expression.getText(tree))) return [ROUTE_HELPERS.get(node.expression.getText(tree))];
+    // ROUND 8.17 class R: a return-context wrapper (`withReturnContext(route, origin)`, or a local one-argument arrow whose
+    // whole body is `withReturnContext(arg, …)`) only appends ?ret=<origin board>. The route it carries is its FIRST
+    // argument, and that argument is resolved — and judged — exactly like a bare `to`. Any other helper still fails closed.
+    if (ts.isCallExpression(node) && node.arguments.length >= 1) {
+      const callee = node.expression.getText(tree);
+      if (callee === 'withReturnContext' || RETURN_CONTEXT_WRAPPERS.has(callee)) return resolve(node.arguments[0], depth + 1);
+    }
     if (ts.isTemplateExpression(node)) {
       let route = node.head.text;
       for (const span of node.templateSpans) route += '{dynamic}' + span.literal.text;
@@ -365,6 +376,10 @@ export function selftest() {
     ['MoneyCell drill by variable', '<MoneyCell cents={c} drill={d} />', true],
     ['NumLink record', '<NumLink to={`/vendors/${r.id}`}>{usd(r.spend_cents)}</NumLink>', false],
     ['NumLink unresolved', '<NumLink to={x}>{usd(r.spend_cents)}</NumLink>', true],
+    ['ret wrapper record', 'const partyHref = (target: string) => withReturnContext(target, o);\nconst a = <NumLink to={partyHref(`/customers/${r.id}`)}>{money(r.billed_cents)}</NumLink>;', false],
+    ['ret wrapper unresolved inner', 'const partyHref = (target: string) => withReturnContext(target, o);\nconst a = <NumLink to={partyHref(x)}>{money(r.billed_cents)}</NumLink>;', true],
+    ['direct withReturnContext record', '<Link to={withReturnContext(`/drivers/${id}`, o)}>{money(c)}</Link>', false],
+    ['non-wrapper helper still fails closed', 'const h = (t: string) => somethingElse(t, o);\nconst a = <NumLink to={h(`/customers/${r.id}`)}>{money(c)}</NumLink>;', true],
     ['route helper', '<Link to={driverProfileTabHref(id, "Settlements")}>{money(c)}</Link>', false],
     ['account register record', '<Link to={`/accounting/chart-of-accounts/register/${id}`}>{money(c)}</Link>', false],
     ['vendors chip filter', '<V3KpiTile value="1" href="/vendors?chip=all" />', false],
@@ -421,7 +436,7 @@ export function selftest() {
   // A real board, planted with a dead number, fails; the real board as shipped passes.
   const boardRel = `${BOARDS_DIR}/VendorsHomeBoard.tsx`;
   const board = fs.readFileSync(path.join(ROOT, boardRel), 'utf8');
-  const planted = board.replace('href="/vendors?chip=open_bills"', '');
+  const planted = board.replace('href={partyHref("/vendors?chip=open_bills")}', '');
   assert.notEqual(planted, board, 'plant changed the board');
   assert.ok(scanSource(planted, boardRel).problems.length > scanSource(board, boardRel).problems.length,
     'a real board tile stripped of its drill adds a problem');

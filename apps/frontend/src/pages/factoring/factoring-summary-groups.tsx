@@ -48,17 +48,11 @@ function debtorMoneyCell(
   kind: "factoring_recourse_customer" | "factoring_chargebacks_customer",
   testId: string,
 ) {
-  return (
-    <MoneyCell
-      cents={Math.round(Number(dollars ?? 0) * 100)}
-      drill={
-        customerId
-          ? { entity: { kind, id: customerId } }
-          : { none: "no customer linked — cannot open factoring cohort" }
-      }
-      data-testid={testId}
-    />
-  );
+  const cents = Math.round(Number(dollars ?? 0) * 100);
+  if (!customerId) {
+    return <MoneyCell cents={cents} drill={{ none: "no customer linked — cannot open factoring cohort" }} data-testid={testId} />;
+  }
+  return <MoneyCell cents={cents} drill={{ entity: { kind, id: customerId } }} data-testid={testId} />;
 }
 
 /** ROUND 8.20 board18 — aging bucket/balance amounts open recourse pipeline for that debtor. */

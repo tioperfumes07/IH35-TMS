@@ -62,8 +62,8 @@ export function collectProblems(root = ROOT) {
 // ── selftest ───────────────────────────────────────────────────────────────
 function runSelftest() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "r9033-parity-"));
-  const dir = path.join(tmpDir, "apps/frontend/src/pages/driver-finance");
-  fs.mkdirSync(dir, { recursive: true });
+  const tmpTargetDir = path.join(tmpDir, "apps/frontend/src/pages/driver-finance");
+  fs.mkdirSync(tmpTargetDir, { recursive: true });
 
   const good = `
 // KPI strip
@@ -101,7 +101,7 @@ label: "Waiting on",
   let passed = 0;
   let failed = 0;
   for (const [desc, src, expect] of tests) {
-    fs.writeFileSync(path.join(dir, "SettlementsToursRegister.tsx"), src);
+    fs.writeFileSync(path.join(tmpTargetDir, "SettlementsToursRegister.tsx"), src);
     const probs = collectProblems(tmpDir);
     if (probs.length !== expect) {
       console.error(`  FAIL [${desc}]: expected ${expect} problems, got ${probs.length}: ${JSON.stringify(probs)}`);

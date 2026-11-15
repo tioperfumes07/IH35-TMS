@@ -366,7 +366,7 @@ export function TrialBalancePage() {
         subtitle={`Ledger debits and credits by account · ${applied.basis === "cash" ? "Cash" : "Accrual"} basis`}
         backHref={reportsBackHref}
         actions={
-          <div className="no-print" style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+          <div className="no-print" style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
             <button type="button" style={{ ...V3_HEADER_BTN, opacity: !query.data ? 0.6 : 1, cursor: !query.data ? "not-allowed" : "pointer" }} onClick={printLetter} disabled={!query.data}>
               Print
             </button>
@@ -443,6 +443,7 @@ export function TrialBalancePage() {
         applyDisabled={!staged.dirty}
       >
         <BasisSelector
+          board
           value={staged.draft.basis}
           onChange={(next) => staged.setDraft((p) => ({ ...p, basis: next }))}
         />

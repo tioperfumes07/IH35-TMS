@@ -1,4 +1,5 @@
 import { useId, type KeyboardEvent } from "react";
+import { V3Segmented } from "../v3/V3Segmented";
 
 export type AccountingBasis = "accrual" | "cash";
 
@@ -6,12 +7,24 @@ type BasisSelectorProps = {
   value: AccountingBasis;
   onChange: (basis: AccountingBasis) => void;
   disabled?: boolean;
+  /** V3 board filter bar: the drawn Accrual | Cash segmented control (no "Basis" caption), as on every report .dc.html. */
+  board?: boolean;
 };
 
 const ORDERED_BASIS: AccountingBasis[] = ["accrual", "cash"];
 
-export function BasisSelector({ value, onChange, disabled = false }: BasisSelectorProps) {
+export function BasisSelector({ value, onChange, disabled = false, board = false }: BasisSelectorProps) {
   const groupId = useId();
+  if (board) {
+    return (
+      <V3Segmented<AccountingBasis>
+        value={value}
+        options={[{ id: "accrual", label: "Accrual" }, { id: "cash", label: "Cash" }]}
+        onChange={(next) => { if (!disabled) onChange(next); }}
+        testId="basis-selector"
+      />
+    );
+  }
 
   function onKeyDown(event: KeyboardEvent<HTMLDivElement>) {
     if (disabled) return;

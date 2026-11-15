@@ -7,13 +7,33 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBulkAction, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow } from "../../api/perfume";
+import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBulkAction, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow, type PerfumeReviewFacet } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { itemSaysMore } from "./perfumeMatchText";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+type LineFilterKey = "gender" | "kind" | "conc" | "category" | "brand";
+type LineFilters = Record<LineFilterKey, string[]>;
+const NO_LINE_FILTERS: LineFilters = { gender: [], kind: [], conc: [], category: [], brand: [] };
+const GENDER_NAMES: Record<string, string> = { M: "Men", W: "Women", U: "Unisex", none: "Gender not stated" };
+const KIND_NAMES: Record<string, string> = { NONE: "Regular bottle", TESTER: "Tester", SET: "Set / gift", MINI: "Mini", REFILL: "Refill", BODY: "Body / cosmetics", VARIOUS: "Various" };
+/** Built at render so the labels follow the desk language. */
+const lineFilterDefs = (): Array<{ key: LineFilterKey; label: string; allLabel: string; name: (v: string) => string }> => [
+  { key: "gender", label: tr("perfume.review.f.gender", "Gender"), allLabel: tr("perfume.review.f.genderAll", "Men · Women · Unisex"), name: (v) => GENDER_NAMES[v] ?? v },
+  { key: "kind", label: tr("perfume.review.f.kind", "Set / tester"), allLabel: tr("perfume.review.f.kindAll", "Every kind"), name: (v) => KIND_NAMES[v] ?? v.charAt(0) + v.slice(1).toLowerCase() },
+  { key: "conc", label: tr("perfume.review.f.conc", "Type"), allLabel: tr("perfume.review.f.concAll", "Every type"), name: (v) => (v === "none" ? "Type not stated" : v) },
+  { key: "category", label: tr("perfume.review.f.category", "Category"), allLabel: tr("perfume.review.f.categoryAll", "Every category"), name: (v) => v },
+  { key: "brand", label: tr("perfume.review.f.brand", "Brand"), allLabel: tr("perfume.review.f.brandAll", "Every brand"), name: (v) => (v === "none" ? "Brand not read" : v) },
+];
+/** The choices are the values found on the waiting lines, each with how many lines it shows; a picked choice stays listed. */
+function facetOptions(found: PerfumeReviewFacet[] | undefined, picked: string[], name: (v: string) => string) {
+  const list = [...(found ?? [])];
+  for (const v of picked) if (!list.some((f) => f.value === v)) list.push({ value: v, count: 0 });
+  return list.map((f) => ({ value: f.value, label: `${name(f.value)} (${f.count.toLocaleString()})` }));
+}
 
 export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = {}) {
   const [page, setPage] = useState(1);
@@ -26,12 +46,17 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
   const [text, setText] = useState("");
   const [status, setStatus] = useState<"review" | "unmatched" | null>(null);
   const [PAGE, setPageSize] = useState(100);
+  // Owner 2026-11-15: "i need to filter by men or women, or by gender or by type, or set or tester or those with
+  // suggestions". Each filter is the engine's reading of the vendor line; the server applies them and pages after.
+  const [lf, setLf] = useState<LineFilters>(NO_LINE_FILTERS);
   const reset = () => { setPage(1); setSelected([]); };
   // Owner 2026-11-13: "just show all the items from my list and i'll confirm each. in review but only for my list."
   const [mineSeen, setMineSeen] = useState(mine);
   if (mineSeen !== mine) { setMineSeen(mine); setPage(1); setSelected([]); }
-  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE, mine],
-    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status, mine }), placeholderData: (p) => p });
+  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE, mine, lf],
+    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status, mine, ...lf }), placeholderData: (p) => p });
+  const facets = q.data?.facets;
+  const lineFilterCount = Object.values(lf).filter((v) => v.length).length;
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   // Owner 2026-11-12: "in all the tabs differentiate between vendors the lines" — a heavy rule above the first
@@ -64,6 +89,23 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
             onChange={(v) => { setStatus((v as "review" | "unmatched" | null) || null); reset(); }}
             options={[{ value: "review", label: tr("perfume.review.statusReview", "Has a suggestion") }, { value: "unmatched", label: tr("perfume.review.statusNone", "Nothing close on file") }]} />
         </label>
+        {lineFilterDefs().map((f) => (
+          <MultiSelectDropdown
+            key={f.key}
+            label={f.label}
+            allLabel={f.allLabel}
+            data-testid={`perfume-review-filter-${f.key}`}
+            options={facetOptions(facets?.[f.key], lf[f.key], f.name)}
+            selected={lf[f.key]}
+            onChange={(next) => { setLf((p) => ({ ...p, [f.key]: next })); reset(); }}
+          />
+        ))}
+        {lineFilterCount > 0 ? (
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-review-clear-filters"
+            onClick={() => { setLf(NO_LINE_FILTERS); reset(); }}>
+            {tr("perfume.review.clearFilters", "Clear filters")} ({lineFilterCount})
+          </Button>
+        ) : null}
         <label className="w-[120px] text-xs text-gray-700">
           {tr("perfume.review.perPage", "Rows per page")}
           <Combobox ariaLabel={tr("perfume.review.perPage", "Rows per page")} value={String(PAGE)}

@@ -1330,7 +1330,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const rrNote = (leg: string) => (homeNetBreakdown?.rr.includes(leg) ? " · run-rate estimate" : " · committed");
 
   return (
-    <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab" style={{ fontFamily: V3.font }}>
+    <div className="space-y-3" data-testid="cash-flow-rolling-ledger-tab" data-v3-board="CashFlow-RollingLedger" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {unknownAmountCount > 0 && (
         <p role="status">{t("cashFlow.unknownDriverCosts", undefined, { count: unknownAmountCount })}</p>
       )}
@@ -1533,12 +1533,18 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             data-testid="rolling-ledger-v3-kpis"
           >
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-opening"
+              subDataV3="cf-rl-kpi-opening-sub"
               label="Opening cash"
               value={boardKpis.opening === null ? "—" : formatUsdCents(boardKpis.opening)}
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-opening"
             />
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-income"
+              subDataV3="cf-rl-kpi-income-sub"
               label="Income due today"
               value={formatUsdCents(boardKpis.incomeDue)}
               sub={`${formatQuantityTable(boardKpis.incomeCount, 0)} item${boardKpis.incomeCount === 1 ? "" : "s"}`}
@@ -1546,6 +1552,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               testId="rolling-ledger-v3-kpi-income"
             />
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-expenses"
+              subDataV3="cf-rl-kpi-expenses-sub"
               label="Expenses due today"
               value={formatUsdCents(boardKpis.expensesDue)}
               sub={boardKpis.expenseSub}
@@ -1553,6 +1562,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               testId="rolling-ledger-v3-kpi-expenses"
             />
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-net"
+              subDataV3="cf-rl-kpi-net-sub"
               label="Net today"
               value={formatCents(boardKpis.net, { sign: true })}
               tone={boardKpis.net > 0 ? "green" : boardKpis.net < 0 ? "red" : "ink"}
@@ -1561,12 +1573,18 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               testId="rolling-ledger-v3-kpi-net"
             />
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-closing"
+              subDataV3="cf-rl-kpi-closing-sub"
               label="Projected closing"
               value={boardKpis.projectedClosing === null ? "—" : formatUsdCents(boardKpis.projectedClosing)}
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-closing"
             />
             <V3KpiTile
+              board
+              valueDataV3="cf-rl-kpi-due10"
+              subDataV3="cf-rl-kpi-due10-sub"
               label="Due next 10 days"
               value={formatUsdCents(boardKpis.dueNext10)}
               href={rollingLedgerKpiHref({ from: today, to: addDaysIso(today, 9) })}

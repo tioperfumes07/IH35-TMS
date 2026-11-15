@@ -174,14 +174,18 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
-export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null };
+export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[] };
+/** One choice of a Review line filter and how many waiting lines it shows (with every other filter applied). */
+export type PerfumeReviewFacet = { value: string; count: number };
+export type PerfumeReviewFacets = { gender: PerfumeReviewFacet[]; conc: PerfumeReviewFacet[]; kind: PerfumeReviewFacet[]; category: PerfumeReviewFacet[]; brand: PerfumeReviewFacet[] };
 export const getPerfumeReview = (offset = 0, limit = 100, f: PerfumeReviewFilter = {}) => {
   const p = new URLSearchParams({ offset: String(offset), limit: String(limit) });
   if (f.listIds?.length) p.set("list_ids", f.listIds.join(","));
   if (f.q?.trim()) p.set("q", f.q.trim());
   if (f.mine) p.set("mine", f.mine);
   if (f.status) p.set("status", f.status);
-  return apiRequest<{ rows: PerfumeReviewRow[]; total: number }>(`/api/v1/perfume/review?${p.toString()}`);
+  for (const k of ["gender", "conc", "kind", "category", "brand"] as const) if (f[k]?.length) p.set(k, f[k]!.join(","));
+  return apiRequest<{ rows: PerfumeReviewRow[]; total: number; facets?: PerfumeReviewFacets }>(`/api/v1/perfume/review?${p.toString()}`);
 };
 export type PerfumeBulkAction =
   | { action: "confirm_best"; row_ids: string[] }

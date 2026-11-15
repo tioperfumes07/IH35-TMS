@@ -199,13 +199,18 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
     <div
       ref={wrapperRef}
       className="relative inline-flex items-stretch"
+      // V3 (every .dc.html): a tab with a menu is drawn exactly like any tab — 600 11px Inter, 8px padding, opacity .85
+      // when idle; the active one is the rgba(255,255,255,.16) box with the 2px white rule. The look sits on the wrapper
+      // so the label and its chevron read as ONE tab.
+      style={parentActive ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" } : { opacity: 0.85 }}
       onMouseEnter={show}
       onMouseLeave={scheduleHide}
     >
       {hasDefaultHref ? (
         <NavLink
           to={item.to}
-          className={`inline-flex h-8 items-center whitespace-nowrap border-b-2 px-2 ${parentActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`}
+          className="whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          style={{ ...NAVY_TAB_TEXT, padding: "8px 2px 8px 8px" }}
         >
           {item.label}
         </NavLink>
@@ -216,7 +221,8 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
-        className={`inline-flex h-8 items-center whitespace-nowrap border-b-2 px-2 ${!hasDefaultHref && parentActive ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`}
+        className="inline-flex items-center whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        style={{ ...NAVY_TAB_TEXT, display: "inline-flex", background: "none", border: "none", padding: hasDefaultHref ? "8px 8px 8px 0" : "8px 8px" }}
         onClick={toggleFromClick}
         onKeyDown={onButtonKeyDown}
       >
@@ -260,6 +266,12 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
 
 /** ROUND 441.6: a module's index tab (Finance "Hub" -> /finance) prefix-matches every sibling (/finance/overview),
  *  so two tabs were active at once. Only the most specific matching tab is active. */
+/** V3 tab text (every .dc.html): 600 11px Inter, line-height normal, white. Shared by plain tabs and menu tabs. */
+const NAVY_TAB_TEXT: CSSProperties = {
+  display: "block", boxSizing: "content-box", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+  fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff", whiteSpace: "nowrap",
+};
+
 export function mostSpecificActiveTo(pathname: string, tos: readonly string[], search = ""): string | null {
   let best: string | null = null;
   let bestPathLength = -1;
@@ -285,8 +297,7 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
-  const activeTo =
-    mostSpecificActiveTo(
+  const activeTo = mostSpecificActiveTo(
       pathname,
       items.filter((i) => !i.children?.length).map((i) => i.to),
       search,

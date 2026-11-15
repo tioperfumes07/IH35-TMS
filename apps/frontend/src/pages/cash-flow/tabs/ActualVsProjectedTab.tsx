@@ -682,7 +682,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
   const expenseAccuracy = useMemo(() => matchedExpenseAccuracyCoverage(groups), [groups]);
 
   return (
-    <div className="space-y-4" style={{ fontFamily: V3.font }} data-testid="cash-flow-avp-v3-root">
+    <div className="space-y-4" data-testid="cash-flow-avp-v3-root" data-v3-board="CashFlow-ActualVsProjected" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {/* Single staged Filters — From/To + Net variance (no split Apply-only date chrome). */}
       <CollapsedListFilters
         activeFilterCount={activeFilterCount}
@@ -764,6 +764,9 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             const pct = accuracyPct(acc.total_projected_income_cents, acc.total_actual_income_cents);
             return (
               <V3KpiTile
+                board
+                valueDataV3="cf-avp-kpi-income-accuracy"
+                subDataV3="cf-avp-kpi-income-accuracy-sub"
                 label="Income accuracy"
                 value={actualsUnavailable ? "unavailable" : `${pct}%`}
                 tone={incomeVerb.tone}
@@ -802,6 +805,9 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             const pct = accuracyPct(matchedProj, matchedAct);
             return (
               <V3KpiTile
+                board
+                valueDataV3="cf-avp-kpi-expense-accuracy"
+                subDataV3="cf-avp-kpi-expense-accuracy-sub"
                 label="Expense accuracy"
                 value={expenseAccuracyUnavailable ? "unavailable" : `${pct}%`}
                 tone={expVerb.tone}
@@ -858,6 +864,9 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                   );
             return (
               <V3KpiTile
+                board
+                valueDataV3="cf-avp-kpi-net-variance"
+                subDataV3="cf-avp-kpi-net-variance-sub"
                 label="Net variance"
                 value={varianceUnavailable ? "unavailable" : formatCents(netVar, { sign: true })}
                 tone={
@@ -878,6 +887,9 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             );
           })()}
           <V3KpiTile
+            board
+            valueDataV3="cf-avp-kpi-days"
+            subDataV3="cf-avp-kpi-days-sub"
             label="Days in range"
             value={formatQuantityTable(dayCountInclusive(applied.from, applied.to), 0)}
             sub={shortRangeLabel(applied.from, applied.to)}
