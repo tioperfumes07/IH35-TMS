@@ -489,6 +489,14 @@ export function LoadsReportBoard() {
           onReset={staged.reset}
           applyDisabled={!staged.dirty}
         >
+          {/* Reports-Loads.dc.html: Group by sits in the filter bar, right after the period presets. */}
+          <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
+          <V3Segmented
+            value={by}
+            options={GROUP_OPTIONS}
+            onChange={(next) => setBy(next)}
+            testId="loads-report-group-by"
+          />
           <label className="flex items-center gap-1 text-xs text-[#4B5563]">
             <span className="font-semibold">Date on</span>
             <SelectCombobox
@@ -506,6 +514,7 @@ export function LoadsReportBoard() {
             selected={staged.draft.status}
             onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
             allLabel="All statuses"
+            board
             data-testid="loads-report-status-filter"
           />
           <MultiSelectDropdown
@@ -514,6 +523,7 @@ export function LoadsReportBoard() {
             selected={staged.draft.tripType}
             onChange={(next) => staged.setDraft((p) => ({ ...p, tripType: next }))}
             allLabel="All trip types"
+            board
             data-testid="loads-report-trip-filter"
           />
           <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
@@ -558,21 +568,12 @@ export function LoadsReportBoard() {
           </label>
         </ReportFilterBar>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-[#5B6576]">
-          <span className="font-semibold text-[#111827]">Group by</span>
-          <V3Segmented
-            value={by}
-            options={GROUP_OPTIONS}
-            onChange={(next) => setBy(next)}
-            testId="loads-report-group-by"
-          />
-          {entityFilterIds(applied.customerId).length + entityFilterIds(applied.driverId).length + entityFilterIds(applied.unitId).length > 0 ? (
-            <span>filtered by the selected records</span>
-          ) : null}
-        </div>
-
         {query.isError ? (
           <ListErrorState title="Couldn't load the loads report" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
+        ) : null}
+
+        {entityFilterIds(applied.customerId).length + entityFilterIds(applied.driverId).length + entityFilterIds(applied.unitId).length > 0 ? (
+          <p className="text-xs text-[#5B6576]">filtered by the selected records</p>
         ) : null}
 
         <ReportKpiGrid>
