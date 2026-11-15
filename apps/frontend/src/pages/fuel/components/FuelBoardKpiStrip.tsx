@@ -74,6 +74,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
       }}
     >
       <V3KpiTile
+        board
         label={`Diesel spend · ${range.labelSuffix}`}
         value={spendValue}
         sub={spendSub}
@@ -81,6 +82,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         href={historyPeriod}
       />
       <V3KpiTile
+        board
         label="Gallons"
         value={gallonsValue}
         sub=""
@@ -88,6 +90,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         href={historyPeriod}
       />
       <V3KpiTile
+        board
         label="Avg $/gal"
         value={avgValue}
         sub=""
@@ -95,6 +98,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         href={historyPeriod}
       />
       <V3KpiTile
+        board
         label="Fills without a load"
         value={noLoadValue}
         sub={noLoadSub}
@@ -104,6 +108,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         href={historyUnlinked}
       />
       <V3KpiTile
+        board
         label="Open questions"
         value={openValue}
         sub="attribution pop-up"
