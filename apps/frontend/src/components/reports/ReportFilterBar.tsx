@@ -209,11 +209,11 @@ export function ReportFilterBar({
             </button>
           ))}
         </span>
+        {children}
         {onSearchChange ? (
           <input type="text" value={search ?? ""} onChange={handleSearch} placeholder="Search…" aria-label="Search"
             style={{ ...B_BTN, width: 160, cursor: "text", fontWeight: 400 }} data-testid={`${testIdPrefix}-filter-search`} />
         ) : null}
-        {children}
         {statusOptions && statusOptions.length > 0 ? (
           <SelectCombobox value={statusFilter ?? ""} onChange={handleStatus} aria-label="Status" className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]" data-testid={`${testIdPrefix}-filter-status`}>
             <option value="">All</option>
