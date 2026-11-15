@@ -347,8 +347,11 @@ export function AccountingHubPage() {
     pending: qboPending,
     failed: qboFailed,
   });
+  // Accounting.dc.html draws "Not connected" in muted ink (a state, not an error); failures stay red / amber.
   const qboTone =
-    qboSyncSummary.tone === "bad" ? "red" : qboSyncSummary.tone === "warn" ? "amber" : ("ink" as const);
+    qboSyncSummary.label === "Not connected"
+      ? ("muted" as const)
+      : qboSyncSummary.tone === "bad" ? "red" : qboSyncSummary.tone === "warn" ? "amber" : ("ink" as const);
 
   const closedByPeriod = useMemo(() => {
     const map = new Map<string, boolean>();
@@ -391,7 +394,8 @@ export function AccountingHubPage() {
         statusLabel = "open";
         statusColor = m < monthNow ? V3.amber : V3.muted;
       }
-      return { label, key, statusLabel, statusColor, marks, isFuture };
+      // Accounting.dc.html: the current month's cell is shaded #EEF2F7.
+      return { label, key, statusLabel, statusColor, marks, isFuture, isCurrent: m === monthNow };
     });
   }, [year, monthNow, closedByPeriod, pastMonthKeys, monthCloseQueries]);
 
@@ -492,9 +496,10 @@ export function AccountingHubPage() {
       className="text-section-header"
     >
       {billsQ.isError ? (
-        <V3KpiTile label="Open bills" value="—" sub="Error loading" />
+        <V3KpiTile board label="Open bills" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="Open bills"
           value={formatUsdCents(openBillsAmountCents)}
           sub={`${openBills.length} unpaid`}
@@ -504,9 +509,10 @@ export function AccountingHubPage() {
         />
       )}
       {billsQ.isError || expensesQ.isError ? (
-        <V3KpiTile label="MTD expenses" value="—" sub="Error loading" />
+        <V3KpiTile board label="MTD expenses" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="MTD expenses"
           value={formatUsdCents(expensesMtdCents)}
           sub="bills + expenses"
@@ -515,9 +521,10 @@ export function AccountingHubPage() {
         />
       )}
       {invoicesQ.isError ? (
-        <V3KpiTile label="Open invoices" value="—" sub="Error loading" />
+        <V3KpiTile board label="Open invoices" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="Open invoices"
           value={formatUsdCents(openInvoicesCents)}
           sub={`${openInvoicesCount} open`}
@@ -526,9 +533,10 @@ export function AccountingHubPage() {
         />
       )}
       {invoicesQ.isError ? (
-        <V3KpiTile label="Overdue A/R" value="—" sub="Error loading" />
+        <V3KpiTile board label="Overdue A/R" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="Overdue A/R"
           value={formatUsdCents(overdueInvoiceCents)}
           sub={`${overdueInvoicesCount} overdue`}
@@ -538,9 +546,10 @@ export function AccountingHubPage() {
         />
       )}
       {qboQueueQ.isError ? (
-        <V3KpiTile label="Unmatched" value="—" sub="Error loading" />
+        <V3KpiTile board label="Unmatched" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="Unmatched"
           value={String(unmatchedItems.length)}
           sub="failed / blocked queue"
@@ -549,9 +558,10 @@ export function AccountingHubPage() {
         />
       )}
       {qboStatsQ.isError || qboConnectionQ.isError ? (
-        <V3KpiTile label="QBO sync" value="—" sub="Error loading" />
+        <V3KpiTile board label="QBO sync" value="—" sub="Error loading" />
       ) : (
         <V3KpiTile
+          board
           label="QBO sync"
           value={qboSyncSummary.label}
           sub={qboSyncSummary.sub}
@@ -630,9 +640,9 @@ export function AccountingHubPage() {
                   key={cell.key}
                   style={{
                     border: `1px solid ${V3.border}`,
-                    borderRadius: 2,
+                    borderRadius: 4,
                     padding: 6,
-                    background: V3.surface,
+                    background: cell.isCurrent ? "#EEF2F7" : V3.surface,
                   }}
                   data-testid={`acct-hub-month-${cell.key}`}
                 >
@@ -653,9 +663,10 @@ export function AccountingHubPage() {
                 </div>
               ))}
             </div>
-            <p style={{ fontSize: 11, color: V3.muted, margin: 0 }}>
-              4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock.
-            </p>
+          </div>
+          {/* Accounting.dc.html: the legend is the card's own footer line — 8px 14px, a soft top rule. */}
+          <div style={{ padding: "8px 14px", borderTop: `1px solid ${V3.borderSoft}`, fontSize: 11, color: V3.muted }}>
+            4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock.
           </div>
         </BoardSection>
 
@@ -723,10 +734,10 @@ export function AccountingHubPage() {
                       },
                     ]}
                     footerCells={{
-                      label: <span className="font-semibold">Total</span>,
-                      invoices: <span className="font-semibold">{arAgingQ.isLoading ? "…" : agingBuckets.totalInv}</span>,
+                      label: <span className="font-bold">Total</span>,
+                      invoices: <span className="font-bold">{arAgingQ.isLoading ? "…" : agingBuckets.totalInv}</span>,
                       amountCents: (
-                        <span className="font-semibold">
+                        <span className="font-bold">
                           {arAgingQ.isLoading ? "…" : formatUsdCents(agingBuckets.totalAmt).replace(/^\$/, "")}
                         </span>
                       ),
