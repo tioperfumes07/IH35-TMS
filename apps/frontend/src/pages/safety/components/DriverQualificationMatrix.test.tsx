@@ -11,7 +11,7 @@ vi.mock("../../../api/mdata", () => ({ listAllDrivers: vi.fn() }));
 vi.mock("../../../api/safety", () => ({ getSafetyKpis: vi.fn() }));
 // Table mechanics are covered by the shared table suite; retain its actual column renderers.
 vi.mock("../../../components/parity/ParityTable", () => ({ ParityTable: ({ rows, columns }: any) => <table><tbody>{rows.map((row: Driver) => <tr key={row.id}>{columns.map((column: any) => <td key={column.key}>{column.render(row)}</td>)}</tr>)}</tbody></table> }));
-const driver = (id: string, fields: Partial<Driver> = {}) => ({ id, first_name: "EXAMPLE", last_name: id, cdl_expires_at: null, dot_medical_expires_at: null, visa_expires_at: null, b1_visa_expires_date: null, emergency_contact_name: null, emergency_contact_phone_primary: null, emergency_contact_phone_alternate: null, samsara_driver_id: null, ...fields }) as Driver;
+const driver = (id: string, fields: Partial<Driver> = {}) => ({ id, first_name: `EXAMPLE ${id}`, last_name: "FIXTURE", cdl_expires_at: null, dot_medical_expires_at: null, visa_expires_at: null, b1_visa_expires_date: null, emergency_contact_name: null, emergency_contact_phone_primary: null, emergency_contact_phone_alternate: null, samsara_driver_id: null, ...fields }) as Driver;
 function mount(companyId = "company-fixture", entry = "/safety/driver-files") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
