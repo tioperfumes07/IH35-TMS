@@ -144,6 +144,11 @@ const PROTECTED = new Set([
   // lists.modal.override_reason arrived via agent-sync-main (7349992008) without a guard.
   // Genuine unbuilt gap; no Built credit. Remove when wired.
   "connectivity\tlists:lists.modal.override_reason",
+  // factoring.panel.factoring_home_board_purchases arrived on main without a connectivity guard.
+  // FILED (CC-2, banking lane, 2026-11-15) — NOT this seat's gap, NOT fixed, no Built credit. Live
+  // on origin/main (confirmed: guard fails on main's own script + main's own data). Remove when
+  // the factoring lane wires the panel and adds the Evidence entry.
+  "connectivity\tfactoring:factoring.panel.factoring_home_board_purchases",
 ]);
 
 const CLOSED_CLAIM_IDS = [

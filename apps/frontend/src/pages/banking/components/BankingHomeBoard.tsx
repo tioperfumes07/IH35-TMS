@@ -682,7 +682,7 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
   const relayTone = !relayKpiQuery.isError && relayHoursAgo != null && relayHoursAgo <= 24 ? "green" : "red";
 
   return (
-    <div className="space-y-3" data-testid="banking-home-board" style={{ fontFamily: V3.font }}>
+    <div className="space-y-3" data-testid="banking-home-board" data-v3-board="Banking" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {loadError ? (
         <ListErrorBanner
           message={userFacingApiError(
@@ -704,45 +704,60 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
         style={{ gap: 8 }}
       >
         <V3KpiTile
+          board
           label={`Money in · ${monthLabel}`}
           value={moneyMapQuery.isError ? "—" : formatUsdCents(kpiSplit.opIn)}
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-in"
+          valueDataV3="banking-kpi-money-in-value"
+          subDataV3="banking-kpi-money-in-sub"
           // ROUND 8.20 board 3 — month dates + money_in + review=all (cleared for_review∪categorized).
           href={moneyInHref}
         />
         <V3KpiTile
+          board
           label={`Money out · ${monthLabel}`}
           value={moneyMapQuery.isError ? "—" : formatUsdCents(kpiSplit.opOut)}
           sub="operating · cleared"
           tone="ink"
           testId="banking-kpi-money-out"
+          valueDataV3="banking-kpi-money-out-value"
+          subDataV3="banking-kpi-money-out-sub"
           href={moneyOutHref}
         />
         <V3KpiTile
+          board
           label="Lines to review"
           value={moneyMapQuery.isError ? "—" : String(kpiSplit.pendingTotal)}
           sub={`${kpiSplit.opPending} operating · ${kpiSplit.relayPending} Relay`}
           tone={kpiSplit.pendingTotal > 0 ? "amber" : "green"}
           testId="banking-kpi-lines-to-review"
+          valueDataV3="banking-kpi-lines-review-value"
+          subDataV3="banking-kpi-lines-review-sub"
           href={reviewHref}
         />
         <V3KpiTile
+          board
           label="Drift alerts"
           value={driftQuery.isError ? "—" : String(driftCount)}
           sub="accounts · bank vs book"
           tone={driftCount > 0 ? "red" : "ink"}
           testId="banking-kpi-drift-alerts"
+          valueDataV3="banking-kpi-drift-value"
+          subDataV3="banking-kpi-drift-sub"
           href={driftHref}
         />
         {/* Row 22 — Relay ingest heartbeat tile: green ≤24h, red >24h or never. */}
         <V3KpiTile
+          board
           label={"RELAY FEED"}
           value={relayKpiQuery.isError ? "—" : relayLabel}
           sub="last pull · fuel cards"
           tone={relayKpiQuery.isError ? "red" : relayTone}
           testId="banking-kpi-relay-feed"
+          valueDataV3="banking-kpi-relay-value"
+          subDataV3="banking-kpi-relay-sub"
           href={relayHref}
         />
       </div>

@@ -183,9 +183,9 @@ if (process.argv.includes("--selftest")) {
     ["rows company not-opened dropped", withField("rows", (s) => s.replace(/not opened/g, "none"))],
     ["rows restores compound Legs cell", withField("rows", (s) => `${s}\n// <TourLegsCell legs={r.legs} />`)],
     ["rows leftover fontSize 11", withField("rows", (s) => `${s}\n<span style={{ fontSize: 11 }}>plant</span>`)],
-    ["setl money wraps", withField("setl", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
-    ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
-    ["backend drops legs type", withField("backend", (s) => s.replace(/legs: \{\n\s*load_id: string; load_number: string; trip_type: string \| null;/, "legs: {\n    dropped_id: string; load_number: string; trip_type: string | null;"))],
+    ["setl money wraps", withField("setl", (s) => s.replace(/cellClass: "whitespace-nowrap text-right tabular-nums",(\n\s*minWidth: 100,\n\s*maxWidth: 140,)/g, 'cellClass: "text-right tabular-nums",$1'))],
+    ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/g, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
+    ["backend drops legs type", withField("backend", (s) => s.replace(/legs: \{\n\s*load_id: string; load_number: string; trip_type: string \| null;/g, "legs: {\n    dropped_id: string; load_number: string; trip_type: string | null;"))],
   ];
   let caught = 0;
   for (const [label, mutated] of mutations) {
