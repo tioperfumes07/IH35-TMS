@@ -49,6 +49,9 @@ export function FleetTruck({ row, vertical = false, moving = false, alert = fals
   </svg>;
 }
 
+// Maintenance-Home.dc.html fleet line: td padding 6px 12px, text wraps (no nowrap) — not the 7px register table.
+const FLEET_TD = { paddingTop: 6, paddingBottom: 6, whiteSpace: "normal" as const };
+
 export function FleetHealthLine({ companyId }: { companyId: string }) {
   const { t } = useTranslation();
   const { pathname, search } = useLocation();
@@ -81,7 +84,7 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   const columns: ParityColumn<FleetHealthRow>[] = [
     // Board 22: the truck drawing in its own unlabeled first column, then Unit (700 13px) over make · model · year (11px).
     { key: "truck", label: "", render: (row) => <FleetTruck row={row} /> },
-    { key: "unit_number", label: "Unit", render: (row) => <div><div style={{ font: "700 13px Inter, ui-sans-serif, system-ui, sans-serif" }}><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} /></div><div style={{ fontSize: 11, color: "#5B6576" }}>{[row.make, row.model, row.year].filter(Boolean).join(" · ") || "—"}</div></div> },
+    { key: "unit_number", label: "Unit", render: (row) => <><div style={{ font: "700 13px Inter, ui-sans-serif, system-ui, sans-serif" }}><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="text-inherit hover:underline" /></div><div style={{ fontSize: 11, color: "#5B6576" }}>{[row.make, row.model, row.year].filter(Boolean).join(" · ") || "—"}</div></> },
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Math.round(Number(row.odometer_mi)).toLocaleString("en-US")} mi`} /> },
     { key: "formatted_location", label: "Location", render: (row) => <div>{row.formatted_location || [row.telemetry_city, row.telemetry_state].filter(Boolean).join(", ") || "Location unavailable"}<div className="text-xs text-slate-500">{row.telemetry_at ? `Last reported ${formatDateTimeUS(row.telemetry_at)}` : "No telemetry timestamp"}</div></div> },
     { key: "pm_interval", label: "Road to next PM · 0 / 20k / 25k", render: (row) => row.pm_schedule_id
@@ -110,6 +113,6 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
     </span>}
     footer="Recorded fleet health and PM schedules. Missing readings are unavailable, never sample values.">
     {health.isError ? <ListErrorState title="Couldn't load fleet health" status={0} message={health.error instanceof Error ? health.error.message : undefined} onRetry={() => void health.refetch()} />
-      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="v3" panel rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." /></div>}
+      : <div className="max-h-[420px] overflow-auto" data-testid="fleet-health-table-scroll"><ParityTable appearance="v3" panel boardTdStyle={FLEET_TD} rows={rows} columns={columns} rowKey={(row) => row.unit_id} loading={health.isPending} storageKey="maintenance-home-fleet-health" emptyText="No units match this filter." /></div>}
   </V3Panel>;
 }
