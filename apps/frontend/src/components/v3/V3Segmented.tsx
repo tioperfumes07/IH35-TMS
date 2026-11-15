@@ -23,6 +23,7 @@ export function V3Segmented<T extends string>({
         display: "inline-flex",
         background: V3.surface,
         border: `1px solid ${V3.border}`,
+        // Every approved design (20 of 20 .dc.html with a segmented control): container radius 6, segment radius 4.
         borderRadius: 6,
         padding: 2,
         gap: 2,

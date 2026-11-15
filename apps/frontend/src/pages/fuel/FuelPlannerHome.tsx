@@ -77,6 +77,20 @@ type Props = {
   initialTab?: FuelTabId;
 };
 
+const FUEL_HEADER_BTN: React.CSSProperties = {
+  height: 28,
+  padding: "0 12px",
+  display: "inline-flex",
+  alignItems: "center",
+  borderRadius: 6,
+  font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif",
+  background: "#fff",
+  color: "#111827",
+  border: "1px solid #DDE1E7",
+  cursor: "pointer",
+  lineHeight: "normal",
+};
+
 export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   const location = useLocation();
   // ROUND 8.20 board19 — expense-map View-all shareable href+ret.
@@ -424,14 +438,15 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
 
   const fuelBoardSubnav = FUEL_BOARD_SUBNAV.map((item) => ({ label: item.label, to: FUEL_TAB_PATH[item.id] }));
   const fuelHeaderActions = (
-    <div className="flex items-center gap-2">
+    <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
       {companyId ? <FuelQuestionsBadge operatingCompanyId={companyId} /> : null}
-      <ActionButton data-testid="fuel-board-header-import-fills" onClick={() => setImportOpen(true)}>
+      {/* Fuel.dc.html header actions: 28px · 0 12px · radius 6 · 600 12px — white bordered, then navy primary. */}
+      <button type="button" data-testid="fuel-board-header-import-fills" onClick={() => setImportOpen(true)} style={FUEL_HEADER_BTN}>
         Import fills
-      </ActionButton>
-      <ActionButton data-testid="fuel-board-header-add-fill" onClick={() => setCreateOpen(true)}>
+      </button>
+      <button type="button" data-testid="fuel-board-header-add-fill" onClick={() => setCreateOpen(true)} style={{ ...FUEL_HEADER_BTN, background: "#13233F", color: "#fff", border: "none" }}>
         + Add fill
-      </ActionButton>
+      </button>
       {tab === "planner" ? (
         <>
           <span title="Trip planning is generated from active dispatch loads — there is no manual trip-create here">
@@ -483,7 +498,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   }
 
   return (
-    <div className="space-y-3" data-v3-board="Fuel" data-testid="fuel-planner-home-root" style={{ lineHeight: "normal" }}>
+    <div data-v3-board="Fuel" data-testid="fuel-planner-home-root" style={{ lineHeight: "normal", display: "flex", flexDirection: "column", gap: 12 }}>
       <FuelPlannerBoardChrome
         title="Fuel"
         subtitle={FUEL_BOARD_SUBTITLE}
