@@ -218,11 +218,11 @@ let nameBrandsSig: string | null = null;
 export function currentNameBrandsSig(): string | null { return nameBrandsSig; }
 export async function loadNameBrands(c: PoolClient): Promise<void> {
   const sig = (await c.query<{ s: string }>(
-    `SELECT concat_ws('|',
-       (SELECT count(*) FROM perfume.items WHERE merged_into_id IS NULL),
-       (SELECT coalesce(sum(hashtext(coalesce(brand,'') || '|' || coalesce(name,''))::bigint), 0) FROM perfume.items WHERE merged_into_id IS NULL),
-       (SELECT count(*) FROM perfume.brand_aliases),
-       (SELECT coalesce(sum(hashtext(coalesce(alias,'') || '|' || coalesce(brand,''))::bigint), 0) FROM perfume.brand_aliases)) AS s`)).rows[0]?.s ?? null;
+    `SELECT concat_ws('|', i.n, i.h, a.n, a.h) AS s
+       FROM (SELECT count(*) AS n, coalesce(sum(hashtext(coalesce(brand,'') || '|' || coalesce(name,''))::bigint), 0) AS h
+               FROM perfume.items WHERE merged_into_id IS NULL) i,
+            (SELECT count(*) AS n, coalesce(sum(hashtext(coalesce(alias,'') || '|' || coalesce(brand,''))::bigint), 0) AS h
+               FROM perfume.brand_aliases) a`)).rows[0]?.s ?? null;
   // No fingerprint read → never trust a remembered index (rebuild every time).
   if (sig !== null && sig === nameBrandsSig) return;
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
@@ -622,7 +622,9 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
   }
   const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
+  const tStart = Date.now();
   await loadNameBrands(c);
+  const tBrands = Date.now();
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
@@ -633,6 +635,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const rows = await c.query(
     `SELECT r.id, r.list_id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
        ${base} ORDER BY v.name, r.row_no`, fp);
+  const tRows = Date.now();
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
     // my_desc: my own offer-list wording for the item (owner 2026-11-14: "showing my description name and la
     // esperanza description name … so i can verify they are matched correctly").
@@ -660,6 +663,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     const forMine = [...offer];
     return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, for_my_desc: forMine[0] ? myDesc.get(forMine[0].item_id) ?? null : null, _mine: forMine.length > 0 };
   });
+  const tRead = Date.now();
   type LineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown; gender?: string | null; conc?: string | null; flags?: string; category?: string; brand_name?: string | null };
   // Grouped by my item, then vendor, so the owner confirms item by item.
   const scoped: LineRow[] = !mine ? (out as LineRow[]) : (out as LineRow[]).filter((r) => r._mine)
@@ -683,6 +687,8 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     return [...n].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
   };
   const kept = scoped.filter((r) => pass(r));
+  // Measured per request (owner 2026-11-15: "make it faster"): where a Review read spends its time.
+  console.info(JSON.stringify({ perfume_review_ms: { brands: tBrands - tStart, rows: tRows - tBrands, read: tRead - tRows, total: Date.now() - tStart, lines: rows.rows.length, cached: identityCache.size } }));
   return {
     rows: kept.slice(opts.offset, opts.offset + opts.limit),
     total: kept.length,
