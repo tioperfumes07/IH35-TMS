@@ -32,7 +32,7 @@ const SHRINK_ONLY_BASELINE = 0; // 2026-10-06 ROUND 433.2 batch 5: 23 -> 0. Ever
 // 2026-11-10 LST-F11139 (owner adopted Lead's recommendation 2026-11-10): 34 -> 35, one preview provable from the code
 // (a MoneyCell { none } reason is shown on hover): OwnerImportModal.tsx (#28761) plan row — the modal runs run(file, commit=false)
 // and says "nothing is written until Post"; no record exists yet. (The BookLoadModalV4 read-outs stay with Cursor — #28796.)
-const DECLARED_NO_DRILL = 35; // 2026-10-22 CC-1 443.210R: +1 WEX import plan preview cell (ImportFuelTransactionsModal.tsx) — no record yet until import runs
+const DECLARED_NO_DRILL = 36; // 2026-11-14 CC-2: +1 debtorMoneyCell none-branch (no customer linked) — B18 factoring-summary-groups.tsx drill literal fix
 
 function stripComments(src) {
   return String(src ?? "")

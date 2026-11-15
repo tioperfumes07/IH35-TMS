@@ -2082,9 +2082,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
                                 <td className="py-1">
                                   <EntityLink kind="factoring_advance" id={advId} label={s.advance_display_id} />
                                 </td>
-                                <td className="py-1 text-right font-mono tabular-nums">{fmtCents(s.total_cents)}</td>
-                                <td className="py-1 text-right font-mono tabular-nums text-[#16A34A]">{fmtCents(s.collected_cents)}</td>
-                                <td className="py-1 text-right font-mono tabular-nums text-gray-700">{fmtCents(s.open_cents)}</td>
+                                <td className="py-1 text-right font-mono tabular-nums"><MoneyCell cents={s.total_cents} drill={{ entity: { kind: "factoring_advance", id: advId } }} /></td>
+                                <td className="py-1 text-right font-mono tabular-nums text-[#16A34A]"><MoneyCell cents={s.collected_cents} drill={{ entity: { kind: "factoring_advance", id: advId } }} /></td>
+                                <td className="py-1 text-right font-mono tabular-nums text-gray-700"><MoneyCell cents={s.open_cents} drill={{ entity: { kind: "factoring_advance", id: advId } }} /></td>
                                 <td className="py-1 text-right">
                                   {allCollected ? (
                                     <span className="text-[#16A34A] font-medium">Fully Collected</span>
