@@ -15,6 +15,8 @@ import { formatQuantityTable, formatUsdTable } from "../../lib/money";
 import { driverProfileTabHref } from "../../pages/drivers/driverProfileTabs";
 import type { DriverProfileAggregate } from "../../pages/drivers/DriverProfilePage";
 import type { DqfComplianceSummary } from "../../lib/driverDqf";
+import { companyToday } from "../../lib/businessDate";
+import { formatNumber } from "../../lib/money";
 
 const text = (value: unknown) => typeof value === "string" || typeof value === "number" ? String(value) : "";
 /** Board 11 date cells: calendar MM-DD-YYYY (date-only, never shifted to Central); "—" when not recorded. */
@@ -23,7 +25,7 @@ const boardDate = (value: unknown) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exe
 const tripDate = (value: unknown) => { const m = /^\d{4}-(\d{2})-(\d{2})/.exec(text(value)); return m ? `${m[1]}-${m[2]}` : "—"; };
 const CARDINALS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
 export const headingCardinal = (deg: number | null | undefined) => deg == null || !Number.isFinite(Number(deg)) ? null : CARDINALS[Math.round((((Number(deg) % 360) + 360) % 360) / 45) % 8];
-const todayIso = () => new Date().toISOString().slice(0, 10);
+const todayIso = () => companyToday();
 /** Board money cells print plain numbers (2 decimals, thousands) — the panel title carries the unit. */
 const plainMoney = (cents: unknown) => { const n = Number(cents); return Number.isFinite(n) ? (n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"; };
 /** Share of the current Mon–Sun pay week elapsed (America/Chicago) — the bar under "Pay this week". */
@@ -109,7 +111,7 @@ export function DriverLiveOverview({ companyId, driverId, aggregate, dqf, dqfUna
   const cardinal = headingCardinal(position?.heading_deg);
   const where = unitHealth?.formatted_location || [unitHealth?.telemetry_city, unitHealth?.telemetry_state].filter(Boolean).join(", ") || null;
   const odo = unitHealth?.odometer_mi ?? null;
-  const unitFooter = [where ?? "Location unavailable", cardinal ? `heading ${cardinal}` : "heading unavailable", odo == null ? "odo unavailable" : `odo ${Math.round(Number(odo)).toLocaleString("en-US")}`].join(" · ") + " ·";
+  const unitFooter = [where ?? "Location unavailable", cardinal ? `heading ${cardinal}` : "heading unavailable", odo == null ? "odo unavailable" : `odo ${formatNumber(Math.round(Number(odo)))}`].join(" · ") + " ·";
   const deductions = Number(settlement?.deductions_total ?? 0);
   const elapsed = payWeekElapsed();
   return <section aria-label="Driver live overview" className="min-w-0 space-y-3 py-3">

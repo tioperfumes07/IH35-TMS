@@ -35,11 +35,7 @@ export function FuelPlannerBoardChrome({
   );
 
   return (
-    <div
-      data-fuel-board-chrome="1"
-      data-testid="fuel-board-chrome"
-      style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink }}
-    >
+    <>
       <PageHeader
         variant="v3"
         crumb="Fuel"
@@ -48,9 +44,15 @@ export function FuelPlannerBoardChrome({
         subtitle={subtitle}
         actions={actions}
       />
-      <div style={{ marginTop: 4 }} data-testid="fuel-board-tabs">
-        <NavyPageSubNav items={navItems} />
+      <div
+        data-fuel-board-chrome="1"
+        data-testid="fuel-board-chrome"
+        style={{ marginTop: 4, lineHeight: "normal", fontFamily: V3.font, color: V3.ink }}
+      >
+        <div data-testid="fuel-board-tabs">
+          <NavyPageSubNav items={navItems} />
+        </div>
       </div>
-    </div>
+    </>
   );
 }

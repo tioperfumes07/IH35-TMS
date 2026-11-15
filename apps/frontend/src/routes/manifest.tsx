@@ -14,6 +14,8 @@ const LoadHistoryBoardPage = React.lazy(() => import("../pages/dispatch/LoadHist
 const BookLoadSpecBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadSpecBoardPage"));
 // ROUND 9.4 board 17 — Book Load TripType board.
 const BookLoadTripTypeBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadTripTypeBoardPage"));
+// ROUND 9.5 board 15 — Book Load SidePanel measurement board.
+const BookLoadSidePanelBoardPage = React.lazy(() => import("../pages/dispatch/BookLoadSidePanelBoardPage"));
 import React from "react";
 import { Navigate, Route, useLocation, useParams, useSearchParams } from "react-router-dom";
 import type { ReactNode } from "react";
@@ -1693,6 +1695,14 @@ export const ROUTES = React.Children.toArray(
           element={
             <ProtectedRoute>
               <BookLoadTripTypeBoardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dispatch/book-load-side-panel"
+          element={
+            <ProtectedRoute>
+              <BookLoadSidePanelBoardPage />
             </ProtectedRoute>
           }
         />

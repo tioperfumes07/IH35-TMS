@@ -69,6 +69,7 @@ import { FuelTransactionsTable } from "./FuelTransactionsTable";
 import { ExpensiveStatesMultiselect } from "./components/ExpensiveStatesMultiselect";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { SimpleCombobox as Combobox } from "../../components/Combobox";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 export type { FuelTabId } from "./FUEL_TABS_CONFIG";
 

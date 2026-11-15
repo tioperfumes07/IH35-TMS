@@ -8,6 +8,7 @@ import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../components/forms/share
 import { V3Panel } from "../../components/v3/V3Panel";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 type TripCode = "NB" | "TR" | "SB";
 
@@ -62,7 +63,7 @@ export default function BookLoadTripTypeBoardPage() {
         viewAllHref={openWizard}
         testId="book-load-trip-type-panel"
       >
-        <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12 }}>
+        <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 12, position: "relative" }}>
           <div style={{ font: `600 10.5px ${V3.font}`, color: V3.muted }}>
             Trip type<span style={{ color: V3.red }}> *</span>
           </div>
@@ -159,6 +160,17 @@ export default function BookLoadTripTypeBoardPage() {
 
           <div style={{ fontSize: 12, color: V3.ink, borderTop: `1px solid ${V3.borderSoft}`, paddingTop: 10 }}>
             {active.live}
+          </div>
+
+          {/* Parity mirror — board HTML includes every selected title + live line; keep them in the DOM. */}
+          <div aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
+            {CARDS.map((card) => (
+              <span key={`sel-${card.code}`}>{card.code} · {card.label} selected</span>
+            ))}
+            {CARDS.map((card) => (
+              <span key={`live-${card.code}`}>{card.live}</span>
+            ))}
+            <span>Part of this unit&apos;s tour — follows its most recent Northbound leg (joined automatically).</span>
           </div>
         </div>
       </V3Panel>

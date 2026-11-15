@@ -3,3 +3,9 @@
    inside board surfaces so a 56px row + 1px border renders 57px, exactly as on the board. The board root keeps
    its own inline box-sizing: border-box; buttons keep the browser default border-box, as on the board. */
 [data-v3-board] *:not(button), [data-v3-board] *::before, [data-v3-board] *::after { box-sizing: content-box; }
+
+/* ROUND 9.5 — design content shell padding so parent metrics of crumb/title match .dc.html */
+[data-v3-board] {
+  padding: 12px 20px 30px;
+  box-sizing: content-box;
+}

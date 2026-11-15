@@ -9,6 +9,7 @@ import { V3Panel } from "../../components/v3/V3Panel";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { useLocation } from "react-router-dom";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 type SpecRow = {
   id: string;
