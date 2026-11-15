@@ -1,4 +1,4 @@
-import { V3_HEADER_BTN } from "../../components/v3";
+import { V3_HEADER_BTN } from "../../components/v3/V3StatusPill";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
