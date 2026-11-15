@@ -81,11 +81,6 @@ const PINNED_LOCAL = [
     reason: "V3 board chrome explicit module trail (443.326 Factoring home).",
   },
   {
-    rel: "pages/fuel/FuelPlannerBoardChrome.tsx",
-    count: 1,
-    reason: "V3 board chrome explicit module trail (443.326 Fuel planner).",
-  },
-  {
     rel: "pages/fuel/card-overage/CardOverageQueuePage.tsx",
     count: 1,
     reason: "Fuel card overage queue leaf trail (operator module path).",

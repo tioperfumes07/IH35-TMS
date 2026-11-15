@@ -33,9 +33,9 @@ function audit(s) {
     const route = new RegExp(`path="${path}"[\\s\\S]{0,180}<Navigate to="${target}" replace`);
     if (!route.test(s.routes)) failures.push(`${path} canonical roster redirect missing`);
   }
-  if (!/listAllCustomers\(\{ operating_company_id: companyId, active_company_only: true \}\)/.test(s.customers)) failures.push("customer roster complete company scope missing");
-  // 443.99: old rule matched the one-line call literally; the call is now multi-line (C-31 split the roster into
-  // with-transactions + all queries). New rule: same scoped args, any whitespace, optional trailing comma.
+  // 443.99: old rule matched the one-line call literally; the call is now multi-line (C-31 split roster).
+  // New rule: same scoped args, any whitespace, optional trailing comma.
+  if (!/listAllCustomers\(\{\s*operating_company_id: companyId,\s*active_company_only: true,?\s*\}\)/.test(s.customers)) failures.push("customer roster complete company scope missing");
   if (!/listAllVendors\(\{\s*operating_company_id: companyId,\s*active_company_only: true,?\s*\}\)/.test(s.vendors)) failures.push("vendor roster company scope missing");
   if (!/onRowClick=\{\(row\) => onSelectCustomer\?\.\(row\.id\)\}/.test(s.customerList)) failures.push("customer list row drill missing");
   if (!/onRowClick=\{\(row\) => onSelectVendor\?\.\(row\.id\)\}/.test(s.vendorList)) failures.push("vendor list row drill missing");
@@ -53,7 +53,7 @@ function audit(s) {
     !/<EntityLink[\s\S]{0,160}kind=\{kind\}[\s\S]{0,120}id=\{row\.entity_id\}[\s\S]{0,120}label=\{(?:row\.display_name|label)\}/.test(
       s.names,
     ) ||
-    !/navigate\(row\.link_to_module_page\)/.test(s.names)
+    !/navigate\((?:hubHref\()?row\.link_to_module_page\)??\)/.test(s.names)
   ) {
     failures.push("names canonical entity drills missing");
   }

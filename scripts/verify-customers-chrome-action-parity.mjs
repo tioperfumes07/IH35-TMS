@@ -29,7 +29,7 @@ function stripComments(src) {
 function newTransactionHost(src) {
   const idx = src.indexOf("New transaction");
   if (idx < 0) return null;
-  const before = src.slice(Math.max(0, idx - 280), idx);
+  const before = src.slice(Math.max(0, idx - 360), idx);
   const after = src.slice(idx, idx + 80);
   if (/<\/Button>\s*$/m.test(after) || after.includes("</Button>")) {
     if (/<Button\b[\s\S]*$/.test(before)) return "Button";

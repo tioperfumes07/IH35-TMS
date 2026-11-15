@@ -24,15 +24,16 @@ import { fileURLToPath } from "node:url";
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-customers-list-md-tabs-reverse";
 const PAGE = "apps/frontend/src/pages/Customers.tsx";
+const MODAL = "apps/frontend/src/components/customers/CustomerCreateModal.tsx";
 const MATRIX = "docs/specs/scoreboard/modules/customers.required.json";
-const FILES = [PAGE, MATRIX];
+const FILES = [PAGE, MODAL, MATRIX];
 const LEAVES = ["list.create", "md.customer_details", "md.new_transaction", "md.transaction_list"];
 
 const CHECKS = [
-  { name: "list.create self-drill after create", file: PAGE, pattern: /onSuccess:\s*async\s*\(customer\)\s*=>\s*\{[\s\S]{0,600}navigate\(`\/customers\/\$\{customer\.id\}`\)/ },
-  { name: "md.transaction_list row drill", file: PAGE, pattern: /onRowClick=\{\(invoice\)\s*=>\s*navigate\(`\/accounting\/invoices\/\$\{invoice\.id\}`\)\}/ },
+  { name: "list.create self-drill after create", file: MODAL, pattern: /navigate\((?:moneyHref\()?`\/customers\/\$\{result(?:\?\.id|\.id)\}`\)??\)/ },
+  { name: "md.transaction_list row drill", file: PAGE, pattern: /onRowClick=\{\(invoice\)\s*=>\s*navigate\((?:custInvHref\()?`\/accounting\/invoices\/\$\{invoice\.id\}`\)?\)/ },
   { name: "md.new_transaction forward drill", file: PAGE, pattern: /data-testid="customer-header-new-transaction"[\s\S]{0,50}/ },
-  { name: "md.new_transaction target route", file: PAGE, pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/ },
+  { name: "md.new_transaction target route", file: PAGE, pattern: /navigate\((?:custInvHref\()?`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)??\)/ },
   { name: "md.customer_details factoring-company reverse drill", file: PAGE, pattern: /factoring_company_vendor_id[\s\S]{0,150}EntityLinkOrTombstone[\s\S]{0,80}kind="vendor"/ },
 ];
 
