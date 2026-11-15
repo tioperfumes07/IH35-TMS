@@ -3,7 +3,7 @@
  * the source line, Print · Export PDF · Export XLSX, and the report tab strip. Export XLSX writes exactly the rows the
  * board's table shows (same exceljs writer the ParityTable uses); Export PDF opens the print dialog (Save as PDF).
  */
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { NavLink, useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../components/layout/PageHeader";
 import { downloadXlsx } from "../../../components/parity/useParityServerView";
@@ -13,7 +13,9 @@ import { REPORT_BOARDS, type ReportBoardId } from "./reportBoardCatalog";
 
 export type ReportBoardXlsx = { filename: string; header: string[]; body: Array<Array<string | number>> };
 
-const BUTTON = "rounded-sm border border-[#DDE1E7] bg-white px-3 py-1 text-xs font-medium text-[#111827] hover:bg-[#F3F5F8]";
+const BTN_BASE: React.CSSProperties = { height: 30, padding: "0 10px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontSize: 12, fontWeight: 600, fontFamily: "Inter, sans-serif", lineHeight: "normal", boxSizing: "content-box", cursor: "pointer" };
+const BTN_OUTLINE: React.CSSProperties = { ...BTN_BASE, background: "#fff", color: "#111827", border: "1px solid #DDE1E7" };
+const BTN_PRIMARY: React.CSSProperties = { ...BTN_BASE, background: "#13233F", color: "#fff", border: "none" };
 
 export function ReportBoardShell({
   id,
@@ -45,19 +47,19 @@ export function ReportBoardShell({
         breadcrumb={["Reports", entry.tab]}
         actions={
           <div className="flex items-center gap-2 print:hidden">
-            <button type="button" className={BUTTON} onClick={() => window.print()} data-testid={`${id}-print`}>
+            <button type="button" style={BTN_OUTLINE} onClick={() => window.print()} data-testid={`${id}-print`}>
               Print
             </button>
             <button
               type="button"
-              className={BUTTON}
+              style={BTN_OUTLINE}
               title="Opens the print dialog — choose Save as PDF"
               onClick={() => window.print()}
               data-testid={`${id}-export-pdf`}
             >
               Export PDF
             </button>
-            <button type="button" className={BUTTON} onClick={exportXlsx} data-testid={`${id}-export-xlsx`}>
+            <button type="button" style={BTN_PRIMARY} onClick={exportXlsx} data-testid={`${id}-export-xlsx`}>
               Export XLSX
             </button>
           </div>

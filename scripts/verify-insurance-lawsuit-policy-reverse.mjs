@@ -26,7 +26,7 @@ function audit(s) {
   if (!/onCreated\(claim\.id,\s*claim\.claim_number\)/.test(claimSuccessBody)) failures.push("claim creator must return the persisted canonical id and label");
   if (!/listLawsuitsQuerySchema[\s\S]{0,180}policy_id:\s*z\.string\(\)\.uuid\(\)\.optional\(\)/.test(s.schema)) failures.push("list schema must accept policy filter");
   if (!/claim\.policy_id = \$\$\{values\.length\}::uuid/.test(s.route)) failures.push("route must apply exact policy predicate through claim");
-  if (!/claim\.operating_company_id = lawsuit\.operating_company_id[\s\S]{0,80}claim\.id = lawsuit\.claim_id/.test(s.route)) failures.push("policy reverse join must retain tenant match");
+  if (!/claim\.operating_company_id = lawsuit\.operating_company_id[\s\S]{0,80}claim\.id = lawsuit\.(insurance_)?claim_id/.test(s.route)) failures.push("policy reverse join must retain tenant match");
   // ROUND 342 step 2c: operating_company_id is the ONE company column — stamped from the scoped $1; the legacy tenant_id is never written.
   // ENG-60 (2026-11): mutate paths retired — FE creates lawsuits as legal.matters type=lawsuit; INSERT check is N/A when retired.
   const routeRetired = /ENG-60:\s*mutate paths retired/.test(s.route);

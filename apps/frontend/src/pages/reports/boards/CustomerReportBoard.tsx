@@ -4,7 +4,7 @@
  * collected = payment applications). Aging detail + Open A/R KPI: GET /api/v1/reports/ar-aging (the canonical aging that ties
  * to GL 1100). Statement: each customer opens its existing statement page (/customers/:id/statement). No new engine.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
@@ -29,6 +29,7 @@ import { mmmDd } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
+import { ReportFilterBar } from "../../../components/reports/ReportFilterBar";
 import { pct, pctLabel, sumBy } from "./reportBoardGroup";
 
 type View = "sales" | "open" | "aging" | "statement";
@@ -100,6 +101,10 @@ export function CustomerReportBoard() {
   const statementViewHref = cohortHref({ view: "statement" });
   const factoredHref = cohortHref({ factored: "factored" });
   const asOf = companyToday();
+  const today = companyToday();
+  const crRangeFrom = range === "ytd" ? `${today.slice(0, 4)}-01-01` : range === "12m" ? (() => { const d = new Date(today); d.setFullYear(d.getFullYear() - 1); return d.toISOString().slice(0, 10); })() : "2020-01-01";
+  const [crFilterFrom, setCrFilterFrom] = useState(crRangeFrom);
+  const [crFilterTo, setCrFilterTo] = useState(today);
 
   const board = useQuery({
     queryKey: ["reports", "customer-board", companyId, range],
@@ -269,34 +274,40 @@ export function CustomerReportBoard() {
       subtitle="sales, receivables and aging by customer · accrual · source: invoices (open A/R from the canonical A/R aging, GL 1100)"
       xlsx={xlsx}
     >
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs" data-testid="customer-report-filters">
-        <label className="flex flex-col gap-1">
-          <span className="font-semibold text-[#4B5563]">Invoiced</span>
-          <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="customer-report-range" />
-        </label>
-        <label className="flex min-w-[12rem] flex-col gap-1 text-[#4B5563]">
-          <span className="font-semibold">Customer</span>
-          <EntityMultiSelect
-            kind="customer"
-            operatingCompanyId={companyId}
-            value={customerIds || null}
-            onChange={(next) => setCustomerIds(next ?? "")}
-            placeholder="All customers"
-          />
-        </label>
+      <ReportFilterBar
+        board
+        testIdPrefix="customer-report"
+        fromDate={crFilterFrom}
+        toDate={crFilterTo}
+        onFromDateChange={(d) => setCrFilterFrom(d ?? crRangeFrom)}
+        onToDateChange={(d) => setCrFilterTo(d ?? today)}
+        onPresetSelect={(preset) => {
+          if (preset === "ytd") setRange("ytd");
+          else if (preset === "last_month" || preset === "this_month") setRange("12m");
+        }}
+        data-testid="customer-report-filters"
+      >
+        <span style={{ fontSize: 11, color: "#5B6576" }}>Invoiced</span>
+        <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="customer-report-range" />
+        <EntityMultiSelect
+          kind="customer"
+          operatingCompanyId={companyId}
+          value={customerIds || null}
+          onChange={(next) => setCustomerIds(next ?? "")}
+          placeholder="All customers"
+        />
         <MultiSelectDropdown
           label="Factored"
           options={FACTORED_OPTIONS}
           selected={factored}
           onChange={setFactored}
           allLabel="Factored: all"
+          board
           data-testid="customer-report-factored-filter"
         />
-        <label className="flex flex-col gap-1">
-          <span className="font-semibold text-[#4B5563]">View</span>
-          <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="customer-report-view" />
-        </label>
-      </div>
+        <span style={{ fontSize: 11, color: "#5B6576" }}>View</span>
+        <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="customer-report-view" />
+      </ReportFilterBar>
 
       {board.isError ? <ListErrorState title="Couldn't load the customer report" {...formatQueryErrorDetail(board.error)} onRetry={() => void board.refetch()} /> : null}
       {aging.isError ? <ListErrorState title="Couldn't load A/R aging" {...formatQueryErrorDetail(aging.error)} onRetry={() => void aging.refetch()} /> : null}

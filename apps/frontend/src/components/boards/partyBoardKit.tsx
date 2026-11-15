@@ -37,8 +37,8 @@ export function downloadCsv(filename: string, header: string[], rows: Array<Arra
 }
 
 const button: CSSProperties = {
-  height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 2,
-  fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer",
+  height: 30, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6,
+  fontSize: 12, fontWeight: 600, fontFamily: V3.font, cursor: "pointer", lineHeight: "normal", boxSizing: "content-box",
 };
 export const outlineButton: CSSProperties = { ...button, background: V3.surface, color: V3.ink, border: `1px solid ${V3.border}` };
 export const primaryButton: CSSProperties = { ...button, background: V3.shell, color: V3.onShell, border: `1px solid ${V3.shell}` };
@@ -51,7 +51,7 @@ export function PartyHomeHeader(props: { crumb: string; title: string; subtitle:
       {props.crumb ? <div style={{ fontSize: 11, color: V3.muted }}>{props.crumb}</div> : null}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: props.crumb ? 12 : 0, gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
-          <button type="button" onClick={props.onBack} style={{ fontSize: 11, color: V3.muted, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: V3.font }}>{"← Back"}</button>
+          <button type="button" onClick={props.onBack} style={{ fontSize: 11, color: V3.muted, background: "transparent", border: "none", padding: 0, cursor: "pointer", fontFamily: V3.font, boxSizing: "content-box", lineHeight: "normal" }}>{"← Back"}</button>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: V3.ink }}>{props.title}</h1>
           <span style={{ fontSize: 11, color: V3.muted }}>{props.subtitle}</span>
         </div>
@@ -66,7 +66,7 @@ export function MeasuredNote({ children, testId }: { children: ReactNode; testId
   return (
     <div data-testid={testId} style={{
       display: "flex", gap: 8, alignItems: "flex-start", background: V3.surface, border: `1px solid ${V3.border}`,
-      borderLeft: `3px solid ${V3.amber}`, borderRadius: 2, padding: "8px 12px", fontSize: 12, color: V3.ink,
+      borderLeft: `3px solid ${V3.amber}`, borderRadius: 6, padding: "8px 12px", fontSize: 12, color: V3.ink,
     }}>
       <b style={{ color: V3.amber, whiteSpace: "nowrap" }}>{"Measured"}</b>
       <span>{children}</span>
@@ -115,7 +115,7 @@ export function PartyTable<R extends { id: string }>(props: {
       sorted.map((r) => props.cols.filter((c) => c.sortable !== false).map((c) => { const v = c.sort(r); return typeof v === "number" && c.num ? v : String(v ?? ""); })));
   return (
     <ParityTable<R>
-      appearance="v3"
+      appearance="board"
       storageKey={props.storageKey}
       tableTestId={props.testId}
       columns={props.cols.map((c, i): ParityColumn<R> => ({
