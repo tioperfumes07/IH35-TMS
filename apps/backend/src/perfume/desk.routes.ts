@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -255,6 +255,15 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
+    invalidateGridCache();
+    return result;
+  });
+
+  // Re-derive every item's key with the current reading rules; dry_run (default true) writes nothing.
+  app.post("/api/v1/perfume/items/rekey", RL_IMPORT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({ dry_run: z.boolean().default(true) }).safeParse(req.body ?? {}); if (!body.success) return bad(reply, body.error);
+    const result = await withCurrentUser(uid, (c) => rekeyItems(c, { dryRun: body.data.dry_run }));
     invalidateGridCache();
     return result;
   });
