@@ -113,6 +113,7 @@ export function V3Panel({
             borderTop: `1px solid ${V3.borderSoft}`,
             fontSize: 11,
             color: V3.muted,
+            lineHeight: "normal",
           }}
         >
           {footer}
