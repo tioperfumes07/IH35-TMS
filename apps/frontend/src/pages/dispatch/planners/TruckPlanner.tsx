@@ -435,7 +435,7 @@ export function TruckPlanner() {
       >
         <b style={{ color: V3.amber, whiteSpace: "nowrap", font: `700 12px ${V3.font}` }} data-v3="measured.label">Measured</b>
         <span>
-          <span data-v3="measured.boardnote" style={{position:"absolute",width:1,height:1,overflow:"hidden",clip:"rect(0 0 0 0)"}}>Truck planner — 4 selected days fill the full width</span>Measured in Chrome 6:00 PM CT on all 4 planners: a 7-day range uses about one third of the grid and the remaining columns render empty with no dates; driver names are cut off (&quot;EDUARDO AZAE…&quot;, &quot;Jorge Luis Infant…&quot;) with no resize; the range is a row of buttons outside Filters.
+          Measured in Chrome 6:00 PM CT on all 4 planners: a 7-day range uses about one third of the grid and the remaining columns render empty with no dates; driver names are cut off (&quot;EDUARDO AZAE…&quot;, &quot;Jorge Luis Infant…&quot;) with no resize; the range is a row of buttons outside Filters.
         </span>
       </div>
     </div>

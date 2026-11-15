@@ -254,7 +254,7 @@ function PlannerEntityFilters({
     <div style={{ display: "flex", flexDirection: "column", gap: 6 }} data-testid="planner-entity-filters">
       <div style={V3_LABEL}>STATUS · DRIVER · UNIT · CUSTOMER</div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 6, alignItems: "center" }}>
-        <div className="min-w-[180px]" data-testid="planner-filter-status">
+        <div data-testid="planner-filter-status">
           <MultiSelectDropdown
             label="Status"
             options={PLANNER_STATUS_OPTIONS}
@@ -262,9 +262,10 @@ function PlannerEntityFilters({
             onChange={(next) => onChange({ ...value, status: next as PlannerEntityStatus[] })}
             allLabel="All statuses ▾"
             data-testid="planner-filter-status-multiselect"
+            board
           />
         </div>
-        <div className="min-w-[180px] flex-1" data-testid="planner-filter-driver">
+        <div data-testid="planner-filter-driver">
           <MultiSelectDropdown
             label="Driver"
             options={driverOptions}
@@ -274,9 +275,10 @@ function PlannerEntityFilters({
             searchable
             loading={driversQuery.isFetching}
             data-testid="planner-filter-driver-multiselect"
+            board
           />
         </div>
-        <div className="min-w-[180px] flex-1" data-testid="planner-filter-unit">
+        <div data-testid="planner-filter-unit">
           <MultiSelectDropdown
             label="Unit"
             options={unitOptions}
@@ -286,9 +288,10 @@ function PlannerEntityFilters({
             searchable
             loading={unitsQuery.isFetching}
             data-testid="planner-filter-unit-multiselect"
+            board
           />
         </div>
-        <div className="min-w-[180px] flex-1" data-testid="planner-filter-customer">
+        <div data-testid="planner-filter-customer">
           <MultiSelectDropdown
             label="Customer"
             options={customerOptions}
@@ -298,6 +301,7 @@ function PlannerEntityFilters({
             searchable
             loading={customersQuery.isFetching}
             data-testid="planner-filter-customer-multiselect"
+            board
           />
         </div>
       </div>
