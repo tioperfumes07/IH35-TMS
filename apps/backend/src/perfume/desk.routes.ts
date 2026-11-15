@@ -16,8 +16,12 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
+
+type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
+let rematchJob: RematchJob = { state: "idle", started_at: null, finished_at: null, result: null, error: null };
+
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
 export async function deskAllowed(uid: string): Promise<boolean> {
@@ -250,11 +254,21 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     return result;
   });
 
+  // The rematch reads every waiting line of every current list — minutes, not a request's worth. It runs in the
+  // background (one at a time); POST answers 202 at once and GET /review/rematch reports it (measured 01:22Z and
+  // 01:38Z: the request itself died with a 502 at 270 s / 173 s and nothing was saved).
   app.post("/api/v1/perfume/review/rematch", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const result = await withCurrentUser(uid, (c) => rematchReview(c));
-    invalidateGridCache();
-    return result;
+    if (rematchJob.state === "running") return reply.code(202).send(rematchJob);
+    rematchJob = { state: "running", started_at: new Date().toISOString(), finished_at: null, result: null, error: null };
+    void withCurrentUser(uid, (c) => rematchReview(c))
+      .then((result) => { rematchJob = { ...rematchJob, state: "done", finished_at: new Date().toISOString(), result }; invalidateGridCache(); })
+      .catch((e: unknown) => { rematchJob = { ...rematchJob, state: "failed", finished_at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) }; });
+    return reply.code(202).send(rematchJob);
+  });
+  app.get("/api/v1/perfume/review/rematch", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return rematchJob;
   });
 
   app.post("/api/v1/perfume/rows/bulk", RL_WRITE, async (req, reply) => {
@@ -317,8 +331,9 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
-    const cols = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
-    const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`);
+    const shown = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
+    const { cols, added } = exportColumnsWithInputs(shown, g.cols);
+    const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`, added);
     const stamp = new Date().toISOString().slice(0, 10);
     return reply
       .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")

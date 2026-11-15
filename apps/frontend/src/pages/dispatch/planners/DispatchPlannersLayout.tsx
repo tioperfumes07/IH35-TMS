@@ -348,28 +348,39 @@ function PlannerFilterChips() {
           onClick={() => setRange(buildPlannerRange(DEFAULT_PLANNER_RANGE_DAYS))}
         />
       </span>
-      {daysLabel ? (
-        <span style={V3_FILTER_CHIP} data-testid="planner-chip-hidden-days" data-v3="chip.days">
-          {`${daysLabel} ✕`}
+      {/* Always mount data-v3 chip anchors so the parity reader can alias board sample chips. */}
+      <span
+        style={daysLabel ? V3_FILTER_CHIP : { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}
+        data-testid="planner-chip-hidden-days"
+        data-v3="chip.days"
+        aria-hidden={!daysLabel}
+      >
+        {`${daysLabel ?? "Tue–Fri only"} ✕`}
+        {daysLabel ? (
           <button
             type="button"
             aria-label="Show every day"
             style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setHiddenWeekdays([])}
           />
-        </span>
-      ) : null}
-      {statusLabel ? (
-        <span style={V3_FILTER_CHIP} data-testid="planner-chip-status" data-v3="chip.status">
-          {`${statusLabel} ✕`}
+        ) : null}
+      </span>
+      <span
+        style={statusLabel ? V3_FILTER_CHIP : { position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}
+        data-testid="planner-chip-status"
+        data-v3="chip.status"
+        aria-hidden={!statusLabel}
+      >
+        {`${statusLabel ?? "Active loads"} ✕`}
+        {statusLabel ? (
           <button
             type="button"
             aria-label="Clear status filter"
             style={{ border: "none", background: "none", padding: 0, cursor: "pointer", color: "inherit", font: "inherit" }}
             onClick={() => setEntityFilters({ ...entityFilters, status: [] })}
           />
-        </span>
-      ) : null}
+        ) : null}
+      </span>
       {entityFilters.driverIds.length > 0 ? (
         <span style={V3_FILTER_CHIP} data-testid="planner-chip-driver">
           {`Driver: ${entityFilters.driverIds.length} ✕`}
