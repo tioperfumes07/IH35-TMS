@@ -311,7 +311,7 @@ export function SettlementsPreSettlementsBoard() {
                 onRetry={() => void openToursQuery.refetch()}
               />
             ) : (
-              <ParityTable appearance="board"
+              <ParityTable appearance="v3"
            
                 title={S443326.preSettlements.tableTitle}
                 storageKey="pre-settlements-panel-v3-board-tours"

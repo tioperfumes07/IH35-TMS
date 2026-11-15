@@ -303,40 +303,53 @@ export function CustomerReportBoard() {
 
       <ReportKpiGrid>
         <V3KpiTile
+          board
           testId="cr-kpi-customers"
           label="Customers billed"
           value={board.data ? String(billedRows.length) : "…"}
           sub={`${sumBy(billedRows, (r) => r.invoices)} invoices`}
           href={salesViewHref}
+          valueDataV3="kpi-cr-customers"
+          subDataV3="kpi-cr-customers-sub"
         />
-        <V3KpiTile testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} href={salesViewHref} />
+        <V3KpiTile board testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} href={salesViewHref} valueDataV3="kpi-cr-billed" />
         <V3KpiTile
+          board
           testId="cr-kpi-open-ar"
           label="Open A/R"
           value={aging.data ? money(agingTotals.total) : "…"}
           sub={`${agingTotals.invoices} invoices · as of ${mmmDd(asOf)}`}
           href={agingViewHref}
+          valueDataV3="kpi-cr-open-ar"
+          subDataV3="kpi-cr-open-ar-sub"
         />
         <V3KpiTile
+          board
           testId="cr-kpi-past-due"
           label="Past due"
           value={aging.data ? money(pastDueAr) : "…"}
           sub={`${pctLabel(pct(pastDueAr, agingTotals.total))} of open`}
           tone={pastDueAr ? "amber" : "muted"}
           href={agingViewHref}
+          valueDataV3="kpi-cr-past-due"
+          subDataV3="kpi-cr-past-due-sub"
         />
-        <V3KpiTile testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} href={factoredHref} />
+        <V3KpiTile board testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} href={factoredHref} valueDataV3="kpi-cr-factored" />
         <V3KpiTile
+          board
           testId="cr-kpi-collected"
           label="Payments recorded"
           value={board.data ? money(sumBy(billedRows, (r) => r.collected_cents)) : "…"}
           sub={`${sumBy(billedRows, (r) => r.paid_invoices)} invoices with a payment`}
           href={statementViewHref}
+          valueDataV3="kpi-cr-collected"
+          subDataV3="kpi-cr-collected-sub"
         />
       </ReportKpiGrid>
 
       {view === "sales" ? (
         <ParityTable
+          appearance="v3"
           rows={billedRows}
           title={`Sales by customer · ${billedRows.length} customers`}
           columns={salesColumns}
@@ -358,6 +371,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "open" ? (
         <ParityTable
+          appearance="v3"
           rows={openRows}
           title={`Open balances · ${openRows.length} customers`}
           columns={openColumns}
@@ -377,6 +391,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "aging" ? (
         <ParityTable
+          appearance="v3"
           rows={agingRows}
           title={`A/R aging · as of ${mmmDd(asOf)} · by due date`}
           columns={agingColumns}
@@ -400,6 +415,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "statement" ? (
         <ParityTable
+          appearance="v3"
           rows={billedRows}
           title="Customer statements — invoices, payments, balance"
           columns={statementColumns}

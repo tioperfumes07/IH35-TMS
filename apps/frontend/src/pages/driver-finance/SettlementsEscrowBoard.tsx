@@ -10,7 +10,6 @@ import { useQuery } from "@tanstack/react-query";
 import { listEscrowAccounts, type EscrowAccount } from "../../api/accounting";
 import { getEscrowDriverBalances } from "../../api/banking";
 import { ListErrorState } from "../../components/ListErrorState";
-import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -103,7 +102,10 @@ function EscrowHeldProgressBar({ pct }: { pct: number }) {
 
 function ActiveStatusPill() {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs" style={{ color: V3.ink }}>
+    <span
+      className="inline-flex items-center gap-1.5"
+      style={{ color: V3.ink, fontSize: 12, fontWeight: 500, lineHeight: "normal", whiteSpace: "nowrap" }}
+    >
       <span
         style={{ width: 7, height: 7, borderRadius: "50%", background: V3.green, display: "inline-block" }}
       />
@@ -190,32 +192,31 @@ export function SettlementsEscrowBoard() {
         sortable: true,
         sortValue: (r) => r.driverName,
         render: (r) => (
-          <EntityLinkOrTombstone
-            kind="driver"
-            id={r.holderId}
-            name={r.driverName}
-            noun="Driver"
+          <Link
+            to={settlementsEscrowRegisterHref(r.holderId)}
             data-testid="settlements-escrow-driver-link"
-          />
+            style={{
+              fontWeight: 700,
+              color: "#1D4ED8",
+              whiteSpace: "nowrap",
+              borderTopLeftRadius: 0,
+              textDecoration: "none",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
+          >
+            {r.driverName}
+          </Link>
         ),
       },
       {
         key: "heldCents",
         label: "Held",
+        kind: "money" as const,
         sortable: true,
         className: "text-right",
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.heldCents,
-        render: (r) => (
-          <Link
-            to={settlementsEscrowRegisterHref(r.holderId)}
-            className="tabular-nums hover:underline"
-            style={{ color: V3.link }}
-            data-testid="settlements-escrow-held-link"
-          >
-            {formatUsdCents(r.heldCents).replace(/^\$/, "")}
-          </Link>
-        ),
+        render: (r) => formatUsdCents(r.heldCents).replace(/^\$/, ""),
       },
       {
         key: "progress",
@@ -238,7 +239,7 @@ export function SettlementsEscrowBoard() {
           <Link
             to={settlementsEscrowRegisterHref(r.holderId)}
             className="font-semibold"
-            style={{ color: V3.link }}
+            style={{ color: V3.link, whiteSpace: "nowrap" }}
             data-testid="settlements-escrow-open-register"
           >
             Open register →
@@ -268,6 +269,7 @@ export function SettlementsEscrowBoard() {
           sub="active bonds with a balance"
           testId="escrow-kpi-drivers-holding"
           href="/driver-finance/escrow"
+          board={true}
         />
         <V3KpiTile
           label="Total held"
@@ -276,6 +278,7 @@ export function SettlementsEscrowBoard() {
           }
           testId="escrow-kpi-total-held"
           href="/driver-finance/escrow"
+          board={true}
         />
         <V3KpiTile
           label="Release window"
@@ -283,6 +286,7 @@ export function SettlementsEscrowBoard() {
           sub="after last settlement"
           testId="escrow-kpi-release-window"
           href="/driver-finance/escrow"
+          board={true}
         />
         <V3KpiTile
           label="Scheduled releases"
@@ -290,6 +294,7 @@ export function SettlementsEscrowBoard() {
           sub="no schedule feed"
           testId="escrow-kpi-scheduled-releases"
           href="/driver-finance/escrow"
+          board={true}
         />
       </div>
 
@@ -306,7 +311,7 @@ export function SettlementsEscrowBoard() {
         testIdPrefix="settlements-escrow"
       >
         <MultiSelectDropdown
-          label="Driver"
+          label="by driver"
           options={driverFilterOptions}
           selected={selectedDriverIds}
           onChange={setSelectedDriverIds}
@@ -337,7 +342,7 @@ export function SettlementsEscrowBoard() {
           testId="settlements-escrow-board-section"
           footer="Live balances from Accounting › Escrow. Click a driver name to open that driver's escrow register."
         >
-          <ParityTable<DriverEscrowRow> appearance="board"
+          <ParityTable<DriverEscrowRow> appearance="v3"
             title="Escrow by driver — click a driver to open his register"
             columns={columns}
             rows={driverRows}
@@ -351,20 +356,11 @@ export function SettlementsEscrowBoard() {
             footerCells={
               driverRows.length > 0
                 ? {
-                    driverName: () => (
-                      <span className="font-bold" style={{ fontSize: 12 }}>
-                        Total
-                      </span>
-                    ),
+                    driverName: () => "Total",
                     heldCents: () => (
-                      <span
-                        className="font-bold tabular-nums text-right block"
-                        style={{ fontSize: 12, color: V3.ink }}
-                      >
-                        <Link className="underline" style={{ color: V3.ink }} to="/accounting/escrow">
-                          {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
-                        </Link>
-                      </span>
+                      <Link className="underline tabular-nums" style={{ color: V3.ink }} to="/accounting/escrow">
+                        {formatUsdCents(totalHeldCents).replace(/^\$/, "")}
+                      </Link>
                     ),
                   }
                 : undefined
@@ -373,7 +369,7 @@ export function SettlementsEscrowBoard() {
         </BoardSection>
       )}
 
-      <BoardSection title="Measured" testId="settlements-escrow-measured-note">
+      <BoardSection title="Measured" testId="settlements-escrow-measured-note" titleStyle={{ fontSize: 12, color: "rgb(180,83,9)" }}>
         <div className="px-3.5 py-3 text-xs" style={{ color: V3.ink }}>
           Junk rows (&quot;Driver — not visible&quot;, Safety, duplicate closed bonds) are hidden on this
           Settlements list; Accounting › Escrow keeps the full ledger.

@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { V3 } from "../../design/v3-tokens";
 
 const viewAllStyle: CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 600,
   color: V3.link,
   background: "transparent",
@@ -17,6 +17,7 @@ const viewAllStyle: CSSProperties = {
   padding: 0,
   fontFamily: V3.font,
   textDecoration: "none",
+  boxSizing: "content-box",
 };
 
 export function BoardSection({
@@ -29,6 +30,7 @@ export function BoardSection({
   footer,
   children,
   testId,
+  titleStyle,
 }: {
   title: string;
   subtitle?: string;
@@ -40,11 +42,12 @@ export function BoardSection({
   footer?: ReactNode;
   children: ReactNode;
   testId?: string;
+  titleStyle?: CSSProperties;
 }) {
   const shell: CSSProperties = {
     background: V3.surface,
     border: `1px solid ${V3.border}`,
-    borderRadius: 2,
+    borderRadius: 6,
     display: "flex",
     flexDirection: "column",
     minWidth: 0,
@@ -62,8 +65,8 @@ export function BoardSection({
           borderBottom: `1px solid ${V3.borderSoft}`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
-          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font }}>{title}</span>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font, ...titleStyle }}>{title}</span>
           {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
@@ -85,7 +88,7 @@ export function BoardSection({
           style={{
             padding: "8px 14px",
             borderTop: `1px solid ${V3.borderSoft}`,
-            fontSize: 12,
+            fontSize: 11,
             color: V3.muted,
             fontFamily: V3.font,
           }}

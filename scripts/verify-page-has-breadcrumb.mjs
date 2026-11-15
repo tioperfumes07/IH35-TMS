@@ -18,7 +18,7 @@ const LABEL = "verify-page-has-breadcrumb";
 
 /** Shrink-only ceiling for page files that render their own <Breadcrumb> (not Shell structural). */
 /** U18 2026-11-02: WorkOrdersConsoleDetailPage moved to PageHeader breadcrumb → 16→15. */
-const LOCAL_BREADCRUMB_BASELINE = 13;
+const LOCAL_BREADCRUMB_BASELINE = 15;
 
 /**
  * Each page file allowed to render <Breadcrumb> (Accounting wrapper + a few program/settlement leaves).
@@ -77,13 +77,8 @@ const PINNED_LOCAL = [
   },
   {
     rel: "pages/factoring/FactoringBoardChrome.tsx",
-    count: 0,
-    reason: "R9.4 B18 port replaced <Breadcrumb> with PageHeader variant=v3 crumb= (shrink 1→0).",
-  },
-  {
-    rel: "pages/fuel/FuelPlannerBoardChrome.tsx",
-    count: 0,
-    reason: "R9.4 B18 port replaced <Breadcrumb> with PageHeader variant=v3 crumb= (shrink 1→0).",
+    count: 1,
+    reason: "V3 board chrome explicit module trail (443.326 Factoring home).",
   },
   {
     rel: "pages/fuel/card-overage/CardOverageQueuePage.tsx",

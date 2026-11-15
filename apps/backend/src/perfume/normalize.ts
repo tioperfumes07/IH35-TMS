@@ -35,6 +35,16 @@ export type Identity = {
 
 /** Short forms vendors use for a brand. Extended at runtime by perfume.brand_aliases rows. */
 export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
+  // ESPERANZA short forms measured live 11-15 (each checked against the item master's own brand spelling).
+  "MAISON A": "MAISON ALHAMBRA",
+  "MAISON A.": "MAISON ALHAMBRA",
+  "AHMED": "AHMED AL MAGHRIBI",
+  "B.SPEARS": "BRITNEY SPEARS",
+  "B SPEARS": "BRITNEY SPEARS",
+  "GLORIA VANDERVILT": "GLORIA VANDERBILT",
+  "HERRERA": "CAROLINA HERRERA",
+  "JEAN PAUL G": "JEAN PAUL GAULTIER",
+  "JEAN PAUL G.": "JEAN PAUL GAULTIER",
   "CH": "CAROLINA HERRERA",
   "C.H": "CAROLINA HERRERA",
   "C HERRERA": "CAROLINA HERRERA",
@@ -394,8 +404,13 @@ export function nameBrandIndex(items: ReadonlyArray<{ brand: string; name: strin
   }
   const out: Record<string, string> = {};
   for (const [ph, m] of seen) {
-    if (m.size !== 1) continue;
-    const [b, n] = [...m][0]!;
+    // One brand owns the phrase — or so dominates it that the others are a different product line sharing a
+    // word ("DAISY": MARC JACOBS 47 items, DISNEY "Daisy Duck" 2 — measured live 11-15): 5+ items and at least
+    // ten times every other brand together.
+    const ranked = [...m].sort((a, b) => b[1] - a[1]);
+    const rest = ranked.slice(1).reduce((t, [, k]) => t + k, 0);
+    if (m.size !== 1 && !(ranked[0]![1] >= 5 && ranked[0]![1] >= 10 * rest)) continue;
+    const [b, n] = ranked[0]!;
     if (!ph.includes(" ") && n < 2) continue; // one word must be seen on 2+ items of that brand
     out[ph] = b;
   }
@@ -445,8 +460,45 @@ export function readSection(section: string | null | undefined): { gender: Gende
   return { gender, flags };
 }
 
+const spellingsCache = new WeakMap<Record<string, string>, { list: string[][]; has: Set<string>; desk: string[]; n: number }>();
+const EMPTY_ALIASES: Record<string, string> = {};
+/** Every brand spelling (built-in aliases, the desk's aliases, their brands, the item master's brands), longest first. */
+function spellingsFor(aliases: Record<string, string>): { list: string[][]; has: Set<string> } {
+  const key = aliases ?? EMPTY_ALIASES;
+  const hit = spellingsCache.get(key);
+  // The match index adds item brands to its alias object as it loads — a changed size rebuilds the list.
+  const n = Object.keys(key).length;
+  if (hit && hit.desk === DESK_BRANDS && hit.n === n) return hit;
+  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...key }), ...DESK_BRANDS];
+  const values = Object.values({ ...BUILTIN_BRAND_ALIASES, ...key });
+  const all = [...new Set([...known, ...values])];
+  const entry = { list: all.map((x) => x.split(" ")).sort((a, b) => b.length - a.length), has: new Set(all), desk: DESK_BRANDS, n };
+  spellingsCache.set(key, entry);
+  return entry;
+}
+
+/** Fragrance lines vendors write in the brand column → the house that owns them. */
+const LINE_HOUSE: Record<string, string> = { HALLOWEEN: "JESUS DEL POZO" };
+/** The pieces a set lists before its fragrance: sizes, types and the extra items (gel, lotion, aftershave, mini…). */
+const SET_PIECE_WORD_RE = new RegExp(
+  "^(?:EDT|EDP|EDC|PARFUM|COLOGNE|SPRAY|SHOWER\\s*GEL|HAIR\\s*&?\\s*BODY\\s*WASH|H\\/BW|BODY\\s*WASH|BODY\\s*LOTION|BODY\\s*SPRAY|BODY\\s*MIST|" +
+  "B\\/\\s*LOTION|BLOTION|S\\/\\s*GEL|SGEL|SG|GEL|BL|LOTION|AFTER\\s*SHAVE\\s*(?:BLAM|BALM)?|A\\/\\s*SHAVE|AFTERSHAVE|AFTER\\s*S\\/?|" +
+  "DEO(?:DORANT)?(?:\\s*(?:SPRAY|STICK))?|FRAGRANCE\\s*MIST|MIST|TRAVEL\\s*SPRAY|MINI|POUCH|BAG|LIPSTICK)(?![A-Z])", "");
+const SET_PIECE_SIZE_RE = /^\d*\.?\d+\s*(?:FL\.?\s*)?(?:OZ|ML)?/;
+function stripSetPieces(t: string): string {
+  let x = String(t).toUpperCase();
+  for (let i = 0; i < 40; i++) {
+    x = x.replace(/^[\s+]+/, "");
+    const m = x.match(SET_PIECE_SIZE_RE) ?? x.match(SET_PIECE_WORD_RE);
+    if (!m || !m[0]) break;
+    x = x.slice(m[0].length);
+  }
+  return x.trim();
+}
+function setTailName(seg: string): string { return stripSetPieces(seg); }
+
 export function identify(input: IdentityInput): Identity {
-  const aliases = input.brandAliases ?? {};
+  const aliases = input.brandAliases ?? EMPTY_ALIASES;
   let s = stripAccents(String(input.description ?? "")).toUpperCase();
 
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
@@ -478,6 +530,9 @@ export function identify(input: IdentityInput): Identity {
   // "JUICY C GLISTENING") — spelled out so the brand reads (owner 2026-11-14 18:23 CT, ESPERANZA list).
   s = s.replace(/\bJESSICA S\.\s*/g, "JESSICA SIMPSON ").replace(/\bSABRINA C\.\s*/g, "SABRINA CARPENTER ")
     .replace(/\bRALPH L\.?\s+/g, "RALPH LAUREN ").replace(/^\s*JUICY C\s+/, "JUICY COUTURE ");
+  // Vendor shorthand for a body mist ("HEIRESS BMIST 236", "THANK YOU NEXT B.M 236", "B/MIST") and the Spanish
+  // spelling "CAPITAN AMERICA" (ESPERANZA list, measured live 11-15) — spelled out so type and name read.
+  s = s.replace(/\bB\s*[./]\s*MIST\b|\bBMIST\b|\bB\.\s*M\b\.?|\bB\/M\b/g, " BODY MIST ").replace(/\bCAPITAN\b/g, "CAPTAIN");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);
@@ -490,7 +545,19 @@ export function identify(input: IdentityInput): Identity {
   if (plus > 0) {
     flags.add("SET");
     contents = s.slice(plus).replace(/\([^)]*\)?/g, " ").replace(/\s-\s.*$/, "").toUpperCase().replace(/[^A-Z0-9+]/g, "").replace(/^\++|\++$/g, "");
-    s = s.slice(0, plus);
+    const head = s.slice(0, plus);
+    // La Esperanza writes the pieces FIRST and the fragrance LAST: "3.4EDP+3.4 SHOWER GEL A.GRANDE SWEET LIKE CANDY
+    // W 3PC SET", "100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP" (measured live 11-15: 185 lines read no brand).
+    // When the part before the first "+ <size>" is only a size / type / piece, the name is what follows the last piece.
+    if (!stripSetPieces(head)) {
+      const segs = s.slice(plus).split("+");
+      const tail = setTailName(segs[segs.length - 1] ?? "");
+      // Keep the main bottle's size and type from the head; its piece words (BL, GEL, MINI…) are not the name.
+      const headSizeType = head.replace(/\+/g, " ").replace(/\b(?:BL|SGEL|SG|GEL|LOTION|BLOTION|MINI|POUCH|BAG|LIPSTICK)\b/g, " ");
+      s = tail ? `${headSizeType} ${tail}` : head;
+    } else {
+      s = head;
+    }
   }
 
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
@@ -530,11 +597,11 @@ export function identify(input: IdentityInput): Identity {
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
   let brand = canonicalBrand(input.brand ?? "", aliases);
-  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...aliases }), ...DESK_BRANDS];
-  const brandValues = new Set(Object.values({ ...BUILTIN_BRAND_ALIASES, ...aliases }));
-  if (brand) brandValues.add(brand);
-  // Remove the brand's words wherever they lead the line, in any of its spellings.
-  const spellings = [...known, ...brandValues].map((x) => x.split(" ")).sort((a, b) => b.length - a.length);
+  // Remove the brand's words wherever they lead the line, in any of its spellings. The sorted spelling list is built
+  // once per alias set (measured 11-15 02:04Z: rebuilding and sorting ~800 spellings on every line of a 20,000-line
+  // rematch kept the API busy past its health check and the instance was restarted).
+  const base = spellingsFor(aliases);
+  const spellings = brand && !base.has.has(brand) ? [brand.split(" "), ...base.list].sort((a, b) => b.length - a.length) : base.list;
   for (const sp of spellings) {
     if (sp.length && sp.every((w, i) => words[i] === w)) {
       const canon = canonicalBrand(sp.join(" "), aliases);
@@ -554,6 +621,15 @@ export function identify(input: IdentityInput): Identity {
     if (one) brand = canonicalBrand(one, aliases);
   }
   if (!brand) brand = canonicalBrand(brandFromName(words, input.nameBrands ?? DESK_NAME_BRANDS), aliases);
+  // A fragrance LINE some vendors write as the brand ("HALLOWEEN BLOSSOM", brand column "HALLOWEEN") belongs to its
+  // house, and the line word stays in the name — the item master files it JESUS DEL POZO · HALLOWEEN BLOSSOM
+  // (owner 11-14: "halloween is j del pozo"; 13 ESPERANZA lines unmatched under brand HALLOWEEN, measured 11-15).
+  const lineHouse = LINE_HOUSE[brand];
+  if (lineHouse) {
+    const lw = brand.split(" ");
+    if (!lw.every((w, i) => words[i] === w)) words = [...lw, ...words];
+    brand = canonicalBrand(lineHouse, aliases);
+  }
   // A dash after a brand prefix ("GA-AQUA DE GIO") leaves the brand glued on; handled by punctuation step above.
   // Some vendors put the brand INSIDE the line (PCA: "DAISY EAU SO FRESH MARC JACOBS(W)EDT SP 4.2oz"). A brand of two
   // or more words is never part of a fragrance name, so its phrase leaves the name wherever it sits. A one-word brand
@@ -599,7 +675,13 @@ export function identify(input: IdentityInput): Identity {
   const shownWords = kept.filter((w, i) => (w === "EAU" || !(noise(w) && !(i === 0 && KEEP_WHEN_FIRST.has(w)))) && w !== ".");
   // Same word, different spelling (owner 2026-11-12: "ck b might also be ck bee, and ck one might also show up
   // as ck 1"). The KEY uses the one spelling; what the owner sees keeps the vendor's own words.
-  const nameWords = keyWords.map((w) => SAME_NAME_WORD[w] ?? w);
+  // The item master files some names with the house trailing or glued ("IDOLE LANCOME", "ED HARDY LOVE&LUCK",
+  // "FRENCH PANACHE S" — S = spray); vendors write "LANCOME IDOLE", "LOVE LUCK" (measured live 11-15: score-1 review
+  // lines held only by "name differs"). The KEY drops a trailing one-word house, a trailing lone S, and splits X&Y.
+  let kw = keyWords.flatMap((w) => (/^[A-Z0-9]+&[A-Z0-9]+$/.test(w) ? w.split("&") : [w]));
+  if (kw.length >= 2 && kw[kw.length - 1] === "S") kw = kw.slice(0, -1);
+  if (brand && !brand.includes(" ") && kw.length >= 2 && kw[kw.length - 1] === brand && kw.slice(0, -1).some((w) => !GENERIC_NAME_WORDS.has(w))) kw = kw.slice(0, -1);
+  const nameWords = kw.map((w) => SAME_NAME_WORD[w] ?? w);
   if (sizeMl != null && sizeMl <= 15 && !flags.has("SET")) flags.add("MINI");
 
   const flagList = [...flags].sort();

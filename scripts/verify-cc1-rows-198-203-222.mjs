@@ -63,7 +63,7 @@ export function findDefects(s) {
   // 222 — drift account names.
   if (!/NULLIF\(btrim\(gl\.account_name\), ''\)/.test(s.driftApi) || !/LEFT JOIN catalogs\.accounts gl ON gl\.id = ba\.ledger_account_id/.test(s.driftApi)) out.push("222: drift-alerts API does not resolve the ledger account name fallback");
   if (/"Account"\s*;/.test(between(s.driftHome, "const driftRows = useMemo", "}, ["))) out.push('222: Banking Home drift label falls back to generic "Account"');
-  if (!/accountNameById\.get\(alert\.bank_account_id\)/.test(s.driftHome)) out.push("222: Banking Home drift label ignores the accounts list the page already loads");
+  if (!/accountNameById\.get\(row\.bank_account_id\)/.test(s.driftHome)) out.push("222: Banking Home drift label ignores the accounts list the page already loads");
   if (/\?\? "Account"/.test(s.driftPanel) || /\|\| "Account"/.test(s.driftPanel)) out.push('222: DriftAlertsPanel falls back to generic "Account"');
   return out;
 }
@@ -80,7 +80,7 @@ if (process.argv.includes("--selftest")) {
     ["203 label from load status", plant("board", "settlementLinkLabel({ number: r.settlement_display_id, status: r.settlement_status, is_open: r.settlement_is_open })", "settlementLabel({ source_document_ref: r.settlement_display_id, status: r.status, is_presettlement: !!(r.settlement_id && !r.settlement_display_id) })")],
     ["203 helper returns dash", plant("board", "return lbl === DASH ? (s.status ? s.status.toUpperCase() : \"PENDING\") : lbl;", "return lbl;")],
     ["222 API no ledger fallback", plant("driftApi", ", NULLIF(btrim(gl.account_name), '')", "")],
-    ["222 home generic Account", plant("driftHome", /entityLabel\(null, alert\.bank_account_id, "Bank account"\);/, '"Account";')],
+    ["222 home generic Account", plant("driftHome", "accountNameById.get(row.bank_account_id)", "null")],
     ["222 panel generic Account", plant("driftPanel", "label={driftAccountLabel(alert)}", 'label={alert.account_name ?? alert.institution_name ?? "Account"}')],
   ];
   let caught = 0;

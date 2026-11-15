@@ -91,3 +91,59 @@ describe("DONNA, DKNY and DONNA KARAN are one brand (owner 19:11 CT)", () => {
     expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DKNY" }).brand).toBe("DONNA KARAN");
   });
 });
+describe("ESPERANZA unmatched lines measured live 11-15", () => {
+  it("a phrase one brand dominates teaches that brand (DAISY: MARC JACOBS 47, DISNEY Daisy Duck 2)", () => {
+    const items = [...Array(47)].map((_, i) => ({ brand: "MARC JACOBS", name: `DAISY ${["LOVE", "WILD", "DREAM", ""][i % 4]}` }))
+      .concat([{ brand: "DISNEY", name: "DAISY DUCK" }, { brand: "DISNEY", name: "DAISY DUCK 2" }, { brand: "DISNEY", name: "MICKEY" }]);
+    const idx = nameBrandIndex(items);
+    expect(idx["DAISY"]).toBe("MARC JACOBS");
+    expect(identify({ description: "DAISY 3.4 EDT", nameBrands: idx }).brand).toBe("MARC JACOBS");
+  });
+  it("a phrase two brands really share teaches nothing", () => {
+    const items = [...Array(6)].map(() => ({ brand: "RAVE", name: "NOW BLACK" })).concat([...Array(4)].map(() => ({ brand: "TOMMY HILFIGER", name: "NOW MEN" })));
+    expect(nameBrandIndex(items)["NOW"]).toBeUndefined();
+  });
+  it("BMIST / B.M / B/MIST are a body mist; CAPITAN is CAPTAIN", () => {
+    for (const d of ["PARIS HILTON HEIRESS BMIST 8OZ", "ARIANA GRANDE THANK YOU NEXT B.M 8OZ", "PARIS HILTON HEIRESS B/MIST 8OZ"])
+      expect(identify({ description: d }).conc).toBe("MIST");
+    expect(identify({ description: "CAPITAN AMERICA 3.4 EDT" }).brand).toBe("MARVEL");
+  });
+});
+describe("ESPERANZA sets list pieces first, fragrance last (measured live 11-15)", () => {
+  it("brand and name come from after the last piece; size/type from the main bottle", () => {
+    const cases: Array<[string, string]> = [
+      ["100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP", "DOLCE & GABBANA|QUEEN 3PC SET|100|EDP|W|SET"],
+      ["6.7EDT+6.7BL+3.4SGEL+0.50EDT D&G LIGHT BLUE MEN 2PC SET", "DOLCE & GABBANA|LIGHT BLUE 2PC SET|200|EDT|M|SET"],
+      ["3.4OZ+BL+0.5OZ TRAVEL SPRAY J CHOO L'EAU W 4PC SET", "JIMMY CHOO|LEAU 4PC SET|100|?|W|SET"],
+      ["100ML EDP+100ML A/SHAVE+POUCH CRISTIANO R. CR7 GAME ON M 3PC SET", "CRISTIANO RONALDO|CR7 GAME ON 3PC SET|100|EDP|M|SET"],
+    ];
+    for (const [d, k] of cases) expect(identify({ description: d }).key.startsWith(k)).toBe(true);
+  });
+  it("a set that names its main bottle first is unchanged", () => {
+    expect(identify({ description: "100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML" }).key.startsWith("?|100% PASSION|100|EDT|M|SET")).toBe(true);
+  });
+});
+describe("HALLOWEEN is a JESUS DEL POZO line (owner 11-14)", () => {
+  it("leading word or brand column — the house is the brand, HALLOWEEN stays in the name", () => {
+    expect(identify({ description: "HALLOWEEN BLOSSOM W 3.4oz EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN BLOSSOM|100|EDT|W")).toBe(true);
+    expect(identify({ description: "BLOSSOM", brand: "HALLOWEEN" }).brand).toBe("JESUS DEL POZO");
+    expect(identify({ description: "JESUS DEL POZO HALLOWEEN KISS W 3.4 EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN KISS|")).toBe(true);
+  });
+  it("ESPERANZA short brand forms", () => {
+    expect(identify({ description: "MAISON A SALVO M EDP 3.4oz" }).brand).toBe("MAISON ALHAMBRA");
+    expect(identify({ description: "B.SPEARS PREROGATIVE 8OZ BMIST" }).brand).toBe("BRITNEY SPEARS");
+    expect(identify({ description: "GLORIA VANDERVILT W 3.4 EDT" }).brand).toBe("GLORIA VANDERBILT");
+  });
+});
+describe("item-master names with the house trailing or glued (measured live 11-15)", () => {
+  it("same key as the vendor's spelling", () => {
+    const k = (b: string, d: string) => identify({ brand: b, description: d }).key;
+    expect(k("LANCOME", "IDOLE LANCOME 100ML EDP W")).toBe(identify({ description: "LANCOME IDOLE W 3.4 EDP" }).key);
+    expect(k("ED HARDY", "ED HARDY LOVE&LUCK 100ML EDT M")).toBe(identify({ description: "ED HARDY LOVE LUCK M 3.4 EDT" }).key);
+    expect(k("LACOSTE", "FRENCH PANACHE S 90ML EDT M")).toBe(identify({ description: "LACOSTE FRENCH PANACHE M 90ML EDT" }).key);
+    expect(k("JEAN PAUL GAULTIER", "JEAN PAUL G SCANDAL 100ML EDP M")).toBe(identify({ description: "JEAN PAUL GAULTIER SCANDAL M 3.4 EDP" }).key);
+  });
+  it("a house word that is the whole name stays", () => {
+    expect(identify({ description: "EAU DE LACOSTE 100ML EDT M", brand: "LACOSTE" }).nameWords.length).toBeGreaterThan(0);
+  });
+});

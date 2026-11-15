@@ -331,42 +331,55 @@ export function VendorReportBoard() {
       {ap.isError ? <ListErrorState title="Couldn't load A/P aging" {...formatQueryErrorDetail(ap.error)} onRetry={() => void ap.refetch()} /> : null}
 
       <ReportKpiGrid>
-        <V3KpiTile testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} href={spendViewHref} />
+        <V3KpiTile board testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} href={spendViewHref} valueDataV3="kpi-vr-vendors" />
         <V3KpiTile
+          board
           testId="vr-kpi-spend"
           label="Spend"
           value={board.data ? money(spend) : "…"}
           sub={`${sumBy(spendRows, (r) => r.txns)} expenses`}
           href={spendViewHref}
+          valueDataV3="kpi-vr-spend"
+          subDataV3="kpi-vr-spend-sub"
         />
         <V3KpiTile
+          board
           testId="vr-kpi-fuel-share"
           label="Fuel share"
           value={board.data ? pctLabel(board.data.kpis.fuel_share_pct) : "…"}
           sub={board.data ? `${money(board.data.kpis.fuel_cents)} on fuel accounts` : undefined}
           href={categoryViewHref}
+          valueDataV3="kpi-vr-fuel-share"
+          subDataV3="kpi-vr-fuel-share-sub"
         />
         <V3KpiTile
+          board
           testId="vr-kpi-open-bills"
           label="Open vendor bills"
           value={ap.data ? money(apTotal) : "…"}
           sub={`${sumBy(apRows, (r) => r.open_bill_count)} bills · as of ${mmmDd(asOf)}`}
           href={openViewHref}
+          valueDataV3="kpi-vr-open-bills"
+          subDataV3="kpi-vr-open-bills-sub"
         />
         {/* BOARD 31 (LEAD ROUND 8.25) — Card payables = what the company OWES the fuel-card issuers now (Dreamline 2510,
             WEX 2520 credit balances from readCardPayableBalances), never fuel SPEND. Fail-old (live): the tile showed
             kpis.fuel_cents — period fuel expense — under a liability label. Drills to the card-payable account register. */}
         <V3KpiTile
+          board
           testId="vr-kpi-card-payables"
           label="Card payables"
           value={board.data ? money(board.data.kpis.card_payables_cents ?? 0) : "…"}
           sub={cardPayablesSub(board.data?.card_payables ?? [], board.data?.card_payables_as_of)}
           href={cardPayablesHref(board.data?.card_payables ?? [])}
+          valueDataV3="kpi-vr-card-payables"
+          subDataV3="kpi-vr-card-payables-sub"
         />
       </ReportKpiGrid>
 
       {view === "spend" ? (
         <ParityTable
+          appearance="v3"
           rows={spendRows}
           title={`Spend by vendor · ${spendRows.length} vendors`}
           columns={spendColumns}
@@ -386,6 +399,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "open" ? (
         <ParityTable
+          appearance="v3"
           rows={apRows}
           title={`Open bills · as of ${mmmDd(asOf)} · by due date`}
           columns={openColumns}
@@ -409,6 +423,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "category" ? (
         <ParityTable
+          appearance="v3"
           rows={categoryRows}
           title="Spend by category (expense account)"
           columns={categoryColumns}
@@ -426,6 +441,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "1099" ? (
         <ParityTable
+          appearance="v3"
           rows={rows1099}
           title="Vendors flagged 1099 on the vendor record"
           columns={columns1099}

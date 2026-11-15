@@ -16,8 +16,12 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
+
+type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
+let rematchJob: RematchJob = { state: "idle", started_at: null, finished_at: null, result: null, error: null };
+
 
 /** Owner role AND listed in perfume.desk_users (owner order: "it would only be me"). Other Owner-role users get 403. */
 export async function deskAllowed(uid: string): Promise<boolean> {
@@ -206,6 +210,18 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       throw e;
     }
   });
+  // One vendor list as written + the BRAND the engine reads + its link and vendor coverage (owner 11-14).
+  app.get("/api/v1/perfume/lists/:id/export.xlsx", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
+    const out = await withCurrentUser(uid, (c) => exportListWorkbook(c, params.data.id));
+    if (!out) return reply.code(404).send({ error: "list_not_found" });
+    return reply
+      .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .header("Content-Disposition", `attachment; filename="${out.fileName}"`)
+      .send(out.buf);
+  });
+
   app.post("/api/v1/perfume/lists/:id/void", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
@@ -243,6 +259,15 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     return result;
   });
 
+  // Re-derive every item's key with the current reading rules; dry_run (default true) writes nothing.
+  app.post("/api/v1/perfume/items/rekey", RL_IMPORT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({ dry_run: z.boolean().default(true) }).safeParse(req.body ?? {}); if (!body.success) return bad(reply, body.error);
+    const result = await withCurrentUser(uid, (c) => rekeyItems(c, { dryRun: body.data.dry_run }));
+    invalidateGridCache();
+    return result;
+  });
+
   app.post("/api/v1/perfume/items/canonicalize-brands", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const result = await withCurrentUser(uid, (c) => canonicalizeItemBrands(c));
@@ -250,11 +275,21 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     return result;
   });
 
+  // The rematch reads every waiting line of every current list — minutes, not a request's worth. It runs in the
+  // background (one at a time); POST answers 202 at once and GET /review/rematch reports it (measured 01:22Z and
+  // 01:38Z: the request itself died with a 502 at 270 s / 173 s and nothing was saved).
   app.post("/api/v1/perfume/review/rematch", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const result = await withCurrentUser(uid, (c) => rematchReview(c));
-    invalidateGridCache();
-    return result;
+    if (rematchJob.state === "running") return reply.code(202).send(rematchJob);
+    rematchJob = { state: "running", started_at: new Date().toISOString(), finished_at: null, result: null, error: null };
+    void withCurrentUser(uid, (c) => rematchReview(c))
+      .then((result) => { rematchJob = { ...rematchJob, state: "done", finished_at: new Date().toISOString(), result }; invalidateGridCache(); })
+      .catch((e: unknown) => { rematchJob = { ...rematchJob, state: "failed", finished_at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) }; });
+    return reply.code(202).send(rematchJob);
+  });
+  app.get("/api/v1/perfume/review/rematch", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return rematchJob;
   });
 
   app.post("/api/v1/perfume/rows/bulk", RL_WRITE, async (req, reply) => {

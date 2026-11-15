@@ -444,6 +444,7 @@ export function SettlementsPage() {
         data-settlements-v3-kpis="1"
       >
         <V3KpiTile
+          board={true}
           label="Total unpaid"
           value={formatQuantityTable(Number(kpis.total_unpaid ?? 0), 0)}
           sub="settlements not yet paid"
@@ -451,6 +452,7 @@ export function SettlementsPage() {
           href="/driver-finance/settlements?tab=payments&payment_state=unpaid"
         />
         <V3KpiTile
+          board={true}
           label="This period"
           value={formatQuantityTable(Number(kpis.this_period ?? 0), 0)}
           sub="period end ≥ this week"
@@ -458,6 +460,7 @@ export function SettlementsPage() {
           href="/driver-finance/settlements"
         />
         <V3KpiTile
+          board={true}
           label="Driver pay (period)"
           value={driverPayThisPeriod}
           sub={
@@ -485,6 +488,7 @@ export function SettlementsPage() {
           href="/driver-finance/settlements?tab=payments"
         />
         <V3KpiTile
+          board={true}
           label="Drivers w/ debt"
           value={
             kpis.drivers_with_debt == null ? "—" : formatQuantityTable(Number(kpis.drivers_with_debt), 0)
@@ -495,6 +499,7 @@ export function SettlementsPage() {
           href="/driver-finance/settlements?tab=payments&focus=debt"
         />
         <V3KpiTile
+          board={true}
           label="YTD settlements"
           value={formatQuantityTable(Number(kpis.ytd_settlements ?? 0), 0)}
           sub={`${ytdYear} calendar year`}
@@ -502,6 +507,7 @@ export function SettlementsPage() {
           href="/driver-finance/settlements"
         />
         <V3KpiTile
+          board={true}
           label="Open driver bills"
           value={formatQuantityTable(Number(kpis.open_driver_bills ?? 0), 0)}
           sub="unsettled driver pay"
@@ -527,14 +533,13 @@ export function SettlementsPage() {
       subtitle="List + detail settlement workflow"
       kpiStrip={settlementsHomeKpiStrip}
       createControl={
-        <Button
-          size="sm"
-          variant="primary"
+        <button
           data-testid="settlements-open-creator"
           onClick={openCreator}
+          style={{ boxSizing: "content-box", height: 18, padding: "5px 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, backgroundColor: V3.shell, color: "#FFF", fontWeight: 600, fontSize: 11, fontFamily: V3.font, border: "none", cursor: "pointer", lineHeight: "normal" }}
         >
           + Settlement Creator
-        </Button>
+        </button>
       }
     >
       <SettlementCreatorDrawer open={creatorOpen} onClose={() => { setRepostDraft(null); closeCreator(); }} allowPost={true} initialDraft={repostDraft} />

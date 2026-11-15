@@ -32,6 +32,7 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
 import { SettlementsSurfaceHeader } from "./SettlementsSurfaceHeader";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { FORM_INPUT_CLASS } from "../../components/forms/inputClass";
 import { formatQueryErrorDetail } from "../../lib/tableError";
@@ -481,9 +482,9 @@ export function SettlementStatementWorkflowPage() {
     return (
       <div className="space-y-3">
         <SettlementsSurfaceHeader title="Settlement workflow" subtitle="Select a settlement from list view" />
-        <BoardSection title="Settlement workflow" testId="settlement-statement-none-selected">
+        <V3Panel board title="Settlement workflow" testId="settlement-statement-none-selected">
           <p className="px-3.5 py-2 text-xs text-gray-600">No settlement selected.</p>
-        </BoardSection>
+        </V3Panel>
       </div>
     );
   }
@@ -699,7 +700,7 @@ export function SettlementStatementWorkflowPage() {
       >
         <span />
       </MoneyListToolbar>
-      <ParityTable appearance="board"
+      <ParityTable appearance="v3"
            
         title="Settlement lines"
         columns={lineSummaryColumns}
@@ -1034,7 +1035,7 @@ export function SettlementStatementWorkflowPage() {
             }}
           />
           {canApproveSettlement ? (
-            <BoardSection
+            <V3Panel board
               title="Approval"
               testId="settlement-statement-approval"
               headerRight={
@@ -1059,7 +1060,7 @@ export function SettlementStatementWorkflowPage() {
                   Approve Settlement
                 </button>
               </div>
-            </BoardSection>
+            </V3Panel>
           ) : null}
           {showFinalizeBlock ? (
             <FinalizeBlock
@@ -1122,7 +1123,7 @@ export function SettlementStatementWorkflowPage() {
             />
           ) : null}
           {isFinalSettlement ? (
-            <BoardSection
+            <V3Panel board
               title="Payment Status"
               testId="settlement-statement-payment-status"
               headerRight={
@@ -1377,7 +1378,7 @@ export function SettlementStatementWorkflowPage() {
                   ) : null}
                 </div>
               </div>
-            </BoardSection>
+            </V3Panel>
           ) : null}
         </div>
       </div>

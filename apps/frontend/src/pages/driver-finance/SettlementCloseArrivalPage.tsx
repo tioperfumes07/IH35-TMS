@@ -679,7 +679,7 @@ export function SettlementCloseArrivalPage() {
               </button>
             </p>
           ) : null}
-          <ParityTable<LoadBoardRow> appearance="board"
+          <ParityTable<LoadBoardRow> appearance="v3"
             title={wizardStep === 3 ? "Gross — loads on arrival" : "Loads & miles"}
             columns={loadBoardColumns}
             rows={loadBoardRows}
@@ -700,7 +700,7 @@ export function SettlementCloseArrivalPage() {
     if (wizardStep === 4) {
       return (
         <CloseBoardPanel title="Deductions" stepTitle="Deductions">
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Other deductions"
             columns={lineColumns}
             rows={deductionRows}
@@ -730,7 +730,7 @@ export function SettlementCloseArrivalPage() {
             <span>Escrow contribution</span>
             <span>Cap {formatUsd(ESCROW_CAP_DOLLARS)}</span>
           </div>
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Escrow this settlement"
             columns={lineColumns}
             rows={escrowRows}
@@ -786,7 +786,7 @@ export function SettlementCloseArrivalPage() {
     if (wizardStep === 6) {
       return (
         <CloseBoardPanel title="Advances" stepTitle="Advances">
-          <ParityTable<LineBoardRow> appearance="board"
+          <ParityTable<LineBoardRow> appearance="v3"
             title="Advance recoveries"
             columns={lineColumns}
             rows={advanceRows}
@@ -846,7 +846,7 @@ export function SettlementCloseArrivalPage() {
               />
             </div>
           </div>
-          <ParityTable<DraftJeRow> appearance="board"
+          <ParityTable<DraftJeRow> appearance="v3"
             title="Draft JE preview — not posted"
             titleInfo={
               <InfoPopover label="About the draft JE preview">

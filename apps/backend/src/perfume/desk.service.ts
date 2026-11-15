@@ -148,6 +148,62 @@ export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: 
   return { checked: items.length, renamed, merged, brands };
 }
 
+/**
+ * Re-derive every item's KEY (brand + name part) with the CURRENT reading rules. An item's identity_key is written
+ * once, when the item is made; when a rule improves (a trailing house "IDOLE LANCOME", "LOVE&LUCK", HALLOWEEN as the
+ * JESUS DEL POZO line — measured live 11-15) the stored key keeps the old reading and the vendor line that now reads
+ * right still misses it. Size / type / gender / flags parts are kept exactly as stored. dryRun reports what WOULD
+ * change (with samples) and writes nothing; a real run renames, and merges an item into an existing twin whose key it
+ * now equals (UPCs, aliases and price lines move to the twin — the same merge canonicalizeItemBrands performs).
+ */
+export async function rekeyItems(c: PoolClient, opts: { dryRun: boolean }): Promise<{
+  checked: number; changed: number; renamed: number; merged: number; dry_run: boolean;
+  samples: Array<{ id: string; from: string; to: string; merge_into: string | null }>;
+}> {
+  await loadNameBrands(c);
+  const aliases = Object.fromEntries((await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`)).rows.map((r) => [r.alias, r.brand]));
+  const items = (await c.query<{ id: string; brand: string; name: string; identity_key: string; display_name: string }>(
+    `SELECT id, brand, name, identity_key, display_name FROM perfume.items WHERE merged_into_id IS NULL ORDER BY created_at, id`)).rows;
+  const byKey = new Map<string, string>();
+  for (const it of items) byKey.set(it.identity_key, it.id);
+  let changed = 0, renamed = 0, merged = 0;
+  const samples: Array<{ id: string; from: string; to: string; merge_into: string | null }> = [];
+  for (const it of items) {
+    const parts = it.identity_key.split("|");
+    if (parts.length < 6 || !it.name) continue;
+    const id = identify({ brand: it.brand || null, description: it.name, brandAliases: aliases });
+    const brand = id.brand || canonicalBrand(it.brand, aliases) || parts[0]!;
+    const name = id.nameWords.join(" ");
+    if (!name && parts[1]) continue; // a reading that loses the whole name is never applied
+    if (brand === parts[0] && name === parts[1]) continue;
+    const next = [brand, name, ...parts.slice(2)].join("|");
+    const holder = byKey.get(next);
+    const mergeInto = holder && holder !== it.id ? holder : null;
+    changed++;
+    if (samples.length < 80) samples.push({ id: it.id, from: it.identity_key, to: next, merge_into: mergeInto });
+    if (opts.dryRun) continue;
+    if (mergeInto) {
+      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      merged++;
+    } else {
+      const lineHouseMoved = brand !== it.brand && id.nameText.startsWith(`${it.brand} `);
+      const newName = lineHouseMoved ? id.nameText : it.name;
+      const display = it.display_name.startsWith(`${it.brand} · `)
+        ? `${brand} · ${lineHouseMoved ? `${newName}${it.display_name.slice(it.brand.length + 3 + it.name.length)}` : it.display_name.slice(it.brand.length + 3)}`
+        : it.display_name;
+      await c.query(`UPDATE perfume.items SET brand = $2, name = $3, identity_key = $4, display_name = $5, updated_at = now() WHERE id = $1`, [it.id, brand, newName, next, display]);
+      byKey.delete(it.identity_key);
+      byKey.set(next, it.id);
+      renamed++;
+    }
+  }
+  if (!opts.dryRun && (renamed || merged)) invalidateGridCache();
+  return { checked: items.length, changed, renamed, merged, dry_run: opts.dryRun, samples };
+}
+
 /* ---------------- index ---------------- */
 
 /** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
@@ -699,7 +755,10 @@ export async function rematchReview(c: PoolClient) {
   // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
   // request died with a 502). Same values, same rules.
   const upd: Array<{ id: string; item_id: string | null; method: string | null; status: string; suggestions: unknown; identity_key: string; loose_key: string }> = [];
+  let n = 0;
   for (const r of rows.rows) {
+    // Let the server answer its health checks while a few thousand lines are read.
+    if (++n % 100 === 0) await new Promise((res) => setImmediate(res));
     const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
     if (m.itemId) {
       upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
@@ -725,7 +784,9 @@ export async function rematchReview(c: PoolClient) {
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id
       WHERE r.match_status = 'matched' AND r.match_method = 'upc' AND l.is_current AND l.voided_at IS NULL`);
   let kindClash = 0;
+  let k = 0;
   for (const r of linked.rows) {
+    if (++k % 200 === 0) await new Promise((res) => setImmediate(res));
     const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
     if (productKind(id.flags) === productKind(r.flags)) continue;
     await c.query(`UPDATE perfume.price_list_rows SET item_id = NULL, match_method = NULL, match_status = 'review', suggestions = $2::jsonb WHERE id = $1`,
@@ -1108,7 +1169,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // read from it, so every brand reading can be checked (blank = the engine could not read one).
     A("c_brand", "COMPETITOR BRAND", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
-    A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
+    A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("stores", "STORES", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
@@ -1333,6 +1394,13 @@ async function buildAnalysisLines(c: PoolClient, x: {
     likelyCache.set(itemId, out);
     return out;
   };
+  // My list carries the same bottle once per store (owner 2026-11-14 21:43 CT: "some might be various times because
+  // they are in different stores"; measured live: 582 lines = 465 items, 78 items on 2–11 lines). The analysis shows
+  // ONE row per item: its stock is the sum of every store's qty, its offer price the lowest line, STORES how many lines.
+  // Owner 2026-11-15 07:10 CT: "if an item is repeated various times … it must show the same amount of lines as the
+  // list" — every line of my list is its own row (one per store, its own qty and price); STORES says how many lines of
+  // my list carry the same item, so the repeats are visible, never merged.
+  const { storesByItem } = onePerItem(x.myLineQ);
   const myLines: GridRow[] = x.myLineQ.map((l) => {
     const ir = l.item_id ? rowById.get(l.item_id) : undefined;
     const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
@@ -1347,6 +1415,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
+      "a:stores": l.item_id ? (storesByItem.get(l.item_id) ?? 1) : 1,
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
       link_mode: l.item_id ? "line" : "item", link_row: l.id, link_item: l.item_id,
@@ -1374,11 +1443,34 @@ async function buildAnalysisLines(c: PoolClient, x: {
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
         minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
+      "a:stores": onMine && l.item_id ? (storesByItem.get(l.item_id) ?? null) : null,
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,
     } as GridRow;
   });
   return { myLines, theirLines };
+}
+
+/** My list carries the same bottle once per store (measured live: 582 lines = 465 items, 78 items on 2–11 lines).
+ *  The analysis keeps EVERY line (owner 2026-11-15 07:10 CT: "same amount of lines as the list"); this gives the store
+ *  count per item (storesByItem) and the per-item totals for any view that wants them. */
+export function onePerItem<L extends { id: string; item_id: string | null; qty: number | null; price_cents: number | null }>(lines: readonly L[]):
+  { lines: Array<L & { stores: number }>; storesByItem: Map<string, number> } {
+  const groups = new Map<string, L[]>();
+  for (const l of lines) {
+    const k = l.item_id ?? `line:${l.id}`;
+    const g = groups.get(k);
+    if (g) g.push(l); else groups.set(k, [l]);
+  }
+  const storesByItem = new Map<string, number>();
+  const out: Array<L & { stores: number }> = [];
+  for (const [k, g] of groups) {
+    if (!k.startsWith("line:")) storesByItem.set(k, g.length);
+    const qtys = g.map((l) => l.qty).filter((q): q is number => q != null);
+    const prices = g.map((l) => l.price_cents).filter((p): p is number => p != null);
+    out.push({ ...g[0]!, qty: qtys.length ? qtys.reduce((a, b) => a + b, 0) : null, price_cents: prices.length ? Math.min(...prices) : null, stores: g.length });
+  }
+  return { lines: out, storesByItem };
 }
 
 export type AnalysisBase = "mine" | "theirs";
@@ -1697,4 +1789,121 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   ]) how.addRow(line);
   how.getColumn(1).width = 26; how.getColumn(2).width = 80;
   return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
+/**
+ * One vendor list as an Excel file, line for line, the description EXACTLY as the vendor wrote it, beside the BRAND
+ * the engine reads (owner 2026-11-14: "keep the description as it is, but add a brand column so I can confirm the
+ * brands … all this in the excel"). Each linked line carries the item it is linked to, that item's brand, a live
+ * BRANDS AGREE formula, and how many OTHER vendors sell the same item with the lowest of their prices — so the owner
+ * sees, on every upload, whether the list matched and whether the item is shared by 2+ vendors.
+ */
+export async function exportListWorkbook(c: PoolClient, listId: string): Promise<{ buf: Buffer; fileName: string } | null> {
+  const head = await c.query<{ vendor: string; created_at: string }>(
+    `SELECT v.name AS vendor, l.list_date::text AS created_at FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id WHERE l.id = $1`, [listId]);
+  if (!head.rows[0]) return null;
+  await loadNameBrands(c);
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const aliases: Record<string, string> = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  // Read the line exactly as the match index does: every item-master brand is a known spelling (addItem puts them in
+  // the index's alias object), so "RAYHAAN AZUL" reads RAYHAAN here too (measured live 11-15: brand column empty).
+  for (const b of (await c.query<{ brand: string }>(`SELECT DISTINCT brand FROM perfume.items WHERE merged_into_id IS NULL AND brand <> ''`)).rows) {
+    if (!(b.brand in aliases)) aliases[b.brand] = b.brand;
+  }
+  const q = await c.query<{
+    sheet: string | null; row_no: number | null; description: string; brand: string | null; upc: string | null; sku: string | null; size_text: string | null;
+    price_cents: number | null; match_status: string; gender_override: string | null; item_id: string | null; display_name: string | null; item_brand: string | null;
+    other_vendors: number; low_other_cents: number | null;
+  }>(
+    `SELECT r.sheet, r.row_no, r.description, r.brand, r.upc, r.sku, r.size_text, r.price_cents, r.match_status, r.gender_override, r.item_id,
+            i.display_name, i.brand AS item_brand,
+            COALESCE(o.n, 0)::int AS other_vendors, o.low AS low_other_cents
+       FROM perfume.price_list_rows r
+       JOIN perfume.price_lists l ON l.id = r.list_id
+       LEFT JOIN perfume.items i ON i.id = r.item_id
+       LEFT JOIN LATERAL (
+         SELECT count(DISTINCT l2.vendor_id) AS n, min(r2.price_cents) AS low
+           FROM perfume.price_list_rows r2 JOIN perfume.price_lists l2 ON l2.id = r2.list_id AND l2.voided_at IS NULL
+          WHERE r.item_id IS NOT NULL AND r2.item_id = r.item_id AND l2.vendor_id <> l.vendor_id) o ON true
+      WHERE r.list_id = $1
+      ORDER BY r.sheet NULLS FIRST, r.row_no NULLS LAST, r.id`, [listId]);
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "TIO Perfumes price desk";
+  const ws = wb.addWorksheet("List with brand");
+  const cols: Array<{ group: string; label: string; width: number }> = [
+    { group: "VENDOR LINE (AS WRITTEN)", label: "Row", width: 6 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "DESCRIPTION", width: 60 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "UPC", width: 16 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "SKU", width: 12 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "PRICE", width: 10 },
+    { group: "ENGINE READS", label: "BRAND", width: 24 },
+    { group: "ENGINE READS", label: "MATCH", width: 11 },
+    { group: "LINKED ITEM", label: "LINKED ITEM", width: 48 },
+    { group: "LINKED ITEM", label: "ITEM BRAND", width: 24 },
+    { group: "LINKED ITEM", label: "BRANDS AGREE", width: 13 },
+    { group: "OTHER VENDORS", label: "OTHER VENDORS SELLING IT", width: 14 },
+    { group: "OTHER VENDORS", label: "LOWEST OTHER PRICE", width: 12 },
+    { group: "OTHER VENDORS", label: "THIS LIST CHEAPER?", width: 12 },
+  ];
+  ws.addRow(cols.map((x) => x.group));
+  ws.addRow(cols.map((x) => x.label));
+  for (let i = 0; i < cols.length;) {
+    let j = i;
+    while (j + 1 < cols.length && cols[j + 1]!.group === cols[i]!.group) j++;
+    if (j > i) ws.mergeCells(1, i + 1, 1, j + 1);
+    ws.getCell(1, i + 1).alignment = { horizontal: "center" };
+    i = j + 1;
+  }
+  cols.forEach((x, i) => { ws.getColumn(i + 1).width = x.width; });
+  ws.getRow(1).font = { bold: true };
+  ws.getRow(2).font = { bold: true };
+  ws.views = [{ state: "frozen", ySplit: 2 }];
+  const red = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFF8D7DA" } };
+  const yellow = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFF3CD" } };
+  q.rows.forEach((r, n) => {
+    const x = n + 3;
+    const read = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: aliases }).brand;
+    const itemBrand = r.item_brand ? canonicalBrand(r.item_brand, aliases) : null;
+    // A line that names no brand but is linked (by UPC, SKU or the brand-free key) carries its item's brand — shown in
+    // italics so the owner sees it came from the link, not from the line's own words.
+    const brand = read || itemBrand || "";
+    const row = ws.addRow([
+      r.row_no ?? n + 1, r.description, r.upc ?? null, r.sku ?? null, r.price_cents == null ? null : r.price_cents / 100,
+      brand || null, r.item_id ? "linked" : r.match_status, r.display_name ?? null, itemBrand, null,
+      r.item_id ? r.other_vendors : null, r.low_other_cents == null ? null : r.low_other_cents / 100, null,
+    ]);
+    row.getCell(3).numFmt = "@"; // a UPC is text: leading zeros stay, no 1.2E+11
+    if (r.upc) row.getCell(3).value = String(r.upc);
+    row.getCell(5).numFmt = "$#,##0.00";
+    row.getCell(12).numFmt = "$#,##0.00";
+    // Live formulas: the owner corrects a BRAND cell and the check re-reads it.
+    row.getCell(10).value = { formula: `IF(I${x}="","",IF(UPPER(TRIM(F${x}))=UPPER(TRIM(I${x})),"YES","NO"))`, result: itemBrand ? (brand === itemBrand ? "YES" : "NO") : "" };
+    row.getCell(13).value = {
+      formula: `IF(OR(E${x}="",L${x}=""),"",IF(E${x}<L${x},"YES",IF(E${x}=L${x},"SAME","NO")))`,
+      result: r.price_cents == null || r.low_other_cents == null ? "" : r.price_cents < r.low_other_cents ? "YES" : r.price_cents === r.low_other_cents ? "SAME" : "NO",
+    };
+    if (!read && brand) row.getCell(6).font = { italic: true, color: { argb: "FF6B7280" } };
+    if (!brand) row.getCell(6).fill = yellow;
+    if (itemBrand && brand !== itemBrand) { row.getCell(6).fill = red; row.getCell(9).fill = red; row.getCell(10).fill = red; }
+    if (!r.item_id) row.getCell(7).fill = yellow;
+  });
+  const last = q.rows.length + 2;
+  ws.addConditionalFormatting({ ref: `J3:J${Math.max(3, last)}`, rules: [{ type: "containsText", operator: "containsText", text: "NO", priority: 1, style: { fill: red } }] });
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: Math.max(2, last), column: cols.length } };
+  const sum = wb.addWorksheet("Summary");
+  sum.addRow(["Vendor", head.rows[0].vendor]);
+  sum.addRow(["Lines", { formula: `COUNTA('List with brand'!B3:B${Math.max(3, last)})` }]);
+  sum.addRow(["Linked", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"linked")` }]);
+  sum.addRow(["In review", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"review")` }]);
+  sum.addRow(["Unmatched", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"unmatched")` }]);
+  sum.addRow(["No brand read", { formula: `COUNTBLANK('List with brand'!F3:F${Math.max(3, last)})` }]);
+  sum.addRow(["Brands disagree", { formula: `COUNTIF('List with brand'!J3:J${Math.max(3, last)},"NO")` }]);
+  sum.addRow(["Linked items sold by 1+ other vendor", { formula: `COUNTIF('List with brand'!K3:K${Math.max(3, last)},">=1")` }]);
+  sum.addRow(["Linked items sold by 2+ other vendors", { formula: `COUNTIF('List with brand'!K3:K${Math.max(3, last)},">=2")` }]);
+  sum.addRow(["This list cheaper than every other vendor", { formula: `COUNTIF('List with brand'!M3:M${Math.max(3, last)},"YES")` }]);
+  sum.getColumn(1).width = 42; sum.getColumn(2).width = 40; sum.getColumn(1).font = { bold: true };
+  const buf = Buffer.from(await wb.xlsx.writeBuffer());
+  const safe = head.rows[0].vendor.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return { buf, fileName: `${safe}-LIST-WITH-BRAND-${new Date().toISOString().slice(0, 10)}.xlsx` };
 }

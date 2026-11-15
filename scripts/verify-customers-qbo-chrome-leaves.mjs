@@ -90,7 +90,7 @@ const CHECKS = [
     const body = src.slice(start, next < 0 ? undefined : next);
     return /onClick=\{onEdit\}[^>]*data-testid="customer-details-edit"/.test(body) && /<DetailRow label=/.test(body) && /<EntityLinkOrTombstone\b/.test(body);
   } } },
-  { name: "md.new_transaction: Customers.tsx navigates to the real invoices list, customer-scoped", file: "apps/frontend/src/pages/Customers.tsx", pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/ },
+  { name: "md.new_transaction: Customers.tsx navigates to the real invoices list, customer-scoped", file: "apps/frontend/src/pages/Customers.tsx", pattern: /navigate\((?:custInvHref\()?`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)??\)/ },
   { name: "detail.profile / detail.billing: CustomerDetail real DatePicker + MoneyInput chrome", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /MoneyInput[\s\S]*DatePicker|DatePicker[\s\S]*MoneyInput/ },
   { name: "detail.contacts.create: CustomerDetail real Modal variant=drawer Create Contact", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{contactModalOpen\}/ },
   // LEAD 443.99 class B (2026-10-12) — detail.billing.record_payment.
@@ -99,7 +99,7 @@ const CHECKS = [
   //             Receive payment (/accounting/payments?create=1) — and the inline payment fields are gone.
   //   why: owner ORDERS 2026-10-01 §3 (customer invoices + A/R READ ONLY); CUST-F20 (#23767, 0234fe78d1).
   { name: "detail.billing.record_payment: CustomerDetail A/R read-only — Record Payment disabled, payments via Accounting", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: { test: (src) =>
-    /data-testid="customer-record-payment-disabled"/.test(src) && /href="\/accounting\/payments\?create=1"/.test(src) && !/value=\{payDate\}|valueDollars=\{payAmount\}/.test(src) } },
+    /data-testid="customer-record-payment-disabled"/.test(src) && /href=(?:\{custInvHref\()?["']\/accounting\/payments\?create=1["']\)??\}?/.test(src) && !/value=\{payDate\}|valueDollars=\{payAmount\}/.test(src) } },
   { name: "detail.quality.create_event: CustomerDetail real Modal variant=drawer Create Quality Event", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{qualityModalOpen\}/ },
   { name: "detail.lanes.create: CustomerDetail real Modal variant=drawer Create/Edit Lane with MoneyInput", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<Modal variant="drawer" open=\{laneModalOpen\}[\s\S]{0,4000}MoneyInput/ },
   { name: "detail.edit / customers.modal.customer_edit: CustomerDetail mounts the real CustomerEditModal", file: "apps/frontend/src/pages/CustomerDetail.tsx", pattern: /<CustomerEditModal/ },

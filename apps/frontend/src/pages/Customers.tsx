@@ -350,7 +350,7 @@ export function CustomerActivityFeed({
 
   return (
     <div className="space-y-2">
-      <ParityTable appearance="board"
+      <ParityTable appearance="v3"
         title="Customer activity"
         rows={activityQuery.data?.events ?? []}
         columns={columns}
@@ -469,7 +469,7 @@ function CustomerFinancialActivityTab({
 
   return (
     <div className="space-y-2">
-      <ParityTable appearance="board"
+      <ParityTable appearance="v3"
         title="Customer financial activity"
         rows={query.data?.rows ?? []}
         columns={columns}
@@ -1317,7 +1317,7 @@ export function CustomersPage() {
   }
 
   return (
-    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="customers" data-c06-page="customers">
+    <div className={MASTER_DETAIL.pageShellClass} data-c05-min-scroll="customers" data-c06-page="customers" data-v3-board="Customers" style={{ lineHeight: "normal", fontFamily: "Inter, sans-serif" }}>
       {viewModeSaveError ? (
         <div
           role="alert"
@@ -1410,48 +1410,66 @@ export function CustomersPage() {
         data-customers-v3-kpis="1"
       >
         <V3KpiTile
+          board
           label="With transactions"
           value={formatQuantityTable(customerHomeKpis.withTransactions, 0)}
+          valueDataV3="customers-kpi-with-transactions"
           sub="customers with activity"
+          subDataV3="customers-kpi-with-transactions-sub"
           testId="customers-kpi-with-transactions"
           href={customersWithTxHref}
         />
         <V3KpiTile
+          board
           label="In the book"
           value={formatQuantityTable(customerHomeKpis.inTheBook, 0)}
+          valueDataV3="customers-kpi-in-the-book"
           sub="full customer roster"
+          subDataV3="customers-kpi-in-the-book-sub"
           testId="customers-kpi-in-the-book"
           href={customersAllHref}
         />
         <V3KpiTile
+          board
           label="Open invoices"
           value={customerHomeKpis.openInvoices == null ? "—" : formatQuantityTable(customerHomeKpis.openInvoices, 0)}
+          valueDataV3="customers-kpi-open-invoices"
           sub="sent/partial with balance"
+          subDataV3="customers-kpi-open-invoices-sub"
           testId="customers-kpi-open-invoices"
           href={customersOpenInvoicesHref}
         />
         <V3KpiTile
+          board
           label="Billed"
           value={customerHomeKpis.billedCents == null ? "—" : fmtMoney(customerHomeKpis.billedCents)}
+          valueDataV3="customers-kpi-billed"
           sub="open invoice totals"
+          subDataV3="customers-kpi-billed-sub"
           testId="customers-kpi-billed"
           href={customersOpenInvoicesHref}
         />
         <V3KpiTile
+          board
           label="A/R open"
           value={customerHomeKpis.arOpenCents == null ? "—" : fmtMoney(customerHomeKpis.arOpenCents)}
+          valueDataV3="customers-kpi-ar-open"
           sub={
             customerHomeKpis.pastDuePct == null
               ? "invoice open balance"
               : `${customerHomeKpis.pastDuePct}% past due`
           }
+          subDataV3="customers-kpi-ar-open-sub"
           testId="customers-kpi-ar-open"
           href={customersOpenInvoicesHref}
         />
         <V3KpiTile
+          board
           label="Collected"
           value={customerHomeKpis.collectedCents == null ? "—" : fmtMoney(customerHomeKpis.collectedCents)}
+          valueDataV3="customers-kpi-collected"
           sub="payments applied YTD (live board engine)"
+          subDataV3="customers-kpi-collected-sub"
           tone={
             customerHomeKpis.collectedCents != null && customerHomeKpis.collectedCents === 0 ? "red" : "ink"
           }
@@ -1643,7 +1661,7 @@ export function CustomersPage() {
                     {customerTxnActivityQuery.isError ? (
                       <ListErrorState title="Couldn't load customer transactions" status={0} message={(customerTxnActivityQuery.error as Error)?.message} onRetry={() => void customerTxnActivityQuery.refetch()} />
                     ) : (
-                      <ParityTable appearance="board"
+                      <ParityTable appearance="v3"
                         rows={customerTxnActivityRows}
                         columns={customerTransactionColumns}
                         rowKey={(r) => `${r.type}-${r.id}`}
@@ -1655,7 +1673,7 @@ export function CustomersPage() {
                       />
                     )}
                     <h4 className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</h4>
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                   rows={txRows}
                   columns={txColumns}
                   rowKey={(invoice) => invoice.id}
@@ -1748,7 +1766,7 @@ export function CustomersPage() {
                     {loadsQuery.isError ? (
                       <ListErrorState title="Couldn't load customer loads" status={0} message={(loadsQuery.error as Error)?.message} onRetry={() => void loadsQuery.refetch()} />
                     ) : (
-                      <ParityTable appearance="board"
+                      <ParityTable appearance="v3"
                         rows={loadsQuery.data?.loads ?? []}
                         columns={loadColumns}
                         rowKey={(load) => load.id}
@@ -1806,7 +1824,7 @@ export function CustomersPage() {
                       onRetry={() => void recurringQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                       title="Recurring invoice templates"
                       rows={recurringQuery.data?.rows ?? []}
                       columns={recurringColumns}
@@ -1827,7 +1845,7 @@ export function CustomersPage() {
                       onRetry={() => void statementInvoicesQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                       title="Overdue open invoices"
                       titleInfo={
                         <InfoPopover label="About overdue invoices">
@@ -1863,7 +1881,7 @@ export function CustomersPage() {
                       onRetry={() => void loadsQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                       rows={loadsQuery.data?.loads ?? []}
                       columns={loadColumns}
                       rowKey={(load) => load.id}
@@ -1888,7 +1906,7 @@ export function CustomersPage() {
                       onRetry={() => void statementInvoicesQuery.refetch()}
                     />
                   ) : (
-                    <ParityTable appearance="board"
+                    <ParityTable appearance="v3"
                       title="Open invoices"
                       rows={(statementInvoicesQuery.data?.invoices ?? []).filter((inv) => {
                         if (isVoidInvoice(inv)) return false;

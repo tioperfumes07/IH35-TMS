@@ -9,7 +9,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  extractPerfumeLines, listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList,
+  extractPerfumeLines, listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel,
   type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
 import {
@@ -54,11 +54,24 @@ export function PerfumeListsPanel() {
             { key: "unmatched", label: "No match", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "is_current", label: "In the grid", sortable: true, render: (l) => (l.is_current ? "Yes" : "No (older)") },
           ]}
-          rowActions={(l) => <span className="flex items-center gap-1"><CurrentListButton list={l} /><VoidListButton list={l} /></span>}
+          rowActions={(l) => <span className="flex items-center gap-1"><ListExcelButton list={l} /><CurrentListButton list={l} /><VoidListButton list={l} /></span>}
           rowActionsWidth={320}
         />
       </section>
     </div>
+  );
+}
+
+function ListExcelButton({ list }: { list: PerfumeList }) {
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" disabled={busy} data-testid="perfume-list-excel" onClick={async () => {
+      setBusy(true);
+      try { await downloadPerfumeListExcel(list.id); }
+      catch (e) { pushToast(userFacingApiError(e, "Export failed"), "error"); }
+      finally { setBusy(false); }
+    }}>Excel</Button>
   );
 }
 

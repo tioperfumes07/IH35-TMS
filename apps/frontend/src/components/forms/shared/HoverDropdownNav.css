@@ -24,6 +24,15 @@
   min-width: 0;
 }
 
+/* ROUND 10.0 — li items inherit the navy background, flex layout, and 2px gap to
+   match the design spec's flat span-in-div structure. */
+.hover-dropdown-nav ul[role="menubar"] li {
+  display: flex;
+  background: #13233F;
+  gap: 2px;
+  padding: 0 6px;
+}
+
 /* COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 A1 — board-viewport-single-row:
    At ≥1280 CSS px (board grade includes 1440×900) the Accounting (and sibling) menubar
    is one compact row with horizontal overflow, matching approved boards. Below that
@@ -41,8 +50,7 @@
   position: relative;
 }
 
-.nav-item-with-dropdown button,
-.hover-dropdown-nav a[role="menuitem"] {
+.nav-item-with-dropdown button {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
@@ -59,13 +67,41 @@
   cursor: pointer;
   text-decoration: none;
   box-sizing: border-box;
-  /* ROUND 8.5 T1 — Settlements (and siblings) measured 59px when long labels
-     wrapped inside a tab; board strip is one compact line. Keep every tab. */
+  /* ROUND 8.5 T1 — long tab labels must not wrap inside a button menuitem (59px measured). */
   white-space: nowrap;
   flex-shrink: 0;
 }
 
-.hover-dropdown-nav a[role="menuitem"].active,
+/* ROUND 10.0 — v3 parity: block layout, 8px padding all sides, Inter font,
+   full-white color (no opacity reduction), content-box, no border-bottom stub. */
+.hover-dropdown-nav a[role="menuitem"] {
+  display: block;
+  height: auto;
+  padding: 8px;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: #fff;
+  opacity: 1;
+  background: none;
+  border: none;
+  border-bottom: none;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: content-box;
+  white-space: normal;
+  flex-shrink: 0;
+}
+
+.hover-dropdown-nav a[role="menuitem"].active {
+  color: #ffffff;
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.16);
+  border-bottom: 2px solid #ffffff;
+}
+
 .nav-item-with-dropdown button.active {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.16);
@@ -78,7 +114,10 @@
   display: inline-flex;
   align-items: stretch;
 }
+/* Restore inline-flex for split nav items; override the block default from a[role="menuitem"]. */
 .nav-item-with-dropdown .nav-split > a[role="menuitem"] {
+  display: inline-flex;
+  align-items: center;
   padding-right: var(--space-2);
 }
 .nav-item-with-dropdown .nav-split > button {

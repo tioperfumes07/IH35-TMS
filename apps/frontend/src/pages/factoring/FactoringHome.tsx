@@ -109,6 +109,7 @@ import { FactoringStagedFilters } from "./FactoringStagedFilters";
 import { DrillKpiCard } from "../../components/layout/DrillKpiCard";
 import { formatQuantityTable, formatUsd, formatUsdCents } from "../../lib/money";
 import { listFactoringPurchaseLines, listFactoringPurchases, type FactoringPurchaseReportLine } from "../../api/factoring-purchases";
+import { UnclearedDocumentsNote } from "../../components/accounting/UnclearedDocumentsNote";
 import "../../assets/fonts/v3-maintenance/board-box.css";
 
 // ROUND 315 / Lead B5 (2026-10-01): remove Account Summary + Request Debtor Credit Check from the
@@ -1727,6 +1728,13 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
               size="md"
             />
           </div>
+          {!summaryQuery.isError && summary != null && (summary.cleared_open_cents != null || (summary.uncleared_documents?.length ?? 0) > 0) ? (
+            <div className="mb-2 px-3.5 text-xs text-[#4B5563]">
+              Cleared {fmtCurrency((summary.cleared_open_cents ?? 0) / 100)}. Applied factoring
+              advances that have not been matched or categorized in Banking are named not cleared.
+              <UnclearedDocumentsNote docs={summary.uncleared_documents ?? []} />
+            </div>
+          ) : null}
           {recourseQuery.isError ? (
             <ListErrorBanner onRetry={() => void recourseQuery.refetch()} />
           ) : null}

@@ -13,7 +13,6 @@ import {
   type SettlementListRow,
 } from "../../api/driverFinance";
 import { getActiveLiabilities, getLiabilitiesKpis } from "../../api/liabilities";
-import { Button } from "../../components/Button";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
@@ -316,7 +315,7 @@ export function SettlementsDeductionsBoard() {
         data-testid="settlements-deductions-kpi-strip"
         data-settlements-deductions-v3-kpis="1"
       >
-        <V3KpiTile
+        <V3KpiTile board
           label={S443326.deductions.kpiWeek}
           value={display(weekMoney)}
           sub={
@@ -327,19 +326,19 @@ export function SettlementsDeductionsBoard() {
           testId="settlements-deductions-kpi-week"
           onClick={() => navigate("/driver-finance/settlements")}
         />
-        <V3KpiTile
+        <V3KpiTile board
           label={S443326.deductions.kpiOpenLiab}
           value={display(openLiabilities === null ? null : Math.round(openLiabilities))}
           testId="settlements-deductions-kpi-open-liab"
           onClick={() => navigate("/driver-finance/liabilities")}
         />
-        <V3KpiTile
+        <V3KpiTile board
           label={S443326.deductions.kpiDriversDebt}
           value={display(driversWithDebt === null ? null : Math.round(driversWithDebt))}
           testId="settlements-deductions-kpi-drivers-debt"
           onClick={() => navigate("/driver-finance/liabilities")}
         />
-        <V3KpiTile
+        <V3KpiTile board
           label={S443326.deductions.kpiScheduled}
           value={display(scheduled === null ? null : Math.round(scheduled))}
           testId="settlements-deductions-kpi-scheduled"
@@ -356,9 +355,8 @@ export function SettlementsDeductionsBoard() {
         activeFilterCount={0}
         testIdPrefix="settlements-deductions"
       >
-        <Button
+        <button
           type="button"
-          size="sm"
           data-testid="settlements-deductions-schedule-new"
           onClick={() => setCreateOpen(true)}
           style={{
@@ -366,13 +364,20 @@ export function SettlementsDeductionsBoard() {
             padding: "0 12px",
             fontSize: 12,
             fontWeight: 600,
-            background: V3.shell,
+            background: "#13233F",
             color: "#fff",
-            borderRadius: 2,
+            borderRadius: 6,
+            border: "none",
+            cursor: "pointer",
+            fontFamily: V3.font,
+            lineHeight: "normal",
+            boxSizing: "content-box",
+            display: "inline-flex",
+            alignItems: "center",
           }}
         >
           {S443326.deductions.newDeduction}
-        </Button>
+        </button>
       </MoneyListToolbar>
 
       {!companyId ? (
@@ -390,7 +395,7 @@ export function SettlementsDeductionsBoard() {
           onViewAll={() => navigate("/driver-finance/settlements")}
         >
           <div style={{ overflowX: "auto" }} data-testid="settlements-deductions-by-type-body">
-            <ParityTable<(typeof TYPE_ROWS)[number]> appearance="board"
+            <ParityTable<(typeof TYPE_ROWS)[number]> appearance="v3"
               tableTestId="settlements-deductions-by-type-table"
               hidePager
               density="compact"
@@ -434,22 +439,12 @@ export function SettlementsDeductionsBoard() {
                 },
               ]}
               footerCells={{
-                type: (
-                  <span data-testid="settlements-deductions-by-type-total" style={{ fontWeight: 700 }}>
-                    {S443326.deductions.rowTotal}
-                  </span>
-                ),
-                amount: (
-                  <span className="text-right tabular-nums" style={{ fontWeight: 700 }}>
-                    {weekMoney != null ? (
-                      <Link className="underline" to={root} style={{ color: "inherit", fontWeight: 700 }}>
-                        {display(weekMoney)}
-                      </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </span>
-                ),
+                type: S443326.deductions.rowTotal,
+                amount: weekMoney != null ? (
+                  <Link className="underline" to={root} style={{ color: "inherit", fontWeight: 700 }}>
+                    {display(weekMoney)}
+                  </Link>
+                ) : "—",
               }}
             />
           </div>
@@ -461,7 +456,7 @@ export function SettlementsDeductionsBoard() {
           onViewAll={() => navigate(root)}
           footer={S443326.deductions.scheduleFooter}
         >
-          <ParityTable<ScheduleRow> appearance="board"
+          <ParityTable<ScheduleRow> appearance="v3"
             columns={scheduleColumns}
             rows={filteredSchedule}
             rowKey={(r) => r.id}

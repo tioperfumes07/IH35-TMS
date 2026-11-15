@@ -411,10 +411,13 @@ export function DriverSettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — every KPI opens the report table / filtered cohort (not a dead tile). */}
         <V3KpiTile
+          board
           testId="dsr-kpi-settlements"
           label="Settlements"
           value={query.data ? String(totals.settlements) : "…"}
           sub={`${totals.drivers} drivers · cancelled excluded`}
+          valueDataV3="kpi-dsr-settlements"
+          subDataV3="kpi-dsr-settlements-sub"
           onClick={() => {
             setDrill(null);
             setBy("settlement");
@@ -422,9 +425,11 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           testId="dsr-kpi-gross"
           label="Gross pay"
           value={query.data ? money(totals.gross) : "…"}
+          valueDataV3="kpi-dsr-gross"
           onClick={() => {
             setDrill(null);
             setBy("settlement");
@@ -432,23 +437,30 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           testId="dsr-kpi-deductions"
           label="Deductions"
           value={query.data ? money(-totals.deductions) : "…"}
           sub="escrow · advances · fees"
           tone="red"
           href="/driver-finance/settlements?tab=deductions"
+          valueDataV3="kpi-dsr-deductions"
+          subDataV3="kpi-dsr-deductions-sub"
         />
         <V3KpiTile
+          board
           testId="dsr-kpi-reimb"
           label="Reimbursements"
           value={query.data ? money(totals.reimb) : "…"}
           href="/driver-finance/settlements?tab=payments"
+          valueDataV3="kpi-dsr-reimb"
         />
         <V3KpiTile
+          board
           testId="dsr-kpi-net"
           label="Net pay"
           value={query.data ? money(totals.net) : "…"}
+          valueDataV3="kpi-dsr-net"
           onClick={() => {
             setDrill(null);
             setBy("settlement");
@@ -456,11 +468,14 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           testId="dsr-kpi-closed-unpaid"
           label="Closed, not marked paid"
           value={query.data ? money(unpaidNet) : "…"}
           sub={`${totals.closedUnpaid.length} settlements`}
           tone={totals.closedUnpaid.length ? "amber" : "muted"}
+          valueDataV3="kpi-dsr-closed-unpaid"
+          subDataV3="kpi-dsr-closed-unpaid-sub"
           onClick={() => {
             applyClosedUnpaidKpi();
             document.querySelector('[data-testid="dsr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -481,6 +496,7 @@ export function DriverSettlementsReportBoard() {
 
       {showDetail ? (
         <ParityTable
+          appearance="v3"
           rows={detailRows}
           title={`${detailRows.length} settlements · newest first`}
           columns={settlementColumns}
@@ -503,6 +519,7 @@ export function DriverSettlementsReportBoard() {
         />
       ) : (
         <ParityTable
+          appearance="v3"
           rows={groups}
           title={`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
           columns={groupColumns}

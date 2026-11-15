@@ -189,23 +189,25 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
   }
 
   return (
-    <div data-testid={`party-board-${props.kind}`} style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, padding: "12px 20px 30px", minHeight: "100%" }}>
+    <div data-testid={`party-board-${props.kind}`} data-v3-board="Customers" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
       <PartyHomeHeader crumb="" title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
         createLabel={"+ Create Customer"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
           {/* One tile format (V3KpiTile). Each tile opens the exact rows it counts: the board's own ?chip=&range= list
               (whose column foots equal the tile) or, for Open invoices, the invoices list's live_open filter. */}
-          <V3KpiTile label="With transactions" value={b ? int(b.kpis.with_transactions) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
-          <V3KpiTile label="In the book" value={b ? int(b.kpis.in_the_book) : "…"} href={partyHref(`/customers?chip=all&range=${range}`)} />
+          <V3KpiTile board label="With transactions" value={b ? int(b.kpis.with_transactions) : "…"} valueDataV3="customers-kpi-with-transactions-value" href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
+          <V3KpiTile board label="In the book" value={b ? int(b.kpis.in_the_book) : "…"} valueDataV3="customers-kpi-in-the-book-value" href={partyHref(`/customers?chip=all&range=${range}`)} />
           {/* ROUND 297: "open" = live, not void, balance above $0 -- the same definition Factoring's candidates use. */}
-          <V3KpiTile label="Open invoices" value={b ? int(b.kpis.open_invoices) : "…"} href={partyHref(`/accounting/invoices?live_open=true&date_from=${b?.range_from ?? ""}`)} />
-          <V3KpiTile label="Billed" value={b ? tileUsd(b.kpis.billed_cents) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
-          <V3KpiTile label="A/R open" value={b ? tileUsd(b.kpis.ar_open_cents) : "…"} href={partyHref(`/customers?chip=open_balance&range=${range}`)}
-            sub={pastDuePct != null ? `${pastDuePct}% past due` : undefined} />
-          <V3KpiTile label="Collected" value={b ? tileUsd(b.kpis.collected_cents) : "…"} href={partyHref(`/customers?chip=with_transactions&range=${range}`)}
+          <V3KpiTile board label="Open invoices" value={b ? int(b.kpis.open_invoices) : "…"} valueDataV3="customers-kpi-open-invoices-value" href={partyHref(`/accounting/invoices?live_open=true&date_from=${b?.range_from ?? ""}`)} />
+          <V3KpiTile board label="Billed" value={b ? tileUsd(b.kpis.billed_cents) : "…"} valueDataV3="customers-kpi-billed-value" href={partyHref(`/customers?chip=with_transactions&range=${range}`)} />
+          <V3KpiTile board label="A/R open" value={b ? tileUsd(b.kpis.ar_open_cents) : "…"} valueDataV3="customers-kpi-ar-open-value"
+            href={partyHref(`/customers?chip=open_balance&range=${range}`)}
+            sub={pastDuePct != null ? `${pastDuePct}% past due` : undefined} subDataV3="customers-kpi-ar-open-sub" />
+          <V3KpiTile board label="Collected" value={b ? tileUsd(b.kpis.collected_cents) : "…"} valueDataV3="customers-kpi-collected-value"
+            href={partyHref(`/customers?chip=with_transactions&range=${range}`)}
             tone={b && b.kpis.collected_cents === 0 && b.kpis.billed_cents > 0 ? "red" : "ink"}
-            sub={b && b.kpis.invoices_with_payment === 0 ? "no payments applied" : b ? `${int(b.kpis.invoices_with_payment)} invoices paid` : undefined} />
+            sub={b && b.kpis.invoices_with_payment === 0 ? "no payments applied" : b ? `${int(b.kpis.invoices_with_payment)} invoices paid` : undefined} subDataV3="customers-kpi-collected-sub" />
         </div>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>

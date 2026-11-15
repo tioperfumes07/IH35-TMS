@@ -53,7 +53,7 @@ export function SettlementsSubNavWrapper({
 
   const isRoot = pathname === "/driver-finance/settlements" && !search;
   const breadcrumb = isRoot
-    ? [{ label: "Driver Finance", href: "/driver-finance" }, { label: "Settlements" }]
+    ? [{ label: "Driver Finance", href: "/driver-finance" }, { label: "Driver Settlements" }]
     : [
         { label: "Driver Finance", href: "/driver-finance" },
         { label: "Settlements", href: "/driver-finance/settlements" },
@@ -74,6 +74,10 @@ export function SettlementsSubNavWrapper({
 
   return (
     <div className="space-y-4" data-settlements-subnav-wrapper="true" data-v3-board="Settlements" style={{ lineHeight: "normal" }}>
+      <div className="relative z-10">
+        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />
+      </div>
+
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
         <div>
           <div data-testid="settlements-breadcrumb">
@@ -84,7 +88,7 @@ export function SettlementsSubNavWrapper({
               type="button"
               data-testid="settlements-back-btn"
               onClick={() => navigate(backHref)}
-              style={{ fontSize: 11, fontWeight: 400, color: "#5B6576", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              style={{ fontSize: 11, fontWeight: 400, color: "#5B6576", background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", boxSizing: "content-box" }}
             >
               ← Back
             </button>
@@ -98,10 +102,6 @@ export function SettlementsSubNavWrapper({
           {actions}
           {createControl}
         </div>
-      </div>
-
-      <div className="relative z-10">
-        <HoverDropdownNav items={navItems} activeHref={activeHref} openOn="click" />
       </div>
 
       {kpiStrip}

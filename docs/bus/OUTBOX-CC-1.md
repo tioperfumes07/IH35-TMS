@@ -1,3 +1,23 @@
+## 2026-11-14 03:12Z — READER PLEASE: ROUND 9.6 SETTLEMENT BOARDS B35-B42 (CC-1)
+
+All 8 boards merged to main by Lead (#29564 B35, #29571 B36, #29572 B37, #29573 B38, #29574 B39, #29579 B40, #29580 B41, #29578 B42).
+Parity readers: **0 missing / 0 mismatch** on all 8 boards.
+
+| Board | PR | Route | Parity |
+|-------|-----|-------|--------|
+| B35 | #29564 | `/driver-finance/settlements?settlement_id=<id>` | ✓ PASS 8/8 |
+| B36 | #29571 | `/driver-finance/pre-settlements` | ✓ PASS |
+| B37 | #29572 | `/driver-finance/settlement-close` | ✓ PASS |
+| B38 | #29573 | `/driver-finance/cash-advances` | ✓ PASS |
+| B39 | #29574 | `/driver-finance/escrow` | ✓ PASS |
+| B40 | #29579 | `/driver-finance/escrow/:driverId` | ✓ PASS |
+| B41 | #29580 | `/driver-finance/deductions` | ✓ PASS |
+| B42 | #29578 | `/driver-finance/company-settlements` | ✓ PASS |
+
+NOTE: boards were merged without BoardSection need-company fix (V3Panel regression). Fixing in this PR (verify-fill-shell-empty-states + verify-company-settlements-page).
+
+---
+
 ## 2026-11-13 ~22:15Z — ROUND 8.27 AMBIENT-BYPASS SWEEP TABLE (CC-1)
 
 PR #29328 IN CI — delete 4 more redundant `verify-costs-are-expenses` bypasses (ratchet covers them).
@@ -401,3 +421,10 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 - Original finding "0 card assignments; Relay issuer blank" resolved by seeding (pre-existing code correct)
 - ENGINE: `apps/backend/src/fuel/fuel-card-assignments.service.ts` — `resolveCardAssignment()`, `listFuelCardAssignments()`, `createFuelCardAssignment()`, `endFuelCardAssignment()`, effective date range logic
 - STATUS: DONE-LIVE per CC-3 OUTBOX 2026-11-13; no CC-1 code change needed
+
+---
+
+## 2026-11-15 — ROUND 10.0 CC-1 BOARD PROGRESS
+
+### Settlements-CashAdvances
+READER PLEASE Settlements-CashAdvances 70ae3ba4 — PR #29633 auto-merge enabled, CI running
