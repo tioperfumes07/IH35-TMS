@@ -18,6 +18,8 @@ import {
 } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
+import { useSearchParams } from "react-router-dom";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both"],
@@ -44,7 +46,7 @@ export function PerfumeListsPanel() {
           storageKey="perfume-desk-lists-v1"
           emptyText="No price lists yet."
           columns={[
-            { key: "vendor_name", label: "Vendor", sortable: true },
+            { key: "vendor_name", label: "Vendor", sortable: true, render: (l) => <EntityLink kind="perfume_vendor" id={l.vendor_id} label={l.vendor_name} data-testid="perfume-list-vendor-link" /> },
             { key: "list_date", label: "List date", sortable: true },
             { key: "file_name", label: "File", sortable: true },
             { key: "rows_saved", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
@@ -112,6 +114,14 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [edit, setEdit] = useState<Partial<PerfumeVendor> & { earn?: string } | null>(null);
+  // A Vendor cell anywhere on the desk (Lists, Review) links here with ?vendor_id= — open that vendor's card for edit.
+  const [params] = useSearchParams();
+  const wanted = params.get("vendor_id");
+  const [opened, setOpened] = useState<string | null>(null);
+  if (wanted && wanted !== opened) {
+    const v = vendors.find((x) => x.id === wanted);
+    if (v) { setOpened(wanted); setEdit({ ...v, earn: v.earn_pct ?? "" }); }
+  }
   const cents = (k: "cushion_lo_cents" | "cushion_hi_cents" | "freight_lo_cents" | "freight_hi_cents", label: string) => (
     <label className="flex flex-col gap-1 text-xs text-gray-600">{label}
       <input type="number" step="0.05" min="0" placeholder={tr("perfume.lists.8", "rule default")} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 tabular-nums"

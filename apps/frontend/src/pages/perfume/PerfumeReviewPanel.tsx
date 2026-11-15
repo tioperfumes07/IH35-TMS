@@ -11,6 +11,7 @@ import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBul
 import { tr } from "./perfumeI18n";
 import { itemSaysMore } from "./perfumeMatchText";
 import { ListErrorState } from "../../components/ListErrorState";
+import { EntityLink } from "../../components/shared/EntityLink";
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -104,7 +105,7 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
                 </span>
               );
             } }] : []),
-          { key: "vendor_name", label: "Vendor", sortable: true },
+          { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="perfume_vendor" id={r.vendor_id} label={r.vendor_name} data-testid="perfume-review-vendor-link" /> },
           { key: "row_no", label: "Row", sortable: true, defaultHidden: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
           { key: "sku", label: "Vendor code", sortable: true, defaultHidden: true },

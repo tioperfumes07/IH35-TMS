@@ -592,7 +592,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   // of my offer items; paging happens after that filter.
   const mine = opts.mine === "offer";
   const rows = await c.query(
-    `SELECT r.id, r.list_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
+    `SELECT r.id, r.list_id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
        ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
   const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
