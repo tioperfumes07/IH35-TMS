@@ -62,7 +62,7 @@ export function check({ listPage, entityLink, manifest, newPage, detailPage }) {
   } else if (!/path\s*=\s*["']\/legal\/matters\/:id["']/.test(manifest)) {
     f.push(`${MANIFEST}: must register /legal/matters/:id detail route`);
   }
-  if (!/legalMattersApi\.create\(companyId, formStateToCreatePayload\(form\)\)/.test(newPage ?? "") || !/onSuccess: \(data\) => navigate\(`\/legal\/matters\/\$\{String\(data\.matter\.id \?\? ""\)\}`\)/.test(newPage ?? "")) {
+  if (!/legalMattersApi\.create\(companyId, formStateToCreatePayload\(form\)\)/.test(newPage ?? "") || !/onSuccess: \(data\) => navigate\([\w(]*`\/legal\/matters\/\$\{String\(data\.matter\.id \?\? ""\)\}`/.test(newPage ?? "")) {
     f.push(`${NEW_PAGE}: create must write under the selected company and navigate to the persisted matter id`);
   }
   if (!/queryFn: \(\) => legalMattersApi\.get\(companyId, id\)/.test(detailPage ?? "") || !/title=\{matter \? String\(matter\.matter_number \?\? "Matter"\) : "Matter"\}/.test(detailPage ?? "")) {

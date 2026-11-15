@@ -309,7 +309,7 @@ export interface EntityLinkProps {
 }
 
 const DEFAULT_LINK_CLASSNAME =
-  "text-[#1F2A44] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-1 rounded-sm";
+  "text-[#111827] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-1 rounded-sm";
 
 /**
  * Resolves an entity kind + id to its real per-id detail route.

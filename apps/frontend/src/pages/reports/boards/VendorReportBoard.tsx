@@ -4,7 +4,7 @@
  * expense_lines → catalogs.accounts, accounting.bills, mdata.vendors.vendor_category / eligible_1099).
  * Open bills: GET /api/v1/reports/ap-aging (the canonical A/P aging). No new engine.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
@@ -23,6 +23,7 @@ import { formatCompanyName } from "../../../lib/formatCompanyName";
 import { mmmDd } from "../../../lib/formatDate";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { ReportFilterBar } from "../../../components/reports/ReportFilterBar";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
 import { pct, pctLabel, sumBy } from "./reportBoardGroup";
 
@@ -122,6 +123,11 @@ export function VendorReportBoard() {
         .sort((a, b) => a.label.localeCompare(b.label)),
     [unitsQ.data],
   );
+
+  const today = companyToday();
+  const rangeFrom = range === "ytd" ? `${today.slice(0, 4)}-01-01` : range === "12m" ? (() => { const d = new Date(today); d.setFullYear(d.getFullYear() - 1); return d.toISOString().slice(0, 10); })() : "2020-01-01";
+  const [filterFrom, setFilterFrom] = useState(rangeFrom);
+  const [filterTo, setFilterTo] = useState(today);
 
   const board = useQuery({
     queryKey: ["reports", "vendor-board", companyId, range, unitIds.join(",")],
@@ -287,45 +293,50 @@ export function VendorReportBoard() {
       subtitle="spend, open bills and 1099 by vendor · source: expenses + bills (open bills from the canonical A/P aging)"
       xlsx={xlsx}
     >
-      <div className="flex flex-wrap items-end gap-3 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs" data-testid="vendor-report-filters">
-        <label className="flex flex-col gap-1">
-          <span className="font-semibold text-[#4B5563]">Date</span>
-          <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="vendor-report-range" />
-        </label>
-        <label className="flex min-w-[12rem] flex-col gap-1 text-[#4B5563]">
-          <span className="font-semibold">Vendor</span>
-          <EntityMultiSelect
-            kind="vendor"
-            operatingCompanyId={companyId}
-            value={vendorIds || null}
-            onChange={(next) => setVendorIds(next ?? "")}
-            placeholder="All vendors"
-          />
-        </label>
+      <ReportFilterBar
+        board
+        testIdPrefix="vendor-report"
+        fromDate={filterFrom}
+        toDate={filterTo}
+        onFromDateChange={(d) => setFilterFrom(d ?? rangeFrom)}
+        onToDateChange={(d) => setFilterTo(d ?? today)}
+        onPresetSelect={(preset) => {
+          if (preset === "ytd") setRange("ytd");
+          else if (preset === "last_month" || preset === "this_month") setRange("12m");
+        }}
+        data-testid="vendor-report-filters"
+      >
+        <span style={{ fontSize: 11, color: "#5B6576" }}>Date</span>
+        <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="vendor-report-range" />
+        <EntityMultiSelect
+          kind="vendor"
+          operatingCompanyId={companyId}
+          value={vendorIds || null}
+          onChange={(next) => setVendorIds(next ?? "")}
+          placeholder="All vendors"
+        />
         <MultiSelectDropdown
           label="Category"
           options={categoryOptions}
           selected={categories}
           onChange={setCategories}
           allLabel="All categories"
+          board
           data-testid="vendor-report-category-filter"
         />
         {/* R6 — board Truck ▾ multi-select; filters expense spend to selected units. */}
-        <div className="min-w-[160px]" data-testid="vendor-report-truck-filter">
-          <MultiSelectDropdown
-            label="Truck"
-            options={unitOptions}
-            selected={unitIds}
-            onChange={setUnitIds}
-            allLabel="All trucks"
-            data-testid="vendor-report-truck-multiselect"
-          />
-        </div>
-        <label className="flex flex-col gap-1">
-          <span className="font-semibold text-[#4B5563]">View</span>
-          <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="vendor-report-view" />
-        </label>
-      </div>
+        <MultiSelectDropdown
+          label="Truck"
+          options={unitOptions}
+          selected={unitIds}
+          onChange={setUnitIds}
+          allLabel="All trucks"
+          board
+          data-testid="vendor-report-truck-filter"
+        />
+        <span style={{ fontSize: 11, color: "#5B6576" }}>View</span>
+        <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="vendor-report-view" />
+      </ReportFilterBar>
 
       {board.isError ? <ListErrorState title="Couldn't load the vendor report" {...formatQueryErrorDetail(board.error)} onRetry={() => void board.refetch()} /> : null}
       {ap.isError ? <ListErrorState title="Couldn't load A/P aging" {...formatQueryErrorDetail(ap.error)} onRetry={() => void ap.refetch()} /> : null}
