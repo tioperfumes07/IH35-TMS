@@ -123,7 +123,13 @@ export function DriverQualificationMatrix({ companyId }: { companyId: string }) 
         key: "first_name",
         label: "Driver",
         className: "text-left",
-        render: (row) => record(row, formatPersonName(`${row.first_name} ${row.last_name}`)),
+        // Safety-DriverFiles.dc.html lists drivers by their given names ("Carlos Mauricio", "Jorge Luis");
+        // the full legal name stays on the link's title, in sort and in export.
+        render: (row) => (
+          <span title={formatPersonName(`${row.first_name} ${row.last_name}`)}>
+            {record(row, formatPersonName(row.first_name))}
+          </span>
+        ),
         sortValue: (row) => `${row.first_name} ${row.last_name}`,
         exportValue: (row) => formatPersonName(`${row.first_name} ${row.last_name}`),
       },
