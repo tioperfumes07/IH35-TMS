@@ -61,7 +61,9 @@ describe("NewCustomerDrawerForm validation (canonical CustomerProfileForm)", () 
     renderDrawer();
 
     await user.type(screen.getByLabelText(/Customer display name/i), "Acme Freight");
-    await user.selectOptions(screen.getByRole("combobox", { name: /Customer type/i }), "broker");
+    // Customer type is a SelectCombobox (typeahead), not a native <select> — pick the option the way a user does.
+    await user.click(screen.getByRole("combobox", { name: /Customer type/i }));
+    await user.click(await screen.findByRole("option", { name: "Broker" }));
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
     expect(createCustomer).not.toHaveBeenCalled();
@@ -76,7 +78,9 @@ describe("NewCustomerDrawerForm validation (canonical CustomerProfileForm)", () 
     renderDrawer();
 
     await user.type(screen.getByLabelText(/Customer display name/i), "Acme Freight");
-    await user.selectOptions(screen.getByRole("combobox", { name: /Customer type/i }), "direct_shipper");
+    // Customer type is a SelectCombobox (typeahead), not a native <select> — pick the option the way a user does.
+    await user.click(screen.getByRole("combobox", { name: /Customer type/i }));
+    await user.click(await screen.findByRole("option", { name: "Direct shipper" }));
     await user.type(screen.getByLabelText(/^Email/i), "billing@acme.test");
     await user.click(screen.getByRole("button", { name: /^Save$/i }));
 
