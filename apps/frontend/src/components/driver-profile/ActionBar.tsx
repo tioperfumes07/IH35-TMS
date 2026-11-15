@@ -30,7 +30,6 @@ export function ActionBar({
   onActionComplete?: () => void;
   onAssignTruck?: () => void;
 }) {
-  const { pathname, search: locSearch } = useLocation();
   const navigate = useNavigate();
   const [messageOpen, setMessageOpen] = useState(false);
   const [suspendOpen, setSuspendOpen] = useState(false);
