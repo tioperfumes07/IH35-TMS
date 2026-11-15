@@ -149,6 +149,8 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "J DEL POZO": "JESUS DEL POZO", "J. DEL POZO": "JESUS DEL POZO", "JESUS DEL POZO": "JESUS DEL POZO",
   "UNITED COLORS OF BENETTON": "BENETTON", "BENETTON": "BENETTON", "BENNETON": "BENETTON",
   "ARDEN": "ELIZABETH ARDEN", "NINA": "NINA RICCI", "DONNA": "DONNA KARAN",
+  // Owner 2026-11-14 19:11 CT: "donna, dkny, donna karan are the same one."
+  "DKNY": "DONNA KARAN", "D.K.N.Y": "DONNA KARAN", "DONNA KARAN NY": "DONNA KARAN",
   // Measured live 11-14 6:45 PM CT on the 209 ESPERANZA lines still without a brand, and on misspelled item brands.
   // Owner 2026-11-14 18:48 CT, his own offer list's brand column: "GIORA it is giorgio armani … hol is hollister, issey is
   // issey miyake, jdel is j del pozo, montb is mont blanc, mosch is moschino, nauti is nautica, narciso rd is narciso

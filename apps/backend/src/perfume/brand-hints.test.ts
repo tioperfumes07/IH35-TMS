@@ -84,3 +84,10 @@ describe("spacing typos are the same bottle (owner 19:03 CT: LOVEME AMETHYST = L
     expect(compactKey(a.key)).toBe(compactKey(b.key));
   });
 });
+describe("DONNA, DKNY and DONNA KARAN are one brand (owner 19:11 CT)", () => {
+  it("every spelling", () => {
+    for (const d of ["DKNY GOLDEN DELICIOUS W EDP 3.4oz", "DONNA KARAN CASHMERE MIST 3.4oz"]) expect(identify({ description: d }).brand).toBe("DONNA KARAN");
+    expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DONNA" }).brand).toBe("DONNA KARAN");
+    expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DKNY" }).brand).toBe("DONNA KARAN");
+  });
+});
