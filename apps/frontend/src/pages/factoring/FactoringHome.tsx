@@ -1,4 +1,5 @@
 import { FactoringProfilePanel } from "./FactoringProfilePanel";
+import { V3_HEADER_BTN, V3_HEADER_BTN_PRIMARY } from "../../components/v3/V3StatusPill";
 import { ImportFaroPurchaseReportAction } from "../../components/imports/OwnerImportActions";
 import {
   AGING_DATE_BASIS_OPTIONS,
@@ -1108,14 +1109,14 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       <ImportFaroPurchaseReportAction />
       <Link
         to={FACTORING_TAB_PATH.submit_invoice}
-        style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textDecoration: "none", lineHeight: "normal" }}
+        style={V3_HEADER_BTN_PRIMARY}
         data-testid="factoring-submit-to-factor-link"
       >
         Submit to Factor
       </Link>
       <details className="relative inline-block">
         <summary
-          style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", cursor: "pointer", listStyle: "none", lineHeight: "normal" }}
+          style={{ ...V3_HEADER_BTN, listStyle: "none" }}
           className="[&::-webkit-details-marker]:hidden"
           data-testid="factoring-header-related-menu"
         >

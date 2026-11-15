@@ -438,6 +438,7 @@ export function FactoringHomeBoard({
         style={{ gap: 8 }}
       >
         <V3KpiTile
+          board
           testId="factoring-kpi-outstanding-liability"
           label="Outstanding liability"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.outstanding_liability_balance)}
@@ -445,6 +446,7 @@ export function FactoringHomeBoard({
           href={factorHref(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
+          board
           testId="factoring-kpi-advanced-mtd"
           label="Advanced MTD"
           value={summaryQuery.isError ? "—" : fmtMoneyDollars(summary?.mtd_advanced_total)}
@@ -452,18 +454,21 @@ export function FactoringHomeBoard({
           href={factorHref(FACTORING_TAB_PATH.payments_to_you)}
         />
         <V3KpiTile
+          board
           testId="factoring-kpi-recourse-days"
           label="Repurchase deadline"
           value={summaryQuery.isError ? "—" : `${formatQuantityTable(Number(summary?.recourse_days ?? 95), 0)} days`}
           href={factorHref(FACTORING_TAB_PATH.recourse_pipeline)}
         />
         <V3KpiTile
+          board
           testId="factoring-kpi-chargebacks"
           label="Chargebacks & fees"
           value={feesQuery.isError ? "—" : fmtMoneyDollars(chargebacksFees)}
           href={factorHref(FACTORING_TAB_PATH.chargebacks_fees)}
         />
         <V3KpiTile
+          board
           testId="factoring-kpi-true-cost"
           label="True cost"
           value={

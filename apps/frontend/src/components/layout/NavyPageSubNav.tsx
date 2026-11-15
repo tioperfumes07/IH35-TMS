@@ -285,11 +285,15 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
-  const activeTo = mostSpecificActiveTo(
-    pathname,
-    items.filter((i) => !i.children?.length).map((i) => i.to),
-    search,
-  );
+  const activeTo =
+    mostSpecificActiveTo(
+      pathname,
+      items.filter((i) => !i.children?.length).map((i) => i.to),
+      search,
+    ) ??
+    // A module landing that IS one tab's view (activePaths) — e.g. /legal draws Contracts active (Legal.dc.html).
+    items.find((i) => !i.children?.length && i.activePaths?.includes(pathname))?.to ??
+    null;
   const useLocalState = activeId !== undefined && onTabChange !== undefined;
   // ROUND 9.0 (owner 2026-11-13: screens identical to docs/design/v3) — measured on Banking.png / Settlements.png:
   // the bar is 32 px tall, #13233F, square; the active tab is a full-height rgba(255,255,255,.16) box (#38465D on the navy) with a 2 px white rule
