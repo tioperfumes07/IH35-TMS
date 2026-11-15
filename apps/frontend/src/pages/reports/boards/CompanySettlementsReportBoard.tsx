@@ -343,6 +343,15 @@ export function CompanySettlementsReportBoard() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
+        {/* Reports-CompanySettlements.dc.html: Group by sits inside the filter bar, right after the period presets. */}
+        <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
+        <V3Segmented
+          value={by}
+          options={GROUP_OPTIONS}
+          onChange={(next) => setBy(next)}
+          testId="company-settlements-report-group-by"
+        />
+        <span style={{ fontSize: 11, color: "#5B6576" }}>dated by trip close (Central)</span>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold">Driver</span>
           <EntityMultiSelect
@@ -364,17 +373,6 @@ export function CompanySettlementsReportBoard() {
           />
         </label>
       </ReportFilterBar>
-
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="font-semibold text-[#111827]">Group by</span>
-        <V3Segmented
-          value={by}
-          options={GROUP_OPTIONS}
-          onChange={(next) => setBy(next)}
-          testId="company-settlements-report-group-by"
-        />
-        <span className="text-[#5B6576]">dated by trip close (Central)</span>
-      </div>
 
       {query.isError ? (
         <ListErrorState title="Couldn't load the company settlement report" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />

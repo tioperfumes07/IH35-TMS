@@ -65,8 +65,7 @@ export function BoardSection({
           borderBottom: `1px solid ${V3.borderSoft}`,
         }}
       >
-        {/* docs/design/v3 panel title row: display flex · align-items baseline · gap 8 (reader v3 11-15: every BoardSection title read flex-start). */}
-        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font, ...titleStyle }}>{title}</span>
           {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>

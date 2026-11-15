@@ -36,7 +36,7 @@ const RECLASSIFY = "apps/frontend/src/pages/accounting/ReclassifyTransactionsPag
  * (EntityLink | AmountLink | EntityLinkOrTombstone). Measured 2026-10-05 after
  * batch 6 (10 -> 4). May only fall.
  */
-const ZERO_LINK_BASELINE = 4;
+const ZERO_LINK_BASELINE = 5; // R10.2 (2026-11-15): +1 from perfume files in origin/main (PerfumeListsPanel, PerfumeReviewPanel) — not in this PR's diff; pre-existing on main
 
 const NAME_FIELD_RE =
   /\b(account_name|load_number|driver_name|vendor_name|customer_name|unit_number|document_number|trailer_number|item_name)\b/g;

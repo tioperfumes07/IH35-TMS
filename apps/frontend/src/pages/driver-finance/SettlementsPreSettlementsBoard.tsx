@@ -199,6 +199,7 @@ export function SettlementsPreSettlementsBoard() {
           sub={S443326.preSettlements.kpiTotalUnpaidSub}
           testId="settlements-presettle-kpi-total-unpaid"
           onClick={() => navigate("/driver-finance/settlements?view=payments&payment_state=unpaid")}
+          board={true}
         />
         <V3KpiTile
           label={S443326.preSettlements.kpiThisPeriod}
@@ -206,6 +207,7 @@ export function SettlementsPreSettlementsBoard() {
           sub={S443326.preSettlements.kpiThisPeriodSub}
           testId="settlements-presettle-kpi-this-period"
           onClick={() => navigate("/driver-finance/settlements")}
+          board={true}
         />
         <V3KpiTile
           label={S443326.preSettlements.kpiDriverPay}
@@ -213,6 +215,7 @@ export function SettlementsPreSettlementsBoard() {
           sub={driverPaySub}
           testId="settlements-presettle-kpi-driver-pay"
           onClick={() => navigate("/driver-finance/settlements?view=payments")}
+          board={true}
         />
         <V3KpiTile
           label={S443326.preSettlements.kpiDriversDebt}
@@ -221,6 +224,7 @@ export function SettlementsPreSettlementsBoard() {
           tone={typeof driversWithDebt === "number" && driversWithDebt > 0 ? "red" : "ink"}
           testId="settlements-presettle-kpi-debt"
           onClick={() => navigate("/driver-finance/settlements?view=payments&focus=debt")}
+          board={true}
         />
         <V3KpiTile
           label={S443326.preSettlements.kpiYtd}
@@ -228,6 +232,7 @@ export function SettlementsPreSettlementsBoard() {
           sub={preSettlementsYtdSub(ytdYear)}
           testId="settlements-presettle-kpi-ytd"
           onClick={() => navigate("/driver-finance/settlements")}
+          board={true}
         />
         <V3KpiTile
           label={S443326.preSettlements.kpiOpenBills}
@@ -235,6 +240,7 @@ export function SettlementsPreSettlementsBoard() {
           sub={S443326.preSettlements.kpiOpenBillsSub}
           testId="settlements-presettle-kpi-open-bills"
           onClick={() => navigate("/driver-finance/settlements?view=payments")}
+          board={true}
         />
       </div>
 
@@ -287,10 +293,11 @@ export function SettlementsPreSettlementsBoard() {
               }}
               style={{
                 height: 28,
+                boxSizing: "content-box",
                 padding: "0 12px",
                 display: "inline-flex",
                 alignItems: "center",
-                borderRadius: 2,
+                borderRadius: 6,
                 font: `600 12px ${V3.font}`,
                 background: V3.surface,
                 color: V3.ink,
@@ -343,9 +350,11 @@ export function SettlementsPreSettlementsBoard() {
               />
             )}
             <p
-              className="px-3.5 py-2 text-xs text-[#6B7280]"
               data-testid="pre-settlements-booked-ahead-note"
-              style={{ fontFamily: V3.font, borderTop: `1px solid ${V3.borderSoft}` }}
+              style={{
+                fontFamily: V3.font, fontSize: 11, lineHeight: "normal", color: V3.muted,
+                padding: "8px 14px", borderTop: `1px solid ${V3.borderSoft}`,
+              }}
             >
               {S443326.preSettlements.bookedAheadNote}
             </p>
