@@ -552,6 +552,12 @@ const V3_TD: CSSProperties = {
   color: "#111827", textOverflow: "clip",
 };
 
+/** V3 board group band (docs/design/v3/CashFlow-Manual.dc.html priority groups). */
+const V3_BAND: CSSProperties = {
+  padding: "7px 12px", backgroundColor: "#F3F5F8", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 700,
+  letterSpacing: "0.04em", textTransform: "uppercase", color: "#111827", borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+};
+
 // COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
 // already clamps to this floor so a user can never shrink a column to unusable/invisible. The one
 // path that did NOT clamp was the initial load from localStorage (`persisted.colWidths`): a value
@@ -2185,13 +2191,14 @@ export function ParityTable<T>({
               return (
                 <Fragment key={`parity-group:${group.key}`}>
                   <tr
-                    className="border-t border-gray-200 bg-gray-50"
+                    className={v3 ? undefined : "border-t border-gray-200 bg-gray-50"}
                     data-parity-group={group.key}
                   >
                     <td
                       colSpan={colSpan}
-                      className="px-2 font-semibold text-gray-800"
-                      style={{ paddingTop: d.padY, paddingBottom: d.padY }}
+                      className={v3 ? undefined : "px-2 font-semibold text-gray-800"}
+                      // v3: the boards' group band (CashFlow-Manual.dc.html): #F3F5F8 · 7px 12px · 700 11px uppercase ink.
+                      style={v3 ? V3_BAND : { paddingTop: d.padY, paddingBottom: d.padY }}
                     >
                       <div className="flex items-center gap-1.5">
                         {groupBy.collapsible ? (
