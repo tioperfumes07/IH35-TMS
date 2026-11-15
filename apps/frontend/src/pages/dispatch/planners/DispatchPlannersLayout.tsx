@@ -76,7 +76,7 @@ const V3_SEG = (on: boolean): CSSProperties => ({
 });
 const V3_DAY = (on: boolean): CSSProperties => ({
   width: 28,
-  height: 26,
+  height: 28,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
