@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
-import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
@@ -155,7 +155,11 @@ export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: 
 export async function loadNameBrands(c: PoolClient): Promise<void> {
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const it = await c.query<{ brand: string; name: string }>(`SELECT brand, name FROM perfume.items WHERE merged_into_id IS NULL`);
-  setNameBrands(nameBrandIndex(it.rows, Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]))));
+  const al = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  setNameBrands(nameBrandIndex(it.rows, al));
+  const n = new Map<string, number>();
+  for (const r of it.rows) { const b = canonicalBrand(r.brand, al); if (b) n.set(b, (n.get(b) ?? 0) + 1); }
+  setDeskBrands([...n].filter(([, c]) => c >= 5).map(([b]) => b));
 }
 
 export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
