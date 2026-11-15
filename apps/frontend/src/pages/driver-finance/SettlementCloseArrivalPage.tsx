@@ -595,13 +595,26 @@ export function SettlementCloseArrivalPage() {
     [settlement?.id],
   );
 
-  const resultLines = [
-    ["Gross", boardGrossPay],
-    ["Deductions", Math.abs(otherDeductionsTotal)],
-    ["Escrow", Math.abs(escrowContributionThisSettlement)],
-    ["Advances recovered", Math.abs(advanceRecoveryTotal)],
-    ["Net to driver", netPay],
-  ] as const;
+  const resultLines: Array<{ line: string; amount: number }> = [
+    { line: "Gross", amount: boardGrossPay },
+    { line: "Deductions", amount: Math.abs(otherDeductionsTotal) },
+    { line: "Escrow", amount: Math.abs(escrowContributionThisSettlement) },
+    { line: "Advances recovered", amount: Math.abs(advanceRecoveryTotal) },
+    { line: "Net to driver", amount: netPay },
+  ];
+  const RESULT_COLS: ParityColumn<{ line: string; amount: number }>[] = [
+    { key: "line", label: "Line", render: (r) => r.line },
+    {
+      key: "amount", label: "Amount", className: "text-right", cellClass: "text-right tabular-nums",
+      render: (r) => (
+        <MoneyCell
+          cents={settlement ? Math.round(r.amount * 100) : null}
+          format={(c) => formatUsd(c / 100)}
+          drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+        />
+      ),
+    },
+  ];
 
   const goBack = () => {
     if (wizardStep > 1) {
@@ -1092,46 +1105,17 @@ export function SettlementCloseArrivalPage() {
                   </Button>
                 )}
               </div>
-              <table data-testid="settlement-close-result-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={{
-                      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600,
-                      color: "#5B6576", backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
-                      lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
-                      borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "left",
-                    }}>Line</th>
-                    <th style={{
-                      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600,
-                      color: "#5B6576", backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
-                      lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
-                      borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "right",
-                    }}>Amount</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resultLines.map(([label, amount]) => (
-                    <tr key={label}>
-                      <td style={{
-                        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 400,
-                        color: "#111827", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
-                        borderBottom: `1px solid ${V3.borderSoft}`,
-                      }}>{label}</td>
-                      <td style={{
-                        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 400,
-                        color: "#111827", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
-                        borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right",
-                      }}>
-                        <MoneyCell
-                          cents={settlement ? Math.round(Number(amount) * 100) : null}
-                          format={(c) => formatUsd(c / 100)}
-                          drill={{ entity: { kind: "settlement", id: settlement?.id } }}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <ParityTable
+                appearance="v3"
+                title="Settlement result"
+                storageKey="settlement-close-result-v3"
+                columns={RESULT_COLS}
+                rows={resultLines}
+                rowKey={(r) => r.line}
+                tableTestId="settlement-close-result-table"
+                hidePager
+                pageSize={resultLines.length || 1}
+              />
             </CloseBoardPanel>
           </div>
 
