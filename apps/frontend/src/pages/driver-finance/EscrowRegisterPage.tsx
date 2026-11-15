@@ -21,7 +21,6 @@ import { MoneyCell } from "../../components/shared/MoneyCell";
 import { entityLabel } from "../../lib/entity-label";
 import { useTranslation } from "react-i18next";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatUsd, formatUsdCents, formatUsdTable, formatQuantityTable } from "../../lib/money";
@@ -491,7 +490,7 @@ export function EscrowRegisterPage() {
             onRetry={() => void tlQ.refetch()}
           />
         ) : (
-          <V3Panel board
+          <BoardSection
             title={`Escrow register — ${driverName}`}
             viewAllHref={escrowViewAllHref}
             testId="escrow-register-board-section"
@@ -510,7 +509,7 @@ export function EscrowRegisterPage() {
               tableTestId="escrow-register-table"
               gearButtonTestId="escrow-register-column-gear"
             />
-          </V3Panel>
+          </BoardSection>
         )}
       </div>
     </SettlementsModuleShell>

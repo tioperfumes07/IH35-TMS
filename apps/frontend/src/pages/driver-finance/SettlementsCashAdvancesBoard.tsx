@@ -13,7 +13,6 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
@@ -307,7 +306,7 @@ export function SettlementsCashAdvancesBoard() {
         data-testid="settlements-cash-advances-board-body"
         data-settlements-cash-advances-board-1fr-2fr="1"
       >
-        <V3Panel board
+        <BoardSection
           title={S443326.cashAdvances.sectionRequests}
           testId="settlements-cash-advances-requests-panel"
           onViewAll={() => navigate(REQUESTS_PATH)}
@@ -334,9 +333,9 @@ export function SettlementsCashAdvancesBoard() {
               />
             )}
           </div>
-        </V3Panel>
+        </BoardSection>
 
-        <V3Panel board
+        <BoardSection
           title={S443326.cashAdvances.sectionAdvances}
           testId="settlements-cash-advances-advances-panel"
           onViewAll={() => navigate(BASE_PATH)}
@@ -366,7 +365,7 @@ export function SettlementsCashAdvancesBoard() {
               />
             )}
           </div>
-        </V3Panel>
+        </BoardSection>
       </div>
 
       {detailOpen && detailQuery.isError ? (

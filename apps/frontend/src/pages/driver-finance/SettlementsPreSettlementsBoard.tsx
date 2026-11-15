@@ -18,7 +18,6 @@ import { preSettlementColumns } from "../../components/driver-finance/PreSettlem
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -271,7 +270,7 @@ export function SettlementsPreSettlementsBoard() {
         data-testid="settlements-presettle-v3-panels"
         data-settlements-presettle-v3-layout="1"
       >
-        <V3Panel board
+        <BoardSection
           title={preSettlementsOpenTitle(countLabel)}
           subtitle={S443326.preSettlements.openPanelSubtitle}
           testId="pre-settlements-v3-panel"
@@ -351,7 +350,7 @@ export function SettlementsPreSettlementsBoard() {
               {S443326.preSettlements.bookedAheadNote}
             </p>
           </div>
-        </V3Panel>
+        </BoardSection>
         <SettlementsPreSettlementsClosesPanel basePath="/driver-finance/pre-settlements" />
       </div>
     </div>

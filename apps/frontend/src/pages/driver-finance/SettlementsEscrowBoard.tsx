@@ -13,7 +13,6 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { V3Panel } from "../../components/v3/V3Panel";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -332,7 +331,7 @@ export function SettlementsEscrowBoard() {
           onRetry={() => void accountsQuery.refetch()}
         />
       ) : (
-        <V3Panel board
+        <BoardSection
           title="Escrow by driver — click a driver to open his register"
           onViewAll={() => navigate("/accounting/escrow")}
           testId="settlements-escrow-board-section"
@@ -371,15 +370,15 @@ export function SettlementsEscrowBoard() {
                 : undefined
             }
           />
-        </V3Panel>
+        </BoardSection>
       )}
 
-      <V3Panel board title="Measured" testId="settlements-escrow-measured-note">
+      <BoardSection title="Measured" testId="settlements-escrow-measured-note">
         <div className="px-3.5 py-3 text-xs" style={{ color: V3.ink }}>
           Junk rows (&quot;Driver — not visible&quot;, Safety, duplicate closed bonds) are hidden on this
           Settlements list; Accounting › Escrow keeps the full ledger.
         </div>
-      </V3Panel>
+      </BoardSection>
     </div>
   );
 }
