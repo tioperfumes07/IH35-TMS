@@ -27,6 +27,7 @@ import { PlannerGrid } from "./PlannerGrid";
 import { groupPlannerBarsByKey, plannerBarLane, plannerBarMoneyDetail, usePlannerLoads } from "./planner-bars";
 import { PlannerViewToggle, type PlannerViewMode } from "./PlannerViewToggle";
 import { formatQuantityTable } from "../../../lib/money";
+import "../../../assets/fonts/v3-maintenance/board-box.css";
 
 void PlannerAxisHead;
 

@@ -41,6 +41,7 @@ import { formatNumber, formatUsdCents } from "../../lib/money";
 import { statusOptions } from "../../lib/statusListParams";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 /** ROUND 9.4 Board 13 — board tabs (V3-Dispatch-LoadHistory.dc.html), not the full DispatchSubnav. */
 const LOAD_HISTORY_BOARD_TABS = [

@@ -8,6 +8,7 @@ import { PageHeader, V3_HEADER_ACTION_STYLE } from "../../components/forms/share
 import { V3Panel } from "../../components/v3/V3Panel";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
+import "../../assets/fonts/v3-maintenance/board-box.css";
 
 type TripCode = "NB" | "TR" | "SB";
 
@@ -43,7 +44,7 @@ export default function BookLoadTripTypeBoardPage() {
   const active = CARDS.find((c) => c.code === selected)!;
 
   return (
-    <div data-v3-board="Dispatch-BookLoad-TripType" data-testid="book-load-trip-type-board" style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink, display: "flex", flexDirection: "column", gap: 12, padding: "12px 20px 30px", boxSizing: "content-box" }}>
+    <div data-v3-board="Dispatch-BookLoad-TripType" data-testid="book-load-trip-type-board" style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink, display: "flex", flexDirection: "column", gap: 12 }}>
       <PageHeader
         variant="v3"
         crumb="Dispatch › Book load"
