@@ -544,7 +544,7 @@ const AUTO_FIT_MAX_WIDTH = 320;
 /** V3 board table cells (docs/design/v3/*.dc.html: th/td inline styles, identical on all 30 boards that draw a table). */
 const V3_TH: CSSProperties = {
   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600, color: "#5B6576", backgroundColor: "#F7F8FA",
-  letterSpacing: "normal", textTransform: "none", lineHeight: 1, height: "auto",
+  letterSpacing: "normal", textTransform: "none", lineHeight: "normal", height: "auto",
   paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
 };
 const V3_TD: CSSProperties = {
