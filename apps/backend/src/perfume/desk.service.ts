@@ -1672,12 +1672,12 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:low_sales", ["a:offer", "a:esp"], (r) => `MIN(${r("a:offer")},${r("a:esp")})`);
   add("a:min_buy", ["a:esp", "a:min_margin", "a:offer"], (r) => `IF(AND(${r("a:esp")}<>"",${r("a:offer")}<>"",${r("a:esp")}<${r("a:offer")}),${r("a:esp")}*(1-${r("a:min_margin")}),"")`);
   add("a:buy_check", ["a:min_buy", "a:low_price"], (r) => `IF(${r("a:min_buy")}="","",IF(${r("a:low_price")}="","No supplier price",IF(${r("a:low_price")}<=${r("a:min_buy")},"YES","NO — "&TEXT(${r("a:low_price")}-${r("a:min_buy")},"$0.00")&" over")))`);
-  add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:offer")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
-  add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:last_cost")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
+  add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:offer")}=0),"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
+  add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:last_cost")}=0),"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
   add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:under_pct", ["a:under_by", "a:esp"], (r) => `IF(${r("a:esp")}=0,"",${r("a:under_by")}/${r("a:esp")})`);
   add("a:can_inc", ["a:under_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:under_by")}/${r("a:offer")})`);
-  add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(${r("a:esp")}=0,"",(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")})`);
+  add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:esp")}=0),"",(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")})`);
   add("a:over_by", ["a:offer", "a:esp"], (r) => `MIN(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",-${r("a:over_by")}/${r("a:offer")})`);
   return out;
@@ -1754,7 +1754,10 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
       // min purchase / its check are formulas on EVERY row with an offer and an Esperanza price, blank when I am the
       // cheaper one — so changing a price or the margin in Excel brings them in and out (owner 19:03 CT).
       const always = f.target === "a:min_buy" || f.target === "a:buy_check";
-      if (t < 0 || (r[f.target] == null && !always) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")))) continue;
+      // Margin / Markup / New Margin need LAST COST, which no upload fills yet: the formula is written on every row with
+      // an offer (or Esperanza) price and reads blank until a cost is typed (owner's engine: =(O3-J3)/O3 on every row).
+      const costLed = f.target === "a:margin" || f.target === "a:markup" || f.target === "a:new_margin";
+      if (t < 0 || (r[f.target] == null && !always && !costLed) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")) && !(costLed && k === "a:last_cost"))) continue;
       const ref = (k: string) => `${L(idx(k))}${excelRow}`;
       const kind = cols[t]!.kind;
       const result = r[f.target] == null ? "" : kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
@@ -1768,6 +1771,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     col.width = c.key === "name" ? 40 : c.kind === "text" ? 18 : 13;
   });
   ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: 2, column: cols.length } };
+  paintGridLikeTheDesk(ws, cols, rows);
   const how = wb.addWorksheet("How computed");
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
@@ -1789,6 +1793,57 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   ]) how.addRow(line);
   how.getColumn(1).width = 26; how.getColumn(2).width = 80;
   return Buffer.from(await wb.xlsx.writeBuffer());
+}
+
+/**
+ * The workbook carries the desk's colours (owner 2026-11-15: "make sure that the prices esperanza has cheaper are also
+ * colored in as in the program, and the negatives are in red … colors everything as it is in the app … always all
+ * reports"). One painter for every grid export (every view), mirroring PerfumeDeskPage's cell rules:
+ *  - the lower of my offer and the competitor's price (a:offer · a:esp · a:offer2 · a:esp2 = MIN(offer, esp)):
+ *    green fill #DCEFE3, bold #14532D — a live conditional rule, so it follows a price typed in Excel;
+ *  - every negative money / % figure: red #B91C1C (bold on money) — live rule;
+ *  - % at or over 20: bold slate #334155 — live rule (the desk's strong-margin tone);
+ *  - Match: matched bold green #1F8A4C, otherwise bold amber #C76A0A;
+ *  - tied lowest supplier: slate fill #F1F5F9;
+ *  - a heavy slate rule (#64748B) on the first column of every group (Mine, each supplier, each competitor).
+ */
+export function paintGridLikeTheDesk(ws: ExcelJS.Worksheet, cols: GridCol[], rows: GridRow[]): void {
+  const first = 3;
+  const last = Math.max(first, rows.length + 2);
+  const idx = (k: string) => cols.findIndex((c) => c.key === k);
+  const L = (i: number) => ws.getColumn(i + 1).letter;
+  const range = (i: number) => `${L(i)}${first}:${L(i)}${last}`;
+  const GREEN_FILL = { type: "pattern" as const, pattern: "solid" as const, bgColor: { argb: "FFDCEFE3" }, fgColor: { argb: "FFDCEFE3" } };
+  let priority = 1;
+  const off = idx("a:offer"), esp = idx("a:esp");
+  for (const k of ["a:offer", "a:esp", "a:offer2", "a:esp2"]) {
+    const i = idx(k);
+    if (i < 0 || off < 0 || esp < 0) continue;
+    const x = `${L(i)}${first}`, o = `$${L(off)}${first}`, e = `$${L(esp)}${first}`;
+    ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "expression", priority: priority++, formulae: [`AND(ISNUMBER(${x}),ISNUMBER(${o}),ISNUMBER(${e}),${x}=MIN(${o},${e}))`], style: { fill: GREEN_FILL, font: { bold: true, color: { argb: "FF14532D" } } } }] });
+  }
+  cols.forEach((c, i) => {
+    if (c.kind !== "money" && c.kind !== "pct") return;
+    ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "cellIs", operator: "lessThan", formulae: ["0"], priority: priority++, style: { font: { bold: c.kind === "money", color: { argb: "FFB91C1C" } } } }] });
+    if (c.kind === "pct") ws.addConditionalFormatting({ ref: range(i), rules: [{ type: "expression", formulae: [`AND(ISNUMBER(${L(i)}${first}),${L(i)}${first}>=0.2)`], priority: priority++, style: { font: { bold: true, color: { argb: "FF334155" } } } }] });
+  });
+  const match = idx("a:match"), best = idx("best_vendor");
+  rows.forEach((r, n) => {
+    const row = ws.getRow(n + first);
+    if (match >= 0 && r["a:match"] != null) row.getCell(match + 1).font = { bold: true, color: { argb: r.matched === 1 ? "FF1F8A4C" : "FFC76A0A" } };
+    if (best >= 0 && r.tied) row.getCell(best + 1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
+  });
+  const seen = new Set<string>();
+  cols.forEach((c, i) => {
+    if (seen.has(c.group)) return;
+    seen.add(c.group);
+    if ((c.group || "Item") === "Item") return;
+    for (let r = 1; r <= last; r++) {
+      const cell = ws.getCell(r, i + 1);
+      cell.border = { ...(cell.border ?? {}), left: { style: "medium", color: { argb: "FF64748B" } } };
+    }
+  });
+  for (const r of [1, 2]) ws.getRow(r).eachCell((cell) => { cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF7F8FA" } }; });
 }
 
 /**
