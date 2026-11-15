@@ -68,8 +68,8 @@ export function collectProblems(root = ROOT) {
 // ── selftest ───────────────────────────────────────────────────────────────
 function runSelftest() {
   const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "r9032-parity-"));
-  const panelsDir = path.join(tmpDir, "apps/frontend/src/pages/driver-finance");
-  fs.mkdirSync(panelsDir, { recursive: true });
+  const tmpPanelsDir = path.join(tmpDir, "apps/frontend/src/pages/driver-finance");
+  fs.mkdirSync(tmpPanelsDir, { recursive: true });
 
   const panelsGood = `
 export function weekOfBoardStatus(s: SettlementListRow, pill?: "open" | "closed") {
@@ -98,8 +98,8 @@ style={{ gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))" }}
   let passed = 0;
   let failed = 0;
   for (const [desc, pSrc, pgSrc, expect] of tests) {
-    fs.writeFileSync(path.join(panelsDir, "SettlementsHomeBoardPanels.tsx"), pSrc);
-    fs.writeFileSync(path.join(panelsDir, "SettlementsPage.tsx"), pgSrc);
+    fs.writeFileSync(path.join(tmpPanelsDir, "SettlementsHomeBoardPanels.tsx"), pSrc);
+    fs.writeFileSync(path.join(tmpPanelsDir, "SettlementsPage.tsx"), pgSrc);
     const probs = collectProblems(tmpDir);
     if (probs.length !== expect) {
       console.error(`  FAIL [${desc}]: expected ${expect} problems, got ${probs.length}: ${JSON.stringify(probs)}`);
