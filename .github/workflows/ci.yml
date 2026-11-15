@@ -52,6 +52,8 @@ jobs:
         run: |
           node scripts/verify-sentry-sdk-contract.mjs
           node scripts/verify-sentry-sdk-contract.mjs --selftest
+      - name: No appearance=board on V3 board tables
+        run: node scripts/verify-no-board-appearance-on-v3-tables.mjs
 
   # X-16: live-population assertions must never be proved on empty CI Postgres.
   # Audited read-only check; fixture writers do NOT belong in this job.
