@@ -35,6 +35,14 @@ export type Identity = {
 
 /** Short forms vendors use for a brand. Extended at runtime by perfume.brand_aliases rows. */
 export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
+  // ESPERANZA short forms measured live 11-15 (each checked against the item master's own brand spelling).
+  "MAISON A": "MAISON ALHAMBRA",
+  "MAISON A.": "MAISON ALHAMBRA",
+  "AHMED": "AHMED AL MAGHRIBI",
+  "B.SPEARS": "BRITNEY SPEARS",
+  "B SPEARS": "BRITNEY SPEARS",
+  "GLORIA VANDERVILT": "GLORIA VANDERBILT",
+  "HERRERA": "CAROLINA HERRERA",
   "CH": "CAROLINA HERRERA",
   "C.H": "CAROLINA HERRERA",
   "C HERRERA": "CAROLINA HERRERA",
@@ -130,6 +138,49 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "ESSENTIAL": "ESSENTIAL PARFUMS",
   "BOADICEA THE VICTORIOUS": "BOADICEA",
   "NINNA RICCI": "NINA RICCI",
+  // Owner 2026-11-14 18:23 CT, on the ESPERANZA list: "jessica s is fancy, choo is jimmy choo, jlo is jennifer lopez,
+  // jovan jovan, juicy c is juicy couture … hb is hugo boss … halloween is j del pozo" + his BRAND column corrections.
+  "JESSICA SIMPSON": "JESSICA SIMPSON", "JESSICA SIMPSONS": "JESSICA SIMPSON",
+  "CHOO": "JIMMY CHOO", "JIMMY CHOO": "JIMMY CHOO",
+  "JLO": "JENNIFER LOPEZ", "J.LO": "JENNIFER LOPEZ", "J LO": "JENNIFER LOPEZ", "JENNIFER LOPEZ": "JENNIFER LOPEZ",
+  "JOVAN": "JOVAN", "JUICY": "JUICY COUTURE",
+  "HB": "HUGO BOSS",
+  "V&ROLF": "VIKTOR & ROLF", "VIKTOR AND ROLF": "VIKTOR & ROLF",
+  "MK": "MICHAEL KORS", "MICHEAL KORS": "MICHAEL KORS", "MICHAEL KORRS": "MICHAEL KORS",
+  "P HILTON": "PARIS HILTON", "PARIS H": "PARIS HILTON",
+  "PR": "PACO RABANNE",
+  "SABRINA CARPENTER": "SABRINA CARPENTER", "SOFIA VERGARA": "SOFIA VERGARA", "SOFIA": "SOFIA VERGARA",
+  "VALENTINP": "VALENTINO", "UNGARO": "EMANUEL UNGARO", "UNAGRO": "EMANUEL UNGARO",
+  "RALPH": "RALPH LAUREN", "RALPH L": "RALPH LAUREN",
+  "ORIENTICA": "ORIENTICA", "SHAKIRA": "SHAKIRA", "VERA WANG": "VERA WANG", "STETSON": "STETSON", "VICKY TIEL": "VICKY TIEL",
+  "OSCAR DE LA RENTA": "OSCAR DE LA RENTA", "OSCAR": "OSCAR DE LA RENTA",
+  "J DEL POZO": "JESUS DEL POZO", "J. DEL POZO": "JESUS DEL POZO", "JESUS DEL POZO": "JESUS DEL POZO",
+  "UNITED COLORS OF BENETTON": "BENETTON", "BENETTON": "BENETTON", "BENNETON": "BENETTON",
+  "ARDEN": "ELIZABETH ARDEN", "NINA": "NINA RICCI", "DONNA": "DONNA KARAN",
+  // Owner 2026-11-14 19:11 CT: "donna, dkny, donna karan are the same one."
+  "DKNY": "DONNA KARAN", "D.K.N.Y": "DONNA KARAN", "DONNA KARAN NY": "DONNA KARAN",
+  // Measured live 11-14 6:45 PM CT on the 209 ESPERANZA lines still without a brand, and on misspelled item brands.
+  // Owner 2026-11-14 18:48 CT, his own offer list's brand column: "GIORA it is giorgio armani … hol is hollister, issey is
+  // issey miyake, jdel is j del pozo, montb is mont blanc, mosch is moschino, nauti is nautica, narciso rd is narciso
+  // rodriguez, nin is nina ricci, salvf is ferragamo, their is thierry mugler, clean mine as well" — every short brand
+  // on his list (measured live 18:49: 69 distinct values) mapped to the brand his vendors use.
+  "GIORA": "GIORGIO ARMANI", "GIORG": "GIORGIO ARMANI", "HOL": "HOLLISTER", "ISSEY": "ISSEY MIYAKE", "ISSSEY": "ISSEY MIYAKE",
+  "JDEL": "JESUS DEL POZO", "J DEL": "JESUS DEL POZO", "MONTB": "MONTBLANC", "MOSCH": "MOSCHINO", "MOSH": "MOSCHINO",
+  "NAUTI": "NAUTICA", "NARCISO RD": "NARCISO RODRIGUEZ", "NIN": "NINA RICCI", "SALVF": "SALVATORE FERRAGAMO",
+  "THEIR": "MUGLER", "THIER": "MUGLER", "ARIANAG": "ARIANA GRANDE", "BVLGA": "BVLGARI", "CACHA": "CACHAREL", "CALVI": "CALVIN KLEIN",
+  "CAROH": "CAROLINA HERRERA", "DOLCE": "DOLCE & GABBANA", "ELIZA": "ELIZABETH ARDEN", "JEAN": "JEAN PAUL GAULTIER", "JIMMY": "JIMMY CHOO",
+  "LACOS": "LACOSTE", "LANCO": "LANCOME", "M-BENZ": "MERCEDES BENZ", "MARCJ": "MARC JACOBS", "M JACOBS": "MARC JACOBS", "MICHK": "MICHAEL KORS",
+  "PARIH": "PARIS HILTON", "SABRINA": "SABRINA CARPENTER", "SMADDEN": "STEVE MADDEN", "SWISS": "SWISS ARMY", "VICTORINOX SWISS ARMY": "SWISS ARMY",
+  "TOMMY HILFIGHER": "TOMMY HILFIGER", "TORY": "TORY BURCH", "VALEN": "VALENTINO", "VERSA": "VERSACE", "VICKYT": "VICKY TIEL",
+  "VICTS": "VICTORIAS SECRET", "HUGO BOSS": "HUGO BOSS", "VS": "VICTORIAS SECRET",
+  // Owner 18:51 CT: "m malul is michael malul".
+  "M.MALUL": "MICHAEL MALUL", "M MALUL": "MICHAEL MALUL", "MALUL": "MICHAEL MALUL", "MICHAEL MALUL": "MICHAEL MALUL",
+  "BURBE": "BURBERRY", "BEILISH": "BILLIE EILISH", "SALVATORE FERREGAMO": "SALVATORE FERRAGAMO", "CHRISTIAN AUDIGIER": "ED HARDY",
+  "G.ARMANI": "GIORGIO ARMANI", "G ARMANI": "GIORGIO ARMANI", "H.B": "HUGO BOSS", "J.CHOO": "JIMMY CHOO", "J CHOO": "JIMMY CHOO",
+  "JIMMI CHOO": "JIMMY CHOO", "JINNY CHOO": "JIMMY CHOO", "MER-BENZ": "MERCEDES BENZ", "MER BENZ": "MERCEDES BENZ", "MERCEDES-BENZ": "MERCEDES BENZ",
+  "BENETON": "BENETTON", "TOOMY": "TOMMY HILFIGER", "BVLGARY": "BVLGARI", "CAROLINA H": "CAROLINA HERRERA", "A.GRAND": "ARIANA GRANDE",
+  "A. GRANDE": "ARIANA GRANDE", "A GRANDE": "ARIANA GRANDE", "ARIANA G": "ARIANA GRANDE", "CRISTIANO R": "CRISTIANO RONALDO",
+  "CRITIANO RONALDO": "CRISTIANO RONALDO", "B. S": "BRITNEY SPEARS", "LOLITA LEMPICK": "LOLITA LEMPICA",
 };
 
 export function canonicalBrand(raw: string, extra: Record<string, string> = {}): string {
@@ -266,7 +317,9 @@ const FLAG_RULES: Array<[RegExp, string]> = [
   // Not a fragrance and not a cosmetic: blotters, bags, backpacks and other store/gift items ("various").
   [/\bBLOTTERS?\b|\bBAGS?\b|\bBACKPACKS?\b|\bPOUCH(ES)?\b|\bTOTES?\b|\bKEY ?CHAINS?\b|\bUMBRELLAS?\b|\bWALLETS?\b|\bDISPLAYS?\b|\bPOSTERS?\b|\bMIRRORS?\b|\bCANDLES?\b|\bTOWELS?\b|\bCASES?\b|\bGIFT BOX(ES)?\b|\bSTRIPS?\b/, "VARIOUS"],
   [/\bCONCENTRATED\b|\bPERFUME OIL\b|\bATTAR\b/, "OIL"],
-  [/\b\d+\s*PCS?\b\s*SET\b|\bGIFT SET\b|\bSET\b|\b\d\s*PC\b/, "SET"],
+  // A set is also a CANISTER, a TRIO, a COFFRET, "4X25ML" or any "<n>PCS" (owner 2026-11-14 18:23 CT: "you did not
+  // extract some sets correctly" — 360 CORAL W CANISTER, 360 W TRIO, MARVEL 4X25ML COFFRET, GUESS 3PCS ET).
+  [/\b\d+\s*PCS?\b\s*SET\b|\bGIFT SET\b|\bSET\b|\b\d\s*PCS?\b|\bCANISTERS?\b|\bTRIO\b|\bCOF+R?FRETS?\b|\bCOFFRETS?\b|\b\d+\s*X\s*\d+(?:\.\d+)?\s*ML\b/, "SET"],
   [/\bMINI\b|\bMINIATURE\b/, "MINI"],
   [/\bREFILL\b|\bRECARGA\b/, "REFILL"],
   [/\bBOX DAMAGE\b|\bDAMAGED?\b|\bDMG\b/, "DAMAGED"],
@@ -286,7 +339,92 @@ export type IdentityInput = {
    *  Its gender / SET / TESTER / MINI apply when the line itself does not say. */
   section?: string | null;
   brandAliases?: Record<string, string>;
+  /** Fragrance-name → brand cross-reference (nameBrandIndex) for lines that name no brand. Defaults to the one the
+   *  desk loaded from every vendor's items (setNameBrands). */
+  nameBrands?: Record<string, string>;
 };
+
+/**
+ * Owner 2026-11-14 18:23 CT, on the ESPERANZA list: a fragrance name can BE the brand's signature — the line names no
+ * brand, the name tells it ("212" Carolina Herrera, "360" Perry Ellis, "POLO" Ralph Lauren, "SPIDERMAN" Marvel,
+ * "HALLOWEEN" J. del Pozo, "FANCY" Jessica Simpson, "HOT" / "COLD" Benetton). These words stay in the name; they only
+ * give the brand when nothing else does. Each line is the owner's own correction.
+ */
+export const NAME_BRAND_HINTS: Record<string, string> = {
+  "212": "CAROLINA HERRERA", "360": "PERRY ELLIS", "360RED": "PERRY ELLIS", "PORTFOLIO": "PERRY ELLIS",
+  "POLO": "RALPH LAUREN", "RALPH CLUB": "RALPH LAUREN", "RALPHS CLUB": "RALPH LAUREN",
+  "SUNFLOWERS": "ELIZABETH ARDEN", "WHITE DIAMONDS": "ELIZABETH ARDEN", "WHITE TEA": "ELIZABETH ARDEN", "RED DOOR": "ELIZABETH ARDEN",
+  "PRINCESS": "DISNEY", "FROZEN": "DISNEY", "MICKEY": "DISNEY", "MINNIE": "DISNEY",
+  "SPIDERMAN": "MARVEL", "SPIDER MAN": "MARVEL", "IRON MAN": "MARVEL", "CAPTAIN AMERICA": "MARVEL", "DEADPOOL": "MARVEL",
+  "AVENGERS": "MARVEL", "HULK": "MARVEL", "THOR": "MARVEL", "BLACK PANTHER": "MARVEL", "MARVEL": "MARVEL",
+  "STALLION": "EMPER", "UNFORGIVABLE": "SEAN JOHN", "UNTOLD": "ARMAF", "YOUTH DEW": "ESTEE LAUDER", "Z 14": "HALSTON",
+  "SUNG": "ALFRED SUNG", "VIVA LA JUICY": "JUICY COUTURE", "VOLUPTE": "OSCAR DE LA RENTA", "MR BURBERRY": "BURBERRY",
+  "MY BURBERRY": "BURBERRY", "PASHA": "CARTIER", "FANCY": "JESSICA SIMPSON", "HOT": "BENETTON", "COLD": "BENETTON",
+  "HALLOWEEN": "JESUS DEL POZO", "HALOWEEN": "JESUS DEL POZO", "ACQUA DI GIO": "GIORGIO ARMANI", "ACQUA DI GIOIA": "GIORGIO ARMANI",
+  "CURIOUS": "BRITNEY SPEARS", "CURIOS": "BRITNEY SPEARS", "FANTASY": "BRITNEY SPEARS", "DRAKKAR": "GUY LAROCHE", "ANGEL": "MUGLER",
+  "ALIEN": "MUGLER", "GREY FLANNEL": "GEOFFREY BEENE", "AMAZING": "BILL BLASS",
+  // Owner 18:48 CT: "those without brands, signorina, uomo, are ferragamo".
+  "SIGNORINA": "SALVATORE FERRAGAMO", "SIGORINA": "SALVATORE FERRAGAMO", "UOMO": "SALVATORE FERRAGAMO",
+};
+let DESK_NAME_BRANDS: Record<string, string> = {};
+/** The desk's cross-reference, loaded from every vendor's items (PCA, MTZ, JIZAN, NANDANSONS …). */
+export function setNameBrands(m: Record<string, string>): void { DESK_NAME_BRANDS = m; }
+const GENERIC_NAME_WORDS = new Set(["BLUE", "BLACK", "WHITE", "RED", "GOLD", "PINK", "ROSE", "NOIR", "LOVE", "SEXY", "SPORT", "INTENSE",
+  "NIGHT", "OUD", "MUSK", "AMBER", "PURE", "CLASSIC", "ORIGINAL", "FRESH", "LIGHT", "DARK", "HOMME", "FEMME", "MAN", "MEN", "WOMAN",
+  "WOMEN", "GIRL", "BOY", "BODY", "MIST", "SET", "MINI", "TESTER", "EDT", "EDP", "PARFUM", "COLOGNE", "SPRAY", "NEW", "THE", "DE", "LA",
+  "LE", "EAU", "POUR", "FOR", "MY", "MR", "MISS", "ONE", "1", "2", "3", "4", "5", "COLLECTION", "EDITION", "ELIXIR", "ABSOLU", "EXTREME",
+  "ROYAL", "PRIVE", "SILVER", "GREEN", "PURPLE", "ORANGE", "VELVET", "SECRET", "DREAM", "GOOD", "BAD", "WILD", "CHERRY", "VANILLA", "COCONUT"]);
+/**
+ * Cross-reference every brand from every vendor's lists (owner 18:25 CT: "you should have used a cross reference to
+ * check all brands from all lists from pca, mtz, etc"): the first 1–3 words of each item's fragrance name, kept only
+ * when ONE brand owns them across the whole item master. A single word must be 3+ characters and not a generic word.
+ */
+export function nameBrandIndex(items: ReadonlyArray<{ brand: string; name: string }>, aliases: Record<string, string> = {}): Record<string, string> {
+  const canon = items.map((it) => ({ brand: canonicalBrand(it.brand, aliases), name: it.name }));
+  const count = new Map<string, number>();
+  for (const c of canon) if (c.brand) count.set(c.brand, (count.get(c.brand) ?? 0) + 1);
+  // A name that starts with ANY brand's first word ("BURBERRY HER" filed under a misspelled "BURBE", "GUESS UOMO"
+  // filed under "SALVATORE FERREGAMO" — measured live 11-14) never teaches a brand: the line's own brand reads it.
+  const brandFirst = new Set<string>([...count.keys(), ...Object.keys(BUILTIN_BRAND_ALIASES), ...Object.values(BUILTIN_BRAND_ALIASES)]
+    .map((b) => b.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim().split(" ")[0]!).filter((w) => w.length >= 3));
+  const seen = new Map<string, Map<string, number>>();
+  for (const c of canon) {
+    if (!c.brand || (count.get(c.brand) ?? 0) < 3) continue; // a brand on 1–2 items is too thin to teach anything
+    const bw = new Set(c.brand.split(" "));
+    const w = String(c.name ?? "").toUpperCase().replace(/'/g, "").replace(/[^A-Z0-9&]+/g, " ").trim().split(" ").filter((x) => x && !bw.has(x));
+    if (!w.length || brandFirst.has(w[0]!)) continue;
+    for (let n = 1; n <= Math.min(3, w.length); n++) {
+      const ph = w.slice(0, n).join(" ");
+      if (n === 1 && (ph.length < 3 || GENERIC_NAME_WORDS.has(ph))) continue;
+      const m = seen.get(ph) ?? new Map<string, number>();
+      m.set(c.brand, (m.get(c.brand) ?? 0) + 1); seen.set(ph, m);
+    }
+  }
+  const out: Record<string, string> = {};
+  for (const [ph, m] of seen) {
+    // One brand owns the phrase — or so dominates it that the others are a different product line sharing a
+    // word ("DAISY": MARC JACOBS 47 items, DISNEY "Daisy Duck" 2 — measured live 11-15): 5+ items and at least
+    // ten times every other brand together.
+    const ranked = [...m].sort((a, b) => b[1] - a[1]);
+    const rest = ranked.slice(1).reduce((t, [, k]) => t + k, 0);
+    if (m.size !== 1 && !(ranked[0]![1] >= 5 && ranked[0]![1] >= 10 * rest)) continue;
+    const [b, n] = ranked[0]!;
+    if (!ph.includes(" ") && n < 2) continue; // one word must be seen on 2+ items of that brand
+    out[ph] = b;
+  }
+  return out;
+}
+let DESK_BRANDS: string[] = [];
+/** Every brand the item master carries on 5+ items — read wherever it sits in a line that names no other brand. */
+export function setDeskBrands(b: string[]): void { DESK_BRANDS = b; }
+function brandFromName(words: readonly string[], idx: Record<string, string>): string {
+  for (let n = Math.min(3, words.length); n >= 1; n--) {
+    const ph = words.slice(0, n).join(" ");
+    const hit = NAME_BRAND_HINTS[ph] ?? idx[ph];
+    if (hit) return hit;
+  }
+  return "";
+}
 
 /**
  * Department codes vendors put in a column instead of a header. Read from the real Perfume Center of
@@ -320,8 +458,45 @@ export function readSection(section: string | null | undefined): { gender: Gende
   return { gender, flags };
 }
 
+const spellingsCache = new WeakMap<Record<string, string>, { list: string[][]; has: Set<string>; desk: string[]; n: number }>();
+const EMPTY_ALIASES: Record<string, string> = {};
+/** Every brand spelling (built-in aliases, the desk's aliases, their brands, the item master's brands), longest first. */
+function spellingsFor(aliases: Record<string, string>): { list: string[][]; has: Set<string> } {
+  const key = aliases ?? EMPTY_ALIASES;
+  const hit = spellingsCache.get(key);
+  // The match index adds item brands to its alias object as it loads — a changed size rebuilds the list.
+  const n = Object.keys(key).length;
+  if (hit && hit.desk === DESK_BRANDS && hit.n === n) return hit;
+  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...key }), ...DESK_BRANDS];
+  const values = Object.values({ ...BUILTIN_BRAND_ALIASES, ...key });
+  const all = [...new Set([...known, ...values])];
+  const entry = { list: all.map((x) => x.split(" ")).sort((a, b) => b.length - a.length), has: new Set(all), desk: DESK_BRANDS, n };
+  spellingsCache.set(key, entry);
+  return entry;
+}
+
+/** Fragrance lines vendors write in the brand column → the house that owns them. */
+const LINE_HOUSE: Record<string, string> = { HALLOWEEN: "JESUS DEL POZO" };
+/** The pieces a set lists before its fragrance: sizes, types and the extra items (gel, lotion, aftershave, mini…). */
+const SET_PIECE_WORD_RE = new RegExp(
+  "^(?:EDT|EDP|EDC|PARFUM|COLOGNE|SPRAY|SHOWER\\s*GEL|HAIR\\s*&?\\s*BODY\\s*WASH|H\\/BW|BODY\\s*WASH|BODY\\s*LOTION|BODY\\s*SPRAY|BODY\\s*MIST|" +
+  "B\\/\\s*LOTION|BLOTION|S\\/\\s*GEL|SGEL|SG|GEL|BL|LOTION|AFTER\\s*SHAVE\\s*(?:BLAM|BALM)?|A\\/\\s*SHAVE|AFTERSHAVE|AFTER\\s*S\\/?|" +
+  "DEO(?:DORANT)?(?:\\s*(?:SPRAY|STICK))?|FRAGRANCE\\s*MIST|MIST|TRAVEL\\s*SPRAY|MINI|POUCH|BAG|LIPSTICK)(?![A-Z])", "");
+const SET_PIECE_SIZE_RE = /^\d*\.?\d+\s*(?:FL\.?\s*)?(?:OZ|ML)?/;
+function stripSetPieces(t: string): string {
+  let x = String(t).toUpperCase();
+  for (let i = 0; i < 40; i++) {
+    x = x.replace(/^[\s+]+/, "");
+    const m = x.match(SET_PIECE_SIZE_RE) ?? x.match(SET_PIECE_WORD_RE);
+    if (!m || !m[0]) break;
+    x = x.slice(m[0].length);
+  }
+  return x.trim();
+}
+function setTailName(seg: string): string { return stripSetPieces(seg); }
+
 export function identify(input: IdentityInput): Identity {
-  const aliases = input.brandAliases ?? {};
+  const aliases = input.brandAliases ?? EMPTY_ALIASES;
   let s = stripAccents(String(input.description ?? "")).toUpperCase();
 
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
@@ -349,9 +524,18 @@ export function identify(input: IdentityInput): Identity {
   s = s.replace(/\bW\/?\s*(?=YOU\b)/g, "WITH ");
   // "TESTER W/CAP", "W/BOX", "W/AIRBAG": W/ is "with" — never Women (measured live 11-14, JIZAN / PPW lines).
   s = s.replace(/\bW\/(?=\s*[A-Z])/g, " ");
+  // Brand abbreviations glued to the next word ("JESSICA S.FANCY", "SABRINA C. CHERRY", "RALPH L. ROMANCE",
+  // "JUICY C GLISTENING") — spelled out so the brand reads (owner 2026-11-14 18:23 CT, ESPERANZA list).
+  s = s.replace(/\bJESSICA S\.\s*/g, "JESSICA SIMPSON ").replace(/\bSABRINA C\.\s*/g, "SABRINA CARPENTER ")
+    .replace(/\bRALPH L\.?\s+/g, "RALPH LAUREN ").replace(/^\s*JUICY C\s+/, "JUICY COUTURE ");
+  // Vendor shorthand for a body mist ("HEIRESS BMIST 236", "THANK YOU NEXT B.M 236", "B/MIST") and the Spanish
+  // spelling "CAPITAN AMERICA" (ESPERANZA list, measured live 11-15) — spelled out so type and name read.
+  s = s.replace(/\bB\s*[./]\s*MIST\b|\bBMIST\b|\bB\.\s*M\b\.?|\bB\/M\b/g, " BODY MIST ").replace(/\bCAPITAN\b/g, "CAPTAIN");
   // Flags are read before parentheses are dropped, because PCA writes them as (T), (BOX DAMAGE ONLY).
   const flags = new Set<string>();
   for (const [re, f] of FLAG_RULES) if (re.test(s)) flags.add(f);
+  // "GUESS SEDUCTIVE NOIR W 4PCS / BAG": a set that comes in a bag is a SET, not a bag.
+  if (flags.has("SET") && flags.has("VARIOUS") && /\b\d\s*PCS?\b/.test(s)) flags.delete("VARIOUS");
   // A set names its main bottle first; the extra pieces follow a "+" ("100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML").
   // The item is the main bottle's name/size/type — the pieces after the first "+ <size>" are not the name.
   const plus = s.search(/\+\s*\d/);
@@ -359,7 +543,19 @@ export function identify(input: IdentityInput): Identity {
   if (plus > 0) {
     flags.add("SET");
     contents = s.slice(plus).replace(/\([^)]*\)?/g, " ").replace(/\s-\s.*$/, "").toUpperCase().replace(/[^A-Z0-9+]/g, "").replace(/^\++|\++$/g, "");
-    s = s.slice(0, plus);
+    const head = s.slice(0, plus);
+    // La Esperanza writes the pieces FIRST and the fragrance LAST: "3.4EDP+3.4 SHOWER GEL A.GRANDE SWEET LIKE CANDY
+    // W 3PC SET", "100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP" (measured live 11-15: 185 lines read no brand).
+    // When the part before the first "+ <size>" is only a size / type / piece, the name is what follows the last piece.
+    if (!stripSetPieces(head)) {
+      const segs = s.slice(plus).split("+");
+      const tail = setTailName(segs[segs.length - 1] ?? "");
+      // Keep the main bottle's size and type from the head; its piece words (BL, GEL, MINI…) are not the name.
+      const headSizeType = head.replace(/\+/g, " ").replace(/\b(?:BL|SGEL|SG|GEL|LOTION|BLOTION|MINI|POUCH|BAG|LIPSTICK)\b/g, " ");
+      s = tail ? `${headSizeType} ${tail}` : head;
+    } else {
+      s = head;
+    }
   }
 
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
@@ -399,17 +595,38 @@ export function identify(input: IdentityInput): Identity {
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
   let brand = canonicalBrand(input.brand ?? "", aliases);
-  const known = Object.keys({ ...BUILTIN_BRAND_ALIASES, ...aliases });
-  const brandValues = new Set(Object.values({ ...BUILTIN_BRAND_ALIASES, ...aliases }));
-  if (brand) brandValues.add(brand);
-  // Remove the brand's words wherever they lead the line, in any of its spellings.
-  const spellings = [...known, ...brandValues].map((x) => x.split(" ")).sort((a, b) => b.length - a.length);
+  // Remove the brand's words wherever they lead the line, in any of its spellings. The sorted spelling list is built
+  // once per alias set (measured 11-15 02:04Z: rebuilding and sorting ~800 spellings on every line of a 20,000-line
+  // rematch kept the API busy past its health check and the instance was restarted).
+  const base = spellingsFor(aliases);
+  const spellings = brand && !base.has.has(brand) ? [brand.split(" "), ...base.list].sort((a, b) => b.length - a.length) : base.list;
   for (const sp of spellings) {
     if (sp.length && sp.every((w, i) => words[i] === w)) {
       const canon = canonicalBrand(sp.join(" "), aliases);
       if (!brand || brand === canon) { brand = canon; words = words.slice(sp.length); }
       break;
     }
+  }
+  // No brand leads the line: a multi-word brand INSIDE it ("W/DEO 2.6oz DOLCE & GABBANA "K" M 2PC SET") is its brand,
+  // else the fragrance name's own words tell it (NAME_BRAND_HINTS, then the cross-reference of every vendor's items).
+  if (!brand) {
+    const inside = spellings.filter((sp) => sp.length >= 2).find((sp) => words.some((_, i) => sp.every((w, j) => words[i + j] === w)));
+    if (inside) brand = canonicalBrand(inside.join(" "), aliases);
+  }
+  // One-word brand of the item master anywhere in the line ("3.4oz EDT+3oz GEL+MINI AZZARO CHROME M 3PC SET").
+  if (!brand) {
+    const one = DESK_BRANDS.find((b) => !b.includes(" ") && b.length >= 4 && words.includes(b));
+    if (one) brand = canonicalBrand(one, aliases);
+  }
+  if (!brand) brand = canonicalBrand(brandFromName(words, input.nameBrands ?? DESK_NAME_BRANDS), aliases);
+  // A fragrance LINE some vendors write as the brand ("HALLOWEEN BLOSSOM", brand column "HALLOWEEN") belongs to its
+  // house, and the line word stays in the name — the item master files it JESUS DEL POZO · HALLOWEEN BLOSSOM
+  // (owner 11-14: "halloween is j del pozo"; 13 ESPERANZA lines unmatched under brand HALLOWEEN, measured 11-15).
+  const lineHouse = LINE_HOUSE[brand];
+  if (lineHouse) {
+    const lw = brand.split(" ");
+    if (!lw.every((w, i) => words[i] === w)) words = [...lw, ...words];
+    brand = canonicalBrand(lineHouse, aliases);
   }
   // A dash after a brand prefix ("GA-AQUA DE GIO") leaves the brand glued on; handled by punctuation step above.
   // Some vendors put the brand INSIDE the line (PCA: "DAISY EAU SO FRESH MARC JACOBS(W)EDT SP 4.2oz"). A brand of two

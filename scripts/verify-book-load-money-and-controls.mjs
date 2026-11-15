@@ -197,7 +197,7 @@ if (process.argv.includes("--selftest")) {
     [lib.replace("sum + Number(row.amount_cents || 0)", "sum + Math.max(0, Number(row.amount_cents || 0))"), editor, wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor.replace("amount_cents: c ?? 0", "amount_cents: Math.max(0, c ?? 0)"), wizard, equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replaceAll("Invoice total", "Section total"), equipment, timeWindow, moneyInput, numberInput],
-    [lib, editor, wizard.replace("inline-flex h-7 overflow-hidden", "flex h-[46px] overflow-hidden"), equipment, timeWindow, moneyInput, numberInput],
+    [lib, editor, wizard.replace("flex h-8 w-max shrink-0 overflow-hidden", "flex h-[46px] w-max shrink-0 overflow-hidden"), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('linehaulFuelError("linehaul"', 'linehaulFuelErrorDISABLED("linehaul"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard.replace('form.setError("linehaul_cents"', 'form.setErrorDISABLED("linehaul_cents"'), equipment, timeWindow, moneyInput, numberInput],
     [lib, editor, wizard, equipment, timeWindow, moneyInput.replace(`${FIELD_H} w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs tabular-nums`, "h-9 w-full rounded-sm border border-gray-300 pl-4 pr-2 text-left text-xs"), numberInput],
