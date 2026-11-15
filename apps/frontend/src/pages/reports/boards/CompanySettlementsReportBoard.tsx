@@ -382,45 +382,61 @@ export function CompanySettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — KPI tiles open the report table / settlements source. */}
         <V3KpiTile
+          board
           testId="csr-kpi-trips"
           label="Closed trips"
           value={query.data ? String(totals.trips) : "…"}
           sub={`${totals.withCompany} with a company settlement`}
           href="/driver-finance/settlements?tab=closed"
+          valueDataV3="kpi-csr-trips"
+          subDataV3="kpi-csr-trips-sub"
         />
         <V3KpiTile
+          board
           testId="csr-kpi-revenue"
           label="Revenue"
           value={query.data ? money(totals.revenue) : "…"}
+          valueDataV3="kpi-csr-revenue"
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
+          board
           testId="csr-kpi-costs"
           label="Costs"
           value={query.data ? money(totals.costs) : "…"}
           sub="fuel · tolls · maintenance on load"
           href={moneyHref("/accounting/expenses")}
+          valueDataV3="kpi-csr-costs"
+          subDataV3="kpi-csr-costs-sub"
         />
         <V3KpiTile
+          board
           testId="csr-kpi-driver-pay"
           label="Driver pay"
           value={query.data ? money(totals.driverPay) : "…"}
           href="/driver-finance/settlements?tab=payments"
+          valueDataV3="kpi-csr-driver-pay"
         />
         <V3KpiTile
+          board
           testId="csr-kpi-margin"
           label="Margin"
           value={query.data ? money(totals.margin) : "…"}
           sub={`${pctLabel(pct(totals.margin, totals.revenue))} of revenue`}
           tone={totals.margin < 0 ? "red" : "green"}
+          valueDataV3="kpi-csr-margin"
+          subDataV3="kpi-csr-margin-sub"
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
+          board
           testId="csr-kpi-zero-cost"
           label="Trips with $0 costs"
           value={query.data ? String(totals.zeroCost.length) : "…"}
           sub="no fuel or expense linked"
           tone={totals.zeroCost.length ? "amber" : "muted"}
+          valueDataV3="kpi-csr-zero-cost"
+          subDataV3="kpi-csr-zero-cost-sub"
           onClick={() => {
             openZeroCostList();
             document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -461,6 +477,7 @@ export function CompanySettlementsReportBoard() {
 
       {showDetail ? (
         <ParityTable
+          appearance="v3"
           rows={detail}
           title={`${detail.length} closed trips · newest first`}
           columns={tripColumns}
@@ -483,6 +500,7 @@ export function CompanySettlementsReportBoard() {
         />
       ) : (
         <ParityTable
+          appearance="v3"
           rows={groups}
           title={`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
           columns={groupColumns}
