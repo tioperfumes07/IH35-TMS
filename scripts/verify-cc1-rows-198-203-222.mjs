@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["accounting","banking"],"cols":["connectivity"],"leafRe":"^cc1_rows_198_203_222$","task":"LEAD-11-03-CC1-ROWS-198-203-222"} */
 /**
  * CC-1 rows 198 / 203 / 222 (LEAD 11-03).
  * 198 (D020) GET /api/v1/accounting/expense-category-map took 8,831 ms; its SQL is 0.67 ms on prod (EXPLAIN ANALYZE as
