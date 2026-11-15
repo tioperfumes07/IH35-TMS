@@ -242,6 +242,7 @@ export function SettlementsCashAdvancesBoard() {
       data-testid="settlements-cash-advances-board"
       data-settlements-cash-advances-rebuild="1"
       data-v3-board="Settlements-CashAdvances"
+      style={{ lineHeight: "normal" }}
     >
       {kpisQuery.isError ? (
         <ListErrorState
