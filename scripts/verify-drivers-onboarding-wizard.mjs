@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/** @matrix-built {"modules":["drivers"],"cols":["connectivity","driver"],"leaves":["onboarding"],"task":"A24-8-DRIVER-ONBOARDING-WIZARD-SAVE-RESUME"} */
 /**
  * Block A24-8: Multi-step driver onboarding wizard with save+resume.
  * Migration 0361 (0349 reserved for A24-10 comm center; 0360 for B28).
@@ -38,11 +39,15 @@ function launcherFailures({ onboardingRoutes, backendTest, driverDetail }) {
     [onboardingRoutes, "return reply.code(result.resumed ? 200 : 201).send(result)", "route must distinguish resume from create"],
     [driverDetail, 'import { createOnboardingSession } from "../api/onboarding"', "Driver Profile must import the canonical creator"],
     [driverDetail, "createOnboardingSession({ operating_company_id: companyId, driver_id: id })", "launcher must forward company + driver"],
-    [driverDetail, "navigate(`/drivers/onboarding/${session.id}`)", "launcher must navigate to the mounted wizard"],
     [driverDetail, "Start / Resume Onboarding", "Driver Profile must expose the launcher"],
     [backendTest, "instead of duplicating it", "backend test must prove idempotent resume"],
   ];
   for (const [source, needle, label] of required) if (!source.includes(needle)) failures.push(label);
+  // ROUND 8.17 class R: the navigate may ride in a return-context wrapper
+  const retWrappers = [...driverDetail.matchAll(/\bconst\s+(\w+)\s*=\s*\(\s*(\w+)\s*(?::\s*string)?\s*\)\s*=>\s*withReturnContext\(\s*\2\s*,/g)].map((m) => m[1]);
+  const wizRoute = "`/drivers/onboarding/${session.id}`";
+  const navTargets = [`navigate(${wizRoute})`, ...retWrappers.map((w) => `navigate(${w}(${wizRoute}))`)];
+  if (!navTargets.some((t) => driverDetail.includes(t))) failures.push("launcher must navigate to the mounted wizard");
   return failures;
 }
 
@@ -154,7 +159,7 @@ function main() {
       { key: "resume status", onboardingRoutes: onboardingRoutes.replace("result.resumed ? 200 : 201", "201") },
       { key: "creator import", driverDetail: driverDetail.replace('import { createOnboardingSession } from "../api/onboarding";', "") },
       { key: "company+driver payload", driverDetail: driverDetail.replace("createOnboardingSession({ operating_company_id: companyId, driver_id: id })", "createOnboardingSession({ operating_company_id: companyId })") },
-      { key: "mounted navigation", driverDetail: driverDetail.replace("navigate(`/drivers/onboarding/${session.id}`)", "navigate('/drivers')") },
+      { key: "mounted navigation", driverDetail: driverDetail.replace(/navigate\(\w+\(`\/drivers\/onboarding\/\$\{session\.id\}`\)\)/, "navigate('/drivers')").replace("navigate(`/drivers/onboarding/${session.id}`)", "navigate('/drivers')") },
       { key: "visible launcher", driverDetail: driverDetail.replace("Start / Resume Onboarding", "") },
       { key: "resume test", backendTest: backendTest.replace("instead of duplicating it", "duplicate behavior") },
     ];
