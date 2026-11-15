@@ -1,4 +1,19 @@
 
+## ROUND 9.5 · 2026-11-15T00:25Z · Cursor LIVE reader re-run
+- After #29584 B15 + #29585 TripType + #29586 PageHeader/board-box.
+- Scores @ 1440×900 (chrome filtered):
+  - **Dispatch-TruckPlanner**: missing=7 mismatches=222 checked=1354
+  - **Dispatch-LoadHistory**: missing=190 mismatches=1206 checked=3299
+  - **Dispatch-BookLoad-Spec**: missing=0 mismatches=215 checked=2180
+  - **Dispatch-BookLoad-TripType**: missing=0 mismatches=212 checked=1039
+  - **Dispatch-BookLoad-SidePanel**: missing=113 mismatches=149 checked=695
+  - **Factoring**: missing=9 mismatches=433 checked=1510
+  - **Fuel**: missing=57 mismatches=537 checked=1596
+  - **Insurance**: missing=7 mismatches=433 checked=1473
+- DONE (reader 0/0): none. TripType **missing=0**.
+- in progress: #29587 Factoring/Fuel chrome flatten; aliases + Spec/LoadHistory residuals.
+
+
 ## ROUND 9.5 · 2026-11-15T00:30Z (checkpoint) · Cursor
 - Deployed FE/API tip at read: `ae71c2b8232218171e2dcde8c34a107ca1b167f6` (healthz/shallow); FE bundle already carries B12–20 markers.
 - B15 PR: https://github.com/tioperfumes07/IH35-TMS/pull/29584 (SidePanel port + measurement route) — LIVE PROOF pending deploy.
