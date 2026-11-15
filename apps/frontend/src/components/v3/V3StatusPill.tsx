@@ -66,6 +66,8 @@ export const V3_TABLE_LINK_CLASS =
 /** V3 board header actions (every .dc.html header): 28px · 0 12px · radius 6 · 600 12px Inter. */
 export const V3_HEADER_BTN: CSSProperties = {
   height: 28,
+  // Drawn as height 28 + a 1px border in content-box (rh 30); preflight would make a <button> border-box (rh 28).
+  boxSizing: "content-box",
   padding: "0 12px",
   display: "inline-flex",
   alignItems: "center",
