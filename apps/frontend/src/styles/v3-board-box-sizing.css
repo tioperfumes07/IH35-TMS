@@ -4,3 +4,8 @@
    element inside any [data-v3-board] root draws on the board's box model. Buttons keep border-box, as on the board.
    The board-shell padding stays in assets/fonts/v3-maintenance/board-box.css (shell roots only). */
 [data-v3-board] *:not(button), [data-v3-board] *::before, [data-v3-board] *::after { box-sizing: content-box; }
+
+/* Every V3 board draws in Inter (docs/design/v3: <div style="font-family:Inter,system-ui,sans-serif">). Text the app
+   leaves on the inherited body stack read '-apple-system' on Accounting's header (reader v3 19:01Z). An element that
+   sets its own family keeps it. */
+[data-v3-board] { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
