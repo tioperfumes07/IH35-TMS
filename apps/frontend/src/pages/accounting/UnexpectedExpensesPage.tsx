@@ -160,6 +160,7 @@ export function UnexpectedExpensesPage() {
           data-testid="unexpected-kpi-strip"
         >
           <V3KpiTile
+            board
             label={`${report?.month_label ?? "Month"} so far`}
             value={
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.month_total_cents)
@@ -170,6 +171,7 @@ export function UnexpectedExpensesPage() {
             testId="unexpected-kpi-month"
           />
           <V3KpiTile
+            board
             label="Possible duplicates"
             value={query.isLoading || !kpis ? "—" : String(kpis.duplicate_count)}
             sub={duplicateSub}
@@ -179,6 +181,7 @@ export function UnexpectedExpensesPage() {
             testId="unexpected-kpi-dupes"
           />
           <V3KpiTile
+            board
             label="Linked to a truck"
             value={
               query.isLoading || !kpis
@@ -190,6 +193,7 @@ export function UnexpectedExpensesPage() {
             testId="unexpected-kpi-linked"
           />
           <V3KpiTile
+            board
             label="Tows · fines"
             value={
               query.isLoading || !kpis ? "—" : formatUsdCents(kpis.tows_fines_cents)
@@ -269,12 +273,12 @@ export function UnexpectedExpensesPage() {
                 candidates.length > 0
                   ? {
                       transaction_date: (
-                        <span className="font-semibold" data-testid="unexpected-total-row">
+                        <span className="font-bold" data-testid="unexpected-total-row">
                           Total
                         </span>
                       ),
                       amount_cents: (
-                        <span className="font-semibold">{formatPlainDollars(kpis?.month_total_cents ?? 0)}</span>
+                        <span className="font-bold">{formatPlainDollars(kpis?.month_total_cents ?? 0)}</span>
                       ),
                     }
                   : undefined
