@@ -36,7 +36,7 @@ export function ReportBoardShell({
     if (sheet) void downloadXlsx(sheet.filename, sheet.header, sheet.body);
   };
   return (
-    <div className="space-y-3" data-testid={`${id}-board`} data-report-board={id}>
+    <div className="space-y-3" data-testid={`${id}-board`} data-report-board={id} data-v3-board={entry.v3Board} style={{ fontFamily: "Inter, sans-serif" }}>
       {/* R1 — title before navy strip; board five-tab strip is the only reports nav (no second ReportsSubNav). */}
       <PageHeader
         title={entry.label}

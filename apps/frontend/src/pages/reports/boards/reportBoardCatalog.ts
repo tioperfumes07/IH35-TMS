@@ -12,6 +12,7 @@ export type ReportBoardEntry = {
   href: string;
   shows: string;
   endpoint: string;
+  v3Board: string;
 };
 
 export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
@@ -22,6 +23,7 @@ export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
     href: "/reports/loads",
     shows: "Revenue, miles and driver pay by week · month · customer · driver · truck · lane · trip type",
     endpoint: "/api/v1/reports/loads",
+    v3Board: "Reports-Loads",
   },
   {
     id: "driver-settlements-report",
@@ -30,6 +32,7 @@ export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
     href: "/reports/driver-settlements",
     shows: "Every driver statement — gross, deductions, reimbursements, net, paid",
     endpoint: "/api/v1/reports/driver-settlements",
+    v3Board: "Reports-DriverSettlements",
   },
   {
     id: "company-settlements-report",
@@ -38,6 +41,7 @@ export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
     href: "/reports/company-settlements",
     shows: "Profit per closed trip — revenue − costs − driver pay",
     endpoint: "/api/v1/driver-finance/tours",
+    v3Board: "Reports-CompanySettlements",
   },
   {
     id: "customer-report",
@@ -46,6 +50,7 @@ export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
     href: "/reports/customers",
     shows: "Sales, open balances, aging and statement by customer",
     endpoint: "/api/v1/mdata/boards/customers",
+    v3Board: "Reports-Customers",
   },
   {
     id: "vendor-report",
@@ -54,6 +59,7 @@ export const REPORT_BOARDS: readonly ReportBoardEntry[] = [
     href: "/reports/vendors",
     shows: "Spend, open bills, category and 1099 by vendor",
     endpoint: "/api/v1/mdata/boards/vendors",
+    v3Board: "Reports-Vendors",
   },
 ] as const;
 
