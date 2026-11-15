@@ -28,6 +28,7 @@ export function V3KpiTile({
   noDrill,
   testId,
   board = false,
+  flat = false,
   valueDataV3,
   subDataV3,
 }: {
@@ -51,9 +52,16 @@ export function V3KpiTile({
   testId?: string;
   /** Draw the V3 board tile (docs/design/v3) instead of the approved Home tile. */
   board?: boolean;
+  /**
+   * The report-board tile (Dispatch-LoadHistory, Reports-Loads / -DriverSettlements / -CompanySettlements / -Customers /
+   * -Vendors .dc.html): the tile ITSELF is the flex column (gap 3) holding label · value · sub — no inner wrapper — and
+   * the sub line is a block that ellipsizes. Implies board.
+   */
+  flat?: boolean;
   valueDataV3?: string;
   subDataV3?: string;
 }) {
+  if (flat) board = true;
   const Tag = onClick ? "button" : "div";
   const tooltip = title ?? (noDrill ? `${label} — ${noDrill}` : label);
   const style: CSSProperties = {
@@ -64,9 +72,7 @@ export function V3KpiTile({
     borderRadius: board ? 6 : 2,
     padding: "10px 12px",
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    gap: 8,
+    ...(flat ? { flexDirection: "column" as const, gap: 3 } : { justifyContent: "space-between", alignItems: "flex-end", gap: 8 }),
     minWidth: 0,
     ...(board ? { lineHeight: "normal" } : {
       // OWNER DESIGN LAW rule 6 / ROUND 8.4 — KPI tiles are 78px across, never bars down.
@@ -84,7 +90,21 @@ export function V3KpiTile({
     fontFamily: V3.font,
   };
 
-  const body = (
+  const labelEl = (
+    <span style={{ fontSize: V3_KPI.labelPx, fontWeight: 600, letterSpacing: "0.06em", color: V3.muted, textTransform: "uppercase" }}>{label}</span>
+  );
+  const flatBody = (
+    <>
+      {labelEl}
+      <span className="n" data-v3={valueDataV3} style={{ fontSize: V3_KPI.valuePx, fontWeight: 700, color: TONE[tone], fontVariantNumeric: "tabular-nums" }}>
+        {value}
+      </span>
+      <span data-v3={subDataV3} style={{ fontSize: V3_KPI.subPx, color: V3.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+        {sub}
+      </span>
+    </>
+  );
+  const nestedBody = (
     <>
       {/* board tiles: spec min 39px (2-line) or 53px (3-line with sub), docs/design/v3/*.dc.html. */}
       <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0, ...(board ? { minHeight: 39 } : {}) }}>
@@ -134,6 +154,7 @@ export function V3KpiTile({
       {spark}
     </>
   );
+  const body = flat ? flatBody : nestedBody;
   if (href) {
     return <Link to={href} title={tooltip} style={style} data-testid={testId}>{body}</Link>;
   }

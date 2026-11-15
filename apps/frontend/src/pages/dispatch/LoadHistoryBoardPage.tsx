@@ -10,13 +10,12 @@
  *   panel                        LoadHistoryDetailPanel (load history timeline, load-cost rollup, expenses, docs)
  * The single-load change timeline (/dispatch/loads/:id/history, LoadHistoryPage) stays as its own page.
  */
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { getLoadsHistory, type LoadsHistoryRow } from "../../api/reports";
 import { currentOriginHref, mergeUrlBoardState, resolveBackHref, withReturnContext } from "../../lib/returnContext";
 import { EntityMultiSelect } from "../../components/EntityMultiSelect";
-import { SelectCombobox } from "../../components/Combobox";
 import { ImportLoadHistoryAction } from "../../components/imports/OwnerImportActions";
 import { LoadDetailDrawer } from "../../components/dispatch/LoadDetailDrawer";
 import { LoadHistoryDetailPanel } from "../../components/dispatch/LoadHistoryDetailPanel";
@@ -30,6 +29,8 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { useStagedListFilters } from "../../components/table";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
+import { V3Segmented } from "../../components/v3/V3Segmented";
+import { V3StatusPill, V3_TABLE_LINK_CLASS, loadStatusTone } from "../../components/v3/V3StatusPill";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { companyToday } from "../../lib/businessDate";
 import { entityLabel } from "../../lib/entity-label";
@@ -76,6 +77,10 @@ const STATUS_FILTER_OPTIONS = statusOptions(
     ].map((s) => [s, loadStatusLabel(s)])
   )
 );
+const DATE_FIELD_OPTIONS: Array<{ id: "pickup" | "delivery"; label: string }> = [
+  { id: "pickup", label: "Pickup" },
+  { id: "delivery", label: "Delivery" },
+];
 const TRIP_OPTIONS = statusOptions({ NB: "NB", TR: "TR", SB: "SB", LOCAL: "LOCAL" });
 
 type Filters = {
@@ -101,24 +106,11 @@ export function monthDay(ymd: string | null | undefined): string {
   return m ? `${m[2]}/${m[3]}` : "—";
 }
 
-const PILL: Record<string, string> = {
-  dispatched: "bg-[#EEF2FF] text-[#1D4ED8]",
-  in_transit: "bg-[#EEF2FF] text-[#1D4ED8]",
-  at_pickup: "bg-[#EEF2FF] text-[#1D4ED8]",
-  at_delivery: "bg-[#EEF2FF] text-[#1D4ED8]",
-  delivered: "bg-[#FFF7ED] text-[#C2410C]",
-  delivered_pending_docs: "bg-[#FFF7ED] text-[#C2410C]",
-  invoiced: "bg-[#ECFDF5] text-[#15803D]",
-  paid: "bg-[#ECFDF5] text-[#15803D]",
-  closed: "bg-[#ECFDF5] text-[#15803D]",
-  completed_docs_received: "bg-[#ECFDF5] text-[#15803D]",
-  cancelled: "bg-[#FEF2F2] text-[#B91C1C]",
-};
-/** Board 13 status pill — the load's own status, colored by stage (blue moving, amber docs, green billed). */
+/** Board 13 status pill — the V3 pill (600 11px, 2px 7px, radius 10), colored by stage. */
 function StatusPill({ status }: { status: string | null | undefined }) {
   const key = String(status ?? "");
   const label = key === "delivered_pending_docs" ? "Delivered · docs" : loadStatusLabel(status);
-  return <span className={`inline-flex rounded-sm px-1.5 py-0.5 text-xs font-medium ${PILL[key] ?? "bg-[#F1F3F6] text-[#374151]"}`}>{label}</span>;
+  return <V3StatusPill tone={loadStatusTone(key)}>{label}</V3StatusPill>;
 }
 
 /** Rate per loaded mile, in cents. */
@@ -260,17 +252,10 @@ export default function LoadHistoryBoardPage() {
   const total = clientFiltered ? rows.length : query.data?.pagination.total ?? 0;
 
   const openPanel = (r: LoadsHistoryRow) => setSelectedId(r.load_id);
-  const cellButton = (r: LoadsHistoryRow, content: React.ReactNode, testId?: string) => (
-    <button
-      type="button"
-      className="text-left text-[#1F2A44] hover:text-[#1F2A44] hover:underline"
-      onClick={() => openPanel(r)}
-      data-testid={testId}
-      title="Open this load's timeline, money and linked records"
-    >
-      {content}
-    </button>
-  );
+  // Design: a plain <td> holding the text (no inner button); the ROW opens this load's timeline / money / linked records
+  // (ParityTable onRowClick), and every record cell is its own link.
+  const cellButton = (_r: LoadsHistoryRow, content: ReactNode, testId?: string) =>
+    testId ? <span data-testid={testId}>{content}</span> : content;
 
   const columns = useMemo<ParityColumn<LoadsHistoryRow>[]>(
     () => [
@@ -278,7 +263,7 @@ export default function LoadHistoryBoardPage() {
         key: "load_number",
         label: "Load #",
         sortable: true,
-        render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} data-testid={`load-history-load-${r.load_id}`} />,
+        render: (r) => <EntityLink className={V3_TABLE_LINK_CLASS} kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} data-testid={`load-history-load-${r.load_id}`} />,
       },
       { key: "status", label: "Status", sortable: true, sortValue: (r) => r.status ?? "", exportValue: (r) => loadStatusLabel(r.status), render: (r) => cellButton(r, <StatusPill status={r.status} />, `load-history-status-${r.load_id}`) },
       { key: "trip_type", label: "Trip", sortable: true, render: (r) => cellButton(r, r.trip_type ?? "—") },
@@ -290,7 +275,7 @@ export default function LoadHistoryBoardPage() {
         cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.customer_id ? (
-            <EntityLink kind="customer" id={r.customer_id} label={r.customer_name ? formatCompanyName(r.customer_name) : entityLabel(null, r.customer_id, "Customer")} />
+            <EntityLink className={V3_TABLE_LINK_CLASS} kind="customer" id={r.customer_id} label={r.customer_name ? formatCompanyName(r.customer_name) : entityLabel(null, r.customer_id, "Customer")} />
           ) : (
             cellButton(r, "—")
           ),
@@ -315,7 +300,7 @@ export default function LoadHistoryBoardPage() {
         cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.driver_id ? (
-            <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ? formatPersonName(r.driver_name) : entityLabel(null, r.driver_id, "Driver")} />
+            <EntityLink className={V3_TABLE_LINK_CLASS} kind="driver" id={r.driver_id} label={r.driver_name ? formatPersonName(r.driver_name) : entityLabel(null, r.driver_id, "Driver")} />
           ) : (
             cellButton(r, "—")
           ),
@@ -326,7 +311,7 @@ export default function LoadHistoryBoardPage() {
         sortable: true,
         className: "whitespace-nowrap text-left",
         cellClass: "whitespace-nowrap text-left",
-        render: (r) => (r.unit_id ? <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} /> : cellButton(r, "—")),
+        render: (r) => (r.unit_id ? <EntityLink className={V3_TABLE_LINK_CLASS} kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} /> : cellButton(r, "—")),
       },
       {
         key: "miles_practical",
@@ -383,7 +368,7 @@ export default function LoadHistoryBoardPage() {
         cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.invoice_id ? (
-            <EntityLink kind="invoice" id={r.invoice_id} label={entityLabel(r.invoice_number, r.invoice_id, "Invoice")} />
+            <EntityLink className={V3_TABLE_LINK_CLASS} kind="invoice" id={r.invoice_id} label={entityLabel(r.invoice_number, r.invoice_id, "Invoice")} />
           ) : (
             cellButton(r, <span className="text-[#6B7280]">not invoiced</span>)
           ),
@@ -413,7 +398,7 @@ export default function LoadHistoryBoardPage() {
         cellClass: "whitespace-nowrap text-left",
         render: (r) =>
           r.settlement_id ? (
-            <EntityLink kind="settlement" id={r.settlement_id} label={entityLabel(r.settlement_number, r.settlement_id, "Settlement")} />
+            <EntityLink className={V3_TABLE_LINK_CLASS} kind="settlement" id={r.settlement_id} label={entityLabel(r.settlement_number, r.settlement_id, "Settlement")} />
           ) : (
             cellButton(r, r.settlement_number ?? "—")
           ),
@@ -503,17 +488,13 @@ export default function LoadHistoryBoardPage() {
         >
           All
         </button>
-        <label className="flex items-center gap-1 text-xs text-[#4B5563]">
-          <span className="font-semibold">Date on</span>
-          <SelectCombobox
-            className="h-7 rounded-sm border border-[#E5E7EB] px-2 text-xs"
-            value={staged.draft.dateField}
-            onChange={(e) => staged.setDraft((p) => ({ ...p, dateField: e.target.value as "pickup" | "delivery" }))}
-          >
-            <option value="pickup">Pickup</option>
-            <option value="delivery">Delivery</option>
-          </SelectCombobox>
-        </label>
+        {/* Design: "Date [Pickup | Delivery]" segmented — which stop date the range filters on. */}
+        <V3Segmented
+          value={staged.draft.dateField}
+          options={DATE_FIELD_OPTIONS}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, dateField: next }))}
+          testId="load-history-date-field"
+        />
         <MultiSelectDropdown
           label="Status"
           options={STATUS_FILTER_OPTIONS}
@@ -570,7 +551,7 @@ export default function LoadHistoryBoardPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 8 }} data-testid="load-history-kpis">
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-loads"
           label="Loads"
           value={kpiValue(String(totals?.load_count ?? 0))}
@@ -579,7 +560,7 @@ export default function LoadHistoryBoardPage() {
           title="View all — include cancelled loads"
         />
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-revenue"
           label="Revenue (rate)"
           value={kpiValue(formatUsdCents(totals?.revenue_cents ?? 0))}
@@ -587,7 +568,7 @@ export default function LoadHistoryBoardPage() {
           noDrill="the sum of the Rate column of the loads listed below"
         />
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-loaded-miles"
           label="Loaded miles"
           value={kpiValue(formatNumber(totals?.loaded_miles ?? 0))}
@@ -595,7 +576,7 @@ export default function LoadHistoryBoardPage() {
           noDrill="the sum of the Loaded mi column below"
         />
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-empty-miles"
           label="Empty miles"
           value={kpiValue(formatNumber(totals?.empty_miles ?? 0))}
@@ -603,7 +584,7 @@ export default function LoadHistoryBoardPage() {
           noDrill="the sum of the Empty mi column below"
         />
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-rpm"
           label="Rate per loaded mile"
           value={kpiValue(
@@ -616,7 +597,7 @@ export default function LoadHistoryBoardPage() {
           noDrill="revenue ÷ loaded miles of the loads below"
         />
         <V3KpiTile
-          board
+          flat
           testId="load-history-kpi-not-invoiced"
           label="Delivered, not invoiced"
           value={kpiValue(String(totals?.delivered_not_invoiced ?? 0))}
@@ -647,6 +628,8 @@ export default function LoadHistoryBoardPage() {
           exportExcel
           minWidthPx={1800}
           tableTestId="load-history-table"
+          onRowClick={openPanel}
+          boardTdStyle={{ padding: "7px 10px", color: "#111827" }}
           footerCells={{
             load_number: <span className="font-semibold text-[#111827]">Totals ({rows.length})</span>,
             revenue_cents: formatUsdCents(rows.reduce((s, r) => s + r.revenue_cents, 0)),
