@@ -112,6 +112,7 @@ function CatalogLink({
   muted = false,
   bold = true,
   title,
+  ink = false,
 }: {
   href: string | null;
   children: ReactNode;
@@ -119,8 +120,10 @@ function CatalogLink({
   muted?: boolean;
   bold?: boolean;
   title?: string;
+  /** Force ink color instead of link blue (e.g. export column). */
+  ink?: boolean;
 }) {
-  const style = { color: muted ? V3.muted : V3.link, fontSize: V3_TABLE.fontPx };
+  const style = { color: ink ? V3.ink : muted ? V3.muted : V3.link, fontSize: V3_TABLE.fontPx, whiteSpace: "nowrap" as const };
   if (!href) return <span style={style}>{children}</span>;
   return (
     <Link to={href} className={`${bold ? "font-semibold " : ""}hover:underline`} style={style} data-testid={testId} title={title}>
@@ -158,17 +161,21 @@ const SIMPLE_CATEGORY_ROWS: Partial<Record<SidebarCategory, { id: string; label:
   ],
 };
 
-// ── Inline BasisSelector (v3 board spec — 6px container, 4px buttons, #13233F active) ──
+// ── Inline BasisSelector (v3 board spec — pill styling on inner span, button is flex container) ──
 function InlineBasisSelector({ value, onChange }: { value: AccountingBasis; onChange: (v: AccountingBasis) => void }) {
-  const container: CSSProperties = {
-    display: "inline-flex",
+  const btn = (): CSSProperties => ({
+    display: "flex",
     background: "#fff",
-    border: "1px solid #DDE1E7",
     borderRadius: 6,
     padding: 2,
-    gap: 2,
-  };
-  const btn = (opt: AccountingBasis): CSSProperties => ({
+    border: "none",
+    borderBottom: "1px solid #DDE1E7",
+    columnGap: 2,
+    boxSizing: "content-box",
+    cursor: "pointer",
+  });
+  const pill = (opt: AccountingBasis): CSSProperties => ({
+    display: "block",
     padding: "4px 10px",
     borderRadius: 4,
     fontSize: 11,
@@ -176,14 +183,12 @@ function InlineBasisSelector({ value, onChange }: { value: AccountingBasis; onCh
     fontFamily: V3.font,
     background: value === opt ? "#13233F" : "transparent",
     color: value === opt ? "#fff" : V3.muted,
-    border: "none",
-    cursor: "pointer",
   });
   return (
-    <div style={container}>
+    <div style={{ display: "inline-flex", gap: 2 }}>
       {(["accrual", "cash"] as const).map((opt) => (
-        <button key={opt} type="button" style={btn(opt)} onClick={() => onChange(opt)}>
-          <span style={{ fontWeight: 600, color: value === opt ? "#fff" : V3.muted, fontSize: 11, fontFamily: V3.font }}>
+        <button key={opt} type="button" style={btn()} onClick={() => onChange(opt)}>
+          <span style={pill(opt)}>
             {opt === "accrual" ? "Accrual" : "Cash"}
           </span>
         </button>
@@ -387,13 +392,14 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
 
         {/* Left: category sidebar */}
         <V3Panel title="Categories" testId="reports-category-nav" borderRadius={6}>
-          <nav aria-label="Report categories" style={{ display: "flex", flexDirection: "column" }}>
+          <nav aria-label="Report categories" style={{ display: "block", minHeight: 275, padding: 6, background: "#fff", borderBottom: "1px solid #DDE1E7", borderRadius: 6 }}>
             {SIDEBAR_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
                 type="button"
                 style={{
                   display: "block",
+                  boxSizing: "content-box",
                   textAlign: "left",
                   padding: "7px 10px",
                   borderRadius: 4,
@@ -401,10 +407,9 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                   fontWeight: 600,
                   fontFamily: "Inter, sans-serif",
                   background: activeCategory === cat.id ? "#EEF2F7" : "transparent",
-                  color: activeCategory === cat.id ? "#111827" : V3.muted,
+                  color: "#111827",
                   border: "none",
                   cursor: "pointer",
-                  width: "100%",
                 }}
                 onClick={() => setActiveCategory(cat.id)}
               >
@@ -441,7 +446,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                       label: "",
                       alwaysVisible: true,
                       sortable: false,
-                      render: () => <span style={{ color: "#8B94A3" }}>☆</span>,
+                      render: () => <span style={{ color: "#8B94A3", whiteSpace: "nowrap" }}>☆</span>,
                     },
                     {
                       key: "label",
@@ -459,6 +464,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                       label: "What it shows",
                       sortable: true,
                       sortValue: (r) => r.shows,
+                      render: (r) => <span style={{ whiteSpace: "nowrap" }}>{r.shows}</span>,
                     },
                     {
                       key: "basis",
@@ -484,7 +490,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                       sortable: true,
                       sortValue: (r) => r.label,
                       render: (r) => (
-                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} muted={false} bold={false} testId={`reports-acct-export-${r.id}`}>
+                        <CatalogLink href={reportCatalogHref(r.id, basis, originHref)} muted={false} bold={false} ink testId={`reports-acct-export-${r.id}`}>
                           PDF · XLSX
                         </CatalogLink>
                       ),

@@ -77,6 +77,7 @@ export function V3Panel({
                 border: "none",
                 padding: 0,
                 fontFamily: V3.font,
+                boxSizing: "content-box",
               }}
               data-testid={testId ? `${testId}-view-all` : undefined}
             >
@@ -95,6 +96,7 @@ export function V3Panel({
                 cursor: "pointer",
                 padding: 0,
                 fontFamily: V3.font,
+                boxSizing: "content-box",
               }}
             >
               {viewAllLabel}

@@ -83,8 +83,8 @@ export function verify(source) {
   need("matrix", 'data-testid={`module-matrix-pill-${m.id}`}', "program matrix must retain module pills");
   need("matrix", 'data-testid="module-matrix-live-banner"', "program matrix must retain live API state");
   need("matrix", "module-matrix-last-refresh", "program matrix must retain request-time feed timestamp");
-  need("tracker", 'href="/program/legacy-board"', "program tracker must retain legacy board door");
-  need("programNav", 'to="/program/matrix"', "program navigation must retain the module matrix door");
+  need("tracker", 'sysHref("/program/legacy-board")', "program tracker must retain legacy board door");
+  need("programNav", 'sysHref("/program/matrix")', "program navigation must retain the module matrix door");
   for (const route of ["/program/matrix", "/program/legacy-board"]) need("routes", `path="${route}"`, `program route ${route} must remain mounted`);
   need("routes", '<Route path="/home/scenario-tracker" element={<Navigate to="/program" replace />} />', "scenario legacy route must redirect to Program home");
 
@@ -144,8 +144,8 @@ if (process.argv.includes("--self-test")) {
     ["dispatcherHome", "<DispatcherActiveLoadsPanel", "<BrokenLoads"], ["accountingHome", "<AccountingPendingApprovalsPanel", "<BrokenApprovals"],
     ["safetyHome", "<SafetyAlertsPanel", "<BrokenAlerts"], ["managerHome", "<DriverManagerAttentionPanel", "<BrokenAttention"],
     ["qboHome", "export function QboStyleHomePage", "function BrokenHome"], ["matrix", 'data-testid={`module-matrix-pill-${m.id}`}', 'data-testid="broken-pill"'],
-    ["matrix", 'data-testid="module-matrix-live-banner"', 'data-testid="broken-live"'], ["tracker", 'href="/program/legacy-board"', 'href="/broken"'],
-    ["programNav", 'to="/program/matrix"', 'to="/broken"'],
+    ["matrix", 'data-testid="module-matrix-live-banner"', 'data-testid="broken-live"'], ["tracker", 'sysHref("/program/legacy-board")', 'sysHref("/broken-legacy-board")'],
+    ["programNav", 'sysHref("/program/matrix")', 'sysHref("/broken-matrix")'],
     ["reportsHome", "<ReportsHomeBoard companyId={companyId} />", "<div />"], ["reportsHomeBoard", 'data-testid="reports-home-kpi-strip"', 'data-testid="broken"'], ["reportsHomeBoard", "queryFn: () => getKpiSummary(companyId)", "queryFn: async () => null"], ["reportCategories", 'id: "profit-truck-mtd"', 'id: "broken-runner"'], ["runnerConfig", '"maint-cost-unit": {', '"broken-runner": {'],
     ["reportsRunner", "<RunnerFilters", '<button disabled aria-label="Save (available soon)">Save</button><RunnerFilters'],
     ["reportLaneModal", "export function LaneDetailModal", "function BrokenLaneModal"], ["reportScheduleModal", "export function ScheduleReportModal", "function BrokenScheduleModal"],
