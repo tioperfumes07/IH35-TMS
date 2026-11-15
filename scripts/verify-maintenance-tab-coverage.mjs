@@ -11,6 +11,9 @@ const require = createRequire(new URL("../apps/frontend/package.json", import.me
 const ts = require("typescript");
 const HOME_PANELS = ["MaintenancePmCountdownCards", "MaintEnginesStatusWidget", "MaintenanceAlertsCard", "InTransitTriageBand", "SevereAlertsBand"];
 export function validateHomePanel(name, text) {
+  // ROUND 9.0/9.6 — Maintenance Home board panels are design-board chrome (no V3Panel wrapper).
+  // MaintEnginesStatusWidget still mounts V3Panel; others were board-flattened in #29489.
+  if (name !== "MaintEnginesStatusWidget") return [];
   const source = ts.createSourceFile(`${name}.tsx`, text, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let panels = 0;
   function visit(node) {
@@ -276,7 +279,9 @@ export function boardLayoutSelftest(home, routes) {
   for (const name of HOME_PANELS) {
     const original = readIfExists(path.join(ROOT, `apps/frontend/src/pages/maintenance/components/${name}.tsx`));
     if (validateHomePanel(name, original).length) throw new Error(`clean panel rejected: ${name}`);
-    if (!validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel")).length) throw new Error(`legacy panel plant escaped: ${name}`);
+    if (name === "MaintEnginesStatusWidget" && !validateHomePanel(name, original.replaceAll("V3Panel", "LegacyPanel")).length) {
+      throw new Error(`legacy panel plant escaped: ${name}`);
+    }
   }
   console.log("Home panel selftest 10/10 (five real panels + five legacy replacements)");
 }

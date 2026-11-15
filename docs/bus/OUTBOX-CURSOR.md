@@ -702,3 +702,30 @@ ROUND 8.17 2026-11-12T16:31Z · classes R/L/S merged: R in flight (returnContext
 
 ## OUTBOX (11-13-2026 ~2:20 AM CT) — ROUND 8.13 #28903 closed · M3 claim #28966 · wiring 20020
 - **DONE:** Closed #28903. CLAIM #28966 + wire #28967 verify-step 20020 (**MERGED**). M3 green.
+
+## ROUND 9.6 / 9.5 — 2026-11-15T01:42Z · 01:40Z CHECKPOINT (DEADLINE)
+
+DONE 0/0 (Lead LIVE PROOF on deployed app): **none**. No Cursor board has Lead-posted missing:0 / mismatches:0 + SHA.
+
+Lead MEASURED (Round 9.6 reader, no aliases, app.ih35dispatch.com @ ~00:33Z):
+- B18 Factoring /factoring — missing 40 / mismatches 406 (detail ~/Downloads/11-14-2026-READER-B18-Factoring.json)
+- B19 Fuel /fuel — missing 98 / mismatches 329 (detail ~/Downloads/11-14-2026-READER-B19-Fuel.json)
+- B20 Insurance /insurance — missing 36 / mismatches 426 (detail ~/Downloads/11-14-2026-READER-B20-Insurance.json)
+
+OPEN FIX PRs (not merged — CI red on B18 stack):
+- B18 #29591 `cursor/r96-fix-b18-factoring` SHA a1956ca3b72 — navy tabs + v3 terms + data-v3 mirrors; CI FAIL: build-typecheck, locked-guards, required-live-load-guard (live Faro repurchase flake + verify-drivers-profile-action-bar / verify-entitylink-deep-links)
+- B19 #29593 `cursor/r96-fix-b19-fuel` — stacked on B18 (v3 by-truck + mirrors)
+- B20 #29595 `cursor/r96-fix-b20-insurance` — stacked on B19 (height + mirrors)
+
+B12–B17: prior R9.5 ports merged earlier round; **Lead has not posted 0/0** for any. Routes ready for Lead reader (aliases for data cells):
+- READER PLEASE: Dispatch-TruckPlanner /dispatch/planners/truck
+- READER PLEASE: Dispatch-LoadHistory /dispatch/load-history
+- READER PLEASE: Dispatch-BookLoad-Modal /dispatch/book-load?presentation=center
+- READER PLEASE: Dispatch-BookLoad-SidePanel /dispatch/book-load-side-panel
+- READER PLEASE: Dispatch-BookLoad-Spec /dispatch/book-load-spec
+- READER PLEASE: Dispatch-BookLoad-TripType /dispatch/book-load-trip-type
+
+API/FE tip at checkpoint: api SHA 681ced58a76a (B18–B20 fixes NOT on prod yet).
+
+NEXT: green #29591 → merge-async stack → FE deploy → `READER PLEASE: Factoring /factoring` · `Fuel /fuel` · `Insurance /insurance`.
+

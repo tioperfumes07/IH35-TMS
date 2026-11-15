@@ -38,7 +38,7 @@ export const OWNER_TEN = [
   "Debtor receipts",
   "Account summary",
   "Aging",
-  "Chargeback and overpayments",
+  "Chargebacks & overpayments",
   "Unapplied cash",
   "Payments to us",
   "Purchase report",
