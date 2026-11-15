@@ -2081,15 +2081,11 @@ export function ParityTable<T>({
                       : {}),
                   }}
                 >
-                  {column.sortable !== false ? (
+                  {/* ROUND 9.6: v3 boards put the label text on the <th> itself (design .dc.html).
+                      A sortable <button> wrapper made the reader measure inline-flex instead of table-cell. */}
+                  {column.sortable !== false && !v3 ? (
                     <button
                       type="button"
-                      // GLOBAL-SORT / Cascade 2026-08-31: hit target must be the full <th> cell
-                      // (DataTable already uses w-full). Label-only inline-flex left most of the
-                      // header dead; enableColumnResize grip still owns the right w-2 edge.
-                      // (CC-3 note: this SORT-01 fix landed via Cursor's own parallel branch first
-                      // — per owner coordination, my own equivalent hunk was dropped in favor of
-                      // this one rather than double-editing ParityTable's sort button.)
                       className={`inline-flex h-full w-full items-center gap-1 ${
                         /\btext-right\b/.test(column.className ?? "")
                           ? "justify-end"
