@@ -179,24 +179,28 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
   const agree = chk != null && boardOpen === chk.remainder_cents && boardOpen === chk.status_open_cents;
 
   return (
-    <div data-testid="party-board-vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, padding: "12px 20px 30px", minHeight: "100%" }}>
+    <div data-testid="party-board-vendors" data-v3-board="Vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
       <PartyHomeHeader crumb="" title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
         createLabel={"+ Create Vendor"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
           {/* Each tile opens the exact rows it counts: the board's own ?chip= list (whose column foots sum to the tile). */}
-          <V3KpiTile label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} href={partyHref("/vendors?chip=with_transactions")} />
-          <V3KpiTile label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} href={partyHref("/vendors?chip=all")} />
-          <V3KpiTile label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} href={partyHref("/vendors?chip=with_transactions")} />
+          <V3KpiTile board label={"With transactions"} value={b ? int(b.kpis.with_transactions) : "…"} valueDataV3="vendors-kpi-with-transactions-value" href={partyHref("/vendors?chip=with_transactions")} />
+          <V3KpiTile board label={"In the book"} value={b ? int(b.kpis.in_the_book) : "…"} valueDataV3="vendors-kpi-in-the-book-value" href={partyHref("/vendors?chip=all")} />
+          <V3KpiTile board label={"Spend YTD"} value={b ? usd(b.kpis.spend_cents) : "…"} valueDataV3="vendors-kpi-spend-ytd-value" href={partyHref("/vendors?chip=with_transactions")} />
           {/* Opens the fuel-account expense lines (the share's numerator; the list's "Total on these accounts" is it). */}
-          <V3KpiTile label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"}
+          <V3KpiTile board label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"}
+            valueDataV3="vendors-kpi-fuel-share-value"
             sub={b && b.kpis.fuel_share_pct != null ? `${usd(b.kpis.fuel_cents)} of ${usd(b.kpis.fuel_lines_total_cents)} lines` : undefined}
+            subDataV3="vendors-kpi-fuel-share-sub"
             href={b && b.kpis.fuel_account_ids?.length
               ? `/accounting/expenses?expense_account_id=${b.kpis.fuel_account_ids.join(",")}&has_vendor=true&date_from=${from}`
               : "/vendors?chip=with_transactions"} />
-          <V3KpiTile label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} href={partyHref("/vendors?chip=open_bills")} />
-          <V3KpiTile label={"Unposted fuel"} value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
+          <V3KpiTile board label={"Open bills"} value={b ? usd(b.kpis.open_bills_cents) : "…"} valueDataV3="vendors-kpi-open-bills-value" href={partyHref("/vendors?chip=open_bills")} />
+          <V3KpiTile board label={"Unposted fuel"} value={b ? usd(b.kpis.unposted_fuel_cents) : "…"} valueDataV3="vendors-kpi-unposted-fuel-value"
+            tone={b && b.kpis.unposted_fuel_cents > 0 ? "amber" : "ink"}
             sub={b ? (b.kpis.unposted_fuel_count > 0 ? `${int(b.kpis.unposted_fuel_count)} since ${day(b.kpis.unposted_fuel_since)}` : "None") : undefined}
+            subDataV3="vendors-kpi-unposted-fuel-sub"
             href={partyHref("/fuel/relay-unmatched?unposted=true")} />
         </div>
 
