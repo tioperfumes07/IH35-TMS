@@ -2179,6 +2179,7 @@ export function ParityTable<T>({
                   borderBottom: "1px solid #ECEEF2",
                   whiteSpace: "nowrap",
                   height: 30,
+                  boxSizing: "border-box",
                 } : undefined}
               >
                 {emptyText}

@@ -18,6 +18,8 @@ const viewAllStyle: CSSProperties = {
   fontFamily: V3.font,
   textDecoration: "none",
   boxSizing: "content-box",
+  height: 30,
+  lineHeight: "30px",
 };
 
 export function BoardSection({

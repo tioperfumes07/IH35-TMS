@@ -381,7 +381,7 @@ export function CompanySettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — KPI tiles open the report table / settlements source. */}
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-trips"
           label="Closed trips"
           value={query.data ? String(totals.trips) : "…"}
@@ -391,7 +391,7 @@ export function CompanySettlementsReportBoard() {
           subDataV3="kpi-csr-trips-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-revenue"
           label="Revenue"
           value={query.data ? money(totals.revenue) : "…"}
@@ -399,7 +399,7 @@ export function CompanySettlementsReportBoard() {
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-costs"
           label="Costs"
           value={query.data ? money(totals.costs) : "…"}
@@ -409,7 +409,7 @@ export function CompanySettlementsReportBoard() {
           subDataV3="kpi-csr-costs-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-driver-pay"
           label="Driver pay"
           value={query.data ? money(totals.driverPay) : "…"}
@@ -417,7 +417,7 @@ export function CompanySettlementsReportBoard() {
           valueDataV3="kpi-csr-driver-pay"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-margin"
           label="Margin"
           value={query.data ? money(totals.margin) : "…"}
@@ -428,7 +428,7 @@ export function CompanySettlementsReportBoard() {
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-zero-cost"
           label="Trips with $0 costs"
           value={query.data ? String(totals.zeroCost.length) : "…"}

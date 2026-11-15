@@ -29,6 +29,16 @@ export const V3 = {
   live: "#22C55E",
   /** Text on shell / navy controls. */
   onShell: "#FFFFFF",
+  /** Status pill pastel backgrounds. */
+  pillBlueBg: "#EFF6FF",
+  pillAmberBg: "#FFFBEB",
+  pillGreenBg: "#ECFDF3",
+  pillSlateBg: "#F1F5F9",
+  pillRedBg: "#FEF2F2",
+  /** Slate-600: status pill slate ink, secondary labels. */
+  slateDark: "#475569",
+  /** Gray-500: focus-ring color. */
+  focusRing: "#6B7280",
   font: "Inter, ui-sans-serif, system-ui, sans-serif",
 } as const;
 

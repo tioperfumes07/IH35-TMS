@@ -412,7 +412,7 @@ export function DriverSettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — every KPI opens the report table / filtered cohort (not a dead tile). */}
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-settlements"
           label="Settlements"
           value={query.data ? String(totals.settlements) : "…"}
@@ -426,7 +426,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-gross"
           label="Gross pay"
           value={query.data ? money(totals.gross) : "…"}
@@ -438,7 +438,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-deductions"
           label="Deductions"
           value={query.data ? money(-totals.deductions) : "…"}
@@ -449,7 +449,7 @@ export function DriverSettlementsReportBoard() {
           subDataV3="kpi-dsr-deductions-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-reimb"
           label="Reimbursements"
           value={query.data ? money(totals.reimb) : "…"}
@@ -457,7 +457,7 @@ export function DriverSettlementsReportBoard() {
           valueDataV3="kpi-dsr-reimb"
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-net"
           label="Net pay"
           value={query.data ? money(totals.net) : "…"}
@@ -469,7 +469,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-closed-unpaid"
           label="Closed, not marked paid"
           value={query.data ? money(unpaidNet) : "…"}

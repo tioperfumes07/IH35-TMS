@@ -1,7 +1,6 @@
-import { useMemo, type ReactNode } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
@@ -90,7 +89,41 @@ export function FactoringBoardChrome({
         data-factoring-board-tabs-wrap="1"
       >
         <div data-testid="factoring-board-tabs">
-          {nav ?? <NavyPageSubNav items={navItems} />}
+          {nav ?? (
+            <nav
+              data-testid="factoring-board-chrome-subnav"
+              style={{
+                minHeight: 32, minWidth: 0, maxWidth: "100%", overflowX: "auto",
+                background: "#13233F", color: "#fff",
+                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal",
+              }}
+            >
+              <div style={{ display: "flex", gap: 2, padding: "0 6px", backgroundColor: "#13233F", minWidth: "max-content" }}>
+                {navItems.map((item) => {
+                  const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+                  const style: CSSProperties = {
+                    display: "block", boxSizing: "content-box", padding: "8px 8px",
+                    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                    fontSize: 11, fontWeight: 600, lineHeight: "normal",
+                    color: "#fff", textDecoration: "none", whiteSpace: "nowrap",
+                    ...(active
+                      ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" }
+                      : { opacity: 0.85 }),
+                  };
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      aria-current={active ? "page" : undefined}
+                      style={style}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </nav>
+          )}
         </div>
       </div>
     </>
