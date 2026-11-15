@@ -1132,24 +1132,23 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     cols.push({ key: `s:${v.id}:price`, label: "List price", group: g, kind: "money" });
     cols.push({ key: `s:${v.id}:cushion`, label: "Cushion", group: g, kind: "money" });
     cols.push({ key: `s:${v.id}:real`, label: "Real price", group: g, kind: "money" });
-    cols.push({ key: `s:${v.id}:diff`, label: "Me vs real $", group: g, kind: "money" });
-    cols.push({ key: `s:${v.id}:diff_pct`, label: "Me vs real %", group: g, kind: "pct" });
+    cols.push({ key: `s:${v.id}:diff`, label: "Their real − me $", group: g, kind: "money" });
+    cols.push({ key: `s:${v.id}:diff_pct`, label: "Their real − me %", group: g, kind: "pct" });
     cols.push({ key: `s:${v.id}:action`, label: "Reduce / raise", group: g, kind: "text" });
   }
-  // COMPETITION MARGIN — owner 2026-11-12: "a tab … an engine, check the margin of the competition if purchasing from
-  // the same vendors, the lowest cost vendors … the vendors' prices − the cushion (.25 under $10, .50 over $10, 1.00
-  // over $30) … so I can measure their margin." Their cost ≈ cheapest supplier list price − that tiered cushion.
-  cols.push(
-    { key: "comp_low_vendor", label: "Cheapest supplier", group: "Their cost", kind: "text" },
-    { key: "comp_low_list", label: "List price", group: "Their cost", kind: "money" },
-    { key: "comp_cushion", label: "Cushion", group: "Their cost", kind: "money" },
-    { key: "comp_cost", label: "Their cost ≈", group: "Their cost", kind: "money" },
-  );
+  // COMPETITION (owner 2026-11-15 13:32 CT): reverse-engineer each competitor's cost from THEIR OWN list — "their list
+  // price minus the cushion … I estimate their margin and it should be showing what it should cost them approximately.
+  // It is not based on where they are purchasing." Same build as Trading: list → cushion → sales price → × (1 − the
+  // margin I estimate) = their cost ≈ → what they earn. The margin is the one typed on the grid (else Rules' store %).
+  // (Replaces the 11-12 build that took the cheapest SUPPLIER list instead of the competitor's own price.)
   for (const v of sellV) {
     const g = `Margin · ${vendorLabel(v)}`;
-    cols.push({ key: `c:${v.id}:price`, label: "Their price", group: g, kind: "money" });
-    cols.push({ key: `c:${v.id}:earn`, label: "They earn", group: g, kind: "money" });
-    cols.push({ key: `c:${v.id}:margin`, label: "Margin %", group: g, kind: "pct" });
+    cols.push({ key: `c:${v.id}:price`, label: "Their list price", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:cushion`, label: "Cushion", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:sales`, label: "Their sales price", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:margin`, label: "Their margin % (my estimate)", group: g, kind: "pct" });
+    cols.push({ key: `c:${v.id}:cost`, label: "Their cost ≈", group: g, kind: "money" });
+    cols.push({ key: `c:${v.id}:earn`, label: "They earn ≈", group: g, kind: "money" });
   }
 
   // LIST ANALYSIS columns — the owner's format, his groups and headers in his order.
@@ -1235,12 +1234,9 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     // no purchase quantities are recommended without stock data).
     row.my_need = myOffer != null && invUploaded ? Math.max(0, (offerQty ?? 1) - (myQty ?? 0)) : null;
     let low: number | null = null, lowAt: string | null = null;
-    // What a competitor most likely pays: the cheapest supplier list price for the item, less the tiered cushion.
+    // List analysis · Purchases: the cheapest supplier for the item (Lowest Vendor / Lowest Price) — my buying side.
     let lowList: number | null = null, lowListAt: string | null = null;
     for (const v of buyV) { const p = offersMap.get(v.id)?.price; if (p != null && (lowList == null || p < lowList)) { lowList = p; lowListAt = vendorLabel(v); } }
-    const compCushion = lowList == null ? null : Math.min(lowList, tieredCushionCents(lowList, rules.competitor_cushion_tiers));
-    const compCost = lowList == null ? null : lowList - (compCushion ?? 0);
-    row.comp_low_vendor = lowListAt; row.comp_low_list = lowList; row.comp_cushion = compCushion; row.comp_cost = compCost;
     for (const v of sellV) {
       const p = offersMap.get(v.id)?.price;
       if (p == null) continue;
@@ -1254,11 +1250,15 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
       row[`s:${v.id}:diff`] = cmp?.diffCents ?? null;
       row[`s:${v.id}:diff_pct`] = cmp?.diffPct ?? null;
       row[`s:${v.id}:action`] = cmp?.action ?? null;
+      // Competition: their list − cushion = their sales price; × (1 − my estimate of their margin) = their cost ≈.
+      const compMargin = earnTyped ?? (v.earn_pct == null ? rules.store_earn_pct : Number(v.earn_pct));
+      const compCost = Math.round(costFromPrice(real, compMargin, "margin"));
       row[`c:${v.id}:price`] = p;
-      if (compCost != null) {
-        row[`c:${v.id}:earn`] = p - compCost;
-        row[`c:${v.id}:margin`] = p > 0 ? Math.round(((p - compCost) / p) * 1000) / 10 : null;
-      }
+      row[`c:${v.id}:cushion`] = cushion;
+      row[`c:${v.id}:sales`] = real;
+      row[`c:${v.id}:margin`] = compMargin;
+      row[`c:${v.id}:cost`] = compCost;
+      row[`c:${v.id}:earn`] = real - compCost;
       if (low == null || p < low) { low = p; lowAt = vendorLabel(v); }
     }
     row.low_sell = low;
@@ -1509,13 +1509,15 @@ export function getOrBuildView(
 /** My offer price against a competitor's real price (list − cushion). diff > 0 = I am over them.
  *  diffPct = diff ÷ their real price; the action gives the % to cut MY price to meet theirs (or the room to raise). */
 export function offerVsReal(myOfferCents: number, realCents: number): { diffCents: number; diffPct: number | null; action: string } {
-  const diff = myOfferCents - realCents;
+  // Owner 2026-11-15 13:32 CT: "the negatives should also be in red … if I need to lower the price or if I'm expensive" —
+  // the figure is their real price − my offer: negative = I am more expensive (same sign as the analysis' Over By).
+  const diff = realCents - myOfferCents;
   const d = (Math.abs(diff) / 100).toFixed(2);
   const diffPct = realCents > 0 ? Math.round((diff / realCents) * 1000) / 10 : null;
   const ofMine = myOfferCents > 0 ? (Math.round((Math.abs(diff) / myOfferCents) * 1000) / 10).toFixed(1) : null;
   const pctTxt = diffPct == null ? "" : ` (${Math.abs(diffPct).toFixed(1)}%)`;
-  if (diff > 0) return { diffCents: diff, diffPct, action: `Over by $${d}${pctTxt} — reduce${ofMine ? ` ${ofMine}%` : ""}` };
-  if (diff < 0) return { diffCents: diff, diffPct, action: `Under by $${d}${pctTxt} — room to raise${ofMine ? ` ${ofMine}%` : ""}` };
+  if (diff < 0) return { diffCents: diff, diffPct, action: `Over by $${d}${pctTxt} — reduce${ofMine ? ` ${ofMine}%` : ""}` };
+  if (diff > 0) return { diffCents: diff, diffPct, action: `Under by $${d}${pctTxt} — room to raise${ofMine ? ` ${ofMine}%` : ""}` };
   return { diffCents: 0, diffPct: 0, action: "Same as their real price" };
 }
 
@@ -1551,7 +1553,7 @@ export function filterView(rows: GridRow[], view: GridView, mine?: MineFilter): 
   if (view === "buy") return rows.filter((r) => (r.n_vendors as number) > 0);
   if (view === "trade") return rows.filter((r) => buyPriced(r));
   if (view === "wholesale") return rows.filter((r) => r.low_sell != null && (r.landed_likely != null || r.my_offer_price != null));
-  if (view === "comp") return rows.filter((r) => r.comp_cost != null && r.low_sell != null);
+  if (view === "comp") return rows.filter((r) => r.low_sell != null);
   // List analysis is of MY list: items on my offer list or in my inventory.
   if (view === "analysis") return rows.filter((r) => r.in_offer === 1 || r.in_inventory === 1);
   return rows;
@@ -1649,8 +1651,6 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   const add = (target: string, deps: string[], build: ExportFormula["build"]) => {
     if (have.has(target) && deps.every((d) => have.has(d))) out.push({ target, deps, build });
   };
-  // Competition · their cost = cheapest supplier list − cushion tier.
-  add("comp_cost", ["comp_low_list", "comp_cushion"], (r) => `${r("comp_low_list")}-${r("comp_cushion")}`);
   for (const c of cols) {
     const m = /^([sc]):([^:]+):price$/.exec(c.key);
     if (!m) continue;
@@ -1658,12 +1658,13 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
     if (m[1] === "s") {
       // Wholesale: real price = list − cushion; me vs real $ = my offer − real; % of real.
       add(`s:${id}:real`, [`s:${id}:price`, `s:${id}:cushion`], (r) => `${r(`s:${id}:price`)}-${r(`s:${id}:cushion`)}`);
-      add(`s:${id}:diff`, ["my_offer_price", `s:${id}:real`], (r) => `${r("my_offer_price")}-${r(`s:${id}:real`)}`);
+      add(`s:${id}:diff`, ["my_offer_price", `s:${id}:real`], (r) => `${r(`s:${id}:real`)}-${r("my_offer_price")}`);
       add(`s:${id}:diff_pct`, [`s:${id}:diff`, `s:${id}:real`], (r) => `IF(${r(`s:${id}:real`)}=0,"",${r(`s:${id}:diff`)}/${r(`s:${id}:real`)})`);
     } else {
-      // Competition: they earn = their price − their cost; margin = earn ÷ price.
-      add(`c:${id}:earn`, [`c:${id}:price`, "comp_cost"], (r) => `${r(`c:${id}:price`)}-${r("comp_cost")}`);
-      add(`c:${id}:margin`, [`c:${id}:earn`, `c:${id}:price`], (r) => `IF(${r(`c:${id}:price`)}=0,"",${r(`c:${id}:earn`)}/${r(`c:${id}:price`)})`);
+      // Competition: sales = their list − cushion; their cost ≈ = sales × (1 − my margin estimate); they earn = sales − cost.
+      add(`c:${id}:sales`, [`c:${id}:price`, `c:${id}:cushion`], (r) => `${r(`c:${id}:price`)}-${r(`c:${id}:cushion`)}`);
+      add(`c:${id}:cost`, [`c:${id}:sales`, `c:${id}:margin`], (r) => `${r(`c:${id}:sales`)}*(1-${r(`c:${id}:margin`)})`);
+      add(`c:${id}:earn`, [`c:${id}:sales`, `c:${id}:cost`], (r) => `${r(`c:${id}:sales`)}-${r(`c:${id}:cost`)}`);
     }
   }
   // List analysis — the owner's PERFUME_ENGINE_FORMATS.xlsx formulas, cell for cell.
@@ -1778,8 +1779,9 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   for (const line of [
     ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
     ["Purchase · Cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
-    ["Competition · Their cost ≈", "Cheapest supplier list price − the cushion tier ($10 and under: $0.25, over $10: $0.50, over $30: $1.00 — set in Rules)"],
-    ["Competition · They earn / Margin %", "Competitor's price − Their cost ≈; Margin % = that ÷ the competitor's price"],
+    ["Competition · Their sales price", "Their list price − the cushion tier ($10 and under: $0.25, over $10: $0.50, over $30: $1.00 — set in Rules)"],
+    ["Competition · Their cost ≈", "Their sales price × (1 − the margin I estimate they earn) — typed on the grid, else the competitor's own %, else Rules"],
+    ["Competition · They earn ≈", "Their sales price − Their cost ≈"],
     ["Trading · They earn ≈", "(Their list price − their cushion) − Sell to them ≈ — what that supplier makes on it"],
     ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
     ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],
