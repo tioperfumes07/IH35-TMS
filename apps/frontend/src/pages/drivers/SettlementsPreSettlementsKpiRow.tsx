@@ -250,43 +250,41 @@ export function SettlementsPreSettlementsClosesPanel({
       testId="settlements-presettle-closes-panel"
       onViewAll={() => navigate(root)}
     >
-      <div style={{ padding: "4px 0" }} data-testid="settlements-presettle-closes-body">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)",
-            gap: 8,
-            padding: "6px 14px",
-            borderBottom: `1px solid ${V3.borderSoft}`,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: V3.muted,
-            fontFamily: V3.font,
-          }}
-        >
-          <span>Check</span>
-          <span>How it is met</span>
-        </div>
-        {CLOSE_CHECKS.map((row) => (
-          <div
-            key={row.check}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)",
-              gap: 8,
-              padding: "8px 14px",
-              borderBottom: `1px solid ${V3.borderSoft}`,
-              fontSize: 12,
-              color: V3.ink,
-              fontFamily: V3.font,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>{row.check}</span>
-            <span style={{ color: V3.muted }}>{row.how}</span>
-          </div>
-        ))}
+      <div data-testid="settlements-presettle-closes-body">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{
+                fontFamily: V3.font, fontSize: 11, fontWeight: 600, color: V3.muted,
+                backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
+                lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "left",
+              }}>Check</th>
+              <th style={{
+                fontFamily: V3.font, fontSize: 11, fontWeight: 600, color: V3.muted,
+                backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
+                lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "left",
+              }}>How it is met</th>
+            </tr>
+          </thead>
+          <tbody>
+            {CLOSE_CHECKS.map((row) => (
+              <tr key={row.check}>
+                <td style={{
+                  fontFamily: V3.font, fontSize: 12, fontWeight: 600, color: V3.ink,
+                  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                  borderBottom: `1px solid ${V3.borderSoft}`,
+                }}>{row.check}</td>
+                <td style={{
+                  fontFamily: V3.font, fontSize: 12, fontWeight: 400, color: V3.muted,
+                  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                  borderBottom: `1px solid ${V3.borderSoft}`,
+                }}>{row.how}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </BoardSection>
   );
