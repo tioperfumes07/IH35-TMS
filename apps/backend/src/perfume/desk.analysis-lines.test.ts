@@ -139,3 +139,11 @@ describe("owner 2026-11-14 21:43 CT — my list repeats a bottle per store; the 
     expect(r.lines.find((l) => l.item_id === null)).toMatchObject({ id: "5", stores: 1 });
   });
 });
+
+describe("owner 2026-11-15 07:10 CT — the analysis shows the same number of lines as my list", () => {
+  it("buildAnalysisLines keeps every store line; STORES = lines of my list carrying that item", async () => {
+    const src = (await import("node:fs")).readFileSync(new URL("./desk.service.ts", import.meta.url), "utf8");
+    expect(src).toMatch(/const myLines: GridRow\[\] = x\.myLineQ\.map\(\(l\) =>/);
+    expect(src).toMatch(/"a:stores": l\.item_id \? \(storesByItem\.get\(l\.item_id\) \?\? 1\) : 1/);
+  });
+});
