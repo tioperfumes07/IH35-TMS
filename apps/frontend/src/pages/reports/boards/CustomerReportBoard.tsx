@@ -20,6 +20,7 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -146,12 +147,12 @@ export function CustomerReportBoard() {
   };
   const pastDueAr = agingTotals.total - agingTotals.current;
 
-  const customerCell = (r: { id: string; name: string }) => <EntityLink kind="customer" id={r.id} label={name(r.name)} />;
+  const customerCell = (r: { id: string; name: string }) => <EntityLink kind="customer" id={r.id} label={name(r.name)} className={V3_TABLE_LINK_CLASS} />;
 
   // R5 / V3-Reports-Customers: Customer · Loads · Billed · % · Avg / load · Open · Past due · Factored · Last invoice
   // Invoices/Collected remain in Open balances + gear (additive); board overview uses Loads.
   const salesColumns: ParityColumn<CustomerBoardReportRow>[] = [
-    { key: "name", label: "Customer", sortable: true, render: customerCell },
+    { key: "name", label: "Customer", sortable: true, cellClass: "font-semibold", render: customerCell },
     {
       key: "loads",
       label: "Loads",
@@ -182,7 +183,7 @@ export function CustomerReportBoard() {
   ];
 
   const openColumns: ParityColumn<CustomerBoardReportRow>[] = [
-    { key: "name", label: "Customer", sortable: true, render: customerCell },
+    { key: "name", label: "Customer", sortable: true, cellClass: "font-semibold", render: customerCell },
     { key: "open_cents", label: "Open", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.open_cents) },
     { key: "current", label: "Current", sortable: true, sortValue: (r) => r.aging.current, cellClass: "text-right", className: "text-right", render: (r) => money(r.aging.current) },
     { key: "past_due", label: "Past due", sortable: true, sortValue: pastDue, cellClass: "text-right", className: "text-right", render: (r) => money(pastDue(r)) },
@@ -193,7 +194,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => r.invoices,
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={moneyHref(`/accounting/invoices?customer_id=${encodeURIComponent(r.id)}&live_open=true`)}>
+        <Link className={V3_TABLE_LINK_CLASS} to={moneyHref(`/accounting/invoices?customer_id=${encodeURIComponent(r.id)}&live_open=true`)}>
           Open invoices
         </Link>
       ),
@@ -204,7 +205,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => name(r.name),
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={statementHref(r.id)}>
+        <Link className={V3_TABLE_LINK_CLASS} to={statementHref(r.id)}>
           Statement
         </Link>
       ),
@@ -212,7 +213,7 @@ export function CustomerReportBoard() {
   ];
 
   const agingColumns: ParityColumn<ARAgingRow>[] = [
-    { key: "customer_name", label: "Customer", sortable: true, render: (r) => <EntityLink kind="customer" id={r.customer_id} label={name(r.customer_name)} /> },
+    { key: "customer_name", label: "Customer", sortable: true, cellClass: "font-semibold", render: (r) => <EntityLink kind="customer" id={r.customer_id} label={name(r.customer_name)} className={V3_TABLE_LINK_CLASS} /> },
     { key: "open_invoice_count", label: "Invoices", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.open_invoice_count) },
     { key: "current_cents", label: "Current", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.current_cents) },
     { key: "bucket_1_30_cents", label: "1–30", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.bucket_1_30_cents) },
@@ -223,7 +224,7 @@ export function CustomerReportBoard() {
   ];
 
   const statementColumns: ParityColumn<CustomerBoardReportRow>[] = [
-    { key: "name", label: "Customer", sortable: true, render: customerCell },
+    { key: "name", label: "Customer", sortable: true, cellClass: "font-semibold", render: customerCell },
     { key: "invoices", label: "Invoices", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.invoices) },
     { key: "billed_cents", label: "Billed", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.billed_cents) },
     { key: "collected_cents", label: "Payments", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.collected_cents) },
@@ -234,7 +235,7 @@ export function CustomerReportBoard() {
       sortable: true,
       sortValue: (r) => name(r.name),
       render: (r) => (
-        <Link className="font-semibold text-[#1D4ED8] hover:underline" to={statementHref(r.id)} data-testid={`customer-report-statement-${r.id}`}>
+        <Link className={V3_TABLE_LINK_CLASS} to={statementHref(r.id)} data-testid={`customer-report-statement-${r.id}`}>
           Open statement →
         </Link>
       ),

@@ -237,7 +237,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
               </button>
               <button
                 type="button"
-                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#1F2A44]"
+                className="rounded-sm border border-gray-300 bg-white px-2 py-1 text-xs font-semibold text-[#5B6576]"
                 onClick={() => {
                   if (selected.length === 0) {
                     pushToast("Select at least one vendor to export.", "info");
@@ -266,7 +266,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
                   id={row.id}
                   name={row.name}
                   noun="Vendor"
-                  className="single-line-name text-[#1F2A44] hover:underline rounded-none"
+                  className="single-line-name text-gray-900 no-underline hover:underline rounded-none"
                 />
               </span>
             ),
@@ -393,7 +393,7 @@ export function VendorsListView({ companyId, vendors, status, openByVendorId, un
             render: (row) => (
               <span
                 className={`inline-flex rounded-sm px-2 py-0.5 text-xs font-semibold ${
-                  row.deactivated_at ? "bg-gray-200 text-gray-700" : "bg-[#F7F8FA] text-[#1F2A44]"
+                  row.deactivated_at ? "bg-gray-200 text-[#5B6576]" : "bg-[#F7F8FA] text-[#5B6576]"
                 }`}
               >
                 {row.deactivated_at ? "Inactive" : "Active"}
