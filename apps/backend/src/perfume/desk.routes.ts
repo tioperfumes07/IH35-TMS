@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -210,6 +210,18 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       throw e;
     }
   });
+  // One vendor list as written + the BRAND the engine reads + its link and vendor coverage (owner 11-14).
+  app.get("/api/v1/perfume/lists/:id/export.xlsx", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
+    const out = await withCurrentUser(uid, (c) => exportListWorkbook(c, params.data.id));
+    if (!out) return reply.code(404).send({ error: "list_not_found" });
+    return reply
+      .header("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      .header("Content-Disposition", `attachment; filename="${out.fileName}"`)
+      .send(out.buf);
+  });
+
   app.post("/api/v1/perfume/lists/:id/void", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);

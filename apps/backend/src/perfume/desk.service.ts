@@ -1703,3 +1703,111 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   how.getColumn(1).width = 26; how.getColumn(2).width = 80;
   return Buffer.from(await wb.xlsx.writeBuffer());
 }
+
+/**
+ * One vendor list as an Excel file, line for line, the description EXACTLY as the vendor wrote it, beside the BRAND
+ * the engine reads (owner 2026-11-14: "keep the description as it is, but add a brand column so I can confirm the
+ * brands … all this in the excel"). Each linked line carries the item it is linked to, that item's brand, a live
+ * BRANDS AGREE formula, and how many OTHER vendors sell the same item with the lowest of their prices — so the owner
+ * sees, on every upload, whether the list matched and whether the item is shared by 2+ vendors.
+ */
+export async function exportListWorkbook(c: PoolClient, listId: string): Promise<{ buf: Buffer; fileName: string } | null> {
+  const head = await c.query<{ vendor: string; created_at: string }>(
+    `SELECT v.name AS vendor, l.created_at::text FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id WHERE l.id = $1`, [listId]);
+  if (!head.rows[0]) return null;
+  await loadNameBrands(c);
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const aliases = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
+  const q = await c.query<{
+    sheet: string | null; row_no: number | null; description: string; brand: string | null; upc: string | null; sku: string | null; size_text: string | null;
+    price_cents: number | null; match_status: string; gender_override: string | null; item_id: string | null; display_name: string | null; item_brand: string | null;
+    other_vendors: number; low_other_cents: number | null;
+  }>(
+    `SELECT r.sheet, r.row_no, r.description, r.brand, r.upc, r.sku, r.size_text, r.price_cents, r.match_status, r.gender_override, r.item_id,
+            i.display_name, i.brand AS item_brand,
+            COALESCE(o.n, 0)::int AS other_vendors, o.low AS low_other_cents
+       FROM perfume.price_list_rows r
+       JOIN perfume.price_lists l ON l.id = r.list_id
+       LEFT JOIN perfume.items i ON i.id = r.item_id
+       LEFT JOIN LATERAL (
+         SELECT count(DISTINCT l2.vendor_id) AS n, min(r2.price_cents) AS low
+           FROM perfume.price_list_rows r2 JOIN perfume.price_lists l2 ON l2.id = r2.list_id AND l2.voided_at IS NULL
+          WHERE r.item_id IS NOT NULL AND r2.item_id = r.item_id AND l2.vendor_id <> l.vendor_id) o ON true
+      WHERE r.list_id = $1
+      ORDER BY r.sheet NULLS FIRST, r.row_no NULLS LAST, r.id`, [listId]);
+
+  const wb = new ExcelJS.Workbook();
+  wb.creator = "TIO Perfumes price desk";
+  const ws = wb.addWorksheet("List with brand");
+  const cols: Array<{ group: string; label: string; width: number }> = [
+    { group: "VENDOR LINE (AS WRITTEN)", label: "Row", width: 6 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "DESCRIPTION", width: 60 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "UPC", width: 16 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "SKU", width: 12 },
+    { group: "VENDOR LINE (AS WRITTEN)", label: "PRICE", width: 10 },
+    { group: "ENGINE READS", label: "BRAND", width: 24 },
+    { group: "ENGINE READS", label: "MATCH", width: 11 },
+    { group: "LINKED ITEM", label: "LINKED ITEM", width: 48 },
+    { group: "LINKED ITEM", label: "ITEM BRAND", width: 24 },
+    { group: "LINKED ITEM", label: "BRANDS AGREE", width: 13 },
+    { group: "OTHER VENDORS", label: "OTHER VENDORS SELLING IT", width: 14 },
+    { group: "OTHER VENDORS", label: "LOWEST OTHER PRICE", width: 12 },
+    { group: "OTHER VENDORS", label: "THIS LIST CHEAPER?", width: 12 },
+  ];
+  ws.addRow(cols.map((x) => x.group));
+  ws.addRow(cols.map((x) => x.label));
+  for (let i = 0; i < cols.length;) {
+    let j = i;
+    while (j + 1 < cols.length && cols[j + 1]!.group === cols[i]!.group) j++;
+    if (j > i) ws.mergeCells(1, i + 1, 1, j + 1);
+    ws.getCell(1, i + 1).alignment = { horizontal: "center" };
+    i = j + 1;
+  }
+  cols.forEach((x, i) => { ws.getColumn(i + 1).width = x.width; });
+  ws.getRow(1).font = { bold: true };
+  ws.getRow(2).font = { bold: true };
+  ws.views = [{ state: "frozen", ySplit: 2 }];
+  const red = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFF8D7DA" } };
+  const yellow = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFFFF3CD" } };
+  q.rows.forEach((r, n) => {
+    const x = n + 3;
+    const brand = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: aliases }).brand;
+    const itemBrand = r.item_brand ? canonicalBrand(r.item_brand, aliases) : null;
+    const row = ws.addRow([
+      r.row_no ?? n + 1, r.description, r.upc ?? null, r.sku ?? null, r.price_cents == null ? null : r.price_cents / 100,
+      brand || null, r.item_id ? "linked" : r.match_status, r.display_name ?? null, itemBrand, null,
+      r.item_id ? r.other_vendors : null, r.low_other_cents == null ? null : r.low_other_cents / 100, null,
+    ]);
+    row.getCell(3).numFmt = "@"; // a UPC is text: leading zeros stay, no 1.2E+11
+    if (r.upc) row.getCell(3).value = String(r.upc);
+    row.getCell(5).numFmt = "$#,##0.00";
+    row.getCell(12).numFmt = "$#,##0.00";
+    // Live formulas: the owner corrects a BRAND cell and the check re-reads it.
+    row.getCell(10).value = { formula: `IF(I${x}="","",IF(UPPER(TRIM(F${x}))=UPPER(TRIM(I${x})),"YES","NO"))`, result: itemBrand ? (brand === itemBrand ? "YES" : "NO") : "" };
+    row.getCell(13).value = {
+      formula: `IF(OR(E${x}="",L${x}=""),"",IF(E${x}<L${x},"YES",IF(E${x}=L${x},"SAME","NO")))`,
+      result: r.price_cents == null || r.low_other_cents == null ? "" : r.price_cents < r.low_other_cents ? "YES" : r.price_cents === r.low_other_cents ? "SAME" : "NO",
+    };
+    if (!brand) row.getCell(6).fill = yellow;
+    if (itemBrand && brand !== itemBrand) { row.getCell(6).fill = red; row.getCell(9).fill = red; row.getCell(10).fill = red; }
+    if (!r.item_id) row.getCell(7).fill = yellow;
+  });
+  const last = q.rows.length + 2;
+  ws.addConditionalFormatting({ ref: `J3:J${Math.max(3, last)}`, rules: [{ type: "containsText", operator: "containsText", text: "NO", priority: 1, style: { fill: red } }] });
+  ws.autoFilter = { from: { row: 2, column: 1 }, to: { row: Math.max(2, last), column: cols.length } };
+  const sum = wb.addWorksheet("Summary");
+  sum.addRow(["Vendor", head.rows[0].vendor]);
+  sum.addRow(["Lines", { formula: `COUNTA('List with brand'!B3:B${Math.max(3, last)})` }]);
+  sum.addRow(["Linked", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"linked")` }]);
+  sum.addRow(["In review", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"review")` }]);
+  sum.addRow(["Unmatched", { formula: `COUNTIF('List with brand'!G3:G${Math.max(3, last)},"unmatched")` }]);
+  sum.addRow(["No brand read", { formula: `COUNTBLANK('List with brand'!F3:F${Math.max(3, last)})` }]);
+  sum.addRow(["Brands disagree", { formula: `COUNTIF('List with brand'!J3:J${Math.max(3, last)},"NO")` }]);
+  sum.addRow(["Linked items sold by 1+ other vendor", { formula: `COUNTIF('List with brand'!K3:K${Math.max(3, last)},">=1")` }]);
+  sum.addRow(["Linked items sold by 2+ other vendors", { formula: `COUNTIF('List with brand'!K3:K${Math.max(3, last)},">=2")` }]);
+  sum.addRow(["This list cheaper than every other vendor", { formula: `COUNTIF('List with brand'!M3:M${Math.max(3, last)},"YES")` }]);
+  sum.getColumn(1).width = 42; sum.getColumn(2).width = 40; sum.getColumn(1).font = { bold: true };
+  const buf = Buffer.from(await wb.xlsx.writeBuffer());
+  const safe = head.rows[0].vendor.replace(/[^A-Za-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
+  return { buf, fileName: `${safe}-LIST-WITH-BRAND-${new Date().toISOString().slice(0, 10)}.xlsx` };
+}
