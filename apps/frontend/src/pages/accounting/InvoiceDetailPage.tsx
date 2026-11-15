@@ -629,7 +629,7 @@ export function InvoiceDetailPage() {
               onClick={(event) => {
                 event.preventDefault();
                 event.stopPropagation();
-                navigate(moneyHref(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`));
+                navigate(`/accounting/audit-trail?source_type=invoice&source_id=${encodeURIComponent(invoice.id)}`);
               }}
               type="button"
             >
