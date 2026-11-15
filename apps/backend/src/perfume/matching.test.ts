@@ -39,7 +39,8 @@ describe("PERFUME-DESK matching", () => {
   it("brand-less list (La Esperanza) links when exactly one item has the same name, size, type and gender", () => {
     const ix = seed(PCA);
     const m = matchLine(ix, "esperanza", { description: "212 SEXY W 3.4oz EDP" }, { allowNewItem: false });
-    expect([m.method, m.itemId]).toEqual(["loose_key", "item-1"]);
+    // Owner 2026-11-14 18:23 CT: "212" tells CAROLINA HERRERA (NAME_BRAND_HINTS) — the line now keys exactly.
+    expect([m.method, m.itemId]).toEqual(["key", "item-1"]);
     const brandInText = matchLine(ix, "esperanza", { description: "CH 212 SEXY 3.4 EDP MUJER" }, { allowNewItem: false });
     expect([brandInText.method, brandInText.itemId]).toEqual(["key", "item-1"]);
   });
@@ -48,8 +49,9 @@ describe("PERFUME-DESK matching", () => {
     const ix = seed(PCA);
     const sexyMen = matchLine(ix, "esperanza", { description: "212 SEXY M 3.4oz EDT" }, { allowNewItem: false });
     expect(sexyMen.itemId).toBeNull();
-    // Owner 2026-11-14 17:34 CT: suggestions only from the SAME brand — a line whose brand is not read gets none.
-    expect(sexyMen.suggestions).toEqual([]);
+    // Owner 2026-11-14 17:34 CT: suggestions only from the SAME brand; "212" reads as CAROLINA HERRERA (18:23 CT).
+    expect(sexyMen.suggestions.length).toBeGreaterThan(0);
+    expect(sexyMen.suggestions.every((g) => ix.items.get(g.item_id)?.brand === "CAROLINA HERRERA")).toBe(true);
     const chSexy = matchLine(ix, "esperanza", { brand: "CAROLINA HERRERA", description: "212 SEXY M 3.4oz EDT" }, { allowNewItem: false });
     expect(chSexy.itemId).toBeNull();
     expect(chSexy.suggestions.every((g) => ix.items.get(g.item_id)?.brand === "CAROLINA HERRERA")).toBe(true);
