@@ -297,8 +297,7 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
-  const activeTo =
-    mostSpecificActiveTo(
+  const activeTo = mostSpecificActiveTo(
       pathname,
       items.filter((i) => !i.children?.length).map((i) => i.to),
       search,
