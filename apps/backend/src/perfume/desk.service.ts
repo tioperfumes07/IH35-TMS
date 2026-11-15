@@ -1397,8 +1397,11 @@ async function buildAnalysisLines(c: PoolClient, x: {
   // My list carries the same bottle once per store (owner 2026-11-14 21:43 CT: "some might be various times because
   // they are in different stores"; measured live: 582 lines = 465 items, 78 items on 2–11 lines). The analysis shows
   // ONE row per item: its stock is the sum of every store's qty, its offer price the lowest line, STORES how many lines.
-  const { lines: myOne, storesByItem } = onePerItem(x.myLineQ);
-  const myLines: GridRow[] = myOne.map((l) => {
+  // Owner 2026-11-15 07:10 CT: "if an item is repeated various times … it must show the same amount of lines as the
+  // list" — every line of my list is its own row (one per store, its own qty and price); STORES says how many lines of
+  // my list carry the same item, so the repeats are visible, never merged.
+  const { storesByItem } = onePerItem(x.myLineQ);
+  const myLines: GridRow[] = x.myLineQ.map((l) => {
     const ir = l.item_id ? rowById.get(l.item_id) : undefined;
     const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
     const matched = Boolean(an?.cBest);
@@ -1412,7 +1415,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
-      "a:stores": l.stores,
+      "a:stores": l.item_id ? (storesByItem.get(l.item_id) ?? 1) : 1,
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
       // What the match box links: an item-less line of mine → to an item; a line of mine with its item → a competitor line.
       link_mode: l.item_id ? "line" : "item", link_row: l.id, link_item: l.item_id,
@@ -1448,10 +1451,9 @@ async function buildAnalysisLines(c: PoolClient, x: {
   return { myLines, theirLines };
 }
 
-/** My list carries the same bottle once per store (owner 2026-11-14 21:43 CT: "some might be various times because
- *  they are in different stores"; measured live: 582 lines = 465 items, 78 items on 2–11 lines). One row per item:
- *  stock = the sum of every store's qty, offer = the lowest line price, stores = how many lines. A line not linked to an
- *  item stays its own row. */
+/** My list carries the same bottle once per store (measured live: 582 lines = 465 items, 78 items on 2–11 lines).
+ *  The analysis keeps EVERY line (owner 2026-11-15 07:10 CT: "same amount of lines as the list"); this gives the store
+ *  count per item (storesByItem) and the per-item totals for any view that wants them. */
 export function onePerItem<L extends { id: string; item_id: string | null; qty: number | null; price_cents: number | null }>(lines: readonly L[]):
   { lines: Array<L & { stores: number }>; storesByItem: Map<string, number> } {
   const groups = new Map<string, L[]>();
