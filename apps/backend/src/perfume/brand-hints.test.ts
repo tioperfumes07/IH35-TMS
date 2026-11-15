@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { identify, nameBrandIndex } from "./normalize.js";
+import { compactKey } from "./matching.js";
 
 /** Owner 2026-11-14 18:23 / 18:25 CT corrections on the ESPERANZA list — the brand, and sets. */
 const b = (d: string, nameBrands: Record<string, string> = {}) => identify({ description: d, nameBrands }).brand;
@@ -72,5 +73,14 @@ describe("the owner's own offer-list brand column (18:48 CT)", () => {
   it("SIGNORINA / UOMO with no brand are Ferragamo", () => {
     expect(identify({ description: "SIGNORINA ELEGANZA EDP 100ML (W)" }).brand).toBe("SALVATORE FERRAGAMO");
     expect(identify({ description: "UOMO SALVATORE FERRAGAMO EDT 100ML (M)" }).brand).toBe("SALVATORE FERRAGAMO");
+  });
+});
+
+describe("spacing typos are the same bottle (owner 19:03 CT: LOVEME AMETHYST = LOVE ME AMETHYST)", () => {
+  it("compact keys agree", () => {
+    const a = identify({ description: "TOUS LOVEME THE AMETHYST ELIXIR 90ML (W)" });
+    const b = identify({ description: "TOUS LOVE ME THE AMETHYST ELIXIR 90 ML (W)" });
+    expect(a.key).not.toBe(b.key);
+    expect(compactKey(a.key)).toBe(compactKey(b.key));
   });
 });

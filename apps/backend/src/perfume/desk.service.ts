@@ -4,7 +4,7 @@
  */
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
-import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
+import { addItem, compactKey, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
@@ -756,7 +756,9 @@ export async function relinkSplitItems(c: PoolClient, ix: MatchIndex): Promise<{
   for (const r of rows) {
     const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
     if (!id.brand || !id.nameWords.length) continue;
-    const target = ix.byKey.get(id.key);
+    const ck = compactKey(id.key);
+    const cc = ck ? ix.byCompact.get(ck) ?? [] : [];
+    const target = ix.byKey.get(id.key) ?? (cc.length === 1 ? cc[0] : undefined);
     if (!target || target === r.item_id) continue;
     const others = carriedBy.get(target);
     if (!others || ![...others].some((v) => v !== r.vendor_id)) continue;
@@ -883,6 +885,23 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
   const both = offer != null && esp != null;
   const under = both ? (offer! < esp! ? esp! - offer! : 0) : null;
   const over = both ? (offer! > esp! ? offer! - esp! : 0) : null;
+  const minBuy = both && esp! < offer! ? Math.round(esp! * (1 - a.minMargin / 100)) : null;
+  const money = (c: number) => `$${(c / 100).toFixed(2)}`;
+  // The recommendation, from the same numbers (owner 19:03 CT: "check the logic, if i am purchasing cheaper and selling
+  // cheaper. then the recommendations"): Esperanza cheaper → lower to their price only if I can buy at or under the
+  // min purchase price; I am cheaper → room to raise to their price; a supplier under my last cost → buy there.
+  const advice = (() => {
+    if (offer == null) return esp == null ? null : "Not on my list";
+    if (esp == null) return "Not on Esperanza's list";
+    const cheaperBuy = a.lowPrice != null && a.cost != null && a.lowPrice < a.cost ? ` · buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} (your last cost ${money(a.cost)})` : "";
+    if (offer > esp) {
+      if (a.lowPrice != null && minBuy != null && a.lowPrice <= minBuy) return `LOWER to ${money(esp)} — buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} keeps ${a.minMargin}%+`;
+      if (a.cost != null && minBuy != null && a.cost <= minBuy) return `LOWER to ${money(esp)} — your last cost ${money(a.cost)} keeps ${a.minMargin}%+`;
+      return `CAN'T MATCH at ${a.minMargin}% — need cost ≤ ${money(minBuy ?? 0)}${a.lowPrice != null ? `, lowest supplier ${money(a.lowPrice)}` : ""}`;
+    }
+    if (offer < esp) return `RAISE up to ${money(esp)} (+${money(esp - offer)})${cheaperBuy}`;
+    return `SAME as Esperanza${cheaperBuy}`;
+  })();
   return {
     "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
     "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[a.gender ?? ""] ?? null,
@@ -891,8 +910,13 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     "a:markup": offer != null && a.cost ? p1((offer - a.cost) / a.cost) : null,
     "a:offer": offer, "a:esp": esp,
     "a:low_sales": offer == null && esp == null ? null : Math.min(...[offer, esp].filter((x): x is number => x != null)),
-    "a:min_buy": esp != null ? Math.round(esp * (1 - a.minMargin / 100)) : null, "a:min_margin": a.minMargin,
+    // Owner 2026-11-14 19:03 CT: "the min purchase price to match esperanza should only have items that esperanza is
+    // cheaper". Only where Esperanza sells for less than my offer is there a price to match.
+    "a:min_buy": minBuy, "a:min_margin": a.minMargin,
     "a:low_vendor": a.lowVendor, "a:low_price": a.lowPrice,
+    // Can I buy it cheap enough to match? The lowest supplier price against the most I can pay.
+    "a:buy_check": minBuy == null ? null : a.lowPrice == null ? "No supplier price"
+      : a.lowPrice <= minBuy ? `YES — ${a.lowVendor ?? "supplier"} ${money(a.lowPrice)} ≤ ${money(minBuy)}` : `NO — lowest ${money(a.lowPrice)} is ${money(a.lowPrice - minBuy)} over`,
     "a:offer2": offer, "a:esp2": esp,
     "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
     "a:can_inc": under != null && offer! > 0 ? p1(under / offer!) : null,
@@ -900,6 +924,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     // Over by is NEGATIVE (owner 2026-11-14: "the over by should be negatives so we can really see we are selling more
     // expensive"); the % to lower stays positive — how much to take off my price.
     "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
+    "a:advice": advice,
     "a:c_list": a.comp?.list ?? null, "a:c_cushion": a.comp?.cushion ?? null, "a:c_sales": esp,
     "a:my_desc": a.myDesc, "a:c_desc": a.comp?.desc ?? null, "a:c_brand": a.comp ? (a.cBrand ?? null) : null, "a:c_vendor": a.comp?.vendor ?? null,
   };
@@ -1077,9 +1102,11 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
     A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
+    A("buy_check", "Lowest vendor ≤ min purchase?", "Purchases", "text"),
     A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Cheaper By", "Analysis", "money"),
     A("under_pct", "Cheaper %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
     A("over_by", "More Expensive By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
+    A("advice", "RECOMMENDATION", "Analysis", "text"),
     A("c_list", "LIST PRICE", cGroup, "money"), A("c_cushion", "CUSHION", cGroup, "money"), A("c_sales", "SALES PRICE", cGroup, "money"),
   );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
@@ -1541,7 +1568,8 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:esp2", ["a:esp"], (r) => `${r("a:esp")}`);
   add("a:offer2", ["a:offer"], (r) => `${r("a:offer")}`);
   add("a:low_sales", ["a:offer", "a:esp"], (r) => `MIN(${r("a:offer")},${r("a:esp")})`);
-  add("a:min_buy", ["a:esp", "a:min_margin"], (r) => `${r("a:esp")}*(1-${r("a:min_margin")})`);
+  add("a:min_buy", ["a:esp", "a:min_margin", "a:offer"], (r) => `IF(AND(${r("a:esp")}<>"",${r("a:offer")}<>"",${r("a:esp")}<${r("a:offer")}),${r("a:esp")}*(1-${r("a:min_margin")}),"")`);
+  add("a:buy_check", ["a:min_buy", "a:low_price"], (r) => `IF(${r("a:min_buy")}="","",IF(${r("a:low_price")}="","No supplier price",IF(${r("a:low_price")}<=${r("a:min_buy")},"YES","NO — "&TEXT(${r("a:low_price")}-${r("a:min_buy")},"$0.00")&" over")))`);
   add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:offer")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
   add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:last_cost")}=0,"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
   add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
@@ -1621,10 +1649,13 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     // Every other computed column is a live formula too (owner 2026-11-14: "exported to excel, with formulas").
     for (const f of exportFormulas(cols)) {
       const t = idx(f.target);
-      if (t < 0 || r[f.target] == null || f.deps.some((k) => r[k] == null)) continue;
+      // min purchase / its check are formulas on EVERY row with an offer and an Esperanza price, blank when I am the
+      // cheaper one — so changing a price or the margin in Excel brings them in and out (owner 19:03 CT).
+      const always = f.target === "a:min_buy" || f.target === "a:buy_check";
+      if (t < 0 || (r[f.target] == null && !always) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")))) continue;
       const ref = (k: string) => `${L(idx(k))}${excelRow}`;
       const kind = cols[t]!.kind;
-      const result = kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
+      const result = r[f.target] == null ? "" : kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
       row.getCell(t + 1).value = { formula: f.build(ref), result: result as number };
     }
   });

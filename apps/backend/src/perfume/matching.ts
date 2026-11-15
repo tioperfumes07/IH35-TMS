@@ -33,6 +33,9 @@ export type MatchIndex = {
   items: Map<string, IndexItem>;
   byUpc: Map<string, string>;
   byKey: Map<string, string>;
+  /** The identity key with the name's spaces removed — "LOVEME AMETHYST" = "LOVE ME AMETHYST" (owner 19:03 CT: "loveme
+   *  amethyst is love me amethyst, it is a typo in their list"). Item ids; one id = an exact bottle. */
+  byCompact: Map<string, string[]>;
   byLoose: Map<string, string[]>;
   /** `${nameWords}|${size}|${flags}` → items with that name, size and flags (any brand, type, gender). */
   byName: Map<string, string[]>;
@@ -64,12 +67,14 @@ export type LineMatch = {
 };
 
 export function emptyIndex(brandAliases: Record<string, string> = {}): MatchIndex {
-  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
+  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byCompact: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
 }
 
 export function addItem(ix: MatchIndex, it: IndexItem) {
   ix.items.set(it.id, it);
   ix.byKey.set(it.identityKey, it.id);
+  const ck = compactKey(it.identityKey);
+  if (ck) { const l0 = ix.byCompact.get(ck) ?? []; if (!l0.includes(it.id)) l0.push(it.id); ix.byCompact.set(ck, l0); }
   const l = ix.byLoose.get(it.looseKey) ?? [];
   if (!l.includes(it.id)) l.push(it.id);
   ix.byLoose.set(it.looseKey, l);
@@ -80,6 +85,13 @@ export function addItem(ix: MatchIndex, it: IndexItem) {
 }
 
 /** identity key = brand|name|size|type|gender|flags[|contents]. Sets with listed contents never name-match. */
+/** brand|NAMEWITHOUTSPACES|size|type|gender|flags — null for a key without brand or name. */
+export function compactKey(k: string): string | null {
+  const p = k.split("|");
+  if (p.length < 6 || !p[0] || p[0] === "?" || !p[1]) return null;
+  return [p[0], p[1].replace(/\s+/g, ""), ...p.slice(2)].join("|");
+}
+
 function nameKeyOfIdentityKey(k: string): string | null {
   const p = k.split("|");
   if (p.length !== 6 || p[2] === "?") return null;
@@ -224,6 +236,12 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // A line whose name is empty after cleaning ("DIOR HOMME COLOGNE" → brand + type only) never links by key.
   const named = identity.nameWords.length > 0;
   if (named && identity.brand && ix.byKey.has(identity.key)) return done(ix.byKey.get(identity.key)!, "key");
+  // Same bottle, the name only spaced differently ("LOVEME" / "LOVE ME"): exactly one item → linked.
+  if (named && identity.brand) {
+    const ck = compactKey(identity.key);
+    const cc = ck ? ix.byCompact.get(ck) ?? [] : [];
+    if (cc.length === 1) return done(cc[0]!, "key");
+  }
   // A brand-less line that carries its OWN barcode (one no known item has) is a different product until the owner
   // says otherwise (measured 11-14: PPW "M-SP KING" UPC 819929011994 $2.95 was glued to BHARARA KING by name).
   if (named && !identity.brand && !upc) {
