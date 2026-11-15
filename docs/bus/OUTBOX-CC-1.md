@@ -1,3 +1,5 @@
+## 2026-11-15 — R11.0 #29675 merged origin/main (#29726 settlements-sidebar fix); CI re-running; faro-no-purchased-account red on main (owner decision, not ours)
+
 ## 2026-11-15 — READER PLEASE Settlements-CashAdvances 06016f38 — PR #29643 lineHeight:normal on board root; KPI/emptyText/viewAll/colHeader fixes from #29635-#29641 already on main
 
 ## 2026-11-15 — READER PLEASE Settlements-Close 07a381ad — PR #29642 step buttons display:block+padding:10px 12px (rh 47px); result table → ParityTable (go26 ratchet fix); nav/back/table-rh fixes already in main via #29640/#29635/#29636
