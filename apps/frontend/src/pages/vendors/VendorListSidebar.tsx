@@ -174,7 +174,7 @@ export function VendorListSidebar({
                     cents={(openByVendorId.get(vendor.id) ?? 0) + (unclearedByVendorId?.get(vendor.id)?.uncleared_cents ?? 0)}
                     format={fmtMoney}
                     className="inline"
-                    drill={{ none: "Cleared balance = open bills + uncleared payments — open the vendor to see each" }}
+                    drill={{ entity: { kind: "vendor", id: vendor.id } }} /* cleared balance = open bills + uncleared payments; the vendor page lists each */
                   />
                   <UnclearedDocumentsNote docs={unclearedByVendorId?.get(vendor.id)?.uncleared_documents ?? []} />
                 </>
