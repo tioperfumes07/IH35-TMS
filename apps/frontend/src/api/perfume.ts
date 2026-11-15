@@ -128,6 +128,8 @@ export type PerfumeReviewRow = {
   /** My own offer-list wording for that item. */
   for_my_desc?: string | null;
   list_id: string;
+  /** perfume.vendors id — the Vendor cell opens that vendor's card on the Lists tab. */
+  vendor_id: string;
   vendor_name: string;
   row_no: number;
   upc: string | null;

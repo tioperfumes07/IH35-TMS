@@ -36,7 +36,7 @@ const RECLASSIFY = "apps/frontend/src/pages/accounting/ReclassifyTransactionsPag
  * (EntityLink | AmountLink | EntityLinkOrTombstone). Measured 2026-10-05 after
  * batch 6 (10 -> 4). May only fall.
  */
-const ZERO_LINK_BASELINE = 4;
+const ZERO_LINK_BASELINE = 3;
 
 const NAME_FIELD_RE =
   /\b(account_name|load_number|driver_name|vendor_name|customer_name|unit_number|document_number|trailer_number|item_name)\b/g;

@@ -284,7 +284,9 @@ export type EntityKind =
   // but have no dedicated drill-through route yet — resolveEntityRoute returns null (plain text).
   | "card_payable"
   | "relay_topup"
-  | "company_settlement";
+  | "company_settlement"
+  /** Perfume desk supplier / store (perfume.vendors) — its own table, never mdata.vendors. */
+  | "perfume_vendor";
 
 export interface EntityLinkProps {
   kind: EntityKind;
@@ -413,6 +415,10 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/driver-finance/cash-advance-requests?request_id=${id}`;
     case "finance_loan":
       return `/finance/amortization?loan_id=${id}`;
+    case "perfume_vendor":
+      // Perfume vendors live in perfume.vendors (NOT mdata.vendors, so never /vendors/:id). The Lists tab opens
+      // that vendor's card for edit when vendor_id is on the URL (PerfumeListsPanel VendorsCard).
+      return `/perfume?tab=lists&vendor_id=${encodeURIComponent(id)}`;
     case "lease_contract":
       return `/accounting/leases/${id}`;
     case "legal_contract":
@@ -502,8 +508,6 @@ export function resolveEntityRoute(kind: EntityKind, id: string): string | null 
       return `/maintenance/driver-reports?load_id=${id}`;
     case "training_record":
       return `/safety/training/records?training_id=${id}`;
-    case "legal_contract":
-      return `/legal/contracts?contract_id=${id}`;
     case "company_violation":
       return `/safety/external-fines?record_type=company-violation&violation_id=${id}`;
     case "integrity_alert":

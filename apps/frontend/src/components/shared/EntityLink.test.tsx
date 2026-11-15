@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { EntityLink, resolveEntityRoute } from "./EntityLink";
+import { withReturnContext } from "../../lib/returnContext";
 
 describe("resolveEntityRoute", () => {
   it("resolves each kind with a real per-id detail route", () => {
@@ -57,8 +58,8 @@ describe("EntityLink", () => {
       </MemoryRouter>,
     );
     const link = screen.getByRole("link", { name: "John Doe" });
-    expect(link).toHaveAttribute("href", "/drivers/drv-1");
-    expect(link.className).toContain("text-[#1F2A44]");
+    expect(link).toHaveAttribute("href", withReturnContext("/drivers/drv-1", "/"));
+    expect(link.className).toContain("text-[#111827]");
   });
 
   it("renders claim, lawsuit, and matter deep-links", () => {
@@ -69,15 +70,9 @@ describe("EntityLink", () => {
         <EntityLink kind="matter" id="mat-1" label="MAT-1" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "CLM-1" })).toHaveAttribute(
-      "href",
-      "/insurance/claims?claim_id=clm-1",
-    );
-    expect(screen.getByRole("link", { name: "LAW-1" })).toHaveAttribute(
-      "href",
-      "/legal/lawsuits?insurance_lawsuit_id=law-1",
-    );
-    expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", "/legal/matters/mat-1");
+    expect(screen.getByRole("link", { name: "CLM-1" })).toHaveAttribute("href", withReturnContext("/insurance/claims?claim_id=clm-1", "/"));
+    expect(screen.getByRole("link", { name: "LAW-1" })).toHaveAttribute("href", withReturnContext("/legal/lawsuits?insurance_lawsuit_id=law-1", "/"));
+    expect(screen.getByRole("link", { name: "MAT-1" })).toHaveAttribute("href", withReturnContext("/legal/matters/mat-1", "/"));
   });
 
   it("renders a real <Link> for bill and expense drill-through", () => {
@@ -87,11 +82,8 @@ describe("EntityLink", () => {
         <EntityLink kind="expense" id="exp-1" label="EXP-0001" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "BILL-0001" })).toHaveAttribute("href", "/accounting/bills/bill-1");
-    expect(screen.getByRole("link", { name: "EXP-0001" })).toHaveAttribute(
-      "href",
-      "/accounting/expenses/exp-1",
-    );
+    expect(screen.getByRole("link", { name: "BILL-0001" })).toHaveAttribute("href", withReturnContext("/accounting/bills/bill-1", "/"));
+    expect(screen.getByRole("link", { name: "EXP-0001" })).toHaveAttribute("href", withReturnContext("/accounting/expenses/exp-1", "/"));
   });
 
   it("renders plain text (no link, no crash) when id is missing", () => {
@@ -110,10 +102,7 @@ describe("EntityLink", () => {
         <EntityLink kind="vendor" id="vnd-42" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "vnd-42" })).toHaveAttribute(
-      "href",
-      "/vendors/vnd-42",
-    );
+    expect(screen.getByRole("link", { name: "vnd-42" })).toHaveAttribute("href", withReturnContext("/vendors/vnd-42", "/"));
   });
 
   it("resolves the settlement query-param route as a real link", () => {
@@ -122,10 +111,7 @@ describe("EntityLink", () => {
         <EntityLink kind="settlement" id="stl-9" label="Settlement 9" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "Settlement 9" })).toHaveAttribute(
-      "href",
-      "/driver-finance/settlements?settlement_id=stl-9",
-    );
+    expect(screen.getByRole("link", { name: "Settlement 9" })).toHaveAttribute("href", withReturnContext("/driver-finance/settlements?settlement_id=stl-9", "/"));
   });
 
   it("resolves the cash_advance query-param route as a real link (Law §9 2026-07-22)", () => {
@@ -134,9 +120,9 @@ describe("EntityLink", () => {
         <EntityLink kind="cash_advance" id="adv-1" label="CA-2026-0001" />
       </MemoryRouter>,
     );
-    expect(screen.getByRole("link", { name: "CA-2026-0001" })).toHaveAttribute(
-      "href",
-      "/cash-advances?advance_id=adv-1",
-    );
+    expect(screen.getByRole("link", { name: "CA-2026-0001" })).toHaveAttribute("href", withReturnContext("/cash-advances?advance_id=adv-1", "/"));
+  });
+  it("routes a perfume vendor to the perfume desk Lists tab, never the TMS vendor page", () => {
+    expect(resolveEntityRoute("perfume_vendor", "pv 1")).toBe("/perfume?tab=lists&vendor_id=pv%201");
   });
 });
