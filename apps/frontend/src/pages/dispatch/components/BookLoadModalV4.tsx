@@ -393,8 +393,10 @@ export function BookLoadModalV4({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [headerTime] = useState(() => formatDateTimeUS(new Date()) || "—");
   // ROUND 443.257 / 443.280-C — Side panel (760px) | Center (1260px); remember per browser.
-  const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
+    const [bookLoadPresentation, setBookLoadPresentation] = useState<"side" | "center">(() => {
     try {
+      const q = new URLSearchParams(window.location.search).get("presentation");
+      if (q === "side" || q === "center") return q;
       return localStorage.getItem("ih35.bookLoad.presentation") === "side" ? "side" : "center";
     } catch {
       return "center";
@@ -1997,7 +1999,7 @@ export function BookLoadModalV4({
         data-wizard-v5={wizardV5 ? "on" : undefined}
         className={
           bookLoadPresentation === "side"
-            ? "flex h-full max-h-[100dvh] w-[760px] max-w-[100vw] flex-col overflow-hidden border-l border-gray-200 bg-white shadow-2xl"
+            ? "flex h-full max-h-[100dvh] w-[760px] max-w-[100vw] flex-col overflow-hidden"
             : "flex max-h-[min(95vh,calc(100dvh-2rem))] flex-col overflow-hidden rounded-md border border-gray-200 bg-[var(--surface)] shadow-2xl"
         }
         // Owner 2026-07-04: let the dispatcher shrink/resize the wizard from the bottom-right corner so they
@@ -2010,7 +2012,16 @@ export function BookLoadModalV4({
         data-board-width={bookLoadPresentation === "side" ? "760" : "1260"}
         style={
           bookLoadPresentation === "side"
-            ? { width: "min(760px, 100vw)", minWidth: 440, minHeight: "100%", lineHeight: "normal", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }
+            ? {
+                width: "min(760px, 100vw)",
+                minWidth: 440,
+                minHeight: "100%",
+                lineHeight: "normal",
+                fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                background: "#F4F3EF",
+                borderLeft: "1px solid #DDE1E7",
+                boxShadow: "-12px 0 30px rgba(17,24,39,.14)",
+              }
             : {
                 width: "min(1260px, calc(100vw - 2rem))",
                 maxWidth: 1260,
@@ -2025,21 +2036,27 @@ export function BookLoadModalV4({
       >
         {/* ROUND 9.4 Board 14 — header identical to Dispatch-BookLoad-Modal.dc.html (#13233F, Side/Center 600 11px). */}
         <header
-          className="flex shrink-0 items-center justify-between border-b px-4 py-2.5 text-white"
-          style={{ background: "#13233F", lineHeight: "normal", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}
+          className="flex shrink-0 items-center border-b text-white"
+          style={{
+            background: "#13233F",
+            lineHeight: "normal",
+            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            padding: bookLoadPresentation === "side" ? "12px 18px" : "10px 16px",
+            gap: 10,
+          }}
         >
           <div>
             <div style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", lineHeight: "normal" }}>
               {isEditMode
                 ? "Dispatch › Edit load"
                 : entryPoint?.kind === "truck-line"
-                  ? `Dispatch › Truck Line › ${entryPoint.unitLabel ?? "Truck"}`
+                  ? `Dispatch › Truck Line › ${entryPoint.unitLabel ?? "Truck"} · Assign a load`
                   : "Dispatch › Book load"}
             </div>
             {/* Two literal headings (not a ternary string) so the locked-ui-surface guard still sees the
                 ">Book load<" text node for the create wizard while Edit shows the load number. */}
             {isEditMode ? (
-              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 16px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Edit load</span>
                 {editLoad?.id ? (
                   <EntityLink
@@ -2052,7 +2069,7 @@ export function BookLoadModalV4({
                 ) : null}
               </div>
             ) : (
-              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 18px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+              <div id="book-load-dialog-title" style={{ display: "flex", alignItems: "center", gap: 6, font: "700 16px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
                 <span>Book load</span>
                 {prefillUnitLabel ? <span data-testid="book-load-header-unit">for {prefillUnitLabel}</span> : null}
                 {prefillLaneStatus ? (
@@ -2063,8 +2080,8 @@ export function BookLoadModalV4({
               </div>
             )}
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, color: "rgba(255,255,255,0.75)", fontSize: 11 }}>
-            <span data-v3="header.time">{headerTime}</span>
+          <span style={{ flex: 1 }} aria-hidden />
+          <div style={{ display: "flex", alignItems: "center", gap: bookLoadPresentation === "side" ? 10 : 12, color: "rgba(255,255,255,0.75)", fontSize: 11 }}>
             <span
               style={{ display: "inline-flex", background: "rgba(255,255,255,0.12)", borderRadius: 6, padding: 2, gap: 2 }}
               role="group"
@@ -2108,6 +2125,7 @@ export function BookLoadModalV4({
                 Center
               </button>
             </span>
+            <span data-v3="header.time">{headerTime}</span>
             <button
               type="button"
               onClick={attemptBookLoadClose}

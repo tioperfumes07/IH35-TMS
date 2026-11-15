@@ -28,6 +28,8 @@ export function V3KpiTile({
   noDrill,
   testId,
   board = false,
+  valueDataV3,
+  subDataV3,
 }: {
   label: string;
   value: string;
@@ -49,6 +51,8 @@ export function V3KpiTile({
   testId?: string;
   /** Draw the V3 board tile (docs/design/v3) instead of the approved Home tile. */
   board?: boolean;
+  valueDataV3?: string;
+  subDataV3?: string;
 }) {
   const Tag = onClick ? "button" : "div";
   const tooltip = title ?? (noDrill ? `${label} — ${noDrill}` : label);
@@ -97,6 +101,7 @@ export function V3KpiTile({
         </span>
         <span
           className="n"
+          data-v3={valueDataV3}
           style={{
             fontSize: V3_KPI.valuePx,
             fontWeight: 700,
@@ -110,6 +115,7 @@ export function V3KpiTile({
         {/* A V3 board always draws the sub line, empty or not (its 3px gap is part of the tile's height). */}
         {(board || (sub != null && sub !== "")) && (
           <span
+            data-v3={subDataV3}
             style={{
               fontSize: V3_KPI.subPx,
               color: V3.muted,

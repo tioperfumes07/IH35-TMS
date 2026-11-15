@@ -191,7 +191,21 @@ export type PerfumeBulkResult = { rows: number; linked: number; items_created: n
 export const canonicalizePerfumeBrands = () =>
   apiRequest<{ checked: number; renamed: number; merged: number; brands: Record<string, string> }>("/api/v1/perfume/items/canonicalize-brands", { method: "POST", body: {} });
 /** Re-runs the matching engine over every line still in Review (new suggestions, new links). */
-export const rematchPerfumeReview = () => apiRequest<Record<string, number>>("/api/v1/perfume/review/rematch", { method: "POST", body: {} });
+export type PerfumeRematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: Record<string, number> | null; error: string | null };
+/** Starts the Review rematch (it runs in the background, minutes) and waits for it — polling every 3 s. */
+export async function rematchPerfumeReview(): Promise<Record<string, number>> {
+  const started = await apiRequest<PerfumeRematchJob>("/api/v1/perfume/review/rematch", { method: "POST", body: {} });
+  // The API runs on more than one server and the job lives on the one that started it (measured 02:03Z: GET answered
+  // "idle" 7 times out of 8). Keep asking until the server running THIS job (same started_at) says done or failed.
+  for (let i = 0; i < 400; i++) {
+    await new Promise((r) => setTimeout(r, 3000));
+    const job = await apiRequest<PerfumeRematchJob>("/api/v1/perfume/review/rematch");
+    if (job.started_at !== started.started_at) continue;
+    if (job.state === "failed") throw new Error(job.error ?? "Rematch failed");
+    if (job.state === "done" && job.result) return job.result;
+  }
+  throw new Error("Rematch still running — check again in a minute");
+}
 export const bulkPerfumeReview = (b: PerfumeBulkAction) => apiRequest<PerfumeBulkResult>("/api/v1/perfume/rows/bulk", { method: "POST", body: b });
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
