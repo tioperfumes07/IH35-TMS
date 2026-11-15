@@ -290,18 +290,26 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
   // ROUND 9.0 (owner 2026-11-13: screens identical to docs/design/v3) — measured on Banking.png / Settlements.png:
   // the bar is 32 px tall, #13233F, square; the active tab is a full-height rgba(255,255,255,.16) box (#38465D on the navy) with a 2 px white rule
   // under it; tabs are 8 px padded, 4 px apart. Replaces the C-22 28 px underline style.
-  const tabClass = (active: boolean) =>
-    `inline-flex h-8 items-center gap-1 whitespace-nowrap border-b-2 px-2 ${active ? "border-white bg-white/[.16]" : "border-transparent text-white/85"}`;
+  // ROUND 10.1 (Lead live reader sweep 11-15 17:27Z, 21 boards): the design's bar is the TABS' OWN parent —
+  // <div style="background:#13233F;display:flex;gap:2px;padding:0 6px"> — and each tab is
+  // <span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">; the active one adds
+  // background:rgba(255,255,255,.16);border-bottom:2px solid #fff and drops the opacity. Inactive tabs draw NO border.
+  const tabClass = (_active: boolean) => "whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white";
+  const tabStyle = (active: boolean): CSSProperties => ({
+    display: "block", boxSizing: "content-box", padding: "8px 8px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+    fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff", whiteSpace: "nowrap",
+    ...(active ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" } : { opacity: 0.85 }),
+  });
   return (
     <nav
       aria-label="Section navigation"
       data-testid="navy-page-subnav"
       data-c22-tab-height="h-8"
-      className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] px-1.5 text-section-header font-semibold text-white"
+      className="min-h-8 min-w-0 max-w-full shrink-0 overflow-x-auto bg-[#13233F] text-white"
       // Every V3 board (42 of 42 .dc.html): tabs 2 px apart, 600 11px Inter, line-height normal.
       style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}
     >
-      <div className="flex h-8 min-w-max items-stretch gap-0.5">
+      <div className="min-w-max" style={{ display: "flex", gap: 2, padding: "0 6px", backgroundColor: "#13233F", boxSizing: "content-box" }}>
         {items.map((item, index) => {
           if (item.children?.length) {
             return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
@@ -316,6 +324,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
                 data-testid={item.testId}
                 aria-current={active ? "page" : undefined}
                 className={tabClass(active)}
+                style={tabStyle(active)}
                 onClick={() => onTabChange(id)}
               >
                 {item.label}
@@ -330,6 +339,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
               data-testid={item.testId}
               aria-current={activeTo === item.to ? "page" : undefined}
               className={tabClass(activeTo === item.to)}
+              style={tabStyle(activeTo === item.to)}
             >
               {item.label}
               {item.hasData ? <DataDot /> : null}
