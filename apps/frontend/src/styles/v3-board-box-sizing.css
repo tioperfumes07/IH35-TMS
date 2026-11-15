@@ -1,0 +1,6 @@
+/* V3 boards (docs/design/v3/*.dc.html) are authored on the browser's default box model (content-box). The app's
+   preflight sets border-box on every element. Live reader 11-15 17:27Z: 889 boxSizing mismatches on 25 boards,
+   because this rule only reached boards whose page chunk imported board-box.css. Loaded once, app-wide, so every
+   element inside any [data-v3-board] root draws on the board's box model. Buttons keep border-box, as on the board.
+   The board-shell padding stays in assets/fonts/v3-maintenance/board-box.css (shell roots only). */
+[data-v3-board] *:not(button), [data-v3-board] *::before, [data-v3-board] *::after { box-sizing: content-box; }

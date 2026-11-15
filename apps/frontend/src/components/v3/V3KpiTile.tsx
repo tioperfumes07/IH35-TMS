@@ -75,7 +75,9 @@ export function V3KpiTile({
       boxSizing: "border-box" as const,
     }),
     textAlign: "left",
-    width: "100%",
+    // board: the board's tile has no width — the grid track stretches it. width:100% under the board's content-box
+    // (board-box.css) would add the 24px padding + 2px border on top of the track and overflow it.
+    ...(board ? {} : { width: "100%" }),
     cursor: onClick || href ? "pointer" : undefined,
     textDecoration: "none",
     color: "inherit",
