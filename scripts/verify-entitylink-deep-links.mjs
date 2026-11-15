@@ -10,6 +10,7 @@ import fs from "node:fs";
 import path from "node:path";
 import ts from "typescript";
 import { fileURLToPath } from "node:url";
+import { unwrapReturnContext } from "./lib/unwrap-return-context.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-entitylink-deep-links";
@@ -740,7 +741,7 @@ function main() {
   const sources = Object.fromEntries(
     Object.entries(FILES).map(([key, file]) => {
       const absolute = path.join(ROOT, file);
-      return [key, fs.existsSync(absolute) ? fs.readFileSync(absolute, "utf8") : null];
+      return [key, fs.existsSync(absolute) ? unwrapReturnContext(fs.readFileSync(absolute, "utf8")) : null];
     }),
   );
   const failures = assertContracts(sources);

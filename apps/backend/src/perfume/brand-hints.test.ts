@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { identify, nameBrandIndex } from "./normalize.js";
+import { compactKey } from "./matching.js";
 
 /** Owner 2026-11-14 18:23 / 18:25 CT corrections on the ESPERANZA list — the brand, and sets. */
 const b = (d: string, nameBrands: Record<string, string> = {}) => identify({ description: d, nameBrands }).brand;
@@ -32,9 +33,14 @@ describe("brands the owner named on the ESPERANZA list", () => {
     expect(b("STALLION 53 BLUE")).toBe("EMPER");
   });
   it("cross-reference: a name only one brand owns across every vendor's items gives that brand", () => {
-    const idx = nameBrandIndex([{ brand: "LATTAFA", name: "ASAD" }, { brand: "LATTAFA", name: "ASAD ZANZIBAR" }, { brand: "ARMAF", name: "BLUE HOMME" }, { brand: "DIOR", name: "BLUE" }]);
+    const idx = nameBrandIndex([{ brand: "LATTAFA", name: "ASAD" }, { brand: "LATTAFA", name: "ASAD ZANZIBAR" }, { brand: "LATTAFA", name: "YARA" },
+      { brand: "ARMAF", name: "BLUE HOMME" }, { brand: "DIOR", name: "BLUE" },
+      // live 11-14: misspelled item brands must not teach a brand — "BURBERRY HER" under "BURBE", "GUESS UOMO" under a Ferragamo misspelling
+      { brand: "XBURB", name: "BURBERRY HER" }, { brand: "XBURB", name: "BURBERRY HERO" }, { brand: "XBURB", name: "BURBERRY GODDESS" },
+      { brand: "BURBERRY", name: "TOUCH" }, { brand: "GUESS", name: "SEDUCTIVE" }]);
     expect(b("ASAD 3.4oz EDP M", idx)).toBe("LATTAFA");
     expect(idx.BLUE).toBeUndefined(); // generic word, never a brand
+    expect(idx.BURBERRY).toBeUndefined(); // a name that starts with a brand never teaches another brand
   });
 });
 describe("sets the owner said were missed", () => {
@@ -45,5 +51,87 @@ describe("sets the owner said were missed", () => {
     const f = identify({ description: "GUESS SEDUCTIVE NOIR W 4PCS / BAG" }).flags;
     expect(f).toContain("SET");
     expect(f).not.toContain("VARIOUS");
+  });
+});
+describe("the owner's own offer-list brand column (18:48 CT)", () => {
+  const col = (brand: string, d = "X 100ML (M)") => identify({ description: d, brand }).brand;
+  it("short brands map to the brand his vendors use", () => {
+    expect(col("GIORA", "ACQUA DI GIO EDT 100ML (W)")).toBe("GIORGIO ARMANI");
+    expect(col("HOL", "WAVE FOR HER EDP 100ML (W)")).toBe("HOLLISTER");
+    expect(col("ISSEY")).toBe("ISSEY MIYAKE");
+    expect(col("JDEL")).toBe("JESUS DEL POZO");
+    expect(col("J DEL")).toBe("JESUS DEL POZO");
+    expect(col("MONTB")).toBe("MONTBLANC");
+    expect(col("MOSCH")).toBe("MOSCHINO");
+    expect(col("NAUTI")).toBe("NAUTICA");
+    expect(col("NARCISO RD")).toBe("NARCISO RODRIGUEZ");
+    expect(col("NIN")).toBe("NINA RICCI");
+    expect(col("SALVF")).toBe("SALVATORE FERRAGAMO");
+    expect(col("THEIR")).toBe("MUGLER");
+    expect(col("CAROH", "212 MEN EDT 100ML (M)")).toBe("CAROLINA HERRERA");
+  });
+  it("SIGNORINA / UOMO with no brand are Ferragamo", () => {
+    expect(identify({ description: "SIGNORINA ELEGANZA EDP 100ML (W)" }).brand).toBe("SALVATORE FERRAGAMO");
+    expect(identify({ description: "UOMO SALVATORE FERRAGAMO EDT 100ML (M)" }).brand).toBe("SALVATORE FERRAGAMO");
+  });
+});
+
+describe("spacing typos are the same bottle (owner 19:03 CT: LOVEME AMETHYST = LOVE ME AMETHYST)", () => {
+  it("compact keys agree", () => {
+    const a = identify({ description: "TOUS LOVEME THE AMETHYST ELIXIR 90ML (W)" });
+    const b = identify({ description: "TOUS LOVE ME THE AMETHYST ELIXIR 90 ML (W)" });
+    expect(a.key).not.toBe(b.key);
+    expect(compactKey(a.key)).toBe(compactKey(b.key));
+  });
+});
+describe("DONNA, DKNY and DONNA KARAN are one brand (owner 19:11 CT)", () => {
+  it("every spelling", () => {
+    for (const d of ["DKNY GOLDEN DELICIOUS W EDP 3.4oz", "DONNA KARAN CASHMERE MIST 3.4oz"]) expect(identify({ description: d }).brand).toBe("DONNA KARAN");
+    expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DONNA" }).brand).toBe("DONNA KARAN");
+    expect(identify({ description: "BE DELICIOUS EDP 100ML (W)", brand: "DKNY" }).brand).toBe("DONNA KARAN");
+  });
+});
+describe("ESPERANZA unmatched lines measured live 11-15", () => {
+  it("a phrase one brand dominates teaches that brand (DAISY: MARC JACOBS 47, DISNEY Daisy Duck 2)", () => {
+    const items = [...Array(47)].map((_, i) => ({ brand: "MARC JACOBS", name: `DAISY ${["LOVE", "WILD", "DREAM", ""][i % 4]}` }))
+      .concat([{ brand: "DISNEY", name: "DAISY DUCK" }, { brand: "DISNEY", name: "DAISY DUCK 2" }, { brand: "DISNEY", name: "MICKEY" }]);
+    const idx = nameBrandIndex(items);
+    expect(idx["DAISY"]).toBe("MARC JACOBS");
+    expect(identify({ description: "DAISY 3.4 EDT", nameBrands: idx }).brand).toBe("MARC JACOBS");
+  });
+  it("a phrase two brands really share teaches nothing", () => {
+    const items = [...Array(6)].map(() => ({ brand: "RAVE", name: "NOW BLACK" })).concat([...Array(4)].map(() => ({ brand: "TOMMY HILFIGER", name: "NOW MEN" })));
+    expect(nameBrandIndex(items)["NOW"]).toBeUndefined();
+  });
+  it("BMIST / B.M / B/MIST are a body mist; CAPITAN is CAPTAIN", () => {
+    for (const d of ["PARIS HILTON HEIRESS BMIST 8OZ", "ARIANA GRANDE THANK YOU NEXT B.M 8OZ", "PARIS HILTON HEIRESS B/MIST 8OZ"])
+      expect(identify({ description: d }).conc).toBe("MIST");
+    expect(identify({ description: "CAPITAN AMERICA 3.4 EDT" }).brand).toBe("MARVEL");
+  });
+});
+describe("ESPERANZA sets list pieces first, fragrance last (measured live 11-15)", () => {
+  it("brand and name come from after the last piece; size/type from the main bottle", () => {
+    const cases: Array<[string, string]> = [
+      ["100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP", "DOLCE & GABBANA|QUEEN 3PC SET|100|EDP|W|SET"],
+      ["6.7EDT+6.7BL+3.4SGEL+0.50EDT D&G LIGHT BLUE MEN 2PC SET", "DOLCE & GABBANA|LIGHT BLUE 2PC SET|200|EDT|M|SET"],
+      ["3.4OZ+BL+0.5OZ TRAVEL SPRAY J CHOO L'EAU W 4PC SET", "JIMMY CHOO|LEAU 4PC SET|100|?|W|SET"],
+      ["100ML EDP+100ML A/SHAVE+POUCH CRISTIANO R. CR7 GAME ON M 3PC SET", "CRISTIANO RONALDO|CR7 GAME ON 3PC SET|100|EDP|M|SET"],
+    ];
+    for (const [d, k] of cases) expect(identify({ description: d }).key.startsWith(k)).toBe(true);
+  });
+  it("a set that names its main bottle first is unchanged", () => {
+    expect(identify({ description: "100% PASSION 3.4 EDT M + 6.7 H/BW + 15ML" }).key.startsWith("?|100% PASSION|100|EDT|M|SET")).toBe(true);
+  });
+});
+describe("HALLOWEEN is a JESUS DEL POZO line (owner 11-14)", () => {
+  it("leading word or brand column — the house is the brand, HALLOWEEN stays in the name", () => {
+    expect(identify({ description: "HALLOWEEN BLOSSOM W 3.4oz EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN BLOSSOM|100|EDT|W")).toBe(true);
+    expect(identify({ description: "BLOSSOM", brand: "HALLOWEEN" }).brand).toBe("JESUS DEL POZO");
+    expect(identify({ description: "JESUS DEL POZO HALLOWEEN KISS W 3.4 EDT" }).key.startsWith("JESUS DEL POZO|HALLOWEEN KISS|")).toBe(true);
+  });
+  it("ESPERANZA short brand forms", () => {
+    expect(identify({ description: "MAISON A SALVO M EDP 3.4oz" }).brand).toBe("MAISON ALHAMBRA");
+    expect(identify({ description: "B.SPEARS PREROGATIVE 8OZ BMIST" }).brand).toBe("BRITNEY SPEARS");
+    expect(identify({ description: "GLORIA VANDERVILT W 3.4 EDT" }).brand).toBe("GLORIA VANDERBILT");
   });
 });
