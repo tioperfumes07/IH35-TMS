@@ -184,6 +184,22 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
 /** Owner 2026-11-12: "we need to have multiple selector to change gender or assign …" — one action over the ticked lines. */
 /** Owner 2026-11-12: "select multiple items so we can choose 100–200 at a time and click confirm or use suggestion at
  * once, because one by one takes very long." Picking is one click (whole page, or every line at/above a likeness). */
+/**
+ * Owner 2026-11-15 16:44 CT: "make it faster, when i click on a suggestion or i select multiple and confirm … it takes a
+ * very long time." Measured live 22:33Z: the confirm itself answers in 57 ms; the click then WAITED for every perfume
+ * view to reload (Review 5.7 s). Now the lines the owner just settled leave the list at once and the toast shows at
+ * once; the views reload in the background (the server stays the authority — the reload replaces this at once).
+ */
+function dropReviewLines(qc: ReturnType<typeof useQueryClient>, ids: string[]) {
+  const gone = new Set(ids);
+  qc.setQueriesData<{ rows: PerfumeReviewRow[]; total: number } | undefined>({ queryKey: ["perfume", "review"] }, (d) => {
+    if (!d || !Array.isArray(d.rows)) return d;
+    const rows = d.rows.filter((r) => !gone.has(r.id));
+    return { ...d, rows, total: Math.max(0, d.total - (d.rows.length - rows.length)) };
+  });
+  void qc.invalidateQueries({ queryKey: ["perfume"] });
+}
+
 function BulkBar({ selected, onDone, rows, onSelect }: { selected: string[]; onDone: () => void; rows: PerfumeReviewRow[]; onSelect: (ids: string[]) => void }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
@@ -200,7 +216,9 @@ function BulkBar({ selected, onDone, rows, onSelect }: { selected: string[]; onD
     setBusy(true);
     try {
       const r = await bulkPerfumeReview(b);
-      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      // A gender change keeps the lines in Review (they re-read); every other action settles them.
+      if (b.action === "set_gender") void qc.invalidateQueries({ queryKey: ["perfume"] });
+      else dropReviewLines(qc, b.row_ids.filter((id) => !r.skipped.some((x) => x.row_id === id)));
       const parts = [`${what}: ${r.rows} line${r.rows === 1 ? "" : "s"}`];
       if (r.linked) parts.push(`${r.linked} linked`);
       if (r.now_matched) parts.push(`${r.now_matched} now matched by the engine`);
@@ -279,7 +297,7 @@ function ConfirmControls({ row }: { row: PerfumeReviewRow }) {
     setBusy(true);
     try {
       const r = await confirmPerfumeRow(row.id, target);
-      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      dropReviewLines(qc, [row.id]);
       pushToast(`Linked ${r.rows_linked} line${r.rows_linked === 1 ? "" : "s"}`, "success");
     } catch (e) { pushToast(userFacingApiError(e, "Not linked"), "error"); } finally { setBusy(false); }
   };
