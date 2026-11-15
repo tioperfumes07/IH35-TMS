@@ -208,7 +208,24 @@ export async function rekeyItems(c: PoolClient, opts: { dryRun: boolean }): Prom
 
 /** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
  *  reading of a line — import, Review, List analysis — uses it. Re-read on every call: one cheap query. */
+/**
+ * Speed (owner 2026-11-15 16:44 CT, measured live 22:33Z: every Review reload 5.7 s): the brand index was rebuilt from
+ * all 14,414 items on EVERY request. It is now rebuilt only when perfume.items or perfume.brand_aliases were written —
+ * read from Postgres's write counters (one catalog row per table). A write on THIS server also drops the remembered
+ * index at once (invalidateGridCache runs after every desk write).
+ */
+let nameBrandsSig: string | null = null;
+export function currentNameBrandsSig(): string | null { return nameBrandsSig; }
 export async function loadNameBrands(c: PoolClient): Promise<void> {
+  // Fingerprint = Postgres's own write counters for the two tables (inserts / updates / deletes since stats reset).
+  // Measured live 23:05Z: hashing every item row under RLS cost 1.1–4.8 s per Review read; these counters cost one
+  // catalog row each. Any write to perfume.items or perfume.brand_aliases, from any server, moves them (stats flush
+  // within about a second); a stats reset only forces one rebuild.
+  const sig = (await c.query<{ s: string }>(
+    `SELECT string_agg(relname || ':' || n_tup_ins || ':' || n_tup_upd || ':' || n_tup_del, '|' ORDER BY relname) AS s
+       FROM pg_stat_user_tables WHERE schemaname = 'perfume' AND relname IN ('items', 'brand_aliases')`)).rows[0]?.s ?? null;
+  // No fingerprint read → never trust a remembered index (rebuild every time).
+  if (sig !== null && sig === nameBrandsSig) return;
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const it = await c.query<{ brand: string; name: string }>(`SELECT brand, name FROM perfume.items WHERE merged_into_id IS NULL`);
   const al = Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]));
@@ -216,6 +233,7 @@ export async function loadNameBrands(c: PoolClient): Promise<void> {
   const n = new Map<string, number>();
   for (const r of it.rows) { const b = canonicalBrand(r.brand, al); if (b) n.set(b, (n.get(b) ?? 0) + 1); }
   setDeskBrands([...n].filter(([, c]) => c >= 5).map(([b]) => b));
+  nameBrandsSig = sig;
 }
 
 export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
@@ -573,7 +591,27 @@ export async function setListCurrent(c: PoolClient, listId: string, current: boo
 
 /* ---------------- review & confirm ---------------- */
 
-export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number }) {
+/** The engine's reading of a Review line, remembered per exact input and per brand fingerprint (same input, same
+ * brand index → same reading). Dropped whole when the fingerprint changes. */
+const identityCache = new Map<string, Identity>();
+let identityCacheSig: string | null = null;
+function cachedIdentity(line: { description: string; brand: string | null; size: string | null; gender: string | null }, aliases: Record<string, string>): Identity {
+  const sig = currentNameBrandsSig();
+  if (sig === null) return identify({ ...line, brandAliases: aliases });
+  if (sig !== identityCacheSig || identityCache.size > 50_000) { identityCache.clear(); identityCacheSig = sig; }
+  const key = JSON.stringify([line.description, line.brand, line.size, line.gender]);
+  let id = identityCache.get(key);
+  if (!id) { id = identify({ ...line, brandAliases: aliases }); identityCache.set(key, id); }
+  return id;
+}
+
+/** Review filters read from the line itself (owner 2026-11-15: "filter by men or women, or by gender or by type, or set
+ * or tester or those with suggestions"). Values are the engine's own reading of the vendor line: gender M / W / U / none,
+ * type (EDT, EDP, PARFUM …), kind (SET, TESTER, MINI, REFILL … or NONE for a regular bottle), category, brand. */
+export type ReviewLineFilters = { gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[] };
+export type ReviewFacet = { value: string; count: number };
+
+export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number } & ReviewLineFilters) {
   // Filters (owner 2026-11-12: "1788 items, lets have the filters"): one vendor list, words in the vendor's line,
   // and "has a suggestion" (review) vs "nothing close" (unmatched).
   const cond: string[] = [];
@@ -585,16 +623,20 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
   }
   const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
+  const tStart = Date.now();
   await loadNameBrands(c);
+  const tBrands = Date.now();
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
   // of my offer items; paging happens after that filter.
   const mine = opts.mine === "offer";
+  // Every waiting line is read (measured 2026-11-15: 1,496 on current lists) so the line filters — which come from the
+  // engine's reading of the text, not from a column — and their counts are exact; paging happens after the filters.
   const rows = await c.query(
     `SELECT r.id, r.list_id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
-       ${base} ORDER BY v.name, r.row_no ${mine ? "" : `LIMIT $${fp.length + 1} OFFSET $${fp.length + 2}`}`, mine ? fp : [...fp, opts.limit, opts.offset]);
-  const total = mine ? null : await c.query<{ n: number }>(`SELECT count(*)::int AS n ${base}`, fp);
+       ${base} ORDER BY v.name, r.row_no`, fp);
+  const tRows = Date.now();
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
     // my_desc: my own offer-list wording for the item (owner 2026-11-14: "showing my description name and la
     // esperanza description name … so i can verify they are matched correctly").
@@ -610,7 +652,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
   const out = rows.rows.map((r: Record<string, unknown>) => {
-    const id = identify({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null, brandAliases: aliases });
+    const id = cachedIdentity({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null }, aliases);
     const tail = vendorLineTail(String(r.description ?? ""));
     const base = { ...r, brand_name: id.brand || null, model: id.nameText || null, size_ml: id.sizeMl, conc: id.conc || null, gender: id.gender || null,
       flags: id.flags.join(" "), category: categoryOf(id.gender, id.flags), country: tail.country, case_pack: (r.case_pack as number | null) ?? tail.casePack, sku: (r.sku as string | null) ?? tail.code };
@@ -622,13 +664,40 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     const forMine = [...offer];
     return { ...base, suggestions: [...forMine, ...engine.filter((s) => !forMine.some((o) => o.item_id === s.item_id))], for_my_item: forMine[0] ? (forMine[0] as { display_name?: string }).display_name ?? null : null, for_my_desc: forMine[0] ? myDesc.get(forMine[0].item_id) ?? null : null, _mine: forMine.length > 0 };
   });
-  if (!mine) return { rows: out, total: total!.rows[0].n };
+  const tRead = Date.now();
+  type LineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown; gender?: string | null; conc?: string | null; flags?: string; category?: string; brand_name?: string | null };
   // Grouped by my item, then vendor, so the owner confirms item by item.
-  type MineRow = Record<string, unknown> & { _mine?: boolean; for_my_item?: string | null; vendor_name?: unknown };
-  const kept = (out as MineRow[]).filter((r) => r._mine)
+  const scoped: LineRow[] = !mine ? (out as LineRow[]) : (out as LineRow[]).filter((r) => r._mine)
     .sort((a, b) => String(a.for_my_item).localeCompare(String(b.for_my_item)) || String(a.vendor_name).localeCompare(String(b.vendor_name)))
     .map(({ _mine: _drop, ...rest }) => rest);
-  return { rows: kept.slice(opts.offset, opts.offset + opts.limit), total: kept.length };
+  const genderOf = (r: LineRow) => (r.gender ? String(r.gender) : "none");
+  const concOf = (r: LineRow) => (r.conc ? String(r.conc) : "none");
+  const kindsOf = (r: LineRow) => { const f = String(r.flags ?? "").split(/\s+/).filter(Boolean); return f.length ? f : ["NONE"]; };
+  const catOf = (r: LineRow) => String(r.category ?? "Unknown");
+  const brandOf = (r: LineRow) => (r.brand_name ? String(r.brand_name) : "none");
+  const want = (vals: string[] | undefined) => (vals?.length ? new Set(vals) : null);
+  const wG = want(opts.gender), wC = want(opts.conc), wK = want(opts.kind), wCat = want(opts.category), wB = want(opts.brand);
+  const pass = (r: LineRow, skip?: "gender" | "conc" | "kind" | "category" | "brand") =>
+    (skip === "gender" || !wG || wG.has(genderOf(r))) && (skip === "conc" || !wC || wC.has(concOf(r))) &&
+    (skip === "kind" || !wK || kindsOf(r).some((k) => wK.has(k))) && (skip === "category" || !wCat || wCat.has(catOf(r))) &&
+    (skip === "brand" || !wB || wB.has(brandOf(r)));
+  // Each filter's counts are measured with every OTHER filter applied, so a count is the number of lines that choice shows.
+  const facet = (key: "gender" | "conc" | "kind" | "category" | "brand", read: (r: LineRow) => string[]): ReviewFacet[] => {
+    const n = new Map<string, number>();
+    for (const r of scoped) if (pass(r, key)) for (const v of read(r)) n.set(v, (n.get(v) ?? 0) + 1);
+    return [...n].map(([value, count]) => ({ value, count })).sort((a, b) => b.count - a.count || a.value.localeCompare(b.value));
+  };
+  const kept = scoped.filter((r) => pass(r));
+  // Measured per request (owner 2026-11-15: "make it faster"): where a Review read spends its time.
+  console.info(JSON.stringify({ perfume_review_ms: { brands: tBrands - tStart, rows: tRows - tBrands, read: tRead - tRows, total: Date.now() - tStart, lines: rows.rows.length, cached: identityCache.size } }));
+  return {
+    rows: kept.slice(opts.offset, opts.offset + opts.limit),
+    total: kept.length,
+    facets: {
+      gender: facet("gender", (r) => [genderOf(r)]), conc: facet("conc", (r) => [concOf(r)]), kind: facet("kind", kindsOf),
+      category: facet("category", (r) => [catOf(r)]), brand: facet("brand", (r) => [brandOf(r)]),
+    },
+  };
 }
 
 /**
@@ -932,7 +1001,7 @@ const _viewCache = new Map<string, ViewPayload>();
 let _gridVer = 0;
 /** Clears both caches and bumps the version counter — write paths call this, so a warm HIT
  * never needs to query max(updated_at) from DB. */
-export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; }
+export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; nameBrandsSig = null; }
 
 /** The competitor line a row is measured against: its list price, cushion, SALES price (list − cushion), wording. */
 export type CompBest = { list: number; cushion: number; real: number; desc: string | null; vendor: string };

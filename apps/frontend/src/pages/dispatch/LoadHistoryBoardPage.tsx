@@ -465,6 +465,13 @@ export default function LoadHistoryBoardPage() {
         toDate={staged.draft.end}
         onFromDateChange={(d) => staged.setDraft((p) => ({ ...p, start: d ?? "" }))}
         onToDateChange={(d) => staged.setDraft((p) => ({ ...p, end: d ?? "" }))}
+        // Design: "All" is the last segment of the period group (every load ever booked).
+        extraPresets={[{
+          id: "all",
+          label: "All",
+          active: staged.draft.start === LOAD_HISTORY_ALL_FROM,
+          onSelect: () => staged.setDraft((p) => ({ ...p, start: LOAD_HISTORY_ALL_FROM, end: companyToday() })),
+        }]}
         onPresetSelect={(preset) => {
           const r = computePresetRange(preset);
           staged.setDraft((p) => ({ ...p, start: r.from, end: r.to }));
@@ -480,14 +487,6 @@ export default function LoadHistoryBoardPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
-        <button
-          type="button"
-          className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs font-medium text-[#1F2A44]"
-          onClick={() => staged.setDraft((p) => ({ ...p, start: LOAD_HISTORY_ALL_FROM, end: companyToday() }))}
-          data-testid="load-history-preset-all"
-        >
-          All
-        </button>
         {/* Design: "Date [Pickup | Delivery]" segmented — which stop date the range filters on. */}
         <V3Segmented
           value={staged.draft.dateField}

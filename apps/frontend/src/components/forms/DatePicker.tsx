@@ -32,6 +32,11 @@ type Props = {
    * or height in className is ignored. Opt-in so screens move to the board sizes surface by surface.
    */
   box?: "filter" | "field";
+  /**
+   * V3 board filter bar (every Reports-* / Load history .dc.html): the date is drawn as the board control —
+   * 28px + 1px #DDE1E7 border (content-box), 0 12px, radius 6, white, 600 12px Inter #111827. Width stays the className's.
+   */
+  board?: boolean;
 };
 
 const DOW = ["S", "M", "T", "W", "T", "F", "S"];
@@ -109,6 +114,7 @@ export function DatePicker({
   "aria-label": ariaLabel,
   "data-testid": dataTestId,
   box,
+  board = false,
 }: Props) {
   const isOutOfRange = (iso: string) => Boolean((max && iso > max) || (min && iso < min));
   const partitioned = partitionDatePickerClassName(className);
@@ -240,8 +246,14 @@ export function DatePicker({
   const dateInputValue = editingDate ? dateDraft : value ? formatDateUS(value) : "";
   const years = yearRange(viewY, min, max);
   // IH35-347-A: ONE standard height h-9 (36px) for all form input primitives.
-  const heightClass = box ? "" : buttonHeight || "h-9";
-  const boxStyle = box
+  const heightClass = box || board ? "" : buttonHeight || "h-9";
+  const boxStyle = board
+    ? {
+        height: 28, boxSizing: "content-box" as const, padding: "0 12px", border: "1px solid #DDE1E7", borderRadius: 6,
+        background: "#fff", font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", lineHeight: "normal",
+        fontVariantNumeric: "tabular-nums" as const,
+      }
+    : box
     ? {
         height: box === "field" ? "var(--ih-h-field)" : "var(--ih-h-control)",
         borderColor: "var(--ih-border-control)",

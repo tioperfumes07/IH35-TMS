@@ -15,21 +15,23 @@ type Props = {
 export function Breadcrumb({ items, skipClaim = false }: Props) {
   useClaimBreadcrumb(!skipClaim);
   return (
-    <nav aria-label="Breadcrumb" className="text-xs text-[#6B7280]">
+    // V3 (every docs/design/v3 board, 42 of 42): the trail is ONE 11px #5B6576 line, "Module › List › Record",
+    // every part the same muted ink (the page title below carries the emphasis). Links keep the ink and underline on hover.
+    <nav aria-label="Breadcrumb" style={{ fontSize: 11, color: "#5B6576", lineHeight: "normal", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
       <ol className="flex flex-wrap items-center gap-1">
         {items.map((item, index) => {
           const isLast = index === items.length - 1;
           return (
             <li key={`${item.label}-${index}`} className="flex items-center gap-1">
               {item.href && !isLast ? (
-                <Link to={item.href} className="text-[#4B5563] hover:text-[#0F1219] hover:underline">
+                <Link to={item.href} className="[color:inherit] hover:underline">
                   {item.label}
                 </Link>
               ) : (
-                <span className={isLast ? "font-semibold text-[#0F1219]" : "text-[#4B5563]"}>{item.label}</span>
+                <span aria-current={isLast ? "page" : undefined}>{item.label}</span>
               )}
               {/* ROUND 367.9 — LAW separator is › (Module › List › Record), not /. */}
-              {!isLast ? <span className="text-[#6B7280]">›</span> : null}
+              {!isLast ? <span aria-hidden="true">›</span> : null}
             </li>
           );
         })}

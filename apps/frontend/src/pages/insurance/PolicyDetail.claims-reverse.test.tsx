@@ -132,22 +132,25 @@ function wrap(ui: ReactElement) {
   );
 }
 
+/** ROUND 8.17 class R: every EntityLink also carries the origin board as ret=; the drill target is the part before it. */
+const stripRet = (href: string | null) => (href ?? "").replace(/[?&]ret=[^&#]*/, "");
+
 describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
   it("renders the policy unit as a resolved canonical unit drill", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "T777" });
-    expect(link.getAttribute("href")).toBe("/fleet/units/00000000-0000-4000-8000-000000000777");
+    expect(stripRet(link.getAttribute("href"))).toBe("/fleet/units/00000000-0000-4000-8000-000000000777");
   });
   it("renders the claim number as a real EntityLink to the claim, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CLM-0042" });
-    expect(link.getAttribute("href")).toBe(`/insurance/claims?claim_id=${claimId}`);
+    expect(stripRet(link.getAttribute("href"))).toBe(`/insurance/claims?claim_id=${claimId}`);
   });
 
   it("renders the lawsuit case number as a real EntityLink to the legal matter, not plain text", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "CASE-9001" });
-    expect(link.getAttribute("href")).toBe(`/legal/matters/${lawsuitId}`);
+    expect(stripRet(link.getAttribute("href"))).toBe(`/legal/matters/${lawsuitId}`);
     expect(legalMattersApiMocks.list).toHaveBeenCalledWith(
       "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
       expect.objectContaining({ type: "lawsuit" }),
@@ -163,7 +166,7 @@ describe("PolicyDetail claims/lawsuits reverse chrome (C-16)", () => {
   it("requests an exact policy-filtered COI reverse list and drills to its customer", async () => {
     render(wrap(<PolicyDetail />));
     const link = await screen.findByRole("link", { name: "Acme Shipper" });
-    expect(link.getAttribute("href")).toBe(`/customers/${customerId}`);
+    expect(stripRet(link.getAttribute("href"))).toBe(`/customers/${customerId}`);
     expect(insuranceApiMocks.listInsuranceCoiRequests).toHaveBeenCalledWith({
       operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071",
       policy_id: policyId,

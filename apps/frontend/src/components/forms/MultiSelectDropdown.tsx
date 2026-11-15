@@ -37,7 +37,7 @@ type Props = {
   board?: boolean;
 };
 
-const BOARD_TRIGGER = { height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", whiteSpace: "nowrap", cursor: "pointer" } as const;
+const BOARD_TRIGGER = { height: 28, boxSizing: "content-box", padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", whiteSpace: "nowrap", cursor: "pointer" } as const;
 
 export function MultiSelectDropdown({
   label,

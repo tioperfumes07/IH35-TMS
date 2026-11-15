@@ -244,11 +244,14 @@ async function main() {
   const files = candidateFiles();
 
   const env = { ...process.env };
-  delete env.DATABASE_URL;
-  delete env.DATABASE_DIRECT_URL;
+  // Set EMPTY, never deleted (Lead 2026-11-15, measured on a seat Mac): a guard that calls dotenv.config() refills an
+  // ABSENT variable from the checkout's local .env and then runs live — the scan read 13 fail-closed guards as
+  // "silent skip" on one machine and green on CI. dotenv never overrides a variable that is set, even to "".
+  env.DATABASE_URL = "";
+  env.DATABASE_DIRECT_URL = "";
   // ROUND 370: require-live-db now falls back to the gate's read-only credential when none is set. Strip that too —
   // this guard proves a live guard with NO credential fails closed; a fallback would turn the test into a live run.
-  delete env.DATABASE_URL_READONLY;
+  env.DATABASE_URL_READONLY = "";
   env.IH35_NO_GATE_CREDENTIAL_FALLBACK = "1";
 
   const outcomes = await mapPool(files, 16, (f) => runsExit0(f, env));

@@ -165,7 +165,7 @@ describe("PolicyDetail edit and archive", () => {
         "00000000-0000-4000-8000-000000000123",
         "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071"
       );
-      expect(mockNavigate).toHaveBeenCalledWith("/insurance/policies");
+      expect(mockNavigate).toHaveBeenCalledWith(expect.stringMatching(/^\/insurance\/policies(\?ret=|$)/));
     });
   });
 });

@@ -1,3 +1,4 @@
+import { V3_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -43,7 +44,8 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
         aria-controls={menuId}
         onClick={() => setOpen((o) => !o)}
         data-testid="banking-new-menu-trigger"
-        className="inline-flex h-7 items-center gap-1 rounded-sm bg-[#14314F] px-2.5 text-xs font-bold text-white hover:bg-[#0F2540]"
+        // Banking.dc.html header: the primary action is the V3 navy header button (28px, 0 12px, radius 6, 600 12px).
+        style={{ ...V3_HEADER_BTN_PRIMARY, gap: 4 }}
       >
         + New
         <ChevronDown className="h-3.5 w-3.5" />
