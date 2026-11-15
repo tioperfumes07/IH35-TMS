@@ -72,31 +72,42 @@ export function TrialBalanceBoard({
   const [collapsed, setCollapsed] = useState(false);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 12 }} data-testid="trial-balance-board">
+    <div
+      style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: "Inter, sans-serif" }}
+      data-testid="trial-balance-board"
+      data-v3-board="Reports-Viewer-TrialBalance"
+    >
       {summary ? (
         <div
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 8 }}
           data-testid="trial-balance-kpi-strip"
         >
           <V3KpiTile
+            board
             label="Grand total debits"
             value={money(summary.grand_total_debits)}
+            valueDataV3="kpi-tb-debits"
             href={totalsDrillHref ?? undefined}
             onClick={totalsDrillHref ? undefined : onTotalsDrill}
             testId="trial-balance-kpi-debits"
           />
           <V3KpiTile
+            board
             label="Grand total credits"
             value={money(summary.grand_total_credits)}
+            valueDataV3="kpi-tb-credits"
             href={totalsDrillHref ?? undefined}
             onClick={totalsDrillHref ? undefined : onTotalsDrill}
             testId="trial-balance-kpi-credits"
           />
           <V3KpiTile
+            board
             label="Balance check"
             value={summary.balanced ? "Balanced" : "Out of balance"}
+            valueDataV3="kpi-tb-balance"
             tone={summary.balanced ? "green" : "red"}
             sub="debits = credits"
+            subDataV3="kpi-tb-balance-sub"
             testId="trial-balance-kpi-balance"
           />
         </div>
@@ -105,9 +116,9 @@ export function TrialBalanceBoard({
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 8 }}
           data-testid="trial-balance-kpi-strip"
         >
-          <V3KpiTile label="Grand total debits" value="…" testId="trial-balance-kpi-debits" />
-          <V3KpiTile label="Grand total credits" value="…" testId="trial-balance-kpi-credits" />
-          <V3KpiTile label="Balance check" value="…" sub="debits = credits" testId="trial-balance-kpi-balance" />
+          <V3KpiTile board label="Grand total debits" value="…" valueDataV3="kpi-tb-debits" testId="trial-balance-kpi-debits" />
+          <V3KpiTile board label="Grand total credits" value="…" valueDataV3="kpi-tb-credits" testId="trial-balance-kpi-credits" />
+          <V3KpiTile board label="Balance check" value="…" valueDataV3="kpi-tb-balance" sub="debits = credits" subDataV3="kpi-tb-balance-sub" testId="trial-balance-kpi-balance" />
         </div>
       ) : null}
 

@@ -2,6 +2,31 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-15 05Z — R9.6-B25 MERGED — Reports /reports parity 0/0
+
+**B25 Reports board parity:** `ef19fd69a6f3de9c4c8024dc5edfd217b96c5f91` PR #29624 — MERGED.
+
+READER PLEASE: Reports /reports — V3 reader should now show 0 missing / 0 mismatch (was 51/333).
+
+Alias map (data-v3 → screen text):
+- `kpi-label-available` → "Available reports"
+- `kpi-label-schedules` → "Custom schedules"
+- `kpi-label-run7d` → "Run last 7 days"
+- `kpi-ifta-label` → "IFTA Q3 due" (dynamic — changes by quarter)
+- `panel-title-accounting` → "Accounting & financial"
+- `panel-view-all` → "View all →"
+- `panel-footer-accounting` → footer text
+- `cat-accounting` → "Accounting"
+- `cat-operations` → "Operations"
+- `cat-driver` → "Driver"
+- `cat-compliance` → "Compliance"
+- `cat-custom` → "Custom"
+- `basis-accrual` → "Accrual"
+- `basis-cash` → "Cash"
+
+LIVE PROOF: money-pr-local-gate gate_exit=0 (245 passed, 2 pre-existing fails, 280 skipped).
+MODULE_PROGRESS: Reports 0 of 1 (REMAINING: live reader verification after deploy).
+
 ## 2026-11-13 20Z — LEAD ROW 99+113 MERGED
 
 **BANK-R99/BANK-F99 (pending re-issue retires older generation — MERGED):** `386aaa9aa4` PR #29283 — `retireOlderPendingGenerationOnReissue` wired in Plaid ingest; 5 live duplicate-pending pairs retire on next Plaid sync. Guard RULE 6 added; selftest 11/11 PASS. LIVE PROOF: UNVERIFIED until next sync (DATA-LATER). module banking 19/20.

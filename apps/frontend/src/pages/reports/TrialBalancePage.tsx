@@ -460,6 +460,7 @@ export function TrialBalancePage() {
         }}
       >
         <ParityTable
+          appearance="v3"
           rows={rows}
           columns={tbColumns}
           rowKey={(row) => row.account_id}
