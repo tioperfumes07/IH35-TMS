@@ -183,8 +183,10 @@ if (process.argv.includes("--selftest")) {
     ["rows company not-opened dropped", withField("rows", (s) => s.replace(/not opened/g, "none"))],
     ["rows restores compound Legs cell", withField("rows", (s) => `${s}\n// <TourLegsCell legs={r.legs} />`)],
     ["rows leftover fontSize 11", withField("rows", (s) => `${s}\n<span style={{ fontSize: 11 }}>plant</span>`)],
-    ["setl money wraps", withField("setl", (s) => s.replace(/key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "whitespace-nowrap text-right tabular-nums"/g, 'key: "revenue", label: "Revenue", testId: "setl-tour-col-revenue", sortable: true, cellClass: "text-right tabular-nums"'))],
-    ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
+    // Mutation: remove whitespace-nowrap from the revenue column's cellClass (multi-line source — match by context)
+    ["setl money wraps", withField("setl", (s) => s.replace(/(key:\s*"revenue"[\s\S]{0,300}?cellClass:\s*")whitespace-nowrap /g, "$1"))],
+    // Replace ALL occurrences (file has 2 listTours callers) so the check can't match the second
+    ["backend drops legs projection", withField("backend", (s) => s.replace(/legs: live\.map\(\(l\) => \(\{\n\s*load_id: l\.load_id,/g, "legs: live.map((l) => ({\n        dropped_load_id: l.load_id,"))],
     ["backend drops legs type", withField("backend", (s) => s.replace(/legs: \{\n\s*load_id: string; load_number: string; trip_type: string \| null;/, "legs: {\n    dropped_id: string; load_number: string; trip_type: string | null;"))],
   ];
   let caught = 0;
