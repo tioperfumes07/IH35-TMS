@@ -150,6 +150,19 @@ export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
   "UNITED COLORS OF BENETTON": "BENETTON", "BENETTON": "BENETTON", "BENNETON": "BENETTON",
   "ARDEN": "ELIZABETH ARDEN", "NINA": "NINA RICCI", "DONNA": "DONNA KARAN",
   // Measured live 11-14 6:45 PM CT on the 209 ESPERANZA lines still without a brand, and on misspelled item brands.
+  // Owner 2026-11-14 18:48 CT, his own offer list's brand column: "GIORA it is giorgio armani … hol is hollister, issey is
+  // issey miyake, jdel is j del pozo, montb is mont blanc, mosch is moschino, nauti is nautica, narciso rd is narciso
+  // rodriguez, nin is nina ricci, salvf is ferragamo, their is thierry mugler, clean mine as well" — every short brand
+  // on his list (measured live 18:49: 69 distinct values) mapped to the brand his vendors use.
+  "GIORA": "GIORGIO ARMANI", "GIORG": "GIORGIO ARMANI", "HOL": "HOLLISTER", "ISSEY": "ISSEY MIYAKE", "ISSSEY": "ISSEY MIYAKE",
+  "JDEL": "JESUS DEL POZO", "J DEL": "JESUS DEL POZO", "MONTB": "MONTBLANC", "MOSCH": "MOSCHINO", "MOSH": "MOSCHINO",
+  "NAUTI": "NAUTICA", "NARCISO RD": "NARCISO RODRIGUEZ", "NIN": "NINA RICCI", "SALVF": "SALVATORE FERRAGAMO",
+  "THEIR": "MUGLER", "THIER": "MUGLER", "ARIANAG": "ARIANA GRANDE", "BVLGA": "BVLGARI", "CACHA": "CACHAREL", "CALVI": "CALVIN KLEIN",
+  "CAROH": "CAROLINA HERRERA", "DOLCE": "DOLCE & GABBANA", "ELIZA": "ELIZABETH ARDEN", "JEAN": "JEAN PAUL GAULTIER", "JIMMY": "JIMMY CHOO",
+  "LACOS": "LACOSTE", "LANCO": "LANCOME", "M-BENZ": "MERCEDES BENZ", "MARCJ": "MARC JACOBS", "M JACOBS": "MARC JACOBS", "MICHK": "MICHAEL KORS",
+  "PARIH": "PARIS HILTON", "SABRINA": "SABRINA CARPENTER", "SMADDEN": "STEVE MADDEN", "SWISS": "SWISS ARMY", "VICTORINOX SWISS ARMY": "SWISS ARMY",
+  "TOMMY HILFIGHER": "TOMMY HILFIGER", "TORY": "TORY BURCH", "VALEN": "VALENTINO", "VERSA": "VERSACE", "VICKYT": "VICKY TIEL",
+  "VICTS": "VICTORIAS SECRET", "HUGO BOSS": "HUGO BOSS",
   "BURBE": "BURBERRY", "BEILISH": "BILLIE EILISH", "SALVATORE FERREGAMO": "SALVATORE FERRAGAMO", "CHRISTIAN AUDIGIER": "ED HARDY",
   "G.ARMANI": "GIORGIO ARMANI", "G ARMANI": "GIORGIO ARMANI", "H.B": "HUGO BOSS", "J.CHOO": "JIMMY CHOO", "J CHOO": "JIMMY CHOO",
   "JIMMI CHOO": "JIMMY CHOO", "JINNY CHOO": "JIMMY CHOO", "MER-BENZ": "MERCEDES BENZ", "MER BENZ": "MERCEDES BENZ", "MERCEDES-BENZ": "MERCEDES BENZ",
@@ -338,6 +351,8 @@ export const NAME_BRAND_HINTS: Record<string, string> = {
   "HALLOWEEN": "JESUS DEL POZO", "HALOWEEN": "JESUS DEL POZO", "ACQUA DI GIO": "GIORGIO ARMANI", "ACQUA DI GIOIA": "GIORGIO ARMANI",
   "CURIOUS": "BRITNEY SPEARS", "CURIOS": "BRITNEY SPEARS", "FANTASY": "BRITNEY SPEARS", "DRAKKAR": "GUY LAROCHE", "ANGEL": "MUGLER",
   "ALIEN": "MUGLER", "GREY FLANNEL": "GEOFFREY BEENE", "AMAZING": "BILL BLASS",
+  // Owner 18:48 CT: "those without brands, signorina, uomo, are ferragamo".
+  "SIGNORINA": "SALVATORE FERRAGAMO", "SIGORINA": "SALVATORE FERRAGAMO", "UOMO": "SALVATORE FERRAGAMO",
 };
 let DESK_NAME_BRANDS: Record<string, string> = {};
 /** The desk's cross-reference, loaded from every vendor's items (PCA, MTZ, JIZAN, NANDANSONS …). */
