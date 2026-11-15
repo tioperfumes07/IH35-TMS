@@ -1,3 +1,4 @@
+import { V3_HEADER_BTN } from "../../components/v3";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -450,7 +451,8 @@ export function BankingHomePage({ initialTab }: Props = {}) {
   // (no longer header links or tabs). Bank Register stays persistent (Doc-18).
   const navActions = (
     <>
-      <ActionButton onClick={openBankRegister}>Bank Register</ActionButton>
+      {/* Banking.dc.html: Bank Register is a V3 header button (28px + 1px border, 600 12px ink). */}
+      <button type="button" style={V3_HEADER_BTN} onClick={openBankRegister} data-testid="banking-home-bank-register">Bank Register</button>
       <BankingNewMenu
         groups={[
           {
