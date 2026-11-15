@@ -2,9 +2,15 @@
 
 Archived 2026-10-17 — content moved to [archive/OUTBOX-CC-3-archive-2026-10-17.md](archive/OUTBOX-CC-3-archive-2026-10-17.md). Live seat orders: the Lead channel (LEAD-TO-SEATS).
 
+## 2026-11-15 R10.0 Reports-Viewer-TrialBalance board parity — READER PLEASE
+
+**R10.0 Reports-Viewer-TrialBalance board parity:** squash SHA `6a40f4a2f9abb8156acf1353505b84b9f2912af8` PR #29665 — MERGED.
+
+READER PLEASE Reports-Viewer-TrialBalance 6a40f4a2f9abb8156acf1353505b84b9f2912af8
+
 ## 2026-11-15 R10.0 Reports board parity — READER PLEASE
 
-**R10.0 Reports board parity:** branch `cc-3/r10-reports-board` — squash SHA pending merge.
+**R10.0 Reports board parity:** squash SHA `408f24b3d72c44e657ad435cc6efbe49eac25c0c` PR #29655 — MERGED.
 
 READER PLEASE: Reports — V3 reader should now show 0 mismatches / 0 missing for sidebar nav, InlineBasisSelector, CatalogLink, V3Panel viewAll (was 192 mismatches at Lead sweep 17:26Z 11-15-2026).
 
