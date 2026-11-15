@@ -11,11 +11,11 @@ import { V3 } from "../../design/v3-tokens";
 import "../../assets/fonts/v3-maintenance/board-box.css";
 
 const STEPS = [
-  { id: "A", title: "Customer · invoice · charges", note: "Same fields / order as Center modal — single column at 760px" },
-  { id: "B", title: "Equipment · driver · trailer", note: "Unit + driver prefilled from the Truck Line row" },
-  { id: "C", title: "Stops and miles", note: "Stops stack vertically in the side drawer" },
-  { id: "D", title: "Pre-dispatch validation", note: "Same engines as Center" },
-  { id: "E", title: "Documents", note: "Same engines as Center" },
+  { letter: "A", title: "Customer · invoice · charges", note: "Same fields / order as Center modal — single column at 760px" },
+  { letter: "B", title: "Equipment · driver · trailer", note: "Unit + driver prefilled from the Truck Line row" },
+  { letter: "C", title: "Stops and miles", note: "Stops stack vertically in the side drawer" },
+  { letter: "D", title: "Pre-dispatch validation", note: "Same engines as Center" },
+  { letter: "E", title: "Documents", note: "Same engines as Center" },
 ];
 
 export default function BookLoadSidePanelBoardPage() {
@@ -107,7 +107,7 @@ export default function BookLoadSidePanelBoardPage() {
             <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
               {STEPS.map((step) => (
                 <div
-                  key={step.id}
+                  key={step.letter}
                   style={{
                     display: "grid",
                     gridTemplateColumns: "28px 1fr",
@@ -132,7 +132,7 @@ export default function BookLoadSidePanelBoardPage() {
                       color: "#fff",
                     }}
                   >
-                    {step.id}
+                    {step.letter}
                   </span>
                   <span>
                     <span style={{ display: "block", font: `700 12px ${V3.font}` }}>{step.title}</span>
