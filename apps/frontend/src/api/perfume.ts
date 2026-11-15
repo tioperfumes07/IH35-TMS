@@ -252,3 +252,20 @@ export async function downloadPerfumeExcel(p: Parameters<typeof perfumeGridQuery
   a.click();
   window.setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60_000);
 }
+
+/** One vendor list as written + the BRAND the engine reads, its link, and vendor coverage (owner 11-14). */
+export async function downloadPerfumeListExcel(listId: string) {
+  const res = await fetch(resolveApiUrl(`/api/v1/perfume/lists/${encodeURIComponent(listId)}/export.xlsx`), { credentials: "include" });
+  if (!res.ok) throw new Error(`Export failed (${res.status})`);
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO-List.xlsx";
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  window.setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 60_000);
+}
