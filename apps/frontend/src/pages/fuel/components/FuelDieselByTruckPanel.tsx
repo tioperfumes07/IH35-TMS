@@ -284,8 +284,11 @@ export function FuelDieselByTruckPanel({
 
       <FuelBoardSection title="Diesel by truck" testId="fuel-diesel-by-truck-section">
         {aggQuery.isError ? <ListErrorBanner onRetry={() => void aggQuery.refetch()} /> : null}
+        {/* Fuel.dc.html: the V3 table with 5px 12px cells and no nowrap on th/td (this board's own table). */}
         <ParityTable<DieselRow>
-          appearance="board"
+          appearance="v3"
+          boardTdStyle={{ paddingTop: 5, paddingBottom: 5, whiteSpace: "normal" }}
+          thStyle={{ whiteSpace: "normal" }}
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}

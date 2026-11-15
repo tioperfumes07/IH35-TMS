@@ -53,10 +53,12 @@ function isYtd(s: SettlementListRow, year: number): boolean {
 const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
 
 /** Board copy (Settlements-PreSettlements.png) — same six close checks as the tour gate. */
+const CLOSE_TH = { textAlign: "left", fontFamily: V3.font, fontSize: 11, fontWeight: 600, color: "#5B6576", padding: "7px 12px", borderBottom: "1px solid #DDE1E7", background: "#F7F8FA", whiteSpace: "nowrap" } as const;
+const CLOSE_TD = { textAlign: "left", padding: "7px 12px", borderBottom: "1px solid #ECEEF2", fontSize: 12, color: "#111827", whiteSpace: "nowrap" } as const;
 const CLOSE_CHECKS: Array<{ check: string; how: string }> = [
   { check: "All loads delivered", how: "POD on every load" },
   { check: "Documents", how: "rate con · BOL · POD" },
-  { check: "Miles locked", how: "signed settlement → AlwaysTrack → lane history" },
+  { check: "Miles locked", how: "signed settlement → AlwaysTrack → lane history → Google" },
   { check: "Fuel attributed", how: "fills on this tour / next load" },
   { check: "Advances matched", how: "Zelle / cash advances on the tour" },
   { check: "Deductions confirmed", how: "escrow · fines · damages" },
@@ -250,43 +252,26 @@ export function SettlementsPreSettlementsClosesPanel({
       testId="settlements-presettle-closes-panel"
       onViewAll={() => navigate(root)}
     >
-      <div style={{ padding: "4px 0" }} data-testid="settlements-presettle-closes-body">
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)",
-            gap: 8,
-            padding: "6px 14px",
-            borderBottom: `1px solid ${V3.borderSoft}`,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: V3.muted,
-            fontFamily: V3.font,
-          }}
-        >
-          <span>Check</span>
-          <span>How it is met</span>
-        </div>
-        {CLOSE_CHECKS.map((row) => (
-          <div
-            key={row.check}
-            style={{
-              display: "grid",
-              gridTemplateColumns: "minmax(0,1fr) minmax(0,1.4fr)",
-              gap: 8,
-              padding: "8px 14px",
-              borderBottom: `1px solid ${V3.borderSoft}`,
-              fontSize: 12,
-              color: V3.ink,
-              fontFamily: V3.font,
-            }}
-          >
-            <span style={{ fontWeight: 600 }}>{row.check}</span>
-            <span style={{ color: V3.muted }}>{row.how}</span>
-          </div>
-        ))}
+      {/* Settlements-PreSettlements.dc.html "What closes a tour": the V3 table — th 600 11px #5B6576 on #F7F8FA,
+          td 7px 12px 12px ink, nowrap. */}
+      <div style={{ overflowX: "auto" }} data-testid="settlements-presettle-closes-body">
+        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font, lineHeight: "normal" }}>
+          <thead>
+            <tr>
+              {["Check", "How it is met"].map((h) => (
+                <th key={h} style={CLOSE_TH}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {CLOSE_CHECKS.map((row) => (
+              <tr key={row.check}>
+                <td className="n" style={CLOSE_TD}>{row.check}</td>
+                <td className="n" style={CLOSE_TD}>{row.how}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </BoardSection>
   );

@@ -114,8 +114,9 @@ function checkFindings() {
   if (/appearance=["']board["']\s*</.test(diesel)) {
     fails.push("F1: FuelDieselByTruckPanel must not break ParityTable generic (appearance before <Type>)");
   }
-  if (!/ParityTable<DieselRow>/.test(diesel) || !/appearance=["']board["']/.test(diesel)) {
-    fails.push("F1/F2: FuelDieselByTruckPanel must keep ParityTable<DieselRow> appearance=board");
+  // R10.1 (Lead 11-15): Fuel.dc.html draws the V3 table (th 600 11px on #F7F8FA, td 5px 12px, wrapping).
+  if (!/ParityTable<DieselRow>/.test(diesel) || !/appearance=["']v3["']/.test(diesel)) {
+    fails.push("F1/F2: FuelDieselByTruckPanel must keep ParityTable<DieselRow> appearance=v3 (Fuel.dc.html)");
   }
   if (!/FleetTruck/.test(diesel)) {
     fails.push("F1: FuelDieselByTruckPanel must render FleetTruck unit graphic");
