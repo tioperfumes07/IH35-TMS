@@ -305,8 +305,8 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const applyAll = () => {
     if (draftTarget === "bad") { pushToast(tr("perfume.desk.target.bad", "Margin must be between 0 and 95%."), "error"); return; }
     if (showEarn && draftEarn === "bad") { pushToast(tr("perfume.desk.earn.bad", "Earn % must be between 0 and 95%."), "error"); return; }
-    const nt = targetDraft.trim() === "" ? target : draftTarget;
-    const ne = !showEarn || earnDraft.trim() === "" ? earn : draftEarn;
+    const nt: number | null = targetDraft.trim() === "" ? target : draftTarget;
+    const ne: number | null = !showEarn || earnDraft.trim() === "" || draftEarn === "bad" ? earn : draftEarn;
     if (nt === target && ne === earn) return;
     setConfirmed(null);
     setAwaiting(true);
