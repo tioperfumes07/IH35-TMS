@@ -1,3 +1,4 @@
+import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -53,8 +54,6 @@ function isYtd(s: SettlementListRow, year: number): boolean {
 const display = (v: string | number | null) => (v === null || v === undefined ? "—" : String(v));
 
 /** Board copy (Settlements-PreSettlements.png) — same six close checks as the tour gate. */
-const CLOSE_TH = { textAlign: "left", fontFamily: V3.font, fontSize: 11, fontWeight: 600, color: "#5B6576", padding: "7px 12px", borderBottom: "1px solid #DDE1E7", background: "#F7F8FA", whiteSpace: "nowrap" } as const;
-const CLOSE_TD = { textAlign: "left", padding: "7px 12px", borderBottom: "1px solid #ECEEF2", fontSize: 12, color: "#111827", whiteSpace: "nowrap" } as const;
 const CLOSE_CHECKS: Array<{ check: string; how: string }> = [
   { check: "All loads delivered", how: "POD on every load" },
   { check: "Documents", how: "rate con · BOL · POD" },
@@ -254,24 +253,18 @@ export function SettlementsPreSettlementsClosesPanel({
     >
       {/* Settlements-PreSettlements.dc.html "What closes a tour": the V3 table — th 600 11px #5B6576 on #F7F8FA,
           td 7px 12px 12px ink, nowrap. */}
-      <div style={{ overflowX: "auto" }} data-testid="settlements-presettle-closes-body">
-        <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: V3.font, lineHeight: "normal" }}>
-          <thead>
-            <tr>
-              {["Check", "How it is met"].map((h) => (
-                <th key={h} style={CLOSE_TH}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {CLOSE_CHECKS.map((row) => (
-              <tr key={row.check}>
-                <td className="n" style={CLOSE_TD}>{row.check}</td>
-                <td className="n" style={CLOSE_TD}>{row.how}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div data-testid="settlements-presettle-closes-body">
+        <ParityTable<{ check: string; how: string }>
+          appearance="v3"
+          hidePager
+          suppressToolbar
+          rows={CLOSE_CHECKS}
+          rowKey={(row) => row.check}
+          columns={[
+            { key: "check", label: "Check", sortable: false, render: (row) => row.check },
+            { key: "how", label: "How it is met", sortable: false, render: (row) => row.how },
+          ]}
+        />
       </div>
     </BoardSection>
   );
