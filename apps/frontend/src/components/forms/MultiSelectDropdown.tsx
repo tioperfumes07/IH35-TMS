@@ -33,7 +33,11 @@ type Props = {
   loading?: boolean;
   listNotice?: string;
   selectedChips?: boolean;
+  /** V3 board trigger (docs/design/v3/Reports-*.dc.html "Status ▾"): 28px · 6px · 600 12px Inter · #DDE1E7 border. */
+  board?: boolean;
 };
+
+const BOARD_TRIGGER = { height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", whiteSpace: "nowrap", cursor: "pointer" } as const;
 
 export function MultiSelectDropdown({
   label,
@@ -51,6 +55,7 @@ export function MultiSelectDropdown({
   loading = false,
   listNotice,
   selectedChips = false,
+  board = false,
   ...rest
 }: Props) {
   const { t } = useTranslation();
@@ -102,7 +107,8 @@ export function MultiSelectDropdown({
         type="button"
         disabled={disabled}
         onClick={() => setOpen((v) => !v)}
-        className={
+        style={board ? BOARD_TRIGGER : undefined}
+        className={board ? undefined : 
           triggerClassName ??
           // ONE CONTROL HEIGHT (OWNER DESIGN LAW 2026-10-02 rule 2, owner report 2026-10-04: "ALL BOXES,
           // DATES, FILTERS ETC MUST BE UNIFORM FOLLOWING STANDARD DESIGN HEIGHTS"). This trigger carried
@@ -114,8 +120,14 @@ export function MultiSelectDropdown({
         aria-haspopup="true"
         aria-expanded={open}
       >
-        <span className="max-w-[10rem] truncate">{summary}</span>
-        <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+        {board ? (
+          <>{selected.length === 0 ? (allLabel?.endsWith("▾") ? allLabel.replace(/\s*▾$/, "") : label) : `${label} (${selected.length})`} ▾</>
+        ) : (
+          <>
+            <span className="max-w-[10rem] truncate">{summary}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+          </>
+        )}
       </button>
       {selectedChips && selected.length ? <div className="flex flex-wrap gap-1" aria-label={`${label} selections`}>
         {selected.map(value => <button key={value} type="button" disabled={disabled}

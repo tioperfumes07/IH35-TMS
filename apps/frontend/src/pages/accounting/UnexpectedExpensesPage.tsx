@@ -134,9 +134,11 @@ export function UnexpectedExpensesPage() {
   }
 
   return (
+    // Accounting-Unexpected.dc.html: the header is the Accounting module's (title "Accounting" + its subtitle);
+    // the tab is named by the breadcrumb "Accounting › Unexpected expenses" and the active sub-tab.
     <AccountingSubNavWrapper
-      title="Unexpected expenses"
-      subtitle="Pending bank debits that look like shop / tire / tow / fine / lumper / medical — confirm each line."
+      title="Accounting"
+      subtitle="Bills, expenses, invoices, settlements & transaction review"
     >
       <div
         className="space-y-3"

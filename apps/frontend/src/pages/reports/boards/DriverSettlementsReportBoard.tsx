@@ -350,6 +350,7 @@ export function DriverSettlementsReportBoard() {
       xlsx={xlsx}
     >
       <ReportFilterBar
+          board
         testIdPrefix="reports-driver-settlements"
         fromDate={staged.draft.start}
         toDate={staged.draft.end}

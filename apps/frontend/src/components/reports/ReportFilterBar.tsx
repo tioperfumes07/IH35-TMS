@@ -31,7 +31,21 @@ type ReportFilterBarProps = {
   onCancel?: () => void;
   /** When provided with onApply, a Reset button renders and calls this on click. */
   onReset?: () => void;
+  /**
+   * V3 board bar (docs/design/v3/Reports-*.dc.html, Dispatch-LoadHistory): one white bar, 6px corners, padding 8/10,
+   * gap 8; "From"/"To" as 11px muted labels; period presets in a segmented group; 28px / 6px / 600 12px controls;
+   * navy Apply. No dividers. Same controls, same behavior — only the drawing changes.
+   */
+  board?: boolean;
 };
+
+const B_FONT = "Inter, ui-sans-serif, system-ui, sans-serif";
+const B_BAR = { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6, padding: "8px 10px", fontFamily: B_FONT, lineHeight: "normal" } as const;
+const B_LABEL = { fontSize: 11, color: "#5B6576" } as const;
+const B_SEG = { display: "inline-flex", background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6, padding: 2, gap: 2 } as const;
+const B_SEG_BTN = { padding: "4px 10px", borderRadius: 4, fontFamily: B_FONT, fontSize: 11, fontWeight: 600, border: 0, background: "transparent", color: "#5B6576", lineHeight: "normal", cursor: "pointer" } as const;
+const B_BTN = { height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: B_FONT, fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", cursor: "pointer" } as const;
+const B_APPLY = { ...B_BTN, background: "#13233F", color: "#fff", border: 0 } as const;
 
 const PRESET_BUTTONS: Array<{ preset: ReportPreset; label: string }> = [
   { preset: "this_week", label: "This week" },
@@ -94,6 +108,7 @@ export function ReportFilterBar({
   applyDisabled,
   onCancel,
   onReset,
+  board = false,
 }: ReportFilterBarProps) {
   const [, setSearchParams] = useSearchParams();
 
@@ -179,6 +194,44 @@ export function ReportFilterBar({
     },
     [onStatusFilterChange, syncUrl],
   );
+
+  if (board) {
+    return (
+      <div data-report-filter-bar="inline" data-testid={`${testIdPrefix}-report-filter-bar`} style={B_BAR}>
+        <span style={B_LABEL}>From</span>
+        <DatePicker className="h-7 w-[120px]" value={fromDate ?? ""} onChange={handleFromDateChange} aria-label="From date" data-testid={`${testIdPrefix}-filter-from`} />
+        <span style={B_LABEL}>To</span>
+        <DatePicker className="h-7 w-[120px]" value={toDate ?? ""} onChange={handleToDateChange} aria-label="To date" data-testid={`${testIdPrefix}-filter-to`} />
+        <span style={B_SEG}>
+          {PRESET_BUTTONS.map((btn) => (
+            <button key={btn.preset} type="button" onClick={() => handlePreset(btn.preset)} style={B_SEG_BTN} data-testid={`${testIdPrefix}-preset-${btn.preset}`}>
+              {btn.label}
+            </button>
+          ))}
+        </span>
+        {children}
+        {onSearchChange ? (
+          <input type="text" value={search ?? ""} onChange={handleSearch} placeholder="Search…" aria-label="Search"
+            style={{ ...B_BTN, width: 160, cursor: "text", fontWeight: 400 }} data-testid={`${testIdPrefix}-filter-search`} />
+        ) : null}
+        {statusOptions && statusOptions.length > 0 ? (
+          <SelectCombobox value={statusFilter ?? ""} onChange={handleStatus} aria-label="Status" className="h-7 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#1F2A44]" data-testid={`${testIdPrefix}-filter-status`}>
+            <option value="">All</option>
+            {statusOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </SelectCombobox>
+        ) : null}
+        {onApply ? (
+          <>
+            {onReset ? <button type="button" onClick={onReset} style={B_BTN} data-testid={`${testIdPrefix}-reset`}>Reset</button> : null}
+            {onCancel ? <button type="button" onClick={onCancel} style={B_BTN} data-testid={`${testIdPrefix}-cancel`}>Cancel</button> : null}
+            <button type="button" onClick={onApply} disabled={applyDisabled} style={{ ...B_APPLY, opacity: applyDisabled ? 0.5 : 1 }} data-testid={`${testIdPrefix}-apply`}>Apply</button>
+          </>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div

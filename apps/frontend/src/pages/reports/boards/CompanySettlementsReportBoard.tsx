@@ -326,6 +326,7 @@ export function CompanySettlementsReportBoard() {
       xlsx={xlsx}
     >
       <ReportFilterBar
+          board
         testIdPrefix="reports-company-settlements"
         fromDate={staged.draft.start}
         toDate={staged.draft.end}
