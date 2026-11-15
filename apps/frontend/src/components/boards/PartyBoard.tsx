@@ -224,7 +224,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
             <VariantDuplicatesPanel board="customers" operatingCompanyId={props.operatingCompanyId} />
           </V3Panel>
         ) : (
-          <V3Panel title={`Customers · ${int(rows.length)}`} onViewAll={props.onMasterDetail} testId="party-board-panel"
+          <V3Panel board title={`Customers · ${int(rows.length)}`} onViewAll={props.onMasterDetail} testId="party-board-panel"
             footer={bucketsShown.length ? (
               <div data-testid="customers-aging-legend" style={{ display: "flex", gap: 14, padding: "10px 12px", fontSize: 11, color: V3.muted }}>
                 {bucketsShown.map((a) => (

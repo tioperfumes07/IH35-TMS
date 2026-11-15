@@ -13,7 +13,7 @@ export const V3_PILL_TONES: Record<V3PillTone, { bg: string; ink: string }> = {
   blue: { bg: V3.pillBlueBg, ink: V3.link },
   amber: { bg: V3.pillAmberBg, ink: V3.amber },
   green: { bg: V3.pillGreenBg, ink: V3.green },
-  slate: { bg: V3.pillSlateBg, ink: V3.slateDark },
+  slate: { bg: V3.pillSlateBg, ink: V3.pillSlateInk },
   red: { bg: V3.pillRedBg, ink: V3.red },
 };
 
@@ -60,9 +60,9 @@ export function V3StatusPill({ tone, children, testId }: { tone: V3PillTone; chi
   );
 }
 
-/** A record link inside a V3 board table: V3.link, 600, no underline until hover (design: <a style="color:#1D4ED8;font-weight:600">). */
+/** A record link inside a V3 board table: V3.link (#1D4ED8), 600, no underline until hover. */
 export const V3_TABLE_LINK_CLASS =
-  `font-semibold text-[${V3.link}] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[${V3.focusRing}] focus-visible:ring-offset-1`;
+  "font-semibold text-blue-700 no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
 
 /** V3 board header actions (every .dc.html header): 28px · 0 12px · radius 6 · 600 12px Inter. */
 export const V3_HEADER_BTN: CSSProperties = {

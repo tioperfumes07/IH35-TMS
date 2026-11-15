@@ -35,10 +35,8 @@ export const V3 = {
   pillGreenBg: "#ECFDF3",
   pillSlateBg: "#F1F5F9",
   pillRedBg: "#FEF2F2",
-  /** Slate-600: status pill slate ink, secondary labels. */
-  slateDark: "#475569",
-  /** Gray-500: focus-ring color. */
-  focusRing: "#6B7280",
+  /** Slate/muted ink for slate pills (#475569 = Tailwind slate-600). */
+  pillSlateInk: "#475569",
   font: "Inter, ui-sans-serif, system-ui, sans-serif",
 } as const;
 

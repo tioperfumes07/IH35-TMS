@@ -316,7 +316,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
           onRetry={() => void atRiskQuery.refetch()}
         />
       ) : null}
-      <ParityTable<CustomerRow> appearance="board"
+      <ParityTable<CustomerRow> appearance="v3"
         title="Customers"
         key={tableResetKey}
         rows={enrichedRows}
@@ -419,7 +419,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             key: "name",
             label: "Customer",
             sortable: true,
-            cellClass: "font-medium",
+            cellClass: "font-semibold",
             render: (row) => (
               <span className="inline-flex items-center gap-1.5 min-w-0" title={row.name}>
                 <EntityLinkOrTombstone
@@ -429,7 +429,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   name={row.name}
                   linkLabel={companyLabel(row.name, row.id, "Customer")}
                   noun="Customer"
-                  className="single-line-name text-[#4B5563] hover:underline"
+                  className="single-line-name text-[#4B5563] hover:underline rounded-none"
                 />
                 <button
                   type="button"

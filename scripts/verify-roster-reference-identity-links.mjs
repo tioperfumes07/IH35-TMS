@@ -53,11 +53,11 @@ export function verify(source) {
   need("vendors", 'id={row.id}', "vendor roster must forward the canonical vendor id");
   need("names", 'data-testid="names-master-record-link"', "Names Master canonical identity must stay linked");
   need("names", 'id={row.entity_id}', "Names Master must forward the canonical entity id");
-  need("names", 'onClick={() => navigate(row.link_to_module_page)}', "Names Master Open action must honor the backend canonical module route");
+  need("names", 'onClick={() => navigate(hubHref(row.link_to_module_page))}', "Names Master Open action must honor the backend canonical module route");
   need("users", 'data-testid="user-roster-record-link"', "user roster primary identity must stay linked");
   need("users", 'kind="user"', "user roster must use the canonical EntityLink user kind");
   need("users", 'id={row.id}', "user roster must forward the canonical identity user id");
-  need("users", 'onRowClick={(row) => navigate(`/users/${row.id}`)}', "user roster row must preserve its canonical detail drill");
+  need("users", 'onRowClick={(row) => navigate(drvHref(`/users/${row.id}`))}', "user roster row must preserve its canonical detail drill");
   failures.push(...matrixLeaf(source, "customerMatrix", "home.roster", "/customers", true));
   failures.push(...matrixLeaf(source, "vendorMatrix", "home.roster", "/vendors", false));
   failures.push(...matrixLeaf(source, "listsMatrix", "hub.names_search", "/lists/names", false));
@@ -86,11 +86,11 @@ if (process.argv.includes("--self-test")) {
     ["vendors", 'kind="vendor"', 'kind="customer"'],
     ["names", 'data-testid="names-master-record-link"', 'data-testid="broken-name-link"'],
     ["names", 'id={row.entity_id}', 'id={undefined}'],
-    ["names", 'onClick={() => navigate(row.link_to_module_page)}', 'onClick={() => undefined}'],
+    ["names", 'onClick={() => navigate(hubHref(row.link_to_module_page))}', 'onClick={() => undefined}'],
     ["users", 'data-testid="user-roster-record-link"', 'data-testid="broken-user-link"'],
     ["users", 'kind="user"', 'kind="driver"'],
     ["users", 'id={row.id}', 'id={undefined}'],
-    ["users", 'onRowClick={(row) => navigate(`/users/${row.id}`)}', 'onRowClick={() => undefined}'],
+    ["users", 'onRowClick={(row) => navigate(drvHref(`/users/${row.id}`))}', 'onRowClick={() => undefined}'],
     ["customerMatrix", '"id": "home.roster"', '"id": "home.roster.broken"'],
     ["vendorMatrix", '"id": "home.roster"', '"id": "home.roster.broken"'],
     ["listsMatrix", '"id": "hub.names_search"', '"id": "hub.names_search.broken"'],
