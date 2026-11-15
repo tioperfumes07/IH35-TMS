@@ -7,6 +7,8 @@ function fake(items: Array<{ id: string; brand: string; name: string; identity_k
   const c = {
     query: async (sql: string) => {
       if (/^UPDATE/.test(sql.trim())) { writes.push(sql); return { rows: [], rowCount: 1 }; }
+      // Brand-index write counters (loadNameBrands fingerprint): no stats row → the index is rebuilt every call.
+      if (/FROM pg_stat_user_tables/.test(sql)) return { rows: [] };
       if (/FROM perfume\.brand_aliases/.test(sql)) return { rows: [] };
       if (/SELECT brand, name FROM perfume\.items/.test(sql)) return { rows: items.map(({ brand, name }) => ({ brand, name })) };
       if (/FROM perfume\.items WHERE merged_into_id IS NULL ORDER BY/.test(sql)) return { rows: items };

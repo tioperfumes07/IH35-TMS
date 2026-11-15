@@ -10,6 +10,8 @@ function fakeClient(): PoolClient {
       if (/FROM perfume\.brand_aliases/.test(sql)) return { rows: [] };
       if (/SELECT brand, name FROM perfume\.items/.test(sql)) return { rows: [] };
       if (/SELECT DISTINCT brand FROM perfume\.items/.test(sql)) return { rows: [{ brand: "RAYHAAN" }, { brand: "GIORGIO ARMANI" }] };
+      // Brand-index write counters (loadNameBrands fingerprint): no stats row → the index is rebuilt every call.
+      if (/FROM pg_stat_user_tables/.test(sql)) return { rows: [] };
       if (/FROM perfume\.price_list_rows r/.test(sql)) return { rows: [
         { sheet: null, row_no: 1, description: "HALLOWEEN BLOSSOM W 3.4oz EDT", brand: null, upc: "008411117777", sku: null, size_text: null, price_cents: 1650,
           match_status: "matched", gender_override: null, item_id: "i1", display_name: "JESUS DEL POZO · HALLOWEEN BLOSSOM · 100 ml", item_brand: "JESUS DEL POZO", other_vendors: 3, low_other_cents: 1800 },
