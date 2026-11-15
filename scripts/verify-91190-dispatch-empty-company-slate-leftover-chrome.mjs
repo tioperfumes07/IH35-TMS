@@ -81,7 +81,10 @@ function boardHits(src, testId) {
     hits.push(`need-company BoardSection testId=${testId} required`);
   }
   // U18 — leaf PageHeader back arrow stays in Dispatch module home
-  if (/<PageHeader\b/.test(src) && !/backHref="\/dispatch"/.test(src)) {
+  // ROUND 8.20 return-context: backHref={x} where x = resolveBackHref({ …, fallback: "/dispatch" }) still lands in Dispatch.
+  const resolvedToDispatch = /backHref=\{(\w+)\}/.exec(src)?.[1];
+  const viaReturn = resolvedToDispatch ? new RegExp(`const ${resolvedToDispatch} = resolveBackHref\\(\\{[^}]*fallback: "/dispatch"`).test(src) : false;
+  if (/<PageHeader\b/.test(src) && !/backHref="\/dispatch"/.test(src) && !viaReturn) {
     hits.push('PageHeader backHref must be /dispatch (U18)');
   }
   return hits;

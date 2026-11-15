@@ -132,7 +132,7 @@ export function audit(s) {
     "On Loads / Available do not click through to a filtered roster",
   );
   // R10
-  need("R10", /width: "min\(1260px, calc\(100vw - 2rem\)\)",\s*maxWidth: 1260/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{ width: "min\(760px, 100vw\)", minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
+  need("R10", /width: "min\(1260px, calc\(100vw - 2rem\)\)",\s*maxWidth: 1260/.test(s.modal) && /w-\[760px\] max-w-\[100vw\]/.test(s.modal) && /\{\s*width: "min\(760px, 100vw\)",\s*minWidth: 440/.test(s.modal), "Book Load is not 1260 center / 760 side (Spec board), clamped to the viewport");
   need("R10", /\[&_input\]:text-right/.test(s.idBar), "the Load # number is not right-aligned in its box");
   // R10b (Board 15, Dispatch-BookLoad-SidePanel.dc.html) — the Truck Line pill opens the wizard as the 760 side panel
   // with "Dispatch › Truck Line › {unit} · Assign a load".

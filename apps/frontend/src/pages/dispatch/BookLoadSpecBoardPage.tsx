@@ -71,7 +71,7 @@ export default function BookLoadSpecBoardPage() {
         testId="book-load-spec-panel"
       >
         <ParityTable
-          appearance="board"
+          appearance="v3"
           rows={ROWS}
           columns={COLUMNS}
           rowKey={(r) => r.id}

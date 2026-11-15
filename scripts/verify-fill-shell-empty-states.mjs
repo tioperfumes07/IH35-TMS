@@ -246,7 +246,9 @@ function analyze(sources) {
   const e = [];
   for (const [rel, tag, testId, label] of checks) {
     const src = sources[rel] ?? "";
-    if (!src.includes(`<${tag}`) || !src.includes(`testId="${testId}"`)) {
+    // V3 boards (docs/design/v3, ROUND 9.x ports) fill the state with the shared <V3Panel board>, the V3 BoardSection.
+    const shells = tag === "BoardSection" ? ["<BoardSection", "<V3Panel board"] : [`<${tag}`];
+    if (!shells.some((t) => src.includes(t)) || !src.includes(`testId="${testId}"`)) {
       e.push(`${rel}: ${label} must use ${tag} (testId=${testId})`);
     }
   }
@@ -265,7 +267,11 @@ if (selftest) {
     ...base,
     "apps/frontend/src/pages/factoring/FactoringHome.tsx": base["apps/frontend/src/pages/factoring/FactoringHome.tsx"].replace(/<BoardSection/g, "<div"),
   };
-  if (!analyze(planted).length) {
+  const plantedV3 = {
+    ...base,
+    "apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx": base["apps/frontend/src/pages/driver-finance/SettlementsDeductionsBoard.tsx"].replace(/<V3Panel board/g, "<div").replace(/<BoardSection/g, "<div"),
+  };
+  if (!analyze(planted).length || !analyze(plantedV3).length) {
     console.error("SELFTEST FAIL plant escaped");
     process.exit(1);
   }

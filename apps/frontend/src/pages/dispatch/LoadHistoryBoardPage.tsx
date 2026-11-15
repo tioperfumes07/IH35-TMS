@@ -625,7 +625,7 @@ export default function LoadHistoryBoardPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: selected ? "minmax(0,1fr) minmax(280px,360px)" : "minmax(0,1fr)", gap: 12, alignItems: "start" }}>
         <ParityTable
-          appearance="board"
+          appearance="v3"
           rows={rows}
           title={
             <span data-v3="table.title" style={{ font: `700 13px ${V3.font}`, color: V3.ink }}>
