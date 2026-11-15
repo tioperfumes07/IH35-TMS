@@ -9,11 +9,16 @@ function fakeClient(): PoolClient {
       if (/FROM perfume\.price_lists l JOIN perfume\.vendors/.test(sql)) return { rows: [{ vendor: "La Esperanza Fragrances", created_at: "2026-11-14" }] };
       if (/FROM perfume\.brand_aliases/.test(sql)) return { rows: [] };
       if (/SELECT brand, name FROM perfume\.items/.test(sql)) return { rows: [] };
+      if (/SELECT DISTINCT brand FROM perfume\.items/.test(sql)) return { rows: [{ brand: "RAYHAAN" }, { brand: "GIORGIO ARMANI" }] };
       if (/FROM perfume\.price_list_rows r/.test(sql)) return { rows: [
         { sheet: null, row_no: 1, description: "HALLOWEEN BLOSSOM W 3.4oz EDT", brand: null, upc: "008411117777", sku: null, size_text: null, price_cents: 1650,
           match_status: "matched", gender_override: null, item_id: "i1", display_name: "JESUS DEL POZO · HALLOWEEN BLOSSOM · 100 ml", item_brand: "JESUS DEL POZO", other_vendors: 3, low_other_cents: 1800 },
         { sheet: null, row_no: 2, description: "SHI W 3.4 EDP", brand: null, upc: null, sku: null, size_text: null, price_cents: 900,
           match_status: "unmatched", gender_override: null, item_id: null, display_name: null, item_brand: null, other_vendors: 0, low_other_cents: null },
+        { sheet: null, row_no: 3, description: "RAYHAAN AZUL 3.4oz", brand: null, upc: null, sku: null, size_text: null, price_cents: 1200,
+          match_status: "unmatched", gender_override: null, item_id: null, display_name: null, item_brand: null, other_vendors: 0, low_other_cents: null },
+        { sheet: null, row_no: 4, description: "EMPORIO DIAMONDS W 3.4oz", brand: null, upc: null, sku: null, size_text: null, price_cents: 2000,
+          match_status: "matched", gender_override: null, item_id: "i2", display_name: "GIORGIO ARMANI · EMPORIO DIAMONDS · 100 ml", item_brand: "GIORGIO ARMANI", other_vendors: 1, low_other_cents: 2100 },
       ] };
       throw new Error(`unexpected sql ${sql}`);
     },
@@ -35,6 +40,10 @@ describe("vendor list export with BRAND (owner 11-14)", () => {
     expect((ws.getRow(3).getCell(10).value as { result: string }).result).toBe("YES");
     expect((ws.getRow(3).getCell(13).value as { result: string }).result).toBe("YES");
     expect(ws.getRow(4).getCell(7).value).toBe("unmatched");
+    expect(ws.getRow(5).getCell(6).value).toBe("RAYHAAN"); // item-master brand read like the match index reads it
+    expect(ws.getRow(6).getCell(6).value).toBe("GIORGIO ARMANI"); // no brand in the line → its linked item's brand
+    expect(ws.getRow(6).getCell(6).font?.italic).toBe(true);
+    expect((ws.getRow(6).getCell(10).value as { result: string }).result).toBe("YES");
     expect(wb.getWorksheet("Summary")!.getRow(3).getCell(2).value).toMatchObject({ formula: expect.stringContaining('"linked"') });
   });
 });
