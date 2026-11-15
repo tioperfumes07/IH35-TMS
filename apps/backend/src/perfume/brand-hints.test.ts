@@ -1,0 +1,49 @@
+import { describe, expect, it } from "vitest";
+import { identify, nameBrandIndex } from "./normalize.js";
+
+/** Owner 2026-11-14 18:23 / 18:25 CT corrections on the ESPERANZA list — the brand, and sets. */
+const b = (d: string, nameBrands: Record<string, string> = {}) => identify({ description: d, nameBrands }).brand;
+describe("brands the owner named on the ESPERANZA list", () => {
+  it("abbreviations and spellings", () => {
+    expect(b("JESSICA S. FANCY LOVE W 3.4oz EDP")).toBe("JESSICA SIMPSON");
+    expect(b("JESSICA S.FANCY GIRL W B/M 8.0oz")).toBe("JESSICA SIMPSON");
+    expect(b("JLO LIVE W 3.4oz EDP")).toBe("JENNIFER LOPEZ");
+    expect(b("JOVAN MUSK W 3.25oz")).toBe("JOVAN");
+    expect(b("JUICY C GLISTENING AMBER W3.4ozEDP")).toBe("JUICY COUTURE");
+    expect(b("HB BOSS BOTTLED BEYOND 3.4oz EDP M")).toBe("HUGO BOSS");
+    expect(b("V&ROLF SPICE BOMB 3oZ EDT")).toBe("VIKTOR & ROLF");
+    expect(b("MK WONDERLUST 4PC SET")).toBe("MICHAEL KORS");
+    expect(b("SABRINA C. CHERRY BABY EDP 2.5oz")).toBe("SABRINA CARPENTER");
+    expect(b("RALPH L. ROMANCE W 3.4oz EDP")).toBe("RALPH LAUREN");
+    expect(b("PARIS H HEIRESS W 3.4oZ EDP")).toBe("PARIS HILTON");
+    expect(b("UNAGRO III M 3.4oZ EDT")).toBe("EMANUEL UNGARO");
+    expect(b("W/DEO 2.6oz DOLCE & GABBANA \"K\" M 2PC SET EDP")).toBe("DOLCE & GABBANA");
+  });
+  it("the fragrance name tells the brand", () => {
+    expect(b("212 VIP ROSE 4.2oz")).toBe("CAROLINA HERRERA");
+    expect(b("360 CORAL W EDP 3.4oz")).toBe("PERRY ELLIS");
+    expect(b("POLO BLUE 6.7oz EDT M")).toBe("RALPH LAUREN");
+    expect(b("SPIDERMAN 3.4oz EDT")).toBe("MARVEL");
+    expect(b("IRON MAN 3.4oZ EDT")).toBe("MARVEL");
+    expect(b("FROZEN ELSA 3.4oz EDT")).toBe("DISNEY");
+    expect(b("HALLOWEEN KISS W 3.4oz EDT")).toBe("JESUS DEL POZO");
+    expect(b("HOT W 3.4oz")).toBe("BENETTON");
+    expect(b("Z-14 M SET 4.2")).toBe("HALSTON");
+    expect(b("STALLION 53 BLUE")).toBe("EMPER");
+  });
+  it("cross-reference: a name only one brand owns across every vendor's items gives that brand", () => {
+    const idx = nameBrandIndex([{ brand: "LATTAFA", name: "ASAD" }, { brand: "LATTAFA", name: "ASAD ZANZIBAR" }, { brand: "ARMAF", name: "BLUE HOMME" }, { brand: "DIOR", name: "BLUE" }]);
+    expect(b("ASAD 3.4oz EDP M", idx)).toBe("LATTAFA");
+    expect(idx.BLUE).toBeUndefined(); // generic word, never a brand
+  });
+});
+describe("sets the owner said were missed", () => {
+  for (const d of ["360 CORAL W CANISTER", "360 W TRIO 1oz", "MARVEL FOR BOYS 4X25ML EDT COFFRET", "PRINCESS FOR GIRL 4X25ML COFRFRET EDT", "GUESS MARCIANO W 3PCS ET", "LATTAFA ASAD COLLECTION 4X25ML"]) {
+    it(d, () => expect(identify({ description: d }).flags).toContain("SET"));
+  }
+  it("a set in a bag is a SET, not a bag", () => {
+    const f = identify({ description: "GUESS SEDUCTIVE NOIR W 4PCS / BAG" }).flags;
+    expect(f).toContain("SET");
+    expect(f).not.toContain("VARIOUS");
+  });
+});
