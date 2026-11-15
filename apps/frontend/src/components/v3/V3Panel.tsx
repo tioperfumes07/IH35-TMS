@@ -95,6 +95,8 @@ export function V3Panel({
                 cursor: "pointer",
                 padding: 0,
                 fontFamily: V3.font,
+                // board: the board draws "View all →" as a span — content-box, line-height normal (not a button box).
+                ...(board ? { boxSizing: "content-box" as const, lineHeight: "normal" } : {}),
               }}
             >
               {viewAllLabel}
