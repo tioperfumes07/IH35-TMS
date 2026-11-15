@@ -20,7 +20,7 @@ export function audit(sources, pt) {
     // invisible — a correctly-attributed table read as "without appearance". New rule skips an optional
     // type argument first; the same omission still fails (selftest plants a generic table without it).
     for (const m of src.matchAll(/<ParityTable(?:<[\w\s,|.[\]]+>)?(?![\w<])[\s\S]*?(?=\/>|>\s*\n)/g)) {
-      if (!/appearance="board"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board"`);
+      if (!/appearance="(board|v3)"/.test(m[0])) f.push(`${file}:${src.slice(0, m.index).split("\n").length} ParityTable without appearance="board"`);
     }
   }
   for (const needle of ['appearance?: "default" | "board" | "v3";', 'const board = appearance === "board" || v3;', '"var(--ih-zebra)"', '"var(--ih-thead)"', 'const BOARD_RULE = "var(--ih-rule)";', 'textTransform: "uppercase" as const'])
