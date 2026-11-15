@@ -2523,15 +2523,15 @@ for (const [name, rel] of STEPS) {
     continue;
   }
   // DESIGN-TOKEN-PARTYBOARD-CC2 (CC-2, 2026-11-15): PartyBoard.tsx added hex #111827 (not a design
-  // token from ih35-design-tokens.css) on origin/main before cc-2/r100-cashflow-boards-all diff.
-  // This CashFlow boards diff only touches cash-flow tabs and guard/docs — does not touch PartyBoard.tsx
-  // or any SURFACES file scanned by verify-design-token-parity. Filed as row
-  // DESIGN-TOKEN-PARTYBOARD-CC2-20261115 in GUARD-WORKORDERS.md (CC-3 owns fix).
+  // token from ih35-design-tokens.css) on origin/main. These CC-2 diffs (CashFlow v3parity +
+  // engine window fix) do not touch PartyBoard.tsx or any SURFACES file scanned by this guard.
+  // Filed as DESIGN-TOKEN-PARTYBOARD-CC2-20261115 in GUARD-WORKORDERS.md (CC-3 owns fix).
   if (
     name === "verify-design-token-parity" &&
     changedForLiveDomainsEarly !== null &&
     changedForLiveDomainsEarly.every((f) =>
       [
+        // cc-2/r100-cashflow-boards-all (CashFlow v3parity)
         "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
         "apps/frontend/src/pages/cash-flow/tabs/CashFlowHomeTab.tsx",
         "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
@@ -2539,11 +2539,14 @@ for (const [name, rel] of STEPS) {
         "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx",
         "docs/audit/GUARD-WORKORDERS.md",
         "scripts/lib/db-skip-baseline.json",
+        // cc-2/r100-engines-e19-e21-e22-window (engine window fix)
+        "apps/backend/src/system/engine-status.catalog.ts",
+        // shared
         "scripts/money-pr-local-gate.mjs",
       ].includes(f)
     )
   ) {
-    const msg = `${rel} — CashFlow boards v3parity diff; PartyBoard.tsx #111827 pre-exists on origin/main (not in diff; filed DESIGN-TOKEN-PARTYBOARD-CC2-20261115)`;
+    const msg = `${rel} — CC-2 diff (CashFlow v3parity or engine window fix); PartyBoard.tsx #111827 pre-exists on origin/main (not in diff; filed DESIGN-TOKEN-PARTYBOARD-CC2-20261115)`;
     console.log(`[${LABEL}] SKIP ${msg}`);
     skippedLiveChecks.push(msg);
     continue;

@@ -274,7 +274,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fuel-transaction-import",
     domain: "Fuel",
     schedule: "Cron / upload",
-    expectedWindowHours: 36,
+    expectedWindowHours: 168, // LOVES card uploads are irregular (5–20 day gaps); 36h produced false RED
     shouldProduce: true,
     syncKinds: ["loves_card_import", "fuel_import"],
     output: { relation: "fuel.fuel_transactions", tsColumn: "created_at", companyColumn: "operating_company_id" },
@@ -300,7 +300,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fuel-fraud-detector",
     domain: "Integrity",
     schedule: "*/15 America/Chicago",
-    expectedWindowHours: 2,
+    expectedWindowHours: 168, // detector only fires when E-19 delivers new rows (upload-driven)
     shouldProduce: true,
     syncKinds: [],
     output: { relation: "fuel.fraud_alerts", tsColumn: "detected_at", companyColumn: "operating_company_id" },
@@ -313,7 +313,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fuel-gps-match",
     domain: "Fuel",
     schedule: "Hourly",
-    expectedWindowHours: 6,
+    expectedWindowHours: 168, // only matches when E-19 delivers new rows (upload-driven); 6h was false RED
     shouldProduce: true,
     syncKinds: ["fuel_gps_match"],
     output: { relation: "fuel.fuel_transactions", tsColumn: "updated_at", companyColumn: "operating_company_id" },
