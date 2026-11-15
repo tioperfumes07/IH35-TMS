@@ -13,7 +13,7 @@ import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombs
 import { MoneyCell } from "../../components/shared/MoneyCell";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { MoneyListToolbar } from "../../components/table/MoneyListToolbar";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -340,9 +340,9 @@ export function CompanySettlementsPage() {
         title="Company Settlements"
         subtitle="Revenue · costs · driver pay · margin per tour"
       >
-        <BoardSection title="Company settlements" testId="company-settlements-need-company">
+        <V3Panel board title="Company settlements" testId="company-settlements-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </BoardSection>
+        </V3Panel>
       </SettlementsSubNavWrapper>
     );
   }
@@ -426,7 +426,7 @@ export function CompanySettlementsPage() {
       </MoneyListToolbar>
 
       <div data-company-settlements-v3-panel="1" data-testid="company-settlements-list-panel">
-        <BoardSection
+        <V3Panel board
           title="Company settlements"
           subtitle="revenue · costs · driver pay · margin per tour"
           onViewAll={() => {
@@ -436,7 +436,7 @@ export function CompanySettlementsPage() {
           }}
           testId="company-settlements-board-section"
         >
-          <ParityTable appearance="board"
+          <ParityTable appearance="v3"
            
             columns={columns}
             rows={tourRows}
@@ -472,7 +472,7 @@ export function CompanySettlementsPage() {
               margin: (v) => formatUsdCents(v.reduce((n, r) => n + r.margin_cents, 0)),
             }}
           />
-        </BoardSection>
+        </V3Panel>
       </div>
 
       {selected ? (
