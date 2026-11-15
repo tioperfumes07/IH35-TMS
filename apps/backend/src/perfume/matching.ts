@@ -14,7 +14,7 @@
  *   7. anything else → "review" with up to 5 suggestions. Never counted in a price until confirmed.
  * Owner rule: identified correctly or not at all — no fuzzy score ever links an item by itself.
  */
-import { genderHintOf, identify, looseKey, normalizeUpc, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, genderHintOf, identify, looseKey, normalizeUpc, type Identity } from "./normalize.js";
 
 export type IndexItem = {
   id: string;
@@ -75,7 +75,8 @@ export function addItem(ix: MatchIndex, it: IndexItem) {
   ix.byLoose.set(it.looseKey, l);
   const nk = nameKeyOfIdentityKey(it.identityKey);
   if (nk) { const n = ix.byName.get(nk) ?? []; if (!n.includes(it.id)) n.push(it.id); ix.byName.set(nk, n); }
-  if (it.brand && !ix.brandAliases[it.brand]) ix.brandAliases[it.brand] = it.brand; // every known brand is detectable in brand-less lines
+  // A spelling the built-in list already maps (NINA → NINA RICCI, ARDEN → ELIZABETH ARDEN) keeps its mapping.
+  if (it.brand && !ix.brandAliases[it.brand] && !BUILTIN_BRAND_ALIASES[it.brand]) ix.brandAliases[it.brand] = it.brand; // every known brand is detectable in brand-less lines
 }
 
 /** identity key = brand|name|size|type|gender|flags[|contents]. Sets with listed contents never name-match. */

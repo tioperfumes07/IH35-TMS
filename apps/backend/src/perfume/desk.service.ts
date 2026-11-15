@@ -5,7 +5,7 @@
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
-import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
@@ -150,7 +150,16 @@ export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: 
 
 /* ---------------- index ---------------- */
 
+/** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
+ *  reading of a line — import, Review, List analysis — uses it. Re-read on every call: one cheap query. */
+export async function loadNameBrands(c: PoolClient): Promise<void> {
+  const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
+  const it = await c.query<{ brand: string; name: string }>(`SELECT brand, name FROM perfume.items WHERE merged_into_id IS NULL`);
+  setNameBrands(nameBrandIndex(it.rows, Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand]))));
+}
+
 export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
+  await loadNameBrands(c);
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const ix = emptyIndex(Object.fromEntries(ba.rows.map((r) => [r.alias, r.brand])));
   const items = await c.query<{ id: string; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }>(
@@ -516,6 +525,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     fp.push(w); cond.push(`(r.description ILIKE '%' || $${fp.length} || '%' OR coalesce(r.brand,'') ILIKE '%' || $${fp.length} || '%' OR coalesce(r.upc,'') = $${fp.length} OR coalesce(r.sku,'') = $${fp.length})`);
   }
   const where = cond.length ? `AND ${cond.join(" AND ")}` : "";
+  await loadNameBrands(c);
   const base = `FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL ${where}`;
   // Narrowed to my offer list: every waiting line is read (a few thousand at most) and kept only when it can be one
@@ -842,6 +852,7 @@ export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null
   const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
   const _cached = _gridCache.get(_cacheKey);
   if (_cached) return _cached;
+  await loadNameBrands(c);
   const rules = await getRules(c);
   const target = targetPctOf(rules, opts.targetPct);
   // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.

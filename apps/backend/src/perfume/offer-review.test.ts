@@ -23,8 +23,8 @@ describe("review: only lines that can be one of my offer items", () => {
     expect(cands("ARMAF CLUB DE NUIT MILESTONE 3.4oz")).toEqual(["milestone"]);
     expect(cands("A.GRANDE GOD IS A WOMAN")).toEqual(["god"]);
     expect(cands("S.FERRAGAMO RED LEATHER M 3.3oz EDP")).toEqual(["redleather"]);
-    // Owner 2026-11-14 17:34 CT: same brand only — a line naming no brand is not proposed (linked by search).
-    expect(cands("HALLOWEEN HERO M 4.2oz EDT")).toEqual([]);
+    // Owner 2026-11-14 18:23 CT: "halloween is j del pozo" — the name tells the brand, so the same-brand rule holds.
+    expect(cands("HALLOWEEN HERO M 4.2oz EDT")).toEqual(["hero"]);
   });
   it("never proposes a different product", () => {
     expect(cands("ARMAF DELIGHTS ISLAND BLISS 4PC SET")).toEqual([]); // set ≠ bottle
