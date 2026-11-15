@@ -445,8 +445,25 @@ export function readSection(section: string | null | undefined): { gender: Gende
   return { gender, flags };
 }
 
+const spellingsCache = new WeakMap<Record<string, string>, { list: string[][]; has: Set<string>; desk: string[]; n: number }>();
+const EMPTY_ALIASES: Record<string, string> = {};
+/** Every brand spelling (built-in aliases, the desk's aliases, their brands, the item master's brands), longest first. */
+function spellingsFor(aliases: Record<string, string>): { list: string[][]; has: Set<string> } {
+  const key = aliases ?? EMPTY_ALIASES;
+  const hit = spellingsCache.get(key);
+  // The match index adds item brands to its alias object as it loads — a changed size rebuilds the list.
+  const n = Object.keys(key).length;
+  if (hit && hit.desk === DESK_BRANDS && hit.n === n) return hit;
+  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...key }), ...DESK_BRANDS];
+  const values = Object.values({ ...BUILTIN_BRAND_ALIASES, ...key });
+  const all = [...new Set([...known, ...values])];
+  const entry = { list: all.map((x) => x.split(" ")).sort((a, b) => b.length - a.length), has: new Set(all), desk: DESK_BRANDS, n };
+  spellingsCache.set(key, entry);
+  return entry;
+}
+
 export function identify(input: IdentityInput): Identity {
-  const aliases = input.brandAliases ?? {};
+  const aliases = input.brandAliases ?? EMPTY_ALIASES;
   let s = stripAccents(String(input.description ?? "")).toUpperCase();
 
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
@@ -530,11 +547,11 @@ export function identify(input: IdentityInput): Identity {
 
   // Brand: the brand column, else the longest known brand or alias the line starts with.
   let brand = canonicalBrand(input.brand ?? "", aliases);
-  const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...aliases }), ...DESK_BRANDS];
-  const brandValues = new Set(Object.values({ ...BUILTIN_BRAND_ALIASES, ...aliases }));
-  if (brand) brandValues.add(brand);
-  // Remove the brand's words wherever they lead the line, in any of its spellings.
-  const spellings = [...known, ...brandValues].map((x) => x.split(" ")).sort((a, b) => b.length - a.length);
+  // Remove the brand's words wherever they lead the line, in any of its spellings. The sorted spelling list is built
+  // once per alias set (measured 11-15 02:04Z: rebuilding and sorting ~800 spellings on every line of a 20,000-line
+  // rematch kept the API busy past its health check and the instance was restarted).
+  const base = spellingsFor(aliases);
+  const spellings = brand && !base.has.has(brand) ? [brand.split(" "), ...base.list].sort((a, b) => b.length - a.length) : base.list;
   for (const sp of spellings) {
     if (sp.length && sp.every((w, i) => words[i] === w)) {
       const canon = canonicalBrand(sp.join(" "), aliases);
