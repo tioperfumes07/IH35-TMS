@@ -27,7 +27,7 @@ const CHECKS = [
   {
     name: "Customers.tsx's New transaction button hops to the invoice list scoped by this customer",
     file: "apps/frontend/src/pages/Customers.tsx",
-    pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)/,
+    pattern: /navigate\((?:custInvHref\()?`\/accounting\/invoices\?customer_id=\$\{selectedCustomer\.id\}`\)??\)/,
   },
   {
     name: "InvoicesListPage reads customer_id from the URL and scopes the query by it",
@@ -52,7 +52,7 @@ const CHECKS = [
     //        coming back on the profile now fails.
     name: "CustomerDetail's Billing tab is A/R read-only and sends payments to Accounting → Receive payment",
     file: "apps/frontend/src/pages/CustomerDetail.tsx",
-    pattern: /data-cust-ar-readonly="1"[\s\S]{0,400}href="\/accounting\/payments\?create=1"[\s\S]{0,8000}data-testid="customer-record-payment-disabled"/,
+    pattern: /data-cust-ar-readonly="1"[\s\S]{0,400}href=\{?(?:custInvHref\()?["']\/accounting\/payments\?create=1["']\)??\}?[\s\S]{0,8000}data-testid="customer-record-payment-disabled"/,
     forbidPattern: /recordPaymentOpen|createCustomerPayment\(|recordCustomerPayment\(|applyCustomerPayment\(/,
   },
   {
