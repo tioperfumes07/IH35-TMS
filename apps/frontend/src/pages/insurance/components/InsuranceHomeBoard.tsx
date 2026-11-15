@@ -463,20 +463,15 @@ export function InsuranceHomeBoard({ companyId }: { companyId: string }) {
             footerCells={
               premiumRows.length > 0
                 ? {
-                    coverage: <span style={{ fontWeight: 700 }}>Total</span>,
+                    // V3 totals row (ParityTable v3 footer td = 700 12px ink on #F7F8FA): the text sits in the td, as drawn.
+                    coverage: "Total",
+                    // Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html. The sum opens the policies it totals.
                     premium: (
-                      <span className="text-right tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                        {/* Board Premium column: plain dollars (no $ glyph) — Insurance.dc.html. The sum opens the policies it totals. */}
-                        <Link to={insHref("/insurance/policies")} style={{ color: V3.link }} data-testid="insurance-premium-total-link">
-                          {formatQuantityTable(annualPremiumCents / 100, 2)}
-                        </Link>
-                      </span>
+                      <Link to={insHref("/insurance/policies")} style={{ color: "inherit" }} data-testid="insurance-premium-total-link">
+                        {formatQuantityTable(annualPremiumCents / 100, 2)}
+                      </Link>
                     ),
-                    share: (
-                      <span className="tabular-nums" style={{ fontWeight: 700, whiteSpace: "nowrap" }}>
-                        100%
-                      </span>
-                    ),
+                    share: "100%",
                   }
                 : undefined
             }
