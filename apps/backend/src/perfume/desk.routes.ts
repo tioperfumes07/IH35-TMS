@@ -245,11 +245,14 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // Review line filters arrive as comma lists (gender=M,W&kind=TESTER).
+  const csvList = z.preprocess((v) => (Array.isArray(v) ? v : typeof v === "string" && v ? v.split(",") : undefined), z.array(z.string().max(80)).max(200).optional());
   app.get("/api/v1/perfume/review", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ list_id: z.string().uuid().optional(),
       list_ids: z.string().max(4000).optional().transform((v) => (v ? v.split(",").filter(Boolean) : undefined)).pipe(z.array(z.string().uuid()).max(50).optional()),
-      q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
+      q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(),
+      gender: csvList, conc: csvList, kind: csvList, category: csvList, brand: csvList, limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });
