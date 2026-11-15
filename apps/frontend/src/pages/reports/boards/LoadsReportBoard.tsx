@@ -472,6 +472,7 @@ export function LoadsReportBoard() {
     >
       <div data-testid="loads-report-page" className="space-y-3">
         <ReportFilterBar
+          board
           testIdPrefix="reports-loads"
           fromDate={staged.draft.start}
           toDate={staged.draft.end}

@@ -474,6 +474,7 @@ export default function LoadHistoryBoardPage() {
       </div>
 
       <ReportFilterBar
+        board
         testIdPrefix="load-history"
         fromDate={staged.draft.start}
         toDate={staged.draft.end}
