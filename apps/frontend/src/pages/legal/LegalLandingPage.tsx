@@ -1,7 +1,6 @@
 import { useNavigate , useLocation} from "react-router-dom";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
-import { Button } from "../../components/Button";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { LegalHomeBoard } from "./components/LegalHomeBoard";
@@ -30,15 +29,22 @@ export function LegalLandingPage() {
 
   return (
     // docs/design/v3/Legal.dc.html — the board root, so the board box model + live reader reach it.
-    <div className="min-w-0 space-y-3 overflow-x-hidden" data-v3-board="Legal" style={{ lineHeight: "normal" }}>
+    <div className="min-w-0 overflow-x-hidden" data-v3-board="Legal" style={{ lineHeight: "normal", display: "flex", flexDirection: "column", gap: 12 }}>
+      {/* Legal.dc.html header: crumb "Legal › Contracts", ← Back · Legal 700 18px · subtitle, navy "+ Create Contract". */}
       <PageHeader
-        breadcrumb={["Legal", "Contracts"]}
+        variant="v3"
+        crumb="Legal › Contracts"
         title="Legal"
         subtitle="Contracts and compliance workflows"
         actions={
-          <Button onClick={() => navigate(moneyHref("/legal/contracts?openSend=1"))}>
+          <button
+            type="button"
+            data-testid="legal-create-contract"
+            onClick={() => navigate(moneyHref("/legal/contracts?openSend=1"))}
+            style={{ height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: "none", background: "#13233F", color: "#fff", font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", cursor: "pointer", lineHeight: "normal" }}
+          >
             + Create Contract
-          </Button>
+          </button>
         }
       />
 

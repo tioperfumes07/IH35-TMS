@@ -262,30 +262,35 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
         data-testid="legal-home-kpi-strip"
       >
         <V3KpiTile
+          board
           testId="legal-kpi-active-templates"
           label="Active templates"
           value={loading && !templatesQuery.isSuccess ? "…" : dash(metrics.activeTemplates)}
           href={legalHref("/legal/templates")}
         />
         <V3KpiTile
+          board
           testId="legal-kpi-pending-signatures"
           label="Pending signatures"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.pendingSignatures)}
           href={legalHref("/legal/contracts?status=sent&status=viewed")}
         />
         <V3KpiTile
+          board
           testId="legal-kpi-recently-signed"
           label="Recently signed (30d)"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.recentlySigned)}
           href={legalHref("/legal/contracts?status=signed_electronically")}
         />
         <V3KpiTile
+          board
           testId="legal-kpi-expiring-contracts"
           label="Expiring contracts (60d)"
           value={loading && !contractsQuery.isSuccess ? "…" : dash(metrics.expiringContracts)}
           href={legalHref("/legal/contracts")}
         />
         <V3KpiTile
+          board
           testId="legal-kpi-open-matters"
           label="Open matters"
           value={loading && !mattersQuery.isSuccess ? "…" : dash(metrics.openMatters)}
@@ -309,8 +314,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               appearance="v3"
               hidePager
               density="compact"
-              suppressToolbarSearch
-              suppressToolbarRange
+              suppressToolbar
               rows={pipeline}
               rowKey={(row) => row.stage}
               rowTestId={(row) => `legal-pipeline-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
@@ -326,15 +330,15 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
                   render: (row) => (
                     <Link
                       to={legalHref(row.href)}
-                      className="inline-flex items-center gap-2 text-inherit no-underline hover:underline"
+                      className="inline-flex items-center gap-[6px] whitespace-nowrap font-medium text-[#111827] no-underline hover:underline"
                       data-testid={`legal-pipeline-link-${row.stage.toLowerCase().replace(/\s+/g, "-")}`}
                       onClick={(e) => e.stopPropagation()}
                     >
                       <span
                         aria-hidden
                         style={{
-                          width: 8,
-                          height: 8,
+                          width: 7,
+                          height: 7,
                           borderRadius: "50%",
                           background: row.dot,
                           display: "inline-block",
@@ -379,8 +383,7 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
               appearance="v3"
               hidePager
               density="compact"
-              suppressToolbarSearch
-              suppressToolbarRange
+              suppressToolbar
               rows={matterRows}
               rowKey={({ m }) => String(m.id ?? "") || matterLabel(m)}
               emptyText={
@@ -440,7 +443,8 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
           viewAllHref={legalHref("/legal/contracts")}
           testId="legal-home-quick-actions"
         >
-          <div style={{ padding: "4px 14px 12px", fontFamily: V3.font }}>
+          {/* Legal.dc.html: padding 12px 14px · column · gap 10; each action a 8px-0 row with a soft rule. */}
+          <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10, fontFamily: V3.font }}>
             {(
               [
                 ["Send contract →", "/legal/contracts?openSend=1"],
@@ -461,8 +465,8 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
                   border: "none",
                   borderBottom: `1px solid ${V3.borderSoft}`,
                   background: "transparent",
-                  fontSize: 12,
-                  fontWeight: 600,
+                  font: `600 12px ${V3.font}`,
+                  lineHeight: "normal",
                   color: V3.link ?? "#1D4ED8",
                   cursor: "pointer",
                   fontFamily: V3.font,

@@ -14,7 +14,8 @@ const TABS = [
 export function LegalModuleTabs() {
   return (
     <NavyPageSubNav
-      items={TABS.map((tab) => ({ label: tab.label, to: tab.to }))}
+      // Legal.dc.html: the /legal landing is the Contracts view — its tab draws active there.
+      items={TABS.map((tab) => ({ label: tab.label, to: tab.to, ...(tab.id === "contracts" ? { activePaths: ["/legal"] } : {}) }))}
     />
   );
 }

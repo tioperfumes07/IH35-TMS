@@ -30,6 +30,9 @@ export interface NavyPageSubNavItem {
    *  Class pill/delete-only red; white is this nav's own existing text color, so a solid dot in it
    *  is visible against the navy bar without adding an off-palette status color. */
   hasData?: boolean;
+  /** Extra exact paths on which this tab reads active — a module landing that IS this tab's view
+   *  (Legal.dc.html: /legal draws the Contracts tab active). */
+  activePaths?: readonly string[];
 }
 
 function DataDot() {
@@ -56,6 +59,7 @@ function isActive(pathname: string, to: string): boolean {
 
 function itemOrChildActive(pathname: string, item: NavyPageSubNavItem): boolean {
   if (isActive(pathname, item.to)) return true;
+  if (item.activePaths?.includes(pathname)) return true;
   return item.children?.some((c) => isActive(pathname, c.to)) ?? false;
 }
 
