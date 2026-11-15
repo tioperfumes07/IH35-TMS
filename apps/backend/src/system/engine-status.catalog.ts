@@ -331,7 +331,9 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     syncKinds: ["fuel_purchase_push"],
     output: null,
     ownerSeat: "CC-3",
-    kind: "pending",
+    // Built and running (cron 00:00 / 12:00 Z, writes integration_sync_log sync_kind fuel_purchase_push): 238 rows
+    // pushed, 3,894 rejected with the reason dropped (#29687 surfaces it, #29694 re-sends the reason-less ones once).
+    kind: "engine",
   },
   {
     id: "E-24",
@@ -428,7 +430,9 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     syncKinds: [],
     output: null,
     ownerSeat: "CC-3",
-    kind: "pending",
+    // Built and running: office → driver on send (chat.routes, SAMSARA_DRIVER_MESSAGING_ENABLED) and the reply poll
+    // integrations.samsara_driver_replies every 5 min (live 2026-11-15 21:30Z: fetched 0 — no driver replied).
+    kind: "engine",
   },
   {
     id: "E-31",
@@ -439,9 +443,11 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: null,
     shouldProduce: false,
     syncKinds: [],
-    output: null,
+    // Built and running every 15 min: pushes dispatched loads, reads the route back into samsara_route_stop_progress
+    // (live 2026-11-15 21:30:15Z: load 13735, 2 stops read).
+    output: { relation: "integrations.samsara_route_stop_progress", tsColumn: "read_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
-    kind: "pending",
+    kind: "engine",
   },
   {
     id: "E-32",
@@ -454,7 +460,9 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     syncKinds: [],
     output: null,
     ownerSeat: "CC-3",
-    kind: "pending",
+    // Built and running hourly (:17): Samsara POD documents → docs.files linked to load/stop/unit/driver (live
+    // 2026-11-15 21:17Z: 1 document in 7 days, 0 photos — nothing to store).
+    kind: "engine",
   },
   {
     id: "E-40",
