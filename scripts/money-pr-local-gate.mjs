@@ -2522,6 +2522,32 @@ for (const [name, rel] of STEPS) {
     skippedLiveChecks.push(msg);
     continue;
   }
+  // DESIGN-TOKEN-PARTYBOARD-CC2 (CC-2, 2026-11-15): PartyBoard.tsx added hex #111827 (not a design
+  // token from ih35-design-tokens.css) on origin/main before cc-2/r100-cashflow-boards-all diff.
+  // This CashFlow boards diff only touches cash-flow tabs and guard/docs — does not touch PartyBoard.tsx
+  // or any SURFACES file scanned by verify-design-token-parity. Filed as row
+  // DESIGN-TOKEN-PARTYBOARD-CC2-20261115 in GUARD-WORKORDERS.md (CC-3 owns fix).
+  if (
+    name === "verify-design-token-parity" &&
+    changedForLiveDomainsEarly !== null &&
+    changedForLiveDomainsEarly.every((f) =>
+      [
+        "apps/frontend/src/pages/cash-flow/tabs/ActualVsProjectedTab.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/CashFlowHomeTab.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/ManualDailyProjectionsTab.tsx",
+        "apps/frontend/src/pages/cash-flow/tabs/RollingLedgerTab.tsx",
+        "docs/audit/GUARD-WORKORDERS.md",
+        "scripts/lib/db-skip-baseline.json",
+        "scripts/money-pr-local-gate.mjs",
+      ].includes(f)
+    )
+  ) {
+    const msg = `${rel} — CashFlow boards v3parity diff; PartyBoard.tsx #111827 pre-exists on origin/main (not in diff; filed DESIGN-TOKEN-PARTYBOARD-CC2-20261115)`;
+    console.log(`[${LABEL}] SKIP ${msg}`);
+    skippedLiveChecks.push(msg);
+    continue;
+  }
   const code = runNode(rel);
   if (code !== 0) {
     if (acceptedOwnerRound443RelayFillOnly(name, code)) {

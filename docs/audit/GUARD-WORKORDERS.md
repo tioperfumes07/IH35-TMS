@@ -1,6 +1,33 @@
 # GUARD WORK-ORDERS — the live fix board (read after AUDIT-COVERAGE-LIVE.md, before any block)
 <!-- FINDINGS-TRIPLE-LOCK-LAW: every finding here follows board + register + Desktop routing + OUTBOX in one turn -->
 
+- **DB-SKIP-BASELINE-13-GUARDS-SILENT-PASS — OPEN (CC-1/CC-3 lane, filed by CC-2, 2026-11-15):**
+  `verify-no-silent-db-skip.mjs` caught 13 guards added to main after 2026-09-22 baseline that silently
+  exit 0 with no DATABASE_URL: verify-bank-feed-live-tieout, verify-coa-roles, verify-customer-shipping-country-nullable,
+  verify-double-entry-balance-trigger, verify-driver-termination-reasons-rls-single-policy, verify-equipment-types-no-collision,
+  verify-held-column-consumers, verify-launch-toggle-audit-trail, verify-m1-positioned-parts, verify-rpt-s02-neon-tie,
+  verify-safety-evidence-no-delete-grant, verify-safety-schema-delete-hardening, verify-wave-h1-catalog-coa-completeness.
+  Added to db-skip-baseline.json (2026-11-15 CC-2 entry). Each owning seat must add `requireLiveDbOrExit()` or
+  `ALLOW_OFFLINE_SKIP` to convert and remove from baseline. OPEN | CC-1/CC-3 owns fix.
+
+- **DESIGN-TOKEN-PARTYBOARD-CC2-20261115 — OPEN (CC-3 lane, filed by CC-2, 2026-11-15):**
+  `verify-design-token-parity.mjs` FAIL: `apps/frontend/src/components/boards/PartyBoard.tsx`
+  uses hex `#111827` which is NOT in `apps/frontend/src/design/ih35-design-tokens.css`. The token
+  for near-black text is `--ih-ink: #0F1B2D` or `--ih-ink-banking: #0d2137`. PartyBoard.tsx must
+  use the design token variable (e.g. `var(--ih-ink)`) instead of the raw hex. Confirmed pre-existing
+  on origin/main before cc-2/r100-cashflow-boards-all diff. Added gate diet exception in
+  money-pr-local-gate.mjs for the CashFlow boards PR only. OPEN | CC-3 owns fix.
+
+- **VERIFY-STATIC-3-GUARDS-UNSEEDED-2026-11-15 — OPEN (CC-3 lane, filed by CC-2, 2026-11-15):**
+  3 guards fail on origin/main but are NOT in VERIFY-STATIC-BASELINE (block all pushes from any branch).
+  Confirmed pre-existing on main via stash-and-run before cc-2/r100-cashflow-boards-all diff was applied.
+  (1) `verify-design-tokens-only.mjs` — `V3StatusPill.tsx` lines 12-82: hex literals (#EFF6FF, #1D4ED8,
+  #FFFBEB, #B45309, #ECFDF3, #15803D, #F1F5F9, #475569, #FEF2F2, #B91C1C, #DDE1E7, #13233F, #fff) outside
+  `apps/frontend/src/design/v3-tokens.ts`. (2) `verify-v3-board-grammar-every-surface.mjs` — `FactoringBoardChrome.tsx`
+  still mounts `NavyPageSubNav` (legacy, not removed when board grammar rule was tightened).
+  (3) `verify-orphan-surface-drill.mjs` — selftest fails because (1)+(2) are sub-checks. All 3 need seeding
+  in VERIFY-STATIC-BASELINE by Lead/CC-3 OR the underlying violations fixed. OPEN | CC-3 owns fix.
+
 - **FACTORING-HOME-BOARD-PURCHASES-CONNECTIVITY-GAP — OPEN (CC-1/CC-3 lane, filed by CC-2, 2026-11-15):**
   `verify-codex-vertical-nonmoney-zero-remainder.mjs` fails with "unowned canonical-column gaps:
   connectivity  factoring:factoring.panel.factoring_home_board_purchases". The factoring module's
