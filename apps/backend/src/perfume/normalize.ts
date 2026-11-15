@@ -35,6 +35,14 @@ export type Identity = {
 
 /** Short forms vendors use for a brand. Extended at runtime by perfume.brand_aliases rows. */
 export const BUILTIN_BRAND_ALIASES: Record<string, string> = {
+  // ESPERANZA short forms measured live 11-15 (each checked against the item master's own brand spelling).
+  "MAISON A": "MAISON ALHAMBRA",
+  "MAISON A.": "MAISON ALHAMBRA",
+  "AHMED": "AHMED AL MAGHRIBI",
+  "B.SPEARS": "BRITNEY SPEARS",
+  "B SPEARS": "BRITNEY SPEARS",
+  "GLORIA VANDERVILT": "GLORIA VANDERBILT",
+  "HERRERA": "CAROLINA HERRERA",
   "CH": "CAROLINA HERRERA",
   "C.H": "CAROLINA HERRERA",
   "C HERRERA": "CAROLINA HERRERA",
@@ -467,6 +475,26 @@ function spellingsFor(aliases: Record<string, string>): { list: string[][]; has:
   return entry;
 }
 
+/** Fragrance lines vendors write in the brand column → the house that owns them. */
+const LINE_HOUSE: Record<string, string> = { HALLOWEEN: "JESUS DEL POZO" };
+/** The pieces a set lists before its fragrance: sizes, types and the extra items (gel, lotion, aftershave, mini…). */
+const SET_PIECE_WORD_RE = new RegExp(
+  "^(?:EDT|EDP|EDC|PARFUM|COLOGNE|SPRAY|SHOWER\\s*GEL|HAIR\\s*&?\\s*BODY\\s*WASH|H\\/BW|BODY\\s*WASH|BODY\\s*LOTION|BODY\\s*SPRAY|BODY\\s*MIST|" +
+  "B\\/\\s*LOTION|BLOTION|S\\/\\s*GEL|SGEL|SG|GEL|BL|LOTION|AFTER\\s*SHAVE\\s*(?:BLAM|BALM)?|A\\/\\s*SHAVE|AFTERSHAVE|AFTER\\s*S\\/?|" +
+  "DEO(?:DORANT)?(?:\\s*(?:SPRAY|STICK))?|FRAGRANCE\\s*MIST|MIST|TRAVEL\\s*SPRAY|MINI|POUCH|BAG|LIPSTICK)(?![A-Z])", "");
+const SET_PIECE_SIZE_RE = /^\d*\.?\d+\s*(?:FL\.?\s*)?(?:OZ|ML)?/;
+function stripSetPieces(t: string): string {
+  let x = String(t).toUpperCase();
+  for (let i = 0; i < 40; i++) {
+    x = x.replace(/^[\s+]+/, "");
+    const m = x.match(SET_PIECE_SIZE_RE) ?? x.match(SET_PIECE_WORD_RE);
+    if (!m || !m[0]) break;
+    x = x.slice(m[0].length);
+  }
+  return x.trim();
+}
+function setTailName(seg: string): string { return stripSetPieces(seg); }
+
 export function identify(input: IdentityInput): Identity {
   const aliases = input.brandAliases ?? EMPTY_ALIASES;
   let s = stripAccents(String(input.description ?? "")).toUpperCase();
@@ -515,7 +543,19 @@ export function identify(input: IdentityInput): Identity {
   if (plus > 0) {
     flags.add("SET");
     contents = s.slice(plus).replace(/\([^)]*\)?/g, " ").replace(/\s-\s.*$/, "").toUpperCase().replace(/[^A-Z0-9+]/g, "").replace(/^\++|\++$/g, "");
-    s = s.slice(0, plus);
+    const head = s.slice(0, plus);
+    // La Esperanza writes the pieces FIRST and the fragrance LAST: "3.4EDP+3.4 SHOWER GEL A.GRANDE SWEET LIKE CANDY
+    // W 3PC SET", "100ML+10ML DOLCE & GABBANA QUEEN W 3PC SET EDP" (measured live 11-15: 185 lines read no brand).
+    // When the part before the first "+ <size>" is only a size / type / piece, the name is what follows the last piece.
+    if (!stripSetPieces(head)) {
+      const segs = s.slice(plus).split("+");
+      const tail = setTailName(segs[segs.length - 1] ?? "");
+      // Keep the main bottle's size and type from the head; its piece words (BL, GEL, MINI…) are not the name.
+      const headSizeType = head.replace(/\+/g, " ").replace(/\b(?:BL|SGEL|SG|GEL|LOTION|BLOTION|MINI|POUCH|BAG|LIPSTICK)\b/g, " ");
+      s = tail ? `${headSizeType} ${tail}` : head;
+    } else {
+      s = head;
+    }
   }
 
   // Gender from a dedicated column, then (M)/(W)/(U) markers.
@@ -579,6 +619,15 @@ export function identify(input: IdentityInput): Identity {
     if (one) brand = canonicalBrand(one, aliases);
   }
   if (!brand) brand = canonicalBrand(brandFromName(words, input.nameBrands ?? DESK_NAME_BRANDS), aliases);
+  // A fragrance LINE some vendors write as the brand ("HALLOWEEN BLOSSOM", brand column "HALLOWEEN") belongs to its
+  // house, and the line word stays in the name — the item master files it JESUS DEL POZO · HALLOWEEN BLOSSOM
+  // (owner 11-14: "halloween is j del pozo"; 13 ESPERANZA lines unmatched under brand HALLOWEEN, measured 11-15).
+  const lineHouse = LINE_HOUSE[brand];
+  if (lineHouse) {
+    const lw = brand.split(" ");
+    if (!lw.every((w, i) => words[i] === w)) words = [...lw, ...words];
+    brand = canonicalBrand(lineHouse, aliases);
+  }
   // A dash after a brand prefix ("GA-AQUA DE GIO") leaves the brand glued on; handled by punctuation step above.
   // Some vendors put the brand INSIDE the line (PCA: "DAISY EAU SO FRESH MARC JACOBS(W)EDT SP 4.2oz"). A brand of two
   // or more words is never part of a fragrance name, so its phrase leaves the name wherever it sits. A one-word brand
