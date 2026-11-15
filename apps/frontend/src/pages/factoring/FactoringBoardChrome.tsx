@@ -35,11 +35,7 @@ export function FactoringBoardChrome({
   );
 
   return (
-    <div
-      data-factoring-board-chrome="1"
-      data-testid="factoring-board-chrome"
-      style={{ lineHeight: "normal", fontFamily: V3.font, color: V3.ink }}
-    >
+    <>
       <PageHeader
         variant="v3"
         crumb="Factoring"
@@ -48,9 +44,16 @@ export function FactoringBoardChrome({
         subtitle={subtitle}
         actions={actions}
       />
-      <div style={{ marginTop: 4 }} data-testid="factoring-board-tabs">
-        {nav ?? <NavyPageSubNav items={navItems} />}
+      <div
+        data-factoring-board-chrome="1"
+        data-testid="factoring-board-chrome"
+        style={{ marginTop: 4, lineHeight: "normal", fontFamily: V3.font, color: V3.ink }}
+        data-factoring-board-tabs-wrap="1"
+      >
+        <div data-testid="factoring-board-tabs">
+          {nav ?? <NavyPageSubNav items={navItems} />}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

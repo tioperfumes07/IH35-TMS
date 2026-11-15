@@ -38,13 +38,15 @@ export function likelyLines(item: OfferItem, lines: readonly CompetitorLine[], m
     const gc = genderCheck(lineGender(ln.description, id.gender), item.gender, item.name);
     if (!gc.ok) continue;
     const lw = new Set([...words(ln.description), ...id.nameWords.flatMap(words), ...words(id.brand)]);
-    const hit = need.filter((w) => lw.has(w));
+    // Spacing typos: "LOVEME" on the line covers my LOVE + ME (owner 19:03 CT).
+    const lc = [...lw].join(" ").replace(/\s+/g, "") + words(ln.description).join("");
+    const hit = need.filter((w) => lw.has(w) || (need.join("").length > 4 && lc.includes(need.join(""))));
     if (hit.length * 2 < need.length || !hit.some((w) => w.length >= 3)) continue;
     const brandSeen = Boolean(id.brand && id.brand === item.brand) || brandWords.some((w) => lw.has(w));
     // Owner 2026-11-14 17:34 CT: "IT MUST BE FROM SAME BRAND" — a line without my item's brand is never proposed.
     if (!brandSeen) continue;
     const mine = new Set([...need, ...words(item.name), ...words(item.brand)]);
-    const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !mine.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w));
+    const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !mine.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w) && !need.join("").includes(w));
     const missing = need.filter((w) => !lw.has(w));
     if (sizesFar(id.sizeMl, item.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && item.size_ml != null && Math.abs(id.sizeMl - item.size_ml) > 5;
