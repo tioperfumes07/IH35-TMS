@@ -134,7 +134,9 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
   // Owner 2026-11-14: no cost I never uploaded and no purchase quantities (no sales / movement data) by default.
   // List analysis: exactly the owner's format (a:* columns), nothing else.
-  if (view === "analysis") return key.startsWith("a:");
+  // Owner 2026-11-15 13:27 CT: the MATCH group is only the competitor's description (brand / competitor / match state
+  // live on Review · My list ↔ competitor, where matching is done).
+  if (view === "analysis") return key.startsWith("a:") && !["a:c_brand", "a:c_vendor", "a:match"].includes(key);
   if (mine && view !== "comp" && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
     || ["my_offer_desc", "my_offer_price", "my_qty", "best_vendor"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
@@ -165,7 +167,7 @@ const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
 const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [] };
 
 /** List analysis columns no upload fills yet (purchase date, qty purchased, last cost, sold, and what needs a cost). */
-const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold", "a:margin", "a:markup", "a:new_margin"]);
+const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold"]);
 
 /** Confirm a match right on the analysis row (owner 2026-11-14: "if from my list there are no matches or confirmed or
  *  still waiting for confirmation, then i should be able to confirm here"). Pick one of the proposed lines / items and
