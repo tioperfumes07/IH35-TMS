@@ -73,7 +73,10 @@ function FactoringBoardCard({
           borderBottom: "1px solid #ECEEF2",
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{title}</span>
+        {/* Factoring.dc.html panel title row: title inside a flex · baseline · gap 8 group (same as V3Panel). */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink }}>{title}</span>
+        </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {headerRight}
           {viewAllHref ? (
