@@ -37,10 +37,10 @@ export function InsuranceLanding() {
 
   return (
     <div
-      className="min-w-0 space-y-3 overflow-x-hidden"
+      className="min-w-0 overflow-x-hidden"
       data-testid="insurance-landing-page"
       data-v3-board="Insurance"
-      style={{ lineHeight: "normal", fontFamily: V3.font }}
+      style={{ lineHeight: "normal", fontFamily: V3.font, display: "flex", flexDirection: "column", gap: 12 }}
     >
       <PageHeader
         variant="v3"
