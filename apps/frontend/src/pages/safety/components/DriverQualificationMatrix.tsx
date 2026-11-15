@@ -31,7 +31,7 @@ const inCohort = (driver: Driver, cohort: Cohort) =>
         ? hasContact(driver)
         : true;
 const STATUS_LINK =
-  "inline-flex items-center gap-[6px] whitespace-nowrap font-[Inter] text-xs font-medium leading-normal text-[#111827] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
+  "inline-flex items-center gap-[6px] whitespace-nowrap font-[Inter] text-xs font-medium leading-[normal] text-[#111827] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
 const INHERIT_LINK = "text-inherit hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280]";
 /** Calendar date → MM/YYYY (Safety-DriverFiles.dc.html), cut from the canonical calendar-only MM/DD/YYYY. */
 const monthYear = (value: string) => {
