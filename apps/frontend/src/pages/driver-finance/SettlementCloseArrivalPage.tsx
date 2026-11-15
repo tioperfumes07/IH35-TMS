@@ -906,42 +906,48 @@ export function SettlementCloseArrivalPage() {
             sub="with open pre-settlement"
             testId="settlement-close-kpi-open-drivers"
             onClick={() => goCloseStep(1)}
+            board={true}
           />
           <V3KpiTile
-            label="Gross"
+            label="Gross pay"
             value={formatUsd(boardGrossDisplay)}
             testId="settlement-close-kpi-gross"
             onClick={settlement ? () => goCloseStep(3) : undefined}
             noDrill={settlement ? undefined : "Select a driver on arrival first"}
+            board={true}
           />
           <V3KpiTile
-            label="Deductions"
+            label="Total deductions"
             value={formatUsd(otherDeductionsTotal)}
             testId="settlement-close-kpi-deductions"
             onClick={settlement ? () => goCloseStep(4) : undefined}
             noDrill={settlement ? undefined : "Select a driver on arrival first"}
+            board={true}
           />
           <V3KpiTile
-            label="Escrow"
+            label="Escrow contribution"
             value={formatUsd(escrowContributionThisSettlement)}
             testId="settlement-close-kpi-escrow"
             onClick={settlement ? () => goCloseStep(5) : undefined}
             noDrill={settlement ? undefined : "Select a driver on arrival first"}
+            board={true}
           />
           <V3KpiTile
-            label="Advances recovered"
+            label="Adv. recovered"
             value={formatUsd(advanceRecoveryTotal)}
             testId="settlement-close-kpi-advances"
             onClick={settlement ? () => goCloseStep(6) : undefined}
             noDrill={settlement ? undefined : "Select a driver on arrival first"}
+            board={true}
           />
           <V3KpiTile
-            label="Net to driver"
+            label="Net payout"
             value={formatUsd(netPay)}
             tone="green"
             testId="settlement-close-kpi-net"
             onClick={settlement ? () => goCloseStep(7) : undefined}
             noDrill={settlement ? undefined : "Select a driver on arrival first"}
+            board={true}
           />
         </div>
       }
@@ -983,9 +989,14 @@ export function SettlementCloseArrivalPage() {
               data-active={on ? "1" : "0"}
               style={{
                 flex: 1,
-                padding: "10px 12px",
+                boxSizing: "content-box",
+                height: "27px",
+                padding: "0 12px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
                 borderRight: idx < CLOSE_BOARD_STEPS.length - 1 ? `1px solid ${V3.borderSoft}` : undefined,
-                background: on ? V3.shell : V3.surface,
+                background: on ? V3.shell : "transparent",
                 color: on ? V3.onShell : V3.ink,
                 textAlign: "left",
                 cursor: reachable ? "pointer" : "not-allowed",
@@ -1046,9 +1057,22 @@ export function SettlementCloseArrivalPage() {
 
             <CloseBoardPanel title="Result" stepTitle="Result" testId="settlement-close-result-panel" onViewAll={() => goCloseStep(7)}>
               <div className="mb-2 flex flex-wrap items-center gap-2">
-                <Button type="button" variant="secondary" onClick={goBack} data-testid="settlement-close-back">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  data-testid="settlement-close-back"
+                  style={{
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    boxSizing: "content-box", height: 18, paddingTop: 6, paddingBottom: 6,
+                    paddingLeft: 12, paddingRight: 12,
+                    fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+                    fontSize: 12, fontWeight: 600, lineHeight: "normal",
+                    color: V3.ink, background: V3.surface,
+                    border: `1px solid ${V3.border}`, borderRadius: 0, cursor: "pointer",
+                  }}
+                >
                   Back
-                </Button>
+                </button>
                 {wizardStep < 7 ? (
                   <Button
                     type="button"
@@ -1070,29 +1094,46 @@ export function SettlementCloseArrivalPage() {
                   </Button>
                 )}
               </div>
-              <div className="space-y-0" data-testid="settlement-close-result-table">
-                <div
-                  className="grid grid-cols-2 gap-2 px-3 py-1.5 text-section-header font-semibold uppercase tracking-wide text-[#4B5563]"
-                  style={{ background: V3.page, borderBottom: `1px solid ${V3.border}` }}
-                >
-                  <span>Line</span>
-                  <span className="text-right">Amount</span>
-                </div>
-                {resultLines.map(([label, amount]) => (
-                  <div
-                    key={label}
-                    className="grid grid-cols-2 gap-2 px-3 py-1.5 text-xs"
-                    style={{ borderBottom: `1px solid ${V3.borderSoft}` }}
-                  >
-                    <span>{label}</span>
-                    <MoneyCell
-                      cents={settlement ? Math.round(Number(amount) * 100) : null}
-                      format={(c) => formatUsd(c / 100)}
-                      drill={{ entity: { kind: "settlement", id: settlement?.id } }}
-                    />
-                  </div>
-                ))}
-              </div>
+              <table data-testid="settlement-close-result-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={{
+                      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600,
+                      color: "#5B6576", backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
+                      lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                      borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "left",
+                    }}>Line</th>
+                    <th style={{
+                      fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600,
+                      color: "#5B6576", backgroundColor: "#F7F8FA", letterSpacing: "normal", textTransform: "none",
+                      lineHeight: 1, paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                      borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap", textAlign: "right",
+                    }}>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {resultLines.map(([label, amount]) => (
+                    <tr key={label}>
+                      <td style={{
+                        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 400,
+                        color: "#111827", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                        borderBottom: `1px solid ${V3.borderSoft}`,
+                      }}>{label}</td>
+                      <td style={{
+                        fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 400,
+                        color: "#111827", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                        borderBottom: `1px solid ${V3.borderSoft}`, textAlign: "right",
+                      }}>
+                        <MoneyCell
+                          cents={settlement ? Math.round(Number(amount) * 100) : null}
+                          format={(c) => formatUsd(c / 100)}
+                          drill={{ entity: { kind: "settlement", id: settlement?.id } }}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </CloseBoardPanel>
           </div>
 
