@@ -135,3 +135,15 @@ describe("HALLOWEEN is a JESUS DEL POZO line (owner 11-14)", () => {
     expect(identify({ description: "GLORIA VANDERVILT W 3.4 EDT" }).brand).toBe("GLORIA VANDERBILT");
   });
 });
+describe("item-master names with the house trailing or glued (measured live 11-15)", () => {
+  it("same key as the vendor's spelling", () => {
+    const k = (b: string, d: string) => identify({ brand: b, description: d }).key;
+    expect(k("LANCOME", "IDOLE LANCOME 100ML EDP W")).toBe(identify({ description: "LANCOME IDOLE W 3.4 EDP" }).key);
+    expect(k("ED HARDY", "ED HARDY LOVE&LUCK 100ML EDT M")).toBe(identify({ description: "ED HARDY LOVE LUCK M 3.4 EDT" }).key);
+    expect(k("LACOSTE", "FRENCH PANACHE S 90ML EDT M")).toBe(identify({ description: "LACOSTE FRENCH PANACHE M 90ML EDT" }).key);
+    expect(k("JEAN PAUL GAULTIER", "JEAN PAUL G SCANDAL 100ML EDP M")).toBe(identify({ description: "JEAN PAUL GAULTIER SCANDAL M 3.4 EDP" }).key);
+  });
+  it("a house word that is the whole name stays", () => {
+    expect(identify({ description: "EAU DE LACOSTE 100ML EDT M", brand: "LACOSTE" }).nameWords.length).toBeGreaterThan(0);
+  });
+});
