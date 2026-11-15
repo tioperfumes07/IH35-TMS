@@ -59,8 +59,12 @@ export function faroStripViaBoardChrome(homeSrc, chromeSrc) {
       homeSrc,
     ) && /subnavItems=\{factoringSubnavItems\}/.test(homeSrc);
   const chromeRendersIt =
-    /subnavItems\.map\(\(item\) => \(\{ label: item\.label, href: item\.to \}\)\)/.test(chromeSrc) &&
-    /<HoverDropdownNav items=\{navItems\}/.test(chromeSrc) &&
+    (
+      (/subnavItems\.map\(\(item\) => \(\{ label: item\.label, href: item\.to \}\)\)/.test(chromeSrc) &&
+        /<HoverDropdownNav items=\{navItems\}/.test(chromeSrc)) ||
+      (/subnavItems\.map\(\(item\) => \(\{ label: item\.label, to: item\.to \}\)\)/.test(chromeSrc) &&
+        /<NavyPageSubNav items=\{navItems\}/.test(chromeSrc))
+    ) &&
     // flat strip: no dropdown children anywhere in the chrome's items
     !/children:/.test(chromeSrc);
   return homeBuildsFromFaroTabs && chromeRendersIt;

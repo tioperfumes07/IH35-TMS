@@ -1103,18 +1103,18 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     [],
   );
   const factoringHeaderActions = (
-    <div className="flex items-center gap-3" style={{ display: "flex", alignItems: "center", gap: 12, font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
+    <div className="flex items-center gap-3" style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}>
       <ImportFaroPurchaseReportAction />
       <Link
         to={FACTORING_TAB_PATH.submit_invoice}
-        style={{ height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", background: "#13233F", color: "#fff", textDecoration: "none", lineHeight: "normal", boxSizing: "border-box" }}
+        style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textDecoration: "none", lineHeight: "normal" }}
         data-testid="factoring-submit-to-factor-link"
       >
         Submit to Factor
       </Link>
       <details className="relative inline-block">
         <summary
-          style={{ height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", background: "#fff", color: "#111827", border: "1px solid #DDE1E7", cursor: "pointer", listStyle: "none", lineHeight: "normal", boxSizing: "border-box" }}
+          style={{ font: "600 11px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", cursor: "pointer", listStyle: "none", lineHeight: "normal" }}
           className="[&::-webkit-details-marker]:hidden"
           data-testid="factoring-header-related-menu"
         >
@@ -1202,31 +1202,7 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
     : "Factoring";
 
   return (
-    <div data-v3-board="Factoring" data-testid="factoring-home-board-root" style={{ lineHeight: "normal", height: 906, boxSizing: "content-box" }}>
-      {/* ROUND 9.6 — clipped board-sample + shell mirrors so Lead aliases resolve inside [data-v3-board]. */}
-      <span aria-hidden style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>
-        <span data-v3="Factoring (Faro Factoring)">Factoring (Faro Factoring)</span>
-        <span data-v3="Chargebacks & overpayments">Chargebacks & overpayments</span>
-        <span data-v3="$175,650.00">$175,650.00</span>
-        <span data-v3="57 invoices">57 invoices</span>
-        <span data-v3="$170,210.48">$170,210.48</span>
-        <span data-v3="17 wires">17 wires</span>
-        <span data-v3="1.60%">1.60%</span>
-        <span data-v3="fee $2,634.76 + wires $170.00">fee $2,634.76 + wires $170.00</span>
-        <span data-v3="net to bank fee + reserve + wire">net to bank fee + reserve + wire</span>
-        <span data-v3="Measured">Measured</span>
-        <span data-v3={'17 wires · $170,210.48 "not cleared": the advances are not linked to their bank deposits in Banking yet.'}>17 wires · $170,210.48 &quot;not cleared&quot;: the advances are not linked to their bank deposits in Banking yet.</span>
-        <span data-v3="IH 35 DISPATCH">IH 35 DISPATCH</span>
-        <span data-v3="USMCA Freight Solutions Inc">USMCA Freight Solutions Inc</span>
-        <span data-v3="Samsara: connected · Relay: connected">Samsara: connected · Relay: connected</span>
-        <span data-v3="+ Create">+ Create</span>
-        <span data-v3="English">English</span>
-        <span data-v3="Thu, Oct 22, 2026, 5:34 PM">Thu, Oct 22, 2026, 5:34 PM</span>
-        <span data-v3="owner ▾">owner ▾</span>
-        {['HOME','TASKS','FUEL','DISPATCH','DRIVER HUB','MAINTENANCE','SAFETY','COMPLIANCE','DRIVER PROFILE','FLEET','INSURANCE','LEGAL','CASH FLOW','SETTLEMENTS','ACCOUNTING','BANKING','FACT','FINANCE HUB','CUSTOMERS','VENDORS','INVENTORY','REPORTS'].map((label) => (
-          <span key={label} data-v3={label}>{label}</span>
-        ))}
-      </span>
+    <div className="space-y-3" data-v3-board="Factoring" data-testid="factoring-home-board-root" style={{ lineHeight: "normal" }}>
       <FactoringBoardChrome
         // ROUND 9.4 Board 18 — title matches Factoring.dc.html "Factoring (Faro Factoring)".
         title={factoringBoardTitle}
