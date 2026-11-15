@@ -1989,7 +1989,7 @@ export function ParityTable<T>({
               ) : null}
             </tr>
           ) : null}
-          <tr style={{ height: DENSITY[density].rowH }}>
+          <tr style={{ height: v3 ? 28.5 : DENSITY[density].rowH }}>
             {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
             {selectable ? (
               <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX }}>
@@ -2162,7 +2162,17 @@ export function ParityTable<T>({
             </tr>
           ) : pageRows.length === 0 ? (
             <tr>
-              <td colSpan={colSpan} className="px-2 py-3 text-center text-section-header text-gray-500">
+              <td
+                colSpan={colSpan}
+                className={v3 ? undefined : "px-2 py-3 text-center text-section-header text-gray-500"}
+                style={v3 ? {
+                  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                  fontSize: 12, color: "#111827",
+                  borderBottom: "1px solid #ECEEF2",
+                  whiteSpace: "nowrap",
+                  height: 30,
+                } : undefined}
+              >
                 {emptyText}
               </td>
             </tr>

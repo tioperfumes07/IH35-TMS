@@ -84,7 +84,8 @@ export function V3KpiTile({
 
   const body = (
     <>
-      <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0 }}>
+      {/* board tiles: spec min 39px (2-line) or 53px (3-line with sub), docs/design/v3/*.dc.html. */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 3, minWidth: 0, ...(board ? { minHeight: 39 } : {}) }}>
         <span
           style={{
             fontSize: V3_KPI.labelPx,
@@ -92,9 +93,7 @@ export function V3KpiTile({
             letterSpacing: "0.06em",
             color: V3.muted,
             textTransform: "uppercase",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
+            ...(board ? { whiteSpace: "normal", textOverflow: "clip" } : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
           }}
         >
           {label}
@@ -107,7 +106,7 @@ export function V3KpiTile({
             fontWeight: 700,
             color: TONE[tone],
             fontVariantNumeric: "tabular-nums",
-            whiteSpace: "nowrap",
+            whiteSpace: board ? "normal" : "nowrap",
           }}
         >
           {value}

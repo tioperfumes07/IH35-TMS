@@ -8,7 +8,7 @@ import { Link } from "react-router-dom";
 import { V3 } from "../../design/v3-tokens";
 
 const viewAllStyle: CSSProperties = {
-  fontSize: 12,
+  fontSize: 11,
   fontWeight: 600,
   color: V3.link,
   background: "transparent",
@@ -17,6 +17,7 @@ const viewAllStyle: CSSProperties = {
   padding: 0,
   fontFamily: V3.font,
   textDecoration: "none",
+  boxSizing: "content-box",
 };
 
 export function BoardSection({
@@ -44,7 +45,7 @@ export function BoardSection({
   const shell: CSSProperties = {
     background: V3.surface,
     border: `1px solid ${V3.border}`,
-    borderRadius: 2,
+    borderRadius: 6,
     display: "flex",
     flexDirection: "column",
     minWidth: 0,
@@ -85,7 +86,7 @@ export function BoardSection({
           style={{
             padding: "8px 14px",
             borderTop: `1px solid ${V3.borderSoft}`,
-            fontSize: 12,
+            fontSize: 11,
             color: V3.muted,
             fontFamily: V3.font,
           }}
