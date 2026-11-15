@@ -977,8 +977,10 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
     "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[a.gender ?? ""] ?? null,
     "a:purch_date": a.purchDate, "a:qty": a.qtyPurch, "a:last_cost": a.cost, "a:sold": a.sold, "a:inv_qty": a.invQty,
-    "a:margin": offer != null && offer > 0 && a.cost != null ? p1((offer - a.cost) / offer) : null,
-    "a:markup": offer != null && a.cost ? p1((offer - a.cost) / a.cost) : null,
+    // Owner 2026-11-15 13:27 CT: "its ok for it to show 0 since we do not have the last cost, but the engines must be
+    // fully built" — Margin / Markup / New Margin read 0 until a LAST COST exists, never blank.
+    "a:margin": offer != null && offer > 0 ? (a.cost != null ? p1((offer - a.cost) / offer) : 0) : null,
+    "a:markup": offer != null ? (a.cost ? p1((offer - a.cost) / a.cost) : 0) : null,
     "a:offer": offer, "a:esp": esp,
     "a:low_sales": offer == null && esp == null ? null : Math.min(...[offer, esp].filter((x): x is number => x != null)),
     // Owner 2026-11-14 19:03 CT: "the min purchase price to match esperanza should only have items that esperanza is
@@ -991,7 +993,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
     "a:offer2": offer, "a:esp2": esp,
     "a:under_by": under, "a:under_pct": under != null && esp! > 0 ? p1(under / esp!) : null,
     "a:can_inc": under != null && offer! > 0 ? p1(under / offer!) : null,
-    "a:new_margin": esp != null && esp > 0 && a.cost != null ? p1((esp - a.cost) / esp) : null,
+    "a:new_margin": esp != null && esp > 0 ? (a.cost != null ? p1((esp - a.cost) / esp) : 0) : null,
     // Over by is NEGATIVE (owner 2026-11-14: "the over by should be negatives so we can really see we are selling more
     // expensive"); the % to lower stays positive — how much to take off my price.
     "a:over_by": over == null ? null : over === 0 ? 0 : -over, "a:lower_pct": over != null && offer! > 0 ? p1(over / offer!) : null,
@@ -1672,12 +1674,12 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:low_sales", ["a:offer", "a:esp"], (r) => `MIN(${r("a:offer")},${r("a:esp")})`);
   add("a:min_buy", ["a:esp", "a:min_margin", "a:offer"], (r) => `IF(AND(${r("a:esp")}<>"",${r("a:offer")}<>"",${r("a:esp")}<${r("a:offer")}),${r("a:esp")}*(1-${r("a:min_margin")}),"")`);
   add("a:buy_check", ["a:min_buy", "a:low_price"], (r) => `IF(${r("a:min_buy")}="","",IF(${r("a:low_price")}="","No supplier price",IF(${r("a:low_price")}<=${r("a:min_buy")},"YES","NO — "&TEXT(${r("a:low_price")}-${r("a:min_buy")},"$0.00")&" over")))`);
-  add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:offer")}=0),"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")})`);
-  add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:last_cost")}=0),"",(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
+  add("a:margin", ["a:offer", "a:last_cost"], (r) => `IF(${r("a:offer")}=0,"",IF(${r("a:last_cost")}="",0,(${r("a:offer")}-${r("a:last_cost")})/${r("a:offer")}))`);
+  add("a:markup", ["a:offer", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:last_cost")}=0),0,(${r("a:offer")}-${r("a:last_cost")})/${r("a:last_cost")})`);
   add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:under_pct", ["a:under_by", "a:esp"], (r) => `IF(${r("a:esp")}=0,"",${r("a:under_by")}/${r("a:esp")})`);
   add("a:can_inc", ["a:under_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:under_by")}/${r("a:offer")})`);
-  add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(OR(${r("a:last_cost")}="",${r("a:esp")}=0),"",(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")})`);
+  add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(${r("a:esp")}=0,"",IF(${r("a:last_cost")}="",0,(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")}))`);
   add("a:over_by", ["a:offer", "a:esp"], (r) => `MIN(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",-${r("a:over_by")}/${r("a:offer")})`);
   return out;

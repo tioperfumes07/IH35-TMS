@@ -48,15 +48,15 @@ describe("Excel export — every computed column is a live formula", () => {
     const ws = wb.worksheets[0]!;
     const at = (k: string) => ws.getRow(3).getCell(cols.findIndex((c) => c.key === k) + 1).value as { formula?: string; result?: unknown } | string;
     expect(at("a:c_sales")).toMatchObject({ formula: "D3-E3", result: 20 });
-    expect(at("a:margin")).toMatchObject({ formula: 'IF(OR(B3="",C3=0),"",(C3-B3)/C3)', result: 0.3 });
-    expect(at("a:markup")).toMatchObject({ formula: 'IF(OR(B3="",B3=0),"",(C3-B3)/B3)' });
+    expect(at("a:margin")).toMatchObject({ formula: 'IF(C3=0,"",IF(B3="",0,(C3-B3)/C3))', result: 0.3 });
+    expect(at("a:markup")).toMatchObject({ formula: 'IF(OR(B3="",B3=0),0,(C3-B3)/B3)' });
     expect(at("a:low_sales")).toMatchObject({ formula: "MIN(C3,G3)" });
     // Owner 19:03 CT: a min purchase price only where Esperanza is cheaper — a formula on every row, blank otherwise.
     expect(at("a:min_buy")).toMatchObject({ formula: 'IF(AND(G3<>"",C3<>"",G3<C3),G3*(1-K3),"")' });
     expect(at("a:under_by")).toMatchObject({ formula: "MAX(G3-C3,0)" });
     expect(at("a:over_by")).toMatchObject({ formula: "MIN(G3-C3,0)" });
     expect(at("a:lower_pct")).toMatchObject({ formula: 'IF(C3=0,"",-P3/C3)' });
-    expect(at("a:new_margin")).toMatchObject({ formula: 'IF(OR(B3="",G3=0),"",(G3-B3)/G3)' });
+    expect(at("a:new_margin")).toMatchObject({ formula: 'IF(G3=0,"",IF(B3="",0,(G3-B3)/G3))' });
     // The match candidates are text in Excel, never an object.
     expect(at("a:cand")).toBe("CIELO BLUE 3.3 · LA ESPERANZA; CIELO 3.4 · LA ESPERANZA");
   });
