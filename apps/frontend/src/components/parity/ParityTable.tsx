@@ -549,6 +549,7 @@ const V3_TH: CSSProperties = {
 };
 const V3_TD: CSSProperties = {
   paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+  color: "#111827", textOverflow: "clip",
 };
 
 // COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
@@ -1622,11 +1623,14 @@ export function ParityTable<T>({
             className={`${column.overflowVisible || isParityMoneyColumn(column) ? "overflow-visible" : "overflow-hidden"} px-2 align-top text-gray-800 ${
               // COMPLETE-DESIGN-BUILD-LAW / ROUND 8.5 B1 — moneyNeverEllipsis: kind:"money" (and *_cents)
               // cells must show full amounts. Ellipsis on money is a board FAIL.
-              column.allowWrap
-                ? "wrap-break-word"
-                : isParityMoneyColumn(column)
-                  ? "whitespace-nowrap"
-                  : "whitespace-nowrap text-ellipsis"
+              // V3 boards: cells wrap like the board (white-space normal, no ellipsis) — money stays on one line.
+              v3
+                ? isParityMoneyColumn(column) ? "whitespace-nowrap" : ""
+                : column.allowWrap
+                  ? "wrap-break-word"
+                  : isParityMoneyColumn(column)
+                    ? "whitespace-nowrap"
+                    : "whitespace-nowrap text-ellipsis"
             } ${parityMergedCellClass(column)}`}
             style={{
               paddingTop: d.padY,
@@ -1648,7 +1652,9 @@ export function ParityTable<T>({
               // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
               ...(board && boardTdStyle ? boardTdStyle : {}),
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
-              ...(v3 ? { ...V3_TD, ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "#FFFFFF" } : {}) } : {}),
+              // V3 boards: the cell is transparent over its row (the board draws no zebra) — only a group /
+              // selection tint shows.
+              ...(v3 ? { ...V3_TD, whiteSpace: isParityMoneyColumn(column) ? "nowrap" : "normal", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
@@ -2015,6 +2021,19 @@ export function ParityTable<T>({
                   // (a click, no movement) and the resize grip (its own onMouseDown + stopPropagation)
                   // both already coexist fine with a draggable ancestor; a real drag gesture bubbles
                   // to dragstart here regardless of which child the pointer started on.
+                  // V3 boards (docs/design/v3/*.dc.html): the column label is the <th>'s OWN text — no inner
+                  // button box — so the cell itself carries the board's padding / colour / rule (measured by the
+                  // parity reader 11-14: "Report" text on a 0-padding inline-flex button inside the th). The whole
+                  // <th> is the sort control: click, Enter or Space.
+                  {...(v3 && column.sortable !== false
+                    ? {
+                        role: "columnheader",
+                        tabIndex: 0,
+                        "aria-sort": sortKey === key ? (sortDirection === "asc" ? "ascending" : "descending") : "none",
+                        onClick: () => toggleSort(key),
+                        onKeyDown: (e: { key: string; preventDefault(): void }) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleSort(key); } },
+                      }
+                    : {})}
                   draggable={enableColumnReorder}
                   onDragStart={enableColumnReorder ? () => setDragKey(key) : undefined}
                   onDragOver={
@@ -2079,7 +2098,12 @@ export function ParityTable<T>({
                       : {}),
                   }}
                 >
-                  {column.sortable !== false ? (
+                  {v3 ? (
+                    <>
+                      {column.label}
+                      {column.sortable !== false && sortKey === key ? <span aria-hidden="true">{sortDirection === "asc" ? " ▲" : " ▼"}</span> : null}
+                    </>
+                  ) : column.sortable !== false ? (
                     <button
                       type="button"
                       // GLOBAL-SORT / Cascade 2026-08-31: hit target must be the full <th> cell
