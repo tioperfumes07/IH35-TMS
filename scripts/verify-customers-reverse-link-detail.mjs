@@ -256,7 +256,8 @@ const CHECKS = [
     file: DETAIL,
     // LEAD 443.99 class B (2026-10-12): View all now also carries &status=active — LST-F3282 (9a738dd0b0, round 297
     // audit) lands the drill on the counted (non-void) set. The canonical customer id is still carried.
-    pattern: /navigate\(`\/accounting\/invoices\?customer_id=\$\{encodeURIComponent\(id\)\}(?:&status=active)?`\)/,
+    // custInvHref wrapper carries ?ret=... for back-navigation — customer_id is still the first query param.
+    pattern: /navigate\((?:custInvHref\()?`\/accounting\/invoices\?customer_id=\$\{encodeURIComponent\(id\)\}(?:&(?:status=active|has_balance=true))?`\)??\)/,
   },
   {
     name: "invoice list destination reads customer_id deep link",
