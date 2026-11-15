@@ -18,6 +18,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { unwrapReturnContext } from "./lib/unwrap-return-context.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const LABEL = "verify-je-list-row-deeplink";
@@ -73,7 +74,7 @@ export function check({ jeList, entityLink, manifest }) {
 export function run() {
   const read = (rel) => {
     try {
-      return fs.readFileSync(path.join(ROOT, rel), "utf8");
+      return unwrapReturnContext(fs.readFileSync(path.join(ROOT, rel), "utf8"));
     } catch {
       return null;
     }
