@@ -513,31 +513,37 @@ export default function LoadHistoryBoardPage() {
           board
           data-testid="load-history-trip-filter"
         />
-        <div className="min-w-[8rem]" aria-label="Customer">
+        <div aria-label="Customer">
           <EntityMultiSelect
             kind="customer"
             operatingCompanyId={companyId}
             value={staged.draft.customerId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, customerId: next ?? "" }))}
             placeholder="Customer ▾"
+            ariaLabel="Customer"
+            board
           />
         </div>
-        <div className="min-w-[8rem]" aria-label="Driver">
+        <div aria-label="Driver">
           <EntityMultiSelect
             kind="driver"
             operatingCompanyId={companyId}
             value={staged.draft.driverId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, driverId: next ?? "" }))}
             placeholder="Driver ▾"
+            ariaLabel="Driver"
+            board
           />
         </div>
-        <div className="min-w-[8rem]" aria-label="Truck">
+        <div aria-label="Truck">
           <EntityMultiSelect
             kind="unit"
             operatingCompanyId={companyId}
             value={staged.draft.unitId || null}
             onChange={(next) => staged.setDraft((p) => ({ ...p, unitId: next ?? "" }))}
             placeholder="Truck ▾"
+            ariaLabel="Truck"
+            board
           />
         </div>
       </ReportFilterBar>
