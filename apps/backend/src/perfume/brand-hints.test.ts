@@ -52,3 +52,25 @@ describe("sets the owner said were missed", () => {
     expect(f).not.toContain("VARIOUS");
   });
 });
+describe("the owner's own offer-list brand column (18:48 CT)", () => {
+  const col = (brand: string, d = "X 100ML (M)") => identify({ description: d, brand }).brand;
+  it("short brands map to the brand his vendors use", () => {
+    expect(col("GIORA", "ACQUA DI GIO EDT 100ML (W)")).toBe("GIORGIO ARMANI");
+    expect(col("HOL", "WAVE FOR HER EDP 100ML (W)")).toBe("HOLLISTER");
+    expect(col("ISSEY")).toBe("ISSEY MIYAKE");
+    expect(col("JDEL")).toBe("JESUS DEL POZO");
+    expect(col("J DEL")).toBe("JESUS DEL POZO");
+    expect(col("MONTB")).toBe("MONTBLANC");
+    expect(col("MOSCH")).toBe("MOSCHINO");
+    expect(col("NAUTI")).toBe("NAUTICA");
+    expect(col("NARCISO RD")).toBe("NARCISO RODRIGUEZ");
+    expect(col("NIN")).toBe("NINA RICCI");
+    expect(col("SALVF")).toBe("SALVATORE FERRAGAMO");
+    expect(col("THEIR")).toBe("MUGLER");
+    expect(col("CAROH", "212 MEN EDT 100ML (M)")).toBe("CAROLINA HERRERA");
+  });
+  it("SIGNORINA / UOMO with no brand are Ferragamo", () => {
+    expect(identify({ description: "SIGNORINA ELEGANZA EDP 100ML (W)" }).brand).toBe("SALVATORE FERRAGAMO");
+    expect(identify({ description: "UOMO SALVATORE FERRAGAMO EDT 100ML (M)" }).brand).toBe("SALVATORE FERRAGAMO");
+  });
+});
