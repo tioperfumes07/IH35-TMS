@@ -13,7 +13,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLinkOrTombstone } from "../../components/shared/EntityLinkOrTombstone";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { formatDisplayName } from "../../components/v3/formatDisplayName";
-import { BoardSection } from "../../components/v3/BoardSection";
+import { V3Panel } from "../../components/v3/V3Panel";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { useCompanyContext } from "../../contexts/CompanyContext";
 import { entityLabel } from "../../lib/entity-label";
@@ -318,9 +318,9 @@ export function SettlementsEscrowBoard() {
       </MoneyListToolbar>
 
       {!companyId ? (
-        <BoardSection title="Escrow" testId="settlements-escrow-need-company">
+        <V3Panel board title="Escrow" testId="settlements-escrow-need-company">
           <p className="px-3 py-2 text-xs text-[#4B5563]">Select an operating company.</p>
-        </BoardSection>
+        </V3Panel>
       ) : null}
 
       {accountsQuery.isError ? (
@@ -331,13 +331,13 @@ export function SettlementsEscrowBoard() {
           onRetry={() => void accountsQuery.refetch()}
         />
       ) : (
-        <BoardSection
+        <V3Panel board
           title="Escrow by driver — click a driver to open his register"
           onViewAll={() => navigate("/accounting/escrow")}
           testId="settlements-escrow-board-section"
           footer="Live balances from Accounting › Escrow. Click a driver name to open that driver's escrow register."
         >
-          <ParityTable<DriverEscrowRow> appearance="board"
+          <ParityTable<DriverEscrowRow> appearance="v3"
             title="Escrow by driver — click a driver to open his register"
             columns={columns}
             rows={driverRows}
@@ -370,15 +370,15 @@ export function SettlementsEscrowBoard() {
                 : undefined
             }
           />
-        </BoardSection>
+        </V3Panel>
       )}
 
-      <BoardSection title="Measured" testId="settlements-escrow-measured-note">
+      <V3Panel board title="Measured" testId="settlements-escrow-measured-note">
         <div className="px-3.5 py-3 text-xs" style={{ color: V3.ink }}>
           Junk rows (&quot;Driver — not visible&quot;, Safety, duplicate closed bonds) are hidden on this
           Settlements list; Accounting › Escrow keeps the full ledger.
         </div>
-      </BoardSection>
+      </V3Panel>
     </div>
   );
 }
