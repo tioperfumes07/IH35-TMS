@@ -549,7 +549,7 @@ const V3_TH: CSSProperties = {
 };
 const V3_TD: CSSProperties = {
   paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
-  color: "#111827", textOverflow: "clip",
+  fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textOverflow: "clip", boxSizing: "content-box",
 };
 
 // COL-WIDTH-FLOOR (BNK-06) — every manual-resize write path (drag, touch-drag, keyboard nudge)
