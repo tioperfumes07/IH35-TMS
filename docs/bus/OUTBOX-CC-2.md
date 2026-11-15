@@ -256,3 +256,7 @@ ROUND 8.23 17:00Z · CC-2 DONE-ENGINE: ENG-17 factoring collection engine — re
 ## ROUND 8.28 — 2026-11-14 00:00Z — CC-2 checkpoint
 
 ROUND 8.28 00:00Z · CC-2 DONE-PERF: ROW 124b stop_fence_keys LATERAL — PR #29339 · merge sha 1270725f87dc · before (plain JOIN): 794·744·677·881·807 ms avg 781 ms · after (LATERAL): 332·348·354·342·332 ms avg 342 ms · target <500 ms ✓ · guard step 20035 selftest 9/9 PASS
+
+## ROUND 9.6 — 2026-11-15 01:53Z — CC-2 v3parity checkpoint
+
+2026-11-15 01:53Z · DONE 0/0: #29603 B2-Acct-Unexpected · #29604 B3-Banking · open: B4-CashFlow-Home · B5-CashFlow-Projected · B6-CashFlow-ActualVsProjected · B7-CashFlow-RollingLedger · B8-CashFlow-Manual (5 boards)

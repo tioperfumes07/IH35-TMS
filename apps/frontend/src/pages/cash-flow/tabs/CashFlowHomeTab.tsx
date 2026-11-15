@@ -917,7 +917,7 @@ export function CashFlowHomeTab({
   const next4WeeksEnd = addDaysIso(today, 27);
 
   return (
-    <div className="space-y-3" data-testid="cash-flow-home-tab" style={{ fontFamily: V3.font }}>
+    <div className="space-y-3" data-testid="cash-flow-home-tab" data-v3-board="CashFlow-Home" style={{ fontFamily: V3.font, color: "#111827", lineHeight: "normal" }}>
       {isError && (
         <div
           className="rounded-sm p-6 text-center text-xs"
@@ -942,30 +942,42 @@ export function CashFlowHomeTab({
           data-testid="cash-flow-home-v3-kpis"
         >
           <V3KpiTile
+            board
             label="Opening cash"
             value={data.opening_cash_cents === null ? "—" : formatUsdCents(data.opening_cash_cents)}
+            valueDataV3="cf-home-kpi-opening-value"
             sub="live · as shown in the app today"
+            subDataV3="cf-home-kpi-opening-sub"
             testId="cash-flow-home-v3-kpi-opening"
             href={cashFlowTabHref("rolling_ledger", { rl_from: today, rl_to: addDaysIso(today, 13) })}
           />
           <V3KpiTile
+            board
             label="Income due today"
             value={formatUsdCents(incomeToday)}
+            valueDataV3="cf-home-kpi-income-value"
             sub={`${todayIncomeCount} item${todayIncomeCount === 1 ? "" : "s"}`}
+            subDataV3="cf-home-kpi-income-sub"
             testId="cash-flow-home-v3-kpi-income"
             href={cashFlowTabHref("daily_prediction")}
           />
           <V3KpiTile
+            board
             label="Expenses due today"
             value={formatUsdCents(expensesToday)}
+            valueDataV3="cf-home-kpi-expenses-value"
             sub={`${todayExpenseCount} item${todayExpenseCount === 1 ? "" : "s"}`}
+            subDataV3="cf-home-kpi-expenses-sub"
             testId="cash-flow-home-v3-kpi-expenses"
             href={cashFlowTabHref("daily_prediction")}
           />
           <V3KpiTile
+            board
             label="Next 4 weeks in"
             value={formatUsdCents(next4WeeksIn)}
+            valueDataV3="cf-home-kpi-4w-value"
             sub="committed invoices"
+            subDataV3="cf-home-kpi-4w-sub"
             spark={
               incomeSpark ? (
                 <svg width={96} height={26} viewBox="0 0 96 26" aria-hidden>
@@ -991,8 +1003,10 @@ export function CashFlowHomeTab({
             })}
           />
           <V3KpiTile
+            board
             label="Weekly run-rate"
             value={formatCashFlowCents(weeklyRunRate, { sign: true })}
+            valueDataV3="cf-home-kpi-runrate-value"
             tone={weeklyRunRate < 0 ? "red" : weeklyRunRate > 0 ? "green" : "ink"}
             sub={
               <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -1002,6 +1016,7 @@ export function CashFlowHomeTab({
                 <span>last 4 full weeks</span>
               </span>
             }
+            subDataV3="cf-home-kpi-runrate-sub"
             spark={
               runRateSpark ? (
                 <svg width={96} height={26} viewBox="0 0 96 26" aria-hidden>
@@ -1022,10 +1037,13 @@ export function CashFlowHomeTab({
             href={cashFlowTabHref("actual_vs_projected")}
           />
           <V3KpiTile
+            board
             label="Lowest balance"
             value={lowest ? formatCashFlowCents(lowest.cents, { sign: true }) : "—"}
+            valueDataV3="cf-home-kpi-lowest-value"
             tone={lowest && lowest.cents < 0 ? "red" : "ink"}
             sub={lowest?.label ?? "no projected days"}
+            subDataV3="cf-home-kpi-lowest-sub"
             testId="cash-flow-home-v3-kpi-lowest"
             href={cashFlowTabHref(
               "rolling_ledger",

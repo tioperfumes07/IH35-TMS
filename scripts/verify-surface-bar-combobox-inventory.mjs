@@ -31,6 +31,7 @@ const ALLOWED_NESTED = new Set([
   "components/forms/StateSelect.tsx",
   "pages/perfume/PerfumeListsPanel.tsx",
   "pages/perfume/PerfumeReviewPanel.tsx",
+  "pages/perfume/PerfumeDeskPage.tsx",
 ]);
 
 /** Combobox hosts owned by an existing matrix leaf (page/section nests). */
