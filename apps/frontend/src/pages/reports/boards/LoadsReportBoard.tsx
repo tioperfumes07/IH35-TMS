@@ -325,11 +325,8 @@ export function LoadsReportBoard() {
         sortValue: (g) => g.loads,
         cellClass: "text-right",
         className: "text-right",
-        render: (g) => (
-          <button type="button" className="text-[#1D4ED8] hover:underline" onClick={() => setDrill({ by, key: g.key, label: g.label })}>
-            {g.loads}
-          </button>
-        ),
+        // Reports-Loads.dc.html: the count is plain text — the ROW opens the group's loads (onRowClick).
+        render: (g) => String(g.loads),
       },
       { key: "revenue", label: "Revenue", sortable: true, sortValue: (g) => g.revenue, cellClass: "text-right", className: "text-right", render: (g) => money(g.revenue) },
       { key: "miles", label: "Loaded mi", sortable: true, sortValue: (g) => g.miles, cellClass: "text-right", className: "text-right", render: (g) => formatNumber(g.miles) },
@@ -672,7 +669,18 @@ export function LoadsReportBoard() {
           <ParityTable
             appearance="v3"
             rows={groups}
-            title={`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
+            title={
+              <span style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+                <span style={{ font: "700 13px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textTransform: "none", letterSpacing: "normal" }}>
+                  {`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
+                </span>
+                <span style={{ fontSize: 11, color: "#5B6576", textTransform: "none", letterSpacing: "normal", fontWeight: 400 }}>
+                  each row opens Load history filtered to that {GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}
+                </span>
+              </span>
+            }
+            onRowClick={(g) => setDrill({ by, key: g.key, label: g.label })}
+            boardTdStyle={{ padding: "7px 10px" }}
             columns={groupColumns}
             rowKey={(g) => g.key}
             loading={query.isPending}
