@@ -148,6 +148,62 @@ export async function canonicalizeItemBrands(c: PoolClient): Promise<{ checked: 
   return { checked: items.length, renamed, merged, brands };
 }
 
+/**
+ * Re-derive every item's KEY (brand + name part) with the CURRENT reading rules. An item's identity_key is written
+ * once, when the item is made; when a rule improves (a trailing house "IDOLE LANCOME", "LOVE&LUCK", HALLOWEEN as the
+ * JESUS DEL POZO line — measured live 11-15) the stored key keeps the old reading and the vendor line that now reads
+ * right still misses it. Size / type / gender / flags parts are kept exactly as stored. dryRun reports what WOULD
+ * change (with samples) and writes nothing; a real run renames, and merges an item into an existing twin whose key it
+ * now equals (UPCs, aliases and price lines move to the twin — the same merge canonicalizeItemBrands performs).
+ */
+export async function rekeyItems(c: PoolClient, opts: { dryRun: boolean }): Promise<{
+  checked: number; changed: number; renamed: number; merged: number; dry_run: boolean;
+  samples: Array<{ id: string; from: string; to: string; merge_into: string | null }>;
+}> {
+  await loadNameBrands(c);
+  const aliases = Object.fromEntries((await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`)).rows.map((r) => [r.alias, r.brand]));
+  const items = (await c.query<{ id: string; brand: string; name: string; identity_key: string; display_name: string }>(
+    `SELECT id, brand, name, identity_key, display_name FROM perfume.items WHERE merged_into_id IS NULL ORDER BY created_at, id`)).rows;
+  const byKey = new Map<string, string>();
+  for (const it of items) byKey.set(it.identity_key, it.id);
+  let changed = 0, renamed = 0, merged = 0;
+  const samples: Array<{ id: string; from: string; to: string; merge_into: string | null }> = [];
+  for (const it of items) {
+    const parts = it.identity_key.split("|");
+    if (parts.length < 6 || !it.name) continue;
+    const id = identify({ brand: it.brand || null, description: it.name, brandAliases: aliases });
+    const brand = id.brand || canonicalBrand(it.brand, aliases) || parts[0]!;
+    const name = id.nameWords.join(" ");
+    if (!name && parts[1]) continue; // a reading that loses the whole name is never applied
+    if (brand === parts[0] && name === parts[1]) continue;
+    const next = [brand, name, ...parts.slice(2)].join("|");
+    const holder = byKey.get(next);
+    const mergeInto = holder && holder !== it.id ? holder : null;
+    changed++;
+    if (samples.length < 80) samples.push({ id: it.id, from: it.identity_key, to: next, merge_into: mergeInto });
+    if (opts.dryRun) continue;
+    if (mergeInto) {
+      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [it.id, mergeInto]);
+      merged++;
+    } else {
+      const lineHouseMoved = brand !== it.brand && id.nameText.startsWith(`${it.brand} `);
+      const newName = lineHouseMoved ? id.nameText : it.name;
+      const display = it.display_name.startsWith(`${it.brand} · `)
+        ? `${brand} · ${lineHouseMoved ? `${newName}${it.display_name.slice(it.brand.length + 3 + it.name.length)}` : it.display_name.slice(it.brand.length + 3)}`
+        : it.display_name;
+      await c.query(`UPDATE perfume.items SET brand = $2, name = $3, identity_key = $4, display_name = $5, updated_at = now() WHERE id = $1`, [it.id, brand, newName, next, display]);
+      byKey.delete(it.identity_key);
+      byKey.set(next, it.id);
+      renamed++;
+    }
+  }
+  if (!opts.dryRun && (renamed || merged)) invalidateGridCache();
+  return { checked: items.length, changed, renamed, merged, dry_run: opts.dryRun, samples };
+}
+
 /* ---------------- index ---------------- */
 
 /** Loads the fragrance-name → brand cross-reference from every vendor's items (normalize.nameBrandIndex) so every
