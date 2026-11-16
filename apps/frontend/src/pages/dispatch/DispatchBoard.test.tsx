@@ -9,6 +9,12 @@ import { DispatchBoard, currentLoadPerUnit } from "./DispatchBoard";
 import { listOpenPreSettlementsByDriver } from "../../api/driverFinance";
 import { listDispatchInShopUnits } from "../../api/dispatch";
 
+// DispatchBoard mounts VoidReasonModal (which reads the company and the signed-in role); in the app both providers wrap
+// every page. The test supplies them the same way the other dispatch page tests do.
+vi.mock("../../contexts/CompanyContext", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../contexts/CompanyContext")>()),
+  useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
 vi.mock("../../api/dispatch", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/dispatch")>();
   return {
@@ -133,7 +139,8 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
 
     const link = (await screen.findAllByTestId("loads-customer-link"))[0];
     expect(link.textContent).toContain("ACME");
-    expect(link.getAttribute("href")).toBe("/customers/00000000-0000-4000-8000-0000000000cc");
+    // ROUND 8.17/8.20: record links carry the return context (?ret=…) — the path is the customer.
+    expect(link.getAttribute("href")?.split("?")[0]).toBe("/customers/00000000-0000-4000-8000-0000000000cc");
   });
 
   it("renders the list producer's trailer id and human label as a canonical reverse drill", async () => {
@@ -165,7 +172,7 @@ describe("DispatchBoard ETA chip (P5-T20)", () => {
 
     const link = (await screen.findAllByTestId(`inline-trailer-link-${loadId}`))[0];
     expect(link.textContent).toContain("TR-99");
-    expect(link.getAttribute("href")).toBe(`/fleet/trailers/${trailerId}`);
+    expect(link.getAttribute("href")?.split("?")[0]).toBe(`/fleet/trailers/${trailerId}`);
   });
 
   it("books an awaiting-assignment unit row instead of silently ignoring the click", async () => {
