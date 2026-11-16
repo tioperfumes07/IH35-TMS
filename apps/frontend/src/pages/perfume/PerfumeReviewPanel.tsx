@@ -7,7 +7,7 @@ import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown"
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBulkAction, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow, type PerfumeReviewFacet } from "../../api/perfume";
+import { bulkPerfumeReview, confirmPerfumeRow, getPerfumeReview, type PerfumeBulkAction, listPerfumeLists, searchPerfumeItems, type PerfumeReviewRow, type PerfumeReviewFacet, type PerfumeSuggestBucket } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { itemSaysMore } from "./perfumeMatchText";
 import { ListErrorState } from "../../components/ListErrorState";
@@ -21,6 +21,15 @@ const NO_LINE_FILTERS: LineFilters = { gender: [], kind: [], conc: [], category:
 const GENDER_NAMES: Record<string, string> = { M: "Men", W: "Women", U: "Unisex", none: "Gender not stated" };
 const KIND_NAMES: Record<string, string> = { NONE: "Regular bottle", TESTER: "Tester", SET: "Set / gift", MINI: "Mini", REFILL: "Refill", BODY: "Body / cosmetics", VARIOUS: "Various" };
 /** Built at render so the labels follow the desk language. */
+const SUGGEST_CHOICES: Array<{ value: PerfumeSuggestBucket; key: string; label: string }> = [
+  { value: "any", key: "perfume.review.suggestAny", label: "Has a suggestion" },
+  { value: "95", key: "perfume.review.suggest95", label: "Best 95% alike and up" },
+  { value: "90", key: "perfume.review.suggest90", label: "Best 90% alike and up" },
+  { value: "80", key: "perfume.review.suggest80", label: "Best 80% alike and up" },
+  { value: "70", key: "perfume.review.suggest70", label: "Best 70% alike and up" },
+  { value: "none", key: "perfume.review.suggestNone", label: "No suggestion" },
+];
+
 const lineFilterDefs = (): Array<{ key: LineFilterKey; label: string; allLabel: string; name: (v: string) => string }> => [
   { key: "gender", label: tr("perfume.review.f.gender", "Gender"), allLabel: tr("perfume.review.f.genderAll", "Men · Women · Unisex"), name: (v) => GENDER_NAMES[v] ?? v },
   { key: "kind", label: tr("perfume.review.f.kind", "Set / tester"), allLabel: tr("perfume.review.f.kindAll", "Every kind"), name: (v) => KIND_NAMES[v] ?? v.charAt(0) + v.slice(1).toLowerCase() },
@@ -44,7 +53,9 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
     .map((l) => ({ value: l.id, label: `${l.vendor_name} · ${String(l.list_date).slice(0, 10)}`, sublabel: l.file_name }));
   const [selected, setSelected] = useState<string[]>([]);
   const [text, setText] = useState("");
-  const [status, setStatus] = useState<"review" | "unmatched" | null>(null);
+  // Owner 2026-11-15 19:24 CT: "the selector or filter for only those that have suggestions … 70 and up". Reads each line's
+  // OWN suggestions (best % alike), on the server, so the count and the pages are exact.
+  const [suggest, setSuggest] = useState<PerfumeSuggestBucket | null>(null);
   const [PAGE, setPageSize] = useState(100);
   // Owner 2026-11-15: "i need to filter by men or women, or by gender or by type, or set or tester or those with
   // suggestions". Each filter is the engine's reading of the vendor line; the server applies them and pages after.
@@ -53,10 +64,10 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
   // Owner 2026-11-13: "just show all the items from my list and i'll confirm each. in review but only for my list."
   const [mineSeen, setMineSeen] = useState(mine);
   if (mineSeen !== mine) { setMineSeen(mine); setPage(1); setSelected([]); }
-  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, status, PAGE, mine, lf],
-    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, status, mine, ...lf }), placeholderData: (p) => p });
+  const q = useQuery({ queryKey: ["perfume", "review", page, listIds, text, suggest, PAGE, mine, lf],
+    queryFn: () => getPerfumeReview((page - 1) * PAGE, PAGE, { listIds, q: text, suggest, mine, ...lf }), placeholderData: (p) => p });
   const facets = q.data?.facets;
-  const lineFilterCount = Object.values(lf).filter((v) => v.length).length;
+  const lineFilterCount = Object.values(lf).filter((v) => v.length).length + (suggest ? 1 : 0);
   const total = q.data?.total ?? 0;
   const pages = Math.max(1, Math.ceil(total / PAGE));
   // Owner 2026-11-12: "in all the tabs differentiate between vendors the lines" — a heavy rule above the first
@@ -83,11 +94,15 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
             data-testid="perfume-review-search" placeholder={tr("perfume.review.searchPh", "e.g. ARMAF CLUB")}
             onChange={(e) => { setText(e.target.value); reset(); }} />
         </label>
-        <label className="w-[200px] max-w-full text-xs text-gray-700">
-          {tr("perfume.review.statusLabel", "Show")}
-          <Combobox ariaLabel={tr("perfume.review.statusLabel", "Show")} allowClear value={status} placeholder={tr("perfume.review.statusAll", "All lines")}
-            onChange={(v) => { setStatus((v as "review" | "unmatched" | null) || null); reset(); }}
-            options={[{ value: "review", label: tr("perfume.review.statusReview", "Has a suggestion") }, { value: "unmatched", label: tr("perfume.review.statusNone", "Nothing close on file") }]} />
+        <label className="w-[230px] max-w-full text-xs text-gray-700">
+          {tr("perfume.review.suggestLabel", "Suggestions")}
+          <Combobox ariaLabel={tr("perfume.review.suggestLabel", "Suggestions")} allowClear value={suggest} placeholder={tr("perfume.review.statusAll", "All lines")}
+            dataTestId="perfume-review-filter-suggest"
+            onChange={(v) => { setSuggest((v as PerfumeSuggestBucket | null) || null); reset(); }}
+            options={SUGGEST_CHOICES.map((c) => {
+              const n = facets?.suggest?.find((f) => f.value === c.value)?.count;
+              return { value: c.value, label: `${tr(c.key, c.label)}${n != null ? ` (${n.toLocaleString()})` : ""}` };
+            })} />
         </label>
         {lineFilterDefs().map((f) => (
           <MultiSelectDropdown
@@ -102,7 +117,7 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
         ))}
         {lineFilterCount > 0 ? (
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-review-clear-filters"
-            onClick={() => { setLf(NO_LINE_FILTERS); reset(); }}>
+            onClick={() => { setLf(NO_LINE_FILTERS); setSuggest(null); reset(); }}>
             {tr("perfume.review.clearFilters", "Clear filters")} ({lineFilterCount})
           </Button>
         ) : null}

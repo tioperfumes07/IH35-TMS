@@ -174,16 +174,19 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
-export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[] };
+export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[]; suggest?: PerfumeSuggestBucket | null };
+/** Owner 11-15 19:24 CT: lines with a suggestion / best ≥95/90/80/70% alike / no suggestion. */
+export type PerfumeSuggestBucket = "any" | "95" | "90" | "80" | "70" | "none";
 /** One choice of a Review line filter and how many waiting lines it shows (with every other filter applied). */
 export type PerfumeReviewFacet = { value: string; count: number };
-export type PerfumeReviewFacets = { gender: PerfumeReviewFacet[]; conc: PerfumeReviewFacet[]; kind: PerfumeReviewFacet[]; category: PerfumeReviewFacet[]; brand: PerfumeReviewFacet[] };
+export type PerfumeReviewFacets = { gender: PerfumeReviewFacet[]; conc: PerfumeReviewFacet[]; kind: PerfumeReviewFacet[]; category: PerfumeReviewFacet[]; brand: PerfumeReviewFacet[]; suggest?: PerfumeReviewFacet[] };
 export const getPerfumeReview = (offset = 0, limit = 100, f: PerfumeReviewFilter = {}) => {
   const p = new URLSearchParams({ offset: String(offset), limit: String(limit) });
   if (f.listIds?.length) p.set("list_ids", f.listIds.join(","));
   if (f.q?.trim()) p.set("q", f.q.trim());
   if (f.mine) p.set("mine", f.mine);
   if (f.status) p.set("status", f.status);
+  if (f.suggest) p.set("suggest", f.suggest);
   for (const k of ["gender", "conc", "kind", "category", "brand"] as const) if (f[k]?.length) p.set(k, f[k]!.join(","));
   return apiRequest<{ rows: PerfumeReviewRow[]; total: number; facets?: PerfumeReviewFacets }>(`/api/v1/perfume/review?${p.toString()}`);
 };
