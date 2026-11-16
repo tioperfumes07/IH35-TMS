@@ -9,7 +9,7 @@ import { recordRelayFillAtReceipt } from "../fuel-expense-document.service.js";
 const CO = "5c854333-6ea5-4faa-af31-67cb272fef80";
 const FILL = "11111111-1111-4111-8111-111111111111";
 
-function db(opts: { relayUnit?: string | null; relayDriver?: string | null; live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number; otherRail?: Array<{ fuel_transaction_id: string; card: string | null }> }) {
+function db(opts: { auditedBefore?: string[]; relayUnit?: string | null; relayDriver?: string | null; live?: Array<{ id: string; fuel_type: string }>; relayAt?: string | null; vendors?: number; loadUnit?: string | null; lines?: unknown[]; paid?: number; otherRail?: Array<{ fuel_transaction_id: string; card: string | null }> }) {
   const calls: string[] = [];
   const inserts: unknown[][] = [];
   const audits: unknown[][] = [];
@@ -18,6 +18,9 @@ function db(opts: { relayUnit?: string | null; relayDriver?: string | null; live
       calls.push(sql.trim().slice(0, 40));
       if (/^SAVEPOINT|^RELEASE|^ROLLBACK TO/.test(sql.trim())) return { rows: [] };
       if (/audit\.append_event/.test(sql)) { audits.push(values); return { rows: [] }; }
+      if (/FROM audit\.audit_events\s+WHERE event_class = 'fuel\.relay_fill_record_refused'/.test(sql)) {
+        return { rows: (opts.auditedBefore ?? []).includes(String(values[2])) ? [{ "?column?": 1 }] : [] };
+      }
       if (/\/\* cross_rail_rows \*\//.test(sql)) return { rows: opts.otherRail ?? [] };
       if (/FROM fuel\.fuel_transactions\s+WHERE operating_company_id = \$1::uuid AND relay_fuel_transaction_id = \$2::uuid AND voided_at IS NULL AND archived_at IS NULL/.test(sql)) return { rows: opts.live ?? [] };
       if (/SELECT transaction_id, relay_created_at::text, location_city AS city/.test(sql)) return { rows: [{ transaction_id: "txn_A", relay_created_at: opts.relayAt === undefined ? "2026-09-03T20:15:00+00" : opts.relayAt, city: "Natalia", state: "TX" }] };
@@ -72,6 +75,16 @@ describe("ENG-65 ensureRelayFillFuelRecords", () => {
 });
 
 describe("ENG-65 recordRelayFillAtReceipt", () => {
+  it("audits a refusal once per fill and reason — the hourly re-pull does not write it again (11-16: 30 rows for 15 fills)", async () => {
+    const reason = "relay_fill_unit_unknown: no truck on the document, on its load, or matched by Relay to a truck of this company (TIER1: a fill carries its truck)";
+    const again = db({ loadUnit: null, auditedBefore: [reason] });
+    const r = await recordRelayFillAtReceipt(again.client as never, { operating_company_id: CO, relay_fill_id: FILL, load_id: "L", driver_id: "d", unit_id: null, actor_user_uuid: null });
+    expect(r.refused).toBe(reason); // still refused, still reported to the caller
+    expect(again.audits).toHaveLength(0); // but not audited a second time
+    const newReason = db({ loadUnit: null, auditedBefore: ["relay_fill_driver_unknown: something else"] });
+    await recordRelayFillAtReceipt(newReason.client as never, { operating_company_id: CO, relay_fill_id: FILL, load_id: "L", driver_id: "d", unit_id: null, actor_user_uuid: null });
+    expect(newReason.audits).toHaveLength(1); // a new reason for the same fill is news — audited
+  });
   it("refuses by name, audited, when no truck can be named (TIER1)", async () => {
     const d = db({ loadUnit: null });
     const r = await recordRelayFillAtReceipt(d.client as never, { operating_company_id: CO, relay_fill_id: FILL, load_id: "L", driver_id: "d", unit_id: null, actor_user_uuid: null });
