@@ -7,6 +7,7 @@
  * Engines: getMoneyMap · getBankingTiles · getDriftAlerts · getPlaidCompanyTransactions.
  * U30: Accounts / Drift / Latest use ParityTable so every header sorts asc/desc.
  */
+import { V3_HEADER_BTN } from "../../../components/v3/V3StatusPill";
 import { useMemo, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
@@ -794,16 +795,10 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           title="Reconciliation drift — bank vs book"
           viewAllHref={reconViewAllHref}
           headerRight={
+            // Banking.dc.html: "Resolve" is the white V3 header button (28px + 1px border, 600 12px ink), beside View all.
             <Link
               to={reconViewAllHref}
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: V3.link,
-                textDecoration: "none",
-                padding: 0,
-                fontFamily: V3.font,
-              }}
+              style={{ ...V3_HEADER_BTN, textDecoration: "none" }}
               data-testid="banking-home-board-drift-resolve"
             >
               Resolve
