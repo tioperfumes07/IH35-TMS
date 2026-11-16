@@ -26,6 +26,7 @@ import {
   type FuelTxnGlPostCandidate,
 } from "../../accounting/fuel-posting/maybe-post-from-fuel-transaction.service.js";
 import { flushFuelCardOverageAfterCommit } from "../../fuel/fuel-card-overage.service.js";
+import { onFuelIngestComplete } from "../../fuel/fuel-ingest-hooks.js";
 import {
   filterRelayFuelTransactionsByDateRange,
   listRelayFuelTransactions,
@@ -538,6 +539,21 @@ export async function runRelayFuelIngestTick(
   // AFTER COMMIT — BANK-DOM-06 card-overage -> driver receivable -> settlement deduction,
   // gated by FUEL_CARD_OVERAGE_RECOVERY_ENABLED (default OFF).
   await flushFuelCardOverageAfterCommit(pendingGlPosts, app.log);
+
+  // ROUND 12 — AFTER COMMIT: the Relay pull is a fuel ingest. The one "fuel rows arrived" hook records every pulled fill
+  // that has no fuel record yet (Relay's own lines, the one receipt writer), then the fill engine and the fraud detector
+  // read them — the same pass the card import and the statement upload run. Before, Relay fills waited for a bank match or a
+  // settlement (fuel.fuel_transactions had no row since 11-11 while 49 fills sat in integrations.relay_fuel_transactions).
+  if (companiesPulled > 0) {
+    const pulledCompanies = companyIds
+      .map((c) => c.id)
+      .filter((id) => isUsmcaOperatingCompany(id) && (!opts?.operatingCompanyIds || opts.operatingCompanyIds.includes(id)));
+    try {
+      await onFuelIngestComplete(app.log as never, "relay_fuel_ingest", pulledCompanies);
+    } catch (err) {
+      failures.push({ operating_company_id: pulledCompanies.join(","), error: err });
+    }
+  }
 
   if (failures.length > 0) {
     // Never silently swallow — surface the aggregated failure so it reaches process-level
