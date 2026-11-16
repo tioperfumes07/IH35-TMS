@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../api/client";
 import { FleetTable, type FleetRow } from "../FleetTable";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 
 const navigate = vi.fn();
 
@@ -100,9 +101,9 @@ describe("FleetTable unified list", () => {
     // The Unit cell stops propagation and navigates through its <Link>, so clicking it no longer routes
     // via the navigate() spy. Assert the DESTINATION on the link — same guarantee ("Unit goes to the unit
     // profile"), read from what actually performs the navigation.
-    expect(screen.getByText("101").closest("a")).toHaveAttribute("href", "/fleet/units/truck-1");
+    expectDrillHref(screen.getByText("101").closest("a") as Element, "/fleet/units/truck-1");
     // Same for the trailer row — "navigates BY KIND" is still the invariant, now carried by the link.
-    expect(screen.getByText("T-10").closest("a")).toHaveAttribute("href", "/fleet/trailers/trailer-1");
+    expectDrillHref(screen.getByText("T-10").closest("a") as Element, "/fleet/trailers/trailer-1");
   });
 
   it("maintenance mode: Unit is a profile link, 3 maintenance columns render, row click still works", () => {

@@ -393,7 +393,7 @@ export function OwnerHome({ auth }: Props) {
           <DrillKpiCard
             testId="saved-query-chip-insurance-schedule"
             label="Insurance schedule"
-            value={insuranceSummaryQuery.data?.summary.policies_expiring_30d}
+            value={insuranceSummaryQuery.data?.summary?.policies_expiring_30d}
             to="/insurance/policies"
           />
           <DrillKpiCard

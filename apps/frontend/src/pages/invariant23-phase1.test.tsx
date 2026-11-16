@@ -83,6 +83,19 @@ vi.mock("../api/mdata", async (importOriginal) => {
       })
     ),
     listDrivers: vi.fn(() => Promise.resolve({ drivers: [fakeDriver] })),
+    // The rosters now read every page through listAll* (one call per roster) and badge counts from /counts.
+    listAllCustomers: vi.fn(() => Promise.resolve({ customers: [fakeCustomer], total: 1 })),
+    listAllVendors: vi.fn(() =>
+      Promise.resolve({
+        vendors: [
+          { id: "v1", name: "LONG VENDOR SERVICES INC", vendor_type: "fuel", notes: null, operating_company_id: oc, deactivated_at: null },
+        ],
+        total: 1,
+      })
+    ),
+    listAllDrivers: vi.fn(() => Promise.resolve({ drivers: [fakeDriver], total: 1 })),
+    getCustomerRosterCounts: vi.fn(() => Promise.resolve({ operating_company_id: oc, with_transactions: 1, active: 1, all: 1, inactive: 0 })),
+    getVendorRosterCounts: vi.fn(() => Promise.resolve({ operating_company_id: oc, with_transactions: 1, active: 1, all: 1, inactive: 0 })),
     listDriverTeams: vi.fn(() => Promise.resolve({ teams: [fakeTeam] })),
   };
 });
@@ -285,7 +298,7 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
 
     // Roster cell. (The customer fixture's name is "ANTONIO RAMIREZ-MARTINEZ JR. TRANSPORT LLC" —
     // "LONG CUSTOMER…" belongs to the invoices fixture further down this file.)
-    await waitFor(() => expect(container.querySelector(".single-line-name")?.textContent).toContain("ANTONIO"));
+    await waitFor(() => expect(container.querySelector(".single-line-name")?.textContent).toContain("Antonio")); // names render proper case (owner ruling 10-22)
 
     // NOT asserted here, and stated rather than quietly dropped: the Main-contact DetailRow also received
     // the token in this change (its value span is `break-words`, so a long contact name really did wrap),
@@ -302,17 +315,19 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
 
   it("CustomersPage list view renders .single-line-name on roster EntityLink", async () => {
     render(wrap(<CustomersPage />));
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    // The roster view toggle is "Regular" | "Master-detail" now (was "List view").
+    fireEvent.click(await screen.findByTestId("customers-view-list"));
     await waitFor(() =>
+      // The roster fixture is the ANTONIO customer (listAllCustomers); it renders proper case.
       expect(document.querySelector('[data-testid="customer-roster-record-link"].single-line-name')?.textContent).toContain(
-        "LONG CUSTOMER"
+        "Antonio Ramirez-Martinez"
       )
     );
   });
 
   it("VendorsPage list view renders .single-line-name on roster EntityLink", async () => {
     render(wrap(<VendorsPage />));
-    fireEvent.click(screen.getByRole("button", { name: "List view" }));
+    fireEvent.click(await screen.findByTestId("vendors-view-list"));
     await waitFor(() =>
       expect(document.querySelector('[data-testid="vendor-roster-record-link"]')?.closest(".single-line-name")?.textContent).toContain(
         "LONG VENDOR"
@@ -322,7 +337,9 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
 
   it("DriversPage renders .single-line-name on driver full name", async () => {
     render(wrap(<DriversPage />));
-    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("ANTONIO"));
+    // Drivers opens on its Home board; the name column lives on the Roster tab.
+    fireEvent.click(within(await screen.findByTestId("navy-page-subnav")).getByText("Roster"));
+    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("Antonio")); // proper case (owner ruling 10-22)
   });
 
   it("UserDetailPage companies tab marks legal_name with .single-line-name", async () => {
@@ -353,16 +370,16 @@ describe("invariant #23 single-line-name phase-1 pages", () => {
 
   it("CashAdvanceRequestsPage driver column uses .single-line-name", async () => {
     render(wrap(<CashAdvanceRequestsPage />));
-    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toBe("LONG DRIVER NAME"));
+    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toBe("Long Driver Name")); // names render proper case (owner ruling 10-22)
   });
 
   it("HomePage owner approval strip lists driver with .single-line-name", async () => {
     render(wrap(<HomePage auth={{ uuid: "owner", email: "o@test.com", role: "Owner" }} />));
-    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("HOME QUEUE DRIVER LONG NAME"));
+    await waitFor(() => expect(document.querySelector(".single-line-name")?.textContent).toContain("Home Queue Driver Long Name")); // names render proper case (owner ruling 10-22)
   });
 
   it("SettlementDisputesTab driver column uses .single-line-name", async () => {
     render(wrap(<SettlementDisputesTab companyId={oc} />));
-    await waitFor(() => expect(document.querySelector("tbody .single-line-name")?.textContent).toBe("DISPUTE DRIVER LONG"));
+    await waitFor(() => expect(document.querySelector("tbody .single-line-name")?.textContent).toBe("Dispute Driver Long")); // names render proper case (owner ruling 10-22)
   });
 });

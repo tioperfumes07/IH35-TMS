@@ -14,7 +14,7 @@ it("initializes once without collecting financial or customer payloads", async (
   expect(vi.mocked(init).mock.calls[0][0]).toMatchObject({
     traceLifecycle: "static",
     dataCollection: {
-      userInfo: false, cookies: false, httpHeaders: false, httpBodies: [],
+      userInfo: false, cookies: false, httpHeaders: { request: false, response: false }, httpBodies: [],
       urlQueryParams: false, graphQL: { document: false, variables: false },
       genAI: { inputs: false, outputs: false }, databaseQueryData: false,
       queues: false, stackFrameVariables: false,

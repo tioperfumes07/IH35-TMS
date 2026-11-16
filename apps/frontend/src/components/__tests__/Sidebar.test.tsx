@@ -91,7 +91,9 @@ describe("Sidebar", () => {
     expect(resolveSidebarOrder("Mechanic" as UserRole, undefined)).toEqual(canonical);
   });
 
-  it("uses uppercase 10px labels and active item weight 600", () => {
+  // #28730 (complete-design law) draws the rail label at 8.5px inline, white, uppercase — not the 10px
+  // text-section-header class it used before.
+  it("uses uppercase 8.5px rail labels and active item weight 600", () => {
     render(
       <MemoryRouter initialEntries={["/home"]}>
         <Sidebar role="Owner" />
@@ -99,7 +101,7 @@ describe("Sidebar", () => {
     );
     const homeLink = screen.getByRole("link", { name: /HOME/i });
     const homeLabel = within(homeLink).getByText("HOME");
-    expect(homeLabel.className).toContain("text-section-header");
+    expect(homeLabel.style.fontSize).toBe("8.5px");
     expect(homeLabel.className).toContain("uppercase");
     expect(window.getComputedStyle(homeLabel).fontWeight).toBe("600");
   });

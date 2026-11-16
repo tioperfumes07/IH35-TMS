@@ -41,6 +41,8 @@ export async function initFrontendSentry(): Promise<void> {
       graphQL: { document: false, variables: false },
       genAI: { inputs: false, outputs: false },
       databaseQueryData: false,
+      // Defaults to true in the SDK: never send task arguments (they carry load / invoice payloads).
+      queues: false,
       stackFrameVariables: false,
     },
     integrations: [],
