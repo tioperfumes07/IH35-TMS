@@ -458,6 +458,8 @@ export function LegalHomeBoard({ companyId }: { companyId: string }) {
                 type="button"
                 onClick={() => navigate(legalHref(to))}
                 style={{
+                  // Legal.dc.html draws each action as a <div> (content-box); ours is a <button> (reset: border-box).
+                  boxSizing: "content-box",
                   display: "block",
                   width: "100%",
                   textAlign: "left",

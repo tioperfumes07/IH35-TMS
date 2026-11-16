@@ -41,7 +41,7 @@ export function LegalLandingPage() {
             type="button"
             data-testid="legal-create-contract"
             onClick={() => navigate(moneyHref("/legal/contracts?openSend=1"))}
-            style={{ height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: "none", background: "#13233F", color: "#fff", font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", cursor: "pointer", lineHeight: "normal" }}
+            style={{ height: 28, boxSizing: "content-box", padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: "none", background: "#13233F", color: "#fff", font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif", cursor: "pointer", lineHeight: "normal" }}
           >
             + Create Contract
           </button>

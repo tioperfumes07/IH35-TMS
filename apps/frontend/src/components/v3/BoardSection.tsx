@@ -18,8 +18,9 @@ const viewAllStyle: CSSProperties = {
   fontFamily: V3.font,
   textDecoration: "none",
   boxSizing: "content-box",
-  height: 30,
-  lineHeight: "30px",
+  // docs/design/v3: 78 of 78 "View all →" are a plain <span style="font:600 11px Inter;color:#1D4ED8"> — line-height
+  // normal, ~14px tall (reader 11-16 02:45Z: the 30px box #29675 gave it read 30 → 14).
+  lineHeight: "normal",
 };
 
 export function BoardSection({
@@ -67,7 +68,9 @@ export function BoardSection({
           borderBottom: `1px solid ${V3.borderSoft}`,
         }}
       >
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, minWidth: 0 }}>
+        {/* Every design section head: <div style="display:flex;align-items:baseline;gap:8px"> (title 700 13px, subtitle 11px).
+            #29662 set this; the stale merge in #29675 put flex-start back. */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font, ...titleStyle }}>{title}</span>
           {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>
