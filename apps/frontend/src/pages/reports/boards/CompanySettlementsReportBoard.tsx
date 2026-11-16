@@ -22,6 +22,7 @@ import { mmmDd } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
 import { groupBy, monthKey, pct, pctLabel, sumBy, weekStartIso } from "./reportBoardGroup";
 
@@ -216,20 +217,20 @@ export function CompanySettlementsReportBoard() {
         sortable: true,
         render: (t) =>
           t.company_settlement_id ? (
-            <EntityLink kind="company_settlement" id={t.company_settlement_id} label={t.company_settlement_display_id ?? "Company settlement"} />
+            <EntityLink kind="company_settlement" id={t.company_settlement_id} label={t.company_settlement_display_id ?? "Company settlement"} className={V3_TABLE_LINK_CLASS} />
           ) : (
             <span className="text-[#B45309]">not opened</span>
           ),
       },
-      { key: "display_id", label: "Driver stl.", sortable: true, render: (t) => <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} /> },
-      { key: "settlement_number", label: "Number", sortable: true, render: (t) => t.settlement_number ?? "—" },
+      { key: "display_id", label: "Driver stl.", sortable: true, cellClass: "font-semibold", render: (t) => <EntityLink kind="settlement" id={t.settlement_id} label={t.display_id ?? "Settlement"} className={V3_TABLE_LINK_CLASS} /> },
+      { key: "settlement_number", label: "Number", sortable: true, render: (t) => <EntityLink kind="settlement" id={t.settlement_id} label={t.settlement_number ?? "—"} className={V3_TABLE_LINK_CLASS} /> },
       {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (t) => <EntityLink kind="driver" id={t.driver_id} label={t.driver_name ? formatPersonName(t.driver_name) : "Driver"} />,
+        render: (t) => <EntityLink kind="driver" id={t.driver_id} label={t.driver_name ? formatPersonName(t.driver_name) : "Driver"} className={V3_TABLE_LINK_CLASS} />,
       },
-      { key: "unit_number", label: "Truck", sortable: true, render: (t) => <EntityLink kind="unit" id={t.unit_id} label={t.unit_number ?? "Unit"} /> },
+      { key: "unit_number", label: "Truck", sortable: true, render: (t) => <EntityLink kind="unit" id={t.unit_id} label={t.unit_number ?? "Unit"} className={V3_TABLE_LINK_CLASS} /> },
       {
         key: "legs_label",
         label: "Legs",
@@ -239,7 +240,7 @@ export function CompanySettlementsReportBoard() {
             {t.legs.map((l, i) => (
               <span key={l.load_id} className="inline-flex items-center gap-1">
                 {i > 0 ? <span>→</span> : null}
-                <EntityLink kind="load" id={l.load_id} label={`${l.trip_type ?? ""} ${l.load_number}`.trim()} />
+                <EntityLink kind="load" id={l.load_id} label={`${l.trip_type ?? ""} ${l.load_number}`.trim()} className={V3_TABLE_LINK_CLASS} />
               </span>
             ))}
           </span>
@@ -266,7 +267,7 @@ export function CompanySettlementsReportBoard() {
           g.link ? (
             <EntityLink kind={g.link.kind} id={g.link.id} label={g.label} />
           ) : (
-            <button type="button" className="font-semibold text-[#1D4ED8] hover:underline" onClick={() => setDrill({ key: g.key, label: g.label })}>
+            <button type="button" className={V3_TABLE_LINK_CLASS} onClick={() => setDrill({ key: g.key, label: g.label })}>
               {g.label}
             </button>
           ),
@@ -279,7 +280,7 @@ export function CompanySettlementsReportBoard() {
         cellClass: "text-right",
         className: "text-right",
         render: (g) => (
-          <button type="button" className="text-[#1D4ED8] hover:underline" onClick={() => setDrill({ key: g.key, label: g.label })}>
+          <button type="button" className={V3_TABLE_LINK_CLASS} onClick={() => setDrill({ key: g.key, label: g.label })}>
             {g.trips}
           </button>
         ),
