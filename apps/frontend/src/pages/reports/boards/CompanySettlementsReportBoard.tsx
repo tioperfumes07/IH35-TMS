@@ -477,6 +477,7 @@ export function CompanySettlementsReportBoard() {
 
       {showDetail ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={detail}
           title={`${detail.length} closed trips · newest first`}
@@ -500,6 +501,7 @@ export function CompanySettlementsReportBoard() {
         />
       ) : (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={groups}
           title={`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
