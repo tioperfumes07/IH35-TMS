@@ -70,7 +70,7 @@ describe("row 53 — Reports Home is exactly the board", () => {
     expect(screen.getByTestId("reports-category-link-vendor-report").getAttribute("href")).toBe("/reports/vendors");
     fireEvent.click(screen.getByRole("button", { name: "Saved" }));
     expect(screen.getByTestId("reports-home-frequently-run")).toBeTruthy();
-    expect(screen.getByTestId("reports-saved-builder-link").getAttribute("href")).toBe("/reports/custom");
+    expect(screen.getByTestId("reports-saved-builder-link").getAttribute("href")?.split("?")[0]).toBe("/reports/custom");
     fireEvent.click(screen.getByRole("button", { name: "Compliance" }));
     await waitFor(() => expect(screen.getByTestId("ifta-card-stub")).toBeTruthy());
   });

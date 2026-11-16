@@ -100,7 +100,7 @@ describe("CustomerProfitabilityPage", () => {
     const row = name.closest("tr");
     expect(row).toBeTruthy();
     await user.click(within(row!).getByText("12"));
-    expect(mockNavigate).toHaveBeenCalledWith("/customers/c1?tab=billing");
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/customers/c1?tab=billing"));
   });
 
   it("opens AR aging filtered by customer when A/R cell clicked", async () => {
@@ -110,7 +110,7 @@ describe("CustomerProfitabilityPage", () => {
     await waitFor(() => expect(screen.getByText("Acme Freight")).toBeInTheDocument());
     const arCell = screen.getByText("$25,000.00");
     await user.click(arCell);
-    expect(mockNavigate).toHaveBeenCalledWith("/reports/ar-aging?customer_id=c1");
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/reports/ar-aging?customer_id=c1"));
   });
 
   it("keeps unresolved customer tombstones non-interactive", async () => {

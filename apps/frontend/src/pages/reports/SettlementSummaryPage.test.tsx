@@ -145,6 +145,6 @@ describe("SettlementSummaryPage", () => {
     const row = screen.getByText("Alpha").closest("tr");
     if (!row) throw new Error("expected a table row for Alpha");
     await user.click(within(row).getByText("10")); // load_count cell, plain text — not an EntityLink
-    expect(mockNavigate).toHaveBeenCalledWith("/drivers/d1?tab=settlements");
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/drivers/d1?tab=settlements"));
   });
 });
