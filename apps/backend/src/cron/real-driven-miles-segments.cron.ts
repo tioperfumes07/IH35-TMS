@@ -12,6 +12,7 @@ import { withLuciaBypass } from "../auth/db.js";
 import { wrapBackgroundJobTick } from "../lib/background-jobs.js";
 import { getRealDrivenMilesSegmentStatus, materializeRealDrivenMilesSegmentsWithSource } from "../integrations/samsara/geofences/real-driven-miles.service.js";
 import { assertTenantContext } from "./_helpers/tenant-context-guard.js";
+import { reattributeStopEventLoads } from "../telematics/unit-stop-events.writer.js";
 
 import { USMCA_COMPANY_ID } from "../org/company-ids.js";
 const CRON_NAME = "telematics.real_driven_miles_segments";
@@ -23,12 +24,15 @@ export function initializeRealDrivenMilesSegmentsCron(app: FastifyInstance) {
   cron.schedule("*/15 * * * *", async () => {
     await wrapBackgroundJobTick(CRON_NAME, async () => {
       assertTenantContext(USMCA_COMPANY_ID, CRON_NAME);
+      // ROUND 12 E-05 — first give every recent stop its load by the one rule (a load keyed in after its stops), so the
+      // legs below read every stop the load owns.
+      const reattributed = await withLuciaBypass((client) => reattributeStopEventLoads(client as never, USMCA_COMPANY_ID));
       const { source, segments: rows } = await withLuciaBypass((client) => materializeRealDrivenMilesSegmentsWithSource(client, {
         operatingCompanyId: USMCA_COMPANY_ID,
       }));
       const status = await withLuciaBypass((client) => getRealDrivenMilesSegmentStatus(client, USMCA_COMPANY_ID));
       app.log.info(
-        { operating_company_id: USMCA_COMPANY_ID, source, segments_written: rows.length, ...status },
+        { operating_company_id: USMCA_COMPANY_ID, source, stops_reattributed: reattributed.attributed, segments_written: rows.length, ...status },
         `${CRON_NAME} complete`
       );
     }, app.log);

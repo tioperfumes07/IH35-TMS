@@ -170,7 +170,15 @@ export async function materializeStopToStopSegments(
           -- active loads PLUS every load due to deliver in the last 7 days: a delivered leg still owes its
           -- empty_home segment, and status leaves "active" the moment it delivers.
           AND ($3::boolean OR l.status::text = ANY($4::text[])
-               OR COALESCE(d.actual_arrival_at, d.scheduled_arrival_at) >= now() - interval '7 days')
+               OR COALESCE(d.actual_arrival_at, d.scheduled_arrival_at) >= now() - interval '7 days'
+               -- ROUND 12 E-05: a load delivered in the last 60 days that has stop evidence but NO legs (its stops were
+               -- attributed after it closed — reattributeStopEventLoads) still owes its legs; measured 11-16: 13704,
+               -- 13710, 13714, 13724 … had 0 segments. Once it has legs this branch no longer selects it.
+               OR (COALESCE(d.actual_arrival_at, d.scheduled_arrival_at) >= now() - interval '60 days'
+                   AND NOT EXISTS (SELECT 1 FROM telematics.load_odometer_segments s0
+                                    WHERE s0.operating_company_id = l.operating_company_id AND s0.load_id = l.id)
+                   AND EXISTS (SELECT 1 FROM telematics.unit_stop_events e0
+                                WHERE e0.load_id_at_time = l.id AND e0.unit_id = l.assigned_unit_id)))
           AND NOT EXISTS (
             -- a segment this path wrote always starts at one of the load's stop ends; any other
             -- segment on the load came from the fence-bounded path -> the load is HELD.
