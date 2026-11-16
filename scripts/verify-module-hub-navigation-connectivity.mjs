@@ -50,14 +50,9 @@ export function verify(source) {
   need("finance", "to: tab.to", "finance tabs must navigate to their mounted route");
 
   for (const id of ["home", "planner", "relay_inbox", "settings", "expense_mapping", "loves_prices", "compliance"]) need("fuelConfig", `id: "${id}"`, `fuel nav ${id} must remain canonical`);
-  // ROUND 443.326 — HoverDropdownNav in FuelPlannerBoardChrome (board chrome, not page-header extract).
-  need("fuelChrome", "HoverDropdownNav", "fuel subnav must navigate through HoverDropdownNav + canonical path registry");
-  if (/import\s*\{[^}]*\bPageHeader\b|<\s*PageHeader\b/.test(source.fuelChrome)) {
-    failures.push("FuelPlannerBoardChrome must not import/render PageHeader extract theater");
-  }
-  if (/import\s*\{[^}]*\bNavyPageSubNav\b|<\s*NavyPageSubNav\b/.test(source.fuelChrome)) {
-    failures.push("FuelPlannerBoardChrome must not import/render NavyPageSubNav extract theater");
-  }
+  // ROUND 9.4 (supersedes 443.326) — Fuel chrome per docs/design/v3/Fuel.dc.html: PageHeader variant="v3" + NavyPageSubNav.
+  need("fuelChrome", "PageHeader", "FuelPlannerBoardChrome must use PageHeader per Fuel.dc.html chrome spec");
+  need("fuelChrome", "NavyPageSubNav", "FuelPlannerBoardChrome must use NavyPageSubNav per Fuel.dc.html chrome spec");
   need("fuel", "FUEL_TAB_PATH", "fuel board must route tabs through the canonical path registry");
   need("fuel", "subnavItems={fuelBoardSubnav}", "fuel board must pass canonical subnav to chrome");
   for (const route of ["/fuel", "/fuel/planner", "/fuel/inbox", "/fuel/relay-inbox", "/fuel/settings", "/fuel/expense-mapping", "/fuel/loves-prices", "/fuel/compliance"]) need("routes", `path="${route}"`, `fuel route ${route} must remain mounted`);
@@ -119,7 +114,8 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
     ["finance", 'id: "overview"', 'id: "broken-overview"'], ["finance", "to: tab.to", "to: \"/broken\""],
     ["statements", 'id: "pl"', 'id: "broken-pl"'], ["fuelConfig", 'id: "home"', 'id: "broken-home"'],
     ["fuel", "subnavItems={fuelBoardSubnav}", "subnavItems={[]}"],
-    ["fuelChrome", "HoverDropdownNav", "GoneNav"],
+    ["fuelChrome", "PageHeader", "GoneHeader"],
+    ["fuelChrome", "NavyPageSubNav", "GoneNav"],
     ["sidebar", 'to: "/help/overview"', 'to: "/broken-help"'], ["helpCenter", 'id="help-search"', 'id="broken-help-search"'],
     ["helpCenter", '"Getting Started"', '"Broken category"'], ["helpCenter", 'kind="help_article"', 'kind="broken_help"'],
     ["helpOverview", 'to: "/help/runbooks"', 'to: "/help"'], ["homeJumps", 'to: "/maintenance"', 'to: "/broken-maintenance"'],
@@ -143,4 +139,4 @@ if (process.argv.includes("--self-test") || process.argv.includes("--selftest"))
   console.log(`PASS: ${mutations.length} planted module-hub defects were rejected`);
 }
 
-console.log("PASS: 58 exact module-hub navigation leaves remain mounted and operator-reachable");
+console.log("PASS: 59 exact module-hub navigation leaves remain mounted and operator-reachable");

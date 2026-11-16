@@ -1,5 +1,5 @@
-import {Link, useLocation, useSearchParams} from "react-router-dom";
-import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
+import { Link } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -47,9 +47,7 @@ function KpiCard({ kpi, to }: { kpi: FinanceHubKpi; to: string }) {
 }
 
 export function FinanceHubPage() {
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const finHref = (target: string) => withReturnContext(target, originHref);
+  const { pathname } = useLocation();
   const [searchParams] = useSearchParams();
   // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
   const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
@@ -107,7 +105,7 @@ export function FinanceHubPage() {
             </InfoPopover>
           </p>
           <p className="mt-3">
-            <Link to={finHref("/finance/overview")} className="font-medium text-[#1F2A44] underline underline-offset-2">
+            <Link to="/finance/overview" className="font-medium text-[#1F2A44] underline underline-offset-2">
               Back to Finance overview
             </Link>
           </p>
