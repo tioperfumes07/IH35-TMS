@@ -89,6 +89,14 @@ const BEHAVIOR_LABEL_MAP = new Map<string, string>([
   ["rollingstop", "rolling_stop"],
   ["noseatbelt", "no_seatbelt"],
   ["seatbeltviolation", "no_seatbelt"],
+  // ROUND 12 E-12 (migration 202616640100) — the measured labels that had no kind and were dropped every day.
+  ["followingdistance", "following_distance"],
+  ["followingdistancesevere", "following_distance"],
+  ["followingdistancemoderate", "following_distance"],
+  ["edgerailroadcrossingviolation", "railroad_crossing"],
+  ["railroadcrossing", "railroad_crossing"],
+  ["lanedeparture", "lane_departure"],
+  ["unsafeparking", "unsafe_parking"],
 ]);
 
 function extractBehaviorKind(raw: Record<string, unknown>): string | null {
@@ -107,7 +115,10 @@ function extractBehaviorKind(raw: Record<string, unknown>): string | null {
 }
 
 /** safety.harsh_events.event_kind CHECK values. */
-export const HARSH_EVENT_KINDS = ["harsh_brake", "harsh_accel", "harsh_turn", "speeding", "mobile_use", "distracted", "rolling_stop", "no_seatbelt"] as const;
+export const HARSH_EVENT_KINDS = [
+  "harsh_brake", "harsh_accel", "harsh_turn", "speeding", "mobile_use", "distracted", "rolling_stop", "no_seatbelt",
+  "following_distance", "railroad_crossing", "lane_departure", "unsafe_parking",
+] as const;
 
 /** Labels on a raw Samsara safety event, for counting the ones we cannot store. */
 export function rawBehaviorLabels(raw: Record<string, unknown>): string[] {
