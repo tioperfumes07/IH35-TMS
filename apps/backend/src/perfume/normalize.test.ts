@@ -69,6 +69,17 @@ describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
     expect(id.gender).toBe("M");
   });
 
+  it("Oni Essence: the bottle size inside parentheses is read, and WOM is women", () => {
+    const a = identify({ description: "ANNICK GOUTAL Songes Wom EDT (100ml)", brand: "A GOUTAL" });
+    expect(a.sizeMl).toBe(100);
+    expect(a.gender).toBe("W");
+    expect(a.conc).toBe("EDT");
+    expect(identify({ description: "HERMES H24 Men EDT TST (100ml)" }).sizeMl).toBe(100);
+    expect(identify({ description: "D&G K Men EDP (100ml+SG 50ml+AS 50ml)" }).sizeMl).toBe(100);
+    // A vendor item number in parentheses is still not a size.
+    expect(identify({ description: "JO MALONE ENGLISH PEAR 1.0 EDC (137792) - France" }).sizeMl).toBe(30);
+  });
+
   it("UPC: digits only, leading zeros and Excel number artifacts removed", () => {
     expect(normalizeUpc("071249104590")).toBe("71249104590");
     expect(normalizeUpc("8411061043868.0")).toBe("8411061043868");
