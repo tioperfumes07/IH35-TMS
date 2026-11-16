@@ -117,7 +117,7 @@ export function PartyTable<R extends { id: string }>(props: {
       sorted.map((r) => props.cols.filter((c) => c.sortable !== false).map((c) => { const v = c.sort(r); return typeof v === "number" && c.num ? v : String(v ?? ""); })));
   return (
     <ParityTable<R>
-      appearance="board"
+      appearance="v3"
       storageKey={props.storageKey}
       tableTestId={props.testId}
       columns={props.cols.map((c, i): ParityColumn<R> => ({
