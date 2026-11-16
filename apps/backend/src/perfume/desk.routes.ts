@@ -5,7 +5,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
-import { withCurrentUser } from "../auth/db.js";
+import { withCurrentUser, withLuciaBypass } from "../auth/db.js";
 import { AnthropicRateLimitError, AnthropicTimeoutError } from "../ai/anthropic-messages.js";
 import {
   AnthropicNotConfiguredError,
@@ -153,14 +153,40 @@ const ANALYSIS_ENGINE_KEYS = new Set(["a:purch_date", "a:qty", "a:last_cost", "a
  *  owner's next read is warm. It runs as the owner who last read the desk (perfume is owner-only, RLS is_owner()). */
 let warmOwnerUid: string | null = null;
 let warmTimer: NodeJS.Timeout | null = null;
+let warmLog: FastifyInstance["log"] | null = null;
+/** Builds the grid in the background as the desk owner (single-flight inside buildGrid). */
+function warmNow() {
+  const uid = warmOwnerUid;
+  if (!uid) return;
+  void withCurrentUser(uid, (c) => buildGrid(c, {})).catch((e: unknown) => warmLog?.warn({ err: e }, "[PERFUME] grid warm failed"));
+}
+/** Owner 2026-11-16 16:26 CT ("fix lets go") — measured live 21:01Z after a deploy: the first grid read took 22.9 s and the
+ *  first Review read rebuilt the brand index (5.0 s), because the warmer only knew the owner after the owner's own first
+ *  read. Each server now learns the desk owner at start (one read of perfume.desk_users — the app can only see its own
+ *  row there, so this read runs under the Lucia bypass, read-only, no write) and builds before anyone asks. */
+async function resolveWarmOwner(): Promise<void> {
+  if (warmOwnerUid) return;
+  const r = await withLuciaBypass((c) => c.query<{ user_id: string }>(
+    `SELECT d.user_id FROM perfume.desk_users d JOIN identity.users u ON u.id = d.user_id
+      WHERE u.role::text = 'Owner' AND u.deactivated_at IS NULL ORDER BY d.added_at LIMIT 1`));
+  warmOwnerUid = warmOwnerUid ?? r.rows[0]?.user_id ?? null;
+}
 function startGridWarmer(log: FastifyInstance["log"]) {
   if (warmTimer) return;
-  warmTimer = setInterval(() => {
-    const uid = warmOwnerUid;
-    if (!uid) return;
-    void withCurrentUser(uid, (c) => buildGrid(c, {})).catch((e: unknown) => log.warn({ err: e }, "[PERFUME] grid warm failed"));
-  }, 20_000);
+  warmLog = log;
+  const boot = setTimeout(() => { void resolveWarmOwner().then(warmNow).catch((e: unknown) => log.warn({ err: e }, "[PERFUME] warm owner lookup failed")); }, 3_000);
+  boot.unref?.();
+  warmTimer = setInterval(warmNow, 20_000);
   warmTimer.unref?.();
+}
+/** Every desk write: drop the cache and start the rebuild at once, so the owner's background refresh joins a build that is
+ *  already running instead of starting one (it was up to 20 s before the warmer noticed). */
+function dataChanged(opts: { itemsUnchanged?: boolean } = {}) {
+  invalidateGridCache(opts);
+  // 1.5 s: the data fingerprint (pg_stat counters) shows a committed write within ~1 s; building sooner would file the new
+  // grid under the old fingerprint and the next read would build it again.
+  const t = setTimeout(warmNow, 1_500);
+  t.unref?.();
 }
 
 export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
@@ -179,7 +205,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = rulesSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     const result = await withCurrentUser(uid, (c) => putRules(c, uid, p.data));
-    invalidateGridCache();
+    dataChanged();
     return result;
   });
 
@@ -191,7 +217,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = vendorSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     const result = await withCurrentUser(uid, (c) => upsertVendor(c, uid, p.data));
-    invalidateGridCache();
+    dataChanged();
     return result;
   });
 
@@ -225,7 +251,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const p = importSchema.safeParse(req.body); if (!p.success) return bad(reply, p.error);
     try {
       const result = await withCurrentUser(uid, (c) => importList(c, uid, p.data));
-      invalidateGridCache();
+      dataChanged();
       return result;
     } catch (e) {
       if (e instanceof ImportCheckFailed) return reply.code(422).send({ error: "import_check_failed", check: e.check });
@@ -249,7 +275,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ reason: z.string().trim().min(3).max(500) }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason));
-    invalidateGridCache();
+    dataChanged();
     return { ok: true };
   });
 
@@ -258,7 +284,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ current: z.boolean() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => setListCurrent(c, params.data.id, body.data.current));
-    invalidateGridCache();
+    dataChanged();
     return { ok: true };
   });
 
@@ -282,7 +308,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
     // Linking to an existing item writes no item: the brand index stays (create_new may add an item).
-    invalidateGridCache({ itemsUnchanged: !body.data.create_new });
+    dataChanged({ itemsUnchanged: !body.data.create_new });
     return result;
   });
 
@@ -291,14 +317,14 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const body = z.object({ dry_run: z.boolean().default(true) }).safeParse(req.body ?? {}); if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => rekeyItems(c, { dryRun: body.data.dry_run }));
-    invalidateGridCache();
+    dataChanged();
     return result;
   });
 
   app.post("/api/v1/perfume/items/canonicalize-brands", RL_IMPORT, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const result = await withCurrentUser(uid, (c) => canonicalizeItemBrands(c));
-    invalidateGridCache();
+    dataChanged();
     return result;
   });
 
@@ -310,7 +336,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     if (rematchJob.state === "running") return reply.code(202).send(rematchJob);
     rematchJob = { state: "running", started_at: new Date().toISOString(), finished_at: null, result: null, error: null };
     void withCurrentUser(uid, (c) => rematchReview(c))
-      .then((result) => { rematchJob = { ...rematchJob, state: "done", finished_at: new Date().toISOString(), result }; invalidateGridCache(); })
+      .then((result) => { rematchJob = { ...rematchJob, state: "done", finished_at: new Date().toISOString(), result }; dataChanged(); })
       .catch((e: unknown) => { rematchJob = { ...rematchJob, state: "failed", finished_at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) }; });
     return reply.code(202).send(rematchJob);
   });
@@ -330,7 +356,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     ]).safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => bulkReview(c, uid, body.data));
-    invalidateGridCache({ itemsUnchanged: body.data.action === "confirm_best" || body.data.action === "link_item" });
+    dataChanged({ itemsUnchanged: body.data.action === "confirm_best" || body.data.action === "link_item" });
     return result;
   });
 
@@ -349,7 +375,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ internal_code: z.string().max(60).nullable() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
     await withCurrentUser(uid, (c) => setInternalCode(c, params.data.id, body.data.internal_code));
-    invalidateGridCache();
+    dataChanged();
     return { ok: true };
   });
 
