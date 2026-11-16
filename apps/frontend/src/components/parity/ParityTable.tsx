@@ -2271,7 +2271,9 @@ export function ParityTable<T>({
                     // inherit C-37 tabular-nums + text-right without extra config.
                     className={v3 ? parityMergedCellClass(column) : `px-2 py-1.5 font-mono ${parityMergedCellClass(column)}`}
                     // Every .dc.html totals row: each <td> is 8px 12px · 700 12px Inter · #F7F8FA · 1px #DDE1E7 rule on top.
-                    style={v3 ? { padding: "8px 12px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 700, backgroundColor: "#F7F8FA", borderTop: "1px solid #DDE1E7", color: "#111827" } : undefined}
+                    // The shorthand font (700 12px Inter) sets line-height normal and the cell carries no white-space (reader 11-16:
+                    // Insurance / Accounting / TB total rows read 32px nowrap against the design's 31.5px).
+                    style={v3 ? { padding: "8px 12px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 700, lineHeight: "normal", whiteSpace: "normal", backgroundColor: "#F7F8FA", borderTop: "1px solid #DDE1E7", color: "#111827" } : undefined}
                   >
                     {content ?? null}
                   </td>
