@@ -46,7 +46,7 @@ type Props = {
 
 // ROUND 12 (reader 11-16 00:48Z): the report-family designs (Dispatch-LoadHistory, Reports-*) draw these as <button>, whose
 // box is border-box: 28px tall including the border (ours drew 30). #29725's content-box was the wrong reading.
-const BOARD_TRIGGER = { height: 28, boxSizing: "border-box", padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", whiteSpace: "nowrap", cursor: "pointer" } as const;
+const BOARD_TRIGGER = { height: 28, boxSizing: "border-box", padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", flexShrink: 0, cursor: "pointer" } as const; // white-space normal as drawn; never shrinks, so never wraps
 
 export function MultiSelectDropdown({
   label,

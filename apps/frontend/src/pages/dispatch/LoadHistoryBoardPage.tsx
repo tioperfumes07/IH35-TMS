@@ -423,6 +423,7 @@ export default function LoadHistoryBoardPage() {
         backHref={loadHistoryBackHref}
         title="Load history"
         subtitle="every load ever booked · USMCA · from the load hub (mdata.loads)"
+        actionsGap={8}
         actions={
           <>
             <button type="button" style={{ ...V3_HEADER_ACTION_STYLE, height: 28, padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, border: `1px solid ${V3.border}`, background: V3.surface, font: `600 12px ${V3.font}` }}>

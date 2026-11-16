@@ -27,6 +27,8 @@ export type PageHeaderProps = {
   variant?: "v3";
   /** v3 only: the module crumb line above the title (the board prints the module name). */
   crumb?: string;
+  /** v3 header actions gap: 12 on module boards; the report family (Dispatch-LoadHistory) draws 8 with wrap. */
+  actionsGap?: number;
 };
 
 const V3_INK = "#111827";
@@ -40,7 +42,7 @@ export const V3_HEADER_ACTION_STYLE = { font: `600 11px ${V3_FONT}`, color: V3_I
  * Not wired to routes in Phase 6 primitive block — import from this path explicitly
  * (`components/forms/shared/PageHeader`), not `components/layout/PageHeader`.
  */
-export function PageHeader({ title, backHref, breadcrumb, subtitle, actions, variant, crumb }: PageHeaderProps) {
+export function PageHeader({ title, backHref, breadcrumb, subtitle, actions, variant, crumb, actionsGap = 12 }: PageHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -61,7 +63,7 @@ export function PageHeader({ title, backHref, breadcrumb, subtitle, actions, var
             <h1 style={{ margin: 0, font: `700 18px ${V3_FONT}`, color: V3_INK, lineHeight: "normal" }}>{title}</h1>
             {subtitle ? <span style={{ fontSize: 11, color: V3_MUTED, lineHeight: "normal" }}>{subtitle}</span> : null}
           </div>
-          {actions ? <div style={{ display: "flex", gap: 12, alignItems: "center", font: `600 11px ${V3_FONT}` }}>{actions}</div> : null}
+          {actions ? <div style={{ display: "flex", gap: actionsGap, alignItems: "center", font: `600 11px ${V3_FONT}`, ...(actionsGap === 8 ? { flexWrap: "wrap" as const } : {}) }}>{actions}</div> : null}
         </div>
       </>
     );
