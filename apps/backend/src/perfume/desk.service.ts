@@ -82,7 +82,8 @@ export type VendorRow = {
 };
 /** Owner 2026-11-16 16:31 CT: "the order of vendors is ok in alphabetical order but the first ones should always be, pca, mtz,
  *  elegance, mr distributors, then the rest in alphabetical order." By the vendor's short name (its column header). */
-export const VENDOR_FIRST = ["PCA", "MTZ", "ELEGANCE", "M&R DIST"];
+// Owner 2026-11-16 17:41 CT: Elegance's ARABIC list is its own list, kept next to Elegance (as PPW BLK FRI sits by PPW).
+export const VENDOR_FIRST = ["PCA", "MTZ", "ELEGANCE", "ELEGANCE ARB", "M&R DIST"];
 export function orderVendors<V extends { name: string; short_name: string | null }>(vs: readonly V[]): V[] {
   const rank = (v: V) => { const i = VENDOR_FIRST.indexOf((v.short_name ?? "").trim().toUpperCase()); return i < 0 ? VENDOR_FIRST.length : i; };
   const label = (v: V) => (v.short_name?.trim() || v.name).toLowerCase();

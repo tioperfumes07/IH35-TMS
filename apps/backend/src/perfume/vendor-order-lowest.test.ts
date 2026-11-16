@@ -5,8 +5,8 @@ import { orderVendors, priceFamilies } from "./desk.service.js";
 
 describe("vendor order", () => {
   it("puts PCA, MTZ, ELEGANCE, M&R DIST first, then A–Z by the column header", () => {
-    const vs = ["PPW BLK FRI", "AWESOME", "M&R DIST", "PPW", "ELEGANCE", "B&S", "MTZ", "PCA", "zeta"].map((s) => ({ name: `${s} full`, short_name: s }));
-    expect(orderVendors(vs).map((v) => v.short_name)).toEqual(["PCA", "MTZ", "ELEGANCE", "M&R DIST", "AWESOME", "B&S", "PPW", "PPW BLK FRI", "zeta"]);
+    const vs = ["PPW BLK FRI", "AWESOME", "M&R DIST", "PPW", "ELEGANCE ARB", "ELEGANCE", "B&S", "MTZ", "PCA", "zeta"].map((s) => ({ name: `${s} full`, short_name: s }));
+    expect(orderVendors(vs).map((v) => v.short_name)).toEqual(["PCA", "MTZ", "ELEGANCE", "ELEGANCE ARB", "M&R DIST", "AWESOME", "B&S", "PPW", "PPW BLK FRI", "zeta"]);
   });
   it("a vendor without a short name sorts by its name", () => {
     const vs = [{ name: "Zed", short_name: null }, { name: "Alpha", short_name: null }, { name: "x", short_name: "MTZ" }];
