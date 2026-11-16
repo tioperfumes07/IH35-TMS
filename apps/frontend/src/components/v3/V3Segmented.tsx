@@ -50,7 +50,9 @@ export function V3Segmented<T extends string>({
               borderRadius: 4,
               fontSize: 11,
               fontWeight: 600,
-              lineHeight: "normal",
+              // The report family draws <button>s (UA line-height normal); module boards draw <span>s whose segment
+              // reads 28px live (Reports.dc.html Accrual | Cash) — normal there made it 27 (reader 11-16, after #29762).
+              ...(box === "border-box" ? { lineHeight: "normal" } : {}),
               border: "none",
               cursor: "pointer",
               background: active ? V3.shell : "transparent",

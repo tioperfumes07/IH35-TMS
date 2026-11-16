@@ -28,7 +28,7 @@ describe("VendorPreferredPartsReverseSection", () => {
     );
 
     const link = await screen.findByRole("link", { name: "Oil filter" });
-    expect(link.getAttribute("href")).toBe("/inventory?part_id=part-1");
+    expect(link.getAttribute("href")?.split("&ret=")[0]).toBe("/inventory?part_id=part-1");
     expect(listMaintenanceParts).toHaveBeenCalledWith("usmca", { vendor_id: "vendor-1" });
     expect(screen.getByText(/OF-1 · on hand 12/)).toBeTruthy();
   });

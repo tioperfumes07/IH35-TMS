@@ -29,6 +29,7 @@ export function assertFinanceLanding({
   hubPage,
   breakEvenPage,
   subnav = "",
+  pinnedTest = "",
 }) {
   const errors = [];
   if (!manifest) errors.push("manifest.tsx missing");
@@ -74,10 +75,15 @@ export function assertFinanceLanding({
   //             `pathname === to || pathname.startsWith(`${to}/`)` — so /finance/hub keeps the Hub ("/finance") tab active.
   //   why: LST-F10158-NAVY-FINANCE (#18880, 5b28a88ddc) moved the module onto NavyPageSubNav; ROUND 441.6's
   //        NavyPageSubNav.most-specific test pins mostSpecificActiveTo("/finance/hub") === "/finance".
+  // ROUND 12 (Lead 11-16): read the behavior, not one spelling of it — NavyPageSubNav keeps prefix matching
+  // (pathname.startsWith(`${base}/`)), picks the active tab through mostSpecificActiveTo(pathname, …), and the pinned
+  // unit test asserts mostSpecificActiveTo("/finance/hub", tabs) === "/finance". A variable rename can no longer turn
+  // this red, and a comment can no longer turn it green.
   const navyKeepsHubActive =
     /<NavyPageSubNav\s+items=\{tabs\.map\(\(tab\) => \(\{ label: tab\.label, to: tab\.to \}\)\)\}/.test(tabs) &&
-    /return pathname === to \|\| pathname\.startsWith\(`\$\{to\}\/`\);/.test(subnav) &&
-    /const activeTo = mostSpecificActiveTo\(/.test(subnav);
+    /^(?!\s*\/\/).*return pathname === (?:to|base) \|\| pathname\.startsWith\(`\$\{(?:to|base)\}\/`\);/m.test(subnav) &&
+    /^(?!\s*\/\/).*=\s*mostSpecificActiveTo\(\s*pathname\b/m.test(subnav) &&
+    /mostSpecificActiveTo\("\/finance\/hub", tabs\)\)\.toBe\("\/finance"\)/.test(pinnedTest);
   if (!navyKeepsHubActive && !/tab\.id\s*===\s*["']hub["'][^;]{0,120}currentPath\s*===\s*["']\/finance\/hub["']/.test(tabs)) {
     errors.push("legacy /finance/hub must keep the Hub tab active");
   }
@@ -126,7 +132,8 @@ function selftest() {
     ...good,
     tabs: good.tabs.replace(/const isActive = currentPath === tab\.to[\s\S]*?"\/finance\/hub"\);/, "") +
       "\n      <NavyPageSubNav items={tabs.map((tab) => ({ label: tab.label, to: tab.to }))} />\n",
-    subnav: "function isActive(pathname, to) {\n  if (to === \"/\") return pathname === \"/\";\n  return pathname === to || pathname.startsWith(`${to}/`);\n}\n  const activeTo = mostSpecificActiveTo(\n",
+    subnav: "function isActive(pathname, to) {\n  const base = pathOnly(to);\n  return pathname === base || pathname.startsWith(`${base}/`);\n}\n  const leafTo = mostSpecificActiveTo(\n      pathname,\n",
+    pinnedTest: 'expect(mostSpecificActiveTo("/finance/hub", tabs)).toBe("/finance");',
   };
   if (assertFinanceLanding(navyGood).length) {
     console.error(`[${LABEL}] SELFTEST FAILED: shared NavyPageSubNav shape rejected: ${assertFinanceLanding(navyGood).join("; ")}`);
@@ -143,7 +150,9 @@ function selftest() {
     ["flyout overview stale", { ...good, sidebar: good.sidebar.replace('Overview", to: "/finance/overview"', 'Overview", to: "/finance"') }, "flyout Overview"],
     ["hub tab stale", { ...good, tabs: good.tabs.replace('id: "hub", label: "Hub", to: "/finance"', 'id: "hub", label: "Hub", to: "/finance/hub"') }, "Hub tab"],
     ["legacy active state lost", { ...good, tabs: good.tabs.replace('currentPath === "/finance/hub"', 'currentPath === "/finance/legacy"') }, "keep the Hub tab active"],
-    ["navy subnav loses prefix matching", { ...navyGood, subnav: navyGood.subnav.replace("|| pathname.startsWith(`${to}/`)", "") }, "keep the Hub tab active"],
+    ["navy subnav loses prefix matching", { ...navyGood, subnav: navyGood.subnav.replace("|| pathname.startsWith(`${base}/`)", "") }, "keep the Hub tab active"],
+    ["prefix matching only in a comment", { ...navyGood, subnav: navyGood.subnav.replace("  return pathname === base || pathname.startsWith(`${base}/`);", "  // return pathname === base || pathname.startsWith(`${base}/`);\n  return pathname === base;") }, "keep the Hub tab active"],
+    ["pinned /finance/hub test removed", { ...navyGood, pinnedTest: "" }, "keep the Hub tab active"],
     ["navy items stop carrying tab.to", { ...navyGood, tabs: navyGood.tabs.replace("to: tab.to }))}", "to: \"/finance\" }))}") }, "keep the Hub tab active"],
     ["back link loops", { ...good, hubPage: good.hubPage.replaceAll("/finance/overview", "/finance") }, "back navigation"],
     ["break-even back loops", { ...good, breakEvenPage: good.breakEvenPage.replace("/finance/overview", "/finance") }, "Break-Even back navigation"],
@@ -174,6 +183,7 @@ const errors = assertFinanceLanding({
   hubPage: read("apps/frontend/src/pages/finance/FinanceHubPage.tsx"),
   breakEvenPage: read("apps/frontend/src/pages/finance/BreakEvenPage.tsx"),
   subnav: read("apps/frontend/src/components/layout/NavyPageSubNav.tsx"),
+  pinnedTest: read("apps/frontend/src/components/layout/__tests__/NavyPageSubNav.most-specific.test.tsx") ?? "",
 });
 
 if (errors.length) {

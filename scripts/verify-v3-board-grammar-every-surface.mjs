@@ -81,7 +81,10 @@ const SURFACES = /** @type {Surface[]} */ ([
   {
     id: "FactoringBoardChrome",
     file: "apps/frontend/src/pages/factoring/FactoringBoardChrome.tsx",
-    forbid: ["PageHeader", "NavyPageSubNav"],
+    // ROUND 12 (Lead 11-16): this file IS the board chrome, and Factoring.dc.html draws the same 32px navy V3 bar every
+    // board draws — NavyPageSubNav has been that bar since ROUND 10.1 (verify-navy-page-subnav locks its tokens; live
+    // reader Factoring 20 → 7 with it). What stays forbidden is the page-header extract.
+    forbid: ["PageHeader"],
     chromeOnly: true,
   },
   {
