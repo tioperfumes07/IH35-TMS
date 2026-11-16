@@ -50,6 +50,7 @@ export function V3Segmented<T extends string>({
               borderRadius: 4,
               fontSize: 11,
               fontWeight: 600,
+              lineHeight: "normal",
               border: "none",
               cursor: "pointer",
               background: active ? V3.shell : "transparent",

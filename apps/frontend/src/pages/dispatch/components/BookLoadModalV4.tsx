@@ -1088,12 +1088,6 @@ export function BookLoadModalV4({
   const extraRatesCents = useMemo(() => sumStopExtraRatesCents(stops ?? []), [stops]);
   const customerInvoiceTotal = sectionTotal + extraRatesCents;
 
-  useEffect(() => {
-    const sum = sumAccessorialCents(accessorialRows ?? []);
-    if (form.getValues("accessorial_cents") !== sum) {
-      form.setValue("accessorial_cents", sum, { shouldDirty: false });
-    }
-  }, [accessorialRows, form]);
   // WIRE-02 / ACCT-F63 — the driver bill preview must NEVER fall back to the customer charges.
   // This memo used to `return sectionTotal + extraRatesCents`, which is the IDENTICAL expression
   // assigned to `customerInvoiceTotal` eight lines above: whenever miles or the per-mile rate were
@@ -1746,6 +1740,7 @@ export function BookLoadModalV4({
                   linehaul_cents: Number(values.linehaul_cents || 0),
                   fuel_surcharge_cents: Number(values.fuel_surcharge_cents || 0),
                   accessorial_rows: values.accessorial_rows ?? [],
+                  accessorial_cents: Number(values.accessorial_cents || 0),
                 }),
                 // W7 — per-stop extra rates as customer charge lines (were dropped from the payload).
                 ...stopExtraRateChargeLines(values.stops ?? []),
@@ -2836,7 +2831,6 @@ export function BookLoadModalV4({
                       }
                     }}
                   />
-                  <input type="hidden" {...form.register("accessorial_cents", { valueAsNumber: true })} />
 
                   {/* GAP-31 per-stop extra rates — relocated to §A (with the charges) per GUARD 2026-06-23.
                       Lives here, NOT in the §C stop card (which is exactly the 11 render-v6 fields). Each

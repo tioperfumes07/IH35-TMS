@@ -204,7 +204,7 @@ export function MultiSelectDropdown({
         )}
       </button>
         {open && menuAt && typeof document !== "undefined"
-          ? createPortal(<div ref={menuRef} style={{ position: "fixed", top: menuAt.top, left: menuAt.left, zIndex: 60 }}>{menuEl}</div>, document.body)
+          ? createPortal(<div ref={menuRef} style={{ position: "fixed", top: menuAt.top, left: menuAt.left, zIndex: 60 /* scroll-reachable-exempt: inner menuEl already constrains via max-h-72 overflow-y-auto */ }}>{menuEl}</div>, document.body)
           : null}
       </>
     );
