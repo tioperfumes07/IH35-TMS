@@ -38,6 +38,11 @@ type ReportFilterBarProps = {
    */
   board?: boolean;
   /**
+   * Board period chips' box. docs/design/v3: the report family (Dispatch-LoadHistory, Reports-*) draws them as <button>s
+   * (border-box, the default); the report VIEWER (Reports-Viewer-TrialBalance) draws <span>s (content-box).
+   */
+  segBox?: "border-box" | "content-box";
+  /**
    * Board bar only: more period buttons drawn INSIDE the preset segmented group, after YTD (Dispatch-LoadHistory.dc.html
    * draws "This week · This month · Last month · YTD · All" as one group). `active` paints the navy selected segment.
    */
@@ -117,6 +122,7 @@ export function ReportFilterBar({
   onCancel,
   onReset,
   board = false,
+  segBox = "border-box",
   extraPresets,
 }: ReportFilterBarProps) {
   const [, setSearchParams] = useSearchParams();
@@ -217,13 +223,13 @@ export function ReportFilterBar({
             const r = computePresetRange(btn.preset);
             const on = fromDate === r.from && toDate === r.to;
             return (
-              <button key={btn.preset} type="button" aria-pressed={on} onClick={() => handlePreset(btn.preset)} style={on ? B_SEG_BTN_ON : B_SEG_BTN} data-testid={`${testIdPrefix}-preset-${btn.preset}`}>
+              <button key={btn.preset} type="button" aria-pressed={on} onClick={() => handlePreset(btn.preset)} style={{ ...(on ? B_SEG_BTN_ON : B_SEG_BTN), boxSizing: segBox }} data-testid={`${testIdPrefix}-preset-${btn.preset}`}>
                 {btn.label}
               </button>
             );
           })}
           {(extraPresets ?? []).map((p) => (
-            <button key={p.id} type="button" aria-pressed={p.active} onClick={p.onSelect} style={p.active ? B_SEG_BTN_ON : B_SEG_BTN} data-testid={`${testIdPrefix}-preset-${p.id}`}>
+            <button key={p.id} type="button" aria-pressed={p.active} onClick={p.onSelect} style={{ ...(p.active ? B_SEG_BTN_ON : B_SEG_BTN), boxSizing: segBox }} data-testid={`${testIdPrefix}-preset-${p.id}`}>
               {p.label}
             </button>
           ))}

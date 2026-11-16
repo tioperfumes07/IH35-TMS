@@ -310,7 +310,7 @@ export function VendorReportBoard() {
         data-testid="vendor-report-filters"
       >
         <span style={{ fontSize: 11, color: "#5B6576" }}>Date</span>
-        <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="vendor-report-range" />
+        <V3Segmented box="border-box" value={range} options={RANGE_OPTIONS} onChange={setRange} testId="vendor-report-range" />
         <EntityMultiSelect
           kind="vendor"
           operatingCompanyId={companyId}
@@ -338,7 +338,7 @@ export function VendorReportBoard() {
           data-testid="vendor-report-truck-filter"
         />
         <span style={{ fontSize: 11, color: "#5B6576" }}>View</span>
-        <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="vendor-report-view" />
+        <V3Segmented box="border-box" value={view} options={VIEW_OPTIONS} onChange={setView} testId="vendor-report-view" />
       </ReportFilterBar>
 
       {board.isError ? <ListErrorState title="Couldn't load the vendor report" {...formatQueryErrorDetail(board.error)} onRetry={() => void board.refetch()} /> : null}

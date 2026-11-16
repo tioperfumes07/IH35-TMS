@@ -346,7 +346,7 @@ export function CompanySettlementsReportBoard() {
       >
         {/* Reports-CompanySettlements.dc.html: Group by sits inside the filter bar, right after the period presets. */}
         <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
-        <V3Segmented
+        <V3Segmented box="border-box"
           value={by}
           options={GROUP_OPTIONS}
           onChange={(next) => setBy(next)}
