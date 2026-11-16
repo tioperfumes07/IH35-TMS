@@ -7,6 +7,11 @@ vi.mock("../auth/useAuth", () => ({
   useAuth: () => ({ user: { role: "Owner" } }),
 }));
 
+// A child (the shared reason modal) reads the selected company; the app always renders it inside CompanyProvider.
+vi.mock("../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "co-1" }),
+}));
+
 vi.mock("../components/Toast", () => ({
   useToast: () => ({ pushToast: vi.fn() }),
 }));

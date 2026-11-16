@@ -18,8 +18,11 @@ describe("maintenance nav count reconcile (B24)", () => {
     expect(MAINTENANCE_MASTER_DATA_NAV_COUNT).toBe(12);
   });
 
-  it("keeps dashboard operational tab count at 9 (C-36)", () => {
-    expect(MAINTENANCE_DASHBOARD_TAB_COUNT).toBe(9);
+  // C-36 (9 tabs) was superseded by R313 / docs/design/v3/Maintenance-Home.dc.html, whose navy sub-nav draws 13:
+  // Home, Fleet Table, Active WOs, PM Due, Faults, In Shop, Service / Location, Driver Reports, Road Service,
+  // Parts Inventory, Cost/mi, Integrity Report, Settings.
+  it("keeps dashboard tab count at the v3 design's 13", () => {
+    expect(MAINTENANCE_DASHBOARD_TAB_COUNT).toBe(13);
   });
 
   it("MAINTENANCE_LISTS_CATALOG_COUNT matches the real catalog map, not a hand-typed number", () => {
