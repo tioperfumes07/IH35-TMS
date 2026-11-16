@@ -27,8 +27,15 @@ import { SettlementRefCell } from "../../../components/shared/SettlementRefCell"
 import { SelectCombobox } from "../../../components/Combobox";
 import { V3, V3_EXPENSE_GROUPS } from "../../../design/v3-tokens";
 import { BoardSection } from "../../../components/v3/BoardSection";
-import { V3Segmented } from "../../../components/v3/V3Segmented";
+import { V3Segmented, type V3SegmentOption } from "../../../components/v3/V3Segmented";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
+
+// Thin wrapper — keeps Banking's SegmentedControl contract while delegating to V3Segmented (ROUND 12.1 CC-2 BANK-F303)
+function SegmentedControl<T extends string>({
+  options, value, onChange, dataTestId,
+}: { options: V3SegmentOption<T>[]; value: T; onChange: (next: T) => void; dataTestId?: string }) {
+  return <V3Segmented options={options} value={value} onChange={onChange} testId={dataTestId} />;
+}
 
 /** ROUND 8.20 board7 — Rolling Ledger KPI → same-tab cohort URL (shareable + Back-safe). */
 function rollingLedgerKpiHref(opts: {
@@ -294,50 +301,6 @@ function expenseGroupLabel(key: (typeof V3_EXPENSE_GROUPS)[number], index: numbe
 type DayGrain = "day" | "week";
 
 
-// Banking's exact 28px (h-7) segmented-button pattern (BankingTransactionsDesignView.tsx's
-// All/Spent/Received and By month/Money in/out/All dates toggles) — reused verbatim here for
-// All/Income/Expenses and By day/By type.
-function SegmentedControl<T extends string>({
-  options,
-  value,
-  onChange,
-  dataTestId,
-}: {
-  options: { value: T; label: string }[];
-  value: T;
-  onChange: (next: T) => void;
-  dataTestId?: string;
-}) {
-  return (
-    <div
-      className="inline-flex h-7 overflow-hidden rounded-sm text-xs"
-      style={{ border: `1px solid ${V3.border}`, background: V3.surface, fontFamily: V3.font }}
-      data-testid={dataTestId}
-    >
-      {options.map((opt, i) => {
-        const active = value === opt.value;
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            className="flex h-7 items-center px-2.5"
-            style={{
-              borderLeft: i !== 0 ? `1px solid ${V3.border}` : undefined,
-              background: active ? V3.shell : "transparent",
-              color: active ? V3.onShell : V3.muted,
-              fontWeight: active ? 600 : 500,
-              fontFamily: V3.font,
-            }}
-            onClick={() => onChange(opt.value)}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
 // Banking's exact dropdown-button-with-chevron + checkbox-menu pattern (the "All transaction
 // types" filter, BankingTransactionsDesignView.tsx lines ~3169-3227) — reused verbatim.
 function TypeFilterDropdown({
@@ -355,7 +318,8 @@ function TypeFilterDropdown({
     <div className="relative">
       <button
         type="button"
-        className="flex h-7 min-w-[9rem] items-center justify-between gap-1 rounded-sm border border-[#E5E7EB] bg-white px-2 text-xs text-[#4B5563]"
+        className="inline-flex h-7 min-w-[9rem] items-center justify-between gap-1"
+        style={{ borderRadius: 6, border: `1px solid ${V3.border}`, background: V3.surface, padding: "0 12px", fontSize: 12, fontWeight: 600, color: V3.ink, fontFamily: V3.font, cursor: "pointer" }}
         onClick={() => setOpen((o) => !o)}
         data-testid="rolling-ledger-type-filter"
       >
@@ -1311,11 +1275,11 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     orderedKeys: ["Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)"],
   };
   const toolbarBtn: CSSProperties = {
-    display: "flex",
+    display: "inline-flex",
     height: 28,
     alignItems: "center",
     gap: 4,
-    borderRadius: 2,
+    borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
     padding: "0 12px",
@@ -1391,8 +1355,8 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
         <span style={{ fontSize: 11, color: V3.muted }}>Date: {dateRangeLabel}</span>
         <SegmentedControl
           options={[
-            { value: "day" as const, label: "By day" },
-            { value: "type" as const, label: "By type" },
+            { id: "day" as const, label: "By day" },
+            { id: "type" as const, label: "By type" },
           ]}
           value={groupMode}
           onChange={(next) => updateParams({ rl_group: next === "day" ? null : next })}
@@ -1431,9 +1395,9 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
           </div>
           <SegmentedControl
             options={[
-              { value: "all" as const, label: "All" },
-              { value: "income" as const, label: "Income" },
-              { value: "expenses" as const, label: "Expenses" },
+              { id: "all" as const, label: "All" },
+              { id: "income" as const, label: "Income" },
+              { id: "expenses" as const, label: "Expenses" },
             ]}
             value={rowKindFilter}
             onChange={(next) => updateParams({ rl_kind: next === "all" ? null : next })}

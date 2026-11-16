@@ -11,7 +11,7 @@ import { RollingLedgerTab } from "./tabs/RollingLedgerTab";
 import { CashFlowHomeTab } from "./tabs/CashFlowHomeTab";
 import { useFeatureFlag } from "../../hooks/useFeatureFlag";
 import { CASH_FORECAST_ENABLED_FLAG } from "../../api/forecast";
-import { currentOriginHref, resolveBackHref, withReturnContext } from "../../lib/returnContext";
+import { resolveBackHref } from "../../lib/returnContext";
 
 export type CashFlowTabId = "home" | "daily_prediction" | "actual_vs_projected" | "manual_daily_projections" | "rolling_ledger";
 
@@ -99,9 +99,7 @@ const CASH_FLOW_BOARD: Record<string, string> = {
 
 export function CashFlowPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { pathname, search: locSearch } = useLocation();
-  const originHref = currentOriginHref(pathname, locSearch);
-  const moneyHref = (target: string) => withReturnContext(target, originHref);
+  const { pathname } = useLocation();
   const { selectedCompanyId } = useCompanyContext();
   // ROUND 8.20 — Cross-module drills attach ?ret=; hub Back must honor it (fallback stays /cash-flow).
   const cashFlowBackHref = resolveBackHref({ searchParams, pathname, fallback: "/cash-flow" });
@@ -177,23 +175,24 @@ export function CashFlowPage() {
       {/* ROUND 8.5 CF1 — Related links ABOVE the tab strip (CashFlow-*.dc.html order). */}
       <nav
         aria-label="Cash flow related modules"
-        className="flex flex-wrap items-center gap-2 rounded-sm border border-[#E5E7EB] bg-white px-3 py-2 text-xs"
+        className="flex flex-wrap items-center gap-2 rounded-sm border border-[#DDE1E7] bg-white"
+        style={{ padding: "6px 10px", fontSize: 11 }}
         data-testid="cash-flow-cross-module-links"
       >
-        <span className="font-semibold text-[#6B7280]">Related:</span>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/banking")}>
+        <span className="text-[#5B6576]">Related:</span>
+        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/banking">
           Banking
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/reports/cash-flow-statement")}>
+        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow-statement">
           Cash flow statement
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/reports/cash-flow")}>
+        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow">
           Cash flow report
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/reports/cash-flow-overview")}>
+        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
           Cash flow overview
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/cash-advances")}>
+        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/cash-advances">
           Cash advances
         </Link>
       </nav>

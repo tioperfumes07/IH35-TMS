@@ -439,7 +439,7 @@ export function QboStyleHomePage({ auth }: Props) {
           <div className="rounded-sm border border-gray-200 bg-white p-4 shadow-xs">
             <div className="mb-3 flex items-center justify-between">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Invoices</p>
-              <Link to={hubHref("/accounting/invoices")} className="text-xs text-[#1F2A44] hover:underline">View →</Link>
+              <Link to="/accounting/invoices" className="text-xs text-[#1F2A44] hover:underline">View →</Link>
             </div>
             {accountingQuery.isLoading ? (
               <div className="h-20 animate-pulse rounded-sm bg-gray-100" />

@@ -93,7 +93,7 @@ export function FuelTransactionsTable({ rows, operatingCompanyId, suppressToolba
   const bulkPermission = useBulkPermission();
 
   return (
-    <ParityTable appearance="board"
+    <ParityTable appearance="v3" boardTdStyle={{ paddingTop: 5, paddingBottom: 5 }}
       title="Fuel transactions"
       rows={rows}
       rowKey={(row) => row.id}
