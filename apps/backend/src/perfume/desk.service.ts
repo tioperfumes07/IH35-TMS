@@ -740,14 +740,16 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
  * the line's UPC to the item, and applies to every other unconfirmed line of that vendor with the same spelling or SKU.
  */
 
-export async function confirmRow(c: PoolClient, userId: string, rowId: string, target: { item_id?: string; create_new?: boolean }) {
+export async function confirmRow(c: PoolClient, userId: string, rowId: string, target: { item_id?: string; create_new?: boolean }, index?: MatchIndex) {
   const row = (await c.query<{ id: string; list_id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; identity_key: string; loose_key: string; gender_override: string | null }>(
     `SELECT r.id, r.list_id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.identity_key, r.loose_key, r.gender_override
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id WHERE r.id = $1`, [rowId])).rows[0];
   if (!row) throw new Error("row_not_found");
   let itemId = target.item_id ?? null;
   if (!itemId && target.create_new) {
-    const ix = await loadIndex(c);
+    // Only the line's own reading is needed here; a bulk "create new" passes the index it loaded once (measured 11-16:
+    // reloading ~20,000 items for every line made 3,000 lines take hours).
+    const ix = index ?? await loadIndex(c);
     const m = matchLine(ix, row.vendor_id, { description: row.description, brand: row.brand, size_text: row.size_text, gender: row.gender_override }, { allowNewItem: false });
     const id = m.identity;
     if (!id.nameWords.length) throw new Error("item_needs_a_name");
@@ -826,6 +828,7 @@ export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
     }
     return out;
   }
+  const bulkIx = b.action === "create_new" ? await loadIndex(c) : undefined;
   for (const id of b.row_ids) {
     let target: { item_id?: string; create_new?: boolean };
     if (b.action === "link_item") target = { item_id: b.item_id };
@@ -841,7 +844,7 @@ export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
     if (!already) { out.skipped.push({ row_id: id, reason: "row_not_found" }); continue; }
     if (already.match_status === "matched") continue;
     try {
-      const r = await confirmRow(c, userId, id, target);
+      const r = await confirmRow(c, userId, id, target, bulkIx);
       out.linked += r.rows_linked;
       if (target.create_new) out.items_created++;
     } catch (e) {
