@@ -23,6 +23,7 @@ import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatUsdCents } from "../../../lib/money";
 import { statusOptions } from "../../../lib/statusListParams";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
 import { groupBy, monthKey, sumBy, weekStartIso } from "./reportBoardGroup";
 
@@ -235,15 +236,16 @@ export function DriverSettlementsReportBoard() {
         key: "display_id",
         label: "Settlement",
         sortable: true,
-        render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label={r.display_id ?? "Settlement"} />,
+        cellClass: "font-semibold",
+        render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label={r.display_id ?? "Settlement"} className={V3_TABLE_LINK_CLASS} />,
       },
       {
         key: "settlement_number",
         label: "Number",
         sortable: true,
-        render: (r) => r.settlement_number ?? (r.status === "closed" ? <span className="text-[#B45309]">No number</span> : "—"),
+        render: (r) => r.settlement_number ? <EntityLink kind="settlement" id={r.settlement_id} label={r.settlement_number} className={V3_TABLE_LINK_CLASS} /> : (r.status === "closed" ? <span className="text-[#B45309]">No number</span> : "—"),
       },
-      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={r.driver_id} label={formatPersonName(r.driver_name)} /> },
+      { key: "driver_name", label: "Driver", sortable: true, render: (r) => <EntityLink kind="driver" id={r.driver_id} label={formatPersonName(r.driver_name)} className={V3_TABLE_LINK_CLASS} /> },
       { key: "status", label: "Status", sortable: true, render: (r) => (r.status === "closed" ? "Closed" : r.status === "open" ? "Open" : r.status) },
       { key: "period_end", label: "Period", sortable: true, render: (r) => periodLabel(r) },
       {
@@ -253,11 +255,11 @@ export function DriverSettlementsReportBoard() {
         render: (r) =>
           r.first_load_id ? (
             <span className="inline-flex gap-1">
-              <EntityLink kind="load" id={r.first_load_id} label={r.first_load_number ?? "Load"} />
+              <EntityLink kind="load" id={r.first_load_id} label={r.first_load_number ?? "Load"} className={V3_TABLE_LINK_CLASS} />
               {r.last_load_id && r.last_load_id !== r.first_load_id ? (
                 <>
                   <span>–</span>
-                  <EntityLink kind="load" id={r.last_load_id} label={r.last_load_number ?? "Load"} />
+                  <EntityLink kind="load" id={r.last_load_id} label={r.last_load_number ?? "Load"} className={V3_TABLE_LINK_CLASS} />
                 </>
               ) : null}
             </span>
@@ -271,7 +273,7 @@ export function DriverSettlementsReportBoard() {
       { key: "advances_cents", label: "Reimb.", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => (r.advances_cents ? money(r.advances_cents) : "—") },
       { key: "net_cents", label: "Net", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.net_cents) },
       { key: "paid_at", label: "Paid", sortable: true, render: (r) => (r.paid_at ? `Paid ${mmmDd(r.paid_at)}` : "Unpaid") },
-      { key: "statement", label: "Statement", sortable: true, sortValue: (r) => r.settlement_id, render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label="Open" /> },
+      { key: "statement", label: "Statement", sortable: true, sortValue: (r) => r.settlement_id, render: (r) => <EntityLink kind="settlement" id={r.settlement_id} label="Open" className={V3_TABLE_LINK_CLASS} /> },
     ],
     []
   );
@@ -285,9 +287,9 @@ export function DriverSettlementsReportBoard() {
         sortValue: (g) => g.key,
         render: (g) =>
           g.driverId ? (
-            <EntityLink kind="driver" id={g.driverId} label={g.label} />
+            <EntityLink kind="driver" id={g.driverId} label={g.label} className={V3_TABLE_LINK_CLASS} />
           ) : (
-            <button type="button" className="font-semibold text-[#1D4ED8] hover:underline" onClick={() => setDrill({ key: g.key, label: g.label })}>
+            <button type="button" className={V3_TABLE_LINK_CLASS} onClick={() => setDrill({ key: g.key, label: g.label })}>
               {g.label}
             </button>
           ),
@@ -300,7 +302,7 @@ export function DriverSettlementsReportBoard() {
         cellClass: "text-right",
         className: "text-right",
         render: (g) => (
-          <button type="button" className="text-[#1D4ED8] hover:underline" onClick={() => setDrill({ key: g.key, label: g.label })}>
+          <button type="button" className={V3_TABLE_LINK_CLASS} onClick={() => setDrill({ key: g.key, label: g.label })}>
             {g.settlements}
           </button>
         ),

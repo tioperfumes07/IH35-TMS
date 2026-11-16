@@ -27,6 +27,7 @@ import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatNumber, formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
 import { statusOptions } from "../../../lib/statusListParams";
+import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
 import { groupBy, monthKey, pct, pctLabel, sumBy, weekStartIso } from "./reportBoardGroup";
 
@@ -306,11 +307,11 @@ export function LoadsReportBoard() {
         sortValue: (g) => g.key,
         render: (g) =>
           g.link ? (
-            <EntityLink kind={g.link.kind} id={g.link.id} label={g.label} />
+            <EntityLink kind={g.link.kind} id={g.link.id} label={g.label} className={V3_TABLE_LINK_CLASS} />
           ) : (
             <button
               type="button"
-              className="font-semibold text-[#1D4ED8] hover:underline"
+              className={V3_TABLE_LINK_CLASS}
               onClick={() => setDrill({ by, key: g.key, label: g.label })}
               data-testid={`loads-report-group-${g.key}`}
             >
@@ -362,12 +363,12 @@ export function LoadsReportBoard() {
 
   const loadColumns = useMemo<ParityColumn<LoadsReportRow>[]>(
     () => [
-      { key: "load_number", label: "Load", sortable: true, render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} /> },
+      { key: "load_number", label: "Load", sortable: true, cellClass: "font-semibold", render: (r) => <EntityLink kind="load" id={r.load_id} label={entityLabel(r.load_number, r.load_id, "Load")} className={V3_TABLE_LINK_CLASS} /> },
       {
         key: "customer_name",
         label: "Customer",
         sortable: true,
-        render: (r) => <EntityLink kind="customer" id={r.customer_id} label={r.customer_name ? formatCompanyName(r.customer_name) : entityLabel(null, r.customer_id, "Customer")} />,
+        render: (r) => <EntityLink kind="customer" id={r.customer_id} label={r.customer_name ? formatCompanyName(r.customer_name) : entityLabel(null, r.customer_id, "Customer")} className={V3_TABLE_LINK_CLASS} />,
       },
       { key: "trip_type", label: "Trip", sortable: true, render: (r) => r.trip_type ?? "—" },
       { key: "status", label: "Status", sortable: true, render: (r) => r.status ?? "—" },
@@ -375,10 +376,10 @@ export function LoadsReportBoard() {
         key: "driver_name",
         label: "Driver",
         sortable: true,
-        render: (r) => <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ? formatPersonName(r.driver_name) : entityLabel(null, r.driver_id, "Driver")} />,
+        render: (r) => <EntityLink kind="driver" id={r.driver_id} label={r.driver_name ? formatPersonName(r.driver_name) : entityLabel(null, r.driver_id, "Driver")} className={V3_TABLE_LINK_CLASS} />,
       },
-      { key: "unit_number", label: "Truck", sortable: true, render: (r) => <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} /> },
-      { key: "trailer_number", label: "Trailer", sortable: true, render: (r) => <EntityLink kind="trailer" id={r.trailer_id} label={entityLabel(r.trailer_number, r.trailer_id, "Trailer")} /> },
+      { key: "unit_number", label: "Truck", sortable: true, render: (r) => <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className={V3_TABLE_LINK_CLASS} /> },
+      { key: "trailer_number", label: "Trailer", sortable: true, render: (r) => <EntityLink kind="trailer" id={r.trailer_id} label={entityLabel(r.trailer_number, r.trailer_id, "Trailer")} className={V3_TABLE_LINK_CLASS} /> },
       { key: "lane", label: "Lane", sortable: true, sortValue: (r) => laneLabel(r), render: (r) => laneLabel(r) },
       { key: "pickup_date", label: "Pickup", sortable: true, render: (r) => mmmDd(r.pickup_date) || "—" },
       { key: "delivery_date", label: "Delivery", sortable: true, render: (r) => mmmDd(r.delivery_date) || "—" },
@@ -401,7 +402,7 @@ export function LoadsReportBoard() {
         key: "invoice_number",
         label: "Invoice",
         sortable: true,
-        render: (r) => (r.invoice_id ? <EntityLink kind="invoice" id={r.invoice_id} label={entityLabel(r.invoice_number, r.invoice_id, "Invoice")} /> : "—"),
+        render: (r) => (r.invoice_id ? <EntityLink kind="invoice" id={r.invoice_id} label={entityLabel(r.invoice_number, r.invoice_id, "Invoice")} className={V3_TABLE_LINK_CLASS} /> : "—"),
       },
       {
         key: "factoring_display",
@@ -487,7 +488,7 @@ export function LoadsReportBoard() {
           applyDisabled={!staged.dirty}
         >
           {/* Reports-Loads.dc.html: Group by sits in the filter bar, right after the period presets. */}
-          <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
+          <span className="text-section-header" style={{ color: "#5B6576" }}>Group by</span>
           <V3Segmented
             value={by}
             options={GROUP_OPTIONS}
@@ -674,7 +675,7 @@ export function LoadsReportBoard() {
                 <span style={{ font: "700 13px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", textTransform: "none", letterSpacing: "normal" }}>
                   {`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}
                 </span>
-                <span style={{ fontSize: 11, color: "#5B6576", textTransform: "none", letterSpacing: "normal", fontWeight: 400 }}>
+                <span className="text-section-header" style={{ color: "#5B6576", textTransform: "none", letterSpacing: "normal", fontWeight: 400 }}>
                   each row opens Load history filtered to that {GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}
                 </span>
               </span>

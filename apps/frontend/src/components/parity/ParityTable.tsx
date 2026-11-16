@@ -546,10 +546,10 @@ const V3_TH: CSSProperties = {
   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600, color: "#5B6576", backgroundColor: "#F7F8FA",
   // Every .dc.html th sets no line-height (normal): 7 + ~14.5 + 7 = 28.5px tall. lineHeight 1 drew 25px headers.
   letterSpacing: "normal", textTransform: "none", lineHeight: "normal", height: "auto",
-  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
 };
 const V3_TD: CSSProperties = {
-  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
   color: "#111827", textOverflow: "clip",
 };
 
@@ -1114,7 +1114,7 @@ export function ParityTable<T>({
   const effectiveRule = v3 ? "#DDE1E7" : BOARD_RULE;
   // v3 mode: Inter 11/600 #5B6576 on #F7F8FA — exact spec values shared by all v3 boards.
   const BOARD_LABEL = v3
-    ? { fontFamily: "Inter, sans-serif" as const, fontSize: 11, fontWeight: 600, letterSpacing: "normal" as const, textTransform: "none" as const, textAlign: "left" as const, color: "#5B6576", backgroundColor: "#F7F8FA", paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, height: "auto" as const, whiteSpace: "nowrap" as const }
+    ? { fontFamily: "Inter, sans-serif" as const, fontSize: 11, fontWeight: 600, letterSpacing: "normal" as const, textTransform: "none" as const, textAlign: "left" as const, color: "#5B6576", backgroundColor: "#F7F8FA", paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, height: "auto" as const, whiteSpace: "nowrap" as const }
     : { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
   // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
   const virtualizeRows = pageRows.length > LARGE_RENDER_ROW_THRESHOLD;
@@ -1655,8 +1655,8 @@ export function ParityTable<T>({
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               // v3 boards use a lighter row divider (#ECEEF2) — overrides tableBodyRule only in v3 mode.
               ...(v3 ? { borderBottom: "1px solid #ECEEF2" } : {}),
-              // R9.3 v3 mode: 7px top/bottom, 12px left/right padding — exact spec.
-              ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12 } : {}),
+              // R9.3 v3 mode: 7px top/bottom, 10px left/right padding — exact spec.
+              ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10 } : {}),
               // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
               ...(board && boardTdStyle ? boardTdStyle : {}),
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
@@ -2174,7 +2174,7 @@ export function ParityTable<T>({
                 colSpan={colSpan}
                 className={v3 ? undefined : "px-2 py-3 text-center text-section-header text-gray-500"}
                 style={v3 ? {
-                  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12,
+                  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10,
                   fontSize: 12, color: "#111827",
                   borderBottom: "1px solid #ECEEF2",
                   whiteSpace: "nowrap",
