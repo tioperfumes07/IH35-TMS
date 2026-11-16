@@ -67,6 +67,8 @@ async function findCandidates(companyId: string): Promise<StrandedExpense[]> {
             OR NOT EXISTS (
               SELECT 1 FROM accounting.journal_entries je
               WHERE je.id = e.reversed_by_je_id
+                -- a reversal JE of another entity is no reversal of this expense (verify-join-entity-scoped)
+                AND je.operating_company_id = e.operating_company_id
             )
           )
         ORDER BY e.transaction_date, e.expense_number`,
