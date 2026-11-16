@@ -13,7 +13,7 @@ import {
   createPettyCashAccount,
   reorderBankAccounts,
 } from "../../api/banking";
-import { PageHeader } from "../../components/layout/PageHeader";
+import { PageHeader } from "../../components/forms/shared/PageHeader";
 import { EntityEmptyState } from "../../components/shared/EntityEmptyState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ActionButton } from "../../components/shared/ActionButton";
@@ -534,11 +534,15 @@ export function BankingHomePage({ initialTab }: Props = {}) {
 
   return (
     <div className="min-w-0 max-w-full space-y-3" data-c06-page="banking" data-v3-board="Banking" style={{ lineHeight: "normal" }}>
+      {/* Banking.dc.html header: crumb "Banking", ← Back · Banking Home 700 18px · subtitle 11px (the V3 header every board
+          draws). Reader 11-16 02:45Z: the layout header drew the title 22px #1A2233 in a 26px row. */}
       <PageHeader
+        variant="v3"
+        crumb="Banking"
         title="Banking Home"
         subtitle="QBO mirrored accounts + categorization"
         actions={headerActions}
-        backHref={bankingReturnHref}
+        backHref={bankingReturnHref ?? undefined}
       />
       <NavyPageSubNav
         items={BANKING_MODULE_TABS.filter((tab) =>
