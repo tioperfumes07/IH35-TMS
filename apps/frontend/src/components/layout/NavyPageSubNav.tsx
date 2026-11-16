@@ -322,14 +322,16 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
   // <span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">; the active one adds
   // background:rgba(255,255,255,.16);border-bottom:2px solid #fff and drops the opacity. Inactive tabs draw NO border.
   const tabClass = (active: boolean) =>
-    `focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${active ? "border-b-2 border-white bg-white/[.16]" : ""}`;
+    `focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${active ? "border-b-2 border-white" : ""}`;
   const tabStyle = (active: boolean): CSSProperties => ({
     display: "block", boxSizing: "content-box", padding: "8px 8px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
     fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff",
   // ROUND 12 (reader 11-16 00:48Z, 185 cells on 21 boards): the design tab carries no white-space (normal). It never wraps
   // because it never shrinks — flex-shrink 0 keeps it at its own width; the bar scrolls (overflow-x auto) instead.
   flexShrink: 0,
-    ...(!active ? { opacity: 0.85 } : {}),
+    // The active box is the design's literal rgba(255,255,255,.16) — Tailwind's bg-white/[.16] computes to an oklab()
+    // color (reader 11-16: one mismatch on every board with a sub-nav).
+    ...(!active ? { opacity: 0.85 } : { backgroundColor: "rgba(255,255,255,.16)" }),
   });
   return (
     <nav

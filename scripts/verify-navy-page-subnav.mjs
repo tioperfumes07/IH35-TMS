@@ -23,7 +23,8 @@ if (process.argv.includes("--selftest")) {
   const good = fs.readFileSync("apps/frontend/src/components/layout/NavyPageSubNav.tsx", "utf8");
   assert.equal(responsiveNavigationErrors(good).length, 0);
   assert.ok(responsiveNavigationErrors(good.replace("min-h-8", "h-8")).length > 0);
-  assert.ok(responsiveNavigationErrors(good.replace("shrink-0", "")).length > 0);
+  // Plant inside the section <nav>'s own className (the first "shrink-0" in the file belongs to the menu tab wrapper).
+  assert.ok(responsiveNavigationErrors(good.replace(/(<nav\s+aria-label="Section navigation"[\s\S]*?className="[^"]*?)\bshrink-0\b/, "$1")).length > 0);
   console.log("verify-navy-page-subnav selftest: 3/3 passed (fixed-height and shrink plants rejected)");
   process.exit(0);
 }
@@ -64,9 +65,10 @@ else pass("text-white present");
 if (!component.includes("overflow-x-auto")) fail("NavyPageSubNav missing locked token: overflow-x-auto");
 else pass("overflow-x-auto present");
 
-// V3 active tab: full-height rgba(255,255,255,.16) box with a 2 px white rule (border-b-2 … border-white bg-white/[.16]).
-if (!component.includes("border-b-2") || !component.includes("border-white bg-white/[.16]")) fail("NavyPageSubNav missing locked V3 active class: border-b-2 + border-white bg-white/[.16]");
-else pass("V3 active class border-b-2 + border-white bg-white/[.16] present");
+// V3 active tab: full-height rgba(255,255,255,.16) box with a 2 px white rule. The box is the design's literal rgba
+// (Tailwind bg-white/[.16] computes to oklab — reader 11-16), the rule is border-b-2 border-white.
+if (!component.includes("border-b-2 border-white") || !component.includes('backgroundColor: "rgba(255,255,255,.16)"')) fail("NavyPageSubNav missing locked V3 active tab: border-b-2 border-white + backgroundColor rgba(255,255,255,.16)");
+else pass("V3 active tab border-b-2 border-white + rgba(255,255,255,.16) present");
 
 // NavLink usage
 if (!component.includes("NavLink")) fail("NavyPageSubNav must use NavLink (not plain <a> or <span>)");
