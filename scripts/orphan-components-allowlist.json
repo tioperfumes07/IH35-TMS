@@ -126,6 +126,8 @@
     "_comment_lawsuitstab: @archived — Legal Home / Insurance shells mount lawsuit surfaces via LegalHomeBoard; LawsuitsTab kept for deep-link + create-modal tests only (Rule 07). Ambient on main tip.",
     "apps/frontend/src/pages/insurance/LawsuitsTab.tsx",
     "_comment_rmstatstrip: @archived — MaintenanceHome panel-mode uses MaintKpiRows; RMStatStrip mentioned in comments/tests only (Rule 07). Ambient on main tip.",
-    "apps/frontend/src/pages/maintenance/components/RMStatStrip.tsx"
+    "apps/frontend/src/pages/maintenance/components/RMStatStrip.tsx",
+    "_comment_plannerrangetoolbar: @archived — ROUND 9.4 (#29562) replaced PlannerRangeToolbar usage in DispatchPlannersLayout.tsx with inline V3 day-chips implementation; toolbar retained archive-not-delete (§7). Ambient on main tip.",
+    "apps/frontend/src/pages/dispatch/planners/PlannerRangeToolbar.tsx"
   ]
 }
