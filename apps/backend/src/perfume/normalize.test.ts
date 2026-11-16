@@ -69,6 +69,23 @@ describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
     expect(id.gender).toBe("M");
   });
 
+  it("owner 11-16 brand words: kind words before the brand, abbreviations, signature names", () => {
+    expect(identify({ description: "TESTER CH GOOD GIRL MIDNIGHT 2.7 L" })).toMatchObject({ brand: "CAROLINA HERRERA", gender: "W" });
+    expect(identify({ description: "TESTER CH GOOD GIRL MIDNIGHT 2.7 L" }).flags).toContain("TESTER");
+    expect(identify({ description: "R.M METAL CARBON 3.4 LE PARF M" }).brand).toBe("RON MARONE");
+    expect(identify({ description: "P.H PASSPORT S.BEACH 3.4 L" }).brand).toBe("PARIS HILTON");
+    expect(identify({ description: "ROLL ON DKNY GOLD" }).brand).toBe("DONNA KARAN");
+    expect(identify({ description: "5TH AVENUE W 2PC SET" }).brand).toBe("ELIZABETH ARDEN");
+    expect(identify({ description: "HAWAS FIRE EDP 3.4oz" }).brand).toBe("RASASI");
+    const set = identify({ description: "SET LATTAFA 3PC FAKHAR FOR MEN 3.4 EDP+6.67 PERFUMED SPRAY" });
+    expect(set.brand).toBe("LATTAFA");
+    expect(set.flags).toContain("SET");
+    const ms = identify({ description: "LMS-ARIAZ DISCOVERY 2ML EXTRAIT" });
+    expect(ms.flags).toEqual(expect.arrayContaining(["MINI", "SET"]));
+    // A name that only starts like a kind word is untouched.
+    expect(identify({ description: "SETTING SUN 3.4 EDP" }).nameWords).toEqual(["SETTING", "SUN"]);
+  });
+
   it("NAME by HOUSE: the house after BY is the brand when no known brand is on the line", () => {
     const a = identify({ description: "ENCORE I by LUNICHE 2.7 EDP SPR (M)" });
     expect(a).toMatchObject({ brand: "LUNICHE", nameText: "ENCORE I", gender: "M", conc: "EDP" });
