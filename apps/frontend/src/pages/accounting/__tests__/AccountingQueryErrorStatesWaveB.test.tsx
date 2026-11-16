@@ -198,7 +198,12 @@ describe("Accounting Wave B query error states", () => {
   it("renders and retries InvoicesListPage customersQuery without an invoices query error", () => {
     const failed = failure("customers unavailable");
     results.set(keyOf(["mdata", "customers", "invoice-filter", "company-1"]), failed);
-    results.set(keyOf(["accounting", "invoices", "company-1", "", false, "", "", "", "", null]), success({ invoices: [] }));
+    // key: statuses=["active"], hasBalance=false, liveOpen=false, customerFilter=[], search="",
+    //      fromDate="", toDate="", deepLinkSourceLoadId=null, sortKey="", sortDirection="asc",
+    //      agingBuckets=[], agingAsOf=null
+    results.set(keyOf(["accounting", "invoices", "company-1", ["active"], false, false, [], "", "", "", null, "", "asc", [], null]), success({ invoices: [] }));
+    // entity multi-selects (load picker); not under test
+    results.set(keyOf(["entity-multi-select", "company-1", "load", "", "active_only"]), success([]));
 
     render(<InvoicesListPage />);
     expect(screen.queryByText("Failed to load. Try refreshing.")).not.toBeInTheDocument();
@@ -206,7 +211,10 @@ describe("Accounting Wave B query error states", () => {
   });
 
   it("renders and retries BillPaymentsListPage unpaidBillsQuery without a payments query error", () => {
-    results.set(keyOf(["accounting", "bill-payments-list", "company-1", "", "", ""]), success({ rows: [] }));
+    // key includes statuses=["active"], sortKey="", sortDirection="asc"
+    results.set(keyOf(["accounting", "bill-payments-list", "company-1", "", "", "", ["active"], "", "", "asc"]), success({ rows: [] }));
+    // entity multi-select (vendor picker); not under test
+    results.set(keyOf(["entity-multi-select", "company-1", "vendor", "", "active_only"]), success([]));
     const failed = failure("unpaid bills unavailable");
     results.set(keyOf(["accounting", "bills-has-balance", "company-1"]), failed);
 

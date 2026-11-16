@@ -48,14 +48,17 @@ function wrap(ui: ReactElement, initialEntry: string) {
 describe("BillsPage has_balance deep-link (A/P aging contract)", () => {
   beforeEach(() => {
     vi.spyOn(mdataApi, "listVendors").mockResolvedValue({ vendors: [] } as never);
-    vi.spyOn(accountingApi, "listBills").mockResolvedValue({ rows: [] } as never);
+    vi.spyOn(accountingApi, "listBillRegister").mockResolvedValue({
+      rows: [],
+      totals: { vendor_bill: { count: 0, amount_cents: 0 }, driver_bill: { count: 0, amount_cents: 0 } },
+    } as never);
   });
 
   it("passes has_balance=true to listBills for aging drill (includes partial)", async () => {
     render(wrap(<BillsPage />, `/accounting/bills?vendor_id=${VENDOR_ID}&has_balance=true`));
 
     await waitFor(() => {
-      expect(accountingApi.listBills).toHaveBeenCalledWith(
+      expect(accountingApi.listBillRegister).toHaveBeenCalledWith(
         COMPANY_ID,
         expect.objectContaining({
           vendor_id: VENDOR_ID,

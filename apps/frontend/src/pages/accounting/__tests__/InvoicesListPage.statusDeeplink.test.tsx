@@ -25,7 +25,7 @@ vi.mock("../../../contexts/CompanyContext", () => ({
 }));
 
 vi.mock("../AccountingSubNavWrapper", () => ({
-  AccountingSubNavWrapper: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  AccountingSubNavWrapper: ({ children, kpiStrip }: { children: React.ReactNode; kpiStrip?: React.ReactNode }) => <div>{kpiStrip}{children}</div>,
 }));
 
 vi.mock("../../../components/shared/EntityLink", () => ({
@@ -168,7 +168,8 @@ describe("InvoicesListPage has_balance deep-link + URL sync (A/R aging contract)
 
     expect(await screen.findByTestId("invoices-filter-with-balance")).toBeChecked();
     await waitFor(() => expect(screen.getByText("INV-1")).toBeInTheDocument());
-    expect(screen.getByText(/Rows: 2 of 2/)).toBeInTheDocument();
+    // "Rows" label and "of 2" sublabel render in separate divs inside the BoardKpiTile
+    expect(screen.getByText("of 2")).toBeInTheDocument();
   });
 
   it("migrates legacy ?status=with_balance to has_balance=true and calls server has_balance", async () => {
@@ -334,8 +335,10 @@ describe("InvoicesListPage LV-AR-OPEN-INCLUDES-VOIDED (ACCT-F5027)", () => {
 
     // Live open $950 + live total $1,200 — voids contribute $0 to both aggregates
     // (board live proof: void $2,450 must not inflate Open / Total billed).
-    expect(screen.getByText(/Total billed:\s*\$1,200\.00/)).toBeInTheDocument();
-    expect(screen.getByText(/Open:\s*\$950\.00/)).toBeInTheDocument();
+    // BoardKpiTile renders label and value in separate divs; find the KPI strip to narrow scope.
+    const kpiStrip = screen.getByTestId("invoices-kpi-strip");
+    expect(within(kpiStrip).getAllByText("$1,200.00").length).toBeGreaterThanOrEqual(1);
+    expect(within(kpiStrip).getByText("$950.00")).toBeInTheDocument();
 
     // The Total and Open cells of both void rows render $0.00 (invoiceTotalCentsForAggregate / invoiceOpenCentsForDisplay);
     // the voided $2,450.00 appears nowhere on the list.

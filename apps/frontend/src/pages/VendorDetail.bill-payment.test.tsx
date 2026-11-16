@@ -46,6 +46,23 @@ vi.mock("../api/maintenance", () => ({
   getVendorIntegrityHistory: vi.fn().mockResolvedValue({ findings: [] }),
 }));
 
+vi.mock("../api/client", () => ({
+  apiRequest: vi.fn().mockResolvedValue({
+    vendor: { id: "v1", name: "Parts Co" },
+    suggested_category: null,
+    saved_category_account: null,
+    ap_aging: { value: { current_cents: 0, d1_30_cents: 0, d31_60_cents: 0, d61_90_cents: 0, d90_plus_cents: 0, total_open_cents: 0, overdue_cents: 0, open_bill_count: 0 }, empty_reason: null },
+    open_bills: { value: [], empty_reason: null },
+    form_1099: { value: { tax_year: 2026, eligible_1099: false, has_tax_id: false, paid_ytd_cents: 0, bill_payments_ytd_cents: 0, expenses_ytd_cents: 0, threshold_cents: 60000, reportable: false, missing_tax_id: false, review_eligibility: false }, empty_reason: null },
+    insurance_authority: { value: { policies: [], authority: { mc_number: null, dot_number: null, safer_status: null, authority_status: null, out_of_service: null, verified_at: null } }, empty_reason: null },
+    work_orders: { value: [], empty_reason: null },
+    fuel: { value: { txns_90d: 0, gallons_90d: 0, total_cents_90d: 0, last_at: null, recent: [] }, empty_reason: null },
+    lanes: { value: [], empty_reason: null },
+    terms: { value: { terms_name: null, days_until_due: null, early_payment_discount_pct: null, early_payment_discount_days: null, default_expense_account: null }, empty_reason: null },
+    history: { value: [], empty_reason: null },
+  }),
+}));
+
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
@@ -89,8 +106,9 @@ describe("VendorDetail A/P read-only (ORDERS §4)", () => {
 
   it("disables Record Bill Payment on vendor profile (A/P read only)", async () => {
     render(wrap(<VendorDetailPage />));
-    await waitFor(() => expect(screen.getByTestId("vendor-record-bill-payment-disabled")).toBeInTheDocument());
-    expect(screen.getByText(/Bills and A\/P on this vendor profile are read only/i)).toBeInTheDocument();
+    const notice = await screen.findByTestId("vendor-record-bill-payment-disabled");
+    expect(notice).toBeInTheDocument();
+    expect(notice.textContent).toMatch(/Bills and A\/P on this vendor profile are read only/i);
     expect(screen.queryByRole("button", { name: /Record payment/i })).not.toBeInTheDocument();
   });
 

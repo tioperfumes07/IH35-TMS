@@ -14,7 +14,8 @@ const data: relayApi.RelayRollForward = {
   days: [
     {
       day: "2026-08-03", deposits_cents: 120000, deposit_fees_cents: 3900, fills_cents: 61356, fill_fees_cents: 400, lumper_cents: 0, balance_cents: 58244,
-      deposits: [{ id: "d1", ref: "txn_DEP1", cents: 120000 }], fills: [{ id: "f1", ref: "txn_FILL1", cents: 30878 }, { id: "f2", ref: "txn_FILL2", cents: 30878 }], lumper: [],
+      // 2 deposits so the button (not MoneyCell drill) renders — clicking it opens the panel
+      deposits: [{ id: "d1", ref: "txn_DEP1", cents: 60000 }, { id: "d2", ref: "txn_DEP2", cents: 60000 }], fills: [{ id: "f1", ref: "txn_FILL1", cents: 30878 }, { id: "f2", ref: "txn_FILL2", cents: 30878 }], lumper: [],
     },
   ],
 };

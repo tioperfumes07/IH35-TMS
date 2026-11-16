@@ -19,6 +19,7 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("react-router-dom", () => ({
   Link: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   useNavigate: () => vi.fn(),
+  useLocation: () => ({ pathname: "/", search: "", hash: "", state: null, key: "default" }),
   // SalesTaxPage reads ?return_id= to highlight the deep-linked row (EntityLink
   // kind="sales_tax_return" drill-through) — no highlight target in these tests.
   useSearchParams: () => [new URLSearchParams()],
@@ -49,7 +50,10 @@ vi.mock("../../../components/Toast", () => ({
 }));
 
 vi.mock("../../../components/UploadZone", () => ({ UploadZone: () => null }));
-vi.mock("../../../components/Combobox", () => ({ Combobox: () => <div data-testid="customer-combobox" /> }));
+vi.mock("../../../components/Combobox", () => ({
+  Combobox: () => <div data-testid="customer-combobox" />,
+  SelectCombobox: ({ children, ...rest }: { children?: ReactNode; [key: string]: unknown }) => <select {...rest as object}>{children}</select>,
+}));
 vi.mock("../../../components/forms/DatePicker", () => ({ DatePicker: () => <input aria-label="date-picker" /> }));
 vi.mock("../../../components/forms/MoneyInput", () => ({ MoneyInput: () => <input aria-label="money-input" /> }));
 vi.mock("../InvoiceCreateBlankPage", () => ({ InvoiceCreateBlankPage: () => null }));
@@ -122,7 +126,8 @@ beforeEach(() => {
 describe("Accounting Wave A query error states", () => {
   it("renders the integration transaction failure before the table and retries txnQuery", () => {
     const failure = failedQuery("sync queue unavailable");
-    queryResults.set(keyOf(["integration-transactions", "company-1", "", "", ""]), failure);
+    // syncStatus is useState<string[]>([]) → initial value is [] (array, not string)
+    queryResults.set(keyOf(["integration-transactions", "company-1", [], "", ""]), failure);
 
     render(<IntegrationTransactionsPage />);
 
@@ -182,6 +187,15 @@ describe("Accounting Wave A query error states", () => {
     queryResults.set(
       keyOf(["record-payment", "deposit-catalog", "company-1"]),
       queryResult({ bankAccounts: [], coaAccounts: [], undepositedFundsAccountId: null })
+    );
+    // QboDocumentNumberField uses these keys; not under test here
+    queryResults.set(
+      keyOf(["qbo-next-number", "/api/v1/accounting/payments/next-number", "company-1"]),
+      queryResult({ next_number: null })
+    );
+    queryResults.set(
+      keyOf(["qbo-number-taken", "/api/v1/accounting/payments/next-number", "company-1", ""]),
+      queryResult({ taken: false })
     );
 
     render(

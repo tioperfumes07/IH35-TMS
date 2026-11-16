@@ -88,6 +88,29 @@ vi.mock("../components/customers/FreeTimeDetentionEditor", () => ({
   FreeTimeDetentionEditor: () => null,
 }));
 
+vi.mock("../api/client", () => ({
+  ApiError: class ApiError extends Error {
+    status: number;
+    body: unknown;
+    constructor(status: number, body: unknown) {
+      super(`API Error ${status}`);
+      this.status = status;
+      this.body = body;
+    }
+  },
+  apiRequest: vi.fn().mockResolvedValue({
+    customer: { id: "c1", name: "Acme", status: "active" },
+    ar_aging: { value: { current_cents: 0, d1_30_cents: 0, d31_60_cents: 0, d61_90_cents: 0, d90_plus_cents: 0, total_open_cents: 0, overdue_cents: 0, open_invoice_count: 0 }, empty_reason: null },
+    credit: { value: { credit_limit_cents: null, credit_limit_source: null, open_ar_cents: 0, uninvoiced_open_load_cents: 0, exposure_cents: 0, available_cents: null, over_limit: false }, empty_reason: null },
+    open_loads: { value: [], empty_reason: null },
+    payment_history: { value: { payment_count: 0, paid_cents: 0, last_payment_date: null, avg_days_to_pay: null, recent: [] }, empty_reason: null },
+    factoring: { value: { eligible: false, factoring_company_vendor_id: null, factoring_company_name: null, recourse_type: null, advance_rate_override: null, reserve_pct_override: null, purchased_line_count: 0, purchased_gross_cents: 0, last_purchase_date: null }, empty_reason: null },
+    documents: { value: [], empty_reason: null },
+    contacts: { value: [], empty_reason: null },
+    rate_history: { value: [], empty_reason: null },
+  }),
+}));
+
 // CustomerDetail reads useCompanyContext, which THROWS outside CompanyProvider
 // ("useCompanyContext must be used within CompanyProvider") — the render died before any assertion, so both
 // cases failed as missing UI rather than as a missing provider. Same shape/values as the established mock in
@@ -162,7 +185,10 @@ describe("CustomerDetail cash application", () => {
 
   it("shows Record Payment section on billing tab", async () => {
     render(wrap(<CustomerDetailPage />));
-    await waitFor(() => expect(screen.getByText("Record Payment")).toBeInTheDocument());
+    // A/R is read-only on the customer profile; "Record payments from Accounting" notice replaces the form
+    const notice = await screen.findByTestId("customer-billing-ar-readonly");
+    expect(notice).toBeInTheDocument();
+    expect(notice.textContent).toMatch(/Invoices and A\/R on this customer profile are read only/i);
   });
 
   it("shows backend pending when listCustomerPayments 404", async () => {

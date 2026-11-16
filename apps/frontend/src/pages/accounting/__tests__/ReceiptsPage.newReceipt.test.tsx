@@ -16,8 +16,9 @@ vi.mock("../../../api/receipts", () => ({
 }));
 vi.mock("../../../contexts/CompanyContext", () => ({ useCompanyContext: () => ({ selectedCompanyId: "co-1" }) }));
 vi.mock("../AccountingSubNavWrapper", () => ({
-  AccountingSubNavWrapper: ({ children, actions }: { children: ReactNode; actions?: ReactNode }) => (
+  AccountingSubNavWrapper: ({ children, actions, createControl }: { children: ReactNode; actions?: ReactNode; createControl?: ReactNode }) => (
     <div>
+      {createControl}
       {actions}
       {children}
     </div>

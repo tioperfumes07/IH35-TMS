@@ -83,11 +83,12 @@ type PersistedCheckDraft = {
   payeeKind: CheckPayeeKind;
   payeeId: string | null;
   /** CodeQL js/clear-text-storage-of-sensitive-data: the bank account is NEVER written to browser storage — a
-   *  restored draft asks the user to pick the bank again. Old drafts may still carry the key; it is ignored. */
+   *  restored draft asks the user to pick the bank again. Old drafts may still carry the key; it is ignored.
+   *  memo is likewise NOT persisted — it comes from an API response that also carries insurance_claim_id and
+   *  legal_matter_id, tainting the whole object as medical-sensitive (CodeQL BANK-F309-CODEQL fix). */
   checkDate: string;
   checkNumber: string;
   printLater: boolean;
-  memo: string;
   tagsText: string;
   /** BANK-F91035 — QBO Class (accounting.expenses.class_id), optional. */
   classId: string | null;
@@ -1019,7 +1020,7 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
         return;
       }
       const parsed = JSON.parse(raw) as PersistedCheckDraft;
-      if (parsed?.payeeId || parsed?.memo || parsed?.checkNumber) {
+      if (parsed?.payeeId || parsed?.checkNumber) {
         setRestoreDraftOffer(parsed);
       } else {
         setRestoreDraftOffer(null);
@@ -1040,7 +1041,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
       checkDate,
       checkNumber,
       printLater,
-      memo,
       tagsText,
       classId,
       settlementNo,
@@ -1205,7 +1205,6 @@ export function WriteCheckForm({ open, operatingCompanyId, onClose, onSaved, onS
                   setCheckDate(d.checkDate || todayCT());
                   setCheckNumber(d.checkNumber ?? "");
                   setPrintLater(Boolean(d.printLater));
-                  setMemo(d.memo ?? "");
                   setTagsText(d.tagsText ?? "");
                   setClassId(d.classId ?? null);
                   setSettlementNo(d.settlementNo ?? "");

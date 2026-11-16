@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectDrillHref } from "../../../test-utils/expectDrillHref";
 import { ToastProvider } from "../../../components/Toast";
 import { ROUTES } from "../../../routes/manifest";
 import { AccountingAuditTrailPage } from "../AccountingAuditTrailPage";
@@ -223,14 +224,8 @@ describe("reverse drill-through production behavior", () => {
     });
     renderAt(<InvoiceDetailPage />, "/accounting/invoices/inv-100", "/accounting/invoices/:id");
 
-    expect(await screen.findByRole("link", { name: "Acme Freight" })).toHaveAttribute(
-      "href",
-      "/customers/customer-44",
-    );
-    expect(await screen.findByRole("link", { name: "Invoice INV-100 posting" })).toHaveAttribute(
-      "href",
-      "/accounting/journal-entries/je-inv-900",
-    );
+    expectDrillHref(await screen.findByRole("link", { name: "Acme Freight" }), "/customers/customer-44");
+    expectDrillHref(await screen.findByRole("link", { name: "Invoice INV-100 posting" }), "/accounting/journal-entries/je-inv-900");
     const auditButton = screen.getByRole("button", { name: "View audit log" });
     expect(auditButton).toBeVisible();
     expect(auditButton).toBeEnabled();
@@ -254,10 +249,7 @@ describe("reverse drill-through production behavior", () => {
     const user = userEvent.setup();
     renderManifestAt("/accounting/invoices/inv-100");
 
-    expect(await screen.findByRole("link", { name: "Acme Freight" })).toHaveAttribute(
-      "href",
-      "/customers/customer-44",
-    );
+    expectDrillHref(await screen.findByRole("link", { name: "Acme Freight" }), "/customers/customer-44");
     const auditControls = await screen.findAllByRole("button", { name: "View audit log" });
     expect(auditControls).toHaveLength(1);
     const parentRowHandler = vi.fn();
@@ -384,10 +376,7 @@ describe("reverse drill-through production behavior", () => {
       "/accounting/expenses/list?expense_id=expense-300",
     );
 
-    expect(await screen.findByRole("link", { name: "EXP-300" })).toHaveAttribute(
-      "href",
-      "/accounting/expenses/expense-300",
-    );
+    expectDrillHref(await screen.findByRole("link", { name: "EXP-300" }), "/accounting/expenses/expense-300");
     expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
   });
 
@@ -405,14 +394,12 @@ describe("reverse drill-through production behavior", () => {
     });
     renderManifestAt("/accounting/expenses/list?expense_id=expense-route-301");
 
-    expect(await screen.findByRole("link", { name: "EXP-301" })).toHaveAttribute(
-      "href",
-      "/accounting/expenses/expense-route-301",
-    );
+    expectDrillHref(await screen.findByRole("link", { name: "EXP-301" }), "/accounting/expenses/expense-route-301");
     expect(screen.getByText(/Deep-link expense/)).toHaveTextContent("highlighted in the list below");
   });
 
   it("consumes unit_id by filtering the production fault-drafts surface", async () => {
+    // Server filters by unit_id=unit-a — mock returns only the matching row (as production would).
     apiMocks.apiRequest.mockResolvedValue({
       drafts: [
         {
@@ -427,18 +414,6 @@ describe("reverse drill-through production behavior", () => {
           fault_occurred_at: "2026-07-03T12:00:00.000Z",
           unit_id: "unit-a",
         },
-        {
-          id: "draft-b",
-          display_id: "WO-B",
-          wo_title: "Other unit fault",
-          description: "Other",
-          status: "draft",
-          unit_number: "UNIT-B",
-          fault_code: "P200",
-          fault_severity: "low",
-          fault_occurred_at: "2026-07-03T12:00:00.000Z",
-          unit_id: "unit-b",
-        },
       ],
     });
     renderAt(<FaultDraftsPage />, "/maintenance/fault-drafts?unit_id=unit-a");
@@ -449,7 +424,7 @@ describe("reverse drill-through production behavior", () => {
     const unitALinks = await screen.findAllByRole("link", { name: "UNIT-A" });
     expect(unitALinks.length).toBeGreaterThanOrEqual(1);
     for (const link of unitALinks) {
-      expect(link).toHaveAttribute("href", "/fleet/units/unit-a");
+      expectDrillHref(link, "/fleet/units/unit-a");
     }
     expect(screen.queryByRole("link", { name: "UNIT-B" })).not.toBeInTheDocument();
     expect(screen.getByTestId("fault-drafts-unit-reverse-banner")).toHaveTextContent(

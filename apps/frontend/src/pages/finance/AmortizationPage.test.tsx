@@ -5,10 +5,11 @@
 // <input type="date"> renders (the shared DatePicker is used instead).
 import * as matchers from "@testing-library/jest-dom/matchers";
 import type { ReactElement } from "react";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { pickDate } from "../../test-utils/pickDate";
 import * as financeAmortizationApi from "../../api/financeAmortization";
 import { AmortizationPage } from "./AmortizationPage";
 
@@ -85,8 +86,7 @@ describe("AmortizationPage create gate (LV-FINANCE-AMORTIZATION-CREATE-UNGATED-R
     expect(createButton).toBeDisabled();
 
     const datePicker = screen.getByTestId("amortization-firstPaymentDate");
-    await user.click(within(datePicker).getByRole("button"));
-    await user.click(await screen.findByRole("button", { name: "1" }));
+    pickDate(datePicker, 1);
 
     await waitFor(() => expect(createButton).toBeEnabled());
     await user.click(createButton);

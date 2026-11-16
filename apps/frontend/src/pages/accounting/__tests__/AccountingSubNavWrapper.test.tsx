@@ -27,10 +27,10 @@ vi.mock("../useAccountingNavKpis", () => ({
   useAccountingNavKpis: () => ({ bills: { count: 0, openAmountCents: 0 }, invoices: { count: 0, openAmountCents: 0 } }),
 }));
 
-function wrap(ui: ReactElement) {
+function wrap(ui: ReactElement, initialEntry = "/accounting/bills/recurring") {
   return (
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
     </QueryClientProvider>
   );
 }
@@ -50,7 +50,7 @@ describe("AccountingSubNavWrapper way back", () => {
         </AccountingSubNavWrapper>,
       ),
     );
-    const crumb = within(screen.getByTestId("accounting-breadcrumb"));
+    const crumb = within(screen.getByRole("navigation", { name: "Breadcrumb" }));
     expect(crumb.getByRole("link", { name: "Accounting" })).toHaveAttribute("href", "/accounting");
     expect(crumb.getByRole("link", { name: "Bills" })).toHaveAttribute("href", "/accounting/bills");
     expect(crumb.getByText("Recurring Bills")).toBeInTheDocument();
