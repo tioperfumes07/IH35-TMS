@@ -26,6 +26,7 @@ import { mmmDd } from "../../../lib/formatDate";
 import { formatPersonName } from "../../../lib/formatPersonName";
 import { formatNumber, formatUsdCents } from "../../../lib/money";
 import { formatQueryErrorDetail } from "../../../lib/tableError";
+import { loadStatusLabel } from "../../../lib/load-status";
 import { statusOptions } from "../../../lib/statusListParams";
 import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
 import { ReportBoardShell, ReportKpiGrid, ReportMeasuredNote } from "./ReportBoardShell";
@@ -44,17 +45,13 @@ const GROUP_OPTIONS: Array<{ id: GroupBy; label: string }> = [
   { id: "load", label: "Load" },
 ];
 
-const STATUS_FILTER_OPTIONS = statusOptions({
-  booked: "Booked",
-  dispatched: "Dispatched",
-  in_transit: "In transit",
-  delivered: "Delivered",
-  delivered_pending_docs: "Delivered pending docs",
-  completed_docs_received: "Completed docs received",
-  closed: "Closed",
-  invoiced: "Invoiced",
-  paid: "Paid",
-});
+const STATUS_FILTER_OPTIONS = statusOptions(
+  Object.fromEntries(
+    (["booked", "dispatched", "in_transit", "delivered", "delivered_pending_docs", "completed_docs_received", "closed", "invoiced", "paid"] as const).map(
+      (s) => [s, loadStatusLabel(s)]
+    )
+  )
+);
 
 const TRIP_OPTIONS = statusOptions({ NB: "NB", TR: "TR", SB: "SB", LOCAL: "LOCAL" });
 

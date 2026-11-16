@@ -86,21 +86,28 @@ export function buildBookLoadChargeLines(input: {
   linehaul_cents: number;
   fuel_surcharge_cents: number;
   accessorial_rows: AccessorialRow[];
+  /** Legacy single-line fallback: used when accessorial_rows is empty. */
+  accessorial_cents?: number;
 }): BookLoadChargeLine[] {
   const lines: BookLoadChargeLine[] = [
     { code: "linehaul", amount_cents: nonNegativeOrZeroWithError(input.linehaul_cents) },
     { code: "fuel_surcharge", amount_cents: nonNegativeOrZeroWithError(input.fuel_surcharge_cents) },
   ];
-  for (const row of input.accessorial_rows) {
-    const amount = Number(row.amount_cents || 0);
-    if (amount === 0) continue;
-    const code = String(row.code || "accessorial").trim() || "accessorial";
-    lines.push({
-      code: code.toLowerCase(),
-      ...(row.additional_charge_id ? { additional_charge_id: row.additional_charge_id } : {}),
-      ...(row.description ? { description: row.description } : {}),
-      amount_cents: amount,
-    });
+  const rows = input.accessorial_rows;
+  if (rows.length > 0) {
+    for (const row of rows) {
+      const amount = Number(row.amount_cents || 0);
+      if (amount === 0) continue;
+      const code = String(row.code || "accessorial").trim() || "accessorial";
+      lines.push({
+        code: code.toLowerCase(),
+        ...(row.additional_charge_id ? { additional_charge_id: row.additional_charge_id } : {}),
+        ...(row.description ? { description: row.description } : {}),
+        amount_cents: amount,
+      });
+    }
+  } else if (input.accessorial_cents && input.accessorial_cents > 0) {
+    lines.push({ code: "accessorial", amount_cents: nonNegativeOrZeroWithError(input.accessorial_cents) });
   }
   return lines;
 }
