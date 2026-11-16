@@ -1,5 +1,4 @@
 import { V3_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
-import { ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState } from "react";
 
 // ROUND-20.8 B1 — was thirteen unstyled text links crammed into one header line (Bank Register ·
@@ -36,7 +35,8 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
   const visibleGroups = groups.filter((g) => g.items.length > 0);
 
   return (
-    <div ref={wrapRef} className="relative inline-block">
+    // Banking.dc.html: "+ New" is a flex item of the header action row (gap 12, centered), drawn without a chevron.
+    <div ref={wrapRef} className="relative" style={{ display: "flex", alignItems: "center", columnGap: 12 }}>
       <button
         type="button"
         aria-haspopup="menu"
@@ -45,10 +45,9 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
         onClick={() => setOpen((o) => !o)}
         data-testid="banking-new-menu-trigger"
         // Banking.dc.html header: the primary action is the V3 navy header button (28px, 0 12px, radius 6, 600 12px).
-        style={{ ...V3_HEADER_BTN_PRIMARY, gap: 4 }}
+        style={V3_HEADER_BTN_PRIMARY}
       >
         + New
-        <ChevronDown className="h-3.5 w-3.5" />
       </button>
       {open ? (
         <div
