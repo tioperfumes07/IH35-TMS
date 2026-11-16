@@ -13,6 +13,8 @@ const privacy = {
   httpHeaders: { request: false, response: false }, httpBodies: [],
   urlQueryParams: false, graphQL: { document: false, variables: false },
   genAI: { inputs: false, outputs: false }, databaseQueryData: false,
+  // SDK default is true ("Include arguments passed to tasks within queues"); the v11 upgrade (#26762) dropped it.
+  queues: false,
   stackFrameVariables: false,
 };
 

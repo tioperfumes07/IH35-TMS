@@ -23,12 +23,14 @@ describe("sentry wiring", () => {
     // changed it to httpHeaders: { request: false, response: false } and dropped `queues`, matching
     // the installed @sentry/core 10.70.0 DataCollection type (build/types/types/datacollection.d.ts:
     // `httpHeaders?: { request?: CollectBehavior; response?: CollectBehavior }`, no `queues` key).
+    // 11-16: the installed SDK is v11 (@sentry/core 11.10), whose DataCollection HAS `queues` with default TRUE
+    // ("Include arguments passed to tasks within queues"), so dropping the key turned collection on. Restored.
     // Full toEqual kept: any key flipping to true / a new collected key fails this test.
     expect(options.dataCollection).toEqual({
       userInfo: false, cookies: false, httpHeaders: { request: false, response: false }, httpBodies: [],
       urlQueryParams: false, graphQL: { document: false, variables: false },
       genAI: { inputs: false, outputs: false }, databaseQueryData: false,
-      stackFrameVariables: false,
+      queues: false, stackFrameVariables: false,
     });
     expect(options.beforeSend).toBeTypeOf("function");
     expect(options.beforeBreadcrumb).toBeTypeOf("function");

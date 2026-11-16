@@ -31,6 +31,8 @@ export function initBackendSentry(): void {
       graphQL: { document: false, variables: false },
       genAI: { inputs: false, outputs: false },
       databaseQueryData: false,
+      // SDK default true: never send queue task arguments (settlement / invoice / load payloads).
+      queues: false,
       stackFrameVariables: false,
     },
     sampleRate: 1.0,
