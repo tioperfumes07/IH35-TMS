@@ -516,8 +516,9 @@ export function BankingHomePage({ initialTab }: Props = {}) {
       </>
     ) : null;
 
+  // Banking.dc.html: the header action row is flex, gap 12, centered.
   const headerActions = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center" style={{ columnGap: 12, rowGap: 8 }}>
       {navActions}
       {tabActions}
     </div>

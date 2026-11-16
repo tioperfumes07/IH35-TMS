@@ -238,7 +238,8 @@ function LinkedToCell({
   return (
     <Link
       to={`${BANKING_TAB_PATH.transactions}?txn_id=${encodeURIComponent(tx.id)}`}
-      style={{ fontSize: 12, fontWeight: 600, color: V3.link, textDecoration: "none" }}
+      // Banking.dc.html: "Link truck · load →" is a blue span at the cell's own weight (400), one line.
+      style={{ fontSize: 12, color: V3.link, textDecoration: "none", whiteSpace: "nowrap" }}
     >
       {linkCtaLabel(tx, accountIsRelay)}
     </Link>
@@ -621,7 +622,8 @@ export function BankingHomeBoard({ companyId }: { companyId: string }) {
           return (
             <Link
               to={`${BANKING_TAB_PATH.transactions}?txn_id=${encodeURIComponent(tx.id)}`}
-              style={{ color: V3.ink, textDecoration: "none", fontWeight: 500 }}
+              // Banking.dc.html: the merchant cell is the row's own 400 12px, one line.
+              style={{ color: V3.ink, textDecoration: "none", whiteSpace: "nowrap" }}
             >
               {desc}
             </Link>
