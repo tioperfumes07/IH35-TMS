@@ -539,10 +539,10 @@ export function readSection(section: string | null | undefined): { gender: Gende
   return { gender, flags };
 }
 
-const spellingsCache = new WeakMap<Record<string, string>, { list: string[][]; has: Set<string>; desk: string[]; n: number }>();
+const spellingsCache = new WeakMap<Record<string, string>, { list: string[][]; has: Set<string>; desk: string[]; n: number; multiByCanon: Map<string, string[][]> }>();
 const EMPTY_ALIASES: Record<string, string> = {};
 /** Every brand spelling (built-in aliases, the desk's aliases, their brands, the item master's brands), longest first. */
-function spellingsFor(aliases: Record<string, string>): { list: string[][]; has: Set<string> } {
+function spellingsFor(aliases: Record<string, string>): { list: string[][]; has: Set<string>; multiByCanon: Map<string, string[][]> } {
   const key = aliases ?? EMPTY_ALIASES;
   const hit = spellingsCache.get(key);
   // The match index adds item brands to its alias object as it loads — a changed size rebuilds the list.
@@ -551,7 +551,16 @@ function spellingsFor(aliases: Record<string, string>): { list: string[][]; has:
   const known = [...Object.keys({ ...BUILTIN_BRAND_ALIASES, ...key }), ...DESK_BRANDS];
   const values = Object.values({ ...BUILTIN_BRAND_ALIASES, ...key });
   const all = [...new Set([...known, ...values])];
-  const entry = { list: all.map((x) => x.split(" ")).sort((a, b) => b.length - a.length), has: new Set(all), desk: DESK_BRANDS, n };
+  const list = all.map((x) => x.split(" ")).sort((a, b) => b.length - a.length);
+  // Speed (measured 11-16: 10 of 14 s of a cold List-analysis build): every line with a brand asked canonicalBrand of
+  // every multi-word spelling (~800) to find that brand's own spellings. Read once per alias set, in list order.
+  const multiByCanon = new Map<string, string[][]>();
+  for (const sp of list) {
+    if (sp.length < 2) continue;
+    const c = canonicalBrand(sp.join(" "), key);
+    (multiByCanon.get(c) ?? multiByCanon.set(c, []).get(c)!).push(sp);
+  }
+  const entry = { list, has: new Set(all), desk: DESK_BRANDS, n, multiByCanon };
   spellingsCache.set(key, entry);
   return entry;
 }
@@ -750,7 +759,15 @@ export function identify(input: IdentityInput): Identity {
   // or more words is never part of a fragrance name, so its phrase leaves the name wherever it sits. A one-word brand
   // stays where it is not leading: "MISS DIOR", "BOSS BOTTLED" name the fragrance with the brand word in them.
   if (brand) {
-    const own = spellings.filter((sp) => sp.length >= 2 && canonicalBrand(sp.join(" "), aliases) === brand);
+    // The brand's own multi-word spellings, in the spelling list's order (longest first; the line's own brand column
+    // spelling, when it is not a known spelling, sits first among spellings of its length).
+    const known = base.multiByCanon.get(brand) ?? [];
+    let own = known;
+    if (spellings !== base.list) {
+      const extra = brand.split(" ");
+      const take = extra.length >= 2 && canonicalBrand(extra.join(" "), aliases) === brand;
+      own = take ? [...known.filter((sp) => sp.length > extra.length), extra, ...known.filter((sp) => sp.length <= extra.length)] : known;
+    }
     for (const sp of own) {
       for (let i = 1; i + sp.length <= words.length; i++) {
         if (sp.every((w, j) => words[i + j] === w) && words.length > sp.length) { words.splice(i, sp.length); i--; }
