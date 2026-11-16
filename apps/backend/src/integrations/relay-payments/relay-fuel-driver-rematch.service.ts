@@ -91,21 +91,26 @@ export async function rematchRelayFuelDrivers(
         link = { link_id, relay_name, evidence, confirmed_by, created_by };
       }
     } else {
-      // 2. The canonical fuel row may already carry driver_id (set by other means).
+      // 2. The canonical fuel row may already carry driver_id (set by other means). Relay-line records (ENG-65) carry the
+      // fill by relay_fuel_transaction_id and Relay's own transaction NUMBER as transaction_reference — never the txn_ id —
+      // so matching on transaction_reference alone found none of them (11-16: 32 of 34 "unmatched" fills had fuel rows
+      // with a driver). Exactly one driver across the fill's live rows, or none — never a pick.
       const fuelRow = await client.query<{ driver_id: string }>(
-        `SELECT ft.driver_id::text AS driver_id
+        `SELECT DISTINCT ft.driver_id::text AS driver_id
            FROM fuel.fuel_transactions ft
           WHERE ft.operating_company_id = $1::uuid
-            AND ft.transaction_reference = $2
+            AND (ft.relay_fuel_transaction_id = $3::uuid OR ft.transaction_reference = $2)
             AND ft.driver_id IS NOT NULL
             AND ft.voided_at IS NULL
             AND ft.archived_at IS NULL
-          LIMIT 1`,
-        [row.operating_company_id, row.transaction_id],
+          LIMIT 2`,
+        [row.operating_company_id, row.transaction_id, row.id],
       );
-      if (fuelRow.rows.length > 0) {
+      if (fuelRow.rows.length === 1) {
         driverId = fuelRow.rows[0].driver_id;
         source = "fuel_row";
+      } else if (fuelRow.rows.length > 1) {
+        unresolvedReason = "fuel_rows_name_different_drivers";
       } else {
         // 3. RC6 fallback: load-based driver from the unit's active load at fill time.
         driverId = await resolveRelayDriverFromLoad(client, row.operating_company_id, row.matched_unit_id, row.relay_created_at);
@@ -144,10 +149,10 @@ export async function rematchRelayFuelDrivers(
         SET driver_id = $1::uuid,
             updated_at = now()
         WHERE operating_company_id = $2::uuid
-          AND transaction_reference = $3
+          AND (relay_fuel_transaction_id = $4::uuid OR transaction_reference = $3)
           AND driver_id IS NULL
       `,
-      [driverId, row.operating_company_id, row.transaction_id],
+      [driverId, row.operating_company_id, row.transaction_id, row.id],
     );
     fuelUpdated += fuelUp.rowCount ?? 0;
   }
