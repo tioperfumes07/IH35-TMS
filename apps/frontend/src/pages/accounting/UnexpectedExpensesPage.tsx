@@ -59,7 +59,8 @@ function LinkCell({ row, originHref }: { row: UnexpectedCandidate; originHref: s
   return (
     <Link
       to={withReturnContext(target, originHref)}
-      style={{ color: V3.link, fontWeight: 500, textDecoration: "none" }}
+      // Accounting-Unexpected.dc.html: <span style="color:#1D4ED8">Link →</span> — the cell's own 400 weight.
+      style={{ color: V3.link, textDecoration: "none" }}
       data-testid={`unexpected-link-${row.id}`}
     >
       Link →
