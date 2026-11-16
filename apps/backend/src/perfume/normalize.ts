@@ -501,6 +501,12 @@ export function identify(input: IdentityInput): Identity {
   const aliases = input.brandAliases ?? EMPTY_ALIASES;
   let s = stripAccents(String(input.description ?? "")).toUpperCase();
 
+  // Classic Wholesale's distribution mark is never part of a name.
+  s = s.replace(/\*\s*APPROVED RETAILERS?\s*(?:ONLY)?\s*\*?/g, " ");
+  // "NAME by HOUSE" (Classic Wholesale, Gift Express, Al Hussein): the house as printed, read before sizes and types
+  // leave the text so it stops where the bottle's size / type / marks begin. Used below only when no known brand is found.
+  const byM = s.match(/\sBY\s+([A-Z][A-Z&'.\- ]{1,40}?)\s*(?=\d|\.\d|\(|\*|\b(?:EDP|EDT|EDC|PARFUM|EXTRAIT|COLOGNE|SPR|SPRAY|EAU|FOR)\b|$)/);
+  const byHouse = byM && /[A-Z]{3}/.test(byM[1]) && !/^(?:ME|YOU|HER|HIM|NIGHT|DAY|THE SEA)$/.test(byM[1].trim()) ? byM[1].trim() : "";
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
   s = s.replace(/\(\s*\d{4,}\s*\).*$/, " ");
   // Oni Essence prints the bottle size INSIDE parentheses: "ANNICK GOUTAL Songes Wom EDT (100ml)",
@@ -625,6 +631,13 @@ export function identify(input: IdentityInput): Identity {
     if (one) brand = canonicalBrand(one, aliases);
   }
   if (!brand) brand = canonicalBrand(brandFromName(words, input.nameBrands ?? DESK_NAME_BRANDS), aliases);
+  // "ENCORE I by LUNICHE 2.7 EDP SPR (M)": no known brand, so the house printed after BY is the brand and leaves the
+  // name (measured 11-16: 105 Classic lines read no brand and could not become an item).
+  if (!brand && byHouse) {
+    const hw = cleanSpaces(byHouse.replace(/[^A-Z0-9&' ]+/g, " ").replace(/'/g, "")).split(" ").filter(Boolean);
+    const at = words.findIndex((w, i) => w === "BY" && hw.every((h, j) => words[i + 1 + j] === h));
+    if (at >= 0) { brand = canonicalBrand(hw.join(" "), aliases); words = [...words.slice(0, at), ...words.slice(at + 1 + hw.length)]; }
+  }
   // A fragrance LINE some vendors write as the brand ("HALLOWEEN BLOSSOM", brand column "HALLOWEEN") belongs to its
   // house, and the line word stays in the name — the item master files it JESUS DEL POZO · HALLOWEEN BLOSSOM
   // (owner 11-14: "halloween is j del pozo"; 13 ESPERANZA lines unmatched under brand HALLOWEEN, measured 11-15).

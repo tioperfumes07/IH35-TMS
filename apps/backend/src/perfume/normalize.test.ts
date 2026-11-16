@@ -69,6 +69,16 @@ describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
     expect(id.gender).toBe("M");
   });
 
+  it("NAME by HOUSE: the house after BY is the brand when no known brand is on the line", () => {
+    const a = identify({ description: "ENCORE I by LUNICHE 2.7 EDP SPR (M)" });
+    expect(a).toMatchObject({ brand: "LUNICHE", nameText: "ENCORE I", gender: "M", conc: "EDP" });
+    const b = identify({ description: "LUMINOUS AZURE by PATEK MAISON 3.4 EDT SPR * APPROVED RETAILERS ONLY *" });
+    expect(b).toMatchObject({ brand: "PATEK MAISON", nameText: "LUMINOUS AZURE", sizeMl: 100 });
+    // A known brand still wins, and BY inside a fragrance name is not a house.
+    expect(identify({ description: "ETERNITY by CALVIN KLEIN 3.3 EDT SPR (M)" }).brand).toBe("CALVIN KLEIN");
+    expect(identify({ description: "STAND BY ME 3.4 EDP W" }).brand).toBe("");
+  });
+
   it("Oni Essence: the bottle size inside parentheses is read, and WOM is women", () => {
     const a = identify({ description: "ANNICK GOUTAL Songes Wom EDT (100ml)", brand: "A GOUTAL" });
     expect(a.sizeMl).toBe(100);
