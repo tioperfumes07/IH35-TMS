@@ -23,6 +23,11 @@ export type EngineCatalogEntry = {
   shouldProduce: boolean;
   /** integrations.integration_sync_log.sync_kind values when known */
   syncKinds: string[];
+  /**
+   * ROUND 12 — _system.background_jobs job_name(s) that run this engine. Most crons record their run there, not in the
+   * sync log: without it the board could not tell "ran, nothing new" (idle) from "did not run" (red).
+   */
+  jobNames?: string[];
   output: EngineOutputProbe | null;
   ownerSeat: string;
   kind: "engine" | "screen" | "pending";
@@ -90,6 +95,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 2,
     shouldProduce: true,
     syncKinds: ["real_driven_miles"],
+    jobNames: ["telematics.real_driven_miles_segments"],
     output: { relation: "telematics.load_odometer_segments", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
@@ -116,6 +122,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 48,
     shouldProduce: true,
     syncKinds: ["samsara_addresses"],
+    jobNames: ["samsara.addresses_mirror"],
     output: { relation: "integrations.samsara_addresses", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
@@ -178,10 +185,11 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Harsh-events + dashcam poll",
     module: "harsh-events-poll",
     domain: "Safety",
-    schedule: "Cron",
-    expectedWindowHours: 6,
+    schedule: "Daily 03:00 America/Chicago",
+    expectedWindowHours: 26,
     shouldProduce: true,
     syncKinds: ["harsh_events_poll"],
+    jobNames: ["safety.harsh_events_poll"],
     output: { relation: "safety.harsh_events", tsColumn: "event_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
@@ -277,6 +285,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 36,
     shouldProduce: true,
     syncKinds: ["loves_card_import", "fuel_import"],
+    jobNames: ["fuel.relay_fill_records", "fuel.loves_card_import_cron"],
     output: { relation: "fuel.fuel_transactions", tsColumn: "created_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-2",
     kind: "engine",
@@ -299,10 +308,11 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Fuel fraud detector",
     module: "fuel-fraud-detector",
     domain: "Integrity",
-    schedule: "*/15 America/Chicago",
-    expectedWindowHours: 2,
+    schedule: "After each fuel ingest (daily)",
+    expectedWindowHours: 26,
     shouldProduce: true,
     syncKinds: [],
+    jobNames: ["fuel.fraud_detector_worker"],
     output: { relation: "fuel.fraud_alerts", tsColumn: "detected_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-2",
     kind: "engine",
@@ -312,10 +322,11 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Fuel ↔ GPS match",
     module: "fuel-gps-match",
     domain: "Fuel",
-    schedule: "Hourly",
-    expectedWindowHours: 6,
+    schedule: "After each fuel ingest (daily)",
+    expectedWindowHours: 26,
     shouldProduce: true,
     syncKinds: ["fuel_gps_match"],
+    jobNames: ["fuel.follows_truck"],
     output: { relation: "fuel.fuel_transactions", tsColumn: "updated_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-2",
     kind: "engine",
