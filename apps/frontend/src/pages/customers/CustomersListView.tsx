@@ -46,10 +46,10 @@ function qualityBadge(customer: Customer) {
 }
 
 function relationshipTierBadge(tier: Customer["relationship_health_tier"] | null | undefined, unavailable = false) {
-  if (unavailable) return { label: "Unavailable", className: "bg-[#F7F8FA] text-[#4B5563]" };
-  if (tier === "thriving") return { label: "Thriving", className: "bg-[#F7F8FA] text-[#4B5563]" };
+  if (unavailable) return { label: "Unavailable", className: "bg-[#F7F8FA] text-[#5B6576]" };
+  if (tier === "thriving") return { label: "Thriving", className: "bg-[#F7F8FA] text-[#5B6576]" };
   if (tier === "healthy") return { label: "Healthy", className: "bg-teal-100 text-teal-800" };
-  if (tier === "watch") return { label: "Watch", className: "bg-[#F7F8FA] text-[#4B5563]" };
+  if (tier === "watch") return { label: "Watch", className: "bg-[#F7F8FA] text-[#5B6576]" };
   if (tier === "at_risk") return { label: "At Risk", className: "bg-red-100 text-red-800" };
   return { label: "Unknown", className: "bg-gray-100 text-gray-700" };
 }
@@ -429,7 +429,7 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
                   name={row.name}
                   linkLabel={companyLabel(row.name, row.id, "Customer")}
                   noun="Customer"
-                  className="single-line-name text-[#4B5563] hover:underline rounded-none"
+                  className="single-line-name text-gray-900 no-underline hover:underline rounded-none"
                 />
                 <button
                   type="button"
@@ -518,9 +518,9 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               return (
                 <span className="flex items-center gap-1 min-w-[72px]">
                   <span className="flex h-2 w-16 overflow-hidden rounded-sm">
-                    <span style={{ width: `${pCurrent}%` }} className="bg-[#14314F]" title={`Current: ${pCurrent}%`} />
-                    <span style={{ width: `${p130}%` }} className="bg-[#9CA3AF]" title={`1–30 days: ${p130}%`} />
-                    <span style={{ width: `${p31plus > 0 ? p31plus : 0}%` }} className="bg-red-500" title={`31+ days: ${p31plus}%`} />
+                    <span style={{ width: `${pCurrent}%` }} className="bg-[#1E3A5F]" title={`Current: ${pCurrent}%`} />
+                    <span style={{ width: `${p130}%` }} className="bg-[#94A3B8]" title={`1–30 days: ${p130}%`} />
+                    <span style={{ width: `${p31plus > 0 ? p31plus : 0}%` }} className="bg-[#B91C1C]" title={`31+ days: ${p31plus}%`} />
                   </span>
                 </span>
               );
@@ -541,8 +541,8 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
               if (!row.factoring_company_vendor_id) return <span className="text-gray-400">—</span>;
               return (
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#16A34A]" />
-                  <span className="truncate text-[#4B5563]">{row.factoring_company_name ?? "Factored"}</span>
+                  <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#15803D]" />
+                  <span className="truncate text-[#5B6576]">{row.factoring_company_name ?? "Factored"}</span>
                 </span>
               );
             },
@@ -553,12 +553,12 @@ export function CustomersListView({ companyId, customers, status, openByCustomer
             sortable: true,
             render: (row) => {
               const active = row.status === "active";
-              const color = active ? "bg-[#16A34A]" : "bg-gray-400";
+              const color = active ? "bg-[#15803D]" : "bg-[#94A3B8]";
               const label = row.status === "active" ? "Active" : row.status === "inactive" ? "Inactive" : row.status === "credit_hold" ? "Credit hold" : row.status === "blacklist" ? "Blacklist" : "—";
               return (
                 <span className="inline-flex items-center gap-1.5">
                   <span className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${color}`} />
-                  <span className="text-[#4B5563]">{label}</span>
+                  <span className="text-[#5B6576]">{label}</span>
                 </span>
               );
             },

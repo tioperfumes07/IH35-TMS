@@ -15,6 +15,8 @@ import { MultiSelectDropdown } from "../../../components/forms/MultiSelectDropdo
 import { ListErrorState } from "../../../components/ListErrorState";
 import { ParityTable, type ParityColumn } from "../../../components/parity/ParityTable";
 import { EntityLink } from "../../../components/shared/EntityLink";
+import { V3_TABLE_LINK_CLASS } from "../../../components/v3/V3StatusPill";
+import { V3 } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
 import { V3Segmented } from "../../../components/v3/V3Segmented";
 import { useCompanyContext } from "../../../contexts/CompanyContext";
@@ -166,16 +168,16 @@ export function VendorReportBoard() {
   const rows1099 = useMemo(() => rows.filter((r) => r.eligible_1099), [rows]);
   const savedCategoryCount = rows.filter((r) => r.saved_category).length;
 
-  const vendorCell = (r: { id: string; name: string }) => <EntityLink kind="vendor" id={r.id} label={name(r.name)} />;
+  const vendorCell = (r: { id: string; name: string }) => <EntityLink kind="vendor" id={r.id} label={name(r.name)} className={V3_TABLE_LINK_CLASS} />;
 
   const spendColumns: ParityColumn<VendorBoardReportRow>[] = [
-    { key: "name", label: "Vendor", sortable: true, render: vendorCell },
+    { key: "name", label: "Vendor", sortable: true, cellClass: "font-semibold", render: vendorCell },
     {
       key: "category",
       label: "Category",
       sortable: true,
       render: (r) =>
-        r.saved_category ? r.saved_category : <span className="text-[#94A3B8]" title="Not saved on the vendor — read from the expense account">{r.category ?? "—"}</span>,
+        r.saved_category ? r.saved_category : <span style={{ color: V3.muted }} title="Not saved on the vendor — read from the expense account">{r.category ?? "—"}</span>,
     },
     { key: "txns", label: "Transactions", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.txns) },
     { key: "spend_cents", label: "Spend", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.spend_cents) },
@@ -200,7 +202,7 @@ export function VendorReportBoard() {
       sortable: true,
       sortValue: (r) => r.txns,
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/vendors/${encodeURIComponent(r.id)}`)}>
+        <Link className={V3_TABLE_LINK_CLASS} to={withRet(`/vendors/${encodeURIComponent(r.id)}`)}>
           Open vendor
         </Link>
       ),
@@ -208,7 +210,7 @@ export function VendorReportBoard() {
   ];
 
   const openColumns: ParityColumn<APAgingRow>[] = [
-    { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={name(r.vendor_name)} /> },
+    { key: "vendor_name", label: "Vendor", sortable: true, cellClass: "font-semibold", render: (r) => <EntityLink kind="vendor" id={r.vendor_id} label={name(r.vendor_name)} className={V3_TABLE_LINK_CLASS} /> },
     {
       key: "open_bill_count",
       label: "Bills",
@@ -216,7 +218,7 @@ export function VendorReportBoard() {
       cellClass: "text-right",
       className: "text-right",
       render: (r) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/accounting/bills?vendor_id=${encodeURIComponent(r.vendor_id)}`)}>
+        <Link className={V3_TABLE_LINK_CLASS} to={withRet(`/accounting/bills?vendor_id=${encodeURIComponent(r.vendor_id)}`)}>
           {r.open_bill_count}
         </Link>
       ),
@@ -234,8 +236,9 @@ export function VendorReportBoard() {
       key: "category",
       label: "Category (expense account)",
       sortable: true,
+      cellClass: "font-semibold",
       render: (c) =>
-        c.account_id ? <EntityLink kind="account" id={c.account_id} label={c.category} /> : <span>{c.category}</span>,
+        c.account_id ? <EntityLink kind="account" id={c.account_id} label={c.category} className={V3_TABLE_LINK_CLASS} /> : <span>{c.category}</span>,
     },
     { key: "spend_cents", label: "Spend", sortable: true, cellClass: "text-right", className: "text-right", render: (c) => money(c.spend_cents) },
     { key: "share", label: "% of spend", sortable: true, sortValue: (c) => c.spend_cents, cellClass: "text-right", className: "text-right", render: (c) => pctLabel(pct(c.spend_cents, categoryTotal)) },
@@ -245,7 +248,7 @@ export function VendorReportBoard() {
       sortable: true,
       sortValue: (c) => c.spend_cents,
       render: (c) => (
-        <Link className="text-[#1D4ED8] hover:underline" to={withRet(`/accounting/expenses?expense_account_id=${encodeURIComponent(c.account_id ?? "none")}&date_from=${board.data?.range_from ?? ""}`)}>
+        <Link className={V3_TABLE_LINK_CLASS} to={withRet(`/accounting/expenses?expense_account_id=${encodeURIComponent(c.account_id ?? "none")}&date_from=${board.data?.range_from ?? ""}`)}>
           Open expenses
         </Link>
       ),
@@ -253,7 +256,7 @@ export function VendorReportBoard() {
   ];
 
   const columns1099: ParityColumn<VendorBoardReportRow>[] = [
-    { key: "name", label: "Vendor", sortable: true, render: vendorCell },
+    { key: "name", label: "Vendor", sortable: true, cellClass: "font-semibold", render: vendorCell },
     { key: "saved_category", label: "Category", sortable: true, render: (r) => r.saved_category ?? "—" },
     { key: "txns", label: "Transactions", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => String(r.txns) },
     { key: "spend_cents", label: "Paid in range", sortable: true, cellClass: "text-right", className: "text-right", render: (r) => money(r.spend_cents) },
