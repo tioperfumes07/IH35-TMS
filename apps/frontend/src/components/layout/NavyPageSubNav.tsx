@@ -335,7 +335,9 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
       // Every V3 board (42 of 42 .dc.html): tabs 2 px apart, 600 11px Inter, line-height normal.
       style={{ fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", lineHeight: "normal" }}
     >
-      <div className="min-w-max" style={{ display: "flex", gap: 2, padding: "0 6px", backgroundColor: "#13233F", boxSizing: "content-box" }}>
+      {/* The design bar is 32px (its active tab's 2px rule makes it so) and every tab stretches to it; a page whose
+          active tab is a menu or not on the bar drew 30px tabs (reader 11-16 02:40Z: Factoring 9 tabs 30 → 32). */}
+      <div className="min-w-max" style={{ display: "flex", gap: 2, padding: "0 6px", backgroundColor: "#13233F", boxSizing: "content-box", minHeight: 32 }}>
         {items.map((item, index) => {
           if (item.children?.length) {
             return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
