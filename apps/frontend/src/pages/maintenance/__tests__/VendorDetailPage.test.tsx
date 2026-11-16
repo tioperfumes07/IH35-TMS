@@ -67,7 +67,7 @@ describe("Maintenance VendorDetailPage (B29)", () => {
     renderPage();
     const workOrderLinks = await screen.findAllByRole("link", { name: "WO-1001" });
     expect(workOrderLinks).toHaveLength(2);
-    expect(workOrderLinks.every((link) => link.getAttribute("href") === "/maintenance/work-orders/wo-1")).toBe(true);
+    expect(workOrderLinks.every((link) => link.getAttribute("href")?.split("?")[0] === "/maintenance/work-orders/wo-1")).toBe(true);
   });
 
   it("shows vendor invoice rows", async () => {
@@ -79,6 +79,6 @@ describe("Maintenance VendorDetailPage (B29)", () => {
   it("links the canonical AP vendor with its resolved human label", async () => {
     renderPage();
     const link = await screen.findByRole("link", { name: "FleetPride AP" });
-    expect(link.getAttribute("href")).toBe("/vendors/22222222-2222-4222-8222-222222222222");
+    expect(link.getAttribute("href")?.split("?")[0]).toBe("/vendors/22222222-2222-4222-8222-222222222222"); // + ?ret= return context
   });
 });

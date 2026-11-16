@@ -37,7 +37,7 @@ export function pmStatusForUnit(
   if (source === "loading") return { text: "Checking PM…", due: false };
   if (source === "error") return { text: "PM unavailable", due: false };
   const mine = rows.filter((r) => r.asset_id === unitId);
-  if (mine.length === 0) return { text: "No PM schedule", due: false };
+  if (mine.length === 0) return { text: "No PM clock", due: false }; // Maintenance-Home.dc.html arrivals wording
   const dueNow = mine.filter((r) => r.is_due);
   if (dueNow.length > 0) return { text: `Due: ${dueNow.map((r) => PM_LABEL[r.pm_type] ?? r.pm_type).join(", ")}`, due: true };
   const byMiles = mine.filter((r) => r.miles_remaining != null).sort((a, b) => (a.miles_remaining ?? 0) - (b.miles_remaining ?? 0))[0];
@@ -58,7 +58,9 @@ function arrivalsColumns(pmRows: MaintPmDueRow[], pmSource: "ready" | "loading" 
       label: "PM status",
       render: row => {
         const pm = pmStatusForUnit(pmRows, row.unit_id, pmSource);
-        return <span data-testid={`maintenance-home-arrival-pm-${row.unit_id}`} className={pm.due ? "font-semibold text-[#A32D2D]" : undefined}>{pm.text}</span>;
+        // Maintenance-Home.dc.html: the status pill (7px dot · 500 12px #111827 · nowrap) — grey with no clock, red when due.
+        const dot = pm.due ? "#A32D2D" : pm.text === "No PM clock" || pm.text === "Checking PM…" || pm.text === "PM unavailable" ? "#94A3B8" : "#15803D";
+        return <span data-testid={`maintenance-home-arrival-pm-${row.unit_id}`} style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif", color: pm.due ? "#A32D2D" : "#111827", whiteSpace: "nowrap" }}><span aria-hidden="true" style={{ width: 7, height: 7, borderRadius: "50%", background: dot, display: "inline-block" }} />{pm.text}</span>;
       },
     },
     {

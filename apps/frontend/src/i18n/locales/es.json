@@ -107,7 +107,8 @@
   "maintenance": {
     "title": "Mantenimiento",
     "fleetHealth": {
-      "noLastPm": "Sin último PM registrado — captúrelo",
+      "noLastPm": "Capturar último PM",
+      "noLastPmHint": "Sin odómetro del último PM — captúrelo para iniciar el conteo al siguiente PM",
       "odometerUnavailable": "Odómetro no disponible",
       "pmReadingUnavailable": "Lectura de PM no disponible"
     }
