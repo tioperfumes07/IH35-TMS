@@ -258,3 +258,37 @@ export async function writeUnitStopEventsCatchUp(
     stopsDetected: windows.reduce((s, w) => s + w.stopsDetected, 0),
   };
 }
+
+/**
+ * ROUND 12 E-05 (owner 2026-11-15 18:40 CT, "the apps transportation engines fully built") — the load a stop belongs to is
+ * resolved when the stop is WRITTEN. A load keyed in (or stamped) after its truck already stopped kept NULL forever, so the
+ * real-driven-miles engine (which reads load_id_at_time) wrote no legs for it.
+ * MEASURED 11-16 01:30Z (prod USMCA, last 60 days): 1,442 stop events had no load; 668 of them resolve to a load by THE same
+ * rule (loadAtTimeSql) today — e.g. loads 13704 / 13710 / 13714 (18-20 stops each in their window, 0 attributed, 0 legs).
+ * This re-asks the same one rule for those stops only (NULL → the load); a stop that already names a load is never moved.
+ */
+export async function reattributeStopEventLoads(
+  client: DbClient,
+  operatingCompanyId: string,
+  opts: { days?: number } = {},
+): Promise<{ attributed: number }> {
+  const days = Math.max(1, Math.min(120, Math.floor(opts.days ?? 60)));
+  const res = await client.query<{ id: string }>(
+    `UPDATE telematics.unit_stop_events e
+        SET load_id_at_time = hit.load_id, updated_at = now()
+       FROM (
+         SELECT e2.id, load_at_time.load_id
+           FROM telematics.unit_stop_events e2
+           JOIN mdata.units u ON u.id = e2.unit_id
+           ${loadAtTimeSql("u.id", "e2.started_at")}
+          WHERE e2.operating_company_id = $1::uuid
+            AND e2.load_id_at_time IS NULL
+            AND e2.started_at > now() - make_interval(days => $2::int)
+            AND load_at_time.load_id IS NOT NULL
+       ) hit
+      WHERE e.id = hit.id AND e.load_id_at_time IS NULL
+      RETURNING e.id::text`,
+    [operatingCompanyId, days],
+  );
+  return { attributed: res.rows.length };
+}
