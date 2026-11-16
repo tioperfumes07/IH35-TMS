@@ -361,6 +361,7 @@ export function CustomerReportBoard() {
 
       {view === "sales" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={billedRows}
           title={`Sales by customer · ${billedRows.length} customers`}
@@ -383,6 +384,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "open" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={openRows}
           title={`Open balances · ${openRows.length} customers`}
@@ -403,6 +405,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "aging" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={agingRows}
           title={`A/R aging · as of ${mmmDd(asOf)} · by due date`}
@@ -427,6 +430,7 @@ export function CustomerReportBoard() {
       ) : null}
       {view === "statement" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={billedRows}
           title="Customer statements — invoices, payments, balance"

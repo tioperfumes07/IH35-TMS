@@ -40,6 +40,14 @@ import { TABLE_MISSING } from "../../lib/money";
 import { TableMoneyCell } from "../table/TableMoneyCell";
 import { downloadXlsx, useParityServerView, type ParityServerView } from "./useParityServerView";
 
+/** V3 select column (docs/design/v3 *.dc.html first <td>: padding 7px 10px). */
+const V3_SELECT_TD: React.CSSProperties = { padding: "7px 10px", verticalAlign: "middle" };
+/** UI CONTROL LAW on V3 boards: the select wrapper keeps its >=24px clickable area (MIN_HIT_TARGET_CLASS) but takes
+ *  20px of the line (-2px margins), so the row is the design's 34px (7px + 20px + 7px) — the hit area never shrinks.
+ *  Non-V3 tables keep 443.156's 32px hit class. */
+const V3_SELECT_HIT: React.CSSProperties = { margin: "-2px 0" };
+const selectHitClass = `${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`;
+
 export type ParityDensity = "regular" | "compact" | "ultra";
 
 export type ParityColumn<T> = {
@@ -463,6 +471,12 @@ export type ParityTableProps<T> = {
    * Spread LAST in td inline style. Applied when appearance="board" or "v3" (a board whose table draws other cell padding than the register table).
    */
   boardTdStyle?: React.CSSProperties;
+  /**
+   * V3 cell left/right padding. docs/design/v3 (counted 11-16): 30 boards draw th/td "padding:7px 12px" (the default);
+   * the report family — Dispatch-LoadHistory and Reports-Loads / -Customers / -Vendors / -DriverSettlements /
+   * -CompanySettlements — draws "padding:7px 10px" on every th and td (those boards pass 10).
+   */
+  v3CellPadX?: 10 | 12;
 };
 
 function compareSortValues(
@@ -546,10 +560,10 @@ const V3_TH: CSSProperties = {
   fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif", fontSize: 11, fontWeight: 600, color: "#5B6576", backgroundColor: "#F7F8FA",
   // Every .dc.html th sets no line-height (normal): 7 + ~14.5 + 7 = 28.5px tall. lineHeight 1 drew 25px headers.
   letterSpacing: "normal", textTransform: "none", lineHeight: "normal", height: "auto",
-  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, borderTop: "none", borderBottom: "1px solid #DDE1E7", whiteSpace: "nowrap",
 };
 const V3_TD: CSSProperties = {
-  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
+  paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
   color: "#111827", textOverflow: "clip",
 };
 
@@ -783,6 +797,7 @@ export function ParityTable<T>({
   headerWeight,
   thStyle,
   boardTdStyle,
+  v3CellPadX = 12,
   footer,
   footerCells,
 }: ParityTableProps<T>) {
@@ -1114,7 +1129,7 @@ export function ParityTable<T>({
   const effectiveRule = v3 ? "#DDE1E7" : BOARD_RULE;
   // v3 mode: Inter 11/600 #5B6576 on #F7F8FA — exact spec values shared by all v3 boards.
   const BOARD_LABEL = v3
-    ? { fontFamily: "Inter, sans-serif" as const, fontSize: 11, fontWeight: 600, letterSpacing: "normal" as const, textTransform: "none" as const, textAlign: "left" as const, color: "#5B6576", backgroundColor: "#F7F8FA", paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10, height: "auto" as const, whiteSpace: "nowrap" as const }
+    ? { fontFamily: "Inter, sans-serif" as const, fontSize: 11, fontWeight: 600, letterSpacing: "normal" as const, textTransform: "none" as const, textAlign: "left" as const, color: "#5B6576", backgroundColor: "#F7F8FA", paddingTop: 7, paddingBottom: 7, paddingLeft: v3CellPadX, paddingRight: v3CellPadX, height: "auto" as const, whiteSpace: "nowrap" as const }
     : { fontSize: 10, fontWeight: 600, letterSpacing: "0.09em", textTransform: "uppercase" as const, textAlign: "left" as const };
   // VC-LIST-02 — when "All" renders a large set, let the browser skip offscreen row paint/layout.
   const virtualizeRows = pageRows.length > LARGE_RENDER_ROW_THRESHOLD;
@@ -1345,7 +1360,9 @@ export function ParityTable<T>({
   function exportMatrix() {
     const cols = visibleColumns;
     const header = cols.map((c) => String(c.label ?? ""));
-    const body = sortedRows.map((row) =>
+    // ROUND 12 — with rows ticked, Export takes exactly those rows (in the table's order); nothing ticked = every row.
+    const picked = selectable && selectedRows.length > 0 ? new Set(selectedRows) : null;
+    const body = (picked ? sortedRows.filter((r) => picked.has(r)) : sortedRows).map((row) =>
       cols.map((c) => {
         const v = c.exportValue ? c.exportValue(row) : (row as Record<string, unknown>)[String(c.key)];
         return v == null ? "" : typeof v === "number" ? v : String(v);
@@ -1588,9 +1605,9 @@ export function ParityTable<T>({
           </td>
         ) : null}
         {selectable ? (
-          <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX }} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            {/* UI CONTROL LAW — the wrapper is the clickable area (>=24px floor; 443.156: 32px), the box is 20px. */}
-            <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
+          <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX, ...(v3 ? V3_SELECT_TD : {}) }} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            {/* UI CONTROL LAW — wrapper = clickable area (>=24px); V3: see V3_SELECT_HIT. */}
+            <span style={v3 ? V3_SELECT_HIT : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
               <input
                 type="checkbox"
                 className={TABLE_SELECT_CHECKBOX_CLASS}
@@ -1655,14 +1672,14 @@ export function ParityTable<T>({
               borderBottom: `1px solid ${colors.tableBodyRule}`,
               // v3 boards use a lighter row divider (#ECEEF2) — overrides tableBodyRule only in v3 mode.
               ...(v3 ? { borderBottom: "1px solid #ECEEF2" } : {}),
-              // R9.3 v3 mode: 7px top/bottom, 10px left/right padding — exact spec.
-              ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10 } : {}),
+              // R9.3 v3 mode: 7px top/bottom; left/right is the board's own (v3CellPadX: 12, report family 10).
+              ...(v3 ? { paddingTop: 7, paddingBottom: 7, paddingLeft: v3CellPadX, paddingRight: v3CellPadX } : {}),
               // R9.3 board parity: boardTdStyle spreads after borderBottom — wins when appearance="board".
               ...(board && boardTdStyle ? boardTdStyle : {}),
               ...(resolvedCellBg ? { backgroundColor: resolvedCellBg } : {}),
               // V3 boards: the cell is transparent over its row (the board draws no zebra) — only a group /
               // selection tint shows.
-              ...(v3 ? { ...V3_TD, whiteSpace: column.allowWrap && !isParityMoneyColumn(column) ? "normal" : "nowrap", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}), ...(boardTdStyle ?? {}) } : {}),
+              ...(v3 ? { ...V3_TD, paddingLeft: v3CellPadX, paddingRight: v3CellPadX, whiteSpace: column.allowWrap && !isParityMoneyColumn(column) ? "normal" : "nowrap", ...(!resolvedCellBg || cellBg === QBO_SURFACE.rowStripe ? { backgroundColor: "transparent" } : {}), ...(boardTdStyle ?? {}) } : {}),
               ...(String(column.key) in stickyLeftPx
                 ? {
                     position: "sticky" as const,
@@ -2000,9 +2017,9 @@ export function ParityTable<T>({
           <tr style={{ height: v3 ? 28.5 : DENSITY[density].rowH }}>
             {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
             {selectable ? (
-              <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX }}>
-                {/* UI CONTROL LAW — same hit-target wrap as the row checkbox (443.156: 20px box, 32px hit area). */}
-                <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
+              <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX, ...(v3 ? V3_SELECT_TD : {}) }}>
+                {/* UI CONTROL LAW — same hit-target wrap as the row checkbox. */}
+                <span style={v3 ? V3_SELECT_HIT : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
                   <input
                     type="checkbox"
                     className={TABLE_SELECT_CHECKBOX_CLASS}
@@ -2091,7 +2108,7 @@ export function ParityTable<T>({
                     borderBottom: `1px solid ${colors.tableColumnRule}`,
                     // board: the boards' column label (.hd) and rules -- overrides the defaults above.
                     ...(board ? { ...BOARD_LABEL, fontWeight: headerWeight ?? BOARD_LABEL.fontWeight, borderTop: `1px solid ${effectiveRule}`, borderBottom: `1px solid ${effectiveRule}` } : {}),
-                    ...(v3 ? V3_TH : {}),
+                    ...(v3 ? { ...V3_TH, paddingLeft: v3CellPadX, paddingRight: v3CellPadX } : {}),
                     ...(w ? (columnLayout === "auto" ? { minWidth: w } : { width: cssWidthFor(w, column) }) : {}),
                     ...(dragOverKey === key ? { outlineColor: colors.navy } : {}),
                     // R9.3 board parity: thStyle spreads LAST — wins over every computed value above.
@@ -2174,7 +2191,7 @@ export function ParityTable<T>({
                 colSpan={colSpan}
                 className={v3 ? undefined : "px-2 py-3 text-center text-section-header text-gray-500"}
                 style={v3 ? {
-                  paddingTop: 7, paddingBottom: 7, paddingLeft: 10, paddingRight: 10,
+                  paddingTop: 7, paddingBottom: 7, paddingLeft: v3CellPadX, paddingRight: v3CellPadX,
                   fontSize: 12, color: "#111827",
                   borderBottom: "1px solid #ECEEF2",
                   whiteSpace: "nowrap",

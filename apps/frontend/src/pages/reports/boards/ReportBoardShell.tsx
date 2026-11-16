@@ -7,7 +7,7 @@ import React, { type ReactNode } from "react";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { PageHeader } from "../../../components/forms/shared/PageHeader";
 import { NavyPageSubNav, type NavyPageSubNavItem } from "../../../components/layout/NavyPageSubNav";
-import { V3_HEADER_BTN, V3_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
+import { V3_REPORT_HEADER_BTN, V3_REPORT_HEADER_BTN_PRIMARY } from "../../../components/v3/V3StatusPill";
 import { REPORTS_SUB_NAV_ITEMS } from "../ReportsSubNav";
 import { downloadXlsx } from "../../../components/parity/useParityServerView";
 import { resolveBackHref } from "../../../lib/returnContext";
@@ -16,8 +16,8 @@ import { REPORT_BOARDS, type ReportBoardId } from "./reportBoardCatalog";
 export type ReportBoardXlsx = { filename: string; header: string[]; body: Array<Array<string | number>> };
 
 // V3-Reports-*.dc.html header buttons: 28px · 0 12px · radius 6 · 600 12px (border-box — the button's 28px includes its rule).
-const BTN_OUTLINE: React.CSSProperties = V3_HEADER_BTN;
-const BTN_PRIMARY: React.CSSProperties = V3_HEADER_BTN_PRIMARY;
+const BTN_OUTLINE: React.CSSProperties = V3_REPORT_HEADER_BTN;
+const BTN_PRIMARY: React.CSSProperties = V3_REPORT_HEADER_BTN_PRIMARY;
 
 /** The report boards' navy bar, as drawn: Reports · Category hub · Run report · the five boards · Cancellations ·
  *  Invoice Search · Scheduled (custom) · Audit (V3-Reports-Loads.dc.html). Built from the Reports nav's own entries. */

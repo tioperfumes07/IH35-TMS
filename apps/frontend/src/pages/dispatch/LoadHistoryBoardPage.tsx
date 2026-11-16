@@ -611,6 +611,7 @@ export default function LoadHistoryBoardPage() {
 
       <div style={{ display: "grid", gridTemplateColumns: selected ? "minmax(0,1fr) minmax(280px,360px)" : "minmax(0,1fr)", gap: 12, alignItems: "start" }}>
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={rows}
           title={
@@ -631,6 +632,9 @@ export default function LoadHistoryBoardPage() {
           minWidthPx={1800}
           tableTestId="load-history-table"
           onRowClick={openPanel}
+          // Dispatch-LoadHistory.dc.html: every row opens with its own checkbox ("select 13700"); ticked rows are what
+          // Export XLSX takes. The checkbox is also what sets the design's 34px row.
+          selectable
           boardTdStyle={{ padding: "7px 10px", color: "#111827" }}
           footerCells={{
             load_number: <span className="font-semibold text-[#111827]">Totals ({rows.length})</span>,

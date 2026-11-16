@@ -62,12 +62,14 @@ export function V3StatusPill({ tone, children, testId }: { tone: V3PillTone; chi
 
 /** A record link inside a V3 board table: V3.link (#1D4ED8), 600, no underline until hover. */
 export const V3_TABLE_LINK_CLASS =
-  "font-semibold text-blue-700 no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
+  "font-semibold text-[#1D4ED8] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
 
 /** V3 board header actions (every .dc.html header): 28px · 0 12px · radius 6 · 600 12px Inter. */
 export const V3_HEADER_BTN: CSSProperties = {
   height: 28,
-  boxSizing: "border-box",
+  // Drawn as height 28 + a 1px border in content-box (rh 30) on the module boards (Banking, Factoring, Legal, Fuel …:
+  // their header actions are <span>s). The report family draws <button>s — border-box 28: V3_REPORT_HEADER_BTN.
+  boxSizing: "content-box",
   padding: "0 12px",
   display: "inline-flex",
   alignItems: "center",
@@ -82,3 +84,6 @@ export const V3_HEADER_BTN: CSSProperties = {
 };
 /** The navy primary header action. */
 export const V3_HEADER_BTN_PRIMARY: CSSProperties = { ...V3_HEADER_BTN, background: V3.shell, color: V3.onShell, border: "none" };
+/** Report-family header actions (Reports-*.dc.html Print · Export PDF · Export XLSX are <button>s): border-box 28px. */
+export const V3_REPORT_HEADER_BTN: CSSProperties = { ...V3_HEADER_BTN, boxSizing: "border-box" };
+export const V3_REPORT_HEADER_BTN_PRIMARY: CSSProperties = { ...V3_HEADER_BTN_PRIMARY, boxSizing: "border-box" };

@@ -393,6 +393,7 @@ export function VendorReportBoard() {
 
       {view === "spend" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={spendRows}
           title={`Spend by vendor · ${spendRows.length} vendors`}
@@ -413,6 +414,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "open" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={apRows}
           title={`Open bills · as of ${mmmDd(asOf)} · by due date`}
@@ -437,6 +439,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "category" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={categoryRows}
           title="Spend by category (expense account)"
@@ -455,6 +458,7 @@ export function VendorReportBoard() {
       ) : null}
       {view === "1099" ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={rows1099}
           title="Vendors flagged 1099 on the vendor record"

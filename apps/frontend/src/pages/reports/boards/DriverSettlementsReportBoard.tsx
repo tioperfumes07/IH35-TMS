@@ -499,6 +499,7 @@ export function DriverSettlementsReportBoard() {
 
       {showDetail ? (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={detailRows}
           title={`${detailRows.length} settlements · newest first`}
@@ -522,6 +523,7 @@ export function DriverSettlementsReportBoard() {
         />
       ) : (
         <ParityTable
+          v3CellPadX={10}
           appearance="v3"
           rows={groups}
           title={`By ${GROUP_OPTIONS.find((g) => g.id === by)?.label.toLowerCase()}`}

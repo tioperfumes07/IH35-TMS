@@ -647,6 +647,7 @@ export function LoadsReportBoard() {
 
         {showDetail ? (
           <ParityTable
+            v3CellPadX={10}
             appearance="v3"
             rows={detailRows}
             title="Loads"
@@ -668,6 +669,7 @@ export function LoadsReportBoard() {
           />
         ) : (
           <ParityTable
+            v3CellPadX={10}
             appearance="v3"
             rows={groups}
             title={
