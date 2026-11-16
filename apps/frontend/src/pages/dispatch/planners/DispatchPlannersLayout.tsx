@@ -43,8 +43,11 @@ function plannerCrumb(pathname: string): string {
 }
 
 const V3_LABEL: CSSProperties = { font: `700 11px ${V3.font}`, color: V3.muted, lineHeight: "normal" };
+// The design draws these as <span>s (content-box: 28px + the 1px border = 30 tall); ours are <button>s, which the
+// reset makes border-box (28). Reader 11-16 02:35Z: 19 TruckPlanner controls border-box → content-box.
 const V3_CHIP_BTN: CSSProperties = {
   height: 28,
+  boxSizing: "content-box",
   padding: "0 12px",
   display: "inline-flex",
   alignItems: "center",
@@ -65,6 +68,7 @@ const V3_SEG_SHELL: CSSProperties = {
   gap: 2,
 };
 const V3_SEG = (on: boolean): CSSProperties => ({
+  boxSizing: "content-box",
   padding: "4px 10px",
   borderRadius: 4,
   font: `600 11px ${V3.font}`,
@@ -74,10 +78,12 @@ const V3_SEG = (on: boolean): CSSProperties => ({
   cursor: "pointer",
   lineHeight: "normal",
 });
+// Dispatch-TruckPlanner.dc.html: a day chip is a <span> 30 × 26 (content-box), inline-flex; off = 1px #DDE1E7 border.
 const V3_DAY = (on: boolean): CSSProperties => ({
-  width: 28,
-  height: 28,
-  display: "flex",
+  width: 30,
+  height: 26,
+  boxSizing: "content-box",
+  display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   borderRadius: 4,
@@ -90,8 +96,9 @@ const V3_DAY = (on: boolean): CSSProperties => ({
 });
 const V3_FOOT_BTN = (primary: boolean): CSSProperties => ({
   height: 28,
+  boxSizing: "content-box",
   padding: "0 12px",
-  display: "flex",
+  display: "inline-flex",
   alignItems: "center",
   borderRadius: 6,
   font: `600 12px ${V3.font}`,
@@ -625,10 +632,10 @@ function PlannerExportButtons() {
 
   return (
     <>
-      <button type="button" onClick={() => exportPlannerCsv(dateRange)} style={V3_HEADER_ACTION_STYLE}>
+      <button type="button" onClick={() => exportPlannerCsv(dateRange)} style={{ ...V3_HEADER_ACTION_STYLE, boxSizing: "content-box" }}>
         Export CSV
       </button>
-      <button type="button" onClick={() => window.print()} style={V3_HEADER_ACTION_STYLE}>
+      <button type="button" onClick={() => window.print()} style={{ ...V3_HEADER_ACTION_STYLE, boxSizing: "content-box" }}>
         Print
       </button>
     </>

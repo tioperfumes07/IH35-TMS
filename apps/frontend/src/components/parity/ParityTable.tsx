@@ -43,9 +43,11 @@ import { downloadXlsx, useParityServerView, type ParityServerView } from "./useP
 /** V3 select column (docs/design/v3 *.dc.html first <td>: padding 7px 10px). */
 const V3_SELECT_TD: React.CSSProperties = { padding: "7px 10px", verticalAlign: "middle" };
 /** UI CONTROL LAW on V3 boards: the select wrapper keeps its >=24px clickable area (MIN_HIT_TARGET_CLASS) but takes
- *  20px of the line (-2px margins), so the row is the design's 34px (7px + 20px + 7px) — the hit area never shrinks.
+ *  19px of the line (-2.5px margins), so the row is the design's 34px (7 + 19 + 7 + the 1px rule) — the hit area never shrinks.
  *  Non-V3 tables keep 443.156's 32px hit class. */
-const V3_SELECT_HIT: React.CSSProperties = { margin: "-2px 0" };
+const V3_SELECT_HIT: React.CSSProperties = { margin: "-2.5px 0" };
+/** Header: the design's th is 28.5px (7 + 14.5 + 7) — the select-all wrapper keeps its 24px hit area in 14px of line. */
+const V3_SELECT_HIT_HEAD: React.CSSProperties = { margin: "-5px 0" };
 const selectHitClass = `${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`;
 
 export type ParityDensity = "regular" | "compact" | "ultra";
@@ -2019,7 +2021,7 @@ export function ParityTable<T>({
             {selectable ? (
               <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX, ...(v3 ? V3_SELECT_TD : {}) }}>
                 {/* UI CONTROL LAW — same hit-target wrap as the row checkbox. */}
-                <span style={v3 ? V3_SELECT_HIT : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
+                <span style={v3 ? V3_SELECT_HIT_HEAD : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
                   <input
                     type="checkbox"
                     className={TABLE_SELECT_CHECKBOX_CLASS}
