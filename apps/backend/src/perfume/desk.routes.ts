@@ -147,7 +147,24 @@ const extractSchema = z.object({
 const ANALYSIS_MATCH_EXTRAS = new Set(["a:c_brand", "a:c_vendor", "a:match"]);
 const ANALYSIS_ENGINE_KEYS = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold", "a:inv_qty", "a:margin", "a:markup", "a:offer", "a:esp", "a:low_sales", "a:min_buy", "a:min_margin", "a:low_vendor", "a:low_price", "a:offer2", "a:esp2", "a:under_by", "a:under_pct", "a:can_inc", "a:new_margin", "a:over_by", "a:lower_pct", "a:c_list", "a:c_cushion", "a:c_sales"]);
 
+/** ROUND 12 (owner 2026-11-15 20:15 CT "i need speed") — measured 02:30Z after the fixes: a warm grid search answers in
+ *  ~200 ms, a cold one ~12 s (the first read on each server after a deploy or after any perfume write). Every 20 s each
+ *  server asks the data fingerprint (one catalog read) and, when it moved, builds the grid in the background — so the
+ *  owner's next read is warm. It runs as the owner who last read the desk (perfume is owner-only, RLS is_owner()). */
+let warmOwnerUid: string | null = null;
+let warmTimer: NodeJS.Timeout | null = null;
+function startGridWarmer(log: FastifyInstance["log"]) {
+  if (warmTimer) return;
+  warmTimer = setInterval(() => {
+    const uid = warmOwnerUid;
+    if (!uid) return;
+    void withCurrentUser(uid, (c) => buildGrid(c, {})).catch((e: unknown) => log.warn({ err: e }, "[PERFUME] grid warm failed"));
+  }, 20_000);
+  warmTimer.unref?.();
+}
+
 export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
+  startGridWarmer(app.log);
   // Lets the company selector show the TIO Perfumes entry only to the desk user. Never 403s an Owner.
   app.get("/api/v1/perfume/access", RL_READ, async (req, reply) => {
     if (!requireAuth(req, reply)) return reply;
@@ -254,6 +271,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(),
       gender: csvList, conc: csvList, kind: csvList, category: csvList, brand: csvList, suggest: z.enum(REVIEW_SUGGEST_BUCKETS).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
+    warmOwnerUid = uid;
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });
   app.post("/api/v1/perfume/rows/:id/confirm", RL_WRITE, async (req, reply) => {
@@ -336,6 +354,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
 
   app.get("/api/v1/perfume/grid", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
+    warmOwnerUid = uid;
     const q = gridQuery.safeParse(req.query); if (!q.success) return bad(reply, q.error);
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     if (q.data.sort && !g.cols.some((c) => c.key === q.data.sort)) return reply.code(400).send({ error: "unknown_sort_column" });
