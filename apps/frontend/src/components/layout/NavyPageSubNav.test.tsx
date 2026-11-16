@@ -223,3 +223,20 @@ describe("NavyDropdown open/close (P0 2026-09-14 — mouseenter-then-click race)
     expect(document.body.contains(menu)).toBe(true);
   });
 });
+
+// Reader 11-16 (Reports-Viewer-TrialBalance.dc.html): on a page a menu tab's child names, the prefix leaf ("Reports" →
+// /reports) is not the active tab — the design draws Run report active.
+describe("menu child beats a prefix leaf", () => {
+  const items = [
+    { label: "Reports", to: "/reports" },
+    { label: "Run report", to: "/reports/hub", children: [{ label: "Trial balance", to: "/reports/trial-balance" }] },
+    { label: "Cancellations", to: "/reports/cancellations" },
+  ];
+  it("no leaf is marked current on /reports/trial-balance; Reports stays current on /reports", () => {
+    const { unmount } = render(<MemoryRouter initialEntries={["/reports/trial-balance"]}><NavyPageSubNav items={items} /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: "Reports" }).getAttribute("aria-current")).toBeNull();
+    unmount();
+    render(<MemoryRouter initialEntries={["/reports"]}><NavyPageSubNav items={items} /></MemoryRouter>);
+    expect(screen.getByRole("link", { name: "Reports" }).getAttribute("aria-current")).toBe("page");
+  });
+});
