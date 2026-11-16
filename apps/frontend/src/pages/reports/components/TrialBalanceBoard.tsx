@@ -20,7 +20,8 @@ export type TrialBalanceBoardSummary = {
 };
 
 const chromeBtn: CSSProperties = {
-  height: 30,
+  // Reports-Viewer-TrialBalance.dc.html: Collapse / Customize are height 28 + a 1px border (30px), content-box spans.
+  height: 28,
   padding: "0 12px",
   display: "inline-flex",
   alignItems: "center",

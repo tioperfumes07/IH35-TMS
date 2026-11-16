@@ -300,11 +300,16 @@ export function mostSpecificActiveTo(pathname: string, tos: readonly string[], s
 
 export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPageSubNavProps) {
   const { pathname, search } = useLocation();
-  const activeTo = mostSpecificActiveTo(
+  // A leaf tab that only matches as a path PREFIX (Reports "/reports") loses to a menu tab whose child names this page
+  // exactly or more specifically (Run report › Trial balance on /reports/trial-balance — the design draws Run report active,
+  // never Reports; reader 11-16 on Reports-Viewer-TrialBalance).
+  const leafTo = mostSpecificActiveTo(
       pathname,
       items.filter((i) => !i.children?.length).map((i) => i.to),
       search,
-    ) ??
+    );
+  const childTo = mostSpecificActiveTo(pathname, items.flatMap((i) => (i.children ?? []).map((c) => c.to)), search);
+  const activeTo = (leafTo && !(childTo && pathOnly(childTo).length > pathOnly(leafTo).length) ? leafTo : null) ??
     // A module landing that IS one tab's view (activePaths) — e.g. /legal draws Contracts active (Legal.dc.html).
     items.find((i) => !i.children?.length && i.activePaths?.includes(pathname))?.to ??
     null;

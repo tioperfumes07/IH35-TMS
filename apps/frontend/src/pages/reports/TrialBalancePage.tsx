@@ -29,6 +29,9 @@ import { useExportAction } from "../../hooks/useExportAction";
 
 import { formatUsdCents } from "../../lib/money";
 import { TrialBalanceBoard, trialBalanceMeasuredArNote } from "./components/TrialBalanceBoard";
+
+// Reports-Viewer-TrialBalance.dc.html: the amounts are the row's own #111827 ink (the 12px .n cell), underline on hover.
+const TB_AMOUNT_LINK = "text-[#111827] hover:underline";
 import { V3 } from "../../design/v3-tokens";
 
 
@@ -258,7 +261,7 @@ export function TrialBalancePage() {
         sortable: true,
         kind: "money",
         render: (row) => (
-          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-debits-${row.account_id}`}>
+          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} className={TB_AMOUNT_LINK} data-testid={`tb-debits-${row.account_id}`}>
             {cell(row.total_debits)}
           </AmountLink>
         ),
@@ -269,7 +272,7 @@ export function TrialBalancePage() {
         sortable: true,
         kind: "money",
         render: (row) => (
-          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-credits-${row.account_id}`}>
+          <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} className={TB_AMOUNT_LINK} data-testid={`tb-credits-${row.account_id}`}>
             {cell(row.total_credits)}
           </AmountLink>
         ),
@@ -281,7 +284,7 @@ export function TrialBalancePage() {
         kind: "money",
         render: (row) => (
           <span className={row.net_balance < 0 ? "text-rose-700" : "text-[#0F1219]"}>
-            <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} data-testid={`tb-net-${row.account_id}`}>
+            <AmountLink filter={tbFilter(canDrill(row), row.account_id, applied)} className={TB_AMOUNT_LINK} data-testid={`tb-net-${row.account_id}`}>
               {cell(row.net_balance)}
             </AmountLink>
           </span>
