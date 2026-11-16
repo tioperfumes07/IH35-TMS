@@ -15,17 +15,20 @@ import { rematchRelayFuelDrivers } from "../relay-fuel-driver-rematch.service.js
 
 type Q = { sql: string; values: unknown[] };
 
-function client(opts: { linkDriver: string | null; fuelDriver: string | null }) {
+function client(opts: { linkDriver: string | null; fuelDriver: string | null; fuelDrivers?: string[]; integrationId?: string | null }) {
   const qs: Q[] = [];
   return {
     qs,
     query: async (sql: string, values: unknown[] = []) => {
       qs.push({ sql, values });
       if (/FROM integrations\.relay_fuel_transactions\s+WHERE matched_driver_id IS NULL/.test(sql))
-        return { rows: [{ id: "r1", operating_company_id: "c", transaction_id: "txn_1", relay_driver_integration_id: "8029341864741314", matched_unit_id: "u1", relay_created_at: "2026-10-01 10:00:00+00" }] };
+        return { rows: [{ id: "r1", operating_company_id: "c", transaction_id: "txn_1", relay_driver_integration_id: opts.integrationId === undefined ? "8029341864741314" : opts.integrationId, matched_unit_id: "u1", relay_created_at: "2026-10-01 10:00:00+00" }] };
       if (/FROM mdata\.drivers\s+WHERE operating_company_id = \$1::uuid\s+AND integration_id = \$2/.test(sql)) return { rows: [] };
       if (/integrations\.relay_driver_links/.test(sql)) return { rows: opts.linkDriver ? [{ id: opts.linkDriver, active: true }] : [] };
-      if (/FROM fuel\.fuel_transactions ft/.test(sql)) return { rows: opts.fuelDriver ? [{ driver_id: opts.fuelDriver }] : [] };
+      if (/FROM fuel\.fuel_transactions ft/.test(sql)) {
+        if (opts.fuelDrivers) return { rows: opts.fuelDrivers.map((d) => ({ driver_id: d })) };
+        return { rows: opts.fuelDriver ? [{ driver_id: opts.fuelDriver }] : [] };
+      }
       if (/UPDATE integrations\.relay_fuel_transactions/.test(sql)) return { rows: [], rowCount: 1 };
       if (/UPDATE fuel\.fuel_transactions/.test(sql)) return { rows: [], rowCount: 0 };
       return { rows: [] };
@@ -56,5 +59,24 @@ describe("E1 rematchRelayFuelDrivers", () => {
     await rematchRelayFuelDrivers(c as never, { operating_company_id: "c" });
     const fu = c.qs.find((q) => /UPDATE fuel\.fuel_transactions/.test(q.sql))!;
     expect(fu.sql).toMatch(/AND driver_id IS NULL/);
+  });
+  // 11-16: 34 Relay fills with no integration id stayed "unmatched" every hour although 32 had fuel rows with a driver —
+  // the lookup read transaction_reference = 'txn_…', and ENG-65 rows carry the fill as relay_fuel_transaction_id.
+  it("finds the fill's own fuel rows by relay_fuel_transaction_id (Relay sent no integration id)", async () => {
+    audit.calls = [];
+    const c = client({ linkDriver: null, fuelDriver: "luis", integrationId: null });
+    const r = await rematchRelayFuelDrivers(c as never, { operating_company_id: "c" });
+    const q = c.qs.find((x) => /FROM fuel\.fuel_transactions ft/.test(x.sql))!;
+    expect(q.sql).toMatch(/ft\.relay_fuel_transaction_id = \$3::uuid/);
+    expect(q.values[2]).toBe("r1");
+    expect(r.relay_updated).toBe(1);
+    expect((audit.calls[0]?.[3] as { source: string }).source).toBe("fuel_row");
+  });
+  it("two different drivers on the fill's rows is a named question, never a pick", async () => {
+    audit.calls = [];
+    const c = client({ linkDriver: null, fuelDriver: null, fuelDrivers: ["luis", "angel"], integrationId: null });
+    const r = await rematchRelayFuelDrivers(c as never, { operating_company_id: "c" });
+    expect(r.relay_updated).toBe(0);
+    expect(r.unresolved_reasons).toEqual({ fuel_rows_name_different_drivers: 1 });
   });
 });
