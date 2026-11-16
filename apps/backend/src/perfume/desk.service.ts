@@ -1109,10 +1109,22 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
 /** A one-click link for a row that is not matched yet: link competitor/my line `row_id` to item `item_id`. */
 export type MatchCandidate = { row_id: string; item_id: string; label: string; price_cents: number | null; why: string };
 
+/** Builds in flight, per cache key (owner 2026-11-15 20:15 CT "i need speed"): measured 02:15Z, four requests that
+ *  arrived while the grid was cold each built it again in parallel (41 s each). Now they wait on the ONE build. */
+const _gridBuilding = new Map<string, Promise<GridPayload>>();
+
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
   const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
   const _cached = _gridCache.get(_cacheKey);
   if (_cached) return _cached;
+  const building = _gridBuilding.get(_cacheKey);
+  if (building) return building;
+  const p = buildGridUncached(c, opts, _cacheKey).finally(() => _gridBuilding.delete(_cacheKey));
+  _gridBuilding.set(_cacheKey, p);
+  return p;
+}
+
+async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null }, _cacheKey: string): Promise<GridPayload> {
   await loadNameBrands(c);
   const rules = await getRules(c);
   const target = targetPctOf(rules, opts.targetPct);

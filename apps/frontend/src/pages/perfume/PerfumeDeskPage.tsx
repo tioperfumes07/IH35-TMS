@@ -2,7 +2,7 @@
  * PERFUME-DESK — TIO Perfumes price desk. Owner-only, hidden (no menu entry; reached from the company
  * selector's "Other businesses → TIO Perfumes" or /perfume). Isolated: reads/writes perfume.* only.
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
@@ -330,9 +330,17 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       pushToast(tr("perfume.desk.saved", "Saved as default"), "success");
     } catch (err) { pushToast(userFacingApiError(err, "Not saved"), "error"); } finally { setSavingDefault(false); }
   };
+  // Owner 2026-11-15 20:15 CT ("i type in amor … it took about 1 minute. fix the speed"): measured 02:15Z — every
+  // keystroke ("a", "am", "amo", "amor") sent its own grid request; four ran at once on a cold grid, 41 s each. The search
+  // now asks once the typing pauses (300 ms): one request per word typed, not one per letter.
+  const [qAsked, setQAsked] = useState(q);
+  useEffect(() => {
+    const t = window.setTimeout(() => setQAsked(q), 300);
+    return () => window.clearTimeout(t);
+  }, [q]);
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, q, picks, target, earn, page, pageSize, mine, carried, base, match],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, qAsked, picks, target, earn, page, pageSize, mine, carried, base, match],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q: qAsked, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   // Competition: my columns, then the competitor's, then every supplier's list price (owner 2026-11-14: "the vendors
