@@ -564,7 +564,8 @@ export function AccountingHubPage() {
           board
           label="QBO sync"
           value={qboSyncSummary.label}
-          sub={qboSyncSummary.sub}
+          // Accounting.dc.html: "Not connected" with an empty sub line (the tile is 39px); a queue held for reconnect still says so.
+          sub={qboSyncSummary.label === "Not connected" && qboPending === 0 ? "" : qboSyncSummary.sub}
           tone={qboTone}
           href={hubHref("/banking/qbo-sync-queue")}
           testId="acct-hub-kpi-qbo"
@@ -626,6 +627,8 @@ export function AccountingHubPage() {
           title={`${year} close — ${closedPastCount} of ${Math.max(0, pastMonthsInYear)} past months closed`}
           viewAllHref={hubHref("/accounting/month-close")}
           testId="accounting-hub-close-calendar"
+          // Accounting.dc.html: the legend is the CARD's own footer line (a direct child of the card, 8px 14px, soft rule).
+          footer="4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock."
         >
           <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
             <div
@@ -663,10 +666,6 @@ export function AccountingHubPage() {
                 </div>
               ))}
             </div>
-          </div>
-          {/* Accounting.dc.html: the legend is the card's own footer line — 8px 14px, a soft top rule. */}
-          <div style={{ padding: "8px 14px", borderTop: `1px solid ${V3.borderSoft}`, fontSize: 11, color: V3.muted }}>
-            4 marks per month: bank rec · AR tie-out · AP tie-out · TB = 0 & lock.
           </div>
         </BoardSection>
 
