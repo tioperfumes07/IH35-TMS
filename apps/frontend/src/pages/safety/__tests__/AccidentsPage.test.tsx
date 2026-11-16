@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as safetyApi from "../../../api/safety";
 import { ToastProvider } from "../../../components/Toast";
 import { AccidentsPage } from "../AccidentsPage";
+import { expectDrillHref } from "../../../test-utils/expectDrillHref";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -104,6 +105,6 @@ describe("AccidentsPage", () => {
     } as never);
     render(wrap(<AccidentsPage operatingCompanyId={companyId} />));
     const link = await screen.findByTestId("accident-row-claim-acc-1");
-    expect(link.getAttribute("href")).toBe("/insurance/claims?claim_id=claim-1");
+    expectDrillHref(link, "/insurance/claims?claim_id=claim-1");
   });
 });

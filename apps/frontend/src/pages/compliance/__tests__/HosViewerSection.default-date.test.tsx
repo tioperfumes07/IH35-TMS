@@ -77,14 +77,15 @@ describe("HosViewerSection default date", () => {
       const el = getByTestId("hos-viewer-date");
       expect(el).toBeTruthy();
       return el;
-    })) as HTMLButtonElement;
+    })) as HTMLElement;
+    // The shared DatePicker shows its date in its own masked input (MM/DD/YYYY), beside the calendar button.
+    const shown = dateButton.querySelector<HTMLInputElement>('input[data-control-kind="date"]')?.value ?? "";
     const expected = companyToday();
     const expectedLabel = formatDateUS(expected);
 
-    // The DatePicker trigger renders the display label "MM/DD/YYYY" (SYS-DATE) for companyToday().
-    expect(dateButton.textContent).toContain(expectedLabel);
+    expect(shown).toBe(expectedLabel);
     // Never epoch, empty, or an obviously stale default.
-    expect(dateButton.textContent).not.toContain(formatDateUS("1970-01-01"));
+    expect(shown).not.toContain(formatDateUS("1970-01-01"));
     expect(expectedLabel).toMatch(/^\d{2}\/\d{2}\/\d{4}$/);
   });
 });

@@ -112,9 +112,10 @@ function expectFinanceTabState(activeName: "Hub" | "Overview", inactiveName: "Hu
   const inactiveTab = within(nav).getByRole("link", { name: inactiveName });
 
   expect(activeTab).toHaveAttribute("aria-current", "page");
-  expect(activeTab).toHaveClass("font-semibold");
+  // Every design tab is 600 weight; the active one is marked by its 2px white rule (and aria-current), not a heavier font.
+  expect(activeTab).toHaveClass("border-b-2");
   expect(inactiveTab).not.toHaveAttribute("aria-current");
-  expect(inactiveTab).not.toHaveClass("font-semibold");
+  expect(inactiveTab).not.toHaveClass("border-b-2");
   expect(within(nav).getAllByRole("link").filter((l) => l.getAttribute("aria-current") === "page")).toHaveLength(1);
 }
 

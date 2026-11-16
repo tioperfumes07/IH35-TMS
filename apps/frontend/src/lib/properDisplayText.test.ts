@@ -7,7 +7,9 @@ describe("properPersonOrPlaceName", () => {
     expect(properPersonOrPlaceName("laredo")).toBe("Laredo");
   });
 
-  it("keeps short ALL-CAPS tokens", () => {
-    expect(properPersonOrPlaceName("IH35 TMS")).toBe("IH35 TMS");
+  // Owner ruling 10-22 (443.257-B): names are proper case, never ALL CAPS — only a code token carrying a digit stays upper.
+  it("keeps code tokens with a digit upper, proper-cases the words around them", () => {
+    expect(properPersonOrPlaceName("LAREDO IH35 YARD")).toBe("Laredo IH35 Yard");
+    expect(properPersonOrPlaceName("HUGO GAYTAN")).toBe("Hugo Gaytan");
   });
 });

@@ -30,7 +30,9 @@ export type ListQueryStatus = {
  */
 export function resolveListState(status: ListQueryStatus, isEmpty: boolean): ListState {
   if (status.isError) return "error";
-  if (status.isPending) return "loading";
+  // A pending query that is NOT fetching is disabled (react-query v5: isPending + fetchStatus idle) — it will never settle
+  // on its own, so it is not "loading" (SETL-F443282). isFetching omitted keeps the old reading: pending = loading.
+  if (status.isPending && status.isFetching !== false) return "loading";
   // Zero rows while a fetch is still in flight is NOT settled — keep showing loading
   // rather than flashing an empty state that a moment later fills with data.
   if (isEmpty && status.isFetching) return "loading";

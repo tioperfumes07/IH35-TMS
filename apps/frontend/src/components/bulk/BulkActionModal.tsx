@@ -109,6 +109,11 @@ export function BulkActionModal({
           open={voidModalOpen}
           onClose={() => setVoidModalOpen(false)}
           onSubmit={handleVoidSubmit}
+          // A bulk status change is not a void: no reversing-entry copy, the button names the action, and the reason
+          // keeps the bulk minimum (BULK_REASON_MIN_LENGTH) instead of the void modal's 3.
+          minLength={BULK_REASON_MIN_LENGTH}
+          postsReversingEntry={false}
+          submitLabel={actionLabel}
         />
       ) : null}
     </>

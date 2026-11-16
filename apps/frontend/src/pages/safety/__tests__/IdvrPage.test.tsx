@@ -64,6 +64,7 @@ describe("IdvrPage", () => {
     const user = userEvent.setup();
     render(wrap(<IdvrPage operatingCompanyId="11111111-1111-4111-8111-111111111111" />));
     await user.click(await screen.findByTestId("idvr-row-dvir-1"));
-    expect(navigateSpy).toHaveBeenCalledWith("/safety/idvr/dvir-1");
+    // The detail opens with the list as its return (ret=), so Back comes here.
+    expect(navigateSpy).toHaveBeenCalledWith("/safety/idvr/dvir-1?ret=%2Fsafety%2Fidvr");
   });
 });

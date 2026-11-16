@@ -11,6 +11,8 @@ function properWord(word: string): string {
   if (KEEP_UPPER.has(bare)) return bare === "JR" || bare === "SR" ? `${bare[0]}${bare.slice(1).toLowerCase()}${word.endsWith(".") ? "." : ""}` : bare;
   const isMixed = word !== word.toUpperCase() && word !== word.toLowerCase() && word.slice(1) !== word.slice(1).toLowerCase();
   if (isMixed) return word;
+  // A token with a digit is a code, not a name word — highway, unit, suite: "IH35", "US83", "I-35" stay as typed.
+  if (/\d/.test(word)) return word.toUpperCase();
   // Hyphenated and apostrophe parts each get a capital: "PEREZ-GARCIA" → "Perez-Garcia", "O'NEIL" → "O'Neil".
   return word
     .toLowerCase()

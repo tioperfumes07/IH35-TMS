@@ -168,7 +168,12 @@ function main() {
   // /finance/overview). Still derived from the route — never from a prop or local state.
   if (
     !navySubNavSrc.includes('aria-current={activeTo === item.to ? "page" : undefined}') ||
-    !/const activeTo = mostSpecificActiveTo\(\s*pathname,/.test(navySubNavSrc)
+    // ROUND 12.3 (#29761): activeTo picks between the most specific LEAF match and the most specific MENU-CHILD match —
+    // both still mostSpecificActiveTo(pathname, …). Require that both come from the route and that activeTo is built
+    // from them, never from a prop or local state.
+    !/const leafTo = mostSpecificActiveTo\(\s*pathname,/.test(navySubNavSrc) ||
+    !/const childTo = mostSpecificActiveTo\(\s*pathname,/.test(navySubNavSrc) ||
+    !/const activeTo = \(leafTo\b[^;]*childTo/.test(navySubNavSrc)
   ) {
     failures.push("shared NavyPageSubNav must set aria-current from route state");
   }

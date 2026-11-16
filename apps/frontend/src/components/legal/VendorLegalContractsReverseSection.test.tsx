@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import { VendorLegalContractsReverseSection } from "./VendorLegalContractsReverseSection";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 
 const listContracts = vi.fn().mockResolvedValue({
   contracts: [{
@@ -29,7 +30,7 @@ describe("VendorLegalContractsReverseSection", () => {
       </QueryClientProvider>,
     );
 
-    expect(await screen.findByRole("link", { name: "Vendor NDA" })).toHaveAttribute("href", "/legal/contracts?contract_id=contract-1");
+    expectDrillHref(await screen.findByRole("link", { name: "Vendor NDA" }), "/legal/contracts?contract_id=contract-1");
     expect(listContracts).toHaveBeenCalledWith({
       operating_company_id: "usmca",
       signer_type: "vendor",
