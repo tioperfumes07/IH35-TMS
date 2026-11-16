@@ -1211,7 +1211,9 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     { key: "category", label: "Kind", group: "Item", kind: "text" },
     { key: "upc", label: "UPC", group: "Item", kind: "text" },
     // MINE — left of every vendor column.
-    { key: "landed_likely", label: "My cost", group: "Mine", kind: "money" },
+    // Owner 2026-11-15 20:43 CT ("yes change"): this is an ESTIMATE from the suppliers' lists (cheapest supplier price −
+    // low cushion + high freight), never his cost — named so. His real cost is "My actual cost" (his inventory file).
+    { key: "landed_likely", label: "Est. cost (best supplier)", group: "Mine", kind: "money" },
     { key: "best_vendor", label: "Buy from", group: "Mine", kind: "text" },
     { key: "target_price_margin", label: `My price @${target}%`, group: "Mine", kind: "money" },
     { key: "target_profit", label: `My profit @${target}%`, group: "Mine", kind: "money" },
@@ -1228,7 +1230,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // file, else the quantities on my offer list ("you uploaded my price list and quantities").
   if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty" : "Inv qty (my list)", group: "Mine", kind: "int" });
   mineCols.push(
-    { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+    { key: "my_last_cost", label: "My actual cost (last purchase)", group: "Mine", kind: "money" },
     { key: "my_purchase_date", label: "Purchase date", group: "Mine", kind: "text" },
     { key: "my_qty_purchased", label: "Qty purchased", group: "Mine", kind: "int" },
     { key: "my_qty_sold", label: "Qty sold", group: "Mine", kind: "int" },
@@ -1906,7 +1908,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
       return v;
     });
     const row = ws.addRow(values);
-    // Live formulas: My cost = vendor price − cushion + freight; margin and markup from it.
+    // Live formulas: Est. cost (best supplier) = vendor price − cushion + freight; margin and markup from it.
     const p = idx("best_price"), cu = idx("cushion"), fr = idx("freight"), lk = idx("landed_likely"), lo = idx("low_sell"), mg = idx("margin"), mk = idx("markup"), pf = idx("profit");
     if (p >= 0 && cu >= 0 && fr >= 0 && lk >= 0 && r.best_price != null) {
       row.getCell(lk + 1).value = { formula: `${L(p)}${excelRow}-${L(cu)}${excelRow}+${L(fr)}${excelRow}`, result: Number(r.landed_likely) / 100 };
@@ -1942,7 +1944,8 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   paintGridLikeTheDesk(ws, cols, rows);
   const how = wb.addWorksheet("How computed");
   for (const line of [
-    ["My cost", "Vendor price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
+    ["Est. cost (best supplier)", "An estimate, not my cost: cheapest supplier price − low cushion + high freight (the safe number: the smaller discount and the larger freight)"],
+    ["My actual cost (last purchase)", "What I really paid — from my inventory file (TIO · My inventory). Blank until that file is uploaded; never a supplier price"],
     ["Purchase · Cushion", "List price − the cushion that vendor gives (its own, else the rule's low cushion)"],
     ["Competition · Their sales price", "Their list price − the cushion tier ($10 and under: $0.25, over $10: $0.50, over $30: $1.00 — set in Rules)"],
     ["Competition · Their cost ≈", "Their sales price × (1 − the margin I estimate they earn) — typed on the grid, else the competitor's own %, else Rules"],
@@ -1951,9 +1954,9 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
     ["Trading · Sell to them ≈", "(Their list price − their cushion) × (1 − the % they earn) — about what that supplier pays, so the most I can sell to them at"],
     ["Mine · My price beats their cost at", "Suppliers whose cost is at or above my price at X% — my offer is good enough for them"],
     ["Mine · Raise / lower", "Lowest competitor − my price at X%: positive = room to raise, negative = lower to compete"],
-    ["Sell at X% margin", "My cost ÷ (1 − X%) — X is the margin typed on the grid"],
-    ["Sell at X% markup", "My cost × (1 + X%)"],
-    ["Profit at X% margin", "Sell at X% margin − my cost"],
+    ["Sell at X% margin", "Est. cost ÷ (1 − X%) — X is the margin typed on the grid"],
+    ["Sell at X% markup", "Est. cost × (1 + X%)"],
+    ["Profit at X% margin", "Sell at X% margin − est. cost"],
     ["Most I can pay for X%", "Lowest Laredo list price × (1 − X%) — buy at or under this to still earn X% at Laredo's low price"],
     ["Laredo low − my X% price", "Positive = my X% price is under the lowest Laredo price"],
     ["Closed numbers", `Every computed price rounds ${rules.round_dir} to ${rules.round_step === "75" ? "a price ending in .75" : `$${(Number(rules.round_step) / 100).toFixed(2)}`}`],

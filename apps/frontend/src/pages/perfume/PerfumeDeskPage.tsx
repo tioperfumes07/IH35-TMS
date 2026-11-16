@@ -115,7 +115,7 @@ export default function PerfumeDeskPage() {
 
 const VIEW_HELP: Record<PerfumeGridView, string> = {
   buy: "Buying from your suppliers: my last cost, purchase date, qty purchased, inventory and qty sold (from my inventory file — inventory from my list until it is uploaded), who is cheapest (Buy from), then each supplier's list price and its price less the cushion (Cushion).",
-  trade: "Selling to your suppliers: your cost once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
+  trade: "Selling to your suppliers: your estimated cost (best supplier) and your actual cost (from your inventory file) once, then for each supplier its list price, about what it earns on the item (list price − cushion − what it pays), and about the price you need to sell to it at ((list price − cushion) less Their earn %).",
   wholesale: "My offer price against each competitor's real price: their list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30). Over/under in $ and %, and the % to reduce my price (or the room to raise). Their description sits next to mine so every match can be checked.",
   comp: "Each competitor's margin if they buy from the cheapest supplier: that supplier's list price less the cushion ($0.25 at $10 and under, $0.50 over $10, $1.00 over $30 — change it in Rules) is their cost; their price less that is what they earn.",
   analysis: "My list analysed in my own format: ITEM · SALES (purchase date, qty, last cost, sold, inventory, margin, markup, offer, Esperanza, lowest sales price) · Purchases (min purchase price to match La Esperanza at Min margin — the My margin % box, 15 when empty — lowest vendor and price) · Analysis (under / over, % to raise or lower, new margin) · COMPETITOR (list price, cushion, sales price). Blank = that figure is not in any upload yet.",
@@ -701,7 +701,7 @@ function RulesPanel() {
         </span>
       </div>
       <div className="text-xs text-gray-600">
-        {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. My cost = vendor price − low cushion + high freight (the safe number); best case = vendor price − high cushion + low freight. Margin = profit ÷ price. Markup = profit ÷ cost.")}
+        {vendors.data?.vendors?.length ?? 0} {tr("perfume.desk.32", "vendors ·")} {lists.data?.lists?.length ?? 0} {tr("perfume.desk.33", "price lists on file. Est. cost (best supplier) = cheapest supplier price − low cushion + high freight (an estimate, the safe number; not your cost); best case = vendor price − high cushion + low freight. My actual cost = what you paid, from your inventory file. Margin = profit ÷ price. Markup = profit ÷ cost.")}
       </div>
     </section>
   );
