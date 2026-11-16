@@ -1173,11 +1173,16 @@
   "202616620100": {
     "claimed_at": "2026-11-14",
     "claimed_by": "lead",
-    "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows — owner 2026-11-14"
+    "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows \u2014 owner 2026-11-14"
   },
   "202616630100": {
     "claimed_at": "2026-11-14",
     "claimed_by": "lead",
-    "purpose": "PERFUME my-list lines without a price (owner offer/inventory lists): perfume.price_list_rows.price_cents nullable — owner 2026-11-14"
+    "purpose": "PERFUME my-list lines without a price (owner offer/inventory lists): perfume.price_list_rows.price_cents nullable \u2014 owner 2026-11-14"
+  },
+  "202616640100": {
+    "claimed_at": "2026-11-16",
+    "claimed_by": "lead",
+    "purpose": "E-12: safety.harsh_events.event_kind adds following_distance, railroad_crossing, lane_departure, unsafe_parking \u2014 Samsara safety events measured on /fleet/safety-events that were counted and dropped (no kind)"
   }
 }

@@ -19,7 +19,9 @@ type HarshEventInput = {
   unit_id: string;
   event_at: string;
   raw_samsara_id: string;
-  event_kind: "harsh_brake" | "harsh_accel" | "harsh_turn" | "speeding" | "mobile_use" | "distracted" | "rolling_stop" | "no_seatbelt";
+  event_kind:
+    | "harsh_brake" | "harsh_accel" | "harsh_turn" | "speeding" | "mobile_use" | "distracted" | "rolling_stop" | "no_seatbelt"
+    | "following_distance" | "railroad_crossing" | "lane_departure" | "unsafe_parking";
   severity: "minor" | "major" | "critical";
   speed_at_event_mph?: number | null;
   g_force?: number | null;
@@ -36,6 +38,11 @@ function toSeverity(value: string): HarshEventInput["severity"] {
 
 function mapEventKind(value: string): HarshEventInput["event_kind"] | null {
   const normalized = value.trim().toLowerCase();
+  // ROUND 12 E-12 — the four Samsara kinds stored since migration 202616640100 (exact kind names first).
+  if (normalized === "following_distance" || normalized.includes("following")) return "following_distance";
+  if (normalized === "railroad_crossing" || normalized.includes("railroad")) return "railroad_crossing";
+  if (normalized === "lane_departure" || normalized.includes("lane")) return "lane_departure";
+  if (normalized === "unsafe_parking" || normalized.includes("parking")) return "unsafe_parking";
   if (normalized.includes("brake")) return "harsh_brake";
   if (normalized.includes("accel")) return "harsh_accel";
   if (normalized.includes("turn") || normalized.includes("corner")) return "harsh_turn";
