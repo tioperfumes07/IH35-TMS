@@ -57,6 +57,7 @@ export function FactoringBoardChrome({
               background: "none",
               border: "none",
               padding: 0,
+              boxSizing: "content-box", // the design's "← Back" is a <span>
               cursor: "pointer",
               fontFamily: V3.font,
               lineHeight: "normal",

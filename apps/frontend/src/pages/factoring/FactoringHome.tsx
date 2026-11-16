@@ -1114,7 +1114,9 @@ export function FactoringHomePage({ initialTab = "account_summary" }: FactoringH
       >
         Submit to Factor
       </Link>
-      <details className="relative inline-block">
+      {/* Factoring.dc.html: "Related ▾" is a flex item of the action row (gap 12, centered) — the <details> wrapper lays out
+          the same way so the button keeps the drawn box (reader 11-16: inline-block wrapper). */}
+      <details className="relative" style={{ display: "flex", alignItems: "center", columnGap: 12 }}>
         <summary
           style={{ ...V3_HEADER_BTN, listStyle: "none" }}
           className="[&::-webkit-details-marker]:hidden"

@@ -74,7 +74,7 @@ describe("RecoursePipelineTable (NEW-21 detail-view column order)", () => {
     expect(idx("Reserve")).toBeGreaterThan(idx("Advance"));
     expect(idx("Factoring fee")).toBeGreaterThan(idx("Reserve"));
 
-    expect(screen.getByText("$3500.00")).toBeTruthy(); // invoice_amount, real, was never rendered before
+    expect(screen.getByText("$3,500.00")).toBeTruthy(); // invoice_amount (MoneyCell: US grouping), real, was never rendered before
   });
 
   it("Factoring fee column shows the real per-advance fee from feesByAdvance, not a hardcoded dash", () => {
