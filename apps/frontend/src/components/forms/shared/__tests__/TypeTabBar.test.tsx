@@ -19,7 +19,8 @@ describe("TypeTabBar", () => {
     expect((active as HTMLButtonElement).style.borderBottom).toContain("2px solid");
     expect((active as HTMLButtonElement).style.color).toBe("rgb(31, 42, 68)");
     expect((inactive as HTMLButtonElement).style.borderBottom).toContain("2px solid transparent");
-    expect((inactive as HTMLButtonElement).style.color).toBe("rgb(148, 163, 184)");
+    // BANK-F91512 (#25254) retired the #94a3b8 muted for #4B5563 (legible on white); the test kept the old value.
+    expect((inactive as HTMLButtonElement).style.color).toBe("rgb(75, 85, 99)");
   });
 
   it("fires onChange when clicking inactive tab", () => {

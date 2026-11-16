@@ -323,7 +323,8 @@ describe("CostBreakdownBox", () => {
     fireEvent.change(screen.getByDisplayValue("Category"), { target: { value: "Updated desc" } });
     expect((onSectionAChange.mock.lastCall?.[0] as CategoryLine[])[0].description).toBe("Updated desc");
 
-    fireEvent.change(screen.getByDisplayValue("1"), { target: { value: "3" } });
+    // Qty is the shared NumberInput (decimals 4): it FORMATS ("1.0000"), so it is found by its label, not "1".
+    fireEvent.change(screen.getByLabelText("Qty"), { target: { value: "3" } });
     expect((onSectionAChange.mock.lastCall?.[0] as CategoryLine[])[0].amount).toBe(30);
 
     // Cost is a MoneyInput: it FORMATS the value, so 10 displays as "10.00" and getByDisplayValue("10")
@@ -369,7 +370,8 @@ describe("CostBreakdownBox", () => {
     pickCombo(screen.getAllByPlaceholderText(/select location/i)[0], "STEER-L");
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].location_label).toBe("STEER-L");
 
-    fireEvent.change(screen.getByDisplayValue("2"), { target: { value: "4" } });
+    // Qty is the shared NumberInput (decimals 4): it FORMATS (value), so it is found by its label.
+    fireEvent.change(screen.getByLabelText("Quantity"), { target: { value: "4" } });
     expect((onSectionBChange.mock.lastCall?.[0] as ItemLine[])[0].amount).toBe(40);
 
     fireEvent.change(screen.getByDisplayValue("10.00"), { target: { value: "8" } });
@@ -428,8 +430,8 @@ describe("CostBreakdownBox", () => {
 
     const partDescInput = screen.getByDisplayValue("Old part");
     const partRow = partDescInput.closest("div.mb-1.grid");
-    const numericInputs = within(partRow as HTMLElement).getAllByRole("spinbutton");
-    fireEvent.change(numericInputs[0], { target: { value: "3" } });
+    // The sub-row quantity is the shared NumberInput (a text box with inputMode decimal, not a spinbutton).
+    fireEvent.change(within(partRow as HTMLElement).getByLabelText("Sub-row quantity"), { target: { value: "3" } });
     next = onSectionBChange.mock.lastCall?.[0] as ItemLine[];
     expect(next[0].sub_rows?.[0].amount).toBe(15);
 

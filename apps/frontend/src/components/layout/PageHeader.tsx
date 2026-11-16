@@ -97,7 +97,8 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
               fontSize: typography.pageHeading,
               color: colors.pageHeading,
               fontWeight: 700,
-              whiteSpace: "nowrap",
+              // ROUND 12 (reader 11-16 00:48Z): the V3 title carries no white-space (normal). flexShrink 0 already keeps it
+              // at its own width, so it never wraps.
               flexShrink: 0,
             }}
           >
@@ -108,13 +109,10 @@ export function PageHeader({ backHref, onBack, breadcrumb, title, subtitle, acti
               style={{
                 fontSize: typography.pageSubtitle,
                 color: colors.mutedText,
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                // minWidth: 0 is required for the ellipsis — without it a flex item refuses to shrink
-                // below its content width and text-overflow silently never engages.
-                minWidth: 0,
-                flexShrink: 999,
+                // ROUND 12 (reader 11-16 00:48Z, 29 boards): the V3 subtitle is plain text — white-space normal, no ellipsis.
+                // It still never stacks under the title: flexShrink 0 keeps it on one line at its own width, and the
+                // title row (overflow hidden) clips what does not fit instead of squeezing the module name.
+                flexShrink: 0,
               }}
             >
               {subtitle}
