@@ -1,14 +1,14 @@
-import { useMemo, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { HoverDropdownNav } from "../../components/forms/shared/HoverDropdownNav";
+import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
 type SubNavItem = { label: string; to: string };
 
 /**
- * ROUND 9.4 Board 18 / ROUND 443.326 — Factoring chrome: breadcrumb + V3 header + HoverDropdownNav tab strip.
+ * ROUND 9.4 Board 18 / ROUND 443.326 — Factoring chrome: breadcrumb + V3 header + the V3 navy sub-nav (ROUND 12).
  * Board grammar only — legacy chrome removed per verify-v3-board-grammar-every-surface.
  */
 export function FactoringBoardChrome({
@@ -29,11 +29,6 @@ export function FactoringBoardChrome({
   const navigate = useNavigate();
   const structuralParent = "/factoring";
   const resolvedBack = resolveBackHref({ searchParams, pathname, fallback: structuralParent });
-
-  const navItems = useMemo(
-    () => subnavItems.map((item) => ({ label: item.label, href: item.to })),
-    [subnavItems],
-  );
 
   return (
     <>
@@ -67,9 +62,10 @@ export function FactoringBoardChrome({
               lineHeight: "normal",
             }}
           >
-            {"←"}
+            {"← Back"}
           </button>
-          <h1 style={{ margin: 0, font: `700 18px ${V3.font}`, color: V3.ink, lineHeight: "normal", height: 22 }}>
+          {/* Factoring.dc.html: "← Back", then the title at its natural 700 18px line (no pinned 22px). */}
+          <h1 style={{ margin: 0, font: `700 18px ${V3.font}`, color: V3.ink, lineHeight: "normal" }}>
             {title}
           </h1>
           {subtitle ? (
@@ -89,7 +85,9 @@ export function FactoringBoardChrome({
         data-factoring-board-tabs-wrap="1"
       >
         <div data-testid="factoring-board-tabs">
-          {nav ?? <HoverDropdownNav items={navItems} />}
+          {/* Factoring.dc.html draws the same navy V3 sub-nav every board draws (32px, tabs stretch): reader 11-16 03:05Z —
+              the hover nav drew 9 tabs 30px tall. */}
+          {nav ?? <NavyPageSubNav items={subnavItems.map((item) => ({ label: item.label, to: item.to }))} />}
         </div>
       </div>
     </>
