@@ -1,6 +1,6 @@
 import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -122,14 +122,16 @@ describe("FinesPage (A23-9)", () => {
 
     await user.click(screen.getByRole("button", { name: "Open" }));
     await waitFor(() => expect(screen.getByTestId("fine-detail-drawer")).toBeTruthy());
-    expect(screen.getByText("Neftali Coronado Urbano")).toBeTruthy();
+    // The name shows in the list row and in the drawer; the drawer is what the conversion re-renders.
+    const drawer = () => within(screen.getByTestId("fine-detail-drawer"));
+    expect(drawer().getByText("Neftali Coronado Urbano")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: "Convert to Driver Liability" }));
     await user.click(screen.getByRole("button", { name: "Confirm conversion" }));
 
     await waitFor(() => expect(safetyApi.convertFineToLiability).toHaveBeenCalledWith("fine-1", companyId));
-    await waitFor(() => expect(screen.getByText("Liability")).toBeTruthy());
-    expect(screen.getByText("Neftali Coronado Urbano")).toBeTruthy();
+    await waitFor(() => expect(drawer().getByText("Liability")).toBeTruthy());
+    expect(drawer().getByText("Neftali Coronado Urbano")).toBeTruthy();
     expect(screen.queryByText("Driver — not visible")).toBeNull();
   });
 });

@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 import { InsuranceSummarySection } from "./InsuranceSummarySection";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 
 describe("InsuranceSummarySection linked policy reverse", () => {
   it("renders a real policy_unit link as a canonical policy drill", () => {
@@ -25,10 +26,7 @@ describe("InsuranceSummarySection linked policy reverse", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByRole("link", { name: "POL-888" })).toHaveAttribute(
-      "href",
-      "/insurance/policies/00000000-0000-4000-8000-000000000888",
-    );
+    expectDrillHref(screen.getByRole("link", { name: "POL-888" }), "/insurance/policies/00000000-0000-4000-8000-000000000888");
     expect(screen.getByText("AL ON")).toBeInTheDocument();
     expect(screen.getByTestId("vp-insurance-document-evidence")).toHaveTextContent("NOT EVIDENCED");
   });

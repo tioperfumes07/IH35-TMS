@@ -10,6 +10,11 @@ import { AccidentReportDrawer } from "./AccidentReportDrawer";
 import { pickCombo } from "../../test-utils/pickCombo";
 import * as loadsApi from "../../api/loads";
 
+// The drawer mounts the shared VoidReasonModal (closed until Void), which reads the selected company.
+vi.mock("../../contexts/CompanyContext", () => ({
+  useCompanyContext: () => ({ selectedCompanyId: "co-1" }),
+}));
+
 // Spread the real module instead of replacing it wholesale. This mock listed only the six writes the
 // drawer used when the file was written; the drawer has since started reading user preferences, and a
 // bare replacement turned that into a hard "No getUserPreferences export is defined on the mock" that
@@ -31,7 +36,8 @@ vi.mock("../../api/safety", async (importOriginal) => {
 // SC1: the four catalogs source from the real company-scoped list functions.
 vi.mock("../../api/mdata", () => ({
   listDrivers: vi.fn().mockResolvedValue({
-    drivers: [{ id: "driver-uuid-1", first_name: "Alfredo", last_name: "Cazares" }],
+    // The driver picker offers only drivers whose recorded status is on the roster (Active) — LEAD 443.257-B.
+    drivers: [{ id: "driver-uuid-1", first_name: "Alfredo", last_name: "Cazares", status: "Active" }],
     total: 1,
   }),
   listUnits: vi.fn().mockResolvedValue({ units: [{ id: "unit-uuid-1", unit_number: "T-101" }], total: 1 }),
@@ -258,8 +264,10 @@ describe("AccidentReportDrawer catalogs (SC1)", () => {
   it("B9: Report Date renders the shared calendar DatePicker, not a raw text input", async () => {
     render(wrap(<AccidentReportDrawer open operatingCompanyId="co-1" accident={draft} createMode onClose={() => {}} onUpdated={() => {}} />));
     const reportDateWrap = await screen.findByTestId("accident-report-date");
-    // The shared DatePicker renders a <button> that opens a calendar — never a raw <input>.
-    expect(within(reportDateWrap).getByRole("button")).toBeInTheDocument();
-    expect(reportDateWrap.querySelector("input")).toBeNull();
+    // The shared DatePicker: its own masked MM/DD/YYYY input plus a calendar button — never a bare text field.
+    expect(within(reportDateWrap).getByRole("button", { name: /calendar/i })).toBeInTheDocument();
+    const inputs = reportDateWrap.querySelectorAll("input");
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0].getAttribute("data-control-kind")).toBe("date");
   });
 });

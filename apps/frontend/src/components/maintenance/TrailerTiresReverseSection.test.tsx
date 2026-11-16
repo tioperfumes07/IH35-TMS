@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TrailerTiresReverseSection } from "./TrailerTiresReverseSection";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 
 const listMaintenanceTireRecords = vi.fn();
 vi.mock("../../api/maintenance", () => ({
@@ -19,7 +20,7 @@ describe("TrailerTiresReverseSection", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(<QueryClientProvider client={client}><MemoryRouter><TrailerTiresReverseSection operatingCompanyId="usmca" equipmentId="trailer-1" /></MemoryRouter></QueryClientProvider>);
     const links = await screen.findAllByRole("link", { name: /Open tire program|Trailer Left 1/ });
-    expect(links.every((link) => link.getAttribute("href") === "/maintenance/tires?equipment_id=trailer-1")).toBe(true);
+    links.forEach((link) => expectDrillHref(link, "/maintenance/tires?equipment_id=trailer-1"));
     expect(listMaintenanceTireRecords).toHaveBeenCalledWith("usmca", { equipment_id: "trailer-1" });
   });
 });

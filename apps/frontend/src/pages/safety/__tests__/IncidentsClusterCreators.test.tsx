@@ -46,7 +46,8 @@ beforeEach(() => {
     photo_keys: ["k"],
   });
   vi.spyOn(mdataApi, "listDrivers").mockResolvedValue({
-    drivers: [{ id: driverId, first_name: "Ana", last_name: "Mecor" }] as never,
+    // The driver picker offers only drivers whose recorded status is on the roster (Active).
+    drivers: [{ id: driverId, first_name: "Ana", last_name: "Mecor", status: "Active" }] as never,
     total: 1,
   });
   // The TRAILER picker is EntityPicker kind="trailer", which reads `listEquipment` (GET /mdata/equipment) —
@@ -159,9 +160,12 @@ describe("Incidents cluster typed creators (SC-CLUSTER: damage + interchange)", 
     const saveBtn = screen.getByTestId("trailer-interchanges-page-save-btn") as HTMLButtonElement;
     await waitFor(() => expect(saveBtn.disabled).toBe(false));
     fireEvent.click(saveBtn);
+    // The no-photos warning is the page's own ConfirmModal now (browser confirm() never shows in the app).
+    expect(createSpy).not.toHaveBeenCalled();
+    fireEvent.click(await screen.findByRole("button", { name: "Create without photos" }));
 
     await waitFor(() => expect(createSpy).toHaveBeenCalledTimes(1));
-    expect(confirmSpy).toHaveBeenCalled();
+    expect(confirmSpy).not.toHaveBeenCalled();
     const payload = createSpy.mock.calls[0][0] as Record<string, unknown>;
     expect(payload.trailer_id).toBe(trailerId);
     expect(payload.interchange_party).toBe("Carrier XYZ");

@@ -5,6 +5,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import * as clientApi from "../../../api/client";
 import { ToastProvider } from "../../../components/Toast";
 import { TrailerProfilePage } from "../TrailerProfilePage";
+import { expectDrillHref } from "../../../test-utils/expectDrillHref";
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
@@ -68,8 +69,8 @@ describe("TrailerProfilePage", () => {
     expect(screen.getByTestId("tp-section-2-specs")).toBeTruthy();
     expect(screen.getByTestId("tp-section-3-assignment")).toBeTruthy();
     expect(screen.getByTestId("tp-section-3b-load-history")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "L-100" })).toHaveAttribute("href", "/dispatch/loads/load-1");
-    expect(screen.getByRole("link", { name: "Test Driver" })).toHaveAttribute("href", "/drivers/driver-1");
+    expectDrillHref(screen.getByRole("link", { name: "L-100" }), "/dispatch/loads/load-1");
+    expectDrillHref(screen.getByRole("link", { name: "Test Driver" }), "/drivers/driver-1");
     expect(screen.getByTestId("tp-section-4-reefer")).toBeTruthy();
     expect(screen.getByTestId("tp-section-5-maintenance")).toBeTruthy();
     expect(screen.getByTestId("service-timeline")).toBeTruthy();

@@ -210,6 +210,9 @@ export function StatusChangeModal({ open, trailerId, companyId, currentStatus, o
         open={voidModalOpen}
         onClose={() => setVoidModalOpen(false)}
         onSubmit={(reasonCode) => handleVoidSubmit(reasonCode)}
+        // A status change is not a void: no reversing-entry copy, and the button says what it does.
+        postsReversingEntry={false}
+        submitLabel="Save status"
       />
     </>
   );

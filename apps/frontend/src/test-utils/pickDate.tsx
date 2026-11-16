@@ -19,10 +19,15 @@ import { within, fireEvent } from "@testing-library/react";
  *              never a disabled leading/trailing blank and never out of range for a min="today" picker.
  */
 export function pickDate(field: HTMLElement, day = 15): void {
-  const trigger = within(field).getAllByRole("button")[0];
+  // The DatePicker is a masked input plus a calendar button (aria-haspopup="dialog"); prefer that button.
+  const trigger =
+    field.querySelector<HTMLElement>('button[aria-haspopup="dialog"]') ?? within(field).queryAllByRole("button")[0];
   if (!trigger) throw new Error("pickDate: no DatePicker trigger button found in the given field");
   fireEvent.click(trigger);
-  const dayCell = within(field)
+  // The calendar is portaled to document.body (role="dialog" "Choose date"); fall back to the field for inline ones.
+  const popovers = Array.from(document.querySelectorAll<HTMLElement>('[data-date-picker-popover="open"]'));
+  const scope = popovers[popovers.length - 1] ?? field;
+  const dayCell = within(scope)
     .getAllByRole("button")
     .find((b) => b.textContent?.trim() === String(day) && !(b as HTMLButtonElement).disabled);
   if (!dayCell) {

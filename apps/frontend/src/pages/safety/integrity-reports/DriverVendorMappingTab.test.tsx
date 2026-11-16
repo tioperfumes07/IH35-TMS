@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { DriverVendorMappingTab } from "./DriverVendorMappingTab";
 
@@ -27,10 +28,13 @@ const findingsResponse = {
 function wrap() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
+    // MemoryRouter: the tab reads the location for its drill links; the app always renders it inside the router.
     <QueryClientProvider client={client}>
-      <ToastProvider>
-        <DriverVendorMappingTab />
-      </ToastProvider>
+      <MemoryRouter>
+        <ToastProvider>
+          <DriverVendorMappingTab />
+        </ToastProvider>
+      </MemoryRouter>
     </QueryClientProvider>
   );
 }

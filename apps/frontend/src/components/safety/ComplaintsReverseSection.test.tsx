@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ComplaintsReverseSection } from "./ComplaintsReverseSection";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 
 const getComplaints = vi.fn();
 let role = "Safety";
@@ -38,7 +39,7 @@ describe("ComplaintsReverseSection", () => {
   it("uses the exact customer filter and drills to the highlighted complaint", async () => {
     renderSection({ customer_id: "customer-1" });
     const link = await screen.findByRole("link", { name: "Late delivery complaint" });
-    expect(link.getAttribute("href")).toBe("/safety/complaints?complaint_id=complaint-1");
+    expectDrillHref(link, "/safety/complaints?complaint_id=complaint-1");
     expect(getComplaints).toHaveBeenCalledWith("usmca", { customer_id: "customer-1", limit: 25, offset: 0 });
   });
 

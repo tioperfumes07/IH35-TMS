@@ -55,7 +55,8 @@ describe("CSA Score source honesty", () => {
     expect((await screen.findAllByText("Unavailable")).length).toBeGreaterThan(0);
 
     const hazmatLabel = screen.getByText("Hazmat");
-    const hazmatCard = hazmatLabel.closest("div.rounded-sm");
+    // Each BASIC card is a ruled tile (border-t) inside one rounded panel; scope to the Hazmat tile itself.
+    const hazmatCard = hazmatLabel.closest("div.border-t");
     expect(hazmatCard).not.toBeNull();
     expect(within(hazmatCard as HTMLElement).getByText("-")).toBeInTheDocument();
     expect(

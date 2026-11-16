@@ -49,7 +49,9 @@ describe("UniversalListToolbar", () => {
     await user.click(screen.getByRole("button", { name: "Date or amount range" }));
     expect(screen.getByText("Choose a field above to set From/To.")).toBeInTheDocument();
     expect(screen.queryByText("This list has no date or amount column to range-filter.")).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "SOL / hearing" })).toBeInTheDocument();
+    // The field picker is the shared SelectCombobox — its options exist once it is opened, as a user opens it.
+    await user.click(screen.getByRole("combobox"));
+    expect(await screen.findByRole("option", { name: "SOL / hearing" })).toBeInTheDocument();
   });
 
   it("keeps search at a fixed QBO width instead of stretching", () => {
