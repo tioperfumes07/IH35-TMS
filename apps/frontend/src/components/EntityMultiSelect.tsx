@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MultiSelectDropdown } from "./forms/MultiSelectDropdown";
@@ -16,13 +17,15 @@ export type EntityMultiSelectProps = {
   disabled?: boolean;
   driverRoster?: "active_only" | "active_or_probation";
   /** V3 board filter: the "Customer ▾" 28px button (MultiSelectDropdown board), no chip row under it. */
+  /** Board + flat: no wrapper at all — the button sits straight in the caller's filter bar (report-family designs). */
+  flat?: boolean;
   board?: boolean;
 };
 
 export const entityFilterIds = (value: string | null | undefined): string[] => [...new Set((value ?? "").split(",").map(id => id.trim()).filter(Boolean))];
 
 /** Read-only filter; uses the same scoped roster as EntityPicker and the one multi-select UI. */
-export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, placeholder, ariaLabel, dataTestId, className, disabled, driverRoster = "active_only", board = false }: EntityMultiSelectProps) {
+export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, placeholder, ariaLabel, dataTestId, className, disabled, driverRoster = "active_only", board = false, flat = false }: EntityMultiSelectProps) {
   const config = getEntityPickerConfig(kind);
   const [search, setSearch] = useState("");
   const [held, setHeld] = useState<EntityPickerOption[]>([]);
@@ -52,7 +55,8 @@ export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, p
   }, [held, sameScope, roster.data, value, config.label]);
   const limit = entityPickerListLimit(kind, { search, driverRoster });
   const notice = roster.isError ? `Couldn't load ${config.label} options. Retry by searching again.` : (roster.data?.length ?? 0) >= limit ? `Showing the first ${limit} results. Search to find another ${config.label}; Select shown selects only displayed options.` : undefined;
-  return <div className={className}>
+  const Wrap = board && flat ? Fragment : "div";
+  return <Wrap {...(board && flat ? {} : { className })}>
     <MultiSelectDropdown label={ariaLabel ?? config.label} allLabel={placeholder ?? `All ${config.label.toLowerCase()}s`} options={options} selected={selected}
       onChange={ids => {
         if (ids.length > 100) {
@@ -62,7 +66,7 @@ export function EntityMultiSelect({ kind, operatingCompanyId, value, onChange, p
         setSelectionError(undefined);
         setHeld(options.filter(option => ids.includes(option.value)));
         onChange(ids.length ? ids.join(",") : null);
-      }} searchable selectedChips={!board} board={board} onSearch={setSearch} serverSearch={config.serverSearch} disabled={disabled || !operatingCompanyId} loading={roster.isFetching} listNotice={notice} data-testid={dataTestId} />
+      }} searchable selectedChips={!board} board={board} flat={flat} onSearch={setSearch} serverSearch={config.serverSearch} disabled={disabled || !operatingCompanyId} loading={roster.isFetching} listNotice={notice} data-testid={dataTestId} />
     {selectionError ? <p role="alert">{selectionError}</p> : null}
-  </div>;
+  </Wrap>;
 }
