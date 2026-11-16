@@ -49,7 +49,10 @@ export function audit(s) {
   if (!/withReturnContext|pmHref\(/.test(s.line) || !/searchParams\.get\("fh"\)/.test(s.line)) {
     f.push(`${LABEL}: FleetHealthLine must put cohort in URL (fh) and wrap PM links with return context`);
   }
-  if (!/data-testid="fleet-health-no-last-pm">\{t\("maintenance\.fleetHealth\.noLastPm"\)\}</.test(s.line) || !/t\("maintenance\.fleetHealth\.odometerUnavailable"\)/.test(s.line)) {
+  // #29758 draws every status as the design's one-line pill, so the no-last-PM text sits inside pill(…) within the linked
+  // element — still that element, still that sentence. Require the test id and the noLastPm text on the same element line.
+  const noLastPmLine = s.line.split("\n").find((l) => l.includes('data-testid="fleet-health-no-last-pm"')) ?? "";
+  if (!/t\("maintenance\.fleetHealth\.noLastPm"\)/.test(noLastPmLine) || !/t\("maintenance\.fleetHealth\.odometerUnavailable"\)/.test(s.line)) {
     f.push("R3: the page does not say what is missing (no last PM vs odometer unavailable)");
   }
   const unitReads = (s.route.match(/AND u\.disposed_date IS NULL/g) ?? []).length;
