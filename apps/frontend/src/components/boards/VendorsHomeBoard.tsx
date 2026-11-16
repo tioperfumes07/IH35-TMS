@@ -180,7 +180,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
 
   return (
     <div data-testid="party-board-vendors" data-v3-board="Vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
-      <PartyHomeHeader crumb="" title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
+      <PartyHomeHeader crumb="Vendors" title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
         createLabel={"+ Create Vendor"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
@@ -191,8 +191,6 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
           {/* Opens the fuel-account expense lines (the share's numerator; the list's "Total on these accounts" is it). */}
           <V3KpiTile board label={"Fuel share"} value={b ? (b.kpis.fuel_share_pct == null ? "—" : `${b.kpis.fuel_share_pct}%`) : "…"}
             valueDataV3="vendors-kpi-fuel-share-value"
-            sub={b && b.kpis.fuel_share_pct != null ? `${usd(b.kpis.fuel_cents)} of ${usd(b.kpis.fuel_lines_total_cents)} lines` : undefined}
-            subDataV3="vendors-kpi-fuel-share-sub"
             href={b && b.kpis.fuel_account_ids?.length
               ? `/accounting/expenses?expense_account_id=${b.kpis.fuel_account_ids.join(",")}&has_vendor=true&date_from=${from}`
               : "/vendors?chip=with_transactions"} />
@@ -245,7 +243,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
             {q.isLoading ? <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>{"Loading vendors…"}</div> : (
               <PartyTable<VendorRow> storageKey="party-board-vendors-table" testId="party-board-table" cols={cols} rows={rows} exportRef={exportRef}
                 exportName="vendors.csv" emptyText="Nothing matches this filter."
-                renderFirst={(r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} />} />
+                renderFirst={(r) => <EntityLink kind="vendor" id={r.id} label={formatCompanyName(r.name)} className="text-[#111827] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#6B7280] focus-visible:ring-offset-1 font-semibold" />} />
             )}
           </V3Panel>
         )}
