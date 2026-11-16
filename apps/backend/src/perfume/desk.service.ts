@@ -598,7 +598,7 @@ let identityCacheSig: string | null = null;
 function cachedIdentity(line: { description: string; brand: string | null; size: string | null; gender: string | null }, aliases: Record<string, string>): Identity {
   const sig = currentNameBrandsSig();
   if (sig === null) return identify({ ...line, brandAliases: aliases });
-  if (sig !== identityCacheSig || identityCache.size > 50_000) { identityCache.clear(); identityCacheSig = sig; }
+  if (sig !== identityCacheSig || identityCache.size > 250_000) { identityCache.clear(); identityCacheSig = sig; }
   const key = JSON.stringify([line.description, line.brand, line.size, line.gender]);
   let id = identityCache.get(key);
   if (!id) { id = identify({ ...line, brandAliases: aliases }); identityCache.set(key, id); }
@@ -1532,9 +1532,13 @@ async function buildAnalysisLines(c: PoolClient, x: {
   };
   // Competitor lines not yet linked to an item on MY list: the pool "my list" rows are proposed from.
   const offerItemIds = new Set(x.myLineQ.map((l) => l.item_id).filter((v): v is string => Boolean(v)));
+  // Each competitor line is read ONCE per build and remembered across builds while the brand index is unchanged
+  // (cachedIdentity): 42,566 lines × 0.27 ms was 11.6 s, and it was done twice per build (measured 11-16).
+  const lineId = (l: { description: string; brand: string | null; size_text: string | null; gender_override: string | null }) =>
+    cachedIdentity({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override }, aliases);
   const compPool: CompetitorLine[] = x.theirLineQ.filter((l) => !(l.item_id && offerItemIds.has(l.item_id)) && l.price_cents != null).map((l) => ({
     row_id: l.id, vendor: vLabel.get(l.vendor_id) ?? "", description: l.description, price_cents: l.price_cents!, linked_to: l.item_id ? (itemById.get(l.item_id)?.display_name ?? null) : null,
-    id: identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases }),
+    id: lineId(l),
   }));
   const brandCache = new Map<string, string | null>();
   // A line that starts with a brand the item master knows ("ANIMALE BLACK M 3.4oz") reads as that brand even when the
@@ -1544,15 +1548,19 @@ async function buildAnalysisLines(c: PoolClient, x: {
     .map((b) => ({ b, w: b.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim() })).filter((o) => o.w.length >= 2)
     .concat(Object.entries(aliases).map(([a, b]) => ({ b, w: a.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim() })).filter((o) => o.w.length >= 2))
     .sort((a, b) => b.w.length - a.w.length);
+  // Bucketed by the brand's first word (a line can only start with a brand whose first word is its own first word),
+  // longest first inside each bucket — the same answer as scanning every brand, without scanning every brand per line.
+  const brandsByFirst = new Map<string, typeof knownBrands>();
+  for (const o of knownBrands) { const f = o.w.split(" ")[0]; (brandsByFirst.get(f) ?? brandsByFirst.set(f, []).get(f)!).push(o); }
   const brandByName = (desc: string): string | null => {
     const d = ` ${desc.toUpperCase().replace(/[^A-Z0-9&]+/g, " ").trim()} `;
-    const hit = knownBrands.find((o) => d.startsWith(` ${o.w} `));
+    const hit = (brandsByFirst.get(d.trim().split(" ")[0]) ?? []).find((o) => d.startsWith(` ${o.w} `));
     return hit ? canonicalBrand(hit.b, aliases) || hit.b : null;
   };
   const brandRead = (desc: string | null | undefined, brand: string | null = null): string | null => {
     if (!desc) return null;
     const k = `${brand ?? ""}|${desc}`;
-    if (!brandCache.has(k)) brandCache.set(k, identify({ description: desc, brand, brandAliases: aliases }).brand || brandByName(desc));
+    if (!brandCache.has(k)) brandCache.set(k, cachedIdentity({ description: desc, brand, size: null, gender: null }, aliases).brand || brandByName(desc));
     return brandCache.get(k)!;
   };
   const likelyCache = new Map<string, MatchCandidate[]>();
@@ -1601,7 +1609,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
     const an = l.item_id ? x.anByItem.get(l.item_id) : undefined;
     let cand: MatchCandidate[] = [];
     if (!onMine) {
-      const id = identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: aliases });
+      const id = lineId(l);
       cand = offerCandidates({ description: l.description, brand: l.brand }, id, myOfferItems, 5).map((o) => ({ row_id: l.id, item_id: o.item_id, label: o.display_name, price_cents: null, why: o.why }));
     }
     return {
