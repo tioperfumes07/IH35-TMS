@@ -1,4 +1,4 @@
-import { liveSettlement, notVoided } from "../accounting/live-document-predicates.sql.js";
+import { liveBill, liveBillLine, liveDriverBill, liveExpense, liveSettlement, notVoided } from "../accounting/live-document-predicates.sql.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { loadServiceTrailerLateralSql, loadServiceTrailerNumberSql } from "../dispatch/load-service.js";
 import { z } from "zod";
@@ -619,7 +619,7 @@ async function batchBuildClosedTourRows(
                    OR EXISTS (
                      SELECT 1 FROM driver_finance.settlement_lines sl
                       WHERE sl.settlement_id = sett.id AND sl.operating_company_id = $2::uuid
-                        AND sl.load_id = l.id AND sl.is_active AND sl.voided_at IS NULL))
+                        AND sl.load_id = l.id AND sl.is_active AND ${notVoided("sl")}))
      ),
      unique_legs AS (SELECT DISTINCT settlement_id, load_id FROM leg_load_ids)
      SELECT ul.settlement_id::text,
@@ -636,8 +636,8 @@ async function batchBuildClosedTourRows(
             ${loadServiceTrailerNumberSql("l", "tr")} AS trailer_number,
             lcr.revenue_cents AS lc_revenue_cents, lcr.is_invoiced AS lc_is_invoiced,
             lcr.costs_cents, lcr.driver_pay_cents,
-            (SELECT COUNT(*) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND e.status <> 'void')
-              + (SELECT COUNT(DISTINCT bl.bill_id) FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id WHERE bl.load_id = l.id AND b.status NOT IN ('void','voided') AND b.revoked_at IS NULL AND bl.voided_at IS NULL) AS cost_count,
+            (SELECT COUNT(*) FROM accounting.expenses e WHERE e.load_id = l.id AND e.operating_company_id = l.operating_company_id AND ${liveExpense("e")})
+              + (SELECT COUNT(DISTINCT bl.bill_id) FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id WHERE bl.load_id = l.id AND ${liveBill("b")} AND ${liveBillLine("bl")}) AS cost_count,
             (SELECT COUNT(*) FROM documents.attachments a WHERE a.operating_company_id = l.operating_company_id AND a.entity_type = 'load' AND a.entity_id = l.id AND a.is_deleted = false AND a.category IN ('pod','bol','proof_of_delivery')) AS pod_count,
             ${milesRealSql} AS miles_real
        FROM unique_legs ul
@@ -676,7 +676,7 @@ async function batchBuildClosedTourRows(
     `SELECT sl.settlement_id::text, COUNT(*)::int AS line_count
        FROM driver_finance.settlement_lines sl
       WHERE sl.settlement_id = ANY($1::uuid[]) AND sl.operating_company_id = $2::uuid
-        AND sl.is_active = true AND sl.voided_at IS NULL
+        AND sl.is_active = true AND ${notVoided("sl")}
       GROUP BY sl.settlement_id`,
     [ids, companyId],
   ) : { rows: [] as Array<{ settlement_id: string; line_count: unknown }> };
@@ -687,8 +687,8 @@ async function batchBuildClosedTourRows(
   // 5. Driver bills for all load IDs (ready.driver_pay)
   const billsRes = allLoadIds.length > 0 ? await client.query<{ load_id: string; loaded_pay_cents: unknown; deadhead_pay_cents: unknown }>(
     `SELECT load_id::text, loaded_pay_cents, deadhead_pay_cents
-       FROM driver_finance.driver_bills
-      WHERE operating_company_id = $1::uuid AND load_id = ANY($2::uuid[]) AND status <> 'void' AND voided_at IS NULL`,
+       FROM driver_finance.driver_bills db
+      WHERE db.operating_company_id = $1::uuid AND db.load_id = ANY($2::uuid[]) AND ${liveDriverBill("db")}`,
     [companyId, allLoadIds],
   ) : { rows: [] };
   const billsByLoad = new Map<string, Array<{ loaded_pay_cents: unknown; deadhead_pay_cents: unknown }>>();
