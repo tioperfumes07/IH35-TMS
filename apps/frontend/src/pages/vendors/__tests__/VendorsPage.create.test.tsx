@@ -14,6 +14,7 @@ vi.mock("../../../api/mdata", () => ({
   listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
   getVendorRollups: vi.fn().mockResolvedValue([]),
   listVendorPaymentMethods: vi.fn().mockResolvedValue({ payment_methods: [] }),
+  getVendorRosterCounts: vi.fn().mockResolvedValue({ operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071", with_transactions: 0, active: 0, all: 0, inactive: 0 }),
 }));
 
 vi.mock("../../../hooks/useCatalogQuery", () => ({

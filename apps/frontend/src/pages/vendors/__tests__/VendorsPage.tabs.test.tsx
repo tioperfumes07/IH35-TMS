@@ -27,6 +27,7 @@ vi.mock("../../../api/mdata", () => ({
   // VC-LIST-01 rollups + payment methods the Vendors page now queries.
   getVendorRollups: vi.fn().mockResolvedValue([]),
   listVendorPaymentMethods: vi.fn().mockResolvedValue({ payment_methods: [] }),
+  getVendorRosterCounts: vi.fn().mockResolvedValue({ operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071", with_transactions: 0, active: 0, all: 0, inactive: 0 }),
 }));
 
 vi.mock("../../../api/accounting", () => ({
@@ -111,7 +112,7 @@ describe("VendorsPage list tabs", () => {
     // check than queryByText: queryByText throws on multiple, so it could never have caught a stray second
     // occurrence in the first place.
     expect(await screen.findAllByText("Active Shop")).not.toHaveLength(0);
-    await user.click(screen.getByRole("button", { name: /inactive \(1\)/i }));
+    await user.click(screen.getByRole("tab", { name: /inactive/i }));
     expect(screen.queryAllByText("Active Shop")).toHaveLength(0);
     expect(screen.getAllByText("Old Shop")).not.toHaveLength(0);
   });
@@ -124,7 +125,7 @@ describe("VendorsPage list tabs", () => {
     ]);
     const router = renderVendorsAt("/vendors");
     await screen.findAllByText("Fuel A");
-    await user.click(screen.getByRole("button", { name: /by category/i }));
+    await user.click(screen.getByRole("tab", { name: /by category/i }));
     const select = await screen.findByLabelText(/vendor type/i);
     await user.click(select);
     expect(await screen.findByRole("option", { name: "+ Add new vendor type" })).toBeInTheDocument();

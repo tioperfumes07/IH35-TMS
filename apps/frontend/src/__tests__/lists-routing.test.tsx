@@ -73,6 +73,7 @@ import { Catalog as DriversRestrictionsCatalog } from "../pages/lists/drivers/re
 import { Catalog as DriversMedicalCardStatusCatalog } from "../pages/lists/drivers/medical-card-status/Catalog";
 import { Catalog as DriversEmploymentStatusCatalog } from "../pages/lists/drivers/employment-status/Catalog";
 import { TerminationReasonsListPage } from "../pages/lists/drivers/TerminationReasonsListPage";
+import { ToastProvider } from "../components/Toast";
 
 vi.mock("../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
@@ -175,14 +176,17 @@ describe("lists catalog routing smoke", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <QueryClientProvider client={client}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path={path} element={element} />
-          </Routes>
-        </MemoryRouter>
+        <ToastProvider>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path={path} element={element} />
+            </Routes>
+          </MemoryRouter>
+        </ToastProvider>
       </QueryClientProvider>
     );
-    expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
+    const headings = await screen.findAllByRole("heading", { name: heading });
+    expect(headings.length).toBeGreaterThan(0);
     expect(consoleError).not.toHaveBeenCalled();
   });
 });

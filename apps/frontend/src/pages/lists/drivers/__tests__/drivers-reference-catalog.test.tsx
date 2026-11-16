@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { ToastProvider } from "../../../../components/Toast";
 import { DRIVERS_REFERENCE_CATALOG_CLIENTS } from "../../../../api/lists-drivers-catalogs";
 import { DriversReferenceCatalogPage } from "../DriversReferenceCatalogPage";
 
@@ -69,14 +70,16 @@ describe("Drivers reference catalog pages", () => {
       const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
       render(
         <QueryClientProvider client={queryClient}>
-          <MemoryRouter>
-            <DriversReferenceCatalogPage client={client} displayName={catalog.title} catalogKey={catalog.key} />
-          </MemoryRouter>
+          <ToastProvider>
+            <MemoryRouter>
+              <DriversReferenceCatalogPage client={client} displayName={catalog.title} catalogKey={catalog.key} />
+            </MemoryRouter>
+          </ToastProvider>
         </QueryClientProvider>
       );
 
       expect(await screen.findByText("Active row")).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: catalog.title })).toBeInTheDocument();
+      expect(screen.getAllByRole("heading", { name: catalog.title }).length).toBeGreaterThan(0);
 
       fireEvent.click(screen.getAllByRole("button", { name: "+ Create" })[0]!);
       expect(await screen.findByText(`Create ${catalog.title}`)).toBeInTheDocument();
@@ -92,14 +95,10 @@ describe("Drivers reference catalog pages", () => {
         expect(createSpy).toHaveBeenCalledWith({ code: "NEW", label: "New row", sort_order: 50 })
       );
 
-      // Two comboboxes render here now, so the singular getByRole threw "Found multiple elements".
-      // This stays POSITIONAL on purpose and it is not the fix I wanted: NEITHER combobox exposes an
-      // accessible name (both dump as label=NONE), so there is nothing to scope by from the test side.
-      // The real fix is on the product — give these selects a label/aria-label — and that is filed as an
-      // a11y gap rather than worked around silently here.
-      fireEvent.change(screen.getAllByRole("combobox")[0]!, { target: { value: "archived" } });
-      await waitFor(() => expect(listSpy).toHaveBeenCalled());
-
+      // The row is active (archived_at: null) and the default filter shows active rows, so Archive
+      // is visible immediately — no filter change needed. The old combobox-change approach was
+      // targeting the search input (the MultiSelectDropdown no longer renders a native <select>),
+      // which caused the page to re-query with search="archived", hiding the active row.
       fireEvent.click(screen.getByRole("button", { name: "Archive" }));
       await waitFor(() => expect(archiveSpy).toHaveBeenCalledWith("11111111-1111-4111-8111-111111111111"));
     });

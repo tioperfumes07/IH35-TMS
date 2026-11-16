@@ -71,8 +71,8 @@ describe("TasksReportPage — period-bounded stats (GO-0044)", () => {
       tasks: [
         // Two genuinely in-window tasks (one completed, one open) -- scheduled_date is inside the
         // 30-day default window ending "today".
-        makeTask({ task_id: "in-1", status: "completed", scheduled_date: "2026-08-20" }),
-        makeTask({ task_id: "in-2", status: "pending", scheduled_date: "2026-08-22" }),
+        makeTask({ task_id: "in-1", status: "completed", scheduled_date: "2026-11-01" }),
+        makeTask({ task_id: "in-2", status: "pending", scheduled_date: "2026-11-05" }),
         // A rollover task the backend includes unbounded because it's still open, but scheduled
         // 400 days before the window -- must NOT be counted here.
         makeTask({ task_id: "rollover-1", status: "pending", scheduled_date: "2025-07-01" }),
