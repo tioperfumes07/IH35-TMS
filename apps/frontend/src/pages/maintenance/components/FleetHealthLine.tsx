@@ -30,7 +30,9 @@ const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-
 const statusTones = { ...tones, ok: "text-green-600" };
 
 export function FleetTruck({ row, vertical = false, moving = false, alert = false, size = "sm" }: { row: Pick<FleetHealthRow, "state" | "body_style">; vertical?: boolean; moving?: boolean; alert?: boolean; size?: "sm" | "board" }) {
-  return <svg aria-hidden="true" viewBox={vertical ? "60 0 180 300" : "-14 96 314 128"} className={`${vertical ? "h-full w-full" : size === "board" ? "h-[52px] w-[122px] shrink-0" : "h-9 w-23 shrink-0"} ${tones[row.state]}`}>
+  // The row drawing sits inline like the design's <svg width="92" height="36"> (the reset makes svg a block, which dropped
+  // the line's descender: rows read 49px against the design's 53).
+  return <svg aria-hidden="true" viewBox={vertical ? "60 0 180 300" : "-14 96 314 128"} style={!vertical && size !== "board" ? { display: "inline", verticalAlign: "baseline" } : undefined} className={`${vertical ? "h-full w-full" : size === "board" ? "h-[52px] w-[122px] shrink-0" : "h-9 w-23 shrink-0"} ${tones[row.state]}`}>
     {!vertical && moving ? <path d="M-12 130h16M-12 160h22M-12 190h16" stroke="#9AA8B8" strokeWidth="5" strokeLinecap="round" /> : null}
     <g transform={vertical ? undefined : "rotate(-90 150 160)"}>
       <g className="fill-slate-800"><rect x="128" y="18" width="7" height="186" rx="2" /><rect x="165" y="18" width="7" height="186" rx="2" /><rect x="128" y="40" width="44" height="5" /><rect x="128" y="82" width="44" height="5" /></g>
@@ -84,7 +86,8 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   };
   const columns: ParityColumn<FleetHealthRow>[] = [
     // Board 22: the truck drawing in its own unlabeled first column, then Unit (700 13px) over make · model · year (11px).
-    { key: "truck", label: "", render: (row) => <FleetTruck row={row} /> },
+    // The design's truck cell has no font size of its own (16px): its line around the inline drawing makes the 53px row.
+    { key: "truck", label: "", render: (row) => <span style={{ fontSize: 16, lineHeight: "normal" }}><FleetTruck row={row} /></span> },
     { key: "unit_number", label: "Unit", render: (row) => <><div style={{ font: "700 13px Inter, ui-sans-serif, system-ui, sans-serif" }}><EntityLink kind="unit" id={row.unit_id} label={row.unit_number} className="text-inherit hover:underline" /></div><div style={{ fontSize: 11, color: "#5B6576", whiteSpace: "nowrap" }}>{[row.make, row.model, row.year].filter(Boolean).join(" · ") || "—"}</div></> },
     { key: "odometer_mi", label: "Odometer", render: (row) => row.odometer_mi == null ? "Unavailable" : <EntityLink kind="unit" id={row.unit_id} label={`${Math.round(Number(row.odometer_mi)).toLocaleString("en-US")} mi`} /> },
     // Maintenance-Home.dc.html: the place on one line ("Laredo yard", 12px). When it was reported stays on hover — the row is
