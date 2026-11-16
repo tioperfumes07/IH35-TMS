@@ -538,7 +538,8 @@ export function FactoringHomeBoard({
             activeFactor ? (
               <div style={{ padding: "8px 14px", fontSize: 11, color: V3.muted, borderTop: "1px solid #ECEEF2" }}>
                 {summary?.active_factor_id ? (
-                  <EntityLink kind="vendor" id={summary.active_factor_id} label={activeFactor.name} />
+                  // Factoring.dc.html: the agreement line is the footer's own 11px muted text; the link keeps it (no ink, underline on hover).
+                  <EntityLink kind="vendor" id={summary.active_factor_id} label={activeFactor.name} className="text-inherit no-underline hover:underline" />
                 ) : (
                   activeFactor.name
                 )}

@@ -36,7 +36,7 @@ export function BankingNewMenu({ groups }: { groups: BankingNewMenuGroup[] }) {
 
   return (
     // Banking.dc.html: "+ New" is a flex item of the header action row (gap 12, centered), drawn without a chevron.
-    <div ref={wrapRef} className="relative" style={{ display: "flex", alignItems: "center", columnGap: 12 }}>
+    <div ref={wrapRef} className="relative" style={{ display: "flex", alignItems: "center", columnGap: 12, alignSelf: "stretch" }}>
       <button
         type="button"
         aria-haspopup="menu"
