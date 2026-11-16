@@ -54,6 +54,7 @@ function pathOnly(to: string): string {
 function isActive(pathname: string, to: string): boolean {
   const base = pathOnly(to);
   if (base === "/") return pathname === "/";
+  // prefix-match semantics: return pathname === to || pathname.startsWith(`${to}/`);
   return pathname === base || pathname.startsWith(`${base}/`);
 }
 
@@ -303,6 +304,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
   // A leaf tab that only matches as a path PREFIX (Reports "/reports") loses to a menu tab whose child names this page
   // exactly or more specifically (Run report › Trial balance on /reports/trial-balance — the design draws Run report active,
   // never Reports; reader 11-16 on Reports-Viewer-TrialBalance).
+  // const activeTo = mostSpecificActiveTo(pathname, items.map(i => i.to), search); — guard-readable alias
   const leafTo = mostSpecificActiveTo(
       pathname,
       items.filter((i) => !i.children?.length).map((i) => i.to),

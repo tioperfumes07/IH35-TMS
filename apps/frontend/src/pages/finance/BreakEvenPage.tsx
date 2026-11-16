@@ -1,6 +1,4 @@
-import { useLocation, useSearchParams } from "react-router-dom";
 import { companyToday } from "../../lib/businessDate";
-import { resolveBackHref } from "../../lib/returnContext";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -68,10 +66,6 @@ function StatTile({
 }
 
 export function BreakEvenPage() {
-  const { pathname } = useLocation();
-  const [searchParams] = useSearchParams();
-  // ROUND 8.20 — drills attach ?ret=; Back must restore origin.
-  const moduleBackHref = resolveBackHref({ searchParams, pathname, fallback: "/finance/overview" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const { enabled, loading: flagLoading } = useFeatureFlag(FINANCE_BREAK_EVEN_UI_FLAG, companyId);
@@ -150,7 +144,7 @@ export function BreakEvenPage() {
 
   const header = (
     <PageHeader
-      backHref={moduleBackHref}
+      backHref="/finance/overview"
       title="Break-Even Analysis"
       subtitle="Finance · Break-Even — read-only estimate, nothing is posted"
     />
