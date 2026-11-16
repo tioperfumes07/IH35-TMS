@@ -214,7 +214,10 @@ function MatchCell({ row, current }: { row: PerfumeGridRow; current: string | nu
       if (mode === "line") { if (!target || !linkItem) return; await confirmPerfumeRow(target, { item_id: linkItem }); }
       else { if (!linkRow) return; await confirmPerfumeRow(linkRow, createNew ? { create_new: true } : { item_id: target! }); }
       pushToast(tr("perfume.analysis.linked", "Linked."), "success");
-      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      // Owner 2026-11-16 14:01 CT ("it is taking very long for the confirmations or accepting suggestions"): the link is
+      // saved when confirmPerfumeRow answers; the box is free at once and the views reload in the background (the
+      // server stays the authority — the reload replaces every number on screen).
+      void qc.invalidateQueries({ queryKey: ["perfume"] });
     } catch (e) { pushToast(userFacingApiError(e, tr("perfume.analysis.linkfail", "Could not link")), "error"); }
     finally { setBusy(false); }
   };

@@ -1058,7 +1058,15 @@ const _viewCache = new Map<string, ViewPayload>();
 let _gridVer = 0;
 /** Clears both caches and bumps the version counter — write paths call this, so a warm HIT
  * never needs to query max(updated_at) from DB. */
-export function invalidateGridCache(): void { _gridCache.clear(); _viewCache.clear(); _gridVer++; nameBrandsSig = null; }
+export function invalidateGridCache(opts: { itemsUnchanged?: boolean } = {}): void {
+  _gridCache.clear(); _viewCache.clear(); _gridVer++;
+  // The brand index reads only perfume.items and perfume.brand_aliases. A confirm that links a line to an EXISTING item
+  // writes neither, so the index stays (measured live 11-16: every Review read after a confirm rebuilt it, 2.2–7.1 s).
+  if (!opts.itemsUnchanged) nameBrandsSig = null;
+}
+/** Lets the server answer other requests (health checks, the owner's other tabs) while a grid builds: measured live
+ *  11-16 19:59Z, a 103 s build blocked the process, its health check failed and the instance was restarted (502s). */
+const yieldToLoop = () => new Promise<void>((r) => setImmediate(r));
 
 /** The competitor line a row is measured against: its list price, cushion, SALES price (list − cushion), wording. */
 export type CompBest = { list: number; cushion: number; real: number; desc: string | null; vendor: string };
@@ -1346,15 +1354,29 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   );
   const vName = new Map(vendors.map((v) => [v.id, vendorLabel(v)]));
   const rows: GridRow[] = [];
+  // Speed (owner 2026-11-16 "i need this to work fast"; measured on the live data: 23,984 items × 60 vendor slots walked
+  // 5 times per item on every rebuild): each item walks only the vendors that carry it, in the same vendor order, so
+  // every "first lowest", ranking and list reads exactly as before.
+  const buyIdx = new Map(buyV.map((v, i) => [v.id, i]));
+  const sellIdx = new Map(sellV.map((v, i) => [v.id, i]));
+  const present = (ids: Iterable<string>, idx: Map<string, number>, list: VendorRow[]): VendorRow[] => {
+    const at: number[] = [];
+    for (const id of ids) { const i = idx.get(id); if (i !== undefined) at.push(i); }
+    return at.sort((a, b) => a - b).map((i) => list[i]);
+  };
+  let _n = 0;
   for (const it of items.rows) {
+    if (++_n % 2000 === 0) await yieldToLoop();
     const offersMap = byItem.get(it.id) ?? new Map();
+    const presBuy = present(offersMap.keys(), buyIdx, buyV);
+    const presSell = present(offersMap.keys(), sellIdx, sellV);
     const row: GridRow = {
       id: it.id, code: it.internal_code, upc: it.upcs?.[0] ?? null, upc_count: it.upcs?.length ?? 0, brand: it.brand, name: it.name,
       size_ml: it.size_ml == null ? null : Number(it.size_ml), conc: it.conc, gender: it.gender, category: categoryOf(it.gender, it.flags), flags: it.flags.join(" "), display_name: it.display_name,
       upcs: (it.upcs ?? []).join(" "),
       line_text: [...(lineText.get(it.id) ?? [])].join(" | "),
     };
-    const offers = buyV.filter((v) => offersMap.has(v.id)).map((v) => ({
+    const offers = presBuy.map((v) => ({
       vendorId: v.id, listedCents: offersMap.get(v.id)!.price,
       cushionLoCents: v.cushion_lo_cents ?? rules.cushion_lo_cents, cushionHiCents: v.cushion_hi_cents ?? rules.cushion_hi_cents,
       freightLoCents: v.freight_lo_cents ?? rules.freight_lo_cents, freightHiCents: v.freight_hi_cents ?? rules.freight_hi_cents,
@@ -1400,8 +1422,8 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     let low: number | null = null, lowAt: string | null = null;
     // List analysis · Purchases: the cheapest supplier for the item (Lowest Vendor / Lowest Price) — my buying side.
     let lowList: number | null = null, lowListAt: string | null = null;
-    for (const v of buyV) { const p = offersMap.get(v.id)?.price; if (p != null && (lowList == null || p < lowList)) { lowList = p; lowListAt = vendorLabel(v); } }
-    for (const v of sellV) {
+    for (const v of presBuy) { const p = offersMap.get(v.id)?.price; if (p != null && (lowList == null || p < lowList)) { lowList = p; lowListAt = vendorLabel(v); } }
+    for (const v of presSell) {
       const p = offersMap.get(v.id)?.price;
       if (p == null) continue;
       row[`s:${v.id}:price`] = p;
@@ -1434,7 +1456,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     //  offer · New margin = (Esperanza − last cost) ÷ Esperanza · Over by = offer − Esperanza · Lower % = over ÷ offer.
     //  The competitor is the one with the lowest SALES price. Blank stays blank — never a guessed cost or date.
     let cBest: CompBest | null = null;
-    for (const v of sellV) {
+    for (const v of presSell) {
       const real = row[`s:${v.id}:real`] as number | undefined;
       if (real == null) continue;
       if (!cBest || real < cBest.real) cBest = { list: row[`s:${v.id}:price`] as number, cushion: row[`s:${v.id}:cushion`] as number, real, desc: (row[`s:${v.id}:desc`] as string | null) ?? null, vendor: vendorLabel(v) };
@@ -1474,7 +1496,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     // at or under their cost (owner 2026-11-12: "their list price, and the cushion and then their margin … compare
     // their cost so I can see if my offer is good enough").
     const beats: string[] = [];
-    for (const v of buyV) {
+    for (const v of presBuy) {
       const theirs = offersMap.get(v.id)?.price;
       if (theirs == null) continue;
       const earn = earnTyped ?? (v.earn_pct == null ? rules.vendor_earn_pct : Number(v.earn_pct));
@@ -1492,7 +1514,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     row.trade_beats = beats.length ? beats.join(", ") : null;
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
-    row.carried_by = [...buyV, ...sellV].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
+    row.carried_by = [...presBuy, ...presSell].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
   const { myLines, theirLines } = await buildAnalysisLines(c, { rows, items: items.rows, myLineQ: myLineQ.rows, theirLineQ: theirLineQ.rows, anByItem, vendors, rules, minMargin });
@@ -1600,7 +1622,14 @@ async function buildAnalysisLines(c: PoolClient, x: {
   });
   // Their list: my offer items proposed for each of their unmatched lines (strict rule, offer-review.ts).
   const myOfferItems = [...offerItemIds].map((id) => itemById.get(id)).filter((i): i is NonNullable<typeof i> => Boolean(i)).map(toOfferItem);
-  const theirLines: GridRow[] = x.theirLineQ.map((l) => {
+  await yieldToLoop();
+  const theirLines: GridRow[] = [];
+  for (let at = 0; at < x.theirLineQ.length; at += 2000) {
+    if (at) await yieldToLoop();
+    for (const l of x.theirLineQ.slice(at, at + 2000)) theirLines.push(theirLine(l));
+  }
+  return { myLines, theirLines };
+  function theirLine(l: (typeof x.theirLineQ)[number]): GridRow {
     const ir = l.item_id ? rowById.get(l.item_id) : undefined;
     const onMine = Boolean(l.item_id && offerItemIds.has(l.item_id));
     const p = l.price_cents;
@@ -1624,8 +1653,7 @@ async function buildAnalysisLines(c: PoolClient, x: {
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
       link_mode: "item", link_row: l.id, link_item: l.item_id,
     } as GridRow;
-  });
-  return { myLines, theirLines };
+  }
 }
 
 /** My list carries the same bottle once per store (measured live: 582 lines = 465 items, 78 items on 2–11 lines).

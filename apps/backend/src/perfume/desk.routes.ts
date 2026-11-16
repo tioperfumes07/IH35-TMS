@@ -281,7 +281,8 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       .refine((b) => Boolean(b.item_id) !== Boolean(b.create_new), "send item_id or create_new").safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => confirmRow(c, uid, params.data.id, body.data));
-    invalidateGridCache();
+    // Linking to an existing item writes no item: the brand index stays (create_new may add an item).
+    invalidateGridCache({ itemsUnchanged: !body.data.create_new });
     return result;
   });
 
@@ -329,7 +330,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     ]).safeParse(req.body);
     if (!body.success) return bad(reply, body.error);
     const result = await withCurrentUser(uid, (c) => bulkReview(c, uid, body.data));
-    invalidateGridCache();
+    invalidateGridCache({ itemsUnchanged: body.data.action === "confirm_best" || body.data.action === "link_item" });
     return result;
   });
 
