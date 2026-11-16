@@ -35,6 +35,7 @@
   --ih-navy: #14314F;            /* primary button, active tab underline, links */
   --ih-navy-ink: #1F2A44;        /* secondary button label, chip text */
   --ih-navy-hover: #0B1B2B;
+  --v3-link: #1D4ED8;            /* V3 board link ink (docs/design/v3 every "View all →" / table link) = V3.link */
   --ih-muted: #64748B;
   --ih-muted-banking: #5d6b7a;
   --ih-muted-2: #475569;
