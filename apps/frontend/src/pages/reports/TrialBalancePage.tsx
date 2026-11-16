@@ -425,6 +425,7 @@ export function TrialBalancePage() {
 
       <ReportFilterBar
         board
+        segBox="content-box"
         testIdPrefix="reports-trial-balance"
         fromDate={staged.draft.start}
         toDate={staged.draft.end}

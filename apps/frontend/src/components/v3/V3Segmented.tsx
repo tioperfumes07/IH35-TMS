@@ -10,11 +10,18 @@ export function V3Segmented<T extends string>({
   options,
   onChange,
   testId,
+  box = "content-box",
 }: {
   value: T;
   options: V3SegmentOption<T>[];
   onChange: (next: T) => void;
   testId?: string;
+  /**
+   * docs/design/v3: the module boards draw segments as <span>s (content-box — the default); the report family
+   * (Dispatch-LoadHistory, Reports-*) draws <button>s, which are border-box. Reader 11-16 02:45Z: CashFlow / Maintenance /
+   * Customers / TB want content-box, Reports-* want border-box.
+   */
+  box?: "content-box" | "border-box";
 }) {
   return (
     <span
@@ -38,6 +45,7 @@ export function V3Segmented<T extends string>({
             type="button"
             onClick={() => onChange(opt.id)}
             style={{
+              boxSizing: box,
               padding: "4px 10px",
               borderRadius: 4,
               fontSize: 11,

@@ -489,7 +489,7 @@ export function LoadsReportBoard() {
         >
           {/* Reports-Loads.dc.html: Group by sits in the filter bar, right after the period presets. */}
           <span className="text-section-header" style={{ color: "#5B6576" }}>Group by</span>
-          <V3Segmented
+          <V3Segmented box="border-box"
             value={by}
             options={GROUP_OPTIONS}
             onChange={(next) => setBy(next)}

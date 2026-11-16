@@ -289,7 +289,7 @@ export function CustomerReportBoard() {
         data-testid="customer-report-filters"
       >
         <span style={{ fontSize: 11, color: "#5B6576" }}>Invoiced</span>
-        <V3Segmented value={range} options={RANGE_OPTIONS} onChange={setRange} testId="customer-report-range" />
+        <V3Segmented box="border-box" value={range} options={RANGE_OPTIONS} onChange={setRange} testId="customer-report-range" />
         <EntityMultiSelect
           kind="customer"
           operatingCompanyId={companyId}
@@ -307,7 +307,7 @@ export function CustomerReportBoard() {
           data-testid="customer-report-factored-filter"
         />
         <span style={{ fontSize: 11, color: "#5B6576" }}>View</span>
-        <V3Segmented value={view} options={VIEW_OPTIONS} onChange={setView} testId="customer-report-view" />
+        <V3Segmented box="border-box" value={view} options={VIEW_OPTIONS} onChange={setView} testId="customer-report-view" />
       </ReportFilterBar>
 
       {board.isError ? <ListErrorState title="Couldn't load the customer report" {...formatQueryErrorDetail(board.error)} onRetry={() => void board.refetch()} /> : null}

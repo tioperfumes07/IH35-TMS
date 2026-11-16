@@ -488,7 +488,7 @@ export default function LoadHistoryBoardPage() {
         applyDisabled={!staged.dirty}
       >
         {/* Design: "Date [Pickup | Delivery]" segmented — which stop date the range filters on. */}
-        <V3Segmented
+        <V3Segmented box="border-box"
           value={staged.draft.dateField}
           options={DATE_FIELD_OPTIONS}
           onChange={(next) => staged.setDraft((p) => ({ ...p, dateField: next }))}

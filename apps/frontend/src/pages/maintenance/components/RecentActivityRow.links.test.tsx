@@ -9,7 +9,11 @@ describe("Maintenance Home recent activity source links", () => {
     render(<MemoryRouter><RecentActivityRow recent={[]} completed={[]} recentTotalCount={0} completedTotalCount={0}
       pageSize={25} recentPage={0} completedPage={0} fetching={false}
       onRecentPageChange={vi.fn()} onCompletedPageChange={vi.fn()} onOpen={vi.fn()} /></MemoryRouter>);
-    expect(screen.getByRole("link", { name: "+ Create Work Order" })).toHaveAttribute("href", "/maintenance?create_wo=1");
+    // ROUND 8.17/8.20: the create link carries the return context too (?ret=), as the View all links below do.
+    const create = new URL(screen.getByRole("link", { name: "+ Create Work Order" }).getAttribute("href") ?? "", "http://x");
+    expect(create.pathname).toBe("/maintenance");
+    expect(create.searchParams.get("create_wo")).toBe("1");
+    expect(create.searchParams.has("ret")).toBe(true);
     // ROUND 9.0 — View all carries ?ret back to the board (path + status unchanged).
     const hrefs = screen.getAllByRole("link", { name: "View all →" }).map((link) => new URL(link.getAttribute("href") ?? "", "http://x"));
     expect(hrefs.map((u) => u.pathname)).toEqual(["/maintenance/active-wos", "/maintenance/active-wos"]);
