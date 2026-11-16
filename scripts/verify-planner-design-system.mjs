@@ -27,8 +27,10 @@ const contracts = [
     //   box + white underline (Dispatch-TruckPlanner.dc.html). Still fails when the strip drifts from that source.
     "DispatchPlannersLayout tabs use the v3 design strip (#13233F, 32px, white/16 active)",
     "layout",
-    (source) => source.includes("bg-[#13233F]") && source.includes("h-8") && source.includes("bg-white/[.16]") && !source.includes("#14314F"),
-    (source) => source.replaceAll("bg-[#13233F]", "bg-slate-800"),
+    // ROUND 12: the planner strip IS the shared V3 NavyPageSubNav (verify-navy-page-subnav locks its 32px navy bar and the
+    // rgba(255,255,255,.16) active box) — the layout must mount it, never a hand-rolled strip.
+    (source) => source.includes("<NavyPageSubNav") && !source.includes("#14314F"),
+    (source) => source.replaceAll("<NavyPageSubNav", "<div"),
   ],
   [
     "PlannerRangeToolbar active range button uses CSS variable and 28px height",
