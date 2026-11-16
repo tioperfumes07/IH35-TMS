@@ -76,7 +76,7 @@ import { relayFillUnitIdSql } from "./relay-fill-unit.sql.js";
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { ensureRelayFillFuelRecords, RelayFillFuelRowsError } from "./relay-fill-fuel-rows.js";
-import { resolveFillDriverAtTime } from "./fuel-load-at-time.js";
+import { resolveFillDriverAtTime, resolveFuelLoadAtTime } from "./fuel-load-at-time.js";
 import {
   CompanyDirectCredit,
   loadFuelTxnCreditSignals,
@@ -958,6 +958,69 @@ export async function listRelayFillDocumentsWithoutRecords(client: QueryableClie
   )).rows;
 }
 
+/**
+ * ROUND 12 (owner 2026-11-15 18:40 CT, "the apps transportation engines fully built") — every live Relay fill that has NO
+ * fuel record and NO expense document yet: the fill pulled by the daily Relay ingest before any bank match or settlement.
+ *
+ * WHAT WAS WRONG (measured 2026-11-16 00:50Z, prod USMCA): integrations.relay_fuel_transactions received 9 fills on 11-15
+ * (txns of 11-11 … 11-14, 49 fills since 11-06 with no record), but fuel.fuel_transactions had no new row since 11-11 23:19 —
+ * a Relay fill was recorded only when its bank line matched (ENG-65 document path) or a settlement posted it. Fuel
+ * transaction import (E-19), the fraud detector (E-21) and the fuel ↔ GPS verdict (E-22) had nothing new to read for days,
+ * although ENG-65's own rule says "a Relay fill always has its fuel RECORDS, whether or not a settlement ever names it".
+ *
+ * Same exclusions as listRelayFillDocumentsWithoutRecords (service codes never get a fuel record; a line whose record
+ * exists voided is done). The document path keeps the fills that already carry a document.
+ */
+export async function listRelayFillsWithoutRecords(client: QueryableClient, operatingCompanyId: string): Promise<Array<{ relay_fill_id: string; unit_id: string | null; driver_id: string | null; at: string }>> {
+  return (await client.query<{ relay_fill_id: string; unit_id: string | null; driver_id: string | null; at: string }>(
+    `SELECT r.id::text AS relay_fill_id, ${relayFillUnitIdSql("r")}::text AS unit_id,
+            (SELECT d.id::text FROM mdata.drivers d WHERE d.id = r.matched_driver_id AND d.operating_company_id = r.operating_company_id) AS driver_id,
+            r.relay_created_at::text AS at
+       FROM integrations.relay_fuel_transactions r
+      WHERE r.operating_company_id = $1::uuid AND r.voided_at IS NULL AND r.is_active AND r.relay_created_at IS NOT NULL
+        AND NOT ${relayServiceCodeSql("r")}
+        AND NOT EXISTS (SELECT 1 FROM fuel.fuel_transactions f
+                         WHERE f.operating_company_id = r.operating_company_id AND f.relay_fuel_transaction_id = r.id
+                           AND f.voided_at IS NULL AND f.archived_at IS NULL)
+        AND NOT EXISTS (SELECT 1 FROM integrations.relay_fuel_transaction_lines l
+                          JOIN fuel.fuel_transactions fv
+                            ON fv.operating_company_id = r.operating_company_id
+                           AND fv.source_row_hash = 'relay-line:' || r.operating_company_id::text || ':' || l.id::text
+                         WHERE l.relay_fuel_transaction_id = r.id AND l.operating_company_id = r.operating_company_id)
+        AND NOT EXISTS (SELECT 1 FROM accounting.expenses e
+                         WHERE e.operating_company_id = r.operating_company_id AND e.voided_at IS NULL
+                           AND e.memo LIKE 'Relay fuel fill ' || r.id::text || '%')
+      ORDER BY r.relay_created_at, r.id`,
+    [operatingCompanyId],
+  )).rows;
+}
+
+/**
+ * ROUND 12 — record one pulled Relay fill through THE one receipt writer (recordRelayFillAtReceipt → ensureRelayFillFuelRecords
+ * → writeRelayFillFuelRows, Relay's own lines, refusals audited by name). The load comes from THE one fuel-to-load rule
+ * (resolveFuelLoadAtTime: the load the truck — else the driver — was running at Relay's moment); none found = no load, the
+ * receipt writer's exemption, and the Settlement Creator / bank match stamp the load when they adopt the record.
+ */
+export async function recordPulledRelayFill(
+  client: QueryableClient,
+  input: { operating_company_id: string; relay_fill_id: string; unit_id: string | null; driver_id: string | null; at: string; actor_user_uuid: string },
+): Promise<{ outcome: "recorded" | "refused" | "already_recorded" | "unchanged"; reason: string | null }> {
+  const load = await resolveFuelLoadAtTime(client as never, {
+    operatingCompanyId: input.operating_company_id, unitId: input.unit_id, driverId: input.driver_id, at: input.at,
+  });
+  const rec = await recordRelayFillAtReceipt(client, {
+    operating_company_id: input.operating_company_id,
+    relay_fill_id: input.relay_fill_id,
+    load_id: load?.load_id ?? null,
+    driver_id: input.driver_id,
+    unit_id: input.unit_id,
+    actor_user_uuid: input.actor_user_uuid,
+  });
+  if (rec.refused) return { outcome: "refused", reason: rec.refused };
+  if (rec.already_recorded) return { outcome: "already_recorded", reason: null };
+  return { outcome: rec.written ? "recorded" : "unchanged", reason: null };
+}
+
 export async function recordAndLinkRelayFillDocument(
   client: QueryableClient,
   input: { operating_company_id: string; expense_id: string; relay_fill_id: string; load_id: string | null; driver_id: string | null; unit_id: string | null; actor_user_uuid: string },
@@ -1188,7 +1251,7 @@ export function relayFillRunVerdict(results: Array<{ relay_fill_id: string; outc
   const failures: string[] = [];
   const refusals: string[] = [];
   for (const r of results) {
-    if (r.outcome === "linked" || r.outcome === "already_recorded") continue;
+    if (r.outcome === "linked" || r.outcome === "already_recorded" || r.outcome === "recorded" || r.outcome === "unchanged") continue;
     const line = `${r.relay_fill_id}: ${r.reason}`;
     if (r.outcome === "refused") refusals.push(line);
     else failures.push(line);

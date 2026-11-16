@@ -17,7 +17,7 @@ import { JOB_LEASE_SECONDS, wrapBackgroundJobTick } from "../lib/background-jobs
 import { withLuciaBypass } from "../auth/db.js";
 import { writeFuelTimeDerivations } from "./fuel-time-derivation.service.js";
 import { runFuelFollowsTruckSweep } from "./fuel-follows-truck-sweep.js";
-import { listRelayFillDocumentsWithoutRecords, recordAndLinkRelayFillDocument, relayFillRunVerdict } from "./fuel-expense-document.service.js";
+import { listRelayFillDocumentsWithoutRecords, listRelayFillsWithoutRecords, recordAndLinkRelayFillDocument, recordPulledRelayFill, relayFillRunVerdict } from "./fuel-expense-document.service.js";
 import { SYSTEM_ACTOR_USER_ID } from "../lib/system-actor.js";
 import { rematchRelayFuelDrivers } from "../integrations/relay-payments/relay-fuel-driver-rematch.service.js";
 import { isUsmcaOperatingCompany } from "../integrations/relay-payments/relay-usmca-date-floor.js";
@@ -29,7 +29,7 @@ import {
 
 export async function onFuelIngestComplete(
   log: FastifyBaseLogger,
-  source: "loves_card_import" | "fuel_statement_upload",
+  source: "loves_card_import" | "fuel_statement_upload" | "relay_fuel_ingest",
   companyIds?: string[]
 ): Promise<void> {
   // ORDERS-2026-10-01 rows 5-6: derive pump time + IFTA state for date-only rows (own output table).
@@ -97,6 +97,23 @@ export async function onFuelIngestComplete(
           results.push({ relay_fill_id: d.relay_fill_id, outcome: r.outcome, reason: r.reason });
         }
         log.info({ operating_company_id: id, documents: docs.length, ...tally, source }, "[FUEL_INGEST_HOOK] relay fill records");
+        // ROUND 12 — the fills the daily Relay pull brought in that have no document yet (no bank match, no settlement): each
+        // is recorded from its own Relay lines through the same one receipt writer, on the load the one fuel-to-load rule finds.
+        const pulled = await withLuciaBypass(async (client) => {
+          await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+          return listRelayFillsWithoutRecords(client as never, id);
+        });
+        const pulledTally: Record<string, number> = {};
+        for (const f of pulled) {
+          const r = await withLuciaBypass(async (client) => {
+            await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [id]);
+            return recordPulledRelayFill(client as never, { operating_company_id: id, ...f, actor_user_uuid: SYSTEM_ACTOR_USER_ID });
+          });
+          pulledTally[r.outcome] = (pulledTally[r.outcome] ?? 0) + 1;
+          // "recorded" / "unchanged" / "already_recorded" are done; a refusal is audited by name inside the writer.
+          results.push({ relay_fill_id: f.relay_fill_id, outcome: r.outcome, reason: r.reason });
+        }
+        log.info({ operating_company_id: id, pulled_fills: pulled.length, ...pulledTally, source }, "[FUEL_INGEST_HOOK] relay pulled fill records");
       }
       // ACCT-F11107: already-recorded (voided-duplicate) fills are done; a fill refused by name is audited and logged with its
       // reason (a decision for a person), and does not fail the run. Only an unexplained non-link throws.
