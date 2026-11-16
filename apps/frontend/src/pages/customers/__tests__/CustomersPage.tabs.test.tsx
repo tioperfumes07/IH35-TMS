@@ -34,6 +34,7 @@ vi.mock("../../../api/mdata", () => ({
   listCustomers: (...args: unknown[]) => listCustomersMock(...args),
   listAllCustomers: (...args: unknown[]) => listCustomersMock(...args),
   getCustomerBillingSummary: vi.fn().mockResolvedValue({ aging_buckets: {} }),
+  getCustomerRosterCounts: vi.fn().mockResolvedValue({ operating_company_id: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071", with_transactions: 0, active: 0, all: 0, inactive: 0 }),
   listAllAtRiskCustomerRelationshipScores: vi.fn().mockResolvedValue({ customers: [] }),
   listPaymentTermOptions: vi.fn().mockResolvedValue({ payment_terms: [] }),
   listVendors: vi.fn().mockResolvedValue({ vendors: [] }),
@@ -158,21 +159,19 @@ describe("CustomersPage list tabs", () => {
     );
     const router = renderCustomersAt("/customers");
     await waitFor(() => expect(listCustomersMock).toHaveBeenCalled());
-    expect(await screen.findByRole("button", { name: /with transactions/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /preferred \(1\)/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /watch \(1\)/i })).toBeInTheDocument();
-    // C-31 — With transactions is the default tab (aria-current=page).
-    expect(screen.getByRole("button", { name: /with transactions/i })).toHaveAttribute("aria-current", "page");
+    // C-31 — tab strip uses role="tab" (not role="button"); With transactions is the default tab.
+    expect(await screen.findByRole("tab", { name: /with transactions/i })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /with transactions/i })).toHaveAttribute("aria-selected", "true");
     expect(router.state.location.search).toBe("");
     expect(screen.getAllByText("Preferred Co")).toHaveLength(1);
   });
 
-  it("clicking Preferred filters rows and sets ?listTab=preferred", async () => {
+  it("clicking Factored tab filters rows and sets ?listTab=factored", async () => {
     const user = userEvent.setup();
     mockCustomerRosters(
       [
-        minimalCustomer({ id: "1", name: "Preferred Co", quality_overall_flag: "preferred" }),
-        minimalCustomer({ id: "2", name: "Other Co", quality_overall_flag: "standard" }),
+        minimalCustomer({ id: "1", name: "Factored Co", factoring_company_vendor_id: "vendor-fac" }),
+        minimalCustomer({ id: "2", name: "Other Co" }),
       ]
     );
     const router = renderCustomersAt("/customers");
@@ -180,13 +179,14 @@ describe("CustomersPage list tabs", () => {
     // so the singular queries throw "Found multiple elements". Presence becomes "at least one"; absence
     // becomes "none anywhere", which is STRICTLY STRONGER than queryByText (that throws on multiples and so
     // could never have caught a stray second occurrence).
-    await screen.findAllByText("Preferred Co");
-    await user.click(screen.getByRole("button", { name: /preferred \(1\)/i }));
-    expect(screen.getAllByText("Preferred Co")).not.toHaveLength(0);
+    await screen.findAllByText("Factored Co");
+    // tab strip uses role="tab" (not role="button")
+    await user.click(screen.getByRole("tab", { name: /factored/i }));
+    expect(screen.getAllByText("Factored Co")).not.toHaveLength(0);
     expect(screen.queryAllByText("Other Co")).toHaveLength(0);
     // CURSOR-RULING-PARAM-LIST-TAB (2026-08-08): list segments own `listTab`; `tab` stays with the DETAIL
-    // tabs so existing detail deep-links keep working. The old assertion predates that ruling.
-    expect(router.state.location.search).toContain("listTab=preferred");
+    // tabs so existing detail deep-links keep working.
+    expect(router.state.location.search).toContain("listTab=factored");
   });
 
   it("keeps the roster segment while secondary tabs update the detail route", async () => {

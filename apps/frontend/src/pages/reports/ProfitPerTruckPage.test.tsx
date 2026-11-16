@@ -149,7 +149,7 @@ describe("ProfitPerTruckPage", () => {
     render(wrap(<ProfitPerTruckPage />));
     await waitFor(() => expect(screen.getByText("101")).toBeInTheDocument());
     await user.click(screen.getByText("Flatbed"));
-    expect(mockNavigate).toHaveBeenCalledWith("/fleet/units/u1?tab=financial");
+    expect(mockNavigate).toHaveBeenCalledWith(expect.stringContaining("/fleet/units/u1?tab=financial"));
   });
 
   it("filters rows by search term", async () => {

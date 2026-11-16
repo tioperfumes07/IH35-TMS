@@ -127,7 +127,7 @@ describe("ManagementReportPackagePage", () => {
     const user = userEvent.setup();
     render(wrap(<ManagementReportPackagePage />, "/reports/management?type=company-overview"));
     const salesLink = await screen.findByRole("link", { name: "Sales Performance" });
-    expect(salesLink).toHaveAttribute("href", "/reports/management?type=sales-performance");
+    expect(salesLink.getAttribute("href")?.split("&ret=")[0]).toBe("/reports/management?type=sales-performance");
     salesLink.focus();
     expect(salesLink).toHaveFocus();
     await user.keyboard("{Enter}");

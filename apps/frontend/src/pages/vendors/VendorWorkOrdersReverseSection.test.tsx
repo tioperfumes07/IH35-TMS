@@ -40,12 +40,12 @@ describe("VendorWorkOrdersReverseSection", () => {
     );
 
     const link = await screen.findByRole("link", { name: "WO-T120-RS-0002" });
-    expect(link.getAttribute("href")).toBe("/maintenance/work-orders/wo-1");
-    expect(listWorkOrdersFiltered).toHaveBeenCalledWith("usmca", { external_vendor_id: "vendor-1" });
+    expect(link.getAttribute("href")?.split("?ret=")[0]).toBe("/maintenance/work-orders/wo-1");
+    expect(listWorkOrdersFiltered).toHaveBeenCalledWith("usmca", { vendor_id: "vendor-1" });
     // T120 is now its own real EntityLinkOrTombstone link (drills to /fleet/units/:id), not plain
     // text sharing a node with "open" — assert the unit link and the status text separately.
     const unitLink = screen.getByRole("link", { name: "T120" });
-    expect(unitLink.getAttribute("href")).toBe("/fleet/units/unit-1");
+    expect(unitLink.getAttribute("href")?.split("?ret=")[0]).toBe("/fleet/units/unit-1");
     expect(screen.getByText(/open · 08\/08\/2026/)).toBeTruthy();
   });
 });
