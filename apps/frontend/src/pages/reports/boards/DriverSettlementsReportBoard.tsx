@@ -367,6 +367,14 @@ export function DriverSettlementsReportBoard() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
+        {/* Reports-DriverSettlements.dc.html: Group by sits inside the filter bar, right after the period presets. */}
+        <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
+        <V3Segmented
+          value={by}
+          options={GROUP_OPTIONS}
+          onChange={(next) => setBy(next)}
+          testId="driver-settlements-report-group-by"
+        />
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold">Driver</span>
           <EntityMultiSelect
@@ -383,6 +391,7 @@ export function DriverSettlementsReportBoard() {
           selected={staged.draft.status}
           onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
           allLabel="Open · closed"
+          board
           data-testid="driver-settlements-report-status-filter"
         />
         <MultiSelectDropdown
@@ -391,19 +400,10 @@ export function DriverSettlementsReportBoard() {
           selected={staged.draft.paid}
           onChange={(next) => staged.setDraft((p) => ({ ...p, paid: next as Array<"paid" | "unpaid"> }))}
           allLabel="Paid: all"
+          board
           data-testid="driver-settlements-report-paid-filter"
         />
       </ReportFilterBar>
-
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="font-semibold text-[#111827]">Group by</span>
-        <V3Segmented
-          value={by}
-          options={GROUP_OPTIONS}
-          onChange={(next) => setBy(next)}
-          testId="driver-settlements-report-group-by"
-        />
-      </div>
 
       {query.isError ? (
         <ListErrorState title="Couldn't load the driver settlement report" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
@@ -412,7 +412,7 @@ export function DriverSettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — every KPI opens the report table / filtered cohort (not a dead tile). */}
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-settlements"
           label="Settlements"
           value={query.data ? String(totals.settlements) : "…"}
@@ -426,7 +426,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-gross"
           label="Gross pay"
           value={query.data ? money(totals.gross) : "…"}
@@ -438,7 +438,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-deductions"
           label="Deductions"
           value={query.data ? money(-totals.deductions) : "…"}
@@ -449,7 +449,7 @@ export function DriverSettlementsReportBoard() {
           subDataV3="kpi-dsr-deductions-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-reimb"
           label="Reimbursements"
           value={query.data ? money(totals.reimb) : "…"}
@@ -457,7 +457,7 @@ export function DriverSettlementsReportBoard() {
           valueDataV3="kpi-dsr-reimb"
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-net"
           label="Net pay"
           value={query.data ? money(totals.net) : "…"}
@@ -469,7 +469,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
-          board
+          flat
           testId="dsr-kpi-closed-unpaid"
           label="Closed, not marked paid"
           value={query.data ? money(unpaidNet) : "…"}

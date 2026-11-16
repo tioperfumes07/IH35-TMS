@@ -343,6 +343,15 @@ export function CompanySettlementsReportBoard() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
+        {/* Reports-CompanySettlements.dc.html: Group by sits inside the filter bar, right after the period presets. */}
+        <span style={{ fontSize: 11, color: "#5B6576" }}>Group by</span>
+        <V3Segmented
+          value={by}
+          options={GROUP_OPTIONS}
+          onChange={(next) => setBy(next)}
+          testId="company-settlements-report-group-by"
+        />
+        <span style={{ fontSize: 11, color: "#5B6576" }}>dated by trip close (Central)</span>
         <label className="flex min-w-[10rem] flex-col gap-1 text-xs text-[#4B5563]">
           <span className="font-semibold">Driver</span>
           <EntityMultiSelect
@@ -365,17 +374,6 @@ export function CompanySettlementsReportBoard() {
         </label>
       </ReportFilterBar>
 
-      <div className="flex flex-wrap items-center gap-2 text-xs">
-        <span className="font-semibold text-[#111827]">Group by</span>
-        <V3Segmented
-          value={by}
-          options={GROUP_OPTIONS}
-          onChange={(next) => setBy(next)}
-          testId="company-settlements-report-group-by"
-        />
-        <span className="text-[#5B6576]">dated by trip close (Central)</span>
-      </div>
-
       {query.isError ? (
         <ListErrorState title="Couldn't load the company settlement report" {...formatQueryErrorDetail(query.error)} onRetry={() => void query.refetch()} />
       ) : null}
@@ -383,7 +381,7 @@ export function CompanySettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — KPI tiles open the report table / settlements source. */}
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-trips"
           label="Closed trips"
           value={query.data ? String(totals.trips) : "…"}
@@ -393,7 +391,7 @@ export function CompanySettlementsReportBoard() {
           subDataV3="kpi-csr-trips-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-revenue"
           label="Revenue"
           value={query.data ? money(totals.revenue) : "…"}
@@ -401,7 +399,7 @@ export function CompanySettlementsReportBoard() {
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-costs"
           label="Costs"
           value={query.data ? money(totals.costs) : "…"}
@@ -411,7 +409,7 @@ export function CompanySettlementsReportBoard() {
           subDataV3="kpi-csr-costs-sub"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-driver-pay"
           label="Driver pay"
           value={query.data ? money(totals.driverPay) : "…"}
@@ -419,7 +417,7 @@ export function CompanySettlementsReportBoard() {
           valueDataV3="kpi-csr-driver-pay"
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-margin"
           label="Margin"
           value={query.data ? money(totals.margin) : "…"}
@@ -430,7 +428,7 @@ export function CompanySettlementsReportBoard() {
           onClick={() => document.querySelector('[data-testid="csr-table"]')?.scrollIntoView({ behavior: "smooth", block: "start" })}
         />
         <V3KpiTile
-          board
+          flat
           testId="csr-kpi-zero-cost"
           label="Trips with $0 costs"
           value={query.data ? String(totals.zeroCost.length) : "…"}

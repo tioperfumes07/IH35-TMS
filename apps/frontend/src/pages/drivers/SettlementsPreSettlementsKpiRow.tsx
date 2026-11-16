@@ -1,4 +1,3 @@
-import { ParityTable } from "../../components/parity/ParityTable";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +7,7 @@ import {
   listSettlements,
   type SettlementListRow,
 } from "../../api/driverFinance";
+import { ParityTable } from "../../components/parity/ParityTable";
 import { V3KpiTile } from "../../components/v3/V3KpiTile";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { useCompanyContext } from "../../contexts/CompanyContext";
@@ -57,7 +57,7 @@ const display = (v: string | number | null) => (v === null || v === undefined ? 
 const CLOSE_CHECKS: Array<{ check: string; how: string }> = [
   { check: "All loads delivered", how: "POD on every load" },
   { check: "Documents", how: "rate con · BOL · POD" },
-  { check: "Miles locked", how: "signed settlement → AlwaysTrack → lane history → Google" },
+  { check: "Miles locked", how: "signed settlement → AlwaysTrack → lane history" },
   { check: "Fuel attributed", how: "fills on this tour / next load" },
   { check: "Advances matched", how: "Zelle / cash advances on the tour" },
   { check: "Deductions confirmed", how: "escrow · fines · damages" },
@@ -251,8 +251,6 @@ export function SettlementsPreSettlementsClosesPanel({
       testId="settlements-presettle-closes-panel"
       onViewAll={() => navigate(root)}
     >
-      {/* Settlements-PreSettlements.dc.html "What closes a tour": the V3 table — th 600 11px #5B6576 on #F7F8FA,
-          td 7px 12px 12px ink, nowrap. */}
       <div data-testid="settlements-presettle-closes-body">
         <ParityTable<{ check: string; how: string }>
           appearance="v3"

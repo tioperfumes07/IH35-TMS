@@ -15,6 +15,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable, type ParityColumn } from "../../components/parity/ParityTable";
 import { BoardSection } from "../../components/v3/BoardSection";
+import { V3_TABLE_LINK_CLASS } from "../../components/v3/V3StatusPill";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ListErrorBanner } from "../../components/shared/ListErrorBanner";
 import { TourLegsCell, tourLoadColumns } from "../../components/dispatch/TourLegsCell";
@@ -147,7 +148,7 @@ export function CompanySettlementsRegisterTab({
     <div className="space-y-2" data-testid="company-settlements-register">
       {q.isError ? <ListErrorBanner message="Failed to load company settlements." onRetry={() => void q.refetch()} /> : null}
       <BoardSection title="Company settlements" testId="company-settlements-register-board-section">
-        <ParityTable appearance="board"
+        <ParityTable appearance="v3"
            
           columns={columns}
           rows={rows}
@@ -187,7 +188,7 @@ function CompanyDriverPicker({
         minWidth: 100,
         sortValue: (r) => settlementLabel(r),
         render: (r) => (
-          <EntityLink kind="settlement" id={r.settlement_id} label={settlementLabel(r)} className="ldt-mono" />
+          <EntityLink kind="settlement" id={r.settlement_id} label={settlementLabel(r)} className={V3_TABLE_LINK_CLASS} />
         ),
       },
       ...tourLoadColumns("company-driver-col", rows),
@@ -244,7 +245,7 @@ function CompanyDriverPicker({
         <ListErrorBanner message="Failed to load tours." onRetry={() => void q.refetch()} />
       ) : null}
       <BoardSection title="Closed tours — driver vs company" testId="company-driver-picker-board-section">
-        <ParityTable appearance="board"
+        <ParityTable appearance="v3"
            
           columns={columns}
           rows={rows}
@@ -370,7 +371,7 @@ function DriverSettlementCard({ readout }: { readout: TourReadout }) {
       </div>
 
       <BoardSection title="Loads on this tour" testId="company-driver-driver-loads-board-section">
-        <ParityTable appearance="board"
+        <ParityTable appearance="v3"
            
           columns={columns}
           rows={legs}

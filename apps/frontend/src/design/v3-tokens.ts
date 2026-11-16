@@ -29,8 +29,7 @@ export const V3 = {
   live: "#22C55E",
   /** Text on shell / navy controls. */
   onShell: "#FFFFFF",
-  font: "Inter, ui-sans-serif, system-ui, sans-serif",
-  /** Status pill tone backgrounds (board chips). */
+  /** Status pill pastel backgrounds. */
   pillBlueBg: "#EFF6FF",
   pillAmberBg: "#FFFBEB",
   pillGreenBg: "#ECFDF3",
@@ -38,6 +37,7 @@ export const V3 = {
   pillRedBg: "#FEF2F2",
   /** Slate/muted ink for slate pills (#475569 = Tailwind slate-600). */
   pillSlateInk: "#475569",
+  font: "Inter, ui-sans-serif, system-ui, sans-serif",
 } as const;
 
 /** Expense groups in owner order for two-sided cash views. */

@@ -313,11 +313,12 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
   // <div style="background:#13233F;display:flex;gap:2px;padding:0 6px"> — and each tab is
   // <span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">; the active one adds
   // background:rgba(255,255,255,.16);border-bottom:2px solid #fff and drops the opacity. Inactive tabs draw NO border.
-  const tabClass = (_active: boolean) => "whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white";
+  const tabClass = (active: boolean) =>
+    `whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${active ? "border-b-2 border-white bg-white/[.16]" : ""}`;
   const tabStyle = (active: boolean): CSSProperties => ({
     display: "block", boxSizing: "content-box", padding: "8px 8px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
     fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff", whiteSpace: "nowrap",
-    ...(active ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" } : { opacity: 0.85 }),
+    ...(!active ? { opacity: 0.85 } : {}),
   });
   return (
     <nav

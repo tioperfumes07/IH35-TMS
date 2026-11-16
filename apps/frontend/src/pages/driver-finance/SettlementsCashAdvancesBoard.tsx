@@ -351,11 +351,11 @@ export function SettlementsCashAdvancesBoard() {
               />
             ) : (
               <ParityTable appearance="v3"
-           
+
                 title={S443326.cashAdvances.sectionAdvances}
                 storageKey="settlements-cash-advances-roster-v3"
                 columns={advanceColumns}
-                rows={filteredAdvances}
+                rows={filteredAdvances.slice(0, 5)}
                 rowKey={(row) => String(row.id)}
                 rowTestId={(row) => `settlements-cash-advances-advance-${String(row.id)}`}
                 loading={listQuery.isLoading}

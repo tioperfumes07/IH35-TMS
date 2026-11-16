@@ -1,3 +1,21 @@
+## 2026-11-15 — R11.0 #29675 re-push: merged origin/main (#29727 driver-onboarding guard fix, #29728 CC-3 boards); verify-navy-page-subnav guard fix (border-b-2 tokens); ready to merge on required checks
+
+## 2026-11-15 — READER PLEASE Settlements-CashAdvances 06016f38 — PR #29643 lineHeight:normal on board root; KPI/emptyText/viewAll/colHeader fixes from #29635-#29641 already on main
+
+## 2026-11-15 — READER PLEASE Settlements-Close 07a381ad — PR #29642 step buttons display:block+padding:10px 12px (rh 47px); result table → ParityTable (go26 ratchet fix); nav/back/table-rh fixes already in main via #29640/#29635/#29636
+
+## 2026-11-15 — READER PLEASE Settlements-Company 4565e451 — PR #29641 auto-merge enabled, CI running (chip fix: BoardSection titleStyle navy chip; nav/back/table-rh fixes already in main via #29640/#29635/#29636)
+
+## 2026-11-15 — READER PLEASE Settlements-Closed — COVERED BY PR #29639 (same SettlementsToursRegister.tsx component as Settlements-Open; no separate PR needed)
+
+## 2026-11-15 — READER PLEASE Settlements d6facaf5 — PR #29640 auto-merge enabled, CI running
+
+## 2026-11-15 — READER PLEASE Settlements-Open 26d8f830 — PR #29639 auto-merge enabled, CI running
+
+## 2026-11-15 — READER PLEASE Settlements-PreSettlements abe4a772 — PR #29638 auto-merge enabled, CI running
+
+---
+
 ## 2026-11-14 03:12Z — READER PLEASE: ROUND 9.6 SETTLEMENT BOARDS B35-B42 (CC-1)
 
 All 8 boards merged to main by Lead (#29564 B35, #29571 B36, #29572 B37, #29573 B38, #29574 B39, #29579 B40, #29580 B41, #29578 B42).
@@ -428,3 +446,7 @@ Settlement P-0102 ($379.73, USMCA, source_document_ref=5796, status=closed). No 
 
 ### Settlements-CashAdvances
 READER PLEASE Settlements-CashAdvances 70ae3ba4 — PR #29633 auto-merge enabled, CI running
+READER PLEASE Settlements-Deductions 38d6ed61 — PR #29634 auto-merge enabled, CI running
+- READER PLEASE Settlements-Company 522b201b — PR #29635 auto-merge enabled, CI running
+- READER PLEASE Settlements-Escrow 9c7d8950 — PR #29636 auto-merge enabled, CI running
+- READER PLEASE Settlements-Close 8d608ac0 — PR #29637 auto-merge enabled, CI running
