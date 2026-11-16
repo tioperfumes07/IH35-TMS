@@ -77,4 +77,20 @@ describeIntegration("perfume bulk review (real Postgres, rolled back)", () => {
     const owner = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.item_upcs WHERE upc = '8000000000031'`)).rows[0].item_id;
     expect(owner).toBe(plain);
   });
+
+  it("create_new on two lines that read the same bottle makes ONE item; the second links to it", async () => {
+    const a = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('SAME ID A', 'both') RETURNING id`)).rows[0].id;
+    const { list_id } = await importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: a, list_date: "2026-11-16", file_name: "a.xlsx", source_kind: "xlsx", rows_read: 2, file_price_total_cents: 3000,
+      rows: [
+        { row_no: 1, description: "ZZSAME GLOW (W) EDP SP 3.4oz", price: "15.00" },
+        { row_no: 2, description: "ZZSAME GLOW EDP 3.4oz (W)", price: "15.00" },
+      ],
+    });
+    const ids = (await db.query<{ id: string }>(`SELECT id FROM perfume.price_list_rows WHERE list_id = $1 ORDER BY row_no`, [list_id])).rows.map((r) => r.id);
+    await bulkReview(db as never, TEST_OWNER_USER_ID, { action: "create_new", row_ids: ids });
+    const items = (await db.query<{ item_id: string }>(`SELECT DISTINCT item_id FROM perfume.price_list_rows WHERE list_id = $1`, [list_id])).rows;
+    expect(items).toHaveLength(1);
+    expect(items[0].item_id).toBeTruthy();
+  });
 });
