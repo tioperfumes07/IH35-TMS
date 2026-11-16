@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -252,7 +252,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const q = z.object({ list_id: z.string().uuid().optional(),
       list_ids: z.string().max(4000).optional().transform((v) => (v ? v.split(",").filter(Boolean) : undefined)).pipe(z.array(z.string().uuid()).max(50).optional()),
       q: z.string().max(200).optional(), status: z.enum(["review", "unmatched"]).optional(), mine: z.enum(["offer"]).optional(),
-      gender: csvList, conc: csvList, kind: csvList, category: csvList, brand: csvList, limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
+      gender: csvList, conc: csvList, kind: csvList, category: csvList, brand: csvList, suggest: z.enum(REVIEW_SUGGEST_BUCKETS).optional(), limit: z.coerce.number().int().min(1).max(500).default(100), offset: z.coerce.number().int().min(0).default(0) }).safeParse(req.query);
     if (!q.success) return bad(reply, q.error);
     return withCurrentUser(uid, (c) => reviewQueue(c, q.data));
   });

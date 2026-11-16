@@ -608,7 +608,12 @@ function cachedIdentity(line: { description: string; brand: string | null; size:
 /** Review filters read from the line itself (owner 2026-11-15: "filter by men or women, or by gender or by type, or set
  * or tester or those with suggestions"). Values are the engine's own reading of the vendor line: gender M / W / U / none,
  * type (EDT, EDP, PARFUM …), kind (SET, TESTER, MINI, REFILL … or NONE for a regular bottle), category, brand. */
-export type ReviewLineFilters = { gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[] };
+/** Owner 2026-11-15 19:24 CT: "the selector or filter for only those that have suggestions … 70 and up". `suggest` reads the
+ *  line's OWN suggestions (the best one's % alike): "any" = has a suggestion, "95"/"90"/"80"/"70" = best is at least that
+ *  % alike, "none" = no suggestion. */
+export const REVIEW_SUGGEST_BUCKETS = ["any", "95", "90", "80", "70", "none"] as const;
+export type ReviewSuggestBucket = (typeof REVIEW_SUGGEST_BUCKETS)[number];
+export type ReviewLineFilters = { gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[]; suggest?: ReviewSuggestBucket };
 export type ReviewFacet = { value: string; count: number };
 
 export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_ids?: string[]; q?: string; status?: "review" | "unmatched"; mine?: "offer"; limit: number; offset: number } & ReviewLineFilters) {
@@ -675,12 +680,22 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   const kindsOf = (r: LineRow) => { const f = String(r.flags ?? "").split(/\s+/).filter(Boolean); return f.length ? f : ["NONE"]; };
   const catOf = (r: LineRow) => String(r.category ?? "Unknown");
   const brandOf = (r: LineRow) => (r.brand_name ? String(r.brand_name) : "none");
+  const bestPct = (r: LineRow) => {
+    const s = (r.suggestions as Array<{ score?: number }> | null | undefined)?.[0];
+    return s && typeof s.score === "number" ? Math.round(s.score * 100) : null;
+  };
+  const inBucket = (r: LineRow, b: ReviewSuggestBucket) => {
+    const pct = bestPct(r);
+    if (b === "none") return pct == null;
+    if (b === "any") return pct != null;
+    return pct != null && pct >= Number(b);
+  };
   const want = (vals: string[] | undefined) => (vals?.length ? new Set(vals) : null);
   const wG = want(opts.gender), wC = want(opts.conc), wK = want(opts.kind), wCat = want(opts.category), wB = want(opts.brand);
-  const pass = (r: LineRow, skip?: "gender" | "conc" | "kind" | "category" | "brand") =>
+  const pass = (r: LineRow, skip?: "gender" | "conc" | "kind" | "category" | "brand" | "suggest") =>
     (skip === "gender" || !wG || wG.has(genderOf(r))) && (skip === "conc" || !wC || wC.has(concOf(r))) &&
     (skip === "kind" || !wK || kindsOf(r).some((k) => wK.has(k))) && (skip === "category" || !wCat || wCat.has(catOf(r))) &&
-    (skip === "brand" || !wB || wB.has(brandOf(r)));
+    (skip === "brand" || !wB || wB.has(brandOf(r))) && (skip === "suggest" || !opts.suggest || inBucket(r, opts.suggest));
   // Each filter's counts are measured with every OTHER filter applied, so a count is the number of lines that choice shows.
   const facet = (key: "gender" | "conc" | "kind" | "category" | "brand", read: (r: LineRow) => string[]): ReviewFacet[] => {
     const n = new Map<string, number>();
@@ -696,6 +711,8 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
     facets: {
       gender: facet("gender", (r) => [genderOf(r)]), conc: facet("conc", (r) => [concOf(r)]), kind: facet("kind", kindsOf),
       category: facet("category", (r) => [catOf(r)]), brand: facet("brand", (r) => [brandOf(r)]),
+      // Each bucket counted with every other filter applied (the buckets overlap: 95%+ is inside 70%+ and "any").
+      suggest: REVIEW_SUGGEST_BUCKETS.map((b) => ({ value: b, count: scoped.filter((r) => pass(r, "suggest") && inBucket(r, b)).length })),
     },
   };
 }
