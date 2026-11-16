@@ -102,7 +102,7 @@ export function planFuelPurchasePushes(
       fuel_transaction_id: row.id,
       action: "push",
       body: {
-        transactionReference: row.id,
+        transactionReference: samsaraTransactionReference(row.id),
         transactionTime: at.toISOString(),
         transactionLocation: location,
         fuelQuantityLiters: (gallons * LITERS_PER_US_GALLON).toFixed(3),
@@ -145,6 +145,17 @@ type LedgerState = { pushed: Set<string>; lastSkipReason: Map<string, string>; p
 
 /** The pre-#29687 failure text: status code only, Samsara's body reason dropped. */
 export const BARE_HTTP_REASON = /^samsara_fuel_purchase_http_\d{3}(:http_\d{3})?$/;
+/**
+ * E-23 (measured live 2026-11-16 00:00Z, Samsara's reason now recorded): every push was rejected with
+ * "length of body.transactionReference must be lesser or equal than 32 but got … (len=36)" — we sent the
+ * fuel_transactions UUID with its dashes. The reference is the same UUID's 32 hex digits (dashes removed), which maps
+ * back to exactly one fuel_transactions.id.
+ */
+export function samsaraTransactionReference(fuelTransactionId: string): string {
+  return String(fuelTransactionId).replace(/-/g, "").toLowerCase();
+}
+/** A 400 caused by OUR payload format (fixed above) is not the row's fault: those rows are sent again, never parked. */
+export const OUR_PAYLOAD_FORMAT_REASON = /transactionReference must be lesser or equal than 32/;
 
 async function loadLedger(client: PgClient, operatingCompanyId: string): Promise<LedgerState> {
   const res = await client.query(
@@ -168,7 +179,7 @@ async function loadLedger(client: PgClient, operatingCompanyId: string): Promise
     // Permanent ONLY when Samsara's own reason was recorded. The 3,894 pre-#29687 failures carry the bare
     // "samsara_fuel_purchase_http_400:http_400" (reason dropped) — those rows get ONE more send so the rejection
     // is finally readable, instead of being parked forever without knowing why (owner law: root cause, not a skip).
-    else if (r.outcome === "failed" && r.reason && /http_4(?!29)\d\d/.test(String(r.reason)) && !BARE_HTTP_REASON.test(String(r.reason))) permanentlyFailed.add(String(r.id));
+    else if (r.outcome === "failed" && r.reason && /http_4(?!29)\d\d/.test(String(r.reason)) && !BARE_HTTP_REASON.test(String(r.reason)) && !OUR_PAYLOAD_FORMAT_REASON.test(String(r.reason))) permanentlyFailed.add(String(r.id));
   }
   return { pushed, lastSkipReason, permanentlyFailed };
 }
