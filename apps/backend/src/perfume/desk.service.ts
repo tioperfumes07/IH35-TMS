@@ -80,11 +80,19 @@ export type VendorRow = {
   cushion_lo_cents: number | null; cushion_hi_cents: number | null; freight_lo_cents: number | null; freight_hi_cents: number | null;
   earn_pct: string | null; sells_by_box: boolean; contact: string | null; column_mapping: Record<string, unknown>;
 };
+/** Owner 2026-11-16 16:31 CT: "the order of vendors is ok in alphabetical order but the first ones should always be, pca, mtz,
+ *  elegance, mr distributors, then the rest in alphabetical order." By the vendor's short name (its column header). */
+export const VENDOR_FIRST = ["PCA", "MTZ", "ELEGANCE", "M&R DIST"];
+export function orderVendors<V extends { name: string; short_name: string | null }>(vs: readonly V[]): V[] {
+  const rank = (v: V) => { const i = VENDOR_FIRST.indexOf((v.short_name ?? "").trim().toUpperCase()); return i < 0 ? VENDOR_FIRST.length : i; };
+  const label = (v: V) => (v.short_name?.trim() || v.name).toLowerCase();
+  return [...vs].sort((a, b) => rank(a) - rank(b) || label(a).localeCompare(label(b)) || a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+}
 export async function listVendors(c: PoolClient): Promise<VendorRow[]> {
-  return (await c.query<VendorRow>(
+  return orderVendors((await c.query<VendorRow>(
     `SELECT id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping
        FROM perfume.vendors WHERE archived_at IS NULL ORDER BY lower(name)`,
-  )).rows;
+  )).rows);
 }
 export type VendorInput = Partial<Omit<VendorRow, "id" | "earn_pct">> & { id?: string; name: string; earn_pct?: number | null };
 /** The column header for a vendor: the owner's short name (PCA, MTZ, NAND, PPW …), else the full name. */
@@ -1933,6 +1941,19 @@ export function exportColumnsWithInputs(shown: readonly GridCol[], all: readonly
   return { cols: [...shown, ...all.filter((c) => added.has(c.key))], added };
 }
 
+const LOW_FILL = { type: "pattern" as const, pattern: "solid" as const, fgColor: { argb: "FFDCEFE3" } };
+/** The per-vendor columns that compare like with like: every vendor's "List price" (v:*:price), every competitor's "Real
+ *  price" (s:*:real) … — one family per (prefix, field), only families with 2+ vendors. Returns column indexes. */
+export function priceFamilies(keys: readonly string[], isMoney: (i: number) => boolean): number[][] {
+  const fam = new Map<string, number[]>();
+  keys.forEach((k, i) => {
+    const m = /^([vtsc]):[^:]+:([a-z_]+)$/.exec(k);
+    if (!m || !isMoney(i) || /diff|earn|cushion|cush|margin/.test(m[2]!)) return;
+    const f = `${m[1]}:${m[2]}`;
+    (fam.get(f) ?? fam.set(f, []).get(f)!).push(i);
+  });
+  return [...fam.values()].filter((x) => x.length >= 2);
+}
 export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string, added: ReadonlySet<string> = new Set()): Promise<Buffer> {
   const wb = new ExcelJS.Workbook();
   wb.creator = "TIO Perfumes price desk";
@@ -1950,6 +1971,7 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
   }
   ws.getRow(1).font = { bold: true };
   ws.getRow(2).font = { bold: true };
+  const lowFamilies = priceFamilies(cols.map((c) => c.key), (i) => cols[i]!.kind === "money");
   ws.views = [{ state: "frozen", ySplit: 2 }];
   const idx = (k: string) => cols.findIndex((c) => c.key === k);
   const L = (i: number) => ws.getColumn(i + 1).letter;
@@ -1966,6 +1988,15 @@ export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: De
       return v;
     });
     const row = ws.addRow(values);
+    // Owner 2026-11-16 16:31 CT: "if on any item there is a lowest item should also be colored in and if many have the same
+    // price, then those have the same colors." Per family of vendor columns (every vendor's list price, every vendor's
+    // real price …) the lowest is shaded, every tie the same shade.
+    for (const fam of lowFamilies) {
+      let min: number | null = null;
+      for (const i of fam) { const v = values[i]; if (typeof v === "number" && (min == null || v < min)) min = v; }
+      if (min == null) continue;
+      for (const i of fam) if (values[i] === min) { const cell = row.getCell(i + 1); cell.fill = LOW_FILL; cell.font = { bold: true, color: { argb: "FF14532D" } }; }
+    }
     // Live formulas: Est. cost (best supplier) = vendor price − cushion + freight; margin and markup from it.
     const p = idx("best_price"), cu = idx("cushion"), fr = idx("freight"), lk = idx("landed_likely"), lo = idx("low_sell"), mg = idx("margin"), mk = idx("markup"), pf = idx("profit");
     if (p >= 0 && cu >= 0 && fr >= 0 && lk >= 0 && r.best_price != null) {
