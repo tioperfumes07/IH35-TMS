@@ -771,7 +771,16 @@ export async function confirmRow(c: PoolClient, userId: string, rowId: string, t
   }
   // The owner's confirmation is the authority on what a barcode is (owner 2026-11-14: "AZZ WTD … REFILL … it is not the
   // same item at all"): the barcode moves to the item he chose, so the next import links it there too.
-  if (row.upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO UPDATE SET item_id = EXCLUDED.item_id`, [row.upc, itemId, row.list_id]);
+  // Except a NEW item made from the line ("create new"): the barcode already on another item stays there. A line that
+  // is a different KIND of product than the item carrying its barcode (TESTER / SET / MINI of the plain bottle, measured
+  // 11-16: 694 waiting lines) becomes its own item, and the plain bottle must keep linking every vendor's plain line.
+  if (row.upc) {
+    await c.query(
+      target.create_new
+        ? `INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO NOTHING`
+        : `INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO UPDATE SET item_id = EXCLUDED.item_id`,
+      [row.upc, itemId, row.list_id]);
+  }
   // This line is relinked even when it was matched (a wrong match is corrected here); other lines with the same
   // text / SKU follow only when they are not matched yet.
   const applied = await c.query(

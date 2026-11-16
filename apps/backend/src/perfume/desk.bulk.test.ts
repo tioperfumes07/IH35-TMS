@@ -53,4 +53,28 @@ describeIntegration("perfume bulk review (real Postgres, rolled back)", () => {
     const raw = (await db.query<{ description: string }>(`SELECT description FROM perfume.price_list_rows WHERE id = $1`, [row.id])).rows[0];
     expect(raw.description).toBe("ZZBULK GLOW 3.4oz EDP");
   });
+
+  it("create_new on a TESTER line whose barcode is on the plain bottle makes its own item; the barcode stays on the bottle", async () => {
+    const a = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('KIND SUP A', 'buy') RETURNING id`)).rows[0].id;
+    const b = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('KIND SUP B', 'both') RETURNING id`)).rows[0].id;
+    await importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: a, list_date: "2026-11-16", file_name: "a.xlsx", source_kind: "xlsx", rows_read: 1, file_price_total_cents: 2000,
+      rows: [{ row_no: 1, upc: "8000000000031", brand: "ZZKIND", description: "ZZKIND AURA (W) EDP SP 3.4oz", price: "20.00" }],
+    });
+    const plain = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.item_upcs WHERE upc = '8000000000031'`)).rows[0].item_id;
+    const { list_id } = await importList(db as never, TEST_OWNER_USER_ID, {
+      vendor_id: b, list_date: "2026-11-16", file_name: "b.xlsx", source_kind: "xlsx", rows_read: 1, file_price_total_cents: 1500,
+      rows: [{ row_no: 1, upc: "8000000000031", brand: "ZZKIND", description: "ZZKIND AURA (W) EDP SP 3.4oz TESTER", price: "15.00" }],
+    });
+    const row = (await db.query<{ id: string; match_status: string }>(`SELECT id, match_status FROM perfume.price_list_rows WHERE list_id = $1`, [list_id])).rows[0];
+    expect(row.match_status).toBe("review");
+
+    const r = await bulkReview(db as never, TEST_OWNER_USER_ID, { action: "create_new", row_ids: [row.id] });
+    expect(r.items_created).toBe(1);
+    const linked = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.price_list_rows WHERE id = $1`, [row.id])).rows[0].item_id;
+    expect(linked).not.toBe(plain);
+    // The plain bottle keeps its barcode: the next plain line of any vendor still links to it.
+    const owner = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.item_upcs WHERE upc = '8000000000031'`)).rows[0].item_id;
+    expect(owner).toBe(plain);
+  });
 });
