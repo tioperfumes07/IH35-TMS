@@ -1113,8 +1113,25 @@ export type MatchCandidate = { row_id: string; item_id: string; label: string; p
  *  arrived while the grid was cold each built it again in parallel (41 s each). Now they wait on the ONE build. */
 const _gridBuilding = new Map<string, Promise<GridPayload>>();
 
+/** ROUND 12 — the write counters of every perfume table. The backend runs 4+ servers, each with its own cache;
+ *  _gridVer only moves on the server that took the write, so the others kept serving the grid from before a Review
+ *  confirm. One catalog read (milliseconds); any write on any server moves it. */
+async function perfumeDataSig(c: PoolClient): Promise<string | null> {
+  try {
+    return (await c.query<{ s: string }>(
+      `SELECT string_agg(relname || ':' || n_tup_ins || ':' || n_tup_upd || ':' || n_tup_del, '|' ORDER BY relname) AS s
+         FROM pg_stat_user_tables WHERE schemaname = 'perfume'`)).rows[0]?.s ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
-  const _cacheKey = `v${_gridVer}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
+  // No fingerprint read → a key no earlier build carries (a remembered grid is never trusted without one).
+  const sig = (await perfumeDataSig(c)) ?? "nosig";
+  const _cacheKey = `v${_gridVer}|${sig}|${opts.targetPct ?? "null"}|${opts.earnPct ?? "null"}`;
+  // A new fingerprint makes every remembered grid and view stale: drop them (bounded memory, never a stale read).
+  for (const k of _gridCache.keys()) if (!k.includes(`|${sig}|`)) { _gridCache.clear(); _viewCache.clear(); break; }
   const _cached = _gridCache.get(_cacheKey);
   if (_cached) return _cached;
   const building = _gridBuilding.get(_cacheKey);
@@ -1456,7 +1473,8 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   }
   const { myLines, theirLines } = await buildAnalysisLines(c, { rows, items: items.rows, myLineQ: myLineQ.rows, theirLineQ: theirLineQ.rows, anByItem, vendors, rules, minMargin });
   const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey, myLines, theirLines };
-  _gridCache.set(_cacheKey, _result);
+  // Without a data fingerprint the build is shared by the requests already waiting on it, but never remembered.
+  if (!_cacheKey.includes("|nosig|")) _gridCache.set(_cacheKey, _result);
   return _result;
 }
 

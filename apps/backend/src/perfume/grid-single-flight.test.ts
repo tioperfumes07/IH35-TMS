@@ -18,3 +18,24 @@ describe("buildGrid single flight", () => {
     expect(once).toBe(reads); // three concurrent requests read exactly what one build reads
   });
 });
+
+describe("buildGrid is fresh across servers", () => {
+  it("a write anywhere (the perfume tables' write counters move) rebuilds; no write reuses the grid", async () => {
+    invalidateGridCache();
+    let sig = "items:1:0:0";
+    let builds = 0;
+    const client = { query: async (sql: string) => {
+      if (/pg_stat_user_tables/.test(sql)) return { rows: [{ s: sig }] };
+      if (/FROM perfume\.vendors/.test(sql)) builds++;
+      return { rows: [], rowCount: 0 };
+    } };
+    const a = await buildGrid(client as never);
+    const b = await buildGrid(client as never);
+    expect(b).toBe(a);
+    const before = builds;
+    sig = "items:1:1:0"; // a Review confirm on another server
+    const c = await buildGrid(client as never);
+    expect(c).not.toBe(a);
+    expect(builds).toBeGreaterThan(before);
+  });
+});
