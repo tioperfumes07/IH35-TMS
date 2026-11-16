@@ -880,9 +880,7 @@ export async function recordRelayFillAtReceipt(
   if (!unitId) unitId = relayMatch?.unit_id ?? null;
   if (!unitId) {
     const reason = "relay_fill_unit_unknown: no truck on the document, on its load, or matched by Relay to a truck of this company (TIER1: a fill carries its truck)";
-    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
-      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
-    }, "warning", "ENG-65");
+    await auditRelayRefusalOnce(client, input, reason);
     return { written: false, refused: reason };
   }
   let driverId = input.driver_id;
@@ -896,9 +894,7 @@ export async function recordRelayFillAtReceipt(
   }
   if (!driverId) {
     const reason = "relay_fill_driver_unknown: no driver on the document or from Relay, and no card / truck assignment or load names one at the fill time (TIER1: a working truck's fill carries its driver)";
-    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
-      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
-    }, "warning", "ENG-65");
+    await auditRelayRefusalOnce(client, input, reason);
     return { written: false, refused: reason };
   }
   await client.query("SAVEPOINT relay_fill_record_at_receipt");
@@ -921,11 +917,34 @@ export async function recordRelayFillAtReceipt(
     // rail also records). The unique index on the line's source_row_hash says so: this is "done", not a refusal — idempotent skip.
     if (isRelayLineAlreadyRecordedError(err)) return { written: false, refused: null, already_recorded: true };
     const reason = err instanceof RelayFillFuelRowsError ? `${err.code}: ${err.message}` : String((err as Error)?.message ?? err);
-    await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
-      operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
-    }, "warning", "ENG-65");
+    await auditRelayRefusalOnce(client, input, reason);
     return { written: false, refused: reason };
   }
+}
+
+/**
+ * A refusal is a fact about one fill: audited once per (fill, reason). The hourly pull re-reads the same refused fills, and
+ * writing the same warning every hour buried the 15 real refusals under 15 copies a day (measured 11-16: 30 rows, 15 fills).
+ * A fill refused for a NEW reason is audited again — that is news.
+ */
+async function auditRelayRefusalOnce(
+  client: QueryableClient,
+  input: { operating_company_id: string; relay_fill_id: string; actor_user_uuid?: string | null },
+  reason: string,
+): Promise<void> {
+  const seen = await client.query(
+    `SELECT 1 FROM audit.audit_events
+      WHERE event_class = 'fuel.relay_fill_record_refused'
+        AND payload->>'relay_fuel_transaction_id' = $1
+        AND payload->>'operating_company_id' = $2
+        AND payload->>'reason' = $3
+      LIMIT 1`,
+    [input.relay_fill_id, input.operating_company_id, reason],
+  );
+  if ((seen.rows ?? []).length > 0) return;
+  await appendCrudAudit(client as never, input.actor_user_uuid ?? SYSTEM_ACTOR_USER_ID, "fuel.relay_fill_record_refused", {
+    operating_company_id: input.operating_company_id, relay_fuel_transaction_id: input.relay_fill_id, reason,
+  }, "warning", "ENG-65");
 }
 
 /**
