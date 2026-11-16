@@ -1184,5 +1184,10 @@
     "claimed_at": "2026-11-16",
     "claimed_by": "lead",
     "purpose": "E-12: safety.harsh_events.event_kind adds following_distance, railroad_crossing, lane_departure, unsafe_parking \u2014 Samsara safety events measured on /fleet/safety-events that were counted and dropped (no kind)"
+  },
+  "202616650100": {
+    "claimed_at": "2026-11-16",
+    "claimed_by": "lead",
+    "purpose": "E-29: integrations.auto_status_switch_events.case_id adds 'D' (dispatched \u2192 at_pickup when the truck is parked in the pickup fence)"
   }
 }

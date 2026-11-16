@@ -15,13 +15,13 @@ export const STATIONARY_WINDOW_MIN = 30;
 export const DELIVERY_DWELL_MIN = 5;
 export const IDEMPOTENCY_WINDOW_MIN = 30;
 
-export type AutoStatusCaseId = "A" | "B" | "C";
+export type AutoStatusCaseId = "A" | "B" | "C" | "D";
 
 export type DriftAction =
   | {
       case_id: AutoStatusCaseId;
       action: "auto_apply";
-      proposed_status: "in_transit" | "at_delivery";
+      proposed_status: "at_pickup" | "in_transit" | "at_delivery";
       reason: string;
       evidence: Record<string, unknown>;
     }
@@ -146,8 +146,37 @@ export function evaluateCaseC(ctx: LoadGpsContext): DriftAction {
   };
 }
 
+/**
+ * Case D (11-16) — the truck is parked at the pickup while the load still reads "dispatched". USMCA loads go dispatched →
+ * delivered with nobody stamping arrival (measured 11-16: 0 USMCA loads ever sat at_pickup / in_transit in 30 days, so
+ * cases A–C never had a load to read and E-29 wrote nothing since 10-22). Inside the pickup fence AND not moving
+ * (≤ 0.25 mi over the last 30 min) → at_pickup. Same stage (stop_micro), so cases A and C carry it on from there.
+ */
+export function evaluateCaseD(ctx: LoadGpsContext): DriftAction {
+  if (ctx.current_status !== "dispatched") return null;
+  if (ctx.pickup_lat == null || ctx.pickup_lng == null) return null;
+  if (!isWithinGeofenceMiles(ctx.lat, ctx.lng, ctx.pickup_lat, ctx.pickup_lng)) return null;
+  if (ctx.position_30min_ago_lat == null || ctx.position_30min_ago_lng == null) return null;
+  const movedMiles = haversineMiles(ctx.position_30min_ago_lat, ctx.position_30min_ago_lng, ctx.lat, ctx.lng);
+  if (movedMiles > 0.25) return null;
+  return {
+    case_id: "D",
+    action: "auto_apply",
+    proposed_status: "at_pickup",
+    reason: `GPS parked at the pickup fence (${movedMiles.toFixed(2)} mi in ${STATIONARY_WINDOW_MIN} min) while status remained dispatched.`,
+    evidence: {
+      moved_miles: movedMiles,
+      window_minutes: STATIONARY_WINDOW_MIN,
+      pickup_lat: ctx.pickup_lat,
+      pickup_lng: ctx.pickup_lng,
+      gps_lat: ctx.lat,
+      gps_lng: ctx.lng,
+    },
+  };
+}
+
 export function detectStatusDriftFromContext(ctx: LoadGpsContext): DriftAction {
-  return evaluateCaseA(ctx) ?? evaluateCaseB(ctx) ?? evaluateCaseC(ctx);
+  return evaluateCaseD(ctx) ?? evaluateCaseA(ctx) ?? evaluateCaseB(ctx) ?? evaluateCaseC(ctx);
 }
 
 async function fetchPositionSnapshot(
@@ -421,7 +450,7 @@ export async function applyAutoSwitch(
   client: DbClient,
   operatingCompanyId: string,
   loadUuid: string,
-  newStatus: "in_transit" | "at_delivery",
+  newStatus: "at_pickup" | "in_transit" | "at_delivery",
   reason: string,
   drift: Extract<DriftAction, { action: "auto_apply" }>
 ): Promise<{ applied: boolean; event_uuid?: string; skipped?: string }> {
@@ -552,10 +581,51 @@ export async function processDriftForLoad(
   // ORDERS 2026-10-01 rule 2: an engine that touches a business record (mdata.loads.status) ships
   // flag-OFF; the Lead carries the switch to the owner. Detection still runs and is returned.
   if (!autoStatusApplyEnabled()) {
-    return { drift, result: { applied: false, skipped: "AUTO_STATUS_SWITCH_APPLY_not_true", proposed_status: drift.proposed_status } };
+    // The status is NOT touched, but the detection is recorded (auto_switched=false, applied_at NULL) so dispatch sees
+    // what GPS says and the engine board measures the engine — before this, a detection with the switch off left no
+    // trace at all and E-29 read "0 rows" whether it worked or not.
+    const proposal = await recordProposedSwitch(client, operatingCompanyId, loadUuid, drift);
+    return { drift, result: { applied: false, skipped: "AUTO_STATUS_SWITCH_APPLY_not_true", proposed_status: drift.proposed_status, ...proposal } };
   }
   const applied = await applyAutoSwitch(client, operatingCompanyId, loadUuid, drift.proposed_status, drift.reason, drift);
   return { drift, result: applied };
+}
+
+/**
+ * One proposal per load + case + status it was read in — a truck parked at the pickup for six hours is one proposal, not
+ * twelve. A new status (the dispatcher moved the load) makes a new proposal possible. Never writes mdata.loads.
+ */
+export async function recordProposedSwitch(
+  client: DbClient,
+  operatingCompanyId: string,
+  loadUuid: string,
+  drift: Extract<DriftAction, { action: "auto_apply" }>
+): Promise<{ proposal_recorded: boolean; event_uuid?: string }> {
+  const ctx = await fetchLoadGpsContext(client, operatingCompanyId, loadUuid);
+  if (!ctx) return { proposal_recorded: false };
+  const seen = await client.query(
+    `SELECT 1 FROM integrations.auto_status_switch_events
+      WHERE operating_company_id = $1::uuid AND load_uuid = $2::uuid AND case_id = $3 AND from_status = $4
+        AND auto_switched = false
+      LIMIT 1`,
+    [operatingCompanyId, loadUuid, drift.case_id, ctx.current_status]
+  );
+  if ((seen.rows ?? []).length > 0) return { proposal_recorded: false };
+  const res = await client.query<{ uuid: string }>(
+    `
+      INSERT INTO integrations.auto_status_switch_events (
+        operating_company_id, load_uuid, unit_uuid, driver_uuid, case_id, from_status, to_status, reason,
+        auto_switched, applied_at, driver_notified, evidence
+      )
+      VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8, false, NULL, false, $9::jsonb)
+      RETURNING uuid::text
+    `,
+    [
+      operatingCompanyId, loadUuid, ctx.unit_uuid, ctx.driver_uuid, drift.case_id, ctx.current_status, drift.proposed_status,
+      drift.reason, JSON.stringify({ ...drift.evidence, proposal_only: true, apply_switch: "AUTO_STATUS_SWITCH_APPLY off" }),
+    ]
+  );
+  return { proposal_recorded: true, event_uuid: res.rows[0]?.uuid };
 }
 
 /** Writes to mdata.loads.status only when AUTO_STATUS_SWITCH_APPLY=true (default OFF). */
@@ -622,7 +692,7 @@ export async function listActiveLoadsForAutoStatus(client: DbClient, operatingCo
        AND p.operating_company_id = l.operating_company_id
       WHERE l.operating_company_id = $1::uuid
         AND l.soft_deleted_at IS NULL
-        AND l.status::text IN ('at_pickup', 'in_transit')
+        AND l.status::text IN ('dispatched', 'at_pickup', 'in_transit')
         AND l.assigned_unit_id IS NOT NULL
       ORDER BY l.assigned_unit_id
     `,
