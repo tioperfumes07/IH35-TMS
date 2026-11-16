@@ -263,8 +263,16 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   const sizeOk = identity.sizeMl != null || (upc !== "" && (identity.flags.includes("VARIOUS") || identity.flags.includes("BODY")));
   const strongIdentity = sizeOk && (identity.brand !== "" || upc !== "") && (identity.nameWords.length > 0 || upc !== "");
   if (upcKindClash) {
-    const s = suggest(ix, identity);
-    return { identity, upc, textKey, itemId: null, method: null, status: "review", suggestions: s };
+    // Owner 2026-11-15 20:10 CT ("if they have the upc in common or what?"): the item that already carries this barcode
+    // is the FIRST suggestion, said plainly — measured 15 waiting lines whose UPC is on an item never showed that item
+    // (suggest() skips another kind of product). Its % alike is the words' own similarity (never a made-up 100%), so
+    // the "95% and up" bulk confirm never takes a kind clash; the owner decides.
+    const it = ix.items.get(upcItem!)!;
+    const words = Math.round(Math.max(similarity(identity.nameText, it.name), similarity(`${identity.brand} ${identity.nameText}`, `${it.brand} ${it.name}`)) * 100) / 100;
+    const kindLine = productKind(identity.flags) || "plain bottle", kindItem = productKind(it.flags) || "plain bottle";
+    const upcSuggestion: Suggestion = { item_id: it.id, display_name: it.displayName, score: words, why: `same UPC ${upc} — line is ${kindLine}, item is ${kindItem}; check` };
+    const s = suggest(ix, identity).filter((x) => x.item_id !== it.id);
+    return { identity, upc, textKey, itemId: null, method: null, status: "review", suggestions: [upcSuggestion, ...s].slice(0, 5) };
   }
   if (opts.allowNewItem && strongIdentity && (upc || sku) && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
