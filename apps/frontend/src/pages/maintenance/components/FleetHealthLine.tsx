@@ -25,7 +25,7 @@ function PmRoad({ interval, used, state }: { interval: number; used: number; sta
   );
 }
 
-const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "In shop", none: "No PM clock" };
+const labels = { ok: "Healthy", soon: "PM soon", overdue: "PM overdue", shop: "In shop", none: "Enter last PM" }; // Maintenance-Home.dc.html: a truck with no PM clock reads "Enter last PM"
 const tones = { ok: "text-blue-900", soon: "text-amber-700", overdue: "text-red-800", shop: "text-slate-600", none: "text-slate-500" };
 const statusTones = { ...tones, ok: "text-green-600" };
 
@@ -75,14 +75,16 @@ export function FleetHealthLine({ companyId }: { companyId: string }) {
   const pmHref = (href: string) => withReturnContext(href, origin);
   const health = useQuery({ queryKey: ["maintenance", "fleet-health", companyId], queryFn: () => readFleetHealth(companyId), enabled: Boolean(companyId), staleTime: 60_000, refetchInterval: 180_000 });
   // LEAD 443.281 row 108: say WHAT is missing — a clock with no last-PM odometer (the truck's reading is there) vs no odometer.
+  // Maintenance-Home.dc.html status: inline-flex · gap 6 · 500 12px #111827 · nowrap, a 7px tone dot — every state, the
+  // missing-reading ones too (reader 11-16: the free sentence wrapped to 3 lines and made the fleet rows 58px, not 53).
+  const pill = (tone: string, label: string) => <span style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", whiteSpace: "nowrap" }}><span aria-hidden="true" className={`rounded-full bg-current ${tone}`} style={{ width: 7, height: 7, display: "inline-block" }} />{label}</span>;
   const statusCell = (row: FleetHealthRow) => {
     if (row.pm_baseline_absent && row.pm_schedule_id && row.state !== "shop") {
-      return <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} data-testid="fleet-health-no-last-pm">{t("maintenance.fleetHealth.noLastPm")}</Link>;
+      return <Link to={pmHref(`/maintenance/pm-schedule?schedule_id=${encodeURIComponent(row.pm_schedule_id)}`)} data-testid="fleet-health-no-last-pm" style={{ textDecoration: "none" }} title={t("maintenance.fleetHealth.noLastPmHint")}>{pill(statusTones.none, t("maintenance.fleetHealth.noLastPm"))}</Link>;
     }
-    if (row.odometer_mi == null && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.odometerUnavailable");
-    if ((row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state)) return t("maintenance.fleetHealth.pmReadingUnavailable");
-    // Maintenance-Home.dc.html status: inline-flex · gap 6 · 500 12px #111827 · nowrap, a 7px tone dot.
-    return <span style={{ display: "inline-flex", alignItems: "center", gap: 6, font: "500 12px Inter, ui-sans-serif, system-ui, sans-serif", color: "#111827", whiteSpace: "nowrap" }}><span aria-hidden="true" className={`rounded-full bg-current ${statusTones[row.state]}`} style={{ width: 7, height: 7, display: "inline-block" }} />{labels[row.state]}</span>;
+    if (row.odometer_mi == null && !["shop", "none"].includes(row.state)) return pill(statusTones.none, t("maintenance.fleetHealth.odometerUnavailable"));
+    if ((row.miles_left == null || !row.pm_interval) && !["shop", "none"].includes(row.state)) return pill(statusTones.none, t("maintenance.fleetHealth.pmReadingUnavailable"));
+    return pill(statusTones[row.state], labels[row.state]);
   };
   const columns: ParityColumn<FleetHealthRow>[] = [
     // Board 22: the truck drawing in its own unlabeled first column, then Unit (700 13px) over make · model · year (11px).

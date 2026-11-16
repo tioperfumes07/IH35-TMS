@@ -69,7 +69,8 @@ describe("DefectsInboxPage (B27)", () => {
   it("links to defect detail route", async () => {
     renderPage();
     const link = await screen.findByTestId("defect-detail-link-defect-1");
-    expect(link).toHaveAttribute("href", "/maintenance/defects/defect-1");
+    // The link carries the return context (?ret=) — the route is the path before it.
+    expect(link.getAttribute("href")?.split("?")[0]).toBe("/maintenance/defects/defect-1");
   });
 
   it("shows empty state when queue is empty", async () => {

@@ -107,7 +107,8 @@
   "maintenance": {
     "title": "Maintenance",
     "fleetHealth": {
-      "noLastPm": "No last PM on file — enter it",
+      "noLastPm": "Enter last PM",
+      "noLastPmHint": "No last PM odometer on file — enter it to start the road to the next PM",
       "odometerUnavailable": "Odometer unavailable",
       "pmReadingUnavailable": "PM reading unavailable"
     }
