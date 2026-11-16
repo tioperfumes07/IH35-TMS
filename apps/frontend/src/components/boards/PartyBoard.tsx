@@ -148,7 +148,10 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     {
       key: "factored", label: "Factored", width: 150, sort: (r) => r.factored ?? "",
       cell: (r) => (r.factored ? (
-        <DotLabel color={V3.link}>{r.factor_vendor_id ? <EntityLink kind="vendor" id={r.factor_vendor_id} label={formatCompanyName(r.factored)} className="[color:inherit] [font:inherit] no-underline hover:underline" /> : formatCompanyName(r.factored)}</DotLabel>
+        <span style={{ position: "relative" }}>
+          <DotLabel color={V3.link}>{formatCompanyName(r.factored)}</DotLabel>
+          {r.factor_vendor_id ? <EntityLink kind="vendor" id={r.factor_vendor_id} label="" className="absolute inset-0" /> : null}
+        </span>
       ) : "—"),
     },
     {
@@ -191,7 +194,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
 
   return (
     <div data-testid={`party-board-${props.kind}`} data-v3-board="Customers" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
-      <PartyHomeHeader crumb="" title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
+      <PartyHomeHeader crumb="Customers" title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
         createLabel={"+ Create Customer"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
         <div data-testid="party-board-kpis" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 8 }}>
@@ -213,7 +216,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <V3Segmented<Chip> testId="party-board-chips" value={chip} options={chipOptions} onChange={setChip} />
-          <div style={{ display: "flex", gap: 8 }}>
+          <div style={{ display: "flex", columnGap: 6, alignItems: "center" }}>
             <button type="button" style={outlineButton} data-testid="customers-board-export" onClick={() => exportRef.current()}>{"Export"}</button>
             <button type="button" style={outlineButton} data-testid="customers-board-print" onClick={() => window.print()}>{"Print"}</button>
           </div>
@@ -226,10 +229,10 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
         ) : (
           <V3Panel board title={`Customers · ${int(rows.length)}`} onViewAll={props.onMasterDetail} testId="party-board-panel"
             footer={bucketsShown.length ? (
-              <div data-testid="customers-aging-legend" style={{ display: "flex", gap: 14, padding: "10px 12px", fontSize: 11, color: V3.muted }}>
+              <div data-testid="customers-aging-legend" style={{ display: "flex", gap: 14, padding: "8px 12px", fontSize: 11, color: V3.muted }}>
                 {bucketsShown.map((a) => (
-                  <span key={a.key} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <span aria-hidden="true" style={{ width: 8, height: 6, background: a.color, display: "inline-block" }} />{a.label}
+                  <span key={a.key}>
+                    <span aria-hidden="true" style={{ width: 8, height: 6, background: a.color, display: "inline-block" }} />{" "}{a.label}
                   </span>
                 ))}
               </div>
@@ -237,7 +240,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
             {q.isLoading ? <div style={{ padding: 12, fontSize: 12, color: V3.muted }}>{"Loading customers…"}</div> : (
               <PartyTable<CustomerRow> storageKey="party-board-customers-table" testId="party-board-table" cols={cols} rows={rows} exportRef={exportRef}
                 exportName="customers.csv" emptyText="Nothing matches this filter."
-                renderFirst={(r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} />} />
+                renderFirst={(r) => <EntityLink kind="customer" id={r.id} label={formatCompanyName(r.name)} className="[color:inherit] hover:underline focus:outline-none font-semibold" />} />
             )}
           </V3Panel>
         )}

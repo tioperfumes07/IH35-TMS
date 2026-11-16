@@ -168,8 +168,7 @@ function InlineBasisSelector({ value, onChange }: { value: AccountingBasis; onCh
     background: "#fff",
     borderRadius: 6,
     padding: 2,
-    border: "none",
-    borderBottom: "1px solid #DDE1E7",
+    border: "1px solid #DDE1E7",
     columnGap: 2,
     boxSizing: "content-box",
     cursor: "pointer",
@@ -392,7 +391,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
 
         {/* Left: category sidebar */}
         <V3Panel title="Categories" testId="reports-category-nav" borderRadius={6}>
-          <nav aria-label="Report categories" style={{ display: "block", minHeight: 275, padding: 6, background: "#fff", borderBottom: "1px solid #DDE1E7", borderRadius: 6 }}>
+          <nav aria-label="Report categories" style={{ display: "block", height: 261, padding: 6, background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6 }}>
             {SIDEBAR_CATEGORIES.map((cat) => (
               <button
                 key={cat.id}
@@ -431,6 +430,7 @@ export function ReportsHomeBoard({ companyId }: { companyId: string }) {
                 headerRight={<InlineBasisSelector value={basis} onChange={setBasis} />}
                 testId="reports-home-accounting-financial"
                 borderRadius={6}
+                board
                 footer="Report name or Run → opens the live report viewer (dates, basis, search, columns — edit and re-run). PDF / XLSX export exactly what the viewer shows with the filters applied — the QuickBooks pattern."
               >
                 <ParityTable<CatalogRowObj>

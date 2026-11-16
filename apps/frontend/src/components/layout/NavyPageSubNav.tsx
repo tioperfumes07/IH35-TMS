@@ -347,7 +347,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
       <div className="min-w-max" style={{ display: "flex", gap: 2, padding: "0 6px", backgroundColor: "#13233F", boxSizing: "content-box", minHeight: 32 }}>
         {items.map((item, index) => {
           if (item.children?.length) {
-            return <NavyDropdown key={item.to || item.label} item={item} pathname={pathname} />;
+            return <NavyDropdown key={item.label || item.to} item={item} pathname={pathname} />;
           }
           const id = itemIds?.[index] ?? item.to;
           if (useLocalState) {
@@ -369,7 +369,7 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
           }
           return (
             <Link
-              key={item.to}
+              key={item.label || item.to}
               to={item.to}
               data-testid={item.testId}
               aria-current={activeTo === item.to ? "page" : undefined}

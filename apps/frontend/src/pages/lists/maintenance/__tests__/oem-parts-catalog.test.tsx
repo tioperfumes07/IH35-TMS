@@ -5,7 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { oemPartsCatalogClient } from "../../../../api/lists-oem-parts";
 import { OemPartsCatalog } from "../OemPartsCatalog";
 
-vi.mock("../../../contexts/CompanyContext", () => ({
+vi.mock("../../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({
     selectedCompanyId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
     companies: [],
@@ -52,7 +52,7 @@ describe("OemPartsCatalog", () => {
         })
       )
     );
-    const checkbox = screen.getByRole("checkbox");
+    const checkbox = screen.getByRole("checkbox", { name: /fleet brands only/i });
     expect(checkbox).toBeChecked();
   });
 

@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as documentAlertsApi from "../../../api/document-alerts";
+import { ToastProvider } from "../../../components/Toast";
 import { DocumentAlertsPage } from "../DocumentAlertsPage";
 
 const COMPANY = "11111111-1111-4111-8111-111111111111";
@@ -17,7 +18,9 @@ function wrap(ui: React.ReactElement, initialEntry = "/") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return (
     <QueryClientProvider client={client}>
-      <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[initialEntry]}>{ui}</MemoryRouter>
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

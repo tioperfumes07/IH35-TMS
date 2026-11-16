@@ -238,7 +238,7 @@ describe("DailyTasksPage", () => {
     // widget, which is why this class reads as a missing fixture row. A listbox option is addressed by its
     // VISIBLE TEXT, not its id.
     // Exact label, not /Assignee/i — the task detail panel also renders "Assignee: <email>".
-    pickCombo(screen.getByLabelText("Assignee"), /dispatcher@test.invalid/);
+    pickCombo(screen.getByLabelText("Assignee"), /dispatcher@test.invalid/i);
     await user.click(screen.getAllByRole("button", { name: "+ Create" })[1]);
     await waitFor(() => expect(dailyTasksApi.createDailyTask).toHaveBeenCalled());
 
