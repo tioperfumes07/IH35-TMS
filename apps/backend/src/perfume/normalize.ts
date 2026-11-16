@@ -196,7 +196,7 @@ export function canonicalBrand(raw: string, extra: Record<string, string> = {}):
 
 const GENDER_WORDS: Record<string, Gender> = {
   W: "W", L: "W", WOMAN: "W", WOMEN: "W", WOMENS: "W", LADY: "W", LADIES: "W", MUJER: "W", MUJERES: "W",
-  DAMA: "W", DAMAS: "W", SENORA: "W", SENORAS: "W", FEMENINO: "W", FEMENINA: "W", FEM: "W", WMN: "W", WM: "W",
+  DAMA: "W", DAMAS: "W", SENORA: "W", SENORAS: "W", FEMENINO: "W", FEMENINA: "W", FEM: "W", WMN: "W", WM: "W", WOM: "W",
   M: "M", MAN: "M", MEN: "M", MENS: "M", HOMBRE: "M", HOMBRES: "M", CABALLERO: "M", CABALLEROS: "M",
   SENOR: "M", MASCULINO: "M", VARON: "M", MASC: "M",
   U: "U", UNISEX: "U", UNISEXO: "U",
@@ -503,6 +503,10 @@ export function identify(input: IdentityInput): Identity {
 
   // Vendor-internal tails: MTZ "(100028) - Spain - 15pcs ByBox", PCA "(NEW PACK)(ONLY USA)(LI FREE)".
   s = s.replace(/\(\s*\d{4,}\s*\).*$/, " ");
+  // Oni Essence prints the bottle size INSIDE parentheses: "ANNICK GOUTAL Songes Wom EDT (100ml)",
+  // "VERSACE Pour Homme EDT (100ml+SG 100ml)". Parentheses are dropped below, so the size never read (measured
+  // 11-16: 537 of Oni's 1,023 priced lines unlinked). The leading size is moved out in front of the parenthesis.
+  s = s.replace(/\(\s*(\d+(?:\.\d+)?\s*(?:ML|OZ)\b)\s*/g, " $1 (");
   // Perfumes Plus: "L- SARAH.J PARKER COVET 3.4 EDP SPR - 13827" — a leading "L-/W-/M-/U-" is the gender and the
   // trailing " - 13827" is the vendor's item number, never part of the name.
   let leadGender: Gender = "";
