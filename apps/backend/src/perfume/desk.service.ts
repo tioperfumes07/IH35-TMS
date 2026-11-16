@@ -4,7 +4,7 @@
  */
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
-import { addItem, compactKey, displayNameOf, emptyIndex, matchLine, productKind, suggest, type LineIn, type MatchIndex } from "./matching.js";
+import { addItem, compactKey, displayNameOf, emptyIndex, matchLine, productKind, similarity, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
@@ -656,6 +656,24 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   // gender, tester/set, country, pieces per box, the vendor's code — the same reading the import engine used.
   const ba = await c.query<{ alias: string; brand: string }>(`SELECT alias, brand FROM perfume.brand_aliases`);
   const aliases = { ...BUILTIN_BRAND_ALIASES, ...Object.fromEntries(ba.rows.map((a) => [a.alias, a.brand])) };
+  // Owner 2026-11-15 20:10 CT ("if they have the upc in common"): a waiting line whose barcode is already on an item gets
+  // that item as its FIRST suggestion, read now (no rematch needed). % alike stays the words' own similarity.
+  const lineUpcs = [...new Set(rows.rows.map((r: Record<string, unknown>) => String(r.upc ?? "").trim()).filter(Boolean))];
+  const upcItems = new Map<string, { id: string; display_name: string; brand: string; name: string }>();
+  if (lineUpcs.length) {
+    for (const u of (await c.query<{ upc: string; id: string; display_name: string; brand: string; name: string }>(
+      `SELECT u.upc, i.id, i.display_name, i.brand, i.name FROM perfume.item_upcs u JOIN perfume.items i ON i.id = u.item_id
+        WHERE u.upc = ANY($1::text[]) AND i.merged_into_id IS NULL`, [lineUpcs])).rows) upcItems.set(u.upc, u);
+  }
+  const withUpcSuggestion = (r: Record<string, unknown>): Record<string, unknown> => {
+    const hit = upcItems.get(String(r.upc ?? "").trim());
+    if (!hit) return r;
+    const list = (r.suggestions as Array<{ item_id: string }> | null) ?? [];
+    if (list[0]?.item_id === hit.id) return r;
+    const words = Math.round(Math.max(similarity(String(r.description ?? ""), hit.name), similarity(String(r.description ?? ""), `${hit.brand} ${hit.name}`)) * 100) / 100;
+    return { ...r, suggestions: [{ item_id: hit.id, display_name: hit.display_name, score: words, why: `same UPC ${String(r.upc)} — check the words` }, ...list.filter((x) => x.item_id !== hit.id)].slice(0, 5) };
+  };
+  rows.rows = rows.rows.map(withUpcSuggestion);
   const out = rows.rows.map((r: Record<string, unknown>) => {
     const id = cachedIdentity({ description: String(r.description ?? ""), brand: (r.brand as string | null) ?? null, size: (r.size_text as string | null) ?? null, gender: (r.gender_override as string | null) ?? null }, aliases);
     const tail = vendorLineTail(String(r.description ?? ""));
