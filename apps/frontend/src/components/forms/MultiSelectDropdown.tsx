@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { useTranslation } from "../../hooks/useTranslation";
@@ -35,6 +36,12 @@ type Props = {
   selectedChips?: boolean;
   /** V3 board trigger (docs/design/v3/Reports-*.dc.html "Status ▾"): 28px · 6px · 600 12px Inter · #DDE1E7 border. */
   board?: boolean;
+  /**
+   * Board mode only: no wrapper — the trigger is a direct child of the caller's bar, as the report-family designs draw it
+   * (Dispatch-LoadHistory / Reports-*: a <button> straight inside the white filter bar). The menu opens in a portal at the
+   * trigger. Reader 11-16: report filter buttons read their wrapper as parent (block, no padding), not the bar.
+   */
+  flat?: boolean;
 };
 
 // ROUND 12 (reader 11-16 00:48Z): the report-family designs (Dispatch-LoadHistory, Reports-*) draw these as <button>, whose
@@ -58,17 +65,27 @@ export function MultiSelectDropdown({
   listNotice,
   selectedChips = false,
   board = false,
+  flat = false,
   ...rest
 }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const flatBoard = board && flat;
+  const [menuAt, setMenuAt] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     if (!open) return;
     const onDoc = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const t = e.target as Node;
+      if (flatBoard) {
+        if (!btnRef.current?.contains(t) && !menuRef.current?.contains(t)) setOpen(false);
+        return;
+      }
+      if (ref.current && !ref.current.contains(t)) setOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setOpen(false);
@@ -79,7 +96,13 @@ export function MultiSelectDropdown({
       document.removeEventListener("mousedown", onDoc);
       document.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, flatBoard]);
+
+  useEffect(() => {
+    if (!open || !flatBoard || !btnRef.current) { setMenuAt(null); return; }
+    const r = btnRef.current.getBoundingClientRect();
+    setMenuAt({ top: r.bottom + 4, left: r.left });
+  }, [open, flatBoard]);
 
   useEffect(() => {
     if (!open) { setQuery(""); onSearch?.(""); }
@@ -103,47 +126,11 @@ export function MultiSelectDropdown({
     return options.filter((o) => o.label.toLowerCase().includes(q));
   }, [options, query, searchable, serverSearch]);
 
-  return (
-    <div ref={ref} className={`relative ${className ?? ""}`} data-testid={rest["data-testid"]}>
-      <button
-        type="button"
-        disabled={disabled}
-        onClick={() => setOpen((v) => !v)}
-        style={board ? BOARD_TRIGGER : undefined}
-        className={board ? undefined : 
-          triggerClassName ??
-          // ONE CONTROL HEIGHT (OWNER DESIGN LAW 2026-10-02 rule 2, owner report 2026-10-04: "ALL BOXES,
-          // DATES, FILTERS ETC MUST BE UNIFORM FOLLOWING STANDARD DESIGN HEIGHTS"). This trigger carried
-          // NO height class at all -- py-1 let the glyph set its own height, so every one of the 27 call
-          // sites rendered a multi-select a few pixels shorter than the Combobox/date/search controls
-          // beside it. Take the height from the one token every other filter control takes it from.
-          `mt-1 flex items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-gray-900 hover:bg-gray-50 ${FILTER_CONTROL_SIZE_CLASS}`
-        }
-        aria-haspopup="true"
-        aria-expanded={open}
-      >
-        {board ? (
-          <>{selected.length === 0 ? (allLabel?.endsWith("▾") ? allLabel.replace(/\s*▾$/, "") : label) : `${label} (${selected.length})`} ▾</>
-        ) : (
-          <>
-            <span className="max-w-[10rem] truncate">{summary}</span>
-            <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
-          </>
-        )}
-      </button>
-      {selectedChips && selected.length ? <div className="flex flex-wrap gap-1" aria-label={`${label} selections`}>
-        {selected.map(value => <button key={value} type="button" disabled={disabled}
-          onClick={() => onChange(selected.filter(id => id !== value))}
-          aria-label={`Remove ${options.find(option => option.value === value)?.label ?? label}`}
-          className={`max-w-full truncate rounded-sm border border-gray-300 px-2 text-xs ${FILTER_CONTROL_HEIGHT_CLASS}`}>
-          {options.find(option => option.value === value)?.label ?? label} ×
-        </button>)}
-      </div> : null}
-      {open ? (
+  const menuEl = (
         <div
           role="group"
           aria-label={label}
-          className="absolute z-20 mt-1 max-h-72 w-56 overflow-y-auto rounded-sm border border-gray-300 bg-white p-1 shadow-lg"
+          className={`${flatBoard ? "" : "absolute z-20 mt-1 "}max-h-72 w-56 overflow-y-auto rounded-sm border border-gray-300 bg-white p-1 shadow-lg`}
         >
           {searchable ? (
             <input
@@ -183,7 +170,83 @@ export function MultiSelectDropdown({
             <p className="px-2 py-1 text-xs text-gray-500">No matches for &ldquo;{query}&rdquo;</p>
           ) : null}
         </div>
-      ) : null}
+  );
+
+  if (flatBoard) {
+    return (
+      <>
+      <button
+        ref={btnRef}
+        data-testid={rest["data-testid"]}
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        style={board ? BOARD_TRIGGER : undefined}
+        className={board ? undefined : 
+          triggerClassName ??
+          // ONE CONTROL HEIGHT (OWNER DESIGN LAW 2026-10-02 rule 2, owner report 2026-10-04: "ALL BOXES,
+          // DATES, FILTERS ETC MUST BE UNIFORM FOLLOWING STANDARD DESIGN HEIGHTS"). This trigger carried
+          // NO height class at all -- py-1 let the glyph set its own height, so every one of the 27 call
+          // sites rendered a multi-select a few pixels shorter than the Combobox/date/search controls
+          // beside it. Take the height from the one token every other filter control takes it from.
+          `mt-1 flex items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-gray-900 hover:bg-gray-50 ${FILTER_CONTROL_SIZE_CLASS}`
+        }
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        {board ? (
+          <>{selected.length === 0 ? (allLabel?.endsWith("▾") ? allLabel.replace(/\s*▾$/, "") : label) : `${label} (${selected.length})`} ▾</>
+        ) : (
+          <>
+            <span className="max-w-[10rem] truncate">{summary}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+          </>
+        )}
+      </button>
+        {open && menuAt && typeof document !== "undefined"
+          ? createPortal(<div ref={menuRef} style={{ position: "fixed", top: menuAt.top, left: menuAt.left, zIndex: 60 }}>{menuEl}</div>, document.body)
+          : null}
+      </>
+    );
+  }
+
+  return (
+    <div ref={ref} className={`relative ${className ?? ""}`} data-testid={rest["data-testid"]}>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((v) => !v)}
+        style={board ? BOARD_TRIGGER : undefined}
+        className={board ? undefined : 
+          triggerClassName ??
+          // ONE CONTROL HEIGHT (OWNER DESIGN LAW 2026-10-02 rule 2, owner report 2026-10-04: "ALL BOXES,
+          // DATES, FILTERS ETC MUST BE UNIFORM FOLLOWING STANDARD DESIGN HEIGHTS"). This trigger carried
+          // NO height class at all -- py-1 let the glyph set its own height, so every one of the 27 call
+          // sites rendered a multi-select a few pixels shorter than the Combobox/date/search controls
+          // beside it. Take the height from the one token every other filter control takes it from.
+          `mt-1 flex items-center justify-between gap-1 rounded-sm border border-gray-300 bg-white px-2 text-gray-900 hover:bg-gray-50 ${FILTER_CONTROL_SIZE_CLASS}`
+        }
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        {board ? (
+          <>{selected.length === 0 ? (allLabel?.endsWith("▾") ? allLabel.replace(/\s*▾$/, "") : label) : `${label} (${selected.length})`} ▾</>
+        ) : (
+          <>
+            <span className="max-w-[10rem] truncate">{summary}</span>
+            <ChevronDown className="h-3.5 w-3.5 text-gray-500" />
+          </>
+        )}
+      </button>
+      {selectedChips && selected.length ? <div className="flex flex-wrap gap-1" aria-label={`${label} selections`}>
+        {selected.map(value => <button key={value} type="button" disabled={disabled}
+          onClick={() => onChange(selected.filter(id => id !== value))}
+          aria-label={`Remove ${options.find(option => option.value === value)?.label ?? label}`}
+          className={`max-w-full truncate rounded-sm border border-gray-300 px-2 text-xs ${FILTER_CONTROL_HEIGHT_CLASS}`}>
+          {options.find(option => option.value === value)?.label ?? label} ×
+        </button>)}
+      </div> : null}
+      {open ? menuEl : null}
       {/* Board mode: the trigger's own text ("Status ▾") names it — a second, hidden "Status" would be a stray node the
           V3 board does not draw. */}
       {board ? null : <span className="sr-only">{label}</span>}

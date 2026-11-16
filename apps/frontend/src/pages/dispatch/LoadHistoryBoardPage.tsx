@@ -487,6 +487,8 @@ export default function LoadHistoryBoardPage() {
         onReset={staged.reset}
         applyDisabled={!staged.dirty}
       >
+        {/* Dispatch-LoadHistory.dc.html: every filter is a <button> straight inside the white bar — the dropdowns render
+            flat (no wrapper), as drawn. */}
         {/* Design: "Date [Pickup | Delivery]" segmented — which stop date the range filters on. */}
         <V3Segmented box="border-box"
           value={staged.draft.dateField}
@@ -501,6 +503,7 @@ export default function LoadHistoryBoardPage() {
           onChange={(next) => staged.setDraft((p) => ({ ...p, status: next }))}
           allLabel="Status: all except cancelled ▾"
           board
+          flat
           data-testid="load-history-status-filter"
         />
         <MultiSelectDropdown
@@ -510,41 +513,39 @@ export default function LoadHistoryBoardPage() {
           onChange={(next) => staged.setDraft((p) => ({ ...p, tripType: next }))}
           allLabel="Trip NB · TR · SB · Local ▾"
           board
+          flat
           data-testid="load-history-trip-filter"
         />
-        <div aria-label="Customer">
-          <EntityMultiSelect
-            kind="customer"
-            operatingCompanyId={companyId}
-            value={staged.draft.customerId || null}
-            onChange={(next) => staged.setDraft((p) => ({ ...p, customerId: next ?? "" }))}
-            placeholder="Customer ▾"
-            ariaLabel="Customer"
-            board
-          />
-        </div>
-        <div aria-label="Driver">
-          <EntityMultiSelect
-            kind="driver"
-            operatingCompanyId={companyId}
-            value={staged.draft.driverId || null}
-            onChange={(next) => staged.setDraft((p) => ({ ...p, driverId: next ?? "" }))}
-            placeholder="Driver ▾"
-            ariaLabel="Driver"
-            board
-          />
-        </div>
-        <div aria-label="Truck">
-          <EntityMultiSelect
-            kind="unit"
-            operatingCompanyId={companyId}
-            value={staged.draft.unitId || null}
-            onChange={(next) => staged.setDraft((p) => ({ ...p, unitId: next ?? "" }))}
-            placeholder="Truck ▾"
-            ariaLabel="Truck"
-            board
-          />
-        </div>
+        <EntityMultiSelect
+          kind="customer"
+          operatingCompanyId={companyId}
+          value={staged.draft.customerId || null}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, customerId: next ?? "" }))}
+          placeholder="Customer ▾"
+          ariaLabel="Customer"
+          board
+          flat
+        />
+        <EntityMultiSelect
+          kind="driver"
+          operatingCompanyId={companyId}
+          value={staged.draft.driverId || null}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, driverId: next ?? "" }))}
+          placeholder="Driver ▾"
+          ariaLabel="Driver"
+          board
+          flat
+        />
+        <EntityMultiSelect
+          kind="unit"
+          operatingCompanyId={companyId}
+          value={staged.draft.unitId || null}
+          onChange={(next) => staged.setDraft((p) => ({ ...p, unitId: next ?? "" }))}
+          placeholder="Truck ▾"
+          ariaLabel="Truck"
+          board
+          flat
+        />
       </ReportFilterBar>
 
       {query.isError ? (
