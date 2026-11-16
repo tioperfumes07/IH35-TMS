@@ -136,6 +136,30 @@ async function latestSyncLog(
   }
 }
 
+/** ROUND 12 — the engine's own job record (_system.background_jobs): last success / last failure across its job names. */
+async function latestJobRun(
+  client: PoolClient,
+  jobNames: string[] | undefined
+): Promise<{ last_ok: string | null; last_failed: string | null; error_message: string | null } | null> {
+  if (!jobNames?.length) return null;
+  const sp = "e41_jobs";
+  await client.query(`SAVEPOINT ${sp}`);
+  try {
+    const res = await client.query<{ last_ok: string | null; last_failed: string | null; error_message: string | null }>(
+      `SELECT max(last_successful_run_at)::text AS last_ok, max(last_failed_run_at)::text AS last_failed,
+              (array_agg(last_error_message ORDER BY last_failed_run_at DESC NULLS LAST))[1] AS error_message
+         FROM _system.background_jobs WHERE job_name = ANY($1::text[])`,
+      [jobNames]
+    );
+    await client.query(`RELEASE SAVEPOINT ${sp}`);
+    const row = res.rows[0];
+    return row && (row.last_ok || row.last_failed) ? row : null;
+  } catch {
+    await client.query(`ROLLBACK TO SAVEPOINT ${sp}`).catch(() => {});
+    return null;
+  }
+}
+
 function nextRunHint(schedule: string, lastRunAt: string | null, windowHours: number | null): string | null {
   if (!windowHours) return schedule === "—" ? null : schedule;
   if (!lastRunAt) return `due (window ${windowHours}h) · ${schedule}`;
@@ -145,7 +169,7 @@ function nextRunHint(schedule: string, lastRunAt: string | null, windowHours: nu
   return new Date(nextMs).toISOString();
 }
 
-function healthFor(entry: EngineCatalogEntry, opts: {
+export function healthFor(entry: EngineCatalogEntry, opts: {
   lastRunAt: string | null;
   lastSuccess: boolean | null;
   lastError: string | null;
@@ -169,6 +193,14 @@ function healthFor(entry: EngineCatalogEntry, opts: {
     (opts.rows24h === 0 && opts.lastRunAt == null) ||
     (opts.rows24h == null && !opts.lastRunAt && !opts.probeNote);
   if (opts.rows24h === 0) {
+    // ROUND 12 — it ran green inside its window and found nothing new (no fraud, no new Samsara address, no harsh event):
+    // idle, said plainly with the run time — never green, and never red for a run that worked.
+    if (opts.lastRunAt && opts.lastSuccess === true) {
+      const ageH = (Date.now() - Date.parse(opts.lastRunAt)) / 3600_000;
+      if (!Number.isNaN(ageH) && ageH <= entry.expectedWindowHours) {
+        return { health: "idle", reason: `ran ${opts.lastRunAt.slice(0, 16).replace("T", " ")}Z — nothing new in 24 h` };
+      }
+    }
     return { health: "red", reason: "should produce — 0 rows in 24 h" };
   }
   if (silent) {
@@ -191,7 +223,14 @@ export async function fetchEngineStatusBoard(
 ): Promise<{ engines: EngineStatusRow[]; catalog_count: number; measured_at: string }> {
   const engines: EngineStatusRow[] = [];
   for (const entry of ENGINE_STATUS_CATALOG) {
-    const sync = await latestSyncLog(client, entry.syncKinds, operatingCompanyId);
+    const fromLog = await latestSyncLog(client, entry.syncKinds, operatingCompanyId);
+    // ROUND 12 — a cron that records its run in _system.background_jobs (not the sync log) is read there: the latest of
+    // its success / failure decides. A failure newer than the last success is a failed run (red, with its error).
+    const job = fromLog.finished_at ? null : await latestJobRun(client, entry.jobNames);
+    const jobFailedLast = Boolean(job?.last_failed && (!job.last_ok || Date.parse(job.last_failed) > Date.parse(job.last_ok)));
+    const sync = job
+      ? { finished_at: jobFailedLast ? job.last_failed : job.last_ok, success: !jobFailedLast, error_message: jobFailedLast ? job.error_message : null, rows_added: null }
+      : fromLog;
     const probe = await countLast24h(client, entry, operatingCompanyId);
     const rows24h =
       probe.count != null
