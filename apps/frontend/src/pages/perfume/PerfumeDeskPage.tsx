@@ -356,6 +356,20 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   }, [query.data?.cols, view]);
   // Owner 2026-11-12: "so I don't confuse between vendors have a line noting difference." A heavy left rule on the
   // first shown column of every group (Mine, each supplier, each competitor) — header and every row.
+  // Owner 2026-11-16 16:31 CT: "if on any item there is a lowest item should also be colored in and if many have the same
+  // price, then those have the same colors." Like with like: every vendor's list price, every competitor's real price …
+  const lowFamily = useMemo(() => {
+    const fam = new Map<string, string[]>();
+    for (const c of cols) {
+      const m = /^([vtsc]):[^:]+:([a-z_]+)$/.exec(c.key);
+      if (!m || c.kind !== "money" || /diff|earn|cushion|cush|margin/.test(m[2]!)) continue;
+      const f = `${m[1]}:${m[2]}`;
+      (fam.get(f) ?? fam.set(f, []).get(f)!).push(c.key);
+    }
+    const byKey = new Map<string, string[]>();
+    for (const keys of fam.values()) if (keys.length >= 2) for (const k of keys) byKey.set(k, keys);
+    return byKey;
+  }, [cols]);
   const groupStart = useMemo(() => {
     const seen = new Set<string>();
     const starts = new Set<string>();
@@ -385,6 +399,12 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         if (c.kind === "money" && LOW_PAIR.has(c.key) && v != null && r["a:offer"] != null && r["a:esp"] != null && Number(v) === Math.min(Number(r["a:offer"]), Number(r["a:esp"]))) {
           return <span data-testid="perfume-analysis-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
         }
+        const fam = lowFamily.get(c.key);
+        if (fam && v != null && v !== "") {
+          let min: number | null = null;
+          for (const k of fam) { const x = r[k]; if (x != null && x !== "" && Number.isFinite(Number(x)) && (min == null || Number(x) < min)) min = Number(x); }
+          if (min != null && Number(v) === min) return <span data-testid="perfume-vendor-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
+        }
         if (c.key === "a:over_by" && v != null && Number(v) < 0) return <span className="font-semibold text-red-700">{money(v)}</span>;
         // Owner 2026-11-15 13:32 CT: in every view a negative figure (I'm more expensive / must lower) is red.
         if (c.kind === "money") return v != null && Number(v) < 0 ? <span className="font-semibold text-red-700">{money(v)}</span> : money(v);
@@ -400,7 +420,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view, mine, groupStart, hideEmpty, matchDesk],
+    [cols, view, mine, groupStart, hideEmpty, matchDesk, lowFamily],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
