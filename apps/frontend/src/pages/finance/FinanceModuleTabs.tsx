@@ -51,16 +51,16 @@ export function FinanceModuleTabs() {
         data-testid="finance-cross-module-links"
       >
         <span className="font-semibold text-[#6B7280]">Related:</span>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/accounting")}>
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/accounting">
           Accounting
         </Link>
         <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/dispatch/load-costs")}>
           Load costs
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/cash-flow")}>
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/cash-flow">
           Cash Flow
         </Link>
-        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to={moneyHref("/reports/profit-loss")}>
+        <Link className="font-medium text-[#1F2A44] underline-offset-2 hover:underline" to="/reports/profit-loss">
           Profit &amp; Loss
         </Link>
       </nav>

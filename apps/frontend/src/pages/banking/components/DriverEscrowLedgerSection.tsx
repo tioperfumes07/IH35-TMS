@@ -278,7 +278,7 @@ export function DriverEscrowLedgerSection({ operatingCompanyId, driverEscrowBala
         key: "driver_name",
         label: "Driver",
         render: (row) => (
-          <Link to={drvHref(`/drivers/${row.driver_id}`)} className="text-[#1F2A44] hover:underline">
+          <Link to={`/drivers/${row.driver_id}`} className="text-[#1F2A44] hover:underline">
             {entityLabel(row.driver_name, row.driver_id, "Driver")}
           </Link>
         ),

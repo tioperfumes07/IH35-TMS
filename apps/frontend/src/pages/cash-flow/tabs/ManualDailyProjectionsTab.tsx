@@ -583,11 +583,11 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     return `${wd}, ${formatDateUS(projectionDate)}`;
   })();
   const toolbarBtn: CSSProperties = {
-    display: "flex",
+    display: "inline-flex",
     height: 28,
     alignItems: "center",
     gap: 4,
-    borderRadius: 2,
+    borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
     padding: "0 12px",
