@@ -1,7 +1,6 @@
 import { type ReactNode } from "react";
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Breadcrumb } from "../../components/shared/Breadcrumb";
-import { NavyPageSubNav } from "../../components/layout/NavyPageSubNav";
 import { resolveBackHref } from "../../lib/returnContext";
 import { V3 } from "../../design/v3-tokens";
 
@@ -86,9 +85,32 @@ export function FactoringBoardChrome({
         data-factoring-board-tabs-wrap="1"
       >
         <div data-testid="factoring-board-tabs">
-          {/* Factoring.dc.html draws the same navy V3 sub-nav every board draws (32px, tabs stretch): reader 11-16 03:05Z —
-              the hover nav drew 9 tabs 30px tall. */}
-          {nav ?? <NavyPageSubNav items={subnavItems.map((item) => ({ label: item.label, to: item.to }))} />}
+          {nav ?? (subnavItems.length > 0 ? (
+            <div style={{ background: V3.shell, display: "flex", gap: 2, padding: "0 6px", lineHeight: "normal" }}>
+              {subnavItems.map((item) => {
+                const active = pathname === item.to || pathname.startsWith(item.to + "/");
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    style={{
+                      padding: "8px 8px",
+                      font: `600 11px ${V3.font}`,
+                      color: V3.onShell,
+                      opacity: active ? 1 : 0.85,
+                      background: active ? "rgba(255,255,255,.16)" : "transparent",
+                      borderBottom: active ? "2px solid #fff" : "2px solid transparent",
+                      lineHeight: "normal",
+                      textDecoration: "none",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          ) : null)}
         </div>
       </div>
     </>
