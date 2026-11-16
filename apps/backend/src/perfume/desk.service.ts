@@ -783,12 +783,15 @@ export async function confirmRow(c: PoolClient, userId: string, rowId: string, t
   // Except a NEW item made from the line ("create new"): the barcode already on another item stays there. A line that
   // is a different KIND of product than the item carrying its barcode (TESTER / SET / MINI of the plain bottle, measured
   // 11-16: 694 waiting lines) becomes its own item, and the plain bottle must keep linking every vendor's plain line.
-  if (row.upc) {
+  // Only a real barcode is filed: lines stored before normalizeUpc checked its length after the zero strip (PCA "9188307",
+  // 11-16) would break item_upcs_upc_check and roll back a whole bulk.
+  const upc = normalizeUpc(row.upc);
+  if (upc) {
     await c.query(
       target.create_new
         ? `INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO NOTHING`
         : `INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id) VALUES ($1,$2,$3) ON CONFLICT (upc) DO UPDATE SET item_id = EXCLUDED.item_id`,
-      [row.upc, itemId, row.list_id]);
+      [upc, itemId, row.list_id]);
   }
   // This line is relinked even when it was matched (a wrong match is corrected here); other lines with the same
   // text / SKU follow only when they are not matched yet.
