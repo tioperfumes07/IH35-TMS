@@ -632,6 +632,9 @@ export default function LoadHistoryBoardPage() {
           minWidthPx={1800}
           tableTestId="load-history-table"
           onRowClick={openPanel}
+          // Dispatch-LoadHistory.dc.html: every row opens with its own checkbox ("select 13700"); ticked rows are what
+          // Export XLSX takes. The checkbox is also what sets the design's 34px row.
+          selectable
           boardTdStyle={{ padding: "7px 10px", color: "#111827" }}
           footerCells={{
             load_number: <span className="font-semibold text-[#111827]">Totals ({rows.length})</span>,

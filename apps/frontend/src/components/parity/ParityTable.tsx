@@ -40,6 +40,14 @@ import { TABLE_MISSING } from "../../lib/money";
 import { TableMoneyCell } from "../table/TableMoneyCell";
 import { downloadXlsx, useParityServerView, type ParityServerView } from "./useParityServerView";
 
+/** V3 select column (docs/design/v3 *.dc.html first <td>: padding 7px 10px). */
+const V3_SELECT_TD: React.CSSProperties = { padding: "7px 10px", verticalAlign: "middle" };
+/** UI CONTROL LAW on V3 boards: the select wrapper keeps its >=24px clickable area (MIN_HIT_TARGET_CLASS) but takes
+ *  20px of the line (-2px margins), so the row is the design's 34px (7px + 20px + 7px) — the hit area never shrinks.
+ *  Non-V3 tables keep 443.156's 32px hit class. */
+const V3_SELECT_HIT: React.CSSProperties = { margin: "-2px 0" };
+const selectHitClass = `${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`;
+
 export type ParityDensity = "regular" | "compact" | "ultra";
 
 export type ParityColumn<T> = {
@@ -1352,7 +1360,9 @@ export function ParityTable<T>({
   function exportMatrix() {
     const cols = visibleColumns;
     const header = cols.map((c) => String(c.label ?? ""));
-    const body = sortedRows.map((row) =>
+    // ROUND 12 — with rows ticked, Export takes exactly those rows (in the table's order); nothing ticked = every row.
+    const picked = selectable && selectedRows.length > 0 ? new Set(selectedRows) : null;
+    const body = (picked ? sortedRows.filter((r) => picked.has(r)) : sortedRows).map((row) =>
       cols.map((c) => {
         const v = c.exportValue ? c.exportValue(row) : (row as Record<string, unknown>)[String(c.key)];
         return v == null ? "" : typeof v === "number" ? v : String(v);
@@ -1595,9 +1605,9 @@ export function ParityTable<T>({
           </td>
         ) : null}
         {selectable ? (
-          <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX }} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
-            {/* UI CONTROL LAW — the wrapper is the clickable area (>=24px floor; 443.156: 32px), the box is 20px. */}
-            <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
+          <td className="px-2" style={{ width: TABLE_SELECT_COLUMN_PX, ...(v3 ? V3_SELECT_TD : {}) }} onClick={(e: { stopPropagation(): void }) => e.stopPropagation()}>
+            {/* UI CONTROL LAW — wrapper = clickable area (>=24px); V3: see V3_SELECT_HIT. */}
+            <span style={v3 ? V3_SELECT_HIT : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
               <input
                 type="checkbox"
                 className={TABLE_SELECT_CHECKBOX_CLASS}
@@ -2007,9 +2017,9 @@ export function ParityTable<T>({
           <tr style={{ height: v3 ? 28.5 : DENSITY[density].rowH }}>
             {renderExpanded ? <th className="w-8 px-2" style={{ backgroundColor: resolvedHeaderBg }} /> : null}
             {selectable ? (
-              <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX }}>
-                {/* UI CONTROL LAW — same hit-target wrap as the row checkbox (443.156: 20px box, 32px hit area). */}
-                <span className={`${MIN_HIT_TARGET_CLASS} ${TABLE_SELECT_HIT_CLASS}`}>
+              <th className="px-2" style={{ backgroundColor: resolvedHeaderBg, width: TABLE_SELECT_COLUMN_PX, ...(v3 ? V3_SELECT_TD : {}) }}>
+                {/* UI CONTROL LAW — same hit-target wrap as the row checkbox. */}
+                <span style={v3 ? V3_SELECT_HIT : undefined} className={v3 ? MIN_HIT_TARGET_CLASS : selectHitClass}>
                   <input
                     type="checkbox"
                     className={TABLE_SELECT_CHECKBOX_CLASS}

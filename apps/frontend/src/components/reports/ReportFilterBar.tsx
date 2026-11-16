@@ -49,6 +49,8 @@ const B_BAR = { display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8,
 const B_LABEL = { fontSize: 11, color: "#5B6576" } as const;
 const B_SEG = { display: "inline-flex", background: "#fff", border: "1px solid #DDE1E7", borderRadius: 6, padding: 2, gap: 2 } as const;
 const B_SEG_BTN = { padding: "4px 10px", borderRadius: 4, fontFamily: B_FONT, fontSize: 11, fontWeight: 600, border: 0, background: "transparent", color: "#5B6576", lineHeight: "normal", cursor: "pointer" } as const;
+// ROUND 12 (reader 11-16 00:48Z): the report-family designs (Dispatch-LoadHistory, Reports-*) draw these as <button>, whose
+// box is border-box: 28px tall including the border (ours drew 30). #29725's content-box was the wrong reading.
 const B_BTN = { height: 28, boxSizing: "border-box", padding: "0 12px", display: "inline-flex", alignItems: "center", borderRadius: 6, fontFamily: B_FONT, fontSize: 12, fontWeight: 600, background: "#fff", color: "#111827", border: "1px solid #DDE1E7", lineHeight: "normal", cursor: "pointer" } as const;
 const B_APPLY = { ...B_BTN, background: "#13233F", color: "#fff", border: 0 } as const;
 const B_SEG_BTN_ON = { ...B_SEG_BTN, background: "#13233F", color: "#fff" } as const;

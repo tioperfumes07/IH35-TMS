@@ -62,7 +62,7 @@ export function V3StatusPill({ tone, children, testId }: { tone: V3PillTone; chi
 
 /** A record link inside a V3 board table: V3.link (#1D4ED8), 600, no underline until hover. */
 export const V3_TABLE_LINK_CLASS =
-  "font-semibold text-blue-700 no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
+  "font-semibold text-[#1D4ED8] no-underline hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-500 focus-visible:ring-offset-1";
 
 /** V3 board header actions (every .dc.html header): 28px · 0 12px · radius 6 · 600 12px Inter. */
 export const V3_HEADER_BTN: CSSProperties = {
