@@ -753,11 +753,18 @@ export async function confirmRow(c: PoolClient, userId: string, rowId: string, t
     const m = matchLine(ix, row.vendor_id, { description: row.description, brand: row.brand, size_text: row.size_text, gender: row.gender_override }, { allowNewItem: false });
     const id = m.identity;
     if (!id.nameWords.length) throw new Error("item_needs_a_name");
-    const ins = await c.query<{ id: string }>(
-      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
-      [id.brand, id.nameText, id.sizeMl, id.conc, id.gender, id.flags, id.key, looseKey(id), displayNameOf(id), userId]);
-    itemId = ins.rows[0].id;
+    // The same reading IS the same product: when a live item already holds this identity (another vendor's line, or an
+    // earlier line of the same bulk), the line links to it. Inserting again broke items_identity_key_uq and rolled back
+    // the whole bulk (measured 11-16, 100 lines per batch).
+    const same = (await c.query<{ id: string }>(`SELECT id FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL LIMIT 1`, [id.key])).rows[0];
+    if (same) itemId = same.id;
+    else {
+      const ins = await c.query<{ id: string }>(
+        `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, created_by)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        [id.brand, id.nameText, id.sizeMl, id.conc, id.gender, id.flags, id.key, looseKey(id), displayNameOf(id), userId]);
+      itemId = ins.rows[0].id;
+    }
   }
   if (!itemId) throw new Error("item_required");
   const textKey = [row.brand ?? "", row.description, row.size_text ?? ""].join(" ").toUpperCase().replace(/\s+/g, " ").trim();
