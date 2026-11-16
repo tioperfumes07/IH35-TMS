@@ -56,7 +56,6 @@ export function V3Segmented<T extends string>({
               background: active ? V3.shell : "transparent",
               color: active ? V3.onShell : V3.muted,
               fontFamily: V3.font,
-              boxSizing: "content-box",
             }}
           >
             {opt.label}
