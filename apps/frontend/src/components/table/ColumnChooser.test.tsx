@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { ColumnChooser } from "./ColumnChooser";
+import { pickCombo } from "../../test-utils/pickCombo";
 
 describe("ColumnChooser Apply law", () => {
   it("keeps page and column changes as drafts until Apply", () => {
@@ -18,7 +19,8 @@ describe("ColumnChooser Apply law", () => {
 
     fireEvent.click(screen.getByLabelText("Table settings"));
     fireEvent.click(screen.getByRole("checkbox", { name: "Amount" }));
-    fireEvent.change(screen.getByLabelText("Rows per page"), { target: { value: "50" } });
+    // Rows per page is the shared SelectCombobox: pick the option a user reads.
+    pickCombo(screen.getByRole("combobox", { name: "Rows per page" }), "50");
     expect(onToggleColumn).not.toHaveBeenCalled();
     expect(onPageSizeChange).not.toHaveBeenCalled();
 

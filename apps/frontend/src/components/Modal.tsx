@@ -12,6 +12,7 @@ import { ModalCloseButton } from "./ModalCloseButton";
 import { PARITY_CREATE_DRAWER_WIDTH } from "./parity/sizing";
 import { ResizeHandle } from "./ui/ResizeHandle";
 import "../styles/proportion-chrome.css";
+import { useRegisterAttemptClose } from "./useRegisterAttemptClose";
 
 type ModalProps = {
   open: boolean;
@@ -63,6 +64,8 @@ type ModalProps = {
   size?: "sm" | "md" | "lg";
   /** Opt-in expansion for review workspaces; ordinary decision dialogs stay bounded. */
   allowFullPage?: boolean;
+  /** Put on the dialog panel. Callers passed it for years and it was silently dropped (TS accepts any data-* on JSX). */
+  "data-testid"?: string;
 };
 
 export function Modal({
@@ -81,6 +84,7 @@ export function Modal({
   variant = "center",
   size = "md",
   allowFullPage = false,
+  "data-testid": dataTestId,
 }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const layer = useOverlayLayer(open);
@@ -175,11 +179,8 @@ export function Modal({
     attemptClose();
   }, open);
 
-  useEffect(() => {
-    if (!onRegisterAttemptClose) return;
-    onRegisterAttemptClose(attemptClose);
-    return () => onRegisterAttemptClose(() => {});
-  }, [onRegisterAttemptClose, attemptClose]);
+  // One stable registration per mount — re-registering on every render looped forever (see the hook).
+  useRegisterAttemptClose(onRegisterAttemptClose, attemptClose);
 
   useEffect(() => {
     if (!open) setShowDiscardConfirm(false);
@@ -282,6 +283,7 @@ export function Modal({
           role="dialog"
           aria-modal="true"
           aria-label={title}
+          data-testid={dataTestId}
           data-modal-variant={variant}
           data-proportion-chrome="qbo-compact"
           onMouseDown={(event) => event.stopPropagation()}

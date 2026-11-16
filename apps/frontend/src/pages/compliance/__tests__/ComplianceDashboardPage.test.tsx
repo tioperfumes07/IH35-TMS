@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -30,6 +30,9 @@ function renderPage(initialEntry = "/compliance") {
     </QueryClientProvider>
   );
 }
+
+// The section tabs are the shared navy sub-nav: buttons, the current one marked aria-current="page".
+const tab = (name: string) => within(screen.getByTestId("navy-page-subnav")).getByRole("button", { name });
 
 describe("ComplianceDashboardPage", () => {
   beforeEach(() => {
@@ -82,24 +85,24 @@ describe("ComplianceDashboardPage", () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByTestId("compliance-dashboard-page");
-    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    await user.click(tab("Overview"));
     expect(await screen.findByTestId("compliance-section-summary")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-table")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-rules")).toBeTruthy();
     expect(screen.getByTestId("compliance-section-log")).toBeTruthy();
     expect(screen.getByTestId("compliance-summary-cards")).toBeTruthy();
     expect(screen.getByTestId("compliance-table-panel")).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Overview" }).getAttribute("aria-selected")).toBe("true");
+    expect(tab("Overview").getAttribute("aria-current")).toBe("page");
   });
 
   it("deep-links via ?tab= and writes tab into the URL on click", async () => {
     const user = userEvent.setup();
     renderPage("/compliance?tab=hos_tracker");
     expect(await screen.findByTestId("compliance-section-hos-tracker")).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "HOS Tracker" }).getAttribute("aria-selected")).toBe("true");
+    expect(tab("HOS Tracker").getAttribute("aria-current")).toBe("page");
 
-    await user.click(screen.getByRole("tab", { name: "Overview" }));
+    await user.click(tab("Overview"));
     expect(await screen.findByTestId("compliance-section-summary")).toBeTruthy();
-    expect(screen.getByRole("tab", { name: "Overview" }).getAttribute("aria-selected")).toBe("true");
+    expect(tab("Overview").getAttribute("aria-current")).toBe("page");
   });
 });

@@ -40,7 +40,8 @@ describe("EditTrailerModal", () => {
         </ToastProvider>
       </QueryClientProvider>
     );
-    expect(screen.getByTestId("tp-edit-trailer-modal")).toBeTruthy();
+    // REG-025/026: the editor is a side drawer now (fleet-edit-trailer-drawer), not the old centered modal.
+    expect(screen.getByTestId("fleet-edit-trailer-drawer")).toBeTruthy();
     expect(await screen.findByDisplayValue("T-100")).toBeTruthy();
     expect(screen.getByDisplayValue("VIN1")).toBeTruthy();
   });

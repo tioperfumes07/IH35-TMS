@@ -86,14 +86,13 @@ describe("ClaimCreateModal — claim economics slice 2", () => {
 
   it("owner lock #1 — recovery_rail defaults to 'ask' (never auto-advanced)", () => {
     render(wrap(<ClaimCreateModal {...defaultProps} />));
-    const select = screen.getByTestId("claim-create-recovery-rail-field").querySelector("select");
-    expect(select).toHaveValue("ask");
+    // The field is the shared SelectCombobox: its input shows the chosen option's label.
+    expect(within(screen.getByTestId("claim-create-recovery-rail-field")).getByRole("combobox")).toHaveValue("Ask later (not decided)");
   });
 
   it("owner lock #2 — repair_books_treatment defaults to 'ask', no dollar-threshold copy present", () => {
     render(wrap(<ClaimCreateModal {...defaultProps} />));
-    const select = screen.getByTestId("claim-create-repair-books-field").querySelector("select");
-    expect(select).toHaveValue("ask");
+    expect(within(screen.getByTestId("claim-create-repair-books-field")).getByRole("combobox")).toHaveValue("Ask later (not decided)");
     expect(screen.getByText(/No dollar threshold applies/i)).toBeInTheDocument();
   });
 

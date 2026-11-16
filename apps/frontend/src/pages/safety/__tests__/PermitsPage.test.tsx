@@ -79,7 +79,7 @@ describe("PermitsPage (A23-13)", () => {
     await user.type(screen.getByLabelText(/Holder name/i), "IH35");
     // Expiry date is the shared DatePicker (button + calendar popover), not a typeable input — typing into
     // it set nothing, so `disabled={!draft.expiry_date}` kept Create disabled and the submit never ran.
-    pickDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement);
+    pickDate(screen.getByText(/Expiry date/i).parentElement as HTMLElement);
     await user.click(screen.getByRole("button", { name: "Create" }));
     await waitFor(() => {
       expect(safetyApi.createSafetyPermit).toHaveBeenCalled();
@@ -93,7 +93,7 @@ describe("PermitsPage (A23-13)", () => {
     await user.click(screen.getByTestId("permits-create-btn"));
     await user.type(screen.getByLabelText(/Permit number/i), "TX-OA-FAIL");
     await user.type(screen.getByLabelText(/Holder name/i), "IH35");
-    pickDate(screen.getByText(/Expiry date/i).closest("label") as HTMLElement);
+    pickDate(screen.getByText(/Expiry date/i).parentElement as HTMLElement);
     await user.click(screen.getByRole("button", { name: "Create" }));
     expect(await screen.findByTestId("permit-create-error")).toBeTruthy();
     expect(screen.getByTestId("permits-create-modal")).toBeTruthy();

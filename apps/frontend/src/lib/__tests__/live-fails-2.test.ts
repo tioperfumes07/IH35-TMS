@@ -50,11 +50,16 @@ vi.mock("../../api/fuelPlanner", async (orig) => ({ ...(await orig<typeof import
 describe("Diesel by truck pages within the API's 200 cap (live: limit=500 -> HTTP 400)", () => {
   afterEach(() => getFuelTransactions.mockReset());
   it("never asks for more than 200 and pages until has_more is false", async () => {
+    // Real pages: 200 fills then 150, total_count 350 on both (the reader refuses an empty page that says has_more,
+    // a changing total, or a short period — those are integrity errors, not paging).
+    const fills = (start: number, n: number) =>
+      Array.from({ length: n }, (_, i) => ({ id: `tx-${start + i}`, unit_id: "u1", unit_number: "101", amount_cents: 100, gallons: 1, load_id: null }));
     getFuelTransactions
-      .mockResolvedValueOnce({ transactions: [], has_more: true, total: 350 })
-      .mockResolvedValueOnce({ transactions: [], has_more: false, total: 350 });
+      .mockResolvedValueOnce({ transactions: fills(0, 200), has_more: true, total_count: 350 })
+      .mockResolvedValueOnce({ transactions: fills(200, 150), has_more: false, total_count: 350 });
     const { fetchDieselByTruckAggregate } = await import("../../pages/fuel/fuelDieselByTruck");
-    await fetchDieselByTruckAggregate("co", "2026-10-01", "2026-10-31");
+    const agg = await fetchDieselByTruckAggregate("co", "2026-10-01", "2026-10-31");
+    expect(agg.fill_count).toBe(350);
     expect(getFuelTransactions).toHaveBeenCalledTimes(2);
     for (const call of getFuelTransactions.mock.calls) expect(call[1].limit).toBeLessThanOrEqual(200);
     expect(getFuelTransactions.mock.calls[1][1].offset).toBe(200);

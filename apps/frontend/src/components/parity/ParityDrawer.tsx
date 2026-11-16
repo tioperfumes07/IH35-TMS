@@ -14,6 +14,7 @@ import { OverlayParent, useOverlayLayer } from "../../hooks/useOverlayLayer";
 import { PARITY_DRAWER_WIDTH, PARITY_DRAWER_WIDTH_WIDE, PARITY_DRAWER_WIDTH_HALF, PARITY_DRAWER_WIDTH_XWIDE } from "./sizing";
 import { colors, typography } from "../../design/tokens";
 import "../../styles/proportion-chrome.css";
+import { useRegisterAttemptClose } from "../useRegisterAttemptClose";
 
 export type ParityDrawerProps = {
   open: boolean;
@@ -69,11 +70,8 @@ export function ParityDrawer({
     onClose();
   }, [confirmDiscardOnClose, isDirty, onClose]);
 
-  useEffect(() => {
-    if (!onRegisterAttemptClose) return;
-    onRegisterAttemptClose(attemptClose);
-    return () => onRegisterAttemptClose(() => {});
-  }, [attemptClose, onRegisterAttemptClose]);
+  // One stable registration per mount — re-registering on every render looped forever (see the hook).
+  useRegisterAttemptClose(onRegisterAttemptClose, attemptClose);
 
   useEffect(() => {
     if (!open) setShowDiscardConfirm(false);
