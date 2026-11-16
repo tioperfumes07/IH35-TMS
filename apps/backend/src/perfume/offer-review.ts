@@ -67,18 +67,47 @@ function kindFlags(flags: readonly string[]): string {
   return KIND_FLAGS.filter((f) => flags.includes(f)).join(",");
 }
 
+/** One offer item's words, read once per items list (not once per line × item). */
+type PreparedItem = { it: OfferItem; need: string[]; needJoined: string; brandWords: string[]; kind: string; itemAll: Set<string>; itemCompact: string };
+type ItemsIndex = { prepared: PreparedItem[]; byBrand: Map<string, number[]>; byBrandWord: Map<string, number[]> };
+const itemsIndexCache = new WeakMap<readonly OfferItem[], ItemsIndex>();
+/** Speed (owner 2026-11-16 14:01 CT "i need this to work fast"; measured from the live logs: the List-analysis grid took
+ *  103 s): every competitor line was compared with every offer item — 42,566 lines × 464 items = 92 s. A line can only be
+ *  proposed for an item whose brand it carries (the same brand read, or one of the item's brand words on the line), so
+ *  only those items are compared, in the list's own order — the same candidates, the same order, the same scores. */
+function itemsIndex(items: readonly OfferItem[]): ItemsIndex {
+  const hit = itemsIndexCache.get(items);
+  if (hit) return hit;
+  const byBrand = new Map<string, number[]>();
+  const byBrandWord = new Map<string, number[]>();
+  const prepared = items.map((it, i) => {
+    const need = nameKeyWords(it.name);
+    const brandWords = words(it.brand).filter((w) => w.length >= 3 && !NOISE.has(w));
+    const itemAll = new Set([...need, ...words(it.brand), ...words(it.name)]);
+    (byBrand.get(it.brand) ?? byBrand.set(it.brand, []).get(it.brand)!).push(i);
+    for (const w of new Set(brandWords)) (byBrandWord.get(w) ?? byBrandWord.set(w, []).get(w)!).push(i);
+    return { it, need, needJoined: need.join(""), brandWords, kind: kindFlags(it.flags), itemAll, itemCompact: [...itemAll].join("") + need.join("") };
+  });
+  const ix = { prepared, byBrand, byBrandWord };
+  itemsIndexCache.set(items, ix);
+  return ix;
+}
+
 export function offerCandidates(line: { description: string; brand: string | null }, id: Identity, items: readonly OfferItem[], max = 3): OfferCandidate[] {
   const lineWords = new Set([...words(line.description), ...words(line.brand ?? ""), ...id.nameWords.flatMap(words), ...words(id.brand)]);
   const lineKind = kindFlags(id.flags);
   const gender = lineGender(line.description, id.gender);
   const out: OfferCandidate[] = [];
-  for (const it of items) {
-    const need = nameKeyWords(it.name);
+  const ix = itemsIndex(items);
+  const pick = new Set<number>(ix.byBrand.get(id.brand) ?? []);
+  for (const w of lineWords) for (const i of ix.byBrandWord.get(w) ?? []) pick.add(i);
+  const lineCompact = [...words(line.description), ...id.nameWords.flatMap(words)].join("");
+  const lineNameWords = [...new Set(id.nameWords.flatMap(words))];
+  for (const i of [...pick].sort((a, b) => a - b)) {
+    const { it, need, needJoined, brandWords, kind, itemAll, itemCompact } = ix.prepared[i];
     // Spacing typos count as the same words ("LOVEME AMETHYST" = "LOVE ME AMETHYST", owner 19:03 CT).
-    const lineCompact = [...words(line.description), ...id.nameWords.flatMap(words)].join("");
-    if (!need.length || !(need.every((w) => lineWords.has(w)) || lineCompact.includes(need.join("")))) continue;
+    if (!need.length || !(need.every((w) => lineWords.has(w)) || lineCompact.includes(needJoined))) continue;
     if (id.brand && it.brand && id.brand !== it.brand) continue;
-    const brandWords = words(it.brand).filter((w) => w.length >= 3 && !NOISE.has(w));
     const brandSeen = id.brand === it.brand || brandWords.some((w) => lineWords.has(w));
     // Owner 2026-11-14 17:34 CT: "THE ENGINE, WHEN RECOMMENDING, IT MUST BE FROM SAME BRAND." A line whose brand is not
     // my item's brand — or names no brand at all — is never proposed; it is linked by search only.
@@ -87,16 +116,14 @@ export function offerCandidates(line: { description: string; brand: string | nul
     // shown; the owner decides.
     if (sizesFar(id.sizeMl, it.size_ml)) continue;
     const sizeDiffers = id.sizeMl != null && it.size_ml != null && Math.abs(id.sizeMl - it.size_ml) > 5;
-    if (lineKind !== kindFlags(it.flags)) continue;
+    if (lineKind !== kind) continue;
     // Men's and women's bottles are different products (genderCheck).
     const gc = genderCheck(gender, it.gender, it.name);
     if (!gc.ok) continue;
     // A name word the line has and my item does not is a DIFFERENT bottle (measured live 11-13 on ESPERANZA:
     // WANTED vs WANTED INTENSE, HER vs HER BLOSSOM, GOOD GIRL vs GOOD GIRL BLUSH, 212 VIP vs 212 VIP ROSE) — not
     // proposed. Gender words and noise words do not count.
-    const itemAll = new Set([...need, ...words(it.brand), ...words(it.name)]);
-    const itemCompact = [...itemAll].join("") + need.join("");
-    const extras = [...new Set(id.nameWords.flatMap(words))].filter((w) => !itemAll.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w) && !need.join("").includes(w) && !itemCompact.includes(w));
+    const extras = lineNameWords.filter((w) => !itemAll.has(w) && !NOISE.has(w) && !GENDER_WORDS.has(w) && !needJoined.includes(w) && !itemCompact.includes(w));
     if (extras.length) continue;
     const sizeOk = id.sizeMl != null && it.size_ml != null;
     // Type (EDT / EDP / PARFUM / EXTRAIT) differing is usually a different bottle: proposed, scored lower, named.
