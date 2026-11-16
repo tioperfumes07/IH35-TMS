@@ -198,7 +198,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
   return (
     <div
       ref={wrapperRef}
-      className="relative inline-flex items-stretch"
+      className="relative inline-flex shrink-0 items-stretch"
       // V3 (every .dc.html): a tab with a menu is drawn exactly like any tab — 600 11px Inter, 8px padding, opacity .85
       // when idle; the active one is the rgba(255,255,255,.16) box with the 2px white rule. The look sits on the wrapper
       // so the label and its chevron read as ONE tab.
@@ -209,7 +209,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
       {hasDefaultHref ? (
         <NavLink
           to={item.to}
-          className="whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+          className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
           style={{ ...NAVY_TAB_TEXT, padding: "8px 2px 8px 8px" }}
         >
           {item.label}
@@ -221,7 +221,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls={menuId}
-        className="inline-flex items-center whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+        className="inline-flex items-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
         style={{ ...NAVY_TAB_TEXT, display: "inline-flex", background: "none", border: "none", padding: hasDefaultHref ? "8px 8px 8px 0" : "8px 8px" }}
         onClick={toggleFromClick}
         onKeyDown={onButtonKeyDown}
@@ -269,7 +269,10 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
 /** V3 tab text (every .dc.html): 600 11px Inter, line-height normal, white. Shared by plain tabs and menu tabs. */
 const NAVY_TAB_TEXT: CSSProperties = {
   display: "block", boxSizing: "content-box", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-  fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff", whiteSpace: "nowrap",
+  fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff",
+  // ROUND 12 (reader 11-16 00:48Z, 185 cells on 21 boards): the design tab carries no white-space (normal). It never wraps
+  // because it never shrinks — flex-shrink 0 keeps it at its own width; the bar scrolls (overflow-x auto) instead.
+  flexShrink: 0,
 };
 
 export function mostSpecificActiveTo(pathname: string, tos: readonly string[], search = ""): string | null {
@@ -314,10 +317,13 @@ export function NavyPageSubNav({ items, activeId, onTabChange, itemIds }: NavyPa
   // <span style="padding:8px 8px;font:600 11px Inter;color:#fff;opacity:.85">; the active one adds
   // background:rgba(255,255,255,.16);border-bottom:2px solid #fff and drops the opacity. Inactive tabs draw NO border.
   const tabClass = (active: boolean) =>
-    `whitespace-nowrap focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${active ? "border-b-2 border-white bg-white/[.16]" : ""}`;
+    `focus-visible:outline focus-visible:outline-2 focus-visible:outline-white ${active ? "border-b-2 border-white bg-white/[.16]" : ""}`;
   const tabStyle = (active: boolean): CSSProperties => ({
     display: "block", boxSizing: "content-box", padding: "8px 8px", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-    fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff", whiteSpace: "nowrap",
+    fontSize: 11, fontWeight: 600, lineHeight: "normal", color: "#fff",
+  // ROUND 12 (reader 11-16 00:48Z, 185 cells on 21 boards): the design tab carries no white-space (normal). It never wraps
+  // because it never shrinks — flex-shrink 0 keeps it at its own width; the bar scrolls (overflow-x auto) instead.
+  flexShrink: 0,
     ...(!active ? { opacity: 0.85 } : {}),
   });
   return (

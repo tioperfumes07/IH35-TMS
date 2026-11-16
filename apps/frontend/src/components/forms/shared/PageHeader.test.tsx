@@ -14,8 +14,10 @@ beforeEach(() => navigateSpy.mockClear());
 
 describe("PageHeader primitive (invariant #21)", () => {
   it("renders back + breadcrumb on drilled-in page", () => {
+    // The page lives inside Maintenance: Back to the in-module parent (/maintenance). From "/" (another module) the
+    // structural rule correctly refuses a cross-module backHref and goes Home — the old test rendered at "/".
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/maintenance/work-orders/wo-1"]}>
         <PageHeader
           title="Work Order WO-T169-IS-05-06-2026-0035-23914"
           backHref="/maintenance"
