@@ -75,6 +75,15 @@ describe("PERFUME-DESK identity — owner's own examples (2026-11-12)", () => {
     expect(normalizeUpc("8.411061043868e+12")).toBe("8411061043868");
     expect(normalizeUpc("I0100305")).toBe("");      // a PCA item number in the UPC column is not a UPC
     expect(normalizeUpc("BSDKBD")).toBe("");
+    // A vendor code whose digits are mostly leading zeros is not a UPC: what comes back must satisfy
+    // perfume.item_upcs CHECK (upc ~ '^[1-9][0-9]{7,13}$') or the whole import 500s (B&S / POTW, 11-16).
+    expect(normalizeUpc("BODY000000015")).toBe("");
+    expect(normalizeUpc("TEST000020.W.3.4")).toBe("");
+    expect(normalizeUpc("0000000012345678")).toBe("12345678");
+    for (const v of ["BODY000000015", "MINI000000008", "00000001234", "0085715167224", "SET3660732643240", "679614304097T"]) {
+      const u = normalizeUpc(v);
+      expect(u === "" || /^[1-9][0-9]{7,13}$/.test(u)).toBe(true);
+    }
   });
 
   it("more owner words: DAMA / SENORA / MUJERES for women, HOMBRES / SENOR / VARON for men", () => {

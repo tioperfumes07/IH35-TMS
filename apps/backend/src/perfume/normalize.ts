@@ -705,9 +705,13 @@ export function normalizeUpc(v: unknown): string {
   let s = String(v ?? "").trim();
   s = s.replace(/\.0+$/, "");
   if (/^\d+(\.\d+)?e\+\d+$/i.test(s)) s = BigInt(Math.round(Number(s))).toString();
-  const d = s.replace(/\D/g, "");
+  // Strip the leading zeros FIRST, then check the length: a vendor code printed in the UPC column
+  // (POTW "BODY000000015", B&S "TEST000020.W.3.4") has 9-10 digits but only "15"/"2034" once the zeros go, and
+  // perfume.item_upcs only accepts ^[1-9][0-9]{7,13}$ — checking before the strip let it through and 500'd the
+  // whole B&S import (11-16) on item_upcs_upc_check.
+  const d = s.replace(/\D/g, "").replace(/^0+/, "");
   if (d.length < 8 || d.length > 14) return "";
-  return d.replace(/^0+/, "");
+  return d;
 }
 
 /* ---------------- vendor line ending ---------------- */
