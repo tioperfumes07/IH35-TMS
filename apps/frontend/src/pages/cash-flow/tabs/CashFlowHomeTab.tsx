@@ -664,7 +664,7 @@ function ThirteenWeekTable({
           ...tdLabel,
           display: "table-cell",
           fontWeight: opts?.bold ? 700 : 400,
-          color: opts?.grey?.(columns[0]) ? V3.mutedSoft : V3.ink,
+          color: V3.ink,
         }}
       >
         {label}
@@ -727,7 +727,7 @@ function ThirteenWeekTable({
           {row(<span style={{ color: V3.mutedSoft }}>Run-rate top-up</span>, (w) => w.topup_cents, "topup", {
             grey: (w) => w.topup_run_rate || w.topup_cents > 0,
           })}
-          {row(<b>Total receipts</b>, (w) => w.income_cents, "income_total", { bold: true })}
+          {row("Total receipts", (w) => w.income_cents, "income_total", { bold: true })}
           {groupRow("Disbursements")}
           {row("Finance & lease payments", (w) => w.finance_cents, "finance", { of: totalExpense })}
           {row("Driver pay (run-rate)", (w) => w.driver_cents, "driver", {
@@ -743,10 +743,10 @@ function ThirteenWeekTable({
             of: totalExpense,
             grey: (w) => w.other_run_rate,
           })}
-          {row(<b>Total disbursements</b>, (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
+          {row("Total disbursements", (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
           {groupRow("Position")}
-          {row(<b>Net cash flow</b>, (w) => w.net_cents, "net", { bold: true, tone: true })}
-          {row(<b>Ending balance</b>, (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
+          {row("Net cash flow", (w) => w.net_cents, "net", { bold: true, tone: true })}
+          {row("Ending balance", (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
         </div>
       </div>
     </div>

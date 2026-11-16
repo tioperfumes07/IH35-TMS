@@ -1743,7 +1743,7 @@ export function ParityTable<T>({
       {!suppressToolbar && !panel && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
-            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title" style={v3 ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
               {title}
             </h2>
             {titleInfo}
@@ -2220,6 +2220,7 @@ export function ParityTable<T>({
                   <tr
                     className={v3 ? undefined : "border-t border-gray-200 bg-gray-50"}
                     data-parity-group={group.key}
+                    style={v3 ? { height: 30 } : undefined}
                   >
                     <td
                       colSpan={colSpan}
@@ -2227,8 +2228,8 @@ export function ParityTable<T>({
                       // v3: the boards' group band (CashFlow-Manual.dc.html): #F3F5F8 · 7px 12px · 700 11px uppercase ink.
                       style={v3 ? V3_BAND : { paddingTop: d.padY, paddingBottom: d.padY }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        {groupBy.collapsible ? (
+                      {groupBy.collapsible ? (
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             aria-label={isCollapsed ? `Expand group ${group.key}` : `Collapse group ${group.key}`}
@@ -2238,9 +2239,9 @@ export function ParityTable<T>({
                           >
                             {isCollapsed ? "▸" : "▾"}
                           </button>
-                        ) : null}
-                        <div className="min-w-0 flex-1">{groupBy.renderHeader(group.key, group.rows)}</div>
-                      </div>
+                          <div className="min-w-0 flex-1">{groupBy.renderHeader(group.key, group.rows)}</div>
+                        </div>
+                      ) : groupBy.renderHeader(group.key, group.rows)}
                     </td>
                   </tr>
                   {isCollapsed ? null : group.rows.map((row, i) => renderDataRow(row, i))}

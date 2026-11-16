@@ -244,18 +244,13 @@ export function FuelHomePage() {
         render: (r) => {
           const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) : undefined;
           return (
-            <div className="min-w-0" data-testid="fuel-home-diesel-unit-identity">
+            <div data-testid="fuel-home-diesel-unit-identity">
               {r.unit_id ? (
-                <EntityLink
-                  kind="unit"
-                  id={r.unit_id}
-                  label={entityLabel(r.unit_number, r.unit_id, "Unit")}
-                  className="font-semibold text-[#1F2A44]"
-                />
+                <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className="font-semibold" />
               ) : (
                 <span className="font-semibold">{r.unit_number || "—"}</span>
               )}
-              <div className="truncate text-xs text-[#5B6576]">{identity || "—"}</div>
+              <div style={{ fontSize: 11, color: "#5B6576" }}>{identity || "—"}</div>
             </div>
           );
         },
@@ -297,7 +292,7 @@ export function FuelHomePage() {
         render: (r) => (
           <Link
             to={unitHistoryHref(r.unit_id)}
-            className="shrink-0 whitespace-nowrap tabular-nums font-semibold text-[#1F2A44] hover:underline"
+            className="shrink-0 whitespace-nowrap tabular-nums font-semibold hover:underline"
             data-testid="fuel-home-diesel-amount-drill"
           >
             {formatMoneyCents(r.spend_cents)}
@@ -313,7 +308,7 @@ export function FuelHomePage() {
         sortValue: (r) => r.gallons,
         render: (r) =>
           Number.isFinite(r.gallons) ? (
-            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-gallons-drill">
+            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums hover:underline" data-testid="fuel-home-diesel-gallons-drill">
               {formatQuantityTable(r.gallons, 1)}
             </Link>
           ) : (
@@ -330,7 +325,7 @@ export function FuelHomePage() {
         sortValue: (r) => r.avg_price_per_gallon ?? Number.POSITIVE_INFINITY,
         render: (r) =>
           r.avg_price_per_gallon != null ? (
-            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-rate-drill">
+            <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums hover:underline" data-testid="fuel-home-diesel-rate-drill">
               {formatUsdRateTable(r.avg_price_per_gallon, 3)}
             </Link>
           ) : (
@@ -345,7 +340,7 @@ export function FuelHomePage() {
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.fill_count,
         render: (r) => (
-          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-fills-drill">
+          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums hover:underline" data-testid="fuel-home-diesel-fills-drill">
             {formatQuantityTable(r.fill_count, 0)}
           </Link>
         ),
@@ -358,7 +353,7 @@ export function FuelHomePage() {
         cellClass: "text-right tabular-nums",
         sortValue: (r) => r.load_count,
         render: (r) => (
-          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums text-[#1F2A44] hover:underline" data-testid="fuel-home-diesel-loads-drill">
+          <Link to={unitHistoryHref(r.unit_id)} className="tabular-nums hover:underline" data-testid="fuel-home-diesel-loads-drill">
             {formatQuantityTable(r.load_count, 0)}
           </Link>
         ),
@@ -430,7 +425,7 @@ export function FuelHomePage() {
           // Fuel.dc.html: the V3 table — 5px 12px cells, no nowrap on th/td (this board's own table).
           <ParityTable<DieselBoardRow>
             appearance="v3"
-            boardTdStyle={{ paddingTop: 5, paddingBottom: 5, whiteSpace: "normal" }}
+            boardTdStyle={{ paddingTop: 10, paddingBottom: 10, whiteSpace: "normal" }}
             thStyle={{ whiteSpace: "normal" }}
             title="Diesel by truck"
             columns={dieselColumns}
