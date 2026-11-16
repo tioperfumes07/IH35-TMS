@@ -35,7 +35,7 @@ function renderPage() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={qc}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/accounting/bills/recurring"]}>
         <RecurringBillList />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -48,7 +48,7 @@ describe("RecurringBillList way back", () => {
 
   it("is the module breadcrumb: Accounting › Bills › Recurring Bills", async () => {
     renderPage();
-    const crumb = await screen.findByTestId("accounting-breadcrumb");
+    const crumb = await screen.findByRole("navigation", { name: "Breadcrumb" });
     expect(crumb.querySelector('a[href="/accounting"]')).toBeTruthy();
     expect(crumb.querySelector('a[href="/accounting/bills"]')).toBeTruthy();
     expect(crumb.textContent).toContain("Recurring Bills");

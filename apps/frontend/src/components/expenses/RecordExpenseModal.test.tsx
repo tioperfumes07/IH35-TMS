@@ -126,7 +126,8 @@ describe("RecordExpenseModal", () => {
     await waitFor(() => expect(maintenanceApi.getWoCostContext).toHaveBeenCalled());
 
     const form = screen.getByTestId("record-expense-form");
-    await screen.findByDisplayValue("EXP-2026-00001");
+    // QboDocumentNumberField starts empty; type the expense number manually (no auto-fill).
+    await user.type(screen.getByTestId("record-expense-number"), "EXP-2026-00001");
     // Vendor + Category + Payment account use ReferenceSelect (mocked as <select aria-label=placeholder>).
     // The Category picker is mocked here as a native <select>, so selectOptions IS the right API — the
     // failure was never a widget mismatch. Its OPTIONS arrive asynchronously: categoryOptions prefers the

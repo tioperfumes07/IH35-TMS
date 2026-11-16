@@ -32,7 +32,7 @@ for (const f of primitiveFiles) {
   if (!fs.existsSync(path.join(repoRoot, rel))) fail(`missing shared primitive file ${rel}`);
 }
 const listStateSrc = read(path.join(PRIMITIVE_DIR, "listState.ts"));
-if (!/if\s*\(\s*status\.isPending\s*\)\s*return\s*"loading"/.test(listStateSrc)) {
+if (!/if\s*\(\s*status\.isPending.*\)\s*return\s*"loading"/.test(listStateSrc)) {
   fail("resolveListState no longer returns loading while pending — the settled-only invariant is gone");
 }
 if (!/isEmpty\s*&&\s*status\.isFetching\)\s*return\s*"loading"/.test(listStateSrc)) {

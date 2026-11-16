@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -23,6 +24,14 @@ vi.mock("../../../api/accounting", () => ({
 
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
+}));
+
+// VoidReasonModal: canTypeMemo requires Owner/Accountant; empty reasons → textarea shows.
+vi.mock("../../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Owner" } }),
+}));
+vi.mock("../../../api/catalogs", () => ({
+  listVoidCancelReasons: () => Promise.resolve({ reasons: [] }),
 }));
 
 vi.mock("../AccountingSubNavWrapper", () => ({
@@ -107,8 +116,17 @@ describe("FactoringDetailPage lifecycle mutation error handling", () => {
 
     render(wrap(<FactoringDetailPage />));
 
+    // Step 1: open the action drawer
     fireEvent.click(await screen.findByRole("button", { name: "Void" }));
+    // Step 2: Confirm in the drawer opens VoidReasonModal
     fireEvent.click(await screen.findByRole("button", { name: "Confirm" }));
+    // Step 3: fill in the VoidReasonModal textarea and submit
+    const reasonTextarea = await screen.findByPlaceholderText(/Required reason/);
+    await userEvent.type(reasonTextarea, "voiding now");
+    // Multiple dialogs exist (drawer + VoidReasonModal); the modal is last in DOM order
+    const dialogs = screen.getAllByRole("dialog");
+    const voidModal = dialogs[dialogs.length - 1];
+    fireEvent.click(within(voidModal).getByRole("button", { name: "Void" }));
 
     await waitFor(() => expect(voidFactoringMock).toHaveBeenCalledOnce());
     await waitFor(() =>

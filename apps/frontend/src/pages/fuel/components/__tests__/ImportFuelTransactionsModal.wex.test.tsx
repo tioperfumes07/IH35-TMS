@@ -3,6 +3,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { pickCombo } from "../../../../test-utils/pickCombo";
 
 const importWexStatement = vi.fn();
 vi.mock("../../../../api/fuelPlanner", () => ({
@@ -39,7 +40,8 @@ describe("ImportFuelTransactionsModal — England WEX statement (443.202)", () =
         <ImportFuelTransactionsModal open operatingCompanyId="co-1" onClose={vi.fn()} onImported={onImported} />
       </QueryClientProvider>
     );
-    fireEvent.change(screen.getByTestId("fuel-import-kind"), { target: { value: "wex" } });
+    // SelectCombobox renders a custom combobox (not a native <select>); use pickCombo
+    pickCombo(screen.getByTestId("fuel-import-kind"), /WEX/);
     const file = new File(["Card #,Tran Date"], "TransactionReport-261021102759.csv", { type: "text/csv" });
     fireEvent.change(container.ownerDocument.querySelector('input[type="file"]')!, { target: { files: [file] } });
 

@@ -40,6 +40,14 @@ vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "91f6d7d8-0f3a-4c2d-8e1b-2c3d4e5f6071" }),
 }));
 
+// VoidReasonModal: canTypeMemo requires Owner/Accountant; empty reasons → textarea shows.
+vi.mock("../../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Accountant" } }),
+}));
+vi.mock("../../../api/catalogs", () => ({
+  listVoidCancelReasons: () => Promise.resolve({ reasons: [] }),
+}));
+
 vi.mock("../AccountingSubNavWrapper", () => ({
   AccountingSubNavWrapper: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

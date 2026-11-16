@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 import { MoneyProofTrailPanel } from "./MoneyProofTrailPanel";
 
 const getMoneyProofTrail = vi.fn();
@@ -26,9 +27,10 @@ describe("MoneyProofTrailPanel", () => {
     });
     renderPanel();
     expect(await screen.findByText("EX-000007")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "Expense EXP-1" }).getAttribute("href")).toBe("/accounting/journal-entries/je-1");
-    expect(screen.getByText("5000 — Fuel")).toBeTruthy();
-    expect(screen.getByRole("link", { name: "expense_for" }).getAttribute("href")).toBe("/dispatch/loads/load-1");
+    expectDrillHref(screen.getByRole("link", { name: "Expense EXP-1" }), "/accounting/journal-entries/je-1");
+    // showAccountNumbers is OFF by default — account name only, no number prefix
+    expect(screen.getByText("Fuel")).toBeTruthy();
+    expectDrillHref(screen.getByRole("link", { name: "expense_for" }), "/dispatch/loads/load-1");
   });
 
   it("does not imply a posting when the ledger has no rows", async () => {

@@ -9,6 +9,9 @@ import { VoidReasonModal } from "../VoidReasonModal";
 vi.mock("../../../contexts/CompanyContext", () => ({
   useCompanyContext: () => ({ selectedCompanyId: "11111111-1111-4111-8111-111111111111" }),
 }));
+vi.mock("../../../auth/useAuth", () => ({
+  useAuth: () => ({ user: { role: "Owner", uuid: "00000000-0000-0000-0000-000000000001" } }),
+}));
 vi.mock("../../../api/catalogs", () => ({
   listVoidCancelReasons: vi.fn().mockResolvedValue({ reasons: [] }),
 }));

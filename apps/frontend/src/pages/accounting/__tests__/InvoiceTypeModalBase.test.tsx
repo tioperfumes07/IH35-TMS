@@ -3,10 +3,12 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { ToastProvider } from "../../../components/Toast";
 import { InvoiceTypeModalBase } from "../../accounting/modals/InvoiceTypeModalBase";
 
 const listCustomersMock = vi.fn();
+const listAllCustomersMock = vi.fn();
 const listLoadsMock = vi.fn();
 const getCoaAccountsMock = vi.fn();
 const addInvoiceLineMock = vi.fn();
@@ -14,6 +16,7 @@ const patchInvoiceMock = vi.fn();
 
 vi.mock("../../../api/mdata", () => ({
   listCustomers: (...args: unknown[]) => listCustomersMock(...args),
+  listAllCustomers: (...args: unknown[]) => listAllCustomersMock(...args),
 }));
 
 vi.mock("../../../api/loads", () => ({
@@ -36,9 +39,11 @@ vi.mock("../../../api/accounting", async (importOriginal) => {
 function wrap(ui: ReactElement) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <QueryClientProvider client={qc}>
-      <ToastProvider>{ui}</ToastProvider>
-    </QueryClientProvider>
+    <MemoryRouter>
+      <QueryClientProvider client={qc}>
+        <ToastProvider>{ui}</ToastProvider>
+      </QueryClientProvider>
+    </MemoryRouter>
   );
 }
 
@@ -69,7 +74,7 @@ describe("InvoiceTypeModalBase validation", () => {
 
   it("after picking a TMS customer, Create sends customer_id UUID", async () => {
     const user = userEvent.setup();
-    listCustomersMock.mockResolvedValue({
+    listAllCustomersMock.mockResolvedValue({
       customers: [
         {
           id: "71111111-1111-4111-8111-111111111111",
@@ -80,6 +85,7 @@ describe("InvoiceTypeModalBase validation", () => {
       ],
       total: 1,
     });
+    listCustomersMock.mockResolvedValue({ customers: [], total: 0 });
     listLoadsMock.mockResolvedValue({ loads: [], total_count: 0 });
     getCoaAccountsMock.mockResolvedValue({
       accounts: [
@@ -109,7 +115,7 @@ describe("InvoiceTypeModalBase validation", () => {
 
     const custInput = screen.getByPlaceholderText(/Search customers…/i);
     await user.click(custInput);
-    await waitFor(() => expect(listCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
+    await waitFor(() => expect(listAllCustomersMock).toHaveBeenCalled(), { timeout: 4000 });
 
     const option = await screen.findByRole("option", { name: /Invoice Customer LLC/i });
     await user.click(option);

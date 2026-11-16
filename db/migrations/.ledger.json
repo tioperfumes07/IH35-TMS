@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1588,
+  "migration_count": 1595,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -6232,6 +6232,10 @@
       "checksum": "48dd1892123eaeaa18c70dc741c5687c70624c091d6915398b8affe7b1b26932"
     },
     {
+      "filename": "202616310100_eng60_drop_insurance_lawsuit.sql",
+      "checksum": "567528164169a60fd61c5a5ff5d22fd45c4e32c48a6616509a3192351d6213c4"
+    },
+    {
       "filename": "202616311200_eng60_matters_lawsuit_fk_to_legal_matters.sql",
       "checksum": "abe249f5ee3d0bc8ed55cab730a972484edc73f9f10aad4546b06bccf9ca4d1c"
     },
@@ -6354,6 +6358,30 @@
     {
       "filename": "202616570100_unit_lease_owner_asset_holder_engine.sql",
       "checksum": "fabbb1f7006202b1d93a8b7a5d9acde95753e23f3ff3d804ce43c11f2030a8c1"
+    },
+    {
+      "filename": "202616580100_period_lock_engine_all_money_documents.sql",
+      "checksum": "73ec16353bf1bccf87fb6611dc681fc8a44e6b6482dc1598ad3d521582b0069c"
+    },
+    {
+      "filename": "202616600100_perf_duty_status_events_overlap_index.sql",
+      "checksum": "e2dc9b4df9fd625b08aa70a027205e468c48551cacd96b8cf75d3fe97b56d560"
+    },
+    {
+      "filename": "202616610100_perf_tour_list_closed_batch_indexes.sql",
+      "checksum": "065a52389f5f1a46e89265ec831eafd57eef992aca8301ef2bb34e9d5d799e13"
+    },
+    {
+      "filename": "202616620100_perfume_inventory_purchase_fields.sql",
+      "checksum": "1d0a20790164c33a2ee07569f4a5d49436cdbfd5f8dd02bbe8c6351152c3117c"
+    },
+    {
+      "filename": "202616630100_perfume_my_list_lines_without_price.sql",
+      "checksum": "7125153631a30f6309103105684838690b8bc555498fd63427990f7c8e251b44"
+    },
+    {
+      "filename": "202616640100_safety_harsh_events_more_samsara_kinds.sql",
+      "checksum": "240d7246ae75ad4027190465f8a17f95f7ad1e0ac481fd2a4add5f20c7199fb7"
     }
   ]
 }

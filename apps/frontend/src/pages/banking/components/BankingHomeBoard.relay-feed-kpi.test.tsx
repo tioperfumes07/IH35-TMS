@@ -2,7 +2,7 @@
  * Row 22 — RELAY FEED KPI tile on Banking Home.
  * Verifies:
  *  1. Tile renders with testId banking-kpi-relay-feed.
- *  2. Tile links to /banking/relay-card.
+ *  2. Tile links to /banking/relay (route-manifest relay_card: "/banking/relay").
  *  3. Shows primary_label text from the KPI response when fresh (≤ 24h).
  *  4. Shows "Never" when relay_ingest_heartbeat has null value (never ingested).
  */
@@ -47,7 +47,7 @@ describe("Row 22 BankingHomeBoard RELAY FEED KPI tile", () => {
     const tile = await screen.findByTestId("banking-kpi-relay-feed");
     await waitFor(() => expect(tile.textContent).toContain("2h ago"));
     const href = tile.getAttribute("href") ?? "";
-    expect(href).toContain("/banking/relay-card");
+    expect(href).toContain("/banking/relay");
   });
 
   it("shows Never when relay_ingest_heartbeat has null value (never ingested)", async () => {

@@ -3,6 +3,7 @@ import type { ReactElement } from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { expectDrillHref } from "../../test-utils/expectDrillHref";
 import { MyAccountantPage } from "./MyAccountantPage";
 import * as maApi from "../../api/my-accountant";
 import { makeAccountingPeriod } from "../../test-utils/factories";
@@ -74,9 +75,7 @@ describe("MyAccountantPage", () => {
     // missing or the kind has no mounted route (EntityLink.tsx:656-671), and a text query would
     // pass against that span. Requiring role=link means the drill-through must really be clickable.
     const link = await screen.findByRole("link", { name: "View closing entry →" });
-    expect(link.getAttribute("href")).toBe(
-      "/accounting/journal-entries/9e1c0f22-4b7a-4d2e-9c31-8a5f6b0d7e44",
-    );
+    expectDrillHref(link, "/accounting/journal-entries/9e1c0f22-4b7a-4d2e-9c31-8a5f6b0d7e44");
     // and the month-close fallback must NOT render when a real JE was resolved
     expect(screen.queryByText("View closing entries →")).toBeNull();
   });
