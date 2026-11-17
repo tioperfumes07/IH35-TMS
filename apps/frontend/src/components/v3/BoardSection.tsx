@@ -26,6 +26,7 @@ const viewAllStyle: CSSProperties = {
 export function BoardSection({
   title,
   subtitle,
+  subtitleSize,
   onViewAll,
   viewAllHref,
   viewAllLabel = "View all →",
@@ -37,6 +38,8 @@ export function BoardSection({
 }: {
   title: string;
   subtitle?: string;
+  /** Override subtitle font size (default 12). Use only for per-board spec requirements. */
+  subtitleSize?: number;
   onViewAll?: () => void;
   /** Prefer over onViewAll — shareable drill with ?ret= (Class R). */
   viewAllHref?: string;
@@ -72,7 +75,7 @@ export function BoardSection({
             #29662 set this; the stale merge in #29675 put flex-start back. */}
         <div style={{ display: "flex", alignItems: "baseline", gap: 8, minWidth: 0 }}>
           <span style={{ fontSize: 13, fontWeight: 700, color: V3.ink, fontFamily: V3.font, ...titleStyle }}>{title}</span>
-          {subtitle ? <span style={{ fontSize: 12, color: V3.muted }}>{subtitle}</span> : null}
+          {subtitle ? <span style={{ fontSize: subtitleSize ?? 12, color: V3.muted }}>{subtitle}</span> : null}
         </div>
         <span style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0 }}>
           {headerRight}

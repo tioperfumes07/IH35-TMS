@@ -235,7 +235,7 @@ function isBoardEmptyRow(row: RollingLedgerRow): boolean {
 
 function RowStatusPill({ row }: { row: RollingLedgerRow }) {
   if (isFactoringRow(row.type)) {
-    return <span style={{ color: V3.muted }}>—</span>;
+    return <span>—</span>;
   }
   return <span>{row.status?.replace(/_/g, " ") ?? "—"}</span>;
 }
@@ -1254,10 +1254,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       const realRows = rows.filter((r) => !isBoardEmptyRow(r));
       const total = realRows.reduce((s, r) => s + r.amount_cents, 0);
       return (
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+        <>
           {label}
           <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>{formatCents(total)}</span>
-        </span>
+        </>
       );
     },
     orderedKeys: [...V3_EXPENSE_GROUPS],
@@ -1265,20 +1265,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const incomeTypeGroupBy = {
     getKey: (row: RollingLedgerRow) => row.type,
     renderHeader: (key: string, rows: RollingLedgerRow[]) => (
-      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+      <>
         {incomeGroupLabel(key)}
         <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>
           {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
         </span>
-      </span>
+      </>
     ),
     orderedKeys: ["Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)"],
   };
   const toolbarBtn: CSSProperties = {
-    display: "inline-flex",
+    display: "flex",
     height: 28,
     alignItems: "center",
-    gap: 4,
     borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
@@ -1288,6 +1287,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     color: V3.ink,
     fontFamily: V3.font,
     cursor: "pointer",
+    boxSizing: "content-box",
   };
   const dateRangeLabel = `${fmtNavDate(from).replace(/^\w+, /, "")} – ${fmtNavDate(to).replace(/^\w+, /, "")}`;
 
@@ -1496,7 +1496,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8 }}
             data-testid="rolling-ledger-v3-kpis"
           >
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-opening"
               subDataV3="cf-rl-kpi-opening-sub"
@@ -1505,7 +1505,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-opening"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-income"
               subDataV3="cf-rl-kpi-income-sub"
@@ -1515,7 +1515,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ kind: "income", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-income"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-expenses"
               subDataV3="cf-rl-kpi-expenses-sub"
@@ -1525,7 +1525,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ kind: "expenses", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-expenses"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-net"
               subDataV3="cf-rl-kpi-net-sub"
@@ -1536,7 +1536,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ from: today, to: today })}
               testId="rolling-ledger-v3-kpi-net"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-closing"
               subDataV3="cf-rl-kpi-closing-sub"
@@ -1545,7 +1545,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-closing"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-due10"
               subDataV3="cf-rl-kpi-due10-sub"
@@ -1599,6 +1599,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               <BoardSection
                 title={`Expenses · ${selectedLabel}`}
                 subtitle="payment priority order"
+                subtitleSize={11}
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-expense-panel"
               >

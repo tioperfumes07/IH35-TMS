@@ -46,9 +46,14 @@ const SELF_NAME = path.basename(SELF_PATH);
 const SCRIPTS_DIR = path.dirname(SELF_PATH);
 const LABEL = "verify-static";
 const ROOT = path.resolve(SCRIPTS_DIR, "..");
-// This is an orchestration runner, not a static guard. It starts its own
-// PostgreSQL server and block-ready executes it separately after verify:static.
-const NON_STATIC_ORCHESTRATORS = new Set(["verify-local-ci.mjs"]);
+// These are orchestration runners, not static guards.
+// verify-local-ci.mjs: starts its own PostgreSQL server; block-ready executes it separately after verify:static.
+// verify-no-silent-db-skip.mjs: CC-2 ROUND 12.6 (2026-11-16) — spawns 406+ child guard processes with 8-way
+// parallelism (20.6s wall-clock, no DB). The 25s runGuard timeout is too tight when verify-static is itself
+// running 4500+ sequential spawnSync calls, starving the meta-guard's worker pool. Adding it here matches
+// verify-local-ci.mjs semantics: it IS an orchestrator. money-pr-local-gate still runs it with a live DB.
+// SURFACE-BREACH-AUTHORIZED: CC-1 guard orchestrator exclusion — same class as verify-local-ci.mjs.
+const NON_STATIC_ORCHESTRATORS = new Set(["verify-local-ci.mjs", "verify-no-silent-db-skip.mjs"]);
 
 export const STATIC_RESULT_CATEGORIES = Object.freeze({
   PASS: "PASS",

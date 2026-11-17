@@ -32,7 +32,7 @@ import { createPortal } from "react-dom";
 import { colors, spacing, typography, MIN_HIT_TARGET_CLASS, TABLE_SELECT_CHECKBOX_CLASS, TABLE_SELECT_HIT_CLASS, TABLE_SELECT_COLUMN_PX, TOOLBAR_ICON_SIZE_CLASS } from "../../design/tokens";
 import { QBO_SURFACE, QBO_SURFACE_CLASS, QBO_TOOLBAR_ICON_SLOT } from "../../design/qbo-parity";
 import { Button } from "../Button";
-import { Printer as PrintIcon, Settings as GearIcon } from "lucide-react";
+import { Settings as GearIcon } from "lucide-react";
 import "../../design/ih35-design-tokens.css";
 import { UniversalListToolbar, applyUniversalListFilters, type UniversalRange } from "../table/UniversalListToolbar";
 import { QBO_MONEY_CELL_CLASS } from "../../design/qbo-parity";
@@ -571,7 +571,7 @@ const V3_TH: CSSProperties = {
 };
 const V3_TD: CSSProperties = {
   paddingTop: 7, paddingBottom: 7, paddingLeft: 12, paddingRight: 12, fontSize: 12, borderBottom: "1px solid #ECEEF2", lineHeight: "normal",
-  color: "#111827", textOverflow: "clip",
+  color: "#111827", textOverflow: "clip", boxSizing: "content-box",
 };
 
 /** V3 board group band (docs/design/v3/CashFlow-Manual.dc.html priority groups). */
@@ -1743,7 +1743,7 @@ export function ParityTable<T>({
       {!suppressToolbar && !panel && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
-            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title">
+            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title" style={v3 ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
               {title}
             </h2>
             {titleInfo}
@@ -1794,22 +1794,34 @@ export function ParityTable<T>({
             <span className="text-gray-400">{toolbar ? null : ""}</span>
           )}
         </div>
-        <div className={`flex items-center gap-2 ${QBO_TOOLBAR_ICON_SLOT}`} data-qbo-toolbar-icons="true">
+        <div className={`flex items-center gap-2 ${QBO_TOOLBAR_ICON_SLOT}`} style={{ boxSizing: "content-box" }} data-qbo-toolbar-icons="true">
           {toolbar}
           {/* D53 — Print + Export in QuickBooks toolbar position (right of pager chrome, beside gear). */}
-          <Button
+          <button
             type="button"
-            variant="tertiary"
-            size="sm"
             aria-label="Print"
             data-testid="parity-table-print"
+            style={{
+              display: "flex",
+              height: 28,
+              alignItems: "center",
+              borderRadius: 6,
+              border: "1px solid #DDE1E7",
+              background: "#FFFFFF",
+              padding: "0 12px",
+              fontSize: 12,
+              fontWeight: 600,
+              color: "#111827",
+              cursor: "pointer",
+              boxSizing: "content-box",
+              fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+            }}
             onClick={() => {
               if (typeof window !== "undefined") window.print();
             }}
           >
-            <PrintIcon className={TOOLBAR_ICON_SIZE_CLASS} aria-hidden />
-            <span className="sr-only">Print</span>
-          </Button>
+            Print
+          </button>
           {exportFilename ? (
             // UI CONTROL LAW — this used to be a hand-rolled <button> with its own ad-hoc,
             // smaller fixed size, a THIRD button size alongside Button.tsx's own two. Now the
@@ -1932,7 +1944,7 @@ export function ParityTable<T>({
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
       ) : null}
 
-      <div className={`min-w-0 max-w-full ${scrollMaxHeight ? "overflow-auto" : "overflow-x-auto"}`} style={scrollMaxHeight ? { maxHeight: scrollMaxHeight } : undefined} data-testid={scrollMaxHeight ? "parity-table-scrollbox" : undefined}>
+      <div className="min-w-0 max-w-full overflow-x-auto" style={scrollMaxHeight ? { maxHeight: scrollMaxHeight, overflowY: "auto" } : undefined} data-testid={scrollMaxHeight ? "parity-table-scrollbox" : undefined}>
       {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still
@@ -2220,6 +2232,7 @@ export function ParityTable<T>({
                   <tr
                     className={v3 ? undefined : "border-t border-gray-200 bg-gray-50"}
                     data-parity-group={group.key}
+                    style={v3 ? { height: 30 } : undefined}
                   >
                     <td
                       colSpan={colSpan}
@@ -2227,20 +2240,21 @@ export function ParityTable<T>({
                       // v3: the boards' group band (CashFlow-Manual.dc.html): #F3F5F8 · 7px 12px · 700 11px uppercase ink.
                       style={v3 ? V3_BAND : { paddingTop: d.padY, paddingBottom: d.padY }}
                     >
-                      <div className="flex items-center gap-1.5">
-                        {groupBy.collapsible ? (
+                      {groupBy.collapsible ? (
+                        <>
                           <button
                             type="button"
                             aria-label={isCollapsed ? `Expand group ${group.key}` : `Collapse group ${group.key}`}
                             aria-expanded={!isCollapsed}
                             className="text-gray-500 hover:text-gray-800"
+                            style={{ marginRight: 6 }}
                             onClick={() => toggleGroupCollapsed(group.key)}
                           >
                             {isCollapsed ? "▸" : "▾"}
                           </button>
-                        ) : null}
-                        <div className="min-w-0 flex-1">{groupBy.renderHeader(group.key, group.rows)}</div>
-                      </div>
+                          {groupBy.renderHeader(group.key, group.rows)}
+                        </>
+                      ) : groupBy.renderHeader(group.key, group.rows)}
                     </td>
                   </tr>
                   {isCollapsed ? null : group.rows.map((row, i) => renderDataRow(row, i))}

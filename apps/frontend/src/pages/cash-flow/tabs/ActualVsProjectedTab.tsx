@@ -460,7 +460,7 @@ function accuracyVerb(
   unavailable: boolean,
 ): { text: string; tone: "ink" | "green" | "red" | "muted"; accent: string } {
   if (unavailable) return { text: "actuals unavailable", tone: "muted", accent: V3.muted };
-  if (projected === 0 && actual > 0) return { text: "▼ not projected", tone: "red", accent: V3.amber };
+  if (projected === 0 && actual > 0) return { text: "▼ not projected", tone: "red", accent: V3.red };
   if (projected === 0 && actual === 0) return { text: "flat", tone: "muted", accent: V3.muted };
   if (actual > projected) return { text: "▼ under-projected", tone: "red", accent: V3.red };
   if (actual < projected) return { text: "▲ over-projected", tone: "green", accent: V3.green };
@@ -550,7 +550,7 @@ export function AvpCompareChart({ points, grain, expNotCapturedDays = 0 }: { poi
         </span>
       </div>
       {projExpensesAllZero ? (
-        <p className="text-xs" style={{ color: V3.amber }} data-testid="cash-flow-avp-proj-exp-zero-note">
+        <p style={{ color: V3.amber, fontSize: 11, lineHeight: "normal", margin: 0 }} data-testid="cash-flow-avp-proj-exp-zero-note">
           Projected expenses: $0 every day — the engine projects none
         </p>
       ) : null}
@@ -763,13 +763,13 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             );
             const pct = accuracyPct(acc.total_projected_income_cents, acc.total_actual_income_cents);
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-income-accuracy"
                 subDataV3="cf-avp-kpi-income-accuracy-sub"
                 label="Income accuracy"
                 value={actualsUnavailable ? "unavailable" : `${pct}%`}
-                tone={incomeVerb.tone}
+                tone={actualsUnavailable || pct === 0 ? "ink" : incomeVerb.tone}
                 sub={
                   <span style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     <span style={{ fontWeight: 600, color: incomeVerb.accent }}>
@@ -804,13 +804,13 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             const expVerb = accuracyVerb(matchedProj, matchedAct, expenseAccuracyUnavailable);
             const pct = accuracyPct(matchedProj, matchedAct);
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-expense-accuracy"
                 subDataV3="cf-avp-kpi-expense-accuracy-sub"
                 label="Expense accuracy"
                 value={expenseAccuracyUnavailable ? "unavailable" : `${pct}%`}
-                tone={expVerb.tone}
+                tone={expenseAccuracyUnavailable || pct === 0 ? "ink" : expVerb.tone}
                 sub={
                   <span style={{ display: "flex", flexDirection: "column", gap: 2 }} data-testid="cash-flow-avp-v3-kpi-expense-sub">
                     <span style={{ fontWeight: 600, color: expVerb.accent }}>
@@ -863,7 +863,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                     originHref,
                   );
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-net-variance"
                 subDataV3="cf-avp-kpi-net-variance-sub"
@@ -886,7 +886,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               />
             );
           })()}
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-avp-kpi-days"
             subDataV3="cf-avp-kpi-days-sub"
@@ -994,7 +994,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
           background: V3.surface,
           border: `1px solid ${V3.border}`,
           borderLeft: `3px solid ${V3.amber}`,
-          borderRadius: 2,
+          borderRadius: 6,
           padding: "8px 12px",
           fontSize: 12,
           color: V3.ink,

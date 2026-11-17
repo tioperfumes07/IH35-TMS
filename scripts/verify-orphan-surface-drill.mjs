@@ -18,8 +18,9 @@ const CHECKS = [
   {
     id: "ORPH-001",
     file: "apps/frontend/src/pages/accounting/BillDetailPage.tsx",
-    pattern: /backHref=["']\/accounting\/bills["']/,
-    desc: "BillDetailPage must render PageHeader backHref=\"/accounting/bills\"",
+    // ROUND 8.20 (a896129331) made backHref dynamic via resolveBackHref; guard updated to match.
+    pattern: /resolveBackHref[\s\S]{0,120}?fallback:\s*["']\/accounting\/bills["']/,
+    desc: "BillDetailPage must call resolveBackHref with fallback=\"/accounting/bills\"",
   },
   {
     id: "ORPH-002",
@@ -61,18 +62,17 @@ function runChecks(readFile) {
 }
 
 if (process.argv.includes("--selftest")) {
-  // Mutation: delete the backHref on a real file's content and confirm RED, then confirm the
-  // unmodified files are GREEN.
+  // Mutation: corrupt the fallback target and confirm RED, then confirm unmodified files are GREEN.
   const real = (f) => fs.readFileSync(f, "utf8");
   const mutated = (f) => {
     const src = real(f);
-    if (f.endsWith("BillDetailPage.tsx")) return src.replace(/backHref=["']\/accounting\/bills["']/, "");
+    if (f.endsWith("BillDetailPage.tsx")) return src.replace(/fallback:\s*["']\/accounting\/bills["']/, 'fallback: "/accounting"');
     return src;
   };
 
   const redOffenders = runChecks(mutated);
   if (!redOffenders.some((o) => o.startsWith("ORPH-001"))) {
-    console.error(`${LABEL}: selftest FAILED — planting a dropped backHref did not go RED`);
+    console.error(`${LABEL}: selftest FAILED — planting a dropped fallback did not go RED`);
     process.exit(1);
   }
 
@@ -82,7 +82,7 @@ if (process.argv.includes("--selftest")) {
     process.exit(1);
   }
 
-  console.log(`${LABEL}: selftest PASS — RED on a planted dropped backHref, GREEN on current source (3 checks).`);
+  console.log(`${LABEL}: selftest PASS — RED on a planted dropped fallback, GREEN on current source (3 checks).`);
   process.exit(0);
 }
 

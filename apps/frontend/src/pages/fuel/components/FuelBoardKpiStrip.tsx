@@ -73,7 +73,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         gap: 8,
       }}
     >
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         board
         label={`Diesel spend · ${range.labelSuffix}`}
         value={spendValue}
@@ -81,7 +81,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         testId="fuel-board-kpi-diesel-spend"
         href={historyPeriod}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         board
         label="Gallons"
         value={gallonsValue}
@@ -89,7 +89,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         testId="fuel-board-kpi-gallons"
         href={historyPeriod}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         board
         label="Avg $/gal"
         value={avgValue}
@@ -97,7 +97,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         testId="fuel-board-kpi-avg-gal"
         href={historyPeriod}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         board
         label="Fills without a load"
         value={noLoadValue}
@@ -107,7 +107,7 @@ export function FuelBoardKpiStrip({ companyId, period = "oct" }: Props) {
         // ROUND 8.17 class S — no-load opens the period's unlinked fills only (never all history).
         href={historyUnlinked}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         board
         label="Open questions"
         value={openValue}
