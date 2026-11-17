@@ -625,20 +625,20 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
             data-testid="fuel-history-v3-kpi-strip"
             data-fuel-history-v3-kpis="1"
           >
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               label="Transactions"
               value={fuelTransactionsQuery.isPending ? "…" : formatQuantityTable(fuelHistoryTotal, 0)}
               sub="in current filters"
               testId="fuel-history-kpi-total"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               label="Voided"
               value={fuelTransactionsQuery.isPending ? "…" : formatQuantityTable(fuelHistoryVoidedCount, 0)}
               sub={includeVoidedFuel ? "included in list" : "hidden by default"}
               tone={fuelHistoryVoidedCount > 0 ? "muted" : "ink"}
               testId="fuel-history-kpi-voided"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               label="Fleet savings YTD"
               value={
                 savingsQuery.isPending
@@ -650,7 +650,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
               sub="planner compliance savings"
               testId="fuel-history-kpi-fleet-savings"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               label="Lost savings YTD"
               value={
                 savingsQuery.isPending
@@ -1072,25 +1072,25 @@ function PlannerSettingsForm({ companyId, settings }: { companyId: string; setti
         data-testid="fuel-settings-v3-kpi-strip"
         data-fuel-settings-v3-kpis="1"
       >
-        <V3KpiTile
+        <V3KpiTile labelNoWrap
           label="Max miles / shift"
           value={String(settings.max_miles_per_shift ?? 720)}
           sub="saved limit"
           testId="fuel-settings-kpi-miles"
         />
-        <V3KpiTile
+        <V3KpiTile labelNoWrap
           label="Off-highway miles"
           value={String(settings.max_off_highway_miles ?? 5)}
           sub="saved limit"
           testId="fuel-settings-kpi-offhighway"
         />
-        <V3KpiTile
+        <V3KpiTile labelNoWrap
           label="Backwards miles"
           value={String(settings.max_backwards_miles ?? 5)}
           sub="saved limit"
           testId="fuel-settings-kpi-backwards"
         />
-        <V3KpiTile
+        <V3KpiTile labelNoWrap
           label="Overfill %"
           value={String(settings.overfill_threshold_pct ?? 95)}
           sub="saved threshold"

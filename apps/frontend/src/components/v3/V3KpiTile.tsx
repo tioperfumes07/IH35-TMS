@@ -28,6 +28,7 @@ export function V3KpiTile({
   noDrill,
   testId,
   board = false,
+  labelNoWrap = false,
   flat = false,
   valueDataV3,
   subDataV3,
@@ -52,6 +53,8 @@ export function V3KpiTile({
   testId?: string;
   /** Draw the V3 board tile (docs/design/v3) instead of the approved Home tile. */
   board?: boolean;
+  /** Board tile whose design keeps the label on one line (Cash Flow, Fuel). Default: a board label wraps. */
+  labelNoWrap?: boolean;
   /**
    * The report-board tile (Dispatch-LoadHistory, Reports-Loads / -DriverSettlements / -CompanySettlements / -Customers /
    * -Vendors .dc.html): the tile ITSELF is the flex column (gap 3) holding label · value · sub — no inner wrapper — and
@@ -115,7 +118,10 @@ export function V3KpiTile({
             letterSpacing: "0.06em",
             color: V3.muted,
             textTransform: "uppercase",
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            // Per board (ROUND 12.5 law: shared V3 pieces change only through a per-board prop): a board tile's label
+            // wraps (normal / clip) — 33 boards' designs — unless the board asks for one line (Cash Flow + Fuel designs).
+            // #29808 made one-line global and moved every other board's KPI labels off its design (+8…+12 each, reader 05:20Z).
+            ...(board && !labelNoWrap ? { whiteSpace: "normal", textOverflow: "clip" } : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
           }}
         >
           {label}

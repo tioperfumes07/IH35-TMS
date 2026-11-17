@@ -1496,7 +1496,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 8 }}
             data-testid="rolling-ledger-v3-kpis"
           >
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-opening"
               subDataV3="cf-rl-kpi-opening-sub"
@@ -1505,7 +1505,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-opening"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-income"
               subDataV3="cf-rl-kpi-income-sub"
@@ -1515,7 +1515,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ kind: "income", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-income"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-expenses"
               subDataV3="cf-rl-kpi-expenses-sub"
@@ -1525,7 +1525,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ kind: "expenses", from: today, to: today })}
               testId="rolling-ledger-v3-kpi-expenses"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-net"
               subDataV3="cf-rl-kpi-net-sub"
@@ -1536,7 +1536,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={rollingLedgerKpiHref({ from: today, to: today })}
               testId="rolling-ledger-v3-kpi-net"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-closing"
               subDataV3="cf-rl-kpi-closing-sub"
@@ -1545,7 +1545,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               href={withReturnContext(BANKING_TAB_PATH.bank_accounts, originHref)}
               testId="rolling-ledger-v3-kpi-closing"
             />
-            <V3KpiTile
+            <V3KpiTile labelNoWrap
               board
               valueDataV3="cf-rl-kpi-due10"
               subDataV3="cf-rl-kpi-due10-sub"

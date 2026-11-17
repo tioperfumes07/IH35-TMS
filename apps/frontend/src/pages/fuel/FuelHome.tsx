@@ -60,7 +60,7 @@ export function FuelFraudAlertsKpiCard() {
       : "Loading… · CAP-11 fraud monitor";
 
   return (
-    <V3KpiTile
+    <V3KpiTile labelNoWrap
       label="Open Fraud Alerts"
       value={value}
       sub={sub}
@@ -110,7 +110,7 @@ export function FuelCardOverageKpiCard() {
       : "Loading… · BANK-F10 approve-then-recover";
 
   return (
-    <V3KpiTile
+    <V3KpiTile labelNoWrap
       label="Card overage queue"
       value={value}
       sub={sub}

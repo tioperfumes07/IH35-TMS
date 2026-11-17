@@ -763,7 +763,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             );
             const pct = accuracyPct(acc.total_projected_income_cents, acc.total_actual_income_cents);
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-income-accuracy"
                 subDataV3="cf-avp-kpi-income-accuracy-sub"
@@ -804,7 +804,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
             const expVerb = accuracyVerb(matchedProj, matchedAct, expenseAccuracyUnavailable);
             const pct = accuracyPct(matchedProj, matchedAct);
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-expense-accuracy"
                 subDataV3="cf-avp-kpi-expense-accuracy-sub"
@@ -863,7 +863,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
                     originHref,
                   );
             return (
-              <V3KpiTile
+              <V3KpiTile labelNoWrap
                 board
                 valueDataV3="cf-avp-kpi-net-variance"
                 subDataV3="cf-avp-kpi-net-variance-sub"
@@ -886,7 +886,7 @@ export function ActualVsProjectedTab({ operatingCompanyId }: Props) {
               />
             );
           })()}
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-avp-kpi-days"
             subDataV3="cf-avp-kpi-days-sub"

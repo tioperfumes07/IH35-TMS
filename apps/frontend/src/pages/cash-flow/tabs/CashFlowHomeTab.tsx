@@ -941,7 +941,7 @@ export function CashFlowHomeTab({
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(170px,1fr))", gap: 8 }}
           data-testid="cash-flow-home-v3-kpis"
         >
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-opening"
             subDataV3="cf-home-kpi-opening-sub"
@@ -951,7 +951,7 @@ export function CashFlowHomeTab({
             testId="cash-flow-home-v3-kpi-opening"
             href={cashFlowTabHref("rolling_ledger", { rl_from: today, rl_to: addDaysIso(today, 13) })}
           />
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-income"
             subDataV3="cf-home-kpi-income-sub"
@@ -961,7 +961,7 @@ export function CashFlowHomeTab({
             testId="cash-flow-home-v3-kpi-income"
             href={cashFlowTabHref("daily_prediction")}
           />
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-expenses"
             subDataV3="cf-home-kpi-expenses-sub"
@@ -971,7 +971,7 @@ export function CashFlowHomeTab({
             testId="cash-flow-home-v3-kpi-expenses"
             href={cashFlowTabHref("daily_prediction")}
           />
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-4w"
             subDataV3="cf-home-kpi-4w-sub"
@@ -1002,7 +1002,7 @@ export function CashFlowHomeTab({
               rl_types: "Invoice,Factor advance,Load (not invoiced)",
             })}
           />
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-runrate"
             subDataV3="cf-home-kpi-runrate-sub"
@@ -1029,7 +1029,7 @@ export function CashFlowHomeTab({
             testId="cash-flow-home-v3-kpi-runrate"
             href={cashFlowTabHref("actual_vs_projected")}
           />
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-home-kpi-lowest"
             subDataV3="cf-home-kpi-lowest-sub"

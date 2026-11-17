@@ -83,45 +83,45 @@ export function FuelKpiRow({ dashboard, lovesSyncStatus }: Props) {
       data-testid="fuel-home-kpi-strip"
       data-fuel-v3-kpis="1"
     >
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="Active Plans"
         value={display(activePlans === null ? null : String(activePlans))}
         testId="fuel-kpi-active-plans"
         href={plannerHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="MTD Spend"
         value={display(fixed(metric(dashboard?.mtd_spend), 0, "$"))}
         sub="diesel · month to date"
         testId="fuel-kpi-mtd-spend"
         href={historyHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="Avg $/gal"
         // Register row 164 — same precision as the Fuel board strip (3 dp) so one figure reads identically on both.
         value={display(fixed(metric(dashboard?.avg_price_per_gallon), 3, "$"))}
         testId="fuel-kpi-avg-price"
         href={historyHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="MTD Savings"
         value={display(fixed(metric(dashboard?.mtd_savings), 0, "$"))}
         testId="fuel-kpi-mtd-savings"
         href={plannerHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="Compliance %"
         value={display(fixed(metric(dashboard?.compliance_pct), 1, "", "%"))}
         testId="fuel-kpi-compliance"
         href={complianceHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="Fleet MPG"
         value={display(fixed(metric(dashboard?.fleet_mpg), 1))}
         testId="fuel-kpi-fleet-mpg"
         href={historyHref}
       />
-      <V3KpiTile
+      <V3KpiTile labelNoWrap
         label="Loves Sync"
         value={display(formatLovesSyncLabel(dashboard, lovesSyncStatus))}
         tone={lovesSyncTone(lovesSyncAt, lovesSyncStatus?.status)}
