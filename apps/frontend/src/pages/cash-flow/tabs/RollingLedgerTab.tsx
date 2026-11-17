@@ -235,7 +235,7 @@ function isBoardEmptyRow(row: RollingLedgerRow): boolean {
 
 function RowStatusPill({ row }: { row: RollingLedgerRow }) {
   if (isFactoringRow(row.type)) {
-    return <span style={{ color: V3.muted }}>—</span>;
+    return <span>—</span>;
   }
   return <span>{row.status?.replace(/_/g, " ") ?? "—"}</span>;
 }
@@ -1254,10 +1254,10 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
       const realRows = rows.filter((r) => !isBoardEmptyRow(r));
       const total = realRows.reduce((s, r) => s + r.amount_cents, 0);
       return (
-        <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+        <>
           {label}
           <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>{formatCents(total)}</span>
-        </span>
+        </>
       );
     },
     orderedKeys: [...V3_EXPENSE_GROUPS],
@@ -1265,20 +1265,19 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
   const incomeTypeGroupBy = {
     getKey: (row: RollingLedgerRow) => row.type,
     renderHeader: (key: string, rows: RollingLedgerRow[]) => (
-      <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: V3.ink }}>
+      <>
         {incomeGroupLabel(key)}
         <span style={{ float: "right", fontVariantNumeric: "tabular-nums" }}>
           {formatCents(rows.reduce((s, r) => s + r.amount_cents, 0))}
         </span>
-      </span>
+      </>
     ),
     orderedKeys: ["Invoice", "Factor advance", "Factor reserve", "Load (not invoiced)"],
   };
   const toolbarBtn: CSSProperties = {
-    display: "inline-flex",
+    display: "flex",
     height: 28,
     alignItems: "center",
-    gap: 4,
     borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
@@ -1288,6 +1287,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
     color: V3.ink,
     fontFamily: V3.font,
     cursor: "pointer",
+    boxSizing: "content-box",
   };
   const dateRangeLabel = `${fmtNavDate(from).replace(/^\w+, /, "")} – ${fmtNavDate(to).replace(/^\w+, /, "")}`;
 
@@ -1599,6 +1599,7 @@ export function RollingLedgerTab({ operatingCompanyId }: Props) {
               <BoardSection
                 title={`Expenses · ${selectedLabel}`}
                 subtitle="payment priority order"
+                subtitleSize={11}
                 onViewAll={() => setSelectedDate(null)}
                 testId="rolling-ledger-expense-panel"
               >

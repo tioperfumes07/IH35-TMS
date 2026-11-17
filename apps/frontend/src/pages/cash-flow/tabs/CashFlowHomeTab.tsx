@@ -664,7 +664,7 @@ function ThirteenWeekTable({
           ...tdLabel,
           display: "table-cell",
           fontWeight: opts?.bold ? 700 : 400,
-          color: opts?.grey?.(columns[0]) ? V3.mutedSoft : V3.ink,
+          color: V3.ink,
         }}
       >
         {label}
@@ -727,7 +727,7 @@ function ThirteenWeekTable({
           {row(<span style={{ color: V3.mutedSoft }}>Run-rate top-up</span>, (w) => w.topup_cents, "topup", {
             grey: (w) => w.topup_run_rate || w.topup_cents > 0,
           })}
-          {row(<b>Total receipts</b>, (w) => w.income_cents, "income_total", { bold: true })}
+          {row("Total receipts", (w) => w.income_cents, "income_total", { bold: true })}
           {groupRow("Disbursements")}
           {row("Finance & lease payments", (w) => w.finance_cents, "finance", { of: totalExpense })}
           {row("Driver pay (run-rate)", (w) => w.driver_cents, "driver", {
@@ -743,10 +743,10 @@ function ThirteenWeekTable({
             of: totalExpense,
             grey: (w) => w.other_run_rate,
           })}
-          {row(<b>Total disbursements</b>, (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
+          {row("Total disbursements", (w) => w.expenses_cents, "expense_total", { bold: true, of: totalExpense })}
           {groupRow("Position")}
-          {row(<b>Net cash flow</b>, (w) => w.net_cents, "net", { bold: true, tone: true })}
-          {row(<b>Ending balance</b>, (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
+          {row("Net cash flow", (w) => w.net_cents, "net", { bold: true, tone: true })}
+          {row("Ending balance", (w) => w.ending_cash_cents ?? 0, "ending", { bold: true, tone: true })}
         </div>
       </div>
     </div>
@@ -1009,14 +1009,7 @@ export function CashFlowHomeTab({
             label="Weekly run-rate"
             value={formatCashFlowCents(weeklyRunRate, { sign: true })}
             tone={weeklyRunRate < 0 ? "red" : weeklyRunRate > 0 ? "green" : "ink"}
-            sub={
-              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: weeklyRunRate < 0 ? V3.red : V3.green }}>
-                  {weeklyRunRate < 0 ? "▼ out > in" : weeklyRunRate > 0 ? "▲ in > out" : "flat"}
-                </span>
-                <span>last 4 full weeks</span>
-              </span>
-            }
+            sub="last 4 full weeks"
             spark={
               runRateSpark ? (
                 <svg width={96} height={26} viewBox="0 0 96 26" aria-hidden>

@@ -89,6 +89,7 @@ const FUEL_HEADER_BTN: React.CSSProperties = {
   border: "1px solid #DDE1E7",
   cursor: "pointer",
   lineHeight: "normal",
+  boxSizing: "content-box",
 };
 
 export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
@@ -498,7 +499,7 @@ export function FuelPlannerHomePage({ initialTab = "home" }: Props) {
   }
 
   return (
-    <div data-v3-board="Fuel" data-testid="fuel-planner-home-root" style={{ lineHeight: "normal", display: "flex", flexDirection: "column", gap: 12 }}>
+    <div data-v3-board="Fuel" data-testid="fuel-planner-home-root" style={{ lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
       <FuelPlannerBoardChrome
         title="Fuel"
         subtitle={FUEL_BOARD_SUBTITLE}

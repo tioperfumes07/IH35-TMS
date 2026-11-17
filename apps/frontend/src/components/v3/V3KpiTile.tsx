@@ -115,7 +115,7 @@ export function V3KpiTile({
             letterSpacing: "0.06em",
             color: V3.muted,
             textTransform: "uppercase",
-            ...(board ? { whiteSpace: "normal", textOverflow: "clip" } : { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }),
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
           }}
         >
           {label}
@@ -129,6 +129,7 @@ export function V3KpiTile({
             color: TONE[tone],
             fontVariantNumeric: "tabular-nums",
             whiteSpace: board ? "normal" : "nowrap",
+            ...(board ? { display: "block" } : {}),
           }}
         >
           {value}

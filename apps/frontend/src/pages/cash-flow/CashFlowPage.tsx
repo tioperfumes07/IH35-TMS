@@ -1,4 +1,4 @@
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { TrendingUp } from "lucide-react";
 import { PageHeader } from "../../components/layout/PageHeader";
 import { BoardSection } from "../../components/v3/BoardSection";
@@ -100,6 +100,7 @@ const CASH_FLOW_BOARD: Record<string, string> = {
 export function CashFlowPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const { selectedCompanyId } = useCompanyContext();
   // ROUND 8.20 — Cross-module drills attach ?ret=; hub Back must honor it (fallback stays /cash-flow).
   const cashFlowBackHref = resolveBackHref({ searchParams, pathname, fallback: "/cash-flow" });
@@ -159,43 +160,42 @@ export function CashFlowPage() {
 
   return (
     <div
-      className="min-w-0 max-w-full space-y-4"
       data-testid="cash-flow-page"
       data-c06-page="cash-flow"
-      // docs/design/v3/CashFlow-*.dc.html — one board per tab; naming the root puts it on the board box model and
-      // lets the live reader measure it (17:51Z it fell back to <main>).
       data-v3-board={CASH_FLOW_BOARD[activeTab] ?? "CashFlow-Home"}
-      style={{ lineHeight: "normal" }}
+      style={{ lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}
     >
-      <PageHeader
-        backHref={cashFlowBackHref}
-        title="Cash Flow"
-        subtitle="Forward-looking daily cash position — predicted income and expenses"
-      />
+      <div style={{ fontSize: 11, color: "#5B6576" }}>Cash Flow</div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginTop: 12, gap: 12, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => navigate(cashFlowBackHref)}
+            style={{ fontSize: 11, color: "#5B6576", background: "transparent", border: "none", padding: 0, cursor: "pointer", lineHeight: "normal" }}
+          >
+            {"← Back"}
+          </button>
+          <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "#111827" }}>Cash Flow</h1>
+          <span style={{ fontSize: 11, color: "#5B6576" }}>{"Forward-looking daily cash position — predicted income and expenses"}</span>
+        </div>
+      </div>
       {/* ROUND 8.5 CF1 — Related links ABOVE the tab strip (CashFlow-*.dc.html order). */}
-      <nav
+      <div
         aria-label="Cash flow related modules"
-        className="flex flex-wrap items-center gap-2 rounded-sm border border-[#DDE1E7] bg-white"
-        style={{ padding: "6px 10px", fontSize: 11 }}
         data-testid="cash-flow-cross-module-links"
+        style={{ padding: "6px 10px", fontSize: 11, color: "#5B6576", background: "#fff", border: "1px solid #DDE1E7", marginTop: 8 }}
       >
-        <span className="text-[#5B6576]">Related:</span>
-        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/banking">
-          Banking
-        </Link>
-        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow-statement">
-          Cash flow statement
-        </Link>
-        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow">
-          Cash flow report
-        </Link>
-        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/reports/cash-flow-overview">
-          Cash flow overview
-        </Link>
-        <Link className="text-[#1D4ED8] underline-offset-2 hover:underline" to="/cash-advances">
-          Cash advances
-        </Link>
-      </nav>
+        {"Related: "}
+        <Link style={{ color: "#1D4ED8" }} to="/banking">Banking</Link>
+        {" · "}
+        <Link style={{ color: "#1D4ED8" }} to="/reports/cash-flow-statement">Cash flow statement</Link>
+        {" · "}
+        <Link style={{ color: "#1D4ED8" }} to="/reports/cash-flow">Cash flow report</Link>
+        {" · "}
+        <Link style={{ color: "#1D4ED8" }} to="/reports/cash-flow-overview">Cash flow overview</Link>
+        {" · "}
+        <Link style={{ color: "#1D4ED8" }} to="/cash-advances">Cash advances</Link>
+      </div>
       <NavyPageSubNav
         items={TABS.map((t) => ({ label: t.label, to: `#${t.id}` }))}
         activeId={activeTab}

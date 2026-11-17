@@ -27,7 +27,6 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { getCashFlowOpeningCash, pullManualTransactions } from "../../../api/cashFlow";
 import { V3, V3_EXPENSE_GROUPS, V3_TABLE } from "../../../design/v3-tokens";
 import { V3KpiTile } from "../../../components/v3/V3KpiTile";
-import { BoardSection } from "../../../components/v3/BoardSection";
 import { currentOriginHref, withReturnContext } from "../../../lib/returnContext";
 import { BANKING_TAB_PATH } from "../../../router/route-manifest";
 
@@ -315,7 +314,7 @@ function ProjectionPanel({
           >
             + Add line
           </button>
-          {subtitle ? <span className="truncate" style={{ color: V3.muted, fontSize: V3_TABLE.headerPx }}>{subtitle}</span> : null}
+          {subtitle ? <span style={{ color: V3.muted, fontSize: V3_TABLE.headerPx }}>{subtitle}</span> : null}
         </div>
         <span className="shrink-0 text-xs font-semibold tabular-nums" style={{ color: accentColor }} data-mdp-header-total={direction}>{fmtCents(panelTotalCents)}</span>
       </div>
@@ -583,10 +582,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     return `${wd}, ${formatDateUS(projectionDate)}`;
   })();
   const toolbarBtn: CSSProperties = {
-    display: "inline-flex",
+    display: "flex",
     height: 28,
     alignItems: "center",
-    gap: 4,
     borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
@@ -596,6 +594,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     color: V3.ink,
     fontFamily: V3.font,
     cursor: "pointer",
+    boxSizing: "content-box",
   };
 
   return (
@@ -650,7 +649,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           </button>
         </div>
         <span className="flex-1" />
-        <div className="relative">
+        <div className="relative" style={{ display: "flex", alignItems: "center", gap: 8, boxSizing: "content-box" }}>
           <button type="button" onClick={() => setHistoryOpen((o) => !o)} style={toolbarBtn} data-testid="cash-flow-mdp-history">
             History
           </button>
@@ -680,8 +679,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
         <button
           type="button"
-          className="h-7 rounded-sm px-3 font-semibold disabled:opacity-50"
-          style={{ background: V3.shell, color: V3.onShell }}
+          className="rounded-md px-3 font-semibold disabled:opacity-50"
+          style={{ background: V3.shell, color: V3.onShell, height: 28, display: "flex", alignItems: "center", boxSizing: "content-box" }}
           // ROUND 8.20 board 8 — never Save while opening-cash/projections are still loading or failed:
           // bankTotalDollars falls back to 0 and would overwrite production opening balance with $0.
           disabled={
@@ -873,18 +872,28 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         />
       </div>
 
-      {/* CF6 — single Measured label (BoardSection title); do not duplicate the bold in-body word. */}
-      <BoardSection title="Measured" testId="cash-flow-mdp-v3-measured">
-        <div
-          className="flex items-start gap-2 px-3.5 py-2 text-xs"
-          style={{ borderLeft: `3px solid ${V3.amber}`, color: V3.ink }}
-        >
-          <span>
-            Each manual line is audited (who · when · reason) and links to its customer, vendor, driver, unit, invoice or
-            bill. Projection only — nothing posts to the books.
-          </span>
-        </div>
-      </BoardSection>
+      {/* CF6 — Measured callout: 12px amber label + inline explanation. */}
+      <div
+        data-testid="cash-flow-mdp-v3-measured"
+        style={{
+          display: "flex",
+          gap: 8,
+          alignItems: "flex-start",
+          background: V3.surface,
+          border: `1px solid ${V3.border}`,
+          borderLeft: `3px solid ${V3.amber}`,
+          borderRadius: 6,
+          padding: "8px 12px",
+          fontSize: 12,
+          color: V3.ink,
+        }}
+      >
+        <b style={{ color: V3.amber, whiteSpace: "nowrap", fontSize: 12 }}>Measured</b>
+        <span>
+          Each manual line is audited (who · when · reason) and links to its customer, vendor, driver, unit, invoice or
+          bill. Projection only — nothing posts to the books.
+        </span>
+      </div>
     </div>
   );
 }

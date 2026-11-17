@@ -379,7 +379,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "group",
         label: "Group",
-        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
+        render: (item) => <span className="text-section-header font-bold uppercase text-[#4B5563]" style={{ letterSpacing: "0.04em" }}>{item._group}</span>,
       },
       {
         key: "due_date",
@@ -475,7 +475,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
       {
         key: "group",
         label: "Priority",
-        render: (item) => <span className="text-section-header font-semibold uppercase tracking-wide text-[#4B5563]">{item._group}</span>,
+        render: (item) => <span className="text-section-header font-bold uppercase text-[#4B5563]" style={{ letterSpacing: "0.04em" }}>{item._group}</span>,
       },
       {
         key: "due_date",
@@ -690,7 +690,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         }}
       >
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>OPENING CASH</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>OPENING CASH</div>
           <div className="n" style={{ fontSize: 18, fontWeight: 700, color: V3.ink }}>
             {isLoading || opening === null ? (
               "—"
@@ -701,9 +701,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             )}
           </div>
         </div>
-        <span style={{ color: V3.mutedSoft }}>+</span>
+        <span style={{ color: V3.mutedSoft, fontSize: 16 }}>+</span>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>INCOME − EXPENSES</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>INCOME − EXPENSES</div>
           <div
             className="n"
             style={{
@@ -721,9 +721,9 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
             )}
           </div>
         </div>
-        <span style={{ color: V3.mutedSoft }}>=</span>
+        <span style={{ color: V3.mutedSoft, fontSize: 16 }}>=</span>
         <div>
-          <div style={{ fontSize: 11, fontWeight: 600, color: V3.muted, letterSpacing: "0.06em" }}>PROJECTED CLOSING</div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: V3.muted }}>PROJECTED CLOSING</div>
           <div
             className="n"
             style={{
@@ -771,7 +771,8 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
               // CF3 / Codex ROUND 8.5 — tile click selects that day AND forces grain=day so a week/month
               // view cannot leave the strip looking selected while the panels still show week aggregates.
               onClick={() => {
-                applyProj(entry.date, "day");
+                setDate(entry.date);
+                setGrain("day");
               }}
               title={`${pos ? "+" : ""}${formatUsdCents(entry.net_cents)}`}
               style={{
@@ -845,6 +846,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Expenses"
           subtitle="in payment priority order"
+          subtitleSize={11}
           viewAllHref={withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "expenses"), originHref)}
           testId="cash-flow-projected-expense-panel"
         >

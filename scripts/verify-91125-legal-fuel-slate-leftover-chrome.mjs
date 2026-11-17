@@ -56,7 +56,10 @@ function u18Hits(path, src) {
   const hits = [];
   if (!path.includes("/pages/legal/")) return hits;
   if (path.endsWith("/LegalLandingPage.tsx")) return hits; // module home
-  if (/<PageHeader\b/.test(src) && !/backHref="\/legal"/.test(src)) {
+  // ROUND 8.20 uses resolveBackHref({ fallback }) — list/landing → /legal; detail/new → /legal/matters.
+  const isDetailLevel = /(?:Detail|New)Page\.tsx$/.test(path);
+  const legalFallbackOk = /fallback:\s*["']\/legal["']/.test(src) || (isDetailLevel && /fallback:\s*["']\/legal\/matters["']/.test(src));
+  if (/<PageHeader\b/.test(src) && !/backHref="\/legal"/.test(src) && !legalFallbackOk) {
     hits.push("PageHeader backHref must be /legal (U18)");
   }
   return hits;
