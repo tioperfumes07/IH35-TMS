@@ -112,10 +112,9 @@ const LIVE_FLAG_FILES = new Map([
 // imports — only node:fs + node:path); walks 12,624 source files; measured ~19s standalone with
 // stripped env, blowing the 8s bound every time. Declares ALLOW_OFFLINE_SKIP. Adding to
 // NOT_A_CANDIDATE preserves CI correctness (verify-step wires it in CI separately); fixes local.
-// CC-3 R12.6 (2026-11-16) — verify-no-sample-bank-transaction-writes.mjs: declares ALLOW_OFFLINE_SKIP,
-// correctly skips the DB half when DATABASE_URL is unset/empty; its static scanRepo() walk takes ~17s,
-// exceeding the 8s bound. CI coverage is maintained via its own verify-step. Adding to NOT_A_CANDIDATE
-// fixes the false hang.
+// CC-3 R12.6 / CC-2 ROUND 12.6 (2026-11-16) — verify-no-sample-bank-transaction-writes.mjs: declares
+// ALLOW_OFFLINE_SKIP; its static scanRepo() walk exceeds the 8s bound. CI coverage via verify-step.
+// Adding to NOT_A_CANDIDATE fixes the false hang.
 const NOT_A_CANDIDATE = new Set([
   "verify-static.mjs",
   "verify-no-silent-db-skip.mjs",
@@ -125,8 +124,8 @@ const NOT_A_CANDIDATE = new Set([
   "verify-seat-distance-from-main.mjs",
   "verify-coa-canonical.mjs",
   "verify-one-feed-path-per-purchase.mjs",
-  "verify-no-session-scoped-rls-bypass.mjs",
   "verify-no-sample-bank-transaction-writes.mjs",
+  "verify-no-session-scoped-rls-bypass.mjs",
 ]);
 
 function candidateFiles() {
