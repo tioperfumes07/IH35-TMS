@@ -40,7 +40,8 @@ describe("Perfume desk columns", () => {
     mount();
     await screen.findByTestId("perfume-item-toggle");
     const box = screen.getByTestId("parity-table-scrollbox");
-    expect(box.className).toContain("overflow-auto");
+    expect(box.className).toContain("overflow-x-auto");
+    expect(box.style.overflowY).toBe("auto");
     expect(box.style.maxHeight).toContain("100vh");
   });
   it("Hide item columns takes Brand / Name / Size away and Show brings them back", async () => {

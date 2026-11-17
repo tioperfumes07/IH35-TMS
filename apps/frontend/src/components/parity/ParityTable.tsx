@@ -1932,7 +1932,7 @@ export function ParityTable<T>({
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
       ) : null}
 
-      <div className={`min-w-0 max-w-full ${scrollMaxHeight ? "overflow-auto" : "overflow-x-auto"}`} style={scrollMaxHeight ? { maxHeight: scrollMaxHeight } : undefined} data-testid={scrollMaxHeight ? "parity-table-scrollbox" : undefined}>
+      <div className="min-w-0 max-w-full overflow-x-auto" style={scrollMaxHeight ? { maxHeight: scrollMaxHeight, overflowY: "auto" } : undefined} data-testid={scrollMaxHeight ? "parity-table-scrollbox" : undefined}>
       {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still
