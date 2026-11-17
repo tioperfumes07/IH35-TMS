@@ -316,6 +316,7 @@ export function CustomerReportBoard() {
       <ReportKpiGrid>
         <V3KpiTile
           board
+          flat
           testId="cr-kpi-customers"
           label="Customers billed"
           value={board.data ? String(billedRows.length) : "…"}
@@ -324,9 +325,10 @@ export function CustomerReportBoard() {
           valueDataV3="kpi-cr-customers"
           subDataV3="kpi-cr-customers-sub"
         />
-        <V3KpiTile board testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} href={salesViewHref} valueDataV3="kpi-cr-billed" />
+        <V3KpiTile board flat testId="cr-kpi-billed" label="Billed" value={board.data ? money(billed) : "…"} href={salesViewHref} valueDataV3="kpi-cr-billed" />
         <V3KpiTile
           board
+          flat
           testId="cr-kpi-open-ar"
           label="Open A/R"
           value={aging.data ? money(agingTotals.total) : "…"}
@@ -337,6 +339,7 @@ export function CustomerReportBoard() {
         />
         <V3KpiTile
           board
+          flat
           testId="cr-kpi-past-due"
           label="Past due"
           value={aging.data ? money(pastDueAr) : "…"}
@@ -346,9 +349,10 @@ export function CustomerReportBoard() {
           valueDataV3="kpi-cr-past-due"
           subDataV3="kpi-cr-past-due-sub"
         />
-        <V3KpiTile board testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} href={factoredHref} valueDataV3="kpi-cr-factored" />
+        <V3KpiTile board flat testId="cr-kpi-factored" label="Customers with factored invoices" value={board.data ? String(factoredCount) : "…"} href={factoredHref} valueDataV3="kpi-cr-factored" />
         <V3KpiTile
           board
+          flat
           testId="cr-kpi-collected"
           label="Payments recorded"
           value={board.data ? money(sumBy(billedRows, (r) => r.collected_cents)) : "…"}
