@@ -428,7 +428,10 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 24,
     shouldProduce: true,
     syncKinds: [],
-    output: { relation: "integrations.auto_status_switch_events", tsColumn: "created_at", companyColumn: "operating_company_id" },
+    // jobNames so the board can distinguish "ran, found no drift" (idle) from "did not run" (red). Probe the
+    // position snapshots table (auto_status_switch_events is 0-row; positions are what keep it alive).
+    jobNames: ["integrations.auto_status_switch_worker"],
+    output: { relation: "integrations.auto_status_position_snapshots", tsColumn: "recorded_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
   },
@@ -459,7 +462,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     shouldProduce: true,
     jobNames: ["integrations.samsara_routes_push"],
     // Live 2026-11-17 08:10Z (_system.background_jobs): 66 runs today, last success 08:00Z; last route_push sync row 2026-11-10 02:00Z. The board read no job, so a running engine showed grey "n/a" and a stopped one would too; with its job it shows its last run, idle when there was nothing new, red when it stops (#29811 described this change but its merged diff did not carry it).
-    syncKinds: [],
+    syncKinds: ["route_push"],
     // Built and running every 15 min: pushes dispatched loads, reads the route back into samsara_route_stop_progress
     // (live 2026-11-15 21:30:15Z: load 13735, 2 stops read).
     output: { relation: "integrations.samsara_route_stop_progress", tsColumn: "read_at", companyColumn: "operating_company_id" },
