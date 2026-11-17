@@ -236,14 +236,14 @@ export function CompanySettlementsReportBoard() {
         label: "Legs",
         sortable: true,
         render: (t) => (
-          <span className="inline-flex flex-wrap items-center gap-1">
+          <>
             {t.legs.map((l, i) => (
-              <span key={l.load_id} className="inline-flex items-center gap-1">
+              <span key={l.load_id}>
                 {i > 0 ? <span>→</span> : null}
                 <EntityLink kind="load" id={l.load_id} label={`${l.trip_type ?? ""} ${l.load_number}`.trim()} className={V3_TABLE_LINK_CLASS} />
               </span>
             ))}
-          </span>
+          </>
         ),
       },
       { key: "closed_date", label: "Closed", sortable: true, render: (t) => mmmDd(t.closed_date) || "—" },
