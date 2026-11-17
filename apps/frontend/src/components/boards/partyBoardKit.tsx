@@ -22,6 +22,7 @@ export type PartyCol<R> = {
   width?: number;
   /** false for a bar / graphic column that has no value to order by. */
   sortable?: boolean;
+  cellClass?: string;
   sort: (r: R) => string | number;
   cell: (r: R) => ReactNode;
 };
@@ -126,6 +127,7 @@ export function PartyTable<R extends { id: string }>(props: {
         kind: c.num ? "number" : undefined,
         minWidth: c.width,
         sortable: c.sortable === false ? false : true,
+        cellClass: c.cellClass,
         sortValue: c.sort,
         exportValue: c.sort,
         render: (r) => (i === 0 ? props.renderFirst(r) : c.cell(r)),

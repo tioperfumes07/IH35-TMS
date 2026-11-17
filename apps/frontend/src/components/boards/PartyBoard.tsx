@@ -147,11 +147,12 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
     { key: "last_invoice_date", label: "Last invoice", width: 104, sort: (r) => r.last_invoice ?? "", cell: (r) => <span>{day(r.last_invoice)}</span> },
     {
       key: "factored", label: "Factored", width: 150, sort: (r) => r.factored ?? "",
+      cellClass: "relative",
       cell: (r) => (r.factored ? (
-        <span style={{ position: "relative" }}>
+        <>
           <DotLabel color={V3.link}>{formatCompanyName(r.factored)}</DotLabel>
           {r.factor_vendor_id ? <EntityLink kind="vendor" id={r.factor_vendor_id} label="" className="absolute inset-0" /> : null}
-        </span>
+        </>
       ) : "—"),
     },
     {
@@ -193,7 +194,7 @@ export function PartyBoard(props: { kind: "customers"; operatingCompanyId: strin
   }
 
   return (
-    <div data-testid={`party-board-${props.kind}`} data-v3-board="Customers" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
+    <div data-testid={`party-board-${props.kind}`} data-v3-board="Customers" style={{ color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
       <PartyHomeHeader crumb="Customers" title={"Customers"} subtitle={"The list opens on the customers you actually do business with"}
         createLabel={"+ Create Customer"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>

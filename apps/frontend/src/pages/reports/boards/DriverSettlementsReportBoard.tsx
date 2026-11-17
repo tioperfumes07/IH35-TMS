@@ -414,6 +414,7 @@ export function DriverSettlementsReportBoard() {
       <ReportKpiGrid>
         {/* ROUND 8.17 class S — every KPI opens the report table / filtered cohort (not a dead tile). */}
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-settlements"
           label="Settlements"
@@ -428,6 +429,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-gross"
           label="Gross pay"
@@ -440,6 +442,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-deductions"
           label="Deductions"
@@ -451,6 +454,7 @@ export function DriverSettlementsReportBoard() {
           subDataV3="kpi-dsr-deductions-sub"
         />
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-reimb"
           label="Reimbursements"
@@ -459,6 +463,7 @@ export function DriverSettlementsReportBoard() {
           valueDataV3="kpi-dsr-reimb"
         />
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-net"
           label="Net pay"
@@ -471,6 +476,7 @@ export function DriverSettlementsReportBoard() {
           }}
         />
         <V3KpiTile
+          board
           flat
           testId="dsr-kpi-closed-unpaid"
           label="Closed, not marked paid"

@@ -345,9 +345,10 @@ export function VendorReportBoard() {
       {ap.isError ? <ListErrorState title="Couldn't load A/P aging" {...formatQueryErrorDetail(ap.error)} onRetry={() => void ap.refetch()} /> : null}
 
       <ReportKpiGrid>
-        <V3KpiTile board testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} href={spendViewHref} valueDataV3="kpi-vr-vendors" />
+        <V3KpiTile board flat testId="vr-kpi-vendors" label="Vendors paid" value={board.data ? String(spendRows.length) : "…"} href={spendViewHref} valueDataV3="kpi-vr-vendors" />
         <V3KpiTile
           board
+          flat
           testId="vr-kpi-spend"
           label="Spend"
           value={board.data ? money(spend) : "…"}
@@ -358,6 +359,7 @@ export function VendorReportBoard() {
         />
         <V3KpiTile
           board
+          flat
           testId="vr-kpi-fuel-share"
           label="Fuel share"
           value={board.data ? pctLabel(board.data.kpis.fuel_share_pct) : "…"}
@@ -368,6 +370,7 @@ export function VendorReportBoard() {
         />
         <V3KpiTile
           board
+          flat
           testId="vr-kpi-open-bills"
           label="Open vendor bills"
           value={ap.data ? money(apTotal) : "…"}
@@ -381,6 +384,7 @@ export function VendorReportBoard() {
             kpis.fuel_cents — period fuel expense — under a liability label. Drills to the card-payable account register. */}
         <V3KpiTile
           board
+          flat
           testId="vr-kpi-card-payables"
           label="Card payables"
           value={board.data ? money(board.data.kpis.card_payables_cents ?? 0) : "…"}
