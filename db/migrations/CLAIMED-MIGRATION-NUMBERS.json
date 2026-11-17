@@ -1189,5 +1189,10 @@
     "claimed_at": "2026-11-16",
     "claimed_by": "lead",
     "purpose": "E-29: integrations.auto_status_switch_events.case_id adds 'D' (dispatched \u2192 at_pickup when the truck is parked in the pickup fence)"
+  },
+  "202616660100": {
+    "claimed_at": "2026-11-17",
+    "claimed_by": "lead",
+    "purpose": "PERFUME my own costs per item (last cost, average cost) typed on the desk: perfume.item_costs \u2014 owner 2026-11-17 14:04 CT"
   }
 }

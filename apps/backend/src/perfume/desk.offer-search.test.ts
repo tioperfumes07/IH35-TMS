@@ -40,7 +40,10 @@ describe("my offer margin is measured, never added on top", () => {
   it("the grid computes (offer − my cost) ÷ offer from my inventory cost only — never a supplier price (owner 2026-11-14)", () => {
     const src = readFileSync(new URL("./desk.service.ts", import.meta.url), "utf8");
     expect(src).not.toContain("const offerCost = (myCost ?? (row.landed_likely as number | null)) ?? null;");
-    expect(src).toContain("myCost != null ? Math.round(((myOffer - myCost) / myOffer) * 1000) / 10 : null");
-    expect(src).toContain('{ key: "offer_margin_pct", label: "My offer margin %", group: "Mine", kind: "pct" }');
+    // Owner 2026-11-17: margin on my last cost AND on my avg cost — both my own figures; the lowest supplier price only
+    // feeds the separately named "buying at lowest supplier" columns, never "My margin".
+    expect(src).toContain("Object.assign(row, myPriceMath(myOffer, myCost, myAvg, lowList));");
+    expect(src).toContain('{ key: "offer_margin_pct", label: "My margin % (last cost)", group: "Mine", kind: "pct" }');
+    expect(src).toContain('{ key: "buy_margin_pct", label: "Margin % buying at lowest supplier", group: "Mine", kind: "pct" }');
   });
 });

@@ -1008,7 +1008,7 @@ export async function searchItems(c: PoolClient, q: string, limit = 25, gender: 
       ORDER BY similarity(i.display_name, $1) DESC LIMIT $3`, [s, words, limit, gender])).rows;
 }
 
-/** Competitor lines (every current sell/both list) for the List-analysis match box: every word must be in the line,
+/** Competitor lines (every current competitor list — kind "sell") for the List-analysis match box: every word must be in the line,
  *  in any order; a number also matches its UPC or code. Linked lines are returned too, with what they are linked to,
  *  so a wrong link can be seen and corrected (owner 2026-11-14: "the box to search, suggestions … the correct matching engine"). */
 export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25, gender: "M" | "W" | null = null) {
@@ -1020,7 +1020,7 @@ export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25
     `SELECT r.id AS row_id, r.description, r.brand, r.size_text, r.gender_override, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        LEFT JOIN perfume.items i ON i.id = r.item_id
-      WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL
+      WHERE v.kind = 'sell' AND l.is_current AND l.voided_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w
                          WHERE upper(r.description || ' ' || coalesce(r.upc, '') || ' ' || coalesce(r.sku, '')) NOT LIKE '%' || w || '%')
       ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, gender ? limit * 3 : limit])).rows;
@@ -1165,6 +1165,57 @@ async function perfumeDataSig(c: PoolClient): Promise<string | null> {
   }
 }
 
+/** My list price against my costs (owner 2026-11-17 14:04 CT: "all price boxes editable … engine automatically
+ *  calculates for that item the margin etc."). One function, used by the grid build; the desk's frontend repeats it
+ *  (perfumePriceMath.ts, same fixtures in both tests) so a typed price recomputes the row at once, then the server's
+ *  rebuild replaces it. Margin = (price − cost) ÷ price · Markup = (price − cost) ÷ cost. Owner 2026-11-15 13:27 CT:
+ *  margin and markup read 0 until a cost exists (never blank) when there is a price; blank with no price. */
+export function myPriceMath(offer: number | null, last: number | null, avg: number | null, lowBuy: number | null): Record<string, number | null> {
+  const p1 = (x: number) => Math.round(x * 1000) / 10;
+  const margin = (cost: number | null) => (offer == null || offer <= 0 ? null : cost == null ? 0 : p1((offer - cost) / offer));
+  const markup = (cost: number | null) => (offer == null ? null : cost == null || cost <= 0 ? 0 : p1((offer - cost) / cost));
+  return {
+    offer_profit: offer != null && last != null ? offer - last : null,
+    offer_margin_pct: margin(last), offer_markup_pct: markup(last),
+    offer_margin_avg_pct: margin(avg), offer_markup_avg_pct: markup(avg),
+    buy_margin_pct: offer != null && offer > 0 && lowBuy != null ? p1((offer - lowBuy) / offer) : null,
+    buy_markup_pct: offer != null && lowBuy != null && lowBuy > 0 ? p1((offer - lowBuy) / lowBuy) : null,
+  };
+}
+
+/** Owner 2026-11-17: type my list price or my cost right on the desk. My list price writes the line(s) of my CURRENT
+ *  offer list (one line by line_id, or every line of the item); the old price is kept on the line (raw.price_edits).
+ *  My last / avg cost write perfume.item_costs (the old value kept in edits). Nothing outside my own lists is written. */
+export async function setMyPrice(c: PoolClient, uid: string, b: { item_id?: string | null; line_id?: string | null; field: "offer" | "last_cost" | "avg_cost"; cents: number | null }):
+  Promise<{ updated: number }> {
+  if (b.field === "offer") {
+    if (b.cents == null) throw new MyPriceError("price_required");
+    if (!b.line_id && !b.item_id) throw new MyPriceError("item_or_line_required");
+    const r = await c.query(
+      `UPDATE perfume.price_list_rows r
+          SET price_cents = $3,
+              raw = coalesce(r.raw, '{}'::jsonb) || jsonb_build_object('price_edits', coalesce(r.raw->'price_edits', '[]'::jsonb)
+                    || jsonb_build_array(jsonb_build_object('from', r.price_cents, 'to', $3::int, 'at', now(), 'by', $4::text)))
+         FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id
+        WHERE l.id = r.list_id AND v.kind = 'offer' AND l.is_current AND l.voided_at IS NULL
+          AND (($1::uuid IS NOT NULL AND r.id = $1::uuid) OR ($1::uuid IS NULL AND r.item_id = $2::uuid))`,
+      [b.line_id ?? null, b.item_id ?? null, b.cents, uid]);
+    if (!r.rowCount) throw new MyPriceError("not_on_my_list");
+    return { updated: r.rowCount };
+  }
+  if (!b.item_id) throw new MyPriceError("item_required");
+  const col = b.field === "last_cost" ? "last_cost_cents" : "avg_cost_cents";
+  const r = await c.query(
+    `INSERT INTO perfume.item_costs AS t (item_id, ${col}, edits, updated_by, updated_at)
+     VALUES ($1, $2, jsonb_build_array(jsonb_build_object('field', $3::text, 'from', NULL, 'to', $2::int, 'at', now(), 'by', $5::text)), $4::uuid, now())
+     ON CONFLICT (item_id) DO UPDATE SET ${col} = $2,
+       edits = t.edits || jsonb_build_array(jsonb_build_object('field', $3::text, 'from', t.${col}, 'to', $2::int, 'at', now(), 'by', $5::text)),
+       updated_by = $4::uuid, updated_at = now()`,
+    [b.item_id, b.cents, b.field, uid, uid]);
+  return { updated: r.rowCount ?? 0 };
+}
+export class MyPriceError extends Error {}
+
 export async function buildGrid(c: PoolClient, opts: { targetPct?: number | null; earnPct?: number | null } = {}): Promise<GridPayload> {
   // No fingerprint read → a key no earlier build carries (a remembered grid is never trusted without one).
   const sig = (await perfumeDataSig(c)) ?? "nosig";
@@ -1189,6 +1240,12 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   const vendors = await listVendors(c);
   const buyV = vendors.filter((v) => v.kind === "buy" || v.kind === "both");
   const sellV = vendors.filter((v) => v.kind === "sell" || v.kind === "both");
+  // List analysis compares my list with the LAREDO competitor's list (owner 2026-11-17 14:04 CT: "analysis, it is supposed
+  // to be with la esperanza … verify it is the correct list"). Measured that hour: 27 supplier lists had been saved as
+  // "both", so "Esperanza Price" was the cheapest of 28 lists. The analysis reads only competitor lists (kind "sell"),
+  // never a supplier's, whatever a supplier is marked.
+  const compV = vendors.filter((v) => v.kind === "sell");
+  const compIds = new Set(compV.map((v) => v.id));
   // My own lists (owner 2026-11-12): my offer list to clients and my inventory (stock, quantities, last cost).
   // Never a supplier and never a competitor; each new upload replaces the last.
   const offerV = vendors.filter((v) => v.kind === "offer");
@@ -1219,7 +1276,11 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     gender_override: string | null; price_cents: number | null; match_status: string }>(
     `SELECT r.id, l.vendor_id, r.item_id, r.description, r.brand, r.size_text, r.gender_override, r.price_cents::int AS price_cents, r.match_status
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-      WHERE v.kind IN ('sell', 'both') AND l.is_current AND l.voided_at IS NULL ORDER BY v.name, r.row_no`);
+      WHERE v.kind = 'sell' AND l.is_current AND l.voided_at IS NULL ORDER BY v.name, r.row_no`);
+  // My own costs typed on the desk (owner 2026-11-17: last cost and average cost per item, every tab).
+  const myCostQ = await c.query<{ item_id: string; last_cost_cents: number | null; avg_cost_cents: number | null }>(
+    `SELECT item_id, last_cost_cents, avg_cost_cents FROM perfume.item_costs`);
+  const typedCost = new Map(myCostQ.rows.map((r) => [r.item_id, r]));
   // My stock with no inventory file = the SUM of every line of that bottle on my list (Blue Cielo sits on 11 lines).
   const offerQtySum = new Map<string, number>();
   for (const l of myLineQ.rows) if (l.item_id && l.qty != null) offerQtySum.set(l.item_id, (offerQtySum.get(l.item_id) ?? 0) + l.qty);
@@ -1269,17 +1330,28 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // file, else the quantities on my offer list ("you uploaded my price list and quantities").
   if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty" : "Inv qty (my list)", group: "Mine", kind: "int" });
   mineCols.push(
-    { key: "my_last_cost", label: "My actual cost (last purchase)", group: "Mine", kind: "money" },
+    { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+    { key: "my_avg_cost", label: "My avg cost", group: "Mine", kind: "money" },
+    { key: "low_buy_price", label: "Lowest supplier price", group: "Mine", kind: "money" },
+    { key: "low_buy_vendor", label: "Lowest supplier", group: "Mine", kind: "text" },
     { key: "my_purchase_date", label: "Purchase date", group: "Mine", kind: "text" },
     { key: "my_qty_purchased", label: "Qty purchased", group: "Mine", kind: "int" },
     { key: "my_qty_sold", label: "Qty sold", group: "Mine", kind: "int" },
   );
   if (hasOffer) mineCols.push(
     { key: "my_offer_desc", label: "My description", group: "Mine", kind: "text" },
-    { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
+    // Owner 2026-11-17 14:04 CT: "i still need to view my list price … my last cost, avg cost … margins, mark up etc.
+    // all the same data so i can make the correct decisions and purchases" — on every tab, the same figures.
+    { key: "my_offer_price", label: "My list price", group: "Mine", kind: "money" },
+    { key: "offer_profit", label: "My profit $ (last cost)", group: "Mine", kind: "money" },
+    { key: "offer_margin_pct", label: "My margin % (last cost)", group: "Mine", kind: "pct" },
+    { key: "offer_markup_pct", label: "My markup % (last cost)", group: "Mine", kind: "pct" },
+    { key: "offer_margin_avg_pct", label: "My margin % (avg cost)", group: "Mine", kind: "pct" },
+    { key: "offer_markup_avg_pct", label: "My markup % (avg cost)", group: "Mine", kind: "pct" },
+    { key: "buy_margin_pct", label: "Margin % buying at lowest supplier", group: "Mine", kind: "pct" },
+    { key: "buy_markup_pct", label: "Markup % buying at lowest supplier", group: "Mine", kind: "pct" },
     { key: "offer_vs_low", label: "Offer vs lowest", group: "Mine", kind: "money" },
     { key: "offer_action", label: "My offer: raise / lower", group: "Mine", kind: "text" },
-    { key: "offer_margin_pct", label: "My offer margin %", group: "Mine", kind: "pct" },
     { key: "my_need", label: "Need to buy", group: "Mine", kind: "int" },
   );
   cols.splice(cols.findIndex((c) => c.group === "Mine"), 0, ...mineCols);
@@ -1333,7 +1405,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
 
   // LIST ANALYSIS columns — the owner's format, his groups and headers in his order.
   const minMargin = opts.targetPct ?? 15;
-  const cGroup = `COMPETITOR · ${sellV.length === 1 ? vendorLabel(sellV[0]) : "lowest sales price"}`;
+  const cGroup = `COMPETITOR · ${compV.length === 1 ? vendorLabel(compV[0]) : "lowest sales price"}`;
   const A = (key: string, label: string, group: string, kind: GridCol["kind"]): GridCol => ({ key: `a:${key}`, label, group, kind });
   cols.push(
     // Owner 2026-11-14 17:07 CT: one description per side, no repeats — NAME is MY description (my list's own wording).
@@ -1413,6 +1485,10 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; mySku = mySku ?? o.sku; } }
     // An inventory file exists (any item): then it is the stock — an item not on it has none on hand.
     const invUploaded = hasInv;
+    // My inventory file's last cost wins; else the cost I typed on the desk. Average cost: only what I typed.
+    const typed = typedCost.get(it.id);
+    if (myCost == null && typed?.last_cost_cents != null) myCost = typed.last_cost_cents;
+    const myAvg = typed?.avg_cost_cents ?? null;
     // No inventory file yet: the quantity on my offer list IS my stock (owner 2026-11-14). Never a guessed number.
     if (!invUploaded && offerQtySum.has(it.id)) myQty = offerQtySum.get(it.id)!;
     row.my_offer_desc = myOfferDesc;
@@ -1422,6 +1498,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     row.my_sku = mySku;
     row.my_qty = myQty;
     row.my_last_cost = myCost;
+    row.my_avg_cost = myAvg;
     row.my_offer_price = myOffer;
     row.in_offer = myOffer != null ? 1 : 0;
     row.in_inventory = myQty != null ? 1 : 0;
@@ -1466,6 +1543,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     //  The competitor is the one with the lowest SALES price. Blank stays blank — never a guessed cost or date.
     let cBest: CompBest | null = null;
     for (const v of presSell) {
+      if (!compIds.has(v.id)) continue;
       const real = row[`s:${v.id}:real`] as number | undefined;
       if (real == null) continue;
       if (!cBest || real < cBest.real) cBest = { list: row[`s:${v.id}:price`] as number, cushion: row[`s:${v.id}:cushion`] as number, real, desc: (row[`s:${v.id}:desc`] as string | null) ?? null, vendor: vendorLabel(v) };
@@ -1483,7 +1561,9 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     // Measured, never assumed — no margin is added on top of my offer price anywhere.
     // Owner 2026-11-14: "where are you getting my cost from? i never uploaded my current cost." Only my inventory's
     // last cost counts as my cost — never a supplier price standing in for it.
-    row.offer_margin_pct = myOffer != null && myOffer > 0 && myCost != null ? Math.round(((myOffer - myCost) / myOffer) * 1000) / 10 : null;
+    Object.assign(row, myPriceMath(myOffer, myCost, myAvg, lowList));
+    row.low_buy_price = lowList;
+    row.low_buy_vendor = lowListAt;
     if (myOffer != null && low != null) {
       row.offer_vs_low = low - myOffer;
       row.offer_action = wholesaleAction(low - myOffer);
@@ -1898,7 +1978,16 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   const action = (gap: string, same: string) => `IF(${gap}>0,"Under by "&TEXT(${gap},"$0.00")&" — can raise",IF(${gap}<0,"Over by "&TEXT(-(${gap}),"$0.00")&" — lower to compete","${same}"))`;
   add("offer_vs_low", ["low_sell", "my_offer_price"], (r) => `${r("low_sell")}-${r("my_offer_price")}`);
   add("offer_action", ["offer_vs_low"], (r) => action(r("offer_vs_low"), "Same as lowest competitor"));
-  add("offer_margin_pct", ["my_offer_price", "my_last_cost"], (r) => `IF(${r("my_offer_price")}=0,"",(${r("my_offer_price")}-${r("my_last_cost")})/${r("my_offer_price")})`);
+  // Margin / markup on my list price: 0 until the cost is there (owner 2026-11-15), as on screen.
+  const marg = (cost: string) => (r: (k: string) => string) => `IF(OR(${r("my_offer_price")}="",${r("my_offer_price")}=0),"",IF(${r(cost)}="",0,(${r("my_offer_price")}-${r(cost)})/${r("my_offer_price")}))`;
+  const mark = (cost: string) => (r: (k: string) => string) => `IF(${r("my_offer_price")}="","",IF(OR(${r(cost)}="",${r(cost)}=0),0,(${r("my_offer_price")}-${r(cost)})/${r(cost)}))`;
+  add("offer_margin_pct", ["my_offer_price", "my_last_cost"], marg("my_last_cost"));
+  add("offer_markup_pct", ["my_offer_price", "my_last_cost"], mark("my_last_cost"));
+  add("offer_margin_avg_pct", ["my_offer_price", "my_avg_cost"], marg("my_avg_cost"));
+  add("offer_markup_avg_pct", ["my_offer_price", "my_avg_cost"], mark("my_avg_cost"));
+  add("offer_profit", ["my_offer_price", "my_last_cost"], (r) => `IF(OR(${r("my_offer_price")}="",${r("my_last_cost")}=""),"",${r("my_offer_price")}-${r("my_last_cost")})`);
+  add("buy_margin_pct", ["my_offer_price", "low_buy_price"], (r) => `IF(OR(${r("my_offer_price")}="",${r("my_offer_price")}=0,${r("low_buy_price")}=""),"",(${r("my_offer_price")}-${r("low_buy_price")})/${r("my_offer_price")})`);
+  add("buy_markup_pct", ["my_offer_price", "low_buy_price"], (r) => `IF(OR(${r("my_offer_price")}="",${r("low_buy_price")}="",${r("low_buy_price")}=0),"",(${r("my_offer_price")}-${r("low_buy_price")})/${r("low_buy_price")})`);
   add("target_profit", ["target_price_margin", "landed_likely"], (r) => `${r("target_price_margin")}-${r("landed_likely")}`);
   add("target_action", ["low_sell", "target_price_margin"], (r) => action(`(${r("low_sell")}-${r("target_price_margin")})`, "Same as lowest competitor"));
   // List analysis — the owner's PERFUME_ENGINE_FORMATS.xlsx formulas, cell for cell.
