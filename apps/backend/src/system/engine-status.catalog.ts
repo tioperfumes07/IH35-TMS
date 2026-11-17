@@ -431,7 +431,7 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     // jobNames so the board can distinguish "ran, found no drift" (idle) from "did not run" (red). Probe the
     // position snapshots table (auto_status_switch_events is 0-row; positions are what keep it alive).
     jobNames: ["integrations.auto_status_switch_worker"],
-    output: { relation: "integrations.auto_status_position_snapshots", tsColumn: "captured_at", companyColumn: "operating_company_id" },
+    output: { relation: "integrations.auto_status_position_snapshots", tsColumn: "recorded_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
   },
