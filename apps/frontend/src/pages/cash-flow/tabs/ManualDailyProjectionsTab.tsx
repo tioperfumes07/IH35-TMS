@@ -582,10 +582,9 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     return `${wd}, ${formatDateUS(projectionDate)}`;
   })();
   const toolbarBtn: CSSProperties = {
-    display: "inline-flex",
+    display: "flex",
     height: 28,
     alignItems: "center",
-    gap: 4,
     borderRadius: 6,
     border: `1px solid ${V3.border}`,
     background: V3.surface,
@@ -595,6 +594,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
     color: V3.ink,
     fontFamily: V3.font,
     cursor: "pointer",
+    boxSizing: "content-box",
   };
 
   return (
@@ -649,7 +649,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           </button>
         </div>
         <span className="flex-1" />
-        <div className="relative">
+        <div className="relative" style={{ display: "flex", alignItems: "center", gap: 8, boxSizing: "content-box" }}>
           <button type="button" onClick={() => setHistoryOpen((o) => !o)} style={toolbarBtn} data-testid="cash-flow-mdp-history">
             History
           </button>
@@ -679,8 +679,8 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         </div>
         <button
           type="button"
-          className="h-7 rounded-md px-3 font-semibold disabled:opacity-50"
-          style={{ background: V3.shell, color: V3.onShell }}
+          className="rounded-md px-3 font-semibold disabled:opacity-50"
+          style={{ background: V3.shell, color: V3.onShell, height: 28, display: "flex", alignItems: "center", boxSizing: "content-box" }}
           // ROUND 8.20 board 8 — never Save while opening-cash/projections are still loading or failed:
           // bankTotalDollars falls back to 0 and would overwrite production opening balance with $0.
           disabled={

@@ -1009,14 +1009,7 @@ export function CashFlowHomeTab({
             label="Weekly run-rate"
             value={formatCashFlowCents(weeklyRunRate, { sign: true })}
             tone={weeklyRunRate < 0 ? "red" : weeklyRunRate > 0 ? "green" : "ink"}
-            sub={
-              <span style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                <span style={{ fontWeight: 600, color: weeklyRunRate < 0 ? V3.red : V3.green }}>
-                  {weeklyRunRate < 0 ? "▼ out > in" : weeklyRunRate > 0 ? "▲ in > out" : "flat"}
-                </span>
-                <span>last 4 full weeks</span>
-              </span>
-            }
+            sub="last 4 full weeks"
             spark={
               runRateSpark ? (
                 <svg width={96} height={26} viewBox="0 0 96 26" aria-hidden>

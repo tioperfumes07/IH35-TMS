@@ -89,6 +89,7 @@ const FUEL_HEADER_BTN: React.CSSProperties = {
   border: "1px solid #DDE1E7",
   cursor: "pointer",
   lineHeight: "normal",
+  boxSizing: "content-box",
 };
 
 export function FuelPlannerHomePage({ initialTab = "home" }: Props) {

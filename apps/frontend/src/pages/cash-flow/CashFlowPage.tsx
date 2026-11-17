@@ -173,10 +173,10 @@ export function CashFlowPage() {
             onClick={() => navigate(cashFlowBackHref)}
             style={{ fontSize: 11, color: "#5B6576", background: "transparent", border: "none", padding: 0, cursor: "pointer", lineHeight: "normal" }}
           >
-            ← Back
+            {"← Back"}
           </button>
           <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: "#111827" }}>Cash Flow</h1>
-          <span style={{ fontSize: 11, color: "#5B6576" }}>Forward-looking daily cash position — predicted income and expenses</span>
+          <span style={{ fontSize: 11, color: "#5B6576" }}>{"Forward-looking daily cash position — predicted income and expenses"}</span>
         </div>
       </div>
       {/* ROUND 8.5 CF1 — Related links ABOVE the tab strip (CashFlow-*.dc.html order). */}

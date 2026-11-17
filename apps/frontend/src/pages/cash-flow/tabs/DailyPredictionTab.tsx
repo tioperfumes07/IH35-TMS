@@ -846,6 +846,7 @@ export function DailyPredictionTab({ operatingCompanyId }: Props) {
         <BoardSection
           title="Expenses"
           subtitle="in payment priority order"
+          subtitleSize={11}
           viewAllHref={withReturnContext(dailyPredictionRlHref(rangeFrom, rangeTo, "expenses"), originHref)}
           testId="cash-flow-projected-expense-panel"
         >

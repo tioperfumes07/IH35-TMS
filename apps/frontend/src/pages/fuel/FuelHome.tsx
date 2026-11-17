@@ -1,6 +1,6 @@
 // TABLE_DATE_OMIT: this table has no date column by design — Diesel by truck is one row per TRUCK aggregated over the period chosen in the board's Oct / Sep / YTD period control — the period is the filter, not a column.
 import { useCallback, useMemo } from "react";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "../../api/client";
 import { getFuelDashboard, getLovesSyncStatus } from "../../api/fuelPlanner";
@@ -21,7 +21,6 @@ import { entityLabel } from "../../lib/entity-label";
 import { currentOriginHref, withReturnContext } from "../../lib/returnContext";
 import { fetchDieselByTruckAggregate, type DieselByTruckRow } from "./fuelDieselByTruck";
 import { fuelBoardPeriodOptions, fuelBoardPeriodRange, type FuelBoardPeriodId } from "./fuelBoardPeriod";
-import { fuelBoardViewAllHref } from "./fuelBoardViewAllHref";
 import { V3Segmented } from "../../components/v3/V3Segmented";
 import { FuelBoardSection } from "./FuelBoardSection";
 import { FleetTruck } from "../maintenance/components/FleetHealthLine";
@@ -110,15 +109,13 @@ export function FuelCardOverageKpiCard() {
       ? "Pending review · BANK-F10 approve-then-recover"
       : "Loading… · BANK-F10 approve-then-recover";
 
-  const { pathname, search } = useLocation();
-  const originHref = currentOriginHref(pathname, search);
   return (
     <V3KpiTile
       label="Card overage queue"
       value={value}
       sub={sub}
       testId="fuel-card-overage-kpi"
-      href={withReturnContext("/fuel/card-overage", originHref)}
+      href="/fuel/card-overage"
     />
   );
 }
@@ -133,6 +130,7 @@ type DieselBoardRow = DieselByTruckRow & { id: string };
  * No metric-as-rows theater, no panel-stack chrome.
  */
 export function FuelHomePage() {
+  const navigate = useNavigate();
   const { pathname, search: locationSearch } = useLocation();
   const originHref = currentOriginHref(pathname, locationSearch);
   const { selectedCompanyId } = useCompanyContext();
@@ -244,14 +242,14 @@ export function FuelHomePage() {
         render: (r) => {
           const identity = r.unit_id ? makeModelByUnitId.get(r.unit_id) : undefined;
           return (
-            <div data-testid="fuel-home-diesel-unit-identity">
+            <>
               {r.unit_id ? (
                 <EntityLink kind="unit" id={r.unit_id} label={entityLabel(r.unit_number, r.unit_id, "Unit")} className="font-semibold" />
               ) : (
                 <span className="font-semibold">{r.unit_number || "—"}</span>
               )}
               <div style={{ fontSize: 11, color: "#5B6576" }}>{identity || "—"}</div>
-            </div>
+            </>
           );
         },
       },
@@ -402,7 +400,7 @@ export function FuelHomePage() {
 
       <FuelBoardSection
         title="Diesel by truck"
-        viewAllHref={fuelBoardViewAllHref(period, originHref)}
+        onViewAll={() => navigate(`/fuel/by-truck?period=${encodeURIComponent(period)}&ret=${encodeURIComponent(originHref)}`)}
         testId="fuel-home-diesel-board"
         headerRight={
           <V3Segmented
@@ -425,7 +423,7 @@ export function FuelHomePage() {
           // Fuel.dc.html: the V3 table — 5px 12px cells, no nowrap on th/td (this board's own table).
           <ParityTable<DieselBoardRow>
             appearance="v3"
-            boardTdStyle={{ paddingTop: 10, paddingBottom: 10, whiteSpace: "normal" }}
+            boardTdStyle={{ paddingTop: 5, paddingBottom: 5, height: 36, whiteSpace: "normal", boxSizing: "content-box" }}
             thStyle={{ whiteSpace: "normal" }}
             title="Diesel by truck"
             columns={dieselColumns}
