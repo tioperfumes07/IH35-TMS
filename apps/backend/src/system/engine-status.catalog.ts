@@ -337,13 +337,14 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fuel-purchase-push",
     domain: "Fuel",
     schedule: "Twice daily",
+    // E-23 is a producer (push/poll): writes integration_sync_log on every run. shouldProduce was false → board
+    // painted it grey (n/a) even when it was dead; now red shows when it last ran > 36h ago.
     expectedWindowHours: 36,
-    shouldProduce: false,
+    shouldProduce: true,
     syncKinds: ["fuel_purchase_push"],
+    jobNames: ["integrations.samsara_fuel_purchase_push"],
     output: null,
     ownerSeat: "CC-3",
-    // Built and running (cron 00:00 / 12:00 Z, writes integration_sync_log sync_kind fuel_purchase_push): 238 rows
-    // pushed, 3,894 rejected with the reason dropped (#29687 surfaces it, #29694 re-sends the reason-less ones once).
     kind: "engine",
   },
   {
@@ -426,7 +427,11 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     expectedWindowHours: 24,
     shouldProduce: true,
     syncKinds: [],
-    output: { relation: "integrations.auto_status_switch_events", tsColumn: "created_at", companyColumn: "operating_company_id" },
+    // E-29: auto_status_switch_events is an event table (rows only on drift) — 0 rows does not mean dead. Add
+    // jobNames so the board can distinguish "ran, found no drift" (idle) from "did not run" (red). Probe the
+    // position snapshots table (written by every tick with live GPS) to corroborate aliveness.
+    jobNames: ["integrations.auto_status_switch_worker"],
+    output: { relation: "integrations.auto_status_position_snapshots", tsColumn: "recorded_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
   },
@@ -436,13 +441,14 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fleet/messages",
     domain: "Driver",
     schedule: "On send / poll",
-    expectedWindowHours: null,
-    shouldProduce: false,
+    // E-30 is a producer (polls Samsara every 5 min). shouldProduce was false → board painted grey (n/a). Now
+    // jobNames lets it show idle (ran, no driver replied) rather than red when it's healthy.
+    expectedWindowHours: 1,
+    shouldProduce: true,
     syncKinds: [],
+    jobNames: ["integrations.samsara_driver_replies"],
     output: null,
     ownerSeat: "CC-3",
-    // Built and running: office → driver on send (chat.routes, SAMSARA_DRIVER_MESSAGING_ENABLED) and the reply poll
-    // integrations.samsara_driver_replies every 5 min (live 2026-11-15 21:30Z: fetched 0 — no driver replied).
     kind: "engine",
   },
   {
@@ -450,12 +456,15 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Samsara Routes push",
     module: "fleet/routes",
     domain: "Dispatch",
-    schedule: "On dispatch",
-    expectedWindowHours: null,
-    shouldProduce: false,
-    syncKinds: [],
-    // Built and running every 15 min: pushes dispatched loads, reads the route back into samsara_route_stop_progress
-    // (live 2026-11-15 21:30:15Z: load 13735, 2 stops read).
+    schedule: "*/15 * * * *",
+    // E-31 is a producer (pushes dispatched loads every 15 min, reads stop progress back). shouldProduce was false
+    // → board painted grey. 7,157 Samsara failures "scheduled arrival time required" stopped sync_log writes after
+    // 2026-11-10; loads without scheduled_arrival_at are now skipped cleanly. jobNames shows the cron is alive;
+    // syncKinds reads the last successful push from the sync log.
+    expectedWindowHours: 1,
+    shouldProduce: true,
+    syncKinds: ["route_push"],
+    jobNames: ["integrations.samsara_routes_push"],
     output: { relation: "integrations.samsara_route_stop_progress", tsColumn: "read_at", companyColumn: "operating_company_id" },
     ownerSeat: "CC-3",
     kind: "engine",
@@ -465,14 +474,15 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     name: "Documents / Forms (BOL, POD)",
     module: "fleet/documents",
     domain: "Dispatch",
-    schedule: "On stop",
-    expectedWindowHours: null,
-    shouldProduce: false,
+    schedule: "17 * * * *",
+    // E-32 is a producer (polls Samsara hourly :17 for POD photos). shouldProduce was false → board painted grey.
+    // jobNames shows the cron is alive; idle is correct when no driver has submitted photos.
+    expectedWindowHours: 2,
+    shouldProduce: true,
     syncKinds: [],
+    jobNames: ["integrations.samsara_documents"],
     output: null,
     ownerSeat: "CC-3",
-    // Built and running hourly (:17): Samsara POD documents → docs.files linked to load/stop/unit/driver (live
-    // 2026-11-15 21:17Z: 1 document in 7 days, 0 photos — nothing to store).
     kind: "engine",
   },
   {
