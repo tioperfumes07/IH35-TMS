@@ -770,7 +770,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
         data-testid="cash-flow-mdp-v3-kpis"
       >
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="bank" data-testid="mdp-bank-balances">
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-manual-kpi-bank"
             subDataV3="cf-manual-kpi-bank-sub"
@@ -794,7 +794,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           />
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="income">
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-manual-kpi-income"
             subDataV3="cf-manual-kpi-income-sub"
@@ -811,7 +811,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           </span>
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="expense">
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-manual-kpi-expense"
             subDataV3="cf-manual-kpi-expense-sub"
@@ -828,7 +828,7 @@ export function ManualDailyProjectionsTab({ operatingCompanyId }: { operatingCom
           </span>
         </div>
         <div className="flex min-h-[5.5rem] flex-col" data-mdp-kpi="net">
-          <V3KpiTile
+          <V3KpiTile labelNoWrap
             board
             valueDataV3="cf-manual-kpi-net"
             subDataV3="cf-manual-kpi-net-sub"
