@@ -13,7 +13,7 @@ const PAGES = [
   "apps/frontend/src/pages/fleet/TransfersInProgressPage.tsx",
   "apps/frontend/src/pages/fleet/TrailerProfilePage.tsx",
   "apps/frontend/src/pages/fleet/VehicleProfilePage.tsx",
-  "apps/frontend/src/pages/fleet/RosterIntegrityPage.tsx",
+  // RosterIntegrityPage is a module home (U18 literal backHref="/fleet") — not a leaf
 ];
 
 export function check(src, file) {
