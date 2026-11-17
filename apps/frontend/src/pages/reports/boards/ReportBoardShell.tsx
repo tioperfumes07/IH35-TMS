@@ -23,7 +23,11 @@ const BTN_PRIMARY: React.CSSProperties = V3_REPORT_HEADER_BTN_PRIMARY;
  *  Invoice Search · Scheduled (custom) · Audit (V3-Reports-Loads.dc.html). Built from the Reports nav's own entries. */
 function reportBoardNavItems(): NavyPageSubNavItem[] {
   const by = (label: string) => REPORTS_SUB_NAV_ITEMS.find((i) => i.label === label);
-  const head = ["Reports", "Category hub", "Run report"].map(by).filter((i): i is NavyPageSubNavItem => Boolean(i));
+  // "Run report" children list every runner href including the board routes → parentActive fires on the boards.
+  const head = ["Reports", "Category hub", "Run report"]
+    .map(by)
+    .filter((i): i is NavyPageSubNavItem => Boolean(i))
+    .map((i) => (i.label === "Run report" ? { ...i, children: undefined } : i));
   const tail = ["Cancellations", "Invoice Search", "Scheduled (custom)", "Audit"].map(by).filter((i): i is NavyPageSubNavItem => Boolean(i));
   return [...head, ...REPORT_BOARDS.map((b) => ({ label: b.tab, to: b.href })), ...tail];
 }
@@ -53,7 +57,7 @@ export function ReportBoardShell({
       data-testid={`${id}-board`}
       data-report-board={id}
       data-v3-board={entry.v3Board}
-      style={{ fontFamily: "Inter, sans-serif", display: "flex", flexDirection: "column", gap: 12 }}
+      style={{ fontFamily: "Inter, sans-serif", display: "block" }}
     >
       {/* V3-Reports-*.dc.html: crumb "Reports › <tab>", ← Back · title 700 18px · source line, then the navy bar. */}
       <PageHeader

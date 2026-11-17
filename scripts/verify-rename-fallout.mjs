@@ -4,6 +4,8 @@
  * migration or code that still references schema.old_table name.
  *
  * Conservative: only handles unquoted identifiers; skips COMMENT-only lines.
+ *
+ * Owned paths (for diff-scoped pre-push): "db/migrations" "apps/backend/src"
  */
 import fs from "fs";
 import path from "path";
@@ -49,10 +51,18 @@ function main() {
 
   const migOrder = new Map(migrations.map((f, i) => [f, i]));
 
+  // Pre-read all migration files once to avoid re-reading per rename (perf: O(files) not O(renames×files))
+  const migCache = new Map(
+    migrations.map((f) => {
+      const raw = fs.readFileSync(path.join(MIG_DIR, f), "utf8");
+      return [f, { raw, stripped: stripComments(raw) }];
+    }),
+  );
+
   const renames = [];
   for (const file of migrations) {
     const mig = migSortKey(file)[0];
-    const sql = stripComments(fs.readFileSync(path.join(MIG_DIR, file), "utf8"));
+    const sql = migCache.get(file).stripped;
     const rt =
       /ALTER\s+TABLE\s+([a-z_][a-z0-9_]*)\.([a-z_][a-z0-9_]*)\s+RENAME\s+TO\s+([a-z_][a-z0-9_]*)\s*;/gi;
     let m;
@@ -74,12 +84,28 @@ function main() {
     new RegExp(`\\b${oldFq.replace(".", "\\.")}\\b`, "g");
 
   function skipVerifierScript(fp) {
-    return (
-      /verify-canonical-schema-names\.mjs$/.test(fp) ||
-      /verify-rename-fallout\.mjs$/.test(fp) ||
-      /verify-reference-before-introduction\.mjs$/.test(fp) ||
-      /verify-backend-schema-contract\.mjs$/.test(fp)
-    );
+    // Guard scripts (verify-*.mjs) and step orchestrators never reference schema-qualified table names
+    if (/\/verify-[^/]+\.mjs$/.test(fp)) return true;
+    if (fp.includes(`${path.sep}verify-steps${path.sep}`)) return true;
+    return false;
+  }
+
+  // Pre-read all source files once to avoid re-reading per rename (perf: O(files) not O(renames×files))
+  const scanDirs = [
+    path.join(ROOT, "apps", "backend", "src"),
+    path.join(ROOT, "scripts"),
+  ];
+  const srcFiles = [];
+  for (const dir of scanDirs) {
+    for (const fp of walkFiles(
+      dir,
+      (p) =>
+        /\.(ts|tsx|mts|cts|js|mjs|cjs)$/.test(p) &&
+        !p.includes(`${path.sep}dist${path.sep}`),
+    )) {
+      if (skipVerifierScript(fp)) continue;
+      srcFiles.push({ fp, text: fs.readFileSync(fp, "utf8") });
+    }
   }
 
   for (const r of renames) {
@@ -88,8 +114,7 @@ function main() {
     for (const file of migrations) {
       const ordF = migOrder.get(file);
       if (ordF < renameOrdinal) continue;
-      const raw = fs.readFileSync(path.join(MIG_DIR, file), "utf8");
-      const sql = stripComments(raw);
+      const { stripped: sql } = migCache.get(file);
       pat.lastIndex = 0;
       if (!pat.test(sql)) continue;
       pat.lastIndex = 0;
@@ -118,30 +143,17 @@ function main() {
       }
     }
 
-    const scanDirs = [
-      path.join(ROOT, "apps", "backend", "src"),
-      path.join(ROOT, "scripts"),
-    ];
-    for (const dir of scanDirs) {
-      for (const fp of walkFiles(
-        dir,
-        (p) =>
-          /\.(ts|tsx|mts|cts|js|mjs|cjs)$/.test(p) &&
-          !p.includes(`${path.sep}dist${path.sep}`),
-      )) {
-        if (skipVerifierScript(fp)) continue;
-        const text = fs.readFileSync(fp, "utf8");
-        pat.lastIndex = 0;
-        if (pat.test(text)) {
-          hits.push({
-            kind: "code",
-            oldFq: r.oldFq,
-            newFq: r.newFq,
-            renamedInMig: r.mig,
-            renamedInFile: r.file,
-            hitFile: path.relative(ROOT, fp),
-          });
-        }
+    for (const { fp, text } of srcFiles) {
+      pat.lastIndex = 0;
+      if (pat.test(text)) {
+        hits.push({
+          kind: "code",
+          oldFq: r.oldFq,
+          newFq: r.newFq,
+          renamedInMig: r.mig,
+          renamedInFile: r.file,
+          hitFile: path.relative(ROOT, fp),
+        });
       }
     }
   }

@@ -572,11 +572,12 @@ export function LoadsReportBoard() {
         ) : null}
 
         <ReportKpiGrid>
-          <V3KpiTile flat testId="loads-report-kpi-loads" label="Loads" value={query.data ? String(totals.loads) : "…"} sub="draft · cancelled · voided excluded" valueDataV3="kpi-loads-count" subDataV3="kpi-loads-count-sub" />
-          <V3KpiTile flat testId="loads-report-kpi-revenue" label="Revenue" value={query.data ? money(totals.revenue) : "…"} sub={`by ${applied.dateField} date`} valueDataV3="kpi-loads-revenue" subDataV3="kpi-loads-revenue-sub" />
-          <V3KpiTile flat testId="loads-report-kpi-miles" label="Loaded miles" value={query.data ? formatNumber(totals.miles) : "…"} sub="practical miles on the load" valueDataV3="kpi-loads-miles" subDataV3="kpi-loads-miles-sub" />
-          <V3KpiTile flat testId="loads-report-kpi-rpm" label="Rate per loaded mile" value={query.data ? perMile(totals.revenue, totals.miles) : "…"} valueDataV3="kpi-loads-rpm" />
+          <V3KpiTile board flat testId="loads-report-kpi-loads" label="Loads" value={query.data ? String(totals.loads) : "…"} sub="draft · cancelled · voided excluded" valueDataV3="kpi-loads-count" subDataV3="kpi-loads-count-sub" />
+          <V3KpiTile board flat testId="loads-report-kpi-revenue" label="Revenue" value={query.data ? money(totals.revenue) : "…"} sub={`by ${applied.dateField} date`} valueDataV3="kpi-loads-revenue" subDataV3="kpi-loads-revenue-sub" />
+          <V3KpiTile board flat testId="loads-report-kpi-miles" label="Loaded miles" value={query.data ? formatNumber(totals.miles) : "…"} sub="practical miles on the load" valueDataV3="kpi-loads-miles" subDataV3="kpi-loads-miles-sub" />
+          <V3KpiTile board flat testId="loads-report-kpi-rpm" label="Rate per loaded mile" value={query.data ? perMile(totals.revenue, totals.miles) : "…"} valueDataV3="kpi-loads-rpm" />
           <V3KpiTile
+            board
             flat
             testId="loads-report-kpi-driver-pay"
             label="Driver pay"
@@ -586,6 +587,7 @@ export function LoadsReportBoard() {
             subDataV3="kpi-loads-driver-pay-sub"
           />
           <V3KpiTile
+            board
             flat
             testId="loads-report-kpi-empty-miles"
             label="Empty miles"
@@ -599,7 +601,7 @@ export function LoadsReportBoard() {
             subDataV3="kpi-loads-empty-miles-sub"
           />
           {/* Additive vs board: Fuel/Margin stay; Empty miles is the board sixth KPI. */}
-          <V3KpiTile flat testId="loads-report-kpi-margin" label="Margin" value={query.data ? money(totals.margin) : "…"} sub={`fuel ${money(totals.fuel)}`} valueDataV3="kpi-loads-margin" subDataV3="kpi-loads-margin-sub" />
+          <V3KpiTile board flat testId="loads-report-kpi-margin" label="Margin" value={query.data ? money(totals.margin) : "…"} sub={`fuel ${money(totals.fuel)}`} valueDataV3="kpi-loads-margin" subDataV3="kpi-loads-margin-sub" />
         </ReportKpiGrid>
 
         <section className="rounded-sm border border-[#DDE1E7] bg-white p-3" data-testid="loads-report-revenue-by-week">

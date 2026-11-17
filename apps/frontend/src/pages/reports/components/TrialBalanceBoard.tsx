@@ -76,7 +76,7 @@ export function TrialBalanceBoard({
 
   return (
     <div
-      style={{ display: "flex", flexDirection: "column", gap: 12, fontFamily: "Inter, sans-serif" }}
+      style={{ display: "block", fontFamily: "Inter, sans-serif" }}
       data-testid="trial-balance-board"
     >
       {summary ? (

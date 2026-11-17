@@ -179,7 +179,7 @@ export function VendorsHomeBoard(props: { operatingCompanyId: string; onMasterDe
   const agree = chk != null && boardOpen === chk.remainder_cents && boardOpen === chk.status_open_cents;
 
   return (
-    <div data-testid="party-board-vendors" data-v3-board="Vendors" style={{ background: V3.page, color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
+    <div data-testid="party-board-vendors" data-v3-board="Vendors" style={{ color: V3.ink, fontFamily: V3.font, lineHeight: "normal", padding: "12px 20px 30px", minHeight: "100%" }}>
       <PartyHomeHeader crumb="Vendors" title={"Vendors"} subtitle={"The list opens on the vendors you actually pay"}
         createLabel={"+ Create Vendor"} onBack={() => navigate(inModuleBackHref(location.pathname))} onCreate={props.onCreate} />
       <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 12 }}>
