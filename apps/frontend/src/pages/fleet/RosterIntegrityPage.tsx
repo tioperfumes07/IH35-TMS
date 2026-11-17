@@ -1,4 +1,3 @@
-import { useLocation, useSearchParams } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRosterIntegrity, runRosterIntegrity, voidRosterFinding, type RosterFinding } from "../../api/fleetRoster";
@@ -10,7 +9,6 @@ import { ParityTable, type ParityColumn } from "../../components/parity/ParityTa
 import { EntityLink } from "../../components/shared/EntityLink";
 import { BoardSection } from "../../components/v3/BoardSection";
 import { formatDateTimeUS } from "../../lib/formatDate";
-import { resolveBackHref } from "../../lib/returnContext";
 import { formatQueryErrorDetail } from "../../lib/tableError";
 
 /**
@@ -21,10 +19,6 @@ import { formatQueryErrorDetail } from "../../lib/tableError";
 const SEVERITY_LABEL: Record<RosterFinding["severity"], string> = { critical: "Critical", warning: "Warning", info: "Info" };
 
 export function RosterIntegrityPage() {
-  const { pathname } = useLocation();
-  const [searchParams] = useSearchParams();
-  // ROUND 8.20 board20 — Fleet drills attach ?ret=; Back must restore origin.
-  const fleetBackHref = resolveBackHref({ searchParams, pathname, fallback: "/fleet" });
   const { selectedCompanyId } = useCompanyContext();
   const companyId = selectedCompanyId ?? "";
   const qc = useQueryClient();
@@ -85,7 +79,7 @@ export function RosterIntegrityPage() {
   return (
     <div className="space-y-3 p-3" data-testid="roster-integrity-page">
       <PageHeader
-        backHref={fleetBackHref}
+        backHref="/fleet"
         title="Fleet roster integrity"
         subtitle="Units reconciled against Samsara, the insurance schedule, IRP and the lease — one row per mismatch"
         breadcrumb={["Fleet", "Roster integrity"]}
