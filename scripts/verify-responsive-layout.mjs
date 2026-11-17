@@ -93,7 +93,7 @@ try {
     for (const planted of [
       parityTable.replace("min-w-0 break-words text-section-header", "whitespace-nowrap text-section-header"),
       parityTable.replace('"min-w-0 max-w-full overflow-visible bg-white"', '"overflow-visible bg-white"'),
-      parityTable.replace('`min-w-0 max-w-full ${scrollMaxHeight', '`${scrollMaxHeight'),
+      parityTable.replace('className="min-w-0 max-w-full overflow-x-auto"', 'className="overflow-x-auto"'),
     ]) {
       let rejected = false;
       try { assertTableToolbarCanWrap(planted); } catch { rejected = true; }
