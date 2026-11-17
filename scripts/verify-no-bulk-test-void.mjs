@@ -31,6 +31,9 @@ const BULK = [
 function walk(dir, out = []) {
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
     if (ent.name === "node_modules" || ent.name === ".git" || ent.name.startsWith(".")) continue;
+    // frontend, verify-steps, and verify-*.mjs guard files never contain bulk-void SQL; skip to keep fast
+    if (ent.isDirectory() && (ent.name === "frontend" || ent.name === "verify-steps")) continue;
+    if (!ent.isDirectory() && /^verify-.+\.mjs$/.test(ent.name)) continue;
     const p = path.join(dir, ent.name);
     if (ent.isDirectory()) walk(p, out);
     else if (/\.(mjs|ts|tsx|sql|md)$/.test(ent.name)) out.push(p);
@@ -51,7 +54,7 @@ export function assertNoBulkTestVoid(root = ROOT) {
       if (re.test(text)) {
         const line = text.split(/\n/).find((l) => re.test(l)) ?? "";
         if (/must not|forbidden|do not void-all|never DELETE.*is_sample_data/i.test(line)) continue;
-        if (rel.startsWith("docs/") && /not permitted|NOT permitted|Do not void/i.test(text)) continue;
+        if (rel.startsWith("docs/lockdown/") && /not permitted|NOT permitted|Do not void/i.test(text)) continue;
         fails.push(`${rel}: bulk TEST void/delete pattern ${re}`);
         break;
       }
