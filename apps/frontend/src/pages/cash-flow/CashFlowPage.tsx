@@ -171,7 +171,7 @@ export function CashFlowPage() {
           <button
             type="button"
             onClick={() => navigate(cashFlowBackHref)}
-            style={{ fontSize: 11, color: "#5B6576", background: "transparent", border: "none", padding: 0, cursor: "pointer", lineHeight: "normal" }}
+            style={{ fontSize: 11, color: "#5B6576", background: "transparent", border: "none", padding: 0, cursor: "pointer", lineHeight: "normal", boxSizing: "content-box" }}
           >
             {"← Back"}
           </button>
