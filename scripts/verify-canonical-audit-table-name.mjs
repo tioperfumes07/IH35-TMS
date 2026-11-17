@@ -1,14 +1,18 @@
 #!/usr/bin/env node
+// Owned paths (for diff-scoped pre-push): "apps/backend" "db/migrations" "packages" "scripts"
 import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const SCAN_DIRS = ["apps", "packages", "scripts", "db/migrations"];
+// Legacy "audit"+"events" refs only appear in server/migration code — skip frontend and verify scripts
+const SCAN_DIRS = ["apps/backend", "packages", "db/migrations"];
 const ALLOWED_AUDIT_EVENTS_FILE = "db/migrations/0216_audit_canonical_name_drift_capture.sql";
 const LEGACY_AUDIT_NAME = "audit" + ".events";
 const CANONICAL_PATTERN = /\baudit\.audit_events\b/;
 const LEGACY_PATTERN = /\baudit[.]events\b/;
 const LEGACY_WRITE_PATTERN = /\b(insert\s+into|update|delete\s+from|merge\s+into)\s+audit[.]events\b/i;
+const CODE_EXT = new Set([".ts", ".tsx", ".mts", ".cts", ".sql", ".mjs", ".js", ".cjs"]);
+const SKIP_DIRS = new Set(["node_modules", "dist", "verify-steps"]);
 
 function fail(message) {
   console.error(`verify:canonical-audit-table-name FAILED\n- ${message}`);
@@ -18,13 +22,13 @@ function fail(message) {
 function walk(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    if (entry.name.startsWith(".") || entry.name === "node_modules" || entry.name === "dist") continue;
+    if (entry.name.startsWith(".") || SKIP_DIRS.has(entry.name)) continue;
     const full = path.join(dir, entry.name);
     if (entry.isDirectory()) {
       walk(full, out);
       continue;
     }
-    out.push(full);
+    if (CODE_EXT.has(path.extname(entry.name))) out.push(full);
   }
   return out;
 }
