@@ -42,7 +42,7 @@ describe("List analysis — my list | their list, matched filter, the match box,
     await waitFor(() => expect(paths.some((p) => p.path.includes("base=theirs"))).toBe(true));
     fireEvent.click(screen.getByLabelText("Not matched", { exact: false }));
     await waitFor(() => expect(paths.some((p) => p.path.includes("base=theirs") && p.path.includes("match=unmatched"))).toBe(true));
-    fireEvent.click(screen.getByLabelText("My list", { exact: false }));
+    fireEvent.click(screen.getByTestId("perfume-analysis-base-mine"));
 
     // List analysis is read-only (owner 2026-11-14 17:22: matching is done in Review): no match box here.
     expect(screen.queryByTestId("perfume-analysis-matchbox")).toBeNull();

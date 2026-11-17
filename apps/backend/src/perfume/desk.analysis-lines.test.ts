@@ -99,7 +99,8 @@ describe("Excel export — every computed column is a live formula", () => {
     expect(by("t:b1:cost")).toBe("ROUND(MAX(0,t:b1:list-t:b1:cushion)*(1-t:b1:pct),2)");
     expect(by("t:b1:earn")).toBe("MAX(0,t:b1:list-t:b1:cushion)-t:b1:cost");
     expect(by("offer_vs_low")).toBe("low_sell-my_offer_price");
-    expect(by("offer_margin_pct")).toBe('IF(my_offer_price=0,"",(my_offer_price-my_last_cost)/my_offer_price)');
+    // 0 until a cost exists, blank with no price (owner 2026-11-15 / 2026-11-17), as on screen.
+    expect(by("offer_margin_pct")).toBe('IF(OR(my_offer_price="",my_offer_price=0),"",IF(my_last_cost="",0,(my_offer_price-my_last_cost)/my_offer_price))');
     expect(by("target_profit")).toBe("target_price_margin-landed_likely");
     expect(by("offer_action")).toContain('"Over by "&TEXT(-(offer_vs_low),"$0.00")&" — lower to compete"');
     expect(by("s:v1:action")).toContain('" — reduce"&IF(my_offer_price>0," "&TEXT(ABS(s:v1:diff)/my_offer_price,"0.0%"),"")');

@@ -22,7 +22,7 @@ import { EntityLink } from "../../components/shared/EntityLink";
 import { useSearchParams } from "react-router-dom";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
-const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both"],
+const KINDS: Array<[PerfumeVendorKind, string]> = [["buy", "Supplier — I buy from them and sell to them"], ["sell", "Wholesale competitor"], ["both", "Both — supplier and Laredo competitor (shows in Wholesale and Competition)"],
   ["offer", "My offer list — what I offer my clients"], ["inventory", "My inventory — my stock, quantities and last cost"]];
 
 export function PerfumeListsPanel() {

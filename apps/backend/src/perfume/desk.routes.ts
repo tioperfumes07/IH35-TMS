@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -369,6 +369,24 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ q: z.string().max(200), gender: z.enum(["M", "W"]).optional() }).safeParse(req.query); if (!q.success) return bad(reply, q.error);
     return { lines: await withCurrentUser(uid, (c) => searchCompetitorLines(c, q.data.q, 25, q.data.gender ?? null)) };
+  });
+  // Owner 2026-11-17 14:04 CT: "all price boxes editable in my lists so i can change price and engine automatically
+  // calculates for that item the margin etc. in all tabs." My list price (my current offer list) or my last / avg cost.
+  app.put("/api/v1/perfume/mine/price", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({
+      item_id: z.string().uuid().nullable().optional(), line_id: z.string().uuid().nullable().optional(),
+      field: z.enum(["offer", "last_cost", "avg_cost"]), cents: z.number().int().min(0).max(10_000_000).nullable(),
+    }).safeParse(req.body);
+    if (!body.success) return bad(reply, body.error);
+    try {
+      const result = await withCurrentUser(uid, (c) => setMyPrice(c, uid, body.data));
+      dataChanged({ itemsUnchanged: true });
+      return { ok: true, ...result };
+    } catch (e) {
+      if (e instanceof MyPriceError) return reply.code(e.message === "not_on_my_list" ? 409 : 400).send({ error: e.message });
+      throw e;
+    }
   });
   app.put("/api/v1/perfume/items/:id/internal-code", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

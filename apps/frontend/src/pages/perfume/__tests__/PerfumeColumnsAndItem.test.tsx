@@ -17,6 +17,7 @@ const COLS = [
   { key: "size_ml", label: "Size ml", group: "Item", kind: "text" },
   { key: "my_last_cost", label: "My actual cost (last purchase)", group: "Mine", kind: "money" },
   { key: "my_offer_price", label: "My offer price", group: "Mine", kind: "money" },
+  { key: "landed_likely", label: "Est. cost (best supplier)", group: "Mine", kind: "money" },
   { key: "v:a:price", label: "List price", group: "PCA", kind: "money" },
   { key: "v:b:price", label: "List price", group: "MTZ", kind: "money" },
 ];
@@ -61,11 +62,11 @@ describe("Perfume desk columns", () => {
     const panel = await screen.findByTestId("perfume-columns-panel");
     expect(panel.textContent).toContain("Mine");
     expect(panel.textContent).toContain("PCA");
-    const offer = screen.getByTestId("perfume-col-my_offer_price") as HTMLInputElement;
-    expect(offer.checked).toBe(false);
-    fireEvent.click(offer);
-    await waitFor(() => expect((screen.getByTestId("perfume-col-my_offer_price") as HTMLInputElement).checked).toBe(true));
-    expect(screen.getAllByRole("columnheader", { name: /My offer price/ }).length).toBeGreaterThan(0);
+    const est = screen.getByTestId("perfume-col-landed_likely") as HTMLInputElement;
+    expect(est.checked).toBe(false);
+    fireEvent.click(est);
+    await waitFor(() => expect((screen.getByTestId("perfume-col-landed_likely") as HTMLInputElement).checked).toBe(true));
+    expect(screen.getAllByRole("columnheader", { name: /Est\. cost/ }).length).toBeGreaterThan(0);
   });
   it("my offer price is green when at or under everybody else's price, not otherwise", async () => {
     window.localStorage.setItem("perfume-cols-buy-v1", JSON.stringify({ choices: { my_offer_price: true }, itemOff: false }));

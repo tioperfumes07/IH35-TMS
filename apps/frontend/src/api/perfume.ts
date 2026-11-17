@@ -218,6 +218,11 @@ export async function rematchPerfumeReview(): Promise<Record<string, number>> {
 export const bulkPerfumeReview = (b: PerfumeBulkAction) => apiRequest<PerfumeBulkResult>("/api/v1/perfume/rows/bulk", { method: "POST", body: b });
 export const confirmPerfumeRow = (rowId: string, target: { item_id: string } | { create_new: true }) =>
   apiRequest<{ item_id: string; rows_linked: number }>(`/api/v1/perfume/rows/${rowId}/confirm`, { method: "POST", body: target });
+/** Owner 2026-11-17: type my list price (my current offer list — one line, or every line of the item) or my last / avg
+ *  cost (per item) right on the desk. 409 not_on_my_list: the item is not on my offer list. */
+export type PerfumeMyPriceField = "offer" | "last_cost" | "avg_cost";
+export const setPerfumeMyPrice = (body: { item_id?: string | null; line_id?: string | null; field: PerfumeMyPriceField; cents: number | null }) =>
+  apiRequest<{ ok: true; updated: number }>(`/api/v1/perfume/mine/price`, { method: "PUT", body });
 /** Match my list ↔ competitor: my offer items with no competitor line linked, and the lines each most likely is. */
 export type PerfumeLineCandidate = { row_id: string; vendor: string; description: string; price_cents: number; score: number; why: string; linked_to: string | null };
 /** gender: the line being linked is Men (M) or Women (W) — the other gender's bottles are never returned. */

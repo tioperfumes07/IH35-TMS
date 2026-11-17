@@ -15,8 +15,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeExcel, getPerfumeAccess, getPerfumeGrid, getPerfumeReview, getPerfumeRules, listPerfumeLists, listPerfumeVendors, putPerfumeRules,
   type PerfumeFacetKey, type PerfumeGridRow, type PerfumeGridView, type PerfumeRules,
-  canonicalizePerfumeBrands, rematchPerfumeReview, confirmPerfumeRow, searchPerfumeItems, searchPerfumeLines,
+  canonicalizePerfumeBrands, rematchPerfumeReview, confirmPerfumeRow, searchPerfumeItems, searchPerfumeLines, setPerfumeMyPrice, type PerfumeMyPriceField,
 } from "../../api/perfume";
+import { myPriceMath } from "./perfumePriceMath";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
@@ -128,7 +129,13 @@ const PAGE = 200;
 const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 
 /** Columns a view opens with; every other column is one tick away in the ⚙ gear. */
+/** Owner 2026-11-17 14:04 CT, every tab: "i still need to view my list price … my last cost, avg cost … margins, mark up
+ *  etc. all the same data so i can make the correct decisions and purchases." Shown by default on every tab but List
+ *  analysis (which keeps the owner's own format). Blank cost = "—"; margin / markup read 0 until a cost exists. */
+const MY_PRICE_SET = ["my_offer_price", "my_last_cost", "my_avg_cost", "offer_margin_pct", "offer_markup_pct", "offer_margin_avg_pct", "offer_markup_avg_pct"];
+const BUY_SET = ["low_buy_price", "buy_margin_pct", "buy_markup_pct"];
 function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = null): boolean {
+  if (view !== "analysis" && (MY_PRICE_SET.includes(key) || (view !== "comp" && view !== "trade" && BUY_SET.includes(key)))) return true;
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
@@ -237,6 +244,106 @@ function MatchCell({ row, current }: { row: PerfumeGridRow; current: string | nu
 }
 
 const LOW_PAIR = new Set(["a:offer", "a:esp", "a:offer2", "a:esp2"]);
+
+/** The price boxes the owner types in (owner 2026-11-17 14:04 CT: "all price boxes editable in my lists so i can change
+ *  price and engine automatically calculates for that item the margin etc. in all tabs"). Column → what it writes. */
+const EDIT_FIELD: Record<string, PerfumeMyPriceField> = {
+  my_offer_price: "offer", my_last_cost: "last_cost", my_avg_cost: "avg_cost", "a:offer": "offer", "a:offer2": "offer", "a:last_cost": "last_cost",
+};
+/** Which row / line a box writes, or null when the box is not mine to type in (an item not on my offer list has no list
+ *  price of mine; a competitor line not linked to an item has no cost of mine). */
+function editTarget(r: PerfumeGridRow, key: string): { item_id: string | null; line_id: string | null } | null {
+  const field = EDIT_FIELD[key];
+  if (!field) return null;
+  const id = String(r.id);
+  const analysis = key.startsWith("a:");
+  const itemId = analysis ? (r.item_id == null ? null : String(r.item_id)) : id;
+  if (field === "offer") {
+    if (analysis && id.startsWith("m:")) return { item_id: null, line_id: String(r.line_id) };
+    if (analysis) return itemId && r["a:offer"] != null ? { item_id: itemId, line_id: null } : null;
+    return r.in_offer === 1 ? { item_id: itemId, line_id: null } : null;
+  }
+  return itemId ? { item_id: itemId, line_id: null } : null;
+}
+/** Dollars typed → cents; "" clears (costs only). */
+function parseDollars(t: string): number | null | "bad" {
+  const x = t.replace(/[$,\s]/g, "");
+  if (x === "") return null;
+  const n = Number(x);
+  return Number.isFinite(n) && n >= 0 && n <= 100_000 ? Math.round(n * 100) : "bad";
+}
+
+/** One editable price box. Enter or leaving the box saves; Esc puts the number back. The row recomputes on screen at once
+ *  (perfumePriceMath, the server's own formulas), then every view reloads from the server. */
+function PriceCell({ row, colKey, tone }: { row: PerfumeGridRow; colKey: string; tone: "low" | "neg" | null }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const v = row[colKey];
+  const shown = v == null || v === "" ? "" : (Number(v) / 100).toFixed(2);
+  const [draft, setDraft] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const target = editTarget(row, colKey);
+  const field = EDIT_FIELD[colKey]!;
+  const save = async () => {
+    if (draft == null) return;
+    const cents = parseDollars(draft);
+    if (cents === "bad") { pushToast(tr("perfume.price.bad", "Type a price in dollars, like 24.50"), "error"); return; }
+    if (cents === (v == null || v === "" ? null : Number(v))) { setDraft(null); return; }
+    if (field === "offer" && cents == null) { pushToast(tr("perfume.price.need", "My list price can't be blank."), "error"); return; }
+    setBusy(true);
+    try {
+      await setPerfumeMyPrice({ ...target!, field, cents });
+      // The item's row recomputes now on every view held in memory; the server's rebuild then replaces it.
+      const itemId = target!.item_id;
+      qc.setQueriesData<{ rows?: PerfumeGridRow[] } & Record<string, unknown>>({ queryKey: ["perfume", "grid"] }, (old) => {
+        if (!old?.rows) return old;
+        return { ...old, rows: old.rows.map((r) => (sameTarget(r, target!, itemId) ? recompute(r, field, cents) : r)) };
+      });
+      setDraft(null);
+      pushToast(tr("perfume.price.saved", "Saved — margins recomputed"), "success");
+      void qc.invalidateQueries({ queryKey: ["perfume", "grid"] });
+    } catch (e) { pushToast(userFacingApiError(e, tr("perfume.price.fail", "Price not saved")), "error"); }
+    finally { setBusy(false); }
+  };
+  if (!target) return <span>{money(v)}</span>;
+  const cls = tone === "low" ? "bg-[#DCEFE3] font-semibold text-[#14532D]" : tone === "neg" ? "font-semibold text-red-700" : "bg-white";
+  return (
+    <input
+      type="text" inputMode="decimal" disabled={busy}
+      data-testid={`perfume-price-${colKey}`}
+      aria-label={`${field === "offer" ? "My list price" : field === "last_cost" ? "My last cost" : "My avg cost"} ${String(row.display_name ?? row.name ?? "")}`}
+      value={draft ?? shown} placeholder="—"
+      onChange={(e) => setDraft(e.target.value)}
+      onFocus={(e) => e.currentTarget.select()}
+      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void save(); } if (e.key === "Escape") setDraft(null); }}
+      onBlur={() => void save()}
+      onClick={(e) => e.stopPropagation()}
+      className={`h-[26px] w-[84px] rounded-sm border border-gray-300 px-1 text-right text-xs tabular-nums ${cls}`}
+    />
+  );
+}
+function sameTarget(r: PerfumeGridRow, t: { item_id: string | null; line_id: string | null }, itemId: string | null): boolean {
+  if (t.line_id) return String(r.line_id ?? "") === t.line_id || (itemId != null && String(r.id) === itemId);
+  if (!itemId) return false;
+  return String(r.id) === itemId || String(r.item_id ?? "") === itemId;
+}
+function recompute(r: PerfumeGridRow, field: PerfumeMyPriceField, cents: number | null): PerfumeGridRow {
+  const n = { ...r } as Record<string, unknown>;
+  const num = (k: string) => (n[k] == null || n[k] === "" ? null : Number(n[k]));
+  if (field === "offer") { if ("my_offer_price" in n || !String(r.id).includes(":")) n.my_offer_price = cents; if (String(r.id).includes(":")) { n["a:offer"] = cents; n["a:offer2"] = cents; } }
+  if (field === "last_cost") { n.my_last_cost = cents; if (String(r.id).includes(":")) n["a:last_cost"] = cents; }
+  if (field === "avg_cost") n.my_avg_cost = cents;
+  if (!String(r.id).includes(":")) Object.assign(n, myPriceMath(num("my_offer_price"), num("my_last_cost"), num("my_avg_cost"), num("low_buy_price")));
+  else {
+    // List analysis — the owner's own Margin / Markup / New margin (0 until a last cost exists).
+    const o = num("a:offer"), c = num("a:last_cost"), esp = num("a:esp");
+    const p1 = (x: number) => Math.round(x * 1000) / 10;
+    n["a:margin"] = o != null && o > 0 ? (c != null ? p1((o - c) / o) : 0) : null;
+    n["a:markup"] = o != null ? (c ? p1((o - c) / c) : 0) : null;
+    n["a:new_margin"] = esp != null && esp > 0 ? (c != null ? p1((esp - c) / esp) : 0) : null;
+  }
+  return n as PerfumeGridRow;
+}
 const GENDER_WORD: Record<string, string> = { W: "Women", M: "Men", U: "Unisex", "—": "Not stated" };
 
 /** "Match my list ↔ competitor" (owner 2026-11-14 15:10: "in match my list competitor it is practically the same
@@ -379,17 +486,21 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const visKey = `perfume-cols-${matchDesk ? "match-" : ""}${view}${mine ? "-mine" : ""}-v1`;
   const isItemGroup = (g: string) => g.trim().toUpperCase() === "ITEM";
   const defaultOn = (key: string) => (matchDesk ? MATCH_DESK.test(key) : defaultVisible(view, key, mine) && !(view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(key)));
-  const readChoices = (k: string): { choices: Record<string, boolean>; itemOff: boolean } => {
-    try { const v = JSON.parse(window.localStorage.getItem(k) ?? "null"); if (v && typeof v === "object") return { choices: v.choices ?? {}, itemOff: v.itemOff === true }; } catch { /* storage blocked: tab defaults */ }
-    return { choices: {}, itemOff: false };
+  type VisState = { choices: Record<string, boolean>; itemOff: boolean; descOff: boolean };
+  const readChoices = (k: string): VisState => {
+    try { const v = JSON.parse(window.localStorage.getItem(k) ?? "null"); if (v && typeof v === "object") return { choices: v.choices ?? {}, itemOff: v.itemOff === true, descOff: v.descOff === true }; } catch { /* storage blocked: tab defaults */ }
+    return { choices: {}, itemOff: false, descOff: false };
   };
   const [vis, setVis] = useState(() => ({ key: visKey, ...readChoices(visKey) }));
   if (vis.key !== visKey) setVis({ key: visKey, ...readChoices(visKey) });
-  const saveVis = (next: { choices: Record<string, boolean>; itemOff: boolean }) => {
+  const saveVis = (next: VisState) => {
     try { window.localStorage.setItem(visKey, JSON.stringify(next)); } catch { /* storage blocked: kept for this visit */ }
     setVis({ key: visKey, ...next });
   };
-  const isShown = (c: { key: string; group: string }) => (vis.itemOff && isItemGroup(c.group) ? false : vis.choices[c.key] ?? defaultOn(c.key));
+  // Owner 2026-11-17 14:04 CT: "i need to be able to toggle on and off as well the competition description" — one switch
+  // for every competitor's description column (the match box in Review stays).
+  const isDesc = (k: string) => /^s:[^:]+:desc$/.test(k) || (!matchDesk && k === "a:c_desc");
+  const isShown = (c: { key: string; group: string }) => (vis.itemOff && isItemGroup(c.group) ? false : vis.descOff && isDesc(c.key) ? false : vis.choices[c.key] ?? defaultOn(c.key));
   const shownCols = cols.filter(isShown);
   const shownSig = shownCols.map((c) => c.key).join("|");
   const groupStart = useMemo(() => {
@@ -417,6 +528,20 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       exportValue: (r: PerfumeGridRow) => (Array.isArray(r[c.key]) ? (r[c.key] as unknown as Array<{ label: string }>).map((x) => x.label).join("; ") : r[c.key] ?? null),
       render: (r: PerfumeGridRow) => {
         const v = r[c.key];
+        if (EDIT_FIELD[c.key] && !matchDesk) {
+          let tone: "low" | "neg" | null = v != null && v !== "" && Number(v) < 0 ? "neg" : null;
+          if (LOW_PAIR.has(c.key) && v != null && r["a:offer"] != null && r["a:esp"] != null && Number(v) === Math.min(Number(r["a:offer"]), Number(r["a:esp"]))) tone = "low";
+          if (c.key === "my_offer_price" && v != null && v !== "") {
+            let low: number | null = null;
+            for (const k of Object.keys(r)) {
+              if (!/^(v|s|c):[^:]+:price$/.test(k)) continue;
+              const x = r[k];
+              if (x != null && x !== "" && Number.isFinite(Number(x)) && (low == null || Number(x) < low)) low = Number(x);
+            }
+            if (low != null && Number(v) <= low) tone = "low";
+          }
+          return <span data-testid={tone === "low" ? (c.key === "my_offer_price" ? "perfume-offer-lowest" : "perfume-analysis-lowest") : undefined} className="block"><PriceCell key={`${String(r.id)}:${String(v)}`} row={r} colKey={c.key} tone={tone} /></span>;
+        }
         // List analysis (owner 2026-11-14): the lower of my offer and their price gets its own shade, that box only;
         // "more expensive by" is negative and red.
         if (c.kind === "money" && LOW_PAIR.has(c.key) && v != null && r["a:offer"] != null && r["a:esp"] != null && Number(v) === Math.min(Number(r["a:offer"]), Number(r["a:esp"]))) {
@@ -478,14 +603,14 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const setShown = (keys: string[], on: boolean) => {
     const choices = { ...vis.choices };
     for (const k of keys) choices[k] = on;
-    saveVis({ choices, itemOff: vis.itemOff });
+    saveVis({ ...vis, choices, descOff: on && keys.some(isDesc) ? false : vis.descOff });
   };
   const columnPanel = (
     <div data-testid="perfume-columns-panel" className="text-xs">
       <div className="mb-1 flex items-center justify-between gap-2">
         <span className="font-semibold uppercase tracking-wide text-gray-500">{tr("perfume.cols.title", "Columns by section")}</span>
         <button type="button" className="rounded-sm px-1.5 py-0.5 font-semibold text-gray-600 hover:bg-gray-100" data-testid="perfume-columns-defaults"
-          onClick={() => saveVis({ choices: {}, itemOff: false })}>{tr("perfume.cols.defaults", "Tab defaults")}</button>
+          onClick={() => saveVis({ choices: {}, itemOff: false, descOff: false })}>{tr("perfume.cols.defaults", "Tab defaults")}</button>
       </div>
       <div className="max-h-[60vh] min-w-[300px] overflow-auto pr-1">
         {allGroups.map((g) => {
@@ -498,7 +623,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                   checked={on === g.cols.length} ref={(el) => { if (el) el.indeterminate = on > 0 && on < g.cols.length; }}
                   onClick={(e) => e.stopPropagation()}
                   onChange={(e) => {
-                    if (item && e.target.checked && vis.itemOff) { saveVis({ choices: { ...vis.choices, ...Object.fromEntries(g.cols.map((c) => [c.key, true])) }, itemOff: false }); return; }
+                    if (item && e.target.checked && vis.itemOff) { saveVis({ ...vis, choices: { ...vis.choices, ...Object.fromEntries(g.cols.map((c) => [c.key, true])) }, itemOff: false }); return; }
                     setShown(g.cols.map((c) => c.key), e.target.checked);
                   }} />
                 <span className="font-semibold text-[#1F2A44]">{g.label}</span>
@@ -509,7 +634,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                   <label key={c.key} className="flex items-center gap-2 py-0.5 text-gray-700">
                     <input type="checkbox" data-testid={`perfume-col-${c.key}`} checked={isShown(c)}
                       onChange={(e) => {
-                        if (item && vis.itemOff && e.target.checked) { saveVis({ choices: { ...vis.choices, [c.key]: true }, itemOff: false }); return; }
+                        if (item && vis.itemOff && e.target.checked) { saveVis({ ...vis, choices: { ...vis.choices, [c.key]: true }, itemOff: false }); return; }
                         setShown([c.key], e.target.checked);
                       }} />
                     {c.label}
@@ -523,6 +648,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     </div>
   );
   const hasItem = cols.some((c) => isItemGroup(c.group));
+  const hasDesc = cols.some((c) => isDesc(c.key) && (vis.choices[c.key] ?? defaultOn(c.key)));
   const total = query.data?.total ?? 0;
   // Confirm only once the server has recomputed with the applied numbers (the grid's own measured_at, not the click):
   // the new key's own data, never the previous page held as placeholder.
@@ -592,9 +718,16 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
           <div className="flex flex-wrap items-center gap-2">
             {hasItem ? (
               <button type="button" data-testid="perfume-item-toggle" aria-pressed={!vis.itemOff}
-                onClick={() => saveVis({ choices: vis.choices, itemOff: !vis.itemOff })}
+                onClick={() => saveVis({ ...vis, itemOff: !vis.itemOff })}
                 className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${vis.itemOff ? "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]" : "border-[#1F2A44] bg-[#1F2A44] text-white"}`}>
                 {vis.itemOff ? tr("perfume.item.show", "Show item columns") : tr("perfume.item.hide", "Hide item columns")}
+              </button>
+            ) : null}
+            {hasDesc ? (
+              <button type="button" data-testid="perfume-desc-toggle" aria-pressed={!vis.descOff}
+                onClick={() => saveVis({ ...vis, descOff: !vis.descOff })}
+                className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${vis.descOff ? "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]" : "border-[#1F2A44] bg-[#1F2A44] text-white"}`}>
+                {vis.descOff ? tr("perfume.desc.show", "Show competitor description") : tr("perfume.desc.hide", "Hide competitor description")}
               </button>
             ) : null}
             <input
