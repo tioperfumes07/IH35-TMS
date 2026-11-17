@@ -338,7 +338,9 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     domain: "Fuel",
     schedule: "Twice daily",
     expectedWindowHours: 36,
-    shouldProduce: false,
+    shouldProduce: true,
+    jobNames: ["integrations.samsara_fuel_purchase_push"],
+    // Live 2026-11-17 08:10Z (_system.background_jobs): 2 runs today, last success 00:00Z. The board read no job, so a running engine showed grey "n/a" and a stopped one would too; with its job it shows its last run, idle when there was nothing new, red when it stops (#29811 described this change but its merged diff did not carry it).
     syncKinds: ["fuel_purchase_push"],
     output: null,
     ownerSeat: "CC-3",
@@ -436,8 +438,10 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fleet/messages",
     domain: "Driver",
     schedule: "On send / poll",
-    expectedWindowHours: null,
-    shouldProduce: false,
+    expectedWindowHours: 1,
+    shouldProduce: true,
+    jobNames: ["integrations.samsara_driver_replies"],
+    // Live 2026-11-17 08:10Z (_system.background_jobs): 200 runs today, last success 08:05Z. The board read no job, so a running engine showed grey "n/a" and a stopped one would too; with its job it shows its last run, idle when there was nothing new, red when it stops (#29811 described this change but its merged diff did not carry it).
     syncKinds: [],
     output: null,
     ownerSeat: "CC-3",
@@ -451,8 +455,10 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fleet/routes",
     domain: "Dispatch",
     schedule: "On dispatch",
-    expectedWindowHours: null,
-    shouldProduce: false,
+    expectedWindowHours: 2,
+    shouldProduce: true,
+    jobNames: ["integrations.samsara_routes_push"],
+    // Live 2026-11-17 08:10Z (_system.background_jobs): 66 runs today, last success 08:00Z; last route_push sync row 2026-11-10 02:00Z. The board read no job, so a running engine showed grey "n/a" and a stopped one would too; with its job it shows its last run, idle when there was nothing new, red when it stops (#29811 described this change but its merged diff did not carry it).
     syncKinds: [],
     // Built and running every 15 min: pushes dispatched loads, reads the route back into samsara_route_stop_progress
     // (live 2026-11-15 21:30:15Z: load 13735, 2 stops read).
@@ -466,8 +472,10 @@ export const ENGINE_STATUS_CATALOG: EngineCatalogEntry[] = [
     module: "fleet/documents",
     domain: "Dispatch",
     schedule: "On stop",
-    expectedWindowHours: null,
-    shouldProduce: false,
+    expectedWindowHours: 3,
+    shouldProduce: true,
+    jobNames: ["integrations.samsara_documents"],
+    // Live 2026-11-17 08:10Z (_system.background_jobs): 16 runs today, last success 07:17Z. The board read no job, so a running engine showed grey "n/a" and a stopped one would too; with its job it shows its last run, idle when there was nothing new, red when it stops (#29811 described this change but its merged diff did not carry it).
     syncKinds: [],
     output: null,
     ownerSeat: "CC-3",
