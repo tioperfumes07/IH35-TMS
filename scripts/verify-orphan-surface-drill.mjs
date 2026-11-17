@@ -37,10 +37,11 @@ const CHECKS = [
   {
     id: "ORPH-004",
     file: "apps/frontend/src/pages/cash-flow/tabs/DailyPredictionTab.tsx",
-    // CF3: must setDate AND setGrain("day") — a setDate-only handler leaves week/month grain sticky.
+    // CF3: must set date AND force grain=day atomically — applyProj(entry.date, "day") is the
+    // correct form; setDate+setGrain had a stale `date` closure that reverted the navigation date.
     // SURFACE-BREACH (owner all-45): Cursor owns Cash Flow; guard lived under CC-1 orphan set.
-    pattern: /onClick=\{\(\)\s*=>\s*\{\s*setDate\(entry\.date\);\s*setGrain\(["']day["']\);\s*\}\}/,
-    desc: "the 7-day strip day cells must call setDate + setGrain(\"day\") on click (CF3 day drill)",
+    pattern: /onClick=\{\(\)\s*=>\s*applyProj\(entry\.date,\s*["']day["']\)\}/,
+    desc: "the 7-day strip day cells must call applyProj(entry.date, \"day\") on click (CF3 day drill)",
   },
 ];
 
