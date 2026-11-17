@@ -58,7 +58,9 @@ function auditPageHeaderFile(file, source) {
 function auditDefectDetail(source) {
   const failures = [];
   const stripped = stripComments(source);
-  if (!/navigate\(\s*["']\/maintenance\/defects["']\s*\)/.test(stripped)) {
+  // ROUND 8.20 (#29509) wraps the structural parent in maintHref(...) so the list keeps its return context (ret=);
+  // still the defects list, never history.
+  if (!/navigate\(\s*(?:maintHref\(\s*)?["']\/maintenance\/defects["']\s*\)?\s*\)/.test(stripped)) {
     failures.push(`${DEFECT_DETAIL_FILE}: Up must navigate("/maintenance/defects") (structural list parent)`);
   }
   if (/hasInAppHistory|navigate\(\s*-1\s*\)/.test(stripped)) {
@@ -104,7 +106,9 @@ if (process.argv.includes("--selftest")) {
   }
 
   total += 1;
-  const mutatedDefect = defectSource.replace('navigate("/maintenance/defects")', 'navigate(-1)');
+  const mutatedDefect = defectSource
+    .replace('navigate(maintHref("/maintenance/defects"))', 'navigate(-1)')
+    .replace('navigate("/maintenance/defects")', 'navigate(-1)');
   if (mutatedDefect === defectSource) throw new Error("mutation for DefectDetailPage.tsx did not change source -- inert");
   if (auditDefectDetail(mutatedDefect).length === 0) throw new Error("mutation escaped for DefectDetailPage.tsx");
   caught += 1;
