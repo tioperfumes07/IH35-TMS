@@ -26,7 +26,10 @@ function assertTableToolbarCanWrap(source) {
     throw new Error("ParityTable title must wrap within narrow panels");
   }
   assertIncludes(source, '"min-w-0 max-w-full overflow-visible bg-white"', "Embedded table shell must shrink inside its panel");
-  assertIncludes(source, 'className="min-w-0 max-w-full overflow-x-auto"', "Table scrolling must remain inside its panel");
+  // Accept static form OR scrollMaxHeight template-literal form (main added conditional overflow-auto)
+  const hasStaticScroll = source.includes('className="min-w-0 max-w-full overflow-x-auto"');
+  const hasTemplateScroll = source.includes('`min-w-0 max-w-full ${scrollMaxHeight') && source.includes('"overflow-x-auto"');
+  if (!hasStaticScroll && !hasTemplateScroll) throw new Error("Table scrolling must remain inside its panel");
 }
 
 try {
@@ -90,7 +93,7 @@ try {
     for (const planted of [
       parityTable.replace("min-w-0 break-words text-section-header", "whitespace-nowrap text-section-header"),
       parityTable.replace('"min-w-0 max-w-full overflow-visible bg-white"', '"overflow-visible bg-white"'),
-      parityTable.replace('className="min-w-0 max-w-full overflow-x-auto"', 'className="overflow-x-auto"'),
+      parityTable.replace('`min-w-0 max-w-full ${scrollMaxHeight', '`${scrollMaxHeight'),
     ]) {
       let rejected = false;
       try { assertTableToolbarCanWrap(planted); } catch { rejected = true; }
