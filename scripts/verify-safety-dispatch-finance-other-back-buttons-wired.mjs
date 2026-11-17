@@ -86,11 +86,18 @@ function auditProgramModuleNav(source) {
   return failures;
 }
 
+function structuralUpRe(parentHref) {
+  const escaped = parentHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`navigate\\(\\s*(?:[A-Za-z_$][\\w$]*Href\\(\\s*)?["']${escaped}["']\\s*\\)?\\s*\\)`);
+}
+
 function auditStructuralUp(file, parentHref, source) {
   const failures = [];
   const stripped = stripComments(source);
-  const escaped = parentHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  if (!new RegExp(`navigate\\(\\s*["']${escaped}["']\\s*\\)`).test(stripped)) {
+  // The parent may be written bare, navigate("/safety/idvr"), or through the module's href helper,
+  // navigate(safetyHref("/safety/idvr")) / navigate(setHref("/settings")) — the same structural target either way
+  // (the helper only prefixes the entity scope). Anything else is still a failure.
+  if (!structuralUpRe(parentHref).test(stripped)) {
     failures.push(`${file}: Up must navigate("${parentHref}") — structural parent (ROUND 367.9)`);
   }
   if (/hasInAppHistory/.test(stripped) || /navigate\(\s*-1\s*\)/.test(stripped)) {
@@ -160,10 +167,7 @@ if (process.argv.includes("--selftest")) {
   for (let i = 0; i < STRUCTURAL_UP_FILES.length; i++) {
     total += 1;
     const { file, parentHref } = STRUCTURAL_UP_FILES[i];
-    const mutated = structuralSources[i].replace(
-      new RegExp(`navigate\\(\\s*["']${parentHref.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["']\\s*\\)`),
-      'navigate("/wrong")',
-    );
+    const mutated = structuralSources[i].replace(structuralUpRe(parentHref), 'navigate("/wrong")');
     if (mutated === structuralSources[i]) throw new Error(`mutation for ${file} did not change source -- inert`);
     if (auditStructuralUp(file, parentHref, mutated).length === 0) {
       throw new Error(`mutation escaped for ${file}`);
