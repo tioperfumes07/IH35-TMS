@@ -218,6 +218,11 @@ export type ParityTableProps<T> = {
   serverViewKey?: string;
   /** Sticky header row on vertical scroll (universal-list standard). Default true. */
   stickyHeader?: boolean;
+  /** Opt-in (per board): the table scrolls inside its own box no taller than this (e.g. "calc(100vh - 220px)"), so the
+   *  sticky header — group band and column labels — stays frozen while the rows scroll. Without it the header sticks only
+   *  to the horizontal-scroll wrapper, which never scrolls vertically, so it scrolls away with the page.
+   *  Owner 2026-11-16 19:23 CT (TIO perfume desk): "in all headers … have them freeze when one scrolls down". */
+  scrollMaxHeight?: string;
   /** Minimum table width in px. When set, the table never compresses below this inside the
    *  overflow-x-auto wrapper — wide multi-column boards (Load Costs, DESIGN-CONTRACT §14
    *  min-width:1660) scroll horizontally instead of squeezing columns to truncation. Opt-in;
@@ -762,6 +767,7 @@ export function ParityTable<T>({
   exportExcel = false,
   serverViewKey,
   stickyHeader = true,
+  scrollMaxHeight,
   minWidthPx,
   columnLayout = "fixed",
   wrapHeaders = false,
@@ -1926,7 +1932,7 @@ export function ParityTable<T>({
         <div className="border-b border-gray-200 px-2 py-1.5">{filterBar}</div>
       ) : null}
 
-      <div className="min-w-0 max-w-full overflow-x-auto">
+      <div className={`min-w-0 max-w-full ${scrollMaxHeight ? "overflow-auto" : "overflow-x-auto"}`} style={scrollMaxHeight ? { maxHeight: scrollMaxHeight } : undefined} data-testid={scrollMaxHeight ? "parity-table-scrollbox" : undefined}>
       {/* CENTER-EVERYTHING LAW (owner ruling 2026-09-04) — text-align is inherited, so this is the
           one place that flips every header/column that doesn't declare its own alignment. A column
           with an explicit text-right/text-left in its own className (money columns, etc.) still

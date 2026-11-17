@@ -370,22 +370,45 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     for (const keys of fam.values()) if (keys.length >= 2) for (const k of keys) byKey.set(k, keys);
     return byKey;
   }, [cols]);
+  // Owner 2026-11-16 19:23–19:24 CT: "in the gears I need to have the selection to turn on mine, brand, size, type etc.
+  // … should also have my last cost etc. … these should be in all tabs" and "toggle the item section on and off in all
+  // so it does not take up so much space". Measured: the table gear listed 707 bare checkboxes in a 192 px box ("List
+  // price", "Cushion" … with no vendor name), so Mine / Brand / Size / Type / My last cost could not be found. The desk now
+  // owns which columns show: every tab's columns grouped by section (Item, Mine, each vendor, each competitor …), a
+  // switch per section and per column, kept per tab in this browser; the tab's own defaults until the owner changes one.
+  const visKey = `perfume-cols-${matchDesk ? "match-" : ""}${view}${mine ? "-mine" : ""}-v1`;
+  const isItemGroup = (g: string) => g.trim().toUpperCase() === "ITEM";
+  const defaultOn = (key: string) => (matchDesk ? MATCH_DESK.test(key) : defaultVisible(view, key, mine) && !(view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(key)));
+  const readChoices = (k: string): { choices: Record<string, boolean>; itemOff: boolean } => {
+    try { const v = JSON.parse(window.localStorage.getItem(k) ?? "null"); if (v && typeof v === "object") return { choices: v.choices ?? {}, itemOff: v.itemOff === true }; } catch { /* storage blocked: tab defaults */ }
+    return { choices: {}, itemOff: false };
+  };
+  const [vis, setVis] = useState(() => ({ key: visKey, ...readChoices(visKey) }));
+  if (vis.key !== visKey) setVis({ key: visKey, ...readChoices(visKey) });
+  const saveVis = (next: { choices: Record<string, boolean>; itemOff: boolean }) => {
+    try { window.localStorage.setItem(visKey, JSON.stringify(next)); } catch { /* storage blocked: kept for this visit */ }
+    setVis({ key: visKey, ...next });
+  };
+  const isShown = (c: { key: string; group: string }) => (vis.itemOff && isItemGroup(c.group) ? false : vis.choices[c.key] ?? defaultOn(c.key));
+  const shownCols = cols.filter(isShown);
+  const shownSig = shownCols.map((c) => c.key).join("|");
   const groupStart = useMemo(() => {
     const seen = new Set<string>();
     const starts = new Set<string>();
-    for (const c of cols) {
-      if (seen.has(c.group) || !defaultVisible(view, c.key, mine)) continue;
+    for (const c of shownCols) {
+      if (seen.has(c.group)) continue;
       seen.add(c.group);
       if (c.group !== "Item") starts.add(c.key);
     }
     return starts;
-  }, [cols, view, mine]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shownSig is the shown column list
+  }, [shownSig, cols]);
   const columns: Array<ParityColumn<PerfumeGridRow>> = useMemo(
-    () => cols.map((c) => ({
+    () => shownCols.map((c) => ({
       key: c.key,
       label: c.label,
       sortable: true,
-      defaultHidden: matchDesk ? !MATCH_DESK.test(c.key) : !defaultVisible(view, c.key, mine) || (view === "analysis" && hideEmpty && ANALYSIS_EMPTY.has(c.key)),
+      alwaysVisible: true,
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
       cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
@@ -405,6 +428,17 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
           for (const k of fam) { const x = r[k]; if (x != null && x !== "" && Number.isFinite(Number(x)) && (min == null || Number(x) < min)) min = Number(x); }
           if (min != null && Number(v) === min) return <span data-testid="perfume-vendor-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
         }
+        // Owner 2026-11-16 19:24 CT: "if any of my offer prices are the same or lower than anybody else then should be
+        // highlighted in green" — my offer at or under every supplier's and every competitor's price for the item.
+        if (c.key === "my_offer_price" && v != null && v !== "") {
+          let low: number | null = null;
+          for (const k of Object.keys(r)) {
+            if (!/^(v|s|c):[^:]+:price$/.test(k)) continue;
+            const x = r[k];
+            if (x != null && x !== "" && Number.isFinite(Number(x)) && (low == null || Number(x) < low)) low = Number(x);
+          }
+          if (low != null && Number(v) <= low) return <span data-testid="perfume-offer-lowest" className="-mx-1 block rounded-sm bg-[#DCEFE3] px-1 font-semibold text-[#14532D]">{money(v)}</span>;
+        }
         if (c.key === "a:over_by" && v != null && Number(v) < 0) return <span className="font-semibold text-red-700">{money(v)}</span>;
         // Owner 2026-11-15 13:32 CT: in every view a negative figure (I'm more expensive / must lower) is red.
         if (c.kind === "money") return v != null && Number(v) < 0 ? <span className="font-semibold text-red-700">{money(v)}</span> : money(v);
@@ -420,16 +454,75 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         return v == null || v === "" ? "—" : String(v);
       },
     })),
-    [cols, view, mine, groupStart, hideEmpty, matchDesk, lowFamily],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shownSig is the shown column list
+    [shownSig, cols, view, mine, groupStart, matchDesk, lowFamily],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[] }> = [];
-    for (const c of cols) {
+    for (const c of shownCols) {
       const g = groups.find((x) => x.label === c.group);
       if (g) g.keys.push(c.key); else groups.push({ label: c.group, keys: [c.key] });
     }
     return groups;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shownSig is the shown column list
+  }, [shownSig, cols]);
+  // Every column of the tab, by section, for the gear.
+  const allGroups = useMemo(() => {
+    const groups: Array<{ label: string; cols: typeof cols }> = [];
+    for (const c of cols) {
+      const g = groups.find((x) => x.label === c.group);
+      if (g) g.cols.push(c); else groups.push({ label: c.group, cols: [c] });
+    }
+    return groups;
   }, [cols]);
+  const setShown = (keys: string[], on: boolean) => {
+    const choices = { ...vis.choices };
+    for (const k of keys) choices[k] = on;
+    saveVis({ choices, itemOff: vis.itemOff });
+  };
+  const columnPanel = (
+    <div data-testid="perfume-columns-panel" className="text-xs">
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <span className="font-semibold uppercase tracking-wide text-gray-500">{tr("perfume.cols.title", "Columns by section")}</span>
+        <button type="button" className="rounded-sm px-1.5 py-0.5 font-semibold text-gray-600 hover:bg-gray-100" data-testid="perfume-columns-defaults"
+          onClick={() => saveVis({ choices: {}, itemOff: false })}>{tr("perfume.cols.defaults", "Tab defaults")}</button>
+      </div>
+      <div className="max-h-[60vh] min-w-[300px] overflow-auto pr-1">
+        {allGroups.map((g) => {
+          const on = g.cols.filter(isShown).length;
+          const item = isItemGroup(g.label);
+          return (
+            <details key={g.label} className="border-b border-gray-100 py-0.5" open={item || g.label === "Mine"}>
+              <summary className="flex cursor-pointer items-center gap-2 py-0.5">
+                <input type="checkbox" aria-label={`${g.label}: show all columns`} data-testid={`perfume-colgroup-${g.label}`}
+                  checked={on === g.cols.length} ref={(el) => { if (el) el.indeterminate = on > 0 && on < g.cols.length; }}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => {
+                    if (item && e.target.checked && vis.itemOff) { saveVis({ choices: { ...vis.choices, ...Object.fromEntries(g.cols.map((c) => [c.key, true])) }, itemOff: false }); return; }
+                    setShown(g.cols.map((c) => c.key), e.target.checked);
+                  }} />
+                <span className="font-semibold text-[#1F2A44]">{g.label}</span>
+                <span className="text-gray-500">{on}/{g.cols.length}</span>
+              </summary>
+              <div className="ml-5 grid grid-cols-1 gap-x-3">
+                {g.cols.map((c) => (
+                  <label key={c.key} className="flex items-center gap-2 py-0.5 text-gray-700">
+                    <input type="checkbox" data-testid={`perfume-col-${c.key}`} checked={isShown(c)}
+                      onChange={(e) => {
+                        if (item && vis.itemOff && e.target.checked) { saveVis({ choices: { ...vis.choices, [c.key]: true }, itemOff: false }); return; }
+                        setShown([c.key], e.target.checked);
+                      }} />
+                    {c.label}
+                  </label>
+                ))}
+              </div>
+            </details>
+          );
+        })}
+      </div>
+    </div>
+  );
+  const hasItem = cols.some((c) => isItemGroup(c.group));
   const total = query.data?.total ?? 0;
   // Confirm only once the server has recomputed with the applied numbers (the grid's own measured_at, not the click):
   // the new key's own data, never the previous page held as placeholder.
@@ -491,10 +584,19 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         hidePager
         suppressToolbarSearch
         stickyHeader
+        scrollMaxHeight="calc(100vh - 230px)"
+        gearExtra={columnPanel}
         enableColumnReorder
         emptyText={q || Object.values(picks).some((p) => p.length > 0) ? "No items match the search and filters." : "No items yet — import a price list."}
         toolbar={
           <div className="flex flex-wrap items-center gap-2">
+            {hasItem ? (
+              <button type="button" data-testid="perfume-item-toggle" aria-pressed={!vis.itemOff}
+                onClick={() => saveVis({ choices: vis.choices, itemOff: !vis.itemOff })}
+                className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${vis.itemOff ? "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]" : "border-[#1F2A44] bg-[#1F2A44] text-white"}`}>
+                {vis.itemOff ? tr("perfume.item.show", "Show item columns") : tr("perfume.item.hide", "Hide item columns")}
+              </button>
+            ) : null}
             <input
               type="search"
               value={q}
@@ -580,7 +682,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               variant="secondary"
               className="h-[34px] px-3 text-xs"
               onClick={() => {
-                const visible = columns.filter((c) => !c.defaultHidden).map((c) => String(c.key));
+                const visible = shownCols.map((c) => c.key);
                 downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match }, visible)
                   .then(() => pushToast(`Exported ${total.toLocaleString()} ${view === "analysis" ? "lines" : "items"} to Excel — with the formulas and colours`, "success"))
                   .catch((e) => pushToast(String(e?.message ?? e), "error"));
