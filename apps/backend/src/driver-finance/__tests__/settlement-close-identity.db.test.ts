@@ -68,8 +68,8 @@ describeIntegration("BOARD-35: settlement statement identity (real Postgres)", (
       const settlementId = randomUUID();
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
-           (id, operating_company_id, driver_id, settlement_model, status, is_sample_data)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'load_bookended', 'open', true)`,
+           (id, operating_company_id, display_id, driver_id, period_start, period_end, settlement_model, status, is_sample_data)
+         VALUES ($1::uuid, $2::uuid, 'BOARD35-' || left($1::text, 8), $3::uuid, CURRENT_DATE - 7, CURRENT_DATE, 'load_bookended', 'open', true)`,
         [settlementId, companyId, driverId],
       );
 
@@ -153,9 +153,9 @@ describeIntegration("BOARD-35: settlement statement identity (real Postgres)", (
       const settlementId = randomUUID();
       await db.query(
         `INSERT INTO driver_finance.driver_settlements
-           (id, operating_company_id, driver_id, settlement_model, status,
+           (id, operating_company_id, display_id, driver_id, period_start, period_end, settlement_model, status,
             trip_closed_at, paid_at, source_document_ref, is_sample_data)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'load_bookended', 'open',
+         VALUES ($1::uuid, $2::uuid, 'BOARD35-' || left($1::text, 8), $3::uuid, CURRENT_DATE - 7, CURRENT_DATE, 'load_bookended', 'open',
                  now(), now(), '9999', true)`,
         [settlementId, companyId, driverId],
       );

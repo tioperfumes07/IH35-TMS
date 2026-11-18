@@ -223,7 +223,10 @@ async function ensureUnit(
     status: "InService",
     assigned_driver_id: driverId,
     owner_company_id: companyId,
-    currently_leased_to_company_id: companyId,
+    // The sample truck is the company's own, not leased: a unit leased to an operating carrier must be owned by an
+    // asset holder (ENG-54, 202616570100 trg_units_lease_owner_asset_holder) — "leased to itself" was refused, so
+    // onboarding sample data failed for every new operating company.
+    currently_leased_to_company_id: null,
     notes: "Onboarding sample unit",
     created_by_user_id: actorUserId,
     updated_by_user_id: actorUserId,

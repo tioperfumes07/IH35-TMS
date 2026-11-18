@@ -103,16 +103,27 @@ describeIntegration("Fuel card assignment engine (ROW 104, real Postgres)", () =
       // Overlap prevention: the trigger blocks an INSERT; test it fires and resolveUnitByCard
       // handles the case without crashing when two entries exist (bypass the trigger to force
       // the ambiguous state directly via a raw INSERT, then reset).
-      await db.query(`
+      const dupSql = `
         INSERT INTO fuel.fuel_card_assignments (operating_company_id, card_last_digits, unit_id, effective_from, created_by_user_id)
         VALUES ($1::uuid, '1234', $2::uuid, $3::timestamptz, $4::uuid)
-      `, [companyA, unitA, from1, TEST_OWNER_USER_ID]);
+      `;
+      // The overlap trigger refuses the second active assignment …
+      await db.query("SAVEPOINT overlap_refused");
+      await expect(db.query(dupSql, [companyA, unitA, from1, TEST_OWNER_USER_ID])).rejects.toThrow(/already has an active assignment overlapping/);
+      await db.query("ROLLBACK TO SAVEPOINT overlap_refused");
+      // … so the ambiguous state the resolver must survive (two rows left by data written before the trigger) is planted
+      // with triggers off for this one statement only (the CI database user is the superuser that owns the schema).
+      await db.query("SET LOCAL session_replication_role = replica");
+      await db.query(dupSql, [companyA, unitA, from1, TEST_OWNER_USER_ID]);
+      await db.query("SET LOCAL session_replication_role = origin");
       // Now two active rows for card 1234 at the same time
       const rAmbig = await resolveUnitByCard(client, companyA, "1234", "2026-10-15T12:00:00Z");
       expect(rAmbig.resolved).toBe(false);
       if (!rAmbig.resolved) expect(rAmbig.reason).toBe("ambiguous_assignment");
       // remove the duplicate so the rest of the test can proceed
-      await db.query(`DELETE FROM fuel.fuel_card_assignments WHERE operating_company_id = $1 AND card_last_digits = '1234' AND id <> $2`, [companyA, a1.id]);
+      // (rows are voided, never deleted — trigger on fuel.fuel_card_assignments)
+      await db.query(`UPDATE fuel.fuel_card_assignments SET voided_at = now(), void_reason = 'test: planted ambiguous duplicate'
+                       WHERE operating_company_id = $1 AND card_last_digits = '1234' AND id <> $2 AND voided_at IS NULL`, [companyA, a1.id]);
 
       // ── 3. end (set effective_to) ──────────────────────────────────────────────────────
       const ended = await endFuelCardAssignment(client, companyA, a1.id, "2026-11-01T00:00:00Z");

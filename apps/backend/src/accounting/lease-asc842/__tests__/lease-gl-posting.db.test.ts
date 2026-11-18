@@ -109,7 +109,7 @@ describeIntegration("FIN-22 lease ASC 842 GL posting (real Postgres)", () => {
     await bypass(async () => {
       await db.query(
         `INSERT INTO mdata.units (id, unit_number, vin, owner_company_id, currently_leased_to_company_id, is_sample_data)
-         VALUES ($1::uuid,$2,$3,$4::uuid,$4::uuid, true)`,
+         VALUES ($1::uuid,$2,$3,$4::uuid,NULL, true)`, // owned, not leased: the lease lives on the contract (ENG-54 trigger refuses an operating carrier owning a leased truck)
         [unitId, `F22-${randomUUID().slice(0, 6)}`, vin, opts.ownerId]
       );
       await db.query(

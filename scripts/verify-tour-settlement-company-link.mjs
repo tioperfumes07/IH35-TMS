@@ -23,7 +23,8 @@ function read(rel) {
 
 export function verify(entityLink, tab) {
   const f = [];
-  if (!/\| "company_settlement";/.test(entityLink)) f.push("entitykind-missing");
+  // A member of the EntityKind union wherever it sits (#29702 appended a commented "perfume_vendor" after it).
+  if (!/\|\s*"company_settlement"\s*(?:\/\*[\s\S]*?\*\/\s*)?(?:;|\|)/.test(entityLink)) f.push("entitykind-missing");
   if (!/case "company_settlement":\s*\n\s*return `\/driver-finance\/company-settlements\?id=\$\{id\}`;/.test(entityLink)) {
     f.push("resolver-case-missing");
   }
@@ -38,7 +39,7 @@ if (process.argv.includes("--selftest")) {
   const baseline = verify(entityLink, tab);
   if (baseline.length) fail(`baseline not green — real checks failing: ${baseline.join(", ")}`);
   const mutations = [
-    [entityLink.replace('| "company_settlement";', ";"), tab],
+    [entityLink.replace(/\|\s*"company_settlement"(?=\s*(?:\/\*[\s\S]*?\*\/\s*)?(?:;|\|))/, ""), tab],
     [entityLink.replace('return `/driver-finance/company-settlements?id=${id}`;', "return null;"), tab],
     [entityLink, tab.replace('<EntityLink kind="company_settlement" id={cs.id} label={cs.display_id} />', "cs.display_id")],
     [entityLink, tab.replace("cs.id && cs.display_id", "cs.display_id")],

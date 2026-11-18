@@ -66,7 +66,8 @@ const FILL_PAIR_SQL = `
          (coalesce(a.purchased_at, a.transaction_at) AT TIME ZONE 'America/Chicago')::date::text AS a_day,
          (coalesce(b.purchased_at, b.transaction_at) AT TIME ZONE 'America/Chicago')::date::text AS b_day,
          a.gallons::text AS a_gal, b.gallons::text AS b_gal,
-         a.total_cost::text AS a_total, b.total_cost::text AS b_total, a.gross_cost::text AS a_gross, b.gross_cost::text AS b_gross
+         a.total_cost::text AS a_total, b.total_cost::text AS b_total, a.gross_cost::text AS a_gross, b.gross_cost::text AS b_gross,
+         a.relay_fuel_transaction_id::text AS a_relay, b.relay_fuel_transaction_id::text AS b_relay
     FROM fuel.fuel_transactions a
     JOIN fuel.fuel_transactions b
       ON b.operating_company_id = a.operating_company_id AND b.unit_id = a.unit_id AND b.fuel_type = a.fuel_type AND a.id < b.id
@@ -79,8 +80,14 @@ const FILL_PAIR_SQL = `
 const cents = (v) => (v === null || v === undefined || v === "" ? null : Math.round(Number(v) * 100));
 const dayGap = (x, y) => Math.abs(Date.parse(`${x}T00:00:00Z`) - Date.parse(`${y}T00:00:00Z`)) / 86_400_000;
 /** Pure: two fuel rows are the same fill — same unit + product, <= 1 company day, gallons within 0.01, amount within 5c. */
+//  Two DIFFERENT Relay transactions are two purchases, never one fill twice: Relay issues one transaction id per
+//  purchase, and its one-time fuel codes are fixed-dollar ($190 / $90), so two codes the same day carry the same amount
+//  and gallons (2026-11-18: T152 09-07 txn_2xTTwBYFDSJNuQ 21:26Z + txn_AJyrss5NZ141mg 22:52Z, T148 09-06
+//  txn_2mLB51LEnRMmix 21:41Z + txn_2xU8KgCxBmTLqp 22:36Z — distinct fuel codes in integrations.relay_fuel_transactions).
+//  The 2026-11-03 baseline note already ruled 84fc1e04/b32ec5f7 "two charges, not one fill twice".
 export function isDuplicateFill(p) {
   if (!p.a_unit || p.a_unit !== p.b_unit || p.a_type !== p.b_type) return false;
+  if (p.a_relay && p.b_relay && p.a_relay !== p.b_relay) return false;
   if (dayGap(p.a_day, p.b_day) > 1) return false;
   if (Math.round(Math.abs(Number(p.a_gal) - Number(p.b_gal)) * 1000) > 10) return false;
   const as = [cents(p.a_total), cents(p.a_gross)].filter((v) => v !== null);
@@ -268,6 +275,9 @@ if (process.argv.includes("--selftest")) {
     ["gallons 0.02 apart is not the same fill", !isDuplicateFill({ ...copy, b_gal: "102.019" })],
     ["another truck is not the same fill", !isDuplicateFill({ ...copy, b_unit: "u171" })],
     ["another product is not the same fill", !isDuplicateFill({ ...copy, b_type: "def" })],
+    ["two different Relay transactions are two purchases, not one fill twice", !isDuplicateFill({ ...copy, a_relay: "r1", b_relay: "r2" })],
+    ["PLANT: the SAME Relay transaction recorded twice is a duplicate", isDuplicateFill({ ...copy, a_relay: "r1", b_relay: "r1" })],
+    ["PLANT: a Relay fill beside a statement copy with no Relay id is still checked", isDuplicateFill({ ...copy, a_relay: "r1", b_relay: null })],
     ["amounts 6 cents apart are not the same fill", !isDuplicateFill({ ...copy, b_gross: "559.93", b_total: "514.08" })],
     ["a new duplicate fill pair grows (FAIL)", ratchet({ doubled_with_live_fuel_twin: 2, diesel_expenses_off_fuel_source: 0, duplicate_fill_pairs: 1 }, base).grew.includes("duplicate_fill_pairs")],
   ];

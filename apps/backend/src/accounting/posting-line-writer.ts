@@ -304,11 +304,15 @@ export async function resolvePostingSourceLoad(
   }
   // ENG-27 / G8 — a bank categorization that tags a load carries that load on every leg.
   // Reads bt.categorization_load_id; never guesses — if unset, returns null and the leg posts without a load.
+  // 443.110 G8 — a DERIVED load is only ever the posting company's own: a categorization tagged with another company's
+  // load posts with no load (its party still stamps), it does not refuse the whole posting (only a caller that NAMES a
+  // foreign load is refused). The foreign tag stays on the bank line for the owner to correct.
   if (line.source_transaction_type === "bank_categorization" && line.operating_company_id) {
     const bc = await client.query<{ load_id: string | null }>(
-      `SELECT categorization_load_id::text AS load_id
-         FROM banking.bank_transactions
-        WHERE id = $1::uuid AND operating_company_id = $2::uuid
+      `SELECT bt.categorization_load_id::text AS load_id
+         FROM banking.bank_transactions bt
+         JOIN mdata.loads ml ON ml.id = bt.categorization_load_id AND ml.operating_company_id = bt.operating_company_id
+        WHERE bt.id = $1::uuid AND bt.operating_company_id = $2::uuid
         LIMIT 1`,
       [id, line.operating_company_id]
     );

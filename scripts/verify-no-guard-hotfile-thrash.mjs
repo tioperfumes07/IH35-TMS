@@ -42,10 +42,24 @@ function addedLines(diff) {
     .map((l) => l.slice(1));
 }
 
+/** The verify:* script keys package.json already has on the base branch — editing one is not a new registration. */
+function baseVerifyKeys(root = ROOT) {
+  try {
+    const base = JSON.parse(execSync(`git show ${baseRef()}:package.json`, { cwd: root, encoding: "utf8" }));
+    return new Set(Object.keys(base.scripts ?? {}).filter((k) => k.startsWith("verify:")));
+  } catch {
+    return new Set();
+  }
+}
+
 export function assertNoHotfileThrash({ root = ROOT } = {}) {
   const errs = [];
+  // A NEW verify:* key is the thrash this guard stops. A changed command on a key main already registers (the
+  // 2026-11-18 portable --env-file-if-exists fix) is not a new registration and is not refused.
+  const existing = baseVerifyKeys(root);
   for (const line of addedLines(diffFile("package.json", root))) {
-    if (/^\s*"verify:[^"]+"\s*:/.test(line)) {
+    const key = /^\s*"(verify:[^"]+)"\s*:/.exec(line)?.[1];
+    if (key && !existing.has(key)) {
       errs.push(
         `package.json adds ${line.trim()} — FORBIDDEN. Wire via scripts/verify-steps/ only (docs/specs/STOP-THE-THRASH-WORKORDER-2026-07-17.md).`,
       );
@@ -67,6 +81,13 @@ function main() {
   if (process.argv.includes("--selftest")) {
     const errs = assertNoHotfileThrash();
     if (!Array.isArray(errs)) throw new Error("must return array");
+    // A key main does not have is refused; one it has is not.
+    const keys = baseVerifyKeys();
+    if (!keys.size) throw new Error("selftest: base package.json has no verify:* keys -- cannot judge");
+    const known = [...keys][0];
+    const isNew = (k) => !keys.has(k);
+    if (isNew(known)) throw new Error(`selftest: existing key ${known} judged new`);
+    if (!isNew("verify:zz-selftest-never-registered")) throw new Error("selftest: a brand-new key was not judged new");
     console.log("verify-no-guard-hotfile-thrash --selftest PASS");
     return;
   }

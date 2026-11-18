@@ -8,6 +8,7 @@ import pg from "pg";
 import { describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { refuseProductionConnectionString, refuseProductionDatabase } from "../../../test-helpers/refuse-production.js";
+import { insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 import { reinstateDocumentThenVoidReversal, ReinstateDocumentError } from "../../accounting/reinstate-document.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -50,20 +51,15 @@ describeIntegration("ENG-44 REVERSE: reinstate voided driver bill (real Postgres
       // Throwaway customer + load (is_sample_data=true so guard ratchets ignore it)
       const custId = randomUUID();
       await db.query(
-        `INSERT INTO mdata.customers (id, operating_company_id, name, is_sample_data)
+        `INSERT INTO mdata.customers (id, operating_company_id, customer_name, is_sample_data)
          VALUES ($1::uuid, $2::uuid, 'ENG44TestCust', true)`,
         [custId, companyId]
       );
 
       const loadId = randomUUID();
       const loadNum = `L-ENG44-${sfx.toUpperCase()}`;
-      await db.query(
-        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, is_sample_data,
-                                   status, origin_city, origin_state, destination_city, destination_state)
-         VALUES ($1::uuid, $2::uuid, $3, $4::uuid, true,
-                 'dispatched', 'Laredo', 'TX', 'Chicago', 'IL')`,
-        [loadId, companyId, loadNum, custId]
-      );
+      // A real load row (dispatcher + trailer equipment are required) — the shared fixture helper.
+      await insertLoadForInvoice(db as never, companyId, custId, { loadId, loadNumber: loadNum });
 
       // Voided driver bill — status='void' and voided_at both required by constraint
       const billId = randomUUID();
@@ -148,20 +144,15 @@ describeIntegration("ENG-44 REVERSE: reinstate voided driver bill (real Postgres
 
       const custId = randomUUID();
       await db.query(
-        `INSERT INTO mdata.customers (id, operating_company_id, name, is_sample_data)
+        `INSERT INTO mdata.customers (id, operating_company_id, customer_name, is_sample_data)
          VALUES ($1::uuid, $2::uuid, 'ENG44TestCust2', true)`,
         [custId, companyId]
       );
 
       const loadId = randomUUID();
       const loadNum = `L-ENG44B-${sfx.toUpperCase()}`;
-      await db.query(
-        `INSERT INTO mdata.loads (id, operating_company_id, load_number, customer_id, is_sample_data,
-                                   status, origin_city, origin_state, destination_city, destination_state)
-         VALUES ($1::uuid, $2::uuid, $3, $4::uuid, true,
-                 'dispatched', 'Laredo', 'TX', 'Chicago', 'IL')`,
-        [loadId, companyId, loadNum, custId]
-      );
+      // A real load row (dispatcher + trailer equipment are required) — the shared fixture helper.
+      await insertLoadForInvoice(db as never, companyId, custId, { loadId, loadNumber: loadNum });
 
       const billId = randomUUID();
       const billNum = `DB-ENG44B-${sfx.toUpperCase()}`;
