@@ -525,7 +525,10 @@ export async function maybeReclassifyFuelFillForIntercompanyDiesel(
   journalEntryId: string,
   actorUserId: string,
 ): Promise<{ reclassified: boolean; reason?: string }> {
-  // Check if the fill's load (from the NEW posting) belongs to a different company
+  // Check if the fill's load (from the NEW posting) belongs to a different company.
+  // A posting has no voided_at of its own — it is void when its journal entry is (je.voided_at). The p.voided_at this
+  // query carried (#29157) does not exist in the schema: every USMCA fuel GL post threw "column p.voided_at does not
+  // exist" from 2026-11-13 02:49Z (#29157 deploy; Render log "[FUEL_GL_POST] post failed") until this fix.
   const loadCheck = await client.query<{ load_id: string; load_company_id: string; posting_ids: string[] }>(
     `SELECT p.load_id::text,
             ml.operating_company_id::text AS load_company_id,
@@ -540,7 +543,7 @@ export async function maybeReclassifyFuelFillForIntercompanyDiesel(
         AND p.debit_or_credit = 'debit'
         AND p.load_id IS NOT NULL
         AND ml.operating_company_id IS DISTINCT FROM $1::uuid
-        AND je.voided_at IS NULL AND p.voided_at IS NULL
+        AND je.voided_at IS NULL
       GROUP BY p.load_id, ml.operating_company_id`,
     [operatingCompanyId, journalEntryId],
   );
