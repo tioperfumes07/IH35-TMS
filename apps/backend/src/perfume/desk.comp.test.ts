@@ -48,10 +48,19 @@ describeIntegration("competition margin tab (real Postgres, rolled back)", () =>
     const g = await buildGrid(db as never, {});
     const row = (n: string) => g.rows.find((r) => r.brand === "ZZCOMP" && r.name === n)!;
     const d = row("DELTA"), e = row("EPSILON");
-    expect([d.comp_low_vendor, d.comp_low_list, d.comp_cushion, d.comp_cost]).toEqual(["CTB", 3200, 100, 3100]);
-    expect([d[`c:${s.id}:price`], d[`c:${s.id}:earn`], d[`c:${s.id}:margin`]]).toEqual([3700, 600, 16.2]);
-    expect([e.comp_low_vendor, e.comp_cushion, e.comp_cost, e[`c:${s.id}:earn`], e[`c:${s.id}:margin`]]).toEqual(["CTA", 25, 775, 125, 13.9]);
-    expect(g.cols.find((c) => c.key === `c:${s.id}:margin`)).toMatchObject({ label: "Margin %", group: "Margin · CTS", kind: "pct" });
+    // Owner 2026-11-15 13:32 CT (#29671): Competition reverse-engineers THEIR cost from THEIR OWN list — their list −
+    // tier cushion = their sales price; × (1 − my margin estimate) = their cost ≈; they earn = sales − cost. Not from
+    // where they buy (the cheapest-supplier columns of #29121 were retired).
+    const m = Number(d[`c:${s.id}:margin`]);
+    expect(Number.isFinite(m)).toBe(true);
+    // DELTA $37.00 (> $30 → $1.00 cushion); EPSILON $9.00 (≤ $10 → $0.25).
+    expect([d[`c:${s.id}:price`], d[`c:${s.id}:cushion`], d[`c:${s.id}:sales`]]).toEqual([3700, 100, 3600]);
+    expect(d[`c:${s.id}:cost`]).toBe(Math.round(3600 * (1 - m / 100)));
+    expect(d[`c:${s.id}:earn`]).toBe(3600 - Number(d[`c:${s.id}:cost`]));
+    expect([e[`c:${s.id}:price`], e[`c:${s.id}:cushion`], e[`c:${s.id}:sales`]]).toEqual([900, 25, 875]);
+    expect(e[`c:${s.id}:earn`]).toBe(875 - Number(e[`c:${s.id}:cost`]));
+    expect(g.cols.find((c) => c.key === `c:${s.id}:margin`)).toMatchObject({ label: "Their margin % (my estimate)", kind: "pct" });
+    expect(g.cols.find((c) => c.key === "comp_low_vendor")).toBeUndefined();
     expect(filterView(g.rows, "comp").filter((r) => r.brand === "ZZCOMP").length).toBe(2);
   });
 });

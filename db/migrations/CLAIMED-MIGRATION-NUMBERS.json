@@ -1194,5 +1194,10 @@
     "claimed_at": "2026-11-17",
     "claimed_by": "lead",
     "purpose": "PERFUME my own costs per item (last cost, average cost) typed on the desk: perfume.item_costs \u2014 owner 2026-11-17 14:04 CT"
+  },
+  "202616670100": {
+    "claimed_at": "2026-11-18",
+    "claimed_by": "lead",
+    "purpose": "capture 79 undocumented live reinstate columns (17 document tables) so a fresh-migrated DB matches prod; no-op on prod"
   }
 }

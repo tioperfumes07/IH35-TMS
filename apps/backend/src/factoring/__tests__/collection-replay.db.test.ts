@@ -20,8 +20,23 @@ import {
   type IsolatedOperatingCompany,
 } from "../../../test-helpers/db-fixture.js";
 import { connectFixtureClient, inRolledBackAppTxn } from "../../../test-helpers/posting-gate-proof.js";
+import { insertInvoiceLine, insertLoadForInvoice } from "../../../test-helpers/load-born-invoice.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
+
+async function bindCollectionRoles(client: pg.ClientBase, companyId: string): Promise<void> {
+  for (const [role, number, name, type] of [
+    ["factoring_advance_liability", "2150", "ENG17 Factoring advance liability", "Liability"],
+    ["ar_control", "1100", "ENG17 Accounts receivable", "Asset"],
+  ] as const) {
+    const acct = (await client.query<{ id: string }>(
+      `INSERT INTO catalogs.accounts (operating_company_id, account_name, account_type, account_number)
+       VALUES ($1::uuid, $2, $3, $4) RETURNING id::text AS id`, [companyId, name, type, number])).rows[0]!.id;
+    await client.query(
+      `INSERT INTO accounting.chart_of_accounts_roles (operating_company_id, role, account_id, is_active)
+       VALUES ($1::uuid, $2, $3::uuid, true)`, [companyId, role, acct]);
+  }
+}
 
 describeIntegration("ENG-17 collection replay — real PG integration", () => {
   let db: pg.Client;
@@ -55,21 +70,32 @@ describeIntegration("ENG-17 collection replay — real PG integration", () => {
          VALUES ($1::uuid, $2::uuid, 'Test Customer', 'active', $3::uuid)`,
         [custId, iso.companyId, TEST_OWNER_USER_ID]
       );
+      // The two accounts the collection posts to (Dr 2150 factoring_advance_liability / Cr 1100 ar_control): an isolated
+      // company has no chart of its own, so the fixture binds them, inside this rolled-back transaction.
+      await bindCollectionRoles(client as never, iso.companyId);
+      // The factor the advance names (the isolated test company has no vendors of its own).
+      await client.query(
+        `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid, 'ENG17 test factor', 'other')`,
+        [iso.companyId]
+      );
       await client.query(
         `INSERT INTO accounting.factoring_advances
-           (id, operating_company_id, factoring_company_vendor_id, display_id, status, invoice_total_cents, advance_amount_cents, advance_rate_pct, submitted_at, created_by_user_id)
-         SELECT $1::uuid, $2::uuid, v.id, 'ADV-ENG17-01', 'funded', 100000, 80000, 80, now(), $3::uuid
+           (id, operating_company_id, factoring_company_vendor_id, display_id, status, invoice_total_cents, advance_amount_cents, advance_rate_pct, reserve_pct, reserve_amount_cents, submitted_at, created_by_user_id)
+         SELECT $1::uuid, $2::uuid, v.id, 'ADV-ENG17-01', 'advanced', 100000, 80000, 80, 20, 20000, now(), $3::uuid
            FROM mdata.vendors v WHERE v.operating_company_id = $2::uuid LIMIT 1`,
         [advId, iso.companyId, TEST_OWNER_USER_ID]
       );
+      // A from_load invoice is written with its load, as a draft, then its line moves it to sent (LAW 363.2 helpers).
+      const invLoad = await insertLoadForInvoice(client as never, iso.companyId, custId);
       await client.query(
         `INSERT INTO accounting.invoices
-           (id, operating_company_id, customer_id, display_id, status, issue_date, due_date,
-            total_cents, amount_open_cents, factoring_advance_id, factoring_status, created_by_user_id)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'TEST-INV-ENG17', 'sent', CURRENT_DATE, CURRENT_DATE + 30,
-                 100000, 100000, $4::uuid, 'advanced', $5::uuid)`,
-        [invId, iso.companyId, custId, advId, TEST_OWNER_USER_ID]
+           (id, operating_company_id, customer_id, source_load_id, display_id, status, issue_date, due_date,
+            total_cents, factoring_advance_id, factoring_status, created_by_user_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $6::uuid, 'INV-9917-00001', 'draft', CURRENT_DATE, CURRENT_DATE + 30,
+                 100000, $4::uuid, 'advanced', $5::uuid)`,
+        [invId, iso.companyId, custId, advId, TEST_OWNER_USER_ID, invLoad]
       );
+      await insertInvoiceLine(client as never, iso.companyId, invId, 100000, { loadId: invLoad, status: "sent" });
 
       const result = await applyFaroCollectionInClientTx(client as never, {
         operating_company_id: iso.companyId,
@@ -103,21 +129,32 @@ describeIntegration("ENG-17 collection replay — real PG integration", () => {
          VALUES ($1::uuid, $2::uuid, 'Idem Customer', 'active', $3::uuid)`,
         [custId, iso.companyId, TEST_OWNER_USER_ID]
       );
+      // The two accounts the collection posts to (Dr 2150 factoring_advance_liability / Cr 1100 ar_control): an isolated
+      // company has no chart of its own, so the fixture binds them, inside this rolled-back transaction.
+      await bindCollectionRoles(client as never, iso.companyId);
+      // The factor the advance names (the isolated test company has no vendors of its own).
+      await client.query(
+        `INSERT INTO mdata.vendors (operating_company_id, vendor_name, vendor_type) VALUES ($1::uuid, 'ENG17 test factor', 'other')`,
+        [iso.companyId]
+      );
       await client.query(
         `INSERT INTO accounting.factoring_advances
-           (id, operating_company_id, factoring_company_vendor_id, display_id, status, invoice_total_cents, advance_amount_cents, advance_rate_pct, submitted_at, created_by_user_id)
-         SELECT $1::uuid, $2::uuid, v.id, 'ADV-ENG17-02', 'funded', 50000, 40000, 80, now(), $3::uuid
+           (id, operating_company_id, factoring_company_vendor_id, display_id, status, invoice_total_cents, advance_amount_cents, advance_rate_pct, reserve_pct, reserve_amount_cents, submitted_at, created_by_user_id)
+         SELECT $1::uuid, $2::uuid, v.id, 'ADV-ENG17-02', 'advanced', 50000, 40000, 80, 20, 10000, now(), $3::uuid
            FROM mdata.vendors v WHERE v.operating_company_id = $2::uuid LIMIT 1`,
         [advId, iso.companyId, TEST_OWNER_USER_ID]
       );
+      // A from_load invoice is written with its load, as a draft, then its line moves it to sent (LAW 363.2 helpers).
+      const invLoad = await insertLoadForInvoice(client as never, iso.companyId, custId);
       await client.query(
         `INSERT INTO accounting.invoices
-           (id, operating_company_id, customer_id, display_id, status, issue_date, due_date,
-            total_cents, amount_open_cents, factoring_advance_id, factoring_status, created_by_user_id)
-         VALUES ($1::uuid, $2::uuid, $3::uuid, 'TEST-INV-ENG17-2', 'sent', CURRENT_DATE, CURRENT_DATE + 30,
-                 50000, 50000, $4::uuid, 'advanced', $5::uuid)`,
-        [invId, iso.companyId, custId, advId, TEST_OWNER_USER_ID]
+           (id, operating_company_id, customer_id, source_load_id, display_id, status, issue_date, due_date,
+            total_cents, factoring_advance_id, factoring_status, created_by_user_id)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $6::uuid, 'INV-9917-00002', 'draft', CURRENT_DATE, CURRENT_DATE + 30,
+                 50000, $4::uuid, 'advanced', $5::uuid)`,
+        [invId, iso.companyId, custId, advId, TEST_OWNER_USER_ID, invLoad]
       );
+      await insertInvoiceLine(client as never, iso.companyId, invId, 50000, { loadId: invLoad, status: "sent" });
 
       // First apply
       await applyFaroCollectionInClientTx(client as never, {

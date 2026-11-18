@@ -135,14 +135,14 @@ describeIntegration("document links refused at DB (443.106 + DEGH-05, real Postg
       const unit = (
         await one(
           `INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id, is_sample_data)
-           VALUES ($1, $2, $3, $3, true) RETURNING id::text AS id`,
+           VALUES ($1, $2, $3, NULL, true) RETURNING id::text AS id`,
           [`${tag}-U1`, `${tag}VIN1`, opco]
         )
       ).id;
       const otherUnit = (
         await one(
           `INSERT INTO mdata.units (unit_number, vin, owner_company_id, currently_leased_to_company_id, is_sample_data)
-           VALUES ($1, $2, $3, $3, true) RETURNING id::text AS id`,
+           VALUES ($1, $2, $3, NULL, true) RETURNING id::text AS id`,
           [`${tag}-U2`, `${tag}VIN2`, opco]
         )
       ).id;

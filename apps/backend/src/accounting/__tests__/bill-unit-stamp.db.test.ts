@@ -33,13 +33,14 @@ describeIntegration("posted driver bills take their load's unit (443.102, real P
       await db.query("BEGIN");
       await db.query("SET LOCAL app.bypass_rls = 'lucia'");
       const tag = `UST${Date.now().toString(36).toUpperCase()}`;
-      const co = async (code: string) =>
+      const co = async (code: string, type: "operating_carrier" | "asset_holder" = "operating_carrier") =>
         (await db.query<{ id: string }>(
-          `INSERT INTO org.companies (code, legal_name, company_type) VALUES ($1, $2, 'operating_carrier') RETURNING id::text AS id`,
-          [code, `Unit stamp test ${code}`]
+          `INSERT INTO org.companies (code, legal_name, company_type) VALUES ($1, $2, $3) RETURNING id::text AS id`,
+          [code, `Unit stamp test ${code}`, type]
         )).rows[0]!.id;
       const opco = await co(`${tag}A`);
-      const lessor = await co(`${tag}B`);
+      // A leased truck is owned by an asset holder (ENG-54 trigger trg_units_lease_owner_asset_holder, 202616570100).
+      const lessor = await co(`${tag}B`, "asset_holder");
       await db.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [opco]);
       const trailer = await prepareCompanyForLoadInserts(db, opco);
       const one = async <T = { id: string }>(sql: string, params: unknown[]) => (await db.query<T>(sql, params)).rows[0]!;

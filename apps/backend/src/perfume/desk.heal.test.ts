@@ -43,6 +43,9 @@ describeIntegration("perfume import heals stale auto-identified items (real Post
       `INSERT INTO perfume.items (brand, name, identity_key, loose_key, display_name) VALUES ($1,$2,$3,$4,$2) RETURNING id`,
       [right2.brand, right2.nameText, right2.key, looseKey(right2)])).rows[0].id;
     const stale2 = await ins("ABERCROMBIE & FITCH", "100 PASSION 3 4 6 7 H BW", "HEALTEST|100 PASSION 3 4 6 7 H BW|15|EDT|M|SET");
+    // The stale item is the same gift SET (its key ends |SET): an item of another product kind is never reached by UPC
+    // (matching.ts upcKindClash, owner 2026-11-15 20:10 CT), so the fixture carries the set flag the stale rule gave it.
+    await db.query(`UPDATE perfume.items SET flags = $2 WHERE id = $1`, [stale2, right2.flags]);
     await db.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ('9085715169983', $1)`, [stale2]);
 
     const { list_id, check } = await importList(db as never, TEST_OWNER_USER_ID, {
