@@ -1386,6 +1386,14 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     { key: "target_price_margin", label: `My price @${target}%`, group: "Mine", kind: "money" },
     { key: "target_profit", label: `My profit @${target}%`, group: "Mine", kind: "money" },
     { key: "trade_beats", label: "My price beats their cost at", group: "Mine", kind: "text" },
+    // Owner 2026-11-19 08:44 CT: "i want to see the lowest price for the trade per item … the sell them price so i can
+    // compare immediately." The lowest and the highest "sell to them" price across every supplier, and who.
+    { key: "trade_low_list", label: "Trade · lowest list price", group: "Mine", kind: "money" },
+    { key: "trade_low_cost", label: "Trade · lowest sell-to price", group: "Mine", kind: "money" },
+    { key: "trade_low_vendor", label: "Trade · lowest sell-to vendor", group: "Mine", kind: "text" },
+    { key: "trade_high_cost", label: "Trade · highest sell-to price", group: "Mine", kind: "money" },
+    { key: "trade_high_vendor", label: "Trade · highest sell-to vendor", group: "Mine", kind: "text" },
+    { key: "trade_profit_vs_cost", label: "Trade · highest sell-to − my last cost", group: "Mine", kind: "money" },
     { key: "low_sell", label: "Lowest competitor", group: "Mine", kind: "money" },
     { key: "target_action", label: "Raise / lower", group: "Mine", kind: "text" },
   ];
@@ -1669,6 +1677,17 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
       if (mine != null && mine <= theirCost) beats.push(vendorLabel(v));
     }
     row.trade_beats = beats.length ? beats.join(", ") : null;
+    const sellTo = presBuy.flatMap((v) => (row[`t:${v.id}:cost`] == null ? [] : [{ v: vendorLabel(v), cost: row[`t:${v.id}:cost`] as number, list: row[`t:${v.id}:list`] as number }]));
+    if (sellTo.length) {
+      const lo = Math.min(...sellTo.map((x) => x.cost)), hi = Math.max(...sellTo.map((x) => x.cost));
+      row.trade_low_list = Math.min(...sellTo.map((x) => x.list));
+      row.trade_low_cost = lo;
+      row.trade_low_vendor = sellTo.filter((x) => x.cost === lo).map((x) => x.v).join(", ");
+      row.trade_high_cost = hi;
+      row.trade_high_vendor = sellTo.filter((x) => x.cost === hi).map((x) => x.v).join(", ");
+      const myCostNow = row.my_last_cost as number | null | undefined;
+      row.trade_profit_vs_cost = myCostNow != null ? hi - myCostNow : null;
+    }
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
     row.carried_by = [...presBuy, ...presSell].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");

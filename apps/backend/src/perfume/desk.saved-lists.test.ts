@@ -69,6 +69,9 @@ describeIntegration("saved lists: import as new keeps the old list; switching ch
     invalidateGridCache();
     let g = await buildGrid(db as never);
     expect(g.rows.find((r) => r.id === it["8000000998027"])?.my_offer_price).toBe(2477);
+    // Owner 2026-11-19 08:44 CT — the sell-to price per item: supplier list 20.00 − 0.50 cushion, less its 16% = 16.38.
+    const rb = g.rows.find((r) => r.id === it["8000000998027"])!;
+    expect([rb.trade_low_list, rb.trade_low_cost, rb.trade_high_cost, rb.trade_low_vendor, rb.trade_high_vendor]).toEqual([2000, 1638, 1638, "ZZSL SUPPLIER", "ZZSL SUPPLIER"]);
     expect(g.rows.find((r) => r.id === it["8000000998010"])?.my_offer_price ?? null).toBeNull();
 
     // Switch back to offer 1: the grid reads it again; offer 2 stays saved.
