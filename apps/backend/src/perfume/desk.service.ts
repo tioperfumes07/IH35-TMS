@@ -2112,7 +2112,22 @@ export function priceFamilies(keys: readonly string[], isMoney: (i: number) => b
   });
   return [...fam.values()].filter((x) => x.length >= 2);
 }
-export async function exportWorkbook(cols: GridCol[], rows: GridRow[], rules: DeskRules, title: string, added: ReadonlySet<string> = new Set()): Promise<Buffer> {
+/** Vendor column groups (v:<id>:…, t:<id>:…, s:<id>:…) with no value on any exported row are left out of the Excel
+ *  (owner 2026-11-19 08:14 CT, Trading · sell to my vendors: "just those that do not have price, remove in the export").
+ *  Item, mine and analysis columns always stay. */
+export function dropEmptyVendorColumns(cols: GridCol[], rows: GridRow[]): GridCol[] {
+  const groupKey = (k: string) => { const m = /^([vts]):([^:]+):/.exec(k); return m ? `${m[1]}:${m[2]}` : null; };
+  const filled = new Set<string>();
+  for (const c of cols) {
+    const g = groupKey(c.key);
+    if (!g || filled.has(g)) continue;
+    if (rows.some((r) => r[c.key] != null && r[c.key] !== "")) filled.add(g);
+  }
+  return cols.filter((c) => { const g = groupKey(c.key); return !g || filled.has(g); });
+}
+
+export async function exportWorkbook(cols0: GridCol[], rows: GridRow[], rules: DeskRules, title: string, added: ReadonlySet<string> = new Set()): Promise<Buffer> {
+  const cols = dropEmptyVendorColumns(cols0, rows);
   const wb = new ExcelJS.Workbook();
   wb.creator = "TIO Perfumes price desk";
   const ws = wb.addWorksheet(title.slice(0, 31));
