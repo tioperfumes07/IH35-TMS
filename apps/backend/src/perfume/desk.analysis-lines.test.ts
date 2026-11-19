@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import ExcelJS from "exceljs";
-import { analysisFields, analysisRowsOf, exportColumnsWithInputs, exportFormulas, exportWorkbook, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
+import { analysisFields, analysisRowsOf, exportColumnsWithInputs, exportFormulas, exportWorkbook, dropEmptyVendorColumns, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
 
 // Owner 2026-11-14: "my lists there are 583 rows - 1 header, so 582 items. why does the list in list analysis only have 463";
 // "a box to select if i want to view their list or just my list … a little filter … only those items that are matched";
@@ -187,4 +187,24 @@ describe("owner 2026-11-15 07:10 CT — the analysis shows the same number of li
     expect(src).toMatch(/const myLines: GridRow\[\] = x\.myLineQ\.map\(\(l\) =>/);
     expect(src).toMatch(/"a:stores": l\.item_id \? \(storesByItem\.get\(l\.item_id\) \?\? 1\) : 1/);
   });
+
+  // Owner 2026-11-19 08:14 CT: the Trading export keeps only the vendors that have a price on the exported rows.
+  it("a vendor with no price on any exported row is left out of the Excel; vendors with a price and item columns stay", async () => {
+    const cols = [
+      { key: "brand", label: "Brand", group: "Item", kind: "text" },
+      { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+      { key: "t:b1:list", label: "Their list price", group: "Trade · JIZAN", kind: "money" },
+      { key: "t:b1:cost", label: "Sell to them ≈", group: "Trade · JIZAN", kind: "money" },
+      { key: "t:b2:list", label: "Their list price", group: "Trade · PCA", kind: "money" },
+      { key: "t:b2:cost", label: "Sell to them ≈", group: "Trade · PCA", kind: "money" },
+    ] as GridCol[];
+    const rows = [{ brand: "VERSACE", my_last_cost: 2477, "t:b1:list": 3000, "t:b1:cost": 2478 }, { brand: "MOSCHINO", my_last_cost: null }] as unknown as GridRow[];
+    expect(dropEmptyVendorColumns(cols, rows).map((c) => c.key)).toEqual(["brand", "my_last_cost", "t:b1:list", "t:b1:cost"]);
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(await exportWorkbook(cols, rows, DEFAULT_RULES, "TIO trade"));
+    const head = (wb.worksheets[0]!.getRow(1).values as unknown[]).filter(Boolean);
+    expect(head).not.toContain("TRADE · PCA");
+    expect(head).toContain("TRADE · JIZAN");
+  });
 });
+
