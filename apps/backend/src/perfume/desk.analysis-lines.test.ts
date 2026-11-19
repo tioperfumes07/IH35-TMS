@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import ExcelJS from "exceljs";
-import { analysisFields, analysisRowsOf, exportColumnsWithInputs, exportFormulas, exportWorkbook, dropEmptyVendorColumns, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
+import { analysisFields, analysisRowsOf, exportColumnsWithInputs, exportFormulas, exportWorkbook, dropEmptyVendorColumns, withUpcColumns, prepare, DEFAULT_RULES, type GridCol, type GridRow } from "./desk.service";
 
 // Owner 2026-11-14: "my lists there are 583 rows - 1 header, so 582 items. why does the list in list analysis only have 463";
 // "a box to select if i want to view their list or just my list … a little filter … only those items that are matched";
@@ -205,6 +205,17 @@ describe("owner 2026-11-15 07:10 CT — the analysis shows the same number of li
     const head = (wb.worksheets[0]!.getRow(1).values as unknown[]).filter(Boolean);
     expect(head).not.toContain("TRADE · PCA");
     expect(head).toContain("TRADE · JIZAN");
+  });
+
+  // Owner 2026-11-19 08:29 CT: "I NEED IT TO EXPORT WITH THE UPC CODES."
+  it("every export carries the UPCs and my SKU right after the item columns", () => {
+    const cols = [
+      { key: "brand", label: "Brand", group: "Item", kind: "text" },
+      { key: "name", label: "Name", group: "Item", kind: "text" },
+      { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+    ] as GridCol[];
+    expect(withUpcColumns(cols).map((c) => c.key)).toEqual(["brand", "name", "upcs", "my_sku", "my_last_cost"]);
+    expect(withUpcColumns([...cols.slice(0, 2), { key: "upc", label: "UPC", group: "Item", kind: "text" } as GridCol, cols[2]!]).map((c) => c.key)).toEqual(["brand", "name", "upcs", "my_sku", "my_last_cost"]);
   });
 });
 

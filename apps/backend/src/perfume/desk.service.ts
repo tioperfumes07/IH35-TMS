@@ -2112,6 +2112,16 @@ export function priceFamilies(keys: readonly string[], isMoney: (i: number) => b
   });
   return [...fam.values()].filter((x) => x.length >= 2);
 }
+/** Owner 2026-11-19 08:29 CT: "I NEED IT TO EXPORT WITH THE UPC CODES." Every Excel export carries the item's UPCs (all of
+ *  them, one cell) and my own SKU / reference from my list, right after the item columns, whatever the screen shows. */
+export function withUpcColumns(cols: GridCol[]): GridCol[] {
+  const rest = cols.filter((c) => c.key !== "upc" && c.key !== "upcs" && c.key !== "my_sku");
+  let at = 0;
+  rest.forEach((c, i) => { if ((c.group || "Item") === "Item") at = i + 1; });
+  const add: GridCol[] = [{ key: "upcs", label: "UPC", group: "Item", kind: "text" }, { key: "my_sku", label: "My SKU / ref", group: "Item", kind: "text" }];
+  return [...rest.slice(0, at), ...add, ...rest.slice(at)];
+}
+
 /** Vendor column groups (v:<id>:…, t:<id>:…, s:<id>:…) with no value on any exported row are left out of the Excel
  *  (owner 2026-11-19 08:14 CT, Trading · sell to my vendors: "just those that do not have price, remove in the export").
  *  Item, mine and analysis columns always stay. */
