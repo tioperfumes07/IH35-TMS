@@ -20,6 +20,7 @@ import {
 import { myPriceMath } from "./perfumePriceMath";
 import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
+import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 
@@ -93,6 +94,7 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
+      {tab === "rules" ? null : <PerfumeSavedListsBar />}
       {tab === "lists" || tab === "rules" || tab === "analysis" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>

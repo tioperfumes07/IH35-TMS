@@ -82,6 +82,8 @@ export type PerfumeImportBody = {
   rows: PerfumeImportRow[];
   /** false = supplement (new arrivals): added next to the vendor's current list instead of replacing it. */
   replaces_current?: boolean;
+  /** My own lists: keep every list I have, save this one under its own name and put it in use (switch back any time). */
+  save_as_new?: boolean;
 };
 export type PerfumeImportCheck = {
   rows_read: number;
@@ -173,6 +175,12 @@ export const savePerfumeImport = (b: PerfumeImportBody) =>
   apiRequest<{ list_id: string; check: PerfumeImportCheck }>("/api/v1/perfume/lists", { method: "POST", body: b });
 export const setPerfumeListCurrent = (id: string, current: boolean) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/current`, { method: "POST", body: { current } });
+/** One saved list of mine (offer / inventory): every live list of that vendor sharing one name. */
+export type PerfumeSavedList = { key: string; vendor_id: string; vendor_name: string; kind: "offer" | "inventory"; number: number; name: string;
+  list_ids: string[]; files: string[]; first_date: string; last_date: string; lines: number; in_use: boolean; imported_at: string };
+export const listPerfumeSavedLists = () => apiRequest<{ saved: PerfumeSavedList[] }>("/api/v1/perfume/mine/saved-lists");
+export const activatePerfumeSavedList = (vendorId: string, key: string | null) =>
+  apiRequest<{ ok: true; in_use: number }>("/api/v1/perfume/mine/saved-lists/use", { method: "POST", body: { vendor_id: vendorId, key } });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
 export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[]; suggest?: PerfumeSuggestBucket | null };
 /** Owner 11-15 19:24 CT: lines with a suggestion / best ≥95/90/80/70% alike / no suggestion. */

@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
   canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -102,6 +102,7 @@ const importSchema = z.object({
   file_price_total_cents: z.number().int().min(0),
   rows: z.array(rowSchema).max(100_000),
   replaces_current: z.boolean().optional(),
+  save_as_new: z.boolean().optional(),
 });
 const gridQuery = z.object({
   view: z.enum(["buy", "trade", "wholesale", "comp", "analysis", "all"]).default("buy"),
@@ -286,6 +287,24 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     await withCurrentUser(uid, (c) => setListCurrent(c, params.data.id, body.data.current));
     dataChanged();
     return { ok: true };
+  });
+
+  // My saved lists (offer / inventory): see them all, put one in use, switch back any time — nothing is deleted.
+  app.get("/api/v1/perfume/mine/saved-lists", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return { saved: await withCurrentUser(uid, (c) => mySavedLists(c)) };
+  });
+  app.post("/api/v1/perfume/mine/saved-lists/use", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({ vendor_id: z.string().uuid(), key: z.string().min(1).max(300).nullable() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
+    try {
+      const r = await withCurrentUser(uid, (c) => useSavedList(c, body.data.vendor_id, body.data.key));
+      dataChanged();
+      return { ok: true, ...r };
+    } catch (e) {
+      if (e instanceof SavedListError) return reply.code(422).send({ error: "saved_list", message: e.message });
+      throw e;
+    }
   });
 
   // Review line filters arrive as comma lists (gender=M,W&kind=TESTER).
