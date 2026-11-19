@@ -49,6 +49,7 @@ export function PerfumeListsPanel() {
             { key: "vendor_name", label: "Vendor", sortable: true, render: (l) => <EntityLink kind="perfume_vendor" id={l.vendor_id} label={l.vendor_name} data-testid="perfume-list-vendor-link" /> },
             { key: "list_date", label: "List date", sortable: true },
             { key: "file_name", label: "File", sortable: true },
+            { key: "label", label: "Saved as", sortable: true, render: (l) => l.label ?? "" },
             { key: "rows_saved", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "price_total_saved_cents", label: "Price total", sortable: true, kind: "number", cellClass: "text-right tabular-nums", sortValue: (l) => Number(l.price_total_saved_cents), render: (l) => money(l.price_total_saved_cents) },
             { key: "matched", label: "Linked", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
@@ -206,6 +207,10 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const [listDate, setListDate] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; });
   // A full price list replaces the vendor's current list; a supplement (new arrivals, specials) is added next to it.
   const [replaces, setReplaces] = useState(true);
+  // My own lists (offer / inventory): replace the list in use, add to it, or SAVE AS A NEW LIST and keep every other one
+  // (owner 2026-11-19: "if i import this i dont want the current comparison to be deleted").
+  const [ownMode, setOwnMode] = useState<"new" | "add" | "replace">("new");
+  const [saveName, setSaveName] = useState("");
   const [check, setCheck] = useState<PerfumeImportCheck | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -246,7 +251,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const open = async (files: File[]) => {
     const f = files[0];
     if (!f) return;
-    setFile(f); setCheck(null); setLines([]);
+    setFile(f); setCheck(null); setLines([]); setSaveName(f.name.replace(/\.[a-z0-9]+$/i, ""));
     setFileLabel(files.length > 1 ? `${files.length} pictures (${f.name} …)` : f.name);
     setReplaces(files.length > 1 || isPictureFile(f) ? false : !/arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement/i.test(f.name));
     try {
@@ -266,7 +271,10 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   };
   const body = (): PerfumeImportBody | null => {
     if (!read || !extracted || !vendorId || !file) return null;
-    return { vendor_id: vendorId, list_date: listDate, file_name: (fileLabel || file.name).slice(0, 200), source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows, replaces_current: replaces };
+    return { vendor_id: vendorId, list_date: listDate, file_name: (fileLabel || file.name).slice(0, 200), source_kind: read.kind, rows_read: extracted.rowsRead, file_price_total_cents: extracted.fileTotalCents, rows: extracted.rows,
+      ...(ownList
+        ? { replaces_current: ownMode === "replace", save_as_new: ownMode === "new", label: ownMode === "new" ? (saveName.trim() || null) : null }
+        : { replaces_current: replaces }) };
   };
   const run = async (save: boolean) => {
     const b = body(); if (!b) return;
@@ -393,12 +401,33 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
               { key: "price", label: "Price", cellClass: "text-right tabular-nums", render: (r) => `$${r.price}` }, { key: "qty", label: "Qty" },
             ]}
           />}
+          {ownList ? (
+            <fieldset className="space-y-1 text-xs text-gray-700" data-testid="perfume-import-own-mode">
+              <legend className="font-semibold text-[#1F2A44]">{tr("perfume.lists.own.legend", "How to save this list of mine")}</legend>
+              {([
+                ["new", "Save as a new list — keep every list I already have; this one goes in use and I can switch back any time (My saved lists, top of the desk)"],
+                ["add", "Add to the list in use — it joins that saved list and switches with it"],
+                ["replace", "Replace the list in use — the older lists are removed (kept only as the audit record)"],
+              ] as const).map(([k, l]) => (
+                <label key={k} className="flex items-start gap-2">
+                  <input type="radio" name="perfume-own-mode" className="mt-0.5" checked={ownMode === k} onChange={() => setOwnMode(k)} data-testid={`perfume-import-own-${k}`} />
+                  <span>{tr(`perfume.lists.own.${k}`, l)}</span>
+                </label>
+              ))}
+              {ownMode === "new" ? (
+                <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.own.name", "Name of this saved list")}
+                  <input className="h-[34px] w-[320px] rounded-sm border border-gray-300 px-2" value={saveName} maxLength={200} onChange={(e) => setSaveName(e.target.value)} data-testid="perfume-import-save-name" />
+                </label>
+              ) : null}
+            </fieldset>
+          ) : (
           <label className="flex items-start gap-2 text-xs text-gray-700">
             <input type="checkbox" className="mt-0.5" checked={replaces} onChange={(e) => setReplaces(e.target.checked)} data-testid="perfume-import-replaces" />
             <span>
               <b>{tr("perfume.lists.31", "This is the vendor's full price list")}</b> {tr("perfume.lists.32", "— it replaces ALL their older lists: those are removed from Lists, the grid and review (kept only as the audit record). Untick for new arrivals / specials: the file is added next to their full list (the newest list wins when both carry an item) until their next full list replaces both.")}
             </span>
           </label>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length || needPrice > 0} onClick={() => void run(false)}>{tr("perfume.lists.33", "Check before saving")}</Button>
             <Button type="button" className="h-[34px] px-3 text-xs" disabled={!vendorId || busy || !extracted.rows.length || needPrice > 0} onClick={() => void run(true)}>{tr("perfume.lists.34", "Save list")}</Button>

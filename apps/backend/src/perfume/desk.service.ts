@@ -282,6 +282,10 @@ export type ImportIn = {
    * false: a supplement (new arrivals, specials) — it is added and the vendor's current list stays current.
    */
   replaces_current?: boolean;
+  /** My own lists only (offer / inventory): keep every list I already have, save this one under its own name and put it
+   *  in use; the others stay saved and one click switches back (owner 2026-11-19: "add function to save … the current
+   *  lists and comparisons, and then … switch between this one and the new testers one … offer 1, 2, 3 … or by date"). */
+  save_as_new?: boolean;
 };
 export type ImportCheck = {
   rows_read: number; rows_saved: number; rows_skipped: number;
@@ -421,7 +425,21 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     [vendor.id, body.list_date, body.label ?? null, body.file_name, body.source_kind, check.rows_read, check.rows_saved, check.rows_skipped,
       check.price_total_file_cents, check.price_total_saved_cents, userId]);
   const listId = list.rows[0].id;
-  if (body.replaces_current !== false) {
+  const own = vendor.kind === "offer" || vendor.kind === "inventory";
+  if (own && body.save_as_new) {
+    // Saved list: every other list of mine is KEPT (never voided) and only taken out of use; this one is in use.
+    await c.query(`UPDATE perfume.price_lists SET is_current = false WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL`, [vendor.id, listId]);
+  } else if (own && body.replaces_current === false) {
+    // Added to the list in use: it joins that saved list (same name), so switching moves them together.
+    const cur = (await c.query<{ id: string; label: string | null; file_name: string; list_date: string }>(
+      `SELECT id, label, file_name, list_date::text FROM perfume.price_lists WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL AND is_current
+        ORDER BY imported_at LIMIT 1`, [vendor.id, listId])).rows[0];
+    if (cur) {
+      const name = cur.label ?? `${cur.file_name} · ${cur.list_date}`;
+      await c.query(`UPDATE perfume.price_lists SET label = $3 WHERE vendor_id = $1 AND voided_at IS NULL AND is_current AND (id = $2 OR label IS NULL)`, [vendor.id, listId, name]);
+    }
+  }
+  if (body.replaces_current !== false && !(own && body.save_as_new)) {
     // A full list REPLACES the vendor's older lists (owner 2026-11-12: "we cannot have old lists we replace with the new
     // ones"): they are voided — gone from the Lists tab, the grid and review — and kept only as the audit record.
     await c.query(
@@ -590,6 +608,56 @@ export async function voidList(c: PoolClient, listId: string, reason: string) {
        SELECT id FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL ORDER BY list_date DESC, imported_at DESC LIMIT 1)
        AND NOT EXISTS (SELECT 1 FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL AND is_current)`,
     [r.rows[0].vendor_id]);
+}
+
+/** My saved lists (offer / inventory). A saved list is every live list of that vendor sharing one name (label); a list
+ *  with no name is its own saved list. Numbered per kind in the order imported (Offer 1, Offer 2 …). */
+export type SavedListLine = { id: string; vendor_id: string; vendor_name: string; kind: "offer" | "inventory"; label: string | null; file_name: string;
+  list_date: string; rows_saved: number; is_current: boolean; imported_at: string };
+export type SavedList = { key: string; vendor_id: string; vendor_name: string; kind: "offer" | "inventory"; number: number; name: string;
+  list_ids: string[]; files: string[]; first_date: string; last_date: string; lines: number; in_use: boolean; imported_at: string };
+export function groupSavedLists(lines: SavedListLine[]): SavedList[] {
+  const by = new Map<string, SavedList>();
+  const sorted = [...lines].sort((a, b) => a.imported_at.localeCompare(b.imported_at) || a.list_date.localeCompare(b.list_date) || a.id.localeCompare(b.id));
+  for (const l of sorted) {
+    const key = l.label ?? l.id;
+    const k = `${l.vendor_id}|${key}`;
+    const g = by.get(k);
+    if (!g) {
+      by.set(k, { key, vendor_id: l.vendor_id, vendor_name: l.vendor_name, kind: l.kind, number: 0, name: l.label ?? `${l.file_name} · ${l.list_date}`,
+        list_ids: [l.id], files: [l.file_name], first_date: l.list_date, last_date: l.list_date, lines: l.rows_saved, in_use: l.is_current, imported_at: l.imported_at });
+    } else {
+      g.list_ids.push(l.id); g.files.push(l.file_name); g.lines += l.rows_saved; g.in_use = g.in_use && l.is_current;
+      if (l.list_date < g.first_date) g.first_date = l.list_date;
+      if (l.list_date > g.last_date) g.last_date = l.list_date;
+    }
+  }
+  const out = [...by.values()];
+  const n: Record<string, number> = {};
+  for (const g of out) g.number = n[g.kind] = (n[g.kind] ?? 0) + 1;
+  return out;
+}
+export async function mySavedLists(c: PoolClient): Promise<SavedList[]> {
+  const r = await c.query<SavedListLine>(
+    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, v.kind, l.label, l.file_name, l.list_date::text,
+            l.rows_saved, l.is_current, l.imported_at::text
+       FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE l.voided_at IS NULL AND v.kind IN ('offer', 'inventory') AND v.archived_at IS NULL`);
+  return groupSavedLists(r.rows);
+}
+export class SavedListError extends Error {}
+/** Puts one saved list in use for that vendor (every other saved list of it is kept, out of use). key null = none in use. */
+export async function useSavedList(c: PoolClient, vendorId: string, key: string | null): Promise<{ in_use: number }> {
+  const v = await vendorById(c, vendorId);
+  if (v.kind !== "offer" && v.kind !== "inventory") throw new SavedListError("only my offer list and my inventory have saved lists");
+  if (key != null) {
+    const hit = await c.query(`SELECT 1 FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL AND COALESCE(label, id::text) = $2 LIMIT 1`, [vendorId, key]);
+    if (!hit.rowCount) throw new SavedListError("saved list not found");
+  }
+  const r = await c.query(
+    `UPDATE perfume.price_lists SET is_current = ($2::text IS NOT NULL AND COALESCE(label, id::text) = $2::text) WHERE vendor_id = $1 AND voided_at IS NULL RETURNING is_current`,
+    [vendorId, key]);
+  return { in_use: r.rows.filter((x: { is_current: boolean }) => x.is_current).length };
 }
 
 /** Owner switch: count this list in the grid (current) or not. Voided lists cannot be switched. */
