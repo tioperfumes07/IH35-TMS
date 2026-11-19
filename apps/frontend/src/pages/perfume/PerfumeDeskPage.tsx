@@ -154,7 +154,7 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // qty sold … the last price i purchased is important because prices change weekly."
   if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_last_cost", "my_purchase_date", "my_qty_purchased", "my_qty", "my_qty_sold"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
-  if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
+  if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || /^trade_(low|high|profit)/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   // Owner 2026-11-14: "in competition their margin … the vendors prices should be after all the esperanza data
   // margins etc. i need to see their data next to mine" — mine, then the competitor (their line, list, cushion, sales
   // price, their cost, what they earn, margin), then every supplier's list price.
