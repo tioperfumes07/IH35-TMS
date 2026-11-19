@@ -15,7 +15,7 @@ import {
   PerfumeExtractInputError,
 } from "./extract.service.js";
 import {
-  buildGrid, bulkReview, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
+  buildGrid, bulkReview, withUpcColumns, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
   canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
@@ -451,7 +451,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const shown = q.data.view === "analysis"
       ? g.cols.filter((c) => (picked.some((p) => p.key === c.key) || ANALYSIS_ENGINE_KEYS.has(c.key)) && !ANALYSIS_MATCH_EXTRAS.has(c.key))
       : picked;
-    const { cols, added } = exportColumnsWithInputs(shown, g.cols);
+    const { cols, added } = exportColumnsWithInputs(q.data.view === "analysis" ? shown : withUpcColumns(shown), g.cols);
     const buf = await exportWorkbook(cols, rows, g.rules, `TIO ${q.data.view}`, added);
     const stamp = new Date().toISOString().slice(0, 10);
     return reply
