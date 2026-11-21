@@ -221,7 +221,7 @@ export function suggest(ix: MatchIndex, id: Identity, limit = 5): Suggestion[] {
   return out.sort((a, b) => b.score - a.score).slice(0, limit);
 }
 
-export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: { allowNewItem: boolean }): LineMatch {
+export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: { allowNewItem: boolean; ownList?: boolean }): LineMatch {
   const identity = identify({
     description: line.description, brand: line.brand, size: line.size_text, gender: line.gender, type: line.type,
     section: line.section, brandAliases: ix.brandAliases,
@@ -278,6 +278,12 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }
   const suggestions = suggest(ix, identity);
+  // 6b. MY OWN list (offer / inventory): a line with MY item number that no item fits and nothing even resembles is
+  // its own product — my item number identifies it (owner 2026-11-20 20:46 CT, HK inventory: 341 of 1,715 lines were
+  // left with no item, so their cost and stock showed nowhere). Anything that resembles an item still goes to Review.
+  if (opts.allowNewItem && opts.ownList && sku && named && !suggestions.length && !ix.byKey.has(identity.key)) {
+    return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
+  }
   return { identity, upc, textKey, itemId: null, method: null, status: suggestions.length ? "review" : "unmatched", suggestions };
 }
 

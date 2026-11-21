@@ -265,7 +265,9 @@ export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
 /* ---------------- import ---------------- */
 
 export type ImportRowIn = LineIn & { sheet?: string | null; row_no: number; raw?: unknown; price: unknown; qty?: unknown; case_pack?: unknown;
-  purchase_date?: string | null; qty_purchased?: unknown; qty_sold?: unknown };
+  purchase_date?: string | null; qty_purchased?: unknown; qty_sold?: unknown;
+  /** My inventory by location (owner 2026-11-20 20:38 CT: "locations … in the app register"): { "008": 12, "011": 5 }. */
+  qty_by_location?: Record<string, unknown> | null };
 export type ImportIn = {
   vendor_id: string;
   list_date: string;
@@ -315,6 +317,46 @@ function intOrNull(v: unknown): number | null {
   return Number.isFinite(n) ? Math.trunc(n) : null;
 }
 
+/** A location code as the owner writes it: "8", "008", "t1" → "008", "T1" (codes are 3-digit store numbers or letters). */
+export function locationCode(v: unknown): string {
+  const t = String(v ?? "").trim().toUpperCase();
+  if (/^\d{1,3}$/.test(t)) return t.padStart(3, "0");
+  return /^[A-Z0-9-]{1,10}$/.test(t) ? t : "";
+}
+/** { "008": "12", "11": 5, "x": "" } → { "008": 12, "011": 5 } — whole pieces only, empty / non-numbers dropped. */
+export function qtyByLocation(v: unknown): Record<string, number> | null {
+  if (!v || typeof v !== "object") return null;
+  const out: Record<string, number> = {};
+  for (const [k, raw] of Object.entries(v as Record<string, unknown>)) {
+    const code = locationCode(k);
+    const n = intOrNull(raw);
+    if (!code || n == null || n === 0) continue;
+    out[code] = (out[code] ?? 0) + n;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
+/** The owner's locations register (owner 2026-11-20 20:38 CT: "008 perfume bodega laredo, 5 hidalgo-mcallen, 11 laredo …"). */
+export type PerfumeLocation = { code: string; name: string; sort_order: number; active: boolean; updated_at: string };
+export async function listLocations(c: PoolClient): Promise<PerfumeLocation[]> {
+  return (await c.query<PerfumeLocation>(
+    `SELECT code, name, sort_order, active, updated_at::text FROM perfume.locations ORDER BY sort_order, code`)).rows;
+}
+export class LocationError extends Error {}
+export async function saveLocation(c: PoolClient, uid: string, b: { code: string; name: string; sort_order?: number | null; active?: boolean | null }): Promise<PerfumeLocation> {
+  const code = locationCode(b.code);
+  const name = String(b.name ?? "").trim();
+  if (!code) throw new LocationError("location_code_invalid");
+  if (!name) throw new LocationError("location_name_required");
+  return (await c.query<PerfumeLocation>(
+    `INSERT INTO perfume.locations AS t (code, name, sort_order, active, updated_by, updated_at)
+     VALUES ($1, $2, COALESCE($3, (SELECT COALESCE(max(sort_order), 0) + 10 FROM perfume.locations)), COALESCE($4, true), $5::uuid, now())
+     ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name, sort_order = COALESCE($3, t.sort_order), active = COALESCE($4, t.active),
+       updated_by = EXCLUDED.updated_by, updated_at = now()
+     RETURNING code, name, sort_order, active, updated_at::text`,
+    [code, name, b.sort_order ?? null, b.active ?? null, uid])).rows[0];
+}
+
 /** ownList: the owner's own offer / inventory list — a line that names an item but has no price is kept with an empty
  *  price (owner 2026-11-14: 2 of his 582 lines had none). Supplier and competitor lists still need a price. */
 export function prepare(body: ImportIn, ownList = false) {
@@ -324,7 +366,9 @@ export function prepare(body: ImportIn, ownList = false) {
     const hasItem = Boolean(String(r.description ?? "").trim() || normalizeUpc(r.upc) || String(r.sku ?? "").trim());
     if (!hasItem) continue;
     if ((cents0 == null || cents0 <= 0) && !ownList) continue;
-    const cents = cents0 != null && cents0 > 0 ? cents0 : null;
+    // Owner 2026-11-20 20:46 CT: "all those with 0 cost are either testers or blotters" — on my own list a cost the
+    // file PRINTS as 0 is kept as $0 (free testers / blotters); an empty cell stays empty (never a made-up 0).
+    const cents = cents0 != null && cents0 > 0 ? cents0 : ownList && cents0 === 0 ? 0 : null;
     const description = String(r.description ?? "").trim() || String(r.sku ?? r.upc ?? "");
     // The vendor's own item code, when the list has no SKU column but prints it in the line: MTZ writes
     // "JO MALONE ENGLISH PEAR & FREESIA 1.0 EDC L UNBOXED  (137792) - France". Without it a no-barcode
@@ -349,7 +393,7 @@ export async function previewImport(c: PoolClient, body: ImportIn): Promise<Impo
   check.upcs_on_two_products = sharedUpcs.size;
   for (const r0 of saved) {
     const r = sharedUpcs.has(normalizeUpc(r0.upc)) ? { ...r0, upc: null } : r0;
-    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell", ownList: vendor.kind === "offer" || vendor.kind === "inventory" });
     tally(check, m.method, m.status);
     if (m.method === "new_item") {
       created++;
@@ -453,7 +497,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   const ix = await loadIndex(c);
   type Out = { sheet: string | null; row_no: number; raw: unknown; upc: string | null; sku: string | null; brand: string | null; description: string;
     size_text: string | null; price_cents: number | null; qty: number | null; case_pack: number | null; identity_key: string; loose_key: string;
-    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null;
+    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null; qty_by_location: Record<string, number> | null;
     item_id: string | null; match_method: string | null; match_status: string; suggestions: unknown };
   const out: Out[] = [];
   const newItems: Array<{ tmp: string; brand: string; name: string; size_ml: number | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }> = [];
@@ -472,7 +516,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   for (const r0 of saved) {
     const shared = sharedUpcs.has(normalizeUpc(r0.upc));
     const r = shared ? { ...r0, upc: null } : r0;
-    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell" });
+    const m = matchLine(ix, vendor.id, r, { allowNewItem: vendor.kind !== "sell", ownList: own });
     let itemId = m.itemId;
     if (m.method === "new_item") {
       const id = m.identity;
@@ -492,6 +536,7 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
       sheet: r.sheet ?? null, row_no: r.row_no, raw: r.raw ?? {}, upc: normalizeUpc(r0.upc) || null, sku: sku || null, brand: r.brand ?? null,
       description: r.description, size_text: r.size_text ?? null, price_cents: r.price_cents, qty: intOrNull(r.qty), case_pack: intOrNull(r.case_pack),
       purchase_date: dateOrNull(r.purchase_date), qty_purchased: intOrNull(r.qty_purchased), qty_sold: intOrNull(r.qty_sold),
+      qty_by_location: own ? qtyByLocation(r.qty_by_location) : null,
       identity_key: m.identity.key, loose_key: looseKey(m.identity), item_id: itemId, match_method: m.method,
       match_status: itemId ? "matched" : m.status, suggestions: m.suggestions,
     });
@@ -573,11 +618,11 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   for (let i = 0; i < out.length; i += 500) {
     await c.query(
       `INSERT INTO perfume.price_list_rows (list_id, sheet, row_no, raw, upc, sku, brand, description, size_text, price_cents, qty, case_pack,
-         purchase_date, qty_purchased, qty_sold, identity_key, loose_key, item_id, match_method, match_status, suggestions)
+         purchase_date, qty_purchased, qty_sold, qty_by_location, identity_key, loose_key, item_id, match_method, match_status, suggestions)
        SELECT $1, x.sheet, x.row_no, coalesce(x.raw, '{}'::jsonb), x.upc, x.sku, x.brand, x.description, x.size_text, x.price_cents, x.qty, x.case_pack,
-              x.purchase_date, x.qty_purchased, x.qty_sold, x.identity_key, x.loose_key, x.item_id, x.match_method, x.match_status, coalesce(x.suggestions, '[]'::jsonb)
+              x.purchase_date, x.qty_purchased, x.qty_sold, x.qty_by_location, x.identity_key, x.loose_key, x.item_id, x.match_method, x.match_status, coalesce(x.suggestions, '[]'::jsonb)
          FROM jsonb_to_recordset($2::jsonb) AS x(sheet text, row_no int, raw jsonb, upc text, sku text, brand text, description text, size_text text,
-              price_cents int, qty int, case_pack int, purchase_date date, qty_purchased int, qty_sold int, identity_key text, loose_key text, item_id uuid, match_method text, match_status text, suggestions jsonb)`,
+              price_cents int, qty int, case_pack int, purchase_date date, qty_purchased int, qty_sold int, qty_by_location jsonb, identity_key text, loose_key text, item_id uuid, match_method text, match_status text, suggestions jsonb)`,
       [listId, JSON.stringify(out.slice(i, i + 500))]);
   }
   // Re-read what was stored: the check is proven against the table, not against memory.
@@ -1319,11 +1364,11 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   const offerV = vendors.filter((v) => v.kind === "offer");
   const invV = vendors.filter((v) => v.kind === "inventory");
   const prices = await c.query<{ item_id: string; vendor_id: string; price_cents: number; qty: number | null; case_pack: number | null; sku: string | null; description: string;
-    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null }>(
+    purchase_date: string | null; qty_purchased: number | null; qty_sold: number | null; qty_by_location: Record<string, number> | null }>(
     // A vendor can have several current lists (full list + new arrivals). For each item the vendor's NEWEST
     // current list that carries it sets the price (list date, then import time); within that list, the lowest line.
     `SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::int AS price_cents, r.qty, r.case_pack, r.sku, r.description,
-            r.purchase_date::text AS purchase_date, r.qty_purchased, r.qty_sold
+            r.purchase_date::text AS purchase_date, r.qty_purchased, r.qty_sold, r.qty_by_location
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.item_id IS NOT NULL AND l.is_current AND l.voided_at IS NULL
       ORDER BY r.item_id, l.vendor_id, l.list_date DESC, l.imported_at DESC, r.price_cents ASC`);
@@ -1349,6 +1394,25 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   const myCostQ = await c.query<{ item_id: string; last_cost_cents: number | null; avg_cost_cents: number | null }>(
     `SELECT item_id, last_cost_cents, avg_cost_cents FROM perfume.item_costs`);
   const typedCost = new Map(myCostQ.rows.map((r) => [r.item_id, r]));
+  // My stock = EVERY line of the bottle on my inventory list in use, summed (owner 2026-11-20: the HK file carries one
+  // bottle under two item numbers; one line per item undercounted it), and the same per location.
+  const invLineQ = await c.query<{ item_id: string; qty: number | null; qty_by_location: Record<string, number> | null }>(
+    `SELECT r.item_id, r.qty, r.qty_by_location FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+       JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL`);
+  const invStock = new Map<string, { qty: number; byLoc: Record<string, number> }>();
+  for (const l of invLineQ.rows) {
+    const s0 = invStock.get(l.item_id) ?? { qty: 0, byLoc: {} };
+    s0.qty += l.qty ?? 0;
+    for (const [k, q] of Object.entries(l.qty_by_location ?? {})) s0.byLoc[k] = (s0.byLoc[k] ?? 0) + Number(q || 0);
+    invStock.set(l.item_id, s0);
+  }
+  const locSeen = new Set<string>();
+  for (const s0 of invStock.values()) for (const k of Object.keys(s0.byLoc)) locSeen.add(k);
+  const locations = locSeen.size ? await listLocations(c) : [];
+  const locName = new Map(locations.map((l) => [l.code, l.name]));
+  const locOrder = new Map(locations.map((l) => [l.code, l.sort_order]));
+  const locCodes = [...locSeen].sort((a, b) => (locOrder.get(a) ?? 1e9) - (locOrder.get(b) ?? 1e9) || a.localeCompare(b));
   // My stock with no inventory file = the SUM of every line of that bottle on my list (Blue Cielo sits on 11 lines).
   const offerQtySum = new Map<string, number>();
   for (const l of myLineQ.rows) if (l.item_id && l.qty != null) offerQtySum.set(l.item_id, (offerQtySum.get(l.item_id) ?? 0) + l.qty);
@@ -1405,6 +1469,11 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // qty sold … the last price i purchased is important because prices change weekly". Stock comes from my inventory
   // file, else the quantities on my offer list ("you uploaded my price list and quantities").
   if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty" : "Inv qty (my list)", group: "Mine", kind: "int" });
+  // One stock column per location of my inventory, "number · name" from the locations register.
+  for (const code of locCodes) {
+    const nm = locName.get(code);
+    mineCols.push({ key: `loc:${code}`, label: `Qty ${code}${nm && nm !== code ? ` · ${nm}` : ""}`, group: "Mine", kind: "int" });
+  }
   mineCols.push(
     { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
     { key: "my_avg_cost", label: "My avg cost", group: "Mine", kind: "money" },
@@ -1557,6 +1626,11 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     let myQty: number | null = null, myCost: number | null = null, myOffer: number | null = null, offerQty: number | null = null;
     let myPurch: string | null = null, myQtyPurch: number | null = null, mySold: number | null = null, mySku: string | null = null;
     for (const v of invV) { const o = offersMap.get(v.id); if (o) { myQty = (myQty ?? 0) + (o.qty ?? 0); myCost = myCost ?? o.price; myPurch = myPurch ?? o.purchase_date; myQtyPurch = myQtyPurch ?? o.qty_purchased; mySold = mySold ?? o.qty_sold; mySku = mySku ?? o.sku; } }
+    const stock = invStock.get(it.id);
+    if (stock) {
+      myQty = stock.qty;
+      for (const [k, q] of Object.entries(stock.byLoc)) row[`loc:${k}`] = q;
+    }
     let myOfferDesc: string | null = null;
     for (const v of offerV) { const o = offersMap.get(v.id); if (o) { myOffer = myOffer ?? o.price; myOfferDesc = myOfferDesc ?? o.desc; offerQty = o.qty ?? offerQty; mySku = mySku ?? o.sku; } }
     // An inventory file exists (any item): then it is the stock — an item not on it has none on hand.

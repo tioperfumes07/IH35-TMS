@@ -9,11 +9,11 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  extractPerfumeLines, listPerfumeLists, listPerfumeVendors, previewPerfumeImport, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel,
-  type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeVendor, type PerfumeVendorKind,
+  extractPerfumeLines, listPerfumeLists, listPerfumeLocations, listPerfumeVendors, previewPerfumeImport, savePerfumeLocation, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel,
+  type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeLocation, type PerfumeVendor, type PerfumeVendorKind,
 } from "../../api/perfume";
 import {
-  extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, pictureLinesToExtracted, priceToCents, readAnyFile, readPictureFiles,
+  extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, locationColumns, pictureLinesToExtracted, priceToCents, readAnyFile, readPictureFiles,
   type Mapping, type PictureLine, type ReadFile,
 } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
@@ -37,6 +37,7 @@ export function PerfumeListsPanel() {
     <div className="space-y-4">
       <ImportCard vendors={vendors.data?.vendors ?? []} />
       <VendorsCard vendors={vendors.data?.vendors ?? []} />
+      <LocationsCard />
       <section className="space-y-1" aria-label={tr("perfume.lists.1", "Price lists on file")}>
         <div className="text-section-header">{tr("perfume.lists.2", "Price lists on file")}</div>
         <ParityTable<PerfumeList>
@@ -189,6 +190,61 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
   );
 }
 
+/* ---------------- locations register ---------------- */
+
+/** Owner 2026-11-20 20:38 CT: "LOCATIONS … with number and name … in the app register". My stores / bodegas: the
+ *  number (code) my inventory file uses and the name. Column headers on the desk read "Qty 008 · Perfume Bodega Laredo". */
+function LocationsCard() {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const locs = useQuery({ queryKey: ["perfume", "locations"], queryFn: listPerfumeLocations });
+  const [edit, setEdit] = useState<{ code: string; name: string; isNew: boolean } | null>(null);
+  const save = async () => {
+    if (!edit) return;
+    try {
+      await savePerfumeLocation({ code: edit.code, name: edit.name });
+      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      pushToast(`Location ${edit.code} saved`, "success");
+      setEdit(null);
+    } catch (e) { pushToast(userFacingApiError(e, "Location not saved"), "error"); }
+  };
+  if (locs.isError) return <ListErrorState title={tr("perfume.loc.err", "Couldn't load locations")} status={0} message={(locs.error as Error)?.message} onRetry={() => void locs.refetch()} />;
+  return (
+    <section className="space-y-1" aria-label={tr("perfume.loc.1", "Locations")} data-testid="perfume-locations">
+      <div className="flex items-center justify-between">
+        <div className="text-section-header">{tr("perfume.loc.2", "Locations — my stores and bodegas")}</div>
+        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ code: "", name: "", isNew: true })}>{tr("perfume.loc.3", "Add location")}</Button>
+      </div>
+      {edit ? (
+        <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white p-2">
+          <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.loc.4", "Number")}
+            <input data-testid="perfume-location-code" className="h-[40px] w-[104px] rounded-sm border border-gray-300 px-2 uppercase" value={edit.code} disabled={!edit.isNew}
+              onChange={(e) => setEdit({ ...edit, code: e.target.value.toUpperCase() })} placeholder="008" maxLength={10} />
+          </label>
+          <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.loc.5", "Name")}
+            <input data-testid="perfume-location-name" className="h-[40px] w-[260px] rounded-sm border border-gray-300 px-2" value={edit.name}
+              onChange={(e) => setEdit({ ...edit, name: e.target.value })} placeholder={tr("perfume.loc.6", "Perfume Bodega Laredo")} maxLength={120} />
+          </label>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={!edit.code.trim() || !edit.name.trim()} onClick={() => void save()}>{tr("perfume.lists.18", "Save")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setEdit(null)}>{tr("perfume.lists.19", "Close")}</Button>
+        </div>
+      ) : null}
+      <ParityTable<PerfumeLocation>
+        rows={locs.data?.locations ?? []}
+        rowKey={(l) => l.code}
+        storageKey="perfume-desk-locations-v1"
+        emptyText="No locations yet — add 008 Perfume Bodega Laredo …"
+        onRowClick={(l) => setEdit({ code: l.code, name: l.name, isNew: false })}
+        columns={[
+          { key: "code", label: "Number", sortable: true },
+          { key: "name", label: "Name", sortable: true },
+          { key: "active", label: "Active", sortable: true, render: (l) => (l.active ? "Yes" : "No") },
+        ]}
+      />
+    </section>
+  );
+}
+
 /* ---------------- import ---------------- */
 
 function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
@@ -219,9 +275,13 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
   const isPictures = read?.kind === "image";
   // My own lists (offer / inventory) keep a line that names an item but has no price (owner 2026-11-14).
   const ownList = ["offer", "inventory"].includes(vendors.find((v) => v.id === vendorId)?.kind ?? "");
+  // My inventory file's location columns ("008 Perfume Bodega Laredo", "011 Laredo" …) → pieces per location.
+  const locs = useQuery({ queryKey: ["perfume", "locations"], queryFn: listPerfumeLocations, enabled: ownList });
+  const locCodes = useMemo(() => (ownList ? (locs.data?.locations ?? []).map((l) => l.code) : []), [ownList, locs.data]);
+  const locCols = useMemo(() => (sheet && locCodes.length ? locationColumns(sheet.cells[headerRow] ?? [], locCodes) : new Map<number, string>()), [sheet, headerRow, locCodes]);
   const extracted = useMemo(
-    () => (isPictures ? (lines.length ? pictureLinesToExtracted(lines) : null) : sheet ? extractRows(sheet, headerRow, map, { keepPriceless: ownList }) : null),
-    [isPictures, lines, sheet, headerRow, map, ownList],
+    () => (isPictures ? (lines.length ? pictureLinesToExtracted(lines) : null) : sheet ? extractRows(sheet, headerRow, map, { keepPriceless: ownList, locationCodes: locCodes }) : null),
+    [isPictures, lines, sheet, headerRow, map, ownList, locCodes],
   );
   const needPrice = lines.filter((l) => l.include && !(Number(l.price) > 0)).length;
 
@@ -389,6 +449,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <div className="text-xs text-gray-700">
             {isPictures ? tr("perfume.lists.pic8", "Approved from the pictures:") : tr("perfume.lists.29", "Read from the file:")} <b>{extracted.rowsRead.toLocaleString()}</b> {tr("perfume.lists.30", "priced lines · price total")} <b>{money(extracted.fileTotalCents)}</b>
             {extracted.sections ? ` · ${extracted.sections} section headers (WOMEN / MEN / SETS …) carried to the lines under them` : ""}
+            {locCols.size ? <span data-testid="perfume-import-locations"> · {tr("perfume.loc.7", "stock by location read from")} <b>{locCols.size}</b> {tr("perfume.loc.8", "location columns")} ({[...locCols.values()].join(", ")})</span> : null}
           </div>
           {isPictures ? null : <ParityTable
             rows={extracted.rows.slice(0, 8)}
