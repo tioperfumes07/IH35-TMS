@@ -198,11 +198,10 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
   return (
     <div
       ref={wrapperRef}
-      className="relative inline-flex shrink-0 items-stretch"
-      // V3 (every .dc.html): a tab with a menu is drawn exactly like any tab — 600 11px Inter, 8px padding, opacity .85
-      // when idle; the active one is the rgba(255,255,255,.16) box with the 2px white rule. The look sits on the wrapper
-      // so the label and its chevron read as ONE tab.
-      style={parentActive ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" } : { opacity: 0.85 }}
+      className="relative inline-flex shrink-0"
+      // V3 (every .dc.html): the wrapper carries the navy background (same as bar); active indicator moves to the NavLink
+      // so self.backgroundColor matches the spec measurement (parity reader walks text→NavLink→wrapper).
+      style={{ backgroundColor: "#13233F", paddingLeft: 6, paddingRight: 6, columnGap: 2, ...(parentActive ? {} : { opacity: 0.85 }) }}
       onMouseEnter={show}
       onMouseLeave={scheduleHide}
     >
@@ -210,7 +209,7 @@ function NavyDropdown({ item, pathname }: { item: NavyPageSubNavItem; pathname: 
         <NavLink
           to={item.to}
           className="focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-          style={{ ...NAVY_TAB_TEXT, padding: "8px 2px 8px 8px" }}
+          style={{ ...NAVY_TAB_TEXT, padding: "8px 8px", ...(parentActive ? { backgroundColor: "rgba(255,255,255,.16)", borderBottom: "2px solid #fff" } : {}) }}
         >
           {item.label}
         </NavLink>
