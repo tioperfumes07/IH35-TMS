@@ -152,7 +152,7 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
   // Owner 2026-11-14: "in purchase compare vendors i need … my last cost, date, quantity purchased, current inventory,
   // qty sold … the last price i purchased is important because prices change weekly."
-  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || ["best_vendor", "my_last_cost", "my_purchase_date", "my_qty_purchased", "my_qty", "my_qty_sold"].includes(key);
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || /^loc:/.test(key) || ["best_vendor", "my_last_cost", "my_avg_cost", "my_purchase_date", "my_qty_purchased", "my_qty", "my_qty_sold"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || /^trade_(low|high|profit)/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   // Owner 2026-11-14: "in competition their margin … the vendors prices should be after all the esperanza data

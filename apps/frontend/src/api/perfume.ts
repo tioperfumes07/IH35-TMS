@@ -70,6 +70,8 @@ export type PerfumeImportRow = {
   purchase_date?: string | null;
   qty_purchased?: number | string | null;
   qty_sold?: number | string | null;
+  /** My inventory by location: { "008": 12, "011": 5 } (owner 2026-11-20). */
+  qty_by_location?: Record<string, number | string> | null;
 };
 export type PerfumeImportBody = {
   vendor_id: string;
@@ -181,6 +183,11 @@ export type PerfumeSavedList = { key: string; vendor_id: string; vendor_name: st
 export const listPerfumeSavedLists = () => apiRequest<{ saved: PerfumeSavedList[] }>("/api/v1/perfume/mine/saved-lists");
 export const activatePerfumeSavedList = (vendorId: string, key: string | null) =>
   apiRequest<{ ok: true; in_use: number }>("/api/v1/perfume/mine/saved-lists/use", { method: "POST", body: { vendor_id: vendorId, key } });
+/** The owner's locations register (owner 2026-11-20 20:38 CT): store / bodega number + name. */
+export type PerfumeLocation = { code: string; name: string; sort_order: number; active: boolean; updated_at: string };
+export const listPerfumeLocations = () => apiRequest<{ locations: PerfumeLocation[] }>("/api/v1/perfume/locations");
+export const savePerfumeLocation = (b: { code: string; name: string; sort_order?: number | null; active?: boolean | null }) =>
+  apiRequest<{ location: PerfumeLocation }>("/api/v1/perfume/locations", { method: "POST", body: b });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
 export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[]; suggest?: PerfumeSuggestBucket | null };
 /** Owner 11-15 19:24 CT: lines with a suggestion / best ≥95/90/80/70% alike / no suggestion. */

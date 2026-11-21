@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, withUpcColumns, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -91,6 +91,8 @@ const rowSchema = z.object({
   purchase_date: z.string().max(30).nullable().optional(),
   qty_purchased: z.union([z.number(), z.string().max(30)]).nullable().optional(),
   qty_sold: z.union([z.number(), z.string().max(30)]).nullable().optional(),
+  // My inventory by location (owner 2026-11-20): { "008": 12, "011": 5 }.
+  qty_by_location: z.record(z.string().max(10), z.union([z.number(), z.string().max(30)])).nullable().optional(),
 });
 const importSchema = z.object({
   vendor_id: z.string().uuid(),
@@ -303,6 +305,26 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       return { ok: true, ...r };
     } catch (e) {
       if (e instanceof SavedListError) return reply.code(422).send({ error: "saved_list", message: e.message });
+      throw e;
+    }
+  });
+
+  // The owner's locations register (owner 2026-11-20 20:38 CT): number + name of every store / bodega.
+  app.get("/api/v1/perfume/locations", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return { locations: await withCurrentUser(uid, (c) => listLocations(c)) };
+  });
+  app.post("/api/v1/perfume/locations", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({ code: z.string().min(1).max(10), name: z.string().min(1).max(120), sort_order: z.number().int().min(0).max(100_000).nullable().optional(),
+      active: z.boolean().nullable().optional() }).safeParse(req.body);
+    if (!body.success) return bad(reply, body.error);
+    try {
+      const location = await withCurrentUser(uid, (c) => saveLocation(c, uid, body.data));
+      dataChanged();
+      return { location };
+    } catch (e) {
+      if (e instanceof LocationError) return reply.code(400).send({ error: e.message });
       throw e;
     }
   });

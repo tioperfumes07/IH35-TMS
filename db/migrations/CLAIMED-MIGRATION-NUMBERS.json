@@ -1203,5 +1203,10 @@
     "claimed_at": "2026-11-18",
     "claimed_by": "lead",
     "purpose": "capture 79 undocumented live reinstate columns (17 document tables) so a fresh-migrated DB matches prod; no-op on prod"
+  },
+  "202616680100": {
+    "claimed_at": "2026-11-20",
+    "claimed_by": "lead",
+    "purpose": "PERFUME locations register (number + name) and my inventory qty by location: perfume.locations, price_list_rows.qty_by_location \u2014 owner 2026-11-20 20:38 CT"
   }
 }

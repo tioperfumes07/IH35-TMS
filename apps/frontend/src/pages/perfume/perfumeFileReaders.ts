@@ -88,8 +88,28 @@ export type Extracted = { rows: PerfumeImportRow[]; rowsRead: number; fileTotalC
  */
 /** keepPriceless: the owner's OWN lists (offer / inventory) — a line naming an item but carrying no price is still an
  *  item he holds (owner 2026-11-14: 582 lines, 2 without a price were dropped); its price stays empty, never 0. */
-export function extractRows(sheet: Sheet, headerRow: number, map: Mapping, opts: { keepPriceless?: boolean } = {}): Extracted {
+/** A location code as the owner writes it: "8" / "008" → "008", "t1" → "T1". */
+export function locationCodeOf(v: unknown): string {
+  const t = String(v ?? "").trim().toUpperCase();
+  if (/^\d{1,3}$/.test(t)) return t.padStart(3, "0");
+  return /^[A-Z0-9-]{1,10}$/.test(t) ? t : "";
+}
+/** Columns of my inventory file that hold one location's pieces: a header that STARTS with a registered location
+ *  number ("008 Perfume Bodega Laredo qty", "11 - Laredo", "T1"). Column index → location code. */
+export function locationColumns(header: unknown[], codes: string[]): Map<number, string> {
+  const known = new Set(codes);
+  const out = new Map<number, string>();
+  header.forEach((h, i) => {
+    const m = String(h ?? "").trim().match(/^([A-Za-z0-9]{1,10})(?=$|[\s\-·:|])/);
+    const code = m ? locationCodeOf(m[1]) : "";
+    if (code && known.has(code)) out.set(i, code);
+  });
+  return out;
+}
+
+export function extractRows(sheet: Sheet, headerRow: number, map: Mapping, opts: { keepPriceless?: boolean; locationCodes?: string[] } = {}): Extracted {
   const rows: PerfumeImportRow[] = [];
+  const locCols = opts.locationCodes?.length ? locationColumns(sheet.cells[headerRow] ?? [], opts.locationCodes) : new Map<number, string>();
   let section = "";
   let rowsRead = 0, total = 0, sections = 0;
   const get = (r: Sheet["cells"][number], f: Field) => (map[f] == null ? null : r[map[f]!]);
@@ -112,10 +132,17 @@ export function extractRows(sheet: Sheet, headerRow: number, map: Mapping, opts:
       gender: cellText(get(r, "gender")) || null, section: cellText(get(r, "section")) || section || null,
       price: priceCents == null ? null : (priceCents / 100).toFixed(2), qty: cellText(get(r, "qty")) || null, case_pack: cellText(get(r, "case_pack")) || null,
       purchase_date: cellText(get(r, "purchase_date")) || null, qty_purchased: cellText(get(r, "qty_purchased")) || null, qty_sold: cellText(get(r, "qty_sold")) || null,
+      ...(locCols.size ? { qty_by_location: locQty(r, locCols) } : {}),
       raw: Object.fromEntries(r.map((c, k) => [k, c])),
     });
   }
   return { rows, rowsRead, fileTotalCents: total, sections };
+}
+
+function locQty(r: unknown[], cols: Map<number, string>): Record<string, string> | null {
+  const out: Record<string, string> = {};
+  for (const [i, code] of cols) { const t = cellText(r[i]); if (t && t !== "0") out[code] = t; }
+  return Object.keys(out).length ? out : null;
 }
 
 export async function readSpreadsheet(file: File): Promise<ReadFile> {
