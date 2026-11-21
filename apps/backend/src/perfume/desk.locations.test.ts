@@ -127,3 +127,39 @@ describe("PERFUME-DESK money is never rounded unless the owner asks (owner 2026-
     expect(matchFields(1750, 2000, 1465, 1465, 25)["a:match_change"]).toBe(225);
   });
 });
+
+describeIntegration("HK tester codes never ride onto the regular bottle (real Postgres, rolled back)", () => {
+  let db: pg.Client;
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    db = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL!));
+    await db.connect();
+    await db.query("BEGIN");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+  });
+  afterAll(async () => {
+    await db?.query("ROLLBACK").catch(() => {});
+    await db?.end().catch(() => {});
+  });
+  it("(MT) is its own tester item; the regular bottle keeps its real cost; a SKU first linked wrong is corrected on the next import", async () => {
+    const inv = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZHK MY STOCK', 'inventory') RETURNING id`)).rows[0].id;
+    const reg = { row_no: 2, upc: "8000000996016", sku: "82891", description: "ZZOBSESSION MEN EDT 125ML (M)", price: "13.87", qty: "323" };
+    const tst = { row_no: 3, sku: "82473", description: "ZZOBSESSION MEN EDT 125ML (MT)", price: "0.01", qty: "43" };
+    // Simulate the old wrong link: the tester's SKU already aliased to the regular bottle.
+    const first = await importList(db as never, TEST_OWNER_USER_ID, { vendor_id: inv, list_date: "2026-11-17", file_name: "hk.xlsx", source_kind: "xlsx", rows_read: 1, file_price_total_cents: 1387, save_as_new: true, rows: [reg] });
+    const regItem = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.price_list_rows WHERE list_id = $1`, [first.list_id])).rows[0].item_id;
+    await db.query(`INSERT INTO perfume.item_aliases (item_id, vendor_id, sku, method) VALUES ($1, $2, '82473', 'import')`, [regItem, inv]);
+    const second = await importList(db as never, TEST_OWNER_USER_ID, { vendor_id: inv, list_date: "2026-11-17", file_name: "hk2.xlsx", source_kind: "xlsx", rows_read: 2, file_price_total_cents: 1388, save_as_new: true, rows: [reg, tst] });
+    const rows = (await db.query<{ sku: string; item_id: string; flags: string[] }>(
+      `SELECT r.sku, r.item_id, i.flags FROM perfume.price_list_rows r JOIN perfume.items i ON i.id = r.item_id WHERE r.list_id = $1 ORDER BY r.row_no`, [second.list_id])).rows;
+    expect(rows[0].item_id).toBe(regItem);
+    expect(rows[1].item_id).not.toBe(regItem);
+    expect(rows[1].flags).toContain("TESTER");
+    const alias = (await db.query<{ item_id: string }>(`SELECT item_id FROM perfume.item_aliases WHERE vendor_id = $1 AND sku = '82473'`, [inv])).rows[0];
+    expect(alias.item_id).toBe(rows[1].item_id);
+    invalidateGridCache();
+    const g = await buildGrid(db as never);
+    expect(g.rows.find((r) => r.id === regItem)?.my_last_cost).toBe(1387);
+    expect(g.rows.find((r) => r.id === regItem)?.my_qty).toBe(323);
+  });
+});
