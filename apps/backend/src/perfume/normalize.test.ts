@@ -341,3 +341,15 @@ describe("PERFUME-DESK identity — audit 2026-11-12 (Eternity Cologne, Moonligh
     expect(c.nameText).not.toMatch(/BODY CREAM|\b3 3\b/);
   });
 });
+
+describe("HK tester codes (owner 2026-11-20 21:58 CT)", () => {
+  it("(MT) / (WT) / (UT) are testers with their gender; (M) / (W) / (U) stay plain bottles", () => {
+    const t = (d: string) => { const x = identify({ description: d }); return [x.gender, x.flags.includes("TESTER")]; };
+    expect(t("OBSESSION MEN EDT 125ML (MT)")).toEqual(["M", true]);
+    expect(t("212 VIP ROSE EDP 80ML (WT)")).toEqual(["W", true]);
+    expect(t("CK ONE EDT 200ML (UT)")).toEqual(["U", true]);
+    expect(t("OBSESSION MEN EDT 125ML (M)")).toEqual(["M", false]);
+    expect(t("CK ONE EDT 200ML (U)")).toEqual(["U", false]);
+    expect(identify({ description: "OBSESSION MEN EDT 125ML (MT)" }).key).not.toBe(identify({ description: "OBSESSION MEN EDT 125ML (M)" }).key);
+  });
+});

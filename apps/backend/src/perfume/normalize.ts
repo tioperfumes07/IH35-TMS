@@ -688,6 +688,11 @@ export function identify(input: IdentityInput): Identity {
   if (leadMini) flags.add("MINI");
   const paren = s.match(/\((M|W|U|L)[*.]?\)/);
   if (!gender && paren) gender = GENDER_WORDS[paren[1]];
+  // HK / TIO item master (owner 2026-11-20 21:58 CT, costs missing on 212 VIP, CK ONE, OBSESSION): "(MT)", "(WT)", "(UT)"
+  // = men's / women's / unisex TESTER. Read as plain gender before, so "OBSESSION MEN EDT 125ML (MT)" ($0.01 tester)
+  // was linked to the regular bottle and its $0 cost became the bottle's last cost.
+  const parenT = s.match(/\((M|W|U|L)\s*T\)/);
+  if (parenT) { flags.add("TESTER"); if (!gender) gender = GENDER_WORDS[parenT[1]]; }
   s = s.replace(/\([^)]*\)/g, " ");
   // A description the vendor cut off inside a parenthesis ("…3PC SET(3.3oz EDT SP, 3.3 Body Cream, 3") leaves an
   // unclosed "(…" — its contents are never the name (audit 2026-11-12, PCA Carven).

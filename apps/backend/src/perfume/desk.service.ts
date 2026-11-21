@@ -534,7 +534,8 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     const strong = itemId && m.method && m.method !== "loose_key";
     if (strong && m.upc && !ix.byUpc.has(m.upc)) { ix.byUpc.set(m.upc, itemId!); newUpcs.set(m.upc, itemId!); }
     const sku = String(r.sku ?? "").trim();
-    if (strong && sku && !ix.vendorSku.has(`${vendor.id}|${sku}`)) { ix.vendorSku.set(`${vendor.id}|${sku}`, itemId!); newSkus.set(sku, itemId!); }
+    // A SKU re-linked to another item (a kind clash corrected it) moves its import alias too; a confirmed one never moves.
+    if (strong && sku && ix.vendorSku.get(`${vendor.id}|${sku}`) !== itemId) { ix.vendorSku.set(`${vendor.id}|${sku}`, itemId!); newSkus.set(sku, itemId!); }
     out.push({
       sheet: r.sheet ?? null, row_no: r.row_no, raw: r.raw ?? {}, upc: normalizeUpc(r0.upc) || null, sku: sku || null, brand: r.brand ?? null,
       description: r.description, size_text: r.size_text ?? null, price_cents: r.price_cents, qty: intOrNull(r.qty), case_pack: intOrNull(r.case_pack),
@@ -615,7 +616,8 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   for (let i = 0; i < skuRows.length; i += 1000) {
     await c.query(
       `INSERT INTO perfume.item_aliases (item_id, vendor_id, sku, method)
-       SELECT x.item_id, $2, x.sku, 'import' FROM jsonb_to_recordset($1::jsonb) AS x(sku text, item_id uuid) ON CONFLICT DO NOTHING`,
+       SELECT x.item_id, $2, x.sku, 'import' FROM jsonb_to_recordset($1::jsonb) AS x(sku text, item_id uuid)
+       ON CONFLICT (vendor_id, sku) WHERE sku IS NOT NULL DO UPDATE SET item_id = EXCLUDED.item_id WHERE perfume.item_aliases.method = 'import'`,
       [JSON.stringify(skuRows.slice(i, i + 1000)), vendor.id]);
   }
   for (let i = 0; i < out.length; i += 500) {

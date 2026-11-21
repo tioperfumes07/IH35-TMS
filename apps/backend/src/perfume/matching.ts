@@ -238,7 +238,12 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   const upcKindClash = Boolean(upcItem && ix.items.get(upcItem) && productKind(ix.items.get(upcItem)!.flags) !== productKind(identity.flags));
   if (upcItem && !upcKindClash) return done(upcItem, "upc");
   const sku = (line.sku ?? "").trim();
-  if (sku && ix.vendorSku.has(`${vendorId}|${sku}`)) return done(ix.vendorSku.get(`${vendorId}|${sku}`)!, "sku");
+  // A SKU this vendor's earlier list linked links again — unless the line says it is another KIND of product than that
+  // item (a TESTER line on a regular bottle): owner 2026-11-20 21:58 CT, HK "(MT)" testers had been linked to the
+  // regular bottle and their $0 cost showed as its last cost. Same rule as the barcode above.
+  const skuItem = sku ? ix.vendorSku.get(`${vendorId}|${sku}`) : undefined;
+  const skuKindClash = Boolean(skuItem && ix.items.get(skuItem) && productKind(ix.items.get(skuItem)!.flags) !== productKind(identity.flags));
+  if (skuItem && !skuKindClash) return done(skuItem, "sku");
   if (ix.vendorText.has(`${vendorId}|${textKey}`)) return done(ix.vendorText.get(`${vendorId}|${textKey}`)!, "alias");
   // A line whose name is empty after cleaning ("DIOR HOMME COLOGNE" → brand + type only) never links by key.
   const named = identity.nameWords.length > 0;
