@@ -250,7 +250,7 @@ const LOW_PAIR = new Set(["a:offer", "a:esp", "a:offer2", "a:esp2"]);
 /** The price boxes the owner types in (owner 2026-11-17 14:04 CT: "all price boxes editable in my lists so i can change
  *  price and engine automatically calculates for that item the margin etc. in all tabs"). Column → what it writes. */
 const EDIT_FIELD: Record<string, PerfumeMyPriceField> = {
-  my_offer_price: "offer", my_last_cost: "last_cost", my_avg_cost: "avg_cost", "a:offer": "offer", "a:offer2": "offer", "a:last_cost": "last_cost",
+  my_offer_price: "offer", my_last_cost: "last_cost", my_avg_cost: "avg_cost", "a:offer": "offer", "a:offer2": "offer", "a:last_cost": "last_cost", "a:avg_cost": "avg_cost",
 };
 /** Which row / line a box writes, or null when the box is not mine to type in (an item not on my offer list has no list
  *  price of mine; a competitor line not linked to an item has no cost of mine). */
@@ -334,7 +334,7 @@ function recompute(r: PerfumeGridRow, field: PerfumeMyPriceField, cents: number 
   const num = (k: string) => (n[k] == null || n[k] === "" ? null : Number(n[k]));
   if (field === "offer") { if ("my_offer_price" in n || !String(r.id).includes(":")) n.my_offer_price = cents; if (String(r.id).includes(":")) { n["a:offer"] = cents; n["a:offer2"] = cents; } }
   if (field === "last_cost") { n.my_last_cost = cents; if (String(r.id).includes(":")) n["a:last_cost"] = cents; }
-  if (field === "avg_cost") n.my_avg_cost = cents;
+  if (field === "avg_cost") { n.my_avg_cost = cents; if (String(r.id).includes(":")) n["a:avg_cost"] = cents; }
   if (!String(r.id).includes(":")) Object.assign(n, myPriceMath(num("my_offer_price"), num("my_last_cost"), num("my_avg_cost"), num("low_buy_price")));
   else {
     // List analysis — the owner's own Margin / Markup / New margin (0 until a last cost exists).
@@ -343,6 +343,16 @@ function recompute(r: PerfumeGridRow, field: PerfumeMyPriceField, cents: number 
     n["a:margin"] = o != null && o > 0 ? (c != null ? p1((o - c) / o) : 0) : null;
     n["a:markup"] = o != null ? (c ? p1((o - c) / c) : 0) : null;
     n["a:new_margin"] = esp != null && esp > 0 ? (c != null ? p1((esp - c) / esp) : 0) : null;
+    const av = num("a:avg_cost");
+    n["a:margin_avg"] = o != null && o > 0 ? (av != null ? p1((o - av) / o) : 0) : null;
+    n["a:markup_avg"] = o != null ? (av ? p1((o - av) / av) : 0) : null;
+    // Match the competitor (price − the rule's $0.25): the change and my margin / profit there on each cost.
+    const mp = num("a:match_price");
+    n["a:match_change"] = mp != null && o != null ? mp - o : null;
+    n["a:match_margin"] = mp != null && mp > 0 && c != null ? p1((mp - c) / mp) : null;
+    n["a:match_profit"] = mp != null && c != null ? mp - c : null;
+    n["a:match_margin_avg"] = mp != null && mp > 0 && av != null ? p1((mp - av) / mp) : null;
+    n["a:match_profit_avg"] = mp != null && av != null ? mp - av : null;
   }
   return n as PerfumeGridRow;
 }
@@ -889,7 +899,7 @@ function MatchCleanup() {
 
 /* ---------------- rules ---------------- */
 
-const STEPS: Array<[PerfumeRules["round_step"], string]> = [["5", ".05"], ["10", ".10"], ["25", ".25"], ["50", ".50"], ["100", "1.00"], ["75", "ends in .75"]];
+const STEPS: Array<[PerfumeRules["round_step"], string]> = [["1", "Exact (no rounding)"], ["5", ".05"], ["10", ".10"], ["25", ".25"], ["50", ".50"], ["100", "1.00"], ["75", "ends in .75"]];
 const DIRS: Array<[PerfumeRules["round_dir"], string]> = [["up", "Up"], ["nearest", "Nearest"], ["down", "Down"]];
 
 function RulesPanel() {
@@ -925,6 +935,10 @@ function RulesPanel() {
       <div>
         <div className="text-section-header">{tr("perfume.desk.17", "Closed numbers")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.18", "Close to")} {seg(STEPS, r.round_step, (v) => setDraft({ ...draft, round_step: v }))} {tr("perfume.desk.19", "Direction")} {seg(DIRS, r.round_dir, (v) => setDraft({ ...draft, round_dir: v }))}</div>
+      </div>
+      <div>
+        <div className="text-section-header">{tr("perfume.desk.match1", "Match the competitor")}</div>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.match2", "My match price = their price less")} {dollars("match_under_cents")} {tr("perfume.desk.match3", "— List analysis shows the change, and my margin and profit at that price on my last and average cost")}</div>
       </div>
       <div>
         <div className="text-section-header">{tr("perfume.desk.20", "Vendor cushion (default — each vendor can override in Price lists)")}</div>

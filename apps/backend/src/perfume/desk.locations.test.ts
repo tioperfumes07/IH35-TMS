@@ -99,3 +99,31 @@ describeIntegration("my inventory by location on the desk (real Postgres, rolled
     expect(labels).toEqual(expect.arrayContaining(["Qty 008 · Perfume Bodega Laredo", "Qty 011 · Laredo", "Qty 229 · Calexico"]));
   });
 });
+
+describe("PERFUME-DESK money is never rounded unless the owner asks (owner 2026-11-20 21:45 CT)", () => {
+  it("the default rule is exact to the cent; a closed-number rule still works when chosen", async () => {
+    const { closeCents } = await import("./pricing.js");
+    const { DEFAULT_RULES, analysisFields } = await import("./desk.service.js");
+    expect(DEFAULT_RULES.round_step).toBe("1");
+    expect(closeCents(2717, "1", "up")).toBe(2717);
+    expect(closeCents(2717.4, "1", "up")).toBe(2717);
+    expect(closeCents(2717, "50", "up")).toBe(2750);
+    // List analysis · Sales: my average cost with its own margin and markup, next to the last cost.
+    const f = analysisFields({ upc: null, sku: null, brand: null, name: null, size: null, type: null, gender: null, purchDate: null, qtyPurch: null,
+      cost: 5251, avgCost: 5000, sold: null, invQty: 248, offer: 6000, comp: null, lowVendor: null, lowPrice: null, minMargin: 10, myDesc: null });
+    expect([f["a:last_cost"], f["a:avg_cost"], f["a:margin"], f["a:margin_avg"], f["a:markup_avg"]]).toEqual([5251, 5000, 12.5, 16.7, 20]);
+    // No competitor price → nothing to match.
+    expect(f["a:match_price"]).toBeNull();
+  });
+  it("match the competitor: their price − $0.25, the change, and my margin / profit there on last and average cost (exact cents)", async () => {
+    const { matchFields } = await import("./desk.service.js");
+    // Esperanza $29.99 → match $29.74; my price $46.00 → lower $16.26; avg cost $40.00 → −$10.26 (below cost), last $27.37.
+    expect(matchFields(4600, 2999, 2737, 4000, 25)).toEqual({
+      "a:match_price": 2974, "a:match_change": -1626,
+      "a:match_margin": 8, "a:match_profit": 237,
+      "a:match_margin_avg": -34.5, "a:match_profit_avg": -1026,
+    });
+    // I am cheaper: raise to their price − 0.25.
+    expect(matchFields(1750, 2000, 1465, 1465, 25)["a:match_change"]).toBe(225);
+  });
+});

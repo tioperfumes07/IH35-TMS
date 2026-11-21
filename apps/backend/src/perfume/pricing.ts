@@ -10,7 +10,8 @@
  *  - Show BOTH margin (profit ÷ price) and markup (profit ÷ cost).
  */
 
-export type RoundStep = "5" | "10" | "25" | "50" | "100" | "75";
+/** "1" = exact to the cent — no rounding (owner 2026-11-20 21:45 CT: "should not round ever in any money, unless I ask"). */
+export type RoundStep = "1" | "5" | "10" | "25" | "50" | "100" | "75";
 export type RoundDir = "up" | "nearest" | "down";
 export type EarnBasis = "margin" | "markup";
 
@@ -22,6 +23,7 @@ export function cents(x: number): number {
 /** Close a price (in cents) on the owner's closed-number rule. */
 export function closeCents(c: number, step: RoundStep = "50", dir: RoundDir = "up"): number {
   if (!Number.isFinite(c)) return c;
+  if (step === "1") return Math.round(c);
   if (step === "75") {
     const dollars = Math.floor(c / 100);
     const candidates = [dollars - 2, dollars - 1, dollars, dollars + 1].map((d) => d * 100 + 75);

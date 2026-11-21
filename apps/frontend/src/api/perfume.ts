@@ -22,7 +22,7 @@ export type PerfumeVendor = {
   column_mapping: Record<string, unknown>;
 };
 export type PerfumeRules = {
-  round_step: "5" | "10" | "25" | "50" | "100" | "75";
+  round_step: "1" | "5" | "10" | "25" | "50" | "100" | "75";
   round_dir: "up" | "nearest" | "down";
   cushion_lo_cents: number;
   cushion_hi_cents: number;
@@ -33,6 +33,8 @@ export type PerfumeRules = {
   wholesale_targets_pct: number[];
   /** Cushion by list price for a competitor's cost: highest tier whose over_cents the price exceeds. */
   competitor_cushion_tiers: Array<{ over_cents: number; cushion_cents: number }>;
+  /** I match the competitor's price less this (owner 2026-11-20: "the .25 difference"). */
+  match_under_cents?: number;
 };
 export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int" };
 export type PerfumeGridRow = Record<string, string | number | null>;
