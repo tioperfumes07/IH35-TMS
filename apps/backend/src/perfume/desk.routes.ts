@@ -60,7 +60,7 @@ const vendorSchema = z.object({
   column_mapping: z.record(z.string(), z.unknown()).optional(),
 });
 const rulesSchema = z.object({
-  round_step: z.enum(["5", "10", "25", "50", "100", "75"]).optional(),
+  round_step: z.enum(["1", "5", "10", "25", "50", "100", "75"]).optional(),
   round_dir: z.enum(["up", "nearest", "down"]).optional(),
   cushion_lo_cents: z.number().int().min(0).max(10_000).optional(),
   cushion_hi_cents: z.number().int().min(0).max(10_000).optional(),
@@ -70,6 +70,7 @@ const rulesSchema = z.object({
   store_earn_pct: z.number().min(0).max(99).optional(),
   wholesale_targets_pct: z.array(z.number().min(0).max(99)).max(6).optional(),
   competitor_cushion_tiers: z.array(z.object({ over_cents: z.number().int().min(0).max(1_000_000), cushion_cents: z.number().int().min(0).max(10_000) })).max(6).optional(),
+  match_under_cents: z.number().int().min(0).max(10_000).optional(),
   columns: z.record(z.string(), z.array(z.string()).max(200)).optional(),
 });
 const rowSchema = z.object({

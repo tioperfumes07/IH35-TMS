@@ -26,11 +26,14 @@ export type DeskRules = {
    * applies. Owner 2026-11-12: ".25 under 10 dollars, .50 of items over 10 dollars, 1.00 of items over 30 dollars".
    * Used to estimate a competitor's cost, and from it the margin the competitor earns. */
   competitor_cushion_tiers: Array<{ over_cents: number; cushion_cents: number }>;
+  /** Owner 2026-11-20 21:47 CT: I match the competitor's price less this much ("the .25 difference"). */
+  match_under_cents: number;
   columns?: Record<string, string[]>;
 };
 export const DEFAULT_RULES: DeskRules = {
-  round_step: "50", round_dir: "up", cushion_lo_cents: 25, cushion_hi_cents: 50, freight_lo_cents: 35, freight_hi_cents: 45,
-  vendor_earn_pct: 16, store_earn_pct: 16, wholesale_targets_pct: [11, 12.5, 15],
+  // Owner 2026-11-20 21:45 CT: "it rounds up, should not round ever in any money, unless I ask it to" — exact cents.
+  round_step: "1", round_dir: "up", cushion_lo_cents: 25, cushion_hi_cents: 50, freight_lo_cents: 35, freight_hi_cents: 45,
+  vendor_earn_pct: 16, store_earn_pct: 16, wholesale_targets_pct: [11, 12.5, 15], match_under_cents: 25,
   competitor_cushion_tiers: [{ over_cents: 0, cushion_cents: 25 }, { over_cents: 1000, cushion_cents: 50 }, { over_cents: 3000, cushion_cents: 100 }],
 };
 
@@ -1195,7 +1198,11 @@ export type CompBest = { list: number; cushion: number; real: number; desc: stri
 type AnalysisIn = {
   upc: string | null; sku: string | null; brand: string | null; name: string | null; size: number | null; type: string | null; gender: string | null;
   purchDate: string | null; qtyPurch: number | null; cost: number | null; sold: number | null; invQty: number | null; offer: number | null;
+  /** My average cost (owner 2026-11-20 21:45 CT: "in list analysis in sales I am missing my avg cost"). */
+  avgCost?: number | null;
   comp: CompBest | null; lowVendor: string | null; lowPrice: number | null; minMargin: number; myDesc: string | null;
+  /** The competitor's price less this = my match price (rule match_under_cents, default $0.25). */
+  matchUnder?: number;
   /** The brand the engine read on the competitor's line (owner 17:34: "add a brand column so I can confirm the brands"). */
   cBrand?: string | null;
 };
@@ -1205,6 +1212,18 @@ type AnalysisIn = {
  *  margin) · Under by = Esperanza − offer when I am under · Under % = under ÷ Esperanza · Can increase % = under ÷ offer ·
  *  New margin = (Esperanza − last cost) ÷ Esperanza · Over by = offer − Esperanza · Lower % = over ÷ offer.
  *  Blank stays blank — never a guessed cost, date or price. Money in cents, percentages in %. */
+export function matchFields(offer: number | null, esp: number | null, last: number | null, avg: number | null, under: number): Record<string, number | null> {
+  const p1 = (x: number) => Math.round(x * 1000) / 10;
+  const match = esp == null ? null : esp - under;
+  const marg = (c: number | null) => (match == null || match <= 0 || c == null ? null : p1((match - c) / match));
+  return {
+    "a:match_price": match,
+    "a:match_change": match != null && offer != null ? match - offer : null,
+    "a:match_margin": marg(last), "a:match_profit": match != null && last != null ? match - last : null,
+    "a:match_margin_avg": marg(avg), "a:match_profit_avg": match != null && avg != null ? match - avg : null,
+  };
+}
+
 export function analysisFields(a: AnalysisIn): Record<string, string | number | null> {
   const p1 = (x: number) => Math.round(x * 1000) / 10;
   const esp = a.comp?.real ?? null;
@@ -1232,12 +1251,19 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
   return {
     "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
     "a:kind": ({ M: "Men", W: "Women", U: "Unisex" } as Record<string, string>)[a.gender ?? ""] ?? null,
-    "a:purch_date": a.purchDate, "a:qty": a.qtyPurch, "a:last_cost": a.cost, "a:sold": a.sold, "a:inv_qty": a.invQty,
+    "a:purch_date": a.purchDate, "a:qty": a.qtyPurch, "a:last_cost": a.cost, "a:avg_cost": a.avgCost ?? null, "a:sold": a.sold, "a:inv_qty": a.invQty,
+    "a:margin_avg": offer != null && offer > 0 ? (a.avgCost != null ? p1((offer - a.avgCost) / offer) : 0) : null,
+    "a:markup_avg": offer != null ? (a.avgCost ? p1((offer - a.avgCost) / a.avgCost) : 0) : null,
     // Owner 2026-11-15 13:27 CT: "its ok for it to show 0 since we do not have the last cost, but the engines must be
     // fully built" — Margin / Markup / New Margin read 0 until a LAST COST exists, never blank.
     "a:margin": offer != null && offer > 0 ? (a.cost != null ? p1((offer - a.cost) / offer) : 0) : null,
     "a:markup": offer != null ? (a.cost ? p1((offer - a.cost) / a.cost) : 0) : null,
     "a:offer": offer, "a:esp": esp,
+    // Owner 2026-11-20 21:47 CT: "a column next to Esperanza's price … I will need to match those prices, either increase
+    // or reduce … based on my current cost what the new margin would be if we match their price — the .25 difference".
+    // Match price = competitor price − $0.25 (rule); change = match − my price (+ raise / − lower); margin and profit at
+    // the match price on my last cost and on my average cost. Exact cents, never rounded.
+    ...matchFields(offer, esp, a.cost, a.avgCost ?? null, a.matchUnder ?? 25),
     "a:low_sales": offer == null && esp == null ? null : Math.min(...[offer, esp].filter((x): x is number => x != null)),
     // Owner 2026-11-14 19:03 CT: "the min purchase price to match esperanza should only have items that esperanza is
     // cheaper". Only where Esperanza sells for less than my offer is there a price to match.
@@ -1567,8 +1593,15 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     // read from it, so every brand reading can be checked (blank = the engine could not read one).
     A("c_brand", "COMPETITOR BRAND", "MATCH", "text"), A("c_vendor", "Competitor", "MATCH", "text"), A("match", "Match", "MATCH", "text"),
     A("purch_date", "PURCH DATE", "SALES", "text"), A("qty", "QTY", "SALES", "int"), A("last_cost", "LAST COST", "SALES", "money"),
+    A("avg_cost", "AVG COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("stores", "STORES", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
-    A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"), A("low_sales", "Lowest Sales Price", "SALES", "money"),
+    A("margin_avg", "Margin (avg cost)", "SALES", "pct"), A("markup_avg", "Markup (avg cost)", "SALES", "pct"),
+    A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"),
+    A("match_price", `MATCH PRICE (Esperanza − $${(rules.match_under_cents / 100).toFixed(2)})`, "SALES", "money"),
+    A("match_change", "Change to match (+ raise / − lower)", "SALES", "money"),
+    A("match_margin", "Margin at match (last cost)", "SALES", "pct"), A("match_profit", "Profit $ at match (last cost)", "SALES", "money"),
+    A("match_margin_avg", "Margin at match (avg cost)", "SALES", "pct"), A("match_profit_avg", "Profit $ at match (avg cost)", "SALES", "money"),
+    A("low_sales", "Lowest Sales Price", "SALES", "money"),
     A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
     A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
     A("buy_check", "Lowest vendor ≤ min purchase?", "Purchases", "text"),
@@ -1861,8 +1894,8 @@ async function buildAnalysisLines(c: PoolClient, x: {
       id: `m:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
         upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
-        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
-        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
+        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, avgCost: (ir?.my_avg_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
+        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, matchUnder: x.rules.match_under_cents, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
       "a:stores": l.item_id ? (storesByItem.get(l.item_id) ?? 1) : 1,
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
@@ -1895,9 +1928,9 @@ async function buildAnalysisLines(c: PoolClient, x: {
       id: `c:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
         upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
-        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
+        purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, avgCost: (ir?.my_avg_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
         invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
-        minMargin: x.minMargin, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
+        minMargin: x.minMargin, matchUnder: x.rules.match_under_cents, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
       "a:stores": onMine && l.item_id ? (storesByItem.get(l.item_id) ?? null) : null,
       "a:match": onMine ? "Matched" : l.item_id ? "Not on my list" : "Not linked to an item", matched: onMine ? 1 : 0, cand: cand as unknown as string,
@@ -2164,6 +2197,13 @@ export function exportFormulas(cols: readonly GridCol[]): ExportFormula[] {
   add("a:under_by", ["a:offer", "a:esp"], (r) => `MAX(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:under_pct", ["a:under_by", "a:esp"], (r) => `IF(${r("a:esp")}=0,"",${r("a:under_by")}/${r("a:esp")})`);
   add("a:can_inc", ["a:under_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",${r("a:under_by")}/${r("a:offer")})`);
+  add("a:match_change", ["a:match_price", "a:offer"], (r) => `${r("a:match_price")}-${r("a:offer")}`);
+  add("a:match_margin", ["a:match_price", "a:last_cost"], (r) => `IF(${r("a:match_price")}<=0,"",(${r("a:match_price")}-${r("a:last_cost")})/${r("a:match_price")})`);
+  add("a:match_profit", ["a:match_price", "a:last_cost"], (r) => `${r("a:match_price")}-${r("a:last_cost")}`);
+  add("a:match_margin_avg", ["a:match_price", "a:avg_cost"], (r) => `IF(${r("a:match_price")}<=0,"",(${r("a:match_price")}-${r("a:avg_cost")})/${r("a:match_price")})`);
+  add("a:match_profit_avg", ["a:match_price", "a:avg_cost"], (r) => `${r("a:match_price")}-${r("a:avg_cost")}`);
+  add("a:margin_avg", ["a:offer", "a:avg_cost"], (r) => `IF(${r("a:offer")}=0,"",IF(${r("a:avg_cost")}="",0,(${r("a:offer")}-${r("a:avg_cost")})/${r("a:offer")}))`);
+  add("a:markup_avg", ["a:offer", "a:avg_cost"], (r) => `IF(OR(${r("a:avg_cost")}="",${r("a:avg_cost")}=0),0,(${r("a:offer")}-${r("a:avg_cost")})/${r("a:avg_cost")})`);
   add("a:new_margin", ["a:esp", "a:last_cost"], (r) => `IF(${r("a:esp")}=0,"",IF(${r("a:last_cost")}="",0,(${r("a:esp")}-${r("a:last_cost")})/${r("a:esp")}))`);
   add("a:over_by", ["a:offer", "a:esp"], (r) => `MIN(${r("a:esp")}-${r("a:offer")},0)`);
   add("a:lower_pct", ["a:over_by", "a:offer"], (r) => `IF(${r("a:offer")}=0,"",-${r("a:over_by")}/${r("a:offer")})`);
@@ -2291,8 +2331,8 @@ export async function exportWorkbook(cols0: GridCol[], rows: GridRow[], rules: D
       const always = f.target === "a:min_buy" || f.target === "a:buy_check";
       // Margin / Markup / New Margin need LAST COST, which no upload fills yet: the formula is written on every row with
       // an offer (or Esperanza) price and reads blank until a cost is typed (owner's engine: =(O3-J3)/O3 on every row).
-      const costLed = f.target === "a:margin" || f.target === "a:markup" || f.target === "a:new_margin";
-      if (t < 0 || (r[f.target] == null && !always && !costLed) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")) && !(costLed && k === "a:last_cost"))) continue;
+      const costLed = f.target === "a:margin" || f.target === "a:markup" || f.target === "a:new_margin" || f.target === "a:margin_avg" || f.target === "a:markup_avg";
+      if (t < 0 || (r[f.target] == null && !always && !costLed) || f.deps.some((k) => r[k] == null && !(always && (k === "a:min_buy" || k === "a:low_price")) && !(costLed && (k === "a:last_cost" || k === "a:avg_cost")))) continue;
       const ref = (k: string) => `${L(idx(k))}${excelRow}`;
       const kind = cols[t]!.kind;
       const result = r[f.target] == null ? "" : kind === "money" || kind === "pct" ? Number(r[f.target]) / 100 : r[f.target];
@@ -2324,7 +2364,7 @@ export async function exportWorkbook(cols0: GridCol[], rows: GridRow[], rules: D
     ["Profit at X% margin", "Sell at X% margin − est. cost"],
     ["Most I can pay for X%", "Lowest Laredo list price × (1 − X%) — buy at or under this to still earn X% at Laredo's low price"],
     ["Laredo low − my X% price", "Positive = my X% price is under the lowest Laredo price"],
-    ["Closed numbers", `Every computed price rounds ${rules.round_dir} to ${rules.round_step === "75" ? "a price ending in .75" : `$${(Number(rules.round_step) / 100).toFixed(2)}`}`],
+    ["Closed numbers", rules.round_step === "1" ? "Exact to the cent — no price is rounded" : `Every computed price rounds ${rules.round_dir} to ${rules.round_step === "75" ? "a price ending in .75" : `$${(Number(rules.round_step) / 100).toFixed(2)}`}`],
     ["Default cushion", `$${(rules.cushion_lo_cents / 100).toFixed(2)} – $${(rules.cushion_hi_cents / 100).toFixed(2)} (each vendor can override)`],
     ["Default freight", `$${(rules.freight_lo_cents / 100).toFixed(2)} – $${(rules.freight_hi_cents / 100).toFixed(2)} per piece`],
   ]) how.addRow(line);
