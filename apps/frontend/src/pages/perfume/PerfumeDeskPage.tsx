@@ -137,7 +137,8 @@ const PAGE_SIZES = [50, 100, 200, 300, 500, 1000];
 const MY_PRICE_SET = ["my_offer_price", "my_last_cost", "my_avg_cost", "offer_margin_pct", "offer_markup_pct", "offer_margin_avg_pct", "offer_markup_avg_pct"];
 const BUY_SET = ["low_buy_price", "buy_margin_pct", "buy_markup_pct"];
 function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = null): boolean {
-  if (view !== "analysis" && (MY_PRICE_SET.includes(key) || (view !== "comp" && view !== "trade" && BUY_SET.includes(key)))) return true;
+  // Owner 2026-11-23 12:32 CT: suppliers (PCA, MTZ …) are for Purchase and Trading — never on Wholesale or List analysis.
+  if (view !== "analysis" && (MY_PRICE_SET.includes(key) || ((view === "buy" || view === "all") && BUY_SET.includes(key)))) return true;
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
@@ -145,7 +146,8 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // List analysis: exactly the owner's format (a:* columns), nothing else.
   // Owner 2026-11-15 13:27 CT: the MATCH group is only the competitor's description (brand / competitor / match state
   // live on Review · My list ↔ competitor, where matching is done).
-  if (view === "analysis") return key.startsWith("a:") && !["a:c_brand", "a:c_vendor", "a:match"].includes(key);
+  // Owner 2026-11-23: several wholesalers (Esperanza, Broadway, Omni) — the Competitor column names whose price it is.
+  if (view === "analysis") return key.startsWith("a:") && !["a:c_brand", "a:match"].includes(key);
   if (mine && view !== "comp" && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
     || ["my_offer_desc", "my_offer_price", "my_qty", "best_vendor"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
@@ -166,6 +168,28 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // cushion, real price, and me vs their real price ($, %, reduce / raise). No cost, margin or need-to-buy columns.
   if (view === "wholesale") return item || /^s:.*:(desc|price|cushion|real|diff|diff_pct|action)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
+}
+
+/** Owner 2026-11-23 12:32 CT: "in analysis or the wholesale vs competition i need to have wholesalers … not PCA and those,
+ *  those are vendors … for trading and for purchasing, so they should not be appearing in wholesale or list analysis."
+ *  Every supplier column (each supplier's prices, Trading, cheapest supplier, the cost built from a supplier) is left out
+ *  of these tabs entirely — not even in the gear. */
+const SUPPLIER_COL = /^(v:|t:|trade_|low_buy_|buy_(margin|markup)_pct$|landed_likely$|best_(vendor|price)$|n_vendors$|target_|cushion$|freight$)/;
+function supplierFree(view: PerfumeGridView): boolean {
+  return view === "wholesale" || view === "comp" || view === "analysis";
+}
+/** Wholesaler picker (owner 2026-11-23: "have toggle buttons … I also just need an analysis of Broadway"): the vendors
+ *  switched on for Wholesale; none picked = all of them. Kept per tab in this browser. */
+function useCompPicks(view: PerfumeGridView) {
+  const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors, enabled: supplierFree(view) });
+  const wholesalers = (vendors.data?.vendors ?? []).filter((v) => (v.roles ?? []).includes("wholesale"));
+  const storeKey = `perfume-comps-${view}-v1`;
+  const read = (): string[] => { try { const v = JSON.parse(window.localStorage.getItem(storeKey) ?? "[]"); return Array.isArray(v) ? v.map(String) : []; } catch { return []; } };
+  const [picks, setPicks] = useState<{ key: string; ids: string[] }>(() => ({ key: storeKey, ids: read() }));
+  if (picks.key !== storeKey) setPicks({ key: storeKey, ids: read() });
+  const valid = picks.ids.filter((id) => wholesalers.some((w) => w.id === id));
+  const save = (ids: string[]) => { try { window.localStorage.setItem(storeKey, JSON.stringify(ids)); } catch { /* storage blocked: this visit only */ } setPicks({ key: storeKey, ids }); };
+  return { wholesalers, picked: valid, save };
 }
 
 const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
@@ -400,6 +424,8 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const [base, setBase] = useState<"mine" | "theirs">("mine");
   const [match, setMatch] = useState<"all" | "matched" | "unmatched">(matchDesk ? "unmatched" : "all");
   const [hideEmpty, setHideEmpty] = useState(false);
+  const comp = useCompPicks(view);
+  const comps = supplierFree(view) ? comp.picked : [];
   const [viewSeen, setViewSeen] = useState(view);
   if (viewSeen !== view) { setViewSeen(view); setCarried(view === "comp"); setPage(1); }
   // The margin the owner wants to see prices at — typed here, applied on Enter or leaving the box.
@@ -461,18 +487,21 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     return () => window.clearTimeout(t);
   }, [q]);
   const query = useQuery({
-    queryKey: ["perfume", "grid", view, sort.key, sort.dir, qAsked, picks, target, earn, page, pageSize, mine, carried, base, match],
-    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q: qAsked, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, offset: (page - 1) * pageSize, limit: pageSize }),
+    queryKey: ["perfume", "grid", view, sort.key, sort.dir, qAsked, picks, target, earn, page, pageSize, mine, carried, base, match, comps.join(",")],
+    queryFn: () => getPerfumeGrid({ view, sort: sort.key, dir: sort.dir, q: qAsked, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, comps, offset: (page - 1) * pageSize, limit: pageSize }),
     placeholderData: (prev) => prev,
   });
   // Competition: my columns, then the competitor's, then every supplier's list price (owner 2026-11-14: "the vendors
   // prices should be after all the esperanza data margins etc."). Other tabs keep the server's order.
   const cols = useMemo(() => {
-    const all = query.data?.cols ?? [];
+    const all0 = query.data?.cols ?? [];
+    const all = supplierFree(view) ? all0.filter((c) => !SUPPLIER_COL.test(c.key)) : all0;
     if (view !== "comp") return all;
     const rank = (k: string) => (k.startsWith("v:") ? 2 : k.startsWith("t:") || k.startsWith("a:") ? 3 : 1);
     return all.map((c, i) => ({ c, i })).sort((a, b) => rank(a.c.key) - rank(b.c.key) || a.i - b.i).map((x) => x.c);
   }, [query.data?.cols, view]);
+  // A wholesaler switched off on the picker: its column group is hidden too (Wholesale, Competition).
+  const compOff = (k: string) => { const m = /^[sc]:([^:]+):/.exec(k); return Boolean(m && comps.length && !comps.includes(m[1]!)); };
   // Owner 2026-11-12: "so I don't confuse between vendors have a line noting difference." A heavy left rule on the
   // first shown column of every group (Mine, each supplier, each competitor) — header and every row.
   // Owner 2026-11-16 16:31 CT: "if on any item there is a lowest item should also be colored in and if many have the same
@@ -512,7 +541,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   // Owner 2026-11-17 14:04 CT: "i need to be able to toggle on and off as well the competition description" — one switch
   // for every competitor's description column (the match box in Review stays).
   const isDesc = (k: string) => /^s:[^:]+:desc$/.test(k) || (!matchDesk && k === "a:c_desc");
-  const isShown = (c: { key: string; group: string }) => (vis.itemOff && isItemGroup(c.group) ? false : vis.descOff && isDesc(c.key) ? false : vis.choices[c.key] ?? defaultOn(c.key));
+  const isShown = (c: { key: string; group: string }) => (compOff(c.key) ? false : vis.itemOff && isItemGroup(c.group) ? false : vis.descOff && isDesc(c.key) ? false : vis.choices[c.key] ?? defaultOn(c.key));
   const shownCols = cols.filter(isShown);
   const shownSig = shownCols.map((c) => c.key).join("|");
   const groupStart = useMemo(() => {
@@ -675,6 +704,21 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   return (
     <section className="space-y-2" aria-label={`${view} view`}>
       <div className="text-xs text-gray-600">{VIEW_HELP[view]}</div>
+      {supplierFree(view) && comp.wholesalers.length ? (
+        <div className="flex flex-wrap items-center gap-1 text-xs" role="group" aria-label={tr("perfume.comps.label", "Compare with")} data-testid="perfume-comp-picker">
+          <span className="font-semibold text-[#1F2A44]">{tr("perfume.comps.label", "Compare with")}</span>
+          <button type="button" aria-pressed={comps.length === 0} data-testid="perfume-comp-all" onClick={() => { comp.save([]); setPage(1); }}
+            className={`h-[30px] rounded-sm border px-3 ${comps.length === 0 ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{tr("perfume.comps.all", "All wholesalers")}</button>
+          {comp.wholesalers.map((w) => {
+            const on = comps.includes(w.id);
+            return (
+              <button key={w.id} type="button" aria-pressed={on} data-testid={`perfume-comp-${(w.short_name || w.name).replace(/\s+/g, "-").toLowerCase()}`}
+                onClick={() => { comp.save(on ? comps.filter((x) => x !== w.id) : [...comps, w.id]); setPage(1); }}
+                className={`h-[30px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{w.short_name || w.name}</button>
+            );
+          })}
+        </div>
+      ) : null}
       {/* TABLE_DATE_OMIT: price-grid rows are SKU×vendor cells; list date lives on the Lists tab, not the comparison grid. */}
       {/* The table mounts only once the server has sent this view's columns: ParityTable reads the default
           hidden set at mount, so mounting with no columns showed EVERY column (owner 2026-11-12: Trading still
@@ -828,7 +872,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               className="h-[34px] px-3 text-xs"
               onClick={() => {
                 const visible = shownCols.map((c) => c.key);
-                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match }, visible)
+                downloadPerfumeExcel({ view, sort: sort.key, dir: sort.dir, q, ...picks, target_pct: target, earn_pct: earn, mine, carried, base, match, comps }, visible)
                   .then(() => pushToast(`Exported ${total.toLocaleString()} ${view === "analysis" ? "lines" : "items"} to Excel — with the formulas and colours`, "success"))
                   .catch((e) => pushToast(String(e?.message ?? e), "error"));
               }}

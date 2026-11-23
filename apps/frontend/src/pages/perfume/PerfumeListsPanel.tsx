@@ -10,7 +10,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   extractPerfumeLines, listPerfumeLists, listPerfumeLocations, listPerfumeVendors, previewPerfumeImport, savePerfumeLocation, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel,
-  type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeLocation, type PerfumeVendor, type PerfumeVendorKind,
+  PERFUME_VENDOR_ROLES, type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeLocation, type PerfumeVendor, type PerfumeVendorKind, type PerfumeVendorRole,
 } from "../../api/perfume";
 import {
   extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, locationColumns, pictureLinesToExtracted, priceToCents, readAnyFile, readPictureFiles,
@@ -144,7 +144,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
     <section className="space-y-1" aria-label={tr("perfume.lists.9", "Vendors")}>
       <div className="flex items-center justify-between">
         <div className="text-section-header">{tr("perfume.lists.10", "Vendors & Laredo stores")}</div>
-        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ kind: "buy" })}>{tr("perfume.lists.11", "Add vendor")}</Button>
+        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ kind: "buy", roles: ["purchase", "trading"] })}>{tr("perfume.lists.11", "Add vendor")}</Button>
       </div>
       {edit ? (
         <div className="flex flex-wrap items-end gap-2 rounded-sm border border-gray-200 bg-white p-2">
@@ -154,12 +154,24 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.13b", "Short name (column header)")}
             <input data-testid="perfume-vendor-short-name" maxLength={12} className="h-[40px] w-[120px] rounded-sm border border-gray-300 px-2 uppercase" value={edit.short_name ?? ""} onChange={(e) => setEdit({ ...edit, short_name: e.target.value.toUpperCase() })} placeholder={tr("perfume.lists.13c", "PCA")} />
           </label>
-          <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14", "Kind")}
-            <span className="flex gap-1">{KINDS.map(([k, l]) => (
-              <button key={k} type="button" aria-pressed={edit.kind === k} onClick={() => setEdit({ ...edit, kind: k })}
-                className={`h-[40px] rounded-sm border px-2 ${edit.kind === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>{l}</button>
-            ))}</span>
-          </span>
+          {edit.kind === "offer" || edit.kind === "inventory" ? (
+            <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14", "Kind")}
+              <span className="flex h-[40px] items-center">{KINDS.find(([k]) => k === edit.kind)?.[1]}</span>
+            </span>
+          ) : (
+            // Owner 2026-11-23 12:32 CT: "categorize vendors, for trading and purchases, and wholesale for wholesale and
+            // trading, and have toggle buttons" — each one switches the vendor's list on or off in that tab.
+            <span className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.14r", "Use this list in")}
+              <span className="flex gap-1">{PERFUME_VENDOR_ROLES.map(([r, l]) => {
+                const on = (edit.roles ?? []).includes(r);
+                return (
+                  <button key={r} type="button" aria-pressed={on} data-testid={`perfume-vendor-role-${r}`}
+                    onClick={() => setEdit({ ...edit, roles: on ? (edit.roles ?? []).filter((x) => x !== r) : [...(edit.roles ?? []), r] })}
+                    className={`h-[40px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>{l}</button>
+                );
+              })}</span>
+            </span>
+          )}
           {cents("cushion_lo_cents", "Cushion from $")}{cents("cushion_hi_cents", "to $")}
           {cents("freight_lo_cents", "Freight from $")}{cents("freight_hi_cents", "to $")}
           <label className="flex flex-col gap-1 text-xs text-gray-600">{tr("perfume.lists.15", "Earns %")}
@@ -179,7 +191,8 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
         columns={[
           { key: "name", label: "Name", sortable: true },
           { key: "short_name", label: "Short", sortable: true, render: (v) => v.short_name ?? "" },
-          { key: "kind", label: "Kind", sortable: true, render: (v) => KINDS.find(([k]) => k === v.kind)?.[1] ?? v.kind },
+          { key: "kind", label: "Use in", sortable: true, sortValue: (v) => (v.roles ?? []).join(" ") || v.kind,
+            render: (v) => (v.kind === "offer" || v.kind === "inventory" ? (KINDS.find(([k]) => k === v.kind)?.[1] ?? v.kind) : <RoleToggles vendor={v} />) },
           { key: "cushion_lo_cents", label: "Cushion", sortable: true, render: (v) => (v.cushion_lo_cents == null && v.cushion_hi_cents == null ? "rule default" : `${money(v.cushion_lo_cents)} – ${money(v.cushion_hi_cents)}`) },
           { key: "freight_lo_cents", label: "Freight / pc", sortable: true, render: (v) => (v.freight_lo_cents == null && v.freight_hi_cents == null ? "rule default" : `${money(v.freight_lo_cents)} – ${money(v.freight_hi_cents)}`) },
           { key: "earn_pct", label: "Earns %", sortable: true, render: (v) => (v.earn_pct == null ? "rule default" : `${Number(v.earn_pct)}%`) },
@@ -187,6 +200,32 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
         ]}
       />
     </section>
+  );
+}
+
+/** One toggle per tab, right on the vendor's row: Purchase · Trading · Wholesale. A click saves at once. */
+function RoleToggles({ vendor }: { vendor: PerfumeVendor }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  const roles = vendor.roles ?? [];
+  const flip = async (r: PerfumeVendorRole) => {
+    const next = roles.includes(r) ? roles.filter((x) => x !== r) : [...roles, r];
+    setBusy(true);
+    try {
+      await savePerfumeVendor({ ...vendor, roles: next, earn_pct: vendor.earn_pct == null ? null : Number(vendor.earn_pct) });
+      await qc.invalidateQueries({ queryKey: ["perfume"] });
+      pushToast(`${vendor.short_name || vendor.name}: ${next.length ? next.map((x) => PERFUME_VENDOR_ROLES.find(([k]) => k === x)?.[1]).join(" · ") : "in no tab"}`, "success");
+    } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <span className="flex gap-1" onClick={(e) => e.stopPropagation()}>{PERFUME_VENDOR_ROLES.map(([r, l]) => {
+      const on = roles.includes(r);
+      return (
+        <button key={r} type="button" disabled={busy} aria-pressed={on} data-testid={`perfume-vendor-row-role-${r}`} onClick={() => void flip(r)}
+          className={`h-[26px] rounded-sm border px-2 text-xs ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-600"}`}>{l}</button>
+      );
+    })}</span>
   );
 }
 
@@ -371,7 +410,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
               <Combobox ariaLabel="This list is from" size="sm" value={v.kind}
                 onChange={(k) => {
                   if (!k || k === v.kind) return;
-                  void savePerfumeVendor({ ...v, kind: k as PerfumeVendorKind, earn_pct: v.earn_pct == null ? null : Number(v.earn_pct) })
+                  void savePerfumeVendor({ ...v, kind: k as PerfumeVendorKind, roles: undefined, earn_pct: v.earn_pct == null ? null : Number(v.earn_pct) })
                     .then(() => qc.invalidateQueries({ queryKey: ["perfume"] }))
                     .then(() => pushToast(`${v.name}: ${KINDS.find(([kk]) => kk === k)?.[1]}`, "success"))
                     .catch((e) => pushToast(userFacingApiError(e, "Not changed"), "error"));

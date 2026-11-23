@@ -6,12 +6,16 @@ export function getPerfumeAccess(): Promise<{ allowed: boolean }> {
   return apiRequest<{ allowed: boolean }>("/api/v1/perfume/access");
 }
 export type PerfumeVendorKind = "buy" | "sell" | "both" | "offer" | "inventory";
+/** Owner 2026-11-23 12:32 CT: the desk tabs a vendor's list feeds — purchase, trading, wholesale (toggle buttons). */
+export type PerfumeVendorRole = "purchase" | "trading" | "wholesale";
+export const PERFUME_VENDOR_ROLES: Array<[PerfumeVendorRole, string]> = [["purchase", "Purchase"], ["trading", "Trading"], ["wholesale", "Wholesale"]];
 export type PerfumeVendor = {
   id: string;
   name: string;
   /** The owner's column-header abbreviation (PCA, MTZ, NAND, PPW …); the full name when empty. */
   short_name: string | null;
   kind: PerfumeVendorKind;
+  roles: PerfumeVendorRole[];
   cushion_lo_cents: number | null;
   cushion_hi_cents: number | null;
   freight_lo_cents: number | null;
@@ -250,7 +254,7 @@ export const searchPerfumeLines = (q: string, gender?: string | null) => apiRequ
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean; base?: "mine" | "theirs"; match?: "all" | "matched" | "unmatched" }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean; base?: "mine" | "theirs"; match?: "all" | "matched" | "unmatched"; comps?: string[] }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
   for (const k of ["category", "gender", "brand", "size", "vendor"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
@@ -259,6 +263,7 @@ export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?
   if (p.mine) s.set("mine", p.mine);
   if (p.carried) s.set("carried", "1");
   if (p.view === "analysis") { s.set("base", p.base ?? "mine"); s.set("match", p.match ?? "all"); }
+  if (p.comps?.length) s.set("comps", p.comps.join(","));
   return s;
 }
 export const getPerfumeGrid = (p: Parameters<typeof perfumeGridQuery>[0]) => apiRequest<PerfumeGrid>(`/api/v1/perfume/grid?${perfumeGridQuery(p).toString()}`);
