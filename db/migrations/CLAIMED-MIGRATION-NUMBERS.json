@@ -1208,5 +1208,10 @@
     "claimed_at": "2026-11-20",
     "claimed_by": "lead",
     "purpose": "PERFUME locations register (number + name) and my inventory qty by location: perfume.locations, price_list_rows.qty_by_location \u2014 owner 2026-11-20 20:38 CT"
+  },
+  "202616690100": {
+    "claimed_at": "2026-11-23",
+    "claimed_by": "lead",
+    "purpose": "PERFUME vendor roles (purchase / trading / wholesale toggles): perfume.vendors.roles \u2014 owner 2026-11-23 12:32 CT"
   }
 }

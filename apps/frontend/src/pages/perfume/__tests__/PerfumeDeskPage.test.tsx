@@ -77,7 +77,7 @@ describe("PERFUME-DESK page", () => {
     expect(String(gridCall?.[0])).toContain("view=buy");
   });
 
-  it("Show: My offer list holds on every tab, sends mine=offer, and shows every supplier and competitor price", async () => {
+  it("Show: My offer list holds on every tab, sends mine=offer, shows the competitor and never a supplier on Wholesale", async () => {
     const MINE_GRID = {
       ...GRID,
       cols: [
@@ -93,11 +93,13 @@ describe("PERFUME-DESK page", () => {
       if (path === "/api/v1/perfume/access") return { allowed: true };
       if (path.startsWith("/api/v1/perfume/grid")) return MINE_GRID;
       if (path.startsWith("/api/v1/perfume/review")) return { rows: [], total: 0 };
+      if (path === "/api/v1/perfume/vendors") return { vendors: [] };
       throw new Error(`unexpected ${path}`);
     });
     renderPage("/perfume?tab=wholesale&mine=offer");
     expect(await screen.findByText("$24.50")).toBeTruthy(); // competitor
-    expect(screen.getByText("$20.20")).toBeTruthy(); // supplier — shown on Wholesale only because the list is narrowed
+    // Owner 2026-11-23 12:32 CT: suppliers are for Purchase and Trading — never on Wholesale, narrowed or not.
+    expect(screen.queryByText("$20.20")).toBeNull();
     expect(screen.getByText("$22.50")).toBeTruthy(); // my offer
     expect(screen.getByTestId("perfume-mine-offer").getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Competition · their margin" }));
@@ -148,6 +150,27 @@ describe("PERFUME-DESK page", () => {
     expect(await screen.findByText("Closed numbers")).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: ".25" }));
     expect((screen.getByRole("button", { name: "Save" }) as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("Wholesale: one toggle per wholesaler (never a supplier); picking Broadway asks for comps=its id", async () => {
+    const V = (id: string, short: string, roles: string[]) => ({ id, name: short, short_name: short, kind: roles.includes("wholesale") ? "sell" : "buy", roles,
+      cushion_lo_cents: null, cushion_hi_cents: null, freight_lo_cents: null, freight_hi_cents: null, earn_pct: null, sells_by_box: false, contact: null, column_mapping: {} });
+    vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+      if (path === "/api/v1/perfume/access") return { allowed: true };
+      if (path.startsWith("/api/v1/perfume/grid")) return GRID;
+      if (path.startsWith("/api/v1/perfume/review")) return { rows: [], total: 0 };
+      if (path === "/api/v1/perfume/vendors") return { vendors: [V("esp", "ESPERANZA", ["wholesale"]), V("bw", "BROADWAY", ["wholesale"]), V("pca", "PCA", ["purchase", "trading"])] };
+      throw new Error(`unexpected ${path}`);
+    });
+    renderPage("/perfume?tab=wholesale");
+    expect(await screen.findByTestId("perfume-comp-broadway")).toBeTruthy();
+    expect(screen.getByTestId("perfume-comp-esperanza")).toBeTruthy();
+    expect(screen.queryByTestId("perfume-comp-pca")).toBeNull();
+    expect(screen.getByTestId("perfume-comp-all").getAttribute("aria-pressed")).toBe("true");
+    fireEvent.click(screen.getByTestId("perfume-comp-broadway"));
+    await waitFor(() => expect(vi.mocked(clientApi.apiRequest).mock.calls.some(([p]) => String(p).includes("view=wholesale") && String(p).includes("comps=bw"))).toBe(true));
+    expect(screen.getByTestId("perfume-comp-broadway").getAttribute("aria-pressed")).toBe("true");
+    try { window.localStorage.clear(); } catch { /* jsdom */ }
   });
 });
 

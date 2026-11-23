@@ -80,9 +80,29 @@ export function toCents(v: unknown): number | null {
 
 export type VendorRow = {
   id: string; name: string; short_name: string | null; kind: "buy" | "sell" | "both" | "offer" | "inventory";
+  /** Which desk tabs the vendor's list feeds (owner 2026-11-23 12:32 CT): purchase, trading, wholesale. */
+  roles: VendorRole[];
   cushion_lo_cents: number | null; cushion_hi_cents: number | null; freight_lo_cents: number | null; freight_hi_cents: number | null;
   earn_pct: string | null; sells_by_box: boolean; contact: string | null; column_mapping: Record<string, unknown>;
 };
+/** Owner 2026-11-23 12:32 CT: "categorize vendors, for trading and purchases, and wholesale for wholesale and trading,
+ *  and have toggle buttons." purchase → Purchase · compare vendors; trading → Trading · sell to my vendors; wholesale →
+ *  Wholesale · vs competition, Competition · their margin and List analysis. A vendor can carry several. */
+export const VENDOR_ROLES = ["purchase", "trading", "wholesale"] as const;
+export type VendorRole = (typeof VENDOR_ROLES)[number];
+export const hasRole = (v: Pick<VendorRow, "roles">, r: VendorRole): boolean => (v.roles ?? []).includes(r);
+/** The roles a vendor saved with only a kind gets (the kind it replaces as the tab switch). */
+export function rolesOfKind(kind: VendorRow["kind"]): VendorRole[] {
+  if (kind === "buy" || kind === "both") return ["purchase", "trading"];
+  if (kind === "sell") return ["wholesale"];
+  return [];
+}
+/** The kind kept in step with the roles (import reads it: a competitor-only list never creates new items). */
+export function kindOfRoles(roles: readonly VendorRole[], kind: VendorRow["kind"]): VendorRow["kind"] {
+  if (kind === "offer" || kind === "inventory") return kind;
+  const w = roles.includes("wholesale"), b = roles.includes("purchase") || roles.includes("trading");
+  return w && b ? "both" : w ? "sell" : "buy";
+}
 /** Owner 2026-11-16 16:31 CT: "the order of vendors is ok in alphabetical order but the first ones should always be, pca, mtz,
  *  elegance, mr distributors, then the rest in alphabetical order." By the vendor's short name (its column header). */
 // Owner 2026-11-16 17:41 CT: Elegance's ARABIC list is its own list, kept next to Elegance (as PPW BLK FRI sits by PPW).
@@ -94,7 +114,7 @@ export function orderVendors<V extends { name: string; short_name: string | null
 }
 export async function listVendors(c: PoolClient): Promise<VendorRow[]> {
   return orderVendors((await c.query<VendorRow>(
-    `SELECT id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping
+    `SELECT id, name, short_name, kind, roles, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping
        FROM perfume.vendors WHERE archived_at IS NULL ORDER BY lower(name)`,
   )).rows);
 }
@@ -102,19 +122,22 @@ export type VendorInput = Partial<Omit<VendorRow, "id" | "earn_pct">> & { id?: s
 /** The column header for a vendor: the owner's short name (PCA, MTZ, NAND, PPW …), else the full name. */
 export const vendorLabel = (v: Pick<VendorRow, "name" | "short_name">): string => (v.short_name?.trim() || v.name);
 export async function upsertVendor(c: PoolClient, userId: string, v: VendorInput): Promise<VendorRow> {
-  const vals = [v.name.trim(), v.kind ?? "buy", v.cushion_lo_cents ?? null, v.cushion_hi_cents ?? null, v.freight_lo_cents ?? null,
+  const kind0 = v.kind ?? "buy";
+  const own = kind0 === "offer" || kind0 === "inventory";
+  const roles: VendorRole[] = own ? [] : [...new Set(v.roles ?? rolesOfKind(kind0))].filter((r): r is VendorRole => (VENDOR_ROLES as readonly string[]).includes(r));
+  const vals = [v.name.trim(), kindOfRoles(roles, kind0), v.cushion_lo_cents ?? null, v.cushion_hi_cents ?? null, v.freight_lo_cents ?? null,
     v.freight_hi_cents ?? null, v.earn_pct ?? null, v.sells_by_box ?? false, v.contact ?? null, JSON.stringify(v.column_mapping ?? {}),
-    v.short_name?.trim() ? v.short_name.trim().toUpperCase() : null];
+    v.short_name?.trim() ? v.short_name.trim().toUpperCase() : null, roles];
   const r = v.id
     ? await c.query<VendorRow>(
       `UPDATE perfume.vendors SET name=$2, kind=$3, cushion_lo_cents=$4, cushion_hi_cents=$5, freight_lo_cents=$6, freight_hi_cents=$7,
-              earn_pct=$8, sells_by_box=$9, contact=$10, column_mapping=$11::jsonb, short_name=$12, updated_at=now()
-        WHERE id=$1 RETURNING id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
+              earn_pct=$8, sells_by_box=$9, contact=$10, column_mapping=$11::jsonb, short_name=$12, roles=$13::text[], updated_at=now()
+        WHERE id=$1 RETURNING id, name, short_name, kind, roles, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
       [v.id, ...vals])
     : await c.query<VendorRow>(
-      `INSERT INTO perfume.vendors (name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct, sells_by_box, contact, column_mapping, short_name, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12)
-       RETURNING id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
+      `INSERT INTO perfume.vendors (name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct, sells_by_box, contact, column_mapping, short_name, roles, created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12::text[],$13)
+       RETURNING id, name, short_name, kind, roles, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping`,
       [...vals, userId]);
   if (!r.rows[0]) throw new Error("vendor_not_found");
   return r.rows[0];
@@ -424,7 +447,7 @@ function tally(check: ImportCheck, method: string | null, status: string) {
 }
 
 async function vendorById(c: PoolClient, id: string): Promise<VendorRow> {
-  const v = (await c.query<VendorRow>(`SELECT id, name, short_name, kind, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping FROM perfume.vendors WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
+  const v = (await c.query<VendorRow>(`SELECT id, name, short_name, kind, roles, cushion_lo_cents, cushion_hi_cents, freight_lo_cents, freight_hi_cents, earn_pct::text, sells_by_box, contact, column_mapping FROM perfume.vendors WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
   if (!v) throw new Error("vendor_not_found");
   return v;
 }
@@ -1138,7 +1161,7 @@ export async function searchCompetitorLines(c: PoolClient, q: string, limit = 25
     `SELECT r.id AS row_id, r.description, r.brand, r.size_text, r.gender_override, v.name AS vendor, r.price_cents::int AS price_cents, i.display_name AS linked_to
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
        LEFT JOIN perfume.items i ON i.id = r.item_id
-      WHERE v.kind = 'sell' AND l.is_current AND l.voided_at IS NULL
+      WHERE 'wholesale' = ANY(v.roles) AND l.is_current AND l.voided_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM unnest($1::text[]) w
                          WHERE upper(r.description || ' ' || coalesce(r.upc, '') || ' ' || coalesce(r.sku, '')) NOT LIKE '%' || w || '%')
       ORDER BY similarity(r.description, $2) DESC, r.description LIMIT $3`, [words, s, gender ? limit * 3 : limit])).rows;
@@ -1172,6 +1195,8 @@ export function earnPctOf(rules: DeskRules, typed: number | null | undefined): n
 
 /* ROUND 8.32 — CC-2 11-14: in-process caches; Level-1 per (data version, target, earn); Level-2 per (data version, view, mine, sort, dir). */
 type GridPayload = { cols: GridCol[]; rows: GridRow[]; rules: DeskRules; vendors: VendorRow[]; target_pct: number; earn_pct: number; _vk: string;
+  /** List analysis' min margin (the My margin % box, 15 when empty) — the competitor picker recomputes with it. */
+  minMargin?: number;
   /** List analysis, one row per LINE: my offer list (every line) and the competitors' full lists. */
   myLines?: GridRow[]; theirLines?: GridRow[] };
 /** Shared collator — avoids creating a new Intl.Collator on every localeCompare call (O(comparisons) → O(1) construction). */
@@ -1240,7 +1265,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
   // min purchase price; I am cheaper → room to raise to their price; a supplier under my last cost → buy there.
   const advice = (() => {
     if (offer == null) return esp == null ? null : "Not on my list";
-    if (esp == null) return "Not on Esperanza's list";
+    if (esp == null) return "Not on the competitor's list";
     const cheaperBuy = a.lowPrice != null && a.cost != null && a.lowPrice < a.cost ? ` · buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} (your last cost ${money(a.cost)})` : "";
     if (offer > esp) {
       if (a.lowPrice != null && minBuy != null && a.lowPrice <= minBuy) return `LOWER to ${money(esp)} — buy from ${a.lowVendor ?? "supplier"} at ${money(a.lowPrice)} keeps ${a.minMargin}%+`;
@@ -1248,7 +1273,7 @@ export function analysisFields(a: AnalysisIn): Record<string, string | number | 
       return `CAN'T MATCH at ${a.minMargin}% — need cost ≤ ${money(minBuy ?? 0)}${a.lowPrice != null ? `, lowest supplier ${money(a.lowPrice)}` : ""}`;
     }
     if (offer < esp) return `RAISE up to ${money(esp)} (+${money(esp - offer)})${cheaperBuy}`;
-    return `SAME as Esperanza${cheaperBuy}`;
+    return `SAME as ${a.comp?.vendor || "the competitor"}${cheaperBuy}`;
   })();
   return {
     "a:upc": a.upc, "a:sku": a.sku, "a:brand": a.brand, "a:name": a.name, "a:size": a.size, "a:type": a.type,
@@ -1379,13 +1404,16 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // Typed on the Trading tab: one % for every vendor. Not typed: each vendor's own saved %, else the rule.
   const earnTyped = opts.earnPct == null ? null : earnPctOf(rules, opts.earnPct);
   const vendors = await listVendors(c);
-  const buyV = vendors.filter((v) => v.kind === "buy" || v.kind === "both");
-  const sellV = vendors.filter((v) => v.kind === "sell" || v.kind === "both");
+  // Owner 2026-11-23 12:32 CT: each tab reads only the vendors switched on for it — suppliers (PCA, MTZ …) for Purchase
+  // and Trading, wholesalers (Esperanza, Broadway, Omni) for Wholesale, Competition and List analysis.
+  const buyV = vendors.filter((v) => hasRole(v, "purchase"));
+  const tradeV = vendors.filter((v) => hasRole(v, "trading"));
+  const sellV = vendors.filter((v) => hasRole(v, "wholesale"));
   // List analysis compares my list with the LAREDO competitor's list (owner 2026-11-17 14:04 CT: "analysis, it is supposed
   // to be with la esperanza … verify it is the correct list"). Measured that hour: 27 supplier lists had been saved as
   // "both", so "Esperanza Price" was the cheapest of 28 lists. The analysis reads only competitor lists (kind "sell"),
   // never a supplier's, whatever a supplier is marked.
-  const compV = vendors.filter((v) => v.kind === "sell");
+  const compV = sellV;
   const compIds = new Set(compV.map((v) => v.id));
   // My own lists (owner 2026-11-12): my offer list to clients and my inventory (stock, quantities, last cost).
   // Never a supplier and never a competitor; each new upload replaces the last.
@@ -1417,7 +1445,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     gender_override: string | null; price_cents: number | null; match_status: string }>(
     `SELECT r.id, l.vendor_id, r.item_id, r.description, r.brand, r.size_text, r.gender_override, r.price_cents::int AS price_cents, r.match_status
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-      WHERE v.kind = 'sell' AND l.is_current AND l.voided_at IS NULL ORDER BY v.name, r.row_no`);
+      WHERE 'wholesale' = ANY(v.roles) AND l.is_current AND l.voided_at IS NULL ORDER BY v.name, r.row_no`);
   // My own costs typed on the desk (owner 2026-11-17: last cost and average cost per item, every tab).
   const myCostQ = await c.query<{ item_id: string; last_cost_cents: number | null; avg_cost_cents: number | null }>(
     `SELECT item_id, last_cost_cents, avg_cost_cents FROM perfume.item_costs`);
@@ -1537,7 +1565,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     cols.push({ key: `v:${v.id}:cush`, label: "Cushion $", group: vendorLabel(v), kind: "money" });
   }
   // TRADING — two columns per supplier: their price, and their cost = (their price − cushion) less the % they earn.
-  for (const v of buyV) {
+  for (const v of tradeV) {
     // Owner 2026-11-12: "the data from each vendor should only really be the price of the vendor's list, the approx
     // profit they earn and the price I approximately need to sell to them."
     cols.push({ key: `t:${v.id}:list`, label: "Their list price", group: `Trade · ${vendorLabel(v)}`, kind: "money" });
@@ -1598,16 +1626,14 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     A("avg_cost", "AVG COST", "SALES", "money"),
     A("sold", "SOLD", "SALES", "int"), A("inv_qty", "Inv Qty", "SALES", "int"), A("stores", "STORES", "SALES", "int"), A("margin", "Margin", "SALES", "pct"), A("markup", "Markup", "SALES", "pct"),
     A("margin_avg", "Margin (avg cost)", "SALES", "pct"), A("markup_avg", "Markup (avg cost)", "SALES", "pct"),
-    A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Esperanza Price", "SALES", "money"),
-    A("match_price", `MATCH PRICE (Esperanza − $${(rules.match_under_cents / 100).toFixed(2)})`, "SALES", "money"),
+    A("offer", "OFFER PRICE", "SALES", "money"), A("esp", "Competitor Price", "SALES", "money"),
+    A("match_price", `MATCH PRICE (competitor − $${(rules.match_under_cents / 100).toFixed(2)})`, "SALES", "money"),
     A("match_change", "Change to match (+ raise / − lower)", "SALES", "money"),
     A("match_margin", "Margin at match (last cost)", "SALES", "pct"), A("match_profit", "Profit $ at match (last cost)", "SALES", "money"),
     A("match_margin_avg", "Margin at match (avg cost)", "SALES", "pct"), A("match_profit_avg", "Profit $ at match (avg cost)", "SALES", "money"),
     A("low_sales", "Lowest Sales Price", "SALES", "money"),
-    A("min_buy", "Min Purchase Price to match la esperanza", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
-    A("low_vendor", "Lowest Vendor", "Purchases", "text"), A("low_price", "Lowest Price", "Purchases", "money"),
-    A("buy_check", "Lowest vendor ≤ min purchase?", "Purchases", "text"),
-    A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Esperanza Price", "Analysis", "money"), A("under_by", "Cheaper By", "Analysis", "money"),
+    A("min_buy", "Min Purchase Price to match the competitor", "Purchases", "money"), A("min_margin", "Min Margin", "Purchases", "pct"),
+    A("offer2", "OFFER PRICE", "Analysis", "money"), A("esp2", "Competitor Price", "Analysis", "money"), A("under_by", "Cheaper By", "Analysis", "money"),
     A("under_pct", "Cheaper %", "Analysis", "pct"), A("can_inc", "Can Increase %", "Analysis", "pct"), A("new_margin", "New Margin.", "Analysis", "pct"),
     A("over_by", "More Expensive By", "Analysis", "money"), A("lower_pct", "Lower % to Match", "Analysis", "pct"),
     A("advice", "RECOMMENDATION", "Analysis", "text"),
@@ -1620,6 +1646,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // every "first lowest", ranking and list reads exactly as before.
   const buyIdx = new Map(buyV.map((v, i) => [v.id, i]));
   const sellIdx = new Map(sellV.map((v, i) => [v.id, i]));
+  const tradeIdx = new Map(tradeV.map((v, i) => [v.id, i]));
   const present = (ids: Iterable<string>, idx: Map<string, number>, list: VendorRow[]): VendorRow[] => {
     const at: number[] = [];
     for (const id of ids) { const i = idx.get(id); if (i !== undefined) at.push(i); }
@@ -1631,6 +1658,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     const offersMap = byItem.get(it.id) ?? new Map();
     const presBuy = present(offersMap.keys(), buyIdx, buyV);
     const presSell = present(offersMap.keys(), sellIdx, sellV);
+    const presTrade = present(offersMap.keys(), tradeIdx, tradeV);
     const row: GridRow = {
       id: it.id, code: it.internal_code, upc: it.upcs?.[0] ?? null, upc_count: it.upcs?.length ?? 0, brand: it.brand, name: it.name,
       size_ml: it.size_ml == null ? null : Number(it.size_ml), conc: it.conc, gender: it.gender, category: categoryOf(it.gender, it.flags), flags: it.flags.join(" "), display_name: it.display_name,
@@ -1737,7 +1765,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     Object.assign(row, analysisFields({
       upc: row.upc as string | null, sku: mySku, brand: it.brand, name: it.name, size: row.size_ml as number | null, type: it.conc || null, gender: it.gender,
       purchDate: myPurch, qtyPurch: myQtyPurch, cost: myCost, sold: mySold, invQty: myQty, offer: myOffer, comp: cBest,
-      lowVendor: lowListAt, lowPrice: lowList, minMargin, myDesc: myOfferDesc,
+      lowVendor: null, lowPrice: null, minMargin, myDesc: myOfferDesc,
     }));
     // My offer price against the lowest competitor (owner 2026-11-13: "my wholesale prices … compare in wholesale and
     // with other vendors"). Positive gap = my offer is under the cheapest competitor.
@@ -1770,7 +1798,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     // at or under their cost (owner 2026-11-12: "their list price, and the cushion and then their margin … compare
     // their cost so I can see if my offer is good enough").
     const beats: string[] = [];
-    for (const v of presBuy) {
+    for (const v of presTrade) {
       const theirs = offersMap.get(v.id)?.price;
       if (theirs == null) continue;
       const earn = earnTyped ?? (v.earn_pct == null ? rules.vendor_earn_pct : Number(v.earn_pct));
@@ -1786,7 +1814,7 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
       if (mine != null && mine <= theirCost) beats.push(vendorLabel(v));
     }
     row.trade_beats = beats.length ? beats.join(", ") : null;
-    const sellTo = presBuy.flatMap((v) => (row[`t:${v.id}:cost`] == null ? [] : [{ v: vendorLabel(v), cost: row[`t:${v.id}:cost`] as number, list: row[`t:${v.id}:list`] as number }]));
+    const sellTo = presTrade.flatMap((v) => (row[`t:${v.id}:cost`] == null ? [] : [{ v: vendorLabel(v), cost: row[`t:${v.id}:cost`] as number, list: row[`t:${v.id}:list`] as number }]));
     if (sellTo.length) {
       const lo = Math.min(...sellTo.map((x) => x.cost)), hi = Math.max(...sellTo.map((x) => x.cost));
       row.trade_low_list = Math.min(...sellTo.map((x) => x.list));
@@ -1799,11 +1827,11 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     }
     if (low != null) row.target_max_cost = costFromPrice(low, target, "margin");
     // Every vendor (buy or Laredo store) that has a price for this item — the Vendor filter reads it; not a column.
-    row.carried_by = [...presBuy, ...presSell].filter((v) => row[`v:${v.id}:price`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
+    row.carried_by = [...new Set([...presBuy, ...presTrade, ...presSell])].filter((v) => row[`v:${v.id}:price`] != null || row[`t:${v.id}:list`] != null || row[`s:${v.id}:price`] != null).map((v) => v.name).join("\n");
     rows.push(row);
   }
   const { myLines, theirLines } = await buildAnalysisLines(c, { rows, items: items.rows, myLineQ: myLineQ.rows, theirLineQ: theirLineQ.rows, anByItem, vendors, rules, minMargin });
-  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey, myLines, theirLines };
+  const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey, myLines, theirLines, minMargin };
   // Without a data fingerprint the build is shared by the requests already waiting on it, but never remembered.
   if (!_cacheKey.includes("|nosig|")) _gridCache.set(_cacheKey, _result);
   return _result;
@@ -1893,11 +1921,11 @@ async function buildAnalysisLines(c: PoolClient, x: {
     const cand: MatchCandidate[] = matched ? [] : l.item_id ? likelyFor(l.item_id)
       : (l.suggestions ?? []).slice(0, 5).map((sg) => ({ row_id: l.id, item_id: sg.item_id, label: sg.display_name, price_cents: null, why: sg.why ?? "" }));
     return {
-      id: `m:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
+      id: `m:${l.id}`, line_id: l.id, item_id: l.item_id, item_gender: (ir?.gender as string) ?? null, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
         upc: l.upc, sku: l.sku, brand: (ir?.brand as string) ?? null, name: l.description, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, avgCost: (ir?.my_avg_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
-        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null, minMargin: x.minMargin, matchUnder: x.rules.match_under_cents, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
+        invQty: l.qty, offer: l.price_cents, comp: an?.cBest ?? null, lowVendor: null, lowPrice: null, minMargin: x.minMargin, matchUnder: x.rules.match_under_cents, myDesc: l.description, cBrand: brandRead(an?.cBest?.desc),
       }),
       "a:stores": l.item_id ? (storesByItem.get(l.item_id) ?? 1) : 1,
       "a:match": state, matched: matched ? 1 : 0, cand: cand as unknown as string,
@@ -1927,11 +1955,11 @@ async function buildAnalysisLines(c: PoolClient, x: {
       cand = offerCandidates({ description: l.description, brand: l.brand }, id, myOfferItems, 5).map((o) => ({ row_id: l.id, item_id: o.item_id, label: o.display_name, price_cents: null, why: o.why }));
     }
     return {
-      id: `c:${l.id}`, line_id: l.id, item_id: l.item_id, ...base(l.item_id, l.description, l.brand, l.size_text),
+      id: `c:${l.id}`, line_id: l.id, item_id: l.item_id, c_vendor_id: l.vendor_id, ...base(l.item_id, l.description, l.brand, l.size_text),
       ...analysisFields({
         upc: (ir?.upc as string) ?? null, sku: (ir?.my_sku as string) ?? null, brand: (ir?.brand as string) ?? null, name: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, size: (ir?.size_ml as number) ?? null, type: (ir?.conc as string) || null, gender: (ir?.gender as string) ?? null,
         purchDate: (ir?.my_purchase_date as string) ?? null, qtyPurch: (ir?.my_qty_purchased as number) ?? null, cost: (ir?.my_last_cost as number) ?? null, avgCost: (ir?.my_avg_cost as number) ?? null, sold: (ir?.my_qty_sold as number) ?? null,
-        invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: an?.lowVendor ?? null, lowPrice: an?.lowPrice ?? null,
+        invQty: onMine ? ((ir?.my_qty as number) ?? null) : null, offer: onMine ? ((ir?.my_offer_price as number) ?? null) : null, comp, lowVendor: null, lowPrice: null,
         minMargin: x.minMargin, matchUnder: x.rules.match_under_cents, myDesc: onMine ? ((ir?.my_offer_desc as string) ?? null) : null, cBrand: brandRead(l.description, l.brand),
       }),
       "a:stores": onMine && l.item_id ? (storesByItem.get(l.item_id) ?? null) : null,
@@ -1968,9 +1996,46 @@ export type AnalysisMatch = "all" | "matched" | "unmatched";
 /** List analysis rows: my list's lines or the competitors' full lists, all / matched (in common) / not matched. */
 export function analysisRowsOf(g: Pick<GridPayload, "myLines" | "theirLines">, base: AnalysisBase, match: AnalysisMatch): GridRow[] {
   const src = (base === "theirs" ? g.theirLines : g.myLines) ?? [];
+  return matchFilter(src, match);
+}
+function matchFilter(src: GridRow[], match: AnalysisMatch): GridRow[] {
   if (match === "matched") return src.filter((r) => r.matched === 1);
   if (match === "unmatched") return src.filter((r) => r.matched !== 1);
   return src;
+}
+
+/** Owner 2026-11-23 12:32 CT: the wholesalers picked with the toggle buttons (Esperanza, Broadway, Omni …). The cheapest
+ *  SALES price (list − cushion) among only those for one item row, or null. */
+export function compBestOf(itemRow: GridRow | undefined, comps: ReadonlySet<string>, label: (id: string) => string): CompBest | null {
+  if (!itemRow) return null;
+  let best: CompBest | null = null;
+  for (const id of comps) {
+    const real = itemRow[`s:${id}:real`] as number | null | undefined;
+    if (real == null) continue;
+    if (!best || real < best.real) best = { list: itemRow[`s:${id}:price`] as number, cushion: itemRow[`s:${id}:cushion`] as number, real, desc: (itemRow[`s:${id}:desc`] as string | null) ?? null, vendor: label(id) };
+  }
+  return best;
+}
+/** A line of my list re-measured against only the picked wholesalers: the same analysisFields, the same inputs the
+ *  line already carries, only the competitor changes. */
+export function reanalyseLine(r: GridRow, comp: CompBest | null, minMargin: number, matchUnder: number): GridRow {
+  const n = (k: string) => (r[k] == null ? null : Number(r[k]));
+  const t = (k: string) => (r[k] == null ? null : String(r[k]));
+  const out: GridRow = {
+    ...r,
+    ...analysisFields({
+      upc: t("a:upc"), sku: t("a:sku"), brand: t("a:brand"), name: t("a:name"), size: n("a:size"), type: t("a:type"), gender: t("item_gender"),
+      purchDate: t("a:purch_date"), qtyPurch: n("a:qty"), cost: n("a:last_cost"), avgCost: n("a:avg_cost"), sold: n("a:sold"), invQty: n("a:inv_qty"),
+      offer: n("a:offer"), comp, lowVendor: null, lowPrice: null, minMargin, matchUnder, myDesc: t("a:name"),
+      cBrand: comp && comp.desc === r["a:c_desc"] ? t("a:c_brand") : null,
+    }),
+    "a:stores": r["a:stores"] ?? null,
+  };
+  const matched = Boolean(comp);
+  out.matched = matched ? 1 : 0;
+  if (r.item_id) out["a:match"] = matched ? "Matched" : "No competitor line linked";
+  if (matched) out.cand = [] as unknown as string;
+  return out;
 }
 
 export function getOrBuildView(
@@ -1981,11 +2046,34 @@ export function getOrBuildView(
   dir: "asc" | "desc",
   base: AnalysisBase = "mine",
   match: AnalysisMatch = "all",
+  comps?: readonly string[] | null,
 ): ViewPayload {
-  const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}|${view === "analysis" ? `${base}|${match}` : ""}`;
+  // Only wholesalers count; an empty or unknown pick = all of them (the toggle never shows an empty grid by accident).
+  const wholesale = new Set(g.vendors.filter((v) => hasRole(v, "wholesale")).map((v) => v.id));
+  const picked = [...new Set((comps ?? []).filter((id) => wholesale.has(id)))].sort();
+  const narrowed = picked.length > 0 && picked.length < wholesale.size;
+  const compKey = narrowed ? picked.join(",") : "";
+  const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}|${view === "analysis" ? `${base}|${match}` : ""}|${compKey}`;
   const hit = _viewCache.get(key);
   if (hit) return hit;
-  const baseRows = view === "analysis" ? analysisRowsOf(g, base, match) : filterView(filterMine(g.rows, mine), view, mine);
+  let baseRows: GridRow[];
+  if (view === "analysis") {
+    if (!narrowed) baseRows = analysisRowsOf(g, base, match);
+    else if (base === "theirs") baseRows = matchFilter((g.theirLines ?? []).filter((r) => picked.includes(String(r.c_vendor_id))), match);
+    else {
+      const set = new Set(picked);
+      const byId = new Map(g.rows.map((r) => [String(r.id), r]));
+      const vName = new Map(g.vendors.map((v) => [v.id, vendorLabel(v)]));
+      const label = (id: string) => vName.get(id) ?? "";
+      const mu = g.rules.match_under_cents;
+      const mm = g.minMargin ?? 15;
+      baseRows = matchFilter((g.myLines ?? []).map((r) => reanalyseLine(r, r.item_id ? compBestOf(byId.get(String(r.item_id)), set, label) : null, mm, mu)), match);
+    }
+  } else {
+    baseRows = filterView(filterMine(g.rows, mine), view, mine);
+    // Wholesale / Competition narrowed to the picked wholesalers: the items at least one of them carries.
+    if (narrowed && !mine && (view === "wholesale" || view === "comp")) baseRows = baseRows.filter((r) => picked.some((id) => r[`s:${id}:price`] != null));
+  }
   const sorted = sort ? sortRows(baseRows, sort, dir) : baseRows;
   const facets0 = gridFacets(sorted, { category: [], gender: [], brand: [], size: [], vendor: [] });
   const vp: ViewPayload = { sorted, facets0 };
