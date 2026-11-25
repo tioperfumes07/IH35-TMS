@@ -494,6 +494,7 @@ import { registerLegalSignRoutes } from "./legal/sign.routes.js";
 import { registerLegalAttorneyReviewRoutes } from "./legal/attorney-review.routes.js";
 import { registerLegalMattersRoutes } from "./legal/matters.routes.js";
 import { registerPerfumeDeskRoutes } from "./perfume/desk.routes.js";
+import { registerPerfumeMailRoutes } from "./perfume/mail/mail.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { startLoadChangeBus, stopLoadChangeBus } from "./realtime/load-change-bus.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
@@ -578,6 +579,7 @@ import { registerQboAccountsPushStatusRoutes } from "./sync/qbo-accounts-status.
 import { initializeQboAccountsPushScheduler, stopQboAccountsPushScheduler } from "./sync/qbo-accounts-push.js";
 import { registerLovesSyncStatusRoutes } from "./sync/loves-status.routes.js";
 import { initializeLovesCardImportCron } from "./cron/loves-card-import.cron.js";
+import { initializePerfumeMailPriceListsCron } from "./cron/perfume-mail-price-lists.cron.js";
 import { initializeReconCron } from "./cron/recon.cron.js";
 import { initializeAuditChainVerifyCron } from "./cron/audit-chain-verify.cron.js";
 import { initializeRelayFuelIngestCron } from "./integrations/relay-payments/relay-fuel-ingest.cron.js";
@@ -1464,6 +1466,7 @@ async function main() {
   await registerLegalMattersRoutes(app);
   // PERFUME-DESK — owner-only TIO Perfumes price desk (isolated schema perfume.*; no carrier data).
   await registerPerfumeDeskRoutes(app);
+  await registerPerfumeMailRoutes(app);
   await registerDailyTasksRoutes(app);
   await app.register(taskRoutes, { prefix: "/api/v1/tasks" });
   await registerTelematicsHosRoutes(app);
@@ -1753,6 +1756,13 @@ async function main() {
       app.log.info("[STARTUP] loves-card-import-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] loves-card-import-cron failed");
+    }
+
+    try {
+      initializePerfumeMailPriceListsCron(app);
+      app.log.info("[STARTUP] perfume-mail-price-lists-cron initialized");
+    } catch (error) {
+      app.log.error({ err: error }, "[STARTUP] perfume-mail-price-lists-cron failed");
     }
 
     try {
