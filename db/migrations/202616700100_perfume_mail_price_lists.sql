@@ -91,14 +91,26 @@ CREATE TABLE IF NOT EXISTS perfume.mail_files (
 CREATE INDEX IF NOT EXISTS mail_files_received_idx ON perfume.mail_files (received_at DESC);
 CREATE INDEX IF NOT EXISTS mail_files_sha_idx ON perfume.mail_files (vendor_id, sha256) WHERE status = 'imported';
 
-DO $$
-DECLARE t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY['mail_accounts', 'mail_rules', 'mail_runs', 'mail_files'] LOOP
-    EXECUTE format('ALTER TABLE perfume.%I ENABLE ROW LEVEL SECURITY', t);
-    EXECUTE format('ALTER TABLE perfume.%I FORCE ROW LEVEL SECURITY', t);
-    EXECUTE format('DROP POLICY IF EXISTS %I ON perfume.%I', t || '_owner_only', t);
-    EXECUTE format('CREATE POLICY %I ON perfume.%I USING (perfume.is_owner()) WITH CHECK (perfume.is_owner())', t || '_owner_only', t);
-    EXECUTE format('GRANT SELECT, INSERT, UPDATE ON perfume.%I TO ih35_app', t);
-  END LOOP;
-END $$;
+ALTER TABLE perfume.mail_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.mail_accounts FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mail_accounts_owner_only ON perfume.mail_accounts;
+CREATE POLICY mail_accounts_owner_only ON perfume.mail_accounts USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.mail_accounts TO ih35_app;
+
+ALTER TABLE perfume.mail_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.mail_rules FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mail_rules_owner_only ON perfume.mail_rules;
+CREATE POLICY mail_rules_owner_only ON perfume.mail_rules USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.mail_rules TO ih35_app;
+
+ALTER TABLE perfume.mail_runs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.mail_runs FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mail_runs_owner_only ON perfume.mail_runs;
+CREATE POLICY mail_runs_owner_only ON perfume.mail_runs USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.mail_runs TO ih35_app;
+
+ALTER TABLE perfume.mail_files ENABLE ROW LEVEL SECURITY;
+ALTER TABLE perfume.mail_files FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS mail_files_owner_only ON perfume.mail_files;
+CREATE POLICY mail_files_owner_only ON perfume.mail_files USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
+GRANT SELECT, INSERT, UPDATE ON perfume.mail_files TO ih35_app;
