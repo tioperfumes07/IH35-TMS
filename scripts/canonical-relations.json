@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) — canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md §1.5).",
-  "count": 926,
+  "count": 930,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -670,8 +670,12 @@
     "perfume.item_aliases",
     "perfume.item_costs",
     "perfume.item_upcs",
-    "perfume.locations",
     "perfume.items",
+    "perfume.locations",
+    "perfume.mail_accounts",
+    "perfume.mail_files",
+    "perfume.mail_rules",
+    "perfume.mail_runs",
     "perfume.needs",
     "perfume.price_list_rows",
     "perfume.price_lists",
