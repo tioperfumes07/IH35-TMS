@@ -7,8 +7,10 @@ export function getPerfumeAccess(): Promise<{ allowed: boolean }> {
 }
 export type PerfumeVendorKind = "buy" | "sell" | "both" | "offer" | "inventory";
 /** Owner 2026-11-23 12:32 CT: the desk tabs a vendor's list feeds — purchase, trading, wholesale (toggle buttons). */
-export type PerfumeVendorRole = "purchase" | "trading" | "wholesale";
-export const PERFUME_VENDOR_ROLES: Array<[PerfumeVendorRole, string]> = [["purchase", "Purchase"], ["trading", "Trading"], ["wholesale", "Wholesale"]];
+export type PerfumeVendorRole = "purchase" | "trading" | "wholesale" | "distributor" | "customer";
+/** The desk-tab roles first; then the owner's own tags (2026-11-25 23:41 CT) — Distributor, Customer ("also buys from me"). */
+export const PERFUME_VENDOR_ROLES: Array<[PerfumeVendorRole, string]> = [["purchase", "Purchase"], ["trading", "Trading"], ["wholesale", "Wholesale"],
+  ["distributor", "Distributor"], ["customer", "Customer"]];
 export type PerfumeVendor = {
   id: string;
   name: string;
