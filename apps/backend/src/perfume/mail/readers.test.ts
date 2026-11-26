@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import * as browser from "../../../../frontend/src/pages/perfume/perfumeFileReaders.js";
 import {
   applySavedColumns, chooseReading, extractRows, findHeaderRow, guessMapping, parseCsv, pdfLinePairs, priceToCents, readPriceFile,
-  isSpecialList, savedColumnsOf, SPECIAL_LIST_RE, UnreadableFileError, type Sheet,
+  isSpecialList, savedColumnsOf, splitCodedRow, SPECIAL_LIST_RE, UnreadableFileError, type Sheet,
 } from "./readers.js";
 
 const VENDOR_SHEET: Sheet = {
@@ -132,6 +132,15 @@ describe("held, never guessed", () => {
   it("a special list (new arrivals, promo, Black Friday) is kept next to the vendor's list", () => {
     for (const n of ["NEW ARRIVALS 11-24.xlsx", "Black Friday PPW.xlsx", "PROMO NOV.pdf", "closeout list.csv"]) expect(SPECIAL_LIST_RE.test(n)).toBe(true);
     for (const n of ["PCA PRICE LIST 11-24.xlsx", "ALL BRANDS.xlsx", "LISTA N 19.pdf"]) expect(SPECIAL_LIST_RE.test(n)).toBe(false);
+  });
+  it("a PCA PDF line (gender · brand · origin · code · name in one run) is split so it links", () => {
+    const base = { sheet: "PDF", row_no: 2, upc: null, sku: null, brand: null, size_text: null, type: null, gender: null, section: null, price: "34.50", qty: null, case_pack: null, raw: {} };
+    expect(splitCodedRow({ ...base, description: "M Carolina Herrera ES I0088421 212 (M) EDT SP 1.7oz(NEW PACK" } as never)).toMatchObject(
+      { sku: "I0088421", brand: "Carolina Herrera", gender: "Men", description: "Carolina Herrera 212 (M) EDT SP 1.7oz(NEW PACK" });
+    expect(splitCodedRow({ ...base, description: "COS Completely Bare US I0087568 COMPLETELY CLEAN HAND SANITI" } as never)).toMatchObject(
+      { sku: "I0087568", brand: "Completely Bare", gender: null });
+    const plain = { ...base, description: "ARMAF CLUB DE NUIT EDT 100ML MAN" };
+    expect(splitCodedRow(plain as never)).toBe(plain);
   });
   it("a full list mailed under a 'new arrivals' subject is the full list (PCA, Euro measured 2026-11-26)", () => {
     expect(isSpecialList("PRICE-LIST-11-25-2026.pdf", "FW: PERFUME CENTER OF AMERICA::::::::::::::NEW ARRIVALS & PRICE LIST")).toBe(false);
