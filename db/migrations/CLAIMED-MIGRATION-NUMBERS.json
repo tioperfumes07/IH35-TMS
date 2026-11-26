@@ -1240,8 +1240,8 @@
     "purpose": "PERFUME vendor tags: perfume.vendors.roles adds distributor + customer (owner tags vendors only / trading / distributor / customer as well) \u2014 owner 2026-11-25 23:41 CT"
   },
   "202616740100": {
-    "claimed_at": "2026-11-25",
+    "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME contacts database: perfume.contact_companies / contact_people / contact_origins / google_search_runs \u2014 owner 2026-11-25 22:04-22:11 CT (renumbered from 202616710100, taken by perfume mail send #29839)"
+    "purpose": "PERFUME contacts database (vendor / customer / both, start date, how) + Google business search \u2014 PR #29837 (owner 2026-11-25)"
   }
 }
