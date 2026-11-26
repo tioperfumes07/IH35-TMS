@@ -800,6 +800,10 @@
     {
       "file": "apps/backend/src/users/table-preferences.routes.ts",
       "reason": "Per-user table preferences (column order / widths / sort) in identity.user_preferences — UI convenience, not a business or financial event; same disposition as the identity/driver preference routes (443.199 heavy post-step review 2026-10-17)"
+    },
+    {
+      "file": "apps/backend/src/perfume/mail/mail.routes.ts",
+      "reason": "PERFUME desk (TIO Perfumes / ScentsX LLC) — isolated perfume schema with no operating_company_id and no carrier spine, same as desk.service.ts. Its writes are its own record: perfume.mail_runs (one row per run), perfume.mail_files (every file seen, with status, reason and the list it saved), perfume.mail_rules (created_by, switched off never deleted) and perfume.mail_accounts (connected_by / connected_at); price lists are saved only through importList with its to-the-cent check."
     }
   ]
 }
