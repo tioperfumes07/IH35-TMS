@@ -109,8 +109,8 @@ describeIntegration("a mailed list saved through the Lists tab's import (real Po
     expect((await db.query(`SELECT voided_at FROM perfume.price_lists WHERE id = $1`, [forced.listId])).rows[0].voided_at).toBeNull();
     expect((await db.query(`SELECT label FROM perfume.price_lists WHERE id = $1`, [bf.listId])).rows[0].label).toBe("Price list");
 
-    // Held for the right reason, nothing saved: no columns, old .xls.
+    // Held for the right reason, nothing saved: no columns; a ".xls" that is not an Excel file (no OLE2 signature).
     expect((await importMailFile(db as never, ctx, meta("terms.csv", "msg-5"), Buffer.from("Terms,Notes,Contact\nNet 30,FOB,Ana\n"), r)).reason).toMatch(/No description and price columns/);
-    expect((await importMailFile(db as never, ctx, meta("old.xls", "msg-6"), Buffer.from("x"), r)).reason).toMatch(/Old Excel/);
+    expect((await importMailFile(db as never, ctx, meta("old.xls", "msg-6"), Buffer.from("x"), r)).reason).toMatch(/could not be opened/);
   });
 });
