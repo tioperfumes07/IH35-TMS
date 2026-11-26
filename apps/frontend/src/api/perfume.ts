@@ -378,11 +378,11 @@ export type PerfumeContactRow = { id: string; name: string; domain: string | nul
   customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
   phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
   status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null };
-export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach";
+export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach" | "kind";
 export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; limit: number; offset: number; rows: PerfumeContactRow[];
   facets?: Record<PerfumeContactFacet, Array<{ value: string; count: number }>> };
 /** Several values per filter box ("|"-separated on the wire — a city name can hold a comma). */
-export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach", string[]>>;
+export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach" | "kinds", string[]>>;
 export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; q?: string; source?: string; limit?: number; offset?: number } & PerfumeContactPicks) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) {
@@ -509,3 +509,58 @@ export async function fetchPerfumeOfferExcel(): Promise<{ name: string; mime: st
   const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO-Perfumes-offer.xlsx";
   return { name, mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes: await res.arrayBuffer() };
 }
+
+/* ------------------------------------------------------------------ leads: catalogs + contacts Excel round trip (owner 2026-11-26 17:38 CT) */
+
+export type PerfumeCatalogKind = "vendor_type" | "customer_type" | "category" | "segment" | "source_kind" | "product_type" | "gender";
+export type PerfumeCatalogs = { kinds: Array<{ kind: PerfumeCatalogKind; label: string; values: Array<{ id: string; value: string; sort: number; contacts: number }> }> };
+export const listPerfumeCatalogs = () => apiRequest<PerfumeCatalogs>("/api/v1/perfume/catalogs");
+export const addPerfumeCatalogValue = (b: { kind: PerfumeCatalogKind; value: string }) => apiRequest<{ id: string }>("/api/v1/perfume/catalogs", { method: "POST", body: b });
+export const renamePerfumeCatalogValue = (id: string, value: string) =>
+  apiRequest<{ moved: number }>(`/api/v1/perfume/catalogs/${encodeURIComponent(id)}/rename`, { method: "POST", body: { value } });
+export const archivePerfumeCatalogValue = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/catalogs/${encodeURIComponent(id)}/archive`, { method: "POST", body: {} });
+
+/** Every contact as the Excel file the owner filters and categorizes (one row per person), saved to the computer. */
+export async function downloadPerfumeContactsExcel(): Promise<number> {
+  const res = await fetch(resolveApiUrl("/api/v1/perfume/contacts/export.xlsx"), { credentials: "include" });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO-Perfumes-Leads.xlsx";
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a); a.click();
+  window.setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 60_000);
+  return Number(res.headers.get("X-Rows") ?? 0);
+}
+
+export type PerfumeUploadKind = "export" | "email" | "leaked" | "phone" | "other";
+export type PerfumeUploadSummary = {
+  file_name: string;
+  sheets: Array<{ name: string; kind: PerfumeUploadKind | "skipped"; header_row: number | null; rows: number; used: number; columns: string[] }>;
+  existing: { rows: number; companies_changed: number; people_changed: number; remove_companies: number; remove_people: number; not_found: number; conflicts: number };
+  changes: Array<{ company: string; person: string | null; field: string; from: string | null; to: string | null }>;
+  changes_total: number;
+  conflicts: Array<{ company: string; field: string; values: string[] }>;
+  not_found: Array<{ sheet: string; row: number; id: string }>;
+  removals: Array<{ scope: "company" | "person"; company: string; person: string | null }>;
+  new: { records: number; would_match: number; would_insert: number; people: number; by_kind: Partial<Record<PerfumeUploadKind, number>>;
+    by_category: Record<string, { records: number; match: number }>;
+    samples: Array<{ name: string; kind: PerfumeUploadKind; category: string | null; email: string | null; phone: string | null; country: string | null; leaked_from: string | null; match: string | null }> };
+  unknown: Partial<Record<PerfumeCatalogKind, string[]>>;
+};
+export type PerfumeUploadResult = { companies_changed: number; people_changed: number; companies_removed: number; people_removed: number; records: number; inserted: number;
+  matched: number; people_inserted: number; origins: number; skipped: number; catalog_added: number; errors: string[] };
+export type PerfumeUpload = { id: string; file_name: string; status: "previewed" | "applying" | "applied" | "failed" | "discarded"; summary: PerfumeUploadSummary;
+  options: PerfumeApplyOptions | null; result: PerfumeUploadResult | null; error: string | null; created_at: string; applied_at: string | null };
+export type PerfumeApplyOptions = { skip_categories: string[]; skip_kinds: PerfumeUploadKind[]; add_unknown: boolean };
+export type PerfumeUploadRow = { id: string; file_name: string; status: PerfumeUpload["status"]; created_at: string; applied_at: string | null; error: string | null;
+  existing: PerfumeUploadSummary["existing"] | null; new: Pick<PerfumeUploadSummary["new"], "records" | "would_match" | "would_insert" | "people"> | null; result: PerfumeUploadResult | null };
+
+export const uploadPerfumeContacts = (b: { file_name: string; sheets: Array<{ name: string; rows: Array<Array<string | number | boolean | null>> }> }) =>
+  apiRequest<{ id: string; summary: PerfumeUploadSummary }>("/api/v1/perfume/contacts/uploads", { method: "POST", body: b });
+export const listPerfumeContactUploads = () => apiRequest<{ uploads: PerfumeUploadRow[] }>("/api/v1/perfume/contacts/uploads");
+export const getPerfumeContactUpload = (id: string) => apiRequest<PerfumeUpload>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}`);
+export const applyPerfumeContactUpload = (id: string, b: PerfumeApplyOptions) =>
+  apiRequest<{ status: "applying" }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/apply`, { method: "POST", body: b });
+export const discardPerfumeContactUpload = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/discard`, { method: "POST", body: {} });

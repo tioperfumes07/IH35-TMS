@@ -138,7 +138,7 @@ describe("TIO Perfumes workspace rail", () => {
   it("on /perfume shows only the perfume modules, lit by the tab's module; on a carrier page none of them", () => {
     const { unmount } = render(<MemoryRouter initialEntries={["/perfume?tab=campaign"]}><Sidebar role="Owner" /></MemoryRouter>);
     const rail = screen.getByTestId("perfume-sidebar");
-    expect(within(rail).getAllByRole("link").map((a) => a.textContent)).toEqual(["Price desk", "Mail lists", "Leads", "Campaigns", "Traders", "Trade shows"]);
+    expect(within(rail).getAllByRole("link").map((a) => a.textContent)).toEqual(["Price desk", "Mail lists", "Leads", "Campaigns", "Traders", "Trade shows", "Catalogs"]);
     expect(screen.getByTestId("perfume-nav-campaigns").getAttribute("aria-current")).toBe("page");
     expect(screen.getByTestId("perfume-nav-leads").getAttribute("href")).toBe("/perfume?tab=contacts");
     expect(screen.queryByText("Dispatch")).toBeNull();

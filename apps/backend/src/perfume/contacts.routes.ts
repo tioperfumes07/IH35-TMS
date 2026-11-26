@@ -27,7 +27,7 @@ async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<stri
 
 const RL_READ = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
 const RL_SEARCH = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } } as const;
-const listSchema = z.object({
+export const listSchema = z.object({
   role: z.enum(["vendor", "customer", "both", "none", "all"]).optional(),
   q: z.string().max(200).optional(),
   source: z.string().max(120).optional(),
@@ -37,6 +37,7 @@ const listSchema = z.object({
   categories: z.string().max(4000).optional(), sources: z.string().max(2000).optional(), hows: z.string().max(2000).optional(),
   regions: z.string().max(4000).optional(), ctypes: z.string().max(4000).optional(), vtypes: z.string().max(2000).optional(),
   segments: z.string().max(4000).optional(), statuses: z.string().max(400).optional(), shows: z.string().max(8000).optional(), reach: z.string().max(200).optional(),
+  kinds: z.string().max(2000).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -51,16 +52,21 @@ const runSchema = z.object({ city: z.string().trim().max(160) });
 const importSchema = z.object({ records: z.array(importRecordSchema).min(1).max(500) });
 const RL_IMPORT = { bodyLimit: 8 * 1024 * 1024, config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
 
+/** The list query with every "|"-separated box split into its values (the list and the Excel download read the same filters). */
+export function contactQueryFrom(d: z.infer<typeof listSchema>) {
+  const many = (v?: string) => (v ? v.split("|").map((x) => x.trim()).filter(Boolean).slice(0, 300) : undefined);
+  return { ...d, countries: many(d.countries), states: many(d.states), cities: many(d.cities),
+    categories: many(d.categories), sources: many(d.sources), hows: many(d.hows), regions: many(d.regions),
+    ctypes: many(d.ctypes), vtypes: many(d.vtypes), segments: many(d.segments), statuses: many(d.statuses),
+    shows: many(d.shows), reach: many(d.reach), kinds: many(d.kinds) };
+}
+
 export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
   app.get("/api/v1/perfume/contacts", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = listSchema.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "invalid_query", details: q.error.flatten() });
-    const many = (v?: string) => (v ? v.split("|").map((x) => x.trim()).filter(Boolean).slice(0, 300) : undefined);
-    const query = { ...q.data, countries: many(q.data.countries), states: many(q.data.states), cities: many(q.data.cities),
-      categories: many(q.data.categories), sources: many(q.data.sources), hows: many(q.data.hows), regions: many(q.data.regions),
-      ctypes: many(q.data.ctypes), vtypes: many(q.data.vtypes), segments: many(q.data.segments), statuses: many(q.data.statuses),
-      shows: many(q.data.shows), reach: many(q.data.reach) };
+    const query = contactQueryFrom(q.data);
     return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 

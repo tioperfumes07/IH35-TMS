@@ -25,6 +25,8 @@ import { PerfumeContactsPanel } from "./PerfumeContactsPanel";
 import { PerfumeTradeShowsPanel } from "./PerfumeTradeShowsPanel";
 import { PerfumeCampaignPanel } from "./PerfumeCampaignPanel";
 import { PerfumeTradersPanel } from "./PerfumeTradersPanel";
+import { PerfumeLeadsExcelPanel } from "./PerfumeLeadsExcelPanel";
+import { PerfumeCatalogsPanel } from "./PerfumeCatalogsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
@@ -32,10 +34,10 @@ import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 import { perfumeModuleOf } from "./perfumeModules";
 
-type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "campaign" | "traders" | "shows" | "review" | "rules";
+type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "vendors" | "customers" | "excel" | "catalogs" | "campaign" | "traders" | "shows" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
   ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
-  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "Contacts"], ["campaign", "Campaigns"], ["traders", "Traders"], ["shows", "Trade shows"], ["review", "Review"], ["rules", "Rules"],
+  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "All leads"], ["vendors", "Vendors"], ["customers", "Customers"], ["excel", "Excel update"], ["catalogs", "Catalogs"], ["campaign", "Campaigns"], ["traders", "Traders"], ["shows", "Trade shows"], ["review", "Review"], ["rules", "Rules"],
 ];
 
 export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -140,7 +142,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel /> : tab === "campaign" ? <PerfumeCampaignPanel /> : tab === "traders" ? <PerfumeTradersPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel key="all" /> : tab === "vendors" ? <PerfumeContactsPanel key="vendor" initialRole="vendor" /> : tab === "customers" ? <PerfumeContactsPanel key="customer" initialRole="customer" /> : tab === "excel" ? <PerfumeLeadsExcelPanel /> : tab === "catalogs" ? <PerfumeCatalogsPanel /> : tab === "campaign" ? <PerfumeCampaignPanel /> : tab === "traders" ? <PerfumeTradersPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
