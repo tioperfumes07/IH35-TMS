@@ -85,3 +85,27 @@ describeIntegration("Rematch creates the new items (real Postgres, rolled back)"
     expect(c.match_method).not.toBe("new_item");
   });
 });
+
+describe("same bottle, another spelling (owner 2026-11-26 17:48 CT)", () => {
+  const ixWith = (rows: Array<[string, string, string]>) => {
+    const ix = emptyIndex();
+    for (const [iid, d, brand] of rows) {
+      const x = identify({ description: d, brand });
+      addItem(ix, { id: iid, brand: x.brand, name: x.nameText, sizeMl: x.sizeMl, conc: x.conc, gender: x.gender, flags: x.flags, identityKey: x.key, looseKey: looseKey(x), displayName: displayNameOf(x) });
+    }
+    return ix;
+  };
+  it("THE DREAMER = DREAMER; TOY 2 YUMMY = TOY YUMMY; same size, type and kind", () => {
+    const ix = ixWith([["dream", "VERSACE THE DREAMER 100ML EDT M", "VERSACE"], ["toy", "MOSCHINO TOY 2 YUMMY 100ML EDP W", "MOSCHINO"]]);
+    expect(matchLine(ix, "sanya", { description: "VERSACE DREAMER  100 ML EDT SP (ITALY)", brand: "VERSACE" }, { allowNewItem: true }).itemId).toBe("dream");
+    expect(matchLine(ix, "sanya", { description: "MOSCHINO TOY YUMMY  100 ML EDP SP (ITALY)", brand: "MOSCHINO" }, { allowNewItem: true }).itemId).toBe("toy");
+  });
+  it("never across size, type or kind; two candidates stay in Review", () => {
+    const ix = ixWith([["d100", "VERSACE THE DREAMER 100ML EDT M", "VERSACE"], ["d50", "VERSACE THE DREAMER 50ML EDT M", "VERSACE"]]);
+    expect(matchLine(ix, "s", { description: "VERSACE DREAMER 30 ML EDT SP", brand: "VERSACE" }, { allowNewItem: false }).itemId).toBeNull();
+    expect(matchLine(ix, "s", { description: "VERSACE DREAMER 100 ML EDP SP", brand: "VERSACE" }, { allowNewItem: false }).itemId).toBeNull();
+    expect(matchLine(ix, "s", { description: "TESTER VERSACE DREAMER 100 ML EDT SP", brand: "VERSACE" }, { allowNewItem: false }).itemId).toBeNull();
+    const two = ixWith([["a", "LACOSTE ESSENTIAL 125ML EDT M", "LACOSTE"], ["b", "LACOSTE ESSENTIAL SPORT 125ML EDT M", "LACOSTE"]]);
+    expect(matchLine(two, "s", { description: "LACOSTE ESSENTIAL 125 ML EDT", brand: "LACOSTE" }, { allowNewItem: false }).itemId).toBe("a");
+  });
+});

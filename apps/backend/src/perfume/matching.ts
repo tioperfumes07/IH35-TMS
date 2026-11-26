@@ -121,6 +121,40 @@ export function nameMatch(ix: MatchIndex, id: Identity): string | null {
   return fits.length === 1 ? fits[0] : null;
 }
 
+/** Words that never tell two bottles of one brand apart ("THE DREAMER" = "DREAMER"; a leading TT is Euro's tester mark). */
+const NAME_FILLER = new Set(["THE", "TT", "EAU", "DE", "DU", "LA", "LE", "FOR", "BY", "AND", "&", "POUR", "HOMME", "FEMME", "MEN", "WOMEN", "MAN",
+  "WOMAN", "HIM", "HER", "M", "W", "L", "U"]);
+function nameSetOf(name: string, brand: string): Set<string> {
+  const brandWords = new Set(brand.toUpperCase().split(/[^A-Z0-9]+/).filter(Boolean));
+  return new Set(name.toUpperCase().split(/[^A-Z0-9]+/).filter((w) => w && !brandWords.has(w) && !NAME_FILLER.has(w)));
+}
+/**
+ * The same bottle under another spelling (owner 2026-11-26 17:48 CT "DO NOT PAUSE, FINISH"). Measured 23:50Z in Review:
+ * "VERSACE DREAMER 100 ML EDT" vs VERSACE · THE DREAMER · 100 ml · EDT (60%), "MOSCHINO TOY YUMMY 100 ML EDP" vs TOY 2
+ * YUMMY, "PALOMA PICASSO EDT SP 3.4oz (TESTER)" vs PALOMA PICASSO 100 ml EDT TESTER. One item of the same brand, the
+ * same bottle size, the same kind of product (tester / set / body …), no clashing type or gender, and the same name
+ * words — or one extra number ("TOY 2 YUMMY") — is that item. Two candidates = Review (the owner decides).
+ */
+export function sameProduct(ix: MatchIndex, id: Identity): string | null {
+  if (!id.brand || id.sizeMl == null || id.contents) return null;
+  const line = nameSetOf(id.nameText, id.brand);
+  const hits: string[] = [];
+  for (const iid of ix.byBrand.get(id.brand) ?? []) {
+    const it = ix.items.get(iid);
+    if (!it || it.sizeMl !== id.sizeMl || productKind(it.flags) !== productKind(id.flags)) continue;
+    if (id.conc && it.conc && id.conc !== it.conc) continue;
+    const itGender = it.gender || genderHintOf(it.name);
+    if (id.gender && itGender && id.gender !== "U" && itGender !== "U" && itGender !== id.gender) continue;
+    const item = nameSetOf(it.name, it.brand);
+    const [small, big] = line.size <= item.size ? [line, item] : [item, line];
+    if (![...small].every((w) => big.has(w))) continue;
+    const extra = [...big].filter((w) => !small.has(w));
+    if (extra.length > 1 || (extra.length === 1 && !/^\d+$/.test(extra[0]!))) continue;
+    hits.push(iid);
+  }
+  return hits.length === 1 ? hits[0]! : null;
+}
+
 /** The vendor's own spelling, normalized — what a confirmation remembers. */
 export function textKeyOf(line: LineIn): string {
   return [line.brand ?? "", line.description, line.size_text ?? ""].join(" ").toUpperCase().replace(/\s+/g, " ").trim();
@@ -272,6 +306,8 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
     if (c.length === 1) return done(c[0], "loose_key");
   }
   if (!upc && (named || identity.brand)) { const n = nameMatch(ix, identity); if (n) return done(n, "name"); }
+  // A barcode no item carries is a new bottle (5b): the same-spelling rule is for lines without one.
+  if (!upc) { const sp = sameProduct(ix, identity); if (sp) return done(sp, "name"); }
   // A brand-only bottle ("4711 3.4 EDC U") is a strong identity only when the vendor also gives its barcode.
   // With its barcode a line is a strong identity even when the vendor prints no known brand (Lux America
   // "AL HAMBRA ANARCH 100ML EDP"); without a barcode it needs brand + name + size.
