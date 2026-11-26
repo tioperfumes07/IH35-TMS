@@ -5,3 +5,4 @@ ALTER TABLE perfume.trade_shows ADD COLUMN IF NOT EXISTS organizer text;
 ALTER TABLE perfume.trade_shows ADD COLUMN IF NOT EXISTS register_url text;
 ALTER TABLE perfume.trade_shows ADD COLUMN IF NOT EXISTS contact_email text;
 ALTER TABLE perfume.trade_shows ADD COLUMN IF NOT EXISTS contact_phone text;
+
