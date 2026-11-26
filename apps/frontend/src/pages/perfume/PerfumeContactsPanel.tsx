@@ -193,7 +193,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   );
 }
 
-/** The Master Database and the INEGI DENUE pull come in as one JSON-lines file each; sent in batches of 500, one transaction each. */
+/** The Master Database and the research files come in as one JSON-lines file each; sent in batches of 500, one transaction each. */
 function ImportCard({ onDone }: { onDone: () => void }) {
   const { pushToast } = useToast();
   const [state, setState] = useState<{ file: string; done: number; total: number; tally: PerfumeContactImportTally | null; error: string | null } | null>(null);
@@ -228,7 +228,7 @@ function ImportCard({ onDone }: { onDone: () => void }) {
           {state.file}: {state.done.toLocaleString("en-US")}{" "}{tr("perfume.contacts.of", "of")}{" "}{state.total.toLocaleString("en-US")}{" "}{tr("perfume.contacts.records", "records")}{state.tally ? ` · ${state.tally.inserted.toLocaleString("en-US")} new · ${state.tally.matched.toLocaleString("en-US")} already in the list (${Object.entries(state.tally.by).map(([k, v]) => `${k} ${v.toLocaleString("en-US")}`).join(" · ") || "—"}) · ${state.tally.people_inserted.toLocaleString("en-US")} people · ${state.tally.origins.toLocaleString("en-US")} origins` : ""}
           {state.error ? <b className="text-red-700"> — {state.error}</b> : null}
         </span>
-      ) : <span className="text-[#64748B]">{tr("perfume.contacts.master_database_or_inegi_denue_duplicate", "Master Database or INEGI DENUE — duplicates are matched, never doubled.")}</span>}
+      ) : <span className="text-[#64748B]">{tr("perfume.contacts.master_database_or_research_duplicate", "Master Database or a research file — duplicates are matched, never doubled.")}</span>}
     </section>
   );
 }

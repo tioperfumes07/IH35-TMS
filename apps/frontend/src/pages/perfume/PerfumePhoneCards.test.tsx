@@ -49,3 +49,11 @@ describe("PerfumePhoneCards", () => {
     expect(screen.getByTestId("perfume-phone-empty").textContent).toBe("No items match the search and filters.");
   });
 });
+
+describe("PerfumePhoneCards — placeholders", () => {
+  it("leaves out a placeholder brand such as ? instead of printing it", () => {
+    render(<PerfumePhoneCards loading={false} emptyText="none" cols={[]} rows={[{ id: "9", brand: "?", name: "BOND 9 CHELSEA FLOWERS" }]} />);
+    expect(screen.getByText("BOND 9 CHELSEA FLOWERS")).toBeTruthy();
+    expect(screen.queryByText(/\? ·/)).toBeNull();
+  });
+});

@@ -47,9 +47,9 @@ export function PerfumeSavedListsBar() {
         const mine = saved.filter((s) => s.vendor_id === v.vendor_id);
         const using = mine.find((s) => s.in_use);
         return (
-          <label key={v.vendor_id} className="flex items-center gap-1 text-xs text-gray-600" data-testid={`perfume-saved-${v.kind}`}>
+          <label key={v.vendor_id} className="flex min-w-0 max-w-full flex-wrap items-center gap-1 text-xs text-gray-600" data-testid={`perfume-saved-${v.kind}`}>
             {tr(`perfume.saved.kind.${v.kind}`, KIND_TITLE[v.kind])}
-            <span className="w-[420px]">
+            <span className="w-[420px] min-w-0 max-w-full">
               <Combobox ariaLabel={KIND_TITLE[v.kind]} size="sm" disabled={busy === v.vendor_id}
                 value={using?.key ?? NONE}
                 dataTestId={`perfume-saved-pick-${v.kind}`}
