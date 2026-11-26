@@ -22,14 +22,15 @@ import logoUrl from "./tio-perfumes-logo.png";
 import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeMailPanel } from "./PerfumeMailPanel";
 import { PerfumeContactsPanel } from "./PerfumeContactsPanel";
+import { PerfumeTradeShowsPanel } from "./PerfumeTradeShowsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 
-type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "review" | "rules";
+type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "shows" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
   ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
-  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "Contacts"], ["review", "Review"], ["rules", "Rules"],
+  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "Contacts"], ["shows", "Trade shows"], ["review", "Review"], ["rules", "Rules"],
 ];
 
 export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -96,8 +97,8 @@ export default function PerfumeDeskPage() {
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "rules" || tab === "mail" || tab === "contacts" ? null : <PerfumeSavedListsBar />}
-      {tab === "lists" || tab === "mail" || tab === "contacts" || tab === "rules" || tab === "analysis" ? null : (
+      {tab === "rules" || tab === "mail" || tab === "contacts" || tab === "shows" ? null : <PerfumeSavedListsBar />}
+      {tab === "lists" || tab === "mail" || tab === "contacts" || tab === "shows" || tab === "rules" || tab === "analysis" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
           {(tab === "review" ? REVIEW_MINE_OPTIONS : MINE_OPTIONS).map(([k, l]) => (
@@ -111,7 +112,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
