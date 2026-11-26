@@ -18,6 +18,16 @@ import {
   addPerfumeShowContact, listPerfumeContacts, listPerfumeShowContacts, listPerfumeShows, savePerfumeShow, setPerfumeShowIGo, updatePerfumeShowContact,
   type PerfumeShow, type PerfumeShowContact, type PerfumeShowContactStatus,
 } from "../../api/perfume";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
+
+/** A stored instant (ISO, UTC) as the local wall clock "YYYY-MM-DDTHH:mm" the picker shows and edits. */
+function localWallClock(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+}
 import { tr } from "./perfumeI18n";
 
 const DASH = "—";
@@ -211,9 +221,10 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
               {(Object.keys(STATUS_TEXT) as PerfumeShowContactStatus[]).map((k) => <option key={k} value={k}>{STATUS_TEXT[k]}</option>)}
             </select>) },
           { key: "meeting_at", label: "When", sortable: true, render: (x) => (
-            <input type="datetime-local" aria-label={`Meeting time with ${x.company}`} className={ctl} value={x.meeting_at ? x.meeting_at.slice(0, 16) : ""}
-              onClick={(e) => e.stopPropagation()}
-              onChange={(e) => void patch(x, { meeting_at: e.target.value ? new Date(e.target.value).toISOString() : null })} />) },
+            <span onClick={(e) => e.stopPropagation()}>
+              <DateTimePicker aria-label={`Meeting time with ${x.company}`} className={ctl} value={localWallClock(x.meeting_at)}
+                onChange={(v) => void patch(x, { meeting_at: v ? new Date(v).toISOString() : null })} />
+            </span>) },
           { key: "booth", label: "Booth", sortable: true, render: (x) => x.booth ?? DASH },
           { key: "note", label: "Note", render: (x) => x.note ?? DASH },
           { key: "remove", label: "", render: (x) => (
