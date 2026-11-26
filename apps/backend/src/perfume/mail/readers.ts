@@ -328,3 +328,19 @@ export function chooseReading(file: ReadFile, saved: SavedColumns | null): Choic
 /** A supplement (new arrivals, specials, Black Friday) is kept NEXT TO the vendor's list, never replacing it —
  *  the Lists tab's file-name rule, plus Black Friday / closeout (owner 2026-11-23: the Black Friday list sits next to PPW). */
 export const SPECIAL_LIST_RE = /arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement|black\s*friday|closeout|clearance|liquidaci/i;
+
+/** A file or subject that names the vendor's FULL list. PCA mails "PRICE-LIST-11-25-2026.pdf" under the subject
+ *  "PERFUME CENTER OF AMERICA … NEW ARRIVALS & PRICE LIST", Euro "Updated Stock List With All New Arrivals": the
+ *  words "new arrivals" ride along on the full list, so a full-list name always wins (owner 2026-11-26 15:26 CT:
+ *  "most should be replaced by the newest one"). */
+export const FULL_LIST_RE = /price[-_ ]?list|stock[-_ ]?list|lista\s*(de\s*)?precios?|all[-_ ]brands|full[-_ ]list|complete[-_ ]list/i;
+
+/** Special (kept next to the vendor's list)? The file name decides first: a full-list name is never special, a
+ *  special name ("BLACK FRIDAY.xlsx") always is. Only a neutral file name falls back to the subject, and a subject
+ *  that also names the full list ("… NEW ARRIVALS & PRICE LIST") is the full list. */
+export function isSpecialList(fileName: string, subject: string | null | undefined): boolean {
+  if (FULL_LIST_RE.test(fileName)) return false;
+  if (SPECIAL_LIST_RE.test(fileName)) return true;
+  const subj = subject ?? "";
+  return SPECIAL_LIST_RE.test(subj) && !FULL_LIST_RE.test(subj);
+}
