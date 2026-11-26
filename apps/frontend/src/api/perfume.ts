@@ -436,3 +436,75 @@ export const addPerfumeShowContact = (id: string, b: { company_id: string; perso
   apiRequest<{ id: string }>(`/api/v1/perfume/trade-shows/${id}/contacts`, { method: "POST", body: b });
 export const updatePerfumeShowContact = (id: string, b: { status?: PerfumeShowContactStatus; meeting_at?: string | null; booth?: string | null; note?: string | null; archived?: boolean }) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/trade-show-contacts/${id}`, { method: "PATCH", body: b });
+
+/* ------------------------------------------------------------------ campaigns + traders (design boards 4 and 3) */
+
+export type PerfumeCampaignFilters = PerfumeContactPicks & { roles?: Array<PerfumeContactRole | "none">; q?: string };
+export type PerfumeSegment = { id: string; name: string; filters: PerfumeCampaignFilters; created_at: string; updated_at: string };
+export type PerfumeAudience = { companies: number; people: number; with_email: number; phone_only: number; opted_out: number; invalid: number;
+  recipients: number; en: number; es: number; sample: Array<{ email: string; language: "en" | "es" }> };
+export type PerfumeCampaignStatus = "draft" | "scheduled" | "sending" | "sent" | "stopped" | "failed";
+export type PerfumeCampaign = { id: string; name: string; segment_id: string | null; segment_name?: string | null; filters: PerfumeCampaignFilters;
+  language: "auto" | "en" | "es"; subject_en: string | null; subject_es: string | null; body_en: string | null; body_es: string | null;
+  attachment_names: string[]; per_hour: number; status: PerfumeCampaignStatus; scheduled_for: string | null; recipients: number; sent: number;
+  skipped: number; failed: number; error: string | null; started_at: string | null; finished_at: string | null; created_at: string; updated_at: string; batches?: number };
+export type PerfumeCampaignDetail = { campaign: PerfumeCampaign; attachments: Array<{ id: string; file_name: string; mime_type: string; bytes: number }>;
+  batches: Array<{ id: string; language: "en" | "es"; seq: number; recipients: number; sent: number; skipped: number; failed: number; status: string; error: string | null }> };
+export type PerfumeCampaignInput = { id?: string; name: string; segment_id?: string | null; filters: PerfumeCampaignFilters; language: "auto" | "en" | "es";
+  subject_en?: string | null; subject_es?: string | null; body_en?: string | null; body_es?: string | null; per_hour: number };
+
+export const listPerfumeSegments = () => apiRequest<{ segments: PerfumeSegment[] }>("/api/v1/perfume/segments");
+export const savePerfumeSegment = (b: { id?: string; name: string; filters: PerfumeCampaignFilters }) =>
+  apiRequest<{ id: string }>("/api/v1/perfume/segments", { method: "POST", body: b });
+export const archivePerfumeSegment = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/segments/${encodeURIComponent(id)}/archive`, { method: "POST", body: {} });
+export const getPerfumeAudience = (filters: PerfumeCampaignFilters, language: "auto" | "en" | "es") =>
+  apiRequest<PerfumeAudience>("/api/v1/perfume/campaigns/audience", { method: "POST", body: { filters, language } });
+export const listPerfumeCampaigns = () => apiRequest<{ campaigns: PerfumeCampaign[] }>("/api/v1/perfume/campaigns");
+export const getPerfumeCampaign = (id: string) => apiRequest<PerfumeCampaignDetail>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}`);
+export const savePerfumeCampaign = (b: PerfumeCampaignInput) => apiRequest<{ id: string }>("/api/v1/perfume/campaigns", { method: "POST", body: b });
+export const addPerfumeCampaignAttachment = (id: string, a: { name: string; mime_type?: string; content_base64: string }) =>
+  apiRequest<{ id: string; bytes: number }>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}/attachments`, { method: "POST", body: a });
+export const removePerfumeCampaignAttachment = (id: string, attachmentId: string) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}/attachments/${encodeURIComponent(attachmentId)}/remove`, { method: "POST", body: {} });
+export const testPerfumeCampaign = (id: string, language: "en" | "es") =>
+  apiRequest<{ batch_id: string; to: string }>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}/test`, { method: "POST", body: { language } });
+export const sendPerfumeCampaign = (id: string, when?: string | null) =>
+  apiRequest<{ status: "sending" | "scheduled"; recipients: number; scheduled_for?: string }>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}/send`, { method: "POST", body: { when: when ?? null } });
+export const stopPerfumeCampaign = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/campaigns/${encodeURIComponent(id)}/stop`, { method: "POST", body: {} });
+
+export type PerfumeTradeStage = "offer_received" | "buyers_matched" | "offer_sent" | "negotiating" | "closed" | "lost";
+export type PerfumeTradeBuyer = { id: string; company_id: string; company: string; status: "matched" | "offered" | "negotiating" | "won" | "lost"; offer_cents: number | null; note: string | null };
+export type PerfumeTrade = { id: string; item: string; brand: string | null; upc: string | null; from_company_id: string | null; from_company: string | null;
+  buy_cents: number | null; sell_cents: number | null; qty: number | null; stage: PerfumeTradeStage; note: string | null; closed_on: string | null;
+  created_at: string; updated_at: string; buyers: PerfumeTradeBuyer[] };
+export type PerfumeTraders = {
+  kpis: { both: number; both_with_email: number; sent_lists: number; exposed_lists: number; common_buyers: number; open_trades: number; closed_trades: number };
+  trades: PerfumeTrade[];
+  common_buyers: Array<{ id: string; name: string; role: PerfumeContactRole | null; city: string | null; country: string | null; lists: number; senders: string[] }>;
+  exposed_lists: Array<{ sender: string; buyers: number; first_on: string | null; last_on: string | null }>;
+  matrix_brands: string[];
+  matrix: Array<{ vendor_id: string; vendor: string; brands: Record<string, number>; carried: number }>;
+  brand_options: Array<{ brand: string; vendors: number }>;
+};
+export type PerfumeTradeInput = { id?: string; item: string; brand?: string | null; upc?: string | null; from_company_id?: string | null;
+  buy_cents?: number | null; sell_cents?: number | null; qty?: number | null; stage: PerfumeTradeStage; note?: string | null };
+
+export const getPerfumeTraders = (brands: string[]) =>
+  apiRequest<PerfumeTraders>(`/api/v1/perfume/traders${brands.length ? `?${new URLSearchParams({ brands: brands.join("|") }).toString()}` : ""}`);
+export const savePerfumeTrade = (b: PerfumeTradeInput) => apiRequest<{ id: string }>("/api/v1/perfume/trades", { method: "POST", body: b });
+export const setPerfumeTradeStage = (id: string, stage: PerfumeTradeStage) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/trades/${encodeURIComponent(id)}/stage`, { method: "POST", body: { stage } });
+export const archivePerfumeTrade = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/trades/${encodeURIComponent(id)}/archive`, { method: "POST", body: {} });
+export const addPerfumeTradeBuyer = (id: string, b: { company_id: string; offer_cents?: number | null; note?: string | null }) =>
+  apiRequest<{ id: string }>(`/api/v1/perfume/trades/${encodeURIComponent(id)}/buyers`, { method: "POST", body: b });
+export const updatePerfumeTradeBuyer = (id: string, b: { status?: PerfumeTradeBuyer["status"]; offer_cents?: number | null; note?: string | null; archived?: boolean }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/trade-buyers/${encodeURIComponent(id)}`, { method: "PATCH", body: b });
+
+/** My offer list as the Excel workbook the desk exports (all items I offer), for a campaign attachment. */
+export async function fetchPerfumeOfferExcel(): Promise<{ name: string; mime: string; bytes: ArrayBuffer }> {
+  const q = perfumeGridQuery({ view: "all", mine: "offer", offset: 0, limit: 1 });
+  const res = await fetch(resolveApiUrl(`/api/v1/perfume/export.xlsx?${q.toString()}`), { credentials: "include" });
+  if (!res.ok) throw new Error(`Offer list export failed (${res.status})`);
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO-Perfumes-offer.xlsx";
+  return { name, mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", bytes: await res.arrayBuffer() };
+}

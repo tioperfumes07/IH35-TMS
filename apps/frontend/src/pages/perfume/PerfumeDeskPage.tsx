@@ -23,16 +23,18 @@ import { PerfumeListsPanel } from "./PerfumeListsPanel";
 import { PerfumeMailPanel } from "./PerfumeMailPanel";
 import { PerfumeContactsPanel } from "./PerfumeContactsPanel";
 import { PerfumeTradeShowsPanel } from "./PerfumeTradeShowsPanel";
+import { PerfumeCampaignPanel } from "./PerfumeCampaignPanel";
+import { PerfumeTradersPanel } from "./PerfumeTradersPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 
-type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "shows" | "review" | "rules";
+type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "campaign" | "traders" | "shows" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
   ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
-  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "Contacts"], ["shows", "Trade shows"], ["review", "Review"], ["rules", "Rules"],
+  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "Contacts"], ["campaign", "Campaigns"], ["traders", "Traders"], ["shows", "Trade shows"], ["review", "Review"], ["rules", "Rules"],
 ];
 
 export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -133,7 +135,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel /> : tab === "campaign" ? <PerfumeCampaignPanel /> : tab === "traders" ? <PerfumeTradersPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }
