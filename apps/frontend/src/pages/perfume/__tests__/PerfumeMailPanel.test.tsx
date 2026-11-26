@@ -121,4 +121,27 @@ describe("Mail price lists", () => {
     expect(screen.getByText("Lista 11/24")).toBeTruthy();
     expect(screen.getByText("stop@buyer.com")).toBeTruthy();
   });
+  // Owner 2026-11-25 23:25 CT: "add a hotmail connection".
+  it("Hotmail is the third mailbox; until Microsoft sign-in is set up on the server its Connect stays off and says why", async () => {
+    state.mailboxes = ["tioperfumes07@gmail.com", "jpm@tioperfumes.com", "tio-perfumes@hotmail.com"];
+    state.microsoft_mailboxes = ["tio-perfumes@hotmail.com"];
+    state.microsoft_configured = false;
+    mount();
+    const boxes = await screen.findAllByTestId("perfume-mail-account");
+    expect(boxes).toHaveLength(3);
+    expect(within(boxes[2]).getByText("Hotmail (Microsoft) sign-in is not set up on the server yet.")).toBeTruthy();
+    expect((within(boxes[2]).getByTestId("perfume-mail-connect") as HTMLButtonElement).disabled).toBe(true);
+    expect((within(boxes[0]).getByTestId("perfume-mail-connect") as HTMLButtonElement).disabled).toBe(false);
+  });
+  it("with Microsoft set up, Hotmail's Connect goes to the Microsoft sign-in", async () => {
+    state.mailboxes = ["tioperfumes07@gmail.com", "jpm@tioperfumes.com", "tio-perfumes@hotmail.com"];
+    state.microsoft_mailboxes = ["tio-perfumes@hotmail.com"];
+    state.microsoft_configured = true;
+    const assign = vi.fn();
+    Object.defineProperty(window, "location", { value: { ...window.location, assign, origin: "https://app.ih35dispatch.com" }, writable: true });
+    mount();
+    const boxes = await screen.findAllByTestId("perfume-mail-account");
+    fireEvent.click(within(boxes[2]).getByTestId("perfume-mail-connect"));
+    expect(String(assign.mock.calls[0][0])).toContain("/api/v1/perfume/mail/microsoft/connect?returnTo=https%3A%2F%2Fapp.ih35dispatch.com");
+  });
 });

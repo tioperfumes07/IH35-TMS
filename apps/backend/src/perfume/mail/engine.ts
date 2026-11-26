@@ -22,7 +22,8 @@ import type { PoolClient } from "pg";
 import { withCurrentUser, withLuciaBypass } from "../../auth/db.js";
 import { decrypt } from "../../lib/encryption.js";
 import { ImportCheckFailed, importList, invalidateGridCache, type ImportCheck } from "../desk.service.js";
-import { accessTokenFor, attachmentsOf, Gmail, header, MailReconnectError, senderAddress, type Attachment, type FetchLike, type GmailMessage } from "./gmail.js";
+import { attachmentsOf, header, MailReconnectError, senderAddress, type Attachment, type FetchLike, type GmailMessage } from "./gmail.js";
+import { gmailFromQuery, gmailSearchQuery, openSource, type MailProvider, type MailSource } from "./source.js";
 import { chooseReading, PRICE_FILE_EXT, readPriceFile, savedColumnsOf, SPECIAL_LIST_RE, UnreadableFileError, type Choice } from "./readers.js";
 import { downloadLink, downloadLinksOf, htmlOf, LINK_PREFIX, linkFileName, type DownloadImpl } from "./links.js";
 
@@ -56,14 +57,12 @@ export function listDateOf(receivedAt: Date): string {
 
 /** The Gmail search for one run: price-list attachments received in the last `days` days, not sent by the owner. */
 export function searchQuery(days: number): string {
-  return `has:attachment newer_than:${Math.max(1, Math.min(60, Math.floor(days)))}d -in:sent -in:drafts {filename:xlsx filename:xls filename:csv filename:pdf filename:xlsm}`;
+  return gmailSearchQuery(days);
 }
 
 /** Mail from the senders set up as vendors (address or @domain) — for lists sent as a download link, not an attachment. */
 export function linkSearchQuery(days: number, fromAddresses: string[]): string | null {
-  const froms = [...new Set(fromAddresses.map((a) => a.trim().toLowerCase().replace(/^@/, "")).filter(Boolean))];
-  if (!froms.length) return null;
-  return `newer_than:${Math.max(1, Math.min(60, Math.floor(days)))}d -in:sent -in:drafts from:(${froms.join(" OR ")})`;
+  return gmailFromQuery(days, fromAddresses);
 }
 
 export type HoldReason =
@@ -177,17 +176,16 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
     const runId = await withCurrentUser(ownerUid, async (c) => (await c.query<{ id: string }>(
       `INSERT INTO perfume.mail_runs (trigger, started_by) VALUES ($1, $2) RETURNING id`, [opts.trigger, opts.startedBy ?? null])).rows[0].id);
     const sum: RunSummary = { run_id: runId, accounts: 0, messages_seen: 0, imported: 0, held: 0, unassigned: 0, failed: 0, errors: [] };
-    const accounts = await withCurrentUser(ownerUid, async (c) => (await c.query<{ email: string; refresh_token_enc: Buffer; last_checked_at: string | null }>(
-      `SELECT email, refresh_token_enc, last_checked_at FROM perfume.mail_accounts WHERE status = 'connected' ORDER BY email`)).rows);
+    const accounts = await withCurrentUser(ownerUid, async (c) => (await c.query<{ email: string; provider: MailProvider; refresh_token_enc: Buffer; last_checked_at: string | null }>(
+      `SELECT email, provider, refresh_token_enc, last_checked_at FROM perfume.mail_accounts WHERE status = 'connected' ORDER BY email`)).rows);
     for (const acct of accounts) {
       sum.accounts++;
       const ctx: Ctx = { ownerUid, runId, account: acct.email };
       try {
-        const token = await accessTokenFor(decrypt(acct.refresh_token_enc) ?? "", opts.fetchImpl);
-        const gmail = new Gmail(token, opts.fetchImpl);
+        const gmail: MailSource = await openSource(ownerUid, acct, opts.fetchImpl);
         // First run of a mailbox looks back 14 days; then the run window (3 days by default).
         const days = opts.days ?? (acct.last_checked_at ? 3 : 14);
-        const ids = await gmail.listIds(searchQuery(days), 300);
+        const ids = await gmail.priceFileIds(days);
         const withFiles = new Set<string>();
         const rules = await withCurrentUser(ownerUid, async (c) => (await c.query<MailRule>(
           `SELECT id, from_address, file_text, vendor_id, special, ignore FROM perfume.mail_rules WHERE active`)).rows);
@@ -231,8 +229,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
         }
         // Lists sent as a "Download Excel PriceList" link (MTZ, Elegance, Nandansons, Classic, Gift Express, M&R measured
         // 2026-11-25: no attachment, a Constant Contact link). Only for senders the owner set up as a vendor.
-        const lq = linkSearchQuery(days, rules.filter((r) => r.vendor_id && !r.ignore).map((r) => r.from_address));
-        const linkIds = lq ? (await gmail.listIds(lq, 200)).filter((x) => !withFiles.has(x)) : [];
+        const linkIds = (await gmail.fromIds(days, rules.filter((r) => r.vendor_id && !r.ignore).map((r) => r.from_address))).filter((x) => !withFiles.has(x));
         for (const id of linkIds) {
           sum.messages_seen++;
           let msg: GmailMessage;
@@ -295,8 +292,8 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
 export async function reprocessMailFile(ownerUid: string, fileId: string, opts: { vendorId?: string; special?: boolean; fileText?: string | null; force?: boolean;
   fetchImpl?: FetchLike; downloadImpl?: DownloadImpl }): Promise<Outcome & { file_id: string }> {
   const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; sender: string; subject: string | null;
-    received_at: Date; rule_id: string | null; vendor_id: string | null; refresh_token_enc: Buffer | null; status: string }>(
-    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, f.status
+    received_at: Date; rule_id: string | null; vendor_id: string | null; refresh_token_enc: Buffer | null; provider: MailProvider; status: string }>(
+    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, a.provider, f.status
        FROM perfume.mail_files f JOIN perfume.mail_accounts a ON a.email = f.account_email WHERE f.id = $1`, [fileId])).rows[0]);
   if (!f) throw new MailFileError("file_not_found");
   if (f.status === "imported" && !opts.force) throw new MailFileError("already_imported");
@@ -315,9 +312,8 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
       `SELECT special FROM perfume.mail_rules WHERE id = $1`, [ruleId])).rows[0]?.special ?? false));
   }
   if (!vendorId) throw new MailFileError("vendor_required");
-  const token = await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", opts.fetchImpl);
-  const gmail = new Gmail(token, opts.fetchImpl);
-  const buf = await fileBytes(gmail, f.external_gmail_message_id, f.file_name, opts.downloadImpl);
+  const src = await openSource(ownerUid, { email: f.account_email, provider: f.provider, refresh_token_enc: f.refresh_token_enc }, opts.fetchImpl);
+  const buf = await fileBytes(src, f.external_gmail_message_id, f.file_name, opts.downloadImpl);
   const ctx: Ctx = { ownerUid, runId: null, account: f.account_email };
   const meta: FileMeta = { messageId: f.external_gmail_message_id, fileName: f.file_name, sender: f.sender, subject: f.subject ?? "", receivedAt: new Date(f.received_at) };
   const o = await withCurrentUser(ownerUid, async (c) => {
@@ -331,16 +327,16 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
 
 /** The original attachment, for the owner to open on the Lists tab (held files). */
 export async function downloadMailFile(ownerUid: string, fileId: string, fetchImpl?: FetchLike): Promise<{ fileName: string; buf: Buffer }> {
-  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; refresh_token_enc: Buffer | null }>(
-    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, a.refresh_token_enc FROM perfume.mail_files f
+  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; refresh_token_enc: Buffer | null; provider: MailProvider }>(
+    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, a.refresh_token_enc, a.provider FROM perfume.mail_files f
        JOIN perfume.mail_accounts a ON a.email = f.account_email WHERE f.id = $1`, [fileId])).rows[0]);
   if (!f) throw new MailFileError("file_not_found");
-  const gmail = new Gmail(await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", fetchImpl), fetchImpl);
-  return { fileName: f.file_name, buf: await fileBytes(gmail, f.external_gmail_message_id, f.file_name) };
+  const src = await openSource(ownerUid, { email: f.account_email, provider: f.provider, refresh_token_enc: f.refresh_token_enc }, fetchImpl);
+  return { fileName: f.file_name, buf: await fileBytes(src, f.external_gmail_message_id, f.file_name) };
 }
 
 /** The bytes of a recorded file: the attachment, or — for a "Link · …" file — the email's download link opened again. */
-async function fileBytes(gmail: Gmail, messageId: string, fileName: string, downloadImpl?: DownloadImpl): Promise<Buffer> {
+async function fileBytes(gmail: MailSource, messageId: string, fileName: string, downloadImpl?: DownloadImpl): Promise<Buffer> {
   const msg = await gmail.message(messageId);
   if (fileName.startsWith(LINK_PREFIX)) {
     const link = downloadLinksOf(htmlOf(msg)).find((l) => fileName.startsWith(linkFileName(l.label, "")));

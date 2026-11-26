@@ -203,8 +203,9 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
   );
 }
 
-/** One toggle per tab, right on the vendor's row: Purchase · Trading · Wholesale. A click saves at once. */
-function RoleToggles({ vendor }: { vendor: PerfumeVendor }) {
+/** One toggle per tab, right on the vendor's row: Purchase · Trading · Wholesale, then the owner's own tags (2026-11-25 23:41 CT)
+ *  Distributor · Customer. A click saves at once. */
+export function RoleToggles({ vendor }: { vendor: PerfumeVendor }) {
   const qc = useQueryClient();
   const { pushToast } = useToast();
   const [busy, setBusy] = useState(false);

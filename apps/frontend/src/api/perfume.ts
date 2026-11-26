@@ -7,8 +7,10 @@ export function getPerfumeAccess(): Promise<{ allowed: boolean }> {
 }
 export type PerfumeVendorKind = "buy" | "sell" | "both" | "offer" | "inventory";
 /** Owner 2026-11-23 12:32 CT: the desk tabs a vendor's list feeds — purchase, trading, wholesale (toggle buttons). */
-export type PerfumeVendorRole = "purchase" | "trading" | "wholesale";
-export const PERFUME_VENDOR_ROLES: Array<[PerfumeVendorRole, string]> = [["purchase", "Purchase"], ["trading", "Trading"], ["wholesale", "Wholesale"]];
+export type PerfumeVendorRole = "purchase" | "trading" | "wholesale" | "distributor" | "customer";
+/** The desk-tab roles first; then the owner's own tags (2026-11-25 23:41 CT) — Distributor, Customer ("also buys from me"). */
+export const PERFUME_VENDOR_ROLES: Array<[PerfumeVendorRole, string]> = [["purchase", "Purchase"], ["trading", "Trading"], ["wholesale", "Wholesale"],
+  ["distributor", "Distributor"], ["customer", "Customer"]];
 export type PerfumeVendor = {
   id: string;
   name: string;
@@ -308,7 +310,7 @@ export async function downloadPerfumeListExcel(listId: string) {
 
 /* ---------------- Mail price lists (owner 2026-11-25 17:29 CT) ---------------- */
 /** "AN ENGINE THAT AUTOMATICALLY GOES TO MY MAIL APP, GETS ALL THE PRICE LISTS DAILY AND UPDATES THE APP WITH THE NEW PRICES". */
-export type PerfumeMailAccount = { email: string; status: "connected" | "reconnect" | "disconnected"; last_error: string | null; connected_at: string; last_checked_at: string | null; can_send?: boolean };
+export type PerfumeMailAccount = { email: string; status: "connected" | "reconnect" | "disconnected"; last_error: string | null; connected_at: string; last_checked_at: string | null; can_send?: boolean; provider?: "google" | "microsoft" };
 export type PerfumeMailRule = { id: string; from_address: string; file_text: string | null; vendor_id: string | null; vendor_name: string | null; special: boolean; ignore: boolean; created_at: string };
 export type PerfumeMailRun = { id: string; trigger: "schedule" | "manual"; started_at: string; finished_at: string | null; accounts: number; messages_seen: number;
   imported: number; held: number; unassigned: number; failed: number; error: string | null };
@@ -321,11 +323,12 @@ export type PerfumeMailSendBatch = { id: string; from_email: string; subject: st
 export type PerfumeMailOptout = { email: string; reason: string | null; created_at: string };
 export type PerfumeMailSendState = { sender: string; daily_cap: number; sent_last_24h: number; max_recipients: number; max_attachment_bytes: number;
   footer: string; batches: PerfumeMailSendBatch[]; optouts: PerfumeMailOptout[] };
-export type PerfumeMailState = { configured: boolean; mailboxes: string[]; schedule: string; running: boolean; accounts: PerfumeMailAccount[];
+export type PerfumeMailState = { configured: boolean; microsoft_configured?: boolean; microsoft_mailboxes?: string[]; mailboxes: string[]; schedule: string; running: boolean; accounts: PerfumeMailAccount[];
   rules: PerfumeMailRule[]; runs: PerfumeMailRun[]; files: PerfumeMailFile[]; send?: PerfumeMailSendState };
 export const getPerfumeMail = () => apiRequest<PerfumeMailState>("/api/v1/perfume/mail");
 /** Google sign-in for one TIO mailbox (read-only; jpm@tioperfumes.com also asks for send). A page navigation, not a fetch. */
-export function perfumeMailConnectUrl(email: string, send = false): string {
+export function perfumeMailConnectUrl(email: string, send = false, microsoft = false): string {
+  if (microsoft) return resolveApiUrl(`/api/v1/perfume/mail/microsoft/connect?${new URLSearchParams({ returnTo: window.location.origin }).toString()}`);
   const q = new URLSearchParams({ email, returnTo: window.location.origin, ...(send ? { send: "1" } : {}) });
   return resolveApiUrl(`/api/v1/perfume/mail/connect?${q.toString()}`);
 }

@@ -66,7 +66,7 @@ function frontendBaseUrl(): string {
   return (process.env.FRONTEND_BASE_URL || DEFAULT_FRONTEND_BASE_URL).replace(/\/$/, "");
 }
 
-function validateReturnTo(returnTo: string | undefined): string {
+export function validateReturnTo(returnTo: string | undefined): string {
   const fallback = frontendBaseUrl();
   if (!returnTo) return fallback;
   const normalized = returnTo.trim().replace(/\/$/, "");
