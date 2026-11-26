@@ -87,4 +87,38 @@ describe("Mail price lists", () => {
     fireEvent.click(await screen.findByTestId("perfume-mail-force"));
     await waitFor(() => expect(posts).toContainEqual(["/api/v1/perfume/mail/files/f2/import", { force: true }]));
   });
+
+  // Owner 2026-11-25 22:50 CT: "ACTIVATE THE OUTGOING EMAILS WITH JPM@TIOPERFUMES.COM SO I CAN SEND THE LISTS FROM THE APP".
+  const sendState = { sender: "jpm@tioperfumes.com", daily_cap: 1500, sent_last_24h: 12, max_recipients: 500, max_attachment_bytes: 20971520,
+    footer: "\n\n—\nTIO Perfumes (ScentsX LLC) · Laredo, Texas\nTo stop receiving our lists, reply to this email with STOP.",
+    batches: [{ id: "b1", from_email: "jpm@tioperfumes.com", subject: "Lista 11/24", attachment_names: ["TIO 11-24.xlsx"], recipients: 40, sent: 38, skipped: 1, failed: 1,
+      status: "done" as const, error: null, started_at: "2026-11-25T02:00:00Z", finished_at: "2026-11-25T02:01:00Z" }],
+    optouts: [{ email: "stop@buyer.com", reason: "Replied STOP", created_at: "2026-11-25T03:00:00Z" }] };
+  it("jpm@ connected read-only: the send box says to connect again for sending, and Send stays off", async () => {
+    state.accounts.push({ email: "jpm@tioperfumes.com", status: "connected", last_error: null, connected_at: "2026-11-25T23:00:00Z", last_checked_at: null, can_send: false });
+    state.send = sendState;
+    mount();
+    await waitFor(() => expect(screen.getByTestId("perfume-mail-send-not-ready").textContent).toContain("connected for reading only"));
+    expect((screen.getByTestId("perfume-mail-send-start") as HTMLButtonElement).disabled).toBe(true);
+    expect(screen.getByTestId("perfume-mail-send-cap").textContent).toBe("12 of 1,500 sent in the last 24 hours");
+  });
+  it("jpm@ with send access: paste addresses, subject, Send → confirm the count → one POST from jpm@", async () => {
+    state.accounts.push({ email: "jpm@tioperfumes.com", status: "connected", last_error: null, connected_at: "2026-11-25T23:00:00Z", last_checked_at: null, can_send: true });
+    state.send = sendState;
+    mount();
+    const boxes = await screen.findAllByTestId("perfume-mail-account");
+    expect(within(boxes[1]).getByText(/Connected \(read \+ send\)/)).toBeTruthy();
+    fireEvent.change(screen.getByTestId("perfume-mail-send-to"), { target: { value: "Kanak <kanak@perfume-center.com>, sales@etperfume.com\nSALES@etperfume.com" } });
+    expect(screen.getByTestId("perfume-mail-send-count").textContent).toBe("2 addresses");
+    fireEvent.change(screen.getByTestId("perfume-mail-send-subject"), { target: { value: "Lista de precios 11/25" } });
+    fireEvent.change(screen.getByTestId("perfume-mail-send-body"), { target: { value: "Adjunto la lista." } });
+    fireEvent.click(screen.getByTestId("perfume-mail-send-start"));
+    expect(screen.getByTestId("perfume-mail-send-confirm-text").textContent).toBe("Send “Lista de precios 11/25” to 2 addresses from jpm@tioperfumes.com?");
+    expect(posts.find((p) => p[0] === "/api/v1/perfume/mail/send")).toBeUndefined();
+    fireEvent.click(screen.getByTestId("perfume-mail-send-confirm"));
+    await waitFor(() => expect(posts).toContainEqual(["/api/v1/perfume/mail/send",
+      { to: "Kanak <kanak@perfume-center.com>, sales@etperfume.com\nSALES@etperfume.com", subject: "Lista de precios 11/25", body: "Adjunto la lista.", attachments: [] }]));
+    expect(screen.getByText("Lista 11/24")).toBeTruthy();
+    expect(screen.getByText("stop@buyer.com")).toBeTruthy();
+  });
 });

@@ -5,7 +5,7 @@
  *
  * The two mailboxes (connect = the owner's own Google sign-in, read-only), the last runs, every price-list file the engine
  * saw — imported, held with its reason, or from a sender not set up yet (pick the vendor once; next time it is automatic) —
- * and the sender rules.
+ * and the sender rules. jpm@tioperfumes.com also connects for sending (owner 2026-11-25 22:50 CT) — the Send a list box.
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import {
   type PerfumeMailFile, type PerfumeMailFileStatus, type PerfumeMailRule, type PerfumeMailRun, type PerfumeVendor,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { PerfumeMailSendCard } from "./PerfumeMailSendCard";
 
 const money = (c: unknown) => (c == null ? "—" : `$${(Number(c) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
 const STATUS_TEXT: Record<PerfumeMailFileStatus, string> = {
@@ -45,7 +46,7 @@ export function PerfumeMailPanel() {
   const { pushToast } = useToast();
   const [params, setParams] = useSearchParams();
   const [runBusy, setRunBusy] = useState(false);
-  const mail = useQuery({ queryKey: ["perfume", "mail"], queryFn: getPerfumeMail, refetchInterval: (q) => (q.state.data?.running || runBusy ? 4_000 : false) });
+  const mail = useQuery({ queryKey: ["perfume", "mail"], queryFn: getPerfumeMail, refetchInterval: (q) => (q.state.data?.running || runBusy || q.state.data?.send?.batches.some((b) => b.status === "sending") ? 4_000 : false) });
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
 
   // Back from Google: say what happened once, then clear the URL.
@@ -53,7 +54,7 @@ export function PerfumeMailPanel() {
     const ok = params.get("mail_connected");
     const err = params.get("mail_error");
     if (!ok && !err) return;
-    if (ok) pushToast(`${ok} connected — its price lists are read every morning.`, "success");
+    if (ok) pushToast(`${ok} connected — its price lists are read five times a day.`, "success");
     if (err) pushToast(CONNECT_ERRORS[err] ?? `Mailbox not connected (${err})`, "error");
     const next = new URLSearchParams(params);
     for (const k of ["mail_connected", "mail_error", "mail_email"]) next.delete(k);
@@ -95,14 +96,14 @@ export function PerfumeMailPanel() {
                 <div className="space-y-0.5">
                   <div className="font-semibold">{email}</div>
                   <div className={state === "connected" ? "text-emerald-800" : state === "reconnect" ? "font-semibold text-red-700" : "text-gray-600"}>
-                    {state === "connected" ? tr("perfume.mail.connected", "Connected (read-only)") : state === "reconnect" ? tr("perfume.mail.reconnect", "Google stopped the access — connect again") : tr("perfume.mail.notConnected", "Not connected")}
+                    {state === "connected" ? (a?.can_send ? tr("perfume.mail.connectedSend", "Connected (read + send)") : tr("perfume.mail.connected", "Connected (read-only)")) : state === "reconnect" ? tr("perfume.mail.reconnect", "Google stopped the access — connect again") : tr("perfume.mail.notConnected", "Not connected")}
                     {a?.last_checked_at ? ` · ${tr("perfume.mail.lastChecked", "last checked")} ${formatDateTimeUS(a.last_checked_at)}` : ""}
                   </div>
                   {a?.last_error ? <div className="text-red-700">{a.last_error}</div> : null}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button type="button" className="h-[34px] px-3 text-xs" disabled={!d?.configured} data-testid="perfume-mail-connect"
-                    onClick={() => { window.location.assign(perfumeMailConnectUrl(email)); }}>
+                    onClick={() => { window.location.assign(perfumeMailConnectUrl(email, email === (d?.send?.sender ?? "jpm@tioperfumes.com"))); }}>
                     {state === "connected" ? tr("perfume.mail.connectAgain", "Connect again") : tr("perfume.mail.connect", "Connect")}
                   </Button>
                   {state === "connected" || state === "reconnect" ? (
@@ -119,6 +120,9 @@ export function PerfumeMailPanel() {
         <RunsLine runs={d?.runs ?? []} />
       </section>
 
+      <PerfumeMailSendCard send={d?.send} account={d?.accounts.find((a) => a.email === (d?.send?.sender ?? "jpm@tioperfumes.com"))}
+        configured={Boolean(d?.configured)} onChanged={() => void mail.refetch()} />
+
       <FilesCard files={d?.files ?? []} loading={mail.isLoading} vendorOptions={vendorOptions} onChanged={() => void qc.invalidateQueries({ queryKey: ["perfume"] })} />
       <RulesCard rules={d?.rules ?? []} vendors={vendors.data?.vendors ?? []} onChanged={() => void mail.refetch()} />
     </div>
@@ -130,7 +134,7 @@ function RunsLine({ runs }: { runs: PerfumeMailRun[] }) {
   if (!last) return <div className="text-xs text-gray-600">{tr("perfume.mail.noRuns", "No mail check yet.")}</div>;
   return (
     <div className="text-xs text-gray-700" data-testid="perfume-mail-last-run">
-      <b>{tr("perfume.mail.lastRun", "Last check")}:</b> {formatDateTimeUS(last.started_at)} ({last.trigger === "schedule" ? "every morning" : "Check mail now"})
+      <b>{tr("perfume.mail.lastRun", "Last check")}:</b> {formatDateTimeUS(last.started_at)} ({last.trigger === "schedule" ? "scheduled check" : "Check mail now"})
       {last.finished_at ? ` · ${last.messages_seen} emails · ${last.imported} imported · ${last.held} held · ${last.unassigned} from senders not set up · ${last.failed} failed` : " · running…"}
       {last.error ? <div className="whitespace-pre-wrap text-red-700">{last.error}</div> : null}
     </div>

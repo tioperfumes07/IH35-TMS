@@ -178,6 +178,10 @@
     "202616700100_perfume_mail_price_lists.sql::external_gmail_message_id": {
       "kind": "external_id",
       "reason": "Gmail's own message id (users.messages.id) of the email the price-list attachment came in — assigned by Google, not a row of ours; the engine uses it to fetch the attachment again and to record each file once."
+    },
+    "202616710100_perfume_mail_send.sql::external_gmail_message_id": {
+      "kind": "external_id",
+      "reason": "Gmail's own message id (users.messages.send response id) of a list email sent from jpm@tioperfumes.com — assigned by Google, not a row of ours; kept so a sent email can be found in the mailbox."
     }
   }
 }

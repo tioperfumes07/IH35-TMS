@@ -7,11 +7,15 @@
  * only. Nothing here logs, returns or persists a token.
  */
 export const GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
+/** Send only (owner 2026-11-25 22:50 CT: send the lists from jpm@tioperfumes.com). Never used by the read engine. */
+export const GMAIL_SEND_SCOPE = "https://www.googleapis.com/auth/gmail.send";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const API = "https://gmail.googleapis.com/gmail/v1/users/me";
 
 /** Google refused the stored grant (revoked, password changed, app access removed): the owner must sign in again. */
 export class MailReconnectError extends Error {}
+/** The mailbox grant has no send access (403 on send): reading still works; the owner connects it again for sending. */
+export class SendNotGrantedError extends Error {}
 export class GmailApiError extends Error {
   constructor(public readonly status: number, message: string) { super(message); }
 }
@@ -79,6 +83,20 @@ export class Gmail {
     return this.get<GmailMessage>(`/messages/${encodeURIComponent(id)}?format=full`);
   }
 
+  /** Sends one RFC 822 message (already built by buildMime). Returns Gmail's message id. */
+  async send(raw: Buffer): Promise<string> {
+    const res = await this.doFetch(`${API}/messages/send`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${this.token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ raw: raw.toString("base64url") }),
+    });
+    if (res.status === 401) throw new MailReconnectError("Google refused the mailbox access (401) — sign in to this mailbox again on the desk.");
+    if (res.status === 403) throw new SendNotGrantedError("This mailbox was connected without send access — connect it again for sending on the desk.");
+    if (!res.ok) throw new GmailApiError(res.status, `gmail send ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
+    const body = (await res.json().catch(() => ({}))) as { id?: string };
+    return body.id ?? "";
+  }
+
   async attachment(messageId: string, a: Attachment): Promise<Buffer> {
     if (a.inlineData) return Buffer.from(a.inlineData, "base64url");
     if (!a.attachmentId) throw new GmailApiError(404, `attachment ${a.fileName} has no data`);
@@ -111,4 +129,32 @@ export function attachmentsOf(m: GmailMessage): Attachment[] {
   };
   walk(m.payload);
   return out;
+}
+
+/** RFC 2047 for a header with non-ASCII text (Spanish subjects, accented names). */
+function encodeHeaderValue(v: string): string {
+  // eslint-disable-next-line no-control-regex
+  return /^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${Buffer.from(v, "utf8").toString("base64")}?=`;
+}
+function wrap76(b64: string): string { return b64.replace(/.{1,76}/g, "$&\r\n"); }
+export type MimeAttachment = { fileName: string; content: Buffer; mimeType: string };
+
+/** One plain-text email with attachments (multipart/mixed). Header injection is refused, never cleaned. */
+export function buildMime(m: { from: string; to: string; subject: string; text: string; attachments: MimeAttachment[] }): Buffer {
+  for (const v of [m.from, m.to, m.subject]) if (/[\r\n]/.test(v)) throw new Error("mime_header_newline");
+  const boundary = `tio_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+  const lines = [
+    `From: ${m.from}`, `To: ${m.to}`, `Subject: ${encodeHeaderValue(m.subject)}`, "MIME-Version: 1.0",
+    `Content-Type: multipart/mixed; boundary="${boundary}"`, "",
+    `--${boundary}`, 'Content-Type: text/plain; charset="UTF-8"', "Content-Transfer-Encoding: base64", "",
+    wrap76(Buffer.from(m.text, "utf8").toString("base64")),
+  ];
+  for (const a of m.attachments) {
+    const name = a.fileName.replace(/["\r\n\\]/g, "_");
+    lines.push(`--${boundary}`, `Content-Type: ${a.mimeType || "application/octet-stream"}; name="${encodeHeaderValue(name)}"`,
+      `Content-Disposition: attachment; filename="${encodeHeaderValue(name)}"`, "Content-Transfer-Encoding: base64", "",
+      wrap76(a.content.toString("base64")));
+  }
+  lines.push(`--${boundary}--`, "");
+  return Buffer.from(lines.join("\r\n"), "utf8");
 }
