@@ -1,3 +1,4 @@
+// TABLE_DATE_OMIT: the Pre-Settlements closes table has no date column by design — one row per close check (check / how it is met), a standing rule list, not a dated record.
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -259,8 +260,8 @@ export function SettlementsPreSettlementsClosesPanel({
           rows={CLOSE_CHECKS}
           rowKey={(row) => row.check}
           columns={[
-            { key: "check", label: "Check", sortable: false, render: (row) => row.check },
-            { key: "how", label: "How it is met", sortable: false, render: (row) => row.how },
+            { key: "check", label: "Check", sortable: true, render: (row) => row.check },
+            { key: "how", label: "How it is met", sortable: true, render: (row) => row.how },
           ]}
         />
       </div>
