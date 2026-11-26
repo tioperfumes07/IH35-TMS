@@ -10500,7 +10500,7 @@
       "created_by",
       "customer_type",
       "domain",
-      "external_id",
+      "external_directory_id",
       "external_ref",
       "external_source",
       "first_contact_on",

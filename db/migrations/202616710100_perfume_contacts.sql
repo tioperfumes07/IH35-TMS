@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS perfume.contact_companies (
   owner_name text,
   -- An outside directory's own key (INEGI DENUE id, …) so a re-import never doubles a row; segment / SCIAN from that directory.
   external_source text,
-  external_id text,
+  external_directory_id text,
   external_ref jsonb,
   segment text,
   scian_code text,
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS perfume.contact_companies (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE UNIQUE INDEX IF NOT EXISTS contact_companies_place_uq ON perfume.contact_companies (google_place_id) WHERE google_place_id IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS contact_companies_external_uq ON perfume.contact_companies (external_source, external_id) WHERE external_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS contact_companies_external_uq ON perfume.contact_companies (external_source, external_directory_id) WHERE external_directory_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS contact_companies_domain_idx ON perfume.contact_companies (domain) WHERE domain IS NOT NULL;
 CREATE INDEX IF NOT EXISTS contact_companies_name_trgm ON perfume.contact_companies USING gin (lower(name) gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS contact_companies_name_key_idx ON perfume.contact_companies (name_key, lower(city)) WHERE name_key IS NOT NULL;

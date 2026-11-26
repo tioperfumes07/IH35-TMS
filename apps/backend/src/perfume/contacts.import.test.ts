@@ -44,21 +44,21 @@ describeIntegration("import into the contacts database (real Postgres, rolled ba
       rec({ company: { name: "IMPTEST Perfume Center", domain: "imptest-pc.com", role: "customer", website: "imptest-pc.com", first_contact_on: "2014-08-19", last_email_on: "2026-11-25" },
         people: [{ name: "Lakshmi", email: "lakshmi@imptest-pc.com", phones: ["+1 (516) 555-0101"] }, { name: "Ronak again", email: "ronak@imptest-pc.com" }],
         origins: [{ person_index: 0, occurred_on: "2014-08-19", how: "Email", source: "TIO mailboxes" }, { person_index: 0, how: "Kumar list", source: "Kumar list (Desktop)" }] }),
-      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_id: "imp-1", phone: "8670000001" } }),
-      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_id: "imp-2", phone: "8670000001" } }),
-      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_id: "imp-1" } }),
-      rec({ company: { name: "IMPTEST La Rosa", city: "Nuevo Laredo", source: "INEGI DENUE", external_source: "INEGI DENUE", external_id: "imp-3", phone: "(516) 555-0101", segment: "Perfume & cosmetics wholesale" } }),
+      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_directory_id: "imp-1", phone: "8670000001" } }),
+      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_directory_id: "imp-2", phone: "8670000001" } }),
+      rec({ company: { name: "Sin Nombre", city: "IMPTEST City", source: "INEGI DENUE", external_source: "INEGI DENUE", external_directory_id: "imp-1" } }),
+      rec({ company: { name: "IMPTEST La Rosa", city: "Nuevo Laredo", source: "INEGI DENUE", external_source: "INEGI DENUE", external_directory_id: "imp-3", phone: "(516) 555-0101", segment: "Perfume & cosmetics wholesale" } }),
     ], TEST_OWNER_USER_ID);
     expect([t.records, t.inserted, t.matched]).toEqual([6, 3, 3]);
     expect(t.by).toEqual({ email: 1, "outside key": 1, phone: 1 }); // Ronak's email comes before the domain in the key order
     expect([t.people_inserted, t.people_existing]).toEqual([2, 1]);
 
-    const pc = (await db.query(`SELECT id, role, website, first_contact_on::text AS f, last_email_on::text AS l, external_id, segment
+    const pc = (await db.query(`SELECT id, role, website, first_contact_on::text AS f, last_email_on::text AS l, external_directory_id, segment
       FROM perfume.contact_companies WHERE domain = 'imptest-pc.com'`)).rows;
     expect(pc).toHaveLength(1);
     expect([pc[0].role, pc[0].website, pc[0].f, pc[0].l]).toEqual(["both", "imptest-pc.com", "2014-08-19", "2026-11-25"]);
     // The DENUE row with the same phone as Lakshmi merged into the Master company and took its outside key.
-    expect([pc[0].external_id, pc[0].segment]).toEqual(["imp-3", "Perfume & cosmetics wholesale"]);
+    expect([pc[0].external_directory_id, pc[0].segment]).toEqual(["imp-3", "Perfume & cosmetics wholesale"]);
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_people WHERE company_id = $1`, [pc[0].id])).rows[0].n).toBe(2);
     expect((await db.query(`SELECT how FROM perfume.contact_origins WHERE company_id = $1 ORDER BY occurred_on NULLS LAST, how`, [pc[0].id])).rows.map((r) => r.how))
       .toEqual(["Email", "Email", "Kumar list"]);

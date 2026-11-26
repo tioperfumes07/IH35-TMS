@@ -22,7 +22,7 @@ export const importRecordSchema = z.object({
     phone: str, phone_intl: str, maps_uri: str, google_place_id: str, linkedin: str, owner_name: str,
     status: z.enum(["prospect", "active", "dormant", "do_not_email"]).nullable().optional(), source: z.string().trim().min(1).max(120),
     first_contact_on: date, last_email_on: date, notes: z.string().max(5000).nullable().optional(),
-    external_source: str, external_id: str, external_ref: z.record(z.string(), z.unknown()).nullable().optional(), segment: str, scian_code: str,
+    external_source: str, external_directory_id: str, external_ref: z.record(z.string(), z.unknown()).nullable().optional(), segment: str, scian_code: str,
     categories: z.array(z.string().max(200)).max(50).optional(), brands: z.array(z.string().max(200)).max(200).optional(),
   }),
   people: z.array(z.object({
@@ -48,16 +48,16 @@ const ROLE_MERGE = (a: string | null, b: string | null) => (!a ? b ?? null : !b 
 
 const COMPANY_COLS: Array<keyof ImportRecord["company"]> = ["name", "domain", "role", "vendor_type", "customer_type", "main_category", "address", "city", "state", "zip", "country", "region", "website",
   "phone", "phone_intl", "maps_uri", "google_place_id", "linkedin", "owner_name", "status", "source", "first_contact_on", "last_email_on", "notes",
-  "external_source", "external_id", "external_ref", "segment", "scian_code"];
+  "external_source", "external_directory_id", "external_ref", "segment", "scian_code"];
 
 async function findCompany(c: pg.PoolClient, rec: ImportRecord): Promise<[string | null, string | null]> {
   const co = rec.company;
   // Two different ids from the same directory are two different businesses (two "Sin Nombre" beer depots on one street, two
   // branches sharing a phone): they never merge with each other — only with records from another source.
-  const src = co.external_id ? co.external_source : null;
-  const NOT_SAME_DIR = src ? ` AND (external_source IS DISTINCT FROM '${src.replace(/'/g, "''")}' OR external_id IS NULL)` : "";
+  const src = co.external_directory_id ? co.external_source : null;
+  const NOT_SAME_DIR = src ? ` AND (external_source IS DISTINCT FROM '${src.replace(/'/g, "''")}' OR external_directory_id IS NULL)` : "";
   const q1 = async (sql: string, args: unknown[]): Promise<string | null> => ((await c.query<{ id: string }>(sql.replaceAll("/*dir*/", NOT_SAME_DIR), args)).rows[0]?.id ?? null);
-  if (co.external_id) { const id = await q1(`SELECT id FROM perfume.contact_companies WHERE external_source = $1 AND external_id = $2`, [co.external_source, co.external_id]); if (id) return [id, "outside key"]; }
+  if (co.external_directory_id) { const id = await q1(`SELECT id FROM perfume.contact_companies WHERE external_source = $1 AND external_directory_id = $2`, [co.external_source, co.external_directory_id]); if (id) return [id, "outside key"]; }
   if (co.google_place_id) { const id = await q1(`SELECT id FROM perfume.contact_companies WHERE google_place_id = $1`, [co.google_place_id]); if (id) return [id, "place_id"]; }
   const phones = [...new Set([co.phone, ...rec.people.flatMap((p) => p.phones ?? [])].map(phone10).filter((x): x is string => Boolean(x)))];
   for (const p of phones) {
@@ -90,16 +90,16 @@ async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: Impor
   if (id) {
     t.matched += 1; t.by[how!] = (t.by[how!] ?? 0) + 1;
     const cur = (await c.query<{ role: string | null }>(`SELECT role FROM perfume.contact_companies WHERE id = $1`, [id])).rows[0]!;
-    const sets = COMPANY_COLS.filter((k) => !["name", "source", "role", "status", "first_contact_on", "last_email_on", "external_source", "external_id"].includes(k));
+    const sets = COMPANY_COLS.filter((k) => !["name", "source", "role", "status", "first_contact_on", "last_email_on", "external_source", "external_directory_id"].includes(k));
     await c.query(
       `UPDATE perfume.contact_companies SET ${sets.map((k, i) => `${k} = coalesce(${k}, $${i + 2})`).join(", ")},
           role = $${sets.length + 2}, categories = (SELECT array(SELECT DISTINCT unnest(categories || $${sets.length + 3}::text[]))),
           brands = (SELECT array(SELECT DISTINCT unnest(brands || $${sets.length + 4}::text[]))),
           first_contact_on = LEAST(first_contact_on, $${sets.length + 5}::date), last_email_on = GREATEST(last_email_on, $${sets.length + 6}::date),
-          external_source = coalesce(external_source, $${sets.length + 7}), external_id = coalesce(external_id, $${sets.length + 8}), updated_at = now()
+          external_source = coalesce(external_source, $${sets.length + 7}), external_directory_id = coalesce(external_directory_id, $${sets.length + 8}), updated_at = now()
         WHERE id = $1`,
       [id, ...sets.map((k) => (k === "external_ref" && co[k] != null ? JSON.stringify(co[k]) : co[k] ?? null)), ROLE_MERGE(cur.role, (co.role as string | null) ?? null), co.categories ?? [], co.brands ?? [],
-        co.first_contact_on ?? null, co.last_email_on ?? null, co.external_source ?? null, co.external_id ?? null]);
+        co.first_contact_on ?? null, co.last_email_on ?? null, co.external_source ?? null, co.external_directory_id ?? null]);
   } else {
     const cols = COMPANY_COLS.filter((k) => co[k] != null);
     const r = await c.query<{ id: string }>(
