@@ -39,6 +39,8 @@ export function cellText(col: Pick<PerfumeGridCol, "kind">, v: unknown): string 
 }
 
 const str = (v: unknown) => (v == null || v === "" ? "" : String(v));
+/** A vendor file's placeholder ("?", "-", "N/A") is not a brand: the card leaves it out instead of printing it. */
+const realText = (v: unknown) => { const t = str(v).trim(); return /^(?:[?\-—–.*\s]+|n\/?a)$/i.test(t) ? "" : t; };
 
 /** The headline fields every card shows, when the view carries them. */
 const HEAD: Array<{ key: string; label: string; vendorKey?: string }> = [
@@ -66,7 +68,7 @@ export function PerfumePhoneCards({ rows, cols, loading, emptyText }: { rows: Pe
       {rows.map((r) => {
         const id = String(r.id);
         const isOpen = open === id;
-        const title = [str(r.brand), str(r.name)].filter(Boolean).join(" · ") || str(r.description) || tr("perfume.phone.noName", "(no name in the file)");
+        const title = [realText(r.brand), realText(r.name)].filter(Boolean).join(" · ") || str(r.description) || tr("perfume.phone.noName", "(no name in the file)");
         const sub = [r.size_ml != null && r.size_ml !== "" ? `${r.size_ml} ml` : "", str(r.conc), str(r.category), str(r.gender)].filter(Boolean).join(" · ");
         const head = HEAD.filter((h) => r[h.key] != null && r[h.key] !== "");
         const details = detailCols.filter((c) => r[c.key] != null && r[c.key] !== "");
