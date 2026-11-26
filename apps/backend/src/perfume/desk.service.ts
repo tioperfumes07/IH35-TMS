@@ -88,7 +88,10 @@ export type VendorRow = {
 /** Owner 2026-11-23 12:32 CT: "categorize vendors, for trading and purchases, and wholesale for wholesale and trading,
  *  and have toggle buttons." purchase → Purchase · compare vendors; trading → Trading · sell to my vendors; wholesale →
  *  Wholesale · vs competition, Competition · their margin and List analysis. A vendor can carry several. */
-export const VENDOR_ROLES = ["purchase", "trading", "wholesale"] as const;
+export const VENDOR_ROLES = ["purchase", "trading", "wholesale", "distributor", "customer"] as const;
+/** Owner 2026-11-25 23:41 CT: "I'll tag or categorize vendors as vendors only trading distributors and customer as well" —
+ *  distributor / customer are the owner's tags only: no desk tab, no import rule reads them (kindOfRoles ignores them). */
+export const VENDOR_TAG_ONLY_ROLES = ["distributor", "customer"] as const;
 export type VendorRole = (typeof VENDOR_ROLES)[number];
 export const hasRole = (v: Pick<VendorRow, "roles">, r: VendorRole): boolean => (v.roles ?? []).includes(r);
 /** The roles a vendor saved with only a kind gets (the kind it replaces as the tab switch). */

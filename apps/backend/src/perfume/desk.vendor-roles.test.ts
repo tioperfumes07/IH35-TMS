@@ -31,6 +31,13 @@ describe("vendor roles ↔ kind", () => {
     expect(kindOfRoles(["purchase"], "sell")).toBe("buy");
     expect(kindOfRoles([], "offer")).toBe("offer");
   });
+  // Owner 2026-11-25 23:41 CT: "I'll tag or categorize vendors as vendors only trading distributors and customer as well".
+  it("Distributor and Customer are the owner's tags only: they never change the kind (no tab, no import rule)", () => {
+    expect(kindOfRoles(["purchase", "customer"], "buy")).toBe("buy");
+    expect(kindOfRoles(["distributor", "customer"], "buy")).toBe("buy");
+    expect(kindOfRoles(["wholesale", "customer"], "sell")).toBe("sell");
+    expect(kindOfRoles(["wholesale", "distributor", "trading"], "sell")).toBe("both");
+  });
 });
 
 describe("wholesaler picker", () => {
