@@ -310,10 +310,11 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // (owner 2026-11-26 15:56 CT "completely new items … should be automatically created", 16:59 CT "get this all completely
   // done"). Measured 23:00Z: of 958 waiting lines, MOD's minis / roll-ons ("MINI DAZZLING SILVER 5ML L", code
   // MINIDAZSIL5ML) had no suggestion at all and my inventory's gifts ("PARIS HILTON TOTE BAG GWP" vs "WHITE TOTE BAG", 25%)
-  // only far ones. A suggestion 50% alike or more still goes to Review — the owner decides those. A line whose name is
+  // only far ones. Measured 23:20Z after that: Parvin / Sanya / Sushmaa print no code at all — a line with its brand, its
+  // name and its bottle size ("Gucci Rush Women 1 OZ EDT SP", brand Gucci) is a product too. A suggestion 50% alike or more still goes to Review — the owner decides those. A line whose name is
   // empty after cleaning (brand only, "DIOR HOMME COLOGNE") is never created by itself.
   const bestAlike = suggestions.reduce((b, x) => Math.max(b, x.score), 0);
-  if (opts.allowNewItem && (upc || sku) && named && bestAlike < NEW_ITEM_BELOW && !ix.byKey.has(identity.key)) {
+  if (opts.allowNewItem && (upc || sku || strongIdentity) && named && bestAlike < NEW_ITEM_BELOW && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }
   return { identity, upc, textKey, itemId: null, method: null, status: suggestions.length ? "review" : "unmatched", suggestions };

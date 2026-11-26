@@ -31,8 +31,17 @@ describe("nothing alike + own code = new item (pure)", () => {
     const near = matchLine(ix, "inv", { description: "GUESS ICONIC POUCH GWP (U)", brand: "GUESS", sku: "109427" }, { allowNewItem: true, ownList: true });
     expect([near.method, near.status]).toEqual([null, "review"]);
   });
-  it("no code and no barcode → never created", () => {
+  it("no code: created only with brand + name + bottle size; otherwise it waits", () => {
     expect(matchLine(emptyIndex(), "mod", { description: "MINI DAZZLING SILVER 5ML L" }, { allowNewItem: true }).method).toBeNull();
+    expect(matchLine(emptyIndex(), "parvin", { description: "Gucci Rush Women 1 OZ EDT SP", brand: "Gucci" }, { allowNewItem: true }).method).toBe("new_item");
+    expect(matchLine(emptyIndex(), "parvin", { description: "Gucci Rush Women EDT SP", brand: "Gucci" }, { allowNewItem: true }).method).toBeNull();
+    // A competitor's list never creates.
+    expect(matchLine(emptyIndex(), "comp", { description: "Gucci Rush Women 1 OZ EDT SP", brand: "Gucci" }, { allowNewItem: false }).method).toBeNull();
+  });
+  it("\"Eau De Perfume\" is EDP; \"WITH CAP\" is packing, not name", () => {
+    expect(identify({ description: "Le Beau Paradise Garden 2.5 Oz Eau De Perfume Spray", brand: "Jean Paul Gaultier" }).conc).toBe("EDP");
+    expect(identify({ description: "TESTER VERSACE DYLAN BLUE  100 ML EDT SP(M) WITH CAP (ITALY)", brand: "VERSACE" }).nameWords).toEqual(["DYLAN", "BLUE"]);
+    expect(identify({ description: "ARMANI STRONGER WITH YOU 100ML EDT M", brand: "ARMANI" }).nameWords).toContain("WITH");
   });
 });
 
