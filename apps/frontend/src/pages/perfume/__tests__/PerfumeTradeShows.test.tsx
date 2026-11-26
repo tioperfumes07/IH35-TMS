@@ -10,12 +10,13 @@ vi.mock("../../../api/client", async (importOriginal) => ({ ...(await importOrig
 
 // Owner 2026-11-26 15:56 CT: "i am still missing all the other views that you or he other agent deisnged" — the trade show planner.
 const show = (id: string, name: string, starts: string, city: string, iGo: boolean): PerfumeShow => ({ id, name, starts_on: starts, ends_on: starts, city, country: null,
-  kind: "Duty free", dates_status: "Confirmed", i_go: iGo, venue: null, website: null, notes: null, source: "EventsEye", contacts: 0, meetings: 0 });
+  kind: "Duty free", dates_status: "Confirmed", i_go: iGo, venue: null, website: null, notes: null, source: "EventsEye", organizer: null, register_url: null, contact_email: null, contact_phone: null, contacts: 0, meetings: 0 });
 let shows: PerfumeShow[];
 const calls: Array<[string, unknown]> = [];
 beforeEach(() => {
   calls.length = 0;
-  shows = [show("s1", "TFWA World Exhibition & Conference", "2027-10-03", "Cannes, France", true), show("s2", "Beautyworld Middle East", "2027-10-27", "Dubai, UAE", false)];
+  shows = [{ ...show("s1", "TFWA World Exhibition & Conference", "2027-10-03", "Cannes, France", true), website: "www.tfwa.com", register_url: "https://www.tfwa.com/register",
+    organizer: "TFWA", contact_email: "info@tfwa.com", contact_phone: "+33 1 40 74 09 86" }, show("s2", "Beautyworld Middle East", "2027-10-27", "Dubai, UAE", false)];
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (opts?.method) calls.push([path, opts.body]);
     if (path === "/api/v1/perfume/trade-shows") return { shows };
@@ -43,5 +44,16 @@ describe("trade show planner", () => {
     const detail = await screen.findByTestId("perfume-show-detail");
     expect(within(detail).getByTestId("perfume-show-find-contact")).toBeTruthy();
     expect(await within(detail).findByText("No contact linked to this show yet.")).toBeTruthy();
+  });
+  it("each show links to its register page and website in a new tab, with the organizer's email and phone (owner 2026-11-26 17:08 CT)", async () => {
+    mount();
+    const reg = await screen.findByTestId("perfume-show-register-s1");
+    expect(reg.getAttribute("href")).toBe("https://www.tfwa.com/register");
+    expect(reg.getAttribute("target")).toBe("_blank");
+    expect(screen.getAllByText("tfwa.com")[0]!.closest("a")!.getAttribute("href")).toBe("https://www.tfwa.com/");
+    expect(screen.getAllByText("info@tfwa.com")[0]!.closest("a")!.getAttribute("href")).toBe("mailto:info@tfwa.com");
+    expect(screen.getAllByText("+33 1 40 74 09 86")[0]!.closest("a")!.getAttribute("href")).toBe("tel:+33140740986");
+    // A show with no web address shows no link.
+    expect(screen.queryByTestId("perfume-show-register-s2")).toBeNull();
   });
 });

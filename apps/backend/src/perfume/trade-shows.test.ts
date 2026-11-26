@@ -63,4 +63,13 @@ describeIntegration("trade show planner (real Postgres, rolled back)", () => {
     expect(await listShowContacts(db as never, a.id)).toEqual([]);
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.trade_show_contacts WHERE id = $1`, [x1.id])).rows[0].n).toBe(1);
   });
+  it("keeps the organizer, register page, email and phone; an import fills them only where blank (owner 2026-11-26 17:08 CT)", async () => {
+    const base = { name: "ZZ Contact Data Expo", starts_on: "2027-03-02" };
+    const a = await saveShow(db as never, TEST_OWNER_USER_ID, showSchema.parse({ ...base, organizer: "ZZ Events", register_url: "https://zz.test/register",
+      contact_email: "info@zz.test", contact_phone: "+1 212 555 0100", website: "https://zz.test" }));
+    await saveShow(db as never, TEST_OWNER_USER_ID, showSchema.parse({ ...base, organizer: "Someone else", contact_email: "other@zz.test" }));
+    const row = (await listShows(db as never)).find((s) => s.id === a.id)!;
+    expect([row.organizer, row.register_url, row.contact_email, row.contact_phone, row.website])
+      .toEqual(["ZZ Events", "https://zz.test/register", "info@zz.test", "+1 212 555 0100", "https://zz.test"]);
+  });
 });
