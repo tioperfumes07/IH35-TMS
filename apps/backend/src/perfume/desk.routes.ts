@@ -59,7 +59,7 @@ const vendorSchema = z.object({
   contact: z.string().max(300).nullable().optional(),
   column_mapping: z.record(z.string(), z.unknown()).optional(),
   // Owner 2026-11-23 12:32 CT: purchase / trading / wholesale — the tabs the vendor's list feeds (toggle buttons).
-  roles: z.array(z.enum(["purchase", "trading", "wholesale"])).max(3).optional(),
+  roles: z.array(z.enum(["purchase", "trading", "wholesale", "distributor", "customer"])).max(5).optional(),
 });
 const rulesSchema = z.object({
   round_step: z.enum(["1", "5", "10", "25", "50", "100", "75"]).optional(),
