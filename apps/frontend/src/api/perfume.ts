@@ -378,11 +378,11 @@ export type PerfumeContactRow = { id: string; name: string; domain: string | nul
   customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
   phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
   status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null };
-export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "source" | "how";
+export type PerfumeContactFacet = "country" | "state" | "city" | "category" | "source" | "how" | "region" | "ctype" | "vtype" | "segment" | "status" | "show" | "reach";
 export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; limit: number; offset: number; rows: PerfumeContactRow[];
   facets?: Record<PerfumeContactFacet, Array<{ value: string; count: number }>> };
 /** Several values per filter box ("|"-separated on the wire — a city name can hold a comma). */
-export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows", string[]>>;
+export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach", string[]>>;
 export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; q?: string; source?: string; limit?: number; offset?: number } & PerfumeContactPicks) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) {
