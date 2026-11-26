@@ -126,6 +126,22 @@ export function extractRows(sheet: Sheet, headerRow: number, map: Mapping): Extr
   return { rows, rowsRead, fileTotalCents: total, sections };
 }
 
+/**
+ * A PDF line that carries gender · brand · origin · item code · name in one run (Perfume Center of America, measured
+ * 2026-11-26 on PRICE-LIST-11-24-2026.pdf: "M Carolina Herrera ES I0088421 212 (M) EDT SP 1.7oz(NEW PACK"). Split it so
+ * the line links like every other list: the vendor's code is the SKU, the brand is the brand, the gender is the gender,
+ * and the name keeps the brand in front. A line without that shape is returned unchanged.
+ */
+const CODED_NAME_RE = /^([A-Z]{1,4})\s+(.+?)\s+[A-Z]{2}\s+(I\d{6,8})\s+(.+)$/;
+const CODED_GENDER: Record<string, string> = { M: "Men", W: "Women", L: "Women", U: "Unisex" };
+export function splitCodedRow(r: ImportRow): ImportRow {
+  const m = CODED_NAME_RE.exec(r.description);
+  if (!m) return r;
+  const [, g, brand, code, name] = m;
+  return { ...r, sku: r.sku ?? code, brand: r.brand ?? cap(brand.trim(), 120), gender: r.gender ?? CODED_GENDER[g] ?? null,
+    description: cap(`${brand.trim()} ${name.trim()}`, 400) };
+}
+
 /** Every "$00.00" on a PDF text line becomes one [name, price] pair (same rule as the browser reader). */
 export const PDF_NO_NAME = "(no name on this line in the file)";
 export function pdfLinePairs(line: string): Array<[string, string]> {
@@ -301,7 +317,8 @@ export function chooseReading(file: ReadFile, saved: SavedColumns | null): Choic
   if (file.kind === "pdf_text") {
     const sheet = file.sheets[0];
     const map: Mapping = { desc: 0, price: 1 };
-    return { sheet, headerRow: 0, map, extracted: extractRows(sheet, 0, map), how: "pdf" };
+    const extracted = extractRows(sheet, 0, map);
+    return { sheet, headerRow: 0, map, extracted: { ...extracted, rows: extracted.rows.map(splitCodedRow) }, how: "pdf" };
   }
   if (saved) {
     const pool = saved.sheet ? [...file.sheets.filter((s) => s.name === saved.sheet), ...file.sheets.filter((s) => s.name !== saved.sheet)] : file.sheets;
@@ -328,3 +345,19 @@ export function chooseReading(file: ReadFile, saved: SavedColumns | null): Choic
 /** A supplement (new arrivals, specials, Black Friday) is kept NEXT TO the vendor's list, never replacing it —
  *  the Lists tab's file-name rule, plus Black Friday / closeout (owner 2026-11-23: the Black Friday list sits next to PPW). */
 export const SPECIAL_LIST_RE = /arrival|nuevo|new[-_ ]|special|promo|oferta|addend|supplement|black\s*friday|closeout|clearance|liquidaci/i;
+
+/** A file or subject that names the vendor's FULL list. PCA mails "PRICE-LIST-11-25-2026.pdf" under the subject
+ *  "PERFUME CENTER OF AMERICA … NEW ARRIVALS & PRICE LIST", Euro "Updated Stock List With All New Arrivals": the
+ *  words "new arrivals" ride along on the full list, so a full-list name always wins (owner 2026-11-26 15:26 CT:
+ *  "most should be replaced by the newest one"). */
+export const FULL_LIST_RE = /price[-_ ]?list|stock[-_ ]?list|lista\s*(de\s*)?precios?|all[-_ ]brands|full[-_ ]list|complete[-_ ]list/i;
+
+/** Special (kept next to the vendor's list)? The file name decides first: a full-list name is never special, a
+ *  special name ("BLACK FRIDAY.xlsx") always is. Only a neutral file name falls back to the subject, and a subject
+ *  that also names the full list ("… NEW ARRIVALS & PRICE LIST") is the full list. */
+export function isSpecialList(fileName: string, subject: string | null | undefined): boolean {
+  if (FULL_LIST_RE.test(fileName)) return false;
+  if (SPECIAL_LIST_RE.test(fileName)) return true;
+  const subj = subject ?? "";
+  return SPECIAL_LIST_RE.test(subj) && !FULL_LIST_RE.test(subj);
+}

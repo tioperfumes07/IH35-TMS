@@ -109,6 +109,13 @@ describeIntegration("a mailed list saved through the Lists tab's import (real Po
     expect((await db.query(`SELECT voided_at FROM perfume.price_lists WHERE id = $1`, [forced.listId])).rows[0].voided_at).toBeNull();
     expect((await db.query(`SELECT label FROM perfume.price_lists WHERE id = $1`, [bf.listId])).rows[0].label).toBe("Price list");
 
+    // An OLDER email (weeks of mail are read newest first) never replaces the newest list and is not imported.
+    const older = await importMailFile(db as never, ctx, { ...meta("MAILTEST 11-10.csv", "msg-7"), receivedAt: new Date("2026-11-10T15:00:00Z") }, csv(12, 1200), r);
+    expect(older.status).toBe("duplicate");
+    expect(older.reason).toMatch(/Older than the list in use \(2026-11-25\)/);
+    expect(older.listId).toBeUndefined();
+    expect((await db.query(`SELECT voided_at FROM perfume.price_lists WHERE id = $1`, [forced.listId])).rows[0].voided_at).toBeNull();
+
     // Held for the right reason, nothing saved: no columns, old .xls.
     expect((await importMailFile(db as never, ctx, meta("terms.csv", "msg-5"), Buffer.from("Terms,Notes,Contact\nNet 30,FOB,Ana\n"), r)).reason).toMatch(/No description and price columns/);
     expect((await importMailFile(db as never, ctx, meta("old.xls", "msg-6"), Buffer.from("x"), r)).reason).toMatch(/Old Excel/);

@@ -24,7 +24,7 @@ import { decrypt } from "../../lib/encryption.js";
 import { ImportCheckFailed, importList, invalidateGridCache, type ImportCheck } from "../desk.service.js";
 import { attachmentsOf, header, MailReconnectError, senderAddress, type Attachment, type FetchLike, type GmailMessage } from "./gmail.js";
 import { gmailFromQuery, gmailSearchQuery, openSource, type MailProvider, type MailSource } from "./source.js";
-import { chooseReading, PRICE_FILE_EXT, readPriceFile, savedColumnsOf, SPECIAL_LIST_RE, UnreadableFileError, type Choice } from "./readers.js";
+import { chooseReading, isSpecialList, PRICE_FILE_EXT, readPriceFile, savedColumnsOf, UnreadableFileError, type Choice } from "./readers.js";
 import { downloadLink, downloadLinksOf, htmlOf, LINK_PREFIX, linkFileName, type DownloadImpl } from "./links.js";
 
 export const PERFUME_MAIL_JOB = "perfume.mail_price_lists_cron";
@@ -126,8 +126,16 @@ export async function importMailFile(c: PoolClient, ctx: Ctx, f: FileMeta, buf: 
   if (!choice) return { ...base, status: "held", reason: HOLD_TEXT.columns_not_found };
   const ex = choice.extracted;
   if (!ex.rowsRead) return { ...base, status: "held", reason: HOLD_TEXT.no_prices_found };
-  const special = rule.special || SPECIAL_LIST_RE.test(f.fileName) || SPECIAL_LIST_RE.test(f.subject ?? "");
+  const special = rule.special || isSpecialList(f.fileName, f.subject);
   if (!special && !opts.force) {
+    // The newest full list is the one in use: an older email (the first look-back reads weeks of mail, newest first)
+    // never replaces it and is not imported at all (owner 2026-11-26 15:26 CT: "replaced by the newest one").
+    const newest = (await c.query<{ list_date: string }>(
+      `SELECT list_date::text FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL AND label IS NULL
+        ORDER BY list_date DESC LIMIT 1`, [v.id])).rows[0];
+    if (newest && listDateOf(f.receivedAt) < newest.list_date.slice(0, 10)) {
+      return { ...base, status: "duplicate", reason: `Older than the list in use (${newest.list_date.slice(0, 10)}) — the newest list is kept.` };
+    }
     const cur = (await c.query<{ rows_saved: number }>(
       `SELECT rows_saved FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL ORDER BY (label IS NULL) DESC, imported_at DESC LIMIT 1`,
       [v.id])).rows[0];
