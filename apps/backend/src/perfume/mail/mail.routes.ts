@@ -7,16 +7,23 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../../auth/session-middleware.js";
 import { withCurrentUser } from "../../auth/db.js";
-import { registerGoogleGrantPurpose, startGoogleGrant } from "../../auth/routes.js";
+import { registerGoogleGrantPurpose, startGoogleGrant, validateReturnTo } from "../../auth/routes.js";
+import { oauthPkceCookieOptions } from "../../auth/session-cookie-policy.js";
 import { encrypt } from "../../lib/encryption.js";
+import { exchangeMicrosoftCode, microsoftAuthorizeUrl, microsoftClient, Outlook, pkcePair } from "./outlook.js";
 import { deskAllowed } from "../desk.routes.js";
 import { downloadMailFile, MailFileError, mailRunInProgress, reprocessMailFile, runMailImport } from "./engine.js";
 import { GMAIL_READONLY_SCOPE, GMAIL_SEND_SCOPE, googleClient, MailReconnectError } from "./gmail.js";
 import { DAILY_SEND_CAP, MAX_ATTACHMENT_BYTES, MAX_RECIPIENTS_PER_SEND, parseRecipients, PERFUME_SENDER, SEND_FOOTER, SendError, startSend } from "./send.js";
 
 export const PERFUME_MAIL_GRANT = "perfume_mail";
-/** The two mailboxes the owner named (2026-11-25 17:32 CT). Any other address he signs in with is refused. */
-export const PERFUME_MAILBOXES = ["tioperfumes07@gmail.com", "jpm@tioperfumes.com"];
+/** The mailboxes the owner named (2026-11-25 17:32 CT; Hotmail 23:25 CT). Any other address he signs in with is refused. */
+export const PERFUME_MAILBOXES = ["tioperfumes07@gmail.com", "jpm@tioperfumes.com", "tio-perfumes@hotmail.com"];
+/** Read through Microsoft (Outlook.com), not Google. */
+export const PERFUME_MICROSOFT_MAILBOXES = ["tio-perfumes@hotmail.com"];
+const MS_STATE_COOKIE = "perfume_ms_state";
+const MS_VERIFIER_COOKIE = "perfume_ms_verifier";
+const MS_RETURN_COOKIE = "perfume_ms_return";
 export const PERFUME_MAIL_SCHEDULE_TEXT = "Monday–Saturday at 6:30 AM, 9:30 AM, 12:30 PM, 5:00 PM and 9:45 PM; Sunday at 9:45 PM (Laredo time)";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -50,7 +57,7 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     const info = await fetch("https://openidconnect.googleapis.com/v1/userinfo", { headers: { Authorization: `Bearer ${tokens.accessToken}` } });
     const email = info.ok ? String(((await info.json()) as Record<string, unknown>)["email"] ?? "").toLowerCase() : "";
     if (!email) return back("mail_error=no_email");
-    if (!PERFUME_MAILBOXES.includes(email)) return back(`mail_error=not_a_tio_mailbox&mail_email=${encodeURIComponent(email)}`);
+    if (!PERFUME_MAILBOXES.includes(email) || PERFUME_MICROSOFT_MAILBOXES.includes(email)) return back(`mail_error=not_a_tio_mailbox&mail_email=${encodeURIComponent(email)}`);
     const uid = req.user.uuid;
     // Send access counts only for jpm@tioperfumes.com (owner 2026-11-25 22:50 CT); any other grant is read-only.
     const canSend = email === PERFUME_SENDER && tokens.scopes.includes(GMAIL_SEND_SCOPE);
@@ -67,7 +74,7 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     return withCurrentUser(uid, async (c) => {
       const accounts = (await c.query(
-        `SELECT email, status, last_error, connected_at, last_checked_at, can_send FROM perfume.mail_accounts ORDER BY email`)).rows;
+        `SELECT email, status, last_error, connected_at, last_checked_at, can_send, provider FROM perfume.mail_accounts ORDER BY email`)).rows;
       // A send cut off by a restart: no recipient recorded for 10 minutes while still "sending" → stopped (never left spinning).
       await c.query(
         `UPDATE perfume.mail_send_batches b SET status = 'stopped', error = 'Stopped — the server restarted during the send. Recipients not reached are not in the list.', finished_at = now()
@@ -92,7 +99,8 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
            FROM perfume.mail_files f LEFT JOIN perfume.vendors v ON v.id = f.vendor_id LEFT JOIN perfume.price_lists l ON l.id = f.list_id
           ORDER BY f.received_at DESC, f.file_name LIMIT 400`)).rows;
       return {
-        configured: googleClient() != null, mailboxes: PERFUME_MAILBOXES, schedule: PERFUME_MAIL_SCHEDULE_TEXT,
+        configured: googleClient() != null, microsoft_configured: microsoftClient() != null, microsoft_mailboxes: PERFUME_MICROSOFT_MAILBOXES,
+        mailboxes: PERFUME_MAILBOXES, schedule: PERFUME_MAIL_SCHEDULE_TEXT,
         running: mailRunInProgress(), accounts, rules, runs, files,
         send: { sender: PERFUME_SENDER, daily_cap: DAILY_SEND_CAP, sent_last_24h: sentToday, max_recipients: MAX_RECIPIENTS_PER_SEND,
           max_attachment_bytes: MAX_ATTACHMENT_BYTES, footer: SEND_FOOTER, batches: sends, optouts },
@@ -241,5 +249,53 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     await withCurrentUser(uid, (c) => c.query(
       `UPDATE perfume.mail_optouts SET removed_at = now(), removed_by = $2 WHERE email = $1 AND removed_at IS NULL`, [b.data.email.toLowerCase(), uid]));
     return { ok: true };
+  });
+
+  // Hotmail (owner 2026-11-25 23:25 CT): Microsoft sign-in, Mail.Read + offline_access, read-only. Same rules as Google:
+  // only the desk owner, only tio-perfumes@hotmail.com; the refresh token is stored encrypted, never returned or logged.
+  app.get("/api/v1/perfume/mail/microsoft/connect", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const c = microsoftClient();
+    if (!c) return reply.code(503).send({ error: "microsoft_oauth_not_configured" });
+    const q = z.object({ returnTo: z.string().max(300).optional() }).safeParse(req.query);
+    const p = pkcePair();
+    const opts = oauthPkceCookieOptions(600);
+    reply.setCookie(MS_STATE_COOKIE, p.state, opts);
+    reply.setCookie(MS_VERIFIER_COOKIE, p.verifier, opts);
+    reply.setCookie(MS_RETURN_COOKIE, validateReturnTo(q.success ? q.data.returnTo : undefined), opts);
+    return reply.redirect(microsoftAuthorizeUrl(c, { state: p.state, challenge: p.challenge, loginHint: PERFUME_MICROSOFT_MAILBOXES[0] }));
+  });
+
+  app.get("/api/v1/perfume/mail/microsoft/callback", RL_WRITE, async (req, reply) => {
+    const returnTo = validateReturnTo(req.cookies[MS_RETURN_COOKIE]);
+    const back = (q: string) => {
+      for (const k of [MS_STATE_COOKIE, MS_VERIFIER_COOKIE, MS_RETURN_COOKIE]) reply.clearCookie(k, { path: "/" });
+      return reply.redirect(`${returnTo}/perfume?tab=mail&${q}`);
+    };
+    if (!req.user) return back("mail_error=not_signed_in");
+    if (String(req.user.role ?? "") !== "Owner" || !(await deskAllowed(req.user.uuid))) return back("mail_error=not_allowed");
+    const query = req.query as Record<string, string | undefined>;
+    if (query["error"]) return back(`mail_error=${encodeURIComponent(String(query["error"]).slice(0, 60))}`);
+    const stored = req.cookies[MS_STATE_COOKIE];
+    const verifier = req.cookies[MS_VERIFIER_COOKIE];
+    // RFC 6749 §10.12 CSRF defence: the state Microsoft echoes must equal the one this browser stored (HttpOnly cookie).
+    // codeql[js/user-controlled-bypass]
+    if (!query["code"] || !query["state"] || !stored || !verifier || query["state"] !== stored) return back("mail_error=invalid_state");
+    let tokens: Awaited<ReturnType<typeof exchangeMicrosoftCode>>;
+    try { tokens = await exchangeMicrosoftCode(query["code"], verifier); } catch { return back("mail_error=microsoft_sign_in_failed"); }
+    if (!tokens.scopes.some((s) => /mail\.read$/i.test(s))) return back("mail_error=read_access_not_granted");
+    const refreshToken = tokens.refreshToken;
+    if (!refreshToken) return back("mail_error=no_refresh_token");
+    const email = tokens.email || (await new Outlook(tokens.accessToken, "").me().catch(() => ""));
+    if (!email) return back("mail_error=no_email");
+    if (!PERFUME_MICROSOFT_MAILBOXES.includes(email)) return back(`mail_error=not_a_tio_mailbox&mail_email=${encodeURIComponent(email)}`);
+    const uid = req.user.uuid;
+    await withCurrentUser(uid, (c) => c.query(
+      `INSERT INTO perfume.mail_accounts (email, refresh_token_enc, status, last_error, connected_by, connected_at, updated_at, can_send, provider)
+       VALUES ($1, $2, 'connected', NULL, $3, now(), now(), false, 'microsoft')
+       ON CONFLICT (email) DO UPDATE SET refresh_token_enc = EXCLUDED.refresh_token_enc, status = 'connected', last_error = NULL,
+         connected_by = EXCLUDED.connected_by, connected_at = now(), updated_at = now(), can_send = false, provider = 'microsoft'`,
+      [email, encrypt(refreshToken), uid]));
+    return back(`mail_connected=${encodeURIComponent(email)}`);
   });
 }
