@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { buildGrid, filterMine, importList } from "./desk.service.js";
+import { buildGrid, filterMine, importList, rolesOfKind } from "./desk.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -26,7 +26,7 @@ describeIntegration("perfume my offer list + my inventory (real Postgres, rolled
   });
 
   it("stock, last cost, offer price, need to buy, and the selector", async () => {
-    const v = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ($1, $2) RETURNING id`, [name, kind])).rows[0].id;
+    const v = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind, roles) VALUES ($1, $2, $3::text[]) RETURNING id`, [name, kind, rolesOfKind(kind as never)])).rows[0].id;
     const sup = await v("MINE TEST SUP", "buy");
     const inv = await v("MINE TEST INV", "inventory");
     const off = await v("MINE TEST OFFER", "offer");
