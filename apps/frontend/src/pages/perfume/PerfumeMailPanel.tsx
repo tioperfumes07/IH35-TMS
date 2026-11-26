@@ -38,7 +38,10 @@ const CONNECT_ERRORS: Record<string, string> = {
   read_access_not_granted: "Google did not give read access — press Connect again and leave \"Read your email\" ticked.",
   no_refresh_token: "Google did not return lasting access — press Connect again (the consent screen must be accepted).",
   no_email: "Google did not say which mailbox this is — press Connect again.",
-  not_a_tio_mailbox: "That Google account is not one of the two TIO mailboxes — pick tioperfumes07@gmail.com or jpm@tioperfumes.com.",
+  not_a_tio_mailbox: "That account is not one of the TIO mailboxes — pick tioperfumes07@gmail.com, jpm@tioperfumes.com or tio-perfumes@hotmail.com.",
+  invalid_state: "The sign-in took too long or came from another tab — press Connect again.",
+  microsoft_sign_in_failed: "Microsoft did not finish the sign-in — press Connect again.",
+  access_denied: "Microsoft access was not allowed — press Connect again and accept \"Read your mail\".",
 };
 
 export function PerfumeMailPanel() {
@@ -87,10 +90,12 @@ export function PerfumeMailPanel() {
           </div>
         </div>
         {d && !d.configured ? <div className="text-xs text-red-700">{tr("perfume.mail.notConfigured", "Google sign-in is not configured on the server, so no mailbox can be connected.")}</div> : null}
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 md:grid-cols-3">
           {(d?.mailboxes ?? []).map((email) => {
             const a = d?.accounts.find((x) => x.email === email);
             const state = a?.status ?? "not connected";
+            const microsoft = (d?.microsoft_mailboxes ?? []).includes(email);
+            const canConnect = microsoft ? Boolean(d?.microsoft_configured) : Boolean(d?.configured);
             return (
               <div key={email} className="flex flex-wrap items-center justify-between gap-2 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-mail-account">
                 <div className="space-y-0.5">
@@ -100,10 +105,12 @@ export function PerfumeMailPanel() {
                     {a?.last_checked_at ? ` · ${tr("perfume.mail.lastChecked", "last checked")} ${formatDateTimeUS(a.last_checked_at)}` : ""}
                   </div>
                   {a?.last_error ? <div className="text-red-700">{a.last_error}</div> : null}
+                  {microsoft && !d?.microsoft_configured ? <div className="text-gray-600">{tr("perfume.mail.msNotConfiguredLine", "Hotmail (Microsoft) sign-in is not set up on the server yet.")}</div> : null}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button type="button" className="h-[34px] px-3 text-xs" disabled={!d?.configured} data-testid="perfume-mail-connect"
-                    onClick={() => { window.location.assign(perfumeMailConnectUrl(email, email === (d?.send?.sender ?? "jpm@tioperfumes.com"))); }}>
+                  <Button type="button" className="h-[34px] px-3 text-xs" disabled={!canConnect} data-testid="perfume-mail-connect"
+                    title={!canConnect && microsoft ? tr("perfume.mail.msNotConfigured", "Microsoft sign-in is not set up on the server yet") : undefined}
+                    onClick={() => { window.location.assign(perfumeMailConnectUrl(email, email === (d?.send?.sender ?? "jpm@tioperfumes.com"), microsoft)); }}>
                     {state === "connected" ? tr("perfume.mail.connectAgain", "Connect again") : tr("perfume.mail.connect", "Connect")}
                   </Button>
                   {state === "connected" || state === "reconnect" ? (
