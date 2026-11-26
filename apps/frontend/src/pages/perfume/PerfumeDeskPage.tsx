@@ -26,6 +26,7 @@ import { PerfumeTradeShowsPanel } from "./PerfumeTradeShowsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
+import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 
 type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "shows" | "review" | "rules";
@@ -63,6 +64,7 @@ export default function PerfumeDeskPage() {
   const access = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, staleTime: 300_000 });
   const allowed = access.data?.allowed === true;
   const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1), enabled: allowed });
+  const phone = useIsPhone();
   // Old .xls lists the mail engine held (PCA, MOD): read here, in the browser, whenever the desk is open.
   const heldXls = usePerfumeHeldXls(allowed);
   if (!allowed) {
@@ -90,6 +92,14 @@ export default function PerfumeDeskPage() {
             : `${tr("perfume.xls.done", "Old Excel (.xls) price lists from mail")}: ${heldXls.imported} ${tr("perfume.xls.imported", "imported")} · ${heldXls.held} ${tr("perfume.xls.held", "held (see Mail tab)")} · ${heldXls.failed} ${tr("perfume.xls.failed", "failed")}`}
         </div>
       ) : null}
+      {phone ? (
+        <SelectCombobox value={tab} onChange={(e) => go({ tab: e.target.value as Tab })} aria-label={tr("perfume.desk.4", "Price desk sections")} data-testid="perfume-phone-tabs"
+          className="h-[40px] w-full text-xs font-semibold text-[#1F2A44]">
+          {TABS.map(([k, label]) => (
+            <option key={k} value={k}>{label}{k === "review" && review.data?.total ? ` (${review.data.total.toLocaleString()})` : ""}</option>
+          ))}
+        </SelectCombobox>
+      ) : (
       <nav className="flex flex-wrap gap-1" aria-label={tr("perfume.desk.4", "Price desk sections")}>
         {TABS.map(([k, label]) => (
           <button
@@ -103,6 +113,7 @@ export default function PerfumeDeskPage() {
           </button>
         ))}
       </nav>
+      )}
       {/* Owner 2026-11-12: "each tab should have its header so I can make sure I am in the correct one." */}
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
@@ -423,6 +434,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const { pushToast } = useToast();
   const [sort, setSort] = useState<{ key: string; dir: "asc" | "desc" }>({ key: "brand", dir: "asc" });
   const [q, setQ] = useState("");
+  const phone = useIsPhone();
   const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
   const [page, setPage] = useState(1);
   // The desk-wide "Show" selector changed: back to page 1.
@@ -736,7 +748,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       {/* The table mounts only once the server has sent this view's columns: ParityTable reads the default
           hidden set at mount, so mounting with no columns showed EVERY column (owner 2026-11-12: Trading still
           showed every supplier's purchase columns). Keyed by view so each tab starts from its own defaults. */}
-      <div className={view === "analysis" ? "grid grid-cols-[150px_minmax(0,1fr)] items-start gap-2" : ""}>
+      <div className={view === "analysis" ? (phone ? "space-y-2" : "grid grid-cols-[150px_minmax(0,1fr)] items-start gap-2") : ""}>
       {view === "analysis" ? (
         <aside className="space-y-3 rounded-sm border border-gray-200 bg-white p-2 text-xs" aria-label={tr("perfume.analysis.side", "Analysis filters")} data-testid="perfume-analysis-side">
           <fieldset className="space-y-1">
@@ -760,6 +772,24 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       <div className="min-w-0">
       {cols.length === 0 ? (
         <div className="text-xs text-gray-500" data-testid="perfume-grid-loading">{query.isError ? "Couldn't load the grid" : "Loading…"}</div>
+      ) : phone ? (
+        <div className="space-y-2" data-testid="perfume-phone-grid">
+          <input
+            type="search"
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(1); }}
+            placeholder={tr("perfume.desk.6", "Search code, UPC, SKU, brand, name")}
+            aria-label={tr("perfume.desk.7", "Search items")}
+            data-testid="perfume-phone-search"
+            className="h-[40px] w-full rounded-sm border border-gray-300 px-2 text-xs"
+          />
+          <PerfumePhoneCards
+            rows={query.data?.rows ?? []}
+            cols={query.data?.cols ?? []}
+            loading={query.isLoading || query.isFetching}
+            emptyText={q || Object.values(picks).some((p) => p.length > 0) ? "No items match the search and filters." : "No items yet — import a price list."}
+          />
+        </div>
       ) : (
       <ParityTable<PerfumeGridRow>
         key={`${matchDesk ? "match-" : ""}${view}-${mine ?? "all"}-${view === "analysis" ? (hideEmpty ? "h" : "a") : ""}`}
