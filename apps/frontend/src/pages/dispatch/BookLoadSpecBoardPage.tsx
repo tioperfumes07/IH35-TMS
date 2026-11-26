@@ -1,4 +1,3 @@
-// TABLE_DATE_OMIT: this table has no date column by design — one row per measured Book-load field (field / live size / fix / rule), a design spec, not a dated record.
 /**
  * ROUND 9.4 Board 16 — docs/design/v3/Dispatch-BookLoad-Spec.dc.html
  * Measurement board: live Book Load field sizes vs the fix. Layout-only; same engines.
