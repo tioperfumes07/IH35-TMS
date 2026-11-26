@@ -40,12 +40,15 @@ describe("PERFUME-DESK my own list", () => {
     expect(supplier.saved.map((r) => r.price_cents)).toEqual([5251]);
   });
 
-  it("my own item number makes its own item when nothing resembles it; a supplier line without brand/size does not", () => {
+  it("my own item number makes its own item when nothing resembles it; so does a supplier's own code; a competitor line never does", () => {
     const ix = emptyIndex();
     const line = { description: "MO TREATMENT FOR ALL HAIR TYPES GLASS BOTTLE", sku: "110758" };
     expect(matchLine(ix, "inv", line, { allowNewItem: true, ownList: true }).method).toBe("new_item");
+    // Owner 2026-11-26 15:56 CT: a completely new item is created — a supplier line with its own code and nothing alike too.
     const sup = matchLine(ix, "pca", line, { allowNewItem: true });
-    expect([sup.method, sup.status]).toEqual([null, "unmatched"]);
+    expect([sup.method, sup.status]).toEqual(["new_item", "matched"]);
+    // A competitor's list (allowNewItem false) never creates an item.
+    expect(matchLine(ix, "comp", line, { allowNewItem: false }).method).toBeNull();
     // No item number → never a new item, even on my own list.
     expect(matchLine(ix, "inv", { description: "MO TREATMENT FOR ALL HAIR TYPES GLASS BOTTLE" }, { allowNewItem: true, ownList: true }).method).toBeNull();
   });
