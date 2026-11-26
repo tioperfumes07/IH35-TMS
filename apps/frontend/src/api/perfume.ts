@@ -345,3 +345,41 @@ export async function downloadPerfumeMailFile(id: string, fileName: string) {
   a.click();
   window.setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 60_000);
 }
+
+/* PERFUME-CONTACTS (owner 2026-11-25 22:04 / 22:11 CT) — the contacts database, and the Google business search (22:09 CT). */
+export type PerfumeContactRole = "vendor" | "customer" | "both";
+export type PerfumeContactCounts = { companies: number; vendors: number; customers: number; both: number; unclassified: number; from_google: number;
+  needs_email: number; people: number; with_email: number; phone_only: number };
+export type PerfumeContactRow = { id: string; name: string; domain: string | null; role: PerfumeContactRole | null; vendor_type: string | null;
+  customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
+  phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
+  status: string; source: string; first_contact_on: string | null; last_email_on: string | null; people: number; with_email: number; how_started: string | null };
+export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; limit: number; offset: number; rows: PerfumeContactRow[] };
+export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; q?: string; source?: string; limit?: number; offset?: number }) {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) if (v != null && v !== "") p.set(k, String(v));
+  return apiRequest<PerfumeContactList>(`/api/v1/perfume/contacts?${p.toString()}`);
+}
+export type PerfumeContactProfile = {
+  company: Record<string, unknown> & { id: string; name: string };
+  people: Array<{ id: string; name: string | null; email: string | null; phones: string[]; role: PerfumeContactRole | null; how_started: string | null;
+    first_contact_on: string | null; last_email_on: string | null; email_count: number | null }>;
+  origins: Array<{ id: string; occurred_on: string | null; how: string; source: string; source_url: string | null; detail: string | null; person_name: string | null }>;
+};
+export const getPerfumeContact = (id: string) => apiRequest<PerfumeContactProfile>(`/api/v1/perfume/contacts/${encodeURIComponent(id)}`);
+export type PerfumeGoogleRun = { id: string; kind: "single" | "batch"; status: "running" | "done" | "stopped" | "failed" | "interrupted";
+  planned_searches: number; searches_done: number; requests_made: number; results: number; inserted: number; matched: number; skipped_closed: number;
+  by_city: Record<string, { searches: number; results: number; inserted: number; matched: number; skipped_closed: number }>;
+  query: Record<string, unknown> | null; error: string | null; started_at: string; finished_at: string | null };
+export type PerfumeGooglePlan = { configured: boolean; field_mask: string; running: string | null; full_matrix_unlocked: boolean;
+  all: { searches: number; maxRequests: number; cities: number }; first_city: { city: string; searches: number; maxRequests: number; cities: number };
+  cities: Array<{ city: string; searches: number; max_requests: number }>; runs: PerfumeGoogleRun[] };
+export const getPerfumeGooglePlan = () => apiRequest<PerfumeGooglePlan>("/api/v1/perfume/prospects/google-plan");
+export type PerfumeGoogleResult = { place_id: string; name: string; address: string | null; city: string | null; state: string | null; country: string | null;
+  phone: string | null; website: string | null; maps_uri: string | null; rating: number | null; rating_count: number | null; business_status: string | null;
+  outcome: "inserted" | "matched" | "skipped_closed" };
+export const perfumeGoogleSearch = (b: { query: string; city?: string; state?: string; country?: string; max?: number }) =>
+  apiRequest<{ run_id: string; text_query: string; requests: number; inserted: number; matched: number; skipped_closed: number; results: PerfumeGoogleResult[] }>(
+    "/api/v1/perfume/prospects/google-search", { method: "POST", body: b });
+export const startPerfumeGoogleRun = (city: string) => apiRequest<{ run_id: string }>("/api/v1/perfume/prospects/google-run", { method: "POST", body: { city } });
+export const stopPerfumeGoogleRun = (id: string) => apiRequest<{ stopping: boolean }>(`/api/v1/perfume/prospects/google-run/${encodeURIComponent(id)}/stop`, { method: "POST", body: {} });

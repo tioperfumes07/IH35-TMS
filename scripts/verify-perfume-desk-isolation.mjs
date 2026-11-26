@@ -9,7 +9,7 @@
  *      perfume.needs and perfume.brand_aliases (price lists are voided, items merged — never deleted).
  *   2. apps/backend/src/perfume/*.ts (non-test) — SQL names only perfume.* / identity.* schemas and imports
  *      nothing from a carrier or accounting module.
- *   3. apps/backend/src/perfume/desk.routes.ts — every route handler starts with the Owner-only check.
+ *   3. apps/backend/src/perfume/*.routes.ts — every route handler starts with the Owner-only check.
  *
  *   node scripts/verify-perfume-desk-isolation.mjs              check
  *   node scripts/verify-perfume-desk-isolation.mjs --selftest   proves each rule catches a planted breach
@@ -92,7 +92,8 @@ function run() {
   for (const f of files) {
     const src = fs.readFileSync(path.join(BACKEND, f), "utf8");
     errs.push(...checkBackendFile(f, src));
-    if (f === "desk.routes.ts") errs.push(...checkRoutes(f, src));
+    // Every perfume route file (desk, contacts …) — each handler starts with the Owner + desk-user check.
+    if (f.endsWith(".routes.ts")) errs.push(...checkRoutes(f, src));
   }
   if (errs.length) {
     console.error(`${LABEL} FAIL — ${errs.length} breach(es):\n  - ${errs.join("\n  - ")}`);

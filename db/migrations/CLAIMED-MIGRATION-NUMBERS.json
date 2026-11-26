@@ -1073,7 +1073,8 @@
     "202616650100",
     "202616660100",
     "202616670100",
-    "202616700100"
+    "202616700100",
+    "202616710100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1219,5 +1220,10 @@
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
     "purpose": "PERFUME mail price-list engine: perfume.mail_accounts / mail_rules / mail_runs / mail_files \u2014 owner 2026-11-25 17:29 CT"
+  },
+  "202616710100": {
+    "claimed_at": "2026-11-25",
+    "claimed_by": "lead",
+    "purpose": "PERFUME contacts database: perfume.contact_companies / contact_people / contact_origins / google_search_runs \u2014 owner 2026-11-25 22:04-22:11 CT"
   }
 }
