@@ -17,7 +17,9 @@ const TOKENS = path.join(SRC, "design/tokens.ts");
 const INDEX_CSS = path.join(SRC, "index.css");
 const TABLE_HEADER_CELL = path.join(SRC, "components/table/TableHeaderCell.tsx");
 const BASELINE_DOC = path.join(ROOT, "docs/specs/GLOBAL-TYPE-SIZE-BASELINE.md");
-const DATE_RE = /date|incurred|earned|due\b|paid|cleared|created|posted|occurred|as of|period/i;
+// 2026-11-25 — an expiration is a date: the plate tables (trailer + vehicle profile) show "Expiration" keyed expiration and
+//   counted as "no date column". expiration / expires / expiry only — an "Expired" yes/no flag is not a date (selftest).
+const DATE_RE = /date|incurred|earned|due\b|paid|cleared|created|posted|occurred|as of|period|expiration|expires|expiry/i;
 // LEAD 443.99 class B (2026-10-12) — date-column detection.
 //   old rule: a call site has a date column only if a column LABEL or KEY matches DATE_RE (date / created / posted ...).
 //   new rule: ...or a column KEY is timestamp-shaped (DATE_KEY_RE: *_at, *_date, *_day / day, since, effective_from|to).
@@ -138,6 +140,8 @@ if (process.argv.includes("--selftest")) {
     ["'Day' keyed day", ["Day", "Net"], ["day", "net_cents"], true],
     ["'Since' keyed since", ["Since", "Amount"], ["since", "amount_cents"], true],
     ["'Date' label", ["Date", "Amount"], ["when", "amount_cents"], true],
+    ["'Expiration' keyed expiration", ["Plate", "Expiration"], ["plate_number", "expiration"], true],
+    ["an 'Expired' yes/no flag is not a date", ["Plate", "Expired"], ["plate_number", "is_expired"], false],
   ];
   for (const [name, labels, keys, want] of dateCases) {
     if (hasDateColumn(labels, keys) !== want) throw new Error(`selftest date-column case wrong: ${name}`);

@@ -48,7 +48,7 @@ describeIntegration("saved lists: import as new keeps the old list; switching ch
 
   it("offer 1 stays saved when offer 2 is imported as new; either one can be put back in use", async () => {
     const mine = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZSL MY OFFER', 'offer') RETURNING id`)).rows[0].id;
-    const supplier = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZSL SUPPLIER', 'buy') RETURNING id`)).rows[0].id;
+    const supplier = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind, roles) VALUES ('ZZSL SUPPLIER', 'buy', ARRAY['purchase','trading']::text[]) RETURNING id`)).rows[0].id;
     const a = { row_no: 1, upc: "8000000998010", brand: "ZZSL", description: "ZZSL ALPHA (M) EDT SP 3.4oz" };
     const b = { row_no: 1, upc: "8000000998027", brand: "ZZSL", description: "ZZSL BETA TESTER (W) EDP 3.4oz" };
     await importList(db as never, TEST_OWNER_USER_ID, { vendor_id: supplier, list_date: "2026-11-13", file_name: "s.xlsx", source_kind: "xlsx", rows_read: 2, file_price_total_cents: 3000, rows: [{ ...a, price: "10.00" }, { ...b, row_no: 2, price: "20.00" }] });

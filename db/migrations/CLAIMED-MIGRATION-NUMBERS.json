@@ -1072,7 +1072,8 @@
     "202616640100",
     "202616650100",
     "202616660100",
-    "202616670100"
+    "202616670100",
+    "202616700100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1213,5 +1214,10 @@
     "claimed_at": "2026-11-23",
     "claimed_by": "lead",
     "purpose": "PERFUME vendor roles (purchase / trading / wholesale toggles): perfume.vendors.roles \u2014 owner 2026-11-23 12:32 CT"
+  },
+  "202616700100": {
+    "claimed_at": "2026-11-25",
+    "claimed_by": "lead",
+    "purpose": "PERFUME mail price-list engine: perfume.mail_accounts / mail_rules / mail_runs / mail_files \u2014 owner 2026-11-25 17:29 CT"
   }
 }

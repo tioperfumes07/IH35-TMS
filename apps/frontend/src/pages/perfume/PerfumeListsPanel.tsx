@@ -375,6 +375,23 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
         ? { replaces_current: ownMode === "replace", save_as_new: ownMode === "new", label: ownMode === "new" ? (saveName.trim() || null) : null }
         : { replaces_current: replaces }) };
   };
+  // Mail price lists (owner 2026-11-25 17:29 CT): the columns picked here are kept on the vendor (by header text), so the
+  // same vendor's list that arrives by mail is read with these columns instead of a guess.
+  const rememberColumns = async () => {
+    const v = vendors.find((x) => x.id === vendorId);
+    if (!v || ownList || !sheet || !read || (read.kind !== "xlsx" && read.kind !== "xls" && read.kind !== "csv")) return;
+    const hdr = sheet.cells[headerRow] ?? [];
+    const fields: Record<string, string> = {};
+    for (const [f, ix] of Object.entries(map)) {
+      const text = ix == null ? "" : String(hdr[ix] ?? "").trim();
+      if (text && ["upc", "sku", "brand", "desc", "size", "type", "gender", "section", "price", "qty", "case_pack"].includes(f)) fields[f] = text;
+    }
+    if (!fields.desc || !fields.price) return;
+    try {
+      await savePerfumeVendor({ ...v, roles: undefined, earn_pct: v.earn_pct == null ? null : Number(v.earn_pct),
+        column_mapping: { ...(v.column_mapping ?? {}), mail_columns: { sheet: sheet.name, fields } } });
+    } catch { /* the list is saved; only the remembered columns failed — the mail engine then guesses as before */ }
+  };
   const run = async (save: boolean) => {
     const b = body(); if (!b) return;
     setBusy(true);
@@ -382,6 +399,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
       if (save) {
         const r = await savePerfumeImport(b);
         setCheck(r.check);
+        await rememberColumns();
         await qc.invalidateQueries({ queryKey: ["perfume"] });
         pushToast(`Saved ${r.check.rows_saved.toLocaleString()} lines · totals match to the cent`, "success");
       } else setCheck(await previewPerfumeImport(b));

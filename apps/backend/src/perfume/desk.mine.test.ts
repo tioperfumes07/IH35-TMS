@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { buildGrid, filterMine, importList } from "./desk.service.js";
+import { buildGrid, filterMine, importList, rolesOfKind } from "./desk.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
@@ -26,7 +26,7 @@ describeIntegration("perfume my offer list + my inventory (real Postgres, rolled
   });
 
   it("stock, last cost, offer price, need to buy, and the selector", async () => {
-    const v = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ($1, $2) RETURNING id`, [name, kind])).rows[0].id;
+    const v = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind, roles) VALUES ($1, $2, $3::text[]) RETURNING id`, [name, kind, rolesOfKind(kind as never)])).rows[0].id;
     const sup = await v("MINE TEST SUP", "buy");
     const inv = await v("MINE TEST INV", "inventory");
     const off = await v("MINE TEST OFFER", "offer");
@@ -44,9 +44,10 @@ describeIntegration("perfume my offer list + my inventory (real Postgres, rolled
     expect([alpha.my_qty, alpha.my_last_cost, alpha.my_offer_price, alpha.my_need]).toEqual([2, 1400, 2000, 3]);
     expect([beta.my_qty, beta.my_offer_price, beta.my_need]).toEqual([null, 2000, 1]);
     // List analysis — the owner's own formulas (11-14 PERFUME_ENGINE_FORMATS.xlsx): margin (20−14)/20, markup (20−14)/14,
-    // lowest vendor = the cheapest supplier list price; no competitor here, so the competitor columns stay blank.
+    // suppliers are off List analysis since the vendor roles (owner 2026-11-23, #29833): lowest vendor stays blank;
+    // no competitor here, so the competitor columns stay blank too.
     expect([alpha["a:last_cost"], alpha["a:inv_qty"], alpha["a:margin"], alpha["a:markup"], alpha["a:offer"], alpha["a:low_price"], alpha["a:esp"], alpha["a:under_by"]])
-      .toEqual([1400, 2, 30, 42.9, 2000, 1500, null, null]);
+      .toEqual([1400, 2, 30, 42.9, 2000, null, null, null]);
     expect(beta["a:last_cost"]).toBeNull();
     // My lists are never a supplier or a competitor column.
     expect(g.cols.some((c) => c.key.includes(inv) || c.key.includes(off))).toBe(false);

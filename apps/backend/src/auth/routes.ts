@@ -1,4 +1,4 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { generateState, generateCodeVerifier, OAuth2RequestError } from "arctic";
 import { getGoogleOAuthClient } from "./lucia.js";
 import { createSessionCookie, invalidateSession } from "./session-provider.js";
@@ -24,7 +24,43 @@ function allowedReturnUrls(): string[] {
 type PackedState = {
   state: string;
   returnTo: string;
+  /** A Google sign-in that grants a feature access to a Google account (e.g. the perfume desk reading a mailbox) — it
+   *  never logs anyone in. Absent on a normal sign-in. */
+  purpose?: string;
 };
+
+/**
+ * Purpose-scoped Google grants (PERFUME mail engine, owner 2026-11-25 17:29 CT). The SAME registered callback
+ * (OAUTH_REDIRECT_URI) serves them, so no new redirect URI has to be added in Google Cloud. The callback hands the
+ * validated tokens to the purpose's handler INSTEAD of the sign-in path: no user is created, no session is set — the
+ * person stays signed in as themselves, and the handler checks who they are (its own role rules) before keeping anything.
+ */
+export type GoogleGrantTokens = { accessToken: string; refreshToken: string | null; scopes: string[] };
+export type GoogleGrantHandler = (req: FastifyRequest, reply: FastifyReply, ctx: { tokens: GoogleGrantTokens; returnTo: string }) => Promise<unknown>;
+const grantHandlers = new Map<string, GoogleGrantHandler>();
+export function registerGoogleGrantPurpose(purpose: string, handler: GoogleGrantHandler): void {
+  if (!/^[a-z][a-z0-9_]{2,40}$/.test(purpose)) throw new Error(`invalid google grant purpose: ${purpose}`);
+  grantHandlers.set(purpose, handler);
+}
+
+/** Redirect to Google for a purpose-scoped grant: offline access (a refresh token) and the consent screen every time,
+ *  so Google always returns a refresh token for the account the person picks. */
+export async function startGoogleGrant(reply: FastifyReply, opts: { purpose: string; scopes: string[]; returnTo?: string; loginHint?: string | null }) {
+  if (!grantHandlers.has(opts.purpose)) throw new Error(`unregistered google grant purpose: ${opts.purpose}`);
+  const google = getGoogleOAuthClient();
+  if (!google) return reply.code(503).send({ error: "google_oauth_not_configured" });
+  const state = generateState();
+  const packedState = encodeOAuthState({ state, returnTo: validateReturnTo(opts.returnTo), purpose: opts.purpose });
+  const codeVerifier = generateCodeVerifier();
+  const url = await google.createAuthorizationURL(packedState, codeVerifier, ["openid", "email", ...opts.scopes]);
+  url.searchParams.set("access_type", "offline");
+  url.searchParams.set("prompt", "consent select_account");
+  if (opts.loginHint) url.searchParams.set("login_hint", opts.loginHint);
+  const pkce = oauthPkceCookieOptions(COOKIE_MAX_AGE);
+  reply.setCookie(STATE_COOKIE, state, pkce);
+  reply.setCookie(VERIFIER_COOKIE, codeVerifier, pkce);
+  return reply.redirect(url.toString());
+}
 
 function frontendBaseUrl(): string {
   return (process.env.FRONTEND_BASE_URL || DEFAULT_FRONTEND_BASE_URL).replace(/\/$/, "");
@@ -50,7 +86,7 @@ function decodeOAuthState(encoded: string): PackedState | null {
     if (typeof parsed.state !== "string" || typeof parsed.returnTo !== "string") {
       return null;
     }
-    return { state: parsed.state, returnTo: parsed.returnTo };
+    return { state: parsed.state, returnTo: parsed.returnTo, ...(typeof parsed.purpose === "string" ? { purpose: parsed.purpose } : {}) };
   } catch {
     return null;
   }
@@ -113,6 +149,18 @@ export async function registerAuthRoutes(app: FastifyInstance) {
       const returnTo = validateReturnTo(parsedState.returnTo);
       try {
         const tokens = await google.validateAuthorizationCode(code, codeVerifier);
+        if (parsedState.purpose) {
+          // A purpose-scoped grant (startGoogleGrant): never a sign-in. Unknown purpose → refused, nothing kept.
+          const handler = grantHandlers.get(parsedState.purpose);
+          reply.clearCookie(STATE_COOKIE, { path: "/" });
+          reply.clearCookie(VERIFIER_COOKIE, { path: "/" });
+          if (!handler) return reply.code(400).send({ error: "unknown_grant_purpose" });
+          return handler(req, reply, { tokens: {
+            accessToken: tokens.accessToken(),
+            refreshToken: tokens.hasRefreshToken() ? tokens.refreshToken() : null,
+            scopes: tokens.hasScopes() ? tokens.scopes() : [],
+          }, returnTo });
+        }
         const userInfoResp = await fetch("https://openidconnect.googleapis.com/v1/userinfo", {
           headers: { Authorization: "Bearer " + tokens.accessToken() },
         });

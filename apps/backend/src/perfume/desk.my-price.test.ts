@@ -10,7 +10,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { buildGrid, importList, invalidateGridCache, MyPriceError, myPriceMath, setMyPrice } from "./desk.service.js";
+import { buildGrid, importList, invalidateGridCache, MyPriceError, myPriceMath, rolesOfKind, setMyPrice } from "./desk.service.js";
 
 // Identical to apps/frontend/src/pages/perfume/perfumePriceMath.ts MY_PRICE_FIXTURES.
 const FIXTURES: ReadonlyArray<{ in: [number | null, number | null, number | null, number | null]; out: Record<string, number | null> }> = [
@@ -40,7 +40,7 @@ describeIntegration("my list price / my costs written on the desk; analysis = th
   });
 
   it("a 'both' supplier cheaper than Esperanza never becomes the analysis competitor; typed prices recompute the item", async () => {
-    const mk = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ($1, $2) RETURNING id`, [name, kind])).rows[0].id;
+    const mk = async (name: string, kind: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind, roles) VALUES ($1, $2, $3::text[]) RETURNING id`, [name, kind, rolesOfKind(kind as never)])).rows[0].id;
     const both = await mk("ZZMP SUPPLIER MARKED BOTH", "both");
     const esp = await mk("ZZMP ESPERANZA", "sell");
     const mine = await mk("ZZMP MY OFFER", "offer");
