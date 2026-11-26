@@ -14,7 +14,7 @@ import { deskAllowed } from "./desk.routes.js";
 import { emptyTally, importRecords, importRecordSchema } from "./contacts.import.js";
 import { googleKey, GoogleProspectsNotConfigured, PERFUME_PROSPECT_FIELD_MASK } from "./google-prospects.js";
 import {
-  batchPlan, batchRunning, contactCounts, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
+  batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -32,6 +32,9 @@ const listSchema = z.object({
   q: z.string().max(200).optional(),
   source: z.string().max(120).optional(),
   country: z.string().max(60).optional(),
+  // Several values per box, "|"-separated (a city name can hold a comma).
+  countries: z.string().max(4000).optional(), states: z.string().max(4000).optional(), cities: z.string().max(8000).optional(),
+  categories: z.string().max(4000).optional(), sources: z.string().max(2000).optional(), hows: z.string().max(2000).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -51,7 +54,10 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = listSchema.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "invalid_query", details: q.error.flatten() });
-    return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), ...(await listContacts(c, q.data)) }));
+    const many = (v?: string) => (v ? v.split("|").map((x) => x.trim()).filter(Boolean).slice(0, 300) : undefined);
+    const query = { ...q.data, countries: many(q.data.countries), states: many(q.data.states), cities: many(q.data.cities),
+      categories: many(q.data.categories), sources: many(q.data.sources), hows: many(q.data.hows) };
+    return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 
   app.get("/api/v1/perfume/contacts/:id", RL_READ, async (req, reply) => {
