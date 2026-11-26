@@ -421,6 +421,7 @@ export const importPerfumeContacts = (records: unknown[]) =>
 /* ------------------------------------------------------------------ Trade show planner (owner 2026-11-26 15:56 CT) */
 export type PerfumeShow = { id: string; name: string; starts_on: string | null; ends_on: string | null; city: string | null; country: string | null;
   kind: string | null; dates_status: string | null; i_go: boolean; venue: string | null; website: string | null; notes: string | null; source: string | null;
+  organizer: string | null; register_url: string | null; contact_email: string | null; contact_phone: string | null;
   contacts: number; meetings: number };
 export type PerfumeShowContactStatus = "attends" | "meeting_asked" | "meeting_booked" | "met";
 export type PerfumeShowContact = { id: string; company_id: string; company: string; role: PerfumeContactRole | null; city: string | null; country: string | null;

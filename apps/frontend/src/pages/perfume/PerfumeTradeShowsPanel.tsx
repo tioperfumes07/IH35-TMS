@@ -64,7 +64,7 @@ export function PerfumeTradeShowsPanel() {
     && (!picks.months.length || picks.months.includes(monthOf(s) ?? ""))
     && (!picks.kinds.length || picks.kinds.includes(s.kind ?? ""))
     && (!picks.cities.length || picks.cities.includes(s.city ?? ""))
-    && (!q.trim() || `${s.name} ${s.city ?? ""} ${s.kind ?? ""} ${s.venue ?? ""} ${s.notes ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()))),
+    && (!q.trim() || `${s.name} ${s.city ?? ""} ${s.kind ?? ""} ${s.venue ?? ""} ${s.notes ?? ""} ${s.organizer ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()))),
   [all, onlyGo, onlyMeetings, picks, q]);
   const goShows = all.filter((s) => s.i_go);
   const next = goShows.find((s) => (s.ends_on ?? s.starts_on ?? "") >= todayIso());
@@ -119,6 +119,12 @@ export function PerfumeTradeShowsPanel() {
               <input type="checkbox" aria-label={`I go to ${s.name}`} checked={s.i_go} data-testid={`perfume-show-igo-${s.id}`}
                 onClick={(e) => e.stopPropagation()} onChange={() => void toggleGo(s)} />) },
             { key: "name", label: "Show", sortable: true, render: (s) => <span className="font-semibold">{s.name}</span> },
+            // Owner 2026-11-26 17:08 CT: "i need the contact data the website so i can click and take me there to register".
+            { key: "register_url", label: "Register", render: (s) => <ShowLink href={s.register_url ?? s.website} text={tr("perfume.shows.register", "Register")} testId={`perfume-show-register-${s.id}`} /> },
+            { key: "website", label: "Website", render: (s) => <ShowLink href={s.website} text={hostOf(s.website)} /> },
+            { key: "organizer", label: "Organizer", sortable: true, render: (s) => s.organizer ?? DASH },
+            { key: "contact_email", label: "Email", render: (s) => (s.contact_email ? <a className="text-[#1B5FA8] underline" href={`mailto:${s.contact_email}`} onClick={(e) => e.stopPropagation()}>{s.contact_email}</a> : DASH) },
+            { key: "contact_phone", label: "Phone", render: (s) => (s.contact_phone ? <a className="text-[#1B5FA8] underline tabular-nums" href={`tel:${s.contact_phone.replace(/[^\d+]/g, "")}`} onClick={(e) => e.stopPropagation()}>{s.contact_phone}</a> : DASH) },
             { key: "starts_on", label: "Starts", sortable: true, cellClass: "text-right tabular-nums", render: (s) => usDate(s.starts_on) },
             { key: "ends_on", label: "Ends", sortable: true, cellClass: "text-right tabular-nums", render: (s) => usDate(s.ends_on) },
             { key: "city", label: "City", sortable: true, render: (s) => s.city ?? DASH },
@@ -137,9 +143,26 @@ export function PerfumeTradeShowsPanel() {
   );
 }
 
+/** Only a real web address opens (http / https), in a new tab; the row click never fires with it. */
+export function safeUrl(u: string | null | undefined): string | null {
+  if (!u) return null;
+  const v = /^https?:\/\//i.test(u.trim()) ? u.trim() : `https://${u.trim()}`;
+  try { const x = new URL(v); return x.protocol === "http:" || x.protocol === "https:" ? x.toString() : null; } catch { return null; }
+}
+function hostOf(u: string | null): string {
+  const v = safeUrl(u);
+  return v ? new URL(v).hostname.replace(/^www\./, "") : "";
+}
+function ShowLink({ href, text, testId }: { href: string | null; text: string; testId?: string }) {
+  const v = safeUrl(href);
+  if (!v) return <>{DASH}</>;
+  return <a className="text-[#1B5FA8] underline" href={v} target="_blank" rel="noopener noreferrer" data-testid={testId} onClick={(e) => e.stopPropagation()}>{text}</a>;
+}
+
 function AddShowForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => void }) {
   const { pushToast } = useToast();
-  const [f, setF] = useState({ name: "", starts_on: "", ends_on: "", city: "", kind: "", venue: "", notes: "", i_go: false });
+  const [f, setF] = useState({ name: "", starts_on: "", ends_on: "", city: "", kind: "", venue: "", notes: "", website: "", register_url: "", organizer: "",
+    contact_email: "", contact_phone: "", i_go: false });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF((x) => ({ ...x, [k]: k === "i_go" ? e.target.checked : e.target.value }));
   const save = async () => {
     try {
@@ -155,6 +178,11 @@ function AddShowForm({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
       <label className="text-xs">{tr("perfume.shows.f_city", "City")}<input className={`${ctl} block`} value={f.city} onChange={set("city")} /></label>
       <label className="text-xs">{tr("perfume.shows.f_type", "Type")}<input className={`${ctl} block`} value={f.kind} onChange={set("kind")} /></label>
       <label className="text-xs">{tr("perfume.shows.f_venue", "Venue")}<input className={`${ctl} block`} value={f.venue} onChange={set("venue")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_website", "Website")}<input className={`${ctl} block`} value={f.website} onChange={set("website")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_register", "Register page")}<input className={`${ctl} block`} value={f.register_url} onChange={set("register_url")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_organizer", "Organizer")}<input className={`${ctl} block`} value={f.organizer} onChange={set("organizer")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_email", "Email")}<input className={`${ctl} block`} value={f.contact_email} onChange={set("contact_email")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_phone", "Phone")}<input className={`${ctl} block`} value={f.contact_phone} onChange={set("contact_phone")} /></label>
       <label className="flex items-center gap-1 text-xs"><input type="checkbox" checked={f.i_go} onChange={set("i_go")} />{tr("perfume.shows.f_go", "I go")}</label>
       <Button type="button" className="h-[34px] px-3 text-xs" disabled={!f.name.trim()} onClick={() => void save()} data-testid="perfume-shows-add-save">{tr("perfume.shows.save", "Save")}</Button>
       <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.shows.cancel", "Cancel")}</Button>

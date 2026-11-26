@@ -17,6 +17,8 @@ export const showSchema = z.object({
   ends_on: date.nullable().optional(),
   city: text(200), country: text(80), kind: text(200), dates_status: text(80), venue: text(300), website: text(500),
   notes: text(2000), source: text(200),
+  // Owner 2026-11-26 17:08 CT: the organizer, the page to register on, the organizer's email and phone.
+  organizer: text(300), register_url: text(500), contact_email: text(200), contact_phone: text(80),
   i_go: z.boolean().optional(),
 });
 export type ShowIn = z.infer<typeof showSchema>;
@@ -40,7 +42,7 @@ export const showContactPatchSchema = z.object({
 export async function listShows(c: pg.PoolClient) {
   return (await c.query(
     `SELECT s.id, s.name, s.starts_on::text, s.ends_on::text, s.city, s.country, s.kind, s.dates_status, s.i_go, s.venue, s.website,
-            s.notes, s.source,
+            s.notes, s.source, s.organizer, s.register_url, s.contact_email, s.contact_phone,
             (SELECT count(*)::int FROM perfume.trade_show_contacts x WHERE x.show_id = s.id AND x.archived_at IS NULL) AS contacts,
             (SELECT count(*)::int FROM perfume.trade_show_contacts x WHERE x.show_id = s.id AND x.archived_at IS NULL
                 AND x.status IN ('meeting_booked', 'met')) AS meetings
@@ -53,9 +55,11 @@ export async function saveShow(c: pg.PoolClient, uid: string, s: ShowIn): Promis
   if (s.id) {
     const r = await c.query<{ id: string }>(
       `UPDATE perfume.trade_shows SET name = $2, starts_on = $3, ends_on = $4, city = $5, country = $6, kind = $7, dates_status = $8,
-              venue = $9, website = $10, notes = $11, source = $12, i_go = coalesce($13, i_go), updated_at = now()
+              venue = $9, website = $10, notes = $11, source = $12, i_go = coalesce($13, i_go),
+              organizer = $14, register_url = $15, contact_email = $16, contact_phone = $17, updated_at = now()
         WHERE id = $1 AND archived_at IS NULL RETURNING id`,
-      [s.id, s.name, s.starts_on ?? null, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? null]);
+      [s.id, s.name, s.starts_on ?? null, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? null,
+       s.organizer, s.register_url, s.contact_email, s.contact_phone]);
     if (!r.rows[0]) throw new ShowNotFound();
     return { id: r.rows[0].id, created: false };
   }
@@ -67,14 +71,19 @@ export async function saveShow(c: pg.PoolClient, uid: string, s: ShowIn): Promis
     await c.query(
       `UPDATE perfume.trade_shows SET ends_on = coalesce(ends_on, $2), city = coalesce(city, $3), country = coalesce(country, $4), kind = coalesce(kind, $5),
               dates_status = coalesce(dates_status, $6), venue = coalesce(venue, $7), website = coalesce(website, $8), notes = coalesce(notes, $9),
-              source = coalesce(source, $10), i_go = i_go OR coalesce($11, false), updated_at = now() WHERE id = $1`,
-      [found.rows[0].id, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? null]);
+              source = coalesce(source, $10), i_go = i_go OR coalesce($11, false),
+              organizer = coalesce(organizer, $12), register_url = coalesce(register_url, $13), contact_email = coalesce(contact_email, $14),
+              contact_phone = coalesce(contact_phone, $15), updated_at = now() WHERE id = $1`,
+      [found.rows[0].id, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? null,
+       s.organizer, s.register_url, s.contact_email, s.contact_phone]);
     return { id: found.rows[0].id, created: false };
   }
   const r = await c.query<{ id: string }>(
-    `INSERT INTO perfume.trade_shows (name, starts_on, ends_on, city, country, kind, dates_status, venue, website, notes, source, i_go, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
-    [s.name, s.starts_on ?? null, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? false, uid]);
+    `INSERT INTO perfume.trade_shows (name, starts_on, ends_on, city, country, kind, dates_status, venue, website, notes, source, i_go, created_by,
+       organizer, register_url, contact_email, contact_phone)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
+    [s.name, s.starts_on ?? null, s.ends_on ?? null, s.city, s.country, s.kind, s.dates_status, s.venue, s.website, s.notes, s.source, s.i_go ?? false, uid,
+     s.organizer, s.register_url, s.contact_email, s.contact_phone]);
   return { id: r.rows[0]!.id, created: true };
 }
 
