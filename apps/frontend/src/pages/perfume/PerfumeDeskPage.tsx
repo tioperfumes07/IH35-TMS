@@ -30,6 +30,7 @@ import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
+import { perfumeModuleOf } from "./perfumeModules";
 
 type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "campaign" | "traders" | "shows" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
@@ -54,6 +55,10 @@ function TioLogo() {
 export default function PerfumeDeskPage() {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.find(([k]) => k === params.get("tab"))?.[0] ?? "buy") as Tab;
+  // The module this tab belongs to (left menu); only its own tabs show in the row below the title.
+  const mod = perfumeModuleOf(tab);
+  const modTabs = TABS.filter(([k]) => mod.tabs.includes(k));
+  const priceTab = mod.id === "desk" && tab !== "rules" && tab !== "lists";
   // Owner 2026-11-13: "each tab must have a button or selector so i can have it show only those items in my list and
   // all competitions and all vendors prices on only my items". One selector for the whole desk, in the URL, kept on
   // every tab switch.
@@ -83,7 +88,7 @@ export default function PerfumeDeskPage() {
       <div className="flex flex-wrap items-center gap-3">
         <TioLogo />
         <div className="min-w-0">
-          <h1 className="text-page-title font-semibold text-[#1F2A44]">{tr("perfume.desk.2", "TIO Perfumes · Price desk")}</h1>
+          <h1 className="text-page-title font-semibold text-[#1F2A44]">{`TIO Perfumes · ${tr(`perfume.module.${mod.id}`, mod.label)}`}</h1>
           <div className="text-xs text-gray-500">{tr("perfume.desk.3", "ScentsX LLC dba TIO Perfumes · owner only · separate from every carrier · never posts to accounting")}</div>
         </div>
       </div>
@@ -94,16 +99,16 @@ export default function PerfumeDeskPage() {
             : `${tr("perfume.xls.done", "Old Excel (.xls) price lists from mail")}: ${heldXls.imported} ${tr("perfume.xls.imported", "imported")} · ${heldXls.held} ${tr("perfume.xls.held", "held (see Mail tab)")} · ${heldXls.failed} ${tr("perfume.xls.failed", "failed")}`}
         </div>
       ) : null}
-      {phone ? (
+      {phone && modTabs.length > 1 ? (
         <SelectCombobox value={tab} onChange={(e) => go({ tab: e.target.value as Tab })} aria-label={tr("perfume.desk.4", "Price desk sections")} data-testid="perfume-phone-tabs"
           className="h-[40px] w-full text-xs font-semibold text-[#1F2A44]">
-          {TABS.map(([k, label]) => (
+          {modTabs.map(([k, label]) => (
             <option key={k} value={k}>{label}{k === "review" && review.data?.total ? ` (${review.data.total.toLocaleString()})` : ""}</option>
           ))}
         </SelectCombobox>
       ) : (
-      <nav className="flex flex-wrap gap-1" aria-label={tr("perfume.desk.4", "Price desk sections")}>
-        {TABS.map(([k, label]) => (
+      modTabs.length > 1 ? <nav className="flex flex-wrap gap-1" aria-label={tr("perfume.desk.4", "Price desk sections")}>
+        {modTabs.map(([k, label]) => (
           <button
             key={k}
             type="button"
@@ -114,14 +119,14 @@ export default function PerfumeDeskPage() {
             {label}{k === "review" && review.data?.total ? ` (${review.data.total.toLocaleString()})` : ""}
           </button>
         ))}
-      </nav>
+      </nav> : null
       )}
       {/* Owner 2026-11-12: "each tab should have its header so I can make sure I am in the correct one." */}
       <h2 className="border-b-2 border-[#1F2A44] pb-1 text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="perfume-tab-header">
         {TABS.find(([k]) => k === tab)?.[1]}
       </h2>
-      {tab === "rules" || tab === "mail" || tab === "contacts" || tab === "shows" ? null : <PerfumeSavedListsBar />}
-      {tab === "lists" || tab === "mail" || tab === "contacts" || tab === "shows" || tab === "rules" || tab === "analysis" ? null : (
+      {mod.id !== "desk" || tab === "rules" ? null : <PerfumeSavedListsBar />}
+      {!priceTab || tab === "analysis" ? null : (
         <div className="flex flex-wrap items-center gap-2 rounded-sm border border-gray-200 bg-white px-2 py-1.5" role="group" aria-label={tr("perfume.desk.mine.aria", "Show items")} data-testid="perfume-mine-filter">
           <span className="text-xs font-semibold text-[#1F2A44]">{tr("perfume.desk.mine.label", "Show")}</span>
           {(tab === "review" ? REVIEW_MINE_OPTIONS : MINE_OPTIONS).map(([k, l]) => (

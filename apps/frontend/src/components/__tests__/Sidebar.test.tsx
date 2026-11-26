@@ -132,3 +132,19 @@ describe("Sidebar", () => {
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/dispatch");
   });
 });
+
+// Owner 2026-11-26 17:38 CT: "THIS SHOULD ONLY BE VISIBLE FOR TIO PERFUMES. AND HAVE OUR OWN MODULES".
+describe("TIO Perfumes workspace rail", () => {
+  it("on /perfume shows only the perfume modules, lit by the tab's module; on a carrier page none of them", () => {
+    const { unmount } = render(<MemoryRouter initialEntries={["/perfume?tab=campaign"]}><Sidebar role="Owner" /></MemoryRouter>);
+    const rail = screen.getByTestId("perfume-sidebar");
+    expect(within(rail).getAllByRole("link").map((a) => a.textContent)).toEqual(["Price desk", "Mail lists", "Leads", "Campaigns", "Traders", "Trade shows"]);
+    expect(screen.getByTestId("perfume-nav-campaigns").getAttribute("aria-current")).toBe("page");
+    expect(screen.getByTestId("perfume-nav-leads").getAttribute("href")).toBe("/perfume?tab=contacts");
+    expect(screen.queryByText("Dispatch")).toBeNull();
+    unmount();
+    render(<MemoryRouter initialEntries={["/dispatch"]}><Sidebar role="Owner" /></MemoryRouter>);
+    expect(screen.queryByTestId("perfume-sidebar")).toBeNull();
+    expect(screen.queryByText("Leads")).toBeNull();
+  });
+});

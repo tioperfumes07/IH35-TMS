@@ -10,6 +10,7 @@ import { colors, spacing } from "../design/tokens";
 import type { UserRole } from "../types/api";
 import { rememberModuleHref } from "../lib/lastModuleNav";
 import { resolveSidebarOrder, SIDEBAR_ITEM_META } from "./layout/sidebar-config";
+import { isPerfumePath, PERFUME_MODULES, perfumeModuleOf } from "../pages/perfume/perfumeModules";
 
 type SidebarProps = {
   role: UserRole;
@@ -88,6 +89,9 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
           borderRight: `1px solid ${colors.sidebarBorder}`,
         }}
       >
+        {isPerfumePath(location.pathname) ? (
+          <PerfumeSidebarItems search={location.search} onNavigate={() => onMobileClose?.()} />
+        ) : (
         <div className="flex min-h-full flex-col items-center gap-1 py-2">
           {visibleMetas.map((meta) => {
             const forceReportsActive = meta.id === "reports" && location.pathname.startsWith("/reports/");
@@ -153,7 +157,41 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
             );
           })}
         </div>
+        )}
       </aside>
     </>
+  );
+}
+
+/**
+ * TIO Perfumes workspace (owner 2026-11-26 17:38 CT: "only visible for TIO Perfumes … our own modules"): on /perfume the
+ * rail shows the perfume modules only — no carrier module — and on carrier pages none of these show.
+ */
+function PerfumeSidebarItems({ search, onNavigate }: { search: string; onNavigate: () => void }) {
+  const active = perfumeModuleOf(new URLSearchParams(search).get("tab")).id;
+  return (
+    <div className="flex min-h-full flex-col items-center gap-1 py-2" data-testid="perfume-sidebar">
+      {PERFUME_MODULES.map((m) => {
+        const on = m.id === active;
+        return (
+          <div key={m.id} className="w-full">
+            <NavLink
+              to={`/perfume?tab=${m.tabs[0]}`}
+              onClick={onNavigate}
+              data-testid={`perfume-nav-${m.id}`}
+              aria-current={on ? "page" : undefined}
+              className={`relative flex w-full flex-col items-center justify-center hover:bg-white/5 ${on ? "bg-white/10" : ""}`}
+              style={{ height: spacing.sidebarItemHeight, padding: "10px 4px 9px" }}
+            >
+              <m.Icon className="h-4 w-4" />
+              <span className="mt-1 leading-none uppercase"
+                style={{ color: "white", fontSize: 8.5, fontWeight: on ? 600 : 400, letterSpacing: "0.03em", textAlign: "center", maxWidth: "100%", padding: "0 2px", overflow: "hidden", textOverflow: "ellipsis" }}>
+                {m.label}
+              </span>
+            </NavLink>
+          </div>
+        );
+      })}
+    </div>
   );
 }
