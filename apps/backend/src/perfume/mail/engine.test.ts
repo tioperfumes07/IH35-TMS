@@ -9,11 +9,23 @@ import { buildPgClientConfig } from "../../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../../test-helpers/db-fixture.js";
 import { importList, upsertVendor } from "../desk.service.js";
-import { importMailFile, listDateOf, MIN_SHARE_OF_CURRENT, ruleFor, searchQuery, type MailRule } from "./engine.js";
+import { importMailFile, listDateOf, looksLikePriceList, MIN_SHARE_OF_CURRENT, ruleFor, searchQuery, type MailRule } from "./engine.js";
 import { attachmentsOf, header, senderAddress, type GmailMessage } from "./gmail.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 const rule = (p: Partial<MailRule>): MailRule => ({ id: p.id ?? "r", from_address: "", file_text: null, vendor_id: "v", special: false, ignore: false, ...p });
+
+describe("mail from a sender with no rule", () => {
+  it("only a file that reads as a price list waits for the owner; invoices and tickets are left alone", () => {
+    expect(looksLikePriceList("Complete Wholesale List.xlsx", "Specials")).toBe(true);
+    expect(looksLikePriceList("stock 11-26.pdf", "Weekly offer")).toBe(true);
+    expect(looksLikePriceList("availability.csv", null)).toBe(true);
+    expect(looksLikePriceList("FACTURA A1234.pdf", "CFDI emitido")).toBe(false);
+    expect(looksLikePriceList("Invoice-4471.pdf", "Your Anthropic invoice")).toBe(false);
+    expect(looksLikePriceList("BOL 88231.pdf", "Load 5531")).toBe(false);
+    expect(looksLikePriceList("document.pdf", "Highway carrier onboarding")).toBe(false);
+  });
+});
 
 describe("which rule a mailed file belongs to", () => {
   const rules = [
