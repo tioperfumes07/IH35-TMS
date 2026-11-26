@@ -82,10 +82,10 @@ type Outcome = { status: FileStatus; reason?: string | null; listId?: string | n
 
 async function recordFile(c: PoolClient, ctx: Ctx, f: FileMeta, o: Outcome, replace = false): Promise<void> {
   await c.query(
-    `INSERT INTO perfume.mail_files (account_email, message_id, file_name, sender, subject, received_at, sha256, status, reason, rule_id, vendor_id,
+    `INSERT INTO perfume.mail_files (account_email, external_gmail_message_id, file_name, sender, subject, received_at, sha256, status, reason, rule_id, vendor_id,
        list_id, rows_read, rows_saved, file_total_cents, import_check, run_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17)
-     ON CONFLICT (account_email, message_id, file_name) DO ${replace ? `UPDATE SET sha256 = EXCLUDED.sha256, status = EXCLUDED.status,
+     ON CONFLICT (account_email, external_gmail_message_id, file_name) DO ${replace ? `UPDATE SET sha256 = EXCLUDED.sha256, status = EXCLUDED.status,
        reason = EXCLUDED.reason, rule_id = EXCLUDED.rule_id, vendor_id = EXCLUDED.vendor_id, list_id = EXCLUDED.list_id, rows_read = EXCLUDED.rows_read,
        rows_saved = EXCLUDED.rows_saved, file_total_cents = EXCLUDED.file_total_cents, import_check = EXCLUDED.import_check,
        run_id = EXCLUDED.run_id, processed_at = now()` : "NOTHING"}`,
@@ -184,7 +184,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
         for (const id of ids) {
           sum.messages_seen++;
           const seen = await withCurrentUser(ownerUid, async (c) => new Set((await c.query<{ file_name: string }>(
-            `SELECT file_name FROM perfume.mail_files WHERE account_email = $1 AND message_id = $2`, [acct.email, id])).rows.map((r) => r.file_name)));
+            `SELECT file_name FROM perfume.mail_files WHERE account_email = $1 AND external_gmail_message_id = $2`, [acct.email, id])).rows.map((r) => r.file_name)));
           let msg: GmailMessage;
           try { msg = await gmail.message(id); } catch (e) { if (e instanceof MailReconnectError) throw e; sum.failed++; sum.errors.push(String((e as Error)?.message ?? e).slice(0, 200)); continue; }
           const files = attachmentsOf(msg).filter((a) => PRICE_FILE_EXT.test(a.fileName) && !seen.has(a.fileName.slice(0, 300)));
@@ -243,9 +243,9 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
 /** The owner's answer to one recorded file: "this sender is <vendor>" (creates the rule) and/or "import anyway". */
 export async function reprocessMailFile(ownerUid: string, fileId: string, opts: { vendorId?: string; special?: boolean; fileText?: string | null; force?: boolean;
   fetchImpl?: FetchLike }): Promise<Outcome & { file_id: string }> {
-  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; message_id: string; file_name: string; sender: string; subject: string | null;
+  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; sender: string; subject: string | null;
     received_at: Date; rule_id: string | null; vendor_id: string | null; refresh_token_enc: Buffer | null; status: string }>(
-    `SELECT f.account_email, f.message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, f.status
+    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, f.status
        FROM perfume.mail_files f JOIN perfume.mail_accounts a ON a.email = f.account_email WHERE f.id = $1`, [fileId])).rows[0]);
   if (!f) throw new MailFileError("file_not_found");
   if (f.status === "imported" && !opts.force) throw new MailFileError("already_imported");
@@ -266,12 +266,12 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
   if (!vendorId) throw new MailFileError("vendor_required");
   const token = await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", opts.fetchImpl);
   const gmail = new Gmail(token, opts.fetchImpl);
-  const msg = await gmail.message(f.message_id);
+  const msg = await gmail.message(f.external_gmail_message_id);
   const a = attachmentsOf(msg).find((x) => x.fileName.slice(0, 300) === f.file_name);
   if (!a) throw new MailFileError("attachment_gone");
-  const buf = await gmail.attachment(f.message_id, a);
+  const buf = await gmail.attachment(f.external_gmail_message_id, a);
   const ctx: Ctx = { ownerUid, runId: null, account: f.account_email };
-  const meta: FileMeta = { messageId: f.message_id, fileName: f.file_name, sender: f.sender, subject: f.subject ?? "", receivedAt: new Date(f.received_at) };
+  const meta: FileMeta = { messageId: f.external_gmail_message_id, fileName: f.file_name, sender: f.sender, subject: f.subject ?? "", receivedAt: new Date(f.received_at) };
   const o = await withCurrentUser(ownerUid, async (c) => {
     const out = await importMailFile(c, ctx, meta, buf, { id: ruleId, vendor_id: vendorId!, special }, { force: opts.force });
     await recordFile(c, ctx, meta, out, true);
@@ -283,15 +283,15 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
 
 /** The original attachment, for the owner to open on the Lists tab (held files). */
 export async function downloadMailFile(ownerUid: string, fileId: string, fetchImpl?: FetchLike): Promise<{ fileName: string; buf: Buffer }> {
-  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; message_id: string; file_name: string; refresh_token_enc: Buffer | null }>(
-    `SELECT f.account_email, f.message_id, f.file_name, a.refresh_token_enc FROM perfume.mail_files f
+  const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; refresh_token_enc: Buffer | null }>(
+    `SELECT f.account_email, f.external_gmail_message_id, f.file_name, a.refresh_token_enc FROM perfume.mail_files f
        JOIN perfume.mail_accounts a ON a.email = f.account_email WHERE f.id = $1`, [fileId])).rows[0]);
   if (!f) throw new MailFileError("file_not_found");
   const gmail = new Gmail(await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", fetchImpl), fetchImpl);
-  const msg = await gmail.message(f.message_id);
+  const msg = await gmail.message(f.external_gmail_message_id);
   const a = attachmentsOf(msg).find((x) => x.fileName.slice(0, 300) === f.file_name);
   if (!a) throw new MailFileError("attachment_gone");
-  return { fileName: f.file_name, buf: await gmail.attachment(f.message_id, a) };
+  return { fileName: f.file_name, buf: await gmail.attachment(f.external_gmail_message_id, a) };
 }
 
 export class MailFileError extends Error {}

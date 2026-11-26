@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS perfume.mail_runs (
 CREATE TABLE IF NOT EXISTS perfume.mail_files (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   account_email text NOT NULL REFERENCES perfume.mail_accounts(email),
-  message_id text NOT NULL CHECK (length(message_id) BETWEEN 1 AND 200),
+  external_gmail_message_id text NOT NULL CHECK (length(external_gmail_message_id) BETWEEN 1 AND 200),
   file_name text NOT NULL CHECK (length(file_name) BETWEEN 1 AND 300),
   sender text NOT NULL,
   subject text,
@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS perfume.mail_files (
   run_id uuid REFERENCES perfume.mail_runs(id),
   processed_at timestamptz NOT NULL DEFAULT now(),
   created_at timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (account_email, message_id, file_name),
+  UNIQUE (account_email, external_gmail_message_id, file_name),
   CHECK (status <> 'imported' OR list_id IS NOT NULL)
 );
 CREATE INDEX IF NOT EXISTS mail_files_received_idx ON perfume.mail_files (received_at DESC);

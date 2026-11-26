@@ -91,7 +91,7 @@ export function PerfumeMailPanel() {
             const a = d?.accounts.find((x) => x.email === email);
             const state = a?.status ?? "not connected";
             return (
-              <div key={email} className="flex flex-wrap items-center justify-between gap-2 rounded-sm border border-gray-200 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-mail-account">
+              <div key={email} className="flex flex-wrap items-center justify-between gap-2 bg-[var(--surface-unselected)] p-2 text-xs" data-testid="perfume-mail-account">
                 <div className="space-y-0.5">
                   <div className="font-semibold">{email}</div>
                   <div className={state === "connected" ? "text-emerald-800" : state === "reconnect" ? "font-semibold text-red-700" : "text-gray-600"}>
@@ -235,10 +235,10 @@ function RulesCard({ rules, vendors, onChanged }: { rules: PerfumeMailRule[]; ve
       <div className="text-section-header">{tr("perfume.mail.rules", "Senders")}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.mail.from", "From (address or @domain.com)")}
-          <input className="h-[40px] w-[240px] rounded-sm border border-gray-300 px-2" value={from} onChange={(e) => setFrom(e.target.value)} placeholder="sales@vendor.com" />
+          <input className="h-[40px] w-[240px] rounded-sm border border-gray-300 px-2" value={from} onChange={(e) => setFrom(e.target.value)} placeholder={tr("perfume.mail.fromPh", "sales@vendor.com")} />
         </label>
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.mail.fileText", "File name contains (optional)")}
-          <input className="h-[40px] w-[170px] rounded-sm border border-gray-300 px-2" value={fileText} onChange={(e) => setFileText(e.target.value)} placeholder="ARABIC" />
+          <input className="h-[40px] w-[170px] rounded-sm border border-gray-300 px-2" value={fileText} onChange={(e) => setFileText(e.target.value)} placeholder={tr("perfume.mail.fileTextPh", "ARABIC")} />
         </label>
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.23", "Vendor")}
           <Combobox ariaLabel="Vendor" size="sm" value={vendorId} onChange={setVendorId} placeholder={tr("perfume.lists.24", "Pick vendor")} options={options} />

@@ -89,7 +89,7 @@ describeIntegration("a mailed list saved through the Lists tab's import (real Po
     expect([fresh.voided_at, fresh.list_date, fresh.file_name]).toEqual([null, "2026-11-25", "MAILTEST 11-25.csv · mail list@mailtest.com"]);
 
     // Recorded once; the same file again (another email) is a duplicate, nothing saved.
-    await db.query(`INSERT INTO perfume.mail_files (account_email, message_id, file_name, sender, received_at, sha256, status, rule_id, vendor_id, list_id)
+    await db.query(`INSERT INTO perfume.mail_files (account_email, external_gmail_message_id, file_name, sender, received_at, sha256, status, rule_id, vendor_id, list_id)
                     VALUES ($1, 'msg-1', 'MAILTEST 11-25.csv', 'list@mailtest.com', now(), $2, 'imported', $3, $4, $5)`, [ctx.account, a.sha, ruleRow.id, v.id, a.listId]);
     const again = await importMailFile(db as never, ctx, meta("MAILTEST 11-25 (1).csv", "msg-2"), csv(10), r);
     expect([again.status, again.listId]).toEqual(["duplicate", a.listId]);
