@@ -112,6 +112,12 @@ async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: Impor
   for (const p of rec.people) {
     let pid: string | null = null;
     if (p.email) pid = (await c.query<{ id: string }>(`SELECT id FROM perfume.contact_people WHERE email = $1 AND archived_at IS NULL`, [p.email])).rows[0]?.id ?? null;
+    // No email: the same phone (last 10 digits) at this company, or the same name at this company, is the same person.
+    if (!pid && !p.email) {
+      const keys = [...new Set((p.phones ?? []).map(phone10).filter((x): x is string => Boolean(x)))];
+      if (keys.length) pid = (await c.query<{ id: string }>(`SELECT id FROM perfume.contact_people WHERE company_id = $1 AND archived_at IS NULL AND phone_keys && $2::text[] LIMIT 1`, [id, keys])).rows[0]?.id ?? null;
+      if (!pid && p.name) pid = (await c.query<{ id: string }>(`SELECT id FROM perfume.contact_people WHERE company_id = $1 AND archived_at IS NULL AND lower(btrim(name)) = lower(btrim($2)) LIMIT 1`, [id, p.name])).rows[0]?.id ?? null;
+    }
     if (pid) { t.people_existing += 1; personIds.push(pid); continue; }
     if (!p.email && !(p.phones ?? []).length && !p.name) { personIds.push(null); continue; }
     const r = await c.query<{ id: string }>(

@@ -62,6 +62,12 @@ describeIntegration("import into the contacts database (real Postgres, rolled ba
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_people WHERE company_id = $1`, [pc[0].id])).rows[0].n).toBe(2);
     expect((await db.query(`SELECT how FROM perfume.contact_origins WHERE company_id = $1 ORDER BY occurred_on NULLS LAST, how`, [pc[0].id])).rows.map((r) => r.how))
       .toEqual(["Email", "Email", "Kumar list"]);
+    // A phone-only person seen again (another source, phone written differently) is the same person — never twice.
+    const again = await importRecords(db as never, [
+      rec({ company: { name: "IMPTEST Phone Only Co", source: "Master Database" }, people: [{ name: "Juan Phone", phones: ["+52 867 555 0199"] }] }),
+      rec({ company: { name: "IMPTEST Phone Only Co", source: "Phone contacts" }, people: [{ name: "Juan P.", phones: ["(867) 555-0199"] }] }),
+    ], TEST_OWNER_USER_ID);
+    expect([again.inserted, again.matched, again.people_inserted, again.people_existing]).toEqual([1, 1, 1, 1]);
     // Two "Sin Nombre" depots with different DENUE ids stay two, even with one phone and one name; the same id again is one.
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_companies WHERE name = 'Sin Nombre' AND city = 'IMPTEST City'`)).rows[0].n).toBe(2);
   });
