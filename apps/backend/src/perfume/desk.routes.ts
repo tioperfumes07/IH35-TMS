@@ -381,7 +381,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     if (rematchJob.state === "running") return reply.code(202).send(rematchJob);
     rematchJob = { state: "running", started_at: new Date().toISOString(), finished_at: null, result: null, error: null };
-    void withCurrentUser(uid, (c) => rematchReview(c))
+    void withCurrentUser(uid, (c) => rematchReview(c, uid))
       .then((result) => { rematchJob = { ...rematchJob, state: "done", finished_at: new Date().toISOString(), result }; dataChanged(); })
       .catch((e: unknown) => { rematchJob = { ...rematchJob, state: "failed", finished_at: new Date().toISOString(), error: e instanceof Error ? e.message : String(e) }; });
     return reply.code(202).send(rematchJob);

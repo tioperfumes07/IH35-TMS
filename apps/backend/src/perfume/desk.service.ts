@@ -1025,13 +1025,16 @@ export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
  * links by itself, and every other line gets fresh suggestions under today's rules. Run after the engine
  * improves or new lists bring new items. The vendor's text and the owner's gender corrections are kept.
  */
-export async function rematchReview(c: PoolClient) {
+export async function rematchReview(c: PoolClient, userId: string | null = null) {
   const ix = await loadIndex(c);
-  const rows = await c.query<{ id: string; vendor_id: string; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
-    `SELECT r.id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.gender_override
-       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+  const rows = await c.query<{ id: string; vendor_id: string; vendor_kind: VendorRow["kind"]; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
+    `SELECT r.id, l.vendor_id, v.kind AS vendor_kind, r.upc, r.sku, r.brand, r.description, r.size_text, r.gender_override
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL`);
-  const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0, codes_read: 0 };
+  const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0, codes_read: 0, items_created: 0 };
+  // New products (matching.ts 6c and the import's own new-item rules): created here exactly as an import creates them.
+  const newItems: Array<{ tmp: string; brand: string; name: string; size_ml: number | null; conc: string; gender: string; flags: string[]; identity_key: string; loose_key: string; display_name: string }> = [];
+  const newCodes: Array<{ tmp: string; vendor_id: string; sku: string | null; upc: string }> = [];
   const recoded: Array<{ id: string; sku: string; brand: string | null; description: string }> = [];
   // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
   // request died with a 502). Same values, same rules.
@@ -1045,14 +1048,55 @@ export async function rematchReview(c: PoolClient) {
     // (measured 22:40Z: 3,788 PCA lines waiting, every one with its I-code in the name and no SKU).
     const coded = !r.sku && !r.upc ? readCodedName(r.description) : null;
     if (coded) { r.sku = coded.sku; r.brand = r.brand ?? coded.brand; r.description = coded.description; recoded.push({ id: r.id, sku: coded.sku, brand: r.brand, description: coded.description }); }
-    const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override ?? coded?.gender ?? null }, { allowNewItem: false });
-    if (m.itemId) {
+    const own = r.vendor_kind === "offer" || r.vendor_kind === "inventory";
+    const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override ?? coded?.gender ?? null },
+      { allowNewItem: r.vendor_kind !== "sell", ownList: own });
+    if (m.method === "new_item") {
+      const id = m.identity;
+      const tmp = `tmp:${newItems.length}`;
+      newItems.push({ tmp, brand: id.brand, name: id.nameText, size_ml: id.sizeMl, conc: id.conc, gender: id.gender, flags: id.flags,
+        identity_key: id.key, loose_key: looseKey(id), display_name: displayNameOf(id) });
+      addItem(ix, { id: tmp, brand: id.brand, name: id.nameText, sizeMl: id.sizeMl, conc: id.conc, gender: id.gender, flags: id.flags,
+        identityKey: id.key, looseKey: looseKey(id), displayName: displayNameOf(id) });
+      if (m.upc) ix.byUpc.set(m.upc, tmp);
+      const sku = (r.sku ?? "").trim() || null;
+      if (sku) ix.vendorSku.set(`${r.vendor_id}|${sku}`, tmp);
+      newCodes.push({ tmp, vendor_id: r.vendor_id, sku, upc: m.upc });
+      upd.push({ id: r.id, item_id: tmp, method: "new_item", status: "matched", suggestions: [], identity_key: id.key, loose_key: looseKey(id) });
+      out.items_created++;
+    } else if (m.itemId) {
       upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       out.now_matched++;
     } else {
       upd.push({ id: r.id, item_id: null, method: null, status: m.status, suggestions: m.suggestions, identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       if (m.status === "review") out.review++; else out.unmatched++;
     }
+  }
+  const real = new Map<string, string>();
+  for (let i = 0; i < newItems.length; i += 500) {
+    const batch = newItems.slice(i, i + 500);
+    const ins = await c.query<{ id: string; identity_key: string }>(
+      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, created_by)
+       SELECT x.brand, x.name, x.size_ml, x.conc, x.gender, x.flags, x.identity_key, x.loose_key, x.display_name, $2
+         FROM jsonb_to_recordset($1::jsonb) AS x(brand text, name text, size_ml numeric, conc text, gender text, flags text[], identity_key text, loose_key text, display_name text)
+       RETURNING id, identity_key`,
+      [JSON.stringify(batch), userId]);
+    const byKey = new Map(ins.rows.map((x) => [x.identity_key, x.id]));
+    for (const it of batch) {
+      const id = byKey.get(it.identity_key);
+      if (!id) throw new Error(`item_insert_lost: ${it.identity_key}`);
+      real.set(it.tmp, id);
+    }
+  }
+  const resolve = (v: string | null) => (v && v.startsWith("tmp:") ? real.get(v) ?? null : v);
+  for (const u of upd) u.item_id = resolve(u.item_id);
+  for (const k of newCodes) {
+    const item = resolve(k.tmp);
+    if (k.upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ($1, $2) ON CONFLICT (upc) DO NOTHING`, [k.upc, item]);
+    if (k.sku) await c.query(
+      `INSERT INTO perfume.item_aliases (item_id, vendor_id, sku, method) VALUES ($1, $2, $3, 'import')
+       ON CONFLICT (vendor_id, sku) WHERE sku IS NOT NULL DO UPDATE SET item_id = EXCLUDED.item_id WHERE perfume.item_aliases.method = 'import'`,
+      [item, k.vendor_id, k.sku]);
   }
   for (let i = 0; i < upd.length; i += 500) {
     await c.query(

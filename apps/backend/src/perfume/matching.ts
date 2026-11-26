@@ -306,8 +306,20 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   if (opts.allowNewItem && opts.ownList && sku && named && !suggestions.length && !ix.byKey.has(identity.key)) {
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }
+  // 6c. A line with the vendor's own code or a barcode, a readable name, and nothing at least half alike is a new product
+  // (owner 2026-11-26 15:56 CT "completely new items … should be automatically created", 16:59 CT "get this all completely
+  // done"). Measured 23:00Z: of 958 waiting lines, MOD's minis / roll-ons ("MINI DAZZLING SILVER 5ML L", code
+  // MINIDAZSIL5ML) had no suggestion at all and my inventory's gifts ("PARIS HILTON TOTE BAG GWP" vs "WHITE TOTE BAG", 25%)
+  // only far ones. A suggestion 50% alike or more still goes to Review — the owner decides those. A line whose name is
+  // empty after cleaning (brand only, "DIOR HOMME COLOGNE") is never created by itself.
+  const bestAlike = suggestions.reduce((b, x) => Math.max(b, x.score), 0);
+  if (opts.allowNewItem && (upc || sku) && named && bestAlike < NEW_ITEM_BELOW && !ix.byKey.has(identity.key)) {
+    return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
+  }
   return { identity, upc, textKey, itemId: null, method: null, status: suggestions.length ? "review" : "unmatched", suggestions };
 }
+/** A line whose closest item is less alike than this is its own product (when it carries a code or barcode). */
+export const NEW_ITEM_BELOW = 0.5;
 
 export function displayNameOf(id: Identity): string {
   const size = id.sizeMl != null ? `${id.sizeMl} ml` : "";
