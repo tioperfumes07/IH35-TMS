@@ -33,6 +33,11 @@ beforeEach(() => {
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (path.startsWith("/api/v1/perfume/contacts?")) return list;
     if (path === "/api/v1/perfume/prospects/google-plan") return plan;
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/import") {
+      posts.push([path, opts.body]);
+      const n = (opts.body as { records: unknown[] }).records.length;
+      return { records: n, inserted: n - 1, matched: 1, by: { domain: 1 }, people_inserted: n, people_existing: 0, origins: n };
+    }
     if (opts?.method === "POST") { posts.push([path, opts.body]); return { run_id: "run-1" }; }
     throw new Error(`unexpected ${path}`);
   });
@@ -64,5 +69,15 @@ describe("Contacts", () => {
     expect(posts).toHaveLength(0);
     fireEvent.click(screen.getByTestId("perfume-google-start"));
     await waitFor(() => expect(posts).toEqual([["/api/v1/perfume/prospects/google-run", { city: "Nuevo Laredo, Tamaulipas, México" }]]));
+  });
+
+  it("imports a contacts file in batches and shows new vs already in the list", async () => {
+    mount();
+    const input = await screen.findByTestId("perfume-contacts-import-file");
+    const line = (n: string) => JSON.stringify({ company: { name: n, source: "Master Database" }, people: [], origins: [] });
+    const file = new File([[line("A"), line("B"), line("C")].join("\n")], "master.jsonl", { type: "application/json" });
+    fireEvent.change(input, { target: { files: [file] } });
+    await waitFor(() => expect(screen.getByTestId("perfume-contacts-import-status").textContent).toContain("3 of 3 records · 2 new · 1 already in the list (domain 1)"));
+    expect(posts.filter(([p]) => p === "/api/v1/perfume/contacts/import")).toHaveLength(1);
   });
 });

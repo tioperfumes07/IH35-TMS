@@ -16,8 +16,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
-  getPerfumeContact, getPerfumeGooglePlan, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
-  type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
+  getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
+  type PerfumeContactImportTally, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 
@@ -62,6 +62,7 @@ export function PerfumeContactsPanel() {
         <KpiCard label="Needs email — never in a send" number={n(c?.needs_email)} disabled disabledReason="Companies with no email on file; Google gives no email." />
       </div>
 
+      <ImportCard onDone={() => void list.refetch()} />
       <GoogleCard onChanged={() => void list.refetch()} />
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label="Contacts">
@@ -165,6 +166,47 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
           ))}
         </div>
       </div>
+    </section>
+  );
+}
+
+/** The Master Database and the INEGI DENUE pull come in as one JSON-lines file each; sent in batches of 500, one transaction each. */
+function ImportCard({ onDone }: { onDone: () => void }) {
+  const { pushToast } = useToast();
+  const [state, setState] = useState<{ file: string; done: number; total: number; tally: PerfumeContactImportTally | null; error: string | null } | null>(null);
+  const run = async (f: File) => {
+    const lines = (await f.text()).split(/\r?\n/).filter((l) => l.trim());
+    let records: unknown[];
+    try { records = lines.map((l) => JSON.parse(l)); } catch { pushToast(`${f.name} is not a contacts file (one JSON record per line).`, "error"); return; }
+    const sum: PerfumeContactImportTally = { records: 0, inserted: 0, matched: 0, by: {}, people_inserted: 0, people_existing: 0, origins: 0 };
+    setState({ file: f.name, done: 0, total: records.length, tally: null, error: null });
+    for (let i = 0; i < records.length; i += 500) {
+      try {
+        const t = await importPerfumeContacts(records.slice(i, i + 500));
+        for (const k of ["records", "inserted", "matched", "people_inserted", "people_existing", "origins"] as const) sum[k] += t[k];
+        for (const [k, v] of Object.entries(t.by)) sum.by[k] = (sum.by[k] ?? 0) + v;
+        setState({ file: f.name, done: Math.min(i + 500, records.length), total: records.length, tally: { ...sum, by: { ...sum.by } }, error: null });
+      } catch (e) {
+        setState({ file: f.name, done: i, total: records.length, tally: { ...sum }, error: userFacingApiError(e, "Import stopped") });
+        return;
+      }
+    }
+    pushToast(`${f.name}: ${sum.inserted.toLocaleString("en-US")} new · ${sum.matched.toLocaleString("en-US")} already in the list`, "success");
+    onDone();
+  };
+  const busy = state != null && state.done < state.total && !state.error;
+  return (
+    <section className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label="Import contacts" data-testid="perfume-contacts-import">
+      <span className="text-section-header">Import contacts file</span>
+      <input type="file" accept=".jsonl,.json,.txt" aria-label="Contacts file" disabled={busy} data-testid="perfume-contacts-import-file"
+        onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void run(f); }} />
+      {state ? (
+        <span data-testid="perfume-contacts-import-status">
+          {state.file}: {state.done.toLocaleString("en-US")} of {state.total.toLocaleString("en-US")} records
+          {state.tally ? ` · ${state.tally.inserted.toLocaleString("en-US")} new · ${state.tally.matched.toLocaleString("en-US")} already in the list (${Object.entries(state.tally.by).map(([k, v]) => `${k} ${v.toLocaleString("en-US")}`).join(" · ") || "—"}) · ${state.tally.people_inserted.toLocaleString("en-US")} people · ${state.tally.origins.toLocaleString("en-US")} origins` : ""}
+          {state.error ? <b className="text-red-700"> — {state.error}</b> : null}
+        </span>
+      ) : <span className="text-[#64748B]">Master Database or INEGI DENUE — duplicates are matched, never doubled.</span>}
     </section>
   );
 }

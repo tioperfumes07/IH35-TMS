@@ -11,6 +11,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
+import { emptyTally, importRecords, importRecordSchema } from "./contacts.import.js";
 import { googleKey, GoogleProspectsNotConfigured, PERFUME_PROSPECT_FIELD_MASK } from "./google-prospects.js";
 import {
   batchPlan, batchRunning, contactCounts, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
@@ -42,6 +43,8 @@ const searchSchema = z.object({
   max: z.number().int().min(1).max(60).optional(),
 });
 const runSchema = z.object({ city: z.string().trim().max(160) });
+const importSchema = z.object({ records: z.array(importRecordSchema).min(1).max(500) });
+const RL_IMPORT = { bodyLimit: 8 * 1024 * 1024, config: { rateLimit: { max: 120, timeWindow: "1 minute" } } } as const;
 
 export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
   app.get("/api/v1/perfume/contacts", RL_READ, async (req, reply) => {
@@ -58,6 +61,14 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const out = await withCurrentUser(uid, (c) => getContact(c, id.data));
     if (!out) return reply.code(404).send({ error: "not_found" });
     return out;
+  });
+
+  // The Master Database and the INEGI DENUE pull, sent from the Contacts tab in batches of up to 500 (one transaction each).
+  app.post("/api/v1/perfume/contacts/import", RL_IMPORT, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = importSchema.safeParse(req.body ?? {});
+    if (!body.success) return reply.code(400).send({ error: "invalid_records", details: body.error.issues.slice(0, 5) });
+    return withCurrentUser(uid, (c) => importRecords(c, body.data.records, uid, emptyTally()));
   });
 
   app.get("/api/v1/perfume/prospects/google-plan", RL_READ, async (req, reply) => {

@@ -383,3 +383,6 @@ export const perfumeGoogleSearch = (b: { query: string; city?: string; state?: s
     "/api/v1/perfume/prospects/google-search", { method: "POST", body: b });
 export const startPerfumeGoogleRun = (city: string) => apiRequest<{ run_id: string }>("/api/v1/perfume/prospects/google-run", { method: "POST", body: { city } });
 export const stopPerfumeGoogleRun = (id: string) => apiRequest<{ stopping: boolean }>(`/api/v1/perfume/prospects/google-run/${encodeURIComponent(id)}/stop`, { method: "POST", body: {} });
+export type PerfumeContactImportTally = { records: number; inserted: number; matched: number; by: Record<string, number>; people_inserted: number; people_existing: number; origins: number };
+export const importPerfumeContacts = (records: unknown[]) =>
+  apiRequest<PerfumeContactImportTally>("/api/v1/perfume/contacts/import", { method: "POST", body: { records } });
