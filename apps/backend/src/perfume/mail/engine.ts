@@ -173,6 +173,15 @@ export type RunSummary = { run_id: string; accounts: number; messages_seen: numb
 let running = false;
 export function mailRunInProgress(): boolean { return running; }
 
+/** A file from a sender with no rule is shown to the owner only when its name or subject reads as a price list. */
+export const PRICE_LIST_WORDS = /price|precio|lista|list|stock|inventor|offer|oferta|catalog|cat[aá]logo|special|closeout|arrival|available|availability|deal|promo/i;
+const NOT_A_LIST = /invoice|factura|cfdi|receipt|recibo|statement|estado de cuenta|ticket|bol\b|bill of lading|pod\b|rate ?con|settlement|payroll|w-?9|1099|contract|contrato/i;
+export function looksLikePriceList(fileName: string, subject: string | null | undefined): boolean {
+  const text = `${fileName} ${subject ?? ""}`;
+  if (NOT_A_LIST.test(text)) return false;
+  return PRICE_LIST_WORDS.test(text) || /\.(xlsx|xlsm|xls|csv)$/i.test(fileName);
+}
+
 /** One run over every connected mailbox. */
 export async function runMailImport(opts: { trigger: "schedule" | "manual"; startedBy?: string | null; days?: number; fetchImpl?: FetchLike;
   downloadImpl?: DownloadImpl }): Promise<RunSummary | null> {
@@ -181,6 +190,11 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
   try {
     const ownerUid = opts.startedBy ?? (await deskOwnerUid());
     if (!ownerUid) return null;
+    // A run cut off by a server restart never finishes on its own (measured 2026-11-26: the 13:29 CT run stayed open):
+    // close it as stopped so the desk never shows a run that is still "checking".
+    await withCurrentUser(ownerUid, (c) => c.query(
+      `UPDATE perfume.mail_runs SET finished_at = now(), error = COALESCE(error, 'Stopped — the server restarted during the check.')
+        WHERE finished_at IS NULL AND started_at < now() - interval '2 hours'`));
     const runId = await withCurrentUser(ownerUid, async (c) => (await c.query<{ id: string }>(
       `INSERT INTO perfume.mail_runs (trigger, started_by) VALUES ($1, $2) RETURNING id`, [opts.trigger, opts.startedBy ?? null])).rows[0].id);
     const sum: RunSummary = { run_id: runId, accounts: 0, messages_seen: 0, imported: 0, held: 0, unassigned: 0, failed: 0, errors: [] };
@@ -213,6 +227,10 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
             const rule = ruleFor(rules, f.sender, f.fileName);
             if (rule?.ignore) continue;
             if (!rule || !rule.vendor_id) {
+              // Only a file that looks like a price list waits for the owner; invoices, statements, tickets and other
+              // mail with a PDF are left alone (measured 2026-11-26: 110 of 128 unassigned were Highway, CFDI invoices,
+              // Anthropic / Neon bills, Delcan, Relay — none a price list).
+              if (!looksLikePriceList(f.fileName, f.subject)) continue;
               await withCurrentUser(ownerUid, (c) => recordFile(c, ctx, f, { status: "unassigned", reason: "Sender not set up — pick the vendor on the desk." }));
               sum.unassigned++;
               continue;
