@@ -175,6 +175,27 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     }
   });
 
+  // An old .xls held by the engine: the owner's browser read its cells (the server never parses .xls); the server checks the
+  // file is a real .xls it fetched itself, then runs the same reading, half-size and to-the-cent checks as any mailed list.
+  const cell = z.union([z.string().max(2000), z.number().finite(), z.null()]);
+  const cellsSchema = z.object({
+    sheets: z.array(z.object({ name: z.string().max(200), cells: z.array(z.array(cell).max(200)).max(60_000) })).min(1).max(30),
+    force: z.boolean().optional(),
+  });
+  app.post("/api/v1/perfume/mail/files/:id/xls-cells", { bodyLimit: 40 * 1024 * 1024, config: { rateLimit: { max: 60, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ id: uuid }).safeParse(req.params);
+    const b = cellsSchema.safeParse(req.body ?? {});
+    if (!p.success || !b.success) return reply.code(400).send({ error: "validation_error" });
+    try {
+      return await reprocessMailFile(uid, p.data.id, { force: b.data.force, readInBrowser: { kind: "xls", sheets: b.data.sheets } });
+    } catch (e) {
+      if (e instanceof MailFileError) return reply.code(e.message === "file_not_found" ? 404 : 409).send({ error: e.message });
+      if (e instanceof MailReconnectError) return reply.code(409).send({ error: "mailbox_reconnect", message: e.message });
+      throw e;
+    }
+  });
+
   app.get("/api/v1/perfume/mail/files/:id/download", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = z.object({ id: uuid }).safeParse(req.params);

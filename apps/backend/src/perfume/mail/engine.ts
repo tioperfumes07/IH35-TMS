@@ -24,7 +24,7 @@ import { decrypt } from "../../lib/encryption.js";
 import { ImportCheckFailed, importList, invalidateGridCache, type ImportCheck } from "../desk.service.js";
 import { attachmentsOf, header, MailReconnectError, senderAddress, type Attachment, type FetchLike, type GmailMessage } from "./gmail.js";
 import { gmailFromQuery, gmailSearchQuery, openSource, type MailProvider, type MailSource } from "./source.js";
-import { chooseReading, isSpecialList, PRICE_FILE_EXT, readPriceFile, savedColumnsOf, UnreadableFileError, type Choice } from "./readers.js";
+import { chooseReading, isOleXls, isSpecialList, PRICE_FILE_EXT, readPriceFile, type ReadFile, savedColumnsOf, UnreadableFileError, type Choice } from "./readers.js";
 import { downloadLink, downloadLinksOf, htmlOf, LINK_PREFIX, linkFileName, type DownloadImpl } from "./links.js";
 
 export const PERFUME_MAIL_JOB = "perfume.mail_price_lists_cron";
@@ -70,7 +70,7 @@ export type HoldReason =
   | "columns_not_found" | "no_prices_found" | "much_smaller_than_current" | "totals_not_matching" | "vendor_missing";
 
 export const HOLD_TEXT: Record<HoldReason, string> = {
-  old_xls: "Old Excel format (.xls) — open it on the Lists tab.",
+  old_xls: "Old Excel format (.xls) — the desk reads it in the browser the next time the Mail tab is open.",
   scanned_pdf: "Scanned PDF (no text) — open it on the Lists tab; the picture reader reads it.",
   unsupported_type: "Not a price-list file type.",
   unreadable: "The file could not be opened.",
@@ -103,7 +103,7 @@ async function recordFile(c: PoolClient, ctx: Ctx, f: FileMeta, o: Outcome, repl
 
 /** Read one downloaded file and save it as the vendor's list (or hold it). Runs inside the owner's transaction. */
 export async function importMailFile(c: PoolClient, ctx: Ctx, f: FileMeta, buf: Buffer, rule: { id: string | null; vendor_id: string; special: boolean },
-  opts: { force?: boolean } = {}): Promise<Outcome> {
+  opts: { force?: boolean; readInBrowser?: ReadFile } = {}): Promise<Outcome> {
   const sha = crypto.createHash("sha256").update(buf).digest("hex");
   const base = { sha, ruleId: rule.id, vendorId: rule.vendor_id };
   const v = (await c.query<{ id: string; name: string; column_mapping: Record<string, unknown> }>(
@@ -118,7 +118,9 @@ export async function importMailFile(c: PoolClient, ctx: Ctx, f: FileMeta, buf: 
   if (buf.length > MAX_FILE_BYTES) return { ...base, status: "held", reason: HOLD_TEXT.too_large };
   let choice: Choice | null;
   try {
-    choice = chooseReading(await readPriceFile(buf, f.fileName), savedColumnsOf(v.column_mapping));
+    // An old binary .xls is never parsed on the server (no SheetJS in the backend — #2686 / verify-xlsx-upload-magic-bytes).
+    // The owner's browser reads its cells with the desk's own reader and hands them here; every check below still runs.
+    choice = chooseReading(opts.readInBrowser ?? (await readPriceFile(buf, f.fileName)), savedColumnsOf(v.column_mapping));
   } catch (e) {
     if (e instanceof UnreadableFileError) return { ...base, status: "held", reason: HOLD_TEXT[e.reason] };
     return { ...base, status: "held", reason: `${HOLD_TEXT.unreadable} ${String((e as Error)?.message ?? e).slice(0, 160)}` };
@@ -144,7 +146,7 @@ export async function importMailFile(c: PoolClient, ctx: Ctx, f: FileMeta, buf: 
         reason: `${HOLD_TEXT.much_smaller_than_current} (${ex.rowsRead.toLocaleString("en-US")} lines vs ${cur.rows_saved.toLocaleString("en-US")})` };
     }
   }
-  const kind = choice.how === "pdf" ? "pdf_text" : f.fileName.toLowerCase().endsWith(".csv") ? "csv" : "xlsx";
+  const kind = choice.how === "pdf" ? "pdf_text" : opts.readInBrowser ? "xls" : f.fileName.toLowerCase().endsWith(".csv") ? "csv" : "xlsx";
   try {
     const r = await importList(c, ctx.ownerUid, {
       vendor_id: v.id, list_date: listDateOf(f.receivedAt),
@@ -316,7 +318,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
 
 /** The owner's answer to one recorded file: "this sender is <vendor>" (creates the rule) and/or "import anyway". */
 export async function reprocessMailFile(ownerUid: string, fileId: string, opts: { vendorId?: string; special?: boolean; fileText?: string | null; force?: boolean;
-  fetchImpl?: FetchLike; downloadImpl?: DownloadImpl }): Promise<Outcome & { file_id: string }> {
+  readInBrowser?: ReadFile; fetchImpl?: FetchLike; downloadImpl?: DownloadImpl }): Promise<Outcome & { file_id: string }> {
   const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; sender: string; subject: string | null;
     received_at: Date; rule_id: string | null; vendor_id: string | null; refresh_token_enc: Buffer | null; provider: MailProvider; status: string }>(
     `SELECT f.account_email, f.external_gmail_message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, a.provider, f.status
@@ -340,10 +342,12 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
   if (!vendorId) throw new MailFileError("vendor_required");
   const src = await openSource(ownerUid, { email: f.account_email, provider: f.provider, refresh_token_enc: f.refresh_token_enc }, opts.fetchImpl);
   const buf = await fileBytes(src, f.external_gmail_message_id, f.file_name, opts.downloadImpl);
+  // Cells read in the browser are taken only for a real old .xls (OLE2 signature on the bytes this server fetched itself).
+  if (opts.readInBrowser && !isOleXls(buf)) throw new MailFileError("not_an_old_xls");
   const ctx: Ctx = { ownerUid, runId: null, account: f.account_email };
   const meta: FileMeta = { messageId: f.external_gmail_message_id, fileName: f.file_name, sender: f.sender, subject: f.subject ?? "", receivedAt: new Date(f.received_at) };
   const o = await withCurrentUser(ownerUid, async (c) => {
-    const out = await importMailFile(c, ctx, meta, buf, { id: ruleId, vendor_id: vendorId!, special }, { force: opts.force });
+    const out = await importMailFile(c, ctx, meta, buf, { id: ruleId, vendor_id: vendorId!, special }, { force: opts.force, readInBrowser: opts.readInBrowser });
     await recordFile(c, ctx, meta, out, true);
     return out;
   });

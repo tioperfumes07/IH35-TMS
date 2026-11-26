@@ -9,7 +9,7 @@ import ExcelJS from "exceljs";
 import { describe, expect, it } from "vitest";
 import * as browser from "../../../../frontend/src/pages/perfume/perfumeFileReaders.js";
 import {
-  applySavedColumns, chooseReading, extractRows, findHeaderRow, guessMapping, parseCsv, pdfLinePairs, priceToCents, readPriceFile,
+  applySavedColumns, chooseReading, extractRows, findHeaderRow, guessMapping, isOleXls, parseCsv, pdfLinePairs, priceToCents, readPriceFile,
   isSpecialList, savedColumnsOf, splitCodedRow, SPECIAL_LIST_RE, UnreadableFileError, type Sheet,
 } from "./readers.js";
 
@@ -171,3 +171,13 @@ export function pdfWithLines(lines: string[]): Buffer {
   out += `trailer\n<< /Size ${objs.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(out, "latin1");
 }
+
+describe("old .xls signature", () => {
+  it("recognises the OLE2 signature of a real .xls and nothing else", () => {
+    expect(isOleXls(Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1, 0, 0]))).toBe(true);
+    expect(isOleXls(Buffer.from("<html>price list</html>"))).toBe(false);
+    expect(isOleXls(Buffer.from([0x50, 0x4b, 3, 4, 0, 0, 0, 0]))).toBe(false);
+    expect(isOleXls(Buffer.alloc(3))).toBe(false);
+  });
+});
+

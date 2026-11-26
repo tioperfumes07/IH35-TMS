@@ -26,6 +26,7 @@ import { PerfumeTradeShowsPanel } from "./PerfumeTradeShowsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
+import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 
 type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "shows" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
@@ -62,6 +63,8 @@ export default function PerfumeDeskPage() {
   const access = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, staleTime: 300_000 });
   const allowed = access.data?.allowed === true;
   const review = useQuery({ queryKey: ["perfume", "review-count"], queryFn: () => getPerfumeReview(0, 1), enabled: allowed });
+  // Old .xls lists the mail engine held (PCA, MOD): read here, in the browser, whenever the desk is open.
+  const heldXls = usePerfumeHeldXls(allowed);
   if (!allowed) {
     return (
       <div className="p-3" data-testid="perfume-desk-locked">
@@ -80,6 +83,13 @@ export default function PerfumeDeskPage() {
           <div className="text-xs text-gray-500">{tr("perfume.desk.3", "ScentsX LLC dba TIO Perfumes · owner only · separate from every carrier · never posts to accounting")}</div>
         </div>
       </div>
+      {heldXls ? (
+        <div className="rounded-sm border border-gray-200 bg-white px-2 py-1.5 text-xs text-gray-700" role="status" data-testid="perfume-held-xls">
+          {heldXls.running
+            ? `${tr("perfume.xls.reading", "Reading old Excel (.xls) price lists from mail")} · ${heldXls.done} ${tr("perfume.desk.10", "of")} ${heldXls.total}`
+            : `${tr("perfume.xls.done", "Old Excel (.xls) price lists from mail")}: ${heldXls.imported} ${tr("perfume.xls.imported", "imported")} · ${heldXls.held} ${tr("perfume.xls.held", "held (see Mail tab)")} · ${heldXls.failed} ${tr("perfume.xls.failed", "failed")}`}
+        </div>
+      ) : null}
       <nav className="flex flex-wrap gap-1" aria-label={tr("perfume.desk.4", "Price desk sections")}>
         {TABS.map(([k, label]) => (
           <button
