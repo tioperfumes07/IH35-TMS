@@ -4,6 +4,7 @@
  */
 import type pg from "pg";
 import { withCurrentUser } from "../auth/db.js";
+import { ContactMatcher, nameKeys } from "./contacts.matcher.js";
 import {
   buildPlan, cityLabel, phone10, planCounts, searchText,
   type PlannedSearch, type ProspectKeyword, type ProspectRow,
@@ -120,7 +121,13 @@ export async function getContact(c: pg.PoolClient, id: string) {
 export type SaveOutcome = "inserted" | "matched" | "skipped_closed";
 
 /** Dedupe: Google place_id, OR phone last-10 digits (company phone or any person's phone), OR normalized name + city. */
-export async function findExisting(c: pg.PoolClient, r: ProspectRow): Promise<string | null> {
+export async function findExisting(c: pg.PoolClient, r: ProspectRow, m?: ContactMatcher): Promise<string | null> {
+  if (m) {
+    // One read of the keys per run (contacts.matcher.ts): under RLS each SQL key question below is a full scan per result.
+    const p10 = phone10(r.phone) ?? phone10(r.phone_intl);
+    const [nk] = r.city ? await nameKeys(c, [r.name]) : [null];
+    return m.find({ placeId: r.place_id, phones: p10 ? [p10] : [], emails: [], nameKey: nk || null, city: r.city ?? null })[0];
+  }
   const byPlace = await c.query<{ id: string }>(`SELECT id FROM perfume.contact_companies WHERE google_place_id = $1 LIMIT 1`, [r.place_id]);
   if (byPlace.rows[0]) return byPlace.rows[0].id;
   const p10 = phone10(r.phone) ?? phone10(r.phone_intl);
@@ -143,9 +150,9 @@ export async function findExisting(c: pg.PoolClient, r: ProspectRow): Promise<st
   return null;
 }
 
-export async function saveProspect(c: pg.PoolClient, r: ProspectRow, kw: ProspectKeyword | null, query: string, uid: string): Promise<SaveOutcome> {
+export async function saveProspect(c: pg.PoolClient, r: ProspectRow, kw: ProspectKeyword | null, query: string, uid: string, m?: ContactMatcher): Promise<SaveOutcome> {
   if (r.business_status === "CLOSED_PERMANENTLY") return "skipped_closed";
-  const existing = await findExisting(c, r);
+  const existing = await findExisting(c, r, m);
   const detail = `Google search "${query}"`;
   if (existing) {
     // Fill blanks only — a value the owner (or his mail) already gave is never overwritten by Google.
@@ -159,6 +166,7 @@ export async function saveProspect(c: pg.PoolClient, r: ProspectRow, kw: Prospec
         WHERE id = $1`,
       [existing, r.place_id, r.address, r.city, r.state, r.zip, r.country, r.phone, r.phone_intl, r.website, r.maps_uri, r.business_status,
         r.primary_type, r.types, r.rating, r.rating_count, r.hours, kw ? [kw.category] : []]);
+    await m?.refreshCompany(c, existing);
     const seen = await c.query(`SELECT 1 FROM perfume.contact_origins WHERE company_id = $1 AND how = 'Google business search' LIMIT 1`, [existing]);
     if (!seen.rowCount) {
       await c.query(
@@ -179,6 +187,7 @@ export async function saveProspect(c: pg.PoolClient, r: ProspectRow, kw: Prospec
       r.website, r.phone, r.phone_intl, r.maps_uri, r.place_id, r.business_status, r.primary_type, r.types, r.rating, r.rating_count, r.hours, uid]);
   const id = ins.rows[0]?.id;
   if (!id) return "matched";
+  await m?.refreshCompany(c, id);
   await c.query(
     `INSERT INTO perfume.contact_origins (company_id, occurred_on, how, source, source_url, detail, created_by)
      VALUES ($1, (now() AT TIME ZONE 'America/Chicago')::date, 'Google business search', 'Google Places', $2, $3, $4)`,
@@ -200,7 +209,8 @@ export async function singleSearch(uid: string, input: { query: string; city?: s
     const tally = { inserted: 0, matched: 0, skipped_closed: 0 };
     const results: Array<ProspectRow & { outcome: SaveOutcome }> = [];
     await withCurrentUser(uid, async (c) => {
-      for (const r of page.rows) { const o = await saveProspect(c, r, kw, textQuery, uid); tally[o] += 1; results.push({ ...r, outcome: o }); }
+      const m = await ContactMatcher.load(c);
+      for (const r of page.rows) { const o = await saveProspect(c, r, kw, textQuery, uid, m); tally[o] += 1; results.push({ ...r, outcome: o }); }
       await c.query(
         `UPDATE perfume.google_search_runs SET status = 'done', searches_done = 1, requests_made = $2, results = $3, inserted = $4, matched = $5,
             skipped_closed = $6, finished_at = now(), heartbeat_at = now() WHERE id = $1`,
@@ -256,6 +266,8 @@ export async function startBatch(uid: string, opts: { pauseMs?: number; plan?: P
     let finalStatus: "done" | "stopped" | "failed" = "done";
     let error: string | null = null;
     try {
+      // The keys are read once for the whole run and kept current as each search saves (each search commits on its own).
+      const m = await withCurrentUser(uid, (c) => ContactMatcher.load(c));
       for (const s of plan) {
         if (me.stop) { finalStatus = "stopped"; break; }
         const label = cityLabel(s.city);
@@ -264,7 +276,7 @@ export async function startBatch(uid: string, opts: { pauseMs?: number; plan?: P
         requests += page.requests; results += page.rows.length; bucket.searches += 1; bucket.results += page.rows.length; done += 1;
         await withCurrentUser(uid, async (c) => {
           for (const r of page.rows) {
-            const o = await saveProspect(c, r, s.keyword, s.textQuery, uid);
+            const o = await saveProspect(c, r, s.keyword, s.textQuery, uid, m);
             if (o === "inserted") { inserted += 1; bucket.inserted += 1; } else if (o === "matched") { matched += 1; bucket.matched += 1; } else { skipped += 1; bucket.skipped_closed += 1; }
           }
           await c.query(

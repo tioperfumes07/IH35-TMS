@@ -12,6 +12,7 @@
  */
 import type pg from "pg";
 import { z } from "zod";
+import { ContactMatcher, nameKeys, phone10 } from "./contacts.matcher.js";
 
 const str = z.string().trim().max(2000).nullable().optional();
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional();
@@ -43,50 +44,29 @@ export const emptyTally = (): ImportTally => ({ records: 0, inserted: 0, matched
 
 const FREE_MAIL = new Set(["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "aol.com", "icloud.com", "me.com", "live.com", "msn.com", "prodigy.net.mx",
   "hotmail.es", "yahoo.com.mx", "live.com.mx", "outlook.es", "comcast.net", "att.net", "sbcglobal.net", "verizon.net", "mail.com", "protonmail.com", "usa.com"]);
-const phone10 = (s: unknown) => { const d = String(s ?? "").replace(/\D/g, ""); return d.length >= 10 ? d.slice(-10) : null; };
 const ROLE_MERGE = (a: string | null, b: string | null) => (!a ? b ?? null : !b || a === b ? a : "both");
 
 const COMPANY_COLS: Array<keyof ImportRecord["company"]> = ["name", "domain", "role", "vendor_type", "customer_type", "main_category", "address", "city", "state", "zip", "country", "region", "website",
   "phone", "phone_intl", "maps_uri", "google_place_id", "linkedin", "owner_name", "status", "source", "first_contact_on", "last_email_on", "notes",
   "external_source", "external_directory_id", "external_ref", "segment", "scian_code"];
 
-async function findCompany(c: pg.PoolClient, rec: ImportRecord): Promise<[string | null, string | null]> {
+/** Which company this record is, by the matcher's in-memory keys (one read per batch — see contacts.matcher.ts). */
+function findCompany(m: ContactMatcher, rec: ImportRecord, nameKey: string | null): [string | null, string | null] {
   const co = rec.company;
   // Two different ids from the same directory are two different businesses (two "Sin Nombre" beer depots on one street, two
   // branches sharing a phone): they never merge with each other — only with records from another source.
-  const src = co.external_directory_id ? co.external_source : null;
-  const NOT_SAME_DIR = src ? ` AND (external_source IS DISTINCT FROM '${src.replace(/'/g, "''")}' OR external_directory_id IS NULL)` : "";
-  const q1 = async (sql: string, args: unknown[]): Promise<string | null> => ((await c.query<{ id: string }>(sql.replaceAll("/*dir*/", NOT_SAME_DIR), args)).rows[0]?.id ?? null);
-  if (co.external_directory_id) { const id = await q1(`SELECT id FROM perfume.contact_companies WHERE external_source = $1 AND external_directory_id = $2`, [co.external_source, co.external_directory_id]); if (id) return [id, "outside key"]; }
-  if (co.google_place_id) { const id = await q1(`SELECT id FROM perfume.contact_companies WHERE google_place_id = $1`, [co.google_place_id]); if (id) return [id, "place_id"]; }
+  const src = co.external_directory_id ? co.external_source ?? null : null;
   const phones = [...new Set([co.phone, ...rec.people.flatMap((p) => p.phones ?? [])].map(phone10).filter((x): x is string => Boolean(x)))];
-  for (const p of phones) {
-    const id = await q1(
-      `SELECT id FROM perfume.contact_companies WHERE archived_at IS NULL AND right(regexp_replace(coalesce(phone, ''), '\\D', '', 'g'), 10) = $1 /*dir*/
-       UNION ALL SELECT p.company_id FROM perfume.contact_people p WHERE p.archived_at IS NULL
-         AND p.phone_keys @> ARRAY[$1::text]
-         AND p.company_id IN (SELECT id FROM perfume.contact_companies WHERE true /*dir*/) LIMIT 1`, [p]);
-    if (id) return [id, "phone"];
-  }
-  for (const e of rec.people.map((p) => p.email).filter((x): x is string => Boolean(x))) {
-    const id = await q1(`SELECT company_id AS id FROM perfume.contact_people WHERE email = $1 AND archived_at IS NULL
-      AND company_id IN (SELECT id FROM perfume.contact_companies WHERE true /*dir*/)`, [e]);
-    if (id) return [id, "email"];
-  }
-  if (co.domain && !FREE_MAIL.has(String(co.domain))) {
-    const id = await q1(`SELECT id FROM perfume.contact_companies WHERE domain = $1 AND archived_at IS NULL /*dir*/ ORDER BY created_at LIMIT 1`, [co.domain]);
-    if (id) return [id, "domain"];
-  }
-  if (co.city) {
-    const id = await q1(`SELECT id FROM perfume.contact_companies WHERE archived_at IS NULL AND name_key = perfume.name_key($1) AND lower(city) = lower($2) /*dir*/ LIMIT 1`, [co.name, co.city]);
-    if (id) return [id, "name + city"];
-  }
-  return [null, null];
+  return m.find({
+    externalSource: co.external_source ?? null, externalId: co.external_directory_id ?? null, placeId: co.google_place_id ?? null, phones,
+    emails: rec.people.map((p) => p.email).filter((x): x is string => Boolean(x)), domain: co.domain ?? null,
+    nameKey: co.city ? nameKey : null, city: co.city ?? null,
+  }, { notSameDirectory: src, freeMail: FREE_MAIL });
 }
 
-async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: ImportTally) {
+async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, nameKey: string | null, owner: string, t: ImportTally) {
   const co = rec.company;
-  let [id, how] = await findCompany(c, rec);
+  let [id, how] = findCompany(m, rec, nameKey);
   if (id) {
     t.matched += 1; t.by[how!] = (t.by[how!] ?? 0) + 1;
     const cur = (await c.query<{ role: string | null }>(`SELECT role FROM perfume.contact_companies WHERE id = $1`, [id])).rows[0]!;
@@ -108,6 +88,7 @@ async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: Impor
       [...cols.map((k) => (k === "external_ref" && co[k] != null ? JSON.stringify(co[k]) : co[k])), co.categories ?? [], co.brands ?? [], owner]);
     id = r.rows[0]!.id; t.inserted += 1;
   }
+  await m.refreshCompany(c, id);
   const personIds: Array<string | null> = [];
   for (const p of rec.people) {
     let pid: string | null = null;
@@ -120,13 +101,14 @@ async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: Impor
     }
     if (pid) { t.people_existing += 1; personIds.push(pid); continue; }
     if (!p.email && !(p.phones ?? []).length && !p.name) { personIds.push(null); continue; }
-    const r = await c.query<{ id: string }>(
+    const r = await c.query<{ id: string; email: string | null; phone_keys: string[] | null }>(
       `INSERT INTO perfume.contact_people (company_id, name, title, email, other_emails, phones, role, how_started, found_in, first_contact_on, last_email_on,
           email_count, sent_lists, opted_out_at, master_row, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id, email, phone_keys`,
       [id, p.name ?? null, p.title ?? null, p.email ?? null, p.other_emails ?? [], p.phones ?? [], p.role ?? null, p.how_started ?? null, p.found_in ?? null,
         p.first_contact_on ?? null, p.last_email_on ?? null, p.email_count ?? null, Boolean(p.sent_lists), p.opted_out ? new Date() : null, p.master_row ?? null, owner]);
     personIds.push(r.rows[0]!.id); t.people_inserted += 1;
+    m.addPerson(id, r.rows[0]!.email, r.rows[0]!.phone_keys ?? []);
   }
   for (const o of rec.origins ?? []) {
     const pid = o.person_index != null ? personIds[o.person_index] ?? null : null;
@@ -144,6 +126,8 @@ async function load(c: pg.PoolClient, rec: ImportRecord, owner: string, t: Impor
 
 /** One batch, already inside the caller's owner transaction. */
 export async function importRecords(c: pg.PoolClient, records: ImportRecord[], ownerUid: string, t: ImportTally = emptyTally()): Promise<ImportTally> {
-  for (const rec of records) { await load(c, rec, ownerUid, t); t.records += 1; }
+  const m = await ContactMatcher.load(c);
+  const keys = await nameKeys(c, records.map((r) => r.company.name));
+  for (const [i, rec] of records.entries()) { await load(c, m, rec, keys[i] || null, ownerUid, t); t.records += 1; }
   return t;
 }

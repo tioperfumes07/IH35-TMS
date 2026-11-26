@@ -1,0 +1,1 @@
+export default { name: "verify:verify-perfume-contacts-matcher", run(ctx) { ctx.run("node", ["scripts/verify-perfume-contacts-matcher.mjs", "--selftest"]); ctx.run("node", ["scripts/verify-perfume-contacts-matcher.mjs"]); } };
