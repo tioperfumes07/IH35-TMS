@@ -1229,5 +1229,10 @@
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
     "purpose": "PERFUME mail engine third mailbox tio-perfumes@hotmail.com (Microsoft): perfume.mail_accounts.provider \u2014 owner 2026-11-25 23:25 CT"
+  },
+  "202616730100": {
+    "claimed_at": "2026-11-25",
+    "claimed_by": "lead",
+    "purpose": "PERFUME vendor tags: perfume.vendors.roles adds distributor + customer (owner tags vendors only / trading / distributor / customer as well) \u2014 owner 2026-11-25 23:41 CT"
   }
 }
