@@ -1180,7 +1180,9 @@ export async function setInternalCode(c: PoolClient, itemId: string, code: strin
 /* ---------------- the grid ---------------- */
 
 export type ColKind = "text" | "money" | "pct" | "int";
-export type GridCol = { key: string; label: string; group: string; kind: ColKind };
+export type GridCol = { key: string; label: string; group: string; kind: ColKind;
+  /** The date of the vendor's list in use, shown on a line under the vendor's name (owner 2026-11-26 15:38 CT). */
+  sub?: string };
 export type GridView = "buy" | "trade" | "wholesale" | "comp" | "analysis" | "all";
 export type GridRow = Record<string, string | number | null>;
 
@@ -1834,6 +1836,16 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     rows.push(row);
   }
   const { myLines, theirLines } = await buildAnalysisLines(c, { rows, items: items.rows, myLineQ: myLineQ.rows, theirLineQ: theirLineQ.rows, anByItem, vendors, rules, minMargin });
+  // Owner 2026-11-26 15:38 CT: "i want to have the list date on a row on bottom of the vendor name" — every vendor
+  // column carries the date of that vendor's list in use (the newest, when a special list sits next to it).
+  const listDates = new Map((await c.query<{ vendor_id: string; d: string }>(
+    `SELECT vendor_id, to_char(max(list_date), 'MM/DD/YYYY') AS d FROM perfume.price_lists WHERE voided_at IS NULL AND is_current GROUP BY vendor_id`)).rows
+    .map((r) => [r.vendor_id, r.d]));
+  for (const col of cols) {
+    const vid = /^[a-z]+:([0-9a-f-]{36}):/.exec(col.key)?.[1];
+    const d = vid ? listDates.get(vid) : undefined;
+    if (d) col.sub = `List ${d}`;
+  }
   const _result: GridPayload = { cols, rows, rules, vendors, target_pct: target, earn_pct: earnTyped ?? rules.vendor_earn_pct, _vk: _cacheKey, myLines, theirLines, minMargin };
   // Without a data fingerprint the build is shared by the requests already waiting on it, but never remembered.
   if (!_cacheKey.includes("|nosig|")) _gridCache.set(_cacheKey, _result);
@@ -2368,7 +2380,7 @@ export async function exportWorkbook(cols0: GridCol[], rows: GridRow[], rules: D
   wb.creator = "TIO Perfumes price desk";
   const ws = wb.addWorksheet(title.slice(0, 31));
   // The owner's format (PERFUME_ENGINE_FORMATS.xlsx): row 1 the group over its columns, row 2 the column names.
-  const groupOf = (c: GridCol) => (added.has(c.key) ? "FORMULA INPUTS" : (c.group || "ITEM").toUpperCase());
+  const groupOf = (c: GridCol) => (added.has(c.key) ? "FORMULA INPUTS" : `${(c.group || "ITEM").toUpperCase()}${c.sub ? ` · ${c.sub}` : ""}`);
   ws.addRow(cols.map(groupOf));
   ws.addRow(cols.map((c) => c.label));
   for (let i = 0; i < cols.length;) {

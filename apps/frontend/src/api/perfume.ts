@@ -42,7 +42,7 @@ export type PerfumeRules = {
   /** I match the competitor's price less this (owner 2026-11-20: "the .25 difference"). */
   match_under_cents?: number;
 };
-export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int" };
+export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int"; /** "List 11/25/2026" — the vendor's list in use. */ sub?: string };
 export type PerfumeGridRow = Record<string, string | number | null>;
 export type PerfumeGridView = "buy" | "trade" | "wholesale" | "comp" | "analysis" | "all";
 export type PerfumeGrid = {

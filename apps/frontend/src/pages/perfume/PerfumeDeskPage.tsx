@@ -626,10 +626,10 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     [shownSig, cols, view, mine, groupStart, matchDesk, lowFamily],
   );
   const columnGroups = useMemo(() => {
-    const groups: Array<{ label: string; keys: string[] }> = [];
+    const groups: Array<{ label: string; keys: string[]; sublabel?: string }> = [];
     for (const c of shownCols) {
       const g = groups.find((x) => x.label === c.group);
-      if (g) g.keys.push(c.key); else groups.push({ label: c.group, keys: [c.key] });
+      if (g) { g.keys.push(c.key); g.sublabel ??= c.sub; } else groups.push({ label: c.group, keys: [c.key], sublabel: c.sub });
     }
     return groups;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- shownSig is the shown column list
