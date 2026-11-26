@@ -442,6 +442,8 @@ export type ParityTableProps<T> = {
   columnGroups?: Array<{
     label: string;
     keys: string[];
+    /** Optional second line under the group name (the perfume desk: the vendor's list date). */
+    sublabel?: string;
     /** Odd-row body tint for this group's columns (DESIGN-CONTRACT: .b-rev/.b-cost/.b-pay). The band
      * row itself is always the uniform group-band bg — this colour tints the BODY cells only. */
     bg?: string;
@@ -1987,7 +1989,7 @@ export function ParityTable<T>({
               ) : null}
               {(() => {
                 const visibleKeys = visibleColumns.map((c) => String(c.key));
-                const cells: Array<{ label: string; span: number; bg?: string }> = [];
+                const cells: Array<{ label: string; span: number; bg?: string; sublabel?: string }> = [];
                 for (const key of visibleKeys) {
                   const owningGroup = columnGroups.find((g) => g.keys.includes(key));
                   const last = cells[cells.length - 1];
@@ -1999,7 +2001,7 @@ export function ParityTable<T>({
                   if (owningGroup && last && last.label === owningGroup.label) {
                     last.span += 1;
                   } else if (owningGroup) {
-                    cells.push({ label: owningGroup.label, span: 1, bg: owningGroup.bg });
+                    cells.push({ label: owningGroup.label, span: 1, bg: owningGroup.bg, sublabel: owningGroup.sublabel });
                   } else {
                     cells.push({ label: "", span: 1 });
                   }
@@ -2023,6 +2025,9 @@ export function ParityTable<T>({
                     }}
                   >
                     {cell.label}
+                    {cell.sublabel ? (
+                      <div data-testid="parity-group-sublabel" style={{ fontWeight: 400, letterSpacing: 0, textTransform: "none" }}>{cell.sublabel}</div>
+                    ) : null}
                   </th>
                 ));
               })()}
