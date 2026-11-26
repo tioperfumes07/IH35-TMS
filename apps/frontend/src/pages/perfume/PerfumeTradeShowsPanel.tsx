@@ -60,16 +60,16 @@ export function PerfumeTradeShowsPanel() {
 
   const toggleGo = async (s: PerfumeShow) => {
     try { await setPerfumeShowIGo(s.id, !s.i_go); await shows.refetch(); pushToast(`${s.name}: ${!s.i_go ? "I go" : "not going"}`, "success"); }
-    catch (e) { pushToast(userFacingApiError(e), "error"); }
+    catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
 
-  if (shows.isError) return <ListErrorState title={tr("perfume.shows.error", "Trade shows could not load")} error={shows.error} onRetry={() => void shows.refetch()} />;
+  if (shows.isError) return <ListErrorState title={tr("perfume.shows.error", "Couldn't load the trade shows")} status={0} message={(shows.error as Error)?.message} onRetry={() => void shows.refetch()} />;
   return (
     <div className="space-y-3" data-testid="perfume-trade-shows-panel">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
         <KpiCard label={tr("perfume.shows.kpi_shows", "Shows on the calendar")} number={all.length.toLocaleString()} onClick={() => { setPicks(NO_PICKS); setOnlyGo(false); setQ(""); }} />
         <KpiCard label={tr("perfume.shows.kpi_go", "I go")} number={goShows.length.toLocaleString()} onClick={() => setOnlyGo(true)} />
-        <KpiCard label={tr("perfume.shows.kpi_next", "Next show I go to")} number={next ? usDate(next.starts_on) : DASH} sublabel={next?.name} onClick={next ? () => setSelected(next.id) : undefined} />
+        <KpiCard label={tr("perfume.shows.kpi_next", "Next show I go to")} number={next ? `${usDate(next.starts_on)} · ${next.name}` : DASH} onClick={next ? () => setSelected(next.id) : undefined} />
         <KpiCard label={tr("perfume.shows.kpi_meetings", "Meetings booked / held")} number={meetings.toLocaleString()} />
       </div>
 
@@ -132,7 +132,7 @@ function AddShowForm({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
     try {
       await savePerfumeShow({ ...f, starts_on: f.starts_on || null, ends_on: f.ends_on || null, source: "Added by hand" });
       pushToast(`${f.name} saved`, "success"); onSaved();
-    } catch (e) { pushToast(userFacingApiError(e), "error"); }
+    } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
   return (
     <div className="flex flex-wrap items-end gap-2 rounded-[3px] border border-[#D8E0E8] bg-[#F7F9FB] p-2" data-testid="perfume-shows-add-form">
@@ -159,10 +159,10 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
   const refresh = async () => { await contacts.refetch(); onChanged(); };
   const add = async (companyId: string, name: string) => {
     try { await addPerfumeShowContact(id, { company_id: companyId }); setFind(""); await refresh(); pushToast(`${name} added to ${show?.name}`, "success"); }
-    catch (e) { pushToast(userFacingApiError(e), "error"); }
+    catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
   const patch = async (x: PerfumeShowContact, b: Parameters<typeof updatePerfumeShowContact>[1]) => {
-    try { await updatePerfumeShowContact(x.id, b); await refresh(); } catch (e) { pushToast(userFacingApiError(e), "error"); }
+    try { await updatePerfumeShowContact(x.id, b); await refresh(); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
   if (!show) return null;
   return (
