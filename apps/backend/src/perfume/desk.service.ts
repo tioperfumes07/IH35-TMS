@@ -4,7 +4,7 @@
  */
 import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
-import { addItem, compactKey, displayNameOf, emptyIndex, matchLine, productKind, similarity, suggest, type LineIn, type MatchIndex } from "./matching.js";
+import { addItem, compactKey, displayNameOf, distinctProductOf, emptyIndex, matchLine, productKind, similarity, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
@@ -1067,7 +1067,8 @@ export async function rematchReview(c: PoolClient) {
   for (const r of linked.rows) {
     if (++k % 200 === 0) await new Promise((res) => setImmediate(res));
     const id = identify({ description: r.description, brand: r.brand, size: r.size_text, gender: r.gender_override, brandAliases: ix.brandAliases });
-    if (productKind(id.flags) === productKind(r.flags)) continue;
+    // Only a tester or a refill on a bottle's barcode is another product (owner 2026-11-26 15:56 CT: same UPC = same item).
+    if (distinctProductOf(id.flags) === distinctProductOf(r.flags)) continue;
     await c.query(`UPDATE perfume.price_list_rows SET item_id = NULL, match_method = NULL, match_status = 'review', suggestions = $2::jsonb WHERE id = $1`,
       [r.id, JSON.stringify(suggest(ix, id))]);
     kindClash++;
