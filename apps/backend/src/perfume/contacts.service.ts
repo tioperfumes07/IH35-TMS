@@ -13,7 +13,13 @@ export type ContactRole = "vendor" | "customer" | "both";
 
 /* ------------------------------------------------------------------ list / profile */
 
-export type ContactListQuery = { role?: ContactRole | "none" | "all"; q?: string; source?: string; country?: string; limit?: number; offset?: number };
+export type ContactListQuery = { role?: ContactRole | "none" | "all"; q?: string; source?: string; country?: string; limit?: number; offset?: number;
+  /** Owner 2026-11-26 15:56 CT: "the boxes are not drop down filter combobox so i can typ city etc." — each one any of several values. */
+  countries?: string[]; states?: string[]; cities?: string[]; categories?: string[]; sources?: string[]; hows?: string[] };
+
+/** The values the filter boxes offer, each with how many companies carry it (role + search applied, the boxes themselves not). */
+export const CONTACT_FACETS = ["country", "state", "city", "category", "source", "how"] as const;
+export type ContactFacet = typeof CONTACT_FACETS[number];
 
 export async function contactCounts(c: pg.PoolClient) {
   const r = await c.query(
@@ -32,7 +38,7 @@ export async function contactCounts(c: pg.PoolClient) {
   return { ...r.rows[0], ...p.rows[0] };
 }
 
-export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
+export function contactWhere(q: ContactListQuery): { where: string[]; args: unknown[] } {
   const where: string[] = ["co.archived_at IS NULL"];
   const args: unknown[] = [];
   const add = (sql: string, v: unknown) => { args.push(v); where.push(sql.replace("?", `$${args.length}`)); };
@@ -41,6 +47,12 @@ export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
   }
   if (q.source) add("co.source = ?", q.source);
   if (q.country) add("co.country = ?", q.country);
+  if (q.countries?.length) add("co.country = ANY(?::text[])", q.countries);
+  if (q.states?.length) add("co.state = ANY(?::text[])", q.states);
+  if (q.cities?.length) add("co.city = ANY(?::text[])", q.cities);
+  if (q.sources?.length) add("co.source = ANY(?::text[])", q.sources);
+  if (q.categories?.length) { args.push(q.categories); where.push(`(co.main_category = ANY($${args.length}::text[]) OR co.categories && $${args.length}::text[])`); }
+  if (q.hows?.length) add("EXISTS (SELECT 1 FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.how = ANY(?::text[]))", q.hows);
   if (q.q && q.q.trim()) {
     args.push(`%${q.q.trim().toLowerCase()}%`);
     const i = args.length;
@@ -48,6 +60,11 @@ export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
       OR coalesce(co.phone,'') LIKE $${i} OR EXISTS (SELECT 1 FROM perfume.contact_people p WHERE p.company_id = co.id
       AND (lower(coalesce(p.name,'')) LIKE $${i} OR coalesce(p.email,'') LIKE $${i})))`);
   }
+  return { where, args };
+}
+
+export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
+  const { where, args } = contactWhere(q);
   const limit = Math.min(Math.max(q.limit ?? 100, 1), 500);
   const offset = Math.max(q.offset ?? 0, 0);
   const total = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.contact_companies co WHERE ${where.join(" AND ")}`, args)).rows[0]?.n ?? 0;
@@ -63,6 +80,25 @@ export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
       ORDER BY co.last_email_on DESC NULLS LAST, co.name
       LIMIT ${limit} OFFSET ${offset}`, args)).rows;
   return { total, limit, offset, rows };
+}
+
+/** Each filter box's values with counts — role and search applied, every box's own pick left out of its own list. */
+export async function contactFacets(c: pg.PoolClient, q: ContactListQuery): Promise<Record<ContactFacet, Array<{ value: string; count: number }>>> {
+  const out = {} as Record<ContactFacet, Array<{ value: string; count: number }>>;
+  const expr: Record<ContactFacet, string> = {
+    country: "co.country", state: "co.state", city: "co.city", source: "co.source",
+    category: "unnest(array_remove(array_cat(ARRAY[co.main_category], coalesce(co.categories, '{}'::text[])), NULL))",
+    how: "(SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1)",
+  };
+  const own: Record<ContactFacet, keyof ContactListQuery> = { country: "countries", state: "states", city: "cities", source: "sources", category: "categories", how: "hows" };
+  for (const f of CONTACT_FACETS) {
+    const { where, args } = contactWhere({ ...q, [own[f]]: undefined });
+    const rows = (await c.query<{ value: string; count: number }>(
+      `SELECT v AS value, count(*)::int AS count FROM (SELECT ${expr[f]} AS v FROM perfume.contact_companies co WHERE ${where.join(" AND ")}) x
+        WHERE v IS NOT NULL AND v <> '' GROUP BY v ORDER BY count(*) DESC, v LIMIT 2000`, args)).rows;
+    out[f] = rows;
+  }
+  return out;
 }
 
 export async function getContact(c: pg.PoolClient, id: string) {

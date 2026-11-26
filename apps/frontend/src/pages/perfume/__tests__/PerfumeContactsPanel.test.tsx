@@ -13,6 +13,9 @@ vi.mock("../../../api/client", async (importOriginal) => ({ ...(await importOrig
 // customers as well" — 22:09 CT: Google full data. Research session ROUND P1.4 #5: the first batch is one city.
 let plan: PerfumeGooglePlan;
 const list: PerfumeContactList = {
+  facets: { country: [{ value: "MX", count: 1 }, { value: "US", count: 1 }], state: [{ value: "Tamps.", count: 1 }],
+    city: [{ value: "Nuevo Laredo", count: 1 }, { value: "Laredo", count: 1 }], category: [{ value: "Perfume", count: 1 }],
+    source: [{ value: "Google", count: 1 }, { value: "Master Database", count: 1 }], how: [{ value: "Email", count: 1 }] },
   counts: { companies: 3, vendors: 1, customers: 1, both: 1, unclassified: 0, from_google: 1, needs_email: 1, people: 4, with_email: 3, phone_only: 1 },
   total: 3, limit: 300, offset: 0,
   rows: [
@@ -25,13 +28,14 @@ const list: PerfumeContactList = {
   ],
 };
 const posts: Array<[string, unknown]> = [];
+const gets: string[] = [];
 beforeEach(() => {
   posts.length = 0;
   plan = { configured: true, field_mask: "places.id", running: null, full_matrix_unlocked: false,
     all: { searches: 836, maxRequests: 2508, cities: 44 }, first_city: { city: "Nuevo Laredo, Tamaulipas, México", searches: 19, maxRequests: 57, cities: 1 },
     cities: [], runs: [] };
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
-    if (path.startsWith("/api/v1/perfume/contacts?")) return list;
+    if (path.startsWith("/api/v1/perfume/contacts?")) { gets.push(path); return list; }
     if (path === "/api/v1/perfume/prospects/google-plan") return plan;
     if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/import") {
       posts.push([path, opts.body]);
@@ -79,5 +83,18 @@ describe("Contacts", () => {
     fireEvent.change(input, { target: { files: [file] } });
     await waitFor(() => expect(screen.getByTestId("perfume-contacts-import-status").textContent).toContain("3 of 3 records · 2 new · 1 already in the list (domain 1)"));
     expect(posts.filter(([p]) => p === "/api/v1/perfume/contacts/import")).toHaveLength(1);
+  });
+  // Owner 2026-11-26 15:56 CT: "the boxes are not drop down filter combobox so i can typ city etc."
+  it("every filter box is a drop-down you type in; picking a city filters the list", async () => {
+    mount();
+    await waitFor(() => expect(gets.length).toBeGreaterThan(0));
+    await screen.findAllByText("Perfume Center");
+    const box = await screen.findByTestId("perfume-contacts-filter-city");
+    for (const f of ["country", "state", "category", "source", "how"]) expect(screen.getByTestId(`perfume-contacts-filter-${f}`)).toBeTruthy();
+    fireEvent.click(within(box).getByRole("button", { name: /All cities/ }));
+    fireEvent.change(screen.getByTestId("perfume-contacts-filter-city-search"), { target: { value: "nuevo" } });
+    await waitFor(() => expect(screen.getByText("Nuevo Laredo (1)")).toBeTruthy());
+    fireEvent.click(screen.getByText("Nuevo Laredo (1)"));
+    await waitFor(() => expect(gets.some((g) => g.includes("cities=Nuevo+Laredo"))).toBe(true));
   });
 });

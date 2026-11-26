@@ -1077,7 +1077,8 @@
     "202616710100",
     "202616720100",
     "202616730100",
-    "202616740100"
+    "202616740100",
+    "202616750100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1243,5 +1244,10 @@
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
     "purpose": "PERFUME contacts database (vendor / customer / both, start date, how) + Google business search \u2014 PR #29837 (owner 2026-11-25)"
+  },
+  "202616750100": {
+    "claimed_at": "2026-11-26",
+    "claimed_by": "lead",
+    "purpose": "PERFUME trade show planner: perfume.trade_shows + perfume.trade_show_contacts (shows, I go, contacts / meetings per show) \u2014 owner 2026-11-26 15:56 CT"
   }
 }

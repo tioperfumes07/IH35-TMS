@@ -145,6 +145,13 @@ export function productKind(flags: readonly string[]): string {
   return KIND_FLAGS.filter((f) => flags.includes(f)).join("+");
 }
 
+/** What makes a barcode-twin a DIFFERENT product: only tester and refill (sets, body sets and minis share the barcode
+ *  of the same product line in the owner's lists). */
+const DISTINCT_PRODUCT_FLAGS = ["TESTER", "REFILL"];
+export function distinctProductOf(flags: readonly string[]): string {
+  return DISTINCT_PRODUCT_FLAGS.filter((f) => flags.includes(f)).join("+");
+}
+
 /** Words that say nothing about WHICH fragrance it is (never enough on their own to pair two brands). */
 const GENERIC_WORDS = new Set(["EDT", "EDP", "EDC", "PARFUM", "PERFUME", "COLOGNE", "SPRAY", "SP", "MEN", "WOMEN", "MAN", "WOMAN",
   "HOMME", "FEMME", "POUR", "FOR", "HIM", "HER", "THE", "DE", "LA", "LE", "OZ", "ML", "M", "W", "U", "EAU", "TOILETTE", "NEW"]);
@@ -234,8 +241,12 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   // (REFILL / TESTER / SET / MINI …). Measured 11-14: "AZZ WTD EDT SP100ML REFILL /MAD" rode UPC 3351500016617 onto
   // "AZZARO WANTED 100 ml EDT" because another vendor's plain line had carried that barcode there first. The owner
   // decides those in Review; the barcode alone never does.
+  // Owner 2026-11-26 15:56 CT: "if descriptions vary but are upc the same, then it is same. just description changed" —
+  // the barcode links through SET / BODY / MINI / OIL wording ("ED HARDY EDP SP 3.4OZ + 6.8OZ B/L" = "ED HARDY 2 PC SET
+  // WOMAN BODY SET"). Only a TESTER or a REFILL is another product on the same barcode (their own price — owner
+  // 2026-11-20 21:58 CT tester cost; 11-14 AZZARO WANTED REFILL): those still go to Review with the item first.
   const upcItem = upc ? ix.byUpc.get(upc) : undefined;
-  const upcKindClash = Boolean(upcItem && ix.items.get(upcItem) && productKind(ix.items.get(upcItem)!.flags) !== productKind(identity.flags));
+  const upcKindClash = Boolean(upcItem && ix.items.get(upcItem) && distinctProductOf(ix.items.get(upcItem)!.flags) !== distinctProductOf(identity.flags));
   if (upcItem && !upcKindClash) return done(upcItem, "upc");
   const sku = (line.sku ?? "").trim();
   // A SKU this vendor's earlier list linked links again — unless the line says it is another KIND of product than that
@@ -283,6 +294,12 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
     return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
   }
   const suggestions = suggest(ix, identity);
+  // Owner 2026-11-26 15:56 CT: "if there are completely new items that do not share upc code with anyone, then they
+  // should be automatically created" — a line with its own barcode (no item carries it) and nothing that even resembles
+  // it is created, even when the vendor prints no size (PPW "M-COSTUME NATIONAL PARFUM SPR - 34211").
+  if (opts.allowNewItem && upc && (named || identity.brand) && !suggestions.length && !ix.byKey.has(identity.key)) {
+    return { identity, upc, textKey, itemId: null, method: "new_item", status: "matched", suggestions: [] };
+  }
   // 6b. MY OWN list (offer / inventory): a line with MY item number that no item fits and nothing even resembles is
   // its own product — my item number identifies it (owner 2026-11-20 20:46 CT, HK inventory: 341 of 1,715 lines were
   // left with no item, so their cost and stock showed nowhere). Anything that resembles an item still goes to Review.
