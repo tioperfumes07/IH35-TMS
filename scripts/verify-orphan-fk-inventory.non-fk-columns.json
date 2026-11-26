@@ -179,11 +179,11 @@
       "kind": "external_id",
       "reason": "Gmail's own message id (users.messages.id) of the email the price-list attachment came in — assigned by Google, not a row of ours; the engine uses it to fetch the attachment again and to record each file once."
     },
-    "202616710100_perfume_contacts.sql::external_directory_id": {
+    "202616740100_perfume_contacts.sql::external_directory_id": {
       "kind": "external_id",
       "reason": "The outside directory's own record id (INEGI DENUE id, named by external_source) for a TIO Perfumes contact, kept so a re-import never doubles a row; issued by that directory, not a row in this database."
     },
-    "202616710100_perfume_contacts.sql::google_place_id": {
+    "202616740100_perfume_contacts.sql::google_place_id": {
       "kind": "external_id",
       "reason": "Google Places (New) place id of a TIO Perfumes prospect, assigned by Google; stored permanently to dedupe and refresh Google's fields, never a row in this database."
     }
