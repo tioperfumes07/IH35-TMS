@@ -131,5 +131,12 @@ describeIntegration("a mailed list saved through the Lists tab's import (real Po
     // Held for the right reason, nothing saved: no columns, old .xls.
     expect((await importMailFile(db as never, ctx, meta("terms.csv", "msg-5"), Buffer.from("Terms,Notes,Contact\nNet 30,FOB,Ana\n"), r)).reason).toMatch(/No description and price columns/);
     expect((await importMailFile(db as never, ctx, meta("old.xls", "msg-6"), Buffer.from("x"), r)).reason).toMatch(/Old Excel/);
+
+    // The same old .xls, its cells read in the owner's browser: read and saved with every check, recorded as source "xls".
+    const xlsCells = { kind: "xls" as const, sheets: [{ name: "Sheet1", cells: [["UPC", "Description", "Price"],
+      ...Array.from({ length: 10 }, (_, i) => [`81000009${String(i).padStart(5, "0")}`, `MAILTEST XLS ${i} EDT 100ML`, 12.5])] }] };
+    const viaBrowser = await importMailFile(db as never, ctx, meta("MAILTEST PCA.xls", "msg-7"), Buffer.from("x"), r, { readInBrowser: xlsCells });
+    expect([viaBrowser.status, viaBrowser.rowsRead, viaBrowser.rowsSaved, viaBrowser.totalCents]).toEqual(["imported", 10, 10, 12_500]);
+    expect((await db.query(`SELECT source_kind FROM perfume.price_lists WHERE id = $1`, [viaBrowser.listId])).rows[0].source_kind).toBe("xls");
   });
 });

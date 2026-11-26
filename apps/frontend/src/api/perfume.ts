@@ -347,6 +347,15 @@ export const savePerfumeMailRule = (r: { from_address: string; file_text?: strin
 export const switchOffPerfumeMailRule = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/mail/rules/${encodeURIComponent(id)}/off`, { method: "POST", body: {} });
 export const importPerfumeMailFile = (id: string, b: { vendor_id?: string; special?: boolean; file_text?: string | null; force?: boolean }) =>
   apiRequest<{ status: PerfumeMailFileStatus; reason?: string | null; rowsSaved?: number | null }>(`/api/v1/perfume/mail/files/${encodeURIComponent(id)}/import`, { method: "POST", body: b });
+/** The bytes of one mailed file (the server fetches it from the mailbox). */
+export async function fetchPerfumeMailFileBytes(id: string): Promise<Blob> {
+  const res = await fetch(resolveApiUrl(`/api/v1/perfume/mail/files/${encodeURIComponent(id)}/download`), { credentials: "include" });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  return res.blob();
+}
+/** An old .xls the engine held: its cells, read in this browser, go back to the engine for the same checks as any mailed list. */
+export const sendPerfumeMailXlsCells = (id: string, sheets: Array<{ name: string; cells: Array<Array<string | number | null>> }>) =>
+  apiRequest<{ status: PerfumeMailFileStatus; reason?: string | null; rowsSaved?: number | null }>(`/api/v1/perfume/mail/files/${encodeURIComponent(id)}/xls-cells`, { method: "POST", body: { sheets } });
 export async function downloadPerfumeMailFile(id: string, fileName: string) {
   const res = await fetch(resolveApiUrl(`/api/v1/perfume/mail/files/${encodeURIComponent(id)}/download`), { credentials: "include" });
   if (!res.ok) throw new Error(`Download failed (${res.status})`);

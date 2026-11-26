@@ -15,7 +15,7 @@ export type Field = "code" | "sku" | "upc" | "brand" | "desc" | "size" | "type" 
 export type Mapping = Partial<Record<Field, number>>;
 export type Cell = string | number | null;
 export type Sheet = { name: string; cells: Cell[][] };
-export type ReadKind = "xlsx" | "csv" | "pdf_text";
+export type ReadKind = "xlsx" | "xls" | "csv" | "pdf_text";
 export type ReadFile = { kind: ReadKind; sheets: Sheet[] };
 
 export type ImportRow = {
@@ -259,6 +259,12 @@ export function parseCsv(text: string): Cell[][] {
   row.push(cur);
   if (row.some((x) => String(x ?? "").trim() !== "")) rows.push(row);
   return rows.map((r) => r.map((x) => (x === "" ? null : x)));
+}
+
+/** The OLE2 compound-file signature every real binary .xls starts with (D0 CF 11 E0 A1 B1 1A E1). */
+export const OLE_XLS_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+export function isOleXls(buf: Buffer): boolean {
+  return buf.length >= OLE_XLS_MAGIC.length && buf.subarray(0, OLE_XLS_MAGIC.length).equals(OLE_XLS_MAGIC);
 }
 
 export const PRICE_FILE_EXT = /\.(xlsx|xlsm|xls|csv|pdf)$/i;

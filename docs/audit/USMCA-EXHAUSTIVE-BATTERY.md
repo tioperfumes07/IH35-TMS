@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 385 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 295 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 265 | `/:id/approve`, `/scan` — operates on an existing row |
+| **create** (collection POST) | 386 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **nested create** (child POST) | 298 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| action (NOT a create) | 267 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 1018 | |
+| **TOTAL POST endpoints** | 1024 | |
 | UI files with `+ Create`/`+ Book` | 199 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -511,6 +511,32 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/legal/templates/:id/retire` | `apps/backend/src/legal/templates.routes.ts` | — | — | — |
 | create | `/api/v1/legal/templates/library/ensure` | `apps/backend/src/legal/templates.routes.ts` | — | — | — |
 
+### perfume — 21 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/items/canonicalize-brands` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/items/rekey` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/locations` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/accounts/:email/disconnect` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/files/:id/xls-cells` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts/remove` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/rules` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/rules/:id/off` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mine/saved-lists/use` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/prospects/google-run` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/prospects/google-search` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/trade-shows` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trade-shows/:id/contacts` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trade-shows/:id/i-go` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+
 ### driver — 18 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -577,28 +603,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts` | — | — | — |
-
-### perfume — 17 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/items/canonicalize-brands` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/items/rekey` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/locations` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/mail/accounts/:email/disconnect` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/optouts` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/optouts/remove` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/rules` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/mail/rules/:id/off` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mine/saved-lists/use` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/prospects/google-run` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/prospects/google-search` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 
 ### compliance — 11 create-surface(s)
 
