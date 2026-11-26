@@ -1,7 +1,7 @@
 {
   "_comment": "GENERATED FILE - cache of the canonical ledger _system._schema_migrations, read by verify:applied-migrations-immutable where the database is unreachable. Do not hand-edit. Regenerate with: npm run db:ledger:snapshot",
   "generated_by": "db:migrate",
-  "migration_count": 1595,
+  "migration_count": 1602,
   "migrations": [
     {
       "filename": "0001_audit_init.sql",
@@ -6382,6 +6382,34 @@
     {
       "filename": "202616640100_safety_harsh_events_more_samsara_kinds.sql",
       "checksum": "240d7246ae75ad4027190465f8a17f95f7ad1e0ac481fd2a4add5f20c7199fb7"
+    },
+    {
+      "filename": "202616650100_auto_status_switch_case_d.sql",
+      "checksum": "65bf8b272c0ebc8242f1039f0084b449569787df9b54b6d80f4c6c119e6023f5"
+    },
+    {
+      "filename": "202616660100_perfume_item_costs.sql",
+      "checksum": "764028f03bee84c52db21471af45e84fecae3311623f6409aea1860cb8615a50"
+    },
+    {
+      "filename": "202616670100_capture_undocumented_live_reinstate_columns.sql",
+      "checksum": "05c3b4046071aaa5d14973be1d6c154af8bda594d0714bfb48d0ba58cb4a5ffc"
+    },
+    {
+      "filename": "202616680100_perfume_locations.sql",
+      "checksum": "6a29669f4fd9eacc6cd5c26cdae69d6e8ac109727a032df7cd266f325ac0d3d7"
+    },
+    {
+      "filename": "202616690100_perfume_vendor_roles.sql",
+      "checksum": "c1ce8719429eace37496c601fe78568bfc07b3f6f355af03a0a65c742a9ad98c"
+    },
+    {
+      "filename": "202616700100_perfume_mail_price_lists.sql",
+      "checksum": "acf6e98c0253f8cf5705b19532e0f73cc11e96617cfd2cbbc1148cccc2436894"
+    },
+    {
+      "filename": "202616710100_perfume_mail_send.sql",
+      "checksum": "8b87713fcea2b1250025ca05d5536615671f9d8412b49140264a2e3e9fd324c7"
     }
   ]
 }

@@ -1219,5 +1219,10 @@
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
     "purpose": "PERFUME mail price-list engine: perfume.mail_accounts / mail_rules / mail_runs / mail_files \u2014 owner 2026-11-25 17:29 CT"
+  },
+  "202616710100": {
+    "claimed_at": "2026-11-25",
+    "claimed_by": "lead",
+    "purpose": "PERFUME mail send from jpm@tioperfumes.com: perfume.mail_accounts.can_send, perfume.mail_send_batches / mail_sends / mail_optouts \u2014 owner 2026-11-25 22:50 CT"
   }
 }

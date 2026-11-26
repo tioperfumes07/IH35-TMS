@@ -11,12 +11,13 @@ import { registerGoogleGrantPurpose, startGoogleGrant } from "../../auth/routes.
 import { encrypt } from "../../lib/encryption.js";
 import { deskAllowed } from "../desk.routes.js";
 import { downloadMailFile, MailFileError, mailRunInProgress, reprocessMailFile, runMailImport } from "./engine.js";
-import { GMAIL_READONLY_SCOPE, googleClient, MailReconnectError } from "./gmail.js";
+import { GMAIL_READONLY_SCOPE, GMAIL_SEND_SCOPE, googleClient, MailReconnectError } from "./gmail.js";
+import { DAILY_SEND_CAP, MAX_ATTACHMENT_BYTES, MAX_RECIPIENTS_PER_SEND, parseRecipients, PERFUME_SENDER, SEND_FOOTER, SendError, startSend } from "./send.js";
 
 export const PERFUME_MAIL_GRANT = "perfume_mail";
 /** The two mailboxes the owner named (2026-11-25 17:32 CT). Any other address he signs in with is refused. */
 export const PERFUME_MAILBOXES = ["tioperfumes07@gmail.com", "jpm@tioperfumes.com"];
-export const PERFUME_MAIL_SCHEDULE_TEXT = "Every day at 6:15 AM Laredo time";
+export const PERFUME_MAIL_SCHEDULE_TEXT = "Monday–Saturday at 6:30 AM, 9:30 AM, 12:30 PM, 5:00 PM and 9:45 PM; Sunday at 9:45 PM (Laredo time)";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -51,12 +52,14 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     if (!email) return back("mail_error=no_email");
     if (!PERFUME_MAILBOXES.includes(email)) return back(`mail_error=not_a_tio_mailbox&mail_email=${encodeURIComponent(email)}`);
     const uid = req.user.uuid;
+    // Send access counts only for jpm@tioperfumes.com (owner 2026-11-25 22:50 CT); any other grant is read-only.
+    const canSend = email === PERFUME_SENDER && tokens.scopes.includes(GMAIL_SEND_SCOPE);
     await withCurrentUser(uid, (c) => c.query(
-      `INSERT INTO perfume.mail_accounts (email, refresh_token_enc, status, last_error, connected_by, connected_at, updated_at)
-       VALUES ($1, $2, 'connected', NULL, $3, now(), now())
+      `INSERT INTO perfume.mail_accounts (email, refresh_token_enc, status, last_error, connected_by, connected_at, updated_at, can_send)
+       VALUES ($1, $2, 'connected', NULL, $3, now(), now(), $4)
        ON CONFLICT (email) DO UPDATE SET refresh_token_enc = EXCLUDED.refresh_token_enc, status = 'connected', last_error = NULL,
-         connected_by = EXCLUDED.connected_by, connected_at = now(), updated_at = now()`,
-      [email, encrypt(refreshToken), uid]));
+         connected_by = EXCLUDED.connected_by, connected_at = now(), updated_at = now(), can_send = EXCLUDED.can_send`,
+      [email, encrypt(refreshToken), uid, canSend]));
     return back(`mail_connected=${encodeURIComponent(email)}`);
   });
 
@@ -64,7 +67,19 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     return withCurrentUser(uid, async (c) => {
       const accounts = (await c.query(
-        `SELECT email, status, last_error, connected_at, last_checked_at FROM perfume.mail_accounts ORDER BY email`)).rows;
+        `SELECT email, status, last_error, connected_at, last_checked_at, can_send FROM perfume.mail_accounts ORDER BY email`)).rows;
+      // A send cut off by a restart: no recipient recorded for 10 minutes while still "sending" → stopped (never left spinning).
+      await c.query(
+        `UPDATE perfume.mail_send_batches b SET status = 'stopped', error = 'Stopped — the server restarted during the send. Recipients not reached are not in the list.', finished_at = now()
+          WHERE b.status = 'sending' AND b.started_at < now() - interval '10 minutes'
+            AND NOT EXISTS (SELECT 1 FROM perfume.mail_sends s WHERE s.batch_id = b.id AND s.sent_at > now() - interval '10 minutes')`);
+      const sends = (await c.query(
+        `SELECT id, from_email, subject, attachment_names, recipients, sent, skipped, failed, status, error, started_at, finished_at
+           FROM perfume.mail_send_batches ORDER BY started_at DESC LIMIT 20`)).rows;
+      const sentToday = Number((await c.query<{ n: string }>(
+        `SELECT count(*) n FROM perfume.mail_sends s JOIN perfume.mail_send_batches b ON b.id = s.batch_id
+          WHERE b.from_email = $1 AND s.status = 'sent' AND s.sent_at > now() - interval '24 hours'`, [PERFUME_SENDER])).rows[0].n);
+      const optouts = (await c.query(`SELECT email, reason, created_at FROM perfume.mail_optouts ORDER BY created_at DESC`)).rows;
       const rules = (await c.query(
         `SELECT r.id, r.from_address, r.file_text, r.vendor_id, v.name AS vendor_name, r.special, r.ignore, r.created_at
            FROM perfume.mail_rules r LEFT JOIN perfume.vendors v ON v.id = r.vendor_id WHERE r.active ORDER BY r.from_address, r.file_text NULLS FIRST`)).rows;
@@ -79,6 +94,8 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
       return {
         configured: googleClient() != null, mailboxes: PERFUME_MAILBOXES, schedule: PERFUME_MAIL_SCHEDULE_TEXT,
         running: mailRunInProgress(), accounts, rules, runs, files,
+        send: { sender: PERFUME_SENDER, daily_cap: DAILY_SEND_CAP, sent_last_24h: sentToday, max_recipients: MAX_RECIPIENTS_PER_SEND,
+          max_attachment_bytes: MAX_ATTACHMENT_BYTES, footer: SEND_FOOTER, batches: sends, optouts },
       };
     });
   });
@@ -86,9 +103,11 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
   // Top-level navigation from the desk (not fetch): Google sign-in for one of the two mailboxes.
   app.get("/api/v1/perfume/mail/connect", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const q = z.object({ email: z.string().email().optional(), returnTo: z.string().max(300).optional() }).safeParse(req.query);
+    const q = z.object({ email: z.string().email().optional(), returnTo: z.string().max(300).optional(), send: z.enum(["1"]).optional() }).safeParse(req.query);
     const hint = q.success && q.data.email && PERFUME_MAILBOXES.includes(q.data.email.toLowerCase()) ? q.data.email.toLowerCase() : null;
-    return startGoogleGrant(reply, { purpose: PERFUME_MAIL_GRANT, scopes: [GMAIL_READONLY_SCOPE], returnTo: q.success ? q.data.returnTo : undefined, loginHint: hint });
+    // "Connect for sending" (jpm@tioperfumes.com only) asks Google for read + send; every other connect is read-only.
+    const scopes = q.success && q.data.send === "1" && hint === PERFUME_SENDER ? [GMAIL_READONLY_SCOPE, GMAIL_SEND_SCOPE] : [GMAIL_READONLY_SCOPE];
+    return startGoogleGrant(reply, { purpose: PERFUME_MAIL_GRANT, scopes, returnTo: q.success ? q.data.returnTo : undefined, loginHint: hint });
   });
 
   app.post("/api/v1/perfume/mail/accounts/:email/disconnect", RL_WRITE, async (req, reply) => {
@@ -161,5 +180,64 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
       if (e instanceof MailReconnectError) return reply.code(409).send({ error: "mailbox_reconnect", message: e.message });
       throw e;
     }
+  });
+
+  // Send a list from jpm@tioperfumes.com — only when the owner presses Send. One email per recipient, in the background.
+  const sendSchema = z.object({
+    from: z.string().email().default(PERFUME_SENDER),
+    to: z.string().max(200_000),
+    subject: z.string().trim().min(1).max(300),
+    body: z.string().max(20_000),
+    attachments: z.array(z.object({ name: z.string().trim().min(1).max(200), mime_type: z.string().max(200).optional(), content_base64: z.string() })).max(10).default([]),
+  });
+  app.post("/api/v1/perfume/mail/send", { bodyLimit: 30 * 1024 * 1024, config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = sendSchema.safeParse(req.body);
+    if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
+    const { emails, invalid } = parseRecipients(p.data.to);
+    if (invalid.length) return reply.code(400).send({ error: "invalid_addresses", message: `Not email addresses: ${invalid.slice(0, 10).join(", ")}`, invalid });
+    const attachments = p.data.attachments.map((a) => ({ fileName: a.name, mimeType: a.mime_type ?? "application/octet-stream", content: Buffer.from(a.content_base64, "base64") }));
+    try {
+      return reply.code(202).send(await startSend(uid, { from: p.data.from, recipients: emails, subject: p.data.subject, body: p.data.body, attachments }));
+    } catch (e) {
+      if (e instanceof SendError) return reply.code(409).send({ error: e.code, message: e.message });
+      throw e;
+    }
+  });
+
+  app.post("/api/v1/perfume/mail/send/:id/stop", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ id: uuid }).safeParse(req.params);
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    await withCurrentUser(uid, (c) => c.query(`UPDATE perfume.mail_send_batches SET status = 'stopped' WHERE id = $1 AND status = 'sending'`, [p.data.id]));
+    return { ok: true };
+  });
+
+  app.get("/api/v1/perfume/mail/send/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ id: uuid }).safeParse(req.params);
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, async (c) => ({
+      batch: (await c.query(`SELECT * FROM perfume.mail_send_batches WHERE id = $1`, [p.data.id])).rows[0] ?? null,
+      recipients: (await c.query(`SELECT to_email, status, error, sent_at FROM perfume.mail_sends WHERE batch_id = $1 ORDER BY sent_at`, [p.data.id])).rows,
+    }));
+  });
+
+  app.post("/api/v1/perfume/mail/optouts", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = z.object({ emails: z.string().max(50_000), reason: z.string().trim().max(300).optional() }).safeParse(req.body);
+    if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    const { emails } = parseRecipients(b.data.emails);
+    await withCurrentUser(uid, async (c) => { for (const e of emails) await c.query(
+      `INSERT INTO perfume.mail_optouts (email, reason, created_by) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`, [e, b.data.reason ?? null, uid]); });
+    return { added: emails.length };
+  });
+
+  app.post("/api/v1/perfume/mail/optouts/remove", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = z.object({ email: z.string().email() }).safeParse(req.body);
+    if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    await withCurrentUser(uid, (c) => c.query(`DELETE FROM perfume.mail_optouts WHERE email = $1`, [b.data.email.toLowerCase()]));
+    return { ok: true };
   });
 }
