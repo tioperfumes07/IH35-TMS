@@ -46,7 +46,7 @@ export function PerfumeContactsPanel() {
   const c = list.data?.counts;
   const roleBtn = (k: typeof role, label: string, count: number | undefined) => (
     <button key={k} type="button" aria-pressed={role === k} onClick={() => setRole(k)} data-testid={`perfume-contacts-role-${k}`}
-      className={`h-[34px] rounded-sm border px-3 text-xs ${role === k ? "border-[#14314F] bg-[#14314F] font-semibold text-white" : "border-[#C6D1DC] bg-white text-[#1F2A44]"}`}>
+      className={`h-[34px] rounded-sm border px-3 text-xs ${role === k ? "border-[#14314F] bg-[#14314F] font-semibold text-white" : "border-[#C6D1DC] bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}>
       {label} {count == null ? "" : count.toLocaleString("en-US")}
     </button>
   );
@@ -55,30 +55,30 @@ export function PerfumeContactsPanel() {
     <div className="space-y-3" data-testid="perfume-contacts-panel">
       <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-contacts-kpis">
         <KpiCard label={`Companies · ${n(c?.people)} people`} number={n(c?.companies)} onClick={() => { setRole("all"); setSource(""); }} />
-        <KpiCard label="Vendors" number={n(c?.vendors)} onClick={() => setRole("vendor")} />
-        <KpiCard label="Customers" number={n(c?.customers)} onClick={() => setRole("customer")} />
-        <KpiCard label="Vendor + customer" number={n(c?.both)} onClick={() => setRole("both")} />
-        <KpiCard label="From Google" number={n(c?.from_google)} onClick={() => setSource("Google")} />
-        <KpiCard label="Needs email — never in a send" number={n(c?.needs_email)} disabled disabledReason="Companies with no email on file; Google gives no email." />
+        <KpiCard label={tr("perfume.contacts.vendors", "Vendors")} number={n(c?.vendors)} onClick={() => setRole("vendor")} />
+        <KpiCard label={tr("perfume.contacts.customers", "Customers")} number={n(c?.customers)} onClick={() => setRole("customer")} />
+        <KpiCard label={tr("perfume.contacts.vendor_customer", "Vendor + customer")} number={n(c?.both)} onClick={() => setRole("both")} />
+        <KpiCard label={tr("perfume.contacts.from_google", "From Google")} number={n(c?.from_google)} onClick={() => setSource("Google")} />
+        <KpiCard label={tr("perfume.contacts.needs_email_never_in_a_send", "Needs email — never in a send")} number={n(c?.needs_email)} disabled disabledReason="Companies with no email on file; Google gives no email." />
       </div>
 
       <ImportCard onDone={() => void list.refetch()} />
       <GoogleCard onChanged={() => void list.refetch()} />
 
-      <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label="Contacts">
+      <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.contacts", "Contacts")}>
         <div className="flex flex-wrap items-center gap-2">
           {roleBtn("all", "All", c?.companies)}
           {roleBtn("vendor", "Vendors", c?.vendors)}
           {roleBtn("customer", "Customers", c?.customers)}
           {roleBtn("both", "Vendor + customer", c?.both)}
           {roleBtn("none", "Not classified", c?.unclassified)}
-          <select aria-label="Source" className={ctl} value={source} onChange={(e) => setSource(e.target.value)} data-testid="perfume-contacts-source">
-            <option value="">Every source</option>
-            <option value="Master Database">Mail + phones (Master)</option>
-            <option value="INEGI DENUE">INEGI DENUE (Mexico)</option>
-            <option value="Google">Google</option>
+          <select aria-label={tr("perfume.contacts.source", "Source")} className={ctl} value={source} onChange={(e) => setSource(e.target.value)} data-testid="perfume-contacts-source">
+            <option value="">{tr("perfume.contacts.every_source", "Every source")}</option>
+            <option value="Master Database">{tr("perfume.contacts.mail_phones_master", "Mail + phones (Master)")}</option>
+            <option value="INEGI DENUE">{tr("perfume.contacts.inegi_denue_mexico", "INEGI DENUE (Mexico)")}</option>
+            <option value="Google">{tr("perfume.contacts.google", "Google")}</option>
           </select>
-          <input type="search" aria-label="Search contacts" placeholder={`Search all ${n(c?.companies)} — company, person, email, phone, city`}
+          <input type="search" aria-label={tr("perfume.contacts.search_contacts", "Search contacts")} placeholder={`Search all ${n(c?.companies)} — company, person, email, phone, city`}
             className={`${ctl} min-w-[240px] flex-1`} value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-contacts-search" />
         </div>
         <ParityTable<PerfumeContactRow>
@@ -96,7 +96,7 @@ export function PerfumeContactsPanel() {
             { key: "phone", label: "Phone", sortable: true, render: (r) => r.phone ?? DASH },
             { key: "website", label: "Website", sortable: true, render: (r) => (r.website ? <a href={r.website} target="_blank" rel="noreferrer" className="text-[#14314F] underline">{r.website.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "")}</a> : DASH) },
             { key: "people", label: "People", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
-            { key: "with_email", label: "With email", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.with_email ? r.with_email : <span className="text-[#8A4208]">needs email</span>) },
+            { key: "with_email", label: "With email", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.with_email ? r.with_email : <span className="text-[#8A4208]">{tr("perfume.contacts.needs_email", "needs email")}</span>) },
             { key: "first_contact_on", label: "First contact", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.first_contact_on) },
             { key: "last_email_on", label: "Last email", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.last_email_on) },
             { key: "source", label: "Source", sortable: true },
@@ -115,15 +115,15 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   const co = p.data?.company;
   const val = (k: string) => { const v = co?.[k]; return v == null || v === "" ? DASH : Array.isArray(v) ? (v.length ? v.join(" · ") : DASH) : String(v); };
   return (
-    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label="Company profile" data-testid="perfume-contact-profile">
+    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.company_profile", "Company profile")} data-testid="perfume-contact-profile">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2"><span className="text-section-header">{co?.name ?? "…"}</span><RoleBadge role={(co?.["role"] as PerfumeContactRole) ?? null} /></div>
-        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>Close</Button>
+        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.contacts.close", "Close")}</Button>
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
           <ParityTable<PerfumeContactProfile["origins"][number]>
-            title="How and when this relationship started"
+            title={tr("perfume.contacts.how_and_when_this_relationship_started", "How and when this relationship started")}
             rows={p.data?.origins ?? []}
             rowKey={(o) => o.id}
             loading={p.isLoading}
@@ -139,7 +139,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
             ]}
           />
           <ParityTable<PerfumeContactProfile["people"][number]>
-            title="People"
+            title={tr("perfume.contacts.people", "People")}
             rows={p.data?.people ?? []}
             rowKey={(x) => x.id}
             loading={p.isLoading}
@@ -196,17 +196,16 @@ function ImportCard({ onDone }: { onDone: () => void }) {
   };
   const busy = state != null && state.done < state.total && !state.error;
   return (
-    <section className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label="Import contacts" data-testid="perfume-contacts-import">
-      <span className="text-section-header">Import contacts file</span>
-      <input type="file" accept=".jsonl,.json,.txt" aria-label="Contacts file" disabled={busy} data-testid="perfume-contacts-import-file"
+    <section className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label={tr("perfume.contacts.import_contacts", "Import contacts")} data-testid="perfume-contacts-import">
+      <span className="text-section-header">{tr("perfume.contacts.import_contacts_file", "Import contacts file")}</span>
+      <input type="file" accept=".jsonl,.json,.txt" aria-label={tr("perfume.contacts.contacts_file", "Contacts file")} disabled={busy} data-testid="perfume-contacts-import-file"
         onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void run(f); }} />
       {state ? (
         <span data-testid="perfume-contacts-import-status">
-          {state.file}: {state.done.toLocaleString("en-US")} of {state.total.toLocaleString("en-US")} records
-          {state.tally ? ` · ${state.tally.inserted.toLocaleString("en-US")} new · ${state.tally.matched.toLocaleString("en-US")} already in the list (${Object.entries(state.tally.by).map(([k, v]) => `${k} ${v.toLocaleString("en-US")}`).join(" · ") || "—"}) · ${state.tally.people_inserted.toLocaleString("en-US")} people · ${state.tally.origins.toLocaleString("en-US")} origins` : ""}
+          {state.file}: {state.done.toLocaleString("en-US")}{" "}{tr("perfume.contacts.of", "of")}{" "}{state.total.toLocaleString("en-US")}{" "}{tr("perfume.contacts.records", "records")}{state.tally ? ` · ${state.tally.inserted.toLocaleString("en-US")} new · ${state.tally.matched.toLocaleString("en-US")} already in the list (${Object.entries(state.tally.by).map(([k, v]) => `${k} ${v.toLocaleString("en-US")}`).join(" · ") || "—"}) · ${state.tally.people_inserted.toLocaleString("en-US")} people · ${state.tally.origins.toLocaleString("en-US")} origins` : ""}
           {state.error ? <b className="text-red-700"> — {state.error}</b> : null}
         </span>
-      ) : <span className="text-[#64748B]">Master Database or INEGI DENUE — duplicates are matched, never doubled.</span>}
+      ) : <span className="text-[#64748B]">{tr("perfume.contacts.master_database_or_inegi_denue_duplicate", "Master Database or INEGI DENUE — duplicates are matched, never doubled.")}</span>}
     </section>
   );
 }
@@ -230,11 +229,11 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
   const confirmFor = (city: string) => (city === "all" ? d?.all : d?.first_city);
 
   return (
-    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label="Google business search" data-testid="perfume-google-card">
+    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.google_business_search", "Google business search")} data-testid="perfume-google-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">Google business search</div>
-          <div className="text-xs text-[#64748B]">Phone, website, address, hours and rating for perfume, cosmetics, duty free, liquor, tobacco and beer stores. Google gives no email — those read “needs email”.</div>
+          <div className="text-section-header">{tr("perfume.contacts.google_business_search", "Google business search")}</div>
+          <div className="text-xs text-[#64748B]">{tr("perfume.contacts.phone_website_address_hours_and_rating_f", "Phone, website, address, hours and rating for perfume, cosmetics, duty free, liquor, tobacco and beer stores. Google gives no email — those read “needs email”.")}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!d?.configured || Boolean(d?.running) || busy} data-testid="perfume-google-first"
@@ -249,18 +248,18 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
           </Button>
         </div>
       </div>
-      {d && !d.configured ? <div className="text-xs text-red-700">The Google Places key is not set on the server, so no search can run.</div> : null}
+      {d && !d.configured ? <div className="text-xs text-red-700">{tr("perfume.contacts.the_google_places_key_is_not_set_on_the_", "The Google Places key is not set on the server, so no search can run.")}</div> : null}
       {confirmCity ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#B45309] bg-[#FFF7ED] p-2 text-xs" data-testid="perfume-google-confirm">
-          <span><b>{confirmCity === "all" ? `All ${n(d?.all.cities)} cities` : confirmCity}:</b> {n(confirmFor(confirmCity)?.searches)} searches, up to {n(confirmFor(confirmCity)?.maxRequests)} Google requests (each page of 20 results is one request).</span>
-          <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} data-testid="perfume-google-start" onClick={() => void start(confirmCity)}>Start</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setConfirmCity(null)}>Cancel</Button>
+        <div className="flex flex-wrap items-center gap-2 border-l-4 border-[#B45309] bg-[#FFF7ED] p-2 text-xs" data-testid="perfume-google-confirm">
+          <span><b>{confirmCity === "all" ? `All ${n(d?.all.cities)} cities` : confirmCity}:</b> {n(confirmFor(confirmCity)?.searches)}{" "}{tr("perfume.contacts.searches_up_to", "searches, up to")}{" "}{n(confirmFor(confirmCity)?.maxRequests)}{" "}{tr("perfume.contacts.google_requests_each_page_of_20_results_", "Google requests (each page of 20 results is one request).")}</span>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} data-testid="perfume-google-start" onClick={() => void start(confirmCity)}>{tr("perfume.contacts.start", "Start")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setConfirmCity(null)}>{tr("perfume.contacts.cancel", "Cancel")}</Button>
         </div>
       ) : null}
       {running ? (
         <div className="flex flex-wrap items-center gap-3 text-xs" data-testid="perfume-google-progress">
-          <span><b>Running:</b> {running.searches_done} of {running.planned_searches} searches · {running.requests_made} requests · {running.results} results · {running.inserted} new · {running.matched} already in the list · {running.skipped_closed} closed skipped</span>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={async () => { await stopPerfumeGoogleRun(running.id); await plan.refetch(); }}>Stop</Button>
+          <span><b>{tr("perfume.contacts.running", "Running:")}</b> {running.searches_done}{" "}{tr("perfume.contacts.of", "of")}{" "}{running.planned_searches}{" "}{tr("perfume.contacts.searches", "searches ·")}{" "}{running.requests_made}{" "}{tr("perfume.contacts.requests", "requests ·")}{" "}{running.results}{" "}{tr("perfume.contacts.results", "results ·")}{" "}{running.inserted}{" "}{tr("perfume.contacts.new", "new ·")}{" "}{running.matched}{" "}{tr("perfume.contacts.already_in_the_list", "already in the list ·")}{" "}{running.skipped_closed}{" "}{tr("perfume.contacts.closed_skipped", "closed skipped")}</span>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={async () => { await stopPerfumeGoogleRun(running.id); await plan.refetch(); }}>{tr("perfume.contacts.stop", "Stop")}</Button>
         </div>
       ) : null}
 
@@ -274,14 +273,14 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
         } catch (err) { pushToast(userFacingApiError(err, "Google search failed"), "error"); }
         finally { setBusy(false); }
       }}>
-        <input aria-label="What" className={`${ctl} w-[180px]`} value={form.query} onChange={(e) => setForm({ ...form, query: e.target.value })} />
-        <input aria-label="City" className={`${ctl} w-[150px]`} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-        <input aria-label="State" className={`${ctl} w-[130px]`} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
-        <select aria-label="Country" className={ctl} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
-          <option value="MX">México</option><option value="US">United States</option>
+        <input aria-label={tr("perfume.contacts.what", "What")} className={`${ctl} w-[180px]`} value={form.query} onChange={(e) => setForm({ ...form, query: e.target.value })} />
+        <input aria-label={tr("perfume.contacts.city", "City")} className={`${ctl} w-[150px]`} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        <input aria-label={tr("perfume.contacts.state", "State")} className={`${ctl} w-[130px]`} value={form.state} onChange={(e) => setForm({ ...form, state: e.target.value })} />
+        <select aria-label={tr("perfume.contacts.country", "Country")} className={ctl} value={form.country} onChange={(e) => setForm({ ...form, country: e.target.value })}>
+          <option value="MX">{tr("perfume.contacts.mexico", "México")}</option><option value="US">{tr("perfume.contacts.united_states", "United States")}</option>
         </select>
-        <Button type="submit" className="h-[34px] px-3 text-xs" disabled={busy || !d?.configured || form.query.trim().length < 2} data-testid="perfume-google-search">Search one</Button>
-        <span className="text-xs text-[#64748B]">Up to 60 results = up to 3 requests.</span>
+        <Button type="submit" className="h-[34px] px-3 text-xs" disabled={busy || !d?.configured || form.query.trim().length < 2} data-testid="perfume-google-search">{tr("perfume.contacts.search_one", "Search one")}</Button>
+        <span className="text-xs text-[#64748B]">{tr("perfume.contacts.up_to_60_results_up_to_3_requests", "Up to 60 results = up to 3 requests.")}</span>
       </form>
 
       {results ? (
@@ -316,7 +315,7 @@ function RunsTable({ runs }: { runs: PerfumeGoogleRun[] }) {
   return (
     <div className="space-y-1" data-testid="perfume-google-runs">
       <ParityTable<PerfumeGoogleRun>
-        title="Google searches run"
+        title={tr("perfume.contacts.google_searches_run", "Google searches run")}
         rows={runs}
         rowKey={(r) => r.id}
         storageKey="perfume-google-runs-v1"
@@ -340,7 +339,7 @@ function RunsTable({ runs }: { runs: PerfumeGoogleRun[] }) {
       />
       {shown ? (
         <div className="space-y-0.5 bg-[#FAFCFD] p-2 text-xs tabular-nums" data-testid="perfume-google-run-cities">
-          {Object.entries(shown.by_city).map(([city, t]) => <div key={city}>{city}: {t.searches} searches · {t.results} results · {t.inserted} new · {t.matched} already in list · {t.skipped_closed} closed</div>)}
+          {Object.entries(shown.by_city).map(([city, t]) => <div key={city}>{city}: {t.searches}{" "}{tr("perfume.contacts.searches", "searches ·")}{" "}{t.results}{" "}{tr("perfume.contacts.results", "results ·")}{" "}{t.inserted}{" "}{tr("perfume.contacts.new", "new ·")}{" "}{t.matched}{" "}{tr("perfume.contacts.already_in_list", "already in list ·")}{" "}{t.skipped_closed}{" "}{tr("perfume.contacts.closed", "closed")}</div>)}
         </div>
       ) : null}
     </div>
