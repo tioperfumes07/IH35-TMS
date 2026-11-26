@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { useToast } from "../../components/Toast";
@@ -17,7 +18,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
   getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
-  type PerfumeContactImportTally, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
+  type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 
@@ -27,6 +28,16 @@ const ROLE_CLASS: Record<PerfumeContactRole, string> = { vendor: "bg-[#14314F]",
 const usDate = (d: string | null | undefined) => (d ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}` : DASH);
 const n = (v: number | null | undefined) => (v == null ? DASH : v.toLocaleString("en-US"));
 const ctl = "h-[34px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
+
+/** Owner 2026-11-26 15:56 CT: "the boxes are not drop down filter combobox so i can typ city etc." — every box types to narrow. */
+const CONTACT_FILTERS: Array<{ facet: PerfumeContactFacet; pick: keyof PerfumeContactPicks; label: string; all: string }> = [
+  { facet: "country", pick: "countries", label: "Country", all: "All countries" },
+  { facet: "state", pick: "states", label: "State", all: "All states" },
+  { facet: "city", pick: "cities", label: "City", all: "All cities" },
+  { facet: "category", pick: "categories", label: "Category", all: "All categories" },
+  { facet: "source", pick: "sources", label: "Source", all: "Every source" },
+  { facet: "how", pick: "hows", label: "How it started", all: "Any start" },
+];
 
 function RoleBadge({ role }: { role: PerfumeContactRole | null }) {
   if (!role) return <span className="text-gray-400">{DASH}</span>;
@@ -38,7 +49,9 @@ export function PerfumeContactsPanel() {
   const [source, setSource] = useState<string>("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
-  const list = useQuery({ queryKey: ["perfume", "contacts", role, source, q], queryFn: () => listPerfumeContacts({ role, source, q, limit: 300 }) });
+  const [picks, setPicks] = useState<PerfumeContactPicks>({});
+  const list = useQuery({ queryKey: ["perfume", "contacts", role, source, q, picks], queryFn: () => listPerfumeContacts({ role, source, q, limit: 300, ...picks }) });
+  const anyPick = Object.values(picks).some((v) => (v?.length ?? 0) > 0);
 
   if (list.isError) {
     return <ListErrorState title={tr("perfume.contacts.loadError", "Couldn't load the contacts")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
@@ -72,12 +85,22 @@ export function PerfumeContactsPanel() {
           {roleBtn("customer", "Customers", c?.customers)}
           {roleBtn("both", "Vendor + customer", c?.both)}
           {roleBtn("none", "Not classified", c?.unclassified)}
-          <select aria-label={tr("perfume.contacts.source", "Source")} className={ctl} value={source} onChange={(e) => setSource(e.target.value)} data-testid="perfume-contacts-source">
-            <option value="">{tr("perfume.contacts.every_source", "Every source")}</option>
-            <option value="Master Database">{tr("perfume.contacts.mail_phones_master", "Mail + phones (Master)")}</option>
-            <option value="INEGI DENUE">{tr("perfume.contacts.inegi_denue_mexico", "INEGI DENUE (Mexico)")}</option>
-            <option value="Google">{tr("perfume.contacts.google", "Google")}</option>
-          </select>
+          {CONTACT_FILTERS.map((f) => (
+            <MultiSelectDropdown
+              key={f.facet}
+              label={f.label}
+              allLabel={f.all}
+              searchable
+              data-testid={`perfume-contacts-filter-${f.facet}`}
+              options={(list.data?.facets?.[f.facet] ?? []).map((o) => ({ value: o.value, label: `${o.value} (${o.count.toLocaleString()})` }))}
+              selected={picks[f.pick] ?? (f.facet === "source" && source ? [source] : [])}
+              onChange={(next) => { if (f.facet === "source") setSource(""); setPicks((p) => ({ ...p, [f.pick]: next })); }}
+            />
+          ))}
+          {anyPick || source ? (
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-contacts-clear"
+              onClick={() => { setPicks({}); setSource(""); }}>{tr("perfume.contacts.clear", "Clear filters")}</Button>
+          ) : null}
           <input type="search" aria-label={tr("perfume.contacts.search_contacts", "Search contacts")} placeholder={`Search all ${n(c?.companies)} — company, person, email, phone, city`}
             className={`${ctl} min-w-[240px] flex-1`} value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-contacts-search" />
         </div>
@@ -86,7 +109,7 @@ export function PerfumeContactsPanel() {
           rowKey={(r) => r.id}
           loading={list.isLoading}
           storageKey="perfume-contacts-v1"
-          emptyText={q || role !== "all" || source ? "No contact matches these filters." : "No contacts yet — the Master Database import fills this list."}
+          emptyText={q || role !== "all" || source || anyPick ? "No contact matches these filters." : "No contacts yet — the Master Database import fills this list."}
           onRowClick={(r) => setSelected(r.id)}
           columns={[
             { key: "name", label: "Company", sortable: true, render: (r) => <span className="font-semibold text-[#14314F]">{r.name}</span> },
