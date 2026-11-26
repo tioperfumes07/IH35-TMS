@@ -6,6 +6,7 @@ import type { PoolClient } from "pg";
 import ExcelJS from "exceljs";
 import { addItem, compactKey, displayNameOf, distinctProductOf, emptyIndex, matchLine, productKind, similarity, suggest, type LineIn, type MatchIndex } from "./matching.js";
 import { BUILTIN_BRAND_ALIASES, canonicalBrand, categoryOf, identify, nameBrandIndex, setDeskBrands, setNameBrands, looseKey, normalizeUpc, vendorLineTail, type Identity } from "./normalize.js";
+import { readCodedName } from "./mail/readers.js";
 import { lineGender, offerCandidates, type OfferItem } from "./offer-review.js";
 import { likelyLines, type CompetitorLine, type LineCandidate } from "./my-unlinked.js";
 import { closeCents, costFromPrice, marginPct, markupPct, priceFromCost, rankOffers, type RoundDir, type RoundStep } from "./pricing.js";
@@ -1030,7 +1031,8 @@ export async function rematchReview(c: PoolClient) {
     `SELECT r.id, l.vendor_id, r.upc, r.sku, r.brand, r.description, r.size_text, r.gender_override
        FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       WHERE r.match_status <> 'matched' AND l.is_current AND l.voided_at IS NULL`);
-  const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0 };
+  const out = { lines: rows.rows.length, now_matched: 0, review: 0, unmatched: 0, codes_read: 0 };
+  const recoded: Array<{ id: string; sku: string; brand: string | null; description: string }> = [];
   // One UPDATE per 500 lines, not one per line (measured live 11-14 01:22Z: 3,000+ single-row updates ran 270 s and the
   // request died with a 502). Same values, same rules.
   const upd: Array<{ id: string; item_id: string | null; method: string | null; status: string; suggestions: unknown; identity_key: string; loose_key: string }> = [];
@@ -1038,7 +1040,12 @@ export async function rematchReview(c: PoolClient) {
   for (const r of rows.rows) {
     // Let the server answer its health checks while a few thousand lines are read.
     if (++n % 100 === 0) await new Promise((res) => setImmediate(res));
-    const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override }, { allowNewItem: false });
+    // A PCA PDF line saved before the coded-name reader (#29847) still carries its code inside the name ("COS Completely
+    // Bare US I0087568 COMPLETELY CLEAN …"): read it now, so the line links by PCA's own code like the .xls list did
+    // (measured 22:40Z: 3,788 PCA lines waiting, every one with its I-code in the name and no SKU).
+    const coded = !r.sku && !r.upc ? readCodedName(r.description) : null;
+    if (coded) { r.sku = coded.sku; r.brand = r.brand ?? coded.brand; r.description = coded.description; recoded.push({ id: r.id, sku: coded.sku, brand: r.brand, description: coded.description }); }
+    const m = matchLine(ix, r.vendor_id, { upc: r.upc, sku: r.sku, description: r.description, brand: r.brand, size_text: r.size_text, gender: r.gender_override ?? coded?.gender ?? null }, { allowNewItem: false });
     if (m.itemId) {
       upd.push({ id: r.id, item_id: m.itemId, method: m.method, status: "matched", suggestions: [], identity_key: m.identity.key, loose_key: looseKey(m.identity) });
       out.now_matched++;
@@ -1056,6 +1063,14 @@ export async function rematchReview(c: PoolClient) {
          FROM jsonb_to_recordset($1::jsonb) AS x(id uuid, item_id uuid, method text, status text, suggestions jsonb, identity_key text, loose_key text)
         WHERE r.id = x.id`, [JSON.stringify(upd.slice(i, i + 500))]);
   }
+  // The code read from the name is saved on the line (the same SKU / brand / name a fresh import now writes).
+  for (let i = 0; i < recoded.length; i += 500) {
+    await c.query(
+      `UPDATE perfume.price_list_rows r SET sku = x.sku, brand = x.brand, description = x.description
+         FROM jsonb_to_recordset($1::jsonb) AS x(id uuid, sku text, brand text, description text) WHERE r.id = x.id`,
+      [JSON.stringify(recoded.slice(i, i + 500))]);
+  }
+  out.codes_read = recoded.length;
   // Links made by barcode BEFORE the kind rule (2026-11-14): a line that says REFILL / TESTER / SET / MINI … sitting
   // on an item of another kind goes back to Review for the owner. Owner-confirmed links are never touched.
   const linked = await c.query<{ id: string; brand: string | null; description: string; size_text: string | null; gender_override: string | null; flags: string[] }>(

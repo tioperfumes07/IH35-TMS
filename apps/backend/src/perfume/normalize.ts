@@ -612,6 +612,10 @@ export function identify(input: IdentityInput): Identity {
     leadFlag = f === "S" ? "SET" : f === "T" ? "TESTER" : f === "MS" ? "MINI SET" : f === "MINI" ? "MINI" : f === "OIL" ? "OIL" : "";
     return " ";
   });
+  // Euro Perfumes marks a tester with a leading "TT" ("TT-M Benz MAN Fresh edt 100 ml vapo", "TT ATKINSONS 44 Gerrard
+  // Street EDC 100ML vapo"): measured 11-26 22:40Z, 9 Euro tester lines sat in Review against their own TESTER item
+  // because the line read as a plain bottle.
+  if (!leadFlag) s = s.replace(/^\s*TT(?:\s*-\s*|\s+)/, () => { leadFlag = "TESTER"; return " "; });
   s = s.replace(/\s+-\s*\d{3,8}\s*$/, " ");
   // A leading MINI / MINIATURE / VIAL / SAMPLE describes the bottle, not the name: it is a MINI flag, and the brand
   // that follows it is read as the brand ("MINI MARC JACOBS DAISY WILD 4ML", "VIAL MARC JACOBS PERFECT 1.2ML").

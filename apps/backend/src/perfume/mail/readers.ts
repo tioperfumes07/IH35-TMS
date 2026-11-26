@@ -134,12 +134,17 @@ export function extractRows(sheet: Sheet, headerRow: number, map: Mapping): Extr
  */
 const CODED_NAME_RE = /^([A-Z]{1,4})\s+(.+?)\s+[A-Z]{2}\s+(I\d{6,8})\s+(.+)$/;
 const CODED_GENDER: Record<string, string> = { M: "Men", W: "Women", L: "Women", U: "Unisex" };
-export function splitCodedRow(r: ImportRow): ImportRow {
-  const m = CODED_NAME_RE.exec(r.description);
-  if (!m) return r;
+/** PCA's coded PDF line "COS Completely Bare US I0087568 COMPLETELY CLEAN …" → its code, brand, gender and name. */
+export function readCodedName(description: string): { sku: string; brand: string; gender: string | null; description: string } | null {
+  const m = CODED_NAME_RE.exec(description);
+  if (!m) return null;
   const [, g, brand, code, name] = m;
-  return { ...r, sku: r.sku ?? code, brand: r.brand ?? cap(brand.trim(), 120), gender: r.gender ?? CODED_GENDER[g] ?? null,
-    description: cap(`${brand.trim()} ${name.trim()}`, 400) };
+  return { sku: code, brand: cap(brand.trim(), 120), gender: CODED_GENDER[g] ?? null, description: cap(`${brand.trim()} ${name.trim()}`, 400) };
+}
+export function splitCodedRow(r: ImportRow): ImportRow {
+  const c = readCodedName(r.description);
+  if (!c) return r;
+  return { ...r, sku: r.sku ?? c.sku, brand: r.brand ?? c.brand, gender: r.gender ?? c.gender, description: c.description };
 }
 
 /** Every "$00.00" on a PDF text line becomes one [name, price] pair (same rule as the browser reader). */
