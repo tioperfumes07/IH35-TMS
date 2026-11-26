@@ -346,7 +346,7 @@ export function parseSize(text: string): { ml: number | null; spans: RegExp[] } 
 function parseConc(s: string): { conc: Conc; remove: RegExp[] } {
   const rules: Array<[RegExp, Conc]> = [
     [/\bEXTRAIT( DE PARFUM)?\b/, "EXTRAIT"],
-    [/\bEAU DE PARFUM\b|\bEDP\b|\bE\.D\.P\b/, "EDP"],
+    [/\bEAU DE PARFUM\b|\bEAU DE PERFUME\b|\bEDP\b|\bE\.D\.P\b/, "EDP"],
     [/\bEAU DE TOILETTE\b|\bEDT\b|\bE\.D\.T\b/, "EDT"],
     [/\bEAU DE COLOGNE\b|\bEDC\b/, "EDC"],
     [/\bBODY MIST\b|\bHAIR MIST\b|\bMIST\b/, "MIST"],
@@ -616,6 +616,9 @@ export function identify(input: IdentityInput): Identity {
   // Street EDC 100ML vapo"): measured 11-26 22:40Z, 9 Euro tester lines sat in Review against their own TESTER item
   // because the line read as a plain bottle.
   if (!leadFlag) s = s.replace(/^\s*TT(?:\s*-\s*|\s+)/, () => { leadFlag = "TESTER"; return " "; });
+  // "WITH CAP" / "W/ CAP" / "NO CAP" says how a tester is packed, never the name (Sanya "TESTER VERSACE DYLAN BLUE 100 ML
+  // EDT SP(M) WITH CAP" read the name "DYLAN BLUE WITH" — measured 11-26 23:20Z). "WITH" alone stays: STRONGER WITH YOU.
+  s = s.replace(/\b(?:WITH(?:OUT)?|W\/O?|NO)\s*CAPS?\b/g, " ");
   s = s.replace(/\s+-\s*\d{3,8}\s*$/, " ");
   // A leading MINI / MINIATURE / VIAL / SAMPLE describes the bottle, not the name: it is a MINI flag, and the brand
   // that follows it is read as the brand ("MINI MARC JACOBS DAISY WILD 4ML", "VIAL MARC JACOBS PERFECT 1.2ML").
