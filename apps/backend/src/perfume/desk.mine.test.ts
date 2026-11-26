@@ -44,9 +44,10 @@ describeIntegration("perfume my offer list + my inventory (real Postgres, rolled
     expect([alpha.my_qty, alpha.my_last_cost, alpha.my_offer_price, alpha.my_need]).toEqual([2, 1400, 2000, 3]);
     expect([beta.my_qty, beta.my_offer_price, beta.my_need]).toEqual([null, 2000, 1]);
     // List analysis — the owner's own formulas (11-14 PERFUME_ENGINE_FORMATS.xlsx): margin (20−14)/20, markup (20−14)/14,
-    // lowest vendor = the cheapest supplier list price; no competitor here, so the competitor columns stay blank.
+    // suppliers are off List analysis since the vendor roles (owner 2026-11-23, #29833): lowest vendor stays blank;
+    // no competitor here, so the competitor columns stay blank too.
     expect([alpha["a:last_cost"], alpha["a:inv_qty"], alpha["a:margin"], alpha["a:markup"], alpha["a:offer"], alpha["a:low_price"], alpha["a:esp"], alpha["a:under_by"]])
-      .toEqual([1400, 2, 30, 42.9, 2000, 1500, null, null]);
+      .toEqual([1400, 2, 30, 42.9, 2000, null, null, null]);
     expect(beta["a:last_cost"]).toBeNull();
     // My lists are never a supplier or a competitor column.
     expect(g.cols.some((c) => c.key.includes(inv) || c.key.includes(off))).toBe(false);
