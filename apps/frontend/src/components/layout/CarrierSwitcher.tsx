@@ -2,7 +2,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { isPerfumePath } from "../../pages/perfume/perfumeModules";
 import { useAuth } from "../../auth/useAuth";
 import { useTranslation } from "../../hooks/useTranslation";
 import { Button } from "../Button";
@@ -67,7 +68,9 @@ export function CarrierSwitcher() {
   const perfumeAccess = useQuery({ queryKey: ["perfume", "access"], queryFn: getPerfumeAccess, enabled: isOwnerRole, staleTime: 300_000, retry: false });
   const isOwner = isOwnerRole && perfumeAccess.data?.allowed === true;
   const showSwitcher = activeCompanies.length > 1 || isOwner;
-  const selectedLabel = selectedCompanySwitcherLabel(selectedCompany);
+  // On /perfume the app is in the TIO Perfumes workspace: the trigger says so, and the carrier row opens the carrier again.
+  const inPerfume = isPerfumePath(useLocation().pathname);
+  const selectedLabel = inPerfume ? "TIO Perfumes" : selectedCompanySwitcherLabel(selectedCompany);
 
   const defaultCompanyId = useMemo(
     () => activeCompanies.find((company) => company.is_default)?.id ?? null,
@@ -126,8 +129,16 @@ export function CarrierSwitcher() {
                   </div>
                   <div className="mt-1 flex items-center justify-between text-xs text-gray-500">
                     <span>{company.code}</span>
-                    {isSelected ? <span>Current</span> : isDefault ? <span>Default</span> : null}
+                    {isSelected && !inPerfume ? <span>Current</span> : isDefault ? <span>Default</span> : null}
                   </div>
+                  {inPerfume && isSelected ? (
+                    <div className="mt-2">
+                      <Button type="button" className="h-7 px-2 py-1 text-xs" data-testid={`carrier-switcher-open-${company.id}`}
+                        onClick={() => { setOpen(false); navigate("/"); }}>
+                        {t("carrierSwitcher.open", "Open")}
+                      </Button>
+                    </div>
+                  ) : null}
                   {!isSelected ? (
                     <div className="mt-2 flex items-center gap-2">
                       <Button
@@ -185,8 +196,11 @@ export function CarrierSwitcher() {
                   navigate("/perfume");
                 }}
               >
-                <div className="font-semibold text-gray-900">{t("carrierSwitcher.tioPerfumes", "TIO Perfumes")}</div>
-                <div className="mt-1 text-xs text-gray-500">{t("carrierSwitcher.tioPerfumesHint", "Price desk · separate from every carrier")}</div>
+                <div className="flex items-center justify-between font-semibold text-gray-900">
+                  <span>{t("carrierSwitcher.tioPerfumes", "TIO Perfumes")}</span>
+                  {inPerfume ? <span className="text-xs font-normal text-gray-500">Current</span> : null}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">{t("carrierSwitcher.tioPerfumesHint", "Price desk, leads, campaigns · separate from every carrier")}</div>
               </button>
             </div>
           ) : null}
