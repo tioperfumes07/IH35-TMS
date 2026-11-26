@@ -35,6 +35,8 @@ const listSchema = z.object({
   // Several values per box, "|"-separated (a city name can hold a comma).
   countries: z.string().max(4000).optional(), states: z.string().max(4000).optional(), cities: z.string().max(8000).optional(),
   categories: z.string().max(4000).optional(), sources: z.string().max(2000).optional(), hows: z.string().max(2000).optional(),
+  regions: z.string().max(4000).optional(), ctypes: z.string().max(4000).optional(), vtypes: z.string().max(2000).optional(),
+  segments: z.string().max(4000).optional(), statuses: z.string().max(400).optional(), shows: z.string().max(8000).optional(), reach: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(500).optional(),
   offset: z.coerce.number().int().min(0).optional(),
 });
@@ -56,7 +58,9 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     if (!q.success) return reply.code(400).send({ error: "invalid_query", details: q.error.flatten() });
     const many = (v?: string) => (v ? v.split("|").map((x) => x.trim()).filter(Boolean).slice(0, 300) : undefined);
     const query = { ...q.data, countries: many(q.data.countries), states: many(q.data.states), cities: many(q.data.cities),
-      categories: many(q.data.categories), sources: many(q.data.sources), hows: many(q.data.hows) };
+      categories: many(q.data.categories), sources: many(q.data.sources), hows: many(q.data.hows), regions: many(q.data.regions),
+      ctypes: many(q.data.ctypes), vtypes: many(q.data.vtypes), segments: many(q.data.segments), statuses: many(q.data.statuses),
+      shows: many(q.data.shows), reach: many(q.data.reach) };
     return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 

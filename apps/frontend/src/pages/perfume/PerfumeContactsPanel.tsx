@@ -37,6 +37,13 @@ const CONTACT_FILTERS: Array<{ facet: PerfumeContactFacet; pick: keyof PerfumeCo
   { facet: "category", pick: "categories", label: "Category", all: "All categories" },
   { facet: "source", pick: "sources", label: "Source", all: "Every source" },
   { facet: "how", pick: "hows", label: "How it started", all: "Any start" },
+  { facet: "region", pick: "regions", label: "Region", all: "All regions" },
+  { facet: "ctype", pick: "ctypes", label: "Customer type", all: "All customer types" },
+  { facet: "vtype", pick: "vtypes", label: "Vendor type", all: "All vendor types" },
+  { facet: "segment", pick: "segments", label: "Business type", all: "All business types" },
+  { facet: "status", pick: "statuses", label: "Status", all: "Any status" },
+  { facet: "show", pick: "shows", label: "Trade show", all: "Any trade show" },
+  { facet: "reach", pick: "reach", label: "Email / phone", all: "Email or not" },
 ];
 
 function RoleBadge({ role }: { role: PerfumeContactRole | null }) {
