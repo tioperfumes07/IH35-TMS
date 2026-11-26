@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -39,6 +40,7 @@ export function PerfumeTradeShowsPanel() {
   const shows = useQuery({ queryKey: ["perfume", "trade-shows"], queryFn: listPerfumeShows });
   const [picks, setPicks] = useState<Picks>(NO_PICKS);
   const [onlyGo, setOnlyGo] = useState(false);
+  const [onlyMeetings, setOnlyMeetings] = useState(false);
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
@@ -47,16 +49,17 @@ export function PerfumeTradeShowsPanel() {
   const monthOf = (s: PerfumeShow) => (s.starts_on ? MONTHS[Number(s.starts_on.slice(5, 7)) - 1] ?? null : null);
   const rows = useMemo(() => all.filter((s) =>
     (!onlyGo || s.i_go)
+    && (!onlyMeetings || s.meetings > 0)
     && (!picks.years.length || picks.years.includes(yearOf(s) ?? ""))
     && (!picks.months.length || picks.months.includes(monthOf(s) ?? ""))
     && (!picks.kinds.length || picks.kinds.includes(s.kind ?? ""))
     && (!picks.cities.length || picks.cities.includes(s.city ?? ""))
     && (!q.trim() || `${s.name} ${s.city ?? ""} ${s.kind ?? ""} ${s.venue ?? ""} ${s.notes ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()))),
-  [all, onlyGo, picks, q]);
+  [all, onlyGo, onlyMeetings, picks, q]);
   const goShows = all.filter((s) => s.i_go);
   const next = goShows.find((s) => (s.ends_on ?? s.starts_on ?? "") >= todayIso());
   const meetings = all.reduce((t, s) => t + s.meetings, 0);
-  const anyFilter = onlyGo || q || Object.values(picks).some((v) => v.length);
+  const anyFilter = onlyGo || onlyMeetings || q || Object.values(picks).some((v) => v.length);
 
   const toggleGo = async (s: PerfumeShow) => {
     try { await setPerfumeShowIGo(s.id, !s.i_go); await shows.refetch(); pushToast(`${s.name}: ${!s.i_go ? "I go" : "not going"}`, "success"); }
@@ -67,10 +70,10 @@ export function PerfumeTradeShowsPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-trade-shows-panel">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiCard label={tr("perfume.shows.kpi_shows", "Shows on the calendar")} number={all.length.toLocaleString()} onClick={() => { setPicks(NO_PICKS); setOnlyGo(false); setQ(""); }} />
+        <KpiCard label={tr("perfume.shows.kpi_shows", "Shows on the calendar")} number={all.length.toLocaleString()} onClick={() => { setPicks(NO_PICKS); setOnlyGo(false); setOnlyMeetings(false); setQ(""); }} />
         <KpiCard label={tr("perfume.shows.kpi_go", "I go")} number={goShows.length.toLocaleString()} onClick={() => setOnlyGo(true)} />
         <KpiCard label={tr("perfume.shows.kpi_next", "Next show I go to")} number={next ? `${usDate(next.starts_on)} · ${next.name}` : DASH} onClick={next ? () => setSelected(next.id) : undefined} />
-        <KpiCard label={tr("perfume.shows.kpi_meetings", "Meetings booked / held")} number={meetings.toLocaleString()} />
+        <KpiCard label={tr("perfume.shows.kpi_meetings", "Meetings booked / held")} number={meetings.toLocaleString()} onClick={() => setOnlyMeetings(true)} />
       </div>
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.shows.title", "Trade shows")}>
@@ -90,7 +93,7 @@ export function PerfumeTradeShowsPanel() {
             options={countOpts(all.map((s) => s.city))} selected={picks.cities} onChange={(v) => setPicks((p) => ({ ...p, cities: v }))} />
           <input type="search" aria-label={tr("perfume.shows.search", "Search shows")} placeholder={tr("perfume.shows.search_ph", "Search show, city, venue, notes")}
             className={`${ctl} min-w-[220px] flex-1`} value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-shows-search" />
-          {anyFilter ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks(NO_PICKS); setOnlyGo(false); setQ(""); }}>{tr("perfume.shows.clear", "Clear filters")}</Button> : null}
+          {anyFilter ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => { setPicks(NO_PICKS); setOnlyGo(false); setOnlyMeetings(false); setQ(""); }}>{tr("perfume.shows.clear", "Clear filters")}</Button> : null}
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-shows-add" onClick={() => setAdding(true)}>{tr("perfume.shows.add", "Add a show")}</Button>
         </div>
         {adding ? <AddShowForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void shows.refetch(); }} /> : null}
@@ -135,10 +138,10 @@ function AddShowForm({ onClose, onSaved }: { onClose: () => void; onSaved: () =>
     } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
   return (
-    <div className="flex flex-wrap items-end gap-2 rounded-[3px] border border-[#D8E0E8] bg-[#F7F9FB] p-2" data-testid="perfume-shows-add-form">
+    <div className="flex flex-wrap items-end gap-2 border-t border-[#E8EDF2] pt-2" data-testid="perfume-shows-add-form">
       <label className="text-xs">{tr("perfume.shows.f_name", "Show")}<input className={`${ctl} block w-[240px]`} value={f.name} onChange={set("name")} data-testid="perfume-shows-add-name" /></label>
-      <label className="text-xs">{tr("perfume.shows.f_starts", "Starts")}<input type="date" className={`${ctl} block`} value={f.starts_on} onChange={set("starts_on")} /></label>
-      <label className="text-xs">{tr("perfume.shows.f_ends", "Ends")}<input type="date" className={`${ctl} block`} value={f.ends_on} onChange={set("ends_on")} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_starts", "Starts")}<DatePicker aria-label={tr("perfume.shows.f_starts", "Starts")} value={f.starts_on} onChange={(v) => setF((x) => ({ ...x, starts_on: v }))} /></label>
+      <label className="text-xs">{tr("perfume.shows.f_ends", "Ends")}<DatePicker aria-label={tr("perfume.shows.f_ends", "Ends")} value={f.ends_on} onChange={(v) => setF((x) => ({ ...x, ends_on: v }))} /></label>
       <label className="text-xs">{tr("perfume.shows.f_city", "City")}<input className={`${ctl} block`} value={f.city} onChange={set("city")} /></label>
       <label className="text-xs">{tr("perfume.shows.f_type", "Type")}<input className={`${ctl} block`} value={f.kind} onChange={set("kind")} /></label>
       <label className="text-xs">{tr("perfume.shows.f_venue", "Venue")}<input className={`${ctl} block`} value={f.venue} onChange={set("venue")} /></label>
@@ -170,7 +173,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
       <div className="flex items-center justify-between gap-2">
         <div>
           <div className="text-section-header">{show.name}</div>
-          <div className="text-xs text-[#64748B]">{usDate(show.starts_on)} – {usDate(show.ends_on)} · {show.city ?? DASH} · {show.kind ?? DASH}{show.i_go ? " · I go" : ""}</div>
+          <div className="text-xs text-[#64748B]">{[`${usDate(show.starts_on)} – ${usDate(show.ends_on)}`, show.city ?? DASH, show.kind ?? DASH, show.i_go ? tr("perfume.shows.f_go", "I go") : ""].filter(Boolean).join(" · ")}</div>
         </div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.shows.close", "Close")}</Button>
       </div>
@@ -178,7 +181,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
         <input type="search" className={`${ctl} w-full max-w-[420px]`} placeholder={tr("perfume.shows.find_contact", "Add a contact who attends — type a company, person, email or city")}
           value={find} onChange={(e) => setFind(e.target.value)} data-testid="perfume-show-find-contact" />
         {find.trim().length >= 2 && (found.data?.rows?.length ?? 0) > 0 ? (
-          <div className="absolute z-20 mt-1 max-h-64 w-full max-w-[420px] overflow-y-auto rounded-sm border border-gray-300 bg-white shadow-lg" role="listbox">
+          <div className="absolute z-20 mt-1 max-h-64 w-full max-w-[420px] overflow-y-auto border border-gray-300 bg-white shadow-lg" role="listbox">
             {found.data!.rows.map((r) => (
               <button key={r.id} type="button" role="option" aria-selected={false} className="block w-full px-2 py-1 text-left text-xs hover:bg-gray-100"
                 onClick={() => void add(r.id, r.name)} data-testid={`perfume-show-pick-${r.id}`}>
