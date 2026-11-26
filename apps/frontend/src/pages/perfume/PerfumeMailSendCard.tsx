@@ -126,7 +126,7 @@ export function PerfumeMailSendCard({ send, account, configured, onChanged }: {
         ) : (
           <>
             <span className="text-xs font-semibold" data-testid="perfume-mail-send-confirm-text">
-              Send “{subject.trim()}” to {count.toLocaleString("en-US")} {count === 1 ? "address" : "addresses"} from {sender}?
+              {`${tr("perfume.mail.confirmSend", "Send")} “${subject.trim()}” ${tr("perfume.mail.confirmTo", "to")} ${count.toLocaleString("en-US")} ${count === 1 ? "address" : "addresses"} ${tr("perfume.mail.confirmFrom", "from")} ${sender}?`}
             </span>
             <Button type="button" className="h-[34px] px-3 text-xs" disabled={!canSend} data-testid="perfume-mail-send-confirm" onClick={() => void doSend()}>
               {busy ? "Starting…" : `Yes, send to ${count.toLocaleString("en-US")}`}
@@ -162,7 +162,7 @@ export function PerfumeMailSendCard({ send, account, configured, onChanged }: {
       <div className="space-y-1 text-xs" data-testid="perfume-mail-optouts">
         <div className="font-semibold">{tr("perfume.mail.optouts", "Do not send to")} ({(send?.optouts ?? []).length})</div>
         <div className="flex flex-wrap items-center gap-2">
-          <input className="h-[34px] min-w-[260px] flex-1 rounded-sm border border-gray-300 px-2 text-xs" placeholder="address@company.com (people who replied STOP)"
+          <input className="h-[34px] min-w-[260px] flex-1 rounded-sm border border-gray-300 px-2 text-xs" placeholder={tr("perfume.mail.optoutPlaceholder", "address@company.com (people who replied STOP)")}
             value={optText} onChange={(e) => setOptText(e.target.value)} data-testid="perfume-mail-optout-input" />
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!countRecipients(optText)} onClick={async () => {
             try { const r = await addPerfumeMailOptouts(optText, "Replied STOP"); setOptText(""); onChanged(); pushToast(`${r.added} added — never sent to again`, "success"); }
