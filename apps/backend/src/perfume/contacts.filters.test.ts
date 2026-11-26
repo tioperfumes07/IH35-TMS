@@ -40,4 +40,20 @@ describeIntegration("contacts filter boxes (real Postgres, rolled back)", () => 
     expect((await contactFacets(db as never, { cities: ["Laredo"] })).city.map((x) => x.value)).toEqual(expect.arrayContaining(["Laredo", "Nuevo Laredo"]));
     expect((await contactFacets(db as never, { cities: ["Laredo"] })).country).toEqual([{ value: "US", count: 2 }]);
   });
+
+  it("the rest of the boxes: region, customer type, status, trade show, email / phone (owner 2026-11-26 16:59 CT)", async () => {
+    await db.query(`UPDATE perfume.contact_companies SET region = 'Laredo', customer_type = 'Duty free', status = 'active', phone = '9565550100' WHERE name = 'ZZ Sol' AND archived_at IS NULL`);
+    const rosa = (await db.query<{ id: string }>(`SELECT id FROM perfume.contact_companies WHERE name = 'ZZ Rosa' AND archived_at IS NULL`)).rows[0].id;
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'Rosa', 'rosa@zz.test')`, [rosa]);
+    const show = (await db.query<{ id: string }>(`INSERT INTO perfume.trade_shows (name, starts_on) VALUES ('ZZ Expo', '2027-01-26') RETURNING id`)).rows[0].id;
+    await db.query(`INSERT INTO perfume.trade_show_contacts (show_id, company_id) VALUES ($1, $2)`, [show, rosa]);
+    const f = await contactFacets(db as never, {});
+    expect(f.ctype).toEqual([{ value: "Duty free", count: 1 }]);
+    expect(f.show).toEqual([{ value: "ZZ Expo", count: 1 }]);
+    expect(f.reach).toEqual(expect.arrayContaining([{ value: "Has email", count: 1 }, { value: "Phone only", count: 1 }, { value: "No email or phone", count: 1 }]));
+    expect((await listContacts(db as never, { ctypes: ["Duty free"] })).rows.map((r) => r.name)).toEqual(["ZZ Sol"]);
+    expect((await listContacts(db as never, { regions: ["Laredo"], statuses: ["active"] })).rows.map((r) => r.name)).toEqual(["ZZ Sol"]);
+    expect((await listContacts(db as never, { shows: ["ZZ Expo"] })).rows.map((r) => r.name)).toEqual(["ZZ Rosa"]);
+    expect((await listContacts(db as never, { reach: ["No email or phone"] })).rows.map((r) => r.name)).toEqual(["ZZ Luna"]);
+  });
 });

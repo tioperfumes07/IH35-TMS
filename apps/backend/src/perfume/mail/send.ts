@@ -46,10 +46,20 @@ export function messageText(body: string): string {
   return `${body.replace(/\s+$/, "")}${SEND_FOOTER}`;
 }
 
-type StartInput = { from: string; recipients: string[]; subject: string; body: string; attachments: MimeAttachment[] };
+export type StartInput = { from: string; recipients: string[]; subject: string; body: string; attachments: MimeAttachment[] };
 
 /** Validates, records the batch, and sends in the background. Returns the batch id at once. */
 export async function startSend(ownerUid: string, input: StartInput, fetchImpl?: FetchLike): Promise<{ batch_id: string; recipients: number }> {
+  const batchId = await createSendBatch(ownerUid, input);
+  void runSend(ownerUid, batchId, { ...input, from: input.from.toLowerCase() }, fetchImpl).catch(() => undefined);
+  return { batch_id: batchId, recipients: input.recipients.length };
+}
+
+/**
+ * The checks every send passes (sender, recipients, attachment size, mailbox connected for sending, the daily cap) and the
+ * batch row. Used by startSend and by campaigns, which run their batches one after another.
+ */
+export async function createSendBatch(ownerUid: string, input: StartInput): Promise<string> {
   const from = input.from.toLowerCase();
   if (from !== PERFUME_SENDER) throw new SendError("sender_not_allowed", `Lists are sent from ${PERFUME_SENDER} only.`);
   if (!input.recipients.length) throw new SendError("no_recipients", "Add at least one email address.");
@@ -72,8 +82,7 @@ export async function startSend(ownerUid: string, input: StartInput, fetchImpl?:
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
       [from, input.subject.trim(), input.body, input.attachments.map((a) => a.fileName), bytes, input.recipients.length, ownerUid])).rows[0].id;
   });
-  void runSend(ownerUid, batchId, { ...input, from }, fetchImpl).catch(() => undefined);
-  return { batch_id: batchId, recipients: input.recipients.length };
+  return batchId;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
