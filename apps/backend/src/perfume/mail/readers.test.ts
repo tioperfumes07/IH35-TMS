@@ -6,6 +6,7 @@
  * the same list saved by hand. Then each file type the engine opens, and each case it HOLDS instead of guessing.
  */
 import ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 import { describe, expect, it } from "vitest";
 import * as browser from "../../../../frontend/src/pages/perfume/perfumeFileReaders.js";
 import {
@@ -99,6 +100,29 @@ describe("each file type the engine opens", () => {
     expect([other.how, other.extracted.fileTotalCents]).toEqual(["guessed", 1000]);
     expect(savedColumnsOf({ mail_columns: { fields: { desc: "Name" } } })).toBeNull();
   });
+  it(".xls (old binary Excel — PCA, MOD): read like the browser reads it, same lines and same to-the-cent total", async () => {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([
+      ["PERFUME CENTER OF AMERICA"], ["PRICE LIST 11-24-2026"],
+      ["ITEM #", "DESCRIPTION", "UPC", "PRICE", "QTY"],
+      ["WOMEN"],
+      [82384, "CH 212 W 3.4 EDT", "8411061088180", 49.75, 12],
+      [137793, "VERSACE EROS EDT 3.4", "8011003809219", 40.8, 6],
+    ]), "PRICE LIST");
+    const buf = Buffer.from(XLSX.write(wb, { type: "buffer", bookType: "biff8" }) as Buffer);
+    expect(buf.subarray(0, 4).equals(Buffer.from([0xd0, 0xcf, 0x11, 0xe0]))).toBe(true);
+    const file = await readPriceFile(buf, "PRICE-LIST-11-24-2026.xls");
+    expect(file.kind).toBe("xls");
+    const pick = chooseReading(file, null)!;
+    expect(pick.extracted.rowsRead).toBe(2);
+    expect(pick.extracted.fileTotalCents).toBe(4975 + 4080);
+    expect(pick.extracted.rows[0]).toMatchObject({ description: "CH 212 W 3.4 EDT", upc: "8411061088180", price: "49.75", section: "WOMEN" });
+    // Parity with the Lists tab: the browser reader on the same cells gives the same lines and total.
+    const sheet = file.sheets[0]!;
+    const hr = browser.findHeaderRow(sheet.cells);
+    const b = browser.extractRows(sheet, hr, browser.guessMapping((sheet.cells[hr] ?? []).map((h) => String(h ?? ""))));
+    expect([b.rowsRead, b.fileTotalCents]).toEqual([pick.extracted.rowsRead, pick.extracted.fileTotalCents]);
+  });
   it(".csv: quotes, commas and line breaks inside quotes", async () => {
     expect(parseCsv('UPC,Description,Price\r\n"0123","BRAND ""X"", 100ML",12.50\n,,\n"9","MULTI\nLINE",3\n')).toEqual([
       ["UPC", "Description", "Price"], ["0123", 'BRAND "X", 100ML', "12.50"], ["9", "MULTI\nLINE", "3"],
@@ -119,8 +143,8 @@ describe("each file type the engine opens", () => {
 });
 
 describe("held, never guessed", () => {
-  it("old .xls, a scanned PDF and a non-price file are refused with their reason", async () => {
-    await expect(readPriceFile(Buffer.from("x"), "old.xls")).rejects.toMatchObject({ reason: "old_xls" });
+  it("a .xls with no price columns, a scanned PDF and a non-price file are held with their reason", async () => {
+    expect(chooseReading(await readPriceFile(Buffer.from("x"), "old.xls"), null)).toBeNull();
     await expect(readPriceFile(pdfWithLines([]), "scan.pdf")).rejects.toBeInstanceOf(UnreadableFileError);
     await expect(readPriceFile(pdfWithLines([]), "scan.pdf")).rejects.toMatchObject({ reason: "scanned_pdf" });
     await expect(readPriceFile(Buffer.from("x"), "photo.jpg")).rejects.toMatchObject({ reason: "unsupported_type" });

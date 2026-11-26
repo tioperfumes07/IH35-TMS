@@ -4,18 +4,20 @@
  * the section lines and the PDF "NAME ..... $55.50" pairs are the same rules, so a list saved by mail and the same list
  * saved by hand give the same lines and the same to-the-cent file total. readers.test.ts holds both to that.
  *
- * Excel (.xlsx) through exceljs, CSV through a quote-aware splitter, text PDFs through pdf.js (legacy Node build).
- * An old binary .xls, a scanned PDF (no text layer) or a file with no price column is NOT guessed: the engine holds it
- * with the reason and the owner opens it on the Lists tab.
+ * Excel (.xlsx) through exceljs, the old binary Excel (.xls — Perfume Center of America and MOD send theirs that way)
+ * through SheetJS with the exact options the browser reader uses, CSV through a quote-aware splitter, text PDFs through
+ * pdf.js (legacy Node build). A scanned PDF (no text layer), a broken file or a file with no price column is NOT guessed:
+ * the engine holds it with the reason and the owner opens it on the Lists tab.
  */
 import ExcelJS from "exceljs";
+import * as XLSX from "xlsx";
 
 export type Field = "code" | "sku" | "upc" | "brand" | "desc" | "size" | "type" | "gender" | "section" | "price" | "qty" | "case_pack"
   | "purchase_date" | "qty_purchased" | "qty_sold";
 export type Mapping = Partial<Record<Field, number>>;
 export type Cell = string | number | null;
 export type Sheet = { name: string; cells: Cell[][] };
-export type ReadKind = "xlsx" | "csv" | "pdf_text";
+export type ReadKind = "xlsx" | "xls" | "csv" | "pdf_text";
 export type ReadFile = { kind: ReadKind; sheets: Sheet[] };
 
 export type ImportRow = {
@@ -220,6 +222,29 @@ export async function readXlsx(buf: Buffer): Promise<ReadFile> {
   return { kind: "xlsx", sheets };
 }
 
+/**
+ * Old binary Excel (.xls, BIFF). Read the way the Lists tab reads every Excel file in the browser
+ * (perfumeFileReaders.readSpreadsheet: SheetJS, header: 1, raw: true, defval: null, blankrows: false), so a .xls saved by
+ * mail and the same .xls saved by hand give the same cells and the same to-the-cent total.
+ */
+export function readXls(buf: Buffer): ReadFile {
+  let wb: XLSX.WorkBook;
+  try {
+    wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+  } catch (e) {
+    throw new UnreadableFileError("unreadable", `Excel (.xls) file could not be opened: ${String((e as Error)?.message ?? e).slice(0, 160)}`);
+  }
+  if (!wb.SheetNames.length) throw new UnreadableFileError("unreadable", "Excel (.xls) file has no sheets.");
+  return {
+    kind: "xls",
+    sheets: wb.SheetNames.map((name) => ({
+      name,
+      cells: XLSX.utils.sheet_to_json<unknown[]>(wb.Sheets[name]!, { header: 1, raw: true, defval: null, blankrows: false })
+        .map((r) => r.map((v): Cell => (typeof v === "boolean" ? (v ? "TRUE" : "FALSE") : v instanceof Date ? v.toISOString().slice(0, 10) : (v as Cell)))),
+    })),
+  };
+}
+
 /** RFC 4180 CSV (quotes, doubled quotes, commas and newlines inside quotes). Numbers stay text, as the file wrote them. */
 export function parseCsv(text: string): Cell[][] {
   const rows: Cell[][] = [];
@@ -251,9 +276,7 @@ export async function readPriceFile(buf: Buffer, fileName: string): Promise<Read
   const n = fileName.toLowerCase();
   if (n.endsWith(".pdf")) return readPdfText(buf, fileName);
   if (n.endsWith(".csv")) return { kind: "csv", sheets: [{ name: fileName, cells: parseCsv(buf.toString("utf8")) }] };
-  if (n.endsWith(".xls")) {
-    throw new UnreadableFileError("old_xls", "Old Excel format (.xls) — open it on the Lists tab (or ask the vendor for .xlsx).");
-  }
+  if (n.endsWith(".xls")) return readXls(buf);
   if (n.endsWith(".xlsx") || n.endsWith(".xlsm")) return readXlsx(buf);
   throw new UnreadableFileError("unsupported_type", `Not a price-list file type: ${fileName}`);
 }

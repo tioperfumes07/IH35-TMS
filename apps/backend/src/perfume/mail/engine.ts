@@ -136,7 +136,8 @@ export async function importMailFile(c: PoolClient, ctx: Ctx, f: FileMeta, buf: 
         reason: `${HOLD_TEXT.much_smaller_than_current} (${ex.rowsRead.toLocaleString("en-US")} lines vs ${cur.rows_saved.toLocaleString("en-US")})` };
     }
   }
-  const kind = choice.how === "pdf" ? "pdf_text" : f.fileName.toLowerCase().endsWith(".csv") ? "csv" : "xlsx";
+  const lower = f.fileName.toLowerCase();
+  const kind = choice.how === "pdf" ? "pdf_text" : lower.endsWith(".csv") ? "csv" : lower.endsWith(".xls") ? "xls" : "xlsx";
   try {
     const r = await importList(c, ctx.ownerUid, {
       vendor_id: v.id, list_date: listDateOf(f.receivedAt),
