@@ -737,7 +737,8 @@ export function backgroundJobRule(
       // "20 */6 * * *" = every 360m → two missed periods. System-actor membership scoped (USMCA).
       return { enabled: true, maxStaleMinutes: 720 };
     case "perfume.mail_price_lists_cron":
-      // Daily 06:15 CT (perfume-mail-price-lists.cron.ts) — TIO Perfumes mail price lists. 26h window.
+      // Mon–Sat 06:30/09:30/12:30/17:00/21:45, Sun 21:45 CT (perfume-mail-price-lists.cron.ts) — TIO Perfumes mail price
+      // lists. Longest gap Sat 21:45 → Sun 21:45 = 24h; 26h window.
       return { enabled: (process.env.PERFUME_MAIL_CRON_ENABLED ?? "true").trim() !== "false", maxStaleMinutes: 1560 };
     case "fuel.loves_card_import_cron":
       // Daily 06:00 CT standalone Render cron (run-loves-card-import.ts) — fuel-card expense import. 26h window.

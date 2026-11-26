@@ -10,11 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 383 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **create** (collection POST) | 385 | `POST /api/v1/mdata/customers` — creates a top-level record |
 | **nested create** (child POST) | 295 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 263 | `/:id/approve`, `/scan` — operates on an existing row |
+| action (NOT a create) | 265 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 1014 | |
+| **TOTAL POST endpoints** | 1018 | |
 | UI files with `+ Create`/`+ Book` | 199 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -578,7 +578,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts` | — | — | — |
 
-### perfume — 15 create-surface(s)
+### perfume — 17 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -589,6 +589,8 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 | create | `/api/v1/perfume/locations` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 | nested | `/api/v1/perfume/mail/accounts/:email/disconnect` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts/remove` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
 | create | `/api/v1/perfume/mail/rules` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
 | nested | `/api/v1/perfume/mail/rules/:id/off` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
 | create | `/api/v1/perfume/mine/saved-lists/use` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |

@@ -186,6 +186,10 @@
     "202616740100_perfume_contacts.sql::google_place_id": {
       "kind": "external_id",
       "reason": "Google Places (New) place id of a TIO Perfumes prospect, assigned by Google; stored permanently to dedupe and refresh Google's fields, never a row in this database."
+    },
+    "202616710100_perfume_mail_send.sql::external_gmail_message_id": {
+      "kind": "external_id",
+      "reason": "Gmail's own message id (users.messages.send response id) of a list email sent from jpm@tioperfumes.com — assigned by Google, not a row of ours; kept so a sent email can be found in the mailbox."
     }
   }
 }

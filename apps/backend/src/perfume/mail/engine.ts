@@ -24,6 +24,7 @@ import { decrypt } from "../../lib/encryption.js";
 import { ImportCheckFailed, importList, invalidateGridCache, type ImportCheck } from "../desk.service.js";
 import { accessTokenFor, attachmentsOf, Gmail, header, MailReconnectError, senderAddress, type Attachment, type FetchLike, type GmailMessage } from "./gmail.js";
 import { chooseReading, PRICE_FILE_EXT, readPriceFile, savedColumnsOf, SPECIAL_LIST_RE, UnreadableFileError, type Choice } from "./readers.js";
+import { downloadLink, downloadLinksOf, htmlOf, LINK_PREFIX, linkFileName, type DownloadImpl } from "./links.js";
 
 export const PERFUME_MAIL_JOB = "perfume.mail_price_lists_cron";
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
@@ -56,6 +57,13 @@ export function listDateOf(receivedAt: Date): string {
 /** The Gmail search for one run: price-list attachments received in the last `days` days, not sent by the owner. */
 export function searchQuery(days: number): string {
   return `has:attachment newer_than:${Math.max(1, Math.min(60, Math.floor(days)))}d -in:sent -in:drafts {filename:xlsx filename:xls filename:csv filename:pdf filename:xlsm}`;
+}
+
+/** Mail from the senders set up as vendors (address or @domain) — for lists sent as a download link, not an attachment. */
+export function linkSearchQuery(days: number, fromAddresses: string[]): string | null {
+  const froms = [...new Set(fromAddresses.map((a) => a.trim().toLowerCase().replace(/^@/, "")).filter(Boolean))];
+  if (!froms.length) return null;
+  return `newer_than:${Math.max(1, Math.min(60, Math.floor(days)))}d -in:sent -in:drafts from:(${froms.join(" OR ")})`;
 }
 
 export type HoldReason =
@@ -159,7 +167,8 @@ let running = false;
 export function mailRunInProgress(): boolean { return running; }
 
 /** One run over every connected mailbox. */
-export async function runMailImport(opts: { trigger: "schedule" | "manual"; startedBy?: string | null; days?: number; fetchImpl?: FetchLike }): Promise<RunSummary | null> {
+export async function runMailImport(opts: { trigger: "schedule" | "manual"; startedBy?: string | null; days?: number; fetchImpl?: FetchLike;
+  downloadImpl?: DownloadImpl }): Promise<RunSummary | null> {
   if (running) return null;
   running = true;
   try {
@@ -179,6 +188,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
         // First run of a mailbox looks back 14 days; then the run window (3 days by default).
         const days = opts.days ?? (acct.last_checked_at ? 3 : 14);
         const ids = await gmail.listIds(searchQuery(days), 300);
+        const withFiles = new Set<string>();
         const rules = await withCurrentUser(ownerUid, async (c) => (await c.query<MailRule>(
           `SELECT id, from_address, file_text, vendor_id, special, ignore FROM perfume.mail_rules WHERE active`)).rows);
         for (const id of ids) {
@@ -187,6 +197,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
             `SELECT file_name FROM perfume.mail_files WHERE account_email = $1 AND external_gmail_message_id = $2`, [acct.email, id])).rows.map((r) => r.file_name)));
           let msg: GmailMessage;
           try { msg = await gmail.message(id); } catch (e) { if (e instanceof MailReconnectError) throw e; sum.failed++; sum.errors.push(String((e as Error)?.message ?? e).slice(0, 200)); continue; }
+          if (attachmentsOf(msg).some((a) => PRICE_FILE_EXT.test(a.fileName))) withFiles.add(id);
           const files = attachmentsOf(msg).filter((a) => PRICE_FILE_EXT.test(a.fileName) && !seen.has(a.fileName.slice(0, 300)));
           if (!files.length) continue;
           const meta = (a: Attachment): FileMeta => ({ messageId: id, fileName: a.fileName, sender: senderAddress(header(msg, "From")),
@@ -218,6 +229,46 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
             }
           }
         }
+        // Lists sent as a "Download Excel PriceList" link (MTZ, Elegance, Nandansons, Classic, Gift Express, M&R measured
+        // 2026-11-25: no attachment, a Constant Contact link). Only for senders the owner set up as a vendor.
+        const lq = linkSearchQuery(days, rules.filter((r) => r.vendor_id && !r.ignore).map((r) => r.from_address));
+        const linkIds = lq ? (await gmail.listIds(lq, 200)).filter((x) => !withFiles.has(x)) : [];
+        for (const id of linkIds) {
+          sum.messages_seen++;
+          let msg: GmailMessage;
+          try { msg = await gmail.message(id); } catch (e) { if (e instanceof MailReconnectError) throw e; sum.failed++; sum.errors.push(String((e as Error)?.message ?? e).slice(0, 200)); continue; }
+          if (attachmentsOf(msg).some((a) => PRICE_FILE_EXT.test(a.fileName))) continue;
+          const links = downloadLinksOf(htmlOf(msg));
+          if (!links.length) continue;
+          const sender = senderAddress(header(msg, "From"));
+          const seenNames = await withCurrentUser(ownerUid, async (c) => (await c.query<{ file_name: string }>(
+            `SELECT file_name FROM perfume.mail_files WHERE account_email = $1 AND external_gmail_message_id = $2`, [acct.email, id])).rows.map((r) => r.file_name));
+          for (const link of links) {
+            if (seenNames.some((n) => n.startsWith(linkFileName(link.label, "")))) continue;
+            // A link has no file name of its own: the subject carries which list it is (Elegance "Arabic Perfumes Price List").
+            const rule = ruleFor(rules, sender, `${header(msg, "Subject")} ${link.label}`);
+            if (!rule || !rule.vendor_id || rule.ignore) continue;
+            const got = await downloadLink(link, MAX_FILE_BYTES, opts.downloadImpl);
+            const f: FileMeta = { messageId: id, fileName: linkFileName(link.label, got.ok ? got.ext : ""), sender, subject: header(msg, "Subject"),
+              receivedAt: new Date(Number(msg.internalDate ?? Date.now())) };
+            try {
+              const o = await withCurrentUser(ownerUid, async (c) => {
+                const out: Outcome = got.ok
+                  ? await importMailFile(c, ctx, f, got.buf, { id: rule.id, vendor_id: rule.vendor_id!, special: rule.special })
+                  : { status: "held", reason: got.reason, ruleId: rule.id, vendorId: rule.vendor_id };
+                await recordFile(c, ctx, f, out);
+                return out;
+              });
+              if (o.status === "imported") sum.imported++;
+              else if (o.status === "held") sum.held++;
+            } catch (e) {
+              sum.failed++;
+              const msgText = String((e as Error)?.message ?? e).slice(0, 300);
+              sum.errors.push(`${f.fileName}: ${msgText}`);
+              await withCurrentUser(ownerUid, (c) => recordFile(c, ctx, f, { status: "failed", reason: msgText, ruleId: rule.id, vendorId: rule.vendor_id }));
+            }
+          }
+        }
         await withCurrentUser(ownerUid, (c) => c.query(
           `UPDATE perfume.mail_accounts SET last_checked_at = now(), last_error = NULL, updated_at = now() WHERE email = $1`, [acct.email]));
       } catch (e) {
@@ -242,7 +293,7 @@ export async function runMailImport(opts: { trigger: "schedule" | "manual"; star
 
 /** The owner's answer to one recorded file: "this sender is <vendor>" (creates the rule) and/or "import anyway". */
 export async function reprocessMailFile(ownerUid: string, fileId: string, opts: { vendorId?: string; special?: boolean; fileText?: string | null; force?: boolean;
-  fetchImpl?: FetchLike }): Promise<Outcome & { file_id: string }> {
+  fetchImpl?: FetchLike; downloadImpl?: DownloadImpl }): Promise<Outcome & { file_id: string }> {
   const f = await withCurrentUser(ownerUid, async (c) => (await c.query<{ account_email: string; external_gmail_message_id: string; file_name: string; sender: string; subject: string | null;
     received_at: Date; rule_id: string | null; vendor_id: string | null; refresh_token_enc: Buffer | null; status: string }>(
     `SELECT f.account_email, f.external_gmail_message_id, f.file_name, f.sender, f.subject, f.received_at, f.rule_id, f.vendor_id, a.refresh_token_enc, f.status
@@ -266,10 +317,7 @@ export async function reprocessMailFile(ownerUid: string, fileId: string, opts: 
   if (!vendorId) throw new MailFileError("vendor_required");
   const token = await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", opts.fetchImpl);
   const gmail = new Gmail(token, opts.fetchImpl);
-  const msg = await gmail.message(f.external_gmail_message_id);
-  const a = attachmentsOf(msg).find((x) => x.fileName.slice(0, 300) === f.file_name);
-  if (!a) throw new MailFileError("attachment_gone");
-  const buf = await gmail.attachment(f.external_gmail_message_id, a);
+  const buf = await fileBytes(gmail, f.external_gmail_message_id, f.file_name, opts.downloadImpl);
   const ctx: Ctx = { ownerUid, runId: null, account: f.account_email };
   const meta: FileMeta = { messageId: f.external_gmail_message_id, fileName: f.file_name, sender: f.sender, subject: f.subject ?? "", receivedAt: new Date(f.received_at) };
   const o = await withCurrentUser(ownerUid, async (c) => {
@@ -288,10 +336,22 @@ export async function downloadMailFile(ownerUid: string, fileId: string, fetchIm
        JOIN perfume.mail_accounts a ON a.email = f.account_email WHERE f.id = $1`, [fileId])).rows[0]);
   if (!f) throw new MailFileError("file_not_found");
   const gmail = new Gmail(await accessTokenFor(decrypt(f.refresh_token_enc) ?? "", fetchImpl), fetchImpl);
-  const msg = await gmail.message(f.external_gmail_message_id);
-  const a = attachmentsOf(msg).find((x) => x.fileName.slice(0, 300) === f.file_name);
+  return { fileName: f.file_name, buf: await fileBytes(gmail, f.external_gmail_message_id, f.file_name) };
+}
+
+/** The bytes of a recorded file: the attachment, or — for a "Link · …" file — the email's download link opened again. */
+async function fileBytes(gmail: Gmail, messageId: string, fileName: string, downloadImpl?: DownloadImpl): Promise<Buffer> {
+  const msg = await gmail.message(messageId);
+  if (fileName.startsWith(LINK_PREFIX)) {
+    const link = downloadLinksOf(htmlOf(msg)).find((l) => fileName.startsWith(linkFileName(l.label, "")));
+    if (!link) throw new MailFileError("attachment_gone");
+    const got = await downloadLink(link, MAX_FILE_BYTES, downloadImpl);
+    if (!got.ok) throw new MailFileError(got.reason);
+    return got.buf;
+  }
+  const a = attachmentsOf(msg).find((x) => x.fileName.slice(0, 300) === fileName);
   if (!a) throw new MailFileError("attachment_gone");
-  return { fileName: f.file_name, buf: await gmail.attachment(f.external_gmail_message_id, a) };
+  return gmail.attachment(messageId, a);
 }
 
 export class MailFileError extends Error {}

@@ -308,7 +308,7 @@ export async function downloadPerfumeListExcel(listId: string) {
 
 /* ---------------- Mail price lists (owner 2026-11-25 17:29 CT) ---------------- */
 /** "AN ENGINE THAT AUTOMATICALLY GOES TO MY MAIL APP, GETS ALL THE PRICE LISTS DAILY AND UPDATES THE APP WITH THE NEW PRICES". */
-export type PerfumeMailAccount = { email: string; status: "connected" | "reconnect" | "disconnected"; last_error: string | null; connected_at: string; last_checked_at: string | null };
+export type PerfumeMailAccount = { email: string; status: "connected" | "reconnect" | "disconnected"; last_error: string | null; connected_at: string; last_checked_at: string | null; can_send?: boolean };
 export type PerfumeMailRule = { id: string; from_address: string; file_text: string | null; vendor_id: string | null; vendor_name: string | null; special: boolean; ignore: boolean; created_at: string };
 export type PerfumeMailRun = { id: string; trigger: "schedule" | "manual"; started_at: string; finished_at: string | null; accounts: number; messages_seen: number;
   imported: number; held: number; unassigned: number; failed: number; error: string | null };
@@ -316,14 +316,26 @@ export type PerfumeMailFileStatus = "imported" | "held" | "unassigned" | "duplic
 export type PerfumeMailFile = { id: string; account_email: string; file_name: string; sender: string; subject: string | null; received_at: string;
   status: PerfumeMailFileStatus; reason: string | null; vendor_id: string | null; vendor_name: string | null; list_id: string | null; rows_read: number | null;
   rows_saved: number | null; file_total_cents: number | string | null; processed_at: string; list_voided_at: string | null };
+export type PerfumeMailSendBatch = { id: string; from_email: string; subject: string; attachment_names: string[]; recipients: number; sent: number;
+  skipped: number; failed: number; status: "sending" | "done" | "stopped" | "failed"; error: string | null; started_at: string; finished_at: string | null };
+export type PerfumeMailOptout = { email: string; reason: string | null; created_at: string };
+export type PerfumeMailSendState = { sender: string; daily_cap: number; sent_last_24h: number; max_recipients: number; max_attachment_bytes: number;
+  footer: string; batches: PerfumeMailSendBatch[]; optouts: PerfumeMailOptout[] };
 export type PerfumeMailState = { configured: boolean; mailboxes: string[]; schedule: string; running: boolean; accounts: PerfumeMailAccount[];
-  rules: PerfumeMailRule[]; runs: PerfumeMailRun[]; files: PerfumeMailFile[] };
+  rules: PerfumeMailRule[]; runs: PerfumeMailRun[]; files: PerfumeMailFile[]; send?: PerfumeMailSendState };
 export const getPerfumeMail = () => apiRequest<PerfumeMailState>("/api/v1/perfume/mail");
-/** Google sign-in for one TIO mailbox (read-only). A page navigation, not a fetch: Google's screen opens in this tab. */
-export function perfumeMailConnectUrl(email: string): string {
-  const q = new URLSearchParams({ email, returnTo: window.location.origin });
+/** Google sign-in for one TIO mailbox (read-only; jpm@tioperfumes.com also asks for send). A page navigation, not a fetch. */
+export function perfumeMailConnectUrl(email: string, send = false): string {
+  const q = new URLSearchParams({ email, returnTo: window.location.origin, ...(send ? { send: "1" } : {}) });
   return resolveApiUrl(`/api/v1/perfume/mail/connect?${q.toString()}`);
 }
+export type PerfumeMailSendBody = { to: string; subject: string; body: string; attachments: Array<{ name: string; mime_type?: string; content_base64: string }> };
+export const sendPerfumeMail = (b: PerfumeMailSendBody) =>
+  apiRequest<{ batch_id: string; recipients: number }>("/api/v1/perfume/mail/send", { method: "POST", body: b });
+export const stopPerfumeMailSend = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/mail/send/${encodeURIComponent(id)}/stop`, { method: "POST", body: {} });
+export const addPerfumeMailOptouts = (emails: string, reason?: string) =>
+  apiRequest<{ added: number }>("/api/v1/perfume/mail/optouts", { method: "POST", body: { emails, ...(reason ? { reason } : {}) } });
+export const removePerfumeMailOptout = (email: string) => apiRequest<{ ok: true }>("/api/v1/perfume/mail/optouts/remove", { method: "POST", body: { email } });
 export const disconnectPerfumeMail = (email: string) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/mail/accounts/${encodeURIComponent(email)}/disconnect`, { method: "POST", body: {} });
 export const runPerfumeMail = (days?: number) => apiRequest<{ started: true }>("/api/v1/perfume/mail/run", { method: "POST", body: days ? { days } : {} });
