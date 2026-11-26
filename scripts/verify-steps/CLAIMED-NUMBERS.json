@@ -18421,5 +18421,10 @@
     "claimed_at": "2026-11-14T18:41:34Z",
     "claimed_by": "cursor",
     "purpose": "ROUND 8.20 ProgramTracker + CSR expenses href ret wave9"
+  },
+  "20221": {
+    "claimed_at": "2026-11-26T22:45:00Z",
+    "claimed_by": "claude-lead",
+    "purpose": "PERFUME-CONTACTS-IMPORT-SPEED verify-perfume-contacts-matcher (PR #29854)"
   }
 }
