@@ -88,7 +88,7 @@ export async function runSend(ownerUid: string, batchId: string, input: StartInp
       `SELECT refresh_token_enc FROM perfume.mail_accounts WHERE email = $1`, [input.from])).rows[0]?.refresh_token_enc);
     const gmail = new Gmail(await accessTokenFor(decrypt(tokenEnc ?? null) ?? "", fetchImpl), fetchImpl);
     const optouts = await withCurrentUser(ownerUid, async (c) => new Set((await c.query<{ email: string }>(
-      `SELECT email FROM perfume.mail_optouts`)).rows.map((r) => r.email)));
+      `SELECT email FROM perfume.mail_optouts WHERE removed_at IS NULL`)).rows.map((r) => r.email)));
     const text = messageText(input.body);
     for (let i = 0; i < input.recipients.length; i++) {
       const to = input.recipients[i];
@@ -104,7 +104,7 @@ export async function runSend(ownerUid: string, batchId: string, input: StartInp
           const id = await gmail.send(buildMime({ from: input.from, to, subject: input.subject.trim(), text, attachments: input.attachments }));
           sent++;
           await withCurrentUser(ownerUid, (c) => c.query(
-            `INSERT INTO perfume.mail_sends (batch_id, to_email, status, gmail_message_id) VALUES ($1, $2, 'sent', $3) ON CONFLICT DO NOTHING`, [batchId, to, id]));
+            `INSERT INTO perfume.mail_sends (batch_id, to_email, status, external_gmail_message_id) VALUES ($1, $2, 'sent', $3) ON CONFLICT DO NOTHING`, [batchId, to, id]));
         } catch (e) {
           if (e instanceof MailReconnectError || e instanceof SendNotGrantedError) throw e;
           failed++;

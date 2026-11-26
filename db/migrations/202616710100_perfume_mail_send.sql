@@ -9,10 +9,11 @@
 -- 1) perfume.mail_accounts.can_send — the mailbox grant includes Gmail send (only jpm@tioperfumes.com may be a sender).
 -- 2) perfume.mail_send_batches — one row per Send press: from, subject, message, attachment names, counts, status.
 -- 3) perfume.mail_sends — one row per recipient of a batch: sent / skipped (opted out, duplicate) / failed, Gmail id.
--- 4) perfume.mail_optouts — addresses that asked not to receive lists; a send always skips them.
+-- 4) perfume.mail_optouts — addresses that asked not to receive lists; a send always skips them. Taking one off the list
+--    stamps removed_at (kept, never deleted, like every perfume table); adding it again clears removed_at.
 --
 -- Isolated perfume schema (ScentsX LLC): no operating_company_id, never posts to accounting. FORCE RLS owner-only like
--- every perfume table. No DELETE on sends/batches (history is kept); an opt-out can be removed by the owner.
+-- every perfume table. No DELETE grant anywhere (history is kept).
 -- Additive, idempotent.
 
 ALTER TABLE perfume.mail_accounts ADD COLUMN IF NOT EXISTS can_send boolean NOT NULL DEFAULT false;
@@ -41,7 +42,7 @@ CREATE TABLE IF NOT EXISTS perfume.mail_sends (
   batch_id uuid NOT NULL REFERENCES perfume.mail_send_batches(id),
   to_email text NOT NULL CHECK (to_email = lower(to_email) AND to_email LIKE '%_@_%'),
   status text NOT NULL CHECK (status IN ('sent', 'skipped_optout', 'failed')),
-  gmail_message_id text,
+  external_gmail_message_id text,
   error text,
   sent_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (batch_id, to_email)
@@ -52,7 +53,9 @@ CREATE TABLE IF NOT EXISTS perfume.mail_optouts (
   email text PRIMARY KEY CHECK (email = lower(email) AND email LIKE '%_@_%'),
   reason text CHECK (reason IS NULL OR length(reason) <= 300),
   created_by uuid REFERENCES identity.users(id),
-  created_at timestamptz NOT NULL DEFAULT now()
+  created_at timestamptz NOT NULL DEFAULT now(),
+  removed_at timestamptz,
+  removed_by uuid REFERENCES identity.users(id)
 );
 
 ALTER TABLE perfume.mail_send_batches ENABLE ROW LEVEL SECURITY;
@@ -71,4 +74,4 @@ ALTER TABLE perfume.mail_optouts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE perfume.mail_optouts FORCE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS mail_optouts_owner_only ON perfume.mail_optouts;
 CREATE POLICY mail_optouts_owner_only ON perfume.mail_optouts USING (perfume.is_owner()) WITH CHECK (perfume.is_owner());
-GRANT SELECT, INSERT, DELETE ON perfume.mail_optouts TO ih35_app;
+GRANT SELECT, INSERT, UPDATE ON perfume.mail_optouts TO ih35_app;

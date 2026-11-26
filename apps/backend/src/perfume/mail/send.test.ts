@@ -19,7 +19,7 @@ vi.mock("../../auth/db.js", () => ({
       if (s.startsWith("INSERT INTO perfume.mail_send_batches")) {
         const id = `b${db.batches.length + 1}`; db.batches.push({ id, status: "sending", recipients: p[5] }); return { rows: [{ id }] };
       }
-      if (s.startsWith("SELECT email FROM perfume.mail_optouts")) return { rows: db.optouts.map((email) => ({ email })) };
+      if (s.startsWith("SELECT email FROM perfume.mail_optouts WHERE removed_at IS NULL")) return { rows: db.optouts.map((email) => ({ email })) };
       if (s.startsWith("SELECT status FROM perfume.mail_send_batches")) return { rows: db.batches.filter((b) => b.id === p[0]).map((b) => ({ status: b.status })) };
       if (s.startsWith("INSERT INTO perfume.mail_sends")) {
         const status = s.includes("'skipped_optout'") ? "skipped_optout" : s.includes("'sent'") ? "sent" : "failed";

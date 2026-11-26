@@ -79,7 +79,7 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
       const sentToday = Number((await c.query<{ n: string }>(
         `SELECT count(*) n FROM perfume.mail_sends s JOIN perfume.mail_send_batches b ON b.id = s.batch_id
           WHERE b.from_email = $1 AND s.status = 'sent' AND s.sent_at > now() - interval '24 hours'`, [PERFUME_SENDER])).rows[0].n);
-      const optouts = (await c.query(`SELECT email, reason, created_at FROM perfume.mail_optouts ORDER BY created_at DESC`)).rows;
+      const optouts = (await c.query(`SELECT email, reason, created_at FROM perfume.mail_optouts WHERE removed_at IS NULL ORDER BY created_at DESC`)).rows;
       const rules = (await c.query(
         `SELECT r.id, r.from_address, r.file_text, r.vendor_id, v.name AS vendor_name, r.special, r.ignore, r.created_at
            FROM perfume.mail_rules r LEFT JOIN perfume.vendors v ON v.id = r.vendor_id WHERE r.active ORDER BY r.from_address, r.file_text NULLS FIRST`)).rows;
@@ -229,7 +229,8 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     if (!b.success) return reply.code(400).send({ error: "validation_error" });
     const { emails } = parseRecipients(b.data.emails);
     await withCurrentUser(uid, async (c) => { for (const e of emails) await c.query(
-      `INSERT INTO perfume.mail_optouts (email, reason, created_by) VALUES ($1, $2, $3) ON CONFLICT (email) DO NOTHING`, [e, b.data.reason ?? null, uid]); });
+      `INSERT INTO perfume.mail_optouts (email, reason, created_by) VALUES ($1, $2, $3)
+       ON CONFLICT (email) DO UPDATE SET removed_at = NULL, removed_by = NULL, reason = coalesce(EXCLUDED.reason, perfume.mail_optouts.reason)`, [e, b.data.reason ?? null, uid]); });
     return { added: emails.length };
   });
 
@@ -237,7 +238,8 @@ export async function registerPerfumeMailRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = z.object({ email: z.string().email() }).safeParse(req.body);
     if (!b.success) return reply.code(400).send({ error: "validation_error" });
-    await withCurrentUser(uid, (c) => c.query(`DELETE FROM perfume.mail_optouts WHERE email = $1`, [b.data.email.toLowerCase()]));
+    await withCurrentUser(uid, (c) => c.query(
+      `UPDATE perfume.mail_optouts SET removed_at = now(), removed_by = $2 WHERE email = $1 AND removed_at IS NULL`, [b.data.email.toLowerCase(), uid]));
     return { ok: true };
   });
 }
