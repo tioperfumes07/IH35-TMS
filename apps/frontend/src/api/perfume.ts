@@ -401,3 +401,22 @@ export const stopPerfumeGoogleRun = (id: string) => apiRequest<{ stopping: boole
 export type PerfumeContactImportTally = { records: number; inserted: number; matched: number; by: Record<string, number>; people_inserted: number; people_existing: number; origins: number };
 export const importPerfumeContacts = (records: unknown[]) =>
   apiRequest<PerfumeContactImportTally>("/api/v1/perfume/contacts/import", { method: "POST", body: { records } });
+
+/* ------------------------------------------------------------------ Trade show planner (owner 2026-11-26 15:56 CT) */
+export type PerfumeShow = { id: string; name: string; starts_on: string | null; ends_on: string | null; city: string | null; country: string | null;
+  kind: string | null; dates_status: string | null; i_go: boolean; venue: string | null; website: string | null; notes: string | null; source: string | null;
+  contacts: number; meetings: number };
+export type PerfumeShowContactStatus = "attends" | "meeting_asked" | "meeting_booked" | "met";
+export type PerfumeShowContact = { id: string; company_id: string; company: string; role: PerfumeContactRole | null; city: string | null; country: string | null;
+  person_id: string | null; person: string | null; email: string | null; phone: string | null; status: PerfumeShowContactStatus; meeting_at: string | null;
+  booth: string | null; note: string | null };
+export const listPerfumeShows = () => apiRequest<{ shows: PerfumeShow[] }>("/api/v1/perfume/trade-shows");
+export const savePerfumeShow = (s: Partial<PerfumeShow> & { name: string }) => apiRequest<{ id: string; created: boolean }>("/api/v1/perfume/trade-shows", { method: "POST", body: s });
+export const importPerfumeShows = (shows: Array<Partial<PerfumeShow> & { name: string }>) =>
+  apiRequest<{ shows: number; created: number; matched: number }>("/api/v1/perfume/trade-shows/import", { method: "POST", body: { shows } });
+export const setPerfumeShowIGo = (id: string, i_go: boolean) => apiRequest<{ ok: true }>(`/api/v1/perfume/trade-shows/${id}/i-go`, { method: "POST", body: { i_go } });
+export const listPerfumeShowContacts = (id: string) => apiRequest<{ contacts: PerfumeShowContact[] }>(`/api/v1/perfume/trade-shows/${id}/contacts`);
+export const addPerfumeShowContact = (id: string, b: { company_id: string; person_id?: string | null; status?: PerfumeShowContactStatus; booth?: string | null; note?: string | null }) =>
+  apiRequest<{ id: string }>(`/api/v1/perfume/trade-shows/${id}/contacts`, { method: "POST", body: b });
+export const updatePerfumeShowContact = (id: string, b: { status?: PerfumeShowContactStatus; meeting_at?: string | null; booth?: string | null; note?: string | null; archived?: boolean }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/trade-show-contacts/${id}`, { method: "PATCH", body: b });
