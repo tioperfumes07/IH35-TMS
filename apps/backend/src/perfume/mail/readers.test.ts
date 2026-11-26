@@ -144,7 +144,11 @@ describe("each file type the engine opens", () => {
 
 describe("held, never guessed", () => {
   it("a .xls with no price columns, a scanned PDF and a non-price file are held with their reason", async () => {
-    expect(chooseReading(await readPriceFile(Buffer.from("x"), "old.xls"), null)).toBeNull();
+    // Not an Excel file at all (no OLE2 signature): refused before the parser ever sees it.
+    await expect(readPriceFile(Buffer.from("<html><body>price list</body></html>"), "old.xls")).rejects.toMatchObject({ reason: "unreadable" });
+    // A real .xls with no price column: read, then held (no reading chosen).
+    const noPrice = XLSX.write({ SheetNames: ["S"], Sheets: { S: XLSX.utils.aoa_to_sheet([["Item", "Notes"], ["Asad", "call"]]) } }, { type: "buffer", bookType: "biff8" }) as Buffer;
+    expect(chooseReading(await readPriceFile(noPrice, "old.xls"), null)).toBeNull();
     await expect(readPriceFile(pdfWithLines([]), "scan.pdf")).rejects.toBeInstanceOf(UnreadableFileError);
     await expect(readPriceFile(pdfWithLines([]), "scan.pdf")).rejects.toMatchObject({ reason: "scanned_pdf" });
     await expect(readPriceFile(Buffer.from("x"), "photo.jpg")).rejects.toMatchObject({ reason: "unsupported_type" });

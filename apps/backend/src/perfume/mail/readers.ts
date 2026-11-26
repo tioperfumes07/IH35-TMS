@@ -227,10 +227,25 @@ export async function readXlsx(buf: Buffer): Promise<ReadFile> {
  * (perfumeFileReaders.readSpreadsheet: SheetJS, header: 1, raw: true, defval: null, blankrows: false), so a .xls saved by
  * mail and the same .xls saved by hand give the same cells and the same to-the-cent total.
  */
+/** The OLE2 compound-file signature every real BIFF .xls starts with (D0 CF 11 E0 A1 B1 1A E1). */
+export const OLE_XLS_MAGIC = Buffer.from([0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1]);
+/** A vendor price list never needs more; a bigger "xls" is refused before it is parsed. */
+export const XLS_MAX_BYTES = 15 * 1024 * 1024;
+
+/**
+ * Old binary Excel (.xls) from a vendor's mail. Untrusted bytes, so: the OLE2 signature is checked first (an HTML or
+ * text file renamed .xls is refused, never handed to the parser), the size is capped, and only cell values are read
+ * (no formulas evaluated, no HTML/SYLK/text sniffing — `type: "buffer"` on a verified OLE2 file). Read with SheetJS
+ * 0.20.3 from cdn.sheetjs.com, the fixed release (the 0.18.5 npm build removed in #2686 is never used).
+ */
 export function readXls(buf: Buffer): ReadFile {
+  if (buf.length < OLE_XLS_MAGIC.length || !buf.subarray(0, OLE_XLS_MAGIC.length).equals(OLE_XLS_MAGIC)) {
+    throw new UnreadableFileError("unreadable", "This .xls file is not a real Excel file (no Excel signature) — not read.");
+  }
+  if (buf.length > XLS_MAX_BYTES) throw new UnreadableFileError("unreadable", `Excel (.xls) file is over ${XLS_MAX_BYTES / 1024 / 1024} MB — not read.`);
   let wb: XLSX.WorkBook;
   try {
-    wb = XLSX.read(buf, { type: "buffer", cellDates: false });
+    wb = XLSX.read(buf, { type: "buffer", cellDates: false, cellFormula: false, cellHTML: false, cellStyles: false });
   } catch (e) {
     throw new UnreadableFileError("unreadable", `Excel (.xls) file could not be opened: ${String((e as Error)?.message ?? e).slice(0, 160)}`);
   }
