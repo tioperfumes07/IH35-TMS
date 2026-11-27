@@ -260,12 +260,9 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             {Object.entries(GENDER).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
           </select>
         </label>
-        <span className="flex flex-wrap items-center gap-2">
-          {FLAGS.map((fl) => (
-            <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)}
-              onChange={(e) => setEdit({ ...edit, flags: e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl) })} data-testid={`perfume-itemfile-flag-${fl}`} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
-          ))}
-        </span>
+        <label>{tr("perfume.itemfile.flags", "Flags")}
+          <FlagsSelect value={flags} onChange={(x) => setEdit({ ...edit, flags: x })} testId="perfume-itemfile-flag" />
+        </label>
         <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={val("case_pack", it.case_pack ?? null) ?? ""}
           onChange={(e) => setEdit({ ...edit, case_pack: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-case-pack" /></label>
         <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={val("min_order_qty", it.min_order_qty ?? null) ?? ""}
@@ -565,11 +562,33 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
  * one"). One row per field. Brand, model and size offer what is already in the file (type to add a new one); product type and category
  * come from his own lists; EDT / EDP / Parfum and gender are fixed lists. A copy of an item that already exists is refused by name.
  */
+/**
+ * Flags as one dropdown (owner 2026-11-27 13:58 CT "this should not be like this, make clean, drop down") — the box shows what is
+ * picked ("Tester, Set" or —); open it to tick any of the six. Same size as the other boxes.
+ */
+export function FlagsSelect({ value, onChange, testId }: { value: string[]; onChange: (v: string[]) => void; testId: string }) {
+  const nice = (f: string) => f.charAt(0) + f.slice(1).toLowerCase();
+  return (
+    <details className="relative block" data-testid={testId}>
+      <summary className={`${ctl} flex w-[160px] cursor-pointer list-none items-center justify-between gap-1`} aria-label={tr("perfume.itemfile.flags", "Flags")}>
+        <span className="truncate">{value.length ? value.map(nice).join(", ") : DASH}</span><span aria-hidden="true">▾</span>
+      </summary>
+      <div className="absolute left-0 z-20 mt-1 w-[160px] rounded-[3px] border border-[#D8E0E8] bg-white p-2 shadow-md">
+        {FLAGS.map((fl) => (
+          <label key={fl} className="flex items-center gap-2 py-[3px]">
+            <input type="checkbox" checked={value.includes(fl)} onChange={(e) => onChange(e.target.checked ? [...value, fl] : value.filter((y) => y !== fl))} data-testid={`${testId}-${fl}`} />{nice(fl)}
+          </label>
+        ))}
+      </div>
+    </details>
+  );
+}
+
 export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) {
   const { pushToast } = useToast();
   const cats = useItemCatalogs();
   const opts = useQuery({ queryKey: ["perfume", "item-options"], queryFn: getPerfumeItemOptions, staleTime: 60_000 });
-  const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "", case_pack: "", moq: "", weight: "", origin: "", hs: "" });
+  const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "", case_pack: "", moq: "", weight: "", origin: "", hs: "", hk: "" });
   const [flags, setFlags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const ok = v.brand.trim() && v.name.trim() && (v.size === "" || Number(v.size) >= 0);
@@ -579,7 +598,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
     try {
       const r = await createPerfumeItem({ brand: v.brand.trim(), name: v.name.trim(), size_ml: v.size === "" ? null : Number(v.size), conc: v.conc, gender: v.gender, flags,
         model: v.model.trim() || null, product_type: v.product_type || null, category: v.category || null, description: v.description.trim() || null,
-        tio_code: v.tio_code.trim() || null, upc: v.upc.trim() || null, family_id: v.family_id || null,
+        tio_code: v.tio_code.trim() || null, hk_code: v.hk.trim() || null, upc: v.upc.trim() || null, family_id: v.family_id || null,
         case_pack: v.case_pack ? Number(v.case_pack) : null, min_order_qty: v.moq ? Number(v.moq) : null, weight_g: v.weight ? Number(v.weight) : null,
         origin_country: v.origin.trim().toUpperCase() || null, hs_code: v.hs.trim() || null });
       pushToast(`Item created: ${r.display_name}`, "success"); onCreated(r.id);
@@ -595,6 +614,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
       <datalist id="perfume-sizes">{(opts.data?.sizes ?? []).map((b) => <option key={b} value={b} />)}</datalist>
       <div className="flex flex-wrap items-end gap-2 text-xs" data-testid="perfume-new-fields">
         <label>{tr("perfume.itemfile.tio_code", "TIO code")} <input className={`${ctl} block w-[120px]`} value={v.tio_code} onChange={(e) => setV({ ...v, tio_code: e.target.value })} data-testid="perfume-new-tio" /></label>
+        <label>{tr("perfume.itemfile.hk_code", "HK code")} <input className={`${ctl} block w-[120px]`} value={v.hk} onChange={(e) => setV({ ...v, hk: e.target.value })} data-testid="perfume-new-hk" /></label>
         <label>{`${tr("perfume.itemfile.brand", "Brand")} *`} <input list="perfume-brands" className={`${ctl} block w-[160px]`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-new-brand" /></label>
         <label>{`${tr("perfume.itemfile.name", "Name")} *`} <input className={`${ctl} block w-[260px]`} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} data-testid="perfume-new-name" /></label>
         <label>{tr("perfume.itemfile.size", "Size ml")} <input list="perfume-sizes" type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-new-size" /></label>
@@ -618,12 +638,9 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
             {Object.entries(GENDER).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
           </select>
         </label>
-        <span className="flex flex-wrap items-center gap-2">
-          {FLAGS.map((fl) => (
-            <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)}
-              onChange={(e) => setFlags(e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl))} data-testid={`perfume-new-flag-${fl}`} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
-          ))}
-        </span>
+        <label>{tr("perfume.itemfile.flags", "Flags")}
+          <FlagsSelect value={flags} onChange={setFlags} testId="perfume-new-flag" />
+        </label>
         <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-new-case-pack" /></label>
         <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-new-moq" /></label>
         <label>{tr("perfume.itemfile.weight", "Weight g")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.weight} onChange={(e) => setV({ ...v, weight: e.target.value })} data-testid="perfume-new-weight" /></label>

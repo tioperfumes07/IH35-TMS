@@ -838,7 +838,7 @@ export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number 
   case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
 export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags" | "regular_item_id">; flags_add?: string[]; flags_remove?: string[] };
 export type PerfumeItemCreate = { brand: string; name: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; model?: string | null;
-  product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; upc?: string | null; family_id?: string | null;
+  product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; hk_code?: string | null; upc?: string | null; family_id?: string | null;
   case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
 export const createPerfumeItem = (b: PerfumeItemCreate) => apiRequest<{ id: string; display_name: string }>("/api/v1/perfume/item-file", { method: "POST", body: b });
 export const getPerfumeItemOptions = () => apiRequest<{ brands: string[]; models: string[]; sizes: string[] }>("/api/v1/perfume/item-file-options");
