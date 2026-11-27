@@ -32,17 +32,19 @@ export const importRecordSchema = z.object({
     role: z.enum(["vendor", "customer", "both"]).nullable().optional(), how_started: str, found_in: z.string().max(2000).nullable().optional(),
     first_contact_on: date, last_email_on: date, email_count: z.number().int().min(0).nullable().optional(), sent_lists: z.boolean().optional(),
     opted_out: z.boolean().optional(), master_row: z.number().int().nullable().optional(),
-  })).max(50),
+  })).max(200),
   origins: z.array(z.object({
     person_index: z.number().int().min(0).nullable().optional(), occurred_on: date, how: z.string().trim().min(1).max(200),
     source: z.string().trim().min(1).max(300), source_url: z.string().max(2000).nullable().optional(), detail: z.string().max(2000).nullable().optional(),
-  })).max(50).optional(),
+    // A leaked vendor list (owner 2026-11-26 17:38 CT: "i need to know from which address the leak came"): the sender and list number.
+    sender_email: z.string().trim().toLowerCase().max(320).nullable().optional(), leak_no: z.number().int().positive().nullable().optional(),
+  })).max(200).optional(),
 });
 export type ImportRecord = z.infer<typeof importRecordSchema>;
 export type ImportTally = { records: number; inserted: number; matched: number; by: Record<string, number>; people_inserted: number; people_existing: number; origins: number };
 export const emptyTally = (): ImportTally => ({ records: 0, inserted: 0, matched: 0, by: {}, people_inserted: 0, people_existing: 0, origins: 0 });
 
-const FREE_MAIL = new Set(["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "aol.com", "icloud.com", "me.com", "live.com", "msn.com", "prodigy.net.mx",
+export const FREE_MAIL = new Set(["gmail.com", "hotmail.com", "yahoo.com", "outlook.com", "aol.com", "icloud.com", "me.com", "live.com", "msn.com", "prodigy.net.mx",
   "hotmail.es", "yahoo.com.mx", "live.com.mx", "outlook.es", "comcast.net", "att.net", "sbcglobal.net", "verizon.net", "mail.com", "protonmail.com", "usa.com"]);
 const ROLE_MERGE = (a: string | null, b: string | null) => (!a ? b ?? null : !b || a === b ? a : "both");
 
@@ -51,7 +53,7 @@ const COMPANY_COLS: Array<keyof ImportRecord["company"]> = ["name", "domain", "r
   "external_source", "external_directory_id", "external_ref", "segment", "scian_code"];
 
 /** Which company this record is, by the matcher's in-memory keys (one read per batch — see contacts.matcher.ts). */
-function findCompany(m: ContactMatcher, rec: ImportRecord, nameKey: string | null): [string | null, string | null] {
+export function findCompany(m: ContactMatcher, rec: ImportRecord, nameKey: string | null): [string | null, string | null] {
   const co = rec.company;
   // Two different ids from the same directory are two different businesses (two "Sin Nombre" beer depots on one street, two
   // branches sharing a phone): they never merge with each other — only with records from another source.
@@ -117,8 +119,9 @@ async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, name
       [id, o.how, o.source, pid, o.occurred_on ?? null]);
     if (dup.rowCount) continue;
     await c.query(
-      `INSERT INTO perfume.contact_origins (company_id, person_id, occurred_on, how, source, source_url, detail, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [id, pid, o.occurred_on ?? null, o.how, o.source, o.source_url ?? null, o.detail ?? null, owner]);
+      `INSERT INTO perfume.contact_origins (company_id, person_id, occurred_on, how, source, source_url, detail, sender_email, leak_no, created_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [id, pid, o.occurred_on ?? null, o.how, o.source, o.source_url ?? null, o.detail ?? null, o.sender_email ?? null, o.leak_no ?? null, owner]);
     t.origins += 1;
   }
 }

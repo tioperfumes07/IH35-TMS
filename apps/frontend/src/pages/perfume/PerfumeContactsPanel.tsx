@@ -44,6 +44,7 @@ const CONTACT_FILTERS: Array<{ facet: PerfumeContactFacet; pick: keyof PerfumeCo
   { facet: "status", pick: "statuses", label: "Status", all: "Any status" },
   { facet: "show", pick: "shows", label: "Trade show", all: "Any trade show" },
   { facet: "reach", pick: "reach", label: "Email / phone", all: "Email or not" },
+  { facet: "kind", pick: "kinds", label: "Source kind", all: "Every source kind" },
 ];
 
 function RoleBadge({ role }: { role: PerfumeContactRole | null }) {
@@ -51,8 +52,9 @@ function RoleBadge({ role }: { role: PerfumeContactRole | null }) {
   return <span className={`text-section-header inline-block rounded-sm px-1.5 text-white ${ROLE_CLASS[role]}`}>{ROLE_TEXT[role]}</span>;
 }
 
-export function PerfumeContactsPanel() {
-  const [role, setRole] = useState<PerfumeContactRole | "none" | "all">("all");
+/** `initialRole`: the Leads module's Vendors / Customers tabs open this list already on that role (owner 2026-11-26 17:38 CT "where is vendors and customers?"). */
+export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: PerfumeContactRole | "none" | "all" } = {}) {
+  const [role, setRole] = useState<PerfumeContactRole | "none" | "all">(initialRole);
   const [source, setSource] = useState<string>("");
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(null);

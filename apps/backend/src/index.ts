@@ -498,6 +498,7 @@ import { registerPerfumeMailRoutes } from "./perfume/mail/mail.routes.js";
 import { registerPerfumeContactsRoutes } from "./perfume/contacts.routes.js";
 import { registerPerfumeTradeShowRoutes } from "./perfume/trade-shows.routes.js";
 import { registerPerfumeCampaignRoutes } from "./perfume/campaigns.routes.js";
+import { registerPerfumeLeadsRoutes } from "./perfume/leads.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
 import { startLoadChangeBus, stopLoadChangeBus } from "./realtime/load-change-bus.js";
 import { initializeQboHistoricalImportRunner } from "./cron/qbo-historical-import-runner.js";
@@ -1473,6 +1474,7 @@ async function main() {
   await registerPerfumeContactsRoutes(app);
   await registerPerfumeTradeShowRoutes(app);
   await registerPerfumeCampaignRoutes(app);
+  await registerPerfumeLeadsRoutes(app);
   await registerDailyTasksRoutes(app);
   await app.register(taskRoutes, { prefix: "/api/v1/tasks" });
   await registerTelematicsHosRoutes(app);

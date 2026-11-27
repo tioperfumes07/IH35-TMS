@@ -19,7 +19,9 @@ export type ContactListQuery = { role?: ContactRole | "none" | "all"; q?: string
   countries?: string[]; states?: string[]; cities?: string[]; categories?: string[]; sources?: string[]; hows?: string[];
   /** Owner 2026-11-26 16:59 CT "get this all completely done" — the rest of the designed boxes: region, customer type (Duty
    *  free is one), vendor type, business type, status, trade show, and how to reach them (email / phone only / neither). */
-  regions?: string[]; ctypes?: string[]; vtypes?: string[]; segments?: string[]; statuses?: string[]; shows?: string[]; reach?: string[] };
+  regions?: string[]; ctypes?: string[]; vtypes?: string[]; segments?: string[]; statuses?: string[]; shows?: string[]; reach?: string[];
+  /** Owner 2026-11-26 17:38 CT: leads "categorized … from research or the source" — any of the lead source kinds (email, leaked email, phone, research …). */
+  kinds?: string[] };
 
 /** "How to reach" — the company has a person with an email, only a phone, or neither. */
 export const REACH_SQL = `CASE WHEN EXISTS (SELECT 1 FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL AND p.email IS NOT NULL) THEN 'Has email'
@@ -27,7 +29,7 @@ export const REACH_SQL = `CASE WHEN EXISTS (SELECT 1 FROM perfume.contact_people
   ELSE 'No email or phone' END`;
 
 /** The values the filter boxes offer, each with how many companies carry it (role + search applied, the boxes themselves not). */
-export const CONTACT_FACETS = ["country", "state", "city", "category", "source", "how", "region", "ctype", "vtype", "segment", "status", "show", "reach"] as const;
+export const CONTACT_FACETS = ["country", "state", "city", "category", "source", "how", "region", "ctype", "vtype", "segment", "status", "show", "reach", "kind"] as const;
 export type ContactFacet = typeof CONTACT_FACETS[number];
 
 export async function contactCounts(c: pg.PoolClient) {
@@ -70,6 +72,7 @@ export function contactWhere(q: ContactListQuery): { where: string[]; args: unkn
   if (q.shows?.length) add(`EXISTS (SELECT 1 FROM perfume.trade_show_contacts x JOIN perfume.trade_shows s ON s.id = x.show_id
       WHERE x.company_id = co.id AND x.archived_at IS NULL AND s.archived_at IS NULL AND s.name = ANY(?::text[]))`, q.shows);
   if (q.reach?.length) add(`(${REACH_SQL}) = ANY(?::text[])`, q.reach);
+  if (q.kinds?.length) add(`(co.source_kind = ANY(?::text[]) OR EXISTS (SELECT 1 FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.source_kind = ANY($${args.length + 1}::text[])))`, q.kinds);
   if (q.q && q.q.trim()) {
     args.push(`%${q.q.trim().toLowerCase()}%`);
     const i = args.length;
@@ -110,9 +113,10 @@ export async function contactFacets(c: pg.PoolClient, q: ContactListQuery): Prom
     show: `unnest(ARRAY(SELECT s.name FROM perfume.trade_show_contacts x JOIN perfume.trade_shows s ON s.id = x.show_id
              WHERE x.company_id = co.id AND x.archived_at IS NULL AND s.archived_at IS NULL))`,
     reach: REACH_SQL,
+    kind: `unnest(ARRAY(SELECT DISTINCT k FROM (SELECT o.source_kind AS k FROM perfume.contact_origins o WHERE o.company_id = co.id UNION SELECT co.source_kind) z WHERE k IS NOT NULL))`,
   };
   const own: Record<ContactFacet, keyof ContactListQuery> = { country: "countries", state: "states", city: "cities", source: "sources", category: "categories", how: "hows",
-    region: "regions", ctype: "ctypes", vtype: "vtypes", segment: "segments", status: "statuses", show: "shows", reach: "reach" };
+    region: "regions", ctype: "ctypes", vtype: "vtypes", segment: "segments", status: "statuses", show: "shows", reach: "reach", kind: "kinds" };
   for (const f of CONTACT_FACETS) {
     const { where, args } = contactWhere({ ...q, [own[f]]: undefined });
     const rows = (await c.query<{ value: string; count: number }>(
