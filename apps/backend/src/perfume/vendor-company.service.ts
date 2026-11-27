@@ -8,7 +8,7 @@
  */
 import type pg from "pg";
 import { z } from "zod";
-import { companySuggestions, ProfileInvalid, ProfileNotFound } from "./profiles.service.js";
+import { companySuggestions, matchKey, ProfileInvalid, ProfileNotFound } from "./profiles.service.js";
 
 /** The company part of a list's name: what follows " — " and a trailing "( … )" are the list's own label
  *  ("Elegance Distributors — ARABIC list" → "Elegance Distributors", "Miami Trading Zone (MTZ)" → "Miami Trading Zone"). */
@@ -48,11 +48,16 @@ export async function vendorLinkPreview(c: pg.PoolClient): Promise<{ proposals: 
                                   FROM perfume.contact_companies cc WHERE cc.id = $1`, [id])).rows[0];
       if (r) candidates.unshift({ ...r, people: Number(r.people), exact: true } as Candidate);
     }
-    candidates.sort((a, b) => Number(b.exact) - Number(a.exact) || b.people - a.people || a.name.localeCompare(b.name));
+    // Rank (owner 2026-11-27 17:44 CT review of the live preview: "La Esperanza" must not land on a person named Esperanza,
+    // "Premier" on Premier Fragrance LLC, not Premier Beauty Brands): the owner's own note in Contacts ("your vendor",
+    // "also your direct vendor") first, then a name that starts with the list's company name, then same name, then people.
+    const base = matchKey(company_name);
+    const score = (x: Candidate) => (/your (direct )?vendor/i.test(x.name) ? 4 : 0) + (base.length >= 5 && matchKey(x.name).startsWith(base) ? 2 : 0) + (x.exact ? 2 : 0);
+    candidates.sort((a, b) => score(b) - score(a) || b.people - a.people || a.name.localeCompare(b.name));
     const exact = candidates.filter((x) => x.exact);
     const action: LinkProposal["action"] = candidates.length === 0 ? "create" : (exact.length === 1 || candidates.length === 1) ? "link" : "choose";
-    // "choose": the proposal is the candidate with most people (exact names first); the owner confirms or changes it.
-    const company_id = action === "create" ? null : (exact.length === 1 ? exact[0]!.id : candidates[0]!.id);
+    // "choose": the proposal is the best-ranked candidate; the owner confirms or changes it (or finds another company).
+    const company_id = action === "create" ? null : (exact.length === 1 && score(exact[0]!) >= score(candidates[0]!) ? exact[0]!.id : candidates[0]!.id);
     proposals.push({ vendor_id: v.id, vendor: v.name, short_name: v.short_name, kind: v.kind, company_name, action, company_id, candidates });
   }
   return { proposals, linked, unlinked: vs.length };

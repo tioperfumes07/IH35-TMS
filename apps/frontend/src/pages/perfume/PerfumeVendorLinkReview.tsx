@@ -9,11 +9,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { applyPerfumeVendorLinks, getPerfumeVendorLinkPreview, type PerfumeLinkProposal } from "../../api/perfume";
+import { applyPerfumeVendorLinks, getPerfumeVendorLinkPreview, listPerfumeContacts, type PerfumeLinkCandidate, type PerfumeLinkProposal } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ctl } from "./perfumeDocParts";
 
 const NEW = "__new__";
+const FIND = "__find__";
 const ACTION_TEXT: Record<PerfumeLinkProposal["action"], string> = { link: "Same name", choose: "Pick one — Contacts has it more than once", create: "Not in Contacts — a new company" };
 const place = (x: { city: string | null; state: string | null; country: string | null }) => [x.city, x.state, x.country].filter(Boolean).join(", ");
 
@@ -24,6 +25,9 @@ export function VendorLinkReview() {
   const [pick, setPick] = useState<Record<string, string>>({});
   const [names, setNames] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
+  // "Find another company…": any company in Contacts, not only the same-name ones (United Perfumes Panama → United Perfumes).
+  const [extra, setExtra] = useState<Record<string, PerfumeLinkCandidate[]>>({});
+  const [finding, setFinding] = useState<string | null>(null);
   useEffect(() => {
     const p: Record<string, string> = {}; const n: Record<string, string> = {};
     for (const x of pv.data?.proposals ?? []) { p[x.vendor_id] = x.company_id ?? NEW; n[x.vendor_id] = x.company_name; }
@@ -61,10 +65,15 @@ export function VendorLinkReview() {
               <div className={`min-w-0 py-1 text-left ${x.action === "choose" ? "font-semibold text-[#C76A0A]" : "text-[#64748B]"}`}>{ACTION_TEXT[x.action]}</div>
               <div className="flex min-w-0 flex-wrap items-center gap-2 py-1">
                 <select className={`${ctl} min-w-0 max-w-full`} value={v} aria-label={`${tr("perfume.links.company_for", "Company for")} ${x.vendor}`}
-                  onChange={(e) => setPick((p) => ({ ...p, [x.vendor_id]: e.target.value }))} data-testid={`perfume-vendor-link-pick-${x.vendor_id}`}>
-                  {x.candidates.map((c) => <option key={c.id} value={c.id}>{`${c.name}${place(c) ? ` · ${place(c)}` : ""} · ${c.people} ${c.people === 1 ? "person" : "people"}${c.exact ? " · same name" : ""}`}</option>)}
+                  onChange={(e) => { if (e.target.value === FIND) { setFinding(x.vendor_id); return; } setPick((p) => ({ ...p, [x.vendor_id]: e.target.value })); }} data-testid={`perfume-vendor-link-pick-${x.vendor_id}`}>
+                  {[...x.candidates, ...(extra[x.vendor_id] ?? [])].map((c) => <option key={c.id} value={c.id}>{`${c.name}${place(c) ? ` · ${place(c)}` : ""} · ${c.people} ${c.people === 1 ? "person" : "people"}${c.exact ? " · same name" : ""}`}</option>)}
                   <option value={NEW}>{tr("perfume.links.new", "New company in Contacts")}</option>
+                  <option value={FIND}>{tr("perfume.links.find", "Find another company…")}</option>
                 </select>
+                {finding === x.vendor_id ? (
+                  <CompanyFinder label={x.vendor} onPick={(c) => { setExtra((m) => ({ ...m, [x.vendor_id]: [...(m[x.vendor_id] ?? []).filter((y) => y.id !== c.id), c] })); setPick((p) => ({ ...p, [x.vendor_id]: c.id })); setFinding(null); }}
+                    onClose={() => setFinding(null)} testId={`perfume-vendor-link-find-${x.vendor_id}`} />
+                ) : null}
                 {v === NEW ? (
                   <input className={`${ctl} w-[260px] max-w-full`} value={names[x.vendor_id] ?? ""} aria-label={`${tr("perfume.links.new_name", "New company name for")} ${x.vendor}`}
                     onChange={(e) => setNames((n) => ({ ...n, [x.vendor_id]: e.target.value }))} data-testid={`perfume-vendor-link-name-${x.vendor_id}`} />
@@ -75,5 +84,26 @@ export function VendorLinkReview() {
         })}
       </div>
     </section>
+  );
+}
+
+function CompanyFinder({ label, onPick, onClose, testId }: { label: string; onPick: (c: PerfumeLinkCandidate) => void; onClose: () => void; testId: string }) {
+  const [q, setQ] = useState("");
+  const found = useQuery({ queryKey: ["perfume", "contacts", "link-find", q], queryFn: () => listPerfumeContacts({ q, limit: 12 }), enabled: q.trim().length >= 2 });
+  return (
+    <div className="relative" data-testid={testId}>
+      <input autoFocus className={`${ctl} w-[260px] max-w-full`} value={q} onChange={(e) => setQ(e.target.value)} aria-label={`${tr("perfume.links.find_for", "Find a company in Contacts for")} ${label}`}
+        onKeyDown={(e) => { if (e.key === "Escape") onClose(); }} data-testid={`${testId}-q`} />
+      {q.trim().length >= 2 && (found.data?.rows?.length ?? 0) > 0 ? (
+        <div className="absolute z-20 mt-1 max-h-64 w-[320px] overflow-y-auto border border-gray-300 bg-white shadow-lg" role="listbox">
+          {found.data!.rows.map((r) => (
+            <button key={r.id} type="button" role="option" aria-selected={false} className="block w-full px-2 py-1 text-left text-xs hover:bg-gray-100" data-testid={`${testId}-hit-${r.id}`}
+              onClick={() => onPick({ id: r.id, name: r.name, role: r.role, city: r.city, state: r.state, country: r.country, people: r.people, exact: false })}>
+              <span className="font-semibold">{r.name}</span> <span className="text-[#64748B]">{[r.city, r.country].filter(Boolean).join(", ")} · {r.people} {r.people === 1 ? "person" : "people"}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }

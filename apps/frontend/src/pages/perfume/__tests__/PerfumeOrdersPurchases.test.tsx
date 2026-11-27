@@ -56,6 +56,7 @@ beforeEach(() => {
       { kind: "vendor_type", label: "Vendor types", values: [{ id: "t1", value: "Distributor", sort: 10, contacts: 0 }, { id: "t2", value: "Trader", sort: 20, contacts: 0 }] },
       { kind: "customer_type", label: "Customer types", values: [{ id: "t3", value: "Trader", sort: 15, contacts: 0 }, { id: "t4", value: "Retailer", sort: 20, contacts: 0 }] }] };
     if (path === "/api/v1/perfume/companies/co9/role") return { changed: true, role: "both", vendor_type: "Trader", customer_type: "Trader" };
+    if (path.startsWith("/api/v1/perfume/contacts?") && path.includes("United")) return { rows: [{ id: "coU", name: "United Perfumes", role: "both", city: "Miami", state: "FL", country: "US", people: 3 }], total: 1 };
     if (path === "/api/v1/perfume/vendor-links/preview") return linkRows ? { linked: 3, unlinked: 2, proposals: [
       { vendor_id: "vA", vendor: "Vendor A — ARABIC list", short_name: "VA", kind: "buy", company_name: "Vendor A", action: "choose", company_id: "co9",
         candidates: [{ id: "co9", name: "Vendor A LLC", role: "vendor", city: "Miami", state: "FL", country: "US", people: 2, exact: true },
@@ -159,6 +160,18 @@ describe("profiles", () => {
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
       { vendor_id: "vA", company_id: "co8" }, { vendor_id: "vN", create_name: "Nobody Fragrance House" }] }]));
     await waitFor(() => expect(screen.queryByTestId("perfume-vendor-link-review")).toBeNull());
+  });
+  it("Find another company… links a list to any company in Contacts, not only same-name ones", async () => {
+    linkRows = true;
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");
+    const review = await screen.findByTestId("perfume-vendor-link-review");
+    fireEvent.change(within(review).getByTestId("perfume-vendor-link-pick-vN"), { target: { value: "__find__" } });
+    fireEvent.change(await within(review).findByTestId("perfume-vendor-link-find-vN-q"), { target: { value: "United" } });
+    fireEvent.click(await within(review).findByTestId("perfume-vendor-link-find-vN-hit-coU"));
+    await waitFor(() => expect((within(review).getByTestId("perfume-vendor-link-pick-vN") as HTMLSelectElement).value).toBe("coU"));
+    fireEvent.click(within(review).getByTestId("perfume-vendor-link-apply"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
+      { vendor_id: "vA", company_id: "co9" }, { vendor_id: "vN", company_id: "coU" }] }]));
   });
   it("the supplier's company is one record: its name opens the Vendors profile; Convert to both + Trader saves role and types", async () => {
     mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers&open=vA");
