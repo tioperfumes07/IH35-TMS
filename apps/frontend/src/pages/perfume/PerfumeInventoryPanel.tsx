@@ -2,7 +2,7 @@
  * PERFUME-INVENTORY — the ScentsX stock screens (owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations";
  * 20:28 CT: the sites are the ones in his inventory file; FIFO for the books and the average cost he uses for lists, both;
  * adjustments over $500 need a second person). Stock is never typed: every number here is the sum of the stock ledger.
- * Five views: Stock on hand · Stock moves · Transfers · Counts · Sites (with opening stock from the inventory file).
+ * Views: Stock on hand · Stock moves · Transfers · Counts · Write-offs · Valuation · Sites (with opening stock from the inventory file).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -18,13 +18,15 @@ import {
   getPerfumeTransfer, listPerfumeCounts, listPerfumeMoves, listPerfumeSites, listPerfumeStock, listPerfumeTransfers, perfumeStockExportPath, perfumeTransferAction,
   postPerfumeCount, removePerfumeTransferLine, setPerfumeCountLine, setPerfumeReorder, submitPerfumeCount, updatePerfumeSite,
   type PerfumeCountRow, type PerfumeMove, type PerfumeSite, type PerfumeStockRow, type PerfumeTransferRow,
+  addPerfumeWriteoffLine, createPerfumeWriteoff, getPerfumeValuation, getPerfumeWriteoff, listPerfumeWriteoffs, perfumeValuationExportPath, perfumeWriteoffAction,
+  removePerfumeWriteoffLine, type PerfumeValuationRow, type PerfumeWriteoffReason, type PerfumeWriteoffRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { Badge, ctl, DASH, DocLink, ItemFinder, money, NumberCell, SitePicker, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const KIND_TEXT: Record<string, string> = { opening: "Opening stock", receipt: "Received", shipment: "Shipped", transfer_out: "Transfer out", transfer_in: "Transfer in",
-  adjustment: "Adjustment", count: "Count", return: "Return", write_down: "Write-down" };
-const SITE_KIND: Record<string, string> = { warehouse: "Warehouse", store: "Retail store", transit: "In transit", consignment: "Consignment" };
+  adjustment: "Adjustment", count: "Count", return: "Return", write_down: "Written off" };
+const SITE_KIND: Record<string, string> = { warehouse: "Warehouse", store: "Retail store", transit: "In transit", consignment: "Consignment", quarantine: "Quarantine (not sold)" };
 const fail = (push: (m: string, k: "error") => void) => (e: unknown) => push(userFacingApiError(e, "Not saved"), "error");
 
 /* ------------------------------------------------------------------ Stock on hand */
@@ -90,7 +92,8 @@ export function PerfumeMovesPanel() {
   const docOf = (m: PerfumeMove) => m.po_number && m.purchase_order_id ? <DocLink tab="purchases" id={m.purchase_order_id}>{m.po_number}</DocLink>
     : m.so_number && m.sales_order_id ? <DocLink tab="orders" id={m.sales_order_id}>{m.so_number}</DocLink>
     : m.transfer_number && m.transfer_id ? <DocLink tab="transfers" id={m.transfer_id}>{m.transfer_number}</DocLink>
-    : m.count_number && m.count_id ? <DocLink tab="counts" id={m.count_id}>{m.count_number}</DocLink> : <>{m.reason ?? DASH}</>;
+    : m.count_number && m.count_id ? <DocLink tab="counts" id={m.count_id}>{m.count_number}</DocLink>
+    : m.writeoff_number && m.writeoff_id ? <DocLink tab="writeoffs" id={m.writeoff_id}>{m.writeoff_number}</DocLink> : <>{m.reason ?? DASH}</>;
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-moves-panel" aria-label={tr("perfume.inv.moves", "Stock moves")}>
       <div className="flex flex-wrap items-center gap-2">
@@ -279,6 +282,137 @@ function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => 
   );
 }
 
+/* ------------------------------------------------------------------ Write-offs */
+
+const WO_REASON: Record<PerfumeWriteoffReason, string> = { damaged: "Damaged", expired: "Expired", stolen: "Stolen / missing", counterfeit: "Counterfeit", sample: "Used as samples", other: "Other" };
+const WO_TEXT = { draft: "Draft", submitted: "Waiting to post", posted: "Posted", cancelled: "Cancelled" } as const;
+
+export function PerfumeWriteoffsPanel() {
+  const { pushToast } = useToast();
+  const { openId } = useOpenDoc();
+  const list = useQuery({ queryKey: ["perfume", "inventory", "writeoffs"], queryFn: listPerfumeWriteoffs });
+  const [site, setSite] = useState<string | null>(null);
+  const [reason, setReason] = useState<PerfumeWriteoffReason>("damaged");
+  const [notes, setNotes] = useState("");
+  const [selected, setSelected] = useState<string | null>(openId);
+  useEffect(() => { if (openId) setSelected(openId); }, [openId]);
+  if (list.isError) return <ListErrorState title={tr("perfume.inv.woError", "Couldn't load the write-offs")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
+  const start = () => {
+    if (!site) { pushToast("Pick the site", "error"); return; }
+    void createPerfumeWriteoff({ location_code: site, reason, notes: notes.trim() || null })
+      .then((r) => { pushToast(`Write-off ${r.number} started`, "success"); setSelected(r.id); setNotes(""); void list.refetch(); }).catch(fail(pushToast));
+  };
+  return (
+    <div className="space-y-3" data-testid="perfume-writeoffs-panel">
+      <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.writeoffs", "Write-offs")}>
+        <div className="flex flex-wrap items-end gap-2 text-xs">
+          <label>{tr("perfume.inv.site", "Site")} <SitePicker value={site} onChange={setSite} label={tr("perfume.inv.site", "Site")} testId="perfume-wo-site" /></label>
+          <label>{tr("perfume.inv.wo_reason", "Why")}
+            <select className={`${ctl} block`} aria-label={tr("perfume.inv.wo_reason", "Why")} value={reason} onChange={(e) => setReason(e.target.value as PerfumeWriteoffReason)} data-testid="perfume-wo-reason">
+              {(Object.keys(WO_REASON) as PerfumeWriteoffReason[]).map((r) => <option key={r} value={r}>{WO_REASON[r]}</option>)}
+            </select>
+          </label>
+          <label>{tr("perfume.inv.wo_notes", "What happened")} <input className={`${ctl} block w-[260px]`} value={notes} onChange={(e) => setNotes(e.target.value)} data-testid="perfume-wo-notes" /></label>
+          <Button type="button" className="h-[34px] px-3 text-xs" onClick={start} data-testid="perfume-wo-start">{tr("perfume.inv.wo_start", "Start a write-off")}</Button>
+          <span className="text-[#64748B]">{tr("perfume.inv.wo_rule", "Pieces leave at their lot cost (oldest first). Worth more than $500: a second person posts it.")}</span>
+        </div>
+        <ParityTable<PerfumeWriteoffRow>
+          rows={list.data?.writeoffs ?? []} rowKey={(w) => `${w.id}-${w.status}`} loading={list.isLoading} storageKey="perfume-writeoffs-v1" exportFilename="TIO write-offs" exportExcel emptyText="No write-offs." onRowClick={(w) => setSelected(w.id)}
+          columns={[
+            { key: "number", label: "Write-off", sortable: true, render: (w) => <span className="font-semibold">{w.number}</span> },
+            { key: "location_code", label: "Site", sortable: true, render: (w) => w.location_code },
+            { key: "reason", label: "Why", sortable: true, render: (w) => WO_REASON[w.reason], exportValue: (w) => WO_REASON[w.reason] },
+            { key: "status", label: "Status", sortable: true, render: (w) => <Badge text={WO_TEXT[w.status]} color={CC_CLASS[w.status]} />, exportValue: (w) => WO_TEXT[w.status] },
+            { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (w) => w.units.toLocaleString("en-US") },
+            { key: "value_cents", label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (w) => money(w.value_cents), exportValue: (w) => (w.value_cents == null ? "" : w.value_cents / 100) },
+            { key: "submitted_by_email", label: "Submitted by", render: (w) => w.submitted_by_email ?? DASH },
+            { key: "approved_by_email", label: "Posted by", render: (w) => w.approved_by_email ?? DASH },
+          ]}
+        />
+      </section>
+      {selected ? <WriteoffEditor id={selected} onChanged={() => void list.refetch()} onClose={() => setSelected(null)} /> : null}
+    </div>
+  );
+}
+
+function WriteoffEditor({ id, onChanged, onClose }: { id: string; onChanged: () => void; onClose: () => void }) {
+  const { pushToast } = useToast();
+  const w = useQuery({ queryKey: ["perfume", "inventory", "writeoff", id], queryFn: () => getPerfumeWriteoff(id) });
+  if (w.isError) return <ListErrorState title={tr("perfume.inv.woOneError", "Couldn't load the write-off")} status={0} message={(w.error as Error)?.message} onRetry={() => void w.refetch()} />;
+  if (!w.data) return null;
+  const x = w.data;
+  const run = (f: () => Promise<unknown>, ok?: string) => void f().then(async () => { await w.refetch(); onChanged(); if (ok) pushToast(ok, "success"); }).catch(fail(pushToast));
+  return (
+    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-wo-editor" aria-label={x.number}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="text-section-header">{x.number} · {x.location_code} · {WO_REASON[x.reason]} <Badge text={WO_TEXT[x.status]} color={CC_CLASS[x.status]} />
+          {x.value_cents != null ? <span className="ml-2 text-xs">{`${tr("perfume.inv.value", "Value")} ${money(x.value_cents)}`}{x.needs_second_person && x.status === "submitted" ? ` · ${tr("perfume.inv.second", "a second person posts it")}` : ""}</span> : null}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "draft" || !x.lines.length} onClick={() => run(() => perfumeWriteoffAction(id, "submit"), "Submitted")} data-testid="perfume-wo-submit">{tr("perfume.inv.submit", "Submit")}</Button>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "submitted"} onClick={() => run(() => perfumeWriteoffAction(id, "post"), "Taken out of stock")} data-testid="perfume-wo-post">{tr("perfume.inv.post", "Post to stock")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={x.status === "posted" || x.status === "cancelled"} onClick={() => run(() => perfumeWriteoffAction(id, "cancel"))} data-testid="perfume-wo-cancel">{tr("perfume.inv.cancel", "Cancel")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.inv.close", "Close")}</Button>
+        </div>
+      </div>
+      {x.notes ? <div className="text-xs text-[#64748B]">{x.notes}</div> : null}
+      {x.status === "draft" ? <ItemFinder testId="perfume-wo-find" onPick={(itemId, qty) => run(() => addPerfumeWriteoffLine(id, { item_id: itemId, qty }))} /> : null}
+      <ParityTable<typeof x.lines[number]>
+        title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-wo-lines-v1" exportFilename="TIO write-off lines" exportExcel emptyText="No pieces yet — add an item above."
+        columns={[
+          { key: "display_name", label: "Item", render: (l) => <DocLink tab="items" id={l.item_id}>{l.display_name}</DocLink>, exportValue: (l) => l.display_name },
+          { key: "qty", label: "Pieces", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
+          { key: "lot_code", label: "Lot", render: (l) => l.lot_code ?? (l.lot_id ? tr("perfume.inv.named_lot", "named lot") : tr("perfume.inv.oldest", "oldest first")) },
+          { key: "on_hand", label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand.toLocaleString("en-US") },
+          { key: "off", label: "", render: (l) => (x.status === "draft"
+            ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => run(() => removePerfumeWriteoffLine(l.id))} data-testid={`perfume-wo-remove-${l.id}`}>{tr("perfume.inv.remove", "Remove")}</Button> : null) },
+        ]}
+      />
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------------ Month-end valuation */
+
+export function PerfumeValuationPanel() {
+  const { pushToast } = useToast();
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
+  const [asOf, setAsOf] = useState(today);
+  const [site, setSite] = useState<string | null>(null);
+  const v = useQuery({ queryKey: ["perfume", "inventory", "valuation", asOf, site], queryFn: () => getPerfumeValuation(asOf, site ?? undefined), enabled: !!asOf });
+  if (v.isError) return <ListErrorState title={tr("perfume.inv.valError", "Couldn't load the valuation")} status={0} message={(v.error as Error)?.message} onRetry={() => void v.refetch()} />;
+  const d = v.data;
+  return (
+    <div className="space-y-3" data-testid="perfume-valuation-panel">
+      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-4" data-testid="perfume-valuation-kpis">
+        <KpiCard label={tr("perfume.inv.val_fifo", "Value at FIFO (books)")} number={money(d?.total_fifo_cents ?? 0)} onClick={() => setSite(null)} />
+        <KpiCard label={tr("perfume.inv.val_avg", "Value at average cost")} number={money(d?.total_avg_cents ?? 0)} onClick={() => setSite(null)} />
+        <KpiCard label={tr("perfume.inv.val_units", "Units")} number={(d?.sites.reduce((t, s) => t + s.units, 0) ?? 0).toLocaleString("en-US")} onClick={() => setSite(null)} />
+        <KpiCard label={tr("perfume.inv.val_sites", "Sites holding stock")} number={(d?.sites.length ?? 0).toLocaleString("en-US")} onClick={() => setSite(null)} />
+      </div>
+      <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.valuation", "Valuation")}>
+        <div className="flex flex-wrap items-end gap-2 text-xs">
+          <label>{tr("perfume.inv.as_of", "At the close of")} <DatePicker aria-label={tr("perfume.inv.as_of", "At the close of")} value={asOf} onChange={setAsOf} /></label>
+          <label>{tr("perfume.inv.site", "Site")} <SitePicker value={site} onChange={setSite} label={tr("perfume.inv.site", "Site")} testId="perfume-val-site" /></label>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!asOf} data-testid="perfume-val-xlsx"
+            onClick={() => void downloadPerfumeFile(perfumeValuationExportPath(asOf, site ?? undefined), `Stock valuation ${asOf}.xlsx`).catch(fail(pushToast))}>{tr("perfume.inv.val_xlsx", "Excel")}</Button>
+          <span className="text-[#64748B]">{tr("perfume.inv.val_help", "From the stock ledger alone: FIFO = what the lots still hold at their cost; average = on hand × the moving average.")}</span>
+        </div>
+        <ParityTable<PerfumeValuationRow>
+          rows={d?.rows ?? []} rowKey={(r) => `${r.location_code}-${r.item_id}`} loading={v.isLoading} storageKey="perfume-valuation-v1" exportFilename={`TIO valuation ${asOf}`} exportExcel emptyText="No stock on hand at that date."
+          columns={[
+            { key: "location_code", label: "Site", sortable: true, render: (r) => r.location_code },
+            { key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.item_id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
+            { key: "qty", label: "On hand", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.qty.toLocaleString("en-US") },
+            { key: "fifo_cents", label: "FIFO value", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.fifo_cents), exportValue: (r) => r.fifo_cents / 100 },
+            { key: "avg_cents", label: "Average value", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cents), exportValue: (r) => r.avg_cents / 100 },
+          ]}
+        />
+      </section>
+    </div>
+  );
+}
+
 /* ------------------------------------------------------------------ Sites + opening stock */
 
 export function PerfumeSitesPanel() {
@@ -303,11 +437,12 @@ export function PerfumeSitesPanel() {
             { key: "code", label: "Code", sortable: true, render: (s) => <span className="font-semibold">{s.code}</span> },
             { key: "name", label: "Name", sortable: true, render: (s) => s.name },
             { key: "kind", label: "Kind", render: (s) => (s.kind === "transit" ? SITE_KIND.transit : (
-              <select className={ctl} aria-label={tr("perfume.inv.kind", "Kind")} value={s.kind ?? ""} onChange={(e) => save(s.code, { kind: (e.target.value || null) as "warehouse" | "store" | "consignment" | null })} data-testid={`perfume-site-kind-${s.code}`}>
+              <select className={ctl} aria-label={tr("perfume.inv.kind", "Kind")} value={s.kind ?? ""} onChange={(e) => save(s.code, { kind: (e.target.value || null) as "warehouse" | "store" | "consignment" | "quarantine" | null })} data-testid={`perfume-site-kind-${s.code}`}>
                 <option value="">{tr("perfume.inv.kind_unset", "Not set")}</option>
                 <option value="warehouse">{tr("perfume.inv.kind_wh", "Warehouse")}</option>
                 <option value="store">{tr("perfume.inv.kind_store", "Retail store")}</option>
                 <option value="consignment">{tr("perfume.inv.kind_cons", "Consignment")}</option>
+                <option value="quarantine">{tr("perfume.inv.kind_quar", "Quarantine (not sold)")}</option>
               </select>)), exportValue: (s) => SITE_KIND[s.kind ?? ""] ?? "" },
             { key: "units", label: "Units", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.units).toLocaleString("en-US") },
             { key: "items", label: "Items", kind: "number", cellClass: "text-right tabular-nums", render: (s) => Number(s.items).toLocaleString("en-US") },

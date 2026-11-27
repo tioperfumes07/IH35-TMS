@@ -23,7 +23,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders", "accounts", "levels"] },
   { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers", "items"] },
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
-  { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "moves", "transfers", "counts", "sites"] },
+  { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
 ];
 
 /** The module a desk tab belongs to (unknown / missing tab → the price desk). */

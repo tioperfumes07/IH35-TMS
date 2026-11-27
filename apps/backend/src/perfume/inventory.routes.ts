@@ -12,6 +12,7 @@ import {
   addTransferLine, cancelCount, cancelTransfer, createCount, createTransfer, getCount, getTransfer, InvInvalid, InvNotFound, itemLots, listCounts, listMoves,
   listSites, listTransfers, openingApply, openingPreview, postCount, receiveTransfer, removeTransferLine, setCountLine, setReorder, shipTransfer, siteSchema,
   stockOnHand, submitCount, transferSchema, updateSite,
+  addWriteoffLine, cancelWriteoff, createWriteoff, getWriteoff, listWriteoffs, postWriteoff, removeWriteoffLine, submitWriteoff, valuation, writeoffSchema,
 } from "./inventory.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -157,6 +158,72 @@ export async function registerPerfumeInventoryRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { await withCurrentUser(uid, (c) => cancelCount(c, id.data)); return { ok: true }; } catch (e) { return fail(reply, e); }
+  });
+  // Write-offs (damaged / expired / stolen / counterfeit); over $500 a second person posts
+  app.get("/api/v1/perfume/inventory/writeoffs", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => ({ writeoffs: await listWriteoffs(c) }));
+  });
+  app.post("/api/v1/perfume/inventory/writeoffs", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = writeoffSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => createWriteoff(c, uid, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/inventory/writeoffs/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, (c) => getWriteoff(c, id.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/perfume/inventory/writeoffs/:id/lines", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); const p = z.object({ item_id: uuid, qty: z.number().int().min(1).max(10_000_000), lot_id: uuid.nullable().optional() }).safeParse(req.body ?? {});
+    if (!id.success || !p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => addWriteoffLine(c, id.data, p.data.item_id, p.data.qty, p.data.lot_id ?? null)); } catch (e) { return fail(reply, e); }
+  });
+  app.delete("/api/v1/perfume/inventory/writeoff-lines/:id", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { await withCurrentUser(uid, (c) => removeWriteoffLine(c, id.data)); return { ok: true }; } catch (e) { return fail(reply, e); }
+  });
+  const woSteps: Array<[string, (c: Parameters<typeof submitWriteoff>[0], uid: string, id: string) => Promise<unknown>]> = [["submit", submitWriteoff], ["post", postWriteoff]];
+  for (const [verb, fn] of woSteps) {
+    app.post(`/api/v1/perfume/inventory/writeoffs/:id/${verb}`, RL_WRITE, async (req, reply) => {
+      const uid = await ownerOnly(req, reply); if (!uid) return;
+      const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+      try { return await withCurrentUser(uid, (c) => fn(c, uid, id.data)); } catch (e) { return fail(reply, e); }
+    });
+  }
+  app.post("/api/v1/perfume/inventory/writeoffs/:id/cancel", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { await withCurrentUser(uid, (c) => cancelWriteoff(c, id.data)); return { ok: true }; } catch (e) { return fail(reply, e); }
+  });
+  // Month-end valuation, FIFO and moving average, from the ledger
+  const valQuery = z.object({ as_of: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), location: z.string().max(40).optional() });
+  app.get("/api/v1/perfume/inventory/valuation", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = valQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query", message: "Pick the date." });
+    try { return await withCurrentUser(uid, (c) => valuation(c, q.data.as_of, q.data.location)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/inventory/valuation/export.xlsx", RL_FILE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = valQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    const v = await withCurrentUser(uid, (c) => valuation(c, q.data.as_of, q.data.location));
+    const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet("Valuation");
+    const [y, m, d] = v.as_of.split("-");
+    ws.addRow([`TIO Perfumes — stock valuation at close of ${m}/${d}/${y}`]).font = { bold: true, name: "Arial", size: 12 };
+    ws.addRow([]);
+    const head = ws.addRow(["Site", "Item", "On hand", "FIFO value", "Average value"]); head.font = { bold: true, name: "Arial" };
+    for (const r of v.rows) ws.addRow([r.location_code, r.display_name, r.qty, r.fifo_cents / 100, r.avg_cents / 100]);
+    ws.addRow([]);
+    for (const s of v.sites) ws.addRow([s.location_code, "Site total", s.units, s.fifo_cents / 100, s.avg_cents / 100]).font = { bold: true, name: "Arial" };
+    ws.addRow(["All sites", "Total", v.sites.reduce((t, s) => t + s.units, 0), v.total_fifo_cents / 100, v.total_avg_cents / 100]).font = { bold: true, name: "Arial" };
+    ws.getColumn(1).width = 12; ws.getColumn(2).width = 52; ws.getColumn(3).width = 10; ws.getColumn(4).width = 16; ws.getColumn(5).width = 16;
+    ws.getColumn(4).numFmt = '"$"#,##0.00'; ws.getColumn(5).numFmt = '"$"#,##0.00';
+    return reply.header("Content-Type", XLSX).header("Content-Disposition", `attachment; filename="Stock valuation ${m}-${d}-${y}.xlsx"`).send(Buffer.from(await wb.xlsx.writeBuffer()));
   });
   // Opening stock from the owner's inventory file
   app.get("/api/v1/perfume/inventory/opening", RL_READ, async (req, reply) => {

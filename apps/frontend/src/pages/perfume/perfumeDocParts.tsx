@@ -142,9 +142,10 @@ export function ItemFinder({ testId, onPick }: { testId: string; onPick: (itemId
 }
 
 /** One of my own stock sites (warehouses and stores; never In transit). */
-export function SitePicker({ value, onChange, label, testId, allowEmpty = true }: { value: string | null; onChange: (code: string | null) => void; label: string; testId: string; allowEmpty?: boolean }) {
+export function SitePicker({ value, onChange, label, testId, allowEmpty = true, selling = false }: { value: string | null; onChange: (code: string | null) => void; label: string; testId: string; allowEmpty?: boolean;
+  /** Only sites that sell — a quarantine site never ships to a customer. */ selling?: boolean }) {
   const sites = useQuery({ queryKey: ["perfume", "inventory", "sites"], queryFn: listPerfumeSites });
-  const own = (sites.data?.sites ?? []).filter((s) => s.own && s.active && s.kind !== "transit");
+  const own = (sites.data?.sites ?? []).filter((s) => s.own && s.active && s.kind !== "transit" && !(selling && s.kind === "quarantine"));
   if (sites.isError) return <span className="text-xs text-[#9B2C2C]" role="alert" data-testid={testId}>{tr("perfume.docs.sites_error", "Couldn't load the sites — try again.")}</span>;
   return (
     <select className={ctl} aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} data-testid={testId}>

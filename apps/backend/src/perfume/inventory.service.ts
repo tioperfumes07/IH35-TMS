@@ -16,7 +16,7 @@ export class InvNotFound extends Error { constructor() { super("not_found"); } }
 
 export type MoveKind = "opening" | "receipt" | "shipment" | "transfer_out" | "transfer_in" | "adjustment" | "count" | "return" | "write_down";
 export type MoveLinks = { purchase_order_id?: string | null; po_line_id?: string | null; sales_order_id?: string | null; so_line_id?: string | null;
-  transfer_id?: string | null; count_id?: string | null; reason?: string | null };
+  transfer_id?: string | null; count_id?: string | null; writeoff_id?: string | null; reason?: string | null };
 export type Slice = { lot_id: string; qty: number; unit_cost_cents: number };
 
 const ADJUST_SECOND_PERSON_CENTS = 50_000; // owner 20:28 CT: over $500 needs a second person
@@ -61,6 +61,9 @@ export async function stockOut(c: pg.PoolClient, uid: string | null, x: {
 } & MoveLinks): Promise<Slice[]> {
   if (!Number.isInteger(x.qty) || x.qty <= 0) throw new InvInvalid("Quantity out must be a whole number above 0.");
   await assertSite(c, x.location_code, x.allowTransit);
+  if (x.kind === "shipment" && (await c.query(`SELECT 1 FROM perfume.locations WHERE code = $1 AND kind = 'quarantine'`, [x.location_code])).rowCount) {
+    throw new InvInvalid(`${x.location_code} is a quarantine site — its stock is not sold or shipped. Transfer it to a selling site first.`);
+  }
   const s = await stockRow(c, x.item_id, x.location_code);
   const lots = (await c.query<{ id: string; qty_left: number; unit_cost_cents: string }>(
     `SELECT id, qty_left, unit_cost_cents::text FROM perfume.inventory_lots
@@ -91,10 +94,10 @@ async function insertMove(c: pg.PoolClient, uid: string | null, kind: MoveKind, 
   if (qtyAfter < 0) throw new InvInvalid("Stock cannot go below zero.");
   return (await c.query<{ id: string }>(
     `INSERT INTO perfume.stock_moves (kind, item_id, location_code, qty, unit_cost_cents, lot_id, qty_after, avg_cost_after_cents,
-       purchase_order_id, po_line_id, sales_order_id, so_line_id, transfer_id, count_id, reason, created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING id`,
+       purchase_order_id, po_line_id, sales_order_id, so_line_id, transfer_id, count_id, writeoff_id, reason, created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING id`,
     [kind, itemId, loc, qty, cost, lotId, qtyAfter, avgAfter, l.purchase_order_id ?? null, l.po_line_id ?? null, l.sales_order_id ?? null,
-     l.so_line_id ?? null, l.transfer_id ?? null, l.count_id ?? null, l.reason ?? null, uid])).rows[0]!.id;
+     l.so_line_id ?? null, l.transfer_id ?? null, l.count_id ?? null, l.writeoff_id ?? null, l.reason ?? null, uid])).rows[0]!.id;
 }
 
 /* ------------------------------------------------------------------ reads */
@@ -109,7 +112,7 @@ export async function listSites(c: pg.PoolClient) {
 }
 
 export const siteSchema = z.object({
-  name: z.string().trim().min(1).max(120).optional(), kind: z.enum(["warehouse", "store", "consignment"]).nullable().optional(),
+  name: z.string().trim().min(1).max(120).optional(), kind: z.enum(["warehouse", "store", "consignment", "quarantine"]).nullable().optional(),
   own: z.boolean().optional(), active: z.boolean().optional(), address: z.string().trim().max(500).nullable().optional(),
 });
 export async function updateSite(c: pg.PoolClient, uid: string, code: string, x: z.infer<typeof siteSchema>) {
@@ -168,7 +171,8 @@ export async function listMoves(c: pg.PoolClient, f: { item_id?: string; locatio
             m.purchase_order_id, (SELECT number FROM perfume.purchase_orders WHERE id = m.purchase_order_id) AS po_number,
             m.sales_order_id, (SELECT number FROM perfume.sales_orders WHERE id = m.sales_order_id) AS so_number,
             m.transfer_id, (SELECT number FROM perfume.stock_transfers WHERE id = m.transfer_id) AS transfer_number,
-            m.count_id, (SELECT number FROM perfume.stock_counts WHERE id = m.count_id) AS count_number, u.email AS by_email
+            m.count_id, (SELECT number FROM perfume.stock_counts WHERE id = m.count_id) AS count_number,
+            m.writeoff_id, (SELECT number FROM perfume.stock_writeoffs WHERE id = m.writeoff_id) AS writeoff_number, u.email AS by_email
        FROM perfume.stock_moves m JOIN perfume.items i ON i.id = m.item_id LEFT JOIN perfume.inventory_lots lt ON lt.id = m.lot_id
        LEFT JOIN identity.users u ON u.id = m.created_by
       ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY m.moved_at DESC, m.id LIMIT $${args.length}`, args)).rows;
@@ -349,6 +353,135 @@ export async function getCount(c: pg.PoolClient, id: string) {
        FROM perfume.stock_count_lines l JOIN perfume.items i ON i.id = l.item_id
        LEFT JOIN perfume.item_stock s ON s.item_id = l.item_id AND s.location_code = $2 WHERE l.count_id = $1 ORDER BY i.display_name`, [id, h.location_code])).rows;
   return { ...h, diff_value_cents: h.diff_value_cents == null ? null : Number(h.diff_value_cents), lines, needs_second_person: Math.abs(Number(h.diff_value_cents ?? 0)) > ADJUST_SECOND_PERSON_CENTS };
+}
+
+/* ------------------------------------------------------------------ write-offs (damaged / expired / stolen / counterfeit) */
+
+export const WRITEOFF_REASONS = ["damaged", "expired", "stolen", "counterfeit", "sample", "other"] as const;
+export const writeoffSchema = z.object({ location_code: z.string().min(1).max(40), reason: z.enum(WRITEOFF_REASONS), notes: z.string().trim().max(2000).nullable().optional() });
+export async function createWriteoff(c: pg.PoolClient, uid: string, x: z.infer<typeof writeoffSchema>) {
+  await assertSite(c, x.location_code);
+  if (x.reason === "other" && !x.notes?.trim()) throw new InvInvalid("Say what happened when the reason is Other.");
+  return (await c.query<{ id: string; number: string }>(
+    `INSERT INTO perfume.stock_writeoffs (location_code, reason, notes, created_by) VALUES ($1, $2, $3, $4) RETURNING id, number`,
+    [x.location_code, x.reason, x.notes ?? null, uid])).rows[0]!;
+}
+async function writeoffHead(c: pg.PoolClient, id: string) {
+  const h = (await c.query<{ id: string; status: string; location_code: string; submitted_by: string | null; value_cents: string | null; reason: string }>(
+    `SELECT id, status, location_code, submitted_by, value_cents::text, reason FROM perfume.stock_writeoffs WHERE id = $1 FOR UPDATE`, [id])).rows[0];
+  if (!h) throw new InvNotFound();
+  return h;
+}
+export async function addWriteoffLine(c: pg.PoolClient, id: string, itemId: string, qty: number, lotId: string | null = null) {
+  const h = await writeoffHead(c, id);
+  if (h.status !== "draft") throw new InvInvalid("Only a draft write-off takes lines.");
+  if (!Number.isInteger(qty) || qty <= 0) throw new InvInvalid("Quantity must be a whole number above 0.");
+  if (lotId && !(await c.query(`SELECT 1 FROM perfume.inventory_lots WHERE id = $1 AND item_id = $2 AND location_code = $3`, [lotId, itemId, h.location_code])).rowCount) {
+    throw new InvInvalid("That lot is not this item at this site.");
+  }
+  return (await c.query(`INSERT INTO perfume.stock_writeoff_lines (writeoff_id, item_id, qty, lot_id) VALUES ($1, $2, $3, $4) RETURNING id`, [id, itemId, qty, lotId])).rows[0];
+}
+export async function removeWriteoffLine(c: pg.PoolClient, lineId: string) {
+  const l = (await c.query<{ writeoff_id: string }>(`SELECT writeoff_id FROM perfume.stock_writeoff_lines WHERE id = $1 AND archived_at IS NULL`, [lineId])).rows[0];
+  if (!l) throw new InvNotFound();
+  if ((await writeoffHead(c, l.writeoff_id)).status !== "draft") throw new InvInvalid("Only a draft write-off changes.");
+  await c.query(`UPDATE perfume.stock_writeoff_lines SET archived_at = now() WHERE id = $1`, [lineId]);
+}
+/** The value that leaves: the FIFO cost of the lots each line will take (the named lot, else oldest first). */
+async function writeoffValue(c: pg.PoolClient, id: string, loc: string) {
+  const lines = (await c.query<{ item_id: string; qty: number; lot_id: string | null }>(
+    `SELECT item_id, qty, lot_id FROM perfume.stock_writeoff_lines WHERE writeoff_id = $1 AND archived_at IS NULL`, [id])).rows;
+  let total = 0;
+  for (const l of lines) {
+    const lots = (await c.query<{ qty_left: number; unit_cost_cents: string }>(
+      `SELECT qty_left, unit_cost_cents::text FROM perfume.inventory_lots WHERE item_id = $1 AND location_code = $2 AND qty_left > 0 ${l.lot_id ? "AND id = $3" : ""}
+        ORDER BY received_on, created_at, id`, l.lot_id ? [l.item_id, loc, l.lot_id] : [l.item_id, loc])).rows;
+    let need = l.qty;
+    for (const lt of lots) { if (need === 0) break; const t = Math.min(need, lt.qty_left); total += t * Number(lt.unit_cost_cents); need -= t; }
+    if (need > 0) throw new InvInvalid("A line asks for more pieces than the site holds.");
+  }
+  return { lines: lines.length, value: Math.round(total * 100) / 100 };
+}
+export async function submitWriteoff(c: pg.PoolClient, uid: string, id: string) {
+  const h = await writeoffHead(c, id);
+  if (h.status !== "draft") throw new InvInvalid("This write-off was already submitted.");
+  const v = await writeoffValue(c, id, h.location_code);
+  if (v.lines === 0) throw new InvInvalid("Add the pieces first.");
+  await c.query(`UPDATE perfume.stock_writeoffs SET status = 'submitted', value_cents = $2, submitted_by = $3, submitted_at = now(), updated_at = now() WHERE id = $1`,
+    [id, v.value.toFixed(2), uid]);
+  return { value_cents: v.value, needs_second_person: v.value > ADJUST_SECOND_PERSON_CENTS };
+}
+/** Post: each line leaves FIFO (or from its lot) as a write_down move carrying this write-off. Over $500 a second person posts. */
+export async function postWriteoff(c: pg.PoolClient, uid: string, id: string) {
+  const h = await writeoffHead(c, id);
+  if (h.status !== "submitted") throw new InvInvalid("Submit the write-off first.");
+  if (Number(h.value_cents ?? 0) > ADJUST_SECOND_PERSON_CENTS && h.submitted_by === uid) throw new InvInvalid("This write-off is more than $500 — a second person posts it.");
+  const lines = (await c.query<{ item_id: string; qty: number; lot_id: string | null }>(
+    `SELECT item_id, qty, lot_id FROM perfume.stock_writeoff_lines WHERE writeoff_id = $1 AND archived_at IS NULL`, [id])).rows;
+  let cost = 0;
+  for (const l of lines) {
+    const slices = await stockOut(c, uid, { kind: "write_down", item_id: l.item_id, location_code: h.location_code, qty: l.qty, lot_ids: l.lot_id ? [l.lot_id] : undefined,
+      writeoff_id: id, reason: h.reason });
+    cost += slices.reduce((t, x) => t + x.qty * x.unit_cost_cents, 0);
+  }
+  await c.query(`UPDATE perfume.stock_writeoffs SET status = 'posted', value_cents = $3, approved_by = $2, approved_at = now(), updated_at = now() WHERE id = $1`,
+    [id, uid, (Math.round(cost * 100) / 100).toFixed(2)]);
+  return { cost_cents: Math.round(cost * 100) / 100 };
+}
+export async function cancelWriteoff(c: pg.PoolClient, id: string) {
+  const h = await writeoffHead(c, id);
+  if (h.status === "posted") throw new InvInvalid("A posted write-off is final.");
+  await c.query(`UPDATE perfume.stock_writeoffs SET status = 'cancelled', updated_at = now() WHERE id = $1`, [id]);
+}
+export async function listWriteoffs(c: pg.PoolClient) {
+  return (await c.query(
+    `SELECT w.id, w.number, w.location_code, w.reason, w.notes, w.status, w.value_cents::float8 AS value_cents, w.created_at, w.submitted_at, w.approved_at,
+            su.email AS submitted_by_email, ap.email AS approved_by_email,
+            (SELECT count(*)::int FROM perfume.stock_writeoff_lines l WHERE l.writeoff_id = w.id AND l.archived_at IS NULL) AS lines,
+            (SELECT coalesce(sum(l.qty), 0)::int FROM perfume.stock_writeoff_lines l WHERE l.writeoff_id = w.id AND l.archived_at IS NULL) AS units
+       FROM perfume.stock_writeoffs w LEFT JOIN identity.users su ON su.id = w.submitted_by LEFT JOIN identity.users ap ON ap.id = w.approved_by
+      ORDER BY w.created_at DESC LIMIT 1000`)).rows;
+}
+export async function getWriteoff(c: pg.PoolClient, id: string) {
+  const h = (await c.query(`SELECT *, value_cents::float8 AS value_cents FROM perfume.stock_writeoffs WHERE id = $1`, [id])).rows[0];
+  if (!h) throw new InvNotFound();
+  const lines = (await c.query(
+    `SELECT l.id, l.item_id, i.display_name, l.qty, l.lot_id, lt.lot_code, coalesce(s.qty, 0)::int AS on_hand
+       FROM perfume.stock_writeoff_lines l JOIN perfume.items i ON i.id = l.item_id LEFT JOIN perfume.inventory_lots lt ON lt.id = l.lot_id
+       LEFT JOIN perfume.item_stock s ON s.item_id = l.item_id AND s.location_code = $2
+      WHERE l.writeoff_id = $1 AND l.archived_at IS NULL ORDER BY i.display_name`, [id, h.location_code])).rows;
+  const moves = (await c.query(`SELECT id, item_id, qty, unit_cost_cents::float8 AS unit_cost_cents, lot_id, moved_at FROM perfume.stock_moves WHERE writeoff_id = $1 ORDER BY moved_at`, [id])).rows;
+  return { ...h, lines, moves, needs_second_person: Number(h.value_cents ?? 0) > ADJUST_SECOND_PERSON_CENTS };
+}
+
+/* ------------------------------------------------------------------ month-end valuation */
+
+/** Stock value at the close of a day, per site and item, both ways: FIFO (the lot cost each move carried, summed — what the
+ *  lots still held) and moving average (the last move's qty × average). Read-only, from the ledger alone. */
+export async function valuation(c: pg.PoolClient, asOf: string, loc?: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(asOf)) throw new InvInvalid("Pick the date (YYYY-MM-DD).");
+  const args: unknown[] = [asOf];
+  const where = loc ? (args.push(loc), `AND m.location_code = $2`) : "";
+  const rows = (await c.query<{ location_code: string; item_id: string; display_name: string; qty: number; fifo_cents: string; avg_cents: string }>(
+    `WITH upto AS (
+       SELECT m.* FROM perfume.stock_moves m WHERE m.moved_at < ($1::date + 1)::timestamp AT TIME ZONE 'America/Chicago' ${where}),
+     last AS (
+       SELECT DISTINCT ON (location_code, item_id) location_code, item_id, qty_after, avg_cost_after_cents
+         FROM upto ORDER BY location_code, item_id, moved_at DESC, id DESC)
+     SELECT u.location_code, u.item_id, i.display_name, sum(u.qty)::int AS qty, sum(u.qty * u.unit_cost_cents)::text AS fifo_cents,
+            (max(l.qty_after) * max(l.avg_cost_after_cents))::text AS avg_cents
+       FROM upto u JOIN last l ON l.location_code = u.location_code AND l.item_id = u.item_id JOIN perfume.items i ON i.id = u.item_id
+      GROUP BY u.location_code, u.item_id, i.display_name HAVING sum(u.qty) <> 0
+      ORDER BY u.location_code, i.display_name`, args)).rows;
+  const out = rows.map((r) => ({ ...r, fifo_cents: Math.round(Number(r.fifo_cents) * 100) / 100, avg_cents: Math.round(Number(r.avg_cents) * 100) / 100 }));
+  const bySite = new Map<string, { location_code: string; units: number; fifo_cents: number; avg_cents: number }>();
+  for (const r of out) {
+    const s = bySite.get(r.location_code) ?? { location_code: r.location_code, units: 0, fifo_cents: 0, avg_cents: 0 };
+    s.units += r.qty; s.fifo_cents += r.fifo_cents; s.avg_cents += r.avg_cents; bySite.set(r.location_code, s);
+  }
+  const sites = [...bySite.values()].map((s) => ({ ...s, fifo_cents: Math.round(s.fifo_cents * 100) / 100, avg_cents: Math.round(s.avg_cents * 100) / 100 }));
+  return { as_of: asOf, rows: out, sites, total_fifo_cents: Math.round(sites.reduce((t, s) => t + s.fifo_cents, 0) * 100) / 100,
+    total_avg_cents: Math.round(sites.reduce((t, s) => t + s.avg_cents, 0) * 100) / 100 };
 }
 
 /* ------------------------------------------------------------------ opening stock from the owner's inventory file */
