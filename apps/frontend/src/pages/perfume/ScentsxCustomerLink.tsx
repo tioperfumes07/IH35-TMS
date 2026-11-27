@@ -8,7 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { createScentsxCustomer, getScentsxCompany, getScentsxCredit, linkScentsxCustomer, listScentsxCustomerLinks } from "../../api/scentsx";
+import { addScentsxResaleCertificate, createScentsxCustomer, getScentsxCompany, getScentsxCredit, getScentsxCustomerCompliance, linkScentsxCustomer, listScentsxCustomerLinks, screenScentsxParty } from "../../api/scentsx";
+import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { tr } from "./perfumeI18n";
 import { EntityLink } from "../../components/shared/EntityLink";
 
@@ -57,6 +58,7 @@ export function ScentsxCustomerLink({ contactId, name, email, phone }: { contact
       ) : credit.data ? (
         <CreditBlock c={credit.data.credit} />
       ) : null}
+      <CustomerCompliance contactId={contactId} companyId={co.data?.company.id ?? null} />
     </div>
   );
 }
@@ -85,6 +87,63 @@ function CreditBlock({ c }: { c: import("../../api/scentsx").ScentsxCredit }) {
           <span className="tabular-nums" data-testid="scentsx-credit-available">{money(c.available_cents ?? 0)}</span>
         </div>
       ) : <div className="text-[#64748B]">{tr("scentsx.credit.nolimit", "No credit limit — cash or prepaid only.")}</div>}
+    </div>
+  );
+}
+
+const OFAC_TEXT = {
+  never_screened: "Not screened against the OFAC list yet.",
+  list_changed: "Screened against an older OFAC list.",
+  possible_match: "Possible OFAC match — decide on Books → Compliance.",
+  confirmed_match: "Confirmed OFAC match — no sale.",
+} as const;
+
+/** OFAC status (screen now) and the Texas resale certificate (Form 01-339) for this buyer. */
+function CustomerCompliance({ contactId, companyId }: { contactId: string; companyId: string | null }) {
+  const { pushToast } = useToast();
+  const q = useQuery({ queryKey: ["scentsx", "customer-compliance", contactId], queryFn: () => getScentsxCustomerCompliance(contactId) });
+  const [file, setFile] = useState<File | null>(null);
+  const [signed, setSigned] = useState("");
+  const [busy, setBusy] = useState(false);
+  if (q.isError) return <div className="mt-1 text-[#B91C1C]">{tr("scentsx.comp.error", "Couldn't load OFAC / resale status")} <button type="button" className="underline" onClick={() => void q.refetch()}>{tr("scentsx.cust.retry", "Retry")}</button></div>;
+  const d = q.data;
+  if (!d) return null;
+  const screen = async () => {
+    setBusy(true);
+    try {
+      const r = await screenScentsxParty(d.customer_id ? "customer" : "contact_company", d.customer_id ?? contactId);
+      pushToast(r.screening.result === "clear" ? "OFAC: clear" : `OFAC: possible match (${r.screening.hits}) — decide on Books → Compliance`, r.screening.result === "clear" ? "success" : "error");
+      void q.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not screened"), "error"); } finally { setBusy(false); }
+  };
+  const saveCert = async () => {
+    if (!file || !companyId || !signed) return;
+    setBusy(true);
+    try {
+      const fileId = await uploadSourceDocumentFromFile(file, { operating_company_id: companyId });
+      if (!fileId) throw new Error("The file did not upload");
+      await addScentsxResaleCertificate({ contact_company_id: contactId, customer_id: d.customer_id, signed_on: signed, file_id: fileId });
+      pushToast("Resale certificate saved", "success"); setFile(null); void q.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <div className="mt-2 space-y-1 border-t border-[#E5EAF0] pt-2" data-testid="scentsx-customer-compliance">
+      <div className="flex items-center justify-between gap-2">
+        <span className={d.sanctions?.blocked ? "font-semibold text-[#B91C1C]" : "text-[#15803D]"} data-testid="scentsx-customer-ofac">
+          {d.sanctions?.blocked && d.sanctions.reason ? OFAC_TEXT[d.sanctions.reason] : tr("scentsx.comp.ofac_clear", "OFAC: screened, clear")}
+        </span>
+        <button type="button" className="underline" disabled={busy} onClick={() => void screen()}>{tr("scentsx.comp.screen", "Screen now")}</button>
+      </div>
+      {d.resale_certificate_on_file ? (
+        <div className="text-[#15803D]" data-testid="scentsx-customer-resale">{tr("scentsx.comp.resale_on_file", "Resale certificate (Form 01-339) on file")}</div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2" data-testid="scentsx-customer-resale">
+          <span className="text-[#64748B]">{tr("scentsx.comp.resale_none", "No resale certificate — Texas sales tax applies.")}</span>
+          <input type="date" className="h-[28px] rounded-sm border border-[#C6D1DC] px-2" aria-label="Signed on" value={signed} onChange={(e) => setSigned(e.target.value)} />
+          <input type="file" accept="image/*,application/pdf" aria-label="Resale certificate file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !signed || !companyId} onClick={() => void saveCert()}>{tr("scentsx.comp.resale_save", "Save certificate")}</Button>
+        </div>
+      )}
     </div>
   );
 }

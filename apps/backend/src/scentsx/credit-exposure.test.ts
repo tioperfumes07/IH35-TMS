@@ -10,6 +10,8 @@ import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js
 import { createLink } from "./links.service.js";
 import { invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
+import { loadSanctionsList, screenParty } from "./sanctions.service.js";
+import { fixtureFetcher } from "./__fixtures__/ofac-fixture.js";
 
 describe("ScentsX credit exposure (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -50,6 +52,8 @@ describe("ScentsX credit exposure (real Postgres, rolled back)", () => {
       `INSERT INTO mdata.customers (customer_name, operating_company_id, is_sample_data) VALUES ('Credit test buyer', scentsx.company_id(), false) RETURNING id::text`
     );
     await createLink(db, TEST_OWNER_USER_ID, "customer", companyId, cust.rows[0]!.id);
+    await loadSanctionsList(db, TEST_OWNER_USER_ID, fixtureFetcher);
+    await screenParty(db, TEST_OWNER_USER_ID, { kind: "customer", id: cust.rows[0]!.id });
     await invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id);
     // The 4 billed units move from "shipped not billed" to "draft invoices"; the exposure total does not change.
     const after = await creditExposure(db, companyId);

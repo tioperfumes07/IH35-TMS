@@ -9,10 +9,11 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.service.js";
 import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
+import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import {
-  createLink, listDocumentLinks, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
+  createLink, listDocumentLinks, scopeToScentsx, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
 } from "./links.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -57,7 +58,23 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const id = uuid.safeParse((req.params as { id?: string }).id);
     if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try {
-      return await withCurrentUser(uid, async (c) => ({ lines: await billableLines(c, id.data), invoices: await listDocumentLinks(c, { sales_order_id: id.data }) }));
+      return await withCurrentUser(uid, async (c) => {
+        const lines = await billableLines(c, id.data);
+        const invoices = await listDocumentLinks(c, { sales_order_id: id.data });
+        const so = await c.query<{ company_id: string | null }>(`SELECT company_id::text FROM perfume.sales_orders WHERE id = $1::uuid`, [id.data]);
+        const contact = so.rows[0]?.company_id ?? null;
+        const link = contact ? await c.query<{ customer_id: string }>(`SELECT customer_id::text FROM scentsx.customer_links WHERE contact_company_id = $1::uuid AND voided_at IS NULL LIMIT 1`, [contact]) : null;
+        const customerId = link?.rows[0]?.customer_id ?? null;
+        const proofs = await c.query(
+          `SELECT id::text, proof_kind, document_number, crossed_on::text, port, file_id::text, created_at FROM scentsx.export_proofs
+            WHERE sales_order_id = $1::uuid AND voided_at IS NULL ORDER BY created_at`, [id.data]
+        );
+        return {
+          lines, invoices, export_proofs: proofs.rows, export_proof_on_file: await hasExportProof(c, id.data),
+          resale_certificate_on_file: contact ? await hasResaleCertificate(c, contact) : false,
+          sanctions: customerId ? await partyStatus(c, { kind: "customer", id: customerId }) : null,
+        };
+      });
     } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/scentsx/sales-orders/:id/invoice", RL_WRITE, async (req, reply) => {
@@ -66,6 +83,23 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const b = z.object({ channel: z.enum(["wholesale", "retail", "export"]).default("wholesale") }).safeParse(req.body ?? {});
     if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
     try { return await withCurrentUser(uid, async (c) => ({ invoice: await invoiceSalesOrder(c, uid, id.data, b.data.channel) })); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/customers/:companyId/compliance", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { companyId?: string }).companyId);
+    if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try {
+      return await withCurrentUser(uid, async (c) => {
+        await scopeToScentsx(c);
+        const link = await c.query<{ customer_id: string }>(`SELECT customer_id::text FROM scentsx.customer_links WHERE contact_company_id = $1::uuid AND voided_at IS NULL LIMIT 1`, [id.data]);
+        const customerId = link.rows[0]?.customer_id ?? null;
+        return {
+          customer_id: customerId,
+          resale_certificate_on_file: await hasResaleCertificate(c, id.data),
+          sanctions: customerId ? await partyStatus(c, { kind: "customer", id: customerId }) : await partyStatus(c, { kind: "contact_company", id: id.data }),
+        };
+      });
+    } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/customers/:companyId/credit", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
@@ -94,7 +128,15 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
       const uid = await ownerOnly(req, reply); if (!uid) return;
       const b = z.object({ desk_id: uuid, engine_id: uuid }).safeParse(req.body ?? {});
       if (!b.success) return reply.code(400).send({ error: "invalid_body" });
-      try { return await withCurrentUser(uid, async (c) => ({ link: await createLink(c, uid, kind, b.data.desk_id, b.data.engine_id) })); } catch (e) { return fail(reply, e); }
+      try {
+        return await withCurrentUser(uid, async (c) => {
+          const link = await createLink(c, uid, kind, b.data.desk_id, b.data.engine_id);
+          // OFAC: a new ScentsX customer / vendor is screened the moment it is linked, once a list is loaded (design §8).
+          const listed = await c.query(`SELECT 1 FROM scentsx.sanctions_list_loads LIMIT 1`);
+          const screening = listed.rowCount ? await screenParty(c, uid, { kind, id: b.data.engine_id }) : null;
+          return { link, screening };
+        });
+      } catch (e) { return fail(reply, e); }
     });
     app.post(`${base}/:id/void`, RL_WRITE, async (req, reply) => {
       const uid = await ownerOnly(req, reply); if (!uid) return;

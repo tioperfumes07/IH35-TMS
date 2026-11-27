@@ -15,6 +15,7 @@ import type pg from "pg";
 import { createExpandedInvoice } from "../accounting/invoices.service.js";
 import { createInvoiceLineInClientTx } from "../accounting/invoice-line-create.js";
 import { scopeToScentsx, ScentsxLinkInvalid, ScentsxLinkNotFound } from "./links.service.js";
+import { assertNotSanctionsBlocked, hasExportProof, hasResaleCertificate } from "./sanctions.service.js";
 
 type Q = Pick<pg.PoolClient, "query">;
 export type SalesChannel = "wholesale" | "retail" | "export";
@@ -54,6 +55,13 @@ export async function invoiceSalesOrder(c: Q, uid: string, salesOrderId: string,
   );
   const customerId = link.rows[0]?.customer_id;
   if (!customerId) throw new ScentsxLinkInvalid(`${order.customer_name} is not a ScentsX customer yet — use "Make ScentsX customer" on its profile`);
+  // OFAC (design §8): no sale to a party that is not screened against the newest list, or is an uncleared possible match.
+  await assertNotSanctionsBlocked(c, { kind: "customer", id: customerId }, `${order.customer_name} cannot be invoiced`);
+  // Texas: an export is tax-free only with proof the goods left the US — the export channel is refused without it.
+  if (channel === "export" && !(await hasExportProof(c, salesOrderId))) {
+    throw new ScentsxLinkInvalid(`sales order ${order.number} has no export proof (customs broker certification, the foreign import papers or a bill of lading to a point outside the US) — attach it before invoicing it as an export`);
+  }
+  const resale = await hasResaleCertificate(c, order.company_id);
   const lines = (await billableLines(c, salesOrderId)).filter((l) => l.to_bill > 0);
   if (!lines.length) throw new ScentsxLinkInvalid(`nothing shipped on ${order.number} is left to invoice`);
   const acct = await c.query<{ id: string }>(
@@ -70,7 +78,11 @@ export async function invoiceSalesOrder(c: Q, uid: string, salesOrderId: string,
     customerId,
     billToEntityType: "customer",
     billToEntityId: customerId,
-    internalNotes: `TIO Perfumes sales order ${order.number} (${channel}). Sales tax not added: add it unless the buyer gave a resale certificate or the goods were exported with proof.`,
+    internalNotes: channel === "export"
+      ? `TIO Perfumes sales order ${order.number} (export). Export proof on file — no Texas sales tax.`
+      : resale
+        ? `TIO Perfumes sales order ${order.number} (${channel}). Resale certificate on file — no Texas sales tax.`
+        : `TIO Perfumes sales order ${order.number} (${channel}). NO resale certificate on file: add Texas sales tax on the Invoices page before finalizing.`,
   });
   for (const l of lines) {
     const created = await createInvoiceLineInClientTx(c, {

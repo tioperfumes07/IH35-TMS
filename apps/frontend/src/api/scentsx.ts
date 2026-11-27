@@ -29,8 +29,10 @@ export const getScentsxAccountRegister = (accountId: string) =>
   apiRequest<{ lines: ScentsxRegisterLine[] }>(`/api/v1/scentsx/accounts/${encodeURIComponent(accountId)}/register`);
 export type ScentsxBillableLine = { so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; to_bill: number; unit_price_cents: number };
 export type ScentsxDocLink = { id: string; invoice_id: string | null; invoice_number: string | null; invoice_total_cents: string | null; invoice_status: string | null; created_at: string };
+export type ScentsxExportProof = { id: string; proof_kind: string; document_number: string | null; crossed_on: string | null; port: string | null; file_id: string; created_at: string };
+export type ScentsxPartyStatus = { blocked: boolean; reason: "never_screened" | "list_changed" | "possible_match" | "confirmed_match" | null; screening_id: string | null };
 export const getScentsxSalesOrderBilling = (salesOrderId: string) =>
-  apiRequest<{ lines: ScentsxBillableLine[]; invoices: ScentsxDocLink[] }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/billing`);
+  apiRequest<{ lines: ScentsxBillableLine[]; invoices: ScentsxDocLink[]; export_proofs: ScentsxExportProof[]; export_proof_on_file: boolean; resale_certificate_on_file: boolean; sanctions: ScentsxPartyStatus | null }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/billing`);
 export const invoiceScentsxSalesOrder = (salesOrderId: string, channel: "wholesale" | "retail" | "export") =>
   apiRequest<{ invoice: { invoice_id: string; display_id: string; lines: number; units: number } }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/invoice`, { method: "POST", body: { channel } });
 export type ScentsxCredit = {
@@ -90,3 +92,11 @@ export const loadScentsxSanctionsList = () =>
   apiRequest<{ load: { load_id: string; new_load: boolean; names: number }; rescreen: { screened: number; possible_matches: number } }>("/api/v1/scentsx/compliance/sanctions/load", { method: "POST", body: {} });
 export const clearScentsxScreening = (id: string, reason: string) => apiRequest<{ cleared: boolean }>(`/api/v1/scentsx/compliance/sanctions/${encodeURIComponent(id)}/clear`, { method: "POST", body: { reason } });
 export const confirmScentsxMatch = (id: string) => apiRequest<{ confirmed: boolean }>(`/api/v1/scentsx/compliance/sanctions/${encodeURIComponent(id)}/confirm`, { method: "POST", body: {} });
+export const addScentsxExportProof = (input: { sales_order_id: string; proof_kind: "broker_export_certification" | "foreign_import_papers" | "bill_of_lading_outside_us"; document_number?: string | null; crossed_on?: string | null; port?: string | null; file_id: string }) =>
+  apiRequest<{ proof: { id: string } }>("/api/v1/scentsx/compliance/export-proofs", { method: "POST", body: input });
+export const addScentsxResaleCertificate = (input: { contact_company_id: string; customer_id?: string | null; form_code?: "01-339" | "out_of_state" | "mexico_export_buyer"; purchaser_tax_id?: string | null; signed_on: string; file_id: string }) =>
+  apiRequest<{ certificate: { id: string } }>("/api/v1/scentsx/compliance/resale-certificates", { method: "POST", body: input });
+export const screenScentsxParty = (kind: "contact_company" | "customer" | "vendor" | "cash_payer", id: string) =>
+  apiRequest<{ screening: { screening_id: string; result: string; best_score: number; hits: number } }>("/api/v1/scentsx/compliance/sanctions/screen", { method: "POST", body: { kind, id } });
+export const getScentsxCustomerCompliance = (contactCompanyId: string) =>
+  apiRequest<{ resale_certificate_on_file: boolean; sanctions: ScentsxPartyStatus | null; customer_id: string | null }>(`/api/v1/scentsx/customers/${encodeURIComponent(contactCompanyId)}/compliance`);
