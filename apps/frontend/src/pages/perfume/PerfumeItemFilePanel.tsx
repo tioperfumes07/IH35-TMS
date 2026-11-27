@@ -28,7 +28,7 @@ import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts
 const PAGE = 100;
 const CONC = ["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"] as const;
 /** The owner's own item lists (Catalogs → Item product types / Item categories), so a value matches what he keeps there. */
-function useItemCatalogs() {
+export function useItemCatalogs() {
   const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
   const of = (k: string) => (q.data?.kinds.find((x) => x.kind === k)?.values ?? []).map((v) => v.value);
   return { types: of("product_type"), categories: of("item_category") };

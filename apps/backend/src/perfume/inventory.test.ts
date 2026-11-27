@@ -9,8 +9,8 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import {
-  addTransferLine, createCount, createTransfer, getCount, InvInvalid, itemLots, listMoves, openingApply, openingPreview, postCount, receiveTransfer, setCountLine,
-  shipTransfer, stockOnHand, stockOut, submitCount,
+  addTransferLine, createCount, createTransfer, countSheetBody, getCount, InvInvalid, itemLots, listMoves, openingApply, openingPreview, postCount, receiveTransfer, setCountLine,
+  shipTransfer, stockIn, stockOnHand, stockOut, submitCount,
 } from "./inventory.service.js";
 import { addPurchaseLine, createPurchaseOrder, getPurchaseOrder, PoInvalid, receivePurchase, updatePurchaseLine } from "./purchases.service.js";
 import { addOrderLine, createOrder, getOrder, OrderInvalid, shipOrder, updateOrderLine } from "./orders.service.js";
@@ -140,5 +140,44 @@ describeIntegration("ScentsX inventory ledger (real Postgres, rolled back)", () 
     expect(Number(m.avg_cost_after_cents)).toBe(1500);
     await expect(openingApply(db as never, TEST_OWNER_USER_ID, "2026-11-30")).rejects.toBeInstanceOf(InvInvalid);
     await db.query("ROLLBACK TO SAVEPOINT open1");
+  });
+
+  it("count cycle (CONTROL Physical Inventory): sheet by category, blind lines, cut-off at counting — a sale after counting is not counted twice", async () => {
+    await db.query(`INSERT INTO perfume.locations (code, name, sort_order, kind, own) VALUES ('ZC1', 'ZZ Count site', 901, 'warehouse', true) ON CONFLICT (code) DO NOTHING`);
+    const a = await item("CYCLE-A"), b = await item("CYCLE-B"), z0 = await item("CYCLE-Z");
+    await db.query(`UPDATE perfume.items SET category = 'ZZ Perfume' WHERE id = ANY($1::uuid[])`, [[a, z0]]);
+    await db.query(`UPDATE perfume.items SET category = 'ZZ Skin' WHERE id = $1`, [b]);
+    await stockIn(db as never, TEST_OWNER_USER_ID, { kind: "receipt", item_id: a, location_code: "ZC1", qty: 100, unit_cost_cents: 1000, source: "receipt" });
+    await stockIn(db as never, TEST_OWNER_USER_ID, { kind: "receipt", item_id: b, location_code: "ZC1", qty: 5, unit_cost_cents: 2000, source: "receipt" });
+    await stockIn(db as never, TEST_OWNER_USER_ID, { kind: "receipt", item_id: z0, location_code: "ZC1", qty: 1, unit_cost_cents: 500, source: "receipt" });
+    await stockOut(db as never, TEST_OWNER_USER_ID, { kind: "adjustment", item_id: z0, location_code: "ZC1", qty: 1, reason: "zero it" });
+
+    // The sheet: category ZZ Perfume → A only; with the zero-stock items → A and Z. Blind: nothing counted yet.
+    const k0 = await createCount(db as never, TEST_OWNER_USER_ID, "ZC1", { category: "ZZ Perfume" });
+    expect((await getCount(db as never, k0.id)).lines.map((l) => l.item_id)).toEqual([a]);
+    const k = await createCount(db as never, TEST_OWNER_USER_ID, "ZC1", { category: "ZZ Perfume", include_zero: true });
+    let g = await getCount(db as never, k.id);
+    expect(g.lines.map((l) => l.item_id).sort()).toEqual([a, z0].sort());
+    expect(g.lines.every((l) => l.counted_qty == null && l.counted_at == null)).toBe(true);
+    await expect(submitCount(db as never, TEST_OWNER_USER_ID, k.id)).rejects.toThrow(/Nothing has been counted/);
+    // The printed sheet is blind: two rows, an empty Counted box, and never the expected 100.
+    const sheet = await countSheetBody(db as never, k.id);
+    expect((sheet.body.match(/<tr><td>/g) ?? []).length).toBe(2);
+    expect(sheet.body).toContain("<th>Counted</th>");
+    expect(sheet.body).not.toMatch(/>100</);
+
+    // Count A: 98 on the shelf (100 expected at that moment). THEN 3 are sold. Posting must leave 95, not 98.
+    await setCountLine(db as never, k.id, a, 98, TEST_OWNER_USER_ID);
+    await stockOut(db as never, TEST_OWNER_USER_ID, { kind: "shipment", item_id: a, location_code: "ZC1", qty: 3 });
+    g = await getCount(db as never, k.id);
+    expect(g.lines.find((l) => l.item_id === a)).toMatchObject({ expected_qty: 100, counted_qty: 98, variance: -2, on_hand_now: 97 });
+    expect(g.totals).toMatchObject({ lines: 2, counted: 1, not_counted: 1, gain_cents: 0, loss_cents: -2000, net_cents: -2000 });
+    const sub = await submitCount(db as never, TEST_OWNER_USER_ID, k.id);
+    expect(sub).toMatchObject({ diff_value_cents: -2000, counted: 1, not_counted: 1, needs_second_person: false });
+    await postCount(db as never, TEST_OWNER_USER_ID, k.id);
+    const onHand = async (id: string) => Number((await db.query(`SELECT qty FROM perfume.item_stock WHERE item_id = $1 AND location_code = 'ZC1'`, [id])).rows[0]?.qty ?? 0);
+    expect(await onHand(a)).toBe(95);
+    expect(await onHand(z0)).toBe(0); // never counted → nothing moved
+    expect(await onHand(b)).toBe(5); // not on this sheet
   });
 });

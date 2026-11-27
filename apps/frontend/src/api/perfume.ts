@@ -723,8 +723,11 @@ export type PerfumeTransfer = PerfumeTransferRow & { lines: Array<{ id: string; 
   moves: Array<{ kind: string; location_code: string; qty: number; unit_cost_cents: number; moved_at: string; display_name: string }> };
 export type PerfumeCountRow = { id: string; number: string; location_code: string; status: "draft" | "submitted" | "posted" | "cancelled"; diff_value_cents: number | null;
   created_at: string; submitted_at: string | null; approved_at: string | null; submitted_by_email: string | null; approved_by_email: string | null; lines: number };
-export type PerfumeCount = Omit<PerfumeCountRow, "lines"> & { lines: Array<{ id: string; item_id: string; display_name: string; expected_qty: number; counted_qty: number;
-  on_hand_now: number; unit_cost_cents: number }>; needs_second_person: boolean; notes: string | null };
+export type PerfumeCountLine = { id: string; item_id: string; display_name: string; tio_code: string | null; brand: string; upc: string | null; bin: string | null;
+  expected_qty: number; counted_qty: number | null; counted_at: string | null; counted_by_email: string | null; on_hand_now: number; unit_cost_cents: number; variance: number | null };
+export type PerfumeCount = Omit<PerfumeCountRow, "lines"> & { lines: PerfumeCountLine[]; needs_second_person: boolean; notes: string | null;
+  totals: { lines: number; counted: number; not_counted: number; gain_cents: number; loss_cents: number; net_cents: number };
+  selection?: { category?: string | null; brand?: string | null; product_type?: string | null; family_id?: string | null; include_zero?: boolean; all_items?: boolean } };
 export type PerfumeOpening = { lists: string[]; lines: number; units: number; value_cents: number; skipped_no_cost: number; skipped_unknown_site: number;
   by_site: Array<{ code: string; units: number; value: number; lines: number }>; already_applied: boolean };
 const qs = (o: Record<string, string | number | boolean | null | undefined>) => {
@@ -751,7 +754,8 @@ export const removePerfumeTransferLine = (lineId: string) => apiRequest<{ ok: tr
 export const perfumeTransferAction = (id: string, action: "ship" | "receive" | "cancel") => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/transfers/${id}/${action}`, { method: "POST", body: {} });
 export const listPerfumeCounts = () => apiRequest<{ counts: PerfumeCountRow[] }>("/api/v1/perfume/inventory/counts");
 export const getPerfumeCount = (id: string) => apiRequest<PerfumeCount>(`/api/v1/perfume/inventory/counts/${id}`);
-export const createPerfumeCount = (b: { location_code: string; all_items?: boolean; notes?: string | null }) =>
+export const createPerfumeCount = (b: { location_code: string; all_items?: boolean; notes?: string | null; category?: string | null; brand?: string | null;
+  product_type?: string | null; family_id?: string | null; include_zero?: boolean }) =>
   apiRequest<{ id: string; number: string }>("/api/v1/perfume/inventory/counts", { method: "POST", body: b });
 export const setPerfumeCountLine = (id: string, b: { item_id: string; counted_qty: number }) => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/counts/${id}/lines`, { method: "PUT", body: b });
 export const submitPerfumeCount = (id: string) => apiRequest<{ diff_value_cents: number; needs_second_person: boolean }>(`/api/v1/perfume/inventory/counts/${id}/submit`, { method: "POST", body: {} });

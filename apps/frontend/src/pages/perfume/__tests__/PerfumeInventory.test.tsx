@@ -27,7 +27,8 @@ beforeEach(() => {
       submitted_at: "2026-11-27T02:10:00Z", approved_at: null, submitted_by_email: "jorge@test", approved_by_email: null, lines: 1 }] };
     if (path === "/api/v1/perfume/inventory/counts/k1") return { id: "k1", number: "CC-000001", location_code: "008", status: "submitted", diff_value_cents: -60000, notes: null, created_at: "", submitted_at: null,
       approved_at: null, submitted_by_email: null, approved_by_email: null, needs_second_person: true,
-      lines: [{ id: "cl1", item_id: "i1", display_name: "ZZ · NIGHT · 100 ml", expected_qty: 100, counted_qty: 40, on_hand_now: 100, unit_cost_cents: 1000 }] };
+      totals: { lines: 1, counted: 1, not_counted: 0, gain_cents: 0, loss_cents: -60000, net_cents: -60000 },
+      lines: [{ id: "cl1", item_id: "i1", display_name: "ZZ · NIGHT · 100 ml", tio_code: "TIO-1", brand: "ZZ", upc: null, bin: null, expected_qty: 100, counted_qty: 40, counted_at: "2026-11-27T02:05:00Z", counted_by_email: "jorge@test", variance: -60, on_hand_now: 100, unit_cost_cents: 1000 }] };
     if (path === "/api/v1/perfume/inventory/counts/k1/post") return { lines_moved: 1 };
     throw new Error(`unexpected ${path}`);
   });
