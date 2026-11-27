@@ -122,20 +122,20 @@ function NewPoForm({ onClose, onCreated }: { onClose: () => void; onCreated: (id
   );
 }
 
-/** The amount at or over which a PO is approved before its goods are received. Blank = no approval step. */
+/** The amount over which (owner 22:50 CT "over 50K needs approval by me") a PO is approved before its goods are received. Blank = no approval step. */
 function PoApprovalAmount() {
   const { pushToast } = useToast();
   const q = useQuery({ queryKey: ["perfume", "po-approval"], queryFn: getPerfumePoApproval });
   const [v, setV] = useState<number | null | undefined>(undefined);
   if (q.isError) return <ListErrorState title={tr("perfume.pos.apprError", "Couldn't load the approval amount")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   const cur = v === undefined ? q.data?.approval_over_cents ?? null : v;
-  const save = () => void setPerfumePoApproval(cur).then(() => { setV(undefined); void q.refetch(); pushToast(cur == null ? "No PO approval step" : `POs at or over ${money(cur)} need approval`, "success"); })
+  const save = () => void setPerfumePoApproval(cur).then(() => { setV(undefined); void q.refetch(); pushToast(cur == null ? "No PO approval step" : `POs over ${money(cur)} need approval`, "success"); })
     .catch((e) => pushToast(userFacingApiError(e, "Not saved"), "error"));
   return (
     <div className="flex flex-wrap items-end gap-2 text-xs" data-testid="perfume-po-approval-amount">
-      <label>{tr("perfume.pos.appr_amount", "Approve POs at or over")} <MoneyInput className="block w-[120px]" ariaLabel={tr("perfume.pos.appr_amount", "Approve POs at or over")} valueCents={cur} onChangeCents={setV} /></label>
+      <label>{tr("perfume.pos.appr_amount", "Approve POs over")} <MoneyInput className="block w-[120px]" ariaLabel={tr("perfume.pos.appr_amount", "Approve POs over")} valueCents={cur} onChangeCents={setV} /></label>
       <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={v === undefined} onClick={save} data-testid="perfume-po-approval-save">{tr("perfume.pos.appr_save", "Save")}</Button>
-      <span className="text-[#64748B]">{tr("perfume.pos.appr_help", "Blank = no approval. A PO at or over it is received only once approved; a change after approval takes it off.")}</span>
+      <span className="text-[#64748B]">{tr("perfume.pos.appr_help", "Blank = no approval. A PO over it is received only once approved; a change after approval takes it off.")}</span>
     </div>
   );
 }
@@ -173,7 +173,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
             <div className="text-xs" data-testid="perfume-po-approval">
               {p.approved_at
                 ? `${tr("perfume.pos.approved_by", "Approved")} ${new Date(p.approved_at).toLocaleDateString("en-US", { timeZone: "America/Chicago" })}${p.approved_by_email ? ` · ${p.approved_by_email}` : ""}`
-                : `${tr("perfume.pos.awaiting", "Waiting for approval — at or over")} ${money(p.approval_over_cents ?? 0)}`}
+                : `${tr("perfume.pos.awaiting", "Waiting for approval — over")} ${money(p.approval_over_cents ?? 0)}`}
             </div>) : null}
         </div>
         <div className="flex flex-wrap gap-2">

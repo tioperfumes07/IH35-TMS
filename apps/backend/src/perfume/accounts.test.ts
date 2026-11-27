@@ -46,6 +46,21 @@ describeIntegration("price levels and customer accounts (real Postgres, rolled b
     expect((await levelPriceFor(db as never, co, item, 11, 900))!.cents).toBe(1200);
     expect((await levelPriceFor(db as never, co, item, 12, 900))).toMatchObject({ cents: 1100, how: "fixed" });
 
+    // No stock yet: "my average cost" is the cost on the owner's current inventory file (owner 22:50 CT), then the best supplier.
+    const item2 = (await db.query<{ id: string }>(
+      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, identity_key, loose_key, display_name) VALUES ('ZZA', 'FILE', 100, 'EDP', 'M', 'ZZA|FILE|100|EDP|M|', 'x', 'ZZA · FILE') RETURNING id`)).rows[0].id;
+    expect(await levelPriceFor(db as never, co, item2, 1, 900)).toMatchObject({ cents: 1080, how: "best_vendor", cost_source: "best_vendor" });
+    const inv = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZA Inventory', 'inventory') RETURNING id`)).rows[0].id;
+    const fl = (await db.query<{ id: string }>(
+      `INSERT INTO perfume.price_lists (vendor_id, list_date, file_name, source_kind, rows_read, rows_saved, rows_skipped, price_total_file_cents, price_total_saved_cents, is_current)
+       VALUES ($1, current_date, 'zz-inv.xlsx', 'xlsx', 1, 1, 0, 0, 0, true) RETURNING id`, [inv])).rows[0].id;
+    await db.query(`INSERT INTO perfume.price_list_rows (list_id, row_no, raw, description, price_cents, identity_key, loose_key, item_id, match_method, match_status)
+       VALUES ($1, 1, '{}', 'ZZA FILE', 700, 'x', 'x', $2, 'key', 'matched')`, [fl, item2]);
+    expect(await levelPriceFor(db as never, co, item2, 1, 900)).toMatchObject({ cents: 840, how: "avg", cost_cents: 700, cost_source: "inventory_file" });
+    // My average cost typed / imported on the desk wins over the file's last cost.
+    await db.query(`INSERT INTO perfume.item_costs (item_id, avg_cost_cents) VALUES ($1, 650)`, [item2]);
+    expect(await levelPriceFor(db as never, co, item2, 1, 900)).toMatchObject({ cents: 780, cost_cents: 650, cost_source: "my_avg_cost" });
+
     // A quote and an order for this customer take the level's price when none is typed.
     const q = await createQuote(db as never, TEST_OWNER_USER_ID, { company_id: co });
     expect((await addLine(db as never, TEST_OWNER_USER_ID, q.id, { item_id: item, qty: 12 })).unit_price_cents).toBe(1100);
