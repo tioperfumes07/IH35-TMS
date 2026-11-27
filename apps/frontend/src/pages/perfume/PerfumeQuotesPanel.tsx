@@ -143,32 +143,20 @@ function NewQuoteForm({ onClose, onCreated }: { onClose: () => void; onCreated: 
   );
 }
 
-function LineRow({ l, currency, onSaved }: { l: PerfumeQuoteLine; currency: string; onSaved: () => void }) {
+/** A quantity or a price on a quote line: saved when the box is left (Enter or Tab), only when it changed. */
+function LineCell({ l, field, onSaved }: { l: PerfumeQuoteLine; field: "qty" | "unit_price_cents"; onSaved: () => void }) {
   const { pushToast } = useToast();
-  const [qty, setQty] = useState(String(l.qty));
-  const [price, setPrice] = useState((l.unit_price_cents / 100).toFixed(2));
+  const start = field === "qty" ? String(l.qty) : (l.unit_price_cents / 100).toFixed(2);
+  const [v, setV] = useState(start);
   const save = async () => {
-    const q = Number(qty), p = toCents(price);
-    if (!Number.isInteger(q) || q < 1 || p == null) { pushToast("Quantity must be a whole number and the price a dollar amount", "error"); return; }
-    if (q === l.qty && p === l.unit_price_cents) return;
-    try { await updatePerfumeQuoteLine(l.id, { qty: q, unit_price_cents: p }); onSaved(); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
+    const n = field === "qty" ? Number(v) : toCents(v);
+    if (n == null || !Number.isInteger(n) || n < (field === "qty" ? 1 : 0)) { pushToast("Quantity must be a whole number and the price a dollar amount", "error"); setV(start); return; }
+    if (n === (field === "qty" ? l.qty : l.unit_price_cents)) return;
+    try { await updatePerfumeQuoteLine(l.id, { [field]: n }); onSaved(); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
-  const margin = l.cost_cents != null && l.unit_price_cents > 0 ? ((l.unit_price_cents - l.cost_cents) / l.unit_price_cents) * 100 : null;
   return (
-    <tr className="border-b border-[#E8EDF2]" data-testid={`perfume-quote-line-${l.line_no}`}>
-      <td className="px-2 py-1 tabular-nums">{l.line_no}</td>
-      <td className="px-2 py-1">{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</td>
-      <td className="px-2 py-1"><input className={`${ctl} w-[80px] text-right`} aria-label={`Quantity line ${l.line_no}`} value={qty} onChange={(e) => setQty(e.target.value)} onBlur={() => void save()} /></td>
-      <td className="px-2 py-1"><input className={`${ctl} w-[100px] text-right`} aria-label={`Unit price line ${l.line_no}`} value={price} onChange={(e) => setPrice(e.target.value)} onBlur={() => void save()} /></td>
-      <td className="px-2 py-1 text-right tabular-nums">{money(l.qty * l.unit_price_cents, currency)}</td>
-      <td className="px-2 py-1 text-right tabular-nums">{l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`}</td>
-      <td className="px-2 py-1 text-right tabular-nums">{margin == null ? DASH : `${margin.toFixed(1)}%`}</td>
-      <td className="px-2 py-1">
-        <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => void removePerfumeQuoteLine(l.id).then(onSaved).catch((e) => pushToast(userFacingApiError(e, "Not taken off"), "error"))}>
-          {tr("perfume.quotes.take_off", "Take off")}
-        </Button>
-      </td>
-    </tr>
+    <input className={`${ctl} ${field === "qty" ? "w-[80px]" : "w-[100px]"} text-right`} aria-label={field === "qty" ? tr("perfume.quotes.qty", "Qty") : tr("perfume.quotes.price", "Unit price")}
+      value={v} onChange={(e) => setV(e.target.value)} onBlur={() => void save()} onClick={(e) => e.stopPropagation()} data-testid={`perfume-quote-${field}-${l.line_no}`} />
   );
 }
 
@@ -256,23 +244,30 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           </div>
         ) : null}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs" data-testid="perfume-quote-lines">
-          <thead><tr className="border-b border-[#14314F] text-left">
-            <th className="px-2 py-1">#</th><th className="px-2 py-1">{tr("perfume.quotes.item", "Item")}</th><th className="px-2 py-1">{tr("perfume.quotes.qty", "Qty")}</th>
-            <th className="px-2 py-1">{tr("perfume.quotes.price", "Unit price")}</th><th className="px-2 py-1 text-right">{tr("perfume.quotes.total", "Total")}</th>
-            <th className="px-2 py-1 text-right">{tr("perfume.quotes.cost", "Best cost when added")}</th><th className="px-2 py-1 text-right">{tr("perfume.quotes.margin", "Margin")}</th><th />
-          </tr></thead>
-          <tbody>
-            {q.lines.length === 0 ? <tr><td colSpan={8} className="px-2 py-3 text-[#64748B]">{tr("perfume.quotes.no_lines", "No lines yet — add an item above.")}</td></tr> : null}
-            {q.lines.map((l) => <LineRow key={`${l.id}-${l.qty}-${l.unit_price_cents}`} l={l} currency={q.currency} onSaved={() => void refresh()} />)}
-          </tbody>
-          <tfoot><tr className="border-t border-[#14314F] font-semibold">
-            <td /><td className="px-2 py-1">{`${q.lines.length} line${q.lines.length === 1 ? "" : "s"}`}</td>
-            <td className="px-2 py-1 tabular-nums">{q.lines.reduce((t, l) => t + l.qty, 0).toLocaleString("en-US")}</td><td />
-            <td className="px-2 py-1 text-right tabular-nums" data-testid="perfume-quote-total">{money(total, q.currency)}</td><td colSpan={3} />
-          </tr></tfoot>
-        </table>
+      <ParityTable<PerfumeQuoteLine>
+        title={tr("perfume.quotes.lines", "Lines")}
+        rows={q.lines}
+        rowKey={(l) => `${l.id}-${l.qty}-${l.unit_price_cents}`}
+        storageKey="perfume-quote-lines-v1"
+        emptyText="No lines yet — add an item above."
+        columns={[
+          { key: "line_no", label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
+          { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</> },
+          { key: "qty", label: "Qty", render: (l) => <LineCell l={l} field="qty" onSaved={() => void refresh()} /> },
+          { key: "unit_price_cents", label: "Unit price", render: (l) => <LineCell l={l} field="unit_price_cents" onSaved={() => void refresh()} /> },
+          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, q.currency) },
+          { key: "cost_cents", label: "Best cost when added", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`) },
+          { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents != null && l.unit_price_cents > 0 ? `${(((l.unit_price_cents - l.cost_cents) / l.unit_price_cents) * 100).toFixed(1)}%` : DASH) },
+          { key: "off", label: "", render: (l) => (
+            <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs"
+              onClick={(e) => { e.stopPropagation(); void removePerfumeQuoteLine(l.id).then(() => refresh()).catch((er) => pushToast(userFacingApiError(er, "Not taken off"), "error")); }}>
+              {tr("perfume.quotes.take_off", "Take off")}
+            </Button>) },
+        ]}
+      />
+      <div className="flex justify-end gap-4 border-t border-[#14314F] pt-1 text-xs font-semibold" data-testid="perfume-quote-lines-total">
+        <span>{`${q.lines.length} line${q.lines.length === 1 ? "" : "s"} · ${q.lines.reduce((t, l) => t + l.qty, 0).toLocaleString("en-US")} units`}</span>
+        <span data-testid="perfume-quote-total">{money(total, q.currency)}</span>
       </div>
       <div className="flex flex-wrap gap-2">
         <label className="flex-1 text-xs">{tr("perfume.quotes.terms", "Terms")}
