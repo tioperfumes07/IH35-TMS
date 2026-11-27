@@ -161,9 +161,11 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
   });
   app.post("/api/v1/perfume/stock-linkage/link", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const p = z.object({ from_item_id: z.string().uuid(), to_item_id: z.string().uuid() }).safeParse(req.body ?? {});
+    const p = z.object({ from_item_id: z.string().uuid(), to_item_id: z.string().uuid(), same_bottle_sizes: z.boolean().optional() }).safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error" });
-    try { return await withCurrentUser(uid, (c) => linkItemTo(c, uid, p.data.from_item_id, p.data.to_item_id)); } catch (e) { return fail(reply, e); }
+    try {
+      return await withCurrentUser(uid, (c) => linkItemTo(c, uid, p.data.from_item_id, p.data.to_item_id, { sameBottleSizes: p.data.same_bottle_sizes === true }));
+    } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/perfume/stock-linkage/strict", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
