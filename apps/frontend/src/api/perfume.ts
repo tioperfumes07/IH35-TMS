@@ -1051,7 +1051,7 @@ export const importPerfumePurchaseHistory = (rows: PerfumeHistoryRow[]) =>
 export type PerfumeDupCard = { id: string; name: string; role: string | null; city: string | null; state: string | null; phone: string | null; domain: string | null;
   address: string | null; people: number; docs: number; created_at: string };
 export type PerfumeDupRec = { id: string; reasons: string[]; score: number; first_seen_at: string; a: PerfumeDupCard; b: PerfumeDupCard; keep: "a" | "b" };
-export const getPerfumeDupRecommendations = () => apiRequest<{ open: number; found: number; rows: PerfumeDupRec[] }>("/api/v1/perfume/contacts/duplicate-recommendations");
+export const getPerfumeDupRecommendations = () => apiRequest<{ open: number; found: number | null; scanned: boolean; rows: PerfumeDupRec[] }>("/api/v1/perfume/contacts/duplicate-recommendations");
 export const confirmPerfumeDuplicates = (ids: string[], keep: Record<string, "a" | "b">) =>
   apiRequest<{ merged: number }>("/api/v1/perfume/contacts/duplicate-recommendations/confirm", { method: "POST", body: { ids, keep } });
 export const dismissPerfumeDuplicates = (ids: string[]) =>

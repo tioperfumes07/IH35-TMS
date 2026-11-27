@@ -112,7 +112,14 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
   // Owner 17:17 CT: automatic duplicate detector — recommendations (same / similar name, phone, domain, address); the owner confirms.
   app.get("/api/v1/perfume/contacts/duplicate-recommendations", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    return withCurrentUser(uid, async (c) => { const scan = await scanDuplicates(c); return { ...(await listRecommendations(c)), found: scan.found }; });
+    // The scan already runs after every import / Excel update / merge; on open it re-runs only when the last scan is over 10 minutes
+    // old (measured 2026-11-27: a full scan of 3,810 live companies took 19.5 s in the owner's browser).
+    return withCurrentUser(uid, async (c) => {
+      const stale = (await c.query<{ stale: boolean }>(
+        `SELECT coalesce(max(last_seen_at) < now() - interval '10 minutes', true) AS stale FROM perfume.duplicate_candidates`)).rows[0]!.stale;
+      const scan = stale ? await scanDuplicates(c) : null;
+      return { ...(await listRecommendations(c)), found: scan?.found ?? null, scanned: stale };
+    });
   });
   app.post("/api/v1/perfume/contacts/duplicate-recommendations/confirm", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
