@@ -82,10 +82,16 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     expect(ea.events.at(-1)!.kind).toBe("edited");
 
     // The list finds by code / UPC and shows the codes.
-    const byHk = await listItemFile(db as never, { q: "Z200001", limit: 10, offset: 0 });
+    const byHk = await listItemFile(db as never, { q: "Z200001", limit: 10, offset: 0, scope: "all" });
     expect(byHk.rows.map((r) => r.id)).toEqual([b]);
     expect(byHk.rows[0].upcs).toEqual(["812256028475"]);
-    expect((await listItemFile(db as never, { q: "Z56014815", limit: 10, offset: 0 })).rows.map((r) => r.tio_code)).toEqual(["Z56014815"]);
+    expect((await listItemFile(db as never, { q: "Z56014815", limit: 10, offset: 0, scope: "all" })).rows.map((r) => r.tio_code)).toEqual(["Z56014815"]);
+
+    // Our items vs vendors' items only (owner 23:23 CT): CHARLIE is only on the PCA list.
+    const ch = await item("CHARLIE");
+    await line(pcaL, 2, ch, "PCA-2", null, "ZZQ CHARLIE EDP 3.4", 2000);
+    expect((await listItemFile(db as never, { q: "ZZQ", limit: 50, offset: 0, scope: "mine" })).rows.map((r) => r.id).sort()).toEqual([a, b].sort());
+    expect((await listItemFile(db as never, { q: "ZZQ", limit: 50, offset: 0, scope: "vendors" })).rows.map((r) => r.id)).toEqual([ch]);
 
     // Linkage by UPC: the item that carries it and every line linked to it, with each vendor's own words.
     const lk = await linkage(db as never, { q: "812256028475", limit: 100 });

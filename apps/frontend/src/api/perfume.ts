@@ -815,7 +815,8 @@ export const decidePerfumeCreditApplication = (id: string, b: { decision: "appro
 export type PerfumeItemFileRow = { id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null; flags: string[] | null;
   tio_code: string | null; upcs: string[]; hk_codes: string[]; lists_linked: number; best_cost_cents: number | null; my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
 export type PerfumeItemFileHas = "tio" | "no_tio" | "hk" | "no_hk" | "upc" | "no_upc" | "mine";
-export type PerfumeItemFileList = { total: number; rows: PerfumeItemFileRow[]; counts: { items: number; with_tio: number; with_hk: number; with_upc: number } };
+export type PerfumeItemScope = "mine" | "vendors" | "all";
+export type PerfumeItemFileList = { total: number; rows: PerfumeItemFileRow[]; counts: { items: number; with_tio: number; with_hk: number; with_upc: number; mine: number; vendors_only: number } };
 export type PerfumeItemFile = PerfumeItemProfile & {
   hk_codes: Array<{ id: string; sku: string; list: string; method: string; confirmed_at: string | null }>;
   costs: { my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
@@ -826,8 +827,9 @@ export type PerfumeLinkageLine = { line_id: string; vendor_id: string; vendor: s
   size_text: string | null; price_cents: number | null; match_status: string; match_method: string | null; list_date: string; item_id: string | null; item: string | null; tio_code: string | null;
   found_by: "upc" | "code" | "item" | "words" };
 export type PerfumeLinkage = { q: string; upc: string | null; items: Array<{ id: string; display_name: string; tio_code: string | null; upcs: string[] }>; lines: PerfumeLinkageLine[] };
-const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; limit?: number; offset?: number }) => {
+const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number }) => {
   const p = new URLSearchParams();
+  if (f.scope) p.set("scope", f.scope);
   if (f.q?.trim()) p.set("q", f.q.trim());
   if (f.has) p.set("has", f.has);
   if (f.limit != null) p.set("limit", String(f.limit));
@@ -835,8 +837,8 @@ const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; limit?: number; offse
   const s = p.toString();
   return s ? `?${s}` : "";
 };
-export const listPerfumeItemFile = (f: { q?: string; has?: PerfumeItemFileHas; limit?: number; offset?: number } = {}) => apiRequest<PerfumeItemFileList>(`/api/v1/perfume/item-file${itemQs(f)}`);
-export const perfumeItemFileExportPath = (f: { q?: string; has?: PerfumeItemFileHas } = {}) => `/api/v1/perfume/item-file/export.xlsx${itemQs(f)}`;
+export const listPerfumeItemFile = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number } = {}) => apiRequest<PerfumeItemFileList>(`/api/v1/perfume/item-file${itemQs(f)}`);
+export const perfumeItemFileExportPath = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope } = {}) => `/api/v1/perfume/item-file/export.xlsx${itemQs(f)}`;
 export const getPerfumeItemFile = (id: string) => apiRequest<PerfumeItemFile | { merged_into_id: string }>(`/api/v1/perfume/item-file/${id}`);
 export const updatePerfumeItemFile = (id: string, b: PerfumeItemEdit) => apiRequest<{ ok: true }>(`/api/v1/perfume/item-file/${id}`, { method: "PATCH", body: b });
 export const addPerfumeItemUpc = (id: string, upc: string) =>

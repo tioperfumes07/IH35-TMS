@@ -40,6 +40,9 @@ const MINE_KINDS = `('inventory', 'offer')`;
 export const listQuery = z.object({
   q: z.string().trim().max(200).optional(),
   has: z.enum(["tio", "no_tio", "hk", "no_hk", "upc", "no_upc", "mine"]).optional(),
+  /** Owner 23:23 CT: "SHOW ALL ITEMS OUR AND VENDORS BUT HAVE TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL". Ours = on my
+   *  inventory / offer list in use; vendors = on a supplier's or competitor's list in use and not on mine. */
+  scope: z.enum(["mine", "vendors", "all"]).default("all"),
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -62,39 +65,65 @@ function filters(f: z.infer<typeof listQuery>, args: unknown[]) {
   if (f.has === "no_hk") where.push(`NOT ${hk}`);
   if (f.has === "upc") where.push(upc);
   if (f.has === "no_upc") where.push(`NOT ${upc}`);
+  const onMine = `EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`;
+  const onVendor = `EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE r.item_id = i.id AND v.kind NOT IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`;
+  if (f.scope === "mine") where.push(onMine);
+  if (f.scope === "vendors") where.push(`${onVendor} AND NOT ${onMine}`);
   if (f.has === "mine") where.push(`EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`);
   return where.join(" AND ");
 }
+/** One pass per table for the page's ids (never a sub-query per item): every row read pays the FORCE RLS owner check, so the
+ *  first build — one correlated sub-query per item and per KPI — took 26 s on prod (measured 2026-11-27 in the owner's browser). */
 export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery>) {
   const args: unknown[] = [];
   const where = filters(f, args);
   const total = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.items i WHERE ${where}`, args)).rows[0]!.n;
   args.push(f.limit, f.offset);
-  const rows = (await c.query(
-    `WITH page AS (SELECT i.* FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length})
-     SELECT p.id, p.display_name, p.brand, p.name, p.size_ml::float8 AS size_ml, p.conc, p.gender, p.flags, p.internal_code AS tio_code,
-            coalesce((SELECT array_agg(u.upc ORDER BY u.upc) FROM perfume.item_upcs u WHERE u.item_id = p.id), '{}') AS upcs,
-            coalesce((SELECT array_agg(DISTINCT a.sku) FROM perfume.item_aliases a JOIN perfume.vendors v ON v.id = a.vendor_id AND v.kind IN ${MINE_KINDS}
-                       WHERE a.item_id = p.id AND a.sku IS NOT NULL), '{}') AS hk_codes,
-            (SELECT count(DISTINCT l.vendor_id)::int FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
-              WHERE r.item_id = p.id AND l.is_current AND l.voided_at IS NULL) AS lists_linked,
-            (SELECT min(r.price_cents)::int FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-              WHERE r.item_id = p.id AND v.kind = 'buy' AND l.is_current AND l.voided_at IS NULL AND r.price_cents > 0) AS best_cost_cents,
-            (SELECT ic.avg_cost_cents FROM perfume.item_costs ic WHERE ic.item_id = p.id) AS my_avg_cost_cents,
-            (SELECT round(avg(r.price_cents))::int FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-              WHERE r.item_id = p.id AND v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.price_cents >= 100) AS my_last_cost_cents
-       FROM page p ORDER BY p.display_name, p.id`, args)).rows;
-  return { total, rows };
+  const page = (await c.query<{ id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null;
+    flags: string[] | null; tio_code: string | null }>(
+    `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code
+       FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
+  if (!page.length) return { total, rows: [] };
+  const ids = page.map((r) => r.id);
+  const upcs = await c.query<{ item_id: string; upcs: string[] }>(
+    `SELECT item_id, array_agg(upc ORDER BY upc) AS upcs FROM perfume.item_upcs WHERE item_id = ANY($1::uuid[]) GROUP BY item_id`, [ids]);
+  const hks = await c.query<{ item_id: string; codes: string[] }>(
+    `SELECT a.item_id, array_agg(DISTINCT a.sku) AS codes FROM perfume.item_aliases a JOIN perfume.vendors v ON v.id = a.vendor_id AND v.kind IN ${MINE_KINDS}
+      WHERE a.item_id = ANY($1::uuid[]) AND a.sku IS NOT NULL GROUP BY a.item_id`, [ids]);
+  const lines = await c.query<{ item_id: string; lists_linked: number; best: number | null; last: number | null }>(
+    `SELECT r.item_id, count(DISTINCT l.vendor_id)::int AS lists_linked,
+            min(r.price_cents) FILTER (WHERE v.kind = 'buy' AND r.price_cents > 0)::int AS best,
+            round(avg(r.price_cents) FILTER (WHERE v.kind = 'inventory' AND r.price_cents >= 100))::int AS last
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE r.item_id = ANY($1::uuid[]) GROUP BY r.item_id`, [ids]);
+  const avg = await c.query<{ item_id: string; avg_cost_cents: number | null }>(`SELECT item_id, avg_cost_cents FROM perfume.item_costs WHERE item_id = ANY($1::uuid[])`, [ids]);
+  const U = new Map(upcs.rows.map((r) => [r.item_id, r.upcs])), H = new Map(hks.rows.map((r) => [r.item_id, r.codes]));
+  const L = new Map(lines.rows.map((r) => [r.item_id, r])), A = new Map(avg.rows.map((r) => [r.item_id, r.avg_cost_cents]));
+  return {
+    total,
+    rows: page.map((p) => ({
+      ...p, upcs: U.get(p.id) ?? [], hk_codes: H.get(p.id) ?? [], lists_linked: L.get(p.id)?.lists_linked ?? 0,
+      best_cost_cents: L.get(p.id)?.best ?? null, my_avg_cost_cents: A.get(p.id) ?? null, my_last_cost_cents: L.get(p.id)?.last ?? null,
+    })),
+  };
 }
 export async function itemFileCounts(c: pg.PoolClient) {
   return (await c.query(
-    `SELECT count(*)::int AS items,
-            count(*) FILTER (WHERE i.internal_code IS NOT NULL)::int AS with_tio,
-            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM perfume.item_aliases a JOIN perfume.vendors v ON v.id = a.vendor_id AND v.kind IN ${MINE_KINDS}
-                                           WHERE a.item_id = i.id AND a.sku IS NOT NULL))::int AS with_hk,
-            count(*) FILTER (WHERE EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id))::int AS with_upc
-       FROM perfume.items i WHERE i.merged_into_id IS NULL`)).rows[0];
+    `WITH live AS (SELECT id, internal_code FROM perfume.items WHERE merged_into_id IS NULL),
+          cur AS (SELECT r.item_id, v.kind FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL
+                    JOIN perfume.vendors v ON v.id = l.vendor_id WHERE r.item_id IS NOT NULL),
+          mine AS (SELECT DISTINCT item_id FROM cur WHERE kind IN ${MINE_KINDS}),
+          vend AS (SELECT DISTINCT item_id FROM cur WHERE kind NOT IN ${MINE_KINDS})
+     SELECT (SELECT count(*) FROM live)::int AS items,
+            (SELECT count(*) FROM live WHERE internal_code IS NOT NULL)::int AS with_tio,
+            (SELECT count(DISTINCT a.item_id) FROM perfume.item_aliases a JOIN perfume.vendors v ON v.id = a.vendor_id AND v.kind IN ${MINE_KINDS}
+               JOIN live ON live.id = a.item_id WHERE a.sku IS NOT NULL)::int AS with_hk,
+            (SELECT count(DISTINCT u.item_id) FROM perfume.item_upcs u JOIN live ON live.id = u.item_id)::int AS with_upc,
+            (SELECT count(*) FROM mine)::int AS mine,
+            (SELECT count(*) FROM (SELECT item_id FROM vend EXCEPT SELECT item_id FROM mine) x)::int AS vendors_only`)).rows[0];
 }
 
 /* ------------------------------------------------------------------ one item's file */
