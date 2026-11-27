@@ -1084,7 +1084,8 @@
     "202616780100",
     "202616790100",
     "202616800100",
-    "202616810100"
+    "202616810100",
+    "202616860100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1256,6 +1257,7 @@
   "202616790100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME quotations: perfume.quotes + quote_lines + quote_events (number, customer, lines from desk items, status, history, Excel/PDF export) — owner 2026-11-26 18:13 CT"},
   "202616800100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME sales orders + purchase orders: perfume.sales_orders / sales_order_lines / sales_order_events (from an accepted quote, shipped qty) and perfume.purchase_orders / purchase_order_lines / purchase_order_events (to a vendor, from an order or by hand, received qty) — history, Excel/PDF — owner 2026-11-26 19:08 + 19:12 CT"},
   "202616810100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME lead history: perfume.lead_events append-only who/when for contacts, catalogs, campaigns, segments, trades (fully-wired item g, owner 2026-11-26 18:13 CT)"},
+  "202616860100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME price levels + customer accounts (ScentsX): perfume.price_levels / price_level_items (Retail, Wholesale, Distributor, Export Mexico — owner 20:28 CT), perfume.customer_accounts (type, terms, limit, hold) and perfume.credit_applications with owner approval, append-only account history — owner 2026-11-26 20:21 CT"},
   "202616750100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
