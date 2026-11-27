@@ -165,12 +165,14 @@ export async function searchQuoteItems(c: pg.PoolClient, q: string) {
   // a barcode finds its item. Plain bottles come before sets / minis / testers (measured 00:50Z: "versace dylan" listed
   // three gift sets first).
   const words = t.toLowerCase().split(/\s+/).filter((w) => w.length > 0).slice(0, 8);
-  const args: unknown[] = [t.replace(/\D/g, "")];
+  // Inactive items (CONTROL "Active? N", migration 202617100100) are not offered; the register's POS code finds its item.
+  const args: unknown[] = [t.replace(/\D/g, ""), t.toUpperCase()];
   const conds = words.map((w) => { args.push(`%${w}%`); return `lower(i.brand || ' ' || i.name || ' ' || i.display_name) LIKE $${args.length}`; });
   const rows = (await c.query<{ id: string; display_name: string; upc: string | null }>(
     `SELECT i.id, i.display_name, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc
        FROM perfume.items i
-      WHERE i.merged_into_id IS NULL AND ((${conds.join(" AND ")}) OR ($1 <> '' AND EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = $1)))
+      WHERE i.merged_into_id IS NULL AND i.is_active
+        AND ((${conds.join(" AND ")}) OR upper(i.pos_code) = $2 OR ($1 <> '' AND EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = $1)))
       ORDER BY (cardinality(coalesce(i.flags, '{}'::text[])) = 0) DESC, length(i.display_name), i.display_name LIMIT 25`, args)).rows;
   const out = [];
   for (const r of rows) out.push({ ...r, best: await bestCostOf(c, r.id) });

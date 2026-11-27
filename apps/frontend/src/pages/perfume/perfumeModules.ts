@@ -4,10 +4,10 @@
  * and nothing from the carriers; on any carrier page none of these show. Each module is a set of desk tabs.
  * The data stays walled (perfume schema, FORCE RLS owner-only) — this file only decides what the menu shows.
  */
-import { BookOpen, Barcode, Boxes, CalendarDays, FileText, Landmark, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
+import { BookOpen, Barcode, Boxes, CalendarDays, FileSearch, FileText, Landmark, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing" | "items" | "inventory" | "books";
+export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing" | "items" | "inventory" | "reports" | "books";
 export type PerfumeModule = { id: PerfumeModuleId; label: string; Icon: ComponentType<{ className?: string }>; tabs: string[] };
 
 export const PERFUME_MODULES: PerfumeModule[] = [
@@ -27,6 +27,8 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "items", label: "Items", Icon: Barcode, tabs: ["itemfile", "stocklink", "linkage", "items", "families"] },
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
   { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "reorder", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
+  // LEAD ROUND L.20 (owner 2026-11-27 13:50 CT "bring what we need from CONTROL"): CONTROL's inquiry screens and reports.
+  { id: "reports", label: "Inquiry & reports", Icon: FileSearch, tabs: ["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport"] },
   // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
   { id: "books", label: "Books", Icon: Landmark, tabs: ["books"] },
 ];

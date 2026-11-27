@@ -197,8 +197,8 @@ async function stillToBuy(c: pg.PoolClient, orderId: string) {
        FROM perfume.sales_order_lines l WHERE l.order_id = $1 AND l.archived_at IS NULL ORDER BY l.line_no`, [orderId])).rows.filter((l) => l.need > 0);
 }
 
-/** Buy the sales order: one PO per vendor, each line to the vendor with the lowest current price. Lines without an item or with
- *  no vendor carrying it are listed back, never guessed. */
+/** Buy the sales order: one PO per vendor, each line to the item's preferred vendor, else the vendor it was costed on, else the
+ *  lowest current price. Lines without an item or with no vendor carrying it are listed back, never guessed. */
 export async function purchaseOrdersFromOrder(c: pg.PoolClient, uid: string, orderId: string, x: { expected_by?: string | null } = {}) {
   let so;
   try { so = await getOrder(c, orderId); } catch (e) { if (e instanceof OrderNotFound) throw new PoNotFound(); throw e; }
@@ -208,9 +208,12 @@ export async function purchaseOrdersFromOrder(c: pg.PoolClient, uid: string, ord
   const skipped: Array<{ line_no: number; description: string; reason: string }> = [];
   for (const l of need) {
     if (!l.item_id) { skipped.push({ line_no: l.line_no, description: l.description, reason: "no item on the line" }); continue; }
-    // The vendor the order was costed on, while they still carry it; else the cheapest buy vendor right now.
-    let vl = l.cost_vendor_id ? await vendorLineOf(c, l.cost_vendor_id, l.item_id) : null;
-    let vendorId = vl ? l.cost_vendor_id : null;
+    // The item's preferred vendor (CONTROL "Vendor Number", migration 202617100100) while their current list carries it; else the
+    // vendor the order was costed on, while they still carry it; else the cheapest buy vendor right now.
+    const pref = (await c.query<{ v: string | null }>(`SELECT preferred_vendor_id AS v FROM perfume.items WHERE id = $1`, [l.item_id])).rows[0]?.v ?? null;
+    let vl = pref ? await vendorLineOf(c, pref, l.item_id) : null;
+    let vendorId = vl ? pref : null;
+    if (!vl && l.cost_vendor_id) { vl = await vendorLineOf(c, l.cost_vendor_id, l.item_id); vendorId = vl ? l.cost_vendor_id : null; }
     if (!vl) {
       const best = (await c.query<{ vendor_id: string }>(
         `SELECT l2.vendor_id FROM perfume.price_list_rows r JOIN perfume.price_lists l2 ON l2.id = r.list_id JOIN perfume.vendors v ON v.id = l2.vendor_id

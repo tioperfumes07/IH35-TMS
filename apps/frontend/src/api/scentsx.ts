@@ -221,3 +221,18 @@ export const billScentsxPurchaseOrder = (poId: string, b: { vendor_invoice_numbe
   charges: Array<{ account_id: string; description: string; amount_cents: number }> }) =>
   apiRequest<{ bill_id: string; display_id: string | null; amount_cents: number; journal_entry_id: string | null; variance_cents: number;
     variance_journal_entry_id: string | null; units: number }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/bill`, { method: "POST", body: b });
+
+/* ------------------------------------------------------------------ Sales inquiry (LEAD ROUND L.20 item 3, CONTROL parity) */
+export type ScentsxInquiryFilter = { from: string; to: string; item_id?: string; customer_id?: string; invoice_id?: string };
+const inquiryQs = (f: ScentsxInquiryFilter) =>
+  Object.entries(f).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`).join("&");
+export type ScentsxSaleLine = { invoice_line_id: string; invoice_id: string; invoice: string | null; issue_date: string; customer_id: string | null; customer: string;
+  item_id: string | null; item: string | null; description: string | null; qty: number; unit_price_cents: number; amount_cents: number };
+export const getScentsxSalesLines = (f: ScentsxInquiryFilter) =>
+  apiRequest<{ from: string; to: string; rows: ScentsxSaleLine[]; total: { lines: number; invoices: number; qty: number; amount_cents: number }; truncated: boolean }>(`/api/v1/scentsx/inquiry/sales-lines?${inquiryQs(f)}`);
+export type ScentsxSaleInvoice = { invoice_id: string; invoice: string | null; issue_date: string; customer_id: string | null; customer: string; status: string;
+  lines: number; units: number; sales_cents: number; tax_cents: number; total_cents: number };
+export const getScentsxSalesInvoices = (f: ScentsxInquiryFilter) =>
+  apiRequest<{ from: string; to: string; rows: ScentsxSaleInvoice[]; total: { invoices: number; units: number; sales_cents: number; tax_cents: number; total_cents: number }; truncated: boolean }>(`/api/v1/scentsx/inquiry/sales-invoices?${inquiryQs(f)}`);
+export const getScentsxInquiryCustomers = () => apiRequest<{ customers: Array<{ customer_id: string; customer: string; invoices: number }> }>("/api/v1/scentsx/inquiry/customers");
+export const scentsxInquiryXlsxPath = (kind: "sales-lines" | "sales-invoices", f: ScentsxInquiryFilter) => `/api/v1/scentsx/inquiry/${kind}/export.xlsx?${inquiryQs(f)}`;
