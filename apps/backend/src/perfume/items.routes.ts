@@ -55,14 +55,16 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
     });
     const wb = new ExcelJS.Workbook(); const ws = wb.addWorksheet("Item file");
     ws.columns = [{ header: "Item", width: 56 }, { header: "TIO code", width: 14 }, { header: "HK codes", width: 18 }, { header: "UPCs", width: 34 }, { header: "Brand", width: 20 },
-      { header: "Size ml", width: 9 }, { header: "Type", width: 9 }, { header: "Gender", width: 8 }, { header: "Lists linked", width: 11 }, { header: "Best supplier cost", width: 16 },
+      { header: "Size ml", width: 9 }, { header: "EDT / EDP / Parfum", width: 12 }, { header: "Gender", width: 8 },
+      { header: "Model", width: 20 }, { header: "Product type", width: 14 }, { header: "Category", width: 14 }, { header: "Description", width: 30 }, { header: "Lists linked", width: 11 }, { header: "Best supplier cost", width: 16 },
       { header: "My avg cost", width: 12 }, { header: "My last cost", width: 12 }];
     for (const r of all) {
-      ws.addRow([r.display_name, r.tio_code ?? "", (r.hk_codes as string[]).join(", "), (r.upcs as string[]).join(", "), r.brand, r.size_ml ?? "", r.conc ?? "", r.gender ?? "", r.lists_linked,
+      ws.addRow([r.display_name, r.tio_code ?? "", (r.hk_codes as string[]).join(", "), (r.upcs as string[]).join(", "), r.brand, r.size_ml ?? "", r.conc ?? "", r.gender ?? "",
+        r.model ?? "", r.product_type ?? "", r.category ?? "", r.description ?? "", r.lists_linked,
         r.best_cost_cents == null ? "" : Number(r.best_cost_cents) / 100, r.my_avg_cost_cents == null ? "" : Number(r.my_avg_cost_cents) / 100,
         r.my_last_cost_cents == null ? "" : Number(r.my_last_cost_cents) / 100]);
     }
-    for (const n of [10, 11, 12]) ws.getColumn(n).numFmt = '"$"#,##0.00';
+    for (const n of [14, 15, 16]) ws.getColumn(n).numFmt = '"$"#,##0.00';
     ws.getRow(1).font = { bold: true, name: "Arial" };
     return reply.header("Content-Type", XLSX).header("Content-Disposition", `attachment; filename="TIO item file.xlsx"`).send(Buffer.from(await wb.xlsx.writeBuffer()));
   });

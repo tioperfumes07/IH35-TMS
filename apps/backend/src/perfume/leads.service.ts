@@ -25,11 +25,13 @@ import { logEvent, logEvents, type LeadEvent } from "./leads.events.js";
 
 /* ------------------------------------------------------------------ catalogs */
 
-export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "segment", "source_kind", "product_type", "gender"] as const;
+export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "segment", "source_kind", "product_type", "gender", "item_category"] as const;
+/** Lists whose values are carried by ITEMS (perfume.items), not contacts — counted and renamed on items (owner 2026-11-27 07:51 CT). */
+export const ITEM_CATALOG_COLUMN: Partial<Record<string, "product_type" | "category">> = { product_type: "product_type", item_category: "category" };
 export type CatalogKind = typeof CATALOG_KINDS[number];
 export const CATALOG_LABELS: Record<CatalogKind, string> = {
   vendor_type: "Vendor types", customer_type: "Customer types", category: "Categories", segment: "Business types",
-  source_kind: "Lead source kinds", product_type: "Perfume product types", gender: "Genders",
+  source_kind: "Lead source kinds", product_type: "Item product types", gender: "Genders", item_category: "Item categories",
 };
 export const catalogValueSchema = z.object({ kind: z.enum(CATALOG_KINDS), value: z.string().trim().min(1).max(200), sort: z.number().int().min(0).max(10000).optional() });
 
@@ -49,12 +51,14 @@ export async function listCatalogs(c: pg.PoolClient) {
      UNION ALL SELECT 'segment', segment, count(*)::int FROM perfume.contact_companies WHERE archived_at IS NULL AND segment IS NOT NULL GROUP BY 2
      UNION ALL SELECT 'source_kind', k, count(DISTINCT company_id)::int FROM (
                  SELECT o.company_id, o.source_kind AS k FROM perfume.contact_origins o JOIN perfume.contact_companies co ON co.id = o.company_id AND co.archived_at IS NULL
-                 UNION ALL SELECT id, source_kind FROM perfume.contact_companies WHERE archived_at IS NULL) y WHERE k IS NOT NULL GROUP BY 2`)).rows;
+                 UNION ALL SELECT id, source_kind FROM perfume.contact_companies WHERE archived_at IS NULL) y WHERE k IS NOT NULL GROUP BY 2
+     UNION ALL SELECT 'product_type', product_type, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND product_type IS NOT NULL GROUP BY 2
+     UNION ALL SELECT 'item_category', category, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND category IS NOT NULL GROUP BY 2`)).rows;
   const count = new Map(used.map((u) => [`${u.kind}\u0000${u.value.trim().toLowerCase()}`, u.n]));
   const out = Object.fromEntries(CATALOG_KINDS.map((k) => [k, [] as Array<{ id: string; value: string; sort: number; contacts: number }>])) as
     Record<CatalogKind, Array<{ id: string; value: string; sort: number; contacts: number }>>;
   for (const r of rows) out[r.kind].push({ id: r.id, value: r.value, sort: r.sort, contacts: count.get(`${r.kind}\u0000${r.value.trim().toLowerCase()}`) ?? 0 });
-  return { kinds: CATALOG_KINDS.map((k) => ({ kind: k, label: CATALOG_LABELS[k], values: out[k] })) };
+  return { kinds: CATALOG_KINDS.map((k) => ({ kind: k, label: CATALOG_LABELS[k], used_by: ITEM_CATALOG_COLUMN[k] ? "items" as const : "contacts" as const, values: out[k] })) };
 }
 
 export async function addCatalogValue(c: pg.PoolClient, uid: string, v: z.infer<typeof catalogValueSchema>) {
@@ -88,8 +92,20 @@ export async function renameCatalogValue(c: pg.PoolClient, id: string, value: st
           categories = array_replace(categories, $1, $2), updated_at = now()
         WHERE main_category = $1 OR $1 = ANY(categories)`, [cur.value, value])).rowCount ?? 0;
   }
-  await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved } });
-  return { moved };
+  // Item lists: every item carrying the old value follows the rename, and each item's own history says so.
+  const itemCol = ITEM_CATALOG_COLUMN[cur.kind];
+  let itemsMoved = 0;
+  if (itemCol) {
+    const it = await c.query<{ id: string }>(
+      `UPDATE perfume.items SET ${itemCol} = $2, updated_at = now() WHERE ${itemCol} = $1 AND merged_into_id IS NULL RETURNING id`, [cur.value, value]);
+    itemsMoved = it.rowCount ?? 0;
+    for (const r of it.rows) {
+      await c.query(`INSERT INTO perfume.item_events (item_id, kind, detail, created_by) VALUES ($1, 'attributes', $2::jsonb, $3)`,
+        [r.id, JSON.stringify({ from: { [itemCol]: cur.value }, to: { [itemCol]: value }, via: "catalog_rename" }), uid]);
+    }
+  }
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved, items_moved: itemsMoved } });
+  return { moved, items_moved: itemsMoved };
 }
 
 export async function archiveCatalogValue(c: pg.PoolClient, id: string, uid: string | null = null) {

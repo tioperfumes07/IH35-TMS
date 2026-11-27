@@ -8,6 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
+import { addCatalogValue, listCatalogs, renameCatalogValue } from "./leads.service.js";
 import { addHkCode, addUpc, bulkEditItems, createItem, itemOptions, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, linkage, listItemFile, updateItemFile } from "./items.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -143,5 +144,23 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     const o = await itemOptions(db as never);
     expect(o.brands).toContain("ZZK");
     expect(o.models).toContain("Kilo Rouge");
+  });
+  it("item lists are their own catalogs: counted on items, and a rename moves every item carrying it with history", async () => {
+    const u = TEST_OWNER_USER_ID;
+    const cat = await addCatalogValue(db as never, u, { kind: "item_category", value: "ZZ Gift sets" });
+    const it1 = await createItem(db as never, u, { brand: "ZZM", name: "MIKE", category: "ZZ Gift sets", product_type: "Man Set" });
+    const it2 = await createItem(db as never, u, { brand: "ZZM", name: "NOVEMBER", category: "ZZ Gift sets" });
+    const kinds = (await listCatalogs(db as never)).kinds;
+    const ic = kinds.find((k) => k.kind === "item_category")!;
+    expect(ic.used_by).toBe("items");
+    expect(ic.values.find((v) => v.value === "ZZ Gift sets")!.contacts).toBe(2);
+    expect(ic.values.map((v) => v.value)).toEqual(expect.arrayContaining(["Perfume", "Cosmetics"]));
+    expect(kinds.find((k) => k.kind === "category")!.used_by).toBe("contacts");
+    expect(await renameCatalogValue(db as never, cat.id, "ZZ Gift boxes", u)).toMatchObject({ items_moved: 2 });
+    for (const id of [it1.id, it2.id]) {
+      const f = await getItemFile(db as never, id) as { item: { category: string }; events: Array<{ kind: string; detail: { via?: string } }> };
+      expect(f.item.category).toBe("ZZ Gift boxes");
+      expect(f.events.at(-1)).toMatchObject({ kind: "attributes", detail: { via: "catalog_rename" } });
+    }
   });
 });
