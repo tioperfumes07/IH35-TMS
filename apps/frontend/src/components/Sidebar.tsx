@@ -20,7 +20,10 @@ type SidebarProps = {
 
 export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProps) {
   const location = useLocation();
-  const { selectedCompanyId } = useCompanyContext();
+  const { selectedCompanyId, selectedCompany } = useCompanyContext();
+  // SCENTSX: with ScentsX LLC (a distributor) selected, the menu stays the TIO Perfumes menu on every page — its Accounting,
+  // Banking and Reports pages run for ScentsX, and no carrier module (dispatch, drivers, fleet …) is offered.
+  const scentsxWorkspace = selectedCompany?.company_type === "distributor";
 
   // Uniform sidebar order for every operator — single source of truth is SIDEBAR_DEFAULT_ORDER.
   // Order does not depend on per-user prefs or role (Jorge 2026-06-16). Item *visibility* is still
@@ -89,7 +92,7 @@ export function Sidebar({ role, mobileOpen = false, onMobileClose }: SidebarProp
           borderRight: `1px solid ${colors.sidebarBorder}`,
         }}
       >
-        {isPerfumePath(location.pathname) ? (
+        {isPerfumePath(location.pathname) || scentsxWorkspace ? (
           <PerfumeSidebarItems search={location.search} onNavigate={() => onMobileClose?.()} />
         ) : (
         <div className="flex min-h-full flex-col items-center gap-1 py-2">

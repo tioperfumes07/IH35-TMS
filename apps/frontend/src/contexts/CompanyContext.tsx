@@ -7,6 +7,15 @@ import { isLaunchOperatingCompanyCode } from "../lib/launch-operating-company";
 
 const STORAGE_KEY = "ih35:selectedCompanyId";
 
+/**
+ * SCENTSX (owner 2026-11-26 20:13 CT "Own company, same engine"): besides the launch carrier, a distributor company
+ * (ScentsX LLC — TIO Perfumes) can be selected, so Accounting, Banking and Reports run for its own books. The default
+ * selection still prefers the launch carrier; ScentsX is chosen only through the TIO Perfumes entry of the switcher.
+ */
+function isPickableCompany(company: Pick<MyCompany, "code" | "company_type">): boolean {
+  return isLaunchOperatingCompanyCode(company.code) || company.company_type === "distributor";
+}
+
 type CompanyContextValue = {
   companies: MyCompany[];
   selectedCompanyId: string | null;
@@ -47,7 +56,8 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
     }
 
     const launchCompanies = companies.filter((company) => isLaunchOperatingCompanyCode(company.code));
-    const pickable = launchCompanies.length ? launchCompanies : companies;
+    const pickableAll = companies.filter(isPickableCompany);
+    const pickable = pickableAll.length ? pickableAll : companies;
 
     const fromStorage = window.localStorage.getItem(STORAGE_KEY);
     if (fromStorage && pickable.some((company) => company.id === fromStorage)) {
@@ -62,7 +72,7 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const firstAlphabetical = [...pickable].sort((a, b) => a.legal_name.localeCompare(b.legal_name))[0];
+    const firstAlphabetical = [...(launchCompanies.length ? launchCompanies : pickable)].sort((a, b) => a.legal_name.localeCompare(b.legal_name))[0];
     if (firstAlphabetical) {
       setSelectedCompanyId(firstAlphabetical.id);
       window.localStorage.setItem(STORAGE_KEY, firstAlphabetical.id);
@@ -79,10 +89,12 @@ export function CompanyProvider({ children }: { children: ReactNode }) {
   const value = useMemo<CompanyContextValue>(() => {
     const companies = companiesQuery.data ?? [];
     const launchCompanies = companies.filter((company) => isLaunchOperatingCompanyCode(company.code));
-    const pickable = launchCompanies.length ? launchCompanies : companies;
+    const pickableAll = companies.filter(isPickableCompany);
+    const pickable = pickableAll.length ? pickableAll : companies;
     const selectedCompany =
       pickable.find((company) => company.id === selectedCompanyId) ??
       pickable.find((company) => company.is_default) ??
+      launchCompanies[0] ??
       pickable[0] ??
       null;
 

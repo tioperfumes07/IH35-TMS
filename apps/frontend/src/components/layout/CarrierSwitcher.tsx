@@ -69,7 +69,9 @@ export function CarrierSwitcher() {
   const isOwner = isOwnerRole && perfumeAccess.data?.allowed === true;
   const showSwitcher = activeCompanies.length > 1 || isOwner;
   // On /perfume the app is in the TIO Perfumes workspace: the trigger says so, and the carrier row opens the carrier again.
-  const inPerfume = isPerfumePath(useLocation().pathname);
+  const scentsx = useMemo(() => companies.find((c) => c.company_type === "distributor") ?? null, [companies]);
+  // The TIO Perfumes workspace: the /perfume desk, or ScentsX LLC selected (its Accounting / Banking / Reports).
+  const inPerfume = isPerfumePath(useLocation().pathname) || (scentsx !== null && selectedCompanyId === scentsx.id);
   const selectedLabel = inPerfume ? "TIO Perfumes" : selectedCompanySwitcherLabel(selectedCompany);
 
   const defaultCompanyId = useMemo(
@@ -87,6 +89,8 @@ export function CarrierSwitcher() {
       await queryClient.invalidateQueries();
       pushToast(`Switched to ${company.short_name || company.legal_name}`, "success");
       setOpen(false);
+      // Leaving the TIO Perfumes workspace for a carrier opens the carrier's home, not a perfume page.
+      if (inPerfume && company.company_type !== "distributor") navigate("/");
     } catch (err) {
       pushToast(userFacingApiError(err, "Could not switch company"), "error");
     } finally {
@@ -191,7 +195,9 @@ export function CarrierSwitcher() {
                 type="button"
                 className="w-full rounded-sm p-2 text-left text-gray-700 hover:bg-gray-50"
                 data-testid="carrier-switcher-tio-perfumes"
-                onClick={() => {
+                onClick={async () => {
+                  // SCENTSX: entering TIO Perfumes also selects ScentsX LLC, so Accounting / Banking / Reports show its books.
+                  if (scentsx && selectedCompanyId !== scentsx.id) await switchCompany(scentsx);
                   setOpen(false);
                   navigate("/perfume");
                 }}
