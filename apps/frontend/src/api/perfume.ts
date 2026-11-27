@@ -827,6 +827,10 @@ export type PerfumeItemFile = PerfumeItemProfile & {
 export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null;
   model?: string | null; product_type?: string | null; category?: string | null; description?: string | null };
 export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags">; flags_add?: string[]; flags_remove?: string[] };
+export type PerfumeItemCreate = { brand: string; name: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; model?: string | null;
+  product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; upc?: string | null };
+export const createPerfumeItem = (b: PerfumeItemCreate) => apiRequest<{ id: string; display_name: string }>("/api/v1/perfume/item-file", { method: "POST", body: b });
+export const getPerfumeItemOptions = () => apiRequest<{ brands: string[]; models: string[]; sizes: string[] }>("/api/v1/perfume/item-file-options");
 export const bulkEditPerfumeItems = (b: PerfumeItemBulk) => apiRequest<{ updated: number }>("/api/v1/perfume/item-file-bulk", { method: "POST", body: b });
 export type PerfumeLinkageLine = { line_id: string; vendor_id: string; vendor: string; kind: string; sku: string | null; upc: string | null; brand: string | null; description: string;
   size_text: string | null; price_cents: number | null; match_status: string; match_method: string | null; list_date: string; item_id: string | null; item: string | null; tio_code: string | null;

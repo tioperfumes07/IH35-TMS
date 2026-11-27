@@ -214,6 +214,68 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
 }
 
 /**
+ * Item creator (owner 2026-11-27 07:37 CT "in the item creator it should have those rows and should be able to select from list for
+ * each one"). Same identity rules as the desk: the name is read the same way, and an item that is already in the file is refused with
+ * its name (open it instead). TIO code and UPC are optional and checked like the editor does. History: one 'created' row.
+ */
+export const itemCreateSchema = z.object({
+  brand: z.string().trim().min(1).max(80),
+  name: z.string().trim().min(1).max(200),
+  size_ml: z.number().min(0).max(10000).nullable().optional(),
+  conc: z.enum(["EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST", ""]).optional(),
+  gender: z.enum(["M", "W", "U", ""]).optional(),
+  flags: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
+  model: z.string().trim().max(120).nullable().optional(),
+  product_type: z.string().trim().max(60).nullable().optional(),
+  category: z.string().trim().max(60).nullable().optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
+  tio_code: z.string().trim().max(40).nullable().optional(),
+  upc: z.string().trim().max(40).nullable().optional(),
+});
+export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeof itemCreateSchema>) {
+  const flags = x.flags ?? [];
+  const id2 = identify({ description: [x.name, x.size_ml != null ? `${x.size_ml}ML` : "", x.conc ?? "", flags.join(" ")].filter(Boolean).join(" "),
+    brand: x.brand, gender: x.gender === "M" ? "Men" : x.gender === "W" ? "Women" : x.gender === "U" ? "Unisex" : null });
+  if (!id2.nameWords.length && !id2.brand) throw new ItemInvalid("The item needs a name.");
+  const same = (await c.query<{ id: string; display_name: string }>(
+    `SELECT id, display_name FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL LIMIT 1`, [id2.key])).rows[0];
+  if (same) throw new ItemInvalid(`That item is already in the file: "${same.display_name}". Open it instead.`);
+  const code = x.tio_code?.trim() || null;
+  if (code) {
+    const used = (await c.query<{ display_name: string }>(`SELECT display_name FROM perfume.items WHERE internal_code = $1 AND merged_into_id IS NULL`, [code])).rows[0];
+    if (used) throw new ItemInvalid(`TIO code ${code} is already on "${used.display_name}".`);
+  }
+  const upc = x.upc?.trim() ? normalizeUpc(x.upc) : null;
+  if (x.upc?.trim() && !upc) throw new ItemInvalid("That is not a UPC (8 to 14 digits).");
+  if (upc) {
+    const had = (await c.query<{ display_name: string }>(
+      `SELECT i.display_name FROM perfume.item_upcs u JOIN perfume.items i ON i.id = u.item_id WHERE u.upc = $1`, [upc])).rows[0];
+    if (had) throw new ItemInvalid(`UPC ${upc} is already on "${had.display_name}" — open that item instead.`);
+  }
+  const attr = (v: string | null | undefined) => v?.trim() || null;
+  const ins = await c.query<{ id: string }>(
+    `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, internal_code, model, product_type, category, description, created_by)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15) RETURNING id`,
+    [id2.brand || x.brand, id2.nameText || x.name, id2.sizeMl, id2.conc, id2.gender, id2.flags, id2.key, looseKey(id2), displayNameOf(id2), code,
+     attr(x.model), attr(x.product_type), attr(x.category), attr(x.description), uid]);
+  const id = ins.rows[0]!.id;
+  if (upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ($1, $2)`, [upc, id]);
+  await event(c, id, uid, "created", { ...x, flags, upc });
+  invalidateGridCache();
+  return { id, display_name: displayNameOf(id2) };
+}
+
+/** The choices the creator offers: brands, models and sizes already in the file (most used first). */
+export async function itemOptions(c: pg.PoolClient) {
+  const col = async (sql: string) => (await c.query<{ v: string }>(sql)).rows.map((r) => r.v);
+  return {
+    brands: await col(`SELECT brand AS v FROM perfume.items WHERE merged_into_id IS NULL AND btrim(brand) <> '' GROUP BY brand ORDER BY count(*) DESC, brand LIMIT 3000`),
+    models: await col(`SELECT model AS v FROM perfume.items WHERE merged_into_id IS NULL AND model IS NOT NULL GROUP BY model ORDER BY count(*) DESC, model LIMIT 3000`),
+    sizes: await col(`SELECT (size_ml::float8)::text AS v FROM perfume.items WHERE merged_into_id IS NULL AND size_ml IS NOT NULL GROUP BY size_ml ORDER BY count(*) DESC LIMIT 40`),
+  };
+}
+
+/**
  * Bulk edit (owner 2026-11-27 07:22 CT "multiple selector … to edit in mass and bulk"): the same edit applied to every selected item
  * through updateItemFile, so each item gets its own history event and the same identity checks. All or nothing: if one item cannot
  * take the change (e.g. it would become a copy of another item), nothing is saved and the answer names that item. Flags are added

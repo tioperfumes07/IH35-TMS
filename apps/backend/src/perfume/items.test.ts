@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { addHkCode, addUpc, bulkEditItems, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, linkage, listItemFile, updateItemFile } from "./items.service.js";
+import { addHkCode, addUpc, bulkEditItems, createItem, itemOptions, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, linkage, listItemFile, updateItemFile } from "./items.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
@@ -126,5 +126,22 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     const eNow = (await getItemFile(db as never, e)) as { item: { size_ml: string } };
     expect(Number(eNow.item.size_ml)).toBe(100);
     await expect(bulkEditItems(db as never, TEST_OWNER_USER_ID, { ids: [e], set: {} })).rejects.toThrow(/at least one field/);
+  });
+  it("the item creator saves every field with a 'created' history row, refuses a copy, a used TIO code or a used UPC", async () => {
+    const u = TEST_OWNER_USER_ID;
+    const made = await createItem(db as never, u, { brand: "ZZK", name: "KILO", size_ml: 100, conc: "EDP", gender: "W", flags: ["TESTER"], model: "Kilo Rouge",
+      product_type: "Tester Woman", category: "Perfume", description: "New 2026", tio_code: "ZK0001", upc: "0712345678905" });
+    const f = await getItemFile(db as never, made.id) as { item: Record<string, unknown>; upcs: string[]; events: Array<{ kind: string }> };
+    expect(f.item).toMatchObject({ brand: "ZZK", internal_code: "ZK0001", model: "Kilo Rouge", product_type: "Tester Woman", category: "Perfume", description: "New 2026", conc: "EDP", gender: "W" });
+    expect(Number(f.item.size_ml)).toBe(100);
+    expect(f.upcs).toEqual(["712345678905"]);
+    expect(f.events.map((e) => e.kind)).toEqual(["created"]);
+    await expect(createItem(db as never, u, { brand: "ZZK", name: "KILO", size_ml: 100, conc: "EDP", gender: "W", flags: ["TESTER"] })).rejects.toThrow(/already in the file/);
+    await expect(createItem(db as never, u, { brand: "ZZK", name: "LIMA", tio_code: "ZK0001" })).rejects.toThrow(/already on/);
+    await expect(createItem(db as never, u, { brand: "ZZK", name: "LIMA", upc: "712345678905" })).rejects.toThrow(/already on/);
+    await expect(createItem(db as never, u, { brand: "ZZK", name: "LIMA", upc: "12" })).rejects.toThrow(/not a UPC/);
+    const o = await itemOptions(db as never);
+    expect(o.brands).toContain("ZZK");
+    expect(o.models).toContain("Kilo Rouge");
   });
 });
