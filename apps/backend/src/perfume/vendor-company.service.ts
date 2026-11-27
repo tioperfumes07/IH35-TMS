@@ -115,3 +115,39 @@ export async function applyVendorLinks(c: pg.PoolClient, uid: string, x: z.infer
   await c.query("RELEASE SAVEPOINT vendor_links");
   return { linked, created };
 }
+
+/* ------------------------------------------------------------------ role + type on the one record */
+
+export const companyRoleSchema = z.object({
+  role: z.enum(["vendor", "customer", "both"]).nullable().optional(),
+  vendor_type: z.string().trim().max(200).nullable().optional(),
+  customer_type: z.string().trim().max(200).nullable().optional(),
+}).refine((x) => x.role !== undefined || x.vendor_type !== undefined || x.customer_type !== undefined, "Choose a role or a type.");
+
+/** Leads "Convert to vendor / customer / both" and its types (owner 2026-11-27 17:20 CT: "TRADERS IS A TYPE OF CUSTOMER OR
+ *  VENDOR"). A type must be in the catalog (Catalogs → vendor_type / customer_type). One lead_events row with before / after. */
+export async function setCompanyRole(c: pg.PoolClient, uid: string, companyId: string, x: z.infer<typeof companyRoleSchema>) {
+  const co = (await c.query<{ role: string | null; vendor_type: string | null; customer_type: string | null }>(
+    `SELECT role, vendor_type, customer_type FROM perfume.contact_companies WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [companyId])).rows[0];
+  if (!co) throw new ProfileNotFound();
+  for (const [kind, v] of [["vendor_type", x.vendor_type], ["customer_type", x.customer_type]] as const) {
+    if (v) {
+      const ok = (await c.query(`SELECT 1 FROM perfume.catalog_values WHERE kind = $1 AND value = $2 AND archived_at IS NULL`, [kind, v])).rowCount;
+      if (!ok) throw new ProfileInvalid(`"${v}" is not a ${kind === "vendor_type" ? "vendor" : "customer"} type in Catalogs.`);
+    }
+  }
+  // A company with lists it sells to us stays a vendor: it can become both, not customer only.
+  const sellsToUs = (await c.query(`SELECT 1 FROM perfume.vendors WHERE company_id = $1 AND kind = 'buy' AND archived_at IS NULL LIMIT 1`, [companyId])).rowCount;
+  if (sellsToUs && (x.role === "customer" || x.role === null)) throw new ProfileInvalid("This company has price lists it sells to you — it stays a vendor (choose Both).");
+  const next = {
+    role: x.role !== undefined ? x.role : co.role,
+    vendor_type: x.vendor_type !== undefined ? (x.vendor_type || null) : co.vendor_type,
+    customer_type: x.customer_type !== undefined ? (x.customer_type || null) : co.customer_type,
+  };
+  if (next.role === co.role && next.vendor_type === co.vendor_type && next.customer_type === co.customer_type) return { changed: false, ...next };
+  await c.query(`UPDATE perfume.contact_companies SET role = $2, vendor_type = $3, customer_type = $4, updated_at = now() WHERE id = $1`,
+    [companyId, next.role, next.vendor_type, next.customer_type]);
+  await c.query(`INSERT INTO perfume.lead_events (entity, entity_id, company_id, action, detail, created_by) VALUES ('company', $1, $1, 'role_type_set', $2::jsonb, $3)`,
+    [companyId, JSON.stringify({ before: co, after: next }), uid]);
+  return { changed: true, ...next };
+}

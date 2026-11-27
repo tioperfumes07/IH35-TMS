@@ -7,7 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import { companyActivity, itemProfile, ProfileInvalid, ProfileNotFound, vendorProfile } from "./profiles.service.js";
-import { applyLinksSchema, applyVendorLinks, linkVendorCompany, vendorLinkPreview } from "./vendor-company.service.js";
+import { applyLinksSchema, applyVendorLinks, companyRoleSchema, linkVendorCompany, setCompanyRole, vendorLinkPreview } from "./vendor-company.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -48,6 +48,14 @@ export async function registerPerfumeProfileRoutes(app: FastifyInstance) {
     const p = applyLinksSchema.safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid decisions." });
     try { return await withCurrentUser(uid, (c) => applyVendorLinks(c, uid, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  // Leads "Convert to vendor / customer / both" + vendor / customer type (Trader …) on the one company record.
+  app.patch("/api/v1/perfume/companies/:id/role", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = companyRoleSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", message: p.error.issues[0]?.message ?? "Invalid." });
+    try { return await withCurrentUser(uid, (c) => setCompanyRole(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/perfume/items/:id/profile", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

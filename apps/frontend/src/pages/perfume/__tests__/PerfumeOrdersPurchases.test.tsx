@@ -52,6 +52,10 @@ beforeEach(() => {
         state: "FL", country: "US", status: "active", people: 2, email: "sales@vendora.test" },
       lists: [{ id: "L1", list_date: "2026-11-26", label: null, file_name: "a.xlsx", source_kind: "xlsx", rows_saved: 120, is_current: true, voided_at: null, matched: 118, waiting: 2 }],
       items: 118, waiting: 2, codes: 118, words: 117, confirmed: 3, purchase_orders: [prow("p1", "PO-000001", "open")], po_total_cents: 10000, po_open: 1 } satisfies PerfumeVendorProfile;
+    if (path === "/api/v1/perfume/catalogs") return { kinds: [
+      { kind: "vendor_type", label: "Vendor types", values: [{ id: "t1", value: "Distributor", sort: 10, contacts: 0 }, { id: "t2", value: "Trader", sort: 20, contacts: 0 }] },
+      { kind: "customer_type", label: "Customer types", values: [{ id: "t3", value: "Trader", sort: 15, contacts: 0 }, { id: "t4", value: "Retailer", sort: 20, contacts: 0 }] }] };
+    if (path === "/api/v1/perfume/companies/co9/role") return { changed: true, role: "both", vendor_type: "Trader", customer_type: "Trader" };
     if (path === "/api/v1/perfume/vendor-links/preview") return linkRows ? { linked: 3, unlinked: 2, proposals: [
       { vendor_id: "vA", vendor: "Vendor A — ARABIC list", short_name: "VA", kind: "buy", company_name: "Vendor A", action: "choose", company_id: "co9",
         candidates: [{ id: "co9", name: "Vendor A LLC", role: "vendor", city: "Miami", state: "FL", country: "US", people: 2, exact: true },
@@ -155,6 +159,19 @@ describe("profiles", () => {
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
       { vendor_id: "vA", company_id: "co8" }, { vendor_id: "vN", create_name: "Nobody Fragrance House" }] }]));
     await waitFor(() => expect(screen.queryByTestId("perfume-vendor-link-review")).toBeNull());
+  });
+  it("the supplier's company is one record: its name opens the Vendors profile; Convert to both + Trader saves role and types", async () => {
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers&open=vA");
+    const role = await screen.findByTestId("perfume-company-role");
+    fireEvent.change(within(role).getByTestId("perfume-company-role-role"), { target: { value: "both" } });
+    await waitFor(() => expect(within(role).getByTestId("perfume-company-role-vendor-type").querySelectorAll("option").length).toBeGreaterThan(1));
+    fireEvent.change(within(role).getByTestId("perfume-company-role-vendor-type"), { target: { value: "Trader" } });
+    fireEvent.change(within(role).getByTestId("perfume-company-role-customer-type"), { target: { value: "Trader" } });
+    fireEvent.click(within(role).getByTestId("perfume-company-role-save"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/companies/co9/role", { role: "both", vendor_type: "Trader", customer_type: "Trader" }]));
+    fireEvent.click(screen.getByTestId("perfume-vendor-company-open"));
+    await waitFor(() => expect(screen.getByTestId("where").textContent).toContain("tab=vendors"));
+    expect(screen.getByTestId("where").textContent).toContain("open=co9");
   });
   it("clicking a supplier in the list opens its profile in place of the list, at the top; All suppliers goes back", async () => {
     mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");

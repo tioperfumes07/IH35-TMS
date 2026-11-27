@@ -714,6 +714,9 @@ export const getPerfumeVendorLinkPreview = () => apiRequest<{ proposals: Perfume
 export const applyPerfumeVendorLinks = (decisions: Array<{ vendor_id: string; company_id?: string; create_name?: string }>) =>
   apiRequest<{ linked: number; created: number }>("/api/v1/perfume/vendor-links/apply", { method: "POST", body: { decisions } });
 export const getPerfumeItemProfile = (itemId: string) => apiRequest<PerfumeItemProfile | { merged_into_id: string }>(`/api/v1/perfume/items/${itemId}/profile`);
+/** Role (vendor / customer / both) + vendor / customer type on the one company record. */
+export const setPerfumeCompanyRole = (companyId: string, b: { role?: "vendor" | "customer" | "both" | null; vendor_type?: string | null; customer_type?: string | null }) =>
+  apiRequest<{ changed: boolean; role: string | null; vendor_type: string | null; customer_type: string | null }>(`/api/v1/perfume/companies/${companyId}/role`, { method: "PATCH", body: b });
 export const getPerfumeCompanyActivity = (companyId: string) => apiRequest<PerfumeCompanyActivity>(`/api/v1/perfume/contacts/${companyId}/activity`);
 /* ------------------------------------------------------------------ lead history + reverse links (fully-wired items f + g, owner 2026-11-26 18:13 CT) */
 export type PerfumeLeadEvent = { id: string; entity: string; entity_id: string; action: string; detail: Record<string, unknown>; upload_id: string | null; created_at: string; by_name: string | null };
