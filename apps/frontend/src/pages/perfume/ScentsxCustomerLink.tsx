@@ -4,7 +4,7 @@
  * links it to this contact (scentsx.customer_links — the database refuses a link to any other company's customer).
  */
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -20,6 +20,7 @@ const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: 
 
 export function ScentsxCustomerLink({ contactId, name, email, phone }: { contactId: string; name: string; email?: string | null; phone?: string | null }) {
   const { pushToast } = useToast();
+  const qc = useQueryClient();
   const [busy, setBusy] = useState(false);
   const co = useQuery({ queryKey: ["scentsx", "company"], queryFn: getScentsxCompany });
   const links = useQuery({ queryKey: ["scentsx", "customer-link", contactId], queryFn: () => listScentsxCustomerLinks(contactId) });
@@ -44,9 +45,13 @@ export function ScentsxCustomerLink({ contactId, name, email, phone }: { contact
       const created = await createScentsxCustomer(companyId, { name, email: mail, phone: tel });
       const customerId = (created as { id?: string }).id;
       if (!customerId) throw new Error("The customer was created but its id did not come back — open Customers to link it.");
-      await linkScentsxCustomer(contactId, customerId);
-      pushToast(`${name} is now a ScentsX customer`, "success");
+      const linked = await linkScentsxCustomer(contactId, customerId);
+      const scr = (linked as { screening?: { result?: string } }).screening;
+      pushToast(`${name} is now a ScentsX customer${scr?.result ? ` — OFAC: ${scr.result === "clear" ? "clear" : "possible match, decide on Books → Compliance"}` : ""}`, scr && scr.result !== "clear" ? "error" : "success");
+      // The link also screens the customer against OFAC: reload the link, the OFAC / resale block and the credit card together.
       void links.refetch();
+      void qc.invalidateQueries({ queryKey: ["scentsx", "customer-compliance", contactId] });
+      void qc.invalidateQueries({ queryKey: ["scentsx", "credit", contactId] });
     } catch (e) {
       pushToast(userFacingApiError(e, "Not created"), "error");
     } finally {

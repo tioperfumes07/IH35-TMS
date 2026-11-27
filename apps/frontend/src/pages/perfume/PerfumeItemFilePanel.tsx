@@ -18,18 +18,25 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
-  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile,
+  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs,
   type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const PAGE = 100;
+const CONC = ["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"] as const;
+/** The owner's own lists for product type and category (Settings → catalogs), so a typed value matches what he keeps there. */
+function useItemCatalogs() {
+  const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
+  const of = (k: string) => (q.data?.kinds.find((x) => x.kind === k)?.values ?? []).map((v) => v.value);
+  return { types: of("product_type"), categories: of("category") };
+}
 const GENDER: Record<string, string> = { M: "Men", W: "Women", U: "Unisex", "": "—" };
 const FLAGS = ["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"] as const;
 const KIND: Record<string, string> = { buy: "Supplier", sell: "Competitor", offer: "My offer list", inventory: "My inventory" };
 const FOUND: Record<PerfumeLinkageLine["found_by"], string> = { upc: "Same UPC", code: "Same code", item: "Linked to the item", words: "Same words" };
-const EVENT: Record<string, string> = { edited: "Edited", tio_code: "TIO code", upc_added: "UPC added", upc_moved_in: "UPC moved here", upc_moved_out: "UPC moved away",
+const EVENT: Record<string, string> = { edited: "Edited", attributes: "Model / type / category / description", tio_code: "TIO code", upc_added: "UPC added", upc_moved_in: "UPC moved here", upc_moved_out: "UPC moved away",
   hk_code_added: "HK code added", hk_code_moved_in: "HK code moved here", hk_code_moved_out: "HK code moved away", line_linked: "Line linked", codes_filled: "TIO code from my offer list" };
 const fail = (push: (m: string, k: "error") => void, what = "Not saved") => (e: unknown) => push(userFacingApiError(e, what), "error");
 const codes = (a: string[] | null | undefined) => (a && a.length ? a.join(", ") : DASH);
@@ -45,7 +52,10 @@ export function PerfumeItemFilePanel() {
   const [scope, setScope] = useState<PerfumeItemScope>("mine");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<string | null>(openId);
+  // Owner 2026-11-27 07:22 CT: "in items list should have multiple selector as well to edit in mass and bulk".
+  const [picked, setPicked] = useState<string[]>([]);
   useEffect(() => { if (openId) setSelected(openId); }, [openId]);
+  useEffect(() => { setPicked([]); }, [q, has, scope, offset]);
   const list = useQuery({ queryKey: ["perfume", "item-file", q, has, scope, offset], queryFn: () => listPerfumeItemFile({ q, has, scope, limit: PAGE, offset }) });
   const { pushToast } = useToast();
   if (list.isError) return <ListErrorState title={tr("perfume.itemfile.error", "Couldn't load the item file")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
@@ -88,12 +98,22 @@ export function PerfumeItemFilePanel() {
             onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has, scope }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
         </div>
         <FillCodes onDone={() => void list.refetch()} />
+        {picked.length ? <BulkEdit ids={picked} onDone={() => { setPicked([]); void list.refetch(); }} onClear={() => setPicked([])} /> : null}
         <ParityTable<PerfumeItemFileRow>
-          rows={list.data?.rows ?? []} rowKey={(r) => `${r.id}-${r.tio_code}-${r.upcs.length}-${r.hk_codes.length}`} loading={list.isLoading} storageKey="perfume-itemfile-v1"
+          selectable selectedKeys={picked} onSelectionChange={setPicked} maxSelectable={500}
+          rows={list.data?.rows ?? []} rowKey={(r) => r.id} loading={list.isLoading} storageKey="perfume-itemfile-v1"
           exportFilename="TIO item file (this page)" exportExcel emptyText="No items match." onRowClick={(r) => setSelected(r.id)}
           columns={[
             { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <span className="font-semibold">{r.display_name}</span> },
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
+            { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand || DASH, exportValue: (r) => r.brand ?? "" },
+            { className: "text-left", key: "model", label: "Model", sortable: true, render: (r) => r.model ?? DASH, exportValue: (r) => r.model ?? "" },
+            { className: "text-left", key: "product_type", label: "Product type", sortable: true, render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
+            { className: "text-left", key: "category", label: "Category", sortable: true, render: (r) => r.category ?? DASH, exportValue: (r) => r.category ?? "" },
+            { key: "size_ml", label: "Size ml", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.size_ml == null ? DASH : String(r.size_ml)), exportValue: (r) => r.size_ml ?? "" },
+            { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", sortable: true, render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
+            { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
+            { className: "text-left", key: "description", label: "Description", render: (r) => r.description ?? DASH, exportValue: (r) => r.description ?? "" },
             { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
             { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
@@ -138,6 +158,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   const [edit, setEdit] = useState<PerfumeItemEdit>({});
   const [upc, setUpc] = useState("");
   const [hk, setHk] = useState("");
+  const cats = useItemCatalogs();
   useEffect(() => { setEdit({}); }, [id]);
   if (f.isError) return <ListErrorState title={tr("perfume.itemfile.one_error", "Couldn't load the item")} status={0} message={(f.error as Error)?.message} onRetry={() => void f.refetch()} />;
   if (!f.data) return null;
@@ -169,9 +190,20 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         <label>{tr("perfume.itemfile.name", "Name")} <input className={`${ctl} block w-[260px]`} value={val("name", it.name) ?? ""} onChange={(e) => setEdit({ ...edit, name: e.target.value })} data-testid="perfume-itemfile-name" /></label>
         <label>{tr("perfume.itemfile.size", "Size ml")} <input type="number" className={`${ctl} block w-[80px] text-right`} value={val("size_ml", it.size_ml == null ? null : Number(it.size_ml)) ?? ""}
           onChange={(e) => setEdit({ ...edit, size_ml: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-size" /></label>
-        <label>{tr("perfume.itemfile.type", "Type")}
+        <label>{tr("perfume.itemfile.conc", "EDT / EDP / Parfum")}
           <select className={`${ctl} block`} value={val("conc", it.conc ?? "") ?? ""} onChange={(e) => setEdit({ ...edit, conc: e.target.value })} data-testid="perfume-itemfile-conc">
-            {["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"].map((v) => <option key={v} value={v}>{v || DASH}</option>)}
+            {CONC.map((v) => <option key={v} value={v}>{v || DASH}</option>)}
+          </select>
+        </label>
+        <label>{tr("perfume.itemfile.model", "Model")} <input className={`${ctl} block w-[180px]`} value={val("model", it.model ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, model: e.target.value })} data-testid="perfume-itemfile-model" /></label>
+        <label>{tr("perfume.itemfile.product_type", "Product type")}
+          <select className={`${ctl} block`} value={val("product_type", it.product_type ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, product_type: e.target.value })} data-testid="perfume-itemfile-product-type">
+            {["", ...new Set([...cats.types, ...(it.product_type ? [it.product_type] : [])])].map((v) => <option key={v} value={v}>{v || DASH}</option>)}
+          </select>
+        </label>
+        <label>{tr("perfume.itemfile.category", "Category")}
+          <select className={`${ctl} block`} value={val("category", it.category ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, category: e.target.value })} data-testid="perfume-itemfile-category">
+            {["", ...new Set([...cats.categories, ...(it.category ? [it.category] : [])])].map((v) => <option key={v} value={v}>{v || DASH}</option>)}
           </select>
         </label>
         <label>{tr("perfume.itemfile.gender", "Gender")}
@@ -185,6 +217,9 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
               onChange={(e) => setEdit({ ...edit, flags: e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl) })} data-testid={`perfume-itemfile-flag-${fl}`} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
           ))}
         </span>
+        <label className="w-full">{tr("perfume.itemfile.description", "Description")}
+          <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={val("description", it.description ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} data-testid="perfume-itemfile-description" />
+        </label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(edit).length} onClick={save} data-testid="perfume-itemfile-save">{tr("perfume.itemfile.save", "Save")}</Button>
       </div>
       <div className="text-xs">{`${tr("perfume.itemfile.costs", "My avg cost")} ${money(x.costs.my_avg_cost_cents)} · ${tr("perfume.itemfile.last", "My last cost")} ${money(x.costs.my_last_cost_cents)} · ${tr("perfume.itemfile.best", "Best supplier cost")} ${money(x.best_cost_cents)}`}</div>
@@ -386,6 +421,69 @@ export function PerfumeStockLinkagePanel() {
           <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={!d || offset + 50 >= d.total} onClick={() => setOffset(offset + 50)} data-testid="perfume-stock-link-next">{tr("perfume.stock_link.next", "Next")}</Button>
         </div>
       </section>
+    </div>
+  );
+}
+
+/**
+ * Bulk edit (owner 2026-11-27 07:22 CT): the same change on every checked item. Only the fields filled here change; a blank field is
+ * left alone (choose "Clear" to empty it). Flags are added or removed. All or nothing — if one item cannot take it, nothing is saved
+ * and the message names that item. Every item keeps its own history line.
+ */
+function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void; onClear: () => void }) {
+  const { pushToast } = useToast();
+  const cats = useItemCatalogs();
+  const CLEAR = "__clear__";
+  const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove" });
+  const [busy, setBusy] = useState(false);
+  const txt = (x: string) => (x === CLEAR ? null : x.trim() || undefined);
+  const apply = async () => {
+    const set: Record<string, unknown> = {};
+    if (v.brand.trim()) set.brand = v.brand.trim();
+    for (const k of ["model", "product_type", "category", "description"] as const) { const t = txt(v[k]); if (t !== undefined) set[k] = t; }
+    if (v.conc) set.conc = v.conc === CLEAR ? "" : v.conc;
+    if (v.gender) set.gender = v.gender === CLEAR ? "" : v.gender;
+    if (v.size.trim()) set.size_ml = Number(v.size);
+    const flags = v.flag ? { [v.flagMode === "add" ? "flags_add" : "flags_remove"]: [v.flag] } : {};
+    if (!Object.keys(set).length && !v.flag) { pushToast("Fill at least one field to change", "error"); return; }
+    setBusy(true);
+    try {
+      const r = await bulkEditPerfumeItems({ ids, set, ...flags });
+      pushToast(`${r.updated} item(s) updated`, "success"); onDone();
+    } catch (e) { pushToast(userFacingApiError(e, "Nothing was saved"), "error"); } finally { setBusy(false); }
+  };
+  const opt = (list: string[]) => [<option key="" value="">{tr("perfume.bulk.keep", "— keep —")}</option>, <option key={CLEAR} value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option>,
+    ...list.map((x) => <option key={x} value={x}>{x}</option>)];
+  return (
+    <div className="space-y-2 rounded-[3px] border border-[#C6D1DC] bg-[#F8FAFC] p-2 text-xs" data-testid="perfume-itemfile-bulk">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-[#1F2A44]">{`${ids.length} ${tr("perfume.bulk.selected", "selected — change all of them at once (blank = keep as is)")}`}</span>
+        <button type="button" className="underline" onClick={onClear}>{tr("perfume.bulk.unselect", "Unselect all")}</button>
+      </div>
+      <div className="flex flex-wrap items-end gap-2">
+        <label>{tr("perfume.itemfile.brand", "Brand")} <input className={`${ctl} block w-[140px]`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-bulk-brand" /></label>
+        <label>{tr("perfume.itemfile.model", "Model")} <input className={`${ctl} block w-[140px]`} value={v.model === CLEAR ? "" : v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-bulk-model" /></label>
+        <label>{tr("perfume.itemfile.product_type", "Product type")} <select className={`${ctl} block`} value={v.product_type} onChange={(e) => setV({ ...v, product_type: e.target.value })} data-testid="perfume-bulk-product-type">{opt(cats.types)}</select></label>
+        <label>{tr("perfume.itemfile.category", "Category")} <select className={`${ctl} block`} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })} data-testid="perfume-bulk-category">{opt(cats.categories)}</select></label>
+        <label>{tr("perfume.itemfile.conc", "EDT / EDP / Parfum")} <select className={`${ctl} block`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-bulk-conc">{opt(CONC.filter(Boolean) as unknown as string[])}</select></label>
+        <label>{tr("perfume.itemfile.gender", "Gender")}
+          <select className={`${ctl} block`} value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })} data-testid="perfume-bulk-gender">
+            <option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option>
+            <option value="M">Men</option><option value="W">Women</option><option value="U">Unisex</option>
+          </select>
+        </label>
+        <label>{tr("perfume.itemfile.size", "Size ml")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-bulk-size" /></label>
+        <label>{tr("perfume.bulk.flag", "Flag")}
+          <span className="flex gap-1">
+            <select className={ctl} value={v.flagMode} onChange={(e) => setV({ ...v, flagMode: e.target.value as "add" | "remove" })} aria-label="Add or remove flag"><option value="add">Add</option><option value="remove">Remove</option></select>
+            <select className={ctl} value={v.flag} onChange={(e) => setV({ ...v, flag: e.target.value })} data-testid="perfume-bulk-flag" aria-label="Flag">
+              <option value="">{DASH}</option>{FLAGS.map((f) => <option key={f} value={f}>{f.charAt(0) + f.slice(1).toLowerCase()}</option>)}
+            </select>
+          </span>
+        </label>
+        <label className="min-w-[220px] flex-1">{tr("perfume.itemfile.description", "Description")} <input className={`${ctl} block w-full`} value={v.description === CLEAR ? "" : v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-bulk-description" /></label>
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
+      </div>
     </div>
   );
 }

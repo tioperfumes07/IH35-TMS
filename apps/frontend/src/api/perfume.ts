@@ -676,7 +676,8 @@ export type PerfumeVendorProfile = {
 export type PerfumeItemVendorLine = { id: string; vendor_id: string; vendor: string; kind: PerfumeVendorKind; sku: string | null; upc: string | null; brand: string | null;
   description: string; size_text: string | null; price_cents: number | null; qty: number | null; match_method: string | null; list_date: string };
 export type PerfumeItemProfile = {
-  item: { id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string };
+  item: { id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string;
+    model?: string | null; product_type?: string | null; category?: string | null; description?: string | null };
   upcs: string[]; vendor_lines: PerfumeItemVendorLine[];
   remembered: Array<{ id: string; vendor: string; vendor_id: string; sku: string | null; text_key: string | null; method: string; confirmed_at: string | null }>;
   quotes: PerfumeQuoteRow[]; orders: PerfumeOrderRow[]; purchase_orders: PerfumePoRow[]; best_cost_cents: number | null;
@@ -813,6 +814,7 @@ export const decidePerfumeCreditApplication = (id: string, b: { decision: "appro
 
 /* ------------------------------------------------------------------ Item file + linkage (owner 2026-11-26 22:51 CT) */
 export type PerfumeItemFileRow = { id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null; flags: string[] | null;
+  model: string | null; product_type: string | null; category: string | null; description: string | null;
   tio_code: string | null; upcs: string[]; hk_codes: string[]; lists_linked: number; best_cost_cents: number | null; my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
 export type PerfumeItemFileHas = "tio" | "no_tio" | "hk" | "no_hk" | "upc" | "no_upc" | "mine";
 export type PerfumeItemScope = "mine" | "vendors" | "all";
@@ -822,7 +824,10 @@ export type PerfumeItemFile = PerfumeItemProfile & {
   costs: { my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
   events: Array<{ id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null }>;
 };
-export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null };
+export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null;
+  model?: string | null; product_type?: string | null; category?: string | null; description?: string | null };
+export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags">; flags_add?: string[]; flags_remove?: string[] };
+export const bulkEditPerfumeItems = (b: PerfumeItemBulk) => apiRequest<{ updated: number }>("/api/v1/perfume/item-file-bulk", { method: "POST", body: b });
 export type PerfumeLinkageLine = { line_id: string; vendor_id: string; vendor: string; kind: string; sku: string | null; upc: string | null; brand: string | null; description: string;
   size_text: string | null; price_cents: number | null; match_status: string; match_method: string | null; list_date: string; item_id: string | null; item: string | null; tio_code: string | null;
   found_by: "upc" | "code" | "item" | "words" };
