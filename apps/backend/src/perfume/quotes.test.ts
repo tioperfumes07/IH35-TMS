@@ -8,7 +8,7 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import {
-  addLine, copyQuote, createQuote, getQuote, listQuotes, quoteHtml, QuoteInvalid, quotesOfCompany, quotesOfItem, quoteXlsx, removeLine, setQuoteStatus, updateLine,
+  addLine, copyQuote, createQuote, getQuote, listQuotes, quoteHtml, QuoteInvalid, quotesOfCompany, quotesOfItem, quoteXlsx, removeLine, searchQuoteItems, setQuoteStatus, updateLine,
 } from "./quotes.service.js";
 import { getRules } from "./desk.service.js";
 import { priceFromCost } from "./pricing.js";
@@ -69,6 +69,10 @@ describeIntegration("quotations (real Postgres, rolled back)", () => {
     expect((await quotesOfCompany(db as never, co)).map((x) => x["number"])).toEqual([q.number]);
     expect((await quotesOfItem(db as never, item)).map((x) => x["number"])).toEqual([q.number]);
 
+    // Search: every word, plain bottles first.
+    const found = await searchQuoteItems(db as never, "zzq night");
+    expect(found[0]?.id).toBe(item);
+    expect(found[0]?.best?.cents).toBe(1000);
     const copy = await copyQuote(db as never, TEST_OWNER_USER_ID, q.id);
     const cf = await getQuote(db as never, copy.id);
     expect([cf.status, cf.lines.length, cf.lines[0]!.unit_price_cents]).toEqual(["draft", 1, 1150]);

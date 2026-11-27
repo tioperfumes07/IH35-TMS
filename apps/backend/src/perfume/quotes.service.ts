@@ -158,12 +158,17 @@ export async function bestCostOf(c: pg.PoolClient, itemId: string): Promise<{ ce
 export async function searchQuoteItems(c: pg.PoolClient, q: string) {
   const t = q.trim();
   if (t.length < 2) return [];
+  // Every typed word must be in the item (brand, name or display name), so "versace dylan" finds VERSACE · DYLAN BLUE;
+  // a barcode finds its item. Plain bottles come before sets / minis / testers (measured 00:50Z: "versace dylan" listed
+  // three gift sets first).
+  const words = t.toLowerCase().split(/\s+/).filter((w) => w.length > 0).slice(0, 8);
+  const args: unknown[] = [t.replace(/\D/g, "")];
+  const conds = words.map((w) => { args.push(`%${w}%`); return `lower(i.brand || ' ' || i.name || ' ' || i.display_name) LIKE $${args.length}`; });
   const rows = (await c.query<{ id: string; display_name: string; upc: string | null }>(
     `SELECT i.id, i.display_name, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc
        FROM perfume.items i
-      WHERE i.merged_into_id IS NULL AND (lower(i.display_name) LIKE $1 OR EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = $2))
-      ORDER BY (lower(i.display_name) LIKE $3) DESC, i.display_name LIMIT 25`,
-    [`%${t.toLowerCase()}%`, t.replace(/\D/g, ""), `${t.toLowerCase()}%`])).rows;
+      WHERE i.merged_into_id IS NULL AND ((${conds.join(" AND ")}) OR ($1 <> '' AND EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = $1)))
+      ORDER BY (cardinality(coalesce(i.flags, '{}'::text[])) = 0) DESC, length(i.display_name), i.display_name LIMIT 25`, args)).rows;
   const out = [];
   for (const r of rows) out.push({ ...r, best: await bestCostOf(c, r.id) });
   return out;
