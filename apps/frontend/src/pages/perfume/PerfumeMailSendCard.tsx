@@ -72,7 +72,7 @@ export function PerfumeMailSendCard({ send, account, configured, onChanged }: {
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.mail.send", "Send a list")} data-testid="perfume-mail-send">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{tr("perfume.mail.send", "Send a list")} — {sender}</div>
+        <div className="text-card-title">{tr("perfume.mail.send", "Send a list")} — {sender}</div>
         <div className="text-xs text-gray-600" data-testid="perfume-mail-send-cap">
           {send ? `${send.sent_last_24h.toLocaleString("en-US")} of ${send.daily_cap.toLocaleString("en-US")} sent in the last 24 hours` : ""}
         </div>

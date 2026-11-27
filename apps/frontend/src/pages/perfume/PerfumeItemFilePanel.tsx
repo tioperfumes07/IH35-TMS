@@ -245,7 +245,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-itemfile-editor" aria-label={it.display_name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{it.display_name}</div>
+        <div className="text-card-title">{it.display_name}</div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => open("linkage", x.upcs[0] ?? it.internal_code ?? it.display_name)} data-testid="perfume-itemfile-linkage">{tr("perfume.itemfile.to_linkage", "Linkage")}</Button>
           {onClose ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.itemfile.close", "Close")}</Button> : null}
@@ -306,7 +306,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!upc.trim()} data-testid="perfume-itemfile-upc-add"
               onClick={() => run(() => addPerfumeItemUpc(id, upc).then((r) => { setUpc(""); if (r.moved_from) pushToast("UPC moved from another item — its file says so", "success"); }), "UPC on the item")}>{tr("perfume.itemfile.add", "Add")}</Button>
           </div>
-          <ParityTable<{ upc: string }> title={tr("perfume.itemfile.upcs", "UPCs")} rows={x.upcs.map((u) => ({ upc: u }))} rowKey={(r) => r.upc} storageKey="perfume-itemfile-upcs-v1"
+          <ParityTable<{ upc: string }> cardTitle title={tr("perfume.itemfile.upcs", "UPCs")} rows={x.upcs.map((u) => ({ upc: u }))} rowKey={(r) => r.upc} storageKey="perfume-itemfile-upcs-v1"
             exportFilename="TIO item UPCs" exportExcel emptyText="No UPC — add one above."
             columns={[{ className: "text-left", key: "upc", label: "UPC", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.upc)}>{r.upc}</button>, exportValue: (r) => r.upc }]} />
         </div>
@@ -316,7 +316,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!hk.trim()} data-testid="perfume-itemfile-hk-add"
               onClick={() => run(() => addPerfumeItemHkCode(id, hk).then((r) => { setHk(""); if (r.moved_from) pushToast("HK code moved from another item — its file says so", "success"); }), "HK code on the item")}>{tr("perfume.itemfile.add", "Add")}</Button>
           </div>
-          <ParityTable<PerfumeItemFile["hk_codes"][number]> title={tr("perfume.itemfile.hk_codes", "HK codes")} rows={x.hk_codes} rowKey={(r) => r.id} storageKey="perfume-itemfile-hk-v1"
+          <ParityTable<PerfumeItemFile["hk_codes"][number]> cardTitle title={tr("perfume.itemfile.hk_codes", "HK codes")} rows={x.hk_codes} rowKey={(r) => r.id} storageKey="perfume-itemfile-hk-v1"
             exportFilename="TIO item HK codes" exportExcel emptyText="No HK code — add one above."
             columns={[
               { className: "text-left", key: "sku", label: "HK code", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.sku)}>{r.sku}</button>, exportValue: (r) => r.sku },
@@ -326,7 +326,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         </div>
       </div>
       <ParityTable<PerfumeItemFile["vendor_lines"][number]>
-        title={tr("perfume.itemfile.linked", "Every line linked to this item (current lists)")} rows={x.vendor_lines} rowKey={(l) => l.id} storageKey="perfume-itemfile-lines-v1"
+        cardTitle title={tr("perfume.itemfile.linked", "Every line linked to this item (current lists)")} rows={x.vendor_lines} rowKey={(l) => l.id} storageKey="perfume-itemfile-lines-v1"
         exportFilename="TIO item linked lines" exportExcel emptyText="No list carries this item."
         columns={[
           { className: "text-left", key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
@@ -339,7 +339,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         ]}
       />
       <ParityTable<PerfumeItemFile["events"][number]>
-        title={tr("perfume.itemfile.history", "History")} rows={x.events} rowKey={(e) => e.id} storageKey="perfume-itemfile-history-v1" exportFilename="TIO item history" exportExcel emptyText="No changes yet."
+        cardTitle title={tr("perfume.itemfile.history", "History")} rows={x.events} rowKey={(e) => e.id} storageKey="perfume-itemfile-history-v1" exportFilename="TIO item history" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
           { className: "text-left", key: "kind", label: "What", render: (e) => EVENT[e.kind] ?? e.kind, exportValue: (e) => EVENT[e.kind] ?? e.kind },
@@ -654,7 +654,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
   // editor's own layout: label above each box, the same box widths (TIO 120 · Brand 160 · Name 260 · Size 80 · Model 180 …), one card.
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-item-creator" aria-label={tr("perfume.itemfile.new", "New item")}>
-      <div className="text-section-header">{tr("perfume.itemfile.new", "New item")}</div>
+      <div className="text-card-title">{tr("perfume.itemfile.new", "New item")}</div>
       <datalist id="perfume-brands">{(opts.data?.brands ?? []).map((b) => <option key={b} value={b} />)}</datalist>
       <datalist id="perfume-models">{(opts.data?.models ?? []).map((b) => <option key={b} value={b} />)}</datalist>
       <datalist id="perfume-sizes">{(opts.data?.sizes ?? []).map((b) => <option key={b} value={b} />)}</datalist>

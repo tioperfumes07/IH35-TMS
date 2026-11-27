@@ -35,7 +35,7 @@ export function ScentsxSalesOrderInvoice({ salesOrderId }: { salesOrderId: strin
   };
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="scentsx-so-invoice">
-      <div className="text-section-header">{tr("scentsx.inv.title", "ScentsX invoice")}</div>
+      <div className="text-card-title">{tr("scentsx.inv.title", "ScentsX invoice")}</div>
       <div className="flex flex-wrap items-center gap-2">
         <span>{tr("scentsx.inv.left", "Shipped units not yet invoiced")}: <b className="tabular-nums">{toBill}</b></span>
         <select className="h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs" aria-label={tr("scentsx.inv.channel", "Sales channel")} value={channel}

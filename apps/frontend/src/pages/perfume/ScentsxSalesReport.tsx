@@ -38,7 +38,7 @@ export function ScentsxSalesReport() {
         <ListErrorState title={tr("scentsx.sales.error", "Couldn't load sales")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />
       ) : (
         <ParityTable<ScentsxSalesRow>
-          title={by === "customer" ? tr("scentsx.sales.title_customer", "Sales by customer") : tr("scentsx.sales.title_item", "Sales by item")}
+          cardTitle title={by === "customer" ? tr("scentsx.sales.title_customer", "Sales by customer") : tr("scentsx.sales.title_item", "Sales by item")}
           rows={r?.rows ?? []}
           rowKey={(x) => x.key}
           loading={q.isLoading}

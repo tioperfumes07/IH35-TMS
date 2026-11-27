@@ -60,7 +60,7 @@ export function ScentsxItemAccountsBlock() {
   type Row = (typeof rows)[number];
   return (
     <section className="space-y-2" data-testid="scentsx-item-accounts">
-      <div className="text-section-header">{tr("scentsx.itemacct.title", "Item accounts — where each item category's stock and cost of sales post")}</div>
+      <div className="text-card-title">{tr("scentsx.itemacct.title", "Item accounts — where each item category's stock and cost of sales post")}</div>
       <div className="text-xs text-[#64748B]">
         {tr("scentsx.itemacct.defaults", "Blank uses the defaults")}: {d?.defaults.inventory_asset ?? "—"} · {d?.defaults.cogs_goods ?? "—"}. {tr("scentsx.itemacct.rule", "An inventory account cannot be moved while that category has stock on hand — reclass the value first. Sales income follows the channel (wholesale / retail / export).")}
       </div>
@@ -77,7 +77,7 @@ export function ScentsxItemAccountsBlock() {
               onChange={(v) => setEdit({ ...edit, [r.value]: { inv: edit[r.value]?.inv ?? r.map?.inventory_account_id ?? "", cogs: v } })} /> },
           { key: "save", label: "", render: (r) => (edit[r.value] ? <Button type="button" className="h-[28px] px-2 text-xs" onClick={() => save(r.value)}>{tr("scentsx.itemacct.save", "Save")}</Button> : null) },
         ]} />
-      <ParityTable<ScentsxItemAccountMap["history"][number]> title={tr("scentsx.itemacct.history", "Item account changes")} rows={d?.history ?? []} rowKey={(h) => h.id}
+      <ParityTable<ScentsxItemAccountMap["history"][number]> cardTitle title={tr("scentsx.itemacct.history", "Item account changes")} rows={d?.history ?? []} rowKey={(h) => h.id}
         storageKey="scentsx-item-accounts-history-v1" exportFilename="ScentsX item account changes" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "Set on", cellClass: "text-right tabular-nums", render: (h) => day(h.created_at) },

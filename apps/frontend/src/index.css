@@ -165,6 +165,17 @@ body {
   font-size: 11px;
 }
 
+/* Owner 2026-11-27 17:25 CT: "FOR EVERY SECTION THE HEADER MUST BE LARGER … FORMAT COMPANY NAMES, DUPLICATE COMPANIES, GOOGLE
+   SEARCHES RUN … SHOULD HAVE PROPER SIZE IN TITLE". A section / card title (QuickBooks-style): larger than the 11px column header,
+   sentence case, dark. Column headers keep .text-section-header. */
+.text-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #1f2937;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
 /* GLB-02: every rendered table header has one unmistakable contract, including
    legacy hand-written tables that have not yet migrated to DataTable/ParityTable.
    !important is intentional: old per-screen gray utilities must not defeat the

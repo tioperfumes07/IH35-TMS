@@ -58,7 +58,7 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={cat.label} data-testid={`perfume-catalog-${cat.kind}`}>
       <div className="flex items-baseline justify-between gap-2">
-        <div className="text-section-header">{tr(`perfume.cat.${cat.kind}`, cat.label)}</div>
+        <div className="text-card-title">{tr(`perfume.cat.${cat.kind}`, cat.label)}</div>
         <span className="text-xs text-[#64748B]">{cat.values.length} {tr("perfume.cat.values", "values")}</span>
       </div>
       {NOTES[cat.kind] ? <div className="text-xs text-[#64748B]">{tr(`perfume.cat.note_${cat.kind}`, NOTES[cat.kind]!)}</div> : null}

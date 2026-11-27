@@ -60,34 +60,40 @@ const MOVE: Array<[string, string]> = [
 ];
 
 export const mergeSchema = z.object({ keys: z.array(z.string().min(1).max(300)).min(1).max(500) });
+export const mergeOneSchema = z.object({ keep: z.string().uuid(), ids: z.array(z.string().uuid()).min(1).max(500) });
 
-export async function mergeDuplicateGroups(c: pg.PoolClient, uid: string, keys: string[]) {
-  let merged = 0, groupsDone = 0;
-  const kept: string[] = [];
-  for (const key of keys) {
-    const [g] = await duplicateGroups(c, { key });
-    if (!g || !g.merge.length) continue;
-    const keep = g.keep.id;
-    const dupIds = g.merge.map((m) => m.id);
-    await c.query(`SELECT id FROM perfume.contact_companies WHERE id = ANY($1::uuid[]) FOR UPDATE`, [[keep, ...dupIds]]);
+/** Merges the given companies into `keep` (one transaction on the caller's client): see the header. Used by the group merge and by a
+ *  confirmed duplicate recommendation. */
+export async function mergeCompanies(c: pg.PoolClient, uid: string, keep: string, dupIdsIn: string[], reason?: string) {
+  const dupIds = dupIdsIn.filter((d) => d !== keep);
+  if (!dupIds.length) return 0;
+  const live = (await c.query<{ id: string; name: string; city: string | null; archived: boolean }>(
+    `SELECT id::text, name, city, archived_at IS NOT NULL AS archived FROM perfume.contact_companies WHERE id = ANY($1::uuid[])`, [[keep, ...dupIds]])).rows;
+  const k = live.find((x) => x.id === keep);
+  if (!k || k.archived) throw new Error("company_to_keep_not_live");
+  const dups = live.filter((x) => x.id !== keep && !x.archived);
+  if (!dups.length) return 0;
+  const keepName = k.name;
+  const dupIds2 = dups.map((d) => d.id);
+    await c.query(`SELECT id FROM perfume.contact_companies WHERE id = ANY($1::uuid[]) FOR UPDATE`, [[keep, ...dupIds2]]);
     for (const [t, col] of MOVE) {
-      await c.query(`UPDATE ${t} SET ${col} = $1::uuid WHERE ${col} = ANY($2::uuid[])`, [keep, dupIds]);
+      await c.query(`UPDATE ${t} SET ${col} = $1::uuid WHERE ${col} = ANY($2::uuid[])`, [keep, dupIds2]);
     }
     // One-per-company rows move only when the company that stays has none (else they stay on the duplicate = its location).
     await c.query(`UPDATE perfume.customer_accounts a SET company_id = $1::uuid WHERE a.company_id = ANY($2::uuid[])
                      AND NOT EXISTS (SELECT 1 FROM perfume.customer_accounts b WHERE b.company_id = $1::uuid)
-                     AND a.company_id = (SELECT x.company_id FROM perfume.customer_accounts x WHERE x.company_id = ANY($2::uuid[]) ORDER BY x.company_id LIMIT 1)`, [keep, dupIds]);
+                     AND a.company_id = (SELECT x.company_id FROM perfume.customer_accounts x WHERE x.company_id = ANY($2::uuid[]) ORDER BY x.company_id LIMIT 1)`, [keep, dupIds2]);
     await c.query(`UPDATE scentsx.customer_links l SET contact_company_id = $1::uuid WHERE l.contact_company_id = ANY($2::uuid[]) AND l.voided_at IS NULL
                      AND NOT EXISTS (SELECT 1 FROM scentsx.customer_links k WHERE k.contact_company_id = $1::uuid AND k.voided_at IS NULL)
-                     AND l.id = (SELECT y.id FROM scentsx.customer_links y WHERE y.contact_company_id = ANY($2::uuid[]) AND y.voided_at IS NULL ORDER BY y.created_at LIMIT 1)`, [keep, dupIds]);
+                     AND l.id = (SELECT y.id FROM scentsx.customer_links y WHERE y.contact_company_id = ANY($2::uuid[]) AND y.voided_at IS NULL ORDER BY y.created_at LIMIT 1)`, [keep, dupIds2]);
     await c.query(`UPDATE scentsx.party_kyc k SET contact_company_id = $1::uuid WHERE k.contact_company_id = ANY($2::uuid[]) AND k.voided_at IS NULL
                      AND NOT EXISTS (SELECT 1 FROM scentsx.party_kyc j WHERE j.contact_company_id = $1::uuid AND j.voided_at IS NULL)
-                     AND k.id = (SELECT z.id FROM scentsx.party_kyc z WHERE z.contact_company_id = ANY($2::uuid[]) AND z.voided_at IS NULL ORDER BY z.created_at LIMIT 1)`, [keep, dupIds]);
+                     AND k.id = (SELECT z.id FROM scentsx.party_kyc z WHERE z.contact_company_id = ANY($2::uuid[]) AND z.voided_at IS NULL ORDER BY z.created_at LIMIT 1)`, [keep, dupIds2]);
     await c.query(`UPDATE perfume.trade_buyers t SET company_id = $1::uuid WHERE t.company_id = ANY($2::uuid[]) AND t.archived_at IS NULL
-                     AND NOT EXISTS (SELECT 1 FROM perfume.trade_buyers u WHERE u.trade_id = t.trade_id AND u.company_id = $1::uuid AND u.archived_at IS NULL)`, [keep, dupIds]);
+                     AND NOT EXISTS (SELECT 1 FROM perfume.trade_buyers u WHERE u.trade_id = t.trade_id AND u.company_id = $1::uuid AND u.archived_at IS NULL)`, [keep, dupIds2]);
     await c.query(`UPDATE perfume.trade_show_contacts t SET company_id = $1::uuid WHERE t.company_id = ANY($2::uuid[]) AND t.archived_at IS NULL
                      AND NOT EXISTS (SELECT 1 FROM perfume.trade_show_contacts u WHERE u.show_id = t.show_id AND u.company_id = $1::uuid
-                       AND coalesce(u.person_id, '00000000-0000-0000-0000-000000000000'::uuid) = coalesce(t.person_id, '00000000-0000-0000-0000-000000000000'::uuid) AND u.archived_at IS NULL)`, [keep, dupIds]);
+                       AND coalesce(u.person_id, '00000000-0000-0000-0000-000000000000'::uuid) = coalesce(t.person_id, '00000000-0000-0000-0000-000000000000'::uuid) AND u.archived_at IS NULL)`, [keep, dupIds2]);
     // Blank fields of the company that stays come from the duplicates; vendor + customer → both.
     await c.query(
       `UPDATE perfume.contact_companies k SET
@@ -102,13 +108,23 @@ export async function mergeDuplicateGroups(c: pg.PoolClient, uid: string, keys: 
             AND (SELECT bool_or(x.role IN ('customer', 'both')) FROM perfume.contact_companies x WHERE x.id = ANY($3::uuid[])) THEN 'both'
            ELSE coalesce(k.role, (SELECT d.role FROM perfume.contact_companies d WHERE d.id = ANY($2::uuid[]) AND d.role IS NOT NULL LIMIT 1)) END,
          updated_at = now()
-       WHERE k.id = $1::uuid`, [keep, dupIds, [keep, ...dupIds]]);
-    await c.query(`UPDATE perfume.contact_companies SET archived_at = now(), merged_into_id = $1::uuid, merged_at = now(), updated_at = now() WHERE id = ANY($2::uuid[])`, [keep, dupIds]);
+       WHERE k.id = $1::uuid`, [keep, dupIds2, [keep, ...dupIds2]]);
+    await c.query(`UPDATE perfume.contact_companies SET archived_at = now(), merged_into_id = $1::uuid, merged_at = now(), updated_at = now() WHERE id = ANY($2::uuid[])`, [keep, dupIds2]);
     await logEvents(c, uid, [
-      ...g.merge.map((m) => ({ entity: "company" as const, entity_id: m.id, company_id: keep, action: "merged_into", detail: { into: keep, name: g.keep.name, city: m.city } })),
-      { entity: "company" as const, entity_id: keep, company_id: keep, action: "merged_from", detail: { companies: dupIds.length, ids: dupIds } },
+      ...dups.map((m) => ({ entity: "company" as const, entity_id: m.id, company_id: keep, action: "merged_into", detail: { into: keep, name: keepName, city: m.city, ...(reason ? { reason } : {}) } })),
+      { entity: "company" as const, entity_id: keep, company_id: keep, action: "merged_from", detail: { companies: dupIds2.length, ids: dupIds2 } },
     ]);
-    merged += dupIds.length; groupsDone += 1; kept.push(keep);
+  return dupIds2.length;
+}
+
+export async function mergeDuplicateGroups(c: pg.PoolClient, uid: string, keys: string[]) {
+  let merged = 0, groupsDone = 0;
+  const kept: string[] = [];
+  for (const key of keys) {
+    const [g] = await duplicateGroups(c, { key });
+    if (!g || !g.merge.length) continue;
+    merged += await mergeCompanies(c, uid, g.keep.id, g.merge.map((m) => m.id));
+    groupsDone += 1; kept.push(g.keep.id);
   }
   return { groups: groupsDone, merged, kept };
 }

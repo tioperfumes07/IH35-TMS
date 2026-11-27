@@ -70,7 +70,7 @@ export function PerfumeLeadsExcelPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-leads-excel-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.leadsx.title", "Update the contacts in Excel")}>
-        <div className="text-section-header">{tr("perfume.leadsx.title", "Update the contacts in Excel")}</div>
+        <div className="text-card-title">{tr("perfume.leadsx.title", "Update the contacts in Excel")}</div>
         <ol className="list-decimal space-y-0.5 pl-5 text-xs text-[#1F2A44]">
           <li>{tr("perfume.leadsx.s1", "Download every contact — one row per person, with drop-downs for role, types, category and status from the Catalogs.")}</li>
           <li>{tr("perfume.leadsx.s2", "Filter and categorize in Excel. Mark a row Remove company or Remove person if it is not needed. Add new leads at the bottom, or as their own sheets (Emails, Leaked emails, Phone contacts).")}</li>
@@ -92,7 +92,7 @@ export function PerfumeLeadsExcelPanel() {
 
       <section className="rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.leadsx.history", "Uploads")}>
         <ParityTable<PerfumeUploadRow>
-          title={tr("perfume.leadsx.history", "Uploads")}
+          cardTitle title={tr("perfume.leadsx.history", "Uploads")}
           rows={uploads.data?.uploads ?? []}
           rowKey={(u) => u.id}
           loading={uploads.isLoading}
@@ -153,7 +153,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-leadsx-review" aria-label={s.file_name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{s.file_name}</div>
+          <div className="text-card-title">{s.file_name}</div>
           <div className="text-xs text-[#64748B]">{s.sheets.map((x) => `${x.name}: ${KIND_TEXT[x.kind]}${x.kind === "skipped" ? "" : ` · ${n(x.used)} rows`}`).join("  ·  ")}</div>
         </div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.leadsx.close", "Close")}</Button>
@@ -177,7 +177,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
       {s.changes.length ? (
         <div id="perfume-leadsx-changes">
         <ParityTable
-          title={`${tr("perfume.leadsx.changes", "Changes")} (${n(s.changes_total)})`}
+          cardTitle title={`${tr("perfume.leadsx.changes", "Changes")} (${n(s.changes_total)})`}
           rows={s.changes.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
           storageKey="perfume-upload-changes-v1"
@@ -200,7 +200,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
       {s.removals.length ? (
         <div id="perfume-leadsx-removals">
         <ParityTable
-          title={`${tr("perfume.leadsx.removals", "Marked Remove — archived on Apply")} (${n(ex.remove_companies + ex.remove_people)})`}
+          cardTitle title={`${tr("perfume.leadsx.removals", "Marked Remove — archived on Apply")} (${n(ex.remove_companies + ex.remove_people)})`}
           rows={s.removals.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
           storageKey="perfume-upload-removals-v1"
@@ -220,7 +220,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
 
       {s.new.records ? (
         <div id="perfume-leadsx-new" className="space-y-2" data-testid="perfume-leadsx-new">
-          <div className="text-section-header">{tr("perfume.leadsx.new_title", "New leads — choose what goes in")}</div>
+          <div className="text-card-title">{tr("perfume.leadsx.new_title", "New leads — choose what goes in")}</div>
           <div className="flex flex-wrap gap-2">
             {(Object.entries(s.new.by_kind) as Array<[PerfumeUploadKind, number]>).map(([k, v]) => {
               const on = !skipKinds.includes(k);
@@ -234,7 +234,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             })}
           </div>
           <ParityTable
-            title={tr("perfume.leadsx.by_category", "By category in the file")}
+            cardTitle title={tr("perfume.leadsx.by_category", "By category in the file")}
             rows={cats.map(([k, v]) => ({ k, ...v }))}
             rowKey={(c) => c.k}
             storageKey="perfume-upload-categories-v1"
@@ -255,7 +255,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             ]}
           />
           <ParityTable<PerfumeUploadSummary["new"]["samples"][number] & { i: number }>
-            title={`${tr("perfume.leadsx.samples", "First new leads")} (${n(s.new.samples.length)} ${tr("perfume.leadsx.of", "of")} ${n(s.new.records)})`}
+            cardTitle title={`${tr("perfume.leadsx.samples", "First new leads")} (${n(s.new.samples.length)} ${tr("perfume.leadsx.of", "of")} ${n(s.new.records)})`}
             rows={s.new.samples.map((x, i) => ({ ...x, i }))}
             rowKey={(x) => String(x.i)}
             storageKey="perfume-upload-samples-v1"
@@ -281,7 +281,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
       {s.removed_check && (s.removed_check.companies || s.removed_check.people) ? (
         <div className="space-y-2" data-testid="perfume-leadsx-removed-check">
           <ParityTable
-            title={`${tr("perfume.leadsx.rc_title", "Contacts on file that the file's Removed-Check list names")} (${n(s.removed_check.companies)} ${tr("perfume.leadsx.rc_co", "companies")} · ${n(s.removed_check.people)} ${tr("perfume.leadsx.rc_pe", "people")})`}
+            cardTitle title={`${tr("perfume.leadsx.rc_title", "Contacts on file that the file's Removed-Check list names")} (${n(s.removed_check.companies)} ${tr("perfume.leadsx.rc_co", "companies")} · ${n(s.removed_check.people)} ${tr("perfume.leadsx.rc_pe", "people")})`}
             rows={s.removed_check.list.map((c, i) => ({ ...c, i }))}
             rowKey={(c) => String(c.i)}
             storageKey="perfume-upload-removed-check-v1"
@@ -305,7 +305,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
 
       {Object.keys(s.unknown).length ? (
         <div id="perfume-leadsx-unknown" className="space-y-1 text-xs" data-testid="perfume-leadsx-unknown">
-          <div className="text-section-header">{tr("perfume.leadsx.unknown_title", "Types not in the Catalogs yet")}</div>
+          <div className="text-card-title">{tr("perfume.leadsx.unknown_title", "Types not in the Catalogs yet")}</div>
           {Object.entries(s.unknown).map(([k, vals]) => <div key={k}><span className="font-semibold">{FIELD_TEXT[k] ?? k}:</span> {(vals ?? []).join(" · ")}</div>)}
           <label className="flex items-center gap-1"><input type="checkbox" checked={addUnknown} disabled={!editable} onChange={(e) => setAddUnknown(e.target.checked)} />
             {tr("perfume.leadsx.add_unknown", "Add the ones still used to the Catalogs on Apply")}</label>

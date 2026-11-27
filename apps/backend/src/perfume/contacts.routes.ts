@@ -17,7 +17,8 @@ import {
   batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
-import { companyLocations, duplicateGroups, mergeDuplicateGroups, mergeSchema } from "./company-merge.service.js";
+import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
+import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
 import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -97,7 +98,31 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
   app.post("/api/v1/perfume/contacts/duplicates/merge", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = mergeSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
-    return withCurrentUser(uid, (c) => mergeDuplicateGroups(c, uid, b.data.keys));
+    return withCurrentUser(uid, async (c) => { const r = await mergeDuplicateGroups(c, uid, b.data.keys); await scanDuplicates(c); return r; });
+  });
+  // Owner 17:25 CT: click a duplicate company → pop-up with every record of it → pick the one that stays → Confirm.
+  app.post("/api/v1/perfume/contacts/duplicates/merge-one", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = mergeOneSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, async (c) => {
+      const merged = await mergeCompanies(c, uid, b.data.keep, b.data.ids, "duplicate companies: owner confirmed in the pop-up");
+      await scanDuplicates(c); return { merged };
+    });
+  });
+  // Owner 17:17 CT: automatic duplicate detector — recommendations (same / similar name, phone, domain, address); the owner confirms.
+  app.get("/api/v1/perfume/contacts/duplicate-recommendations", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => { const scan = await scanDuplicates(c); return { ...(await listRecommendations(c)), found: scan.found }; });
+  });
+  app.post("/api/v1/perfume/contacts/duplicate-recommendations/confirm", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = decideSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => confirmDuplicates(c, uid, b.data.ids, b.data.keep ?? {}));
+  });
+  app.post("/api/v1/perfume/contacts/duplicate-recommendations/dismiss", { config: { rateLimit: { max: 20, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = decideSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => dismissDuplicates(c, uid, b.data.ids));
   });
   app.get("/api/v1/perfume/contacts/:id/locations", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
@@ -128,7 +153,8 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const body = importSchema.safeParse(req.body ?? {});
     if (!body.success) return reply.code(400).send({ error: "invalid_records", details: body.error.issues.slice(0, 5) });
-    return withCurrentUser(uid, (c) => importRecords(c, body.data.records, uid, emptyTally()));
+    // The duplicate detector runs after every import (owner 17:17 CT): new companies are checked against what is already on file.
+    return withCurrentUser(uid, async (c) => { const t = await importRecords(c, body.data.records, uid, emptyTally()); await scanDuplicates(c); return t; });
   });
 
   app.get("/api/v1/perfume/prospects/google-plan", RL_READ, async (req, reply) => {

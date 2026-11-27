@@ -165,7 +165,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-po-editor" aria-label={p.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{p.number} · <DocLink tab="suppliers" id={p.vendor_id} testId="perfume-po-vendor-link">{p.vendor_name}</DocLink> <Badge text={STATUS_TEXT[p.status]} color={STATUS_CLASS[p.status]} /></div>
+          <div className="text-card-title">{p.number} · <DocLink tab="suppliers" id={p.vendor_id} testId="perfume-po-vendor-link">{p.vendor_name}</DocLink> <Badge text={STATUS_TEXT[p.status]} color={STATUS_CLASS[p.status]} /></div>
           <div className="text-xs text-[#64748B]">
             {[p.vendor_contact, `Date ${usDate(p.order_date)}`].filter(Boolean).join(" · ")}
             {p.sales_order_id && p.sales_order_number ? <> · {tr("perfume.pos.for_order", "For sales order")} <DocLink tab="orders" id={p.sales_order_id} testId="perfume-po-order-link">{p.sales_order_number}</DocLink>{p.sales_order_customer ? ` (${p.sales_order_customer})` : ""}</> : null}
@@ -213,7 +213,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
         </>
       )}
       <ParityTable<PerfumePoLine>
-        title={tr("perfume.pos.lines", "Lines")}
+        cardTitle title={tr("perfume.pos.lines", "Lines")}
         rows={p.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.qty_received}-${l.unit_cost_cents}`}
         storageKey="perfume-po-lines-v1"

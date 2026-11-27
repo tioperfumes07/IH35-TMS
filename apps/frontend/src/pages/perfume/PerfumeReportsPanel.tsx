@@ -37,7 +37,7 @@ function Strip({ children, testId }: { children: ReactNode; testId: string }) {
 function Card({ title, children, testId }: { title: string; children: ReactNode; testId?: string }) {
   return (
     <section className="min-w-0 space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid={testId}>
-      <div className="text-section-header">{title}</div>
+      <div className="text-card-title">{title}</div>
       {children}
     </section>
   );
@@ -121,7 +121,7 @@ export function PerfumeItemInquiryPanel({ initialId }: { initialId?: string | nu
               ]} />
             </Card>
           </div>
-          <ParityTable<PerfumeItemInquiry["stock"][number]> title={tr("perfume.reports.by_site", "On hand by site")} rows={d.stock} rowKey={(r) => r.location_code}
+          <ParityTable<PerfumeItemInquiry["stock"][number]> cardTitle title={tr("perfume.reports.by_site", "On hand by site")} rows={d.stock} rowKey={(r) => r.location_code}
             storageKey="perfume-inquiry-stock-v1" exportFilename={`TIO item inquiry ${it.tio_code ?? it.display_name}`} exportExcel emptyText="Nothing on hand."
             columns={[
               { className: "text-left", key: "location_code", label: "Site", render: (r) => r.site ? `${r.location_code} · ${r.site}` : r.location_code, exportValue: (r) => r.location_code },
@@ -188,7 +188,7 @@ export function PerfumeSalesInquiryPanel() {
             <KpiCard label={tr("perfume.reports.units", "Units")} number={n(lines.data.total.qty)} disabled />
             <KpiCard label={tr("perfume.reports.sales", "Sales")} number={money(lines.data.total.amount_cents)} disabled />
           </Strip>
-          <ParityTable<ScentsxSaleLine> title={tr("perfume.reports.sale_lines", "Sale lines")} rows={lines.data.rows} rowKey={(r) => r.invoice_line_id} storageKey="perfume-sales-inquiry-lines-v1"
+          <ParityTable<ScentsxSaleLine> cardTitle title={tr("perfume.reports.sale_lines", "Sale lines")} rows={lines.data.rows} rowKey={(r) => r.invoice_line_id} storageKey="perfume-sales-inquiry-lines-v1"
             exportFilename="ScentsX sales by item" exportExcel emptyText="No sales in these dates." columns={lineCols} />
           {lines.data.truncated ? <div className="text-xs text-[#5B6B82]">{tr("perfume.reports.truncated", "First 5,000 shown — the totals above count every line. Narrow the dates for the rest.")}</div> : null}
         </>
@@ -201,7 +201,7 @@ export function PerfumeSalesInquiryPanel() {
             <KpiCard label={tr("perfume.reports.sales", "Sales")} number={money(invoices.data.total.sales_cents)} disabled />
             <KpiCard label={tr("perfume.reports.total", "Total with tax")} number={money(invoices.data.total.total_cents)} disabled />
           </Strip>
-          <ParityTable<ScentsxSaleInvoice> title={tr("perfume.reports.sales_list", "Sales")} rows={invoices.data.rows} rowKey={(r) => r.invoice_id} storageKey="perfume-sales-inquiry-invoices-v1"
+          <ParityTable<ScentsxSaleInvoice> cardTitle title={tr("perfume.reports.sales_list", "Sales")} rows={invoices.data.rows} rowKey={(r) => r.invoice_id} storageKey="perfume-sales-inquiry-invoices-v1"
             exportFilename="ScentsX sales inquiry" exportExcel emptyText="No sales in these dates." onRowClick={(r) => setInvoice(r)}
             columns={[
               { className: "text-left", key: "invoice", label: "Invoice", sortable: true, render: (r) => <button type="button" className="underline" onClick={() => setInvoice(r)} data-testid={`perfume-sales-inquiry-open-${r.invoice_id}`}>{r.invoice ?? DASH}</button>, exportValue: (r) => r.invoice ?? "" },
@@ -215,7 +215,7 @@ export function PerfumeSalesInquiryPanel() {
               { key: "total_cents", label: "Total", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents), exportValue: (r) => r.total_cents / 100 },
             ]} />
           {invoice ? (
-            <ParityTable<ScentsxSaleLine> title={`${tr("perfume.reports.invoice_lines", "Lines of invoice")} ${invoice.invoice ?? ""} · ${invoice.customer}`} rows={drill.data?.rows ?? []} loading={drill.isLoading}
+            <ParityTable<ScentsxSaleLine> cardTitle title={`${tr("perfume.reports.invoice_lines", "Lines of invoice")} ${invoice.invoice ?? ""} · ${invoice.customer}`} rows={drill.data?.rows ?? []} loading={drill.isLoading}
               rowKey={(r) => r.invoice_line_id} storageKey="perfume-sales-inquiry-drill-v1" exportFilename={`ScentsX invoice ${invoice.invoice ?? ""}`} exportExcel emptyText="No sale lines." columns={lineCols} />
           ) : null}
         </>
@@ -277,7 +277,7 @@ export function PerfumePriceBookPanel() {
             <KpiCard label={tr("perfume.reports.priced", "Priced")} number={n(q.data.total.priced)} disabled />
             <KpiCard label={tr("perfume.reports.not_priced", "No price")} number={n(q.data.rows.length - q.data.total.priced)} disabled />
           </Strip>
-          <ParityTable<PerfumePriceBookRow> title={`${tr("perfume.reports.price_book", "Price book")} · ${q.data.level.name}`} rows={q.data.rows} rowKey={(r) => r.id} storageKey="perfume-price-book-v1"
+          <ParityTable<PerfumePriceBookRow> cardTitle title={`${tr("perfume.reports.price_book", "Price book")} · ${q.data.level.name}`} rows={q.data.rows} rowKey={(r) => r.id} storageKey="perfume-price-book-v1"
             exportFilename={`TIO price book ${q.data.level.name}`} exportExcel emptyText="No items match."
             columns={[
               { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
@@ -317,7 +317,7 @@ export function PerfumeInventoryStatusPanel() {
             <KpiCard label={tr("perfume.reports.value", "Inventory value")} number={money(q.data.total.value_cents)} disabled />
             <KpiCard label={tr("perfume.reports.avg_unit", "Avg cost per unit")} number={q.data.total.on_hand > 0 ? money(Math.round(q.data.total.value_cents / q.data.total.on_hand)) : DASH} disabled />
           </Strip>
-          <ParityTable<PerfumeStatusRow> title={tr("perfume.reports.inventory_status", "Inventory status")} rows={q.data.rows} rowKey={(r) => r.id} storageKey="perfume-inventory-status-v1"
+          <ParityTable<PerfumeStatusRow> cardTitle title={tr("perfume.reports.inventory_status", "Inventory status")} rows={q.data.rows} rowKey={(r) => r.id} storageKey="perfume-inventory-status-v1"
             exportFilename="TIO inventory status" exportExcel emptyText="No items match." loading={q.isLoading}
             columns={[
               { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
@@ -362,7 +362,7 @@ export function PerfumeFamilyReportPanel() {
             <KpiCard label={tr("perfume.reports.units", "Units on hand")} number={n(q.data.total.on_hand)} disabled />
             <KpiCard label={tr("perfume.reports.value", "Inventory value")} number={money(q.data.total.value_cents)} disabled />
           </Strip>
-          <ParityTable<PerfumeFamilyReportRow> title={tr("perfume.reports.family_report", "Product families")} rows={q.data.rows} rowKey={(r) => r.family_id ?? "none"} storageKey="perfume-family-report-v1"
+          <ParityTable<PerfumeFamilyReportRow> cardTitle title={tr("perfume.reports.family_report", "Product families")} rows={q.data.rows} rowKey={(r) => r.family_id ?? "none"} storageKey="perfume-family-report-v1"
             exportFilename="TIO product families" exportExcel emptyText="No families."
             columns={[
               { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => (r.family_id ? <DocLink tab="families" id={r.family_id}>{r.family}</DocLink> : r.family), exportValue: (r) => r.family },
@@ -409,7 +409,7 @@ export function PerfumeVendorTiersPanel() {
             <KpiCard label={tr("perfume.tiers.k_high", "High priced (sell dearer)")} number={n(q.data.total.high)} disabled />
             <KpiCard label={tr("perfume.tiers.k_few", "Too few items")} number={n(q.data.total.too_few)} disabled />
           </Strip>
-          <ParityTable<PerfumeVendorTierRow> title={tr("perfume.tiers.title", "Vendor price tiers — 100 % = the item's median supplier price")} rows={q.data.rows} rowKey={(r) => r.vendor_id}
+          <ParityTable<PerfumeVendorTierRow> cardTitle title={tr("perfume.tiers.title", "Vendor price tiers — 100 % = the item's median supplier price")} rows={q.data.rows} rowKey={(r) => r.vendor_id}
             storageKey="perfume-vendor-tiers-v1" exportFilename="TIO vendor price tiers" exportExcel emptyText="No supplier lists."
             columns={[
               { className: "text-left", key: "vendor", label: "Vendor", sortable: true, render: (r) => <DocLink tab="suppliers" id={r.vendor_id}>{r.vendor}</DocLink>, exportValue: (r) => r.vendor },

@@ -1067,7 +1067,7 @@ function MatchCleanup() {
   };
   return (
     <div data-testid="perfume-match-cleanup">
-      <div className="text-section-header">{tr("perfume.desk.38", "Match clean-up")}</div>
+      <div className="text-card-title">{tr("perfume.desk.38", "Match clean-up")}</div>
       <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void run()}>{busy ? tr("perfume.desk.40", "Running…") : tr("perfume.desk.39", "Merge brand spellings + re-run Review")}</Button>
         <span className="text-gray-600">{result ?? tr("perfume.desk.41", "One spelling per brand (CALVIN → CALVIN KLEIN, NARCISO R → NARCISO RODRIGUEZ …); the same bottle under two spellings becomes one item. Safe to run again.")}</span>
@@ -1112,27 +1112,27 @@ function RulesPanel() {
   return (
     <section className="max-w-[960px] space-y-4 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.desk.16", "Rules")}>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.17", "Closed numbers")}</div>
+        <div className="text-card-title">{tr("perfume.desk.17", "Closed numbers")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.18", "Close to")} {seg(STEPS, r.round_step, (v) => setDraft({ ...draft, round_step: v }))} {tr("perfume.desk.19", "Direction")} {seg(DIRS, r.round_dir, (v) => setDraft({ ...draft, round_dir: v }))}</div>
       </div>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.match1", "Match the competitor")}</div>
+        <div className="text-card-title">{tr("perfume.desk.match1", "Match the competitor")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.match2", "My match price = their price less")} {dollars("match_under_cents")} {tr("perfume.desk.match3", "— List analysis shows the change, and my margin and profit at that price on my last and average cost")}</div>
       </div>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.20", "Vendor cushion (default — each vendor can override in Price lists)")}</div>
+        <div className="text-card-title">{tr("perfume.desk.20", "Vendor cushion (default — each vendor can override in Price lists)")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.21", "From")} {dollars("cushion_lo_cents")} {tr("perfume.desk.22", "to")} {dollars("cushion_hi_cents")}</div>
       </div>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.23", "Freight per piece (default)")}</div>
+        <div className="text-card-title">{tr("perfume.desk.23", "Freight per piece (default)")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs">{tr("perfume.desk.24", "From")} {dollars("freight_lo_cents")} {tr("perfume.desk.25", "to")} {dollars("freight_hi_cents")}</div>
       </div>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.26", "What they earn")}</div>
+        <div className="text-card-title">{tr("perfume.desk.26", "What they earn")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs">{tr("perfume.desk.27", "My suppliers earn")} {percent("vendor_earn_pct")}{tr("perfume.desk.29", "% on their price — the Trading tab offers them their price less this (change it there for one look, or here to keep it)")}</div>
       </div>
       <div>
-        <div className="text-section-header">{tr("perfume.desk.34", "Competition margin — cushion by list price")}</div>
+        <div className="text-card-title">{tr("perfume.desk.34", "Competition margin — cushion by list price")}</div>
         <div className="mt-1 flex flex-wrap items-center gap-3 text-xs" data-testid="perfume-comp-tiers">
           {(r.competitor_cushion_tiers ?? []).map((t, i) => (
             <span key={i} className="inline-flex items-center gap-1">{t.over_cents === 0 ? tr("perfume.desk.35", "Any price") : `${tr("perfume.desk.36", "Over")} ${money(t.over_cents)}`}:
