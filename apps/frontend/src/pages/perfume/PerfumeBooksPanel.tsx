@@ -20,6 +20,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { tr } from "./perfumeI18n";
 import { ScentsxCompliancePanel } from "./ScentsxCompliancePanel";
 import { ScentsxSalesReport } from "./ScentsxSalesReport";
+import { ScentsxItemAccountsBlock } from "./ScentsxItemAccounts";
 import { getScentsxInventoryTieOut } from "../../api/scentsx";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -102,6 +103,7 @@ export function PerfumeBooksPanel() {
           {tr("scentsx.books.post_now", "Post now")}</Button>
       </div>
       <InventoryTieOut />
+      <ScentsxItemAccountsBlock />
       <ScentsxSalesReport />
       {c && c.periods === 0 ? (
         <div className="rounded-[3px] border border-[#F59E0B] bg-[#FFFBEB] p-2 text-xs" data-testid="scentsx-books-no-period">

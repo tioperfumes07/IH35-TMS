@@ -12,6 +12,7 @@
 import type pg from "pg";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount, type CoaRole } from "../accounting/coa-roles/resolver.service.js";
+import { itemPostingAccounts } from "./item-accounts.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
 import { scopeToScentsx } from "./links.service.js";
 
@@ -48,8 +49,8 @@ export type PostMoveResult =
 export async function postStockMove(c: Q, moveId: string, actor: { userId: string; role: string }): Promise<PostMoveResult> {
   const co = await scopeToScentsx(c);
   if (!(await isEnabled(c as never, SCENTSX_STOCK_MOVE_FLAG, { operating_company_id: co }))) return { posted: false, reason: "flag_off" };
-  const m = await c.query<{ id: string; kind: MoveKind; qty: number; unit_cost_cents: string; moved_on: string; location_code: string; item: string }>(
-    `SELECT sm.id::text, sm.kind, sm.qty, sm.unit_cost_cents::text, (sm.moved_at AT TIME ZONE 'America/Chicago')::date::text AS moved_on,
+  const m = await c.query<{ id: string; kind: MoveKind; qty: number; unit_cost_cents: string; moved_on: string; location_code: string; item: string; item_id: string }>(
+    `SELECT sm.id::text, sm.kind, sm.qty, sm.item_id::text, sm.unit_cost_cents::text, (sm.moved_at AT TIME ZONE 'America/Chicago')::date::text AS moved_on,
             sm.location_code, coalesce(i.name, i.id::text) AS item
        FROM perfume.stock_moves sm JOIN perfume.items i ON i.id = sm.item_id WHERE sm.id = $1::uuid`,
     [moveId]
@@ -66,7 +67,12 @@ export async function postStockMove(c: Q, moveId: string, actor: { userId: strin
   const amount = moveValueCents(mv.qty, mv.unit_cost_cents);
   if (amount <= 0) return { posted: false, reason: "zero_value" };
   const roles = rolesForMove(mv.kind, mv.qty);
-  const [debitAcct, creditAcct] = [await resolveRoleAccount(c as never, co, roles.debit), await resolveRoleAccount(c as never, co, roles.credit)];
+  // The item's own Inventory / COGS accounts (item category or item mapping, migration 202617050100) replace the two item roles;
+  // every other role and every amount stays as the posting map says. No mapping → the role accounts, exactly as before.
+  const mapped = await itemPostingAccounts(c, mv.item_id);
+  const accountFor = async (role: CoaRole) =>
+    (role === "inventory_asset" && mapped.inventory_account_id) || (role === "cogs_goods" && mapped.cogs_account_id) || (await resolveRoleAccount(c as never, co, role));
+  const [debitAcct, creditAcct] = [await accountFor(roles.debit), await accountFor(roles.credit)];
   const memo = `Stock ${mv.kind.replace(/_/g, " ")} · ${Math.abs(mv.qty)} × ${mv.item} · ${mv.location_code}`;
   const je = await createJournalEntryOnClient(
     c as never,
