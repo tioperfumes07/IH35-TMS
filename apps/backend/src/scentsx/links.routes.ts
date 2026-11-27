@@ -7,6 +7,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.service.js";
+import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import {
@@ -49,6 +50,21 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const id = uuid.safeParse((req.params as { id?: string }).id);
     if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { return await withCurrentUser(uid, async (c) => ({ lines: await scentsxAccountRegister(c, id.data) })); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/sales-orders/:id/billing", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try {
+      return await withCurrentUser(uid, async (c) => ({ lines: await billableLines(c, id.data), invoices: await listDocumentLinks(c, { sales_order_id: id.data }) }));
+    } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/sales-orders/:id/invoice", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    const b = z.object({ channel: z.enum(["wholesale", "retail", "export"]).default("wholesale") }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, async (c) => ({ invoice: await invoiceSalesOrder(c, uid, id.data, b.data.channel) })); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/stock-moves/pending", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

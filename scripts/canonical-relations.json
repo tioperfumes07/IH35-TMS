@@ -900,6 +900,7 @@
     "samsara.vehicle_state_miles",
     "scentsx.customer_links",
     "scentsx.document_links",
+    "scentsx.sales_order_invoice_lines",
     "scentsx.vendor_links",
     "search.universal_index",
     "settlement.settlement",
