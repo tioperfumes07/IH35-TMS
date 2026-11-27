@@ -1005,6 +1005,11 @@ export type PerfumeNameFix = { id: string; role: string | null; from: string; to
 export const getPerfumeNameFixes = () => apiRequest<{ count: number; fixes: PerfumeNameFix[] }>("/api/v1/perfume/contacts/name-format/preview");
 export const applyPerfumeNameFixes = (ids: string[]) =>
   apiRequest<{ renamed: number; skipped: number }>("/api/v1/perfume/contacts/name-format/apply", { method: "POST", body: { ids } });
+export type PerfumeVendorTierRow = { vendor_id: string; vendor: string; items_compared: number; index_pct: number | null; cheapest_pct: number | null; priciest_pct: number | null;
+  tier: "Low" | "Medium" | "High" | "Too few items" };
+export const getPerfumeVendorTiers = (q: { min_items?: number; low_below?: number; high_above?: number } = {}) =>
+  apiRequest<{ rows: PerfumeVendorTierRow[]; total: { vendors: number; low: number; medium: number; high: number; too_few: number } }>(
+    `/api/v1/perfume/reports/vendor-tiers?${perfumeReportQs(Object.fromEntries(Object.entries(q).map(([k, v]) => [k, v == null ? undefined : String(v)])))}`);
 
 /** ROUND P1.31 L1: customers ranked A/B/C on purchases (old systems' history + ScentsX invoices), per currency. */
 export type PerfumeRankRow = { key: string; company_id: string | null; customer: string; role: string | null; linked: boolean; sources: string[];

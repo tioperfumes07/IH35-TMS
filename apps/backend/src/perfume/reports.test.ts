@@ -11,7 +11,7 @@ import { createItem, updateItemFile } from "./items.service.js";
 import { createFamily } from "./families.service.js";
 import { stockIn } from "./inventory.service.js";
 import { listLevels, setLevelItem } from "./accounts.service.js";
-import { familyReport, inventoryStatus, itemInquiry, priceBook, reportFilter } from "./reports.service.js";
+import { familyReport, inventoryStatus, itemInquiry, priceBook, reportFilter, tierQuery, vendorPriceTiers } from "./reports.service.js";
 
 const U = TEST_OWNER_USER_ID;
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -76,5 +76,30 @@ describeIntegration("perfume inquiry + reports (real Postgres, rolled back)", ()
     expect(fr.rows.find((r) => r.family_id === fam.id)).toMatchObject({ family: "ZZR Family One", brand: "ZZR", items: 2, items_on_hand: 2, on_hand: 12, value_cents: 14600 });
     expect(fr.rows.at(-1)!.family).toBe("(no family)");
     void z0;
+  });
+  it("vendor price tiers: on items in common, the vendor's median price ratio sets Low / Medium / High", async () => {
+    const vend = async (name: string) => (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind, roles) VALUES ($1, 'buy', '{purchase}') RETURNING id`, [name])).rows[0].id;
+    const cheap = await vend("ZZT Cheap Dist"), mid1 = await vend("ZZT Mid One"), mid2 = await vend("ZZT Mid Two"), dear = await vend("ZZT Dear Wholesale");
+    const its: string[] = [];
+    for (let k = 0; k < 3; k++) {
+      its.push((await db.query<{ id: string }>(`INSERT INTO perfume.items (brand, name, size_ml, identity_key, loose_key, display_name) VALUES ('ZZT', $1, 100, $2, 'x', $1) RETURNING id`,
+        [`ZZT ITEM ${k}`, `ZZT|ITEM${k}|100`])).rows[0].id);
+    }
+    const prices: Record<string, number> = { [cheap]: 900, [mid1]: 1000, [mid2]: 1000, [dear]: 1200 };
+    for (const [v, cents] of Object.entries(prices)) {
+      const l = (await db.query<{ id: string }>(
+        `INSERT INTO perfume.price_lists (vendor_id, list_date, file_name, source_kind, rows_read, rows_saved, rows_skipped, price_total_file_cents, price_total_saved_cents, is_current)
+         VALUES ($1, current_date, 't.xlsx', 'xlsx', 3, 3, 0, 0, 0, true) RETURNING id`, [v])).rows[0].id;
+      let n = 0;
+      for (const it of its) await db.query(`INSERT INTO perfume.price_list_rows (list_id, row_no, raw, description, price_cents, identity_key, loose_key, item_id, match_method, match_status)
+        VALUES ($1, $2, '{}', 'ZZT', $3, 'x', 'x', $4, 'key', 'matched')`, [l, ++n, cents, it]);
+    }
+    const r = await vendorPriceTiers(db as never, tierQuery.parse({ min_items: 3 }));
+    const mine = new Map(r.rows.filter((x) => x.vendor.startsWith("ZZT ")).map((x) => [x.vendor, x]));
+    // Median of 900 / 1000 / 1000 / 1200 = 1000.
+    expect(mine.get("ZZT Cheap Dist")).toMatchObject({ items_compared: 3, index_pct: 90, cheapest_pct: 100, tier: "Low" });
+    expect(mine.get("ZZT Mid One")).toMatchObject({ index_pct: 100, tier: "Medium" });
+    expect(mine.get("ZZT Dear Wholesale")).toMatchObject({ index_pct: 120, priciest_pct: 100, tier: "High" });
+    expect((await vendorPriceTiers(db as never, tierQuery.parse({ min_items: 4 }))).rows.find((x) => x.vendor === "ZZT Cheap Dist")!.tier).toBe("Too few items");
   });
 });

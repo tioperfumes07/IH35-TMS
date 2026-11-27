@@ -254,7 +254,7 @@ export function DriverSettlementsReportBoard() {
         sortable: true,
         render: (r) =>
           r.first_load_id ? (
-            <span className="inline-flex gap-1">
+            <>
               <EntityLink kind="load" id={r.first_load_id} label={r.first_load_number ?? "Load"} className={V3_TABLE_LINK_CLASS} />
               {r.last_load_id && r.last_load_id !== r.first_load_id ? (
                 <>
@@ -262,7 +262,7 @@ export function DriverSettlementsReportBoard() {
                   <EntityLink kind="load" id={r.last_load_id} label={r.last_load_number ?? "Load"} className={V3_TABLE_LINK_CLASS} />
                 </>
               ) : null}
-            </span>
+            </>
           ) : (
             loadsRange(r)
           ),

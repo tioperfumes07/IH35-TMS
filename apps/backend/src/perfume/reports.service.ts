@@ -158,3 +158,50 @@ export async function familyReport(c: pg.PoolClient, f: { active_only: boolean }
   const sum = (k: "items" | "items_on_hand" | "on_hand" | "value_cents") => rows.reduce((t, r) => t + Number(r[k]), 0);
   return { rows, total: { families: rows.filter((r) => r.family_id).length, items: sum("items"), items_on_hand: sum("items_on_hand"), on_hand: sum("on_hand"), value_cents: sum("value_cents") } };
 }
+
+/* ------------------------------------------------------------------ Vendor price tiers */
+
+/**
+ * Owner 2026-11-27 15:40 CT: "vendors from all their lists. on all items there are in common between each, i need to figure out which are
+ * the ones that have in list the most expensive, that means i can sell to them more expensive, the medium range in pricing and then
+ * the lowest pricing. jizan … mtz and pca are usually always the lowest … so to them i need to sell very cheap, low margin high volume".
+ * Per supplier (purchase role): on every item at least `minVendors` suppliers carry on their current lists, its price ÷ that item's
+ * median supplier price. The vendor's index = the median of those ratios (100 = the market median); plus how often it is the cheapest.
+ * Tier: Low below `lowBelow` %, High above `highAbove` %, else Medium. Vendors with fewer than `minItems` items in common are listed
+ * as "Too few items". Read only.
+ */
+export const tierQuery = z.object({
+  min_items: z.coerce.number().int().min(1).max(10000).default(30),
+  min_vendors: z.coerce.number().int().min(2).max(20).default(3),
+  low_below: z.coerce.number().min(50).max(150).default(98),
+  high_above: z.coerce.number().min(50).max(250).default(102),
+});
+export type VendorTierRow = { vendor_id: string; vendor: string; items_compared: number; index_pct: number | null; cheapest_pct: number | null;
+  priciest_pct: number | null; tier: "Low" | "Medium" | "High" | "Too few items" };
+export async function vendorPriceTiers(c: pg.PoolClient, f: z.infer<typeof tierQuery>) {
+  const rows = (await c.query<{ vendor_id: string; vendor: string; items_compared: number; index_pct: string | null; cheapest_pct: string | null; priciest_pct: string | null }>(
+    `WITH p AS (
+       SELECT DISTINCT ON (r.item_id, l.vendor_id) r.item_id, l.vendor_id, r.price_cents::numeric AS price
+         FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+        WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.price_cents >= 100 AND 'purchase' = ANY(v.roles) AND v.archived_at IS NULL
+        ORDER BY r.item_id, l.vendor_id, l.list_date DESC, r.price_cents),
+     m AS (SELECT item_id, percentile_cont(0.5) WITHIN GROUP (ORDER BY price) AS med, min(price) AS lo, max(price) AS hi
+             FROM p GROUP BY item_id HAVING count(*) >= $1),
+     x AS (SELECT p.vendor_id, p.price / m.med AS ratio, (p.price = m.lo) AS cheapest, (p.price = m.hi AND m.hi > m.lo) AS priciest FROM p JOIN m USING (item_id))
+     SELECT v.id AS vendor_id, v.name AS vendor, count(x.vendor_id)::int AS items_compared,
+            round((percentile_cont(0.5) WITHIN GROUP (ORDER BY x.ratio) * 100)::numeric, 1)::text AS index_pct,
+            round(100.0 * avg(x.cheapest::int), 1)::text AS cheapest_pct, round(100.0 * avg(x.priciest::int), 1)::text AS priciest_pct
+       FROM perfume.vendors v LEFT JOIN x ON x.vendor_id = v.id
+      WHERE 'purchase' = ANY(v.roles) AND v.archived_at IS NULL
+      GROUP BY v.id, v.name`, [f.min_vendors])).rows;
+  const out: VendorTierRow[] = rows.map((r) => {
+    const idx = r.index_pct == null ? null : Number(r.index_pct);
+    const tier: VendorTierRow["tier"] = r.items_compared < f.min_items || idx == null ? "Too few items" : idx < f.low_below ? "Low" : idx > f.high_above ? "High" : "Medium";
+    return { vendor_id: r.vendor_id, vendor: r.vendor, items_compared: r.items_compared, index_pct: idx,
+      cheapest_pct: r.cheapest_pct == null ? null : Number(r.cheapest_pct), priciest_pct: r.priciest_pct == null ? null : Number(r.priciest_pct), tier };
+  });
+  const order = { Low: 0, Medium: 1, High: 2, "Too few items": 3 } as const;
+  out.sort((a, b) => order[a.tier] - order[b.tier] || (a.index_pct ?? 1e9) - (b.index_pct ?? 1e9) || a.vendor.localeCompare(b.vendor));
+  const count = (t: VendorTierRow["tier"]) => out.filter((r) => r.tier === t).length;
+  return { rows: out, rules: f, total: { vendors: out.length, low: count("Low"), medium: count("Medium"), high: count("High"), too_few: count("Too few items") } };
+}

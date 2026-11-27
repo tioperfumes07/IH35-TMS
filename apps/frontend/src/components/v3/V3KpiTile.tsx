@@ -77,7 +77,12 @@ export function V3KpiTile({
     display: "flex",
     ...(flat ? { flexDirection: "column" as const, gap: 3 } : { justifyContent: "space-between", alignItems: "flex-end", gap: 8 }),
     minWidth: 0,
-    ...(board ? { lineHeight: "normal" } : {
+    ...(board ? {
+      lineHeight: "normal",
+      // flat (report-board) tiles: spec docs/design/v3/V3-Reports-*.dc.html shows height:53px content-box.
+      // Tailwind's * reset applies border-box globally; content-box + explicit height restores the spec value.
+      ...(flat ? { height: 53, boxSizing: "content-box" as const } : {}),
+    } : {
       // OWNER DESIGN LAW rule 6 / ROUND 8.4 — KPI tiles are 78px across, never bars down.
       minHeight: V3_KPI.heightPx,
       height: V3_KPI.heightPx,

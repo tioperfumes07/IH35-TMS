@@ -43,7 +43,7 @@ const mount = (ui: React.ReactNode) => render(<MemoryRouter><QueryClientProvider
 
 describe("inquiry & reports", () => {
   it("is a module in the Perfume menu with the five screens", () => {
-    expect(PERFUME_MODULES.find((m) => m.id === "reports")?.tabs).toEqual(["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport"]);
+    expect(PERFUME_MODULES.find((m) => m.id === "reports")?.tabs).toEqual(["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport", "vendortiers"]);
   });
   it("items inquiry: codes on one card, every level price, special / minimum, costs and stock on the other", async () => {
     mount(<PerfumeItemInquiryPanel initialId="i1" />);

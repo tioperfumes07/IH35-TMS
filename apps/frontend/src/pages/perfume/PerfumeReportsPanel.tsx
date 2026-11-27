@@ -16,7 +16,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   downloadPerfumeFile, getPerfumeFamilyReport, getPerfumeInventoryStatus, getPerfumeItemInquiry, getPerfumePriceBook, listPerfumePriceLevels, perfumeReportQs,
-  searchPerfumeQuoteItems, type PerfumeFamilyReportRow, type PerfumeItemInquiry, type PerfumePriceBookRow, type PerfumeReportFilter, type PerfumeStatusRow,
+  searchPerfumeQuoteItems, getPerfumeVendorTiers, type PerfumeVendorTierRow, type PerfumeFamilyReportRow, type PerfumeItemInquiry, type PerfumePriceBookRow, type PerfumeReportFilter, type PerfumeStatusRow,
 } from "../../api/perfume";
 import { getScentsxInquiryCustomers, getScentsxSalesInvoices, getScentsxSalesLines, scentsxInquiryXlsxPath, type ScentsxInquiryFilter, type ScentsxSaleInvoice, type ScentsxSaleLine } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
@@ -371,6 +371,53 @@ export function PerfumeFamilyReportPanel() {
               { key: "items_on_hand", label: "Items on hand", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => n(r.items_on_hand), exportValue: (r) => r.items_on_hand },
               { key: "on_hand", label: "Units on hand", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => n(r.on_hand), exportValue: (r) => r.on_hand },
               { key: "value_cents", label: "Value", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.value_cents), exportValue: (r) => r.value_cents / 100 },
+            ]} />
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ Vendor price tiers (owner 2026-11-27 15:40 CT) */
+
+/** Who lists high, medium, low on the items vendors have in common: Low = sell to them cheap (low margin, high volume), High = can sell
+ *  to them dearer. 100 % = the item's median supplier price. The thresholds and the minimum items are boxes the owner can change. */
+export function PerfumeVendorTiersPanel() {
+  const dl = useDownload();
+  const [minItems, setMinItems] = useState("30");
+  const [low, setLow] = useState("98");
+  const [high, setHigh] = useState("102");
+  const qv = { min_items: Number(minItems) || 30, low_below: Number(low) || 98, high_above: Number(high) || 102 };
+  const q = useQuery({ queryKey: ["perfume", "vendor-tiers", qv], queryFn: () => getPerfumeVendorTiers(qv) });
+  const qs = perfumeReportQs({ min_items: String(qv.min_items), low_below: String(qv.low_below), high_above: String(qv.high_above) });
+  const tone: Record<PerfumeVendorTierRow["tier"], string> = { Low: "text-[#14532D] font-semibold", Medium: "text-[#1F2A44]", High: "text-[#991B1B] font-semibold", "Too few items": "text-[#5B6B82]" };
+  return (
+    <div className="space-y-3" data-testid="perfume-vendor-tiers">
+      <div className="flex flex-wrap items-end gap-2 text-xs">
+        <label>{tr("perfume.tiers.low", "Low below %")}<input inputMode="decimal" className={`${ctl} block w-[80px] text-right`} value={low} onChange={(e) => setLow(e.target.value)} data-testid="perfume-tiers-low" /></label>
+        <label>{tr("perfume.tiers.high", "High above %")}<input inputMode="decimal" className={`${ctl} block w-[80px] text-right`} value={high} onChange={(e) => setHigh(e.target.value)} data-testid="perfume-tiers-high" /></label>
+        <label>{tr("perfume.tiers.min", "Min items in common")}<input inputMode="numeric" className={`${ctl} block w-[90px] text-right`} value={minItems} onChange={(e) => setMinItems(e.target.value)} data-testid="perfume-tiers-min" /></label>
+        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-tiers-xlsx"
+          onClick={() => dl(`/api/v1/perfume/reports/vendor-tiers/export.xlsx?${qs}`, "TIO vendor price tiers.xlsx")}>{tr("perfume.reports.excel", "Excel")}</Button>
+      </div>
+      {q.isError ? <ListErrorState title={tr("perfume.tiers.error", "Couldn't measure the vendors")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : null}
+      {q.data ? (
+        <>
+          <Strip testId="perfume-tiers-kpis">
+            <KpiCard label={tr("perfume.tiers.k_low", "Low priced (sell cheap)")} number={n(q.data.total.low)} disabled />
+            <KpiCard label={tr("perfume.tiers.k_med", "Medium")} number={n(q.data.total.medium)} disabled />
+            <KpiCard label={tr("perfume.tiers.k_high", "High priced (sell dearer)")} number={n(q.data.total.high)} disabled />
+            <KpiCard label={tr("perfume.tiers.k_few", "Too few items")} number={n(q.data.total.too_few)} disabled />
+          </Strip>
+          <ParityTable<PerfumeVendorTierRow> title={tr("perfume.tiers.title", "Vendor price tiers — 100 % = the item's median supplier price")} rows={q.data.rows} rowKey={(r) => r.vendor_id}
+            storageKey="perfume-vendor-tiers-v1" exportFilename="TIO vendor price tiers" exportExcel emptyText="No supplier lists."
+            columns={[
+              { className: "text-left", key: "vendor", label: "Vendor", sortable: true, render: (r) => <DocLink tab="suppliers" id={r.vendor_id}>{r.vendor}</DocLink>, exportValue: (r) => r.vendor },
+              { className: "text-left", key: "tier", label: "Tier", sortable: true, render: (r) => <span className={tone[r.tier]}>{r.tier}</span>, exportValue: (r) => r.tier },
+              { key: "index_pct", label: "Price index %", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.index_pct == null ? DASH : `${r.index_pct.toFixed(1)}%`), exportValue: (r) => r.index_pct ?? "" },
+              { key: "items_compared", label: "Items in common", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => n(r.items_compared), exportValue: (r) => r.items_compared },
+              { key: "cheapest_pct", label: "Cheapest on", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.cheapest_pct == null ? DASH : `${r.cheapest_pct.toFixed(1)}%`), exportValue: (r) => r.cheapest_pct ?? "" },
+              { key: "priciest_pct", label: "Most expensive on", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.priciest_pct == null ? DASH : `${r.priciest_pct.toFixed(1)}%`), exportValue: (r) => r.priciest_pct ?? "" },
             ]} />
         </>
       ) : null}
