@@ -22,10 +22,11 @@ import {
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
-import { perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
+import { getPerfumeCompanyLocations, perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
 import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
+import { PerfumeCompanyLocations, PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -92,6 +93,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
       <ImportCard onDone={() => void list.refetch()} />
       <GoogleCard onChanged={() => void list.refetch()} />
       <PerfumeNameFormatCard onDone={() => void list.refetch()} />
+      <PerfumeDuplicatesCard onDone={() => void list.refetch()} />
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.contacts", "Contacts")}>
         <div className="flex flex-wrap items-center gap-2">
@@ -154,6 +156,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
 function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   const p = useQuery({ queryKey: ["perfume", "contact", id], queryFn: () => getPerfumeContact(id) });
+  const locs = useQuery({ queryKey: ["perfume", "contact-locations", id], queryFn: () => getPerfumeCompanyLocations(id) });
   // Reverse links (fully-wired item f): its quotes / orders / POs (P1 activity block), trades, and its history (item g).
   const trades = useQuery({ queryKey: ["perfume", "contact", id, "trades"], queryFn: () => perfumeContactTrades(id) });
   const history = useQuery({ queryKey: ["perfume", "contact", id, "history"], queryFn: () => perfumeContactHistory(id) });
@@ -230,6 +233,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
               { key: "qty", label: "Qty", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.qty) },
             ]}
           />
+          <PerfumeCompanyLocations rows={locs.data?.locations ?? []} />
           <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-contact-history-v1" exportName="TIO contact history" />
         </div>
         <div className="text-xs">

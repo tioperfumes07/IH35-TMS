@@ -17,6 +17,7 @@ import {
   batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
+import { companyLocations, duplicateGroups, mergeDuplicateGroups, mergeSchema } from "./company-merge.service.js";
 import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -87,6 +88,21 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     return withCurrentUser(uid, (c) => companyTier(c, id.data));
+  });
+  // Owner 16:32 CT: one company, many contacts — duplicate companies merged into one (the others kept as its locations).
+  app.get("/api/v1/perfume/contacts/duplicates", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => { const groups = await duplicateGroups(c); return { groups: groups.length, extra: groups.reduce((s, g) => s + g.merge.length, 0), rows: groups }; });
+  });
+  app.post("/api/v1/perfume/contacts/duplicates/merge", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = mergeSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => mergeDuplicateGroups(c, uid, b.data.keys));
+  });
+  app.get("/api/v1/perfume/contacts/:id/locations", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    return withCurrentUser(uid, async (c) => ({ locations: await companyLocations(c, id.data) }));
   });
   // ROUND P1.31 L2 (owner 15:47 CT): company names in proper format — preview, then Apply (one history row per rename).
   app.get("/api/v1/perfume/contacts/name-format/preview", RL_READ, async (req, reply) => {
