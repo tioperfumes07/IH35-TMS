@@ -9,7 +9,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import { ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp } from "./links.service.js";
 import {
-  CashComplianceBlocked, complianceDesk, createPayer, markCaseFiled, markStatementSent, openVoluntaryCase, recordCashReceipt,
+  CashComplianceBlocked, addCmirDeclaration, voidCmirDeclaration, complianceDesk, createPayer, markCaseFiled, markStatementSent, openVoluntaryCase, recordCashReceipt,
   reviewStructuringAlert, updatePayer, voidCashReceipt,
 } from "./cash-compliance.service.js";
 import {
@@ -26,7 +26,7 @@ async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<stri
 }
 
 function fail(reply: FastifyReply, e: unknown) {
-  if (e instanceof CashComplianceBlocked) return reply.code(409).send({ error: "form_8300_identity_required", message: e.message, missing: e.missing });
+  if (e instanceof CashComplianceBlocked) return reply.code(409).send({ error: e.missing.includes("fincen105_declaration") ? "fincen105_declaration_required" : "form_8300_identity_required", message: e.message, missing: e.missing });
   if (e instanceof ScentsxNotSetUp) return reply.code(409).send({ error: "scentsx_not_set_up", message: e.message });
   if (e instanceof ScentsxLinkInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   if (e instanceof ScentsxLinkNotFound) return reply.code(404).send({ error: "not_found" });
@@ -111,6 +111,26 @@ export async function registerScentsxComplianceRoutes(app: FastifyInstance) {
     const b = z.object({ bsa_confirmation: z.string().trim().min(3).max(100), filed_copy_file_id: uuid.nullish() }).safeParse(req.body ?? {});
     if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
     try { return await withCurrentUser(uid, async (c) => await markCaseFiled(c, uid, id.data, b.data.bsa_confirmation, b.data.filed_copy_file_id ?? null)); } catch (e) { return fail(reply, e); }
+  });
+  // SCENTSX B14 — a Mexico payer's signed FinCEN 105 declaration on a Form 8300 case (owner 2026-11-27 07:10 CT).
+  app.post("/api/v1/scentsx/compliance/cases/:id/fincen105", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+    const b = z.object({
+      crossed_on: day, port_of_entry: z.string().trim().min(2).max(120), amount_declared_cents: z.number().int().positive(),
+      currency: z.enum(["USD", "MXN"]), signed_on: day, signed_declaration_file_id: uuid, fincen105_copy_file_id: uuid.nullish(),
+      notes: z.string().trim().max(2000).nullish(),
+    }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, async (c) => await addCmirDeclaration(c, uid, { ...b.data, case_id: id.data })); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/compliance/fincen105/:id/void", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    const b = z.object({ reason: z.string().trim().min(3).max(1000) }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, async (c) => await voidCmirDeclaration(c, uid, id.data, b.data.reason)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/scentsx/compliance/cases/:id/statement-sent", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

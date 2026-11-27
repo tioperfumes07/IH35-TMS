@@ -19,12 +19,13 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { uploadSourceDocumentFromFile } from "../../api/docs";
 import {
   createScentsxCashPayer, getScentsxCompany, getScentsxCompliance, markScentsx8300Filed, markScentsx8300StatementSent, markScentsxReceiptSuspicious,
-  recordScentsxCashReceipt, reviewScentsxStructuringAlert, updateScentsxCashPayer, voidScentsxCashReceipt,
+  recordScentsxCashReceipt, reviewScentsxStructuringAlert, addScentsxCmirDeclaration, voidScentsxCmirDeclaration, updateScentsxCashPayer, voidScentsxCashReceipt,
   clearScentsxScreening, confirmScentsxMatch, getScentsxSanctions, loadScentsxSanctionsList, type ScentsxScreening, getScentsxKycDesk, type ScentsxKycDesk,
   type Scentsx8300Case, type ScentsxCashReceipt, type ScentsxPayerInput, type ScentsxPaymentForm, type ScentsxStructuringAlert, type ScentsxUnloggedCash,
 } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { ScentsxKycBlock } from "./ScentsxKycBlock";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 const money = (cents: number | string) => (Number(cents) / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (iso: string | null) => (iso ? String(iso).slice(0, 10) : "—");
@@ -43,6 +44,8 @@ export function ScentsxCompliancePanel() {
   const [noteFor, setNoteFor] = useState<{ id: string; action: "suspicious" | "filed" | "review" } | null>(null);
   const [note, setNote] = useState("");
   const [voiding, setVoiding] = useState<ScentsxCashReceipt | null>(null);
+  const [cmirFor, setCmirFor] = useState<Scentsx8300Case | null>(null);
+  const [cmirVoid, setCmirVoid] = useState<Scentsx8300Case | null>(null);
   if (desk.isError) return <ListErrorState title={tr("scentsx.cash.error", "Couldn't load the cash log")} status={0} message={(desk.error as Error)?.message} onRetry={() => void desk.refetch()} />;
   const d = desk.data;
   const openCases = (d?.cases ?? []).filter((c) => c.status === "open");
@@ -115,11 +118,19 @@ export function ScentsxCompliancePanel() {
             { key: "payer_statement_sent_on", label: "Payer statement sent", sortable: true, render: (c) => c.payer_statement_sent_on ?? (c.status === "filed" ? (
               <button type="button" className="underline" onClick={() => void markScentsx8300StatementSent(c.id, new Date().toISOString().slice(0, 10)).then(() => desk.refetch()).catch((e) => pushToast(userFacingApiError(e, "Not saved"), "error"))}>
                 {tr("scentsx.cash.sent_today", "Sent today")}</button>) : "—") },
+            { key: "cmir_declaration_no", label: "FinCEN 105", sortable: true, render: (c) => !c.cmir_required ? "Not needed" : c.cmir_declaration_no ? (
+              <span className="flex gap-2"><span data-testid="scentsx-cmir-onfile">{c.cmir_declaration_no}</span>{c.status === "open" ? <button type="button" className="underline" onClick={() => setCmirVoid(c)}>{tr("scentsx.cash.void", "Void")}</button> : null}</span>
+            ) : (
+              <button type="button" className="font-semibold text-[#B91C1C] underline" data-testid="scentsx-cmir-needed" onClick={() => setCmirFor(c)}>{tr("scentsx.cmir.needed", "Signed declaration needed")}</button>) },
             { key: "actions", label: "", render: (c) => c.status === "open" ? (noteBox(c.id, "filed", "BSA e-filing confirmation number") ?? (
               <button type="button" className="underline" onClick={() => { setNoteFor({ id: c.id, action: "filed" }); setNote(""); }}>{tr("scentsx.cash.mark_filed", "Mark filed")}</button>)) : null },
           ]}
         />
       </div>
+
+      {cmirFor ? <CmirForm c={cmirFor} companyId={co.data?.company.id ?? null} onClose={() => setCmirFor(null)} onDone={() => { setCmirFor(null); void desk.refetch(); }} /> : null}
+      <VoidReasonModal open={cmirVoid != null} title={cmirVoid ? `Void FinCEN 105 declaration ${cmirVoid.cmir_declaration_no}` : ""} entityRef={cmirVoid?.cmir_declaration_no ?? undefined} minLength={10}
+        onClose={() => setCmirVoid(null)} onSubmit={async (why) => { if (!cmirVoid?.cmir_declaration_id) return; await voidScentsxCmirDeclaration(cmirVoid.cmir_declaration_id, why); setCmirVoid(null); void desk.refetch(); }} />
 
       <div id="scentsx-structuring">
         <ParityTable<ScentsxStructuringAlert>
@@ -424,6 +435,74 @@ function KycDeskBlock({ companyId }: { companyId: string | null }) {
           ))}
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * SCENTSX B14 — owner 2026-11-27 07:10 CT: a Mexico payer on a Form 8300 signs a statement that they declared the money at U.S.
+ * Customs and filed FinCEN Form 105. "Print to sign" opens the bilingual statement filled from the case; the signed copy is
+ * uploaded here (and the payer's copy of their 105 when they give it). The Form 8300 cannot be marked filed until this is on file.
+ */
+function CmirForm({ c, companyId, onClose, onDone }: { c: Scentsx8300Case; companyId: string | null; onClose: () => void; onDone: () => void }) {
+  const { pushToast } = useToast();
+  const [v, setV] = useState({ crossed_on: "", port: "Laredo, Texas", currency: "USD" as "USD" | "MXN", signed_on: new Date().toISOString().slice(0, 10) });
+  const [cents, setCents] = useState<number | null>(Number(c.total_cash_cents));
+  const [signed, setSigned] = useState<File | null>(null);
+  const [copy105, setCopy105] = useState<File | null>(null);
+  const [busy, setBusy] = useState(false);
+  const up = async (f: File) => {
+    if (!companyId) throw new Error("ScentsX company not loaded");
+    const id = await uploadSourceDocumentFromFile(f, { operating_company_id: companyId });
+    if (!id) throw new Error("The file did not upload");
+    return id;
+  };
+  const printToSign = () => {
+    const amt = ((cents ?? 0) / 100).toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const esc = (x: string) => x.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] as string));
+    const w = window.open("", "_blank");
+    if (!w) { pushToast("Allow pop-ups to print the declaration", "error"); return; }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>FinCEN 105 declaration ${esc(c.case_no)}</title>
+<style>body{font:13px/1.5 Arial,sans-serif;margin:40px;color:#111}h1{font-size:16px}h2{font-size:14px;margin-top:24px}.l{display:inline-block;min-width:260px;border-bottom:1px solid #000}</style></head><body>
+<h1>ScentsX LLC dba TIO Perfumes — Declaration of currency brought into the United States / Declaración de efectivo introducido a los Estados Unidos</h1>
+<p>Form 8300 case / Caso: <b>${esc(c.case_no)}</b><br>Payer / Pagador: <b>${esc(c.payer_name)}</b><br>Amount / Monto: <b>${esc(v.currency)} ${esc(amt)}</b><br>Date crossed / Fecha de cruce: ${esc(v.crossed_on || "________________")}<br>Port of entry / Puerto de entrada: ${esc(v.port || "________________")}</p>
+<h2>English</h2><p>I, the undersigned, declare that the currency and monetary instruments I delivered to ScentsX LLC were brought into the United States by me, that I declared them to U.S. Customs and Border Protection at the port of entry shown above, and that I filed FinCEN Form 105 (Report of International Transportation of Currency or Monetary Instruments) for them as required by 31 U.S.C. 5316 and 31 CFR 1010.340. The information above is true and complete.</p>
+<h2>Español</h2><p>Yo, el abajo firmante, declaro que el efectivo y los instrumentos monetarios que entregué a ScentsX LLC fueron introducidos por mí a los Estados Unidos, que los declaré ante la Oficina de Aduanas y Protección Fronteriza de los EE. UU. (CBP) en el puerto de entrada indicado arriba, y que presenté el formulario FinCEN 105 (Reporte de Transporte Internacional de Efectivo o Instrumentos Monetarios) conforme a 31 U.S.C. 5316 y 31 CFR 1010.340. La información anterior es verdadera y completa.</p>
+<p style="margin-top:48px">Signature / Firma: <span class="l"></span>&nbsp;&nbsp; Date / Fecha: <span class="l" style="min-width:140px"></span></p>
+<p>Printed name / Nombre: <span class="l"></span></p><p>ID type and number / Identificación: <span class="l"></span></p>
+<p style="margin-top:32px">Received for ScentsX LLC by / Recibido por: <span class="l"></span></p>
+</body></html>`);
+    w.document.close(); w.focus(); w.print();
+  };
+  const save = async () => {
+    if (!signed || !v.crossed_on || !v.port.trim() || !(cents && cents > 0)) return;
+    setBusy(true);
+    try {
+      const r = await addScentsxCmirDeclaration(c.id, { crossed_on: v.crossed_on, port_of_entry: v.port, amount_declared_cents: cents, currency: v.currency, signed_on: v.signed_on,
+        signed_declaration_file_id: await up(signed), fincen105_copy_file_id: copy105 ? await up(copy105) : null });
+      pushToast(`FinCEN 105 declaration ${r.declaration_no} saved on ${c.case_no}`, "success"); onDone();
+    } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <div className="space-y-2 rounded-[3px] border border-[#C6D1DC] bg-[#F8FAFC] p-3 text-xs" data-testid="scentsx-cmir-form">
+      <div className="flex items-center justify-between">
+        <span className="font-semibold text-[#1F2A44]">{tr("scentsx.cmir.title", "FinCEN 105 declaration")} — {c.case_no} · {c.payer_name} ({c.payer_country})</span>
+        <button type="button" className="underline" onClick={onClose}>{tr("scentsx.cmir.close", "Close")}</button>
+      </div>
+      <p>{tr("scentsx.cmir.why", "This payer is from Mexico. They sign that they declared this money at U.S. Customs and filed FinCEN Form 105. Print the statement, have them sign it, then upload the signed copy.")}</p>
+      <div className="flex flex-wrap items-center gap-2">
+        <DatePicker aria-label={tr("scentsx.cmir.crossed_on", "Date crossed")} value={v.crossed_on} onChange={(x) => setV({ ...v, crossed_on: x })} />
+        <input className={`${inputCls} w-48`} aria-label={tr("scentsx.cmir.port", "Port of entry")} placeholder={tr("scentsx.cmir.port", "Port of entry")} value={v.port} onChange={(e) => setV({ ...v, port: e.target.value })} />
+        <MoneyInput valueCents={cents} onChangeCents={setCents} ariaLabel="Amount declared" />
+        <select className={inputCls} aria-label={tr("scentsx.cmir.currency", "Currency")} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "USD" | "MXN" })}><option value="USD">USD</option><option value="MXN">MXN</option></select>
+        <Button type="button" className="h-10 px-3 text-xs" onClick={printToSign} data-testid="scentsx-cmir-print">{tr("scentsx.cmir.print", "Print to sign")}</Button>
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <DatePicker aria-label={tr("scentsx.cmir.signed_on", "Signed on")} value={v.signed_on} onChange={(x) => setV({ ...v, signed_on: x })} />
+        <label className="flex items-center gap-1">{tr("scentsx.cmir.signed_copy", "Signed declaration")}<input type="file" accept="application/pdf,image/*" aria-label="Signed declaration" onChange={(e) => setSigned(e.target.files?.[0] ?? null)} /></label>
+        <label className="flex items-center gap-1">{tr("scentsx.cmir.copy105", "Their FinCEN 105 copy (optional)")}<input type="file" accept="application/pdf,image/*" aria-label="FinCEN 105 copy" onChange={(e) => setCopy105(e.target.files?.[0] ?? null)} /></label>
+        <Button type="button" className="h-10 px-3 text-xs" disabled={busy || !signed || !v.crossed_on || !v.port.trim() || !(cents && cents > 0)} onClick={() => void save()} data-testid="scentsx-cmir-save">{tr("scentsx.cmir.save", "Save declaration")}</Button>
+      </div>
     </div>
   );
 }
