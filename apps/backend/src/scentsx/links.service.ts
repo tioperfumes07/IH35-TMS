@@ -121,3 +121,27 @@ export async function listDocumentLinks(c: Q, f: DocFilter) {
   );
   return r.rows;
 }
+
+/** ScentsX's chart of accounts with each account's role bindings and posted balance (read-only). */
+export async function scentsxChart(c: Q) {
+  const co = await scopeToScentsx(c);
+  const r = await c.query<{
+    id: string; account_number: string | null; account_name: string; account_type: string; account_subtype: string | null;
+    roles: string[]; debit_cents: string; credit_cents: string;
+  }>(
+    `SELECT a.id::text, a.account_number, a.account_name, a.account_type, a.account_subtype,
+            coalesce((SELECT array_agg(r.role ORDER BY r.role) FROM accounting.chart_of_accounts_roles r
+                       WHERE r.account_id = a.id AND r.operating_company_id = a.operating_company_id AND r.is_active), '{}') AS roles,
+            coalesce((SELECT sum(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'debit') FROM accounting.journal_entry_postings p
+                        JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+                       WHERE p.account_id = a.id AND j.operating_company_id = a.operating_company_id AND j.status = 'posted'), 0)::text AS debit_cents,
+            coalesce((SELECT sum(p.amount_cents) FILTER (WHERE p.debit_or_credit = 'credit') FROM accounting.journal_entry_postings p
+                        JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+                       WHERE p.account_id = a.id AND j.operating_company_id = a.operating_company_id AND j.status = 'posted'), 0)::text AS credit_cents
+       FROM catalogs.accounts a
+      WHERE a.operating_company_id = $1::uuid AND a.deactivated_at IS NULL
+      ORDER BY a.account_number NULLS LAST, a.account_name`,
+    [co]
+  );
+  return r.rows;
+}

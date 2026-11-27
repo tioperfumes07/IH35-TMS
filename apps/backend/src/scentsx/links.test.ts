@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { createLink, listLinks, scentsxSummary, ScentsxLinkInvalid, voidLink } from "./links.service.js";
+import { createLink, listLinks, scentsxChart, scentsxSummary, ScentsxLinkInvalid, voidLink } from "./links.service.js";
 
 describe("ScentsX company, chart and walls (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -70,5 +70,13 @@ describe("ScentsX company, chart and walls (real Postgres, rolled back)", () => 
     await expect(createLink(db, TEST_OWNER_USER_ID, "customer", co.rows[0]!.id, sx.rows[0]!.id)).rejects.toBeInstanceOf(ScentsxLinkInvalid);
     await voidLink(db, TEST_OWNER_USER_ID, "customer", link.id, "linked to the wrong customer");
     expect((await listLinks(db, "customer", { desk_id: co.rows[0]!.id }))[0]).toMatchObject({ void_reason: "linked to the wrong customer" });
+  });
+
+  it("the Books chart lists every ScentsX account with the poster role it plays", async () => {
+    const chart = await scentsxChart(db);
+    expect(chart.length).toBeGreaterThanOrEqual(43);
+    expect(chart.find((a) => a.account_number === "1100")).toMatchObject({ account_name: "Accounts Receivable (A/R)", roles: ["ar_control"] });
+    expect(chart.find((a) => a.account_number === "2100")!.roles).toContain("sales_tax_payable");
+    expect(chart.every((a) => a.debit_cents === "0" && a.credit_cents === "0")).toBe(true);
   });
 });
