@@ -43,6 +43,8 @@ export type MatchIndex = {
   byName: Map<string, string[]>;
   vendorSku: Map<string, string>;   // `${vendorId}|${sku}` → item id
   vendorText: Map<string, string>;  // `${vendorId}|${textKey}` → item id
+  /** Keys of vendorText the engine remembered itself (method 'import'); the owner's confirmed words are not in it. */
+  vendorTextAuto: Set<string>;
   brandAliases: Record<string, string>;
 };
 
@@ -69,7 +71,7 @@ export type LineMatch = {
 };
 
 export function emptyIndex(brandAliases: Record<string, string> = {}): MatchIndex {
-  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byCompact: new Map(), byBrand: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), brandAliases };
+  return { items: new Map(), byUpc: new Map(), byKey: new Map(), byCompact: new Map(), byBrand: new Map(), byLoose: new Map(), byName: new Map(), vendorSku: new Map(), vendorText: new Map(), vendorTextAuto: new Set(), brandAliases };
 }
 
 export function addItem(ix: MatchIndex, it: IndexItem) {
@@ -289,7 +291,13 @@ export function matchLine(ix: MatchIndex, vendorId: string, line: LineIn, opts: 
   const skuItem = sku ? ix.vendorSku.get(`${vendorId}|${sku}`) : undefined;
   const skuKindClash = Boolean(skuItem && ix.items.get(skuItem) && productKind(ix.items.get(skuItem)!.flags) !== productKind(identity.flags));
   if (skuItem && !skuKindClash) return done(skuItem, "sku");
-  if (ix.vendorText.has(`${vendorId}|${textKey}`)) return done(ix.vendorText.get(`${vendorId}|${textKey}`)!, "alias");
+  // The vendor's own words, linked before (owner 2026-11-26 19:12 CT: "save all the descriptions from different vendors linked
+  // to ours … so any will match automatically"). Words the owner confirmed always link; words the engine remembered link
+  // unless the line is another KIND of product than that item (same rule as the SKU above).
+  const tk = `${vendorId}|${textKey}`;
+  const textItem = ix.vendorText.get(tk);
+  const textKindClash = Boolean(textItem && ix.vendorTextAuto.has(tk) && ix.items.get(textItem) && productKind(ix.items.get(textItem)!.flags) !== productKind(identity.flags));
+  if (textItem && !textKindClash) return done(textItem, "alias");
   // A line whose name is empty after cleaning ("DIOR HOMME COLOGNE" → brand + type only) never links by key.
   const named = identity.nameWords.length > 0;
   if (named && identity.brand && ix.byKey.has(identity.key)) return done(ix.byKey.get(identity.key)!, "key");

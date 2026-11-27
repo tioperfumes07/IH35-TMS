@@ -5,7 +5,7 @@
  * owner edits any price). Every change is in the history. Nothing is deleted — a quote or a line taken off is archived.
  * Never posts to accounting (owner: "maybe later").
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { DatePicker } from "../../components/forms/DatePicker";
@@ -16,10 +16,11 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeQuoteLine, archivePerfumeQuote, copyPerfumeQuote, createPerfumeQuote, downloadPerfumeFile, getPerfumeQuote, listPerfumeContacts, listPerfumeQuotes,
-  removePerfumeQuoteLine, searchPerfumeQuoteItems, setPerfumeQuoteStatus, updatePerfumeQuote, updatePerfumeQuoteLine,
+  orderFromPerfumeQuote, removePerfumeQuoteLine, searchPerfumeQuoteItems, setPerfumeQuoteStatus, updatePerfumeQuote, updatePerfumeQuoteLine,
   type PerfumeQuote, type PerfumeQuoteEvent, type PerfumeQuoteLine, type PerfumeQuoteRow, type PerfumeQuoteStatus,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { DocLink, useOpenDoc } from "./perfumeDocParts";
 
 const DASH = "—";
 const ctl = "h-[34px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
@@ -34,7 +35,7 @@ export function toCents(v: string): number | null {
 const STATUS_TEXT: Record<PerfumeQuoteStatus, string> = { draft: "Draft", sent: "Sent", accepted: "Accepted", rejected: "Rejected", expired: "Expired" };
 const STATUS_CLASS: Record<PerfumeQuoteStatus, string> = { draft: "bg-[#64748B]", sent: "bg-[#14314F]", accepted: "bg-[#1F6B32]", rejected: "bg-[#9B2C2C]", expired: "bg-[#8A4208]" };
 const EVENT_TEXT: Record<string, string> = { created: "Created", edited: "Edited", line_added: "Line added", line_changed: "Line changed", line_removed: "Line taken off",
-  status: "Status", exported_xlsx: "Excel made", exported_pdf: "PDF made", copied_from: "Copied from" };
+  status: "Status", exported_xlsx: "Excel made", exported_pdf: "PDF made", copied_from: "Copied from", ordered: "Became a sales order" };
 const marginPct = (r: { cost_cents: unknown; costed_total_cents: unknown }) => {
   const sell = Number(r.costed_total_cents), cost = Number(r.cost_cents);
   return sell > 0 ? ((sell - cost) / sell) * 100 : null;
@@ -49,8 +50,10 @@ export function PerfumeQuotesPanel() {
   const quotes = useQuery({ queryKey: ["perfume", "quotes"], queryFn: listPerfumeQuotes });
   const [status, setStatus] = useState<PerfumeQuoteStatus | "">("");
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  const { openId } = useOpenDoc();
+  const [selected, setSelected] = useState<string | null>(openId);
   const [adding, setAdding] = useState(false);
+  useEffect(() => { if (openId) setSelected(openId); }, [openId]);
   const all = useMemo(() => quotes.data?.quotes ?? [], [quotes.data]);
   const shown = all.filter((r) => (!status || r.status === status) && (!q.trim() || `${r.number} ${r.customer_name}`.toLowerCase().includes(q.trim().toLowerCase())));
   const count = (s: PerfumeQuoteStatus) => all.filter((r) => r.status === s).length;
@@ -103,6 +106,7 @@ export function PerfumeQuotesPanel() {
             { key: "units", label: "Units", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
             { key: "total_cents", label: "Total", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
             { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (r) => { const m = marginPct(r); return m == null ? DASH : `${m.toFixed(1)}%`; }, exportValue: (r) => { const m = marginPct(r); return m == null ? "" : Number(m.toFixed(1)); } },
+            { key: "order_number", label: "Sales order", sortable: true, render: (r) => (r.order_id && r.order_number ? <DocLink tab="orders" id={r.order_id}>{r.order_number}</DocLink> : DASH), exportValue: (r) => r.order_number ?? "" },
           ]}
         />
       </section>
@@ -171,11 +175,13 @@ function eventText(e: PerfumeQuoteEvent): string {
   if (e.kind === "edited") return Array.isArray(d["fields"]) ? (d["fields"] as string[]).join(", ") : d["archived"] ? "archived" : "";
   if (e.kind === "copied_from") return `${String(d["number"] ?? "")} (${String(d["lines"] ?? 0)} lines)`;
   if (e.kind === "created") return String(d["customer"] ?? "");
+  if (e.kind === "ordered") return String(d["number"] ?? "");
   return "";
 }
 
 function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: () => void; onChanged: () => void; onOpen: (id: string) => void }) {
   const { pushToast } = useToast();
+  const { open } = useOpenDoc();
   const quote = useQuery({ queryKey: ["perfume", "quote", id], queryFn: () => getPerfumeQuote(id) });
   const [find, setFind] = useState("");
   const [qty, setQty] = useState("1");
@@ -204,6 +210,12 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
           <div className="text-xs text-[#64748B]">{[q.customer_email, q.customer_phone, `Date ${usDate(q.quote_date)}`, q.valid_until ? `Valid until ${usDate(q.valid_until)}` : ""].filter(Boolean).join(" · ")}</div>
         </div>
         <div className="flex flex-wrap gap-2">
+          {q.order_id && q.order_number
+            ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => open("orders", q.order_id!)} data-testid="perfume-quote-open-order">{`${tr("perfume.quotes.open_order", "Open sales order")} ${q.order_number}`}</Button>
+            : <Button type="button" className="h-[34px] px-3 text-xs" disabled={!q.lines.length || q.status === "rejected"} data-testid="perfume-quote-make-order"
+                onClick={() => void orderFromPerfumeQuote(id).then((r) => { pushToast(`Sales order ${r.number} made`, "success"); onChanged(); open("orders", r.id); }).catch((e) => pushToast(userFacingApiError(e, "Not made"), "error"))}>
+                {tr("perfume.quotes.make_order", "Make sales order")}
+              </Button>}
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => void file("xlsx")} data-testid="perfume-quote-xlsx">{tr("perfume.quotes.xlsx", "Excel")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => void file("pdf")} data-testid="perfume-quote-pdf">{tr("perfume.quotes.pdf", "PDF")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-quote-copy"
