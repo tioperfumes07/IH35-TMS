@@ -32,8 +32,11 @@ export const orderSchema = z.object({
 export const orderLineSchema = z.object({
   item_id: z.string().uuid().nullable().optional(), description: text(400), upc: text(40),
   qty: z.number().int().min(1).max(1_000_000), unit_price_cents: cents.optional(),
+  /** The owner's written reason for a price below the item's minimum, or a retyped price on an item whose price is locked. */
+  price_override_reason: z.string().trim().min(3).max(500).optional(),
 });
-export const orderLinePatchSchema = z.object({ qty: z.number().int().min(1).max(1_000_000).optional(), unit_price_cents: cents.optional(), qty_shipped: z.number().int().min(0).max(1_000_000).optional() });
+export const orderLinePatchSchema = z.object({ qty: z.number().int().min(1).max(1_000_000).optional(), unit_price_cents: cents.optional(), qty_shipped: z.number().int().min(0).max(1_000_000).optional(),
+  price_override_reason: z.string().trim().min(3).max(500).optional() });
 
 export class OrderNotFound extends Error { constructor() { super("order_not_found"); } }
 export class OrderInvalid extends Error {}
@@ -108,6 +111,21 @@ export async function orderFromQuote(c: pg.PoolClient, uid: string, quoteId: str
   try { q = await getQuote(c, quoteId); } catch (e) { if (e instanceof QuoteNotFound) throw new OrderNotFound(); throw e; }
   if (!q.lines.length) throw new OrderInvalid("The quote has no lines.");
   if (q.status === "rejected") throw new OrderInvalid("The quote was rejected.");
+  // The item's minimum price and active flag hold here too (migration 202617100100): a quoted line below the floor is named, and the
+  // order is not made — fix the quote's price, or add the line on the order with the written override.
+  const ids = q.lines.map((l) => l.item_id).filter((v): v is string => !!v);
+  if (ids.length) {
+    const rules = new Map((await c.query<{ id: string; display_name: string; min_price_cents: string | null; is_active: boolean }>(
+      `SELECT id, display_name, min_price_cents::text, is_active FROM perfume.items WHERE id = ANY($1::uuid[])`, [ids])).rows.map((r) => [r.id, r]));
+    for (const l of q.lines) {
+      const it = l.item_id ? rules.get(l.item_id) : undefined;
+      if (!it) continue;
+      if (!it.is_active) throw new OrderInvalid(`Quote line ${l.line_no}: "${it.display_name}" is inactive.`);
+      if (it.min_price_cents != null && Number(l.unit_price_cents) < Number(it.min_price_cents)) {
+        throw new OrderInvalid(`Quote line ${l.line_no}: "${it.display_name}" at ${usd(Number(l.unit_price_cents))} is below the minimum price ${usd(Number(it.min_price_cents))}.`);
+      }
+    }
+  }
   const r = await c.query<{ id: string; number: string }>(
     `INSERT INTO perfume.sales_orders (quote_id, company_id, customer_name, customer_email, customer_phone, ship_by, currency, terms, notes, created_by)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id, number`,
@@ -167,14 +185,45 @@ async function assertEditable(c: pg.PoolClient, orderId: string) {
   if (s.status === "cancelled") throw new OrderInvalid("The order is cancelled.");
 }
 
+
+const usd = (cents: number) => `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+/**
+ * The item's price rules on an order line (CONTROL "Minimum price" and "Change price?", migration 202617100100, LEAD L.20):
+ *   - below the item's minimum price → refused, unless the owner writes a reason;
+ *   - "Change price? N" (price_locked) and a typed price that is not the customer's level price → refused, unless the owner writes a reason.
+ * An override is one perfume.item_events 'price_override' row (the item's history) and is returned for the order's own line event.
+ */
+async function assertLinePrice(c: pg.PoolClient, uid: string, orderId: string, itemId: string | null | undefined, qty: number, price: number,
+  typed: boolean, reason: string | undefined, lineNo: number | null) {
+  if (!itemId) return null;
+  const it = (await c.query<{ display_name: string; min_price_cents: string | null; price_locked: boolean }>(
+    `SELECT display_name, min_price_cents::text, price_locked FROM perfume.items WHERE id = $1`, [itemId])).rows[0];
+  if (!it) return null;
+  const why: string[] = [];
+  const min = it.min_price_cents == null ? null : Number(it.min_price_cents);
+  if (min != null && price < min) why.push(`below the minimum price ${usd(min)}`);
+  let level: number | null = null;
+  if (it.price_locked && typed) {
+    const co = (await c.query<{ company_id: string | null }>(`SELECT company_id FROM perfume.sales_orders WHERE id = $1`, [orderId])).rows[0]?.company_id ?? null;
+    level = (await levelPriceFor(c, co, itemId, qty, (await bestCostOf(c, itemId))?.cents ?? null))?.cents ?? null;
+    if (level != null && price !== level) why.push(`not the level price ${usd(level)} (the item's price is locked)`);
+  }
+  if (!why.length) return null;
+  if (!reason) throw new OrderInvalid(`"${it.display_name}" at ${usd(price)} is ${why.join(" and ")}. Write the reason to override it.`);
+  const detail = { order_id: orderId, line_no: lineNo, qty, unit_price_cents: price, min_price_cents: min, level_price_cents: level, locked: it.price_locked, reason, why };
+  await c.query(`INSERT INTO perfume.item_events (item_id, kind, detail, created_by) VALUES ($1, 'price_override', $2::jsonb, $3)`, [itemId, JSON.stringify(detail), uid]);
+  return { reason, why };
+}
+
 export async function addOrderLine(c: pg.PoolClient, uid: string, orderId: string, x: z.infer<typeof orderLineSchema>) {
   await assertEditable(c, orderId);
   let description = x.description, upc = x.upc, cost: Awaited<ReturnType<typeof bestCostOf>> = null;
   if (x.item_id) {
-    const it = (await c.query<{ display_name: string; upc: string | null }>(
-      `SELECT i.display_name, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc FROM perfume.items i WHERE i.id = $1 AND i.merged_into_id IS NULL`,
+    const it = (await c.query<{ display_name: string; upc: string | null; is_active: boolean }>(
+      `SELECT i.display_name, i.is_active, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc FROM perfume.items i WHERE i.id = $1 AND i.merged_into_id IS NULL`,
       [x.item_id])).rows[0];
     if (!it) throw new OrderInvalid("That item is not on the desk.");
+    if (!it.is_active) throw new OrderInvalid(`"${it.display_name}" is inactive — make it active in its item file to sell it.`);
     description = description ?? it.display_name; upc = upc ?? it.upc; cost = await bestCostOf(c, x.item_id);
   }
   if (!description) throw new OrderInvalid("A line needs an item or a description.");
@@ -188,20 +237,23 @@ export async function addOrderLine(c: pg.PoolClient, uid: string, orderId: strin
   if (price == null && cost) price = priceFromCost(cost.cents, (await getRules(c)).wholesale_targets_pct[0] ?? 12.5, "markup");
   if (price == null) throw new OrderInvalid("No supplier cost for it — type the price.");
   const no = (await c.query<{ n: number }>(`SELECT coalesce(max(line_no), 0)::int + 1 AS n FROM perfume.sales_order_lines WHERE order_id = $1`, [orderId])).rows[0]!.n;
+  const override = await assertLinePrice(c, uid, orderId, x.item_id, x.qty, price, x.unit_price_cents != null, x.price_override_reason, no);
   const r = await c.query<{ id: string }>(
     `INSERT INTO perfume.sales_order_lines (order_id, line_no, item_id, description, upc, qty, unit_price_cents, cost_cents, cost_vendor_id)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
     [orderId, no, x.item_id ?? null, description, upc, x.qty, price, cost?.cents ?? null, cost?.vendor_id ?? null]);
-  await event(c, orderId, uid, "line_added", { line_no: no, description, qty: x.qty, unit_price_cents: price });
+  await event(c, orderId, uid, "line_added", { line_no: no, description, qty: x.qty, unit_price_cents: price, ...(override ? { price_override: override } : {}) });
   await refreshShipped(c, uid, orderId);
   return { id: r.rows[0]!.id, unit_price_cents: price };
 }
 
 export async function updateOrderLine(c: pg.PoolClient, uid: string, lineId: string, x: z.infer<typeof orderLinePatchSchema>) {
-  const b = (await c.query(`SELECT order_id, line_no, qty, qty_shipped, unit_price_cents FROM perfume.sales_order_lines WHERE id = $1 AND archived_at IS NULL`, [lineId])).rows[0];
+  const b = (await c.query(`SELECT order_id, line_no, item_id, qty, qty_shipped, unit_price_cents FROM perfume.sales_order_lines WHERE id = $1 AND archived_at IS NULL`, [lineId])).rows[0];
   if (!b) throw new OrderNotFound();
   await assertEditable(c, b.order_id);
   const qty = x.qty ?? b.qty;
+  const priceChanged = x.unit_price_cents !== undefined && x.unit_price_cents !== Number(b.unit_price_cents);
+  const override = priceChanged ? await assertLinePrice(c, uid, b.order_id, b.item_id, qty, x.unit_price_cents!, true, x.price_override_reason, b.line_no) : null;
   if (b.qty_shipped > qty || (x.qty_shipped ?? 0) > qty) throw new OrderInvalid("Shipped cannot be more than ordered.");
   // Shipped pieces move stock: more = a shipment out of the order's site (FIFO), fewer = a customer return back in.
   if (x.qty_shipped !== undefined && x.qty_shipped !== b.qty_shipped) {
@@ -211,7 +263,8 @@ export async function updateOrderLine(c: pg.PoolClient, uid: string, lineId: str
   await c.query(`UPDATE perfume.sales_order_lines SET qty = $2, unit_price_cents = coalesce($3, unit_price_cents), updated_at = now() WHERE id = $1`,
     [lineId, qty, x.unit_price_cents ?? null]);
   if ((x.qty !== undefined && x.qty !== b.qty) || (x.unit_price_cents !== undefined && x.unit_price_cents !== Number(b.unit_price_cents))) {
-    await event(c, b.order_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_price_cents: Number(b.unit_price_cents) }, to: { qty: x.qty, unit_price_cents: x.unit_price_cents } });
+    await event(c, b.order_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_price_cents: Number(b.unit_price_cents) }, to: { qty: x.qty, unit_price_cents: x.unit_price_cents },
+      ...(override ? { price_override: override } : {}) });
   }
   await refreshShipped(c, uid, b.order_id);
 }

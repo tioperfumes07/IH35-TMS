@@ -19,14 +19,16 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
   listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs, addPerfumeCatalogValue, createPerfumeItem, getPerfumeItemOptions,
-  type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
+  type PerfumeItemControl, type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { FamilySelect } from "./PerfumeFamiliesPanel";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
+import { ItemControlFields, VendorSelect, centsOf } from "./PerfumeItemControlFields";
 
 const PAGE = 100;
 const CONC = ["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"] as const;
+const yn = (b: boolean | undefined) => (b === false ? "N" : "Y");
 /** The owner's own item lists (Catalogs → Item product types / Item categories), so a value matches what he keeps there. */
 function useItemCatalogs() {
   const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
@@ -139,6 +141,8 @@ export function PerfumeItemFilePanel() {
             <option value="no_hk">{tr("perfume.itemfile.no_hk", "No HK code")}</option>
             <option value="upc">{tr("perfume.itemfile.upc", "With a UPC")}</option>
             <option value="no_upc">{tr("perfume.itemfile.no_upc", "No UPC")}</option>
+            <option value="active">{tr("perfume.itemfile.only_active", "Active items")}</option>
+            <option value="inactive">{tr("perfume.itemfile.only_inactive", "Inactive items")}</option>
           </select>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-itemfile-xlsx"
             onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has, scope }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
@@ -152,6 +156,8 @@ export function PerfumeItemFilePanel() {
           columns={[
             { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
+            { className: "text-left", key: "pos_code", label: "POS code", sortable: true, render: (r) => r.pos_code ?? DASH, exportValue: (r) => r.pos_code ?? "" },
+            { className: "text-left", key: "ticket_description", label: "Ticket description", render: (r) => r.ticket_description ?? DASH, exportValue: (r) => r.ticket_description ?? "" },
             { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand || DASH, exportValue: (r) => r.brand ?? "" },
             { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => (r.family_id ? <DocLink tab="families" id={r.family_id}>{r.family ?? ""}</DocLink> : DASH), exportValue: (r) => r.family ?? "" },
             { className: "text-left", key: "model", label: "Model", sortable: true, render: (r) => r.model ?? DASH, exportValue: (r) => r.model ?? "" },
@@ -165,6 +171,14 @@ export function PerfumeItemFilePanel() {
             { key: "min_order_qty", label: "Min order", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.min_order_qty == null ? DASH : String(r.min_order_qty)), exportValue: (r) => r.min_order_qty ?? "" },
             { className: "text-left", key: "origin_country", label: "Origin", sortable: true, render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
             { className: "text-left", key: "hs_code", label: "HS code", sortable: true, render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
+            { className: "text-left", key: "sold_by", label: "Sold by", sortable: true, render: (r) => (r.sold_by === "pack" ? `Pack of ${r.units_per_pack ?? "?"}` : "Piece"), exportValue: (r) => (r.sold_by === "pack" ? "Pack" : "Piece") },
+            { key: "units_per_pack", label: "Units / pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.units_per_pack == null ? DASH : String(r.units_per_pack)), exportValue: (r) => r.units_per_pack ?? "" },
+            { className: "text-left", key: "preferred_vendor", label: "Preferred vendor", sortable: true, render: (r) => r.preferred_vendor ?? DASH, exportValue: (r) => r.preferred_vendor ?? "" },
+            { className: "text-left", key: "is_stock_item", label: "Stock item", sortable: true, render: (r) => yn(r.is_stock_item), exportValue: (r) => yn(r.is_stock_item) },
+            { className: "text-left", key: "is_active", label: "Active", sortable: true, render: (r) => yn(r.is_active), exportValue: (r) => yn(r.is_active) },
+            { key: "special_price_cents", label: "Special price", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.special_price_cents ?? null), exportValue: (r) => (r.special_price_cents == null ? "" : r.special_price_cents / 100) },
+            { key: "min_price_cents", label: "Minimum price", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.min_price_cents ?? null), exportValue: (r) => (r.min_price_cents == null ? "" : r.min_price_cents / 100) },
+            { className: "text-left", key: "price_locked", label: "Change price", sortable: true, render: (r) => yn(!r.price_locked), exportValue: (r) => yn(!r.price_locked) },
             { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
             { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
@@ -208,8 +222,9 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   const [edit, setEdit] = useState<PerfumeItemEdit>({});
   const [upc, setUpc] = useState("");
   const [hk, setHk] = useState("");
+  const [priceText, setPriceText] = useState<{ special: string | null; min: string | null }>({ special: null, min: null });
   const cats = useItemCatalogs();
-  useEffect(() => { setEdit({}); }, [id]);
+  useEffect(() => { setEdit({}); setPriceText({ special: null, min: null }); }, [id]);
   if (f.isError) return <ListErrorState title={tr("perfume.itemfile.one_error", "Couldn't load the item")} status={0} message={(f.error as Error)?.message} onRetry={() => void f.refetch()} />;
   if (!f.data) return null;
   if ("merged_into_id" in f.data) {
@@ -223,7 +238,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   const run = (fn: () => Promise<unknown>, ok: string) => void fn().then(async () => { await f.refetch(); onChanged(); pushToast(ok, "success"); }).catch(fail(pushToast));
   const save = () => {
     if (!Object.keys(edit).length) { pushToast("Nothing changed", "error"); return; }
-    run(() => updatePerfumeItemFile(id, edit).then(() => setEdit({})), "Item saved");
+    run(() => updatePerfumeItemFile(id, edit).then(() => { setEdit({}); setPriceText({ special: null, min: null }); }), "Item saved");
   };
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-itemfile-editor" aria-label={it.display_name}>
@@ -276,6 +291,9 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         <label className="w-full">{tr("perfume.itemfile.description", "Description")}
           <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={val("description", it.description ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} data-testid="perfume-itemfile-description" />
         </label>
+      </div>
+      <ItemControlFields prefix="perfume-itemfile" value={it} edit={edit} onChange={(p) => setEdit({ ...edit, ...p })} text={priceText} setText={setPriceText} />
+      <div className="flex justify-end">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(edit).length} onClick={save} data-testid="perfume-itemfile-save">{tr("perfume.itemfile.save", "Save")}</Button>
       </div>
       <div className="text-xs">{`${tr("perfume.itemfile.costs", "My avg cost")} ${money(x.costs.my_avg_cost_cents)} · ${tr("perfume.itemfile.last", "My last cost")} ${money(x.costs.my_last_cost_cents)} · ${tr("perfume.itemfile.best", "Best supplier cost")} ${money(x.best_cost_cents)}`}</div>
@@ -490,7 +508,8 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
   const { pushToast } = useToast();
   const cats = useItemCatalogs();
   const CLEAR = "__clear__";
-  const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "", case_pack: "", moq: "", origin: "", hs: "" });
+  const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "", case_pack: "", moq: "", origin: "", hs: "",
+    vendor: "", stock: "", active: "", min_price: "", change_price: "" });
   const [busy, setBusy] = useState(false);
   const txt = (x: string) => (x === CLEAR ? null : x.trim() || undefined);
   const apply = async () => {
@@ -505,6 +524,15 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
     if (v.moq.trim()) set.min_order_qty = Number(v.moq);
     if (v.origin.trim()) set.origin_country = v.origin.trim().toUpperCase();
     if (v.hs.trim()) set.hs_code = v.hs.trim();
+    if (v.vendor) set.preferred_vendor_id = v.vendor === CLEAR ? null : v.vendor;
+    if (v.stock) set.is_stock_item = v.stock === "Y";
+    if (v.active) set.is_active = v.active === "Y";
+    if (v.change_price) set.price_locked = v.change_price === "N";
+    if (v.min_price.trim()) {
+      const c = v.min_price.trim().toLowerCase() === "clear" ? null : centsOf(v.min_price);
+      if (c === undefined) { pushToast("Minimum price is a dollar amount (or \"clear\")", "error"); return; }
+      set.min_price_cents = c;
+    }
     const flags = v.flag ? { [v.flagMode === "add" ? "flags_add" : "flags_remove"]: [v.flag] } : {};
     if (!Object.keys(set).length && !v.flag) { pushToast("Fill at least one field to change", "error"); return; }
     setBusy(true);
@@ -550,6 +578,16 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
         <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[70px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-bulk-moq" /></label>
         <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[56px] uppercase`} value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-bulk-origin" /></label>
         <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[100px]`} value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-bulk-hs" /></label>
+        <label>{tr("perfume.itemfile.pref_vendor", "Preferred vendor")} <VendorSelect value={v.vendor} onChange={(x) => setV({ ...v, vendor: x })} testId="perfume-bulk-pref-vendor"
+          head={<><option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option></>} /></label>
+        {([["stock", "Stock item?", "perfume-bulk-stock-item"], ["active", "Active?", "perfume-bulk-active"], ["change_price", "Change price?", "perfume-bulk-change-price"]] as const).map(([k, label, tid]) => (
+          <label key={k}>{tr(`perfume.bulk.${k}`, label)}
+            <select className={`${ctl} block w-[80px]`} value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} data-testid={tid}>
+              <option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value="Y">Y</option><option value="N">N</option>
+            </select>
+          </label>
+        ))}
+        <label>{tr("perfume.itemfile.min_price", "Minimum price $")} <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} placeholder="clear" value={v.min_price} onChange={(e) => setV({ ...v, min_price: e.target.value })} data-testid="perfume-bulk-min-price" /></label>
         <label className="min-w-[220px] flex-1">{tr("perfume.itemfile.description", "Description")} <input className={`${ctl} block w-full`} value={v.description === CLEAR ? "" : v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-bulk-description" /></label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
       </div>
@@ -590,6 +628,8 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
   const opts = useQuery({ queryKey: ["perfume", "item-options"], queryFn: getPerfumeItemOptions, staleTime: 60_000 });
   const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "", case_pack: "", moq: "", weight: "", origin: "", hs: "", hk: "" });
   const [flags, setFlags] = useState<string[]>([]);
+  const [control, setControl] = useState<PerfumeItemControl>({});
+  const [priceText, setPriceText] = useState<{ special: string | null; min: string | null }>({ special: null, min: null });
   const [busy, setBusy] = useState(false);
   const ok = v.brand.trim() && v.name.trim() && (v.size === "" || Number(v.size) >= 0);
   const save = async () => {
@@ -600,7 +640,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
         model: v.model.trim() || null, product_type: v.product_type || null, category: v.category || null, description: v.description.trim() || null,
         tio_code: v.tio_code.trim() || null, hk_code: v.hk.trim() || null, upc: v.upc.trim() || null, family_id: v.family_id || null,
         case_pack: v.case_pack ? Number(v.case_pack) : null, min_order_qty: v.moq ? Number(v.moq) : null, weight_g: v.weight ? Number(v.weight) : null,
-        origin_country: v.origin.trim().toUpperCase() || null, hs_code: v.hs.trim() || null });
+        origin_country: v.origin.trim().toUpperCase() || null, hs_code: v.hs.trim() || null, ...control });
       pushToast(`Item created: ${r.display_name}`, "success"); onCreated(r.id);
     } catch (e) { pushToast(userFacingApiError(e, "Item not created"), "error"); } finally { setBusy(false); }
   };
@@ -650,6 +690,10 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
         <label className="w-full">{tr("perfume.itemfile.description", "Description")}
           <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-new-description" />
         </label>
+      </div>
+      <ItemControlFields prefix="perfume-new" value={{ sold_by: "piece", is_stock_item: true, is_active: true, price_locked: false }} edit={control}
+        onChange={(p) => setControl({ ...control, ...p })} text={priceText} setText={setPriceText} />
+      <div className="flex justify-end">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void save()} data-testid="perfume-new-save">{tr("perfume.itemfile.create", "Create item")}</Button>
       </div>
     </section>

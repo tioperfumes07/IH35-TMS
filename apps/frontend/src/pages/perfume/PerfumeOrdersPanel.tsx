@@ -140,6 +140,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
   const order = useQuery({ queryKey: ["perfume", "order", id], queryFn: () => getPerfumeOrder(id) });
   const pos = useQuery({ queryKey: ["perfume", "order-pos", id], queryFn: () => perfumePurchaseOrdersOfOrder(id) });
   const [skipped, setSkipped] = useState<Array<{ line_no: number; description: string; reason: string }>>([]);
+  const [override, setOverride] = useState("");
   const refresh = async () => { await Promise.all([order.refetch(), pos.refetch()]); onChanged(); };
   const o: PerfumeOrder | undefined = order.data;
   if (order.isError) return <ListErrorState title={tr("perfume.orders.loadOneError", "Couldn't load the sales order")} status={0} message={(order.error as Error)?.message} onRetry={() => void order.refetch()} />;
@@ -189,6 +190,12 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </select>
       </div>
       {locked ? null : <ItemFinder testId="perfume-order-find-item" onPick={(itemId, qty) => void run(() => addPerfumeOrderLine(id, { item_id: itemId, qty }), undefined, "Not added")} />}
+      {locked ? null : (
+        <label className="block text-xs">{tr("perfume.orders.override", "Price override reason")}
+          <input className={`${ctl} block w-full max-w-[460px]`} maxLength={500} value={override} onChange={(e) => setOverride(e.target.value)} data-testid="perfume-order-override-reason"
+            placeholder={tr("perfume.orders.override_ph", "Only to sell below an item's minimum price, or off a locked price — goes in the item's history")} />
+        </label>
+      )}
       <ParityTable<PerfumeOrderLine>
         title={tr("perfume.orders.lines", "Lines")}
         rows={o.lines}
@@ -202,7 +209,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
           { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</>, exportValue: (l) => `${l.description}${l.upc ? ` ${l.upc}` : ""}` },
           { key: "qty", label: "Qty", render: (l) => <NumberCell value={l.qty} min={1} label={tr("perfume.orders.qty", "Qty")} testId={`perfume-order-qty-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { qty: n }).then(refresh)} />, exportValue: (l) => l.qty },
           { key: "qty_shipped", label: "Shipped", render: (l) => <NumberCell value={l.qty_shipped} label={tr("perfume.orders.shipped", "Shipped")} testId={`perfume-order-shipped-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { qty_shipped: n }).then(refresh)} />, exportValue: (l) => l.qty_shipped },
-          { key: "unit_price_cents", label: "Unit price", render: (l) => <NumberCell value={l.unit_price_cents} money label={tr("perfume.orders.price", "Unit price")} testId={`perfume-order-price-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { unit_price_cents: n }).then(refresh)} />, exportValue: (l) => l.unit_price_cents / 100 },
+          { key: "unit_price_cents", label: "Unit price", render: (l) => <NumberCell value={l.unit_price_cents} money label={tr("perfume.orders.price", "Unit price")} testId={`perfume-order-price-${l.line_no}`} onSave={(n) => updatePerfumeOrderLine(l.id, { unit_price_cents: n, ...(override.trim().length >= 3 ? { price_override_reason: override.trim() } : {}) }).then(() => { setOverride(""); refresh(); })} />, exportValue: (l) => l.unit_price_cents / 100 },
           { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, o.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
           { key: "cost_cents", label: "Best cost when added", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`) },
           { key: "off", label: "", render: (l) => (
