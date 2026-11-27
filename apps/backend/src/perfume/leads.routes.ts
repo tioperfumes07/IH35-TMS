@@ -12,6 +12,7 @@ import {
   addCatalogValue, applySchema, archiveCatalogValue, catalogValueSchema, discardUpload, exportWorkbook, getUpload, healStaleApplies,
   LeadsError, listCatalogs, listUploads, renameCatalogValue, saveUpload, startApply, uploadSchema,
 } from "./leads.service.js";
+import { companyHistory, historyOf } from "./leads.events.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -45,12 +46,12 @@ export async function registerPerfumeLeadsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params); const b = z.object({ value: z.string().trim().min(1).max(200) }).safeParse(req.body ?? {});
     if (!id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
-    try { return await withCurrentUser(uid, (c) => renameCatalogValue(c, id.data.id, b.data.value)); } catch (e) { return fail(reply, e); }
+    try { return await withCurrentUser(uid, (c) => renameCatalogValue(c, id.data.id, b.data.value, uid)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/catalogs/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params); if (!id.success) return reply.code(400).send({ error: "validation_error" });
-    await withCurrentUser(uid, (c) => archiveCatalogValue(c, id.data.id));
+    await withCurrentUser(uid, (c) => archiveCatalogValue(c, id.data.id, uid));
     return { ok: true };
   });
 
@@ -96,4 +97,27 @@ export async function registerPerfumeLeadsRoutes(app: FastifyInstance) {
     await withCurrentUser(uid, (c) => discardUpload(c, id.data.id));
     return { ok: true };
   });
+
+  // History (who / when) and the reverse links of a contact: its trades (offered by it or sold to it).
+  app.get("/api/v1/perfume/contacts/:id/history", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idParam.safeParse(req.params); if (!id.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, async (c) => ({ events: await companyHistory(c, id.data.id) }));
+  });
+  app.get("/api/v1/perfume/contacts/:id/trades", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idParam.safeParse(req.params); if (!id.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, async (c) => ({ trades: (await c.query(
+      `SELECT t.id, t.item, t.brand, t.stage, t.buy_cents, t.sell_cents, t.qty, t.updated_at,
+              CASE WHEN t.from_company_id = $1 THEN 'offered by them' ELSE 'offered to them' END AS side, b.status AS buyer_status, b.offer_cents
+         FROM perfume.trades t LEFT JOIN perfume.trade_buyers b ON b.trade_id = t.id AND b.company_id = $1 AND b.archived_at IS NULL
+        WHERE t.archived_at IS NULL AND (t.from_company_id = $1 OR b.id IS NOT NULL) ORDER BY t.updated_at DESC LIMIT 200`, [id.data.id])).rows }));
+  });
+  for (const [path, entity] of [["trades", "trade"], ["campaigns", "campaign"], ["segments", "segment"], ["catalogs", "catalog_value"]] as const) {
+    app.get(`/api/v1/perfume/${path}/:id/history`, RL_READ, async (req, reply) => {
+      const uid = await ownerOnly(req, reply); if (!uid) return;
+      const id = idParam.safeParse(req.params); if (!id.success) return reply.code(400).send({ error: "validation_error" });
+      return withCurrentUser(uid, async (c) => ({ events: await historyOf(c, entity, id.data.id) }));
+    });
+  }
 }

@@ -35,6 +35,9 @@ const ALLOWED_NESTED = new Set([
   "pages/perfume/PerfumeDeskPage.tsx",
   // #29822 — the My saved lists bar (offer / inventory picker) sits in the same perfume desk shell.
   "pages/perfume/PerfumeSavedListsBar.tsx",
+  // The mail price-list tab's vendor picker sits in the same perfume desk shell as the hosts above (red on main 2026-11-27 01:40Z;
+  // owner 2026-11-26 19:39 CT "You fix it. You have full peroission and authorizations").
+  "pages/perfume/PerfumeMailPanel.tsx",
 ]);
 
 /** Combobox hosts owned by an existing matrix leaf (page/section nests). */

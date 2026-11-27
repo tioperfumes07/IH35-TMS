@@ -23,6 +23,9 @@ import {
   type PerfumeCampaign, type PerfumeCampaignFilters, type PerfumeCampaignInput, type PerfumeContactFacet, type PerfumeContactRole,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { jumpTo } from "./PerfumeTradersPanel";
+import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
+import { perfumeHistoryOf } from "../../api/perfume";
 
 const DASH = "—";
 const ctl = "h-[34px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
@@ -61,7 +64,9 @@ function toBase64(buf: ArrayBuffer): string {
 export function PerfumeCampaignPanel() {
   const campaigns = useQuery({ queryKey: ["perfume", "campaigns"], queryFn: listPerfumeCampaigns, refetchInterval: 15_000 });
   const [open, setOpen] = useState<string | "new" | null>(null);
+  const [only, setOnly] = useState<PerfumeCampaign["status"] | null>(null);
   const all = campaigns.data?.campaigns ?? [];
+  const shown = only ? all.filter((c) => c.status === only) : all;
   const sending = all.filter((c) => c.status === "sending").length;
   const scheduled = all.filter((c) => c.status === "scheduled").length;
   const sent = all.reduce((t, c) => t + c.sent, 0);
@@ -70,21 +75,25 @@ export function PerfumeCampaignPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-campaign-panel">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-        <KpiCard label={tr("perfume.cmp.kpi_all", "Campaigns")} number={all.length.toLocaleString()} />
-        <KpiCard label={tr("perfume.cmp.kpi_sending", "Sending now")} number={sending.toLocaleString()} />
-        <KpiCard label={tr("perfume.cmp.kpi_scheduled", "Scheduled")} number={scheduled.toLocaleString()} />
-        <KpiCard label={tr("perfume.cmp.kpi_sent", "Emails sent")} number={sent.toLocaleString()} />
+        <KpiCard label={tr("perfume.cmp.kpi_all", "Campaigns")} number={all.length.toLocaleString()} onClick={() => setOnly(null)} />
+        <KpiCard label={tr("perfume.cmp.kpi_sending", "Sending now")} number={sending.toLocaleString()} onClick={() => setOnly("sending")} />
+        <KpiCard label={tr("perfume.cmp.kpi_scheduled", "Scheduled")} number={scheduled.toLocaleString()} onClick={() => setOnly("scheduled")} />
+        <KpiCard label={tr("perfume.cmp.kpi_sent", "Emails sent")} number={sent.toLocaleString()} onClick={() => setOnly("sent")} />
       </div>
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.cmp.title", "Mass email campaigns")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-section-header">{tr("perfume.cmp.title", "Mass email campaigns")}</div>
+          <div className="text-section-header">{tr("perfume.cmp.title", "Mass email campaigns")}{only ? ` · ${STATUS_TEXT[only]}` : ""}</div>
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-cmp-new" onClick={() => setOpen("new")}>{tr("perfume.cmp.new", "New campaign")}</Button>
         </div>
         <ParityTable<PerfumeCampaign>
-          rows={all}
+          rows={shown}
           rowKey={(c) => c.id}
           loading={campaigns.isLoading}
           storageKey="perfume-campaigns-v1"
+
+          exportFilename="TIO campaigns"
+
+          exportExcel
           suppressToolbarSearch
           emptyText="No campaign yet — start one with New campaign."
           onRowClick={(c) => setOpen(c.id)}
@@ -111,6 +120,7 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
   const { pushToast } = useToast();
   const detail = useQuery({ queryKey: ["perfume", "campaign", id], queryFn: () => getPerfumeCampaign(id!), enabled: Boolean(id), refetchInterval: 10_000 });
   const segments = useQuery({ queryKey: ["perfume", "segments"], queryFn: listPerfumeSegments });
+  const history = useQuery({ queryKey: ["perfume", "campaign", id, "history"], queryFn: () => perfumeHistoryOf("campaigns", id!), enabled: Boolean(id) });
   const [d, setD] = useState<Draft>(EMPTY);
   const [loaded, setLoaded] = useState(!id);
   const [segName, setSegName] = useState("");
@@ -166,7 +176,7 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
   });
   const onSaveSegment = () => run(`${segName} saved`, async () => { const r = await savePerfumeSegment({ name: segName.trim(), filters: d.filters }); setD((x) => ({ ...x, segment_id: r.id })); setSegName(""); await segments.refetch(); });
   const pickSegment = (sid: string) => {
-    const s = segments.data?.segments.find((x) => x.id === sid);
+    const s = (segments.data?.segments ?? []).find((x) => x.id === sid);
     setD((x) => ({ ...x, segment_id: s?.id ?? null, filters: s ? s.filters : x.filters }));
   };
   const a = audience.data;
@@ -218,14 +228,15 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
             value={f.q ?? ""} disabled={!editable} onChange={(e) => setFilters({ q: e.target.value })} data-testid="perfume-cmp-q" />
         </div>
         <div className="grid grid-cols-2 gap-2 md:grid-cols-6" data-testid="perfume-cmp-audience">
-          <KpiCard label={tr("perfume.cmp.a_recipients", "Will receive it")} number={audience.isLoading ? "…" : (a?.recipients ?? 0).toLocaleString()} />
-          <KpiCard label={tr("perfume.cmp.a_en", "In English")} number={(a?.en ?? 0).toLocaleString()} />
-          <KpiCard label={tr("perfume.cmp.a_es", "In Spanish")} number={(a?.es ?? 0).toLocaleString()} />
-          <KpiCard label={tr("perfume.cmp.a_companies", "Companies")} number={(a?.companies ?? 0).toLocaleString()} />
-          <KpiCard label={tr("perfume.cmp.a_phone", "Phone only (left out)")} number={(a?.phone_only ?? 0).toLocaleString()} />
-          <KpiCard label={tr("perfume.cmp.a_out", "Opted out / bad address")} number={`${(a?.opted_out ?? 0).toLocaleString()} / ${(a?.invalid ?? 0).toLocaleString()}`} />
+          <KpiCard label={tr("perfume.cmp.a_recipients", "Will receive it")} number={audience.isLoading ? "…" : (a?.recipients ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-cmp-sample")} />
+          <KpiCard label={tr("perfume.cmp.a_en", "In English")} number={(a?.en ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-cmp-what")} />
+          <KpiCard label={tr("perfume.cmp.a_es", "In Spanish")} number={(a?.es ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-cmp-what")} />
+          <KpiCard label={tr("perfume.cmp.a_companies", "Companies")} number={(a?.companies ?? 0).toLocaleString()} to="/perfume?tab=contacts" />
+          <KpiCard label={tr("perfume.cmp.a_phone", "Phone only (left out)")} number={(a?.phone_only ?? 0).toLocaleString()} to="/perfume?tab=contacts" />
+          <KpiCard label={tr("perfume.cmp.a_out", "Opted out / bad address")} number={`${(a?.opted_out ?? 0).toLocaleString()} / ${(a?.invalid ?? 0).toLocaleString()}`}
+            disabled disabledReason={tr("perfume.cmp.a_out_why", "Counted only: an opted-out or malformed address is never sent to.")} />
         </div>
-        {a?.sample?.length ? <div className="text-xs text-[#64748B]">{tr("perfume.cmp.sample", "First addresses")}: {a.sample.map((s) => `${s.email} (${s.language.toUpperCase()})`).join(" · ")}</div> : null}
+        {a?.sample?.length ? <div id="perfume-cmp-sample" className="text-xs text-[#64748B]">{tr("perfume.cmp.sample", "First addresses")}: {a.sample.map((s) => `${s.email} (${s.language.toUpperCase()})`).join(" · ")}</div> : null}
         <div className="flex flex-wrap items-center gap-2">
           <input className={`${ctl} w-[260px] max-w-full`} placeholder={tr("perfume.cmp.segment_name", "Save these filters as a segment — name")} value={segName}
             onChange={(e) => setSegName(e.target.value)} data-testid="perfume-cmp-segment-name" />
@@ -235,7 +246,7 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
       </div>
 
       {/* 2 · WHAT */}
-      <div className="space-y-2 border-t border-[#E8EDF2] pt-2" data-testid="perfume-cmp-what">
+      <div id="perfume-cmp-what" className="space-y-2 border-t border-[#E8EDF2] pt-2" data-testid="perfume-cmp-what">
         <div className="text-section-header font-bold uppercase tracking-wide text-[#4B5563]">{tr("perfume.cmp.what", "2 · What")}</div>
         <label className="text-xs">{tr("perfume.cmp.language", "Language")}
           <select className={`${ctl} ml-2`} value={d.language} disabled={!editable} onChange={(e) => setD((x) => ({ ...x, language: e.target.value as Draft["language"] }))} data-testid="perfume-cmp-language">
@@ -310,6 +321,10 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
             rows={detail.data!.batches}
             rowKey={(b) => b.id}
             storageKey="perfume-campaign-batches-v1"
+
+            exportFilename="TIO campaign batches"
+
+            exportExcel
             suppressToolbarSearch
             emptyText="No batch yet."
             columns={[
@@ -325,6 +340,7 @@ function CampaignEditor({ id, onClose, onChanged }: { id: string | null; onClose
           />
         ) : null}
       </div>
+      {id ? <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-campaign-history-v1" exportName="TIO campaign history" /> : null}
     </section>
   );
 }

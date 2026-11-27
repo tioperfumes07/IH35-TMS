@@ -66,7 +66,10 @@ export function findCompany(m: ContactMatcher, rec: ImportRecord, nameKey: strin
   }, { notSameDirectory: src, freeMail: FREE_MAIL });
 }
 
-async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, nameKey: string | null, owner: string, t: ImportTally) {
+/** Called once per record with the company it landed on (history: an import says which contacts it added or joined). */
+export type OnCompany = (companyId: string, inserted: boolean, rec: ImportRecord) => void;
+
+async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, nameKey: string | null, owner: string, t: ImportTally, onCompany?: OnCompany) {
   const co = rec.company;
   let [id, how] = findCompany(m, rec, nameKey);
   if (id) {
@@ -91,6 +94,7 @@ async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, name
     id = r.rows[0]!.id; t.inserted += 1;
   }
   await m.refreshCompany(c, id);
+  onCompany?.(id, how == null, rec);
   const personIds: Array<string | null> = [];
   for (const p of rec.people) {
     let pid: string | null = null;
@@ -128,9 +132,9 @@ async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, name
 
 
 /** One batch, already inside the caller's owner transaction. */
-export async function importRecords(c: pg.PoolClient, records: ImportRecord[], ownerUid: string, t: ImportTally = emptyTally()): Promise<ImportTally> {
+export async function importRecords(c: pg.PoolClient, records: ImportRecord[], ownerUid: string, t: ImportTally = emptyTally(), onCompany?: OnCompany): Promise<ImportTally> {
   const m = await ContactMatcher.load(c);
   const keys = await nameKeys(c, records.map((r) => r.company.name));
-  for (const [i, rec] of records.entries()) { await load(c, m, rec, keys[i] || null, ownerUid, t); t.records += 1; }
+  for (const [i, rec] of records.entries()) { await load(c, m, rec, keys[i] || null, ownerUid, t, onCompany); t.records += 1; }
   return t;
 }

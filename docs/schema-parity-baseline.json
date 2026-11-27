@@ -10718,6 +10718,17 @@
       "size_ml",
       "updated_at"
     ],
+    "perfume.lead_events": [
+      "action",
+      "company_id",
+      "created_at",
+      "created_by",
+      "detail",
+      "entity",
+      "entity_id",
+      "id",
+      "upload_id"
+    ],
     "perfume.locations": [
       "active",
       "code",
@@ -10874,6 +10885,47 @@
       "void_reason",
       "voided_at"
     ],
+    "perfume.purchase_order_events": [
+      "created_at",
+      "created_by",
+      "detail",
+      "id",
+      "kind",
+      "po_id"
+    ],
+    "perfume.purchase_order_lines": [
+      "archived_at",
+      "created_at",
+      "description",
+      "id",
+      "item_id",
+      "line_no",
+      "po_id",
+      "price_list_row_id",
+      "qty",
+      "qty_received",
+      "sales_order_line_id",
+      "unit_cost_cents",
+      "upc",
+      "updated_at",
+      "vendor_sku"
+    ],
+    "perfume.purchase_orders": [
+      "archived_at",
+      "created_at",
+      "created_by",
+      "currency",
+      "expected_by",
+      "id",
+      "notes",
+      "number",
+      "order_date",
+      "sales_order_id",
+      "status",
+      "terms",
+      "updated_at",
+      "vendor_id"
+    ],
     "perfume.quote_events": [
       "created_at",
       "created_by",
@@ -10914,6 +10966,51 @@
       "terms",
       "updated_at",
       "valid_until"
+    ],
+    "perfume.sales_order_events": [
+      "created_at",
+      "created_by",
+      "detail",
+      "id",
+      "kind",
+      "order_id"
+    ],
+    "perfume.sales_order_lines": [
+      "archived_at",
+      "cost_cents",
+      "cost_vendor_id",
+      "created_at",
+      "description",
+      "id",
+      "item_id",
+      "line_no",
+      "order_id",
+      "qty",
+      "qty_shipped",
+      "quote_line_id",
+      "unit_price_cents",
+      "upc",
+      "updated_at"
+    ],
+    "perfume.sales_orders": [
+      "archived_at",
+      "company_id",
+      "created_at",
+      "created_by",
+      "currency",
+      "customer_email",
+      "customer_name",
+      "customer_phone",
+      "id",
+      "notes",
+      "number",
+      "order_date",
+      "quote_id",
+      "ship_by",
+      "ship_to",
+      "status",
+      "terms",
+      "updated_at"
     ],
     "perfume.settings": [
       "id",
@@ -10990,6 +11087,7 @@
     "perfume.vendors": [
       "archived_at",
       "column_mapping",
+      "company_id",
       "contact",
       "created_at",
       "created_by",

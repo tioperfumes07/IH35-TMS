@@ -534,7 +534,7 @@ export async function downloadPerfumeContactsExcel(): Promise<number> {
   return Number(res.headers.get("X-Rows") ?? 0);
 }
 
-export type PerfumeUploadKind = "export" | "email" | "leaked" | "phone" | "other";
+export type PerfumeUploadKind = "export" | "email" | "leaked" | "phone" | "research" | "removed" | "other";
 export type PerfumeUploadSummary = {
   file_name: string;
   sheets: Array<{ name: string; kind: PerfumeUploadKind | "skipped"; header_row: number | null; rows: number; used: number; columns: string[] }>;
@@ -548,12 +548,13 @@ export type PerfumeUploadSummary = {
     by_category: Record<string, { records: number; match: number }>;
     samples: Array<{ name: string; kind: PerfumeUploadKind; category: string | null; email: string | null; phone: string | null; country: string | null; leaked_from: string | null; match: string | null }> };
   unknown: Partial<Record<PerfumeCatalogKind, string[]>>;
+  removed_check?: { companies: number; people: number; list: Array<{ scope: "company" | "person"; company: string; person: string | null }> };
 };
 export type PerfumeUploadResult = { companies_changed: number; people_changed: number; companies_removed: number; people_removed: number; records: number; inserted: number;
   matched: number; people_inserted: number; origins: number; skipped: number; catalog_added: number; errors: string[] };
 export type PerfumeUpload = { id: string; file_name: string; status: "previewed" | "applying" | "applied" | "failed" | "discarded"; summary: PerfumeUploadSummary;
   options: PerfumeApplyOptions | null; result: PerfumeUploadResult | null; error: string | null; created_at: string; applied_at: string | null };
-export type PerfumeApplyOptions = { skip_categories: string[]; skip_kinds: PerfumeUploadKind[]; add_unknown: boolean };
+export type PerfumeApplyOptions = { skip_categories: string[]; skip_kinds: PerfumeUploadKind[]; add_unknown: boolean; apply_removed_check?: boolean };
 export type PerfumeUploadRow = { id: string; file_name: string; status: PerfumeUpload["status"]; created_at: string; applied_at: string | null; error: string | null;
   existing: PerfumeUploadSummary["existing"] | null; new: Pick<PerfumeUploadSummary["new"], "records" | "would_match" | "would_insert" | "people"> | null; result: PerfumeUploadResult | null };
 
@@ -686,3 +687,11 @@ export const setPerfumeVendorCompany = (vendorId: string, companyId: string | nu
   apiRequest<{ ok: true }>(`/api/v1/perfume/vendors/${vendorId}/company`, { method: "PATCH", body: { company_id: companyId } });
 export const getPerfumeItemProfile = (itemId: string) => apiRequest<PerfumeItemProfile | { merged_into_id: string }>(`/api/v1/perfume/items/${itemId}/profile`);
 export const getPerfumeCompanyActivity = (companyId: string) => apiRequest<PerfumeCompanyActivity>(`/api/v1/perfume/contacts/${companyId}/activity`);
+/* ------------------------------------------------------------------ lead history + reverse links (fully-wired items f + g, owner 2026-11-26 18:13 CT) */
+export type PerfumeLeadEvent = { id: string; entity: string; entity_id: string; action: string; detail: Record<string, unknown>; upload_id: string | null; created_at: string; by_name: string | null };
+export const perfumeContactHistory = (id: string) => apiRequest<{ events: PerfumeLeadEvent[] }>(`/api/v1/perfume/contacts/${encodeURIComponent(id)}/history`);
+export const perfumeHistoryOf = (kind: "trades" | "campaigns" | "segments" | "catalogs", id: string) =>
+  apiRequest<{ events: PerfumeLeadEvent[] }>(`/api/v1/perfume/${kind}/${encodeURIComponent(id)}/history`);
+export type PerfumeContactTrade = { id: string; item: string; brand: string | null; stage: PerfumeTradeStage; buy_cents: number | null; sell_cents: number | null;
+  qty: number | null; updated_at: string; side: "offered by them" | "offered to them"; buyer_status: string | null; offer_cents: number | null };
+export const perfumeContactTrades = (id: string) => apiRequest<{ trades: PerfumeContactTrade[] }>(`/api/v1/perfume/contacts/${encodeURIComponent(id)}/trades`);

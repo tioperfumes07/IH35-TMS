@@ -10,6 +10,7 @@
  */
 import type pg from "pg";
 import { z } from "zod";
+import { logEvent } from "./leads.events.js";
 
 export const TRADE_STAGES = ["offer_received", "buyers_matched", "offer_sent", "negotiating", "closed", "lost"] as const;
 export type TradeStage = typeof TRADE_STAGES[number];
@@ -120,23 +121,30 @@ export async function saveTrade(c: pg.PoolClient, uid: string, t: TradeInput) {
           closed_on = CASE WHEN $9 = 'closed' THEN coalesce(closed_on, (now() AT TIME ZONE 'America/Chicago')::date) ELSE NULL END, updated_at = now()
         WHERE id = $1 AND archived_at IS NULL`, [t.id, ...vals]);
     if (!r.rowCount) throw new TradeError("not_found", "Trade not found.");
+    await logEvent(c, uid, { entity: "trade", entity_id: t.id, company_id: t.from_company_id ?? null, action: "edited",
+      detail: { item: t.item, stage: t.stage, buy_cents: t.buy_cents ?? null, sell_cents: t.sell_cents ?? null, qty: t.qty ?? null } });
     return { id: t.id };
   }
   const r = await c.query<{ id: string }>(
     `INSERT INTO perfume.trades (item, brand, upc, from_company_id, buy_cents, sell_cents, qty, stage, note, closed_on, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, CASE WHEN $8 = 'closed' THEN (now() AT TIME ZONE 'America/Chicago')::date END, $10) RETURNING id`, [...vals, uid]);
+  await logEvent(c, uid, { entity: "trade", entity_id: r.rows[0]!.id, company_id: t.from_company_id ?? null, action: "created",
+    detail: { item: t.item, stage: t.stage, buy_cents: t.buy_cents ?? null, sell_cents: t.sell_cents ?? null, qty: t.qty ?? null } });
   return { id: r.rows[0]!.id };
 }
 
-export async function setStage(c: pg.PoolClient, id: string, stage: TradeStage) {
+export async function setStage(c: pg.PoolClient, id: string, stage: TradeStage, uid: string | null = null) {
+  const before = (await c.query<{ stage: string; from_company_id: string | null }>(`SELECT stage, from_company_id FROM perfume.trades WHERE id = $1`, [id])).rows[0];
   const r = await c.query(
     `UPDATE perfume.trades SET stage = $2, closed_on = CASE WHEN $2 = 'closed' THEN coalesce(closed_on, (now() AT TIME ZONE 'America/Chicago')::date) ELSE NULL END,
         updated_at = now() WHERE id = $1 AND archived_at IS NULL`, [id, stage]);
   if (!r.rowCount) throw new TradeError("not_found", "Trade not found.");
+  if (before && before.stage !== stage) await logEvent(c, uid, { entity: "trade", entity_id: id, company_id: before.from_company_id, action: "stage", detail: { from: before.stage, to: stage } });
 }
 
-export async function archiveTrade(c: pg.PoolClient, id: string) {
-  await c.query(`UPDATE perfume.trades SET archived_at = now(), updated_at = now() WHERE id = $1`, [id]);
+export async function archiveTrade(c: pg.PoolClient, id: string, uid: string | null = null) {
+  const r = await c.query<{ from_company_id: string | null }>(`UPDATE perfume.trades SET archived_at = now(), updated_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING from_company_id`, [id]);
+  if (r.rowCount) await logEvent(c, uid, { entity: "trade", entity_id: id, company_id: r.rows[0]!.from_company_id, action: "archived" });
 }
 
 export async function addBuyer(c: pg.PoolClient, uid: string, tradeId: string, b: z.infer<typeof buyerSchema>) {
@@ -147,16 +155,19 @@ export async function addBuyer(c: pg.PoolClient, uid: string, tradeId: string, b
      ON CONFLICT (trade_id, company_id) WHERE archived_at IS NULL DO UPDATE SET offer_cents = coalesce(EXCLUDED.offer_cents, trade_buyers.offer_cents),
        note = coalesce(EXCLUDED.note, trade_buyers.note), updated_at = now() RETURNING id`,
     [tradeId, b.company_id, b.offer_cents ?? null, b.note || null, uid]);
+  await logEvent(c, uid, { entity: "trade_buyer", entity_id: r.rows[0]!.id, company_id: b.company_id, action: "matched", detail: { trade_id: tradeId, offer_cents: b.offer_cents ?? null } });
   // The first buyer moves a new offer to "buyers matched".
-  if (t.stage === "offer_received") await setStage(c, tradeId, "buyers_matched");
+  if (t.stage === "offer_received") await setStage(c, tradeId, "buyers_matched", uid);
   return { id: r.rows[0]!.id };
 }
 
-export async function updateBuyer(c: pg.PoolClient, id: string, p: z.infer<typeof buyerPatchSchema>) {
-  const r = await c.query(
+export async function updateBuyer(c: pg.PoolClient, id: string, p: z.infer<typeof buyerPatchSchema>, uid: string | null = null) {
+  const r = await c.query<{ company_id: string; trade_id: string }>(
     `UPDATE perfume.trade_buyers SET status = coalesce($2, status), offer_cents = CASE WHEN $5 THEN $3 ELSE offer_cents END,
         note = CASE WHEN $6 THEN $4 ELSE note END, archived_at = CASE WHEN $7 THEN now() ELSE archived_at END, updated_at = now()
-      WHERE id = $1`,
+      WHERE id = $1 RETURNING company_id, trade_id`,
     [id, p.status ?? null, p.offer_cents ?? null, p.note ?? null, p.offer_cents !== undefined, p.note !== undefined, Boolean(p.archived)]);
   if (!r.rowCount) throw new TradeError("not_found", "Buyer not found.");
+  await logEvent(c, uid, { entity: "trade_buyer", entity_id: id, company_id: r.rows[0]!.company_id, action: p.archived ? "taken_off" : "edited",
+    detail: { trade_id: r.rows[0]!.trade_id, ...(p.status ? { status: p.status } : {}), ...(p.offer_cents !== undefined ? { offer_cents: p.offer_cents } : {}), ...(p.note !== undefined ? { note: p.note } : {}) } });
 }

@@ -53,7 +53,7 @@ export async function registerPerfumeCampaignRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params);
     if (!id.success) return reply.code(400).send({ error: "validation_error" });
-    await withCurrentUser(uid, (c) => archiveSegment(c, id.data.id));
+    await withCurrentUser(uid, (c) => archiveSegment(c, id.data.id, uid));
     return { ok: true };
   });
   app.post("/api/v1/perfume/campaigns/audience", RL_READ, async (req, reply) => {
@@ -94,7 +94,7 @@ export async function registerPerfumeCampaignRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const p = z.object({ id: z.string().uuid(), attachmentId: z.string().uuid() }).safeParse(req.params);
     if (!p.success) return reply.code(400).send({ error: "validation_error" });
-    await withCurrentUser(uid, (c) => removeAttachment(c, p.data.id, p.data.attachmentId));
+    await withCurrentUser(uid, (c) => removeAttachment(c, p.data.id, p.data.attachmentId, uid));
     return { ok: true };
   });
   app.post("/api/v1/perfume/campaigns/:id/test", RL_SEND, async (req, reply) => {
@@ -136,13 +136,13 @@ export async function registerPerfumeCampaignRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params); const b = z.object({ stage: z.enum(TRADE_STAGES) }).safeParse(req.body);
     if (!id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
-    try { await withCurrentUser(uid, (c) => setStage(c, id.data.id, b.data.stage)); return { ok: true }; } catch (e) { return fail(reply, e); }
+    try { await withCurrentUser(uid, (c) => setStage(c, id.data.id, b.data.stage, uid)); return { ok: true }; } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/trades/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params);
     if (!id.success) return reply.code(400).send({ error: "validation_error" });
-    await withCurrentUser(uid, (c) => archiveTrade(c, id.data.id));
+    await withCurrentUser(uid, (c) => archiveTrade(c, id.data.id, uid));
     return { ok: true };
   });
   app.post("/api/v1/perfume/trades/:id/buyers", RL_WRITE, async (req, reply) => {
@@ -155,6 +155,6 @@ export async function registerPerfumeCampaignRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idParam.safeParse(req.params); const b = buyerPatchSchema.safeParse(req.body);
     if (!id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
-    try { await withCurrentUser(uid, (c) => updateBuyer(c, id.data.id, b.data)); return { ok: true }; } catch (e) { return fail(reply, e); }
+    try { await withCurrentUser(uid, (c) => updateBuyer(c, id.data.id, b.data, uid)); return { ok: true }; } catch (e) { return fail(reply, e); }
   });
 }

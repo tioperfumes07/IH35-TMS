@@ -17,18 +17,20 @@ import {
   uploadPerfumeContacts, type PerfumeUploadKind, type PerfumeUploadRow, type PerfumeUploadSummary,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { jumpTo } from "./PerfumeTradersPanel";
 
 const DASH = "—";
 const n = (v: number | null | undefined) => (v ?? 0).toLocaleString("en-US");
 const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleString("en-US", { timeZone: "America/Chicago", dateStyle: "short", timeStyle: "short" }) + " CT" : DASH);
 export const KIND_TEXT: Record<PerfumeUploadKind | "skipped", string> = {
-  export: "Leads download (with IDs)", email: "Emails", leaked: "Leaked emails", phone: "Phone contacts", other: "Other sheet (new leads)", skipped: "Not read",
+  export: "Leads download (with IDs)", email: "Emails", leaked: "Leaked emails", phone: "Phone contacts", research: "Research prospects (INEGI never read)",
+  removed: "Removed-Check list", other: "Other sheet (new leads)", skipped: "Not read",
 };
 const FIELD_TEXT: Record<string, string> = { company: "Company", role: "Role", vendor_type: "Vendor type", customer_type: "Customer type", category: "Category",
   other_categories: "Other categories", segment: "Business type", status: "Status", country: "Country", state: "State", city: "City", region: "Region",
   address: "Address", website: "Website", notes: "Notes", person: "Person", title: "Title", email: "Email", phones: "Phones" };
 /** File categories that are not perfume leads yet — skipped by default, one click to include. */
-const DEFAULT_SKIP = ["Unclassified - review"];
+const DEFAULT_SKIP = ["Unclassified - review", "Other contact - review", "Local 956 / 210 / 867 - likely personal (review)", "Trucking / transport (IH / IH35 etc.)"];
 
 /** Every sheet of the workbook as rows of cells; dates come out as YYYY-MM-DD so first / last email dates survive. */
 export async function readWorkbook(file: File) {
@@ -95,6 +97,10 @@ export function PerfumeLeadsExcelPanel() {
           rowKey={(u) => u.id}
           loading={uploads.isLoading}
           storageKey="perfume-contact-uploads-v1"
+
+          exportFilename="TIO contact uploads"
+
+          exportExcel
           suppressToolbarSearch
           emptyText="No upload yet."
           onRowClick={(u) => setOpenId(u.id)}
@@ -124,6 +130,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
   const [skipCats, setSkipCats] = useState<string[] | null>(null);
   const [skipKinds, setSkipKinds] = useState<PerfumeUploadKind[]>([]);
   const [addUnknown, setAddUnknown] = useState(true);
+  const [applyRemoved, setApplyRemoved] = useState(false);
   const status = up.data?.status;
   useEffect(() => { if (status === "applied" || status === "failed") onChanged(); }, [status, onChanged]);
   const cats = useMemo(() => Object.entries(s?.new.by_category ?? {}).sort((a, b) => b[1].records - a[1].records), [s]);
@@ -132,7 +139,7 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
   const editable = status === "previewed" || status === "failed";
 
   const apply = async () => {
-    try { await applyPerfumeContactUpload(id, { skip_categories: skip, skip_kinds: skipKinds, add_unknown: addUnknown }); await up.refetch(); }
+    try { await applyPerfumeContactUpload(id, { skip_categories: skip, skip_kinds: skipKinds, add_unknown: addUnknown, apply_removed_check: applyRemoved }); await up.refetch(); }
     catch (e) { pushToast(userFacingApiError(e, "Not applied"), "error"); }
   };
   const discard = async () => {
@@ -153,26 +160,31 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
       </div>
 
       <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-6" data-testid="perfume-leadsx-kpis">
-        <KpiCard label={tr("perfume.leadsx.k_changes", "Contacts changed")} number={n(ex.companies_changed + ex.people_changed)} />
-        <KpiCard label={tr("perfume.leadsx.k_remove", "To remove (archive)")} number={n(ex.remove_companies + ex.remove_people)} />
-        <KpiCard label={tr("perfume.leadsx.k_new", "New leads in the file")} number={n(s.new.records)} />
-        <KpiCard label={tr("perfume.leadsx.k_join", "… already on file (joined)")} number={n(s.new.would_match)} />
-        <KpiCard label={tr("perfume.leadsx.k_add", "… new companies")} number={n(s.new.would_insert)} />
-        <KpiCard label={tr("perfume.leadsx.k_unknown", "New types")} number={n(Object.values(s.unknown).reduce((t, v) => t + (v?.length ?? 0), 0))} />
+        <KpiCard label={tr("perfume.leadsx.k_changes", "Contacts changed")} number={n(ex.companies_changed + ex.people_changed)} onClick={() => jumpTo("perfume-leadsx-changes")} />
+        <KpiCard label={tr("perfume.leadsx.k_remove", "To remove (archive)")} number={n(ex.remove_companies + ex.remove_people)} onClick={() => jumpTo("perfume-leadsx-removals")} />
+        <KpiCard label={tr("perfume.leadsx.k_new", "New leads in the file")} number={n(s.new.records)} onClick={() => jumpTo("perfume-leadsx-new")} />
+        <KpiCard label={tr("perfume.leadsx.k_join", "… already on file (joined)")} number={n(s.new.would_match)} onClick={() => jumpTo("perfume-leadsx-new")} />
+        <KpiCard label={tr("perfume.leadsx.k_add", "… new companies")} number={n(s.new.would_insert)} onClick={() => jumpTo("perfume-leadsx-new")} />
+        <KpiCard label={tr("perfume.leadsx.k_unknown", "New types")} number={n(Object.values(s.unknown).reduce((t, v) => t + (v?.length ?? 0), 0))} onClick={() => jumpTo("perfume-leadsx-unknown")} />
       </div>
       {ex.not_found || ex.conflicts ? (
-        <div className="rounded-sm border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900" role="status">
+        <div className="bg-amber-50 px-2 py-1 text-xs text-amber-900" role="status">
           {ex.not_found ? `${n(ex.not_found)} ${tr("perfume.leadsx.not_found", "rows carry an ID that is no longer on file (removed earlier) — they are left out.")} ` : ""}
           {ex.conflicts ? `${n(ex.conflicts)} ${tr("perfume.leadsx.conflicts", "fields got two different values on rows of the same company — those fields are left as they are:")} ${s.conflicts.slice(0, 5).map((c) => `${c.company} · ${FIELD_TEXT[c.field] ?? c.field} (${c.values.join(" / ")})`).join("; ")}` : ""}
         </div>
       ) : null}
 
       {s.changes.length ? (
+        <div id="perfume-leadsx-changes">
         <ParityTable
           title={`${tr("perfume.leadsx.changes", "Changes")} (${n(s.changes_total)})`}
           rows={s.changes.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
           storageKey="perfume-upload-changes-v1"
+
+          exportFilename="TIO upload changes"
+
+          exportExcel
           emptyText="No change."
           columns={[
             { key: "company", label: "Company", sortable: true, render: (c) => <span className="font-semibold">{c.company}</span> },
@@ -182,14 +194,20 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             { key: "to", label: "Becomes", render: (c) => <span className="font-semibold">{c.to ?? tr("perfume.leadsx.blank", "(blank)")}</span> },
           ]}
         />
+        </div>
       ) : null}
 
       {s.removals.length ? (
+        <div id="perfume-leadsx-removals">
         <ParityTable
           title={`${tr("perfume.leadsx.removals", "Marked Remove — archived on Apply")} (${n(ex.remove_companies + ex.remove_people)})`}
           rows={s.removals.map((c, i) => ({ ...c, i }))}
           rowKey={(c) => String(c.i)}
           storageKey="perfume-upload-removals-v1"
+
+          exportFilename="TIO upload removals"
+
+          exportExcel
           emptyText="Nothing marked Remove."
           columns={[
             { key: "scope", label: "Remove", sortable: true, render: (c) => (c.scope === "company" ? "Whole company" : "Person only") },
@@ -197,10 +215,11 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             { key: "person", label: "Person", render: (c) => c.person ?? DASH },
           ]}
         />
+        </div>
       ) : null}
 
       {s.new.records ? (
-        <div className="space-y-2" data-testid="perfume-leadsx-new">
+        <div id="perfume-leadsx-new" className="space-y-2" data-testid="perfume-leadsx-new">
           <div className="text-section-header">{tr("perfume.leadsx.new_title", "New leads — choose what goes in")}</div>
           <div className="flex flex-wrap gap-2">
             {(Object.entries(s.new.by_kind) as Array<[PerfumeUploadKind, number]>).map(([k, v]) => {
@@ -219,6 +238,10 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             rows={cats.map(([k, v]) => ({ k, ...v }))}
             rowKey={(c) => c.k}
             storageKey="perfume-upload-categories-v1"
+
+            exportFilename="TIO upload categories"
+
+            exportExcel
             suppressToolbarSearch
             emptyText="No category."
             columns={[
@@ -236,6 +259,10 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
             rows={s.new.samples.map((x, i) => ({ ...x, i }))}
             rowKey={(x) => String(x.i)}
             storageKey="perfume-upload-samples-v1"
+
+            exportFilename="TIO upload samples"
+
+            exportExcel
             emptyText="No new lead."
             columns={[
               { key: "name", label: "Company", sortable: true, render: (x) => <span className="font-semibold">{x.name}</span> },
@@ -251,8 +278,33 @@ function UploadReview({ id, onClose, onChanged }: { id: string; onClose: () => v
         </div>
       ) : null}
 
+      {s.removed_check && (s.removed_check.companies || s.removed_check.people) ? (
+        <div className="space-y-2" data-testid="perfume-leadsx-removed-check">
+          <ParityTable
+            title={`${tr("perfume.leadsx.rc_title", "Contacts on file that the file's Removed-Check list names")} (${n(s.removed_check.companies)} ${tr("perfume.leadsx.rc_co", "companies")} · ${n(s.removed_check.people)} ${tr("perfume.leadsx.rc_pe", "people")})`}
+            rows={s.removed_check.list.map((c, i) => ({ ...c, i }))}
+            rowKey={(c) => String(c.i)}
+            storageKey="perfume-upload-removed-check-v1"
+
+            exportFilename="TIO upload removed check"
+
+            exportExcel
+            emptyText="None."
+            columns={[
+              { key: "scope", label: "Archive", sortable: true, render: (c) => (c.scope === "company" ? "Whole company" : "Person only") },
+              { key: "company", label: "Company", sortable: true, render: (c) => <span className="font-semibold">{c.company}</span> },
+              { key: "person", label: "Person", render: (c) => c.person ?? DASH },
+            ]}
+          />
+          <label className="flex items-center gap-1 text-xs">
+            <input type="checkbox" checked={applyRemoved} disabled={!editable} onChange={(e) => setApplyRemoved(e.target.checked)} data-testid="perfume-leadsx-apply-removed" />
+            {tr("perfume.leadsx.rc_apply", "Archive these too on Apply (off until you check the list)")}
+          </label>
+        </div>
+      ) : null}
+
       {Object.keys(s.unknown).length ? (
-        <div className="space-y-1 text-xs" data-testid="perfume-leadsx-unknown">
+        <div id="perfume-leadsx-unknown" className="space-y-1 text-xs" data-testid="perfume-leadsx-unknown">
           <div className="text-section-header">{tr("perfume.leadsx.unknown_title", "Types not in the Catalogs yet")}</div>
           {Object.entries(s.unknown).map(([k, vals]) => <div key={k}><span className="font-semibold">{FIELD_TEXT[k] ?? k}:</span> {(vals ?? []).join(" · ")}</div>)}
           <label className="flex items-center gap-1"><input type="checkbox" checked={addUnknown} disabled={!editable} onChange={(e) => setAddUnknown(e.target.checked)} />

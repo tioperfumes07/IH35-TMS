@@ -21,6 +21,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { emptyTally, findCompany, FREE_MAIL, importRecords, importRecordSchema, type ImportRecord } from "./contacts.import.js";
 import { ContactMatcher, nameKeys, phone10 } from "./contacts.matcher.js";
 import { contactWhere, type ContactListQuery } from "./contacts.service.js";
+import { logEvent, logEvents, type LeadEvent } from "./leads.events.js";
 
 /* ------------------------------------------------------------------ catalogs */
 
@@ -63,6 +64,7 @@ export async function addCatalogValue(c: pg.PoolClient, uid: string, v: z.infer<
       WHERE NOT EXISTS (SELECT 1 FROM perfume.catalog_values WHERE kind = $1 AND lower(btrim(value)) = lower(btrim($2)) AND archived_at IS NULL)
      RETURNING id`, [v.kind, v.value, v.sort ?? null, uid]);
   if (!r.rowCount) throw new LeadsError("exists", `"${v.value}" is already in ${CATALOG_LABELS[v.kind]}.`);
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: r.rows[0]!.id, action: "added", detail: { kind: v.kind, value: v.value } });
   return { id: r.rows[0]!.id };
 }
 
@@ -70,7 +72,7 @@ export async function addCatalogValue(c: pg.PoolClient, uid: string, v: z.infer<
  * Rename a value: the catalog row and every contact carrying the old text move together (a type is a label, so the
  * contacts follow it). Source kinds are computed from where a lead came from, so they can be added or archived, not renamed.
  */
-export async function renameCatalogValue(c: pg.PoolClient, id: string, value: string) {
+export async function renameCatalogValue(c: pg.PoolClient, id: string, value: string, uid: string | null = null) {
   const cur = (await c.query<{ kind: CatalogKind; value: string }>(`SELECT kind, value FROM perfume.catalog_values WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
   if (!cur) throw new LeadsError("not_found", "Catalog value not found.");
   if (cur.kind === "source_kind") throw new LeadsError("source_kind_fixed", "A source kind comes from where the lead was found; add a new one instead.");
@@ -86,11 +88,13 @@ export async function renameCatalogValue(c: pg.PoolClient, id: string, value: st
           categories = array_replace(categories, $1, $2), updated_at = now()
         WHERE main_category = $1 OR $1 = ANY(categories)`, [cur.value, value])).rowCount ?? 0;
   }
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved } });
   return { moved };
 }
 
-export async function archiveCatalogValue(c: pg.PoolClient, id: string) {
-  await c.query(`UPDATE perfume.catalog_values SET archived_at = now(), updated_at = now() WHERE id = $1`, [id]);
+export async function archiveCatalogValue(c: pg.PoolClient, id: string, uid: string | null = null) {
+  const r = await c.query<{ kind: string; value: string }>(`UPDATE perfume.catalog_values SET archived_at = now(), updated_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING kind, value`, [id]);
+  if (r.rowCount) await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "archived", detail: { kind: r.rows[0]!.kind, value: r.rows[0]!.value } });
 }
 
 /* ------------------------------------------------------------------ download */
@@ -138,13 +142,13 @@ export async function exportRows(c: pg.PoolClient, q: ContactListQuery): Promise
   const r = await c.query(
     `SELECT co.id AS company_id, p.id AS person_id, co.name AS company, co.role, co.vendor_type, co.customer_type, co.main_category AS category,
             array_to_string(array_remove(co.categories, co.main_category), '; ') AS other_categories, co.segment, co.status,
-            array_to_string(ARRAY(SELECT DISTINCT k FROM (SELECT o.source_kind AS k FROM perfume.contact_origins o WHERE o.company_id = co.id
-                                   UNION SELECT co.source_kind) z WHERE k IS NOT NULL ORDER BY k), '; ') AS source_kinds,
+            (SELECT string_agg(k, '; ' ORDER BY k) FROM (SELECT o.source_kind AS k FROM perfume.contact_origins o WHERE o.company_id = co.id
+                                   UNION SELECT co.source_kind) z WHERE k IS NOT NULL) AS source_kinds,
             co.source,
             (SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1) AS how_started,
-            array_to_string(ARRAY(SELECT DISTINCT concat_ws(' ', substr(o.source, 11), CASE WHEN o.sender_email IS NOT NULL THEN '<' || o.sender_email || '>' END)
+            (SELECT string_agg(x, '; ' ORDER BY x) FROM (SELECT concat_ws(' ', substr(o.source, 11), CASE WHEN o.sender_email IS NOT NULL THEN '<' || o.sender_email || '>' END) AS x
                                     FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.source_kind = 'Leaked email' AND o.source ILIKE 'Copied by %'
-                                     AND (p.id IS NULL OR o.person_id IS NULL OR o.person_id = p.id)), '; ') AS leaked_from,
+                                     AND (p.id IS NULL OR o.person_id IS NULL OR o.person_id = p.id) GROUP BY 1) lk) AS leaked_from,
             p.name AS person, p.title, p.email, array_to_string(p.phones, '; ') AS phones,
             co.country, co.state, co.city, co.region, co.address, coalesce(co.website, co.domain) AS website,
             to_char(coalesce(p.first_contact_on, co.first_contact_on), 'YYYY-MM-DD') AS first_contact,
@@ -240,22 +244,28 @@ const ALIASES: Record<string, string[]> = {
   company: ["company", "companyname", "companyyourrecords"],
   role: ["role"], vendor_type: ["vendortype"], customer_type: ["customertype"], category: ["category"], other_categories: ["othercategories"],
   segment: ["businesstype", "segment"], status: ["status"],
-  person: ["person", "contactname", "nameintheemail", "contactnameyourrecords", "name"], title: ["title"],
+  person: ["person", "fullname", "contactname", "nameintheemail", "contactnameyourrecords", "name"], title: ["title"],
   email: ["email", "emails", "exposedemailtocc"], phones: ["phones", "phone", "phoneyourrecords"],
-  country: ["country", "countryfromphonecode"], state: ["state"], city: ["city"], region: ["region"], address: ["address"], website: ["website"],
+  country: ["country", "countryfromphonecode", "countryfromphone", "countryrecords"], state: ["state"], city: ["city"], region: ["region"], address: ["address"], website: ["website"],
+  zip: ["zip", "zipcode", "postalcode"],
   notes: ["notes", "note"], first_contact: ["firstemail", "firstcontact"], last_email: ["lastemail"],
   leak_no: ["leak"], leak_subject: ["leakedlistemailsubject"], leak_sender: ["leakedfromsenderaddress"], leak_sender_company: ["sendercompany"],
-  date_sent: ["datesent"], found_on: ["foundon", "listfoundon"], record_type: ["recordtype"],
-  group: ["groupidlinksalltabs", "groupidemailsphonestab", "groupid"], subjects: ["samplesubjects"],
+  date_sent: ["datesent"], found_on: ["foundon", "listfoundon", "sourceswherefound", "sources"], record_type: ["recordtype"],
+  group: ["groupidlinksalltabs", "groupidemailsphonestab", "groupidemailsfull", "groupid"], subjects: ["samplesubjects"],
+  // The final contacts file (owner 2026-11-26 18:55 CT): research rows carry their Source / Type; phone rows say whether the number is real.
+  research_source: ["source"], research_type: ["type"], valid: ["validnumber"], section: ["section"], why_removed: ["whyremoved"],
 };
 const HEADER_LOOKUP = new Map<string, string>();
 for (const [field, names] of Object.entries(ALIASES)) for (const n of names) if (!HEADER_LOOKUP.has(n)) HEADER_LOOKUP.set(n, field);
 
-export type SheetKind = "export" | "email" | "leaked" | "phone" | "other";
+export type SheetKind = "export" | "email" | "leaked" | "phone" | "research" | "removed" | "other";
 export function sheetKind(name: string, fields: Set<string>): SheetKind {
   const n = name.toLowerCase();
   if (fields.has("company_id")) return "export";
+  if (fields.has("why_removed") || /^removed/.test(n)) return "removed";
   if (fields.has("leak_sender") || /leak/.test(n)) return "leaked";
+  if (/prospect|research/.test(n) || (fields.has("research_source") && fields.has("research_type"))) return "research";
+  if (/contacts?-?full/.test(n)) return "phone";
   if (/phone/.test(n)) return "phone";
   if (/e-?mail/.test(n)) return "email";
   return "other";
@@ -290,6 +300,11 @@ export function parseSheets(input: UploadInput) {
       if (!f.company && !f.person && !f.email && !f.phones && !f.company_id) return;
       // Section rows ("USA  -  1702 phone rows") carry only the first column.
       if (kind === "phone" && !f.phones && !f.email) return;
+      // A phone the file marks as not a real number (the extra +1 / +52 copy of a number saved without a code) never comes in.
+      if (kind === "phone" && f.valid && /^no/i.test(f.valid)) return;
+      // Owner 2026-11-26: "no i do not want the inegi data in the app, it is inaccurate" — INEGI rows are never read.
+      if (kind === "research" && f.research_source && /inegi/i.test(f.research_source)
+        && !f.research_source.split(/\s*\+\s*/).some((x) => !/inegi/i.test(x))) return;
       out.push({ sheet: sh.name, kind, row: best + j + 2, f });
       used += 1;
     });
@@ -314,10 +329,16 @@ const splitList = (v: string | null | undefined) => (blank(v) ? v!.split(/[;,\n|
 const isoDate = (v: string | null | undefined) => { const t = blank(v); const m = t ? /^(\d{4})-(\d{2})-(\d{2})/.exec(t) : null; return m ? `${m[1]}-${m[2]}-${m[3]}` : null; };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** A file category like "1 Perfume vendor - sent offers/lists" → "Perfume vendor - sent offers/lists"; 1 and 2 are vendors. */
-export function fileCategory(v: string | null | undefined): { label: string | null; vendor: boolean } {
-  const t = blank(v); if (!t) return { label: null, vendor: false };
-  const m = /^([1-9])\s+(.*)$/.exec(t);
-  return { label: m ? m[2]!.trim() : t, vendor: m ? m[1] === "1" || m[1] === "2" : false };
+export function fileCategory(v: string | null | undefined): { label: string | null; role: "vendor" | "customer" | null } {
+  const t = blank(v); if (!t) return { label: null, role: null };
+  const label = t.replace(/^[1-9]\s+/, "").trim();
+  // The words say it: "Perfume vendor / supplier", "Linked to a perfume vendor" → vendor; "Perfume customer", "Mexico customer", "Buyer …" → customer.
+  const role = /\b(vendor|supplier)\b/i.test(label) ? "vendor" : /\b(customer|buyer)\b/i.test(label) ? "customer" : null;
+  return { label, role };
+}
+/** A research row's Source ("BBB + Customs / key importer") → each source on its own, INEGI left out. */
+export function researchSources(v: string | null | undefined): string[] {
+  return (blank(v) ?? "").split(/\s*\+\s*/).map((x) => x.trim()).filter((x) => x && !/inegi/i.test(x));
 }
 const COUNTRY_UNKNOWN = /^(not verified|unknown.*|incomplete.*|usa\/canada.*)$/i;
 
@@ -336,6 +357,8 @@ export type Plan = {
   remove_people: string[];
   records: Array<{ rec: ImportRecord; categories: string[]; kind: SheetKind }>;
   unknown: Partial<Record<CatalogKind, string[]>>;
+  /** Contacts on file that the upload's Removed-Check sheet lists (by email or phone) — archived on Apply unless left out. */
+  removed_check?: { people: string[]; companies: string[] };
 };
 
 function currentCompanyValue(co: CompanyRow, k: typeof COMPANY_EDIT[number]): string | null {
@@ -387,6 +410,7 @@ function companyNameFor(r: ParsedRow): string {
 
 const SOURCE_OF: Record<SheetKind, string> = {
   export: "Excel upload", other: "Excel upload", email: "Mailbox (organized contacts file)", leaked: "Leaked vendor lists", phone: "Phone contacts (organized file)",
+  research: "Research (final contacts file)", removed: "Removed",
 };
 
 export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
@@ -419,7 +443,13 @@ export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
   const newRows: ParsedRow[] = [];
   const sheetCols = new Map(sheets.map((x) => [x.name, x.columns]));
 
+  const removedEmails = new Set<string>(); const removedPhones = new Set<string>();
   for (const r of rows) {
+    if (r.kind === "removed") {
+      for (const e of splitList(r.f.email)) if (/@/.test(e)) removedEmails.add(e.toLowerCase());
+      for (const ph of splitList(r.f.phones)) { const k = phone10(ph); if (k) removedPhones.add(k); }
+      continue;
+    }
     const cid = r.f.company_id && UUID.test(r.f.company_id) ? r.f.company_id.toLowerCase() : null;
     if (!cid) { newRows.push(r); continue; }
     existingRows += 1;
@@ -479,6 +509,21 @@ export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
   plan.remove_companies = [...removeCo];
   plan.remove_people = [...removePe].filter((pid) => !removeCo.has(people.get(pid)!.company_id));
 
+  // The file's Removed-Check sheet: contacts already on file with one of its emails or phones are proposed for archive too
+  // (owner 2026-11-26 18:11 CT: "REMOVING JUNK ONCE MORE … IN CONTACTS OR PHONE CONTACTS"). A company goes only when every
+  // live person of it is on that list.
+  const rcPeople = new Set<string>();
+  if (removedEmails.size || removedPhones.size) {
+    for (const p of people.values()) {
+      if ((p.email && removedEmails.has(p.email)) || p.phones.some((x) => { const k = phone10(x); return k ? removedPhones.has(k) : false; })) rcPeople.add(p.id);
+    }
+  }
+  const livePeopleOf = new Map<string, string[]>();
+  for (const p of people.values()) { if (!livePeopleOf.has(p.company_id)) livePeopleOf.set(p.company_id, []); livePeopleOf.get(p.company_id)!.push(p.id); }
+  const rcCompanies = [...livePeopleOf.entries()].filter(([cid, ids]) => !removeCo.has(cid) && ids.length && ids.every((id) => rcPeople.has(id))).map(([cid]) => cid);
+  const rcCoSet = new Set(rcCompanies);
+  plan.removed_check = { companies: rcCompanies, people: [...rcPeople].filter((id) => !rcCoSet.has(people.get(id)!.company_id) && !removeCo.has(people.get(id)!.company_id)) };
+
   // New leads: rows without an ID, grouped into one record each.
   const groups = new Map<string, ParsedRow[]>();
   for (const r of newRows) { const k = newRecordKey(r); if (!groups.has(k)) groups.set(k, []); groups.get(k)!.push(r); }
@@ -493,28 +538,45 @@ export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
     for (const r of rs) {
       const f = r.f;
       const fc = fileCategory(f.category);
-      if (r.kind === "export" || r.kind === "other") {
-        if (fc.label) cats.add(fc.label);
-        role = merge(role, roleIn(f.role) ?? null);
-      } else if (fc.label) { cats.add(fc.label); if (fc.vendor) role = merge(role, "vendor"); }
+      if (fc.label) cats.add(fc.label);
+      // The file's own Role column wins (Vendor / Customer / Both); otherwise the category's words; a leaked-list buyer is a customer.
+      const fileRole = roleIn(f.role);
+      if (fileRole) role = merge(role, fileRole);
+      else if (r.kind !== "export" && r.kind !== "other" && fc.role) role = merge(role, fc.role);
       if (r.kind === "leaked") role = merge(role, "customer");
-      for (const k of ["vendor_type", "customer_type", "segment", "state", "city", "region", "address", "website", "notes"] as const) if (blank(f[k]) && co[k] == null) co[k] = blank(f[k]);
+      if (r.kind === "research") {
+        const t = blank(f.research_type) ?? "";
+        if (/vendor|supplier|brand|maker|exporter/i.test(t)) role = merge(role, "vendor"); else if (/customer|importer|buyer/i.test(t)) role = merge(role, "customer");
+        if (t) cats.add(t);
+      }
+      for (const k of ["vendor_type", "customer_type", "segment", "state", "city", "zip", "region", "address", "website", "notes"] as const) if (blank(f[k]) && co[k] == null) co[k] = blank(f[k]);
       const country = blank(f.country);
       if (country && !COUNTRY_UNKNOWN.test(country) && co.country == null) co.country = country;
       for (const x of splitList(f.other_categories)) cats.add(x);
       const email = blank(f.email)?.toLowerCase().split(/[;,\s]+/)[0] ?? null;
       const okEmail = email && /^[^@\s]+@[^@\s]+\.[a-z]{2,}$/.test(email) ? email : null;
       const phones = splitList(f.phones);
-      const name = blank(f.person);
+      // A research row often repeats the company as its "contact": that is not a person.
+      const name = blank(f.person) && blank(f.person)!.toLowerCase() !== (blank(f.company) ?? "").toLowerCase() ? blank(f.person) : null;
+      let rowPersonKey: string | null = null;
       if (okEmail || phones.length || name) {
         const p = { name, title: blank(f.title), email: okEmail, phones, first_contact_on: isoDate(f.first_contact ?? f.date_sent), last_email_on: isoDate(f.last_email ?? f.date_sent),
-          how_started: r.kind === "leaked" ? "Copied on vendor email" : r.kind === "phone" ? "Phone contacts" : r.kind === "email" ? "Email" : "Excel upload", found_in: blank(f.found_on) };
-        const key = personKey(p);
+          how_started: r.kind === "leaked" ? "Copied on vendor email" : r.kind === "phone" ? "Phone contacts" : r.kind === "email" ? "Email"
+            : r.kind === "research" ? researchSources(f.research_source)[0] ?? "Research" : "Excel upload", found_in: blank(f.found_on) };
+        // The same person across tabs of one group: same email, or (no email on this row) the same name or one of the same phones.
+        let key = personKey(p);
+        if (!okEmail && !peopleBy.has(key)) {
+          const k10 = new Set(phones.map(phone10).filter(Boolean));
+          const hit = [...peopleBy.entries()].find(([, q]) => (name && q.name && q.name.toLowerCase() === name.toLowerCase())
+            || (q.phones ?? []).some((x) => k10.has(phone10(x))));
+          if (hit) key = hit[0];
+        }
         const had = peopleBy.get(key);
         if (had) { had.phones = [...new Set([...(had.phones ?? []), ...phones])]; had.name = had.name ?? name; }
         else if (peopleBy.size < 200) peopleBy.set(key, p);
+        rowPersonKey = key;
       }
-      const pi = [...peopleBy.keys()].indexOf(personKey({ email: okEmail, phones, name }));
+      const pi = [...peopleBy.keys()].indexOf(rowPersonKey ?? personKey({ email: okEmail, phones, name }));
       if (r.kind === "leaked") {
         const sender = blank(f.leak_sender_company) ?? blank(f.leak_sender) ?? "unknown sender";
         origins.push({ how: "Copied on vendor email", source: `Copied by ${sender}`.slice(0, 300), occurred_on: isoDate(f.date_sent), person_index: pi >= 0 ? pi : null,
@@ -522,6 +584,10 @@ export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
           sender_email: blank(f.leak_sender)?.toLowerCase() ?? null, leak_no: f.leak_no && /^\d+$/.test(f.leak_no) ? Number(f.leak_no) : null });
       } else if (r.kind === "phone") {
         origins.push({ how: "Phone contacts", source: `Phone contacts (${blank(f.found_on) ?? blank(f.record_type) ?? "file"})`.slice(0, 300), person_index: pi >= 0 ? pi : null, occurred_on: null });
+      } else if (r.kind === "research") {
+        // One origin per research source on the row ("BBB + Customs / key importer" → two), so each lead keeps every place it was found.
+        for (const src of researchSources(f.research_source)) origins.push({ how: src.slice(0, 200), source: `Research: ${src}`.slice(0, 300), occurred_on: null, person_index: pi >= 0 ? pi : null,
+          detail: blank(f.notes)?.slice(0, 2000) ?? null });
       } else if (r.kind === "email") {
         origins.push({ how: "Email", source: `Mailbox (${blank(f.found_on) ?? "file"})`.slice(0, 300), occurred_on: isoDate(f.first_contact), person_index: pi >= 0 ? pi : null,
           detail: blank(f.subjects)?.slice(0, 2000) ?? null });
@@ -574,6 +640,13 @@ export async function previewUpload(c: pg.PoolClient, input: UploadInput) {
     new: { records: plan.records.length, would_match: wouldMatch, would_insert: plan.records.length - wouldMatch,
       people: plan.records.reduce((t, r) => t + r.rec.people.length, 0), by_kind: byKind, by_category: byCategory, samples: newSamples },
     unknown: plan.unknown,
+    removed_check: {
+      companies: plan.removed_check?.companies.length ?? 0, people: plan.removed_check?.people.length ?? 0,
+      list: [
+        ...(plan.removed_check?.companies ?? []).slice(0, 300).map((id) => ({ scope: "company" as const, company: companies.get(id)?.name ?? id, person: null })),
+        ...(plan.removed_check?.people ?? []).slice(0, 300).map((id) => { const p = people.get(id)!; return { scope: "person" as const, company: companies.get(p.company_id)?.name ?? "", person: p.name ?? p.email }; }),
+      ],
+    },
   };
   return { summary, plan };
 }
@@ -606,8 +679,11 @@ export async function discardUpload(c: pg.PoolClient, id: string) {
 
 export const applySchema = z.object({
   skip_categories: z.array(z.string().max(300)).max(200).default([]),
-  skip_kinds: z.array(z.enum(["export", "email", "leaked", "phone", "other"])).max(5).default([]),
+  skip_kinds: z.array(z.enum(["export", "email", "leaked", "phone", "research", "removed", "other"])).max(7).default([]),
   add_unknown: z.boolean().default(true),
+  /** Archive the contacts on file that the upload's Removed-Check sheet lists. Off unless the owner ticks it: that sheet is a
+   *  "check and tell me" list (the final file's own words), and it holds real business — Coppel, Lux America — measured 2026-11-27. */
+  apply_removed_check: z.boolean().default(false),
 });
 export type ApplyOptions = z.infer<typeof applySchema>;
 
@@ -617,7 +693,8 @@ const COMPANY_SET_SQL: Record<string, string> = {
 };
 
 /** Applies a previewed upload in one transaction. Removals archive; nothing is deleted. */
-export async function applyPlan(c: pg.PoolClient, uid: string, plan: Plan, opt: ApplyOptions) {
+export async function applyPlan(c: pg.PoolClient, uid: string, plan: Plan, opt: ApplyOptions, uploadId: string | null = null) {
+  const events: LeadEvent[] = [];
   const result = { companies_changed: 0, people_changed: 0, companies_removed: 0, people_removed: 0, records: 0, inserted: 0, matched: 0,
     people_inserted: 0, origins: 0, skipped: 0, catalog_added: 0, errors: [] as string[] };
   for (const u of plan.company_updates) {
@@ -630,7 +707,10 @@ export async function applyPlan(c: pg.PoolClient, uid: string, plan: Plan, opt: 
     }
     if (!sets.length) continue;
     await c.query("SAVEPOINT u");
-    try { await c.query(`UPDATE perfume.contact_companies SET ${sets.join(", ")}, updated_at = now() WHERE id = $1 AND archived_at IS NULL`, args); await c.query("RELEASE SAVEPOINT u"); result.companies_changed += 1; }
+    try {
+      await c.query(`UPDATE perfume.contact_companies SET ${sets.join(", ")}, updated_at = now() WHERE id = $1 AND archived_at IS NULL`, args); await c.query("RELEASE SAVEPOINT u"); result.companies_changed += 1;
+      events.push({ entity: "company", entity_id: u.id, company_id: u.id, action: "edited_in_excel", detail: u.set, upload_id: uploadId });
+    }
     catch (e) { await c.query("ROLLBACK TO SAVEPOINT u"); result.errors.push(`company ${u.id}: ${(e as Error).message}`); }
   }
   for (const u of plan.person_updates) {
@@ -638,21 +718,46 @@ export async function applyPlan(c: pg.PoolClient, uid: string, plan: Plan, opt: 
     for (const [k, v] of Object.entries(u.set)) { if (!["name", "title", "email", "phones"].includes(k)) continue; args.push(v); sets.push(`${k} = $${args.length}${k === "phones" ? "::text[]" : ""}`); }
     if (!sets.length) continue;
     await c.query("SAVEPOINT p");
-    try { await c.query(`UPDATE perfume.contact_people SET ${sets.join(", ")}, updated_at = now() WHERE id = $1 AND archived_at IS NULL`, args); await c.query("RELEASE SAVEPOINT p"); result.people_changed += 1; }
+    try {
+      const pr = await c.query<{ company_id: string }>(`UPDATE perfume.contact_people SET ${sets.join(", ")}, updated_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING company_id`, args);
+      await c.query("RELEASE SAVEPOINT p"); result.people_changed += 1;
+      if (pr.rowCount) events.push({ entity: "person", entity_id: u.id, company_id: pr.rows[0]!.company_id, action: "edited_in_excel", detail: u.set, upload_id: uploadId });
+    }
     catch (e) { await c.query("ROLLBACK TO SAVEPOINT p"); result.errors.push(`person ${u.id}: ${(e as Error).message.includes("contact_people_email_uq") ? "that email already belongs to another contact" : (e as Error).message}`); }
   }
   if (plan.remove_companies.length) {
-    result.companies_removed = (await c.query(`UPDATE perfume.contact_companies SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL`, [plan.remove_companies])).rowCount ?? 0;
+    const gone = await c.query<{ id: string }>(`UPDATE perfume.contact_companies SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL RETURNING id`, [plan.remove_companies]);
+    result.companies_removed = gone.rowCount ?? 0;
+    for (const g of gone.rows) events.push({ entity: "company", entity_id: g.id, company_id: g.id, action: "archived_in_excel", upload_id: uploadId });
     await c.query(`UPDATE perfume.contact_people SET archived_at = now(), updated_at = now() WHERE company_id = ANY($1::uuid[]) AND archived_at IS NULL`, [plan.remove_companies]);
   }
+  if (opt.apply_removed_check && plan.removed_check) {
+    const rc = plan.removed_check;
+    if (rc.companies.length) {
+      const gone = await c.query<{ id: string }>(`UPDATE perfume.contact_companies SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL RETURNING id`, [rc.companies]);
+      result.companies_removed += gone.rowCount ?? 0;
+      for (const g of gone.rows) events.push({ entity: "company", entity_id: g.id, company_id: g.id, action: "archived_removed_check", upload_id: uploadId });
+      await c.query(`UPDATE perfume.contact_people SET archived_at = now(), updated_at = now() WHERE company_id = ANY($1::uuid[]) AND archived_at IS NULL`, [rc.companies]);
+    }
+    if (rc.people.length) {
+      const gone = await c.query<{ id: string; company_id: string }>(`UPDATE perfume.contact_people SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL RETURNING id, company_id`, [rc.people]);
+      result.people_removed += gone.rowCount ?? 0;
+      for (const g of gone.rows) events.push({ entity: "person", entity_id: g.id, company_id: g.company_id, action: "archived_removed_check", upload_id: uploadId });
+    }
+  }
   if (plan.remove_people.length) {
-    result.people_removed = (await c.query(`UPDATE perfume.contact_people SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL`, [plan.remove_people])).rowCount ?? 0;
+    const gone = await c.query<{ id: string; company_id: string }>(`UPDATE perfume.contact_people SET archived_at = now(), updated_at = now() WHERE id = ANY($1::uuid[]) AND archived_at IS NULL RETURNING id, company_id`, [plan.remove_people]);
+    result.people_removed = gone.rowCount ?? 0;
+    for (const g of gone.rows) events.push({ entity: "person", entity_id: g.id, company_id: g.company_id, action: "archived_in_excel", upload_id: uploadId });
   }
   const skipCats = new Set(opt.skip_categories);
   const keep = plan.records.filter((r) => !opt.skip_kinds.includes(r.kind) && !(r.categories.length && r.categories.every((x) => skipCats.has(x))) && !(skipCats.has("(no category)") && !r.categories.length));
   result.skipped = plan.records.length - keep.length;
   for (let i = 0; i < keep.length; i += 500) {
-    const t = await importRecords(c, keep.slice(i, i + 500).map((r) => r.rec), uid, emptyTally());
+    const t = await importRecords(c, keep.slice(i, i + 500).map((r) => r.rec), uid, emptyTally(), (cid, inserted, rec) => {
+      events.push({ entity: "company", entity_id: cid, company_id: cid, action: inserted ? "added_from_upload" : "joined_from_upload",
+        detail: { source: rec.company.source, people: rec.people.length, origins: (rec.origins ?? []).map((o) => o.how).slice(0, 20) }, upload_id: uploadId });
+    });
     result.records += t.records; result.inserted += t.inserted; result.matched += t.matched; result.people_inserted += t.people_inserted; result.origins += t.origins;
   }
   if (opt.add_unknown) {
@@ -671,6 +776,7 @@ export async function applyPlan(c: pg.PoolClient, uid: string, plan: Plan, opt: 
       }
     }
   }
+  await logEvents(c, uid, events);
   return result;
 }
 
@@ -686,7 +792,7 @@ export async function startApply(uid: string, id: string, opt: ApplyOptions) {
     try {
       const result = await withCurrentUser(uid, async (c) => {
         const plan = (await c.query<{ plan: Plan }>(`SELECT plan FROM perfume.contact_uploads WHERE id = $1`, [id])).rows[0]!.plan;
-        const res = await applyPlan(c, uid, plan, opt);
+        const res = await applyPlan(c, uid, plan, opt, id);
         await c.query(`UPDATE perfume.contact_uploads SET status = 'applied', result = $2, applied_at = now(), error = NULL, updated_at = now() WHERE id = $1`, [id, JSON.stringify(res)]);
         return res;
       });
