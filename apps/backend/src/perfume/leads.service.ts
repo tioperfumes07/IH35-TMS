@@ -588,7 +588,7 @@ export async function saveUpload(c: pg.PoolClient, uid: string, input: UploadInp
 
 export async function listUploads(c: pg.PoolClient) {
   return (await c.query(
-    `SELECT id, file_name, status, created_at, applied_at, error, summary->'existing' AS existing, summary->'new' - 'samples' - 'by_category' AS new, result, options
+    `SELECT id, file_name, status, created_at, applied_at, error, summary->'existing' AS existing, ((summary->'new') - 'samples') - 'by_category' AS new, result, options
        FROM perfume.contact_uploads ORDER BY created_at DESC LIMIT 50`)).rows;
 }
 

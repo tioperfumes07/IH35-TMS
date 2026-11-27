@@ -10489,6 +10489,60 @@
       "brand",
       "created_at"
     ],
+    "perfume.campaign_attachments": [
+      "archived_at",
+      "bytes",
+      "campaign_id",
+      "content",
+      "created_at",
+      "created_by",
+      "file_name",
+      "id",
+      "mime_type"
+    ],
+    "perfume.campaign_batches": [
+      "batch_id",
+      "campaign_id",
+      "created_at",
+      "language",
+      "seq"
+    ],
+    "perfume.campaigns": [
+      "archived_at",
+      "attachment_names",
+      "body_en",
+      "body_es",
+      "created_at",
+      "created_by",
+      "error",
+      "failed",
+      "filters",
+      "finished_at",
+      "id",
+      "language",
+      "name",
+      "per_hour",
+      "recipients",
+      "scheduled_for",
+      "segment_id",
+      "sent",
+      "skipped",
+      "started_at",
+      "status",
+      "subject_en",
+      "subject_es",
+      "updated_at"
+    ],
+    "perfume.catalog_values": [
+      "archived_at",
+      "created_at",
+      "created_by",
+      "id",
+      "kind",
+      "sort",
+      "updated_at",
+      "value"
+    ],
     "perfume.contact_companies": [
       "address",
       "archived_at",
@@ -10528,6 +10582,7 @@
       "scian_code",
       "segment",
       "source",
+      "source_kind",
       "state",
       "status",
       "updated_at",
@@ -10542,9 +10597,12 @@
       "detail",
       "how",
       "id",
+      "leak_no",
       "occurred_on",
       "person_id",
+      "sender_email",
       "source",
+      "source_kind",
       "source_url"
     ],
     "perfume.contact_people": [
@@ -10569,6 +10627,29 @@
       "role",
       "sent_lists",
       "title",
+      "updated_at"
+    ],
+    "perfume.contact_segments": [
+      "archived_at",
+      "created_at",
+      "created_by",
+      "filters",
+      "id",
+      "name",
+      "updated_at"
+    ],
+    "perfume.contact_uploads": [
+      "applied_at",
+      "created_at",
+      "created_by",
+      "error",
+      "file_name",
+      "id",
+      "options",
+      "plan",
+      "result",
+      "status",
+      "summary",
       "updated_at"
     ],
     "perfume.desk_users": [
@@ -10647,11 +10728,13 @@
       "updated_by"
     ],
     "perfume.mail_accounts": [
+      "can_send",
       "connected_at",
       "connected_by",
       "email",
       "last_checked_at",
       "last_error",
+      "provider",
       "refresh_token_enc",
       "status",
       "updated_at"
@@ -10678,6 +10761,14 @@
       "subject",
       "vendor_id"
     ],
+    "perfume.mail_optouts": [
+      "created_at",
+      "created_by",
+      "email",
+      "reason",
+      "removed_at",
+      "removed_by"
+    ],
     "perfume.mail_rules": [
       "active",
       "created_at",
@@ -10703,6 +10794,32 @@
       "started_by",
       "trigger",
       "unassigned"
+    ],
+    "perfume.mail_send_batches": [
+      "attachment_bytes",
+      "attachment_names",
+      "body_text",
+      "error",
+      "failed",
+      "finished_at",
+      "from_email",
+      "id",
+      "recipients",
+      "sent",
+      "skipped",
+      "started_at",
+      "started_by",
+      "status",
+      "subject"
+    ],
+    "perfume.mail_sends": [
+      "batch_id",
+      "error",
+      "external_gmail_message_id",
+      "id",
+      "sent_at",
+      "status",
+      "to_email"
     ],
     "perfume.needs": [
       "item_id",
@@ -10762,6 +10879,72 @@
       "rules",
       "updated_at",
       "updated_by"
+    ],
+    "perfume.trade_buyers": [
+      "archived_at",
+      "company_id",
+      "created_at",
+      "created_by",
+      "id",
+      "note",
+      "offer_cents",
+      "status",
+      "trade_id",
+      "updated_at"
+    ],
+    "perfume.trade_show_contacts": [
+      "archived_at",
+      "booth",
+      "company_id",
+      "created_at",
+      "created_by",
+      "id",
+      "meeting_at",
+      "note",
+      "person_id",
+      "show_id",
+      "status",
+      "updated_at"
+    ],
+    "perfume.trade_shows": [
+      "archived_at",
+      "city",
+      "contact_email",
+      "contact_phone",
+      "country",
+      "created_at",
+      "created_by",
+      "dates_status",
+      "ends_on",
+      "i_go",
+      "id",
+      "kind",
+      "name",
+      "notes",
+      "organizer",
+      "register_url",
+      "source",
+      "starts_on",
+      "updated_at",
+      "venue",
+      "website"
+    ],
+    "perfume.trades": [
+      "archived_at",
+      "brand",
+      "buy_cents",
+      "closed_on",
+      "created_at",
+      "created_by",
+      "from_company_id",
+      "id",
+      "item",
+      "note",
+      "qty",
+      "sell_cents",
+      "stage",
+      "upc",
+      "updated_at"
     ],
     "perfume.vendors": [
       "archived_at",

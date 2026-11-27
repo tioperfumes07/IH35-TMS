@@ -12,7 +12,7 @@ import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js
 import { importRecords, importRecordSchema } from "./contacts.import.js";
 import { listContacts } from "./contacts.service.js";
 import {
-  actionIn, addCatalogValue, applyPlan, applySchema, EXPORT_COLUMNS, exportRows, exportWorkbook, fileCategory, listCatalogs, parseSheets,
+  actionIn, addCatalogValue, applyPlan, getUpload, listUploads, saveUpload, applySchema, EXPORT_COLUMNS, exportRows, exportWorkbook, fileCategory, listCatalogs, parseSheets,
   previewUpload, renameCatalogValue, roleIn, sheetKind,
 } from "./leads.service.js";
 
@@ -84,6 +84,13 @@ describeIntegration("leads Excel round trip (real Postgres, rolled back)", () =>
     expect(summary.new).toMatchObject({ records: 1, would_insert: 1 });
     expect(summary.new.samples[0]).toMatchObject({ kind: "leaked", email: "buyer@ldtest-shop.mx", leaked_from: "LDTEST Vendor Inc", country: "Mexico" });
     expect(summary.unknown.category).toEqual(["LDTEST niche"]);
+
+    // The upload is kept with its preview, and the Uploads list reads it back (prod 2026-11-27 00:06Z: the list query 500'd).
+    const saved = await saveUpload(db as never, TEST_OWNER_USER_ID, { file_name: "edited.xlsx", sheets });
+    const listed = (await listUploads(db as never)).find((u: { id: string }) => u.id === saved.id);
+    expect(listed).toMatchObject({ file_name: "edited.xlsx", status: "previewed", new: { records: 1, would_insert: 1 } });
+    expect(listed.new.samples).toBeUndefined();
+    expect((await getUpload(db as never, saved.id)).summary.existing.companies_changed).toBe(1);
 
     const res = await applyPlan(db as never, TEST_OWNER_USER_ID, plan, applySchema.parse({}));
     expect(res).toMatchObject({ companies_changed: 1, companies_removed: 1, people_removed: 1, inserted: 1, catalog_added: 1, errors: [] });
