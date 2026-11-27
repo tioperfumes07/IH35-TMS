@@ -1107,7 +1107,8 @@
     "202617010100",
     "202617020100",
     "202617030100",
-    "202617040100"
+    "202617040100",
+    "202617050100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1403,5 +1404,6 @@
   "202617010100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item creator: item_events kind created (owner 2026-11-27 07:37 CT)"},
   "202617020100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item catalogs: catalog_values kind item_category (owner 2026-11-27 07:51 CT)"},
   "202617030100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item families (parent over sizes/testers/sets) + olfactory family list (owner 2026-11-27 08:10 CT)"},
-  "202617040100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item per-location settings: bin, min/max, reorder qty + reorder report (owner 2026-11-27 08:10 CT)"}
+  "202617040100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item per-location settings: bin, min/max, reorder qty + reorder report (owner 2026-11-27 08:10 CT)"},
+  "202617050100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX item account mapping: item category / item -> Inventory + COGS accounts used by the stock-move poster and the tie-out (owner 2026-11-27 08:10 CT)"}
 }
