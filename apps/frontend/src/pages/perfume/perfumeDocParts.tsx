@@ -120,6 +120,7 @@ export function ItemFinder({ testId, onPick }: { testId: string; onPick: (itemId
       <input type="search" className={`${ctl} w-full max-w-[460px]`} aria-label={tr("perfume.docs.find_item", "Add an item")} placeholder={tr("perfume.docs.find_item_ph", "Add an item — type a name, brand or barcode")}
         value={find} onChange={(e) => setFind(e.target.value)} data-testid={testId} />
       <label className="text-xs">{tr("perfume.docs.qty", "Qty")} <input className={`${ctl} w-[80px] text-right`} aria-label={tr("perfume.docs.qty", "Qty")} value={qty} onChange={(e) => setQty(e.target.value)} /></label>
+      {items.isError ? <span className="text-xs text-[#9B2C2C]" role="alert">{tr("perfume.docs.find_error", "Couldn't search the items — try again.")}</span> : null}
       {find.trim().length >= 2 && (items.data?.items?.length ?? 0) > 0 ? (
         <div className="absolute top-[38px] z-20 max-h-72 w-full max-w-[460px] overflow-y-auto border border-gray-300 bg-white shadow-lg" role="listbox">
           {items.data!.items.map((it) => (
@@ -139,6 +140,7 @@ export function ItemFinder({ testId, onPick }: { testId: string; onPick: (itemId
 export function SitePicker({ value, onChange, label, testId, allowEmpty = true }: { value: string | null; onChange: (code: string | null) => void; label: string; testId: string; allowEmpty?: boolean }) {
   const sites = useQuery({ queryKey: ["perfume", "inventory", "sites"], queryFn: listPerfumeSites });
   const own = (sites.data?.sites ?? []).filter((s) => s.own && s.active && s.kind !== "transit");
+  if (sites.isError) return <span className="text-xs text-[#9B2C2C]" role="alert" data-testid={testId}>{tr("perfume.docs.sites_error", "Couldn't load the sites — try again.")}</span>;
   return (
     <select className={ctl} aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} data-testid={testId}>
       {allowEmpty ? <option value="">{tr("perfume.docs.pick_site", "Pick a site")}</option> : null}
