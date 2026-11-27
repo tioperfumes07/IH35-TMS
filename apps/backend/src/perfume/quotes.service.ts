@@ -36,7 +36,7 @@ export const linePatchSchema = z.object({ description: text(400), qty: z.number(
 export class QuoteNotFound extends Error { constructor() { super("quote_not_found"); } }
 export class QuoteInvalid extends Error {}
 
-async function event(c: pg.PoolClient, quoteId: string, uid: string | null, kind: string, detail: Record<string, unknown> = {}) {
+export async function quoteEvent(c: pg.PoolClient, quoteId: string, uid: string | null, kind: string, detail: Record<string, unknown> = {}) {
   await c.query(`INSERT INTO perfume.quote_events (quote_id, kind, detail, created_by, created_at) VALUES ($1, $2, $3::jsonb, $4, clock_timestamp())`, [quoteId, kind, JSON.stringify(detail), uid]);
 }
 
@@ -47,7 +47,9 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_price_cents), 0)::bigint FRO
   (SELECT coalesce(sum(l.qty), 0)::int FROM perfume.quote_lines l WHERE l.quote_id = q.id AND l.archived_at IS NULL) AS units`;
 const HEADER = `q.id, q.number, q.company_id, q.customer_name, q.customer_email, q.customer_phone, q.quote_date::text, q.valid_until::text,
   CASE WHEN q.status = 'sent' AND q.valid_until IS NOT NULL AND q.valid_until < current_date THEN 'expired' ELSE q.status END AS status,
-  q.currency, q.terms, q.notes, q.created_at, q.updated_at`;
+  q.currency, q.terms, q.notes, q.created_at, q.updated_at,
+  (SELECT o.id FROM perfume.sales_orders o WHERE o.quote_id = q.id AND o.archived_at IS NULL LIMIT 1) AS order_id,
+  (SELECT o.number FROM perfume.sales_orders o WHERE o.quote_id = q.id AND o.archived_at IS NULL LIMIT 1) AS order_number`;
 
 export async function listQuotes(c: pg.PoolClient, f: { status?: string; company_id?: string; item_id?: string; q?: string } = {}) {
   const where = ["q.archived_at IS NULL"];
@@ -85,7 +87,7 @@ export async function getQuote(c: pg.PoolClient, id: string): Promise<QuoteFull>
 }
 
 /** The customer's name / email / phone come from the contacts database when a company is picked. */
-async function customerOf(c: pg.PoolClient, companyId: string) {
+export async function customerOf(c: pg.PoolClient, companyId: string) {
   const r = (await c.query<{ name: string; phone: string | null; email: string | null }>(
     `SELECT co.name, co.phone, (SELECT p.email FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL AND p.email IS NOT NULL
              AND p.opted_out_at IS NULL ORDER BY p.last_email_on DESC NULLS LAST LIMIT 1) AS email
@@ -103,7 +105,7 @@ export async function createQuote(c: pg.PoolClient, uid: string, x: z.infer<type
      VALUES ($1,$2,$3,$4,coalesce($5::date, current_date),$6,coalesce($7,'USD'),$8,$9,$10) RETURNING id, number`,
     [x.company_id ?? null, name, x.customer_email ?? cu?.email ?? null, x.customer_phone ?? cu?.phone ?? null, x.quote_date ?? null, x.valid_until ?? null,
      x.currency ?? null, x.terms, x.notes, uid]);
-  await event(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, customer: name });
+  await quoteEvent(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, customer: name });
   return r.rows[0]!;
 }
 
@@ -127,7 +129,7 @@ export async function updateQuote(c: pg.PoolClient, uid: string, id: string, x: 
             currency = $8, terms = $9, notes = $10, updated_at = now() WHERE id = $1`,
     [id, next.company_id, next.customer_name, next.customer_email, next.customer_phone, next.quote_date, next.valid_until, next.currency, next.terms, next.notes]);
   const changed = Object.keys(x).filter((k) => x[k as keyof typeof x] !== undefined);
-  await event(c, id, uid, "edited", { fields: changed });
+  await quoteEvent(c, id, uid, "edited", { fields: changed });
 }
 
 export async function setQuoteStatus(c: pg.PoolClient, uid: string, id: string, status: QuoteStatus) {
@@ -135,13 +137,13 @@ export async function setQuoteStatus(c: pg.PoolClient, uid: string, id: string, 
   if (!r.rows[0]) throw new QuoteNotFound();
   if (r.rows[0].status === status) return;
   await c.query(`UPDATE perfume.quotes SET status = $2, updated_at = now() WHERE id = $1`, [id, status]);
-  await event(c, id, uid, "status", { from: r.rows[0].status, to: status });
+  await quoteEvent(c, id, uid, "status", { from: r.rows[0].status, to: status });
 }
 
 export async function archiveQuote(c: pg.PoolClient, uid: string, id: string) {
   const r = await c.query(`UPDATE perfume.quotes SET archived_at = now(), updated_at = now() WHERE id = $1 AND archived_at IS NULL`, [id]);
   if (!r.rowCount) throw new QuoteNotFound();
-  await event(c, id, uid, "edited", { archived: true });
+  await quoteEvent(c, id, uid, "edited", { archived: true });
 }
 
 /** The lowest price an item is on at a current supplier list (competitors, my own lists and offers never count). */
@@ -200,7 +202,7 @@ export async function addLine(c: pg.PoolClient, uid: string, quoteId: string, x:
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
     [quoteId, no, x.item_id ?? null, description, upc, x.qty, price, cost?.cents ?? null, cost?.vendor_id ?? null]);
   await c.query(`UPDATE perfume.quotes SET updated_at = now() WHERE id = $1`, [quoteId]);
-  await event(c, quoteId, uid, "line_added", { line_no: no, description, qty: x.qty, unit_price_cents: price, cost_cents: cost?.cents ?? null, cost_vendor: cost?.vendor ?? null });
+  await quoteEvent(c, quoteId, uid, "line_added", { line_no: no, description, qty: x.qty, unit_price_cents: price, cost_cents: cost?.cents ?? null, cost_vendor: cost?.vendor ?? null });
   return { id: r.rows[0]!.id, unit_price_cents: price };
 }
 
@@ -211,13 +213,13 @@ export async function updateLine(c: pg.PoolClient, uid: string, lineId: string, 
     `UPDATE perfume.quote_lines SET description = coalesce($2, description), qty = coalesce($3, qty), unit_price_cents = coalesce($4, unit_price_cents), updated_at = now() WHERE id = $1`,
     [lineId, x.description ?? null, x.qty ?? null, x.unit_price_cents ?? null]);
   await c.query(`UPDATE perfume.quotes SET updated_at = now() WHERE id = $1`, [b.quote_id]);
-  await event(c, b.quote_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_price_cents: Number(b.unit_price_cents), description: b.description }, to: x });
+  await quoteEvent(c, b.quote_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_price_cents: Number(b.unit_price_cents), description: b.description }, to: x });
 }
 
 export async function removeLine(c: pg.PoolClient, uid: string, lineId: string) {
   const b = (await c.query(`UPDATE perfume.quote_lines SET archived_at = now(), updated_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING quote_id, line_no, description`, [lineId])).rows[0];
   if (!b) throw new QuoteNotFound();
-  await event(c, b.quote_id, uid, "line_removed", { line_no: b.line_no, description: b.description });
+  await quoteEvent(c, b.quote_id, uid, "line_removed", { line_no: b.line_no, description: b.description });
 }
 
 /** A new draft with the same customer and lines (today's date; prices as they were). */
@@ -232,14 +234,14 @@ export async function copyQuote(c: pg.PoolClient, uid: string, id: string) {
       `INSERT INTO perfume.quote_lines (quote_id, line_no, item_id, description, upc, qty, unit_price_cents, cost_cents, cost_vendor_id)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [n.id, no, l.item_id, l.description, l.upc, l.qty, l.unit_price_cents, l.cost_cents, l.cost_vendor_id]);
   }
-  await event(c, n.id, uid, "copied_from", { number: src.number, lines: no });
+  await quoteEvent(c, n.id, uid, "copied_from", { number: src.number, lines: no });
   return n;
 }
 
 /* ------------------------------------------------------------------ Excel + PDF */
 
-const money = (cents: number, cur: string) => `${cur === "MXN" ? "MX$" : "$"}${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-const usDate = (d: string | null) => (d ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}` : "");
+export const money = (cents: number, cur: string) => `${cur === "MXN" ? "MX$" : "$"}${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+export const usDate = (d: string | null) => (d ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}` : "");
 
 /** The quote as an Excel file: header, one row per line with formulas (qty × price = total), and the total by formula. */
 export async function quoteXlsx(c: pg.PoolClient, uid: string, id: string): Promise<{ buffer: Buffer; filename: string }> {
@@ -268,11 +270,11 @@ export async function quoteXlsx(c: pg.PoolClient, uid: string, id: string): Prom
   if (q.terms) { ws.addRow([]); ws.addRow([`Terms: ${q.terms}`]); }
   if (q.notes) ws.addRow([`Notes: ${q.notes}`]);
   ws.eachRow((row) => row.eachCell((cell) => { cell.font = { ...(cell.font ?? {}), name: "Arial" }; }));
-  await event(c, id, uid, "exported_xlsx", {});
+  await quoteEvent(c, id, uid, "exported_xlsx", {});
   return { buffer: Buffer.from(await wb.xlsx.writeBuffer()), filename: `${q.number} ${q.customer_name}.xlsx`.replace(/[^\w .-]+/g, "") };
 }
 
-const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
+export const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]!));
 
 export function quoteHtml(q: QuoteFull): string {
   const rows = q.lines.map((l) => `<tr><td>${l.line_no}</td><td>${esc(l.description)}</td><td>${esc(l.upc ?? "")}</td><td class="n">${l.qty.toLocaleString("en-US")}</td>
@@ -305,7 +307,7 @@ export async function quotePdf(c: pg.PoolClient, uid: string, id: string): Promi
     const page = await browser.newPage();
     await page.setContent(quoteHtml(q), { waitUntil: "load" });
     const pdf = await page.pdf({ format: "Letter", printBackground: true });
-    await event(c, id, uid, "exported_pdf", {});
+    await quoteEvent(c, id, uid, "exported_pdf", {});
     return { buffer: Buffer.from(pdf), filename: `${q.number} ${q.customer_name}.pdf`.replace(/[^\w .-]+/g, "") };
   } finally { await browser.close(); }
 }

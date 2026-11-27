@@ -284,10 +284,13 @@ export async function loadIndex(c: PoolClient): Promise<MatchIndex> {
   for (const i of items.rows) addItem(ix, { id: i.id, brand: i.brand, name: i.name, sizeMl: i.size_ml == null ? null : Number(i.size_ml), conc: i.conc,
     gender: i.gender, flags: i.flags, identityKey: i.identity_key, looseKey: i.loose_key, displayName: i.display_name });
   for (const u of (await c.query<{ upc: string; item_id: string }>(`SELECT upc, item_id FROM perfume.item_upcs`)).rows) ix.byUpc.set(u.upc, u.item_id);
-  for (const a of (await c.query<{ vendor_id: string; sku: string | null; text_key: string | null; item_id: string }>(
-    `SELECT vendor_id, sku, text_key, item_id FROM perfume.item_aliases`)).rows) {
+  for (const a of (await c.query<{ vendor_id: string; sku: string | null; text_key: string | null; item_id: string; method: string }>(
+    `SELECT vendor_id, sku, text_key, item_id, method FROM perfume.item_aliases`)).rows) {
     if (a.sku) ix.vendorSku.set(`${a.vendor_id}|${a.sku}`, a.item_id);
-    if (a.text_key) ix.vendorText.set(`${a.vendor_id}|${a.text_key}`, a.item_id);
+    if (a.text_key) {
+      ix.vendorText.set(`${a.vendor_id}|${a.text_key}`, a.item_id);
+      if (a.method !== "confirmed") ix.vendorTextAuto.add(`${a.vendor_id}|${a.text_key}`);
+    }
   }
   return ix;
 }
@@ -649,7 +652,52 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   if (stored.rows[0].n !== check.rows_saved || Number(stored.rows[0].total) !== check.price_total_saved_cents) {
     throw new Error(`import_store_mismatch: stored ${stored.rows[0].n} rows / ${stored.rows[0].total}¢, expected ${check.rows_saved} / ${check.price_total_saved_cents}¢`);
   }
+  await rememberVendorLinks(c, listId);
   return { list_id: listId, check };
+}
+
+/**
+ * Owner 2026-11-26 19:12 CT: "save all the descriptipons dfrom different cendors linked to ours and the upc etc so any will
+ * maztch automatically". Every line the engine or the owner linked teaches the item three things, so the next list from any
+ * vendor links by itself: its barcode (a new one only — a barcode never moves here; the owner's confirmation moves it),
+ * the vendor's own code, and the vendor's own words (textKeyOf: brand + description + size, upper, one space).
+ * Only when every linked line agrees on one item; a barcode two products share in one list is never learned (the import's
+ * shared-UPC rule). A "loose" link teaches nothing. Codes and words the owner confirmed are never changed; the engine's
+ * own follow the latest link. Set-based: one statement each, for one list (import) or every live list (Rematch).
+ */
+export async function rememberVendorLinks(c: PoolClient, listId: string | null = null): Promise<{ upcs: number; codes: number; words: number }> {
+  const scope = listId ? "AND l.id = $1" : "";
+  const args = listId ? [listId] : [];
+  const linked = `perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id AND i.merged_into_id IS NULL
+    WHERE r.match_status = 'matched' AND r.match_method IS NOT NULL AND r.match_method <> 'loose_key' AND l.voided_at IS NULL ${scope}`;
+  // A barcode two different products carry inside ONE list (the import's shared-UPC rule) is never learned.
+  const upcs = await c.query(
+    `WITH shared AS (SELECT r2.list_id, r2.upc FROM perfume.price_list_rows r2 JOIN perfume.price_lists l2 ON l2.id = r2.list_id
+                      WHERE r2.upc IS NOT NULL AND l2.voided_at IS NULL ${listId ? "AND l2.id = $1" : ""}
+                      GROUP BY r2.list_id, r2.upc HAVING count(DISTINCT r2.identity_key) > 1)
+     INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id)
+     SELECT r.upc, min(r.item_id::text)::uuid, min(r.list_id::text)::uuid FROM ${linked}
+        AND r.upc ~ '^[1-9][0-9]{7,13}$'
+        AND NOT EXISTS (SELECT 1 FROM shared s WHERE s.list_id = r.list_id AND s.upc = r.upc)
+      GROUP BY r.upc HAVING count(DISTINCT r.item_id) = 1
+     ON CONFLICT (upc) DO NOTHING`, args);
+  const codes = await c.query(
+    `INSERT INTO perfume.item_aliases (item_id, vendor_id, sku, method)
+     SELECT min(r.item_id::text)::uuid, l.vendor_id, btrim(r.sku), 'import' FROM ${linked} AND btrim(coalesce(r.sku, '')) <> ''
+      GROUP BY l.vendor_id, btrim(r.sku) HAVING count(DISTINCT r.item_id) = 1
+     ON CONFLICT (vendor_id, sku) WHERE sku IS NOT NULL DO UPDATE SET item_id = EXCLUDED.item_id
+      WHERE perfume.item_aliases.method = 'import' AND perfume.item_aliases.item_id <> EXCLUDED.item_id`, args);
+  const words = await c.query(
+    `INSERT INTO perfume.item_aliases (item_id, vendor_id, text_key, method)
+     SELECT min(t.item_id::text)::uuid, t.vendor_id, t.text_key, 'import'
+       FROM (SELECT r.item_id, l.vendor_id,
+                    btrim(regexp_replace(upper(coalesce(r.brand, '') || ' ' || r.description || ' ' || coalesce(r.size_text, '')), '[[:space:]]+', ' ', 'g')) AS text_key
+               FROM ${linked}) t
+      WHERE t.text_key <> ''
+      GROUP BY t.vendor_id, t.text_key HAVING count(DISTINCT t.item_id) = 1
+     ON CONFLICT (vendor_id, text_key) WHERE text_key IS NOT NULL DO UPDATE SET item_id = EXCLUDED.item_id
+      WHERE perfume.item_aliases.method = 'import' AND perfume.item_aliases.item_id <> EXCLUDED.item_id`, args);
+  return { upcs: upcs.rowCount ?? 0, codes: codes.rowCount ?? 0, words: words.rowCount ?? 0 };
 }
 
 export async function listLists(c: PoolClient) {
@@ -1177,7 +1225,10 @@ export async function rematchReview(c: PoolClient, userId: string | null = null)
     kindClash++;
   }
   const split = await relinkSplitItems(c, ix);
-  return { ...out, items_renamed: healed.renamed, items_merged: healed.merged, kind_clash_to_review: kindClash, ...split };
+  // Learn from the final links (after the kind and split passes), so a link those passes undid is never remembered.
+  const learned = await rememberVendorLinks(c);
+  return { ...out, items_renamed: healed.renamed, items_merged: healed.merged, kind_clash_to_review: kindClash, ...split,
+    learned_upcs: learned.upcs, learned_codes: learned.codes, learned_words: learned.words };
 }
 
 /**
