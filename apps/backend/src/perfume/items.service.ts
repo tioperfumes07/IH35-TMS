@@ -548,13 +548,34 @@ export async function stockLinkQueue(c: pg.PoolClient, f: z.infer<typeof stockQu
 
 /** Link OUR item to the vendors' item: every line of it moves (remembered by HK code and words for the next import), its UPCs,
  *  TIO code, my avg cost and HK codes follow, and ours is retired as merged into it. Both items' files record it. */
-export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, toId: string) {
+/** Two sizes that are one bottle written two ways — oz rounded to ml (4 oz = 118 vs 120 ml; 84 vs 85 ml): within 2.5 %. */
+export const SAME_BOTTLE_SIZE_SHARE = 0.025;
+export function sizesAreSameBottle(a: number, b: number) {
+  return Math.abs(a - b) <= SAME_BOTTLE_SIZE_SHARE * Math.max(a, b);
+}
+
+export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, toId: string, opts: { sameBottleSizes?: boolean } = {}) {
   if (fromId === toId) throw new ItemInvalid("That is the same item.");
   const from = await liveItem(c, fromId);
   const to = await liveItem(c, toId);
   const kind = (f: string[] | null) => (f ?? []).filter((x) => ["SET", "TESTER", "MINI", "BODY", "OIL", "VARIOUS", "REFILL"].includes(x)).sort().join("+");
-  if (from.size_ml != null && to.size_ml != null && Number(from.size_ml) !== Number(to.size_ml)) throw new ItemInvalid(`Different sizes: ${Number(from.size_ml)} ml vs ${Number(to.size_ml)} ml.`);
-  if (kind(from.flags) !== kind(to.flags)) throw new ItemInvalid(`Different kind of product: ${kind(from.flags) || "regular"} vs ${kind(to.flags) || "regular"}.`);
+  const fromSize = from.size_ml == null ? null : Number(from.size_ml);
+  const toSize = to.size_ml == null ? null : Number(to.size_ml);
+  // Owner 2026-11-27 12:05 CT ("continue working on the rest"): a size written two ways (118 vs 120 ml) is one bottle only when the
+  // owner says so on this link (same_bottle_sizes) and the two are within 2.5 %; anything else stays refused.
+  const roundedSize = fromSize != null && toSize != null && fromSize !== toSize;
+  if (roundedSize && !(opts.sameBottleSizes && sizesAreSameBottle(fromSize, toSize))) {
+    throw new ItemInvalid(sizesAreSameBottle(fromSize, toSize)
+      ? `Different sizes: ${fromSize} ml vs ${toSize} ml. If this is the same bottle written two ways, link it with "same bottle sizes".`
+      : `Different sizes: ${fromSize} ml vs ${toSize} ml.`);
+  }
+  // Between two gift sets BODY / MINI / VARIOUS only say what is inside the box, and each vendor's wording raises them differently
+  // ("SG" vs "shower gel"): the contents are what the owner checks when he links a set, so sets compare on SET / TESTER / REFILL.
+  const bothSets = kind(from.flags).split("+").includes("SET") && kind(to.flags).split("+").includes("SET");
+  const boxKind = (f: string[] | null) => (f ?? []).filter((x) => ["SET", "TESTER", "REFILL"].includes(x)).sort().join("+");
+  if (bothSets ? boxKind(from.flags) !== boxKind(to.flags) : kind(from.flags) !== kind(to.flags)) {
+    throw new ItemInvalid(`Different kind of product: ${kind(from.flags) || "regular"} vs ${kind(to.flags) || "regular"}.`);
+  }
   const rows = (await c.query<{ id: string }>(`SELECT id FROM perfume.price_list_rows WHERE item_id = $1`, [fromId])).rows;
   for (const r of rows) await confirmRow(c as never, uid, r.id, { item_id: toId });
   await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [fromId, toId]);
@@ -567,8 +588,9 @@ export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, 
     `INSERT INTO perfume.item_costs (item_id, avg_cost_cents, updated_by, updated_at)
      SELECT $2, avg_cost_cents, $3, now() FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents IS NOT NULL ON CONFLICT (item_id) DO NOTHING`, [fromId, toId, uid]);
   await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [fromId, toId]);
-  await event(c, fromId, uid, "line_linked", { merged_into_item_id: toId, into: to.display_name, lines: rows.length });
-  await event(c, toId, uid, "line_linked", { merged_from_item_id: fromId, from: from.display_name, lines: rows.length, tio_code: from.internal_code });
+  const sizes = roundedSize ? { same_bottle_sizes: { from_ml: fromSize, to_ml: toSize } } : {};
+  await event(c, fromId, uid, "line_linked", { merged_into_item_id: toId, into: to.display_name, lines: rows.length, ...sizes });
+  await event(c, toId, uid, "line_linked", { merged_from_item_id: fromId, from: from.display_name, lines: rows.length, tio_code: from.internal_code, ...sizes });
   invalidateGridCache();
   return { lines: rows.length, into: to.display_name };
 }

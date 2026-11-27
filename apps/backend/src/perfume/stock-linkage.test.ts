@@ -96,6 +96,21 @@ describeIntegration("stock linkage (real Postgres, rolled back)", () => {
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.item_aliases WHERE item_id = $1 AND vendor_id = $2`, [vend, inv])).rows[0].n).toBeGreaterThan(0);
     const f = await getItemFile(db as never, vend) as { events: Array<{ kind: string }> };
     expect(f.events.map((e) => e.kind)).toContain("line_linked");
+
+    // Same bottle written two ways (4 oz = 118 vs 120 ml): refused unless the owner says so on the link, and only within 2.5 %.
+    const green118 = await item("ZZS", "GREEN", 118, "M"), green120 = await item("ZZS", "GREEN", 120, "M"), green100 = await item("ZZS", "GREEN", 100, "M");
+    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green120)).rejects.toThrow(/same bottle sizes/);
+    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green100, { sameBottleSizes: true })).rejects.toThrow(/^Different sizes: 118 ml vs 100 ml\.$/);
+    expect(await linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green120, { sameBottleSizes: true })).toMatchObject({ into: expect.stringContaining("GREEN") });
+    expect((await db.query(`SELECT merged_into_id FROM perfume.items WHERE id = $1`, [green118])).rows[0].merged_into_id).toBe(green120);
+    expect((await db.query(`SELECT detail->'same_bottle_sizes' AS s FROM perfume.item_events WHERE item_id = $1 AND kind = 'line_linked'`, [green120])).rows[0].s).toEqual({ from_ml: 118, to_ml: 120 });
+
+    // Two gift sets: what is inside (BODY / MINI / VARIOUS) is the owner's check, not a refusal; a set never links to a tester set or a single bottle.
+    const setMine = await item("ZZS", "AQUA SET", 100, "M", ["SET"]), setVend = await item("ZZS", "AQUA SET SG", 100, "M", ["BODY", "SET"]);
+    const setTester = await item("ZZS", "AQUA SET T", 100, "M", ["SET", "TESTER"]), single = await item("ZZS", "AQUA", 100, "M", ["BODY"]);
+    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, setMine, setTester)).rejects.toThrow(/Different kind/);
+    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, setMine, single)).rejects.toThrow(/Different kind/);
+    expect(await linkItemTo(db as never, TEST_OWNER_USER_ID, setMine, setVend)).toMatchObject({ into: expect.stringContaining("AQUA SET SG") });
     // BLEU untouched until he links it by hand.
     expect((await db.query(`SELECT merged_into_id FROM perfume.items WHERE id = ANY($1::uuid[])`, [[dupA, dupB]])).rows.every((r) => r.merged_into_id === null)).toBe(true);
     await linkItemTo(db as never, TEST_OWNER_USER_ID, dupA, dupV);
