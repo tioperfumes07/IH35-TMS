@@ -19,7 +19,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, confirmPerfumeRow, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
   listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile,
-  type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeLinkageLine,
+  type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
@@ -41,10 +41,12 @@ export function PerfumeItemFilePanel() {
   const [q, setQ] = useState("");
   const [typed, setTyped] = useState("");
   const [has, setHas] = useState<PerfumeItemFileHas | undefined>(undefined);
+  // Owner 23:23 CT: "TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL" — our stock items first.
+  const [scope, setScope] = useState<PerfumeItemScope>("mine");
   const [offset, setOffset] = useState(0);
   const [selected, setSelected] = useState<string | null>(openId);
   useEffect(() => { if (openId) setSelected(openId); }, [openId]);
-  const list = useQuery({ queryKey: ["perfume", "item-file", q, has, offset], queryFn: () => listPerfumeItemFile({ q, has, limit: PAGE, offset }) });
+  const list = useQuery({ queryKey: ["perfume", "item-file", q, has, scope, offset], queryFn: () => listPerfumeItemFile({ q, has, scope, limit: PAGE, offset }) });
   const { pushToast } = useToast();
   if (list.isError) return <ListErrorState title={tr("perfume.itemfile.error", "Couldn't load the item file")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
   const c = list.data?.counts;
@@ -52,22 +54,29 @@ export function PerfumeItemFilePanel() {
   const total = list.data?.total ?? 0;
   return (
     <div className="space-y-3" data-testid="perfume-itemfile-panel">
-      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-5" data-testid="perfume-itemfile-kpis">
-        <KpiCard label={tr("perfume.itemfile.kpi_items", "Items")} number={(c?.items ?? 0).toLocaleString("en-US")} onClick={() => pick(undefined)} />
+      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-itemfile-kpis">
+        <KpiCard label={tr("perfume.itemfile.kpi_mine", "Our items")} number={(c?.mine ?? 0).toLocaleString("en-US")} onClick={() => { setScope("mine"); pick(undefined); }} />
+        <KpiCard label={tr("perfume.itemfile.kpi_vendors", "Vendors' items only")} number={(c?.vendors_only ?? 0).toLocaleString("en-US")} onClick={() => { setScope("vendors"); pick(undefined); }} />
+        <KpiCard label={tr("perfume.itemfile.kpi_items", "All items")} number={(c?.items ?? 0).toLocaleString("en-US")} onClick={() => { setScope("all"); pick(undefined); }} />
         <KpiCard label={tr("perfume.itemfile.kpi_tio", "With a TIO code")} number={(c?.with_tio ?? 0).toLocaleString("en-US")} onClick={() => pick("tio")} />
         <KpiCard label={tr("perfume.itemfile.kpi_hk", "With an HK code")} number={(c?.with_hk ?? 0).toLocaleString("en-US")} onClick={() => pick("hk")} />
         <KpiCard label={tr("perfume.itemfile.kpi_upc", "With a UPC")} number={(c?.with_upc ?? 0).toLocaleString("en-US")} onClick={() => pick("upc")} />
-        <KpiCard label={tr("perfume.itemfile.kpi_mine", "On my lists")} number={has === "mine" ? total.toLocaleString("en-US") : tr("perfume.itemfile.show", "Show")} onClick={() => pick("mine")} />
       </div>
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.itemfile.title", "Item file")}>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <input type="search" className={`${ctl} min-w-[260px] flex-1`} aria-label={tr("perfume.itemfile.search", "Search items")} value={typed}
-            placeholder={tr("perfume.itemfile.search_ph", "Name, brand, UPC, TIO code or HK code")} onChange={(e) => setTyped(e.target.value)}
+            placeholder={tr("perfume.itemfile.search_ph", "UPC, description, brand, TIO code or HK code")} onChange={(e) => setTyped(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter") { setQ(typed); setOffset(0); } }} data-testid="perfume-itemfile-search" />
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => { setQ(typed); setOffset(0); }} data-testid="perfume-itemfile-go">{tr("perfume.itemfile.go", "Search")}</Button>
+          <span className="flex gap-1" role="group" aria-label={tr("perfume.itemfile.scope", "Whose items")} data-testid="perfume-itemfile-scope">
+            {(["mine", "vendors", "all"] as const).map((sc) => (
+              <Button key={sc} type="button" variant={scope === sc ? "primary" : "secondary"} className="h-[34px] px-3 text-xs" aria-pressed={scope === sc}
+                onClick={() => { setScope(sc); setOffset(0); }} data-testid={`perfume-itemfile-scope-${sc}`}>
+                {sc === "mine" ? tr("perfume.itemfile.ours", "Our items") : sc === "vendors" ? tr("perfume.itemfile.vendors", "Vendors only") : tr("perfume.itemfile.all_scope", "All")}
+              </Button>))}
+          </span>
           <select className={ctl} aria-label={tr("perfume.itemfile.has", "Show")} value={has ?? ""} onChange={(e) => pick((e.target.value || undefined) as PerfumeItemFileHas | undefined)} data-testid="perfume-itemfile-has">
             <option value="">{tr("perfume.itemfile.all", "All items")}</option>
-            <option value="mine">{tr("perfume.itemfile.mine", "On my lists")}</option>
             <option value="tio">{tr("perfume.itemfile.tio", "With a TIO code")}</option>
             <option value="no_tio">{tr("perfume.itemfile.no_tio", "No TIO code")}</option>
             <option value="hk">{tr("perfume.itemfile.hk", "With an HK code")}</option>
@@ -76,17 +85,17 @@ export function PerfumeItemFilePanel() {
             <option value="no_upc">{tr("perfume.itemfile.no_upc", "No UPC")}</option>
           </select>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-itemfile-xlsx"
-            onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
+            onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has, scope }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
         </div>
         <FillCodes onDone={() => void list.refetch()} />
         <ParityTable<PerfumeItemFileRow>
           rows={list.data?.rows ?? []} rowKey={(r) => `${r.id}-${r.tio_code}-${r.upcs.length}-${r.hk_codes.length}`} loading={list.isLoading} storageKey="perfume-itemfile-v1"
           exportFilename="TIO item file (this page)" exportExcel emptyText="No items match." onRowClick={(r) => setSelected(r.id)}
           columns={[
-            { key: "display_name", label: "Item", sortable: true, render: (r) => <span className="font-semibold">{r.display_name}</span> },
-            { key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
-            { key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
-            { key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
+            { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <span className="font-semibold">{r.display_name}</span> },
+            { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
+            { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
+            { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
             { key: "best_cost_cents", label: "Best supplier cost", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.best_cost_cents), exportValue: (r) => (r.best_cost_cents == null ? "" : r.best_cost_cents / 100) },
             { key: "my_avg_cost_cents", label: "My avg cost", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.my_avg_cost_cents), exportValue: (r) => (r.my_avg_cost_cents == null ? "" : r.my_avg_cost_cents / 100) },
@@ -187,7 +196,7 @@ function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
           </div>
           <ParityTable<{ upc: string }> title={tr("perfume.itemfile.upcs", "UPCs")} rows={x.upcs.map((u) => ({ upc: u }))} rowKey={(r) => r.upc} storageKey="perfume-itemfile-upcs-v1"
             exportFilename="TIO item UPCs" exportExcel emptyText="No UPC — add one above."
-            columns={[{ key: "upc", label: "UPC", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.upc)}>{r.upc}</button>, exportValue: (r) => r.upc }]} />
+            columns={[{ className: "text-left", key: "upc", label: "UPC", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.upc)}>{r.upc}</button>, exportValue: (r) => r.upc }]} />
         </div>
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-end gap-2 text-xs">
@@ -198,9 +207,9 @@ function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
           <ParityTable<PerfumeItemFile["hk_codes"][number]> title={tr("perfume.itemfile.hk_codes", "HK codes")} rows={x.hk_codes} rowKey={(r) => r.id} storageKey="perfume-itemfile-hk-v1"
             exportFilename="TIO item HK codes" exportExcel emptyText="No HK code — add one above."
             columns={[
-              { key: "sku", label: "HK code", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.sku)}>{r.sku}</button>, exportValue: (r) => r.sku },
-              { key: "list", label: "From my list", render: (r) => r.list },
-              { key: "method", label: "Linked", render: (r) => (r.method === "confirmed" ? "By me" : "By the desk"), exportValue: (r) => (r.method === "confirmed" ? "By me" : "By the desk") },
+              { className: "text-left", key: "sku", label: "HK code", render: (r) => <button type="button" className="underline" onClick={() => open("linkage", r.sku)}>{r.sku}</button>, exportValue: (r) => r.sku },
+              { className: "text-left", key: "list", label: "From my list", render: (r) => r.list },
+              { className: "text-left", key: "method", label: "Linked", render: (r) => (r.method === "confirmed" ? "By me" : "By the desk"), exportValue: (r) => (r.method === "confirmed" ? "By me" : "By the desk") },
             ]} />
         </div>
       </div>
@@ -208,11 +217,11 @@ function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
         title={tr("perfume.itemfile.linked", "Every line linked to this item (current lists)")} rows={x.vendor_lines} rowKey={(l) => l.id} storageKey="perfume-itemfile-lines-v1"
         exportFilename="TIO item linked lines" exportExcel emptyText="No list carries this item."
         columns={[
-          { key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
-          { key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
-          { key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
-          { key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
-          { key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
+          { className: "text-left", key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
+          { className: "text-left", key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
+          { className: "text-left", key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
+          { className: "text-left", key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
+          { className: "text-left", key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
           { key: "price_cents", label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
           { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
         ]}
@@ -221,9 +230,9 @@ function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
         title={tr("perfume.itemfile.history", "History")} rows={x.events} rowKey={(e) => e.id} storageKey="perfume-itemfile-history-v1" exportFilename="TIO item history" exportExcel emptyText="No changes yet."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
-          { key: "kind", label: "What", render: (e) => EVENT[e.kind] ?? e.kind, exportValue: (e) => EVENT[e.kind] ?? e.kind },
-          { key: "detail", label: "Detail", render: (e) => JSON.stringify(e.detail), exportValue: (e) => JSON.stringify(e.detail) },
-          { key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
+          { className: "text-left", key: "kind", label: "What", render: (e) => EVENT[e.kind] ?? e.kind, exportValue: (e) => EVENT[e.kind] ?? e.kind },
+          { className: "text-left", key: "detail", label: "Detail", render: (e) => JSON.stringify(e.detail), exportValue: (e) => JSON.stringify(e.detail) },
+          { className: "text-left", key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
         ]}
       />
     </section>
@@ -265,16 +274,16 @@ export function PerfumeLinkagePanel() {
           rows={d?.lines ?? []} rowKey={(l) => `${l.line_id}-${l.item_id}`} loading={lk.isLoading && q.length > 0} storageKey="perfume-linkage-v1" exportFilename={`TIO linkage ${q}`} exportExcel
           emptyText={q ? "No line on a current list carries it." : "Type a UPC, a code or words above."}
           columns={[
-            { key: "found_by", label: "Found by", render: (l) => FOUND[l.found_by], exportValue: (l) => FOUND[l.found_by] },
-            { key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
-            { key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
-            { key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
-            { key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
-            { key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
+            { className: "text-left", key: "found_by", label: "Found by", render: (l) => FOUND[l.found_by], exportValue: (l) => FOUND[l.found_by] },
+            { className: "text-left", key: "vendor", label: "List", render: (l) => <DocLink tab="suppliers" id={l.vendor_id}>{l.vendor}</DocLink>, exportValue: (l) => l.vendor },
+            { className: "text-left", key: "kind", label: "Kind", render: (l) => KIND[l.kind] ?? l.kind, exportValue: (l) => KIND[l.kind] ?? l.kind },
+            { className: "text-left", key: "sku", label: "Their code", render: (l) => l.sku ?? DASH, exportValue: (l) => l.sku ?? "" },
+            { className: "text-left", key: "upc", label: "Their UPC", render: (l) => l.upc ?? DASH, exportValue: (l) => l.upc ?? "" },
+            { className: "text-left", key: "description", label: "Their description", render: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" "), exportValue: (l) => [l.brand, l.description, l.size_text].filter(Boolean).join(" ") },
             { key: "price_cents", label: "Price", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.price_cents), exportValue: (l) => (l.price_cents == null ? "" : l.price_cents / 100) },
-            { key: "item", label: "Linked to", render: (l) => (l.item_id && l.item ? <DocLink tab="itemfile" id={l.item_id}>{l.item}</DocLink> : tr("perfume.linkage.not_linked", "Not linked")), exportValue: (l) => l.item ?? "" },
+            { className: "text-left", key: "item", label: "Linked to", render: (l) => (l.item_id && l.item ? <DocLink tab="itemfile" id={l.item_id}>{l.item}</DocLink> : tr("perfume.linkage.not_linked", "Not linked")), exportValue: (l) => l.item ?? "" },
             { key: "list_date", label: "List date", cellClass: "text-right tabular-nums", render: (l) => usDate(l.list_date) },
-            { key: "act", label: "", render: (l) => (target && l.item_id !== target.id
+            { className: "text-left", key: "act", label: "", render: (l) => (target && l.item_id !== target.id
               ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => linkTo(l)} data-testid={`perfume-linkage-link-${l.line_id}`}>{tr("perfume.linkage.link", "Link to this item")}</Button> : null) },
           ]}
         />
