@@ -88,7 +88,7 @@ export async function tradersOverview(c: pg.PoolClient, opts: { brands?: string[
  */
 export async function brandMatrix(c: pg.PoolClient, picked: string[]) {
   const pairs = (await c.query<{ vendor_id: string; vendor: string; brand: string; lines: number }>(
-    `SELECT v.id AS vendor_id, coalesce(nullif(btrim(v.short_name), ''), v.name) AS vendor, upper(btrim(i.brand)) AS brand, count(*)::int AS lines
+    `SELECT v.id AS vendor_id, v.name AS vendor, upper(btrim(i.brand)) AS brand, count(*)::int AS lines
        FROM perfume.price_list_rows r
        JOIN perfume.price_lists l ON l.id = r.list_id AND l.voided_at IS NULL AND l.is_current
        JOIN perfume.vendors v ON v.id = l.vendor_id

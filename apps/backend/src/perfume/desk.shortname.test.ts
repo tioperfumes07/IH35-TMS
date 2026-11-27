@@ -13,8 +13,11 @@ import { buildGrid, importList, upsertVendor, vendorLabel } from "./desk.service
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 
 describe("vendorLabel", () => {
-  it("short name wins, blank falls back to the full name", () => {
-    expect(vendorLabel({ name: "Perfume Center of America (Kanak)", short_name: "PCA" })).toBe("PCA");
+  // Owner 2026-11-27 15:47 CT: "name of vendor should be complete, b&s, should be b&s fragrances … so we do not confuse with another".
+  it("the full name everywhere; the short name only when the full name is blank", () => {
+    expect(vendorLabel({ name: "Perfume Center of America (Kanak)", short_name: "PCA" })).toBe("Perfume Center of America (Kanak)");
+    expect(vendorLabel({ name: "B&S Fragrances and Cosmetics", short_name: "B&S" })).toBe("B&S Fragrances and Cosmetics");
+    expect(vendorLabel({ name: "  ", short_name: "PCA" })).toBe("PCA");
     expect(vendorLabel({ name: "Darielle", short_name: "  " })).toBe("Darielle");
     expect(vendorLabel({ name: "Darielle", short_name: null })).toBe("Darielle");
   });
@@ -34,7 +37,7 @@ describeIntegration("perfume vendor short names in the grid (real Postgres, roll
     await db?.end().catch(() => {});
   });
 
-  it("headers use the short name; purchase second column is 'Cushion'", async () => {
+  it("headers use the full name (short name kept, upper-case); purchase second column is 'Cushion'", async () => {
     const a = await upsertVendor(db as never, TEST_OWNER_USER_ID, { name: "SHORTNAME TEST SUPPLIER LONG NAME", kind: "buy", short_name: "stsl" });
     expect(a.short_name).toBe("STSL");
     const b = await upsertVendor(db as never, TEST_OWNER_USER_ID, { name: "SHORTNAME TEST STORE", kind: "sell" });
@@ -43,9 +46,9 @@ describeIntegration("perfume vendor short names in the grid (real Postgres, roll
     await importList(db as never, TEST_OWNER_USER_ID, { vendor_id: b.id, list_date: "2026-11-12", file_name: "b.xlsx", source_kind: "xlsx", rows_read: 1, file_price_total_cents: 1500, rows: [line] });
     const g = await buildGrid(db as never, {});
     const col = (k: string) => g.cols.find((c) => c.key === k)!;
-    expect(col(`v:${a.id}:price`)).toMatchObject({ label: "List price", group: "STSL" });
-    expect(col(`v:${a.id}:net`)).toMatchObject({ label: "Cushion", group: "STSL" });
-    expect(col(`t:${a.id}:list`).group).toBe("Trade · STSL");
+    expect(col(`v:${a.id}:price`)).toMatchObject({ label: "List price", group: "SHORTNAME TEST SUPPLIER LONG NAME" });
+    expect(col(`v:${a.id}:net`)).toMatchObject({ label: "Cushion", group: "SHORTNAME TEST SUPPLIER LONG NAME" });
+    expect(col(`t:${a.id}:list`).group).toBe("Trade · SHORTNAME TEST SUPPLIER LONG NAME");
     expect(col(`s:${b.id}:price`).group).toBe("Competitor · SHORTNAME TEST STORE");
     expect(g.cols.some((c) => c.label === "After cushion")).toBe(false);
   });

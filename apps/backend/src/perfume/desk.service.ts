@@ -147,7 +147,9 @@ export async function listVendors(c: PoolClient): Promise<VendorRow[]> {
 }
 export type VendorInput = Partial<Omit<VendorRow, "id" | "earn_pct">> & { id?: string; name: string; earn_pct?: number | null };
 /** The column header for a vendor: the owner's short name (PCA, MTZ, NAND, PPW …), else the full name. */
-export const vendorLabel = (v: Pick<VendorRow, "name" | "short_name">): string => (v.short_name?.trim() || v.name);
+/** Owner 2026-11-27 15:47 CT: "name of vendor should be complete, b&s, should be b&s fragrances, etc, so we do not confuse with
+ *  another" — the vendor's full name everywhere; the short name stays for search and for the vendor order (PCA, MTZ … first). */
+export const vendorLabel = (v: Pick<VendorRow, "name" | "short_name">): string => (v.name?.trim() || v.short_name?.trim() || "");
 export async function upsertVendor(c: PoolClient, userId: string, v: VendorInput): Promise<VendorRow> {
   const kind0 = v.kind ?? "buy";
   const own = kind0 === "offer" || kind0 === "inventory";
@@ -728,7 +730,7 @@ export async function rememberVendorLinks(c: PoolClient, listId: string | null =
 
 export async function listLists(c: PoolClient) {
   return (await c.query(
-    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, v.kind, l.list_date::text, l.label, l.file_name, l.source_kind, l.rows_read, l.rows_saved, l.rows_skipped,
+    `SELECT l.id, l.vendor_id, v.name AS vendor_name, v.kind, l.list_date::text, l.label, l.file_name, l.source_kind, l.rows_read, l.rows_saved, l.rows_skipped,
             l.price_total_file_cents::text, l.price_total_saved_cents::text, l.is_current, l.imported_at,
             (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.match_status = 'matched') AS matched,
             (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.match_status = 'review') AS review,
@@ -750,7 +752,7 @@ export type VoidedList = { id: string; vendor_id: string; vendor_name: string; l
   rows_saved: number; voided_at: string; void_reason: string; linked: number; vendor_has_current: boolean };
 export async function listVoidedLists(c: PoolClient, limit = 200): Promise<VoidedList[]> {
   return (await c.query<VoidedList>(
-    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, l.list_date::text, l.label, l.file_name,
+    `SELECT l.id, l.vendor_id, v.name AS vendor_name, l.list_date::text, l.label, l.file_name,
             l.rows_saved, l.voided_at, l.void_reason,
             (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.item_id IS NOT NULL) AS linked,
             EXISTS (SELECT 1 FROM perfume.price_lists o WHERE o.vendor_id = l.vendor_id AND o.voided_at IS NULL AND o.is_current) AS vendor_has_current
@@ -826,7 +828,7 @@ export function groupSavedLists(lines: SavedListLine[]): SavedList[] {
 }
 export async function mySavedLists(c: PoolClient): Promise<SavedList[]> {
   const r = await c.query<SavedListLine>(
-    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, v.kind, l.label, l.file_name, l.list_date::text,
+    `SELECT l.id, l.vendor_id, v.name AS vendor_name, v.kind, l.label, l.file_name, l.list_date::text,
             l.rows_saved, l.is_current, l.imported_at::text
        FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE l.voided_at IS NULL AND v.kind IN ('offer', 'inventory') AND v.archived_at IS NULL`);
@@ -903,7 +905,7 @@ export async function reviewQueue(c: PoolClient, opts: { list_id?: string; list_
   // Every waiting line is read (measured 2026-11-15: 1,496 on current lists) so the line filters — which come from the
   // engine's reading of the text, not from a column — and their counts are exact; paging happens after the filters.
   const rows = await c.query(
-    `SELECT r.id, r.list_id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
+    `SELECT r.id, r.list_id, l.vendor_id, v.name AS vendor_name, r.row_no, r.upc, r.sku, r.brand, r.description, r.size_text, r.case_pack, r.price_cents, r.match_status, r.suggestions, r.gender_override
        ${base} ORDER BY v.name, r.row_no`, fp);
   const tRows = Date.now();
   const offerItems: OfferItem[] = mine ? (await c.query<OfferItem>(
