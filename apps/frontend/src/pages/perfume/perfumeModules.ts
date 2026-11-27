@@ -24,9 +24,9 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers"] },
   // Owner 2026-11-26 22:51 CT: "THE ITEM FILE FOR EACH ITEM … SO WE CAN EDIT … AND THE LINKAGE SCREEN THAT SHOWS THE ITEM UPC AND
   // LINKED TO AND DESCRIPTIONS TO ALL LINKED".
-  { id: "items", label: "Items", Icon: Barcode, tabs: ["itemfile", "stocklink", "linkage", "items"] },
+  { id: "items", label: "Items", Icon: Barcode, tabs: ["itemfile", "stocklink", "linkage", "items", "families"] },
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
-  { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
+  { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "reorder", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
   // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
   { id: "books", label: "Books", Icon: Landmark, tabs: ["books"] },
 ];

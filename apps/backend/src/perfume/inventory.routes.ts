@@ -8,9 +8,11 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
+import { reorderMakeSchema, reorderQuery, reorderReport, reorderToPurchaseOrders } from "./replenishment.service.js";
+import { PoInvalid } from "./purchases.service.js";
 import {
   addTransferLine, cancelCount, cancelTransfer, createCount, createTransfer, getCount, getTransfer, InvInvalid, InvNotFound, itemLots, listCounts, listMoves,
-  listSites, listTransfers, openingApply, openingPreview, postCount, receiveTransfer, removeTransferLine, setCountLine, setReorder, shipTransfer, siteSchema,
+  listSites, listTransfers, openingApply, openingPreview, postCount, receiveTransfer, removeTransferLine, setCountLine, setReorder, itemSites, shipTransfer, siteSchema,
   stockOnHand, submitCount, transferSchema, updateSite,
   addWriteoffLine, cancelWriteoff, createWriteoff, getWriteoff, listWriteoffs, postWriteoff, removeWriteoffLine, submitWriteoff, valuation, writeoffSchema,
 } from "./inventory.service.js";
@@ -30,7 +32,7 @@ const idOf = (req: FastifyRequest) => uuid.safeParse((req.params as { id?: strin
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof InvNotFound) return reply.code(404).send({ error: "not_found" });
-  if (e instanceof InvInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof InvInvalid || e instanceof PoInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   throw e;
 }
 const stockQuery = z.object({ location: z.string().max(40).optional(), q: z.string().max(200).optional(), item_id: uuid.optional(), low: z.enum(["1"]).optional() });
@@ -65,11 +67,28 @@ export async function registerPerfumeInventoryRoutes(app: FastifyInstance) {
     ws.getColumn(6).numFmt = '"$"#,##0.00'; ws.getColumn(7).numFmt = '"$"#,##0.00'; ws.getRow(1).font = { bold: true, name: "Arial" };
     return reply.header("Content-Type", XLSX).header("Content-Disposition", `attachment; filename="Stock on hand.xlsx"`).send(Buffer.from(await wb.xlsx.writeBuffer()));
   });
+  // Replenishment (owner 2026-11-27 08:10 CT): items at or below their min, and the PO maker.
+  app.get("/api/v1/perfume/inventory/reorder-report", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = reorderQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    return withCurrentUser(uid, (c) => reorderReport(c, q.data));
+  });
+  app.post("/api/v1/perfume/inventory/reorder-report/purchase-orders", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = reorderMakeSchema.safeParse(req.body ?? {}); if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => reorderToPurchaseOrders(c, uid, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/inventory/item-sites/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    return withCurrentUser(uid, (c) => itemSites(c, id.data));
+  });
   app.put("/api/v1/perfume/inventory/reorder", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const p = z.object({ item_id: uuid, location_code: z.string().min(1).max(40), min_qty: z.number().int().min(0).nullable(), max_qty: z.number().int().min(0).nullable() }).safeParse(req.body ?? {});
+    const p = z.object({ item_id: uuid, location_code: z.string().min(1).max(40), min_qty: z.number().int().min(0).nullable(), max_qty: z.number().int().min(0).nullable(),
+      bin: z.string().trim().max(40).nullable().optional(), reorder_qty: z.number().int().min(1).max(1_000_000).nullable().optional() }).safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error" });
-    try { await withCurrentUser(uid, (c) => setReorder(c, p.data.item_id, p.data.location_code, p.data.min_qty, p.data.max_qty)); return { ok: true }; } catch (e) { return fail(reply, e); }
+    try { await withCurrentUser(uid, (c) => setReorder(c, p.data.item_id, p.data.location_code, p.data.min_qty, p.data.max_qty, { bin: p.data.bin, reorder_qty: p.data.reorder_qty })); return { ok: true }; } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/perfume/items/:id/lots", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

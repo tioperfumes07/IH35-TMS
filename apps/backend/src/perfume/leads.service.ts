@@ -25,13 +25,13 @@ import { logEvent, logEvents, type LeadEvent } from "./leads.events.js";
 
 /* ------------------------------------------------------------------ catalogs */
 
-export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "segment", "source_kind", "product_type", "gender", "item_category"] as const;
+export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "segment", "source_kind", "product_type", "gender", "item_category", "olfactory_family"] as const;
 /** Lists whose values are carried by ITEMS (perfume.items), not contacts — counted and renamed on items (owner 2026-11-27 07:51 CT). */
 export const ITEM_CATALOG_COLUMN: Partial<Record<string, "product_type" | "category">> = { product_type: "product_type", item_category: "category" };
 export type CatalogKind = typeof CATALOG_KINDS[number];
 export const CATALOG_LABELS: Record<CatalogKind, string> = {
   vendor_type: "Vendor types", customer_type: "Customer types", category: "Categories", segment: "Business types",
-  source_kind: "Lead source kinds", product_type: "Item product types", gender: "Genders", item_category: "Item categories",
+  source_kind: "Lead source kinds", product_type: "Item product types", gender: "Genders", item_category: "Item categories", olfactory_family: "Scent families (olfactory)",
 };
 export const catalogValueSchema = z.object({ kind: z.enum(CATALOG_KINDS), value: z.string().trim().min(1).max(200), sort: z.number().int().min(0).max(10000).optional() });
 
@@ -53,12 +53,13 @@ export async function listCatalogs(c: pg.PoolClient) {
                  SELECT o.company_id, o.source_kind AS k FROM perfume.contact_origins o JOIN perfume.contact_companies co ON co.id = o.company_id AND co.archived_at IS NULL
                  UNION ALL SELECT id, source_kind FROM perfume.contact_companies WHERE archived_at IS NULL) y WHERE k IS NOT NULL GROUP BY 2
      UNION ALL SELECT 'product_type', product_type, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND product_type IS NOT NULL GROUP BY 2
-     UNION ALL SELECT 'item_category', category, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND category IS NOT NULL GROUP BY 2`)).rows;
+     UNION ALL SELECT 'item_category', category, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND category IS NOT NULL GROUP BY 2
+     UNION ALL SELECT 'olfactory_family', olfactory_family, count(*)::int FROM perfume.item_families WHERE archived_at IS NULL AND olfactory_family IS NOT NULL GROUP BY 2`)).rows;
   const count = new Map(used.map((u) => [`${u.kind}\u0000${u.value.trim().toLowerCase()}`, u.n]));
   const out = Object.fromEntries(CATALOG_KINDS.map((k) => [k, [] as Array<{ id: string; value: string; sort: number; contacts: number }>])) as
     Record<CatalogKind, Array<{ id: string; value: string; sort: number; contacts: number }>>;
   for (const r of rows) out[r.kind].push({ id: r.id, value: r.value, sort: r.sort, contacts: count.get(`${r.kind}\u0000${r.value.trim().toLowerCase()}`) ?? 0 });
-  return { kinds: CATALOG_KINDS.map((k) => ({ kind: k, label: CATALOG_LABELS[k], used_by: ITEM_CATALOG_COLUMN[k] ? "items" as const : "contacts" as const, values: out[k] })) };
+  return { kinds: CATALOG_KINDS.map((k) => ({ kind: k, label: CATALOG_LABELS[k], used_by: k === "olfactory_family" ? "families" as const : ITEM_CATALOG_COLUMN[k] ? "items" as const : "contacts" as const, values: out[k] })) };
 }
 
 export async function addCatalogValue(c: pg.PoolClient, uid: string, v: z.infer<typeof catalogValueSchema>) {
@@ -102,6 +103,16 @@ export async function renameCatalogValue(c: pg.PoolClient, id: string, value: st
     for (const r of it.rows) {
       await c.query(`INSERT INTO perfume.item_events (item_id, kind, detail, created_by) VALUES ($1, 'attributes', $2::jsonb, $3)`,
         [r.id, JSON.stringify({ from: { [itemCol]: cur.value }, to: { [itemCol]: value }, via: "catalog_rename" }), uid]);
+    }
+  }
+  // Scent families are carried by item families: they follow the rename, and each family's history says so.
+  if (cur.kind === "olfactory_family") {
+    const fs = await c.query<{ id: string }>(
+      `UPDATE perfume.item_families SET olfactory_family = $2, updated_at = now() WHERE olfactory_family = $1 AND archived_at IS NULL RETURNING id`, [cur.value, value]);
+    itemsMoved = fs.rowCount ?? 0;
+    for (const r of fs.rows) {
+      await c.query(`INSERT INTO perfume.item_family_events (family_id, kind, detail, created_by) VALUES ($1, 'edited', $2::jsonb, $3)`,
+        [r.id, JSON.stringify({ from: { olfactory_family: cur.value }, to: { olfactory_family: value }, via: "catalog_rename" }), uid]);
     }
   }
   await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved, items_moved: itemsMoved } });

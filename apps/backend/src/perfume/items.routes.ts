@@ -13,6 +13,7 @@ import {
   stockLinkQueue, stockQueueQuery, strictLinkApply, strictLinkPreview, updateItemFile,
 } from "./items.service.js";
 import { ProfileNotFound } from "./profiles.service.js";
+import { archiveFamily, createFamily, FamilyInvalid, familyListQuery, FamilyNotFound, familyProfile, familySchema, listFamilies, updateFamily } from "./families.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -28,7 +29,8 @@ const idOf = (req: FastifyRequest) => z.string().uuid().safeParse((req.params as
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof ItemNotFound || e instanceof ProfileNotFound) return reply.code(404).send({ error: "not_found" });
-  if (e instanceof ItemInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof ItemInvalid || e instanceof FamilyInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof FamilyNotFound) return reply.code(404).send({ error: "not_found" });
   throw e;
 }
 
@@ -78,6 +80,33 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
     const id = idOf(req); const p = itemEditSchema.safeParse(req.body ?? {});
     if (!id.success || !p.success) return reply.code(400).send({ error: "validation_error" });
     try { return await withCurrentUser(uid, (c) => updateItemFile(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  // Item families (owner 2026-11-27 08:10 CT).
+  app.get("/api/v1/perfume/families", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = familyListQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    return withCurrentUser(uid, (c) => listFamilies(c, q.data));
+  });
+  app.get("/api/v1/perfume/families/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, (c) => familyProfile(c, id.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/perfume/families", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = familySchema.safeParse(req.body ?? {}); if (!p.success) return reply.code(400).send({ error: "validation_error", message: "A family needs a name." });
+    try { return await withCurrentUser(uid, (c) => createFamily(c, uid, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.patch("/api/v1/perfume/families/:id", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); const p = familySchema.partial().safeParse(req.body ?? {});
+    if (!id.success || !p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => updateFamily(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/perfume/families/:id/archive", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, (c) => archiveFamily(c, uid, id.data)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/item-file", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
