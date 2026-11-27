@@ -6,7 +6,10 @@
  * chart migration / Accounting; journal entries come from the posting engine, never typed here.
  */
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { useCompanyContext } from "../../contexts/CompanyContext";
+import { switchIdentityCompany } from "../../api/identity";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -30,6 +33,18 @@ export function PerfumeBooksPanel() {
   const accts = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
   const [showNumbers, setShowNumbers] = useShowAccountNumbers();
   const [openAcct, setOpenAcct] = useState<ScentsxAccount | null>(null);
+  const { selectedCompanyId, setSelectedCompany } = useCompanyContext();
+  const queryClient = useQueryClient();
+  const onScentsx = Boolean(co.data && selectedCompanyId === co.data.company.id);
+  const openScentsxBooks = async () => {
+    const id = co.data?.company.id;
+    if (!id) return;
+    try {
+      await switchIdentityCompany({ target_company_id: id, confirm: true });
+      setSelectedCompany(id);
+      await queryClient.invalidateQueries();
+    } catch (e) { pushToast(userFacingApiError(e, "Could not open ScentsX's books"), "error"); }
+  };
   const pending = useQuery({ queryKey: ["scentsx", "pending-moves"], queryFn: getScentsxPendingMoves });
   const { pushToast } = useToast();
   const postNow = async () => {
@@ -51,6 +66,24 @@ export function PerfumeBooksPanel() {
         <div className="text-section-header">{c ? `${c.legal_name} · ${c.short_name ?? ""}` : "…"}</div>
         <div className="mt-1 text-[#64748B]">{tr("scentsx.books.note", "Its own company in the accounting engine — its books never mix with USMCA, Transportation or Trucking.")}</div>
         <div className="mt-1">{tr("scentsx.books.ein", "EIN")}: {ein ?? tr("scentsx.books.ein_missing", "not entered yet")}</div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-2 text-xs" data-testid="scentsx-books-pages">
+        {onScentsx ? (
+          <>
+            <span className="font-semibold">{tr("scentsx.books.pages", "ScentsX books")}:</span>
+            {([["/accounting/invoices", "Invoices"], ["/accounting/payments", "Payments received"], ["/accounting/bills", "Bills"], ["/accounting/bill-payments", "Bill payments"],
+              ["/accounting/journal-entries", "Journal entries"], ["/reports/profit-loss", "Profit & loss"], ["/reports/balance-sheet", "Balance sheet"],
+              ["/reports/trial-balance", "Trial balance"], ["/reports/ar-aging", "A/R aging"], ["/reports/ap-aging", "A/P aging"]] as const).map(([to, label]) => (
+              <Link key={to} to={to} className="text-[#14314F] underline">{tr(`scentsx.books.page_${to}`, label)}</Link>
+            ))}
+          </>
+        ) : (
+          <>
+            <span className="text-[#64748B]">{tr("scentsx.books.not_selected", "The Accounting pages are showing another company.")}</span>
+            <Button type="button" className="h-[28px] px-2 text-xs" onClick={() => void openScentsxBooks()} disabled={!co.data} data-testid="scentsx-books-use">
+              {tr("scentsx.books.use", "Open ScentsX's books")}</Button>
+          </>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-2 md:grid-cols-5">
         <KpiCard label={tr("scentsx.books.kpi_accounts", "Accounts")} number={String(c?.accounts ?? 0)} onClick={() => jump("scentsx-chart")} />
