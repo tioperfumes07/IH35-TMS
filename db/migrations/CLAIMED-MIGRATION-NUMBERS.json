@@ -1405,5 +1405,6 @@
   "202617020100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item catalogs: catalog_values kind item_category (owner 2026-11-27 07:51 CT)"},
   "202617030100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item families (parent over sizes/testers/sets) + olfactory family list (owner 2026-11-27 08:10 CT)"},
   "202617040100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item per-location settings: bin, min/max, reorder qty + reorder report (owner 2026-11-27 08:10 CT)"},
-  "202617050100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX item account mapping: item category / item -> Inventory + COGS accounts used by the stock-move poster and the tie-out (owner 2026-11-27 08:10 CT)"}
+  "202617050100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX item account mapping: item category / item -> Inventory + COGS accounts used by the stock-move poster and the tie-out (owner 2026-11-27 08:10 CT)"},
+  "202617060500": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME price-list events: void + restore history (who, when, why) and the restore button (owner 2026-11-27 08:51 CT)"}
 }

@@ -197,6 +197,12 @@ export const listPerfumeLocations = () => apiRequest<{ locations: PerfumeLocatio
 export const savePerfumeLocation = (b: { code: string; name: string; sort_order?: number | null; active?: boolean | null }) =>
   apiRequest<{ location: PerfumeLocation }>("/api/v1/perfume/locations", { method: "POST", body: b });
 export const voidPerfumeList = (id: string, reason: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/lists/${id}/void`, { method: "POST", body: { reason } });
+/** A voided list (owner 2026-11-27 08:51 CT: "restore buttons"): every void and restore is kept in perfume.price_list_events. */
+export type PerfumeVoidedList = { id: string; vendor_id: string; vendor_name: string; list_date: string; label: string | null; file_name: string;
+  rows_saved: number; voided_at: string; void_reason: string; linked: number; vendor_has_current: boolean };
+export const listPerfumeVoidedLists = () => apiRequest<{ lists: PerfumeVoidedList[] }>("/api/v1/perfume/lists/voided");
+export const restorePerfumeList = (id: string, reason: string, replace: boolean) =>
+  apiRequest<{ ok: true; voided_now: string[]; is_current: boolean }>(`/api/v1/perfume/lists/${id}/restore`, { method: "POST", body: { reason, replace } });
 export type PerfumeReviewFilter = { listIds?: string[]; q?: string; status?: "review" | "unmatched" | null; mine?: "offer" | null; gender?: string[]; conc?: string[]; kind?: string[]; category?: string[]; brand?: string[]; suggest?: PerfumeSuggestBucket | null };
 /** Owner 11-15 19:24 CT: lines with a suggestion / best ≥95/90/80/70% alike / no suggestion. */
 export type PerfumeSuggestBucket = "any" | "95" | "90" | "80" | "70" | "none";

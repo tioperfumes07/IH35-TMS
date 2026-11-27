@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import {
   buildGrid, bulkReview, withUpcColumns, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, listVoidedLists, restoreList, ListRestoreError, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -282,9 +282,29 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
     const body = z.object({ reason: z.string().trim().min(3).max(500) }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
-    await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason));
+    await withCurrentUser(uid, (c) => voidList(c, params.data.id, body.data.reason, uid));
     dataChanged();
     return { ok: true };
+  });
+
+  // Voided lists and the restore button (owner 2026-11-27 08:51 CT: "Add void buttons etc restore buttons").
+  app.get("/api/v1/perfume/lists/voided", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return { lists: await withCurrentUser(uid, (c) => listVoidedLists(c)) };
+  });
+
+  app.post("/api/v1/perfume/lists/:id/restore", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const params = z.object({ id: z.string().uuid() }).safeParse(req.params); if (!params.success) return bad(reply, params.error);
+    const body = z.object({ reason: z.string().trim().min(3).max(500), replace: z.boolean() }).safeParse(req.body); if (!body.success) return bad(reply, body.error);
+    try {
+      const out = await withCurrentUser(uid, (c) => restoreList(c, params.data.id, body.data.reason, uid, body.data.replace));
+      dataChanged();
+      return { ok: true, ...out };
+    } catch (e) {
+      if (e instanceof ListRestoreError) return reply.code(409).send({ error: e.message });
+      throw e;
+    }
   });
 
   app.post("/api/v1/perfume/lists/:id/current", RL_WRITE, async (req, reply) => {
