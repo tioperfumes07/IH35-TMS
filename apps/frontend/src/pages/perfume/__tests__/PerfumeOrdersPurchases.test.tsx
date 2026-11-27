@@ -136,6 +136,17 @@ describe("profiles", () => {
     expect(within(within(p).getByTestId("perfume-vendor-kpis")).getByText("117")).toBeTruthy();
     expect(within(p).getAllByText("PO-000001").length).toBeGreaterThan(0);
   });
+  it("clicking a supplier in the list opens its profile in place of the list, at the top; All suppliers goes back", async () => {
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");
+    fireEvent.click(await screen.findByText("Vendor A"));
+    const p = await screen.findByTestId("perfume-vendor-profile");
+    await waitFor(() => expect(within(p).getByTestId("perfume-vendor-company").textContent).toContain("Miami"));
+    expect(screen.queryByTestId("perfume-suppliers-search")).toBeNull();
+    expect(screen.getByTestId("where").textContent).toContain("open=vA");
+    fireEvent.click(screen.getByTestId("perfume-suppliers-back"));
+    await screen.findByTestId("perfume-suppliers-search");
+    expect(screen.getByTestId("where").textContent).not.toContain("open=");
+  });
   it("an unlinked supplier offers its same-name Contacts company; one click links it and the profile shows it", async () => {
     mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers&open=vB");
     const btn = await screen.findByTestId("perfume-vendor-suggest-co7");
