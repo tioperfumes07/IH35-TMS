@@ -104,6 +104,20 @@ describeIntegration("product types + tester pricing (real Postgres, rolled back)
     expect((await wholesaleList(db as never, { level_id: lv.id, q: "ZZP" })).rows.find((r) => r.item_id === tst.id)).toMatchObject({ price_cents: 1875, price_from: "rule" });
   });
 
+  it("never prices from a placeholder cost under $1 (item_costs at 1¢ priced testers at 1¢ live on 2026-11-27)", async () => {
+    const lv = (await db.query<{ id: string; name: string; method: "markup"; pct: string; cost_basis: "avg"; floor_pct: null; tester_pct: string }>(
+      `INSERT INTO perfume.price_levels (name, channel, method, pct, cost_basis, sort_order) VALUES ('ZZ Penny lvl', 'wholesale', 'markup', 25, 'avg', 999)
+       RETURNING id, name, method, pct::text, cost_basis, floor_pct::text, tester_pct::text`)).rows[0]!;
+    await db.query(`INSERT INTO perfume.locations (code, name, sort_order, active, kind, own) VALUES ('ZZPN', 'ZZ PN', 997, true, 'warehouse', true) ON CONFLICT (code) DO NOTHING`);
+    const reg = await createItem(db as never, u, { brand: "ZZN", name: "PENNY", size_ml: 100, conc: "EDT", gender: "M" });
+    const tst = await createItem(db as never, u, { brand: "ZZN", name: "PENNY", size_ml: 100, conc: "EDT", gender: "M", flags: ["TESTER"] });
+    await db.query(`INSERT INTO perfume.item_costs (item_id, avg_cost_cents) VALUES ($1, 1)`, [reg.id]);
+    await db.query(`INSERT INTO perfume.item_stock (item_id, location_code, qty, avg_cost_cents) VALUES ($1, 'ZZPN', 3, 0)`, [tst.id]);
+    const rows = (await wholesaleList(db as never, { level_id: lv.id, q: "ZZN" })).rows;
+    expect(rows.find((r) => r.item_id === tst.id)).toMatchObject({ price_cents: null, price_from: null });
+    expect(await priceAtLevel(db as never, lv, reg.id, 1, 50)).toBeNull(); // a 50¢ supplier price is not a cost either
+  });
+
   it("refuses a tester % outside (0, 100]", async () => {
     await db.query("SAVEPOINT p");
     await expect(db.query(`INSERT INTO perfume.price_levels (name, channel, method, pct, cost_basis, sort_order, tester_pct) VALUES ('ZZ bad', 'wholesale', 'markup', 10, 'avg', 999, 120)`))

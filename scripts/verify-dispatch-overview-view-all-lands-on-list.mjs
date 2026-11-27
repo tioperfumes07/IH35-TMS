@@ -14,23 +14,24 @@ const FILE = "apps/frontend/src/pages/dispatch/DispatchOverview.tsx";
 const original = { overview: fs.readFileSync(FILE, "utf8") };
 
 const contracts = [
+  // Since #29385 (ROUND 8.20) the hrefs go through overviewHref(), which carries the Overview's return context; the target view is the same.
   [
     "no Overview panel routes View-all to the loads(→kanban) view",
     "overview",
-    (s) => !s.includes('viewAllHref="/dispatch?view=loads"'),
-    (s) => s.replace('viewAllHref="/dispatch?view=list"', 'viewAllHref="/dispatch?view=loads"'),
+    (s) => !s.includes('viewAllHref="/dispatch?view=loads"') && !s.includes('viewAllHref={overviewHref("/dispatch?view=loads")}'),
+    (s) => s.replace('viewAllHref={overviewHref("/dispatch?view=list")}', 'viewAllHref={overviewHref("/dispatch?view=loads")}'),
   ],
   [
     "Unassigned units View-all lands on the list",
     "overview",
-    (s) => /title="Unassigned units" viewAllHref="\/dispatch\?view=list"/.test(s),
-    (s) => s.replace('title="Unassigned units" viewAllHref="/dispatch?view=list"', 'title="Unassigned units" viewAllHref="/dispatch?view=kanban"'),
+    (s) => /title="Unassigned units" viewAllHref=\{overviewHref\("\/dispatch\?view=list"\)\}/.test(s),
+    (s) => s.replace('title="Unassigned units" viewAllHref={overviewHref("/dispatch?view=list")}', 'title="Unassigned units" viewAllHref={overviewHref("/dispatch?view=kanban")}'),
   ],
   [
     "Round-trip exposure View-all lands on the list",
     "overview",
-    (s) => /title="Round-trip exposure" viewAllHref="\/dispatch\?view=list"/.test(s),
-    (s) => s.replace('title="Round-trip exposure" viewAllHref="/dispatch?view=list"', 'title="Round-trip exposure" viewAllHref="/dispatch?view=kanban"'),
+    (s) => /title="Round-trip exposure" viewAllHref=\{overviewHref\("\/dispatch\?view=list"\)\}/.test(s),
+    (s) => s.replace('title="Round-trip exposure" viewAllHref={overviewHref("/dispatch?view=list")}', 'title="Round-trip exposure" viewAllHref={overviewHref("/dispatch?view=kanban")}'),
   ],
 ];
 

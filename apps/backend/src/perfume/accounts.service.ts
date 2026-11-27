@@ -75,11 +75,17 @@ export async function setLevelItem(c: pg.PoolClient, uid: string, levelId: strin
  *   2. my average cost (perfume.item_costs.avg_cost_cents — the desk's "My avg cost");
  *   3. my last cost on my current inventory file (the desk's "My last cost");
  *  null when none (the caller then uses the best supplier cost). A file cost under $1.00 is the file's placeholder (e.g. $0.01), not a cost. */
+/**
+ * A cost below $1.00 is a placeholder, not a cost (owner's file holds 321 items at 1–99¢ "avg cost"; a 100 ml perfume priced from 1¢
+ * sold at 1¢ on 2026-11-27). Every pricer ignores it — the same floor the inventory-file fallback already used (price_cents >= 100).
+ */
+export const MIN_COST_CENTS = 100;
+
 export async function avgCostOf(c: pg.PoolClient, itemId: string): Promise<{ cents: number; source: "stock" | "my_avg_cost" | "inventory_file" } | null> {
   const r = (await c.query<{ v: string | null }>(
     `SELECT (sum(qty * avg_cost_cents) / nullif(sum(qty), 0))::text AS v FROM perfume.item_stock WHERE item_id = $1 AND qty > 0`, [itemId])).rows[0];
-  if (r?.v != null) return { cents: Math.round(Number(r.v)), source: "stock" };
-  const t = (await c.query<{ v: number | null }>(`SELECT avg_cost_cents AS v FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents > 0`, [itemId])).rows[0];
+  if (r?.v != null && Number(r.v) >= MIN_COST_CENTS) return { cents: Math.round(Number(r.v)), source: "stock" };
+  const t = (await c.query<{ v: number | null }>(`SELECT avg_cost_cents AS v FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents >= ${MIN_COST_CENTS}`, [itemId])).rows[0];
   if (t?.v != null) return { cents: Number(t.v), source: "my_avg_cost" };
   const f = (await c.query<{ v: string | null }>(
     `SELECT avg(r.price_cents)::text AS v FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
@@ -91,7 +97,7 @@ export async function avgCostOf(c: pg.PoolClient, itemId: string): Promise<{ cen
 export async function costCoverage(c: pg.PoolClient) {
   return (await c.query<{ stock: number; my_avg_cost: number; inventory_file: number; vendor_lists: number; any_cost: number }>(
     `WITH s AS (SELECT DISTINCT item_id FROM perfume.item_stock WHERE qty > 0),
-          t AS (SELECT item_id FROM perfume.item_costs WHERE avg_cost_cents > 0),
+          t AS (SELECT item_id FROM perfume.item_costs WHERE avg_cost_cents >= ${MIN_COST_CENTS}),
           f AS (SELECT DISTINCT r.item_id FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
                  WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.price_cents >= 100),
           b AS (SELECT DISTINCT r.item_id FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
@@ -108,7 +114,7 @@ type LevelRow = { id: string; name: string; method: "markup" | "margin"; pct: st
 export async function bestBuyCents(c: pg.PoolClient, itemId: string): Promise<number | null> {
   const r = await c.query<{ p: string | null }>(
     `SELECT min(r.price_cents)::text p FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
-      WHERE r.item_id = $1 AND l.is_current AND l.voided_at IS NULL AND r.price_cents > 0 AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL`, [itemId]);
+      WHERE r.item_id = $1 AND l.is_current AND l.voided_at IS NULL AND r.price_cents >= ${MIN_COST_CENTS} AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL`, [itemId]);
   return r.rows[0]?.p == null ? null : Number(r.rows[0].p);
 }
 
@@ -120,7 +126,7 @@ async function ownLevelPrice(c: pg.PoolClient, l: LevelRow, itemId: string, qty:
   if (fixed) return { cents: Number(fixed.price_cents), level: l.name, how: "fixed" as const };
   if (l.pct == null) return null;
   const avg = l.cost_basis === "avg" ? await avgCostOf(c, itemId) : null;
-  const cost = avg?.cents ?? bestVendorCents;
+  const cost = avg?.cents ?? (bestVendorCents != null && bestVendorCents >= MIN_COST_CENTS ? bestVendorCents : null);
   if (cost == null) return null;
   return { cents: priceFromCost(cost, Number(l.pct), l.method), level: l.name, how: avg ? ("avg" as const) : ("best_vendor" as const), cost_cents: cost,
     cost_source: avg?.source ?? ("best_vendor" as const) };

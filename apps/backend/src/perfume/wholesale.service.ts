@@ -9,6 +9,7 @@
 import type pg from "pg";
 import { z } from "zod";
 import { priceFromCost } from "./pricing.js";
+import { MIN_COST_CENTS } from "./accounts.service.js";
 
 export class WholesaleInvalid extends Error {}
 
@@ -34,11 +35,11 @@ const MINE = `('inventory', 'offer')`;
 const priceInputs = (x: string, xs: string, prefix: string) => `
             (SELECT json_agg(json_build_object('min_qty', p.min_qty, 'price_cents', p.price_cents) ORDER BY p.min_qty) FROM perfume.price_level_items p
               WHERE p.level_id = $1 AND p.item_id = ${x}.id AND p.archived_at IS NULL) AS ${prefix}breaks,
-            coalesce(${xs}.stock_avg, (SELECT k.avg_cost_cents FROM perfume.item_costs k WHERE k.item_id = ${x}.id AND k.avg_cost_cents > 0),
+            coalesce(CASE WHEN ${xs}.stock_avg >= ${MIN_COST_CENTS} THEN ${xs}.stock_avg END, (SELECT k.avg_cost_cents FROM perfume.item_costs k WHERE k.item_id = ${x}.id AND k.avg_cost_cents >= ${MIN_COST_CENTS}),
               (SELECT avg(r.price_cents) FROM perfume.price_lists l2 JOIN perfume.vendors v ON v.id = l2.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l2.id
-                WHERE v.kind = 'inventory' AND l2.is_current AND l2.voided_at IS NULL AND r.item_id = ${x}.id AND r.price_cents >= 100))::text AS ${prefix}avg_cost,
+                WHERE v.kind = 'inventory' AND l2.is_current AND l2.voided_at IS NULL AND r.item_id = ${x}.id AND r.price_cents >= ${MIN_COST_CENTS}))::text AS ${prefix}avg_cost,
             (SELECT min(r.price_cents) FROM perfume.price_list_rows r JOIN perfume.price_lists l3 ON l3.id = r.list_id JOIN perfume.vendors v ON v.id = l3.vendor_id
-              WHERE r.item_id = ${x}.id AND l3.is_current AND l3.voided_at IS NULL AND r.price_cents > 0 AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL)::text AS ${prefix}best_vendor`;
+              WHERE r.item_id = ${x}.id AND l3.is_current AND l3.voided_at IS NULL AND r.price_cents >= ${MIN_COST_CENTS} AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL)::text AS ${prefix}best_vendor`;
 
 type Inputs = { breaks: Array<{ min_qty: number; price_cents: number }> | null; avg_cost: string | null; best_vendor: string | null };
 type Level = { method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor" };
