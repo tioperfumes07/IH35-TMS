@@ -15,7 +15,7 @@ export function useVendorOptions() {
   const q = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors, staleTime: 60_000 });
   return (q.data?.vendors ?? [])
     .filter((v) => !(v as { archived_at?: string | null }).archived_at)
-    .map((v) => ({ id: v.id, name: (v as { short_name?: string | null }).short_name?.trim() || v.name, kind: String((v as { kind?: string }).kind ?? "") }))
+    .map((v) => ({ id: v.id, name: v.name, kind: String((v as { kind?: string }).kind ?? "") }))
     .sort((a, b) => Number(["inventory", "offer", "sell"].includes(a.kind)) - Number(["inventory", "offer", "sell"].includes(b.kind)) || a.name.localeCompare(b.name));
 }
 

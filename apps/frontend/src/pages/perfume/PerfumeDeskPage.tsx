@@ -791,7 +791,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
             return (
               <button key={w.id} type="button" aria-pressed={on} data-testid={`perfume-comp-${(w.short_name || w.name).replace(/\s+/g, "-").toLowerCase()}`}
                 onClick={() => { comp.save(on ? comps.filter((x) => x !== w.id) : [...comps, w.id]); setPage(1); }}
-                className={`h-[30px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{w.short_name || w.name}</button>
+                className={`h-[30px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{w.name}</button>
             );
           })}
           {comp.suppliers.length ? <span className="ml-2 font-semibold text-[#1F2A44]">{tr("perfume.comps.vendors", "Vendors")}</span> : null}

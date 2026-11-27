@@ -97,7 +97,7 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
             i.case_pack, i.min_order_qty, i.weight_g::float8 AS weight_g, i.origin_country, i.hs_code,
             i.pos_code, i.ticket_description, i.sold_by, i.units_per_pack, i.preferred_vendor_id, i.is_stock_item, i.is_active,
             i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked, i.is_exclusive, i.is_new_launch,
-            (SELECT COALESCE(NULLIF(btrim(v.short_name), ''), v.name) FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
+            (SELECT v.name FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
             (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
   if (!page.length) return { total, rows: [] };

@@ -278,7 +278,7 @@ export function RoleToggles({ vendor }: { vendor: PerfumeVendor }) {
     try {
       await savePerfumeVendor({ ...vendor, roles: next, earn_pct: vendor.earn_pct == null ? null : Number(vendor.earn_pct) });
       await qc.invalidateQueries({ queryKey: ["perfume"] });
-      pushToast(`${vendor.short_name || vendor.name}: ${next.length ? next.map((x) => PERFUME_VENDOR_ROLES.find(([k]) => k === x)?.[1]).join(" · ") : "in no tab"}`, "success");
+      pushToast(`${vendor.name}: ${next.length ? next.map((x) => PERFUME_VENDOR_ROLES.find(([k]) => k === x)?.[1]).join(" · ") : "in no tab"}`, "success");
     } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); } finally { setBusy(false); }
   };
   return (
