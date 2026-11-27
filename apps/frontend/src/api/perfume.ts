@@ -1046,3 +1046,9 @@ export const dismissPerfumeDuplicates = (ids: string[]) =>
 /** Owner 17:25 CT: merge one duplicate company from its pop-up — the record picked stays, the others become its locations. */
 export const mergeOnePerfumeDuplicate = (keep: string, ids: string[]) =>
   apiRequest<{ merged: number }>("/api/v1/perfume/contacts/duplicates/merge-one", { method: "POST", body: { keep, ids } });
+/** Owner 17:35 CT: catalog cleanup — product types without genders, customer / vendor types without overlaps (preview → Apply). */
+export type PerfumeCleanupRow = { key: string; kind: PerfumeCatalogKind; list: string; from: string; to: string; why: string; carriers: number; done: boolean; counted_on: string };
+export const getPerfumeCatalogCleanup = () =>
+  apiRequest<{ rows: PerfumeCleanupRow[]; adds: Array<{ kind: PerfumeCatalogKind; list: string; value: string; exists: boolean }> }>("/api/v1/perfume/catalogs/cleanup");
+export const applyPerfumeCatalogCleanup = (keys: string[]) =>
+  apiRequest<{ applied: number; moved: number }>("/api/v1/perfume/catalogs/cleanup/apply", { method: "POST", body: { keys } });
