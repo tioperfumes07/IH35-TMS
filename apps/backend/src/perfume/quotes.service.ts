@@ -10,7 +10,7 @@ import type pg from "pg";
 import { z } from "zod";
 import ExcelJS from "exceljs";
 import { getRules } from "./desk.service.js";
-import { priceFromCost } from "./pricing.js";
+import { roundRule, sellingPrice } from "./selling-price.js";
 import { levelPriceFor } from "./accounts.service.js";
 
 export const QUOTE_STATUSES = ["draft", "sent", "accepted", "rejected", "expired"] as const;
@@ -199,7 +199,8 @@ export async function addLine(c: pg.PoolClient, uid: string, quoteId: string, x:
   if (price == null) {
     if (!cost) throw new QuoteInvalid("No supplier cost for this item — type the price.");
     const rules = await getRules(c);
-    price = priceFromCost(cost.cents, rules.wholesale_targets_pct[0] ?? 12.5, "markup");
+    // Calculated (never typed): closed by the desk rounding rule — owner 2026-11-27 15:40 CT "round to the nearest .25 upwards".
+    price = sellingPrice(cost.cents, rules.wholesale_targets_pct[0] ?? 12.5, "markup", await roundRule(c));
   }
   const no = (await c.query<{ n: number }>(`SELECT coalesce(max(line_no), 0)::int + 1 AS n FROM perfume.quote_lines WHERE quote_id = $1`, [quoteId])).rows[0]!.n;
   const r = await c.query<{ id: string }>(

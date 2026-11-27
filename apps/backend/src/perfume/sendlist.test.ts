@@ -65,10 +65,15 @@ describeIntegration("send list (real Postgres, rolled back)", () => {
     const r3 = await buildSendList(db as never, { ...base, exclude_restricted: false, exclude_brands: ["ZZDIOR"] });
     expect(r3.rows.map((r) => r.description)).toEqual(["ZZCHANEL BRAVO EDP 100"]);
 
-    // A level's price on my cost: Retail 28% margin on the inventory file's $40.00 → $55.56.
+    // A level's price on my cost: Retail 28% margin on the inventory file's $40.00 → $55.56 exact; with the owner's rule
+    // (2026-11-27 15:40 CT "round to the nearest .25 upwards") → $55.75.
     const retail = (await db.query<{ id: string }>(`UPDATE perfume.price_levels SET pct = 28, method = 'margin', cost_basis = 'avg' WHERE name = 'Retail' RETURNING id`)).rows[0].id;
+    await db.query(`INSERT INTO perfume.settings (id, rules) VALUES (1, '{"round_step":"1","round_dir":"up"}'::jsonb) ON CONFLICT (id) DO UPDATE SET rules = perfume.settings.rules || '{"round_step":"1","round_dir":"up"}'::jsonb`);
     const r4 = await buildSendList(db as never, { ...base, columns: ["description", "level_price"], level_id: retail });
     expect(r4.rows.find((r) => r.item_id === a)!.level_price).toBe(5556);
+    await db.query(`UPDATE perfume.settings SET rules = rules || '{"round_step":"25","round_dir":"up"}'::jsonb WHERE id = 1`);
+    const r4b = await buildSendList(db as never, { ...base, columns: ["description", "level_price"], level_id: retail });
+    expect(r4b.rows.find((r) => r.item_id === a)!.level_price).toBe(5575);
 
     // The Excel carries only the chosen columns; the UPC stays text.
     const f = await sendListXlsx(db as never, { ...base, columns: ["description", "upc", "my_price"], title: "Laredo list" });

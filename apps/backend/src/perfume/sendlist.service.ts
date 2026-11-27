@@ -13,7 +13,7 @@ import type pg from "pg";
 import ExcelJS from "exceljs";
 import { z } from "zod";
 import { categoryOf } from "./normalize.js";
-import { priceFromCost } from "./pricing.js";
+import { roundRule, sellingPrice } from "./selling-price.js";
 
 export class SendListInvalid extends Error {}
 
@@ -115,6 +115,7 @@ export async function buildSendList(c: pg.PoolClient, x: SendListInput) {
       `SELECT DISTINCT ON (item_id) item_id, price_cents::int FROM perfume.price_level_items WHERE level_id = $1 AND archived_at IS NULL AND min_qty <= 1 ORDER BY item_id, min_qty DESC`,
       [x.level_id])).rows.map((r) => [r.item_id, r.price_cents]));
     levelPrice = new Map();
+    const rule = await roundRule(c); // calculated prices close by the desk rounding rule (owner 2026-11-27 15:40 CT)
     for (const k of costs) {
       const f = fixed.get(k.item_id);
       if (f != null) { levelPrice.set(k.item_id, f); continue; }
@@ -123,7 +124,7 @@ export async function buildSendList(c: pg.PoolClient, x: SendListInput) {
       const cost = lv.cost_basis === "avg"
         ? (k.stock != null ? Math.round(Number(k.stock)) : k.mine ?? (l?.file != null ? Math.round(Number(l.file)) : l?.best ?? null))
         : l?.best ?? null;
-      if (cost != null) levelPrice.set(k.item_id, priceFromCost(cost, Number(lv.pct), lv.method));
+      if (cost != null) levelPrice.set(k.item_id, sellingPrice(cost, Number(lv.pct), lv.method, rule));
     }
   }
 

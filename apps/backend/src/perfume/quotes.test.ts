@@ -10,8 +10,8 @@ import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js
 import {
   addLine, copyQuote, createQuote, getQuote, listQuotes, quoteHtml, QuoteInvalid, quotesOfCompany, quotesOfItem, quoteXlsx, removeLine, searchQuoteItems, setQuoteStatus, updateLine,
 } from "./quotes.service.js";
-import { getRules } from "./desk.service.js";
-import { priceFromCost } from "./pricing.js";
+import { getRules, putRules } from "./desk.service.js";
+import { closeCents, priceFromCost } from "./pricing.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 describeIntegration("quotations (real Postgres, rolled back)", () => {
@@ -50,10 +50,13 @@ describeIntegration("quotations (real Postgres, rolled back)", () => {
 
     const q = await createQuote(db as never, TEST_OWNER_USER_ID, { company_id: co, valid_until: "2027-12-31" });
     expect(q.number).toMatch(/^QT-\d{6}$/);
+    // Owner 2026-11-27 15:40 CT: a calculated price rounds UP to the next $0.25 (the desk rounding rule).
+    await putRules(db as never, TEST_OWNER_USER_ID, { round_step: "25", round_dir: "up" });
     const line = await addLine(db as never, TEST_OWNER_USER_ID, q.id, { item_id: item, qty: 12 });
-    // $10.00 (the cheapest supplier, never the competitor's $8.00) + the owner's first wholesale target — exact cents.
+    // $10.00 (the cheapest supplier, never the competitor's $8.00) + the owner's first wholesale target, closed up to the quarter.
     const pct = (await getRules(db as never)).wholesale_targets_pct[0]!;
-    expect(line.unit_price_cents).toBe(priceFromCost(1000, pct, "markup"));
+    expect(line.unit_price_cents).toBe(closeCents(priceFromCost(1000, pct, "markup"), "25", "up"));
+    expect(line.unit_price_cents % 25).toBe(0);
     await expect(addLine(db as never, TEST_OWNER_USER_ID, q.id, { description: "Gift bag", qty: 1 })).rejects.toBeInstanceOf(QuoteInvalid);
     const bag = await addLine(db as never, TEST_OWNER_USER_ID, q.id, { description: "Gift bag", qty: 1, unit_price_cents: 250 });
     await updateLine(db as never, TEST_OWNER_USER_ID, line.id, { qty: 24, unit_price_cents: 1150 });
