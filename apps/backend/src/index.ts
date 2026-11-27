@@ -501,6 +501,8 @@ import { registerPerfumeQuoteRoutes } from "./perfume/quotes.routes.js";
 import { registerPerfumeOrderRoutes } from "./perfume/orders.routes.js";
 import { registerScentsxLinkRoutes } from "./scentsx/links.routes.js";
 import { initializeScentsxStockMovePosterCron } from "./scentsx/stock-move-poster.cron.js";
+import { registerScentsxComplianceRoutes } from "./scentsx/compliance.routes.js";
+import { initializeScentsxSanctionsCron } from "./scentsx/sanctions.cron.js";
 import { registerPerfumePurchaseRoutes } from "./perfume/purchases.routes.js";
 import { registerPerfumeProfileRoutes } from "./perfume/profiles.routes.js";
 import { registerPerfumeInventoryRoutes } from "./perfume/inventory.routes.js";
@@ -1486,6 +1488,7 @@ async function main() {
   await registerPerfumeQuoteRoutes(app);
   await registerPerfumeOrderRoutes(app);
   await registerScentsxLinkRoutes(app);
+  await registerScentsxComplianceRoutes(app);
   await registerPerfumePurchaseRoutes(app);
   await registerPerfumeProfileRoutes(app);
   await registerPerfumeInventoryRoutes(app);
@@ -1774,6 +1777,7 @@ async function main() {
       // outright (not left flag-gated) — see match.service.ts's findCandidates() comment.
       initializeDraftCrewStatusSelfHealCron(app);
       initializeScentsxStockMovePosterCron(app);
+      initializeScentsxSanctionsCron(app);
       app.log.info("[STARTUP] fuel-gps-match-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");

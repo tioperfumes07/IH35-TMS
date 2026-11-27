@@ -724,6 +724,16 @@
       "schema": "_system",
       "table": "purge_authorized_rows",
       "reason": "the OWNER's purge authorization ledger (202615290200, ARM L): table_name + row_pk listed one by one under an AUTH-NNN id, spanning entities by design (one authorization may list rows of several companies). Control plane, not business data: ih35_app has NO grant on it at all (revoked in 202615290200 - stronger than RLS); only ih35_ci_readonly may SELECT (dry runs). Written only by the owner-run purge route / AUTH ops scripts."
+    },
+    {
+      "schema": "scentsx",
+      "table": "sanctions_list_loads",
+      "reason": "OFAC SDN + consolidated non-SDN list as published by the US Treasury (sanctionslist.ofac.treas.gov) — public reference data that belongs to no company and carries no company data; every company screens against the same list. FORCE RLS: read open, write Owner role only (migration 202616930100); loads are append-only and deduplicated by sha256. The company-scoped records are scentsx.sanctions_screenings (operating_company_id + wall trigger)."
+    },
+    {
+      "schema": "scentsx",
+      "table": "sanctions_list_entries",
+      "reason": "OFAC SDN + consolidated non-SDN list as published by the US Treasury (sanctionslist.ofac.treas.gov) — public reference data that belongs to no company and carries no company data; every company screens against the same list. FORCE RLS: read open, write Owner role only (migration 202616930100); loads are append-only and deduplicated by sha256. The company-scoped records are scentsx.sanctions_screenings (operating_company_id + wall trigger)."
     }
   ],
   "remediation_backlog": [
