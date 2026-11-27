@@ -4,10 +4,10 @@
  * and nothing from the carriers; on any carrier page none of these show. Each module is a set of desk tabs.
  * The data stays walled (perfume schema, FORCE RLS owner-only) — this file only decides what the menu shows.
  */
-import { BookOpen, Boxes, CalendarDays, FileText, Landmark, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
+import { BookOpen, Barcode, Boxes, CalendarDays, FileText, Landmark, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing" | "inventory" | "books";
+export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing" | "items" | "inventory" | "books";
 export type PerfumeModule = { id: PerfumeModuleId; label: string; Icon: ComponentType<{ className?: string }>; tabs: string[] };
 
 export const PERFUME_MODULES: PerfumeModule[] = [
@@ -21,7 +21,10 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   // Owner 2026-11-26 18:13 CT: "we need quotations, and then historoy for quotations"; 19:12 CT: "sales order and purchase ordres
   // should already be created, i need my complete customer and vendors profile".
   { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders", "accounts", "levels"] },
-  { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers", "items"] },
+  { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers"] },
+  // Owner 2026-11-26 22:51 CT: "THE ITEM FILE FOR EACH ITEM … SO WE CAN EDIT … AND THE LINKAGE SCREEN THAT SHOWS THE ITEM UPC AND
+  // LINKED TO AND DESCRIPTIONS TO ALL LINKED".
+  { id: "items", label: "Items", Icon: Barcode, tabs: ["itemfile", "linkage", "items"] },
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
   { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
   // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
