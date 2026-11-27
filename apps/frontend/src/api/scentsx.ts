@@ -33,3 +33,10 @@ export const getScentsxSalesOrderBilling = (salesOrderId: string) =>
   apiRequest<{ lines: ScentsxBillableLine[]; invoices: ScentsxDocLink[] }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/billing`);
 export const invoiceScentsxSalesOrder = (salesOrderId: string, channel: "wholesale" | "retail" | "export") =>
   apiRequest<{ invoice: { invoice_id: string; display_id: string; lines: number; units: number } }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/invoice`, { method: "POST", body: { channel } });
+export type ScentsxCredit = {
+  contact_company_id: string; customer_id: string | null; account_type: string | null; credit_limit_cents: number | null; terms_days: number | null;
+  on_hold: boolean; hold_reason: string | null; open_ar_cents: number; past_due_cents: number; oldest_past_due_days: number | null;
+  draft_invoice_cents: number; shipped_not_billed_cents: number; open_order_cents: number; exposure_cents: number; available_cents: number | null; over_limit: boolean;
+};
+export const getScentsxCredit = (contactCompanyId: string) =>
+  apiRequest<{ credit: ScentsxCredit }>(`/api/v1/scentsx/customers/${encodeURIComponent(contactCompanyId)}/credit`);
