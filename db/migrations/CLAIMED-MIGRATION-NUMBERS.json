@@ -1087,6 +1087,7 @@
     "202616810100",
     "202616850100",
     "202616860100",
+    "202616890100",
     "202616820100",
     "202616820200",
     "202616830100",
@@ -1265,6 +1266,7 @@
   "202616810100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME lead history: perfume.lead_events append-only who/when for contacts, catalogs, campaigns, segments, trades (fully-wired item g, owner 2026-11-26 18:13 CT)"},
   "202616850100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME inventory ledger (ScentsX): stock sites kind/own, lots (FIFO layers), append-only stock moves with FIFO and moving-average cost, transfers, cycle counts with second-person approval, PO receive into a site, SO ship from a site, price levels — owner 2026-11-26 20:21 CT (D2/D6/D7/D8 answered)"},
   "202616860100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME price levels + customer accounts (ScentsX): perfume.price_levels / price_level_items (Retail, Wholesale, Distributor, Export Mexico — owner 20:28 CT), perfume.customer_accounts (type, terms, limit, hold) and perfume.credit_applications with owner approval, append-only account history — owner 2026-11-26 20:21 CT"},
+  "202616890100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX company facts the owner gave 2026-11-26 21:24 CT: EIN 51-0538798, fiscal year ends 12-31, formed 04/01/2005 — org.companies.tax_id plus two nullable columns fiscal_year_end (MM-DD) and formed_on"},
   "202616750100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
