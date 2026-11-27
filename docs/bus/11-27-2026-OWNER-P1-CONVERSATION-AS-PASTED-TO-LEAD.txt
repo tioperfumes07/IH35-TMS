@@ -1,0 +1,63 @@
+read thoroughly, i want you to number all pending tasks and i need you to communicate with other cluade agent, if you need anything for me to instcut it let me know. ok continue. i am in price desk. in purchase-compare vendors. here i do not need by default inventory per location, i need invenotryquantity of laredo warehouse by default. i i need first my last purchase date, qty, qty sold, and my current inventory. i need my avg cost, last cost. when wanting to change my margin, i need to have filters for the chnges.  so i can set different percentages for different procuts, exclusive, new launches, testers, ini, sets, etc. regualr goods etc. so create those filters so i can change. remember when generating margins, or calculating, we round to the neaerst .25 upwards. .67 is .75 etc. these filters must be added to all prhcsses trading whoelsale compeititon analyssis all items etc. my offer list my inventoory need to buy etc.the same for trading sell to my vendors and for their margins i want to calculate etc. remeber in. wholesale competition i am missing sonias list. . by default we do not need their description. just list and real price. by default,if i want more data ill select. same for competitio their margin. and same for lsit analysis. in list analysis i should be able to select if vendor, or competition, such as esperanza, sonia, omni, broadway, etc. . here in list anaysis i need to be able to select multiple competitros as well. ------for vendors customers and vendors i need to be able to categorize or rank on purchase capacity or quantity. so you will help me with this analysis. vendors from all their lists. on all items there are in common between each, i need to figure out which are the ones that have in list the most expensive, that means i can sell to them more expensive, the medium range in pricing and then the lowest pricing. jizan or rdalan, and mtz and pca are usually always the lowest as well as m4 distributros, so to them i need to sell very cheap, so they are low margin high bvolume, etc. -----and based on my analysis and tourse when comparing lists i need to be able to confirm the new prices in our lists or matching etc anyhow this last part we can do later. but i need help with all this and the engines and the builds and the deisngs and connectivity etc.  and remember the following---we arew not on trucking, only perfumes today. trucking leave for 3 days, so perfumes only build, code, work, fully wire, reverse route, double, wire mechanical, economic, financial, money, chart of accounts, liabilities, assets, ap, ar, customers, vendors, types, items, catalogs, etc. if you test locally and pass, you must follow fast merge law, fast 4 minute weekend merge method.----
+
+Before numbering anything I'm reading the price-desk code: the views, the grid columns, the margin rules and the rounding.
+
+The engine is clear now. Two quick facts before I number the tasks: where Laredo stock sits in your inventory file, and whether Sonia's list exists at all.
+
+laredo warehouse stock is 008 warehouse.
+
+and in all lsits and pages etc. the descrition and name should not be centered, i think i like it more on the left hand side, as in excel, not centered.
+
+Confirmed: 008 is the Laredo warehouse default. I'll also put item names and descriptions on the left, like Excel, in every list.
+
+All pending perfume work, numbered (15:45 CT). P1 = me, LEAD = the other Claude.
+
+Price desk (yours today, P1 builds)
+
+Purchase · compare vendors default: Laredo stock = warehouse 008 only (other warehouses one tick away in the ⚙ gear). First columns: my last purchase date, qty purchased, qty sold, current inventory (008), avg cost, last cost.
+Margin rules with filters: a different % per group — Exclusive, New launches, Testers, Minis, Sets, Regular (plus brand / type filters). Today only one % applies to everything.
+Rounding: every price the desk calculates rounds UP to the next $0.25 ($20.67 → $20.75). Today it is exact cents (setting is "no rounding").
+The same margin filters on every tab: Trading (sell to my vendors, with their own %), Wholesale, Competition, List analysis, All items, and the My offer list / My inventory / Need to buy views.
+Wholesale · vs competition: Sonia is missing. Measured: there is NO Sonia list in the app (no vendor, no list). Omni has no current list either. Your Downloads only has analysis workbooks made from her prices, not her own list. I need her latest price list file (or tell me which file / email it came in).
+Competitor columns default = list price + real price only (description and the rest in the ⚙ gear). Applies to Wholesale, Competition · their margin and List analysis.
+List analysis: choose vendor or competitor, and pick several competitors at once (Esperanza, Sonia, Omni, Broadway …).
+Vendor price tiers: on the items vendors have in common, rank each vendor High / Medium / Low priced. Low tier (Jizan, Rdalan, MTZ, PCA, M4 …) = sell cheap, low margin / high volume. The tier feeds the Trading %.
+Names and descriptions left-aligned in every list (not centered), like Excel.
+
+Customers / vendors
+10. Rank customers and vendors by purchase capacity and quantity (sales and volume). Proposed for LEAD, since it reads sales and AP money.
+
+Later (you said)
+11. Confirm new prices from a comparison straight into my lists.
+
+Already parked by you
+12. The 3 unlinked vendor lines (Valaya DUMMY, Jus de Amour, the no-name La Esperanza line).
+13. 264 UPC conflicts left (ties / size gaps outside stock), and Bella Vita 85715333001 (250 ml mist vs 100 ml EDP), which is held.
+
+Waiting on LEAD (their files)
+14. Purchase bills (GRNI → A/P) — LEAD is building them.
+15. Hide inactive items from the wholesale lists sent to buyers.
+16. Rule needed: does "Stock item? N" skip the stock ledger?
+17. Three reds already on main (an RLS scanner false alarm, a credit-memo self-test, and a security scan, CodeQL, flagging Plaid / login / accounting code). None are perfume code.
+
+From you, to instruct LEAD: please tell LEAD "take #10 (customer and vendor ranking by purchases) and fix the reds on main (#17)". I'm posting the split on the board now.
+
+From you, for me: Sonia's price list (#5).
+
+Starting now in order 1 → 9, each one merged on the 4-minute rule.
+
+The guard only requires ParityTable itself to keep the centered default, so left-aligning text columns per column is allowed. Branch for #1 (Purchase defaults) and #9 (left-aligned desk text):
+
+Adding an assertion that the Mine group now opens in your order, with Laredo 008 first among the stock columns:
+
+this in all modules etc, and name of vendor should be complete, b&s, should be b&s fragrances, etc, so we do not confuse with another. and remember like quickbooks, should be clcikclable all wired corretly, if i click on a vendor in a list, it shoul dgive me its proficle etc. if i clcik on brands, on number 4 it should take me to those, etc. large brands can be abbreviated paco rabanne, can be Paco R. DOLCE AND AGABANNA CAN BE D&G, JEAN PAUL CAN BE JPG, ETC. IN BUYERS SHOULD ALSO BE LEFT SIDE, FULL COMPANY NAME, ALL PROPER FORMAT, FIRST LETTER CAPITALL LETTER THEN REGUALR ETC. SPACES, IPBGROUP IS IPB Group, etc. in suppliers profiles etc as well all clicakble, all should be clickable like quickbooks and our app, so wire correctly. in supplier profiles, it is the same thing as vendors profiles right '?
+
+write instructions for lead right now here in copy paste box and i will paste to it.
+
+Writing LEAD's box now. First, the live numbers it needs: buyer names in all caps and vendor names as shown.
+
+save all todays conversation and pending work etc in the repo and in journal.
+
+Saving the session's notes and pending work to the repo.
+
+Saving. Checking where handoff docs live in the repo:
