@@ -100,3 +100,5 @@ export const screenScentsxParty = (kind: "contact_company" | "customer" | "vendo
   apiRequest<{ screening: { screening_id: string; result: string; best_score: number; hits: number } }>("/api/v1/scentsx/compliance/sanctions/screen", { method: "POST", body: { kind, id } });
 export const getScentsxCustomerCompliance = (contactCompanyId: string) =>
   apiRequest<{ resale_certificate_on_file: boolean; sanctions: ScentsxPartyStatus | null; customer_id: string | null }>(`/api/v1/scentsx/customers/${encodeURIComponent(contactCompanyId)}/compliance`);
+export type ScentsxTieOut = { as_of: string; account_id: string | null; subledger_cents: number; gl_cents: number; waiting_cents: number; waiting_moves: number; difference_cents: number; ties: boolean; zero_cost_moves: number };
+export const getScentsxInventoryTieOut = () => apiRequest<{ tie_out: ScentsxTieOut }>("/api/v1/scentsx/inventory/tie-out");
