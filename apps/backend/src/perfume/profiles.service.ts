@@ -36,13 +36,35 @@ export async function vendorProfile(c: pg.PoolClient, vendorId: string) {
             (SELECT count(*)::int FROM perfume.item_aliases a WHERE a.vendor_id = $1 AND a.sku IS NOT NULL) AS codes,
             (SELECT count(*)::int FROM perfume.item_aliases a WHERE a.vendor_id = $1 AND a.text_key IS NOT NULL) AS words,
             (SELECT count(*)::int FROM perfume.item_aliases a WHERE a.vendor_id = $1 AND a.method = 'confirmed') AS confirmed`, [vendorId])).rows[0]!;
+  const suggestions = company ? [] : await companySuggestions(c, String(v.name ?? ""), v.short_name ? String(v.short_name) : null);
   const purchase_orders = await listPurchaseOrders(c, { vendor_id: vendorId });
   const live = purchase_orders.filter((p) => p["status"] !== "cancelled");
   return {
-    vendor: v, company, lists, ...counts, purchase_orders,
+    vendor: v, company, suggestions, lists, ...counts, purchase_orders,
     po_total_cents: live.reduce((t, p) => t + Number(p["total_cents"]), 0),
     po_open: purchase_orders.filter((p) => p["status"] === "open").length,
   };
+}
+
+/** A name reduced for matching: letters and digits only, without what is in brackets, after a dash, or company endings
+ *  ("Broadway (wholesale competition)" → BROADWAY, "Fragrance Secret, Inc." → FRAGRANCESECRET). */
+export function matchKey(name: string): string {
+  return name.toUpperCase().replace(/\(.*?\)/g, " ").split(/\s[—–-]\s/)[0]!
+    .replace(/\b(INC|LLC|CORP|CORPORATION|CO|LTD|INTL|INTERNATIONAL|S\.?A)\b\.?/g, " ").replace(/[^A-Z0-9]/g, "");
+}
+
+/** Contacts companies whose name matches an unlinked vendor's name or short name — the owner links one with a click
+ *  (owner 2026-11-27 15:47 CT: supplier profile and vendor profile are one record). Never linked automatically: the
+ *  Contacts list holds duplicates ("Awesome Perfumes" twice) and only the owner knows which one is the real one. */
+export async function companySuggestions(c: pg.PoolClient, name: string, shortName: string | null) {
+  const nk = matchKey(name); const sk = shortName ? matchKey(shortName) : "";
+  if (nk.length < 3 && sk.length < 4) return [];
+  return (await c.query(
+    `WITH cc AS (SELECT ${COMPANY}, cc.id AS cid, regexp_replace(regexp_replace(upper(cc.name), '\\m(INC|LLC|CORP|CORPORATION|CO|LTD|INTL|INTERNATIONAL)\\M', ' ', 'g'), '[^A-Z0-9]', '', 'g') AS k
+                  FROM perfume.contact_companies cc WHERE cc.archived_at IS NULL)
+     SELECT * FROM cc
+      WHERE k <> '' AND (k = $1 OR (length($1) >= 5 AND position($1 in k) > 0) OR (length($2) >= 4 AND k = $2) OR (length($2) >= 5 AND position($2 in k) > 0))
+      ORDER BY (k = $1 OR k = $2) DESC, people DESC, name LIMIT 6`, [nk, sk])).rows;
 }
 
 /** The vendor's company in Contacts (or none). */
