@@ -4,10 +4,10 @@
  * and nothing from the carriers; on any carrier page none of these show. Each module is a set of desk tabs.
  * The data stays walled (perfume schema, FORCE RLS owner-only) — this file only decides what the menu shows.
  */
-import { BookOpen, CalendarDays, FileText, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
+import { BookOpen, CalendarDays, Landmark, FileText, Handshake, Mail, Send, ShoppingCart, Tags, Users } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing";
+export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "sales" | "purchasing" | "books";
 export type PerfumeModule = { id: PerfumeModuleId; label: string; Icon: ComponentType<{ className?: string }>; tabs: string[] };
 
 export const PERFUME_MODULES: PerfumeModule[] = [
@@ -22,6 +22,8 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   // should already be created, i need my complete customer and vendors profile".
   { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders"] },
   { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers", "items"] },
+  // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
+  { id: "books", label: "Books", Icon: Landmark, tabs: ["books"] },
 ];
 
 /** The module a desk tab belongs to (unknown / missing tab → the price desk). */
