@@ -8,7 +8,7 @@ import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
-import { familyReport, inventoryStatus, itemInquiry, priceBook, priceBookQuery, reportFilter, ReportInvalid, ReportNotFound } from "./reports.service.js";
+import { familyReport, inventoryStatus, itemInquiry, priceBook, priceBookQuery, reportFilter, ReportInvalid, ReportNotFound, tierQuery, vendorPriceTiers } from "./reports.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -115,6 +115,26 @@ export async function registerPerfumeReportRoutes(app: FastifyInstance) {
       const pdf = await page.pdf({ format: "Letter", printBackground: true, margin: { top: "0.4in", bottom: "0.4in", left: "0.3in", right: "0.3in" } });
       return send(reply, Buffer.from(pdf), `TIO price book ${r.level.name}.pdf`, "application/pdf");
     } finally { await browser.close(); }
+  });
+
+  // Vendor price tiers (owner 2026-11-27 15:40 CT): who lists high, medium, low on the items they have in common.
+  app.get("/api/v1/perfume/reports/vendor-tiers", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = tierQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query", details: q.error.flatten() });
+    return withCurrentUser(uid, (c) => vendorPriceTiers(c, q.data));
+  });
+  app.get("/api/v1/perfume/reports/vendor-tiers/export.xlsx", RL_FILE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = tierQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    const r = await withCurrentUser(uid, (c) => vendorPriceTiers(c, q.data));
+    const buf = await workbook("Vendor price tiers",
+      [{ header: "Vendor", width: 46 }, { header: "Tier", width: 14 }, { header: "Price index % (100 = median)", width: 16 }, { header: "Items compared", width: 12 },
+        { header: "Cheapest on %", width: 12 }, { header: "Most expensive on %", width: 14 }],
+      r.rows.map((x) => [x.vendor, x.tier, x.index_pct ?? "", x.items_compared, x.cheapest_pct ?? "", x.priciest_pct ?? ""]),
+      [`Total — ${r.total.vendors} vendors: ${r.total.low} low, ${r.total.medium} medium, ${r.total.high} high, ${r.total.too_few} too few items`, "", "", "", "", ""]);
+    return send(reply, buf, "TIO vendor price tiers.xlsx");
   });
 
   // 6. Product family report.
