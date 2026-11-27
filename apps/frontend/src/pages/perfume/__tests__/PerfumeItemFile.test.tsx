@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientApi from "../../../api/client";
 import { ToastProvider } from "../../../components/Toast";
-import { PerfumeItemFilePanel, PerfumeLinkagePanel } from "../PerfumeItemFilePanel";
+import { ItemFileEditor, PerfumeItemFilePanel, PerfumeLinkagePanel } from "../PerfumeItemFilePanel";
 
 vi.mock("../../../api/client", async (importOriginal) => ({ ...(await importOriginal<typeof import("../../../api/client")>()), apiRequest: vi.fn() }));
 
@@ -33,15 +33,21 @@ beforeEach(() => {
     throw new Error(`unexpected ${path}`);
   });
 });
-const mount = (ui: React.ReactNode, at = "/perfume") => render(<MemoryRouter initialEntries={[at]}><QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider>{ui}</ToastProvider></QueryClientProvider></MemoryRouter>);
+function Where() { return <span data-testid="where">{useLocation().search}</span>; }
+const mount = (ui: React.ReactNode, at = "/perfume") => render(<MemoryRouter initialEntries={[at]}><QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider>{ui}<Where /></ToastProvider></QueryClientProvider></MemoryRouter>);
 
 describe("item file and linkage", () => {
-  it("lists TIO / HK / UPC codes, edits the TIO code, adds a UPC", async () => {
+  it("lists TIO / HK / UPC codes; clicking an item opens its profile", async () => {
     mount(<PerfumeItemFilePanel />);
     const k = await screen.findByTestId("perfume-itemfile-kpis");
     await waitFor(() => expect(within(k).getByText("30,916")).toBeTruthy());
     expect(await screen.findByTestId("perfume-itemfile-fill")).toBeTruthy();
+    // Owner 2026-11-27 13:41 CT: clicking an item opens its profile (Items tab), not an editor below the list.
     fireEvent.click((await screen.findAllByText(row.display_name))[0]!);
+    await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("?tab=items&open=i1"));
+  });
+  it("the item editor (on the profile) edits the TIO code and adds a UPC", async () => {
+    mount(<ItemFileEditor id="i1" onChanged={() => {}} />);
     const ed = await screen.findByTestId("perfume-itemfile-editor");
     await waitFor(() => expect(ed.textContent).toContain("108092"));
     fireEvent.change(within(ed).getByTestId("perfume-itemfile-tio"), { target: { value: "T-1" } });

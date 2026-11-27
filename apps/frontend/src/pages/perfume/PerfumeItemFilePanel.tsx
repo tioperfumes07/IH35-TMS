@@ -89,17 +89,18 @@ const codes = (a: string[] | null | undefined) => (a && a.length ? a.join(", ") 
 /* ------------------------------------------------------------------ the item file */
 
 export function PerfumeItemFilePanel() {
-  const { openId } = useOpenDoc();
+  const { openId, open } = useOpenDoc();
   const [q, setQ] = useState("");
   const [typed, setTyped] = useState("");
   const [has, setHas] = useState<PerfumeItemFileHas | undefined>(undefined);
   // Owner 23:23 CT: "TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL" — our stock items first.
   const [scope, setScope] = useState<PerfumeItemScope>("mine");
   const [offset, setOffset] = useState(0);
-  const [selected, setSelected] = useState<string | null>(openId);
   // Owner 2026-11-27 07:22 CT: "in items list should have multiple selector as well to edit in mass and bulk".
   const [picked, setPicked] = useState<string[]>([]);
-  useEffect(() => { if (openId) setSelected(openId); }, [openId]);
+  // Owner 2026-11-27 13:41 CT: "i click on an item and it does not take me to the profile" — every item here opens its profile (Items tab),
+  // which carries the same editor plus barcodes, vendors' lines, quotes, orders, sites, accounts and history.
+  useEffect(() => { if (openId) open("items", openId); }, [openId, open]);
   useEffect(() => { setPicked([]); }, [q, has, scope, offset]);
   const list = useQuery({ queryKey: ["perfume", "item-file", q, has, scope, offset], queryFn: () => listPerfumeItemFile({ q, has, scope, limit: PAGE, offset }) });
   const { pushToast } = useToast();
@@ -147,9 +148,9 @@ export function PerfumeItemFilePanel() {
         <ParityTable<PerfumeItemFileRow>
           selectable selectedKeys={picked} onSelectionChange={setPicked} maxSelectable={500}
           rows={list.data?.rows ?? []} rowKey={(r) => r.id} loading={list.isLoading} storageKey="perfume-itemfile-v1"
-          exportFilename="TIO item file (this page)" exportExcel emptyText="No items match." onRowClick={(r) => setSelected(r.id)}
+          exportFilename="TIO item file (this page)" exportExcel emptyText="No items match." onRowClick={(r) => open("items", r.id)}
           columns={[
-            { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <span className="font-semibold">{r.display_name}</span> },
+            { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
             { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand || DASH, exportValue: (r) => r.brand ?? "" },
             { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => (r.family_id ? <DocLink tab="families" id={r.family_id}>{r.family ?? ""}</DocLink> : DASH), exportValue: (r) => r.family ?? "" },
@@ -178,7 +179,6 @@ export function PerfumeItemFilePanel() {
           <Button type="button" variant="secondary" className="h-[30px] px-2 text-xs" disabled={offset + PAGE >= total} onClick={() => setOffset(offset + PAGE)}>{tr("perfume.itemfile.next", "Next 100")}</Button>
         </div>
       </section>
-      {selected ? <ItemFileEditor id={selected} onChanged={() => void list.refetch()} onClose={() => setSelected(null)} /> : null}
     </div>
   );
 }
@@ -585,45 +585,54 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
       pushToast(`Item created: ${r.display_name}`, "success"); onCreated(r.id);
     } catch (e) { pushToast(userFacingApiError(e, "Item not created"), "error"); } finally { setBusy(false); }
   };
-  const row = (label: string, field: ReactNode) => (
-    <div className="grid grid-cols-[150px_1fr] items-center gap-2 border-b border-[#EEF2F6] py-1"><span className="text-[#475569]">{label}</span><span>{field}</span></div>
-  );
+  // Owner 2026-11-27 13:41 CT: "craete item has boxes out of proportion … the boxes the same as in the app" — the creator uses the item
+  // editor's own layout: label above each box, the same box widths (TIO 120 · Brand 160 · Name 260 · Size 80 · Model 180 …), one card.
   return (
-    <section className="max-w-[720px] rounded-[3px] border border-[#C6D1DC] bg-[#F8FAFC] p-3 text-xs" data-testid="perfume-item-creator" aria-label={tr("perfume.itemfile.new", "New item")}>
-      <div className="mb-2 font-semibold text-[#1F2A44]">{tr("perfume.itemfile.new", "New item")}</div>
+    <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-item-creator" aria-label={tr("perfume.itemfile.new", "New item")}>
+      <div className="text-section-header">{tr("perfume.itemfile.new", "New item")}</div>
       <datalist id="perfume-brands">{(opts.data?.brands ?? []).map((b) => <option key={b} value={b} />)}</datalist>
       <datalist id="perfume-models">{(opts.data?.models ?? []).map((b) => <option key={b} value={b} />)}</datalist>
       <datalist id="perfume-sizes">{(opts.data?.sizes ?? []).map((b) => <option key={b} value={b} />)}</datalist>
-      {row(`${tr("perfume.itemfile.brand", "Brand")} *`, <input list="perfume-brands" className={`${ctl} w-full`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-new-brand" />)}
-      {row(tr("perfume.itemfile.model", "Model"), <input list="perfume-models" className={`${ctl} w-full`} value={v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-new-model" />)}
-      {row(tr("perfume.itemfile.family", "Family"), <FamilySelect className={`${ctl} w-full`} value={v.family_id} brand={v.brand} onChange={(x) => setV({ ...v, family_id: x })} testId="perfume-new-family" />)}
-      {row(`${tr("perfume.itemfile.name", "Name")} *`, <input className={`${ctl} w-full`} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} data-testid="perfume-new-name" />)}
-      {row(tr("perfume.itemfile.product_type", "Product type"), (
-        <CatalogSelect kind="product_type" label="Product type" className={`${ctl} w-full`} value={v.product_type} options={cats.types} onChange={(x) => setV({ ...v, product_type: x })} testId="perfume-new-product-type" />))}
-      {row(tr("perfume.itemfile.category", "Category"), (
-        <CatalogSelect kind="item_category" label="Category" className={`${ctl} w-full`} value={v.category} options={cats.categories} onChange={(x) => setV({ ...v, category: x })} testId="perfume-new-category" />))}
-      {row(tr("perfume.itemfile.size", "Size ml"), <input list="perfume-sizes" type="number" min={0} className={`${ctl} w-[120px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-new-size" />)}
-      {row(tr("perfume.itemfile.conc", "EDT / EDP / Parfum"), (
-        <select className={`${ctl} w-[160px]`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-new-conc">
-          {CONC.map((x) => <option key={x} value={x}>{x || DASH}</option>)}
-        </select>))}
-      {row(tr("perfume.itemfile.gender", "Gender"), (
-        <select className={`${ctl} w-[160px]`} value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })} data-testid="perfume-new-gender">
-          {Object.entries(GENDER).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
-        </select>))}
-      {row(tr("perfume.itemfile.flags", "Flags"), (
-        <span className="flex flex-wrap gap-2">{FLAGS.map((fl) => (
-          <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)} onChange={(e) => setFlags(e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl))} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
-        ))}</span>))}
-      {row(tr("perfume.itemfile.description", "Description"), <textarea className={`${ctl} h-14 w-full py-1`} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-new-description" />)}
-      {row(tr("perfume.itemfile.case_pack", "Case pack"), <input type="number" min={1} className={`${ctl} w-[120px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-new-case-pack" />)}
-      {row(tr("perfume.itemfile.moq", "Min order"), <input type="number" min={1} className={`${ctl} w-[120px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-new-moq" />)}
-      {row(tr("perfume.itemfile.weight", "Weight g"), <input type="number" min={0} className={`${ctl} w-[120px] text-right`} value={v.weight} onChange={(e) => setV({ ...v, weight: e.target.value })} data-testid="perfume-new-weight" />)}
-      {row(tr("perfume.itemfile.origin", "Country of origin"), <input maxLength={2} className={`${ctl} w-[80px] uppercase`} placeholder="FR" value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-new-origin" />)}
-      {row(tr("perfume.itemfile.hs", "HS code"), <input className={`${ctl} w-[160px]`} placeholder="3303.00" value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-new-hs" />)}
-      {row(tr("perfume.itemfile.tio_code", "TIO code"), <input className={`${ctl} w-[160px]`} value={v.tio_code} onChange={(e) => setV({ ...v, tio_code: e.target.value })} data-testid="perfume-new-tio" />)}
-      {row(tr("perfume.itemfile.upc", "UPC"), <input inputMode="numeric" className={`${ctl} w-[200px]`} value={v.upc} onChange={(e) => setV({ ...v, upc: e.target.value })} data-testid="perfume-new-upc" />)}
-      <div className="mt-2 flex justify-end">
+      <div className="flex flex-wrap items-end gap-2 text-xs" data-testid="perfume-new-fields">
+        <label>{tr("perfume.itemfile.tio_code", "TIO code")} <input className={`${ctl} block w-[120px]`} value={v.tio_code} onChange={(e) => setV({ ...v, tio_code: e.target.value })} data-testid="perfume-new-tio" /></label>
+        <label>{`${tr("perfume.itemfile.brand", "Brand")} *`} <input list="perfume-brands" className={`${ctl} block w-[160px]`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-new-brand" /></label>
+        <label>{`${tr("perfume.itemfile.name", "Name")} *`} <input className={`${ctl} block w-[260px]`} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} data-testid="perfume-new-name" /></label>
+        <label>{tr("perfume.itemfile.size", "Size ml")} <input list="perfume-sizes" type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-new-size" /></label>
+        <label>{tr("perfume.itemfile.conc", "EDT / EDP / Parfum")}
+          <select className={`${ctl} block`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-new-conc">
+            {CONC.map((x) => <option key={x} value={x}>{x || DASH}</option>)}
+          </select>
+        </label>
+        <label>{tr("perfume.itemfile.model", "Model")} <input list="perfume-models" className={`${ctl} block w-[180px]`} value={v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-new-model" /></label>
+        <label>{tr("perfume.itemfile.family", "Family")}
+          <FamilySelect value={v.family_id} brand={v.brand} onChange={(x) => setV({ ...v, family_id: x })} testId="perfume-new-family" />
+        </label>
+        <label>{tr("perfume.itemfile.product_type", "Product type")}
+          <CatalogSelect kind="product_type" label="Product type" value={v.product_type} options={cats.types} onChange={(x) => setV({ ...v, product_type: x })} testId="perfume-new-product-type" />
+        </label>
+        <label>{tr("perfume.itemfile.category", "Category")}
+          <CatalogSelect kind="item_category" label="Category" value={v.category} options={cats.categories} onChange={(x) => setV({ ...v, category: x })} testId="perfume-new-category" />
+        </label>
+        <label>{tr("perfume.itemfile.gender", "Gender")}
+          <select className={`${ctl} block`} value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })} data-testid="perfume-new-gender">
+            {Object.entries(GENDER).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+          </select>
+        </label>
+        <span className="flex flex-wrap items-center gap-2">
+          {FLAGS.map((fl) => (
+            <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)}
+              onChange={(e) => setFlags(e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl))} data-testid={`perfume-new-flag-${fl}`} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
+          ))}
+        </span>
+        <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-new-case-pack" /></label>
+        <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-new-moq" /></label>
+        <label>{tr("perfume.itemfile.weight", "Weight g")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={v.weight} onChange={(e) => setV({ ...v, weight: e.target.value })} data-testid="perfume-new-weight" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[60px] uppercase`} placeholder="FR" value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-new-origin" /></label>
+        <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[110px]`} placeholder="3303.00" value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-new-hs" /></label>
+        <label>{tr("perfume.itemfile.upc", "UPC")} <input inputMode="numeric" className={`${ctl} block w-[180px]`} value={v.upc} onChange={(e) => setV({ ...v, upc: e.target.value })} data-testid="perfume-new-upc" /></label>
+        <label className="w-full">{tr("perfume.itemfile.description", "Description")}
+          <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-new-description" />
+        </label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void save()} data-testid="perfume-new-save">{tr("perfume.itemfile.create", "Create item")}</Button>
       </div>
     </section>
