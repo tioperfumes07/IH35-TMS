@@ -9,8 +9,8 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import {
-  addHkCode, addUpc, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, itemEditSchema, itemFileCounts, ItemNotFound, linkage, linkageQuery, listItemFile, listQuery,
-  updateItemFile,
+  addHkCode, addUpc, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, itemEditSchema, itemFileCounts, ItemNotFound, linkage, linkageQuery, linkItemTo, listItemFile, listQuery,
+  stockLinkQueue, stockQueueQuery, strictLinkApply, strictLinkPreview, updateItemFile,
 } from "./items.service.js";
 import { ProfileNotFound } from "./profiles.service.js";
 
@@ -104,5 +104,28 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
     const q = linkageQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "invalid_query", message: "Type a UPC, a code or words." });
     return withCurrentUser(uid, (c) => linkage(c, q.data));
+  });
+  // Stock linkage (owner 2026-11-27 06:19 CT): confirm every one of OUR items to the vendors' item (UPCs, lines, codes, cost).
+  app.get("/api/v1/perfume/stock-linkage", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = stockQueueQuery.safeParse(req.query ?? {});
+    if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    return withCurrentUser(uid, (c) => stockLinkQueue(c, q.data));
+  });
+  app.post("/api/v1/perfume/stock-linkage/link", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ from_item_id: z.string().uuid(), to_item_id: z.string().uuid() }).safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => linkItemTo(c, uid, p.data.from_item_id, p.data.to_item_id)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/stock-linkage/strict", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => ({ pairs: await strictLinkPreview(c) }));
+  });
+  app.post("/api/v1/perfume/stock-linkage/strict", RL_FILE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ confirm: z.literal(true) }).safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => strictLinkApply(c, uid)); } catch (e) { return fail(reply, e); }
   });
 }

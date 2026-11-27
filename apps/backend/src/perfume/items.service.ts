@@ -18,6 +18,7 @@ import { z } from "zod";
 import { identify, looseKey, normalizeUpc } from "./normalize.js";
 import { displayNameOf } from "./matching.js";
 import { itemProfile } from "./profiles.service.js";
+import { confirmRow, invalidateGridCache } from "./desk.service.js";
 
 export class ItemInvalid extends Error {}
 export class ItemNotFound extends Error { constructor() { super("not_found"); } }
@@ -306,4 +307,120 @@ export async function linkage(c: pg.PoolClient, f: z.infer<typeof linkageQuery>)
     `SELECT i.id, i.display_name, i.internal_code AS tio_code, coalesce((SELECT array_agg(u.upc ORDER BY u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id), '{}') AS upcs
        FROM perfume.items i WHERE i.id = ANY($1::uuid[]) ORDER BY i.display_name`, [items])).rows : [];
   return { q, upc, items: itemRows, lines: rows };
+}
+
+
+/* ------------------------------------------------------------------ stock linkage (owner 2026-11-27 06:19 CT) */
+/*
+ * "I THINK YOU NEED TO CONFIRM ALL THOSE PERFUMES CORRECTLY TO UPCS AND VENDORS". Measured on prod 2026-11-27: of 3,877 items on his
+ * own lists only 989 are linked to any vendor line — his HK inventory names ("JPG LE MALE EDT 200ML (M)", "TF NOIR EXTREME") were
+ * read as items of their own. Linking one of OUR items to the vendors' item moves every line of his lists (and their remembered HK
+ * codes / words, so the next import links by itself), its UPCs, TIO code and my avg cost onto that item, and retires ours as merged.
+ * A candidate must be the same bottle: same size, same kind (tester / set / mini / body / refill …), gender and concentration not
+ * contradicting, brand the same or unread. Nothing links unless he (or the strict rule below, which he sees first) says so.
+ */
+const KIND_SQL = (a: string) => `ARRAY(SELECT f FROM unnest(coalesce(${a}.flags, '{}')) f WHERE f IN ('SET','TESTER','MINI','BODY','OIL','VARIOUS','REFILL') ORDER BY f)`;
+const STOP = `('EDP','EDT','EDC','PARFUM','EXTRAIT','SPRAY','SP','SPR','FOR','POUR','HOMME','FEMME','MEN','WOMEN','MAN','WOMAN','HER','HIM','THE','DE','DI','LE','LA','L','W','M','U','OZ','ML','EAU','TESTER','NEW')`;
+const TOKENS = (a: string) => `(SELECT string_agg(t, ' ' ORDER BY t) FROM (SELECT DISTINCT t FROM regexp_split_to_table(regexp_replace(upper(${a}.name), '[^A-Z0-9]+', ' ', 'g'), ' ') t
+    WHERE t <> '' AND t NOT IN ${STOP}) x)`;
+/** Our items (on my current inventory / offer list) that no supplier or competitor line is linked to. */
+const UNLINKED_MINE = `
+  WITH cur AS (SELECT r.item_id, v.kind FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL
+                 JOIN perfume.vendors v ON v.id = l.vendor_id WHERE r.item_id IS NOT NULL),
+       mine AS (SELECT DISTINCT item_id FROM cur WHERE kind IN ${MINE_KINDS}),
+       vend AS (SELECT DISTINCT item_id FROM cur WHERE kind NOT IN ${MINE_KINDS})`;
+/** The same-bottle rule between our item m and a vendors' item v. */
+const SAME_BOTTLE = `v.size_ml IS NOT DISTINCT FROM m.size_ml AND ${KIND_SQL("m")} = ${KIND_SQL("v")}
+    AND (coalesce(m.gender, '') = coalesce(v.gender, '') OR coalesce(m.gender, '') = '' OR coalesce(v.gender, '') = '')
+    AND (coalesce(m.conc, '') = coalesce(v.conc, '') OR coalesce(m.conc, '') = '' OR coalesce(v.conc, '') = '')
+    AND (m.brand = v.brand OR coalesce(m.brand, '') = '' OR coalesce(v.brand, '') = '')`;
+
+export const stockQueueQuery = z.object({
+  q: z.string().trim().max(200).optional(),
+  perfumes_only: z.preprocess((v) => (v === "false" || v === false ? false : v === undefined ? undefined : true), z.boolean().default(true)),
+  limit: z.coerce.number().int().min(1).max(200).default(50),
+  offset: z.coerce.number().int().min(0).default(0),
+});
+export async function stockLinkQueue(c: pg.PoolClient, f: z.infer<typeof stockQueueQuery>) {
+  const args: unknown[] = [];
+  const where = ["i.id IN (SELECT item_id FROM mine)", "i.id NOT IN (SELECT item_id FROM vend)", "i.merged_into_id IS NULL"];
+  if (f.perfumes_only) where.push("i.size_ml IS NOT NULL AND NOT ('VARIOUS' = ANY(coalesce(i.flags, '{}')))");
+  if (f.q) { args.push(`%${f.q.toLowerCase()}%`); where.push(`lower(i.display_name) LIKE $${args.length}`); }
+  const total = (await c.query<{ n: number }>(`${UNLINKED_MINE} SELECT count(*)::int AS n FROM perfume.items i WHERE ${where.join(" AND ")}`, args)).rows[0]!.n;
+  const linked = (await c.query<{ mine: number; linked: number }>(`${UNLINKED_MINE}
+    SELECT (SELECT count(*) FROM mine)::int AS mine, (SELECT count(*) FROM mine WHERE item_id IN (SELECT item_id FROM vend))::int AS linked`)).rows[0]!;
+  args.push(f.limit, f.offset);
+  const page = (await c.query<{ id: string; display_name: string; upcs: string[] | null; hk: string | null; my_desc: string | null }>(`${UNLINKED_MINE}
+    SELECT i.id, i.display_name, (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs,
+           (SELECT min(r.sku) FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL JOIN perfume.vendors v ON v.id = l.vendor_id
+             WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS}) AS hk,
+           (SELECT min(r.description) FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL JOIN perfume.vendors v ON v.id = l.vendor_id
+             WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS}) AS my_desc
+      FROM perfume.items i WHERE ${where.join(" AND ")} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
+  const ids = page.map((p) => p.id);
+  const cands = ids.length ? (await c.query<{ mine_id: string; id: string; display_name: string; score: number; same_brand: boolean; lists: number; best_cents: number | null;
+    upcs: string[] | null; sample: string | null; exact: boolean }>(`${UNLINKED_MINE},
+      v AS (SELECT i.* FROM perfume.items i WHERE i.id IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL),
+      c AS (SELECT m.id AS mine_id, v.id, v.display_name, similarity(m.name, v.name)::float8 AS score, (m.brand = v.brand AND m.brand <> '') AS same_brand,
+                   ${TOKENS("m")} = ${TOKENS("v")} AS exact,
+                   row_number() OVER (PARTITION BY m.id ORDER BY (${TOKENS("m")} = ${TOKENS("v")}) DESC, (m.brand = v.brand AND m.brand <> '') DESC, similarity(m.name, v.name) DESC) AS rk
+              FROM perfume.items m JOIN v ON ${SAME_BOTTLE} AND (similarity(m.name, v.name) >= 0.25 OR ${TOKENS("m")} = ${TOKENS("v")})
+             WHERE m.id = ANY($1::uuid[]))
+    SELECT c.mine_id, c.id, c.display_name, round(c.score::numeric, 2)::float8 AS score, c.same_brand, c.exact,
+           (SELECT count(DISTINCT l.vendor_id)::int FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL WHERE r.item_id = c.id) AS lists,
+           (SELECT min(r.price_cents)::int FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL JOIN perfume.vendors vv ON vv.id = l.vendor_id
+             WHERE r.item_id = c.id AND vv.kind = 'buy' AND r.price_cents > 0) AS best_cents,
+           (SELECT array_agg(u.upc) FROM perfume.item_upcs u WHERE u.item_id = c.id) AS upcs,
+           (SELECT min(r.description) FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id AND l.is_current AND l.voided_at IS NULL WHERE r.item_id = c.id) AS sample
+      FROM c WHERE c.rk <= 5 ORDER BY c.mine_id, c.rk`, [ids])).rows : [];
+  const by = new Map<string, typeof cands>();
+  for (const x of cands) { const a = by.get(x.mine_id) ?? []; a.push(x); by.set(x.mine_id, a); }
+  return { total, mine: linked.mine, linked: linked.linked, rows: page.map((p) => ({ ...p, candidates: by.get(p.id) ?? [] })) };
+}
+
+/** Link OUR item to the vendors' item: every line of it moves (remembered by HK code and words for the next import), its UPCs,
+ *  TIO code, my avg cost and HK codes follow, and ours is retired as merged into it. Both items' files record it. */
+export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, toId: string) {
+  if (fromId === toId) throw new ItemInvalid("That is the same item.");
+  const from = await liveItem(c, fromId);
+  const to = await liveItem(c, toId);
+  const kind = (f: string[] | null) => (f ?? []).filter((x) => ["SET", "TESTER", "MINI", "BODY", "OIL", "VARIOUS", "REFILL"].includes(x)).sort().join("+");
+  if (from.size_ml != null && to.size_ml != null && Number(from.size_ml) !== Number(to.size_ml)) throw new ItemInvalid(`Different sizes: ${Number(from.size_ml)} ml vs ${Number(to.size_ml)} ml.`);
+  if (kind(from.flags) !== kind(to.flags)) throw new ItemInvalid(`Different kind of product: ${kind(from.flags) || "regular"} vs ${kind(to.flags) || "regular"}.`);
+  const rows = (await c.query<{ id: string }>(`SELECT id FROM perfume.price_list_rows WHERE item_id = $1`, [fromId])).rows;
+  for (const r of rows) await confirmRow(c as never, uid, r.id, { item_id: toId });
+  await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [fromId, toId]);
+  await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [fromId, toId]);
+  if (from.internal_code && !to.internal_code) {
+    await c.query(`UPDATE perfume.items SET internal_code = NULL WHERE id = $1`, [fromId]);
+    await c.query(`UPDATE perfume.items SET internal_code = $2, updated_at = now() WHERE id = $1`, [toId, from.internal_code]);
+  }
+  await c.query(
+    `INSERT INTO perfume.item_costs (item_id, avg_cost_cents, updated_by, updated_at)
+     SELECT $2, avg_cost_cents, $3, now() FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents IS NOT NULL ON CONFLICT (item_id) DO NOTHING`, [fromId, toId, uid]);
+  await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [fromId, toId]);
+  await event(c, fromId, uid, "line_linked", { merged_into_item_id: toId, into: to.display_name, lines: rows.length });
+  await event(c, toId, uid, "line_linked", { merged_from_item_id: fromId, from: from.display_name, lines: rows.length, tio_code: from.internal_code });
+  invalidateGridCache();
+  return { lines: rows.length, into: to.display_name };
+}
+
+/** The strict rule, shown before anything links: same words (ignoring EDP / EDT / for him / pour homme …), same brand, same size,
+ *  same kind, gender and concentration not contradicting — exactly one vendors' item fits, and no other of our items fits it
+ *  (Armani Code Men and Code Women must not both land on one unsexed tester). */
+export async function strictLinkPreview(c: pg.PoolClient) {
+  return (await c.query<{ mine_id: string; mine: string; vend_id: string; vend: string }>(`${UNLINKED_MINE},
+      v AS (SELECT i.* FROM perfume.items i WHERE i.id IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL AND i.brand <> ''),
+      m AS (SELECT i.* FROM perfume.items i WHERE i.id IN (SELECT item_id FROM mine) AND i.id NOT IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL AND i.brand <> '' AND i.size_ml IS NOT NULL),
+      tm AS (SELECT id, ${TOKENS("m")} AS k FROM m), tv AS (SELECT id, ${TOKENS("v")} AS k FROM v),
+      p AS (SELECT m.id AS mine_id, m.display_name AS mine, v.id AS vend_id, v.display_name AS vend
+              FROM m JOIN tm ON tm.id = m.id JOIN v ON ${SAME_BOTTLE} AND m.brand = v.brand JOIN tv ON tv.id = v.id AND tv.k = tm.k AND tm.k IS NOT NULL)
+    SELECT * FROM p WHERE mine_id IN (SELECT mine_id FROM p GROUP BY mine_id HAVING count(*) = 1)
+                      AND vend_id IN (SELECT vend_id FROM p GROUP BY vend_id HAVING count(*) = 1) ORDER BY mine`)).rows;
+}
+export async function strictLinkApply(c: pg.PoolClient, uid: string) {
+  const pairs = await strictLinkPreview(c);
+  let linked = 0;
+  for (const p of pairs) { await linkItemTo(c, uid, p.mine_id, p.vend_id); linked++; }
+  return { linked };
 }

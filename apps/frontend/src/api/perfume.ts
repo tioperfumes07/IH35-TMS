@@ -849,6 +849,26 @@ export const getPerfumeFillCodes = () => apiRequest<{ codes_on_list: number; wil
 export const applyPerfumeFillCodes = () => apiRequest<{ filled: number; previewed: number }>("/api/v1/perfume/item-file-fill-codes", { method: "POST", body: { confirm: true } });
 export const getPerfumeLinkage = (q: string) => apiRequest<PerfumeLinkage>(`/api/v1/perfume/linkage?q=${encodeURIComponent(q)}`);
 
+/* ------------------------------------------------------------------ Stock linkage (owner 2026-11-27 06:19 CT) */
+export type PerfumeStockCandidate = { mine_id: string; id: string; display_name: string; score: number; same_brand: boolean; exact: boolean; lists: number; best_cents: number | null;
+  upcs: string[] | null; sample: string | null };
+export type PerfumeStockLinkRow = { id: string; display_name: string; upcs: string[] | null; hk: string | null; my_desc: string | null; candidates: PerfumeStockCandidate[] };
+export type PerfumeStockQueue = { total: number; mine: number; linked: number; rows: PerfumeStockLinkRow[] };
+export type PerfumeStrictPair = { mine_id: string; mine: string; vend_id: string; vend: string };
+export const getPerfumeStockLinkage = (f: { q?: string; perfumes_only?: boolean; limit?: number; offset?: number } = {}) => {
+  const p = new URLSearchParams();
+  if (f.q) p.set("q", f.q);
+  if (f.perfumes_only === false) p.set("perfumes_only", "false");
+  if (f.limit) p.set("limit", String(f.limit));
+  if (f.offset) p.set("offset", String(f.offset));
+  const qs = p.toString();
+  return apiRequest<PerfumeStockQueue>(`/api/v1/perfume/stock-linkage${qs ? `?${qs}` : ""}`);
+};
+export const linkPerfumeStockItem = (from_item_id: string, to_item_id: string) =>
+  apiRequest<{ lines: number; into: string }>("/api/v1/perfume/stock-linkage/link", { method: "POST", body: { from_item_id, to_item_id } });
+export const getPerfumeStrictLinks = () => apiRequest<{ pairs: PerfumeStrictPair[] }>("/api/v1/perfume/stock-linkage/strict");
+export const applyPerfumeStrictLinks = () => apiRequest<{ linked: number }>("/api/v1/perfume/stock-linkage/strict", { method: "POST", body: { confirm: true } });
+
 /* ------------------------------------------------------------------ Send list (owner 2026-11-26 23:23 CT) */
 export const PERFUME_SEND_COLUMNS = ["description", "brand", "category", "size", "conc", "upc", "tio_code", "hk_code", "qty", "my_price", "level_price"] as const;
 export type PerfumeSendColumn = (typeof PERFUME_SEND_COLUMNS)[number];

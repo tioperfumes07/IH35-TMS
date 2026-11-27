@@ -17,9 +17,9 @@ import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, confirmPerfumeRow, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
+  addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
   listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile,
-  type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine,
+  type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
@@ -287,6 +287,103 @@ export function PerfumeLinkagePanel() {
               ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => linkTo(l)} data-testid={`perfume-linkage-link-${l.line_id}`}>{tr("perfume.linkage.link", "Link to this item")}</Button> : null) },
           ]}
         />
+      </section>
+    </div>
+  );
+}
+
+/**
+ * Stock linkage (owner 2026-11-27 06:19 CT: "I think you need to confirm all those perfumes correctly to upcs and vendors"). Every
+ * item on HIS lists that no supplier or competitor line points to, with up to five same-bottle candidates (same size, same kind,
+ * gender / type not contradicting). One click links his item onto the vendors' item — his lines, UPCs, HK codes, TIO code and avg
+ * cost go with it, and his next import finds it by the HK code. The strict pairs (same words and brand, one-to-one) are shown in
+ * full before he presses to link them all.
+ */
+export function PerfumeStockLinkagePanel() {
+  const { pushToast } = useToast();
+  const [typed, setTyped] = useState("");
+  const [q, setQ] = useState("");
+  const [all, setAll] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [showStrict, setShowStrict] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const sq = useQuery({ queryKey: ["perfume", "stock-linkage", q, all, offset], queryFn: () => getPerfumeStockLinkage({ q: q || undefined, perfumes_only: !all, limit: 50, offset }) });
+  const strict = useQuery({ queryKey: ["perfume", "stock-linkage-strict"], queryFn: getPerfumeStrictLinks, enabled: showStrict });
+  if (sq.isError) return <ListErrorState title={tr("perfume.stock_link.error", "Couldn't load the stock linkage")} status={0} message={(sq.error as Error)?.message} onRetry={() => void sq.refetch()} />;
+  const d = sq.data;
+  const link = (from: string, to: string) => {
+    setBusy(true);
+    void linkPerfumeStockItem(from, to).then((r) => { pushToast(`Linked to ${r.into} — ${r.lines} line(s) of your lists moved`, "success"); void sq.refetch(); })
+      .catch(fail(pushToast, "Not linked")).finally(() => setBusy(false));
+  };
+  const applyStrict = () => {
+    setBusy(true);
+    void applyPerfumeStrictLinks().then((r) => { pushToast(`Linked ${r.linked} item(s)`, "success"); setShowStrict(false); void sq.refetch(); void strict.refetch(); })
+      .catch(fail(pushToast, "Not linked")).finally(() => setBusy(false));
+  };
+  return (
+    <div className="space-y-3" data-testid="perfume-stock-linkage-panel">
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+        <KpiCard label={tr("perfume.stock_link.mine", "Our items")} number={d ? d.mine.toLocaleString("en-US") : DASH} disabled disabledReason="Every item on your inventory and offer lists — the list below is the ones not linked yet" />
+        <KpiCard label={tr("perfume.stock_link.linked", "Linked to a vendor")} number={d ? d.linked.toLocaleString("en-US") : DASH} disabled disabledReason="Already on at least one supplier or competitor line — open any in the item file" />
+        <KpiCard label={tr("perfume.stock_link.open", "Not linked yet")} number={d ? (d.mine - d.linked).toLocaleString("en-US") : DASH} onClick={() => { setTyped(""); setQ(""); setAll(true); setOffset(0); }} />
+        <KpiCard label={tr("perfume.stock_link.shown", "Matching this search")} number={d ? d.total.toLocaleString("en-US") : DASH} onClick={() => setOffset(0)} />
+      </div>
+      <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.stock_link.title", "Stock linkage")}>
+        <div className="flex flex-wrap items-end gap-2 text-xs">
+          <input type="search" className={`${ctl} min-w-[260px] flex-1`} aria-label={tr("perfume.stock_link.search", "Search our items")} value={typed}
+            placeholder={tr("perfume.stock_link.search_ph", "Words of our item")} onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") { setOffset(0); setQ(typed); } }} data-testid="perfume-stock-link-search" />
+          <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => { setOffset(0); setQ(typed); }} data-testid="perfume-stock-link-go">{tr("perfume.stock_link.go", "Search")}</Button>
+          <label className="flex items-center gap-1"><input type="checkbox" checked={all} onChange={(e) => { setOffset(0); setAll(e.target.checked); }} data-testid="perfume-stock-link-all" />
+            {tr("perfume.stock_link.all", "Include items with no size and mixed lots")}</label>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setShowStrict((v) => !v)} data-testid="perfume-stock-link-strict">
+            {showStrict ? tr("perfume.stock_link.strict_hide", "Hide the sure matches") : tr("perfume.stock_link.strict_show", "Show the sure matches")}</Button>
+        </div>
+        {showStrict ? (
+          <div className="space-y-2 border-t border-[#D8E0E8] pt-2" data-testid="perfume-stock-link-strict-list">
+            <div className="text-xs">{tr("perfume.stock_link.strict_rule", "Same words (EDP / EDT / for him / pour homme ignored), same brand, same size, same kind, and one-to-one — nothing else fits either side.")}</div>
+            <ParityTable<{ mine_id: string; mine: string; vend_id: string; vend: string }>
+              rows={strict.data?.pairs ?? []} rowKey={(p) => p.mine_id} loading={strict.isLoading} storageKey="perfume-stock-strict-v1" exportFilename="TIO sure matches" exportExcel
+              emptyText="No sure match left."
+              columns={[
+                { className: "text-left", key: "mine", label: "Our item", render: (p) => <DocLink tab="itemfile" id={p.mine_id}>{p.mine}</DocLink>, exportValue: (p) => p.mine },
+                { className: "text-left", key: "vend", label: "Vendors' item", render: (p) => <DocLink tab="itemfile" id={p.vend_id}>{p.vend}</DocLink>, exportValue: (p) => p.vend },
+                { key: "as_of", label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
+              ]}
+            />
+            {strict.data?.pairs.length ? (
+              <Button type="button" className="h-[32px] px-3 text-xs" disabled={busy} onClick={applyStrict} data-testid="perfume-stock-link-strict-apply">
+                {`Link these ${strict.data.pairs.length}`}</Button>) : null}
+          </div>) : null}
+        <ParityTable<PerfumeStockLinkRow>
+          rows={d?.rows ?? []} rowKey={(r) => r.id} loading={sq.isLoading} storageKey="perfume-stock-linkage-v1" exportFilename="TIO stock linkage" exportExcel
+          emptyText="Every one of our items here is linked to a vendor."
+          columns={[
+            { className: "text-left", key: "display_name", label: "Our item", render: (r) => <DocLink tab="itemfile" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
+            { className: "text-left", key: "hk", label: "HK code", render: (r) => r.hk ?? DASH, exportValue: (r) => r.hk ?? "" },
+            { className: "text-left", key: "my_desc", label: "My description", render: (r) => r.my_desc ?? DASH, exportValue: (r) => r.my_desc ?? "" },
+            { className: "text-left", key: "upcs", label: "UPC", render: (r) => codes(r.upcs ?? []), exportValue: (r) => (r.upcs ?? []).join(", ") },
+            { className: "text-left", key: "candidates", label: "Same bottle on the vendors' lists", exportValue: (r) => r.candidates.map((c) => c.display_name).join(" | "),
+              render: (r) => (r.candidates.length ? (
+                <div className="space-y-1">
+                  {r.candidates.map((c) => (
+                    <div key={c.id} className="flex flex-wrap items-center gap-2" data-testid={`perfume-stock-cand-${r.id}-${c.id}`}>
+                      <Button type="button" variant="secondary" className="h-[26px] px-2 text-xs" disabled={busy} onClick={() => link(r.id, c.id)} data-testid={`perfume-stock-link-${r.id}-${c.id}`}>
+                        {tr("perfume.stock_link.link", "Link")}</Button>
+                      <DocLink tab="itemfile" id={c.id}>{c.display_name}</DocLink>
+                      <span className="text-[#5A6B7B]">{[c.exact ? "same words" : `${Math.round(c.score * 100)}% alike`, c.same_brand ? "same brand" : null, `${c.lists} list(s)`,
+                        c.best_cents != null ? `best cost ${money(c.best_cents)}` : null, c.upcs?.length ? `UPC ${c.upcs.join(", ")}` : null, c.sample].filter(Boolean).join(" · ")}</span>
+                    </div>))}
+                </div>) : tr("perfume.stock_link.none", "No same-size, same-kind item on the vendors' lists — open the linkage screen and search by UPC or words.")) },
+            { key: "as_of", label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
+          ]}
+        />
+        <div className="flex items-center gap-2 text-xs">
+          <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - 50))} data-testid="perfume-stock-link-prev">{tr("perfume.stock_link.prev", "Previous")}</Button>
+          <span>{d ? `${d.total ? offset + 1 : 0}–${Math.min(offset + 50, d.total)} of ${d.total.toLocaleString()}` : ""}</span>
+          <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" disabled={!d || offset + 50 >= d.total} onClick={() => setOffset(offset + 50)} data-testid="perfume-stock-link-next">{tr("perfume.stock_link.next", "Next")}</Button>
+        </div>
       </section>
     </div>
   );
