@@ -13,6 +13,7 @@ import { importRecords, importRecordSchema } from "./contacts.import.js";
 import { addAttachment, audienceOf, campaignSchema, contentFor, getCampaign, languageOf, saveCampaign, saveSegment, listSegments } from "./campaigns.service.js";
 import { addBuyer, saveTrade, setStage, tradersOverview, tradeSchema, updateBuyer } from "./traders.service.js";
 import { importList, upsertVendor } from "./desk.service.js";
+import { companyHistory, historyOf } from "./leads.events.js";
 
 describe("campaign rules", () => {
   it("Mexico, Latin America and Spain read Spanish; everyone else English", () => {
@@ -96,8 +97,12 @@ describeIntegration("campaigns and traders (real Postgres, rolled back)", () => 
 
     const t = await saveTrade(db as never, TEST_OWNER_USER_ID, tradeSchema.parse({ item: "CMPTEST Armani Code 4.2 oz", brand: "Armani", buy_cents: 2850, sell_cents: 3200, qty: 120 }));
     const b = await addBuyer(db as never, TEST_OWNER_USER_ID, t.id, { company_id: buyerOne, offer_cents: 3200 });
-    await updateBuyer(db as never, b.id, { status: "offered" });
-    await setStage(db as never, t.id, "closed");
+    await updateBuyer(db as never, b.id, { status: "offered" }, TEST_OWNER_USER_ID);
+    await setStage(db as never, t.id, "closed", TEST_OWNER_USER_ID);
+    // History of the trade: created → buyer matched → stage moved (by the first buyer) → buyer offered → closed.
+    const th = (await historyOf(db as never, "trade", t.id)).map((e: { action: string; detail: { to?: string } }) => e.action + (e.detail.to ? `:${e.detail.to}` : ""));
+    expect(th.sort()).toEqual(["created", "edited", "matched", "stage:buyers_matched", "stage:closed"].sort());
+    expect((await companyHistory(db as never, buyerOne)).some((e: { action: string }) => e.action === "matched")).toBe(true);
 
     const v = await upsertVendor(db as never, TEST_OWNER_USER_ID, { name: "CMPTEST TRADER", kind: "buy", short_name: "CMPT" });
     await importList(db as never, TEST_OWNER_USER_ID, { vendor_id: v.id, list_date: "2026-11-26", file_name: "cmptest.csv", source_kind: "csv",

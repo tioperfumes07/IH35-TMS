@@ -21,6 +21,8 @@ import {
   type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
+import { perfumeContactHistory, perfumeContactTrades, perfumeQuotesOfContact, type PerfumeContactTrade, type PerfumeQuoteRow } from "../../api/perfume";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -118,6 +120,10 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           rowKey={(r) => r.id}
           loading={list.isLoading}
           storageKey="perfume-contacts-v1"
+
+          exportFilename="TIO contacts"
+
+          exportExcel
           emptyText={q || role !== "all" || source || anyPick ? "No contact matches these filters." : "No contacts yet — the Master Database import fills this list."}
           onRowClick={(r) => setSelected(r.id)}
           columns={[
@@ -144,6 +150,10 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
 function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   const p = useQuery({ queryKey: ["perfume", "contact", id], queryFn: () => getPerfumeContact(id) });
+  // Reverse links (fully-wired item f): the quotes and trades that name this company, and its history (item g).
+  const quotes = useQuery({ queryKey: ["perfume", "contact", id, "quotes"], queryFn: () => perfumeQuotesOfContact(id) });
+  const trades = useQuery({ queryKey: ["perfume", "contact", id, "trades"], queryFn: () => perfumeContactTrades(id) });
+  const history = useQuery({ queryKey: ["perfume", "contact", id, "history"], queryFn: () => perfumeContactHistory(id) });
   const co = p.data?.company;
   const val = (k: string) => { const v = co?.[k]; return v == null || v === "" ? DASH : Array.isArray(v) ? (v.length ? v.join(" · ") : DASH) : String(v); };
   return (
@@ -160,6 +170,10 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
             rowKey={(o) => o.id}
             loading={p.isLoading}
             storageKey="perfume-contact-origins-v1"
+
+            exportFilename="TIO contact origins"
+
+            exportExcel
             suppressToolbarSearch
             emptyText="No origin recorded."
             columns={[
@@ -176,6 +190,10 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
             rowKey={(x) => x.id}
             loading={p.isLoading}
             storageKey="perfume-contact-people-v1"
+
+            exportFilename="TIO contact people"
+
+            exportExcel
             suppressToolbarSearch
             emptyText="No person on file — needs email."
             columns={[
@@ -189,6 +207,43 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
               { key: "email_count", label: "Emails", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.email_count) },
             ]}
           />
+          <ParityTable<PerfumeQuoteRow>
+            title={tr("perfume.contacts.quotes", "Quotes")}
+            rows={quotes.data?.quotes ?? []}
+            rowKey={(x) => x.id}
+            loading={quotes.isLoading}
+            storageKey="perfume-contact-quotes-v1"
+            exportFilename="TIO contact quotes"
+            exportExcel
+            suppressToolbarSearch
+            emptyText="No quote for this company yet."
+            columns={[
+              { key: "number", label: "Quote", sortable: true, render: (x) => <a className="font-semibold text-[#14314F] underline" href={`/perfume?tab=quotes&quote=${encodeURIComponent(x.id)}`}>{x.number}</a> },
+              { key: "quote_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.quote_date) },
+              { key: "status", label: "Status", sortable: true },
+              { key: "lines", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.lines) },
+              { key: "total_cents", label: "Total", sortable: true, cellClass: "text-right tabular-nums", render: (x) => `${x.currency} ${(Number(x.total_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
+            ]}
+          />
+          <ParityTable<PerfumeContactTrade>
+            title={tr("perfume.contacts.trades", "Trades")}
+            rows={trades.data?.trades ?? []}
+            rowKey={(x) => x.id}
+            loading={trades.isLoading}
+            storageKey="perfume-contact-trades-v1"
+            exportFilename="TIO contact trades"
+            exportExcel
+            suppressToolbarSearch
+            emptyText="No trade with this company yet."
+            columns={[
+              { key: "item", label: "Item", sortable: true, render: (x) => <a className="font-semibold text-[#14314F] underline" href="/perfume?tab=traders">{x.item}</a> },
+              { key: "side", label: "Side", sortable: true },
+              { key: "stage", label: "Stage", sortable: true, render: (x) => x.stage.replace(/_/g, " ") },
+              { key: "buyer_status", label: "Their status", sortable: true, render: (x) => x.buyer_status ?? DASH },
+              { key: "qty", label: "Qty", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.qty) },
+            ]}
+          />
+          <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-contact-history-v1" exportName="TIO contact history" />
         </div>
         <div className="text-xs">
           {([["Website", "website"], ["Phone", "phone"], ["Address", "address"], ["City", "city"], ["State", "state"], ["Country", "country"], ["Categories", "categories"],
@@ -322,6 +377,10 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
             rows={results.rows}
             rowKey={(r) => r.place_id}
             storageKey="perfume-google-results-v1"
+
+            exportFilename="TIO google results"
+
+            exportExcel
             emptyText="Google found nothing for this search."
             columns={[
               { key: "name", label: "Business", sortable: true, render: (r) => (r.maps_uri ? <a className="font-semibold text-[#14314F] underline" href={r.maps_uri} target="_blank" rel="noreferrer">{r.name}</a> : r.name) },
@@ -351,6 +410,10 @@ function RunsTable({ runs }: { runs: PerfumeGoogleRun[] }) {
         rows={runs}
         rowKey={(r) => r.id}
         storageKey="perfume-google-runs-v1"
+
+        exportFilename="TIO google runs"
+
+        exportExcel
         suppressToolbarSearch
         emptyText="No Google search yet."
         columns={[

@@ -20,6 +20,8 @@ import {
   type PerfumeTrade, type PerfumeTradeBuyer, type PerfumeTradeStage, type PerfumeTraders,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
+import { perfumeHistoryOf } from "../../api/perfume";
 
 const DASH = "—";
 const ctl = "h-[34px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
@@ -32,6 +34,12 @@ const STAGES: Array<[PerfumeTradeStage, string]> = [
 const BUYER_STATUS: Array<[PerfumeTradeBuyer["status"], string]> = [["matched", "Matched"], ["offered", "Offered"], ["negotiating", "Negotiating"], ["won", "Won"], ["lost", "Lost"]];
 const marginPct = (t: Pick<PerfumeTrade, "buy_cents" | "sell_cents">) =>
   t.buy_cents && t.sell_cents ? `${(((t.sell_cents - t.buy_cents) / t.sell_cents) * 100).toFixed(1)}%` : DASH;
+
+/** A KPI card's drill: brings its section into view. */
+export function jumpTo(id: string) {
+  if (typeof document === "undefined") return;
+  document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 type Common = PerfumeTraders["common_buyers"][number];
 type Exposed = PerfumeTraders["exposed_lists"][number];
@@ -54,13 +62,13 @@ export function PerfumeTradersPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-traders-panel">
       <div className="grid grid-cols-2 gap-2 md:grid-cols-4 lg:grid-cols-7">
-        <KpiCard label={tr("perfume.trd.kpi_both", "Vendors I also sell to")} number={(k?.both ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_both_email", "… with an email")} number={(k?.both_with_email ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_sent_lists", "People who sent me lists")} number={(k?.sent_lists ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_exposed", "Exposed vendor lists")} number={(k?.exposed_lists ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_common", "Buyers on 2+ lists")} number={(k?.common_buyers ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_open", "Open trades")} number={(k?.open_trades ?? 0).toLocaleString()} />
-        <KpiCard label={tr("perfume.trd.kpi_closed", "Closed trades")} number={(k?.closed_trades ?? 0).toLocaleString()} />
+        <KpiCard label={tr("perfume.trd.kpi_both", "Vendors I also sell to")} number={(k?.both ?? 0).toLocaleString()} to="/perfume?tab=vendors" />
+        <KpiCard label={tr("perfume.trd.kpi_both_email", "… with an email")} number={(k?.both_with_email ?? 0).toLocaleString()} to="/perfume?tab=vendors" />
+        <KpiCard label={tr("perfume.trd.kpi_sent_lists", "People who sent me lists")} number={(k?.sent_lists ?? 0).toLocaleString()} to="/perfume?tab=contacts" />
+        <KpiCard label={tr("perfume.trd.kpi_exposed", "Exposed vendor lists")} number={(k?.exposed_lists ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-trd-exposed")} />
+        <KpiCard label={tr("perfume.trd.kpi_common", "Buyers on 2+ lists")} number={(k?.common_buyers ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-trd-common")} />
+        <KpiCard label={tr("perfume.trd.kpi_open", "Open trades")} number={(k?.open_trades ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-trd-stages")} />
+        <KpiCard label={tr("perfume.trd.kpi_closed", "Closed trades")} number={(k?.closed_trades ?? 0).toLocaleString()} onClick={() => jumpTo("perfume-trd-stage-closed")} />
       </div>
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.board", "Trade board")}>
@@ -69,11 +77,11 @@ export function PerfumeTradersPanel() {
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-trd-add" onClick={() => setAdding(true)}>{tr("perfume.trd.add", "Add a trade")}</Button>
         </div>
         {adding ? <TradeForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void data.refetch(); }} /> : null}
-        <div className="grid gap-2 md:grid-cols-3 xl:grid-cols-6" data-testid="perfume-trd-stages">
+        <div id="perfume-trd-stages" className="grid gap-2 md:grid-cols-3 xl:grid-cols-6" data-testid="perfume-trd-stages">
           {STAGES.map(([stage, label]) => {
             const here = trades.filter((t) => t.stage === stage);
             return (
-              <div key={stage} className="min-w-0 rounded-sm border border-[#E8EDF2] bg-[#F8FAFC] p-2" data-testid={`perfume-trd-stage-${stage}`}>
+              <div key={stage} id={`perfume-trd-stage-${stage}`} className="min-w-0 bg-[#F8FAFC] p-2" data-testid={`perfume-trd-stage-${stage}`}>
                 <div className="mb-1 flex items-center justify-between text-xs font-semibold text-[#1F2A44]"><span>{tr(`perfume.trd.stage_${stage}`, label)}</span><span className="tabular-nums">{here.length}</span></div>
                 <ul className="space-y-1">
                   {here.map((t) => (
@@ -111,6 +119,10 @@ export function PerfumeTradersPanel() {
           rowKey={(r) => r.vendor_id}
           loading={data.isLoading}
           storageKey="perfume-traders-matrix-v1"
+
+          exportFilename="TIO traders matrix"
+
+          exportExcel
           suppressToolbarSearch
           emptyText="No current price list carries these brands."
           columns={[
@@ -124,13 +136,17 @@ export function PerfumeTradersPanel() {
       </section>
 
       <div className="grid gap-3 xl:grid-cols-2">
-        <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.common", "Buyers on several exposed lists")}>
+        <section id="perfume-trd-common" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.common", "Buyers on several exposed lists")}>
           <ParityTable<Common>
             title={tr("perfume.trd.common", "Buyers on several exposed lists")}
             rows={o?.common_buyers ?? []}
             rowKey={(r) => r.id}
             loading={data.isLoading}
             storageKey="perfume-traders-common-v1"
+
+            exportFilename="TIO traders common"
+
+            exportExcel
             emptyText="No buyer has been copied on two vendors' emails yet."
             columns={[
               { key: "name", label: "Buyer", sortable: true, render: (r) => <span className="font-semibold">{r.name}</span> },
@@ -141,13 +157,17 @@ export function PerfumeTradersPanel() {
             ]}
           />
         </section>
-        <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.exposed", "Exposed vendor lists")}>
+        <section id="perfume-trd-exposed" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.exposed", "Exposed vendor lists")}>
           <ParityTable<Exposed>
             title={tr("perfume.trd.exposed", "Exposed vendor lists")}
             rows={o?.exposed_lists ?? []}
             rowKey={(r) => r.sender}
             loading={data.isLoading}
             storageKey="perfume-traders-exposed-v1"
+
+            exportFilename="TIO traders exposed"
+
+            exportExcel
             emptyText="No vendor email with its customers copied has been read yet."
             columns={[
               { key: "sender", label: "Whose list", sortable: true, render: (r) => <span className="font-semibold">{r.sender}</span> },
@@ -222,6 +242,7 @@ function TradeForm({ onClose, onSaved }: { onClose: () => void; onSaved: () => v
 
 function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null; onClose: () => void; onChanged: () => void }) {
   const { pushToast } = useToast();
+  const history = useQuery({ queryKey: ["perfume", "trade", trade?.id, "history", trade?.updated_at, trade?.buyers.length], queryFn: () => perfumeHistoryOf("trades", trade!.id), enabled: Boolean(trade) });
   if (!trade) return null;
   const act = async (fn: () => Promise<unknown>, ok?: string) => {
     try { await fn(); onChanged(); if (ok) pushToast(ok, "success"); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
@@ -246,6 +267,10 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
         rows={trade.buyers}
         rowKey={(b) => b.id}
         storageKey="perfume-trade-buyers-v1"
+
+        exportFilename="TIO trade buyers"
+
+        exportExcel
         suppressToolbarSearch
         emptyText="No buyer matched yet."
         columns={[
@@ -263,6 +288,7 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
               {tr("perfume.trd.take_off", "Take off")}</Button>) },
         ]}
       />
+      <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-trade-history-v1" exportName="TIO trade history" />
     </section>
   );
 }

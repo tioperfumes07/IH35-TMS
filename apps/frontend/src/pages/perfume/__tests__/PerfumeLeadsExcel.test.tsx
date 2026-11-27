@@ -55,7 +55,7 @@ describe("leads Excel update", () => {
     expect((within(review).getByTestId("perfume-leadsx-cat-Unclassified - review") as HTMLInputElement).checked).toBe(false);
     expect(within(review).getByText(/Linked to a perfume vendor$/, { selector: "div" })).toBeTruthy();
     fireEvent.click(within(review).getByTestId("perfume-leadsx-apply"));
-    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/contacts/uploads/u1/apply", { skip_categories: ["Unclassified - review"], skip_kinds: [], add_unknown: true }]));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/contacts/uploads/u1/apply", { skip_categories: ["Unclassified - review"], skip_kinds: [], add_unknown: true, apply_removed_check: false }]));
   });
 });
 

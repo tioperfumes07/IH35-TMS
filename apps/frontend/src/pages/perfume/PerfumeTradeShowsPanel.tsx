@@ -29,13 +29,15 @@ function localWallClock(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 import { tr } from "./perfumeI18n";
+import { companyToday } from "../../lib/businessDate";
 
 const DASH = "—";
 const ctl = "h-[34px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
 const usDate = (d: string | null | undefined) => (d ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}` : DASH);
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const STATUS_TEXT: Record<PerfumeShowContactStatus, string> = { attends: "Attends", meeting_asked: "Meeting asked", meeting_booked: "Meeting booked", met: "Met" };
-const todayIso = () => new Date().toISOString().slice(0, 10);
+// Laredo calendar day, not UTC (verify-acct-utc-today-defaults; after 6 PM CT the UTC date is already tomorrow).
+const todayIso = () => companyToday();
 
 type Picks = { years: string[]; months: string[]; kinds: string[]; cities: string[] };
 const NO_PICKS: Picks = { years: [], months: [], kinds: [], cities: [] };

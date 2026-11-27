@@ -11,17 +11,22 @@ import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { importRecords, importRecordSchema } from "./contacts.import.js";
 import { listContacts } from "./contacts.service.js";
+import { companyHistory, historyOf } from "./leads.events.js";
 import {
   actionIn, addCatalogValue, applyPlan, getUpload, listUploads, saveUpload, applySchema, EXPORT_COLUMNS, exportRows, exportWorkbook, fileCategory, listCatalogs, parseSheets,
-  previewUpload, renameCatalogValue, roleIn, sheetKind,
+  previewUpload, renameCatalogValue, researchSources, roleIn, sheetKind,
 } from "./leads.service.js";
 
 describe("lead rules", () => {
   it("reads the Action, Role and file Category columns the way the owner writes them", () => {
     expect(["Keep", "", "Remove company", "remove", "Remove person", "No"].map(actionIn)).toEqual(["keep", "keep", "remove_company", "remove_company", "remove_person", "remove_company"]);
     expect(["Vendor", "customer", "Vendor + customer", "", "x"].map(roleIn)).toEqual(["vendor", "customer", "both", null, undefined]);
-    expect(fileCategory("1 Perfume vendor - sent offers/lists")).toEqual({ label: "Perfume vendor - sent offers/lists", vendor: true });
-    expect(fileCategory("5 Unclassified - review")).toEqual({ label: "Unclassified - review", vendor: false });
+    expect(fileCategory("1 Perfume vendor / supplier")).toEqual({ label: "Perfume vendor / supplier", role: "vendor" });
+    expect(fileCategory("2 Perfume customer")).toEqual({ label: "Perfume customer", role: "customer" });
+    expect(fileCategory("6 Buyer from leaked perfume list (new)")).toEqual({ label: "Buyer from leaked perfume list (new)", role: "customer" });
+    expect(fileCategory("7 Other contact - review")).toEqual({ label: "Other contact - review", role: null });
+    expect(researchSources("INEGI DENUE + Sección Amarilla")).toEqual(["Sección Amarilla"]);
+    expect(researchSources("INEGI DENUE")).toEqual([]);
   });
   it("finds the header row and the kind of each sheet of the organized contacts file; section rows and Summary are skipped", () => {
     const { rows, sheets } = parseSheets({ file_name: "x.xlsx", sheets: [
@@ -103,6 +108,11 @@ describeIntegration("leads Excel round trip (real Postgres, rolled back)", () =>
       `SELECT o.source_kind, o.sender_email, o.leak_no, o.source, o.detail, co.role FROM perfume.contact_origins o JOIN perfume.contact_people p ON p.id = o.person_id
          JOIN perfume.contact_companies co ON co.id = o.company_id WHERE p.email = 'buyer@ldtest-shop.mx'`)).rows[0];
     expect(leak).toEqual({ source_kind: "Leaked email", sender_email: "offers@ldtest-vendor.com", leak_no: 7, source: "Copied by LDTEST Vendor Inc", detail: "LDTEST NEW ARRIVALS", role: "customer" });
+    // History: who / when for every change the Apply made (fully-wired item g).
+    const hubId = (await db.query(`SELECT id FROM perfume.contact_companies WHERE name = 'LDTEST Fragrance Hub'`)).rows[0].id;
+    const hist = await companyHistory(db as never, hubId);
+    expect(hist.map((e: { action: string }) => e.action).sort()).toEqual(["archived_in_excel", "edited_in_excel"]);
+    expect(hist.find((e: { action: string }) => e.action === "edited_in_excel").detail).toMatchObject({ customer_type: "Formal wholesale", category: "LDTEST niche" });
     // The Leads list filters by source kind.
     const leaked = await listContacts(db as never, { q: "ldtest", kinds: ["Leaked email"] });
     expect(leaked.rows.map((r: { name: string }) => r.name)).toEqual(["Ldtest-shop"]); // a company domain names the company; the person stays Luis
@@ -113,6 +123,7 @@ describeIntegration("leads Excel round trip (real Postgres, rolled back)", () =>
     const v = await addCatalogValue(db as never, TEST_OWNER_USER_ID, { kind: "vendor_type", value: "LDTEST trader kind" });
     const moved = await renameCatalogValue(db as never, v.id, "LDTEST Trader");
     expect(moved.moved).toBe(1);
+    expect((await historyOf(db as never, "catalog_value", v.id)).map((e: { action: string }) => e.action)).toEqual(["renamed", "added"]);
     expect((await db.query(`SELECT vendor_type FROM perfume.contact_companies WHERE name = 'LDTEST Shop Two'`)).rows[0].vendor_type).toBe("LDTEST Trader");
     const cats = await listCatalogs(db as never);
     expect(cats.kinds.find((k) => k.kind === "vendor_type")!.values.find((x) => x.value === "LDTEST Trader")!.contacts).toBe(1);
@@ -128,5 +139,42 @@ describeIntegration("leads Excel round trip (real Postgres, rolled back)", () =>
     expect(leads.getRow(2).getCell(3).value).toBe("Keep");
     const lists = wb.getWorksheet("Lists")!;
     expect(lists.getRow(1).values).toEqual(expect.arrayContaining(["action", "role", "status", "vendor_type", "customer_type", "category", "segment"]));
+  });
+
+  it("the one final contacts file: Emails-Full / Contacts-Full / Leaked-Emails / Prospects-Research / Removed-Check (owner 2026-11-26 18:55 CT)", async () => {
+    await importRecords(db as never, [rec({ company: { name: "FFTEST Junk Funding LLC", city: "FFTEST City", source: "Master Database" }, people: [{ name: "Loan Guy", email: "loans@fftest-funding.com" }] })], TEST_OWNER_USER_ID);
+    const sheets = [
+      { name: "Emails-Full", rows: [["Group ID", "Category", "Company", "Full name", "Email", "Phone(s)", "Address", "City", "State", "ZIP", "Country", "Role", "First email", "Sources (where found)"],
+        ["1 PERFUME VENDOR / SUPPLIER  -  1 emails"],
+        ["G1", "2 Perfume customer", "FFTEST Specialty Brands Inc", "Ana Pérez", "ana@fftest-sb.com", "+1 (305) 555-0100", "100 Main St", "Miami", "FL", "33101", "USA", "Customer", "2024-07-31", "My contacts"]] },
+      { name: "Contacts-Full", rows: [["Group ID", "Section", "Country (from phone)", "Phone", "Valid number?", "Full name", "Company", "Category"],
+        ["USA  -  2 phone numbers"],
+        ["G1", "USA", "USA", "+1 (305) 555-0101", "Yes", "Ana Pérez", "FFTEST Specialty Brands Inc", "2 Perfume customer"],
+        ["G1", "Not a valid number", "Mexico", "+52 305 555 0101", "No", "Ana Pérez", "FFTEST Specialty Brands Inc", "2 Perfume customer"]] },
+      { name: "Prospects-Research", rows: [["Source", "Type", "Company", "Contact name", "Email", "Phone", "City", "Country", "Segment", "Note"],
+        ["INEGI DENUE", "Potential customer", "FFTEST Abarrotes INEGI", "FFTEST Abarrotes INEGI", null, "8671112222", "Nuevo Laredo", "MX", "abarrotes", null],
+        ["INEGI DENUE + Sección Amarilla", "Potential customer", "FFTEST Perfumeria SA", "FFTEST Perfumeria SA", null, "8671113333", "Nuevo Laredo", "MX", "perfumerias", null],
+        ["Customs (ImportKey/ImportGenius/Panjiva) + Customs / key importer", "Potential vendor - exporter behind your vendors", "FFTEST Exporter Ltd", "FFTEST Exporter Ltd", null, null, null, "Cyprus", null, "PCA"]] },
+      { name: "Removed-Check", rows: [["Group ID", "Why removed", "Name", "Company", "Email(s)", "Phone(s)", "Sources"], ["G9", "Funding / loans", "Loan Guy", "FFTEST Junk Funding LLC", "loans@fftest-funding.com", null, "x"]] },
+      { name: "Summary", rows: [["TIO PERFUMES - ALL CONTACTS"]] },
+    ];
+    const { summary, plan } = await previewUpload(db as never, { file_name: "final.xlsx", sheets });
+    expect(summary.sheets.map((x) => [x.name, x.kind, x.used])).toEqual([["Emails-Full", "email", 1], ["Contacts-Full", "phone", 1], ["Prospects-Research", "research", 2],
+      ["Removed-Check", "removed", 1], ["Summary", "skipped", 0]]);
+    expect(summary.removed_check).toMatchObject({ companies: 1, people: 0 });
+    expect(summary.new.records).toBe(3); // Ana (email + phone tabs, one Group ID) + the Sección Amarilla perfumería + the exporter; the INEGI-only row never comes in
+
+    expect(applySchema.parse({}).apply_removed_check).toBe(false); // the Removed-Check list is archived only when the owner ticks it
+    const res = await applyPlan(db as never, TEST_OWNER_USER_ID, plan, applySchema.parse({ apply_removed_check: true }));
+    expect(res).toMatchObject({ inserted: 3, companies_removed: 1, errors: [] });
+    const ana = (await db.query(`SELECT co.role, co.zip, co.city, co.address, p.phones, co.categories FROM perfume.contact_companies co JOIN perfume.contact_people p ON p.company_id = co.id
+      WHERE p.email = 'ana@fftest-sb.com'`)).rows[0];
+    expect(ana).toMatchObject({ role: "customer", zip: "33101", city: "Miami", address: "100 Main St", phones: ["+1 (305) 555-0100", "+1 (305) 555-0101"], categories: ["Perfume customer"] });
+    const kinds = (await db.query(`SELECT co.name, o.source_kind FROM perfume.contact_origins o JOIN perfume.contact_companies co ON co.id = o.company_id
+      WHERE co.name LIKE 'FFTEST%' AND co.archived_at IS NULL ORDER BY 1, 2`)).rows.map((x: { name: string; source_kind: string }) => `${x.name}: ${x.source_kind}`);
+    expect(kinds).toEqual(["FFTEST Exporter Ltd: Research · customs exports / imports", "FFTEST Exporter Ltd: Research · customs exports / imports",
+      "FFTEST Perfumeria SA: Research · Sección Amarilla (border towns)", "FFTEST Specialty Brands Inc: Email", "FFTEST Specialty Brands Inc: Phone contact"]);
+    expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_companies WHERE name = 'FFTEST Abarrotes INEGI'`)).rows[0].n).toBe(0);
+    expect((await db.query(`SELECT archived_at IS NOT NULL AS gone FROM perfume.contact_companies WHERE name = 'FFTEST Junk Funding LLC'`)).rows[0].gone).toBe(true);
   });
 });

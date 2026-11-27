@@ -11,6 +11,7 @@
  * skips everyone it already reached.
  */
 import type pg from "pg";
+import { logEvent } from "./leads.events.js";
 import { z } from "zod";
 import { withCurrentUser } from "../auth/db.js";
 import { contactWhere, type ContactListQuery } from "./contacts.service.js";
@@ -120,17 +121,20 @@ export async function saveSegment(c: pg.PoolClient, uid: string, s: z.infer<type
     const r = await c.query(`UPDATE perfume.contact_segments SET name = $2, filters = $3, updated_at = now() WHERE id = $1 AND archived_at IS NULL RETURNING id`,
       [id, s.name, s.filters]);
     if (!r.rowCount) throw new CampaignError("not_found", "Segment not found.");
+    await logEvent(c, uid, { entity: "segment", entity_id: id, action: "edited", detail: { name: s.name, filters: s.filters } });
     return { id };
   }
   const r = await c.query<{ id: string }>(
     `INSERT INTO perfume.contact_segments (name, filters, created_by) VALUES ($1, $2, $3)
      ON CONFLICT (lower(btrim(name))) WHERE archived_at IS NULL DO UPDATE SET filters = EXCLUDED.filters, updated_at = now() RETURNING id`,
     [s.name, s.filters, uid]);
+  await logEvent(c, uid, { entity: "segment", entity_id: r.rows[0]!.id, action: "saved", detail: { name: s.name, filters: s.filters } });
   return { id: r.rows[0]!.id };
 }
 
-export async function archiveSegment(c: pg.PoolClient, id: string) {
-  await c.query(`UPDATE perfume.contact_segments SET archived_at = now() WHERE id = $1`, [id]);
+export async function archiveSegment(c: pg.PoolClient, id: string, uid: string | null = null) {
+  const r = await c.query(`UPDATE perfume.contact_segments SET archived_at = now() WHERE id = $1 AND archived_at IS NULL`, [id]);
+  if (r.rowCount) await logEvent(c, uid, { entity: "segment", entity_id: id, action: "archived" });
 }
 
 /* ------------------------------------------------------------------ campaigns */
@@ -170,11 +174,13 @@ export async function saveCampaign(c: pg.PoolClient, uid: string, input: Campaig
     await c.query(
       `UPDATE perfume.campaigns SET name = $2, segment_id = $3, filters = $4, language = $5, subject_en = $6, subject_es = $7, body_en = $8, body_es = $9,
           per_hour = $10, updated_at = now() WHERE id = $1`, [input.id, ...vals]);
+    await logEvent(c, uid, { entity: "campaign", entity_id: input.id, action: "edited", detail: { name: input.name, language: input.language, per_hour: input.per_hour } });
     return { id: input.id };
   }
   const r = await c.query<{ id: string }>(
     `INSERT INTO perfume.campaigns (name, segment_id, filters, language, subject_en, subject_es, body_en, body_es, per_hour, created_by)
      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id`, [...vals, uid]);
+  await logEvent(c, uid, { entity: "campaign", entity_id: r.rows[0]!.id, action: "created", detail: { name: input.name } });
   return { id: r.rows[0]!.id };
 }
 
@@ -191,12 +197,14 @@ export async function addAttachment(c: pg.PoolClient, uid: string, campaignId: s
     `INSERT INTO perfume.campaign_attachments (campaign_id, file_name, mime_type, content, bytes, created_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
     [campaignId, a.name, a.mime_type || "application/octet-stream", buf, buf.length, uid]);
   await syncAttachmentNames(c, campaignId);
+  await logEvent(c, uid, { entity: "campaign", entity_id: campaignId, action: "attachment_added", detail: { file_name: a.name, bytes: buf.length } });
   return { id: r.rows[0]!.id, bytes: buf.length };
 }
 
-export async function removeAttachment(c: pg.PoolClient, campaignId: string, attachmentId: string) {
-  await c.query(`UPDATE perfume.campaign_attachments SET archived_at = now() WHERE id = $1 AND campaign_id = $2`, [attachmentId, campaignId]);
+export async function removeAttachment(c: pg.PoolClient, campaignId: string, attachmentId: string, uid: string | null = null) {
+  const r = await c.query<{ file_name: string }>(`UPDATE perfume.campaign_attachments SET archived_at = now() WHERE id = $1 AND campaign_id = $2 RETURNING file_name`, [attachmentId, campaignId]);
   await syncAttachmentNames(c, campaignId);
+  if (r.rowCount) await logEvent(c, uid, { entity: "campaign", entity_id: campaignId, action: "attachment_removed", detail: { file_name: r.rows[0]!.file_name } });
 }
 
 async function syncAttachmentNames(c: pg.PoolClient, campaignId: string) {
@@ -250,11 +258,13 @@ export async function startCampaign(uid: string, campaignId: string, when?: Date
   if (when && when.getTime() > Date.now() + 60_000) {
     await withCurrentUser(uid, (c) => c.query(
       `UPDATE perfume.campaigns SET status = 'scheduled', scheduled_for = $2, recipients = $3, error = NULL, updated_at = now() WHERE id = $1`,
-      [campaignId, when.toISOString(), check.aud.recipients.length]));
+      [campaignId, when.toISOString(), check.aud.recipients.length]).then(() => logEvent(c, uid, { entity: "campaign", entity_id: campaignId, action: "scheduled",
+        detail: { scheduled_for: when.toISOString(), recipients: check.aud.recipients.length } })));
     return { status: "scheduled" as const, scheduled_for: when.toISOString(), recipients: check.aud.recipients.length };
   }
   await withCurrentUser(uid, (c) => c.query(
-    `UPDATE perfume.campaigns SET status = 'sending', started_at = now(), finished_at = NULL, error = NULL, updated_at = now() WHERE id = $1`, [campaignId]));
+    `UPDATE perfume.campaigns SET status = 'sending', started_at = now(), finished_at = NULL, error = NULL, updated_at = now() WHERE id = $1`, [campaignId])
+    .then(() => logEvent(c, uid, { entity: "campaign", entity_id: campaignId, action: "send_started", detail: { recipients: check.aud.recipients.length, en: check.aud.en, es: check.aud.es } })));
   void runCampaign(uid, campaignId).catch(() => undefined);
   return { status: "sending" as const, recipients: check.aud.recipients.length, en: check.aud.en, es: check.aud.es };
 }
@@ -264,6 +274,7 @@ export async function stopCampaign(uid: string, campaignId: string) {
     await c.query(`UPDATE perfume.campaigns SET status = CASE WHEN status = 'scheduled' THEN 'draft' ELSE 'stopped' END,
         scheduled_for = CASE WHEN status = 'scheduled' THEN NULL ELSE scheduled_for END, updated_at = now()
       WHERE id = $1 AND status IN ('sending', 'scheduled')`, [campaignId]);
+    await logEvent(c, uid, { entity: "campaign", entity_id: campaignId, action: "stopped" });
     await c.query(`UPDATE perfume.mail_send_batches b SET status = 'stopped' FROM perfume.campaign_batches cb
       WHERE cb.batch_id = b.id AND cb.campaign_id = $1 AND b.status = 'sending'`, [campaignId]);
   });

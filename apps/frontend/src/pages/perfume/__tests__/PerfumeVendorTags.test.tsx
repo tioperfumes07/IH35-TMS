@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MemoryRouter } from "react-router-dom";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as clientApi from "../../../api/client";
@@ -19,7 +20,7 @@ beforeEach(() => {
   });
 });
 const mount = (v: PerfumeVendor) => render(
-  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider><RoleToggles vendor={v} /></ToastProvider></QueryClientProvider>);
+  <MemoryRouter><QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider><RoleToggles vendor={v} /></ToastProvider></QueryClientProvider></MemoryRouter>);
 
 describe("vendor tags on the vendor's row", () => {
   it("Purchase · Trading · Wholesale · Distributor · Customer — the owner's two tags sit after the tab roles", () => {

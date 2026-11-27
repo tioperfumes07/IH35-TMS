@@ -15,6 +15,9 @@ import {
   type PerfumeCatalogKind, type PerfumeCatalogs,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { downloadXlsx } from "../../components/parity/useParityServerView";
+import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
+import { perfumeHistoryOf } from "../../api/perfume";
 
 const ctl = "h-[30px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
 const NOTES: Partial<Record<PerfumeCatalogKind, string>> = {
@@ -24,11 +27,19 @@ const NOTES: Partial<Record<PerfumeCatalogKind, string>> = {
 
 export function PerfumeCatalogsPanel() {
   const cats = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs });
+  const exportAll = () => void downloadXlsx("TIO catalogs.xlsx", ["List", "Value", "Contacts using it"],
+    (cats.data?.kinds ?? []).flatMap((k) => k.values.map((v) => [k.label, v.value, v.contacts])));
   if (cats.isError) return <ListErrorState title={tr("perfume.cat.error", "Couldn't load the catalogs")} status={0} message={(cats.error as Error)?.message} onRetry={() => void cats.refetch()} />;
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3" data-testid="perfume-catalogs-panel">
+    <div className="space-y-2" data-testid="perfume-catalogs-panel">
+    <div className="flex justify-end">
+      <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={exportAll} disabled={!cats.data} data-testid="perfume-catalogs-export">
+        {tr("perfume.cat.export", "Export all lists (Excel)")}</Button>
+    </div>
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       {(cats.data?.kinds ?? []).map((k) => <CatalogBox key={k.kind} cat={k} onChanged={() => void cats.refetch()} />)}
       {cats.isLoading ? <div className="text-xs text-gray-500">{tr("perfume.cat.loading", "Loading…")}</div> : null}
+    </div>
     </div>
   );
 }
@@ -37,6 +48,8 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
   const { pushToast } = useToast();
   const [add, setAdd] = useState("");
   const [edit, setEdit] = useState<{ id: string; value: string } | null>(null);
+  const [histOf, setHistOf] = useState<string | null>(null);
+  const history = useQuery({ queryKey: ["perfume", "catalog", histOf, "history"], queryFn: () => perfumeHistoryOf("catalogs", histOf!), enabled: Boolean(histOf) });
   const run = async (fn: () => Promise<unknown>, ok: string) => {
     try { await fn(); onChanged(); pushToast(ok, "success"); } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
   };
@@ -65,6 +78,7 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
                 {cat.kind !== "source_kind" ? (
                   <button type="button" className="text-xs text-[#14314F] underline" onClick={() => setEdit({ id: v.id, value: v.value })}>{tr("perfume.cat.rename", "Rename")}</button>
                 ) : null}
+                <button type="button" className="text-xs text-[#64748B] underline" onClick={() => setHistOf(histOf === v.id ? null : v.id)}>{tr("perfume.cat.history", "History")}</button>
                 <button type="button" className="text-xs text-[#64748B] underline" data-testid={`perfume-catalog-archive-${v.id}`}
                   onClick={() => void run(() => archivePerfumeCatalogValue(v.id), `${v.value} archived`)}>{tr("perfume.cat.archive", "Archive")}</button>
               </>
@@ -72,6 +86,7 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
           </li>
         ))}
       </ul>
+      {histOf ? <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-catalog-history-v1" exportName="TIO catalog value history" /> : null}
       <div className="flex gap-2">
         <input className={`${ctl} min-w-0 flex-1`} placeholder={tr("perfume.cat.add_ph", "Add a value")} value={add} onChange={(e) => setAdd(e.target.value)}
           data-testid={`perfume-catalog-add-${cat.kind}`} />
