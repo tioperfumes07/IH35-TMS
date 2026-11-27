@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.service.js";
 import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
+import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
@@ -106,6 +107,11 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const id = uuid.safeParse((req.params as { companyId?: string }).companyId);
     if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { return await withCurrentUser(uid, async (c) => ({ credit: await creditExposure(c, id.data) })); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/inventory/tie-out", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const asOf = (req.query as { as_of?: string }).as_of;
+    try { return await withCurrentUser(uid, async (c) => ({ tie_out: await inventoryTieOut(c, asOf) })); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/stock-moves/pending", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

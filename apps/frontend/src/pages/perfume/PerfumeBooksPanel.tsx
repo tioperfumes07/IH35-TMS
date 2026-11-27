@@ -19,6 +19,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { tr } from "./perfumeI18n";
 import { ScentsxCompliancePanel } from "./ScentsxCompliancePanel";
+import { getScentsxInventoryTieOut } from "../../api/scentsx";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
@@ -99,6 +100,7 @@ export function PerfumeBooksPanel() {
         <Button type="button" variant="secondary" className="ml-auto h-[30px] px-3 text-xs" disabled={!pending.data?.pending} onClick={() => void postNow()} data-testid="scentsx-books-post-now">
           {tr("scentsx.books.post_now", "Post now")}</Button>
       </div>
+      <InventoryTieOut />
       {c && c.periods === 0 ? (
         <div className="rounded-[3px] border border-[#F59E0B] bg-[#FFFBEB] p-2 text-xs" data-testid="scentsx-books-no-period">
           {tr("scentsx.books.no_period", "No accounting periods are set up yet, so no month can be closed or locked. Entries still post by date; the books start date and the opening balances are yours to enter.")}
@@ -161,5 +163,24 @@ function AccountRegister({ account, label }: { account: ScentsxAccount; label: s
         { key: "credit", label: "Credit", sortable: true, cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "credit" ? money(Number(l.amount_cents)) : "") },
       ]}
     />
+  );
+}
+
+/** Month-end control: the stock sub-ledger value must equal the inventory account plus the moves still waiting to post. */
+function InventoryTieOut() {
+  const q = useQuery({ queryKey: ["scentsx", "inventory-tieout"], queryFn: getScentsxInventoryTieOut });
+  if (q.isError) return <ListErrorState title={tr("scentsx.books.tie_error", "Couldn't load the inventory tie-out")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
+  const t = q.data?.tie_out;
+  if (!t) return null;
+  return (
+    <div className={`flex flex-wrap items-center gap-4 rounded-[3px] border p-2 text-xs ${t.ties ? "border-[#D8E0E8] bg-white" : "border-[#B91C1C] bg-[#FEF2F2]"}`} data-testid="scentsx-books-tieout">
+      <span className="font-semibold">{tr("scentsx.books.tie", "Inventory tie-out")} · {t.as_of}</span>
+      <span>{tr("scentsx.books.tie_sub", "Stock ledger")}: <b className="tabular-nums">{money(t.subledger_cents)}</b></span>
+      <span>{tr("scentsx.books.tie_gl", "Inventory account")}: <b className="tabular-nums">{money(t.gl_cents)}</b></span>
+      <span>{tr("scentsx.books.tie_wait", "Waiting to post")}: <b className="tabular-nums">{money(t.waiting_cents)}</b> ({t.waiting_moves})</span>
+      <span className={t.ties ? "text-[#15803D]" : "font-semibold text-[#B91C1C]"} data-testid="scentsx-books-tieout-diff">
+        {t.ties ? tr("scentsx.books.tie_ok", "Ties to the cent") : `${tr("scentsx.books.tie_bad", "Does not tie — difference")} ${money(t.difference_cents)}`}</span>
+      {t.zero_cost_moves ? <span className="text-[#B45309]">{t.zero_cost_moves} {tr("scentsx.books.tie_zero", "moves have no cost — they add units but no value")}</span> : null}
+    </div>
   );
 }
