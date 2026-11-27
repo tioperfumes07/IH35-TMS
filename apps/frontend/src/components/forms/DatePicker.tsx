@@ -271,6 +271,32 @@ export function DatePicker({
       data-date-box={box}
       style={box ? { width: "var(--ih-w-date)", flex: "none" } : undefined}
     >
+      {board ? (
+        // Board chip: spec docs/design/v3/V3-Reports-*.dc.html shows dates as button chips with text content.
+        // A <button> exposes the date as a text node so the parity reader can find it; <input> values are not text nodes.
+        // border-box + height:28 → rh=28px; font shorthand on the element itself ensures fontWeight:600 (inputs inherit UA weight).
+        <button
+          type="button"
+          disabled={disabled}
+          aria-label={ariaLabel || "Pick date"}
+          aria-haspopup="dialog"
+          aria-expanded={open}
+          style={{
+            height: 28, boxSizing: "border-box" as const, padding: "0 12px",
+            display: "inline-flex", alignItems: "center", borderRadius: 6,
+            font: "600 12px Inter, ui-sans-serif, system-ui, sans-serif",
+            background: "#fff", color: "#111827", border: "1px solid #DDE1E7",
+            fontVariantNumeric: "tabular-nums" as const,
+            cursor: disabled ? "not-allowed" : "pointer", whiteSpace: "nowrap" as const,
+          }}
+          onClick={() => {
+            if (suppressToggleRef.current) { suppressToggleRef.current = false; return; }
+            setOpen((o) => !o);
+          }}
+        >
+          {dateInputValue || placeholder || DATE_PLACEHOLDER_US}
+        </button>
+      ) : (
       <div
         className={`flex ${heightClass} w-full items-center gap-1 rounded-sm border border-gray-300 px-2 text-left text-xs ${
           disabled ? "cursor-not-allowed bg-gray-50 text-gray-400" : "bg-[var(--surface-unselected)]"
@@ -329,6 +355,7 @@ export function DatePicker({
           <Calendar className="h-3.5 w-3.5 text-gray-400" />
         </button>
       </div>
+      )}
       {open && popoverPos && createPortal(
         <div
           ref={popoverRef}
