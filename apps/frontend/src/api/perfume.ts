@@ -810,3 +810,39 @@ export const submitPerfumeCreditApplication = (companyId: string, b: { legal_nam
   apiRequest<{ id: string }>(`/api/v1/perfume/contacts/${companyId}/credit-applications`, { method: "POST", body: b });
 export const decidePerfumeCreditApplication = (id: string, b: { decision: "approved"; limit_cents: number; terms_days: number; note?: string | null } | { decision: "rejected"; note: string } | { decision: "withdrawn"; note?: string | null }) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/credit-applications/${id}/decide`, { method: "POST", body: b });
+
+/* ------------------------------------------------------------------ Item file + linkage (owner 2026-11-26 22:51 CT) */
+export type PerfumeItemFileRow = { id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null; flags: string[] | null;
+  tio_code: string | null; upcs: string[]; hk_codes: string[]; lists_linked: number; best_cost_cents: number | null; my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
+export type PerfumeItemFileHas = "tio" | "no_tio" | "hk" | "no_hk" | "upc" | "no_upc" | "mine";
+export type PerfumeItemFileList = { total: number; rows: PerfumeItemFileRow[]; counts: { items: number; with_tio: number; with_hk: number; with_upc: number } };
+export type PerfumeItemFile = PerfumeItemProfile & {
+  hk_codes: Array<{ id: string; sku: string; list: string; method: string; confirmed_at: string | null }>;
+  costs: { my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
+  events: Array<{ id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null }>;
+};
+export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null };
+export type PerfumeLinkageLine = { line_id: string; vendor_id: string; vendor: string; kind: string; sku: string | null; upc: string | null; brand: string | null; description: string;
+  size_text: string | null; price_cents: number | null; match_status: string; match_method: string | null; list_date: string; item_id: string | null; item: string | null; tio_code: string | null;
+  found_by: "upc" | "code" | "item" | "words" };
+export type PerfumeLinkage = { q: string; upc: string | null; items: Array<{ id: string; display_name: string; tio_code: string | null; upcs: string[] }>; lines: PerfumeLinkageLine[] };
+const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; limit?: number; offset?: number }) => {
+  const p = new URLSearchParams();
+  if (f.q?.trim()) p.set("q", f.q.trim());
+  if (f.has) p.set("has", f.has);
+  if (f.limit != null) p.set("limit", String(f.limit));
+  if (f.offset != null) p.set("offset", String(f.offset));
+  const s = p.toString();
+  return s ? `?${s}` : "";
+};
+export const listPerfumeItemFile = (f: { q?: string; has?: PerfumeItemFileHas; limit?: number; offset?: number } = {}) => apiRequest<PerfumeItemFileList>(`/api/v1/perfume/item-file${itemQs(f)}`);
+export const perfumeItemFileExportPath = (f: { q?: string; has?: PerfumeItemFileHas } = {}) => `/api/v1/perfume/item-file/export.xlsx${itemQs(f)}`;
+export const getPerfumeItemFile = (id: string) => apiRequest<PerfumeItemFile | { merged_into_id: string }>(`/api/v1/perfume/item-file/${id}`);
+export const updatePerfumeItemFile = (id: string, b: PerfumeItemEdit) => apiRequest<{ ok: true }>(`/api/v1/perfume/item-file/${id}`, { method: "PATCH", body: b });
+export const addPerfumeItemUpc = (id: string, upc: string) =>
+  apiRequest<{ upc: string; moved_from: string | null; lines_relinked: number }>(`/api/v1/perfume/item-file/${id}/upcs`, { method: "POST", body: { upc } });
+export const addPerfumeItemHkCode = (id: string, hk_code: string) =>
+  apiRequest<{ hk_code: string; moved_from: string | null; lines_relinked: number }>(`/api/v1/perfume/item-file/${id}/hk-codes`, { method: "POST", body: { hk_code } });
+export const getPerfumeFillCodes = () => apiRequest<{ codes_on_list: number; will_fill: number; sample: Array<{ code: string; item_id: string; display_name: string }> }>("/api/v1/perfume/item-file-fill-codes");
+export const applyPerfumeFillCodes = () => apiRequest<{ filled: number; previewed: number }>("/api/v1/perfume/item-file-fill-codes", { method: "POST", body: { confirm: true } });
+export const getPerfumeLinkage = (q: string) => apiRequest<PerfumeLinkage>(`/api/v1/perfume/linkage?q=${encodeURIComponent(q)}`);
