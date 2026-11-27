@@ -14,7 +14,7 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { billScentsxPurchaseOrder, getScentsxPoBillable, listScentsxAccounts, type ScentsxBillablePoLine, type ScentsxPoBill } from "../../api/scentsx";
+import { billScentsxPurchaseOrder, creditScentsxVendorReturn, getScentsxPoBillable, listScentsxAccounts, type ScentsxBillablePoLine, type ScentsxPoBill } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ctl, DASH, money, usDate } from "./perfumeDocParts";
@@ -80,6 +80,18 @@ export function PurchaseBillForm({ poId, poNumber, onDone }: { poId: string; poN
         <div className="text-xs font-semibold text-[#1F2A44]">{`${tr("perfume.pbill.title", "Vendor bills")} · ${leftUnits.toLocaleString("en-US")} ${tr("perfume.pbill.left", "units received and not billed")}`}</div>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!leftUnits} onClick={() => setOpen(!open)} data-testid="perfume-po-bill-open">{tr("perfume.pbill.enter", "Enter vendor bill")}</Button>
       </div>
+      {lines.some((l) => l.to_credit > 0) ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[3px] border border-[#F59E0B] bg-[#FFFBEB] p-2 text-xs" data-testid="perfume-po-credit-due">
+          <span>{`${lines.reduce((s, l) => s + l.to_credit, 0).toLocaleString("en-US")} ${tr("perfume.pbill.credit_due", "billed units were returned to the vendor — the vendor owes a credit")}`}</span>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} data-testid="perfume-po-credit-issue" onClick={() => void (async () => {
+            setBusy(true);
+            try {
+              const r = await creditScentsxVendorReturn(poId, { credit_date: todayCT(), lines: lines.filter((l) => l.to_credit > 0).map((l) => ({ po_line_id: l.po_line_id, qty: l.to_credit })) });
+              pushToast(`${r.display_id} — vendor credit ${money(r.amount_cents)} (apply it to a bill in Payables)`, "success");
+              await q.refetch(); onDone();
+            } catch (e) { pushToast(userFacingApiError(e, "Vendor credit not issued"), "error"); } finally { setBusy(false); }
+          })()}>{tr("perfume.pbill.credit_issue", "Issue vendor credit")}</Button>
+        </div>) : null}
       {open ? (
         <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] p-3" data-testid="perfume-po-bill-form" aria-label={`${tr("perfume.pbill.title", "Vendor bill")} ${poNumber}`}>
           <div className="flex flex-wrap items-end gap-2 text-xs">
