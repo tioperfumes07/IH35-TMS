@@ -500,6 +500,7 @@ import { registerPerfumeTradeShowRoutes } from "./perfume/trade-shows.routes.js"
 import { registerPerfumeQuoteRoutes } from "./perfume/quotes.routes.js";
 import { registerPerfumeOrderRoutes } from "./perfume/orders.routes.js";
 import { registerScentsxLinkRoutes } from "./scentsx/links.routes.js";
+import { initializeScentsxStockMovePosterCron } from "./scentsx/stock-move-poster.cron.js";
 import { registerPerfumePurchaseRoutes } from "./perfume/purchases.routes.js";
 import { registerPerfumeProfileRoutes } from "./perfume/profiles.routes.js";
 import { registerPerfumeInventoryRoutes } from "./perfume/inventory.routes.js";
@@ -1772,6 +1773,7 @@ async function main() {
       // ACCT-F26301 — Owner Law B: "never in a nightly job." bank-recon-auto-match.cron.ts deleted
       // outright (not left flag-gated) — see match.service.ts's findCandidates() comment.
       initializeDraftCrewStatusSelfHealCron(app);
+      initializeScentsxStockMovePosterCron(app);
       app.log.info("[STARTUP] fuel-gps-match-cron initialized");
     } catch (error) {
       app.log.error({ err: error }, "[STARTUP] fuel-gps-match-cron failed");
