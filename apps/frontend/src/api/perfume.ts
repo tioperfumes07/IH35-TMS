@@ -790,7 +790,7 @@ export type PerfumeCustomerAccount = { company_id: string; company_name: string;
 export type PerfumeCreditApplication = { id: string; company_id: string; company_name?: string; legal_name: string; tax_number?: string | null; requested_limit_cents: number;
   requested_terms_days: number; status: "submitted" | "approved" | "rejected" | "withdrawn"; approved_limit_cents: number | null; approved_terms_days: number | null;
   decision_note?: string | null; created_at: string; decided_at: string | null; decided_by_email: string | null };
-export const listPerfumePriceLevels = () => apiRequest<{ levels: PerfumePriceLevel[] }>("/api/v1/perfume/price-levels");
+export const listPerfumePriceLevels = () => apiRequest<{ levels: PerfumePriceLevel[]; costs?: { stock: number; my_avg_cost: number; inventory_file: number; vendor_lists: number; any_cost: number } }>("/api/v1/perfume/price-levels");
 export const savePerfumePriceLevel = (id: string | null, b: Partial<Pick<PerfumePriceLevel, "name" | "channel" | "method" | "pct" | "cost_basis" | "floor_pct" | "active">>) =>
   id ? apiRequest<{ id: string }>(`/api/v1/perfume/price-levels/${id}`, { method: "PATCH", body: b }) : apiRequest<{ id: string }>("/api/v1/perfume/price-levels", { method: "POST", body: b });
 export const listPerfumeLevelItems = (id: string) => apiRequest<{ items: PerfumeLevelItem[] }>(`/api/v1/perfume/price-levels/${id}/items`);

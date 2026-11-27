@@ -88,7 +88,7 @@ export async function getPurchaseOrder(c: pg.PoolClient, id: string): Promise<Po
     `SELECT e.id, e.kind, e.detail, e.created_at, u.email AS by_email FROM perfume.purchase_order_events e LEFT JOIN identity.users u ON u.id = e.created_by
       WHERE e.po_id = $1 ORDER BY e.created_at, e.id`, [id])).rows;
   const over = await poApprovalOverCents(c);
-  const needs = over != null && Number(h.total_cents) >= over;
+  const needs = over != null && Number(h.total_cents) > over; // owner 22:50 CT: "over 50K needs approval by me"
   return { ...(h as PoFull), approval_over_cents: over, needs_approval: needs, awaiting_approval: needs && !h.approved_at,
     lines: lines.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }) as PoLine), events };
 }
@@ -134,9 +134,9 @@ async function assertApprovedToReceive(c: pg.PoolClient, poId: string, approvedA
   const over = await poApprovalOverCents(c);
   if (over == null || approvedAt) return;
   const total = await poTotal(c, poId);
-  if (total >= over) {
+  if (total > over) {
     const $ = (n: number) => `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    throw new PoInvalid(`This PO is ${$(total)} — at or over your approval amount of ${$(over)}. Approve it before receiving.`);
+    throw new PoInvalid(`This PO is ${$(total)} — over your approval amount of ${$(over)}. Approve it before receiving.`);
   }
 }
 

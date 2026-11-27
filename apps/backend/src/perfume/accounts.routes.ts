@@ -7,7 +7,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import {
-  accountSchema, AcctInvalid, AcctNotFound, applicationSchema, decideApplication, getAccount, levelItems, levelSchema, listAccounts, listApplications, listLevels,
+  accountSchema, AcctInvalid, AcctNotFound, applicationSchema, decideApplication, getAccount, levelItems, levelSchema, listAccounts, listApplications, costCoverage, listLevels,
   saveAccount, saveLevel, setHold, setLevelItem, submitApplication,
 } from "./accounts.service.js";
 
@@ -31,7 +31,7 @@ function fail(reply: FastifyReply, e: unknown) {
 export async function registerPerfumeAccountRoutes(app: FastifyInstance) {
   app.get("/api/v1/perfume/price-levels", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    return withCurrentUser(uid, async (c) => ({ levels: await listLevels(c) }));
+    return withCurrentUser(uid, async (c) => ({ levels: await listLevels(c), costs: await costCoverage(c) }));
   });
   app.post("/api/v1/perfume/price-levels", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
