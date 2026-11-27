@@ -11,7 +11,7 @@ import { z } from "zod";
 import ExcelJS from "exceljs";
 import { bestCostOf, customerOf, esc, getQuote, money, quoteEvent, QuoteNotFound, usDate } from "./quotes.service.js";
 import { getRules } from "./desk.service.js";
-import { priceFromCost } from "./pricing.js";
+import { roundRule, sellingPrice } from "./selling-price.js";
 import { InvInvalid, stockIn, stockOut } from "./inventory.service.js";
 import { AcctInvalid, assertCanShip, levelPriceFor } from "./accounts.service.js";
 
@@ -234,7 +234,8 @@ export async function addOrderLine(c: pg.PoolClient, uid: string, orderId: strin
     const co = (await c.query<{ company_id: string | null }>(`SELECT company_id FROM perfume.sales_orders WHERE id = $1`, [orderId])).rows[0]?.company_id ?? null;
     price = (await levelPriceFor(c, co, x.item_id, x.qty, cost?.cents ?? null))?.cents ?? null;
   }
-  if (price == null && cost) price = priceFromCost(cost.cents, (await getRules(c)).wholesale_targets_pct[0] ?? 12.5, "markup");
+  // Calculated (never typed): closed by the desk rounding rule — owner 2026-11-27 15:40 CT "round to the nearest .25 upwards".
+  if (price == null && cost) price = sellingPrice(cost.cents, (await getRules(c)).wholesale_targets_pct[0] ?? 12.5, "markup", await roundRule(c));
   if (price == null) throw new OrderInvalid("No supplier cost for it — type the price.");
   const no = (await c.query<{ n: number }>(`SELECT coalesce(max(line_no), 0)::int + 1 AS n FROM perfume.sales_order_lines WHERE order_id = $1`, [orderId])).rows[0]!.n;
   const override = await assertLinePrice(c, uid, orderId, x.item_id, x.qty, price, x.unit_price_cents != null, x.price_override_reason, no);
