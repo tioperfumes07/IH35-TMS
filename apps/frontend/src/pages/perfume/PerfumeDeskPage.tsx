@@ -267,6 +267,9 @@ const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
 ];
 const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [], group: [] };
 
+/** Grid columns that hold vendor names (one or several). */
+const VENDOR_NAME_COLS = new Set(["best_vendor", "low_buy_vendor", "trade_low_vendor", "trade_high_vendor", "low_sell_vendor", "a:c_vendor"]);
+
 /** List analysis columns no upload fills yet (purchase date, qty purchased, last cost, sold, and what needs a cost). */
 const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold"]);
 
@@ -480,6 +483,10 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const [q, setQ] = useState("");
   const phone = useIsPhone();
   const [picks, setPicks] = useState<Record<PerfumeFacetKey, string[]>>(NO_PICKS);
+  // Owner 2026-11-27 15:47 CT: "like quickbooks … if i click on a vendor in a list, it should give me its profile … if i click on brands
+  // … it should take me to those" — every vendor name in the grid opens that supplier's profile; a brand narrows the grid to it.
+  const vendorsAll = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors, staleTime: 60_000 });
+  const vendorIdByName = useMemo(() => new Map((vendorsAll.data?.vendors ?? []).flatMap((v) => [[v.name, v.id], ...(v.short_name ? [[v.short_name, v.id]] : [])] as Array<[string, string]>)), [vendorsAll.data]);
   const [page, setPage] = useState(1);
   // The desk-wide "Show" selector changed: back to page 1.
   const [mineSeen, setMineSeen] = useState(mine);
@@ -690,6 +697,26 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
           const itemId = view === "analysis" ? (r.item_id == null ? "" : String(r.item_id)) : String(r.id);
           if (UUID_RE.test(itemId)) return <DocLink tab="items" id={itemId} testId="perfume-grid-item-link">{String(v)}</DocLink>;
         }
+        // Vendor names → the supplier's profile (several names: "PCA | MTZ" or "PCA, MTZ").
+        if (VENDOR_NAME_COLS.has(c.key) && v != null && v !== "") {
+          const names = String(v).split(/\s*\|\s*|,\s+/).filter(Boolean);
+          if (names.some((nm) => vendorIdByName.has(nm))) {
+            return (
+              <span className={c.key === "best_vendor" && r.tied ? "rounded-sm bg-slate-100 px-1" : undefined}>
+                {names.map((nm, i) => {
+                  const vid = vendorIdByName.get(nm);
+                  return <span key={`${nm}-${i}`}>{i ? ", " : ""}{vid ? <DocLink tab="suppliers" id={vid} testId="perfume-grid-vendor-link">{nm}</DocLink> : nm}</span>;
+                })}
+              </span>
+            );
+          }
+        }
+        // Brand → the grid narrowed to that brand (the Brand filter), one click.
+        if ((c.key === "brand" || c.key === "a:brand") && v != null && v !== "" && !matchDesk) {
+          const b = String(v);
+          return <button type="button" className="font-semibold text-[#14314F] underline" data-testid="perfume-grid-brand-link"
+            onClick={(e) => { e.stopPropagation(); setPicks((p) => ({ ...p, brand: [b] })); setPage(1); }}>{b}</button>;
+        }
         if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;
@@ -698,7 +725,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       },
     })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- shownSig is the shown column list
-    [shownSig, cols, view, mine, groupStart, matchDesk, lowFamily],
+    [shownSig, cols, view, mine, groupStart, matchDesk, lowFamily, vendorIdByName],
   );
   const columnGroups = useMemo(() => {
     const groups: Array<{ label: string; keys: string[]; sublabel?: string }> = [];
