@@ -111,6 +111,9 @@ export const PARTYLESS_SOURCE_TYPES = [
   // SCENTSX B3b — a TIO Perfumes stock move moves goods between inventory, GRNI, COGS and shrink; the vendor rides on
   // its bill and the customer on its invoice, never on the move (apps/backend/src/scentsx/stock-move-poster.service.ts).
   "perfume_stock_move",
+  // SCENTSX purchase bills (202617120100) — the vendor's price difference on received units, between GRNI and COGS; the vendor
+  // rides on the bill it belongs to (source id = the bill), never on this entry (apps/backend/src/scentsx/purchase-bill.service.ts).
+  "scentsx_purchase_price_variance",
   // legacy aliases still read by reports; no live writer posts under them
   "payment", "settlement"
 ] as const;

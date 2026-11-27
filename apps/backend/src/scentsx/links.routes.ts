@@ -12,6 +12,7 @@ import { creditExposure } from "./credit-exposure.service.js";
 import { salesReport } from "./sales-report.service.js";
 import { agingQuery, agingReport, customerAccount } from "./receivables.service.js";
 import { createReturn, listReturns, returnableLines, returnSchema } from "./returns.service.js";
+import { billablePoLines, billPurchaseOrder, purchaseBillSchema, purchaseOrderBills } from "./purchase-bill.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { accountMapSchema, itemAccountMap, itemPostingAccounts, setCategoryAccounts, setItemAccounts } from "./item-accounts.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
@@ -63,6 +64,18 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = returnSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", message: b.error.issues[0]?.message ?? "Bad return" });
     try { return reply.code(201).send(await withCurrentUser(uid, (c) => createReturn(c, uid, b.data))); } catch (e) { return fail(reply, e); }
+  });
+  // Purchase bills (migration 202617120100): a received perfume PO billed through the one bill writer + poster (GRNI -> A/P).
+  app.get("/api/v1/scentsx/purchase-orders/:id/billable", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, async (c) => ({ lines: await billablePoLines(c, id.data), bills: await purchaseOrderBills(c, id.data) })); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/purchase-orders/:id/bill", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const b = purchaseBillSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", message: b.error.issues[0]?.message ?? "Bad bill" });
+    try { return reply.code(201).send(await withCurrentUser(uid, (c) => billPurchaseOrder(c, uid, id.data, b.data))); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/receivables/customers/:id", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

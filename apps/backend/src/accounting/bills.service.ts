@@ -2731,6 +2731,8 @@ export const BILL_SOURCES = [
   "settlement_bill_payment",
   "recurring",
   "parts_purchase",
+  // SCENTSX purchase bills (202617120100): a received TIO Perfumes PO billed GRNI -> A/P (scentsx/purchase-bill.service.ts).
+  "perfume_purchase",
   "lease",
   "lease_buyout",
   "legal",
