@@ -24,7 +24,8 @@ import {
 import { tr } from "./perfumeI18n";
 import { FamilySelect } from "./PerfumeFamiliesPanel";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
-import { ItemControlFields, VendorSelect, centsOf } from "./PerfumeItemControlFields";
+import { ItemControlFields, VendorSelect } from "./PerfumeItemControlFields";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 
 const PAGE = 100;
 const CONC = ["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"] as const;
@@ -222,9 +223,8 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   const [edit, setEdit] = useState<PerfumeItemEdit>({});
   const [upc, setUpc] = useState("");
   const [hk, setHk] = useState("");
-  const [priceText, setPriceText] = useState<{ special: string | null; min: string | null }>({ special: null, min: null });
   const cats = useItemCatalogs();
-  useEffect(() => { setEdit({}); setPriceText({ special: null, min: null }); }, [id]);
+  useEffect(() => { setEdit({}); }, [id]);
   if (f.isError) return <ListErrorState title={tr("perfume.itemfile.one_error", "Couldn't load the item")} status={0} message={(f.error as Error)?.message} onRetry={() => void f.refetch()} />;
   if (!f.data) return null;
   if ("merged_into_id" in f.data) {
@@ -238,7 +238,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
   const run = (fn: () => Promise<unknown>, ok: string) => void fn().then(async () => { await f.refetch(); onChanged(); pushToast(ok, "success"); }).catch(fail(pushToast));
   const save = () => {
     if (!Object.keys(edit).length) { pushToast("Nothing changed", "error"); return; }
-    run(() => updatePerfumeItemFile(id, edit).then(() => { setEdit({}); setPriceText({ special: null, min: null }); }), "Item saved");
+    run(() => updatePerfumeItemFile(id, edit).then(() => setEdit({})), "Item saved");
   };
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-itemfile-editor" aria-label={it.display_name}>
@@ -292,7 +292,7 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
           <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={val("description", it.description ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} data-testid="perfume-itemfile-description" />
         </label>
       </div>
-      <ItemControlFields prefix="perfume-itemfile" value={it} edit={edit} onChange={(p) => setEdit({ ...edit, ...p })} text={priceText} setText={setPriceText} />
+      <ItemControlFields prefix="perfume-itemfile" value={it} edit={edit} onChange={(p) => setEdit({ ...edit, ...p })} />
       <div className="flex justify-end">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={!Object.keys(edit).length} onClick={save} data-testid="perfume-itemfile-save">{tr("perfume.itemfile.save", "Save")}</Button>
       </div>
@@ -509,7 +509,9 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
   const cats = useItemCatalogs();
   const CLEAR = "__clear__";
   const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "", case_pack: "", moq: "", origin: "", hs: "",
-    vendor: "", stock: "", active: "", min_price: "", change_price: "" });
+    vendor: "", stock: "", active: "", change_price: "" });
+  const [minCents, setMinCents] = useState<number | null>(null);
+  const [clearMin, setClearMin] = useState(false);
   const [busy, setBusy] = useState(false);
   const txt = (x: string) => (x === CLEAR ? null : x.trim() || undefined);
   const apply = async () => {
@@ -528,11 +530,8 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
     if (v.stock) set.is_stock_item = v.stock === "Y";
     if (v.active) set.is_active = v.active === "Y";
     if (v.change_price) set.price_locked = v.change_price === "N";
-    if (v.min_price.trim()) {
-      const c = v.min_price.trim().toLowerCase() === "clear" ? null : centsOf(v.min_price);
-      if (c === undefined) { pushToast("Minimum price is a dollar amount (or \"clear\")", "error"); return; }
-      set.min_price_cents = c;
-    }
+    if (clearMin) set.min_price_cents = null;
+    else if (minCents != null) set.min_price_cents = minCents;
     const flags = v.flag ? { [v.flagMode === "add" ? "flags_add" : "flags_remove"]: [v.flag] } : {};
     if (!Object.keys(set).length && !v.flag) { pushToast("Fill at least one field to change", "error"); return; }
     setBusy(true);
@@ -587,7 +586,11 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
             </select>
           </label>
         ))}
-        <label>{tr("perfume.itemfile.min_price", "Minimum price $")} <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} placeholder="clear" aria-label={tr("perfume.itemfile.min_price", "Minimum price $")} value={v.min_price} onChange={(e) => setV({ ...v, min_price: e.target.value })} data-testid="perfume-bulk-min-price" /></label>
+        <label>{tr("perfume.itemfile.min_price", "Minimum price")}
+          <span className="block w-[110px]" data-testid="perfume-bulk-min-price">
+            <MoneyInput valueCents={minCents} onChangeCents={setMinCents} disabled={clearMin} ariaLabel={tr("perfume.itemfile.min_price", "Minimum price")} /></span></label>
+        <label className="flex items-center gap-1 pb-2"><input type="checkbox" checked={clearMin} onChange={(e) => setClearMin(e.target.checked)} data-testid="perfume-bulk-min-clear" />
+          {tr("perfume.bulk.min_clear", "Clear minimum")}</label>
         <label className="min-w-[220px] flex-1">{tr("perfume.itemfile.description", "Description")} <input className={`${ctl} block w-full`} value={v.description === CLEAR ? "" : v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-bulk-description" /></label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
       </div>
@@ -629,7 +632,6 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
   const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "", case_pack: "", moq: "", weight: "", origin: "", hs: "", hk: "" });
   const [flags, setFlags] = useState<string[]>([]);
   const [control, setControl] = useState<PerfumeItemControl>({});
-  const [priceText, setPriceText] = useState<{ special: string | null; min: string | null }>({ special: null, min: null });
   const [busy, setBusy] = useState(false);
   const ok = v.brand.trim() && v.name.trim() && (v.size === "" || Number(v.size) >= 0);
   const save = async () => {
@@ -692,7 +694,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
         </label>
       </div>
       <ItemControlFields prefix="perfume-new" value={{ sold_by: "piece", is_stock_item: true, is_active: true, price_locked: false }} edit={control}
-        onChange={(p) => setControl({ ...control, ...p })} text={priceText} setText={setPriceText} />
+        onChange={(p) => setControl({ ...control, ...p })} />
       <div className="flex justify-end">
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void save()} data-testid="perfume-new-save">{tr("perfume.itemfile.create", "Create item")}</Button>
       </div>

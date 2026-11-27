@@ -33,7 +33,7 @@ describe("CONTROL item fields", () => {
   it("the editor shows the item's values and saves POS code, ticket, pack of 12, vendor, prices and the lock in one PATCH", async () => {
     mount(<ItemFileEditor id="i1" onChanged={() => {}} />);
     const box = await screen.findByTestId("perfume-itemfile-control");
-    expect((within(box).getByTestId("perfume-itemfile-min-price") as HTMLInputElement).value).toBe("15.00");
+    expect((within(within(box).getByTestId("perfume-itemfile-min-price")).getByRole("textbox") as HTMLInputElement).value).toBe("15.00");
     expect((within(box).getByTestId("perfume-itemfile-units-per-pack") as HTMLInputElement).disabled).toBe(true);
     await waitFor(() => expect(within(box).getByText("PCA")).toBeTruthy());
     fireEvent.change(within(box).getByTestId("perfume-itemfile-pos-code"), { target: { value: "ZZ-01" } });
@@ -41,7 +41,7 @@ describe("CONTROL item fields", () => {
     fireEvent.change(within(box).getByTestId("perfume-itemfile-sold-by"), { target: { value: "pack" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-units-per-pack"), { target: { value: "12" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-pref-vendor"), { target: { value: "v1" } });
-    fireEvent.change(within(box).getByTestId("perfume-itemfile-min-price"), { target: { value: "18.50" } });
+    fireEvent.change(within(within(box).getByTestId("perfume-itemfile-min-price")).getByRole("textbox"), { target: { value: "18.50" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-active"), { target: { value: "N" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-change-price"), { target: { value: "N" } });
     fireEvent.click(screen.getByTestId("perfume-itemfile-save"));
@@ -57,7 +57,7 @@ describe("CONTROL item fields", () => {
     fireEvent.change(within(card).getByTestId("perfume-new-ticket"), { target: { value: "ZZ PACK" } });
     fireEvent.change(within(card).getByTestId("perfume-new-sold-by"), { target: { value: "pack" } });
     fireEvent.change(within(card).getByTestId("perfume-new-units-per-pack"), { target: { value: "12" } });
-    fireEvent.change(within(card).getByTestId("perfume-new-special"), { target: { value: "$20" } });
+    fireEvent.change(within(within(card).getByTestId("perfume-new-special")).getByRole("textbox"), { target: { value: "20" } });
     fireEvent.click(within(card).getByTestId("perfume-new-save"));
     await waitFor(() => expect(calls.find(([p]) => p === "/api/v1/perfume/item-file")?.[1]).toMatchObject({
       brand: "ZZ", name: "PACK", pos_code: "ZZ-02", ticket_description: "ZZ PACK", sold_by: "pack", units_per_pack: 12, special_price_cents: 2000 }));

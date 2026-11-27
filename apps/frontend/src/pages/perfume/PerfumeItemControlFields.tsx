@@ -6,17 +6,9 @@
  */
 import { useQuery } from "@tanstack/react-query";
 import { listPerfumeVendors, type PerfumeItemControl } from "../../api/perfume";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH } from "./perfumeDocParts";
-
-/** Dollars typed → cents; blank → null; not a number → undefined (ignored). */
-export const centsOf = (s: string): number | null | undefined => {
-  const t = s.replace(/[$,\s]/g, "");
-  if (t === "") return null;
-  const n = Number(t);
-  return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) : undefined;
-};
-export const dollars = (c: number | null | undefined) => (c == null ? "" : (c / 100).toFixed(2));
 
 /** The vendors a preferred vendor can be (buy / both suppliers first, archived left out). */
 export function useVendorOptions() {
@@ -45,11 +37,10 @@ const YN = ({ value, onChange, testId, label }: { value: boolean; onChange: (v: 
 
 /**
  * `value` is what the item has now (or the creator's defaults), `edit` what the owner changed; `onChange` merges a patch into the edit.
- * Prices are typed in dollars and kept as text while typing (`text`), so "12." does not jump.
+ * Prices go through the house MoneyInput (cents in, cents out).
  */
-export function ItemControlFields({ value, edit, onChange, text, setText, prefix }: {
-  value: PerfumeItemControl; edit: PerfumeItemControl; onChange: (patch: PerfumeItemControl) => void;
-  text: { special: string | null; min: string | null }; setText: (t: { special: string | null; min: string | null }) => void; prefix: string;
+export function ItemControlFields({ value, edit, onChange, prefix }: {
+  value: PerfumeItemControl; edit: PerfumeItemControl; onChange: (patch: PerfumeItemControl) => void; prefix: string;
 }) {
   const v = <K extends keyof PerfumeItemControl>(k: K): PerfumeItemControl[K] => (edit[k] !== undefined ? edit[k] : value[k]);
   const soldBy = v("sold_by") ?? "piece";
@@ -73,12 +64,12 @@ export function ItemControlFields({ value, edit, onChange, text, setText, prefix
         <YN value={v("is_stock_item") ?? true} onChange={(x) => onChange({ is_stock_item: x })} testId={`${prefix}-stock-item`} label="Stock item?" /></label>
       <label>{tr("perfume.itemfile.active", "Active?")}
         <YN value={v("is_active") ?? true} onChange={(x) => onChange({ is_active: x })} testId={`${prefix}-active`} label="Active?" /></label>
-      <label>{tr("perfume.itemfile.special", "Special price $")}
-        <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} value={text.special ?? dollars(v("special_price_cents"))} data-testid={`${prefix}-special`}
-          onChange={(e) => { setText({ ...text, special: e.target.value }); const c = centsOf(e.target.value); if (c !== undefined) onChange({ special_price_cents: c }); }} /></label>
-      <label>{tr("perfume.itemfile.min_price", "Minimum price $")}
-        <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} value={text.min ?? dollars(v("min_price_cents"))} data-testid={`${prefix}-min-price`}
-          onChange={(e) => { setText({ ...text, min: e.target.value }); const c = centsOf(e.target.value); if (c !== undefined) onChange({ min_price_cents: c }); }} /></label>
+      <label>{tr("perfume.itemfile.special", "Special price")}
+        <span className="block w-[110px]" data-testid={`${prefix}-special`}>
+          <MoneyInput valueCents={v("special_price_cents") ?? null} onChangeCents={(c) => onChange({ special_price_cents: c })} ariaLabel={tr("perfume.itemfile.special", "Special price")} /></span></label>
+      <label>{tr("perfume.itemfile.min_price", "Minimum price")}
+        <span className="block w-[110px]" data-testid={`${prefix}-min-price`}>
+          <MoneyInput valueCents={v("min_price_cents") ?? null} onChangeCents={(c) => onChange({ min_price_cents: c })} ariaLabel={tr("perfume.itemfile.min_price", "Minimum price")} /></span></label>
       <label title={tr("perfume.itemfile.change_price_hint", "N = an order line takes the customer's level price and cannot be retyped without a written reason")}>
         {tr("perfume.itemfile.change_price", "Change price?")}
         <YN value={!(v("price_locked") ?? false)} onChange={(x) => onChange({ price_locked: !x })} testId={`${prefix}-change-price`} label="Change price?" /></label>
