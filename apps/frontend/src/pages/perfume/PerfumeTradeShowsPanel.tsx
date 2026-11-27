@@ -112,6 +112,8 @@ export function PerfumeTradeShowsPanel() {
           rowKey={(s) => s.id}
           loading={shows.isLoading}
           storageKey="perfume-trade-shows-v1"
+          exportFilename="TIO trade shows"
+          exportExcel
           emptyText={anyFilter ? "No show matches these filters." : "No shows yet — add one, or load the 2027 calendar."}
           onRowClick={(s) => setSelected(s.id)}
           columns={[
@@ -120,8 +122,8 @@ export function PerfumeTradeShowsPanel() {
                 onClick={(e) => e.stopPropagation()} onChange={() => void toggleGo(s)} />) },
             { key: "name", label: "Show", sortable: true, render: (s) => <span className="font-semibold">{s.name}</span> },
             // Owner 2026-11-26 17:08 CT: "i need the contact data the website so i can click and take me there to register".
-            { key: "register_url", label: "Register", render: (s) => <ShowLink href={s.register_url ?? s.website} text={tr("perfume.shows.register", "Register")} testId={`perfume-show-register-${s.id}`} /> },
-            { key: "website", label: "Website", render: (s) => <ShowLink href={s.website} text={hostOf(s.website)} /> },
+            { key: "register_url", label: "Register", render: (s) => <ShowLink href={s.register_url ?? s.website} text={tr("perfume.shows.register", "Register")} testId={`perfume-show-register-${s.id}`} />, exportValue: (s) => s.register_url ?? s.website ?? "" },
+            { key: "website", label: "Website", render: (s) => <ShowLink href={s.website} text={hostOf(s.website)} />, exportValue: (s) => s.website ?? "" },
             { key: "organizer", label: "Organizer", sortable: true, render: (s) => s.organizer ?? DASH },
             { key: "contact_email", label: "Email", render: (s) => (s.contact_email ? <a className="text-[#1B5FA8] underline" href={`mailto:${s.contact_email}`} onClick={(e) => e.stopPropagation()}>{s.contact_email}</a> : DASH) },
             { key: "contact_phone", label: "Phone", render: (s) => (s.contact_phone ? <a className="text-[#1B5FA8] underline tabular-nums" href={`tel:${s.contact_phone.replace(/[^\d+]/g, "")}`} onClick={(e) => e.stopPropagation()}>{s.contact_phone}</a> : DASH) },
@@ -235,6 +237,8 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
         rowKey={(x) => x.id}
         loading={contacts.isLoading}
         storageKey="perfume-show-contacts-v1"
+          exportFilename="TIO trade show contacts"
+          exportExcel
         suppressToolbarSearch
         emptyText="No contact linked to this show yet."
         columns={[

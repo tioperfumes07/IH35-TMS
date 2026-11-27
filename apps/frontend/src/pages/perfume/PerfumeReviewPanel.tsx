@@ -141,6 +141,8 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
         loading={q.isLoading}
         key={mine ?? "all"}
         storageKey={mine ? "perfume-desk-review-mine-v1" : "perfume-desk-review-v3"}
+          exportFilename="TIO review"
+          exportExcel
         selectable
         selectedKeys={selected}
         onSelectionChange={setSelected}

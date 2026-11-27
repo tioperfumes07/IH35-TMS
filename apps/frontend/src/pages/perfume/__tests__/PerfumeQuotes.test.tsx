@@ -50,3 +50,12 @@ describe("quotations", () => {
     expect(within(ed).getByTestId("perfume-quote-pdf")).toBeTruthy();
   });
 });
+
+describe("Excel export on every quotes table (owner 2026-11-26 18:13 CT: \"we need exporters to excel\")", () => {
+  it("the quotes list offers CSV and Excel", async () => {
+    mount();
+    const panel = await screen.findByTestId("perfume-quotes-panel");
+    await waitFor(() => expect(within(panel).getAllByText("QT-000002").length).toBeGreaterThan(0));
+    expect(within(panel).getAllByRole("button", { name: /excel/i }).length).toBeGreaterThan(0);
+  });
+});
