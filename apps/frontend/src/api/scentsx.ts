@@ -39,6 +39,7 @@ export type ScentsxCredit = {
   contact_company_id: string; customer_id: string | null; account_type: string | null; credit_limit_cents: number | null; terms_days: number | null;
   on_hold: boolean; hold_reason: string | null; open_ar_cents: number; past_due_cents: number; oldest_past_due_days: number | null;
   draft_invoice_cents: number; shipped_not_billed_cents: number; open_order_cents: number; exposure_cents: number; available_cents: number | null; over_limit: boolean;
+  kyc_status: ScentsxKycStatus; kyc_missing: string[]; kyc_warnings: string[]; pagare_held_usd_cents: number; pagare_held_mxn_cents: number; pagares_held: number;
 };
 export const getScentsxCredit = (contactCompanyId: string) =>
   apiRequest<{ credit: ScentsxCredit }>(`/api/v1/scentsx/customers/${encodeURIComponent(contactCompanyId)}/credit`);
@@ -102,3 +103,38 @@ export const getScentsxCustomerCompliance = (contactCompanyId: string) =>
   apiRequest<{ resale_certificate_on_file: boolean; sanctions: ScentsxPartyStatus | null; customer_id: string | null }>(`/api/v1/scentsx/customers/${encodeURIComponent(contactCompanyId)}/compliance`);
 export type ScentsxTieOut = { as_of: string; account_id: string | null; subledger_cents: number; gl_cents: number; waiting_cents: number; waiting_moves: number; difference_cents: number; ties: boolean; zero_cost_moves: number };
 export const getScentsxInventoryTieOut = () => apiRequest<{ tie_out: ScentsxTieOut }>("/api/v1/scentsx/inventory/tie-out");
+
+// SCENTSX B12 — KYC profile, W-9 / W-8, pagarés
+export type ScentsxKycStatus = "none" | "incomplete" | "complete";
+export type ScentsxKycKind = "customer" | "vendor";
+export type ScentsxKycProfile = {
+  id: string; contact_company_id: string | null; perfume_vendor_id: string | null; residency: "us" | "mexico" | "other"; entity_kind: "individual" | "business";
+  legal_name: string; dba_name: string | null; ein: string | null; ssn_itin_last4: string | null; sales_tax_permit_state: string | null; sales_tax_permit_number: string | null;
+  sales_tax_permit_file_id: string | null; rfc: string | null; curp: string | null; regimen_fiscal: string | null; constancia_fiscal_file_id: string | null; ine_file_id: string | null;
+  passport_number: string | null; passport_country: string | null; passport_expires_on: string | null; passport_file_id: string | null;
+  visa_kind: "b1_b2" | "border_crossing_card" | "other" | null; visa_number: string | null; visa_expires_on: string | null; visa_file_id: string | null;
+  contact_person: string | null; phone: string | null; email: string | null; address_line: string | null; city: string | null; state_region: string | null;
+  postal_code: string | null; country: string | null; proof_of_address_file_id: string | null; notes: string | null; reviewed_at: string | null;
+};
+export type ScentsxTaxForm = { id: string; form_kind: "W-9" | "W-8BEN" | "W-8BEN-E" | "W-8ECI"; signed_on: string; expires_on: string | null; file_id: string; voided_at: string | null };
+export type ScentsxPagare = { id: string; pagare_no: string; amount_cents: number; currency: "USD" | "MXN"; issued_on: string; due_on: string | null; status: string; suscriptor_name: string; aval_name: string | null; place_of_payment: string; signed_file_id: string };
+export type ScentsxPartyKyc = { profile: ScentsxKycProfile | null; tax_forms: ScentsxTaxForm[]; pagares: ScentsxPagare[]; status: ScentsxKycStatus; missing: string[]; warnings: string[]; engine_id: string | null };
+export type ScentsxKycDesk = {
+  parties: Array<{ kind: ScentsxKycKind; party_id: string; name: string; engine_id: string; reviewed_at: string | null; status: ScentsxKycStatus; missing: string[]; warnings: string[] }>;
+  counts: { complete: number; incomplete: number; none: number; expiring: number };
+  pagares_held: Array<{ id: string; pagare_no: string; contact_company_id: string; customer_name: string; amount_cents: number; currency: string; issued_on: string; due_on: string | null }>;
+};
+const kycPath = (kind: ScentsxKycKind, id: string) => `/api/v1/scentsx/compliance/kyc/${kind}/${encodeURIComponent(id)}`;
+export const getScentsxKycDesk = () => apiRequest<ScentsxKycDesk>("/api/v1/scentsx/compliance/kyc");
+export const getScentsxPartyKyc = (kind: ScentsxKycKind, id: string) => apiRequest<ScentsxPartyKyc>(kycPath(kind, id));
+export const saveScentsxPartyKyc = (kind: ScentsxKycKind, id: string, body: Partial<ScentsxKycProfile>) =>
+  apiRequest<ScentsxPartyKyc>(kycPath(kind, id), { method: "PUT", body });
+export const markScentsxKycReviewed = (kind: ScentsxKycKind, id: string) => apiRequest<ScentsxPartyKyc>(`${kycPath(kind, id)}/reviewed`, { method: "POST", body: {} });
+export const addScentsxTaxForm = (kind: ScentsxKycKind, id: string, body: { form_kind: ScentsxTaxForm["form_kind"]; signed_on: string; file_id: string; expires_on?: string | null }) =>
+  apiRequest<ScentsxPartyKyc>(`${kycPath(kind, id)}/tax-forms`, { method: "POST", body });
+export const voidScentsxTaxForm = (formId: string, reason: string) =>
+  apiRequest<{ voided: boolean }>(`/api/v1/scentsx/compliance/tax-forms/${encodeURIComponent(formId)}/void`, { method: "POST", body: { reason } });
+export const addScentsxPagare = (body: { contact_company_id: string; amount_cents: number; currency: "USD" | "MXN"; issued_on: string; due_on?: string | null; place_of_payment: string; suscriptor_name: string; aval_name?: string | null; moratorio_rate_pct?: number | null; signed_file_id: string }) =>
+  apiRequest<{ id: string; pagare_no: string }>("/api/v1/scentsx/compliance/pagares", { method: "POST", body });
+export const closeScentsxPagare = (id: string, action: "return" | "void", note: string) =>
+  apiRequest<{ id: string; status: string }>(`/api/v1/scentsx/compliance/pagares/${encodeURIComponent(id)}/${action}`, { method: "POST", body: { note } });

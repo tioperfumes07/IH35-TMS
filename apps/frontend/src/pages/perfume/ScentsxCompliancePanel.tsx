@@ -20,10 +20,11 @@ import { uploadSourceDocumentFromFile } from "../../api/docs";
 import {
   createScentsxCashPayer, getScentsxCompany, getScentsxCompliance, markScentsx8300Filed, markScentsx8300StatementSent, markScentsxReceiptSuspicious,
   recordScentsxCashReceipt, reviewScentsxStructuringAlert, updateScentsxCashPayer, voidScentsxCashReceipt,
-  clearScentsxScreening, confirmScentsxMatch, getScentsxSanctions, loadScentsxSanctionsList, type ScentsxScreening,
+  clearScentsxScreening, confirmScentsxMatch, getScentsxSanctions, loadScentsxSanctionsList, type ScentsxScreening, getScentsxKycDesk, type ScentsxKycDesk,
   type Scentsx8300Case, type ScentsxCashReceipt, type ScentsxPayerInput, type ScentsxPaymentForm, type ScentsxStructuringAlert, type ScentsxUnloggedCash,
 } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
+import { ScentsxKycBlock } from "./ScentsxKycBlock";
 
 const money = (cents: number | string) => (Number(cents) / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (iso: string | null) => (iso ? String(iso).slice(0, 10) : "—");
@@ -89,6 +90,8 @@ export function ScentsxCompliancePanel() {
       ) : null}
 
       <SanctionsBlock />
+
+      <KycDeskBlock companyId={co.data?.company.id ?? null} />
 
       <ReceiptForm payers={d?.payers ?? []} companyId={co.data?.company.id ?? null} unlogged={unlogged} onDone={() => void desk.refetch()} />
 
@@ -365,6 +368,61 @@ function SanctionsBlock() {
           ) },
         ]}
       />
+    </div>
+  );
+}
+
+const KYC_LABEL: Record<string, string> = { kyc_profile: "no profile", phone_or_email: "phone/email", passport_copy: "passport copy", visa_copy: "visa copy",
+  constancia_situacion_fiscal: "Constancia", sales_tax_permit_number: "sales tax permit", sales_tax_permit_copy: "permit copy", ssn_itin_last4: "SSN/ITIN last 4" };
+
+/** SCENTSX B12 — every linked ScentsX customer and vendor with its KYC result (RFC / CURP / passport / visa / EIN / sales tax permit /
+ *  W-9 / W-8) and every pagaré held. Open a row to complete it; the rule list is the server's (kyc.service.ts). */
+function KycDeskBlock({ companyId }: { companyId: string | null }) {
+  const q = useQuery({ queryKey: ["scentsx", "kyc-desk"], queryFn: getScentsxKycDesk });
+  const [open, setOpen] = useState<string | null>(null);
+  if (q.isError) return <ListErrorState title={tr("scentsx.kyc.desk_error", "Couldn't load KYC")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
+  const d = q.data;
+  type Row = ScentsxKycDesk["parties"][number];
+  return (
+    <div className="space-y-2" data-testid="scentsx-kyc-desk">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <KpiCard label={tr("scentsx.kyc.complete", "KYC complete")} number={String(d?.counts.complete ?? "—")} />
+        <KpiCard label={tr("scentsx.kyc.incomplete", "KYC missing documents")} number={String(d?.counts.incomplete ?? "—")} />
+        <KpiCard label={tr("scentsx.kyc.none", "No KYC yet")} number={String(d?.counts.none ?? "—")} />
+        <KpiCard label={tr("scentsx.kyc.expiring", "Documents expiring ≤ 60 days")} number={String(d?.counts.expiring ?? "—")} />
+      </div>
+      <ParityTable<Row>
+        title={tr("scentsx.kyc.title", "Customers & vendors — KYC and tax forms")}
+        rows={d?.parties ?? []}
+        rowKey={(r) => `${r.kind}:${r.party_id}`}
+        loading={q.isLoading}
+        storageKey="scentsx-kyc-desk-v1"
+        exportFilename="ScentsX KYC status"
+        exportExcel
+        emptyText="No ScentsX customer or vendor linked yet."
+        columns={[
+          { key: "name", label: "Party", sortable: true, render: (r) => <EntityLink kind={r.kind === "customer" ? "customer" : "vendor"} id={r.engine_id} label={r.name} /> },
+          { key: "kind", label: "Side", sortable: true, render: (r) => (r.kind === "customer" ? "Customer (A/R)" : "Vendor (A/P)") },
+          { key: "status", label: "KYC", sortable: true, render: (r) => <span className={r.status === "complete" ? "text-[#15803D]" : "font-semibold text-[#B45309]"}>{r.status === "complete" ? (r.reviewed_at ? "Complete, reviewed" : "Complete") : r.status === "none" ? "Not started" : "Missing"}</span> },
+          { key: "missing", label: "Missing / expiring", render: (r) => [...r.missing.map((m) => KYC_LABEL[m] ?? m.replace(/_/g, " ")), ...r.warnings.map((w) => w.replace(/_expires_/, " expires ").replace(/_/g, " "))].join(", ") || "—" },
+          { key: "actions", label: "", render: (r) => <button type="button" className="underline" onClick={() => setOpen(open === `${r.kind}:${r.party_id}` ? null : `${r.kind}:${r.party_id}`)}>{open === `${r.kind}:${r.party_id}` ? "Close" : "Open"}</button> },
+        ]}
+      />
+      {open ? (() => {
+        const r = (d?.parties ?? []).find((x) => `${x.kind}:${x.party_id}` === open);
+        return r ? <div className="rounded-[3px] border border-[#D8E0E8] p-2 text-xs"><div className="font-semibold">{r.name}</div><ScentsxKycBlock kind={r.kind} partyId={r.party_id} companyId={companyId} defaultName={r.name} /></div> : null;
+      })() : null}
+      {(d?.pagares_held.length ?? 0) > 0 ? (
+        <div className="rounded-[3px] border border-[#D8E0E8] p-2 text-xs" data-testid="scentsx-pagares-held">
+          <div className="font-semibold text-[#1F2A44]">{tr("scentsx.kyc.pagares", "Pagarés held as security")}</div>
+          {d!.pagares_held.map((x) => (
+            <div key={x.id} className="flex justify-between gap-2">
+              <span>{x.pagare_no} · {x.customer_name}</span>
+              <span className="tabular-nums">{(x.amount_cents / 100).toLocaleString("en-US", { style: "currency", currency: x.currency })} · {x.issued_on}{x.due_on ? ` → ${x.due_on}` : " (a la vista)"}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

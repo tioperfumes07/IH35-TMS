@@ -15,6 +15,7 @@ import {
 import {
   addExportProof, addResaleCertificate, clearScreening, confirmMatch, loadSanctionsList, rescreenAll, sanctionsDesk, screenParty, voidTaxDocument,
 } from "./sanctions.service.js";
+import { addPagare, addTaxForm, closePagare, kycDesk, markKycReviewed, partyKyc, saveKyc, voidTaxForm, type KycParty } from "./kyc.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -188,4 +189,81 @@ export async function registerScentsxComplianceRoutes(app: FastifyInstance) {
   };
   app.post("/api/v1/scentsx/compliance/resale-certificates/:id/void", RL_WRITE, voidTaxDoc("resale_certificates"));
   app.post("/api/v1/scentsx/compliance/export-proofs/:id/void", RL_WRITE, voidTaxDoc("export_proofs"));
+
+  // ── B12: KYC profile, tax forms (W-9 / W-8), pagarés ──
+  const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+  const txt = (n: number) => z.string().trim().max(n).nullish();
+  const kycShape = z.object({
+    residency: z.enum(["us", "mexico", "other"]), entity_kind: z.enum(["individual", "business"]), legal_name: z.string().trim().min(1).max(200),
+    dba_name: txt(200), ein: txt(12), ssn_itin_last4: txt(4), sales_tax_permit_state: txt(2), sales_tax_permit_number: txt(20),
+    sales_tax_permit_file_id: uuid.nullish(), rfc: txt(13), curp: txt(18), regimen_fiscal: txt(120), constancia_fiscal_file_id: uuid.nullish(),
+    ine_file_id: uuid.nullish(), passport_number: txt(20), passport_country: txt(2), passport_expires_on: date.nullish(), passport_file_id: uuid.nullish(),
+    visa_kind: z.enum(["b1_b2", "border_crossing_card", "other"]).nullish(), visa_number: txt(20), visa_expires_on: date.nullish(), visa_file_id: uuid.nullish(),
+    contact_person: txt(200), phone: txt(40), email: txt(200), address_line: txt(300), city: txt(120), state_region: txt(120), postal_code: txt(20),
+    country: txt(2), proof_of_address_file_id: uuid.nullish(), notes: txt(2000),
+  });
+  const partyOf = (req: FastifyRequest): KycParty | null => {
+    const { kind, partyId } = req.params as { kind?: string; partyId?: string };
+    if (!uuid.safeParse(partyId).success) return null;
+    if (kind === "customer") return { kind, contact_company_id: partyId! };
+    if (kind === "vendor") return { kind, perfume_vendor_id: partyId! };
+    return null;
+  };
+  app.get("/api/v1/scentsx/compliance/kyc", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    try { return await withCurrentUser(uid, async (c) => await kycDesk(c)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/compliance/kyc/:kind/:partyId", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const party = partyOf(req); if (!party) return reply.code(400).send({ error: "invalid_party" });
+    try { return await withCurrentUser(uid, async (c) => await partyKyc(c, party)); } catch (e) { return fail(reply, e); }
+  });
+  app.put("/api/v1/scentsx/compliance/kyc/:kind/:partyId", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const party = partyOf(req); if (!party) return reply.code(400).send({ error: "invalid_party" });
+    const b = kycShape.partial().safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_body", issues: b.error.issues });
+    try { return await withCurrentUser(uid, async (c) => await saveKyc(c, uid, party, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/compliance/kyc/:kind/:partyId/reviewed", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const party = partyOf(req); if (!party) return reply.code(400).send({ error: "invalid_party" });
+    try { return await withCurrentUser(uid, async (c) => await markKycReviewed(c, uid, party)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/compliance/kyc/:kind/:partyId/tax-forms", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const party = partyOf(req); if (!party) return reply.code(400).send({ error: "invalid_party" });
+    const b = z.object({
+      form_kind: z.enum(["W-9", "W-8BEN", "W-8BEN-E", "W-8ECI"]), signed_on: date, expires_on: date.nullish(), file_id: uuid,
+      foreign_tin: txt(40), treaty_country: txt(2), chapter3_status: txt(80), notes: txt(2000),
+    }).safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_body", issues: b.error.issues });
+    try { return await withCurrentUser(uid, async (c) => await addTaxForm(c, uid, party, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/compliance/tax-forms/:id/void", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    const b = z.object({ reason: z.string().trim().min(10).max(500) }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, async (c) => await voidTaxForm(c, uid, id.data, b.data.reason)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/compliance/pagares", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = z.object({
+      contact_company_id: uuid, pagare_no: txt(40), amount_cents: z.number().int().positive().max(100_000_000_00), currency: z.enum(["USD", "MXN"]),
+      issued_on: date, due_on: date.nullish(), place_of_payment: z.string().trim().min(1).max(200), suscriptor_name: z.string().trim().min(1).max(200),
+      aval_name: txt(200), moratorio_rate_pct: z.number().min(0).max(1000).nullish(), signed_file_id: uuid, notes: txt(2000),
+    }).safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_body", issues: b.error.issues });
+    try { return await withCurrentUser(uid, async (c) => await addPagare(c, uid, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  const closePag = (action: "returned" | "void") => async (req: FastifyRequest, reply: FastifyReply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    const b = z.object({ note: z.string().trim().min(10).max(500) }).safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, async (c) => await closePagare(c, uid, id.data, action, b.data.note)); } catch (e) { return fail(reply, e); }
+  };
+  app.post("/api/v1/scentsx/compliance/pagares/:id/return", RL_WRITE, closePag("returned"));
+  app.post("/api/v1/scentsx/compliance/pagares/:id/void", RL_WRITE, closePag("void"));
 }

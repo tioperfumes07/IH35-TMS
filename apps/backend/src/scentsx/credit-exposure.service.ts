@@ -12,9 +12,12 @@
  *   shipped not billed  = shipped units not yet on a live ScentsX invoice × unit price (scentsx.sales_order_invoice_lines)
  *   open orders         = ordered-but-not-shipped units × unit price on open sales orders
  *   exposure            = the sum; available = credit_limit_cents − exposure (null when the account has no limit)
+ * B12 (owner 23:17 CT): the same read carries the customer's KYC result (kyc.service.ts requirements — one rule list) and the
+ *   pagarés held as security, per currency. A pagaré does not reduce exposure (it secures it; the debt stays A/R).
  */
 import type pg from "pg";
 import { scopeToScentsx } from "./links.service.js";
+import { pagareCover, partyKyc } from "./kyc.service.js";
 
 type Q = Pick<pg.PoolClient, "query">;
 
@@ -35,6 +38,12 @@ export type CreditExposure = {
   exposure_cents: number;
   available_cents: number | null;
   over_limit: boolean;
+  kyc_status: "none" | "incomplete" | "complete";
+  kyc_missing: string[];
+  kyc_warnings: string[];
+  pagare_held_usd_cents: number;
+  pagare_held_mxn_cents: number;
+  pagares_held: number;
 };
 
 export async function creditExposure(c: Q, contactCompanyId: string): Promise<CreditExposure> {
@@ -83,6 +92,8 @@ export async function creditExposure(c: Q, contactCompanyId: string): Promise<Cr
   const shippedNotBilled = Number(so.rows[0]!.shipped_not_billed);
   const openOrders = Number(so.rows[0]!.open_orders);
   const exposure = ar.open + ar.draft + shippedNotBilled + openOrders;
+  const kyc = await partyKyc(c, { kind: "customer", contact_company_id: contactCompanyId });
+  const cover = await pagareCover(c, contactCompanyId);
   const a = acct.rows[0];
   const limit = a?.credit_limit_cents == null ? null : Number(a.credit_limit_cents);
   return {
@@ -102,5 +113,11 @@ export async function creditExposure(c: Q, contactCompanyId: string): Promise<Cr
     exposure_cents: exposure,
     available_cents: limit == null ? null : limit - exposure,
     over_limit: limit != null && exposure > limit,
+    kyc_status: kyc.status,
+    kyc_missing: kyc.missing,
+    kyc_warnings: kyc.warnings,
+    pagare_held_usd_cents: cover.usd_cents,
+    pagare_held_mxn_cents: cover.mxn_cents,
+    pagares_held: cover.held,
   };
 }

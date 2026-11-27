@@ -10,22 +10,11 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 402 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 325 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 287 | `/:id/approve`, `/scan` — operates on an existing row |
+| **create** (collection POST) | 411 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **nested create** (child POST) | 334 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| action (NOT a create) | 294 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 1087 | |
-| **create** (collection POST) | 401 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 324 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 287 | `/:id/approve`, `/scan` — operates on an existing row |
-| **create** (collection POST) | 403 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 327 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 289 | `/:id/approve`, `/scan` — operates on an existing row |
-| **create** (collection POST) | 407 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 329 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 291 | `/:id/approve`, `/scan` — operates on an existing row |
-| infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 1100 | |
+| **TOTAL POST endpoints** | 1112 | |
 | UI files with `+ Create`/`+ Book` | 199 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
@@ -223,7 +212,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/v5/complaints` | `apps/backend/src/safety/safety-v5.routes.ts` | — | — | — |
 | create | `/api/v1/safety/v5/dot-inspections` | `apps/backend/src/safety/safety-v5.routes.ts` | — | — | — |
 
-### perfume — 63 create-surface(s)
+### perfume — 65 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -283,6 +272,8 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 | nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 | create | `/api/v1/perfume/segments` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/send-list/attach` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/send-list/export.xlsx` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
 | create | `/api/v1/perfume/trade-shows` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
 | nested | `/api/v1/perfume/trade-shows/:id/contacts` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
 | nested | `/api/v1/perfume/trade-shows/:id/i-go` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
@@ -657,13 +648,17 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts` | — | — | — |
 
-### scentsx — 13 create-surface(s)
+### scentsx — 17 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
 | nested | `/api/v1/scentsx/compliance/cases/:id/filed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
 | nested | `/api/v1/scentsx/compliance/cases/:id/statement-sent` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
 | create | `/api/v1/scentsx/compliance/export-proofs` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/reviewed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/tax-forms` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/pagares` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/pagares/:id/return` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
 | create | `/api/v1/scentsx/compliance/payers` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
 | create | `/api/v1/scentsx/compliance/receipts` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
 | nested | `/api/v1/scentsx/compliance/receipts/:id/suspicious` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |

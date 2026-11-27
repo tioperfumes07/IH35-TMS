@@ -12,6 +12,7 @@ import { addScentsxResaleCertificate, createScentsxCustomer, getScentsxCompany, 
 import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { tr } from "./perfumeI18n";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { ScentsxKycBlock } from "./ScentsxKycBlock";
 
 const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -59,6 +60,7 @@ export function ScentsxCustomerLink({ contactId, name, email, phone }: { contact
         <CreditBlock c={credit.data.credit} />
       ) : null}
       <CustomerCompliance contactId={contactId} companyId={co.data?.company.id ?? null} />
+      <ScentsxKycBlock kind="customer" partyId={contactId} companyId={co.data?.company.id ?? null} defaultName={name} />
     </div>
   );
 }
@@ -87,6 +89,15 @@ function CreditBlock({ c }: { c: import("../../api/scentsx").ScentsxCredit }) {
           <span className="tabular-nums" data-testid="scentsx-credit-available">{money(c.available_cents ?? 0)}</span>
         </div>
       ) : <div className="text-[#64748B]">{tr("scentsx.credit.nolimit", "No credit limit — cash or prepaid only.")}</div>}
+      {c.pagares_held > 0 ? (
+        <div className="flex justify-between gap-4" data-testid="scentsx-credit-pagares">
+          <span className="text-[#64748B]">{tr("scentsx.credit.pagares", "Secured by pagarés")} ({c.pagares_held})</span>
+          <span className="tabular-nums">{[c.pagare_held_usd_cents ? money(c.pagare_held_usd_cents) : null, c.pagare_held_mxn_cents ? (c.pagare_held_mxn_cents / 100).toLocaleString("es-MX", { style: "currency", currency: "MXN" }) : null].filter(Boolean).join(" + ")}</span>
+        </div>
+      ) : null}
+      {c.account_type === "credit" && c.kyc_status !== "complete" ? (
+        <div className="font-semibold text-[#B45309]" data-testid="scentsx-credit-kyc">{tr("scentsx.credit.kyc", "Credit account without complete KYC")}: {c.kyc_missing.join(", ")}</div>
+      ) : null}
     </div>
   );
 }
