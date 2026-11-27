@@ -36,6 +36,7 @@ import { PerfumeTradersPanel } from "./PerfumeTradersPanel";
 import { PerfumeLeadsExcelPanel } from "./PerfumeLeadsExcelPanel";
 import { PerfumeCatalogsPanel } from "./PerfumeCatalogsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
+import { MarginGroupsEditor } from "./PerfumeMarginGroups";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
 import { DocLink } from "./perfumeDocParts";
@@ -187,6 +188,10 @@ const BUY_SET = ["low_buy_price", "buy_margin_pct", "buy_markup_pct"];
 function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = null): boolean {
   // Owner 2026-11-23 12:32 CT: suppliers (PCA, MTZ …) are for Purchase and Trading — never on Wholesale or List analysis.
   if (view !== "analysis" && (MY_PRICE_SET.includes(key) || ((view === "buy" || view === "all") && BUY_SET.includes(key)))) return true;
+  // Owner 2026-11-27 15:40 CT: every tab shows the item's margin group and the % it is priced at; the price at that margin on
+  // Purchase, All items and Trading.
+  if (view !== "analysis" && (key === "margin_group" || key === "margin_pct")) return true;
+  if ((view === "buy" || view === "all" || view === "trade") && key === "target_price_margin") return true;
   const item = ["brand", "name", "size_ml", "conc", "category"].includes(key);
   // Narrowed to my own list: on every tab, my list's figures plus EVERY supplier's list price and EVERY competitor's
   // price for those items (owner 2026-11-13), on top of the tab's own columns.
@@ -248,8 +253,10 @@ const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
   { key: "brand", label: "Brand", all: "All brands" },
   { key: "size", label: "Size ml", all: "All sizes" },
   { key: "vendor", label: "Vendor", all: "All vendors" },
+  // Owner 2026-11-27 15:40 CT: margins by group — the same group filter on every tab.
+  { key: "group", label: "Margin group", all: "All groups" },
 ];
-const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [] };
+const NO_PICKS: Record<PerfumeFacetKey, string[]> = { category: [], gender: [], brand: [], size: [], vendor: [], group: [] };
 
 /** List analysis columns no upload fills yet (purchase date, qty purchased, last cost, sold, and what needs a cost). */
 const ANALYSIS_EMPTY = new Set(["a:purch_date", "a:qty", "a:last_cost", "a:sold"]);
@@ -889,6 +896,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
                 className="h-[34px] w-[80px] rounded-sm border border-gray-300 px-2 text-xs tabular-nums"
               />
             </label>
+            <MarginGroupsEditor />
             <label className="flex items-center gap-1 text-xs text-gray-700" data-testid="perfume-carried">
               <input type="checkbox" checked={carried} onChange={(e) => { setCarried(e.target.checked); setPage(1); }} />
               {tr("perfume.desk.carried", "Only items on the competitor's list")}
