@@ -65,7 +65,9 @@ export function collectProblems(root = ROOT) {
       problems.push(`${HOME}: must not use localStorage/sessionStorage`);
     }
   if (!/scenario-tracker-home/.test(home)) problems.push(`${HOME}: missing scenario-tracker-home testid`);
-  if (!/entity\s*===\s*"TRANSP"[\s\S]{0,220}<Link to="\/app\/homepage">QBO-style home<\/Link>/.test(home)) {
+  // #29531 (Program Link to= return-context wave) wraps hrefs in hubHref(...) — the same /app/homepage target with the
+  // return context attached. Both spellings are the link; the TRANSP-only condition is still required.
+  if (!/entity\s*===\s*"TRANSP"[\s\S]{0,220}<Link to=(?:"\/app\/homepage"|\{hubHref\("\/app\/homepage"\)\})>QBO-style home<\/Link>/.test(home)) {
     problems.push(`${HOME}: QBO-style home link must render only for the explicit TRANSP scenario scope`);
   }
   }
