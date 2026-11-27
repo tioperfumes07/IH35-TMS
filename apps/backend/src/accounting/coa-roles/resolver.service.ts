@@ -234,6 +234,16 @@ export const COA_ROLE_VALUES = [
   /** LEAD 443.189 (migration 202616010100) — 2410 Owner / Related-Party Loan Payable: the parent every "Due to / from
    *  <party>" account is created under (party-account.service.ts resolves it by role, never by the number). */
   "related_party_loan_parent",
+  /** SCENTSX B3b (migration 202616880100) — ScentsX LLC goods roles: perpetual inventory moved by the TIO Perfumes stock
+   *  ledger (perfume.stock_moves) through apps/backend/src/scentsx/stock-move-poster.service.ts. Bound for SCENTSX only;
+   *  absent from every fallback — an unbound company fails closed naming the role. */
+  "inventory_asset",
+  "inventory_in_transit",
+  "goods_received_not_billed",
+  "cogs_goods",
+  "inventory_shrink",
+  "inventory_writedown",
+  "opening_balance_equity",
 ] as const;
 
 export type CoaRole = (typeof COA_ROLE_VALUES)[number];

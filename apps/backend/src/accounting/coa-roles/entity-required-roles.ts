@@ -60,6 +60,12 @@ const LEASE_LESSEE: readonly CoaRole[] = ["rent_expense"];
 
 const PROPERTY_TAX: readonly CoaRole[] = ["property_tax_expense", "property_tax_payable"];
 
+/** SCENTSX B3b — the roles the stock-move poster resolves (migration 202616880100 binds them). */
+const GOODS_SCENTSX: readonly CoaRole[] = [
+  "inventory_asset", "inventory_in_transit", "goods_received_not_billed", "cogs_goods",
+  "inventory_shrink", "inventory_writedown", "opening_balance_equity",
+];
+
 /**
  * Designatable everywhere but not required for validate green.
  * Includes unused OO-style recoveries (owner: no owner-operators / no those deductions).
@@ -87,6 +93,10 @@ export function requiredCoaRolesForCompanyCode(code: CompanyCode): readonly CoaR
   const c = String(code ?? "").trim().toUpperCase();
   if (c === "TRK") {
     return uniq([...CORE, ...LEASE_TRK, ...PROPERTY_TAX]);
+  }
+  if (c === "SCENTSX") {
+    // ScentsX LLC (TIO Perfumes) — a goods distributor: no drivers, no factoring, no leases, no Ch. 11 DIP cash.
+    return uniq([...CORE.filter((r) => r !== "cash_dip"), ...GOODS_SCENTSX]);
   }
   if (c === "USMCA") {
     return uniq([...CORE, ...CARRIER_DRIVER, ...PROPERTY_TAX, ...LEASE_LESSEE]);
