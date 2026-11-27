@@ -2272,9 +2272,16 @@ export function compBestOf(itemRow: GridRow | undefined, comps: ReadonlySet<stri
   if (!itemRow) return null;
   let best: CompBest | null = null;
   for (const id of comps) {
+    let c: CompBest | null = null;
     const real = itemRow[`s:${id}:real`] as number | null | undefined;
-    if (real == null) continue;
-    if (!best || real < best.real) best = { list: itemRow[`s:${id}:price`] as number, cushion: itemRow[`s:${id}:cushion`] as number, real, desc: (itemRow[`s:${id}:desc`] as string | null) ?? null, vendor: label(id) };
+    if (real != null) c = { list: itemRow[`s:${id}:price`] as number, cushion: itemRow[`s:${id}:cushion`] as number, real, desc: (itemRow[`s:${id}:desc`] as string | null) ?? null, vendor: label(id) };
+    else {
+      // Owner 2026-11-27 15:40 CT: "in list analysis i should be able to select if vendor, or competition" — a supplier's real price
+      // is its list price less the cushion it gives (the Purchase tab's "Cushion" column).
+      const vl = itemRow[`v:${id}:price`] as number | null | undefined;
+      if (vl != null) c = { list: vl, cushion: (itemRow[`v:${id}:cush`] as number | null | undefined) ?? 0, real: (itemRow[`v:${id}:net`] as number | null | undefined) ?? vl, desc: null, vendor: label(id) };
+    }
+    if (c && (!best || c.real < best.real)) best = c;
   }
   return best;
 }
@@ -2310,10 +2317,12 @@ export function getOrBuildView(
   match: AnalysisMatch = "all",
   comps?: readonly string[] | null,
 ): ViewPayload {
-  // Only wholesalers count; an empty or unknown pick = all of them (the toggle never shows an empty grid by accident).
+  // Wholesalers count on every tab; List analysis also takes suppliers (owner 2026-11-27 15:40 CT "select if vendor, or competition").
+  // An empty or unknown pick = all wholesalers (the toggle never shows an empty grid by accident).
   const wholesale = new Set(g.vendors.filter((v) => hasRole(v, "wholesale")).map((v) => v.id));
-  const picked = [...new Set((comps ?? []).filter((id) => wholesale.has(id)))].sort();
-  const narrowed = picked.length > 0 && picked.length < wholesale.size;
+  const supplier = new Set(view === "analysis" ? g.vendors.filter((v) => hasRole(v, "purchase") && !wholesale.has(v.id)).map((v) => v.id) : []);
+  const picked = [...new Set((comps ?? []).filter((id) => wholesale.has(id) || supplier.has(id)))].sort();
+  const narrowed = picked.length > 0 && (picked.some((id) => supplier.has(id)) || picked.length < wholesale.size);
   const compKey = narrowed ? picked.join(",") : "";
   const key = `${g._vk}|${g.target_pct}|${g.earn_pct}|${view}|${mine ?? ""}|${sort ?? ""}|${dir}|${view === "analysis" ? `${base}|${match}` : ""}|${compKey}`;
   const hit = _viewCache.get(key);

@@ -200,7 +200,9 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // Owner 2026-11-15 13:27 CT: the MATCH group is only the competitor's description (brand / competitor / match state
   // live on Review · My list ↔ competitor, where matching is done).
   // Owner 2026-11-23: several wholesalers (Esperanza, Broadway, Omni) — the Competitor column names whose price it is.
-  if (view === "analysis") return key.startsWith("a:") && !["a:c_brand", "a:match"].includes(key);
+  // Owner 2026-11-27 15:40 CT: "by default we do not need their description. just list and real price … same for lsit analysis" —
+  // the competitor's description, cushion and name are one tick away in the gear.
+  if (view === "analysis") return key.startsWith("a:") && !["a:c_brand", "a:match", "a:c_desc", "a:c_cushion", "a:c_vendor"].includes(key);
   if (mine && view !== "comp" && (/^v:.*:price$/.test(key) || /^s:.*:price$/.test(key)
     || ["my_offer_desc", "my_offer_price", "my_qty", "best_vendor"].includes(key))) return true;
   // Purchase (owner 2026-11-12: "I am in purchase from vendors, I don't have costs, so there should be no costs"):
@@ -217,11 +219,15 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // price, their cost, what they earn, margin), then every supplier's list price.
   // Owner 2026-11-15 13:32 CT: their cost is reverse-engineered from THEIR list (list − cushion = sales; × (1 − my
   // margin estimate) = cost ≈), not from where they buy — so no supplier columns here.
-  if (view === "comp") return item || /^s:.*:desc$/.test(key) || /^c:.*:(price|cushion|sales|margin|cost|earn)$/.test(key)
+  // Owner 2026-11-27 15:40 CT: "same for competition their margin" — per competitor only the list price and the real (sales) price
+  // by default; description, cushion, margin, cost and earn are in the gear.
+  if (view === "comp") return item || /^c:.*:(price|sales)$/.test(key)
     || ["my_offer_desc", "my_offer_price", "my_qty"].includes(key);
   // Wholesale (owner 2026-11-14): my description + my offer price, then per competitor their description, list price,
   // cushion, real price, and me vs their real price ($, %, reduce / raise). No cost, margin or need-to-buy columns.
-  if (view === "wholesale") return item || /^s:.*:(desc|price|cushion|real|diff|diff_pct|action)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
+  // Owner 2026-11-27 15:40 CT: "in wholesale competition … by default we do not need their description. just list and real price.
+  // by default, if i want more data ill select" — cushion, difference and action are in the gear.
+  if (view === "wholesale") return item || /^s:.*:(price|real)$/.test(key) || ["my_offer_desc", "my_offer_price"].includes(key);
   return item || ["upc", "my_qty", "my_last_cost", "my_offer_price", "landed_likely", "best_vendor", "low_sell"].includes(key);
 }
 
@@ -238,13 +244,15 @@ function supplierFree(view: PerfumeGridView): boolean {
 function useCompPicks(view: PerfumeGridView) {
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors, enabled: supplierFree(view) });
   const wholesalers = (vendors.data?.vendors ?? []).filter((v) => (v.roles ?? []).includes("wholesale"));
+  // List analysis also compares with suppliers (owner 2026-11-27 15:40 CT "select if vendor, or competition").
+  const suppliers = view === "analysis" ? (vendors.data?.vendors ?? []).filter((v) => (v.roles ?? []).includes("purchase") && !(v.roles ?? []).includes("wholesale")) : [];
   const storeKey = `perfume-comps-${view}-v1`;
   const read = (): string[] => { try { const v = JSON.parse(window.localStorage.getItem(storeKey) ?? "[]"); return Array.isArray(v) ? v.map(String) : []; } catch { return []; } };
   const [picks, setPicks] = useState<{ key: string; ids: string[] }>(() => ({ key: storeKey, ids: read() }));
   if (picks.key !== storeKey) setPicks({ key: storeKey, ids: read() });
-  const valid = picks.ids.filter((id) => wholesalers.some((w) => w.id === id));
+  const valid = picks.ids.filter((id) => wholesalers.some((w) => w.id === id) || suppliers.some((w) => w.id === id));
   const save = (ids: string[]) => { try { window.localStorage.setItem(storeKey, JSON.stringify(ids)); } catch { /* storage blocked: this visit only */ } setPicks({ key: storeKey, ids }); };
-  return { wholesalers, picked: valid, save };
+  return { wholesalers, suppliers, picked: valid, save };
 }
 
 const FACETS: Array<{ key: PerfumeFacetKey; label: string; all: string }> = [
@@ -603,6 +611,7 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
   const isDesc = (k: string) => /^s:[^:]+:desc$/.test(k) || (!matchDesk && k === "a:c_desc");
   const isShown = (c: { key: string; group: string }) => (compOff(c.key) ? false : vis.itemOff && isItemGroup(c.group) ? false : vis.descOff && isDesc(c.key) ? false : vis.choices[c.key] ?? defaultOn(c.key));
   const shownCols = cols.filter(isShown);
+  const descShown = shownCols.some((c) => isDesc(c.key));
   const shownSig = shownCols.map((c) => c.key).join("|");
   const groupStart = useMemo(() => {
     const seen = new Set<string>();
@@ -756,7 +765,8 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
     </div>
   );
   const hasItem = cols.some((c) => isItemGroup(c.group));
-  const hasDesc = cols.some((c) => isDesc(c.key) && (vis.choices[c.key] ?? defaultOn(c.key)));
+  // The switch shows whenever the tab has competitor descriptions — they are off by default (owner 2026-11-27 15:40 CT).
+  const hasDesc = cols.some((c) => isDesc(c.key) && !compOff(c.key));
   const total = query.data?.total ?? 0;
   // Confirm only once the server has recomputed with the applied numbers (the grid's own measured_at, not the click):
   // the new key's own data, never the previous page held as placeholder.
@@ -782,6 +792,15 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               <button key={w.id} type="button" aria-pressed={on} data-testid={`perfume-comp-${(w.short_name || w.name).replace(/\s+/g, "-").toLowerCase()}`}
                 onClick={() => { comp.save(on ? comps.filter((x) => x !== w.id) : [...comps, w.id]); setPage(1); }}
                 className={`h-[30px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{w.short_name || w.name}</button>
+            );
+          })}
+          {comp.suppliers.length ? <span className="ml-2 font-semibold text-[#1F2A44]">{tr("perfume.comps.vendors", "Vendors")}</span> : null}
+          {comp.suppliers.map((w) => {
+            const on = comps.includes(w.id);
+            return (
+              <button key={w.id} type="button" aria-pressed={on} data-testid={`perfume-comp-vendor-${(w.short_name || w.name).replace(/\s+/g, "-").toLowerCase()}`}
+                onClick={() => { comp.save(on ? comps.filter((x) => x !== w.id) : [...comps, w.id]); setPage(1); }}
+                className={`h-[30px] rounded-sm border px-3 ${on ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>{w.name}</button>
             );
           })}
         </div>
@@ -865,10 +884,11 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
               </button>
             ) : null}
             {hasDesc ? (
-              <button type="button" data-testid="perfume-desc-toggle" aria-pressed={!vis.descOff}
-                onClick={() => saveVis({ ...vis, descOff: !vis.descOff })}
-                className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${vis.descOff ? "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]" : "border-[#1F2A44] bg-[#1F2A44] text-white"}`}>
-                {vis.descOff ? tr("perfume.desc.show", "Show competitor description") : tr("perfume.desc.hide", "Hide competitor description")}
+              // Owner 2026-11-27 15:40 CT: their description is off by default; this one switch shows / hides every competitor's description.
+              <button type="button" data-testid="perfume-desc-toggle" aria-pressed={descShown}
+                onClick={() => saveVis({ ...vis, descOff: false, choices: { ...vis.choices, ...Object.fromEntries(cols.filter((c) => isDesc(c.key)).map((c) => [c.key, !descShown])) } })}
+                className={`h-[34px] rounded-sm border px-3 text-xs font-semibold ${!descShown ? "border-gray-300 bg-[var(--surface-unselected)] text-gray-700 hover:bg-[var(--surface-hover)]" : "border-[#1F2A44] bg-[#1F2A44] text-white"}`}>
+                {!descShown ? tr("perfume.desc.show", "Show competitor description") : tr("perfume.desc.hide", "Hide competitor description")}
               </button>
             ) : null}
             <input
