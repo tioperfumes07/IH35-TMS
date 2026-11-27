@@ -750,3 +750,36 @@ export const cancelPerfumeCount = (id: string) => apiRequest<{ ok: true }>(`/api
 export const getPerfumeOpening = () => apiRequest<PerfumeOpening>("/api/v1/perfume/inventory/opening");
 export const applyPerfumeOpening = (onDate: string) =>
   apiRequest<{ lines: number; units: number; value_cents: number }>("/api/v1/perfume/inventory/opening", { method: "POST", body: { on_date: onDate, confirm: true } });
+
+/* ------------------------------------------------------------------ Price levels + customer accounts (owner 2026-11-26 20:21 / 20:28 CT) */
+export type PerfumePriceLevel = { id: string; name: string; channel: "retail" | "wholesale" | "distributor" | "export"; method: "markup" | "margin"; pct: number | null;
+  cost_basis: "avg" | "best_vendor"; floor_pct: number | null; active: boolean; sort_order: number; fixed_prices: number; customers: number };
+export type PerfumeLevelItem = { id: string; item_id: string; display_name: string; min_qty: number; price_cents: number };
+export type PerfumeAccountType = "cash" | "prepaid" | "credit" | "export";
+export type PerfumeCustomerAccount = { company_id: string; company_name: string; city: string | null; country: string | null; account_type: PerfumeAccountType;
+  price_level_id: string | null; price_level: string | null; terms_days: number | null; credit_limit_cents: number | null; on_hold: boolean; hold_reason: string | null;
+  approved_at: string | null; approved_by_email: string | null; review_on: string | null; tax_number: string | null; resale_certificate: boolean; notes: string | null;
+  open_applications: number; open_orders_cents: number };
+export type PerfumeCreditApplication = { id: string; company_id: string; company_name?: string; legal_name: string; tax_number?: string | null; requested_limit_cents: number;
+  requested_terms_days: number; status: "submitted" | "approved" | "rejected" | "withdrawn"; approved_limit_cents: number | null; approved_terms_days: number | null;
+  decision_note?: string | null; created_at: string; decided_at: string | null; decided_by_email: string | null };
+export const listPerfumePriceLevels = () => apiRequest<{ levels: PerfumePriceLevel[] }>("/api/v1/perfume/price-levels");
+export const savePerfumePriceLevel = (id: string | null, b: Partial<Pick<PerfumePriceLevel, "name" | "channel" | "method" | "pct" | "cost_basis" | "floor_pct" | "active">>) =>
+  id ? apiRequest<{ id: string }>(`/api/v1/perfume/price-levels/${id}`, { method: "PATCH", body: b }) : apiRequest<{ id: string }>("/api/v1/perfume/price-levels", { method: "POST", body: b });
+export const listPerfumeLevelItems = (id: string) => apiRequest<{ items: PerfumeLevelItem[] }>(`/api/v1/perfume/price-levels/${id}/items`);
+export const setPerfumeLevelItem = (id: string, b: { item_id: string; min_qty: number; price_cents: number | null }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/price-levels/${id}/items`, { method: "PUT", body: b });
+export const listPerfumeCustomerAccounts = () => apiRequest<{ accounts: PerfumeCustomerAccount[] }>("/api/v1/perfume/customer-accounts");
+export const getPerfumeCustomerAccount = (companyId: string) =>
+  apiRequest<{ account: PerfumeCustomerAccount | null; applications: PerfumeCreditApplication[]; events: PerfumeQuoteEvent[] }>(`/api/v1/perfume/contacts/${companyId}/account`);
+export const savePerfumeCustomerAccount = (companyId: string, b: { account_type?: "cash" | "prepaid" | "export"; price_level_id?: string | null; terms_days?: number | null;
+  credit_limit_cents?: number | null; review_on?: string | null; tax_number?: string | null; resale_certificate?: boolean; notes?: string | null }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/contacts/${companyId}/account`, { method: "PUT", body: b });
+export const setPerfumeCustomerHold = (companyId: string, hold: boolean, reason: string) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/contacts/${companyId}/account/hold`, { method: "POST", body: { hold, reason } });
+export const listPerfumeCreditApplications = (status?: string) => apiRequest<{ applications: PerfumeCreditApplication[] }>(`/api/v1/perfume/credit-applications${status ? `?status=${status}` : ""}`);
+export const submitPerfumeCreditApplication = (companyId: string, b: { legal_name: string; tax_number?: string | null; address?: string | null; owners?: string | null;
+  trade_references?: string | null; bank_reference?: string | null; requested_limit_cents: number; requested_terms_days: number; resale_certificate?: boolean; personal_guarantee?: boolean }) =>
+  apiRequest<{ id: string }>(`/api/v1/perfume/contacts/${companyId}/credit-applications`, { method: "POST", body: b });
+export const decidePerfumeCreditApplication = (id: string, b: { decision: "approved"; limit_cents: number; terms_days: number; note?: string | null } | { decision: "rejected"; note: string } | { decision: "withdrawn"; note?: string | null }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/credit-applications/${id}/decide`, { method: "POST", body: b });

@@ -20,7 +20,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "catalogs", label: "Catalogs", Icon: BookOpen, tabs: ["catalogs"] },
   // Owner 2026-11-26 18:13 CT: "we need quotations, and then historoy for quotations"; 19:12 CT: "sales order and purchase ordres
   // should already be created, i need my complete customer and vendors profile".
-  { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders"] },
+  { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders", "accounts", "levels"] },
   { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers", "items"] },
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
   { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "moves", "transfers", "counts", "sites"] },

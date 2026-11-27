@@ -13,6 +13,7 @@ import { bestCostOf, customerOf, esc, getQuote, money, quoteEvent, QuoteNotFound
 import { getRules } from "./desk.service.js";
 import { priceFromCost } from "./pricing.js";
 import { InvInvalid, stockIn, stockOut } from "./inventory.service.js";
+import { AcctInvalid, assertCanShip, levelPriceFor } from "./accounts.service.js";
 
 export const ORDER_STATUSES = ["open", "shipped", "cancelled"] as const;
 export type OrderStatus = typeof ORDER_STATUSES[number];
@@ -177,8 +178,13 @@ export async function addOrderLine(c: pg.PoolClient, uid: string, orderId: strin
     description = description ?? it.display_name; upc = upc ?? it.upc; cost = await bestCostOf(c, x.item_id);
   }
   if (!description) throw new OrderInvalid("A line needs an item or a description.");
-  // No price typed: the best supplier cost + the owner's first wholesale target (the quote's rule); no cost → type the price.
+  // No price typed: the customer's price level, else the best supplier cost + the owner's first wholesale target (the quote's
+  // rule); no cost → type the price.
   let price = x.unit_price_cents ?? null;
+  if (price == null && x.item_id) {
+    const co = (await c.query<{ company_id: string | null }>(`SELECT company_id FROM perfume.sales_orders WHERE id = $1`, [orderId])).rows[0]?.company_id ?? null;
+    price = (await levelPriceFor(c, co, x.item_id, x.qty, cost?.cents ?? null))?.cents ?? null;
+  }
   if (price == null && cost) price = priceFromCost(cost.cents, (await getRules(c)).wholesale_targets_pct[0] ?? 12.5, "markup");
   if (price == null) throw new OrderInvalid("No supplier cost for it — type the price.");
   const no = (await c.query<{ n: number }>(`SELECT coalesce(max(line_no), 0)::int + 1 AS n FROM perfume.sales_order_lines WHERE order_id = $1`, [orderId])).rows[0]!.n;
@@ -216,10 +222,12 @@ export const shipSchema = z.object({
 });
 /** Goods leave: each item line out of the site, oldest lots first; the cost of what left is kept in the history. No lines = all. */
 export async function shipOrder(c: pg.PoolClient, uid: string, orderId: string, x: z.infer<typeof shipSchema> = {}) {
-  const o = (await c.query<{ location_code: string | null; status: OrderStatus }>(
-    `SELECT location_code, status FROM perfume.sales_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [orderId])).rows[0];
+  const o = (await c.query<{ location_code: string | null; status: OrderStatus; company_id: string | null }>(
+    `SELECT location_code, status, company_id FROM perfume.sales_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [orderId])).rows[0];
   if (!o) throw new OrderNotFound();
   if (o.status === "cancelled") throw new OrderInvalid("The order is cancelled.");
+  // A customer on credit hold does not ship (owner 2026-11-26 20:21 CT); quoting and ordering stay open.
+  try { await assertCanShip(c, o.company_id); } catch (e) { if (e instanceof AcctInvalid) throw new OrderInvalid(e.message); throw e; }
   const loc = x.location_code ?? o.location_code;
   const lines = (await c.query<{ id: string; line_no: number; item_id: string | null; qty: number; qty_shipped: number }>(
     `SELECT id, line_no, item_id, qty, qty_shipped FROM perfume.sales_order_lines WHERE order_id = $1 AND archived_at IS NULL ORDER BY line_no FOR UPDATE`, [orderId])).rows;
