@@ -52,5 +52,8 @@ describeIntegration("wholesale list (real Postgres, rolled back)", () => {
     expect((await wholesaleList(db as never, { level_id: level, q: "ZZW", family_id: fam.id })).rows.map((r) => r.item_id)).toEqual([a.id]);
     await db.query(`UPDATE perfume.item_stock SET qty = 0 WHERE item_id = $1`, [b.id]);
     expect((await wholesaleList(db as never, { level_id: level, q: "ZZW", in_stock: "1" })).rows.map((r) => r.item_id)).toEqual([a.id]);
+    // ROUND P1.31 L4: an inactive item (CONTROL "Active? N") never goes on a list sent to buyers, even with stock.
+    await db.query(`UPDATE perfume.items SET is_active = false WHERE id = $1`, [a.id]);
+    expect((await wholesaleList(db as never, { level_id: level, q: "ZZW" })).rows.map((r) => r.item_id)).not.toContain(a.id);
   });
 });

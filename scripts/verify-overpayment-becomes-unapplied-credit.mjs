@@ -49,7 +49,10 @@ async function runSelftest() {
   // (a) apply_to_invoice boolean in body schema
   // (b) creditMemoTargetInvoiceRefusal only refuses APPLIED credits over the balance, not unapplied
   // (c) an /apply endpoint (apply credit to next invoice)
-  const cmRoutes = src("apps/backend/src/accounting/credit-memos.routes.ts");
+  // #29947 (2026-11-27) moved the credit-memo create body verbatim out of credit-memos.routes.ts into the one writer
+  // credit-memo-create.service.ts (createBodySchema + createCreditMemoInClientTx, which the route calls). The checks below read both
+  // files — the same patterns, wherever the one create path lives.
+  const cmRoutes = src("apps/backend/src/accounting/credit-memos.routes.ts") + "\n" + src("apps/backend/src/accounting/credit-memo-create.service.ts");
   if (!cmRoutes.includes("apply_to_invoice")) {
     failures.push("PATH1-NEGATIVE: credit-memos.routes.ts missing apply_to_invoice field — unapplied credit path broken");
   }
