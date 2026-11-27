@@ -18,6 +18,7 @@ import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { tr } from "./perfumeI18n";
+import { ScentsxCompliancePanel } from "./ScentsxCompliancePanel";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
 
@@ -133,6 +134,7 @@ export function PerfumeBooksPanel() {
         )}
       </div>
       {openAcct ? <AccountRegister account={openAcct} label={formatAccountDisplayLabel(openAcct, { showNumber: showNumbers })} /> : null}
+      <ScentsxCompliancePanel />
     </div>
   );
 }
