@@ -132,7 +132,7 @@ export function PerfumeAccountsPanel() {
         <KpiCard label={tr("perfume.acct.kpi_credit", "Credit accounts")} number={all.filter((a) => a.account_type === "credit").length.toLocaleString("en-US")} onClick={() => setFilter("credit")} />
         <KpiCard label={tr("perfume.acct.kpi_limits", "Credit limits total")} number={money(all.reduce((t, a) => t + (a.credit_limit_cents ?? 0), 0))} onClick={() => setFilter("credit")} />
         <KpiCard label={tr("perfume.acct.kpi_hold", "On hold")} number={all.filter((a) => a.on_hold).length.toLocaleString("en-US")} onClick={() => setFilter("hold")} />
-        <KpiCard label={tr("perfume.acct.kpi_waiting", "Applications waiting for me")} number={(waiting.data?.applications.length ?? 0).toLocaleString("en-US")} onClick={() => setFilter("waiting")} />
+        <KpiCard label={tr("perfume.acct.kpi_waiting", "Applications waiting for me")} number={(waiting.data?.applications?.length ?? 0).toLocaleString("en-US")} onClick={() => setFilter("waiting")} />
       </div>
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.acct.accounts", "Customer accounts")}>
         <label className="relative block text-xs">{tr("perfume.acct.open", "Open a customer's account (from Contacts)")}
@@ -171,7 +171,8 @@ export function PerfumeAccountsPanel() {
 function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: string; onChanged: () => void; onClose: () => void; push: (m: string, k: "error" | "success") => void }) {
   const acct = useQuery({ queryKey: ["perfume", "customer-account", companyId], queryFn: () => getPerfumeCustomerAccount(companyId) });
   const levels = useQuery({ queryKey: ["perfume", "price-levels"], queryFn: listPerfumePriceLevels });
-  const [reason, setReason] = useState("");
+  // A credit hold / release note (why the account stops or resumes shipping) — not a void reason.
+  const [holdNote, setHoldNote] = useState("");
   const [app, setApp] = useState({ legal_name: "", tax_number: "", limit: "", terms: "30", refs: "", bank: "" });
   if (acct.isError) return <ListErrorState title={tr("perfume.acct.oneError", "Couldn't load the account")} status={0} message={(acct.error as Error)?.message} onRetry={() => void acct.refetch()} />;
   if (!acct.data) return null;
@@ -214,9 +215,9 @@ function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: str
             </>
           ) : null}
           <label className="flex items-center gap-1"><input type="checkbox" checked={a.resale_certificate} onChange={(e) => save({ resale_certificate: e.target.checked })} data-testid="perfume-account-resale" />{tr("perfume.acct.resale", "Resale certificate on file")}</label>
-          <label>{tr("perfume.acct.hold_reason", "Hold / release reason")} <input className={`${ctl} block w-[240px]`} value={reason} onChange={(e) => setReason(e.target.value)} data-testid="perfume-account-reason" /></label>
+          <label>{tr("perfume.acct.hold_reason", "Hold / release reason")} <input className={`${ctl} block w-[240px]`} value={holdNote} onChange={(e) => setHoldNote(e.target.value)} data-testid="perfume-account-reason" /></label>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-account-hold"
-            onClick={() => { if (!reason.trim()) { push("Say why", "error"); return; } run(() => setPerfumeCustomerHold(companyId, !a.on_hold, reason), a.on_hold ? "Hold released" : "Put on hold"); setReason(""); }}>
+            onClick={() => { if (!holdNote.trim()) { push("Say why", "error"); return; } run(() => setPerfumeCustomerHold(companyId, !a.on_hold, holdNote), a.on_hold ? "Hold released" : "Put on hold"); setHoldNote(""); }}>
             {a.on_hold ? tr("perfume.acct.release", "Release hold") : tr("perfume.acct.hold", "Put on hold")}
           </Button>
         </div>
