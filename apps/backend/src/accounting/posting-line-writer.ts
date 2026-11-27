@@ -108,6 +108,9 @@ export const PARTYLESS_SOURCE_TYPES = [
   "settlement_dispute", "load", "factoring_advance_deposit", "factoring_funding",
   "factoring_customer_payment", "factoring_reserve_release", "factoring_default_interest", "faro_reserve_entry",
   "faro_cash_reserve_reclass", "factoring_chargeback" ,
+  // SCENTSX B3b — a TIO Perfumes stock move moves goods between inventory, GRNI, COGS and shrink; the vendor rides on
+  // its bill and the customer on its invoice, never on the move (apps/backend/src/scentsx/stock-move-poster.service.ts).
+  "perfume_stock_move",
   // legacy aliases still read by reports; no live writer posts under them
   "payment", "settlement"
 ] as const;

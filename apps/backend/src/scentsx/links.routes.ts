@@ -6,6 +6,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
+import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import {
@@ -41,6 +42,15 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
   app.get("/api/v1/scentsx/accounts", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     try { return await withCurrentUser(uid, async (c) => ({ accounts: await scentsxChart(c) })); } catch (e) { return fail(reply, e); }
+  });
+
+  app.get("/api/v1/scentsx/stock-moves/pending", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    try { return await withCurrentUser(uid, async (c) => ({ pending: (await pendingStockMoves(c)).count })); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/scentsx/stock-moves/post-pending", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    try { return await withCurrentUser(uid, async (c) => ({ result: await postPendingStockMoves(c, { userId: uid, role: "Owner" }) })); } catch (e) { return fail(reply, e); }
   });
 
   for (const kind of ["customer", "vendor"] as LinkKind[]) {

@@ -9,7 +9,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { KpiCard } from "../../components/layout/KpiCard";
-import { getScentsxCompany, listScentsxAccounts, type ScentsxAccount } from "../../api/scentsx";
+import { getScentsxCompany, getScentsxPendingMoves, listScentsxAccounts, postScentsxPendingMoves, type ScentsxAccount } from "../../api/scentsx";
+import { Button } from "../../components/Button";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
 import { tr } from "./perfumeI18n";
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useShowAccountNumbers } from "../../lib/useShowAccountNumbers";
@@ -25,6 +28,16 @@ export function PerfumeBooksPanel() {
   const co = useQuery({ queryKey: ["scentsx", "company"], queryFn: getScentsxCompany });
   const accts = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
   const [showNumbers, setShowNumbers] = useShowAccountNumbers();
+  const pending = useQuery({ queryKey: ["scentsx", "pending-moves"], queryFn: getScentsxPendingMoves });
+  const { pushToast } = useToast();
+  const postNow = async () => {
+    try {
+      const { result } = await postScentsxPendingMoves();
+      if (result.failed.length) pushToast(`${result.posted} posted · ${result.failed.length} failed: ${result.failed[0]!.error}`, "error");
+      else pushToast(`${result.posted} stock move(s) posted to the books`, "success");
+      void pending.refetch(); void accts.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not posted"), "error"); }
+  };
   if (co.isError) return <ListErrorState title={tr("scentsx.books.error", "Couldn't load ScentsX's books")} status={0} message={(co.error as Error)?.message} onRetry={() => void co.refetch()} />;
   const c = co.data?.company;
   // The EIN is a tax number printed as text, not a record to open — so it is not an EntityLink.
@@ -43,6 +56,12 @@ export function PerfumeBooksPanel() {
         <KpiCard label={tr("scentsx.books.kpi_periods", "Accounting periods")} number={String(c?.periods ?? 0)} onClick={() => jump("scentsx-chart")} />
         <KpiCard label={tr("scentsx.books.kpi_customers", "Customers linked")} number={String(c?.customers_linked ?? 0)} to="/perfume?tab=customers" />
         <KpiCard label={tr("scentsx.books.kpi_vendors", "Vendors linked")} number={String(c?.vendors_linked ?? 0)} to="/perfume?tab=vendors" />
+      </div>
+      <div className="flex items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-2 text-xs" data-testid="scentsx-books-pending">
+        <span>{tr("scentsx.books.pending", "Stock moves not yet in the books")}: <b className="tabular-nums">{pending.isError ? "?" : (pending.data?.pending ?? 0).toLocaleString()}</b></span>
+        <span className="text-[#64748B]">{tr("scentsx.books.pending_note", "Each receipt, shipment, transfer, count and write-down posts automatically every 5 minutes.")}</span>
+        <Button type="button" variant="secondary" className="ml-auto h-[30px] px-3 text-xs" disabled={!pending.data?.pending} onClick={() => void postNow()} data-testid="scentsx-books-post-now">
+          {tr("scentsx.books.post_now", "Post now")}</Button>
       </div>
       {c && c.periods === 0 ? (
         <div className="rounded-[3px] border border-[#F59E0B] bg-[#FFFBEB] p-2 text-xs" data-testid="scentsx-books-no-period">
