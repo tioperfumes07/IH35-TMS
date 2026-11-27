@@ -670,11 +670,15 @@ export async function rememberVendorLinks(c: PoolClient, listId: string | null =
   const args = listId ? [listId] : [];
   const linked = `perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.items i ON i.id = r.item_id AND i.merged_into_id IS NULL
     WHERE r.match_status = 'matched' AND r.match_method IS NOT NULL AND r.match_method <> 'loose_key' AND l.voided_at IS NULL ${scope}`;
+  // A barcode two different products carry inside ONE list (the import's shared-UPC rule) is never learned.
   const upcs = await c.query(
-    `INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id)
+    `WITH shared AS (SELECT r2.list_id, r2.upc FROM perfume.price_list_rows r2 JOIN perfume.price_lists l2 ON l2.id = r2.list_id
+                      WHERE r2.upc IS NOT NULL AND l2.voided_at IS NULL ${listId ? "AND l2.id = $1" : ""}
+                      GROUP BY r2.list_id, r2.upc HAVING count(DISTINCT r2.identity_key) > 1)
+     INSERT INTO perfume.item_upcs (upc, item_id, first_seen_list_id)
      SELECT r.upc, min(r.item_id::text)::uuid, min(r.list_id::text)::uuid FROM ${linked}
         AND r.upc ~ '^[1-9][0-9]{7,13}$'
-        AND NOT EXISTS (SELECT 1 FROM perfume.price_list_rows r2 WHERE r2.list_id = r.list_id AND r2.upc = r.upc AND r2.identity_key IS DISTINCT FROM r.identity_key)
+        AND NOT EXISTS (SELECT 1 FROM shared s WHERE s.list_id = r.list_id AND s.upc = r.upc)
       GROUP BY r.upc HAVING count(DISTINCT r.item_id) = 1
      ON CONFLICT (upc) DO NOTHING`, args);
   const codes = await c.query(
