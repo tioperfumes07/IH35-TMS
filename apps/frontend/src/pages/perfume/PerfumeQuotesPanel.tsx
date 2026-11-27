@@ -89,6 +89,8 @@ export function PerfumeQuotesPanel() {
           rowKey={(r) => r.id}
           loading={quotes.isLoading}
           storageKey="perfume-quotes-v1"
+          exportFilename="TIO quotes"
+          exportExcel
           emptyText={status || q ? "No quote matches these filters." : "No quotes yet — press New quote."}
           onRowClick={(r) => setSelected(r.id)}
           columns={[
@@ -96,11 +98,11 @@ export function PerfumeQuotesPanel() {
             { key: "quote_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.quote_date) },
             { key: "valid_until", label: "Valid until", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.valid_until) },
             { key: "customer_name", label: "Customer", sortable: true, render: (r) => r.customer_name },
-            { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge s={r.status} /> },
+            { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge s={r.status} />, exportValue: (r) => STATUS_TEXT[r.status] },
             { key: "lines", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lines.toLocaleString("en-US") },
             { key: "units", label: "Units", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
-            { key: "total_cents", label: "Total", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency) },
-            { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (r) => { const m = marginPct(r); return m == null ? DASH : `${m.toFixed(1)}%`; } },
+            { key: "total_cents", label: "Total", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents, r.currency), exportValue: (r) => Number(r.total_cents) / 100 },
+            { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (r) => { const m = marginPct(r); return m == null ? DASH : `${m.toFixed(1)}%`; }, exportValue: (r) => { const m = marginPct(r); return m == null ? "" : Number(m.toFixed(1)); } },
           ]}
         />
       </section>
@@ -249,13 +251,15 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         rows={q.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.unit_price_cents}`}
         storageKey="perfume-quote-lines-v1"
+          exportFilename="TIO quote lines"
+          exportExcel
         emptyText="No lines yet — add an item above."
         columns={[
           { key: "line_no", label: "#", cellClass: "tabular-nums", render: (l) => l.line_no },
-          { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</> },
-          { key: "qty", label: "Qty", render: (l) => <LineCell l={l} field="qty" onSaved={() => void refresh()} /> },
-          { key: "unit_price_cents", label: "Unit price", render: (l) => <LineCell l={l} field="unit_price_cents" onSaved={() => void refresh()} /> },
-          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, q.currency) },
+          { key: "description", label: "Item", render: (l) => <>{l.description}{l.upc ? <span className="ml-1 text-[#64748B]">{l.upc}</span> : null}</>, exportValue: (l) => `${l.description}${l.upc ? ` ${l.upc}` : ""}` },
+          { key: "qty", label: "Qty", render: (l) => <LineCell l={l} field="qty" onSaved={() => void refresh()} />, exportValue: (l) => l.qty },
+          { key: "unit_price_cents", label: "Unit price", render: (l) => <LineCell l={l} field="unit_price_cents" onSaved={() => void refresh()} />, exportValue: (l) => l.unit_price_cents / 100 },
+          { key: "total", label: "Total", cellClass: "text-right tabular-nums", render: (l) => money(l.qty * l.unit_price_cents, q.currency), exportValue: (l) => (l.qty * l.unit_price_cents) / 100 },
           { key: "cost_cents", label: "Best cost when added", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents == null ? DASH : `${money(l.cost_cents)}${l.cost_vendor ? ` · ${l.cost_vendor}` : ""}`) },
           { key: "margin", label: "Margin", cellClass: "text-right tabular-nums", render: (l) => (l.cost_cents != null && l.unit_price_cents > 0 ? `${(((l.unit_price_cents - l.cost_cents) / l.unit_price_cents) * 100).toFixed(1)}%` : DASH) },
           { key: "off", label: "", render: (l) => (
@@ -282,11 +286,13 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         rows={q.events}
         rowKey={(e) => e.id}
         storageKey="perfume-quote-history-v1"
+          exportFilename="TIO quote history"
+          exportExcel
         emptyText="No history yet."
         columns={[
           { key: "created_at", label: "When", render: (e) => new Date(e.created_at).toLocaleString("en-US") },
-          { key: "kind", label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind },
-          { key: "detail", label: "Detail", render: (e) => eventText(e) || DASH },
+          { key: "kind", label: "What", render: (e) => EVENT_TEXT[e.kind] ?? e.kind, exportValue: (e) => EVENT_TEXT[e.kind] ?? e.kind },
+          { key: "detail", label: "Detail", render: (e) => eventText(e) || DASH, exportValue: (e) => eventText(e) },
           { key: "by_email", label: "By", render: (e) => e.by_email ?? DASH },
         ]}
       />
