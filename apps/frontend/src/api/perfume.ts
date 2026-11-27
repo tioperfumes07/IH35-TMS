@@ -1,4 +1,4 @@
-import { apiRequest, resolveApiUrl } from "./client";
+import { apiRequest, generateIdempotencyKey, resolveApiUrl } from "./client";
 
 /** PERFUME-DESK — owner-only TIO Perfumes price desk. Every amount is integer cents. */
 /** True only for the login listed in perfume.desk_users (other Owner-role users get false). */
@@ -848,3 +848,31 @@ export const addPerfumeItemHkCode = (id: string, hk_code: string) =>
 export const getPerfumeFillCodes = () => apiRequest<{ codes_on_list: number; will_fill: number; sample: Array<{ code: string; item_id: string; display_name: string }> }>("/api/v1/perfume/item-file-fill-codes");
 export const applyPerfumeFillCodes = () => apiRequest<{ filled: number; previewed: number }>("/api/v1/perfume/item-file-fill-codes", { method: "POST", body: { confirm: true } });
 export const getPerfumeLinkage = (q: string) => apiRequest<PerfumeLinkage>(`/api/v1/perfume/linkage?q=${encodeURIComponent(q)}`);
+
+/* ------------------------------------------------------------------ Send list (owner 2026-11-26 23:23 CT) */
+export const PERFUME_SEND_COLUMNS = ["description", "brand", "category", "size", "conc", "upc", "tio_code", "hk_code", "qty", "my_price", "level_price"] as const;
+export type PerfumeSendColumn = (typeof PERFUME_SEND_COLUMNS)[number];
+export type PerfumeSendListInput = { columns: PerfumeSendColumn[]; level_id?: string | null; sites: string[]; in_stock_only: boolean; exclude_restricted: boolean;
+  exclude_brands: string[]; categories: string[]; title?: string };
+export type PerfumeSendRow = { item_id: string; description: string; brand: string; category: string; size: number | null; conc: string; upc: string; tio_code: string;
+  hk_code: string; qty: number; my_price: number | null; level_price: number | null };
+export type PerfumeSendPreview = { rows: PerfumeSendRow[]; total: number; level: string | null; our_items: number; brands: string[];
+  left_out: { restricted: number; brand: number; no_stock: number; category: number } };
+export const getPerfumeRestricted = () => apiRequest<{ brands: string[]; items: Array<{ id: string; display_name: string }> }>("/api/v1/perfume/send-list/restricted");
+export const setPerfumeRestricted = (b: { brands: string[]; item_ids: string[] }) =>
+  apiRequest<{ brands: string[]; items: Array<{ id: string; display_name: string }> }>("/api/v1/perfume/send-list/restricted", { method: "PUT", body: b });
+export const previewPerfumeSendList = (b: PerfumeSendListInput) => apiRequest<PerfumeSendPreview>("/api/v1/perfume/send-list/preview", { method: "POST", body: b });
+export const attachPerfumeSendList = (b: PerfumeSendListInput & { campaign_id: string }) =>
+  apiRequest<{ attached: string; rows: number }>("/api/v1/perfume/send-list/attach", { method: "POST", body: b });
+/** The Excel he sends (POST: the choices travel in the body). */
+export async function downloadPerfumeSendList(b: PerfumeSendListInput) {
+  const res = await fetch(resolveApiUrl("/api/v1/perfume/send-list/export.xlsx"), { method: "POST", credentials: "include", headers: { "Content-Type": "application/json", "Idempotency-Key": generateIdempotencyKey() }, body: JSON.stringify(b) });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? "TIO price list.xlsx";
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a); a.click();
+  window.setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60_000);
+}
