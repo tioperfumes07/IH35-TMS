@@ -1115,7 +1115,8 @@
     "202617100100",
     "202617110100",
     "202617120100",
-    "202617130100"
+    "202617130100",
+    "202617140100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1420,5 +1421,6 @@
   "202617100100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME CONTROL item fields: POS code, ticket description, sold by pack/piece + units per pack, preferred vendor, stock item, active, special price, minimum price, change-price lock; item_events kind price_override (LEAD L.20, owner 2026-11-27 13:50 / 14:16 CT)"},
   "202617110100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME physical count cycle: per-line counted_at / counted_by cutoff (variance vs on hand at the moment counted), count sheet selection + blind sheet (CONTROL Physical Inventory parity, owner 2026-11-27 13:50 CT)"},
   "202617120100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX purchase bills: bill a received perfume PO through the bill writer (GRNI -> A/P), per-line billed qty (owner 2026-11-27 15:05 CT)"},
-  "202617130100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX vendor credits for returned billed units: crosswalk PO line -> vendor credit (Dr A/P / Cr GRNI via the one vendor-credit writer) (owner 2026-11-27 15:05 CT)"}
+  "202617130100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX vendor credits for returned billed units: crosswalk PO line -> vendor credit (Dr A/P / Cr GRNI via the one vendor-credit writer) (owner 2026-11-27 15:05 CT)"},
+  "202617140100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX literal ENABLE/FORCE RLS for sales_returns, sales_return_lines, purchase_order_bill_lines, purchase_order_vendor_credit_lines (rls-migration-scan reads literals; ROUND P1.31 L3a)"}
 }
