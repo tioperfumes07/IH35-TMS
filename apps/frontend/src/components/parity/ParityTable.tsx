@@ -156,6 +156,8 @@ export type ParityTableProps<T> = {
   /** LEAD 443.174 — the section's real title (what the rows ARE: "Bills — open"), rendered first on the toolbar row in the
    *  app's section-header style, so a titled table costs no extra height. */
   title?: ReactNode;
+  /** Owner 2026-11-27 17:25 CT: the title as a section / card title (.text-card-title, 16px) — the table IS the section. */
+  cardTitle?: boolean;
   /** Optional info "i" beside the title (an InfoPopover): explanatory text lives here, never as a paragraph above the table. */
   titleInfo?: ReactNode;
   /** Header select-all + per-row checkboxes. */
@@ -751,6 +753,7 @@ export function ParityTable<T>({
   storageKey,
   toolbar,
   title,
+  cardTitle,
   titleInfo,
   selectable = false,
   batchActions,
@@ -1745,7 +1748,7 @@ export function ParityTable<T>({
       {!suppressToolbar && !panel && (<div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 px-2 py-1.5">
         {title ? (
           <div className="flex min-w-0 max-w-full items-center gap-1">
-            <h2 className="min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]" data-testid="parity-table-title" style={v3 ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
+            <h2 className={cardTitle ? "min-w-0 break-words text-card-title" : "min-w-0 break-words text-section-header font-bold uppercase tracking-wide text-[#4B5563]"} data-testid="parity-table-title" style={v3 && !cardTitle ? { fontSize: 13, letterSpacing: "normal" } : undefined}>
               {title}
             </h2>
             {titleInfo}

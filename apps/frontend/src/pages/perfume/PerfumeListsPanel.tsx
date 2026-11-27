@@ -40,7 +40,7 @@ export function PerfumeListsPanel() {
       <VendorsCard vendors={vendors.data?.vendors ?? []} />
       <LocationsCard />
       <section className="space-y-1" aria-label={tr("perfume.lists.1", "Price lists on file")}>
-        <div className="text-section-header">{tr("perfume.lists.2", "Price lists on file")}</div>
+        <div className="text-card-title">{tr("perfume.lists.2", "Price lists on file")}</div>
         <ParityTable<PerfumeList>
           rows={lists.data?.lists ?? []}
           rowKey={(l) => l.id}
@@ -74,7 +74,7 @@ export function VoidedListsCard() {
   if (q.isError) return <ListErrorState title={tr("perfume.lists.voidedError", "Couldn't load voided lists")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   return (
     <section className="space-y-1" aria-label={tr("perfume.lists.voided", "Voided lists")}>
-      <div className="text-section-header">{tr("perfume.lists.voided", "Voided lists")}</div>
+      <div className="text-card-title">{tr("perfume.lists.voided", "Voided lists")}</div>
       <ParityTable<PerfumeVoidedList>
         rows={q.data?.lists ?? []}
         rowKey={(l) => l.id}
@@ -203,7 +203,7 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
   return (
     <section className="space-y-1" aria-label={tr("perfume.lists.9", "Vendors")}>
       <div className="flex items-center justify-between">
-        <div className="text-section-header">{tr("perfume.lists.10", "Vendors & Laredo stores")}</div>
+        <div className="text-card-title">{tr("perfume.lists.10", "Vendors & Laredo stores")}</div>
         <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ kind: "buy", roles: ["purchase", "trading"] })}>{tr("perfume.lists.11", "Add vendor")}</Button>
       </div>
       {edit ? (
@@ -314,7 +314,7 @@ function LocationsCard() {
   return (
     <section className="space-y-1" aria-label={tr("perfume.loc.1", "Locations")} data-testid="perfume-locations">
       <div className="flex items-center justify-between">
-        <div className="text-section-header">{tr("perfume.loc.2", "Locations — my stores and bodegas")}</div>
+        <div className="text-card-title">{tr("perfume.loc.2", "Locations — my stores and bodegas")}</div>
         <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setEdit({ code: "", name: "", isNew: true })}>{tr("perfume.loc.3", "Add location")}</Button>
       </div>
       {edit ? (
@@ -473,7 +473,7 @@ function ImportCard({ vendors }: { vendors: PerfumeVendor[] }) {
 
   return (
     <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.lists.20", "Import a price list")}>
-      <div className="text-section-header">{tr("perfume.lists.21", "Import a price list")}</div>
+      <div className="text-card-title">{tr("perfume.lists.21", "Import a price list")}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.lists.22", "File (.xlsx · .xls · .csv · PDF) or offer photos (pick several)")}
           <input type="file" multiple accept=".xlsx,.xls,.csv,.pdf,image/*" className="h-[40px] text-xs" data-testid="perfume-import-file"

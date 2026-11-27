@@ -214,7 +214,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-show-detail" aria-label={show.name}>
       <div className="flex items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{show.name}</div>
+          <div className="text-card-title">{show.name}</div>
           <div className="text-xs text-[#64748B]">{[`${usDate(show.starts_on)} – ${usDate(show.ends_on)}`, show.city ?? DASH, show.kind ?? DASH, show.i_go ? tr("perfume.shows.f_go", "I go") : ""].filter(Boolean).join(" · ")}</div>
         </div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.shows.close", "Close")}</Button>
@@ -234,7 +234,7 @@ function ShowDetail({ show, onClose, onChanged }: { show: PerfumeShow | null; on
         ) : null}
       </div>
       <ParityTable<PerfumeShowContact>
-        title={tr("perfume.shows.contacts_title", "Contacts at this show")}
+        cardTitle title={tr("perfume.shows.contacts_title", "Contacts at this show")}
         rows={contacts.data?.contacts ?? []}
         rowKey={(x) => x.id}
         loading={contacts.isLoading}

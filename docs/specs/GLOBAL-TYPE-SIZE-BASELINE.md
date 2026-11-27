@@ -37,3 +37,9 @@ file is kept current; that one is the "what was measured and why" record.
 
 ## Application
 This baseline applies to ALL screens: lists, catalogs, bills, invoices, registers, drawers, forms, modals, reports. No component may deviate without Jorge's explicit approval.
+
+## Owner ruling 2026-11-27 17:25 CT — section / card titles
+
+Owner, verbatim: "FOR EVERY SECTION THE HEADER MUST BE LARGER ETC, THE PROPER FORMATTING. WE HAVE FORMAT COMPANY NAMES, DUPLCATE COMANIES, GOOGLE SEARCHES RUN, ETC, ALL THOSE, THOSE SHOULD HAVE PROPER SIZE IN TITLE."
+
+A section / card title uses `.text-card-title` (index.css): 16px / 700 / sentence case / #1F2937. Column headers stay 11px / 700 / UPPERCASE (`.text-section-header`, `thead`). `ParityTable` takes `cardTitle` when the table is the section. First applied: every TIO Perfumes / ScentsX screen.

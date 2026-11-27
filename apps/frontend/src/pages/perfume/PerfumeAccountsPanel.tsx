@@ -94,7 +94,7 @@ function LevelItems({ level, onChanged }: { level: PerfumePriceLevel; onChanged:
   };
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-level-items" aria-label={level.name}>
-      <div className="text-section-header">{`${level.name} — ${tr("perfume.acct.fixed", "fixed prices")}`}</div>
+      <div className="text-card-title">{`${level.name} — ${tr("perfume.acct.fixed", "fixed prices")}`}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <label>{tr("perfume.acct.price", "Price")} <MoneyInput className="block w-[100px]" ariaLabel={tr("perfume.acct.price", "Price")} valueCents={price} onChangeCents={setPrice} /></label>
         <span className="text-[#64748B]">{tr("perfume.acct.fixed_help", "then pick the item; Qty = the quantity from which this price applies")}</span>
@@ -194,7 +194,7 @@ function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: str
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-account-editor" aria-label={a?.company_name ?? companyId}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{a?.company_name ?? tr("perfume.acct.new", "New customer account")} {a ? <span className="ml-1 text-xs">{TYPE_TEXT[a.account_type]}</span> : null}
+        <div className="text-card-title">{a?.company_name ?? tr("perfume.acct.new", "New customer account")} {a ? <span className="ml-1 text-xs">{TYPE_TEXT[a.account_type]}</span> : null}
           {a?.on_hold ? <span className="ml-2"><Badge text={`${tr("perfume.acct.on_hold", "On hold")}: ${a.hold_reason ?? ""}`} color="bg-[#9B2C2C]" /></span> : null}</div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.acct.close", "Close")}</Button>
       </div>
@@ -241,7 +241,7 @@ function AccountEditor({ companyId, onChanged, onClose, push }: { companyId: str
         </div>
       </div>
       <ParityTable<PerfumeCreditApplication>
-        title={tr("perfume.acct.applications", "Applications")} rows={applications} rowKey={(x) => `${x.id}-${x.status}`} storageKey="perfume-account-apps-v1" exportFilename="TIO credit applications" exportExcel emptyText="No applications."
+        cardTitle title={tr("perfume.acct.applications", "Applications")} rows={applications} rowKey={(x) => `${x.id}-${x.status}`} storageKey="perfume-account-apps-v1" exportFilename="TIO credit applications" exportExcel emptyText="No applications."
         columns={[
           { key: "created_at", label: "Date", render: (x) => new Date(x.created_at).toLocaleDateString("en-US") },
           { key: "legal_name", label: "Legal name", render: (x) => x.legal_name },

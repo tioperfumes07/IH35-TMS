@@ -206,7 +206,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-quote-editor" aria-label={q.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{q.number} · {q.customer_name} <StatusBadge s={q.status} /></div>
+          <div className="text-card-title">{q.number} · {q.customer_name} <StatusBadge s={q.status} /></div>
           <div className="text-xs text-[#64748B]">{[q.customer_email, q.customer_phone, `Date ${usDate(q.quote_date)}`, q.valid_until ? `Valid until ${usDate(q.valid_until)}` : ""].filter(Boolean).join(" · ")}</div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -259,7 +259,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         ) : null}
       </div>
       <ParityTable<PerfumeQuoteLine>
-        title={tr("perfume.quotes.lines", "Lines")}
+        cardTitle title={tr("perfume.quotes.lines", "Lines")}
         rows={q.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.unit_price_cents}`}
         storageKey="perfume-quote-lines-v1"
@@ -294,7 +294,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         </label>
       </div>
       <ParityTable<PerfumeQuoteEvent>
-        title={tr("perfume.quotes.history", "History")}
+        cardTitle title={tr("perfume.quotes.history", "History")}
         rows={q.events}
         rowKey={(e) => e.id}
         storageKey="perfume-quote-history-v1"

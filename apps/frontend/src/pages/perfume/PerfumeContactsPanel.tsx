@@ -28,6 +28,7 @@ import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
 import { PerfumeCompanyLocations, PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
+import { PerfumeDupRecommendations } from "./PerfumeDupRecommendations";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -100,6 +101,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
       <GoogleCard onChanged={() => void list.refetch()} />
       <PerfumeNameFormatCard onDone={() => void list.refetch()} />
       <PerfumeDuplicatesCard onDone={() => void list.refetch()} />
+      <PerfumeDupRecommendations onDone={() => void list.refetch()} />
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.contacts", "Contacts")}>
         <div className="flex flex-wrap items-center gap-2">
@@ -171,13 +173,13 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.company_profile", "Company profile")} data-testid="perfume-contact-profile">
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2"><span className="text-section-header">{co?.name ?? "…"}</span><RoleBadge role={(co?.["role"] as PerfumeContactRole) ?? null} /></div>
+        <div className="flex items-center gap-2"><span className="text-card-title">{co?.name ?? "…"}</span><RoleBadge role={(co?.["role"] as PerfumeContactRole) ?? null} /></div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.contacts.close", "Close")}</Button>
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
           <ParityTable<PerfumeContactProfile["origins"][number]>
-            title={tr("perfume.contacts.how_and_when_this_relationship_started", "How and when this relationship started")}
+            cardTitle title={tr("perfume.contacts.how_and_when_this_relationship_started", "How and when this relationship started")}
             rows={p.data?.origins ?? []}
             rowKey={(o) => o.id}
             loading={p.isLoading}
@@ -197,7 +199,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
             ]}
           />
           <ParityTable<PerfumeContactProfile["people"][number]>
-            title={tr("perfume.contacts.people", "People")}
+            cardTitle title={tr("perfume.contacts.people", "People")}
             rows={p.data?.people ?? []}
             rowKey={(x) => x.id}
             loading={p.isLoading}
@@ -222,7 +224,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
           {/* ROUND P1.12 A — the P1 seat's activity block: quotes, sales orders, linked vendors and the POs to it, each opening its document. */}
           <PerfumeCompanyActivity companyId={id} />
           <ParityTable<PerfumeContactTrade>
-            title={tr("perfume.contacts.trades", "Trades")}
+            cardTitle title={tr("perfume.contacts.trades", "Trades")}
             rows={trades.data?.trades ?? []}
             rowKey={(x) => x.id}
             loading={trades.isLoading}
@@ -282,7 +284,7 @@ function ImportCard({ onDone }: { onDone: () => void }) {
   const busy = state != null && state.done < state.total && !state.error;
   return (
     <section className="flex flex-wrap items-center gap-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" aria-label={tr("perfume.contacts.import_contacts", "Import contacts")} data-testid="perfume-contacts-import">
-      <span className="text-section-header">{tr("perfume.contacts.import_contacts_file", "Import contacts file")}</span>
+      <span className="text-card-title">{tr("perfume.contacts.import_contacts_file", "Import contacts file")}</span>
       <input type="file" accept=".jsonl,.json,.txt" aria-label={tr("perfume.contacts.contacts_file", "Contacts file")} disabled={busy} data-testid="perfume-contacts-import-file"
         onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void run(f); }} />
       {state ? (
@@ -317,7 +319,7 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.google_business_search", "Google business search")} data-testid="perfume-google-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{tr("perfume.contacts.google_business_search", "Google business search")}</div>
+          <div className="text-card-title">{tr("perfume.contacts.google_business_search", "Google business search")}</div>
           <div className="text-xs text-[#64748B]">{tr("perfume.contacts.phone_website_address_hours_and_rating_g", "Phone, website, address, hours and rating for perfume, cosmetics, beauty supply and duty free stores. Google gives no email — those read “needs email”.")}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -371,7 +373,7 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
       {results ? (
         <div className="space-y-1" data-testid="perfume-google-results">
           <ParityTable<PerfumeGoogleResult>
-            title={`“${results.text}” · ${results.rows.length} results · ${results.requests} Google requests`}
+            cardTitle title={`“${results.text}” · ${results.rows.length} results · ${results.requests} Google requests`}
             rows={results.rows}
             rowKey={(r) => r.place_id}
             storageKey="perfume-google-results-v1"
@@ -404,7 +406,7 @@ function RunsTable({ runs }: { runs: PerfumeGoogleRun[] }) {
   return (
     <div className="space-y-1" data-testid="perfume-google-runs">
       <ParityTable<PerfumeGoogleRun>
-        title={tr("perfume.contacts.google_searches_run", "Google searches run")}
+        cardTitle title={tr("perfume.contacts.google_searches_run", "Google searches run")}
         rows={runs}
         rowKey={(r) => r.id}
         storageKey="perfume-google-runs-v1"

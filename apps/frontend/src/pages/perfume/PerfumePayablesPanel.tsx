@@ -51,7 +51,7 @@ export function PerfumePayablesPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-payables-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.ap.aging", "A/P aging")}>
-        <div className="text-section-header">{tr("perfume.ap.aging", "A/P aging by vendor")}</div>
+        <div className="text-card-title">{tr("perfume.ap.aging", "A/P aging by vendor")}</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label>{tr("perfume.ap.as_of", "As of")} <DatePicker aria-label={tr("perfume.ap.as_of", "As of")} value={asOf} onChange={(v) => setAsOf(v || todayCT())} /></label>
           <span className="text-[#64748B]">{tr("perfume.ap.basis", "Days past the bill's due date. Balances are the books' own open amounts (A/P control account).")}</span>
@@ -89,12 +89,12 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-ap-vendor" aria-label={a.vendor.name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{`${tr("perfume.ap.account", "Vendor account")} · ${a.vendor.name}`}</div>
+        <div className="text-card-title">{`${tr("perfume.ap.account", "Vendor account")} · ${a.vendor.name}`}</div>
         {a.vendor.perfume_vendor_id ? <DocLink tab="suppliers" id={a.vendor.perfume_vendor_id}>{tr("perfume.ap.open_vendor", "Supplier profile")}</DocLink> : null}
       </div>
       <ApStrip b={a.buckets} testId="perfume-ap-vendor-buckets" />
       <ParityTable<ScentsxApOpenBill>
-        title={tr("perfume.ap.open_bills", "Open bills")} rows={a.open_bills} rowKey={(r) => `${r.id}-${r.open_cents}`} storageKey="perfume-ap-open-v1" exportFilename={`TIO open bills ${a.vendor.name}`} exportExcel
+        cardTitle title={tr("perfume.ap.open_bills", "Open bills")} rows={a.open_bills} rowKey={(r) => `${r.id}-${r.open_cents}`} storageKey="perfume-ap-open-v1" exportFilename={`TIO open bills ${a.vendor.name}`} exportExcel
         emptyText="Nothing owed to this vendor."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
@@ -111,7 +111,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
       />
       {bill ? <PayBill key={bill.id} bill={bill} companyId={a.operating_company_id} banks={a.bank_accounts} onClose={() => setPaying(null)} onDone={async () => { setPaying(null); await refresh(); }} /> : null}
       <ParityTable<ScentsxApPayment>
-        title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
+        cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
         emptyText="No payments to this vendor."
         columns={[
           { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
@@ -124,7 +124,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         ]}
       />
       <ParityTable<ScentsxApBill>
-        title={tr("perfume.ap.bills", "Every bill")} rows={a.bills} rowKey={(r) => r.id} storageKey="perfume-ap-bills-v1" exportFilename={`TIO bills ${a.vendor.name}`} exportExcel emptyText="No bills."
+        cardTitle title={tr("perfume.ap.bills", "Every bill")} rows={a.bills} rowKey={(r) => r.id} storageKey="perfume-ap-bills-v1" exportFilename={`TIO bills ${a.vendor.name}`} exportExcel emptyText="No bills."
         columns={[
           { className: "text-left", key: "display_id", label: "Bill", render: (r) => <Link className="underline" to={`/accounting/bills/${encodeURIComponent(r.id)}`}>{r.display_id ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.display_id ?? "" },
           { className: "text-left", key: "bill_number", label: "Vendor invoice", render: (r) => r.bill_number ?? DASH, exportValue: (r) => r.bill_number ?? "" },

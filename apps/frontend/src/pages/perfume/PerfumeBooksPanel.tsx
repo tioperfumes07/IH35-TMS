@@ -67,7 +67,7 @@ export function PerfumeBooksPanel() {
   return (
     <div className="space-y-3" data-testid="scentsx-books-panel">
       <div className="rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs">
-        <div className="text-section-header">{c ? `${c.legal_name} · ${c.short_name ?? ""}` : "…"}</div>
+        <div className="text-card-title">{c ? `${c.legal_name} · ${c.short_name ?? ""}` : "…"}</div>
         <div className="mt-1 text-[#64748B]">{tr("scentsx.books.note", "Its own company in the accounting engine — its books never mix with USMCA, Transportation or Trucking.")}</div>
         <div className="mt-1">{tr("scentsx.books.ein", "EIN")}: {ein ?? tr("scentsx.books.ein_missing", "not entered yet")}</div>
       </div>
@@ -119,7 +119,7 @@ export function PerfumeBooksPanel() {
           <ListErrorState title={tr("scentsx.books.chart_error", "Couldn't load the chart of accounts")} status={0} message={(accts.error as Error)?.message} onRetry={() => void accts.refetch()} />
         ) : (
           <ParityTable<ScentsxAccount>
-            title={tr("scentsx.books.chart", "Chart of accounts")}
+            cardTitle title={tr("scentsx.books.chart", "Chart of accounts")}
             rows={accts.data?.accounts ?? []}
             rowKey={(a) => a.id}
             loading={accts.isLoading}
@@ -151,7 +151,7 @@ function AccountRegister({ account, label }: { account: ScentsxAccount; label: s
   if (reg.isError) return <ListErrorState title={tr("scentsx.books.reg_error", "Couldn't load the register")} status={0} message={(reg.error as Error)?.message} onRetry={() => void reg.refetch()} />;
   return (
     <ParityTable<ScentsxRegisterLine>
-      title={`${tr("scentsx.books.register", "Register")} · ${label}`}
+      cardTitle title={`${tr("scentsx.books.register", "Register")} · ${label}`}
       rows={reg.data?.lines ?? []}
       rowKey={(l) => l.posting_id}
       loading={reg.isLoading}

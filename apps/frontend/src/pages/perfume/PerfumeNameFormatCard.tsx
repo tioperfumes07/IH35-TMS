@@ -32,7 +32,7 @@ export function PerfumeNameFormatCard({ onDone }: { onDone: () => void }) {
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-name-format" aria-label={tr("perfume.names.title", "Format company names")}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{tr("perfume.names.title", "Format company names")}</div>
+        <div className="text-card-title">{tr("perfume.names.title", "Format company names")}</div>
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {open && q.data ? <span>{`${q.data.count.toLocaleString("en-US")} ${tr("perfume.names.to_fix", "names to format")} · ${picked.length.toLocaleString("en-US")} ${tr("perfume.names.picked", "picked")}`}</span> : null}
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setOpen(!open)} data-testid="perfume-name-format-open">

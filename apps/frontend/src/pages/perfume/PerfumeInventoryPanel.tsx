@@ -181,7 +181,7 @@ function TransferEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-transfer-editor" aria-label={x.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{x.number} · {x.from_code} → {x.to_code} <Badge text={TR_TEXT[x.status]} color={TR_CLASS[x.status]} /></div>
+        <div className="text-card-title">{x.number} · {x.from_code} → {x.to_code} <Badge text={TR_TEXT[x.status]} color={TR_CLASS[x.status]} /></div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "draft" || !x.lines.length} onClick={() => run(() => perfumeTransferAction(id, "ship"), `${x.number} left ${x.from_code}`)} data-testid="perfume-transfer-ship">{tr("perfume.inv.ship", "Ship")}</Button>
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "shipped"} onClick={() => run(() => perfumeTransferAction(id, "receive"), `${x.number} received at ${x.to_code}`)} data-testid="perfume-transfer-receive">{tr("perfume.inv.receive", "Receive")}</Button>
@@ -191,7 +191,7 @@ function TransferEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
       </div>
       {x.status === "draft" ? <ItemFinder testId="perfume-transfer-find" onPick={(itemId, qty) => run(() => addPerfumeTransferLine(id, { item_id: itemId, qty }))} /> : null}
       <ParityTable<typeof x.lines[number]>
-        title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-transfer-lines-v1" exportFilename="TIO transfer lines" exportExcel emptyText="No lines yet — add an item above."
+        cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-transfer-lines-v1" exportFilename="TIO transfer lines" exportExcel emptyText="No lines yet — add an item above."
         columns={[
           { key: "display_name", label: "Item", render: (l) => l.display_name },
           { key: "qty", label: "Qty", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
@@ -236,7 +236,7 @@ export function PerfumeCountsPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-counts-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.counts", "Counts")}>
-        <div className="text-section-header">{tr("perfume.inv.count_new", "New count sheet")}</div>
+        <div className="text-card-title">{tr("perfume.inv.count_new", "New count sheet")}</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label>{tr("perfume.inv.site", "Site")} <SitePicker value={site} onChange={setSite} label={tr("perfume.inv.site", "Site")} testId="perfume-count-site" /></label>
           <label>{tr("perfume.itemfile.category", "Category")}
@@ -302,7 +302,7 @@ function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => 
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-count-editor" aria-label={x.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{x.number} · {x.location_code} <Badge text={CC_TEXT[x.status]} color={CC_CLASS[x.status]} />
+        <div className="text-card-title">{x.number} · {x.location_code} <Badge text={CC_TEXT[x.status]} color={CC_CLASS[x.status]} />
           {x.needs_second_person ? <span className="ml-2 text-xs">{tr("perfume.inv.second", "a second person posts it")}</span> : null}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -322,7 +322,7 @@ function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => 
       </div>
       {x.status === "draft" ? <ItemFinder testId="perfume-count-find" onPick={(itemId, qty) => run(() => setPerfumeCountLine(id, { item_id: itemId, counted_qty: qty }))} /> : null}
       <ParityTable<PerfumeCountLine>
-        title={tr("perfume.inv.variance", "Count entry and variance report")} rows={x.lines} rowKey={(l) => `${l.id}-${l.counted_qty ?? "x"}`} storageKey="perfume-count-lines-v2"
+        cardTitle title={tr("perfume.inv.variance", "Count entry and variance report")} rows={x.lines} rowKey={(l) => `${l.id}-${l.counted_qty ?? "x"}`} storageKey="perfume-count-lines-v2"
         exportFilename={`TIO ${x.number} variance`} exportExcel emptyText="No lines yet — add an item above."
         columns={[
           { key: "bin", label: "Bin", sortable: true, render: (l) => l.bin ?? DASH, exportValue: (l) => l.bin ?? "" },
@@ -406,7 +406,7 @@ function WriteoffEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-wo-editor" aria-label={x.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{x.number} · {x.location_code} · {WO_REASON[x.reason]} <Badge text={WO_TEXT[x.status]} color={CC_CLASS[x.status]} />
+        <div className="text-card-title">{x.number} · {x.location_code} · {WO_REASON[x.reason]} <Badge text={WO_TEXT[x.status]} color={CC_CLASS[x.status]} />
           {x.value_cents != null ? <span className="ml-2 text-xs">{`${tr("perfume.inv.value", "Value")} ${money(x.value_cents)}`}{x.needs_second_person && x.status === "submitted" ? ` · ${tr("perfume.inv.second", "a second person posts it")}` : ""}</span> : null}
         </div>
         <div className="flex flex-wrap gap-2">
@@ -419,7 +419,7 @@ function WriteoffEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
       {x.notes ? <div className="text-xs text-[#64748B]">{x.notes}</div> : null}
       {x.status === "draft" ? <ItemFinder testId="perfume-wo-find" onPick={(itemId, qty) => run(() => addPerfumeWriteoffLine(id, { item_id: itemId, qty }))} /> : null}
       <ParityTable<typeof x.lines[number]>
-        title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-wo-lines-v1" exportFilename="TIO write-off lines" exportExcel emptyText="No pieces yet — add an item above."
+        cardTitle title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => l.id} storageKey="perfume-wo-lines-v1" exportFilename="TIO write-off lines" exportExcel emptyText="No pieces yet — add an item above."
         columns={[
           { key: "display_name", label: "Item", render: (l) => <DocLink tab="items" id={l.item_id}>{l.display_name}</DocLink>, exportValue: (l) => l.display_name },
           { key: "qty", label: "Pieces", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.qty.toLocaleString("en-US") },
@@ -492,7 +492,7 @@ export function PerfumeSitesPanel() {
     <div className="space-y-3" data-testid="perfume-sites-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.sites", "Sites")}>
         <ParityTable<PerfumeSite>
-          title={tr("perfume.inv.sites_title", "My sites — warehouses and stores from my inventory file")}
+          cardTitle title={tr("perfume.inv.sites_title", "My sites — warehouses and stores from my inventory file")}
           rows={sites.data?.sites ?? []} rowKey={(s) => `${s.code}-${s.kind}-${s.own}-${s.active}`} loading={sites.isLoading} storageKey="perfume-sites-v1" exportFilename="TIO sites" exportExcel emptyText="No sites."
           columns={[
             { key: "code", label: "Code", sortable: true, render: (s) => <span className="font-semibold">{s.code}</span> },
@@ -515,7 +515,7 @@ export function PerfumeSitesPanel() {
         />
       </section>
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-opening" aria-label={tr("perfume.inv.opening", "Opening stock")}>
-        <div className="text-section-header">{tr("perfume.inv.opening", "Opening stock from my inventory file")}</div>
+        <div className="text-card-title">{tr("perfume.inv.opening", "Opening stock from my inventory file")}</div>
         {!o ? null : o.already_applied ? <div className="text-xs">{tr("perfume.inv.opening_done", "Opening stock is already in the ledger. Corrections go through a count.")}</div> : (
           <>
             <div className="text-xs">{`${o.lists.join(", ") || tr("perfume.inv.no_file", "No current inventory file")} — ${o.lines.toLocaleString("en-US")} lines, ${o.units.toLocaleString("en-US")} units, ${money(o.value_cents)} at the file's cost. Skipped: ${o.skipped_no_cost.toLocaleString("en-US")} with no cost, ${o.skipped_unknown_site.toLocaleString("en-US")} at a site that does not hold stock.`}</div>

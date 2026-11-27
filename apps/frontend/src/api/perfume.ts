@@ -1043,3 +1043,16 @@ export type PerfumeHistoryRow = { source: "usa_store" | "mexico_file"; customer_
   invoices: number | null; amount_cents: number; currency: "USD" | "MXN" };
 export const importPerfumePurchaseHistory = (rows: PerfumeHistoryRow[]) =>
   apiRequest<{ rows: number; inserted: number; updated: number }>("/api/v1/perfume/customers/purchase-history/import", { method: "POST", body: { rows } });
+
+/** Owner 17:17 CT: automatic duplicate detector — recommendations the owner confirms (merge) or dismisses (not a duplicate). */
+export type PerfumeDupCard = { id: string; name: string; role: string | null; city: string | null; state: string | null; phone: string | null; domain: string | null;
+  address: string | null; people: number; docs: number; created_at: string };
+export type PerfumeDupRec = { id: string; reasons: string[]; score: number; first_seen_at: string; a: PerfumeDupCard; b: PerfumeDupCard; keep: "a" | "b" };
+export const getPerfumeDupRecommendations = () => apiRequest<{ open: number; found: number; rows: PerfumeDupRec[] }>("/api/v1/perfume/contacts/duplicate-recommendations");
+export const confirmPerfumeDuplicates = (ids: string[], keep: Record<string, "a" | "b">) =>
+  apiRequest<{ merged: number }>("/api/v1/perfume/contacts/duplicate-recommendations/confirm", { method: "POST", body: { ids, keep } });
+export const dismissPerfumeDuplicates = (ids: string[]) =>
+  apiRequest<{ dismissed: number }>("/api/v1/perfume/contacts/duplicate-recommendations/dismiss", { method: "POST", body: { ids } });
+/** Owner 17:25 CT: merge one duplicate company from its pop-up — the record picked stays, the others become its locations. */
+export const mergeOnePerfumeDuplicate = (keep: string, ids: string[]) =>
+  apiRequest<{ merged: number }>("/api/v1/perfume/contacts/duplicates/merge-one", { method: "POST", body: { keep, ids } });

@@ -64,7 +64,7 @@ export function PerfumeSendListPanel() {
       </div>
       <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-left text-xs" aria-label={tr("perfume.send.title", "Send list")}>
         <div className="space-y-1" data-testid="perfume-sendlist-columns">
-          <div className="text-section-header">{tr("perfume.send.show", "What the list shows (in this order)")}</div>
+          <div className="text-card-title">{tr("perfume.send.show", "What the list shows (in this order)")}</div>
           <div className="flex flex-wrap gap-3">
             {PERFUME_SEND_COLUMNS.map((c) => (
               <label key={c} className="flex items-center gap-1"><input type="checkbox" checked={columns.includes(c)} onChange={() => setColumns(toggle(columns, c))} data-testid={`perfume-send-col-${c}`} />{COL_TEXT[c]}</label>
@@ -83,20 +83,20 @@ export function PerfumeSendListPanel() {
           <label className="flex items-center gap-1"><input type="checkbox" checked={exRestricted} onChange={(e) => setExRestricted(e.target.checked)} data-testid="perfume-send-exrestricted" />{tr("perfume.send.ex_restricted", "Leave out restricted brands / items")}</label>
         </div>
         <div className="space-y-1">
-          <div className="text-section-header">{tr("perfume.send.sites", "Stock from these sites (none ticked = every site)")}</div>
+          <div className="text-card-title">{tr("perfume.send.sites", "Stock from these sites (none ticked = every site)")}</div>
           <div className="flex flex-wrap gap-3">
             {sites.isError ? <span className="text-[#9B2C2C]" role="alert">{tr("perfume.send.sites_error", "Couldn't load the sites")}</span> : null}
             {ourSites.map((s) => <label key={s.code} className="flex items-center gap-1"><input type="checkbox" checked={pickedSites.includes(s.code)} onChange={() => setPickedSites(toggle(pickedSites, s.code))} data-testid={`perfume-send-site-${s.code}`} />{`${s.code} · ${s.name}`}</label>)}
           </div>
         </div>
         <div className="space-y-1">
-          <div className="text-section-header">{tr("perfume.send.types", "Types (none ticked = all)")}</div>
+          <div className="text-card-title">{tr("perfume.send.types", "Types (none ticked = all)")}</div>
           <div className="flex flex-wrap gap-3">
             {CATEGORIES.map((c) => <label key={c} className="flex items-center gap-1"><input type="checkbox" checked={cats.includes(c)} onChange={() => setCats(toggle(cats, c))} />{c}</label>)}
           </div>
         </div>
         <div className="space-y-1" data-testid="perfume-send-restricted">
-          <div className="text-section-header">{tr("perfume.send.restricted", "Restricted brands (left out of every list)")}</div>
+          <div className="text-card-title">{tr("perfume.send.restricted", "Restricted brands (left out of every list)")}</div>
           <div className="flex flex-wrap items-center gap-2">
             {(restricted.data?.brands ?? []).map((b) => (
               <span key={b} className="inline-flex items-center gap-1 rounded-sm border border-[#C6D1DC] px-2 py-0.5">{b}
@@ -110,7 +110,7 @@ export function PerfumeSendListPanel() {
           </div>
         </div>
         <div className="space-y-1">
-          <div className="text-section-header">{tr("perfume.send.brands_out", "Brands left out of this list only")}</div>
+          <div className="text-card-title">{tr("perfume.send.brands_out", "Brands left out of this list only")}</div>
           <div className="flex max-h-[140px] flex-wrap gap-x-3 gap-y-1 overflow-y-auto" data-testid="perfume-send-brands">
             {(p?.brands ?? []).map((b) => <label key={b} className="flex items-center gap-1"><input type="checkbox" checked={exBrands.includes(b)} onChange={() => setExBrands(toggle(exBrands, b))} />{b}</label>)}
           </div>
@@ -130,7 +130,7 @@ export function PerfumeSendListPanel() {
           </Button>
         </div>
         <ParityTable<PerfumeSendRow>
-          title={tr("perfume.send.preview", "Preview (first 300 lines)")} rows={p?.rows ?? []} rowKey={(r) => r.item_id} loading={preview.isLoading} storageKey="perfume-sendlist-v1"
+          cardTitle title={tr("perfume.send.preview", "Preview (first 300 lines)")} rows={p?.rows ?? []} rowKey={(r) => r.item_id} loading={preview.isLoading} storageKey="perfume-sendlist-v1"
           exportFilename={title || "TIO price list"} exportExcel emptyText="Nothing on the list with these choices."
           columns={[
             { key: "as_of", label: "As of", className: "text-left", render: () => asOf, exportValue: () => asOf },

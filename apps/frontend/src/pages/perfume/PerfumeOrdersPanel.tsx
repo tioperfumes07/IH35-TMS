@@ -161,7 +161,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-order-editor" aria-label={o.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{o.number} · {o.customer_name} <Badge text={STATUS_TEXT[o.status]} color={STATUS_CLASS[o.status]} /></div>
+          <div className="text-card-title">{o.number} · {o.customer_name} <Badge text={STATUS_TEXT[o.status]} color={STATUS_CLASS[o.status]} /></div>
           <div className="text-xs text-[#64748B]">
             {[o.customer_email, o.customer_phone, `Date ${usDate(o.order_date)}`].filter(Boolean).join(" · ")}
             {o.quote_id && o.quote_number ? <> · {tr("perfume.orders.from_quote", "From quote")} <DocLink tab="quotes" id={o.quote_id} testId="perfume-order-quote-link">{o.quote_number}</DocLink></> : null}
@@ -197,7 +197,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </label>
       )}
       <ParityTable<PerfumeOrderLine>
-        title={tr("perfume.orders.lines", "Lines")}
+        cardTitle title={tr("perfume.orders.lines", "Lines")}
         rows={o.lines}
         rowKey={(l) => `${l.id}-${l.qty}-${l.qty_shipped}-${l.unit_price_cents}`}
         storageKey="perfume-order-lines-v1"
@@ -231,7 +231,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </div>
       ) : null}
       <ParityTable<PerfumePoRow>
-        title={tr("perfume.orders.pos", "Purchase orders for this sales order")}
+        cardTitle title={tr("perfume.orders.pos", "Purchase orders for this sales order")}
         rows={pos.data?.purchase_orders ?? []}
         rowKey={(p) => p.id}
         loading={pos.isLoading}

@@ -151,7 +151,7 @@ function FamilyProfile({ id }: { id: string }) {
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-family-profile" aria-label={f.name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{[f.brand, f.name].filter(Boolean).join(" · ")}{f.olfactory_family ? ` · ${f.olfactory_family}` : ""}{f.gender ? ` · ${GENDER[f.gender]}` : ""}{f.launch_year ? ` · ${f.launch_year}` : ""}</div>
+        <div className="text-card-title">{[f.brand, f.name].filter(Boolean).join(" · ")}{f.olfactory_family ? ` · ${f.olfactory_family}` : ""}{f.gender ? ` · ${GENDER[f.gender]}` : ""}{f.launch_year ? ` · ${f.launch_year}` : ""}</div>
         {f.archived_at ? <span className="text-xs text-[#B91C1C]">{tr("perfume.fam.archived", "Archived")}</span> : (
           <span className="flex gap-2">
             <Button type="button" variant="secondary" className="h-[30px] px-2 text-xs" onClick={() => setEditing((x) => !x)} data-testid="perfume-family-edit">{editing ? tr("perfume.cat.cancel", "Cancel") : tr("perfume.fam.edit_btn", "Edit")}</Button>
@@ -161,7 +161,7 @@ function FamilyProfile({ id }: { id: string }) {
       </div>
       {f.notes ? <div className="text-xs text-[#475569]">{f.notes}</div> : null}
       {editing ? <FamilyForm initial={f} onSaved={() => { setEditing(false); void p.refetch(); }} onCancel={() => setEditing(false)} /> : null}
-      <ParityTable<PerfumeFamilyProfile["items"][number]> title={tr("perfume.fam.items", "Items in this family")} rows={p.data.items} rowKey={(r) => r.id} storageKey="perfume-family-items-v1"
+      <ParityTable<PerfumeFamilyProfile["items"][number]> cardTitle title={tr("perfume.fam.items", "Items in this family")} rows={p.data.items} rowKey={(r) => r.id} storageKey="perfume-family-items-v1"
         exportFilename={`TIO family ${f.name}`} exportExcel emptyText="No items yet — open an item and pick this family, or use the bulk bar on Item file."
         columns={[
           { className: "text-left", key: "display_name", label: "Item", render: (r) => <DocLink tab="items" id={r.id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
@@ -173,7 +173,7 @@ function FamilyProfile({ id }: { id: string }) {
           { key: "on_hand", label: "On hand", kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.on_hand.toLocaleString("en-US") },
           { key: "avg_cost_cents", label: "Avg cost", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.avg_cost_cents), exportValue: (r) => (r.avg_cost_cents == null ? "" : Number(r.avg_cost_cents) / 100) },
         ]} />
-      <ParityTable<PerfumeFamilyProfile["events"][number]> title={tr("perfume.fam.history", "History")} rows={p.data.events} rowKey={(e) => e.id} storageKey="perfume-family-history-v1"
+      <ParityTable<PerfumeFamilyProfile["events"][number]> cardTitle title={tr("perfume.fam.history", "History")} rows={p.data.events} rowKey={(e) => e.id} storageKey="perfume-family-history-v1"
         exportFilename={`TIO family ${f.name} history`} exportExcel emptyText="No history."
         columns={[
           { key: "created_at", label: "When", cellClass: "text-right tabular-nums", render: (e) => new Date(e.created_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
@@ -241,7 +241,7 @@ export function ItemSitesBlock({ itemId }: { itemId: string }) {
       onChange={(ev) => setEdit({ ...edit, [s.location_code]: { ...e, [k]: ev.target.value } })} />;
   };
   return (
-    <ParityTable<PerfumeItemSite> title={tr("perfume.sites.title", "Sites — on hand, bin, min / max and usual reorder quantity")} rows={sites.data ?? []} rowKey={(s) => s.location_code}
+    <ParityTable<PerfumeItemSite> cardTitle title={tr("perfume.sites.title", "Sites — on hand, bin, min / max and usual reorder quantity")} rows={sites.data ?? []} rowKey={(s) => s.location_code}
       loading={sites.isLoading} storageKey="perfume-item-sites-v1" exportFilename="TIO item sites" exportExcel emptyText="No own sites on the desk."
       columns={[
         { className: "text-left", key: "location_name", label: "Site", render: (s) => s.location_name },

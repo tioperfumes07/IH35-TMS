@@ -75,7 +75,7 @@ export function ScentsxCompliancePanel() {
   return (
     <section className="space-y-3" data-testid="scentsx-compliance">
       <div className="rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs">
-        <div className="text-section-header">{tr("scentsx.cash.title", "Cash & Form 8300")}</div>
+        <div className="text-card-title">{tr("scentsx.cash.title", "Cash & Form 8300")}</div>
         <div className="mt-1 text-[#64748B]">
           {d ? `Form 8300 when related cash from one payer is over ${money(d.settings.cash_report_threshold_cents)} (within ${d.settings.related_window_hours} hours, on the same order or invoice, or linked) — file within ${d.settings.filing_days} days. Alert when ${d.settings.structuring_min_count}+ cash receipts of ${money(d.settings.structuring_floor_cents)}–${money(d.settings.cash_report_threshold_cents)} come within ${d.settings.structuring_window_days} days. Never tell a payer to split a payment.` : "…"}
         </div>
@@ -100,7 +100,7 @@ export function ScentsxCompliancePanel() {
 
       <div id="scentsx-8300-cases">
         <ParityTable<Scentsx8300Case>
-          title={tr("scentsx.cash.cases", "Form 8300 cases")}
+          cardTitle title={tr("scentsx.cash.cases", "Form 8300 cases")}
           rows={d?.cases ?? []}
           rowKey={(c) => c.id}
           loading={desk.isLoading}
@@ -134,7 +134,7 @@ export function ScentsxCompliancePanel() {
 
       <div id="scentsx-structuring">
         <ParityTable<ScentsxStructuringAlert>
-          title={tr("scentsx.cash.alerts", "Structuring alerts")}
+          cardTitle title={tr("scentsx.cash.alerts", "Structuring alerts")}
           rows={d?.alerts ?? []}
           rowKey={(a) => a.id}
           loading={desk.isLoading}
@@ -154,7 +154,7 @@ export function ScentsxCompliancePanel() {
 
       <div id="scentsx-unlogged">
         <ParityTable<ScentsxUnloggedCash>
-          title={tr("scentsx.cash.unlogged", "ScentsX cash payments not in the cash log")}
+          cardTitle title={tr("scentsx.cash.unlogged", "ScentsX cash payments not in the cash log")}
           rows={unlogged}
           rowKey={(p) => p.id}
           loading={desk.isLoading}
@@ -169,7 +169,7 @@ export function ScentsxCompliancePanel() {
       </div>
 
       <ParityTable<ScentsxCashReceipt>
-        title={tr("scentsx.cash.receipts", "Cash log")}
+        cardTitle title={tr("scentsx.cash.receipts", "Cash log")}
         rows={d?.receipts ?? []}
         rowKey={(r) => r.id}
         loading={desk.isLoading}
@@ -238,7 +238,7 @@ function ReceiptForm({ payers, companyId, unlogged, onDone }: { payers: Array<{ 
   };
   return (
     <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="scentsx-cash-form">
-      <div className="text-section-header">{tr("scentsx.cash.log", "Log a cash receipt")}</div>
+      <div className="text-card-title">{tr("scentsx.cash.log", "Log a cash receipt")}</div>
       <div className="flex flex-wrap items-center gap-2">
         <select className={inputCls} aria-label={tr("scentsx.compliancepanel.payer", "Payer")} value={payerId} onChange={(e) => setPayerId(e.target.value)}>
           <option value="">{tr("scentsx.cash.pick_payer", "Payer…")}</option>
@@ -348,13 +348,13 @@ function SanctionsBlock() {
     <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="scentsx-ofac">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{tr("scentsx.ofac.title", "OFAC sanctions screening")}</div>
+          <div className="text-card-title">{tr("scentsx.ofac.title", "OFAC sanctions screening")}</div>
           <div className="text-[#64748B]">{list ? `List loaded ${day(list.loaded_at)} · ${list.sdn_rows.toLocaleString("en-US")} names + ${list.alt_rows.toLocaleString("en-US")} aliases · refreshed daily` : tr("scentsx.ofac.none", "No OFAC list loaded yet — nobody can be cleared to buy or sell until it is.")}</div>
         </div>
         <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy} onClick={() => void load()} data-testid="scentsx-ofac-load">{tr("scentsx.ofac.load", "Load the newest list")}</Button>
       </div>
       <ParityTable<ScentsxScreening>
-        title={tr("scentsx.ofac.open", "Possible matches waiting for you")}
+        cardTitle title={tr("scentsx.ofac.open", "Possible matches waiting for you")}
         rows={q.data?.open_matches ?? []}
         rowKey={(s) => s.id}
         loading={q.isLoading}
@@ -404,7 +404,7 @@ function KycDeskBlock({ companyId }: { companyId: string | null }) {
         <KpiCard label={tr("scentsx.kyc.expiring", "Documents expiring ≤ 60 days")} number={String(d?.counts.expiring ?? "—")} onClick={() => setOnly(only === "expiring" ? "all" : "expiring")} />
       </div>
       <ParityTable<Row>
-        title={tr("scentsx.kyc.title", "Customers & vendors — KYC and tax forms")}
+        cardTitle title={tr("scentsx.kyc.title", "Customers & vendors — KYC and tax forms")}
         rows={(d?.parties ?? []).filter((r) => only === "all" || (only === "expiring" ? r.warnings.length > 0 : r.status === only))}
         rowKey={(r) => `${r.kind}:${r.party_id}`}
         loading={q.isLoading}

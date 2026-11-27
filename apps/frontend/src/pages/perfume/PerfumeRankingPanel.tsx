@@ -87,7 +87,7 @@ export function PerfumeRankingPanel() {
     <div className="space-y-3" data-testid="perfume-ranking-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3">
         <div className="flex flex-wrap items-end gap-2 text-xs">
-          <div className="text-section-header">{tr("perfume.rank.title", "Customer ranking by purchases")}</div>
+          <div className="text-card-title">{tr("perfume.rank.title", "Customer ranking by purchases")}</div>
           <label>{tr("perfume.rank.currency", "Currency")}
             <select className={`${ctl} block`} aria-label={tr("perfume.rank.currency", "Currency")} value={cur} onChange={(e) => setCur(e.target.value as "USD" | "MXN")} data-testid="perfume-rank-currency">
               <option value="USD">{"USD — USA store + ScentsX"}</option><option value="MXN">{"MXN — Mexico"}</option>
