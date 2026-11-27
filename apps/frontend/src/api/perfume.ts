@@ -512,8 +512,8 @@ export async function fetchPerfumeOfferExcel(): Promise<{ name: string; mime: st
 
 /* ------------------------------------------------------------------ leads: catalogs + contacts Excel round trip (owner 2026-11-26 17:38 CT) */
 
-export type PerfumeCatalogKind = "vendor_type" | "customer_type" | "category" | "segment" | "source_kind" | "product_type" | "gender";
-export type PerfumeCatalogs = { kinds: Array<{ kind: PerfumeCatalogKind; label: string; values: Array<{ id: string; value: string; sort: number; contacts: number }> }> };
+export type PerfumeCatalogKind = "vendor_type" | "customer_type" | "category" | "segment" | "source_kind" | "product_type" | "gender" | "item_category";
+export type PerfumeCatalogs = { kinds: Array<{ kind: PerfumeCatalogKind; label: string; used_by?: "items" | "contacts"; values: Array<{ id: string; value: string; sort: number; contacts: number }> }> };
 export const listPerfumeCatalogs = () => apiRequest<PerfumeCatalogs>("/api/v1/perfume/catalogs");
 export const addPerfumeCatalogValue = (b: { kind: PerfumeCatalogKind; value: string }) => apiRequest<{ id: string }>("/api/v1/perfume/catalogs", { method: "POST", body: b });
 export const renamePerfumeCatalogValue = (id: string, value: string) =>

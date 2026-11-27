@@ -9,7 +9,7 @@
  * it, each vendor's own code and description; a line linked elsewhere is linked to the item in one click.
  */
 import { useEffect, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -18,7 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
-  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs, createPerfumeItem, getPerfumeItemOptions,
+  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs, addPerfumeCatalogValue, createPerfumeItem, getPerfumeItemOptions,
   type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
@@ -26,11 +26,55 @@ import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts
 
 const PAGE = 100;
 const CONC = ["", "EDT", "EDP", "PARFUM", "EXTRAIT", "EDC", "MIST"] as const;
-/** The owner's own lists for product type and category (Settings → catalogs), so a typed value matches what he keeps there. */
+/** The owner's own item lists (Catalogs → Item product types / Item categories), so a value matches what he keeps there. */
 function useItemCatalogs() {
   const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
   const of = (k: string) => (q.data?.kinds.find((x) => x.kind === k)?.values ?? []).map((v) => v.value);
-  return { types: of("product_type"), categories: of("category") };
+  return { types: of("product_type"), categories: of("item_category") };
+}
+
+const ADD_NEW = "__add_new__";
+/**
+ * A pick list on one of his item catalogs with "+ Add new…" at the end (owner 2026-11-27 07:51 CT "we need the creator for lists and
+ * catalogs"): typing a new value adds it to that catalog (same rule as the Catalogs screen — no duplicates) and selects it.
+ */
+function CatalogSelect({ kind, value, options, onChange, head, className, testId, label }: {
+  kind: "product_type" | "item_category"; value: string; options: string[]; onChange: (v: string) => void;
+  head?: ReactNode; className?: string; testId?: string; label: string;
+}) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [adding, setAdding] = useState(false);
+  const [text, setText] = useState("");
+  const all = [...new Set([...options, ...(value && !value.startsWith("__") ? [value] : [])])];
+  const save = async () => {
+    const v = text.trim(); if (!v) return;
+    try {
+      await addPerfumeCatalogValue({ kind, value: v });
+      await qc.invalidateQueries({ queryKey: ["perfume", "catalogs"] });
+      pushToast(`"${v}" added to ${kind === "product_type" ? "Item product types" : "Item categories"}`, "success");
+    } catch (e) {
+      // Already in the list → just use it.
+      if (!/already/i.test(userFacingApiError(e, ""))) { pushToast(userFacingApiError(e, "Not added"), "error"); return; }
+    }
+    onChange(v); setAdding(false); setText("");
+  };
+  if (adding) return (
+    <span className="flex items-center gap-1">
+      <input autoFocus className={`${ctl} w-[160px]`} aria-label={`New ${label}`} placeholder={`New ${label.toLowerCase()}`} value={text} onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => { if (e.key === "Enter") void save(); if (e.key === "Escape") setAdding(false); }} data-testid={testId ? `${testId}-new` : undefined} />
+      <Button type="button" className="h-[30px] px-2 text-xs" disabled={!text.trim()} onClick={() => void save()}>{tr("perfume.cat.add", "Add")}</Button>
+      <button type="button" className="underline" onClick={() => setAdding(false)}>{tr("perfume.cat.cancel", "Cancel")}</button>
+    </span>
+  );
+  return (
+    <select className={className ?? `${ctl} block`} aria-label={label} value={value} data-testid={testId}
+      onChange={(e) => { if (e.target.value === ADD_NEW) { setAdding(true); setText(""); } else onChange(e.target.value); }}>
+      {head ?? <option value="">{DASH}</option>}
+      {all.map((x) => <option key={x} value={x}>{x}</option>)}
+      <option value={ADD_NEW}>{tr("perfume.cat.add_new", "+ Add new…")}</option>
+    </select>
+  );
 }
 const GENDER: Record<string, string> = { M: "Men", W: "Women", U: "Unisex", "": "—" };
 const FLAGS = ["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"] as const;
@@ -197,14 +241,10 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
         </label>
         <label>{tr("perfume.itemfile.model", "Model")} <input className={`${ctl} block w-[180px]`} value={val("model", it.model ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, model: e.target.value })} data-testid="perfume-itemfile-model" /></label>
         <label>{tr("perfume.itemfile.product_type", "Product type")}
-          <select className={`${ctl} block`} value={val("product_type", it.product_type ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, product_type: e.target.value })} data-testid="perfume-itemfile-product-type">
-            {["", ...new Set([...cats.types, ...(it.product_type ? [it.product_type] : [])])].map((v) => <option key={v} value={v}>{v || DASH}</option>)}
-          </select>
+          <CatalogSelect kind="product_type" label="Product type" value={val("product_type", it.product_type ?? null) ?? ""} options={cats.types} onChange={(x) => setEdit({ ...edit, product_type: x })} testId="perfume-itemfile-product-type" />
         </label>
         <label>{tr("perfume.itemfile.category", "Category")}
-          <select className={`${ctl} block`} value={val("category", it.category ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, category: e.target.value })} data-testid="perfume-itemfile-category">
-            {["", ...new Set([...cats.categories, ...(it.category ? [it.category] : [])])].map((v) => <option key={v} value={v}>{v || DASH}</option>)}
-          </select>
+          <CatalogSelect kind="item_category" label="Category" value={val("category", it.category ?? null) ?? ""} options={cats.categories} onChange={(x) => setEdit({ ...edit, category: x })} testId="perfume-itemfile-category" />
         </label>
         <label>{tr("perfume.itemfile.gender", "Gender")}
           <select className={`${ctl} block`} value={val("gender", it.gender ?? "") ?? ""} onChange={(e) => setEdit({ ...edit, gender: e.target.value })} data-testid="perfume-itemfile-gender">
@@ -463,8 +503,10 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
       <div className="flex flex-wrap items-end gap-2">
         <label>{tr("perfume.itemfile.brand", "Brand")} <input className={`${ctl} block w-[140px]`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-bulk-brand" /></label>
         <label>{tr("perfume.itemfile.model", "Model")} <input className={`${ctl} block w-[140px]`} value={v.model === CLEAR ? "" : v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-bulk-model" /></label>
-        <label>{tr("perfume.itemfile.product_type", "Product type")} <select className={`${ctl} block`} value={v.product_type} onChange={(e) => setV({ ...v, product_type: e.target.value })} data-testid="perfume-bulk-product-type">{opt(cats.types)}</select></label>
-        <label>{tr("perfume.itemfile.category", "Category")} <select className={`${ctl} block`} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })} data-testid="perfume-bulk-category">{opt(cats.categories)}</select></label>
+        <label>{tr("perfume.itemfile.product_type", "Product type")} <CatalogSelect kind="product_type" label="Product type" value={v.product_type} options={cats.types} onChange={(x) => setV({ ...v, product_type: x })} testId="perfume-bulk-product-type"
+          head={<><option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option></>} /></label>
+        <label>{tr("perfume.itemfile.category", "Category")} <CatalogSelect kind="item_category" label="Category" value={v.category} options={cats.categories} onChange={(x) => setV({ ...v, category: x })} testId="perfume-bulk-category"
+          head={<><option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option></>} /></label>
         <label>{tr("perfume.itemfile.conc", "EDT / EDP / Parfum")} <select className={`${ctl} block`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-bulk-conc">{opt(CONC.filter(Boolean) as unknown as string[])}</select></label>
         <label>{tr("perfume.itemfile.gender", "Gender")}
           <select className={`${ctl} block`} value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })} data-testid="perfume-bulk-gender">
@@ -524,13 +566,9 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
       {row(tr("perfume.itemfile.model", "Model"), <input list="perfume-models" className={`${ctl} w-full`} value={v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-new-model" />)}
       {row(`${tr("perfume.itemfile.name", "Name")} *`, <input className={`${ctl} w-full`} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} data-testid="perfume-new-name" />)}
       {row(tr("perfume.itemfile.product_type", "Product type"), (
-        <select className={`${ctl} w-full`} value={v.product_type} onChange={(e) => setV({ ...v, product_type: e.target.value })} data-testid="perfume-new-product-type">
-          <option value="">{DASH}</option>{cats.types.map((x) => <option key={x} value={x}>{x}</option>)}
-        </select>))}
+        <CatalogSelect kind="product_type" label="Product type" className={`${ctl} w-full`} value={v.product_type} options={cats.types} onChange={(x) => setV({ ...v, product_type: x })} testId="perfume-new-product-type" />))}
       {row(tr("perfume.itemfile.category", "Category"), (
-        <select className={`${ctl} w-full`} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })} data-testid="perfume-new-category">
-          <option value="">{DASH}</option>{cats.categories.map((x) => <option key={x} value={x}>{x}</option>)}
-        </select>))}
+        <CatalogSelect kind="item_category" label="Category" className={`${ctl} w-full`} value={v.category} options={cats.categories} onChange={(x) => setV({ ...v, category: x })} testId="perfume-new-category" />))}
       {row(tr("perfume.itemfile.size", "Size ml"), <input list="perfume-sizes" type="number" min={0} className={`${ctl} w-[120px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-new-size" />)}
       {row(tr("perfume.itemfile.conc", "EDT / EDP / Parfum"), (
         <select className={`${ctl} w-[160px]`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-new-conc">
