@@ -50,7 +50,7 @@ export function PerfumeReceivablesPanel() {
   return (
     <div className="space-y-3" data-testid="perfume-receivables-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.ar.aging", "Aging balance report")}>
-        <div className="text-section-header">{tr("perfume.ar.aging", "Aging balance report")}</div>
+        <div className="text-card-title">{tr("perfume.ar.aging", "Aging balance report")}</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label>{tr("perfume.ar.as_of", "Aging date")} <DatePicker aria-label={tr("perfume.ar.as_of", "Aging date")} value={asOf} onChange={(v) => setAsOf(v || todayCT())} /></label>
           {(["d1", "d2", "d3"] as const).map((k, i) => (
@@ -92,7 +92,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-ar-customer" aria-label={a.customer.name}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="text-section-header">{`${tr("perfume.ar.account_status", "Customer account status")} · ${a.customer.name}`}</div>
+        <div className="text-card-title">{`${tr("perfume.ar.account_status", "Customer account status")} · ${a.customer.name}`}</div>
         <div className="flex flex-wrap gap-3 text-xs text-[#475569]">
           {a.customer.perfume_company_id ? <DocLink tab="customers" id={a.customer.perfume_company_id}>{tr("perfume.ar.open_customer", "Customer card")}</DocLink> : null}
           <span>{`${tr("perfume.ar.terms", "Terms")} ${a.customer.terms_days == null ? DASH : `${a.customer.terms_days} ${tr("perfume.ar.days", "days")}`}`}</span>
@@ -104,7 +104,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
       <BucketStrip b={a.buckets} d={a.days} testId="perfume-ar-customer-buckets" />
       <PaymentEntry acctId={a.operating_company_id} customerId={a.customer.id} open={a.open_invoices} onDone={refresh} />
       <ParityTable<ScentsxArInvoice>
-        title={tr("perfume.ar.history", "Invoice history — click an invoice for its payments")} rows={a.invoices} rowKey={(r) => r.id} storageKey="perfume-ar-invoices-v1"
+        cardTitle title={tr("perfume.ar.history", "Invoice history — click an invoice for its payments")} rows={a.invoices} rowKey={(r) => r.id} storageKey="perfume-ar-invoices-v1"
         exportFilename={`TIO invoices ${a.customer.name}`} exportExcel emptyText="No invoices on ScentsX's books for this customer." onRowClick={(r) => setOpenInv(r.id === openInv ? null : r.id)}
         columns={[
           { className: "text-left", key: "number", label: "Invoice", sortable: true, render: (r) => <Link className="underline" to={`/accounting/invoices/${encodeURIComponent(r.id)}`} onClick={(e) => e.stopPropagation()}>{r.number ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.number ?? "" },
@@ -122,7 +122,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
       {returnInv ? <ReturnForm key={returnInv} invoiceId={returnInv} onClose={() => setReturnInv(null)} onDone={() => void refresh()} /> : null}
       {shown ? (
         <ParityTable<ScentsxArInvoice["payments"][number]>
-          title={`${tr("perfume.ar.payments_on", "Payments on invoice")} ${shown.number ?? ""} · ${tr("perfume.ar.amount", "amount")} ${money(shown.total_cents)} · ${tr("perfume.ar.paid", "paid")} ${money(shown.paid_cents)} · ${tr("perfume.ar.balance", "A/R balance")} ${money(shown.open_cents)}`}
+          cardTitle title={`${tr("perfume.ar.payments_on", "Payments on invoice")} ${shown.number ?? ""} · ${tr("perfume.ar.amount", "amount")} ${money(shown.total_cents)} · ${tr("perfume.ar.paid", "paid")} ${money(shown.paid_cents)} · ${tr("perfume.ar.balance", "A/R balance")} ${money(shown.open_cents)}`}
           rows={shown.payments} rowKey={(p) => `${p.payment_id}-${p.amount_cents}`} storageKey="perfume-ar-inv-payments-v1" exportFilename="TIO invoice payments" exportExcel emptyText="No payment applied to this invoice."
           columns={[
             { className: "text-left", key: "payment_no", label: "Payment", render: (p) => <Link className="underline" to={`/accounting/payments/${encodeURIComponent(p.payment_id)}`}>{p.payment_no ?? p.payment_id.slice(0, 8)}</Link>, exportValue: (p) => p.payment_no ?? "" },
@@ -215,7 +215,7 @@ function PaymentsList({ companyId, rows, onDone }: { companyId: string; rows: Sc
   };
   return (
     <ParityTable<ScentsxArPayment>
-      title={tr("perfume.ar.payments", "Payments")} rows={rows} rowKey={(r) => `${r.id}-${r.voided_at ?? ""}`} storageKey="perfume-ar-payments-v1" exportFilename="TIO customer payments" exportExcel
+      cardTitle title={tr("perfume.ar.payments", "Payments")} rows={rows} rowKey={(r) => `${r.id}-${r.voided_at ?? ""}`} storageKey="perfume-ar-payments-v1" exportFilename="TIO customer payments" exportExcel
       emptyText="No payments recorded for this customer."
       columns={[
         { className: "text-left", key: "number", label: "Payment", render: (r) => <Link className="underline" to={`/accounting/payments/${encodeURIComponent(r.id)}`}>{r.number ?? r.id.slice(0, 8)}</Link>, exportValue: (r) => r.number ?? "" },

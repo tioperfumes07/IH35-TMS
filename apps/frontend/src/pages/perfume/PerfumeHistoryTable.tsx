@@ -25,7 +25,7 @@ export function eventDetail(e: Pick<PerfumeLeadEvent, "detail">): string {
 export function PerfumeHistoryTable({ events, loading, storageKey, title, exportName }: { events: PerfumeLeadEvent[]; loading?: boolean; storageKey: string; title?: string; exportName: string }) {
   return (
     <ParityTable<PerfumeLeadEvent>
-      title={title ?? tr("perfume.history.title", "History — who changed what, when")}
+      cardTitle title={title ?? tr("perfume.history.title", "History — who changed what, when")}
       rows={events}
       rowKey={(e) => e.id}
       loading={loading}

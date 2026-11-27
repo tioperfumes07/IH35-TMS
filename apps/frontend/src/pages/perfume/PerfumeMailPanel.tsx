@@ -78,7 +78,7 @@ export function PerfumeMailPanel() {
     <div className="space-y-4" data-testid="perfume-mail-panel">
       <section className="space-y-2 rounded-sm border border-gray-200 bg-white p-3" aria-label={tr("perfume.mail.boxes", "Mailboxes")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-section-header">{tr("perfume.mail.boxes", "Mailboxes")}</div>
+          <div className="text-card-title">{tr("perfume.mail.boxes", "Mailboxes")}</div>
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <span data-testid="perfume-mail-schedule">{d?.schedule ?? ""}</span>
             <Button type="button" className="h-[34px] px-3 text-xs" disabled={running || runBusy || !d?.accounts.some((a) => a.status === "connected")} data-testid="perfume-mail-run"
@@ -155,7 +155,7 @@ function FilesCard({ files, loading, vendorOptions, onChanged }: { files: Perfum
   return (
     <section className="space-y-1" aria-label={tr("perfume.mail.files", "Price lists from mail")}>
       <div className="flex flex-wrap items-center gap-2">
-        <div className="text-section-header">{tr("perfume.mail.files", "Price lists from mail")}</div>
+        <div className="text-card-title">{tr("perfume.mail.files", "Price lists from mail")}</div>
         {(["needs", "all"] as const).map((k) => (
           <button key={k} type="button" aria-pressed={show === k} onClick={() => setShow(k)} data-testid={`perfume-mail-show-${k}`}
             className={`h-[30px] rounded-sm border px-2 text-xs ${show === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-gray-700"}`}>
@@ -243,7 +243,7 @@ function RulesCard({ rules, vendors, onChanged }: { rules: PerfumeMailRule[]; ve
   const options = vendors.filter((v) => v.kind !== "offer" && v.kind !== "inventory").map((v) => ({ value: v.id, label: v.name }));
   return (
     <section className="space-y-2" aria-label={tr("perfume.mail.rules", "Senders")}>
-      <div className="text-section-header">{tr("perfume.mail.rules", "Senders")}</div>
+      <div className="text-card-title">{tr("perfume.mail.rules", "Senders")}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <label className="flex flex-col gap-1 text-gray-600">{tr("perfume.mail.from", "From (address or @domain.com)")}
           <input className="h-[40px] w-[240px] rounded-sm border border-gray-300 px-2" value={from} onChange={(e) => setFrom(e.target.value)} placeholder={tr("perfume.mail.fromPh", "sales@vendor.com")} />

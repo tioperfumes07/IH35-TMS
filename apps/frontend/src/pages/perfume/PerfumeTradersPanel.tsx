@@ -73,7 +73,7 @@ export function PerfumeTradersPanel() {
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.board", "Trade board")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="text-section-header">{tr("perfume.trd.board", "Trade board")}</div>
+          <div className="text-card-title">{tr("perfume.trd.board", "Trade board")}</div>
           <Button type="button" className="h-[34px] px-3 text-xs" data-testid="perfume-trd-add" onClick={() => setAdding(true)}>{tr("perfume.trd.add", "Add a trade")}</Button>
         </div>
         {adding ? <TradeForm onClose={() => setAdding(false)} onSaved={() => { setAdding(false); void data.refetch(); }} /> : null}
@@ -108,7 +108,7 @@ export function PerfumeTradersPanel() {
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.matrix", "Who carries which brands")}>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <div className="text-section-header">{tr("perfume.trd.matrix", "Who carries which brands")}</div>
+            <div className="text-card-title">{tr("perfume.trd.matrix", "Who carries which brands")}</div>
             <div className="text-xs text-[#64748B]">{tr("perfume.trd.matrix_note", "Lines on each vendor's current price list. With no brand picked: the 8 brands the most vendors carry.")}</div>
           </div>
           <MultiSelectDropdown label={tr("perfume.trd.brands", "Brands")} allLabel={tr("perfume.trd.top_brands", "Top 8 brands")} searchable data-testid="perfume-trd-brands"
@@ -138,7 +138,7 @@ export function PerfumeTradersPanel() {
       <div className="grid gap-3 xl:grid-cols-2">
         <section id="perfume-trd-common" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.common", "Buyers on several exposed lists")}>
           <ParityTable<Common>
-            title={tr("perfume.trd.common", "Buyers on several exposed lists")}
+            cardTitle title={tr("perfume.trd.common", "Buyers on several exposed lists")}
             rows={o?.common_buyers ?? []}
             rowKey={(r) => r.id}
             loading={data.isLoading}
@@ -159,7 +159,7 @@ export function PerfumeTradersPanel() {
         </section>
         <section id="perfume-trd-exposed" className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.trd.exposed", "Exposed vendor lists")}>
           <ParityTable<Exposed>
-            title={tr("perfume.trd.exposed", "Exposed vendor lists")}
+            cardTitle title={tr("perfume.trd.exposed", "Exposed vendor lists")}
             rows={o?.exposed_lists ?? []}
             rowKey={(r) => r.sender}
             loading={data.isLoading}
@@ -251,7 +251,7 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-trd-detail" aria-label={trade.item}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-section-header">{trade.item}</div>
+          <div className="text-card-title">{trade.item}</div>
           <div className="text-xs text-[#64748B]">{[trade.brand, trade.upc ? `UPC ${trade.upc}` : "", trade.from_company ? `${tr("perfume.trd.from", "from")} ${trade.from_company}` : "",
             `${money(trade.buy_cents)} → ${money(trade.sell_cents)} (${marginPct(trade)})`, trade.qty ? `${trade.qty.toLocaleString()} ${tr("perfume.trd.units", "units")}` : "", trade.note ?? ""].filter(Boolean).join(" · ")}</div>
         </div>
@@ -263,7 +263,7 @@ function TradeDetail({ trade, onClose, onChanged }: { trade: PerfumeTrade | null
       <CompanyPick placeholder={tr("perfume.trd.add_buyer", "Match a buyer — type a company, person, email or city")} testId="perfume-trd-buyer-find"
         onPick={(id, name) => void act(() => addPerfumeTradeBuyer(trade.id, { company_id: id, offer_cents: trade.sell_cents }), `${name} matched`)} />
       <ParityTable<PerfumeTradeBuyer>
-        title={tr("perfume.trd.buyers_title", "Buyers matched to this trade")}
+        cardTitle title={tr("perfume.trd.buyers_title", "Buyers matched to this trade")}
         rows={trade.buyers}
         rowKey={(b) => b.id}
         storageKey="perfume-trade-buyers-v1"

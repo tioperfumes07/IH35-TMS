@@ -99,7 +99,7 @@ export function ReturnsList() {
   if (q.isError) return <ListErrorState title={tr("perfume.ret.list_error", "Couldn't load the returns")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   return (
     <ParityTable<ScentsxReturnRow>
-      title={tr("perfume.ret.list", "Returns")} rows={q.data?.returns ?? []} rowKey={(r) => r.id} loading={q.isLoading} storageKey="perfume-returns-v1" exportFilename="TIO returns" exportExcel
+      cardTitle title={tr("perfume.ret.list", "Returns")} rows={q.data?.returns ?? []} rowKey={(r) => r.id} loading={q.isLoading} storageKey="perfume-returns-v1" exportFilename="TIO returns" exportExcel
       emptyText="No returns yet."
       columns={[
         { className: "text-left", key: "return_no", label: "Return", sortable: true, render: (r) => <span className="font-semibold">{r.return_no}</span>, exportValue: (r) => r.return_no },
