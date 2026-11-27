@@ -100,6 +100,12 @@ describeIntegration("my inventory by location on the desk (real Postgres, rolled
     expect([rt.my_qty, rt["loc:229"], rt.my_last_cost]).toEqual([36, 36, 0]);
     const labels = g.cols.filter((c) => c.key.startsWith("loc:")).map((c) => c.label);
     expect(labels).toEqual(expect.arrayContaining(["Qty 008 · Perfume Bodega Laredo", "Qty 011 · Laredo", "Qty 229 · Calexico"]));
+    // Owner 2026-11-27 15:40 / 15:42 CT: the Mine group opens with last purchase date, qty purchased, qty sold, then the Laredo
+    // warehouse (008), the all-sites total, the other sites, then avg cost and last cost.
+    const mine = g.cols.filter((c) => c.group === "Mine").map((c) => c.key);
+    expect(mine.slice(0, 5)).toEqual(["my_purchase_date", "my_qty_purchased", "my_qty_sold", "loc:008", "my_qty"]);
+    expect(mine.indexOf("my_avg_cost")).toBeGreaterThan(mine.indexOf("loc:229"));
+    expect(mine.indexOf("my_last_cost")).toBe(mine.indexOf("my_avg_cost") + 1);
   });
 });
 

@@ -202,7 +202,9 @@ function defaultVisible(view: PerfumeGridView, key: string, mine: MineChoice = n
   // who is cheapest, then each supplier's list price and Cushion (list price less the cushion). No cost / price / profit columns.
   // Owner 2026-11-14: "in purchase compare vendors i need … my last cost, date, quantity purchased, current inventory,
   // qty sold … the last price i purchased is important because prices change weekly."
-  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || /^loc:/.test(key) || ["best_vendor", "my_last_cost", "my_avg_cost", "my_purchase_date", "my_qty_purchased", "my_qty", "my_qty_sold"].includes(key);
+  // Owner 2026-11-27 15:40 / 15:42 CT: "here i do not need by default inventory per location, i need inventory quantity of laredo
+  // warehouse by default" (008) — the other sites and the all-sites total are one tick away in the gear.
+  if (view === "buy") return item || /^v:.*:(price|net)$/.test(key) || key === "loc:008" || ["best_vendor", "my_last_cost", "my_avg_cost", "my_purchase_date", "my_qty_purchased", "my_qty_sold"].includes(key);
   // Trading (owner 2026-11-12): my cost ONCE, then per supplier only their list price, what they earn, what I sell to them at.
   if (view === "trade") return item || /^t:.*:(list|earn|cost)$/.test(key) || /^trade_(low|high|profit)/.test(key) || ["landed_likely", "my_last_cost", "my_qty"].includes(key);
   // Owner 2026-11-14: "in competition their margin … the vendors prices should be after all the esperanza data
@@ -613,8 +615,10 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
       sortable: true,
       alwaysVisible: true,
       kind: c.kind === "money" || c.kind === "pct" || c.kind === "int" ? ("number" as const) : undefined,
-      cellClass: [c.kind === "text" ? "" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
-      className: groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : undefined,
+      // Owner 2026-11-27 15:42 CT: "the description and name should not be centered … on the left hand side, as in excel" —
+      // every text column (brand, name, descriptions, vendor names) reads left; numbers stay right.
+      cellClass: [c.kind === "text" ? "text-left" : "text-right tabular-nums", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
+      className: [c.kind === "text" ? "text-left" : "", groupStart.has(c.key) ? "border-l-2 border-l-slate-500" : ""].filter(Boolean).join(" ") || undefined,
       sortValue: (r: PerfumeGridRow) => r[c.key] ?? null,
       ...(c.key === "a:c_desc" || (view === "analysis" && c.key === "a:name") ? { minWidth: 360 } : {}),
       exportValue: (r: PerfumeGridRow) => (Array.isArray(r[c.key]) ? (r[c.key] as unknown as Array<{ label: string }>).map((x) => x.label).join("; ") : r[c.key] ?? null),
