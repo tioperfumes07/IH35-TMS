@@ -27,3 +27,9 @@ export type ScentsxRegisterLine = {
 };
 export const getScentsxAccountRegister = (accountId: string) =>
   apiRequest<{ lines: ScentsxRegisterLine[] }>(`/api/v1/scentsx/accounts/${encodeURIComponent(accountId)}/register`);
+export type ScentsxBillableLine = { so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; to_bill: number; unit_price_cents: number };
+export type ScentsxDocLink = { id: string; invoice_id: string | null; invoice_number: string | null; invoice_total_cents: string | null; invoice_status: string | null; created_at: string };
+export const getScentsxSalesOrderBilling = (salesOrderId: string) =>
+  apiRequest<{ lines: ScentsxBillableLine[]; invoices: ScentsxDocLink[] }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/billing`);
+export const invoiceScentsxSalesOrder = (salesOrderId: string, channel: "wholesale" | "retail" | "export") =>
+  apiRequest<{ invoice: { invoice_id: string; display_id: string; lines: number; units: number } }>(`/api/v1/scentsx/sales-orders/${encodeURIComponent(salesOrderId)}/invoice`, { method: "POST", body: { channel } });

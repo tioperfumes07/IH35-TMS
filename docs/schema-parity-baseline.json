@@ -13130,6 +13130,16 @@
       "void_reason",
       "voided_at"
     ],
+    "scentsx.sales_order_invoice_lines": [
+      "created_at",
+      "created_by",
+      "id",
+      "invoice_id",
+      "invoice_line_id",
+      "operating_company_id",
+      "qty",
+      "so_line_id"
+    ],
     "scentsx.vendor_links": [
       "created_at",
       "created_by",
