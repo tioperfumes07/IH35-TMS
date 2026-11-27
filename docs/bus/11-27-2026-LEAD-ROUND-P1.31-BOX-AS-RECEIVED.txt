@@ -1,0 +1,48 @@
+TO: LEAD (perfume money seat) · ROUND P1.31 · from OWNER via P1 · 2026-11-27 15:50 CT (21:50 UTC)
+
+OWNER ORDERS (15:05 / 15:40 / 15:47 CT)
+- Perfumes only for 3 days. Trucking frozen. Everything fully wired both ways (QuickBooks-style: click a name → its profile).
+- Fast merge: green locally → push → merge 4 minutes after push. Post every merge on the shared board.
+
+SPLIT — no overlap
+- P1 owns: price desk (desk.service.ts buildGrid / views, PerfumeDeskPage.tsx, desk rules), segment margins + round up to next $0.25, Sonia list, competitor column defaults, list-analysis multi-competitor, vendor price tiers, vendor FULL names, vendor ↔ contact link, brand abbreviations, click-through on vendors / brands / items.
+- LEAD owns L1–L6 below.
+
+L1. RANK CUSTOMERS + VENDORS BY PURCHASE CAPACITY / QTY (owner item #10)
+- Measured 21:45 UTC: ScentsX has 0 invoices and 0 sales orders on prod.
+- Purchase history exists only in the owner's files: USA 815 customers / 18,050 invoices / $77,243,596.30 (2020–2026), Mexico 674 customers / MXN 1,139,242,665.19. Source: ~/Desktop/11-27-2026-TIO-Customers-Sales-USA-and-Mexico.xlsx.
+- Build: a rank per customer and per vendor contact (perfume.contact_companies):
+  - tier A / B / C by 12-month and lifetime purchase $, invoice count and units;
+  - shown and sortable on Contacts, Customer accounts and the customer profile;
+  - Excel.
+- Source of truth = ScentsX invoices when they exist, else the imported history. The import keeps no balances (owner 14:12 CT law: opens at $0).
+- Guard: a test with 3 customers → tiers A/B/C exact.
+
+L2. BUYERS / CUSTOMERS — FULL NAMES, PROPER FORMAT, LEFT, CLICKABLE
+- Measured: 2,871 customer + 201 both + 529 vendor contact companies. Names arrive run-together (e.g. "Ipbgroup" → must read "IPB Group").
+- Rule: full company name; Capital first letter, then regular; correct spacing; known acronyms kept upper (IPB, LLC, SA de CV …).
+- Every buyer name in Sales, Quotes, Orders, Receivables, Contacts, Customer accounts: left-aligned and clicks to its profile.
+- Fix in place with a preview → apply, each rename one history row; never delete.
+- Guard: test "Ipbgroup" → "IPB Group", "B&S FRAGRANCES" → "B&S Fragrances".
+
+L3. MAIN REDS IN YOUR FILES (seen on every P1 PR today)
+- a) rls-migration-scan: scentsx.sales_returns / sales_return_lines (202617080100) flagged — RLS is applied via format('%1$s'), which the scanner does not read. Fix: literal ALTER … ENABLE / FORCE ROW LEVEL SECURITY lines in a follow-up migration, or teach scripts/verify-rls-migration-scan.mjs the %1$s form.
+- b) build-typecheck-heavy → verify:overpayment-becomes-unapplied-credit SELFTEST FAIL: "credit-memos.routes.ts missing apply_to_invoice field" + "creditMemoTargetInvoiceRefusal does not distinguish applied vs unapplied".
+- c) OWNER DECISION, do not touch unless told: CodeQL js/user-controlled-bypass = 14 error-level findings vs baseline 2, on main too. Files: integrations/plaid/webhook-core.ts:145–146, auth/routes.ts:134/146, accounting/posting-engine.service.ts:2356/2489/2623, accounting/owner-data-repair.routes.ts:69/98/145/167/189. Shared / trucking code — frozen today.
+
+L4. wholesale.service.ts (#29935, your file): buyer lists must leave out inactive items — add i.is_active to where. Guard: an inactive item is not on the list.
+
+L5. RULE NEEDED: is_stock_item = N (CONTROL "Stock item? N") → do receipts / shipments skip the stock ledger and inventory-asset posting? Your posting lane — decide with the owner, then build.
+
+L6. Purchase bills (your claim 202617120100): billed ≤ received ≤ ordered per PO line, price variance per line, held until the owner approves with a reason, one vendor invoice no. per vendor (non-voided).
+
+DEADLINES (UTC)
+- L3a + L3b + L4 merged by 2026-11-27 23:30 UTC.
+- L2 by 2026-11-28 06:00 UTC.
+- L1 by 2026-11-28 14:00 UTC.
+- If missed, P1 takes the surface.
+
+DONE (re-measurable)
+- main check-runs: rls-migration-scan and build-typecheck-heavy green on the merge commit.
+- GET a customer named "Ipbgroup" → "IPB Group" with one history row.
+- Contacts list shows tier A/B/C, sortable, Excel.
