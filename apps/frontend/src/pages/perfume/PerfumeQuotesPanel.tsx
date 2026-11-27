@@ -100,7 +100,7 @@ export function PerfumeQuotesPanel() {
             { key: "number", label: "Number", sortable: true, render: (r) => <span className="font-semibold">{r.number}</span> },
             { key: "quote_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.quote_date) },
             { key: "valid_until", label: "Valid until", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.valid_until) },
-            { key: "customer_name", label: "Customer", sortable: true, render: (r) => r.customer_name },
+            { className: "text-left", cellClass: "text-left", key: "customer_name", label: "Customer", sortable: true, render: (r) => (r.company_id ? <DocLink tab="customers" id={r.company_id}>{r.customer_name}</DocLink> : r.customer_name), exportValue: (r) => r.customer_name },
             { key: "status", label: "Status", sortable: true, render: (r) => <StatusBadge s={r.status} />, exportValue: (r) => STATUS_TEXT[r.status] },
             { key: "lines", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.lines.toLocaleString("en-US") },
             { key: "units", label: "Units", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },

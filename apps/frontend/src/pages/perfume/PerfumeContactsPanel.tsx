@@ -25,6 +25,7 @@ import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
 import { perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
 import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
+import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -90,6 +91,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
       <ImportCard onDone={() => void list.refetch()} />
       <GoogleCard onChanged={() => void list.refetch()} />
+      <PerfumeNameFormatCard onDone={() => void list.refetch()} />
 
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.contacts", "Contacts")}>
         <div className="flex flex-wrap items-center gap-2">

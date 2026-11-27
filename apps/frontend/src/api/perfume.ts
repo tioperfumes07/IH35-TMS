@@ -993,3 +993,9 @@ export const getPerfumePriceBook = (f: PerfumeReportFilter & { level_id: string 
 export type PerfumeFamilyReportRow = { family_id: string | null; family: string; brand: string | null; items: number; items_on_hand: number; on_hand: number; value_cents: number };
 export const getPerfumeFamilyReport = (activeOnly: "Y" | "N") =>
   apiRequest<{ rows: PerfumeFamilyReportRow[]; total: { families: number; items: number; items_on_hand: number; on_hand: number; value_cents: number } }>(`/api/v1/perfume/reports/families?active_only=${activeOnly}`);
+
+/** ROUND P1.31 L2: company names in proper format — preview (rule's result per company), Apply (renames + one history row each). */
+export type PerfumeNameFix = { id: string; role: string | null; from: string; to: string; added_on: string | null };
+export const getPerfumeNameFixes = () => apiRequest<{ count: number; fixes: PerfumeNameFix[] }>("/api/v1/perfume/contacts/name-format/preview");
+export const applyPerfumeNameFixes = (ids: string[]) =>
+  apiRequest<{ renamed: number; skipped: number }>("/api/v1/perfume/contacts/name-format/apply", { method: "POST", body: { ids } });

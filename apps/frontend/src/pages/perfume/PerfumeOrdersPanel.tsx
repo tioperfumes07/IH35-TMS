@@ -86,7 +86,7 @@ export function PerfumeOrdersPanel() {
             { key: "number", label: "Number", sortable: true, render: (r) => <span className="font-semibold">{r.number}</span> },
             { key: "order_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.order_date) },
             { key: "ship_by", label: "Ship by", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.ship_by) },
-            { key: "customer_name", label: "Customer", sortable: true, render: (r) => r.customer_name },
+            { className: "text-left", cellClass: "text-left", key: "customer_name", label: "Customer", sortable: true, render: (r) => (r.company_id ? <DocLink tab="customers" id={r.company_id}>{r.customer_name}</DocLink> : r.customer_name), exportValue: (r) => r.customer_name },
             { key: "quote_number", label: "Quote", sortable: true, render: (r) => (r.quote_id && r.quote_number ? <DocLink tab="quotes" id={r.quote_id}>{r.quote_number}</DocLink> : DASH), exportValue: (r) => r.quote_number ?? "" },
             { key: "status", label: "Status", sortable: true, render: (r) => <Badge text={STATUS_TEXT[r.status]} color={STATUS_CLASS[r.status]} />, exportValue: (r) => STATUS_TEXT[r.status] },
             { key: "units", label: "Units", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.units.toLocaleString("en-US") },
