@@ -10,6 +10,7 @@ import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.se
 import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
 import { salesReport } from "./sales-report.service.js";
+import { agingQuery, agingReport, customerAccount } from "./receivables.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { accountMapSchema, itemAccountMap, itemPostingAccounts, setCategoryAccounts, setItemAccounts } from "./item-accounts.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
@@ -40,6 +41,19 @@ function fail(reply: FastifyReply, e: unknown) {
 }
 
 export async function registerScentsxLinkRoutes(app: FastifyInstance) {
+  // Receivables — CONTROL's Aging Balance Report / Customer Account Status / Invoice History (owner 2026-11-27 13:50 CT). Read only;
+  // payments are recorded and voided through the existing /api/v1/accounting/payments engine.
+  app.get("/api/v1/scentsx/receivables/aging", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = agingQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query", message: q.error.issues[0]?.message ?? "Bad aging query" });
+    try { return await withCurrentUser(uid, (c) => agingReport(c, q.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/receivables/customers/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const q = agingQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query", message: q.error.issues[0]?.message ?? "Bad aging query" });
+    try { return await withCurrentUser(uid, (c) => customerAccount(c, id.data, q.data)); } catch (e) { return fail(reply, e); }
+  });
   // Item → Inventory / COGS accounts (owner 2026-11-27 08:10 CT, migration 202617050100).
   app.get("/api/v1/scentsx/item-accounts", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
