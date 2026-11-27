@@ -410,11 +410,13 @@ export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, 
  *  (Armani Code Men and Code Women must not both land on one unsexed tester). */
 export async function strictLinkPreview(c: pg.PoolClient) {
   return (await c.query<{ mine_id: string; mine: string; vend_id: string; vend: string }>(`${UNLINKED_MINE},
-      v AS (SELECT i.* FROM perfume.items i WHERE i.id IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL AND i.brand <> ''),
-      m AS (SELECT i.* FROM perfume.items i WHERE i.id IN (SELECT item_id FROM mine) AND i.id NOT IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL AND i.brand <> '' AND i.size_ml IS NOT NULL),
-      tm AS (SELECT id, ${TOKENS("m")} AS k FROM m), tv AS (SELECT id, ${TOKENS("v")} AS k FROM v),
-      p AS (SELECT m.id AS mine_id, m.display_name AS mine, v.id AS vend_id, v.display_name AS vend
-              FROM m JOIN tm ON tm.id = m.id JOIN v ON ${SAME_BOTTLE} AND m.brand = v.brand JOIN tv ON tv.id = v.id AND tv.k = tm.k AND tm.k IS NOT NULL)
+      -- Each item's words are worked out once, then items meet only on equal words + brand (measured 11-27: computing the words
+      -- per candidate pair ran past a minute on prod; this form 658 ms).
+      v AS MATERIALIZED (SELECT i.*, ${TOKENS("i")} AS k FROM perfume.items i WHERE i.id IN (SELECT item_id FROM vend) AND i.merged_into_id IS NULL AND i.brand <> ''),
+      m AS MATERIALIZED (SELECT i.*, ${TOKENS("i")} AS k FROM perfume.items i WHERE i.id IN (SELECT item_id FROM mine) AND i.id NOT IN (SELECT item_id FROM vend)
+                           AND i.merged_into_id IS NULL AND i.brand <> '' AND i.size_ml IS NOT NULL),
+      p AS MATERIALIZED (SELECT m.id AS mine_id, m.display_name AS mine, v.id AS vend_id, v.display_name AS vend
+              FROM m JOIN v ON v.k = m.k AND v.brand = m.brand AND m.k IS NOT NULL AND ${SAME_BOTTLE})
     SELECT * FROM p WHERE mine_id IN (SELECT mine_id FROM p GROUP BY mine_id HAVING count(*) = 1)
                       AND vend_id IN (SELECT vend_id FROM p GROUP BY vend_id HAVING count(*) = 1) ORDER BY mine`)).rows;
 }
