@@ -60,6 +60,10 @@ async function setMap(c: Q, uid: string, scope: "category" | "item", key: string
       FOR UPDATE`, [co, scope, scope === "item" ? key : null, scope === "category" ? key : null])).rows[0];
   const same = (cur?.inventory_account_id ?? null) === x.inventory_account_id && (cur?.cogs_account_id ?? null) === x.cogs_account_id;
   if (same) return { changed: false };
+  if (x.inventory_account_id) {
+    const transit = await resolveRoleAccountOptional(c as never, co, "inventory_in_transit");
+    if (transit && transit === x.inventory_account_id) throw new ScentsxLinkInvalid("Inventory in Transit is the transfers' clearing account — pick a stock account (1200 Inventory or a sub-account).");
+  }
   if ((cur?.inventory_account_id ?? null) !== x.inventory_account_id) {
     const units = await unitsOnHand(c, scope, key);
     if (units !== 0) {

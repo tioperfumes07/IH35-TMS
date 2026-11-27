@@ -59,6 +59,8 @@ describe("ScentsX item → Inventory / COGS accounts (real Postgres, rolled back
     await expect(setCategoryAccounts(db, u, "ZZ Skincare", { inventory_account_id: bank, cogs_account_id: null })).rejects.toThrow(/subtype Inventory/);
     await db.query("ROLLBACK TO SAVEPOINT t1");
 
+    const transit = (await db.query<{ id: string }>(`SELECT id::text FROM catalogs.accounts WHERE operating_company_id = scentsx.company_id() AND account_number = '1290'`)).rows[0]!.id;
+    await expect(setCategoryAccounts(db, u, "ZZ Skincare", { inventory_account_id: transit, cogs_account_id: null })).rejects.toThrow(/transfers' clearing account/);
     expect(await setCategoryAccounts(db, u, "ZZ Skincare", { inventory_account_id: inv, cogs_account_id: cogs })).toEqual({ changed: true });
     expect(await setItemAccounts(db, u, over, { inventory_account_id: inv2, cogs_account_id: null })).toEqual({ changed: true });
     expect(await itemPostingAccounts(db, mapped)).toMatchObject({ inventory_account_id: inv, cogs_account_id: cogs, source: "category" });

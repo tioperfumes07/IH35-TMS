@@ -26,7 +26,8 @@ function useAccountChoices() {
   const q = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts, staleTime: 60_000 });
   const all = q.data?.accounts ?? [];
   return {
-    inventory: all.filter((a) => a.account_type === "Asset" && a.account_subtype === "Inventory"),
+    // Inventory in transit is the transfers' clearing account (role inventory_in_transit) — never an item's stock account.
+    inventory: all.filter((a) => a.account_type === "Asset" && a.account_subtype === "Inventory" && !a.roles.includes("inventory_in_transit")),
     cogs: all.filter((a) => a.account_type === "CostOfGoodsSold"),
   };
 }
