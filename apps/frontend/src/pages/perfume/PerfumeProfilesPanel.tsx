@@ -10,6 +10,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/Button";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
@@ -77,7 +78,8 @@ export function PosTable({ rows, storageKey }: { rows: PerfumePoRow[]; storageKe
 /* ------------------------------------------------------------------ Supplier profiles */
 
 export function PerfumeSupplierProfilesPanel() {
-  const { openId } = useOpenDoc();
+  const { openId, open } = useOpenDoc();
+  const [, setParams] = useSearchParams();
   const vendors = useQuery({ queryKey: ["perfume", "vendors"], queryFn: listPerfumeVendors });
   const [q, setQ] = useState("");
   const [selected, setSelected] = useState<string | null>(openId);
@@ -85,13 +87,23 @@ export function PerfumeSupplierProfilesPanel() {
   const rows = useMemo(() => (vendors.data?.vendors ?? []).filter((v) => !q.trim() || `${v.name} ${v.short_name ?? ""}`.toLowerCase().includes(q.trim().toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name)), [vendors.data, q]);
   if (vendors.isError) return <ListErrorState title={tr("perfume.profiles.vendorsError", "Couldn't load the vendors")} status={0} message={(vendors.error as Error)?.message} onRetry={() => void vendors.refetch()} />;
+  // Owner 2026-11-27 17:14 CT: "i click and it does not open the profile". It did open — below the 25-row list, off the
+  // screen, with the address nowhere on it. Like QuickBooks' vendor center: the click opens the profile IN PLACE of the
+  // list (top of the page, ?open=<id> in the address so Back returns), and "All suppliers" goes back to the list.
+  const close = () => { setSelected(null); setParams((p) => { const n = new URLSearchParams(p); n.delete("open"); return n; }); };
+  if (selected) return (
+    <div className="space-y-3" data-testid="perfume-suppliers-panel">
+      <Button type="button" variant="secondary" className="h-[30px] px-3 text-xs" onClick={close} data-testid="perfume-suppliers-back">{tr("perfume.profiles.all_suppliers", "← All suppliers")}</Button>
+      <VendorProfile id={selected} onClose={close} />
+    </div>
+  );
   return (
     <div className="space-y-3" data-testid="perfume-suppliers-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.profiles.suppliers", "Supplier profiles")}>
         <input type="search" className={`${ctl} w-full max-w-[420px]`} aria-label={tr("perfume.profiles.find_vendor", "Find a vendor")} placeholder={tr("perfume.profiles.find_vendor_ph", "Find a vendor")}
           value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-suppliers-search" />
         <ParityTable<PerfumeVendor> rows={rows} rowKey={(v) => v.id} loading={vendors.isLoading} storageKey="perfume-suppliers-v1" exportFilename="TIO vendors" exportExcel
-          emptyText="No vendor matches." onRowClick={(v) => setSelected(v.id)}
+          emptyText="No vendor matches." onRowClick={(v) => { setSelected(v.id); open("suppliers", v.id); window.scrollTo({ top: 0 }); }}
           columns={[
             { key: "name", label: "Vendor", sortable: true, render: (v) => <span className="font-semibold">{v.name}</span> },
             { key: "short_name", label: "Short name", sortable: true, render: (v) => v.short_name ?? DASH },
@@ -99,7 +111,6 @@ export function PerfumeSupplierProfilesPanel() {
             { key: "contact", label: "Contact", render: (v) => v.contact ?? DASH },
           ]} />
       </section>
-      {selected ? <VendorProfile id={selected} onClose={() => setSelected(null)} /> : null}
     </div>
   );
 }
@@ -123,15 +134,7 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
         <div className="text-section-header">{p.vendor.name}{p.vendor.short_name ? ` (${p.vendor.short_name})` : ""} · {KIND_TEXT[p.vendor.kind] ?? p.vendor.kind}</div>
         <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.profiles.close", "Close")}</Button>
       </div>
-      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-vendor-kpis">
-        <KpiCard label={tr("perfume.profiles.kpi_items", "Items it carries")} number={p.items.toLocaleString("en-US")} disabled />
-        <KpiCard label={tr("perfume.profiles.kpi_waiting", "Lines waiting in Review")} number={p.waiting.toLocaleString("en-US")} to="/perfume?tab=review" />
-        <KpiCard label={tr("perfume.profiles.kpi_codes", "Their codes remembered")} number={p.codes.toLocaleString("en-US")} disabled />
-        <KpiCard label={tr("perfume.profiles.kpi_words", "Their words remembered")} number={p.words.toLocaleString("en-US")} disabled />
-        <KpiCard label={tr("perfume.profiles.kpi_pos", "Open purchase orders")} number={p.po_open.toLocaleString("en-US")} to="/perfume?tab=purchases" />
-        <KpiCard label={tr("perfume.profiles.kpi_spend", "Bought (POs not cancelled)")} number={money(p.po_total_cents)} to="/perfume?tab=purchases" />
-      </div>
-      <div className="border-t border-[#E8EDF2] pt-2 text-xs" data-testid="perfume-vendor-company">
+      <div className="text-xs" data-testid="perfume-vendor-company">
         <div className="text-section-header mb-1">{tr("perfume.profiles.company", "Company in Contacts")}</div>
         {c ? (
           <div className="flex flex-wrap items-center gap-3">
@@ -168,6 +171,14 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
             ) : null}
           </div>
         )}
+      </div>
+      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-vendor-kpis">
+        <KpiCard label={tr("perfume.profiles.kpi_items", "Items it carries")} number={p.items.toLocaleString("en-US")} disabled />
+        <KpiCard label={tr("perfume.profiles.kpi_waiting", "Lines waiting in Review")} number={p.waiting.toLocaleString("en-US")} to="/perfume?tab=review" />
+        <KpiCard label={tr("perfume.profiles.kpi_codes", "Their codes remembered")} number={p.codes.toLocaleString("en-US")} disabled />
+        <KpiCard label={tr("perfume.profiles.kpi_words", "Their words remembered")} number={p.words.toLocaleString("en-US")} disabled />
+        <KpiCard label={tr("perfume.profiles.kpi_pos", "Open purchase orders")} number={p.po_open.toLocaleString("en-US")} to="/perfume?tab=purchases" />
+        <KpiCard label={tr("perfume.profiles.kpi_spend", "Bought (POs not cancelled)")} number={money(p.po_total_cents)} to="/perfume?tab=purchases" />
       </div>
       <ParityTable<PerfumeVendorProfile["lists"][number]> title={tr("perfume.profiles.lists", "Price lists")} rows={p.lists} rowKey={(l) => l.id} storageKey="perfume-vendor-lists-v1"
         exportFilename="TIO vendor lists" exportExcel emptyText="No lists from this vendor."
