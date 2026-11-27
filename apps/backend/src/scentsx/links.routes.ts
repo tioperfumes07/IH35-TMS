@@ -13,6 +13,7 @@ import { salesReport } from "./sales-report.service.js";
 import { agingQuery, agingReport, customerAccount } from "./receivables.service.js";
 import { createReturn, listReturns, returnableLines, returnSchema } from "./returns.service.js";
 import { billablePoLines, billPurchaseOrder, purchaseBillSchema, purchaseOrderBills } from "./purchase-bill.service.js";
+import { payablesAging, payablesQuery, vendorAccount } from "./payables.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { accountMapSchema, itemAccountMap, itemPostingAccounts, setCategoryAccounts, setItemAccounts } from "./item-accounts.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
@@ -64,6 +65,18 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = returnSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", message: b.error.issues[0]?.message ?? "Bad return" });
     try { return reply.code(201).send(await withCurrentUser(uid, (c) => createReturn(c, uid, b.data))); } catch (e) { return fail(reply, e); }
+  });
+  // Payables — A/P aging by vendor + vendor account (read only; bills are paid / voided through /api/v1/accounting/bills/:id/pay | void).
+  app.get("/api/v1/scentsx/payables/aging", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = payablesQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    try { return await withCurrentUser(uid, (c) => payablesAging(c, q.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/payables/vendors/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const q = payablesQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    try { return await withCurrentUser(uid, (c) => vendorAccount(c, id.data, q.data)); } catch (e) { return fail(reply, e); }
   });
   // Purchase bills (migration 202617120100): a received perfume PO billed through the one bill writer + poster (GRNI -> A/P).
   app.get("/api/v1/scentsx/purchase-orders/:id/billable", RL_READ, async (req, reply) => {
