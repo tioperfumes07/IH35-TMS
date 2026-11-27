@@ -9,7 +9,7 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { addLine, createQuote, getQuote } from "./quotes.service.js";
-import { getOrder, orderFromQuote, OrderInvalid, ordersOfCompany, ordersOfItem, shipAll, updateOrderLine } from "./orders.service.js";
+import { addOrderLine, createOrder, getOrder, orderFromQuote, OrderInvalid, ordersOfCompany, ordersOfItem, shipAll, updateOrderLine } from "./orders.service.js";
 import {
   addPurchaseLine, getPurchaseOrder, PoInvalid, purchaseOrdersFromOrder, purchaseOrdersOfItem, purchaseOrdersOfOrder, purchaseOrdersOfVendor, purchaseOrderXlsx,
   receiveAll, setPurchaseOrderStatus, updatePurchaseLine,
@@ -150,5 +150,22 @@ describeIntegration("sales orders, purchase orders, profiles (real Postgres, rol
     expect(matchLine(ix, v, { description: "ZZO zzwords edp 3.4oz" }, { allowNewItem: false })).toMatchObject({ itemId: it1, method: "alias" });
     // Run twice: nothing new, nothing moved.
     expect(await rememberVendorLinks(db as never, l)).toEqual({ upcs: 0, codes: 0, words: 0 });
+  });
+  it("buys each line from the item's preferred vendor when their list carries it, else the cheapest (CONTROL Vendor Number)", async () => {
+    const it1 = await item("PREF ONE", "8099922233465");
+    const it2 = await item("PREF TWO", "8099922233472");
+    const cheap = await vendor("ZZO Cheap", "buy"), pref = await vendor("ZZO Preferred", "buy");
+    const lCheap = await list(cheap), lPref = await list(pref);
+    await row(lCheap, 1, { sku: "CH-1", description: "PREF ONE CHEAP", cents: 900, item: it1 });
+    await row(lCheap, 2, { sku: "CH-2", description: "PREF TWO CHEAP", cents: 900, item: it2 });
+    await row(lPref, 1, { sku: "PR-1", description: "PREF ONE PREFERRED", cents: 1200, item: it1 }); // dearer, but preferred
+    await db.query(`UPDATE perfume.items SET preferred_vendor_id = $2 WHERE id = ANY($1::uuid[])`, [[it1, it2], pref]); // pref has no line for it2
+    const o = await createOrder(db as never, TEST_OWNER_USER_ID, { customer_name: "ZZO Pref buyer" } as never);
+    await addOrderLine(db as never, TEST_OWNER_USER_ID, o.id, { item_id: it1, qty: 3, unit_price_cents: 2000 });
+    await addOrderLine(db as never, TEST_OWNER_USER_ID, o.id, { item_id: it2, qty: 2, unit_price_cents: 2000 });
+    const made = await purchaseOrdersFromOrder(db as never, TEST_OWNER_USER_ID, o.id);
+    const byV = new Map(await Promise.all(made.purchase_orders.map(async (p) => [p.vendor_id, (await getPurchaseOrder(db as never, p.id)).lines.map((l) => [l.vendor_sku, l.unit_cost_cents])] as const)));
+    expect(byV.get(pref)).toEqual([["PR-1", 1200]]);
+    expect(byV.get(cheap)).toEqual([["CH-2", 900]]);
   });
 });
