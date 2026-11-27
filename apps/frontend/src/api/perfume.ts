@@ -1005,3 +1005,10 @@ export type PerfumeNameFix = { id: string; role: string | null; from: string; to
 export const getPerfumeNameFixes = () => apiRequest<{ count: number; fixes: PerfumeNameFix[] }>("/api/v1/perfume/contacts/name-format/preview");
 export const applyPerfumeNameFixes = (ids: string[]) =>
   apiRequest<{ renamed: number; skipped: number }>("/api/v1/perfume/contacts/name-format/apply", { method: "POST", body: { ids } });
+
+/** ROUND P1.31 L1: customers ranked A/B/C on purchases (old systems' history + ScentsX invoices), per currency. */
+export type PerfumeRankRow = { key: string; company_id: string | null; customer: string; role: string | null; linked: boolean; sources: string[];
+  lifetime_cents: number; last12_cents: number; invoices: number; months: number; first_period: string | null; last_period: string | null; tier: "A" | "B" | "C"; rank: number; share: number };
+export const getPerfumeCustomerRanking = (currency: "USD" | "MXN") =>
+  apiRequest<{ currency: string; total_cents: number; customers: number; tiers: { A: number; B: number; C: number }; linked: number; rows: PerfumeRankRow[] }>(
+    `/api/v1/perfume/customers/ranking?currency=${currency}`);
