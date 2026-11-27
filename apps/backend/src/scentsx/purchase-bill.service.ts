@@ -34,6 +34,7 @@ export type BillablePoLine = {
 /** Every line of the PO: units received (net of vendor returns) and their GRNI value, units already on a live bill, what is left. */
 export async function billablePoLines(c: Q, poId: string): Promise<BillablePoLine[]> {
   await scopeToScentsx(c);
+  if (!(await c.query(`SELECT 1 FROM perfume.purchase_orders WHERE id = $1::uuid AND archived_at IS NULL`, [poId])).rowCount) throw new ScentsxLinkNotFound();
   const r = await c.query<{ po_line_id: string; line_no: number; item_id: string | null; description: string; ordered: number; received: number;
     moved_qty: string | null; moved_value: string | null; billed: number; billed_value: string; unit_cost_cents: string }>(
     `SELECT l.id::text AS po_line_id, l.line_no, l.item_id::text,

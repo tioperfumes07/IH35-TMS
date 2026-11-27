@@ -236,3 +236,20 @@ export const getScentsxSalesInvoices = (f: ScentsxInquiryFilter) =>
   apiRequest<{ from: string; to: string; rows: ScentsxSaleInvoice[]; total: { invoices: number; units: number; sales_cents: number; tax_cents: number; total_cents: number }; truncated: boolean }>(`/api/v1/scentsx/inquiry/sales-invoices?${inquiryQs(f)}`);
 export const getScentsxInquiryCustomers = () => apiRequest<{ customers: Array<{ customer_id: string; customer: string; invoices: number }> }>("/api/v1/scentsx/inquiry/customers");
 export const scentsxInquiryXlsxPath = (kind: "sales-lines" | "sales-invoices", f: ScentsxInquiryFilter) => `/api/v1/scentsx/inquiry/${kind}/export.xlsx?${inquiryQs(f)}`;
+
+/** Payables — A/P aging by vendor + vendor account (read only; bills are paid / voided through /api/v1/accounting/bills/:id/pay | void). */
+export type ScentsxApBuckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; total: number };
+export type ScentsxApAgingRow = ScentsxApBuckets & { vendor_id: string | null; vendor: string; perfume_vendor_id: string | null; bills: number; oldest_past_due: number };
+export type ScentsxApOpenBill = { id: string; display_id: string | null; bill_number: string | null; vendor_id: string | null; bill_date: string; due_date: string;
+  past_due: number; amount_cents: number; settled_cents: number; open_cents: number; bucket: keyof Omit<ScentsxApBuckets, "total">; purchase_order_id: string | null; po_number: string | null };
+export type ScentsxApBill = { id: string; display_id: string | null; bill_number: string | null; bill_date: string; due_date: string; status: string; amount_cents: number;
+  voided: boolean; po_number: string | null; purchase_order_id: string | null };
+export type ScentsxApPayment = { id: string; date: string; method: string; check_number: string | null; reference_number: string | null; amount_cents: number;
+  bill_id: string; bill: string | null; paid_from: string | null; voided: boolean };
+export type ScentsxBank = { id: string; name: string; account_type: string; account_number: string | null };
+export type ScentsxVendorAccount = { as_of: string; operating_company_id: string; vendor: { id: string; name: string; perfume_vendor_id: string | null; perfume_vendor: string | null };
+  buckets: ScentsxApBuckets; open_bills: ScentsxApOpenBill[]; bills: ScentsxApBill[]; payments: ScentsxApPayment[]; bank_accounts: ScentsxBank[] };
+export const getScentsxPayablesAging = (asOf: string) =>
+  apiRequest<{ as_of: string; operating_company_id: string; totals: ScentsxApBuckets; vendors: ScentsxApAgingRow[] }>(`/api/v1/scentsx/payables/aging?as_of=${encodeURIComponent(asOf)}`);
+export const getScentsxVendorAccount = (vendorId: string, asOf: string) =>
+  apiRequest<ScentsxVendorAccount>(`/api/v1/scentsx/payables/vendors/${encodeURIComponent(vendorId)}?as_of=${encodeURIComponent(asOf)}`);
