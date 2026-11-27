@@ -382,8 +382,12 @@ export async function addUpc(c: pg.PoolClient, uid: string, id: string, raw: str
   const upc = normalizeUpc(raw);
   if (!upc) throw new ItemInvalid("That is not a UPC (8 to 14 digits).");
   const had = (await c.query<{ item_id: string }>(`SELECT item_id FROM perfume.item_upcs WHERE upc = $1 FOR UPDATE`, [upc])).rows[0];
-  if (had?.item_id === id) return { upc, moved_from: null };
-  if (had) {
+  // Already this item's UPC: no move, but the lines still go on below. Owner 2026-11-27 13:09 CT ("if most have same UPC and
+  // description, then that is it"): confirming the UPC on the item most vendors name is what brings a vendor's wrongly named
+  // line (a tester / case pack priced on the retail UPC) onto it. Returning early here left those lines on the other item.
+  if (had?.item_id === id) {
+    // nothing to move in perfume.item_upcs
+  } else if (had) {
     await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE upc = $1`, [upc, id]);
     await event(c, had.item_id, uid, "upc_moved_out", { upc, to_item_id: id, to: await nameOf(c, id) });
     await event(c, id, uid, "upc_moved_in", { upc, from_item_id: had.item_id, from: await nameOf(c, had.item_id) });
@@ -395,7 +399,8 @@ export async function addUpc(c: pg.PoolClient, uid: string, id: string, raw: str
   const lines = await c.query(
     `UPDATE perfume.price_list_rows r SET item_id = $2, match_method = 'confirmed', match_status = 'matched', suggestions = '[]'::jsonb
        FROM perfume.price_lists l WHERE l.id = r.list_id AND l.is_current AND l.voided_at IS NULL AND ltrim(r.upc, '0') = $1 AND r.item_id IS DISTINCT FROM $2`, [upc, id]);
-  return { upc, moved_from: had?.item_id ?? null, lines_relinked: lines.rowCount ?? 0 };
+  if (had?.item_id === id && (lines.rowCount ?? 0) > 0) await event(c, id, uid, "line_linked", { by_upc: upc, lines: lines.rowCount });
+  return { upc, moved_from: had && had.item_id !== id ? had.item_id : null, lines_relinked: lines.rowCount ?? 0 };
 }
 
 /** An HK code onto this item (his inventory list's item number): new, or moved from the item that had it. */
