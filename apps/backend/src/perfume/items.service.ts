@@ -42,12 +42,27 @@ const nameOf = async (c: pg.PoolClient, id: string) => (await c.query<{ display_
 /* ------------------------------------------------------------------ the item file list */
 
 const MINE_KINDS = `('inventory', 'offer')`;
+const csvText = z.string().max(4000).optional().transform((v) => (v ? v.split(",").map((x) => x.trim()).filter(Boolean).slice(0, 200) : []));
+const csv = <T extends string>(allowed: readonly T[]) =>
+  z.string().max(400).optional().transform((v) => (v ? v.split(",").map((x) => x.trim()).filter((x): x is T => (allowed as readonly string[]).includes(x)) : [] as T[]));
+/** Set-based (one pass per table, never a sub-query per item — FORCE RLS makes per-row sub-queries slow, see listItemFile):
+ *  IN_STOCK = on hand > 0 across every location; BOUGHT = ever bought: an opening / receipt stock move, a purchase order line
+ *  received, or a cost on file (perfume.item_costs, from my inventory); LOW = below its minimum at a location. */
+const IN_STOCK_IDS = `(SELECT item_id FROM perfume.item_stock GROUP BY item_id HAVING sum(qty) > 0)`;
+const BOUGHT_IDS = `(SELECT item_id FROM perfume.stock_moves WHERE kind IN ('opening', 'receipt')
+  UNION SELECT item_id FROM perfume.purchase_order_lines WHERE qty_received > 0 AND item_id IS NOT NULL UNION SELECT item_id FROM perfume.item_costs)`;
+const LOW_IDS = `(SELECT item_id FROM perfume.item_stock WHERE min_qty IS NOT NULL AND qty < min_qty)`;
 export const listQuery = z.object({
   q: z.string().trim().max(200).optional(),
   has: z.enum(["tio", "no_tio", "hk", "no_hk", "upc", "no_upc", "mine", "active", "inactive"]).optional(),
   /** Owner 23:23 CT: "SHOW ALL ITEMS OUR AND VENDORS BUT HAVE TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL". Ours = on my
    *  inventory / offer list in use; vendors = on a supplier's or competitor's list in use and not on mine. */
   scope: z.enum(["mine", "vendors", "all"]).default("all"),
+  /** Owner 2026-11-27 17:28 CT: "IN ITEMS WE SHOLD ALSO HAVE FILTERS, MULTIPLE DROP DOWN, IN STOCK, NEVER PURCHASED, OUT OF STOCK".
+   *  Comma lists; empty = all. stock: in_stock · out_of_stock (bought before, none on hand) · never_purchased · below_min. */
+  stock: csv(["in_stock", "out_of_stock", "never_purchased", "below_min"]),
+  brand: csvText, product_type: csvText, gender: csvText, category: csvText, conc: csvText, origin: csvText, scent: csvText,
+  family: csvText,
   limit: z.coerce.number().int().min(1).max(500).default(100),
   offset: z.coerce.number().int().min(0).default(0),
 });
@@ -78,6 +93,18 @@ function filters(f: z.infer<typeof listQuery>, args: unknown[]) {
       WHERE r.item_id = i.id AND v.kind NOT IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`;
   if (f.scope === "mine") where.push(onMine);
   if (f.scope === "vendors") where.push(`${onVendor} AND NOT ${onMine}`);
+  const list = (vals: string[] | undefined, expr: string) => { if (vals?.length) { args.push(vals); where.push(`${expr} = ANY($${args.length}::text[])`); } };
+  list(f.brand, "i.brand"); list(f.product_type, "coalesce(i.product_type, '')"); list(f.gender, "coalesce(i.gender, '')");
+  list(f.category, "coalesce(i.category, '')"); list(f.conc, "coalesce(i.conc, '')"); list(f.origin, "coalesce(i.origin_country, '')");
+  list(f.family, "coalesce(i.family_id::text, '')");
+  if (f.scent?.length) { args.push(f.scent); where.push(`i.family_id IN (SELECT id FROM perfume.item_families WHERE olfactory_family = ANY($${args.length}::text[]))`); }
+  if (f.stock?.length) {
+    const st: Record<string, string> = {
+      in_stock: `i.id IN ${IN_STOCK_IDS}`, out_of_stock: `(i.id NOT IN ${IN_STOCK_IDS} AND i.id IN ${BOUGHT_IDS})`, never_purchased: `i.id NOT IN ${BOUGHT_IDS}`,
+      below_min: `i.id IN ${LOW_IDS}`,
+    };
+    where.push(`(${f.stock.map((k) => st[k]).join(" OR ")})`);
+  }
   if (f.has === "mine") where.push(`EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`);
   return where.join(" AND ");
@@ -124,6 +151,30 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
     })),
   };
 }
+/** The filter drop-downs: every value on live items with how many carry it ('' = not set), and the stock counts. */
+export async function itemFileFacets(c: pg.PoolClient) {
+  const facet = async (expr: string) => (await c.query<{ value: string; count: number }>(
+    `SELECT ${expr} AS value, count(*)::int AS count FROM perfume.items i WHERE i.merged_into_id IS NULL GROUP BY 1 ORDER BY 2 DESC, 1`)).rows;
+  const fam = (await c.query<{ value: string; label: string; count: number }>(
+    `SELECT f.id::text AS value, concat_ws(' · ', f.brand, f.name) AS label, count(i.id)::int AS count
+       FROM perfume.item_families f JOIN perfume.items i ON i.family_id = f.id AND i.merged_into_id IS NULL WHERE f.archived_at IS NULL GROUP BY 1, 2 ORDER BY 2`)).rows;
+  const stock = (await c.query<{ in_stock: number; out_of_stock: number; never_purchased: number; below_min: number }>(
+    `WITH live AS (SELECT id FROM perfume.items WHERE merged_into_id IS NULL), ins AS ${IN_STOCK_IDS}, b AS ${BOUGHT_IDS}, lo AS ${LOW_IDS}
+     SELECT count(*) FILTER (WHERE ins.item_id IS NOT NULL)::int AS in_stock,
+            count(*) FILTER (WHERE ins.item_id IS NULL AND b.item_id IS NOT NULL)::int AS out_of_stock,
+            count(*) FILTER (WHERE b.item_id IS NULL)::int AS never_purchased,
+            count(*) FILTER (WHERE live.id IN (SELECT item_id FROM lo))::int AS below_min
+       FROM live LEFT JOIN ins ON ins.item_id = live.id LEFT JOIN (SELECT DISTINCT item_id FROM b) b ON b.item_id = live.id`)).rows[0]!;
+  return {
+    brand: await facet("coalesce(i.brand, '')"), product_type: await facet("coalesce(i.product_type, '')"), gender: await facet("coalesce(i.gender, '')"),
+    category: await facet("coalesce(i.category, '')"), conc: await facet("coalesce(i.conc, '')"), origin: await facet("coalesce(i.origin_country, '')"),
+    scent: (await c.query<{ value: string; count: number }>(
+      `SELECT f.olfactory_family AS value, count(i.id)::int AS count FROM perfume.item_families f JOIN perfume.items i ON i.family_id = f.id AND i.merged_into_id IS NULL
+        WHERE f.archived_at IS NULL AND f.olfactory_family IS NOT NULL GROUP BY 1 ORDER BY 2 DESC, 1`)).rows,
+    family: fam, stock,
+  };
+}
+
 export async function itemFileCounts(c: pg.PoolClient) {
   return (await c.query(
     `WITH live AS (SELECT id, internal_code FROM perfume.items WHERE merged_into_id IS NULL),

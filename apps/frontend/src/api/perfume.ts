@@ -873,8 +873,11 @@ export type PerfumeLinkageLine = { line_id: string; vendor_id: string; vendor: s
   size_text: string | null; price_cents: number | null; match_status: string; match_method: string | null; list_date: string; item_id: string | null; item: string | null; tio_code: string | null;
   found_by: "upc" | "code" | "item" | "words" };
 export type PerfumeLinkage = { q: string; upc: string | null; items: Array<{ id: string; display_name: string; tio_code: string | null; upcs: string[] }>; lines: PerfumeLinkageLine[] };
-const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number }) => {
+/** Owner 17:28 CT: multi-select filters on the item file (comma lists; empty = all). */
+export type PerfumeItemFilters = Partial<Record<"stock" | "brand" | "product_type" | "gender" | "category" | "conc" | "origin" | "scent" | "family", string[]>>;
+const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number; filters?: PerfumeItemFilters }) => {
   const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(f.filters ?? {})) if (v && v.length) p.set(k, v.join(","));
   if (f.scope) p.set("scope", f.scope);
   if (f.q?.trim()) p.set("q", f.q.trim());
   if (f.has) p.set("has", f.has);
@@ -883,8 +886,8 @@ const itemQs = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemSc
   const s = p.toString();
   return s ? `?${s}` : "";
 };
-export const listPerfumeItemFile = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number } = {}) => apiRequest<PerfumeItemFileList>(`/api/v1/perfume/item-file${itemQs(f)}`);
-export const perfumeItemFileExportPath = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope } = {}) => `/api/v1/perfume/item-file/export.xlsx${itemQs(f)}`;
+export const listPerfumeItemFile = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; limit?: number; offset?: number; filters?: PerfumeItemFilters } = {}) => apiRequest<PerfumeItemFileList>(`/api/v1/perfume/item-file${itemQs(f)}`);
+export const perfumeItemFileExportPath = (f: { q?: string; has?: PerfumeItemFileHas; scope?: PerfumeItemScope; filters?: PerfumeItemFilters } = {}) => `/api/v1/perfume/item-file/export.xlsx${itemQs(f)}`;
 export const getPerfumeItemFile = (id: string) => apiRequest<PerfumeItemFile | { merged_into_id: string }>(`/api/v1/perfume/item-file/${id}`);
 export const updatePerfumeItemFile = (id: string, b: PerfumeItemEdit) => apiRequest<{ ok: true }>(`/api/v1/perfume/item-file/${id}`, { method: "PATCH", body: b });
 export const addPerfumeItemUpc = (id: string, upc: string) =>
@@ -1062,3 +1065,7 @@ export const getPerfumeCatalogCleanup = () =>
   apiRequest<{ rows: PerfumeCleanupRow[]; adds: Array<{ kind: PerfumeCatalogKind; list: string; value: string; exists: boolean }> }>("/api/v1/perfume/catalogs/cleanup");
 export const applyPerfumeCatalogCleanup = (keys: string[]) =>
   apiRequest<{ applied: number; moved: number }>("/api/v1/perfume/catalogs/cleanup/apply", { method: "POST", body: { keys } });
+export type PerfumeItemFacet = { value: string; count: number; label?: string };
+export type PerfumeItemFacets = Record<"brand" | "product_type" | "gender" | "category" | "conc" | "origin" | "scent" | "family", PerfumeItemFacet[]>
+  & { stock: { in_stock: number; out_of_stock: number; never_purchased: number; below_min: number } };
+export const getPerfumeItemFacets = () => apiRequest<PerfumeItemFacets>("/api/v1/perfume/item-file/facets");

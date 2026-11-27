@@ -9,7 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import {
-  addHkCode, addUpc, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, itemEditSchema, itemBulkSchema, bulkEditItems, itemCreateSchema, createItem, itemOptions, itemFileCounts, ItemNotFound, linkage, linkageQuery, linkItemTo, listItemFile, listQuery,
+  addHkCode, addUpc, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, itemEditSchema, itemBulkSchema, bulkEditItems, itemCreateSchema, createItem, itemOptions, itemFileCounts, itemFileFacets, ItemNotFound, linkage, linkageQuery, linkItemTo, listItemFile, listQuery,
   stockLinkQueue, stockQueueQuery, strictLinkApply, strictLinkPreview, updateItemFile,
 } from "./items.service.js";
 import { ProfileNotFound } from "./profiles.service.js";
@@ -40,6 +40,10 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
     const q = listQuery.safeParse(req.query ?? {});
     if (!q.success) return reply.code(400).send({ error: "invalid_query" });
     return withCurrentUser(uid, async (c) => ({ ...(await listItemFile(c, q.data)), counts: await itemFileCounts(c) }));
+  });
+  app.get("/api/v1/perfume/item-file/facets", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => itemFileFacets(c));
   });
   app.get("/api/v1/perfume/item-file/export.xlsx", RL_FILE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

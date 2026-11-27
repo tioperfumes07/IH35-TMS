@@ -9,6 +9,7 @@
  *    purchase orders through the PO engine.
  */
 import { useEffect, useState, type ReactNode } from "react";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -103,9 +104,17 @@ export function PerfumeFamiliesPanel() {
   const { openId, open } = useOpenDoc();
   const [q, setQ] = useState("");
   const [creating, setCreating] = useState(false);
+  const [fBrand, setFBrand] = useState<string[]>([]);
+  const [fScent, setFScent] = useState<string[]>([]);
+  const [fGender, setFGender] = useState<string[]>([]);
   const list = useQuery({ queryKey: ["perfume", "families", q], queryFn: () => listPerfumeFamilies(q) });
   if (list.isError) return <ListErrorState title={tr("perfume.fam.error", "Couldn't load the families")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
-  const rows = list.data?.rows ?? [];
+  const all = list.data?.rows ?? [];
+  // Owner 2026-11-27 17:28 CT: "SCENT FAMILY … SHOULD BE MULTIMPLE SELECTOR. BRAND SHOULD BE FILTER COMBOBOX".
+  const facet = (get: (r: PerfumeFamilyRow) => string) => [...all.reduce((m, r) => m.set(get(r), (m.get(get(r)) ?? 0) + 1), new Map<string, number>())]
+    .sort((a, b) => a[0].localeCompare(b[0])).map(([v, n]) => ({ value: v, label: `${v || "Not set"} (${n.toLocaleString("en-US")})` }));
+  const rows = all.filter((r) => (!fBrand.length || fBrand.includes(r.brand ?? "")) && (!fScent.length || fScent.includes(r.olfactory_family ?? ""))
+    && (!fGender.length || fGender.includes(r.gender ?? "")));
   return (
     <div className="space-y-3" data-testid="perfume-families-panel">
       <div className="grid grid-cols-2 gap-[10px] md:grid-cols-4">
@@ -118,6 +127,9 @@ export function PerfumeFamiliesPanel() {
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setCreating((x) => !x)} data-testid="perfume-families-new">{creating ? tr("perfume.fam.cancel_new", "Cancel new family") : tr("perfume.fam.new", "New family")}</Button>
           <input type="search" className={`${ctl} w-full max-w-[360px]`} placeholder={tr("perfume.fam.search", "Find a family — name or brand")} value={q} onChange={(e) => setQ(e.target.value)} aria-label="Find a family" />
+          <MultiSelectDropdown label={tr("perfume.fam.f_brand", "Brand")} allLabel="All brands" searchable options={facet((r) => r.brand ?? "")} selected={fBrand} onChange={setFBrand} data-testid="perfume-families-filter-brand" />
+          <MultiSelectDropdown label={tr("perfume.fam.f_scent", "Scent family")} allLabel="All scent families" searchable options={facet((r) => r.olfactory_family ?? "")} selected={fScent} onChange={setFScent} data-testid="perfume-families-filter-scent" />
+          <MultiSelectDropdown label={tr("perfume.fam.f_gender", "Gender")} allLabel="All genders" options={facet((r) => r.gender ?? "").map((o) => ({ ...o, label: o.label.replace(/^(M|W|U) /, (m) => `${GENDER[m.trim()] ?? m.trim()} `) }))} selected={fGender} onChange={setFGender} data-testid="perfume-families-filter-gender" />
         </div>
         {creating ? <FamilyForm onSaved={(id) => { setCreating(false); open("families", id); }} onCancel={() => setCreating(false)} /> : null}
         <ParityTable<PerfumeFamilyRow> rows={rows} rowKey={(r) => r.id} loading={list.isLoading} storageKey="perfume-families-v1" exportFilename="TIO item families" exportExcel
