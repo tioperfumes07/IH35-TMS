@@ -55,5 +55,8 @@ describeIntegration("wholesale list (real Postgres, rolled back)", () => {
     // ROUND P1.31 L4: an inactive item (CONTROL "Active? N") never goes on a list sent to buyers, even with stock.
     await db.query(`UPDATE perfume.items SET is_active = false WHERE id = $1`, [a.id]);
     expect((await wholesaleList(db as never, { level_id: level, q: "ZZW" })).rows.map((r) => r.item_id)).not.toContain(a.id);
+    // Owner 16:02 CT: "Stock item? N" is hidden from lists too (still found by search in the item file).
+    await db.query(`UPDATE perfume.items SET is_active = true, is_stock_item = false WHERE id = $1`, [a.id]);
+    expect((await wholesaleList(db as never, { level_id: level, q: "ZZW" })).rows.map((r) => r.item_id)).not.toContain(a.id);
   });
 });

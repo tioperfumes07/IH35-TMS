@@ -61,8 +61,10 @@ export async function wholesaleList(c: pg.PoolClient, f: z.infer<typeof wholesal
     `SELECT id, name, channel, method, pct::text, cost_basis, active, tester_pct::text FROM perfume.price_levels WHERE id = $1`, [f.level_id])).rows[0];
   if (!level) throw new WholesaleInvalid("That price level is not on the desk.");
   const args: unknown[] = [f.level_id];
-  // ROUND P1.31 L4 (owner 13:50 CT, CONTROL "Active? N"): an inactive item never goes on a list sent to buyers.
-  const where = ["i.merged_into_id IS NULL", "i.is_active", `(coalesce(st.on_hand, 0) > 0 OR EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+  // ROUND P1.31 L4 (owner 13:50 CT, CONTROL "Active? N"): an inactive item never goes on a list sent to buyers. Owner 16:02 CT: "when
+  // an items stock is n, it means we made the code inactive to appear. in lists etc, but we can still search for it in the app" —
+  // "Stock item? N" is hidden from every list the same way (the item file / search still finds it).
+  const where = ["i.merged_into_id IS NULL", "i.is_active", "i.is_stock_item", `(coalesce(st.on_hand, 0) > 0 OR EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
       JOIN perfume.vendors v ON v.id = l.vendor_id WHERE r.item_id = i.id AND v.kind IN ${MINE} AND l.is_current AND l.voided_at IS NULL))`];
   if (f.q) { args.push(`%${f.q.toLowerCase()}%`); where.push(`(lower(i.display_name) LIKE $${args.length} OR lower(coalesce(i.internal_code, '')) LIKE $${args.length})`); }
   if (f.category) { args.push(f.category); where.push(`lower(i.category) = lower($${args.length})`); }
