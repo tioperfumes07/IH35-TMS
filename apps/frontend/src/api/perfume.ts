@@ -702,7 +702,7 @@ export type PerfumeSite = { code: string; name: string; kind: "warehouse" | "sto
 export type PerfumeStockRow = { item_id: string; display_name: string; internal_code: string | null; location_code: string; location_name: string; qty: number;
   avg_cost_cents: number; fifo_value_cents: number; oldest_lot: string | null; min_qty: number | null; max_qty: number | null };
 export type PerfumeMove = { id: string; moved_at: string; kind: string; item_id: string; display_name: string; location_code: string; qty: number; unit_cost_cents: number;
-  qty_after: number; avg_cost_after_cents: number; lot_id: string | null; lot_code: string | null; reason: string | null; journal_entry_id: string | null;
+  qty_after: number; avg_cost_after_cents: number; lot_id: string | null; lot_code: string | null; reason: string | null;
   purchase_order_id: string | null; po_number: string | null; sales_order_id: string | null; so_number: string | null; transfer_id: string | null; transfer_number: string | null;
   count_id: string | null; count_number: string | null; by_email: string | null };
 export type PerfumeLot = { id: string; location_code: string; lot_code: string | null; source: string; received_on: string; qty_in: number; qty_left: number; unit_cost_cents: number;

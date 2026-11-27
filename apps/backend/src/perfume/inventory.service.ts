@@ -6,7 +6,7 @@
  * On hand is never typed: it is the sum of append-only stock moves. Each move records the FIFO cost of the lot it used and
  * the item's moving-average cost at that site after it. Lots keep vendor + PO line (recall / counterfeit trace). Negative
  * stock is refused. Every inflow / outflow runs inside the caller's transaction, row-locked, so two shipments can never
- * take the same bottle. Nothing here writes accounting (journal_entry_id is filled by the ScentsX accounting layer).
+ * take the same bottle. Nothing here writes accounting (the ScentsX accounting layer links its entries to a move's id).
  */
 import type pg from "pg";
 import { z } from "zod";
@@ -164,7 +164,7 @@ export async function listMoves(c: pg.PoolClient, f: { item_id?: string; locatio
   args.push(Math.min(f.limit ?? 1000, 5000));
   return (await c.query(
     `SELECT m.id, m.moved_at, m.kind, m.item_id, i.display_name, m.location_code, m.qty, m.unit_cost_cents::float8 AS unit_cost_cents, m.qty_after,
-            m.avg_cost_after_cents::float8 AS avg_cost_after_cents, m.lot_id, lt.lot_code, m.reason, m.journal_entry_id,
+            m.avg_cost_after_cents::float8 AS avg_cost_after_cents, m.lot_id, lt.lot_code, m.reason,
             m.purchase_order_id, (SELECT number FROM perfume.purchase_orders WHERE id = m.purchase_order_id) AS po_number,
             m.sales_order_id, (SELECT number FROM perfume.sales_orders WHERE id = m.sales_order_id) AS so_number,
             m.transfer_id, (SELECT number FROM perfume.stock_transfers WHERE id = m.transfer_id) AS transfer_number,

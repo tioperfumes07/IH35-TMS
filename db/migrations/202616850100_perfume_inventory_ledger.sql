@@ -6,8 +6,8 @@
 -- Stock is a ledger, never a typed number: on hand = the sum of append-only stock moves. Every move carries the FIFO cost
 -- of the lot it used AND the item's moving-average cost at that site after the move. Lots (FIFO layers) keep their vendor
 -- and PO line so a recall or counterfeit claim traces to its supplier. Negative stock is refused.
--- journal_entry_id is left for the accounting layer (ScentsX company, 10-23-2026 agent's blocks); nothing here writes
--- accounting.
+-- The accounting layer (ScentsX company, 10-23-2026 agent's blocks) links its journal entries to a move by the move's
+-- id (source type + source id on the entry); nothing here writes accounting.
 
 ALTER TABLE perfume.locations ADD COLUMN IF NOT EXISTS kind text CHECK (kind IN ('warehouse', 'store', 'transit', 'consignment'));
 ALTER TABLE perfume.locations ADD COLUMN IF NOT EXISTS own boolean NOT NULL DEFAULT true;
@@ -122,8 +122,6 @@ CREATE TABLE IF NOT EXISTS perfume.stock_moves (
   transfer_id uuid REFERENCES perfume.stock_transfers(id),
   count_id uuid REFERENCES perfume.stock_counts(id),
   reason text,
-  -- The ScentsX journal entry this move posted to (accounting layer fills it; no FK across the perfume wall).
-  journal_entry_id uuid,
   created_by uuid REFERENCES identity.users(id)
 );
 CREATE INDEX IF NOT EXISTS stock_moves_item_loc_idx ON perfume.stock_moves (item_id, location_code, moved_at);
