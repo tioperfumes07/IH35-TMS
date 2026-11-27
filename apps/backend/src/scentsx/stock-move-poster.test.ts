@@ -33,6 +33,18 @@ describe("ScentsX stock-move poster (real Postgres, rolled back)", () => {
     await db.query("BEGIN");
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
   });
+
+  // Precondition, same as every engine DB test (e.g. driver-reimbursement-idempotent.db.test.ts): the migration turns the
+  // flag ON for SCENTSX only when an Owner user exists — prod has one, a fresh CI database does not — so the test sets the
+  // override itself, inside its rolled-back transaction.
+  const flagOn = async (on: boolean) => {
+    const co = (await db.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE code = 'SCENTSX'`)).rows[0]!.id;
+    await db.query(`DELETE FROM lib.feature_flag_overrides WHERE flag_key = 'SCENTSX_STOCK_MOVE_GL_POSTING_ENABLED' AND operating_company_id = $1::uuid AND user_uuid IS NULL`, [co]);
+    await db.query(
+      `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid) VALUES ('SCENTSX_STOCK_MOVE_GL_POSTING_ENABLED', $1::uuid, $2, $3::uuid)`,
+      [co, on, TEST_OWNER_USER_ID]
+    );
+  };
   afterAll(async () => {
     await db?.query("ROLLBACK").catch(() => {});
     await db?.end().catch(() => {});
@@ -54,6 +66,9 @@ describe("ScentsX stock-move poster (real Postgres, rolled back)", () => {
     expect((await pendingStockMoves(db)).ids).toEqual(expect.arrayContaining([receipt, shipment]));
 
     const actor = { userId: TEST_OWNER_USER_ID, role: "Owner" };
+    await flagOn(false);
+    expect(await postStockMove(db, receipt, actor)).toMatchObject({ posted: false, reason: "flag_off" });
+    await flagOn(true);
     const r1 = await postStockMove(db, receipt, actor);
     expect(r1).toMatchObject({ posted: true, amount_cents: 12500 });
     const sweep = await postPendingStockMoves(db, actor);
