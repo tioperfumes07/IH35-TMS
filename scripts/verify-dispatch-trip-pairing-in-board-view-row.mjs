@@ -67,8 +67,9 @@ const contracts = [
     "dispatchPage",
     // The row templates its testid as `dispatch-view-${tab.id}` (one template covers all four
     // peers, including trip-pairing) rather than four hardcoded testid strings.
-    hasAll('data-testid={`dispatch-view-${tab.id}`}', 'id: "trip-pairing"', 'navigate("/dispatch/trip-pairing")'),
-    (s) => s.replace('navigate("/dispatch/trip-pairing")', 'navigate("/dispatch")'),
+    // The button navigates through dispHref() since #29475/#29499 (it carries the board's return context); the route is the same.
+    hasAll('data-testid={`dispatch-view-${tab.id}`}', 'id: "trip-pairing"', 'navigate(dispHref("/dispatch/trip-pairing"))'),
+    (s) => s.replace('navigate(dispHref("/dispatch/trip-pairing"))', 'navigate(dispHref("/dispatch"))'),
   ],
   [
     "Trip Pairing queues sub-nav entry retained (additive — not removed)",
