@@ -87,4 +87,19 @@ describeIntegration("price-list vendors → one company in Contacts (real Postgr
     expect((await db.query(`SELECT role FROM perfume.contact_companies WHERE id = $1`, [co])).rows[0].role).toBe("both");
     await expect(setCompanyRole(db as never, TEST_OWNER_USER_ID, co, { role: "customer" })).rejects.toThrow(/stays a vendor/);
   });
+
+  it("ranks the owner's own note and the company-name start above a busier look-alike (live preview 11-27: Esperanza, Premier)", async () => {
+    const person = await company("Cabrera Arguijo Zqesperanza", "customer");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'A', 'a1@zq.test'), ($1, 'B', 'b1@zq.test')`, [person]);
+    const real = await company("La Zqesperanza Fragrances LLC - Laredo Texas", "both");
+    const busy = await company("Zqpremier Beauty Brands", "customer");
+    await db.query(`INSERT INTO perfume.contact_people (company_id, name, email) VALUES ($1, 'C', 'c1@zq.test'), ($1, 'D', 'd1@zq.test')`, [busy]);
+    const mine = await company("Zqpremier Fragrance LLC (your vendor 'Zqpremier')", "vendor");
+    const e = await vendor("La Zqesperanza Fragrances (Clasica / Versailles)", "sell", "ZQESPERANZA");
+    const p = await vendor("Zqpremier", "buy", "ZQPREMIER");
+    const by = Object.fromEntries((await vendorLinkPreview(db as never)).proposals.map((x) => [x.vendor_id, x]));
+    expect(by[e]!.company_id).toBe(real);
+    expect(by[p]!.company_id).toBe(mine);
+    expect(by[e]!.candidates.map((c) => c.id)).toContain(person);
+  });
 });
