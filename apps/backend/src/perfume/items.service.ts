@@ -28,8 +28,9 @@ async function event(c: pg.PoolClient, itemId: string, uid: string | null, kind:
 }
 async function liveItem(c: pg.PoolClient, id: string) {
   const r = (await c.query<{ id: string; display_name: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string | null;
-    gender: string | null; flags: string[] | null; identity_key: string }>(
-    `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key FROM perfume.items WHERE id = $1 AND merged_into_id IS NULL FOR UPDATE`, [id])).rows[0];
+    gender: string | null; flags: string[] | null; identity_key: string; model: string | null; product_type: string | null; category: string | null; description: string | null }>(
+    `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key, model, product_type, category, description
+       FROM perfume.items WHERE id = $1 AND merged_into_id IS NULL FOR UPDATE`, [id])).rows[0];
   if (!r) throw new ItemNotFound();
   return r;
 }
@@ -84,8 +85,9 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
   const total = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.items i WHERE ${where}`, args)).rows[0]!.n;
   args.push(f.limit, f.offset);
   const page = (await c.query<{ id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null;
-    flags: string[] | null; tio_code: string | null }>(
-    `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code
+    flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null }>(
+    `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code,
+            i.model, i.product_type, i.category, i.description
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
   if (!page.length) return { total, rows: [] };
   const ids = page.map((r) => r.id);
@@ -155,7 +157,13 @@ export const itemEditSchema = z.object({
   gender: z.enum(["M", "W", "U", ""]).optional(),
   flags: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
   tio_code: z.string().trim().max(40).nullable().optional(),
+  // Owner 2026-11-27 07:22 CT — descriptive attributes, each its own field (migration 202617000100); never part of identity_key.
+  model: z.string().trim().max(120).nullable().optional(),
+  product_type: z.string().trim().max(60).nullable().optional(),
+  category: z.string().trim().max(60).nullable().optional(),
+  description: z.string().trim().max(2000).nullable().optional(),
 });
+const ATTRS = ["model", "product_type", "category", "description"] as const;
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
  *  keeps matching vendors' lines; when another item already IS that reading, the edit is refused and names it. */
 export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, x: z.infer<typeof itemEditSchema>) {
@@ -177,6 +185,19 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
       [id, id2.brand || want.brand, id2.nameText || want.name, id2.sizeMl, id2.conc, id2.gender, id2.flags, id2.key, looseKey(id2), displayNameOf(id2)]);
     await event(c, id, uid, "edited", { from: { ...before, display_name: b.display_name }, to: { ...want, display_name: displayNameOf(id2) } });
   }
+  // Descriptive attributes: written as typed (blank = cleared), one event with every field that changed.
+  const attrFrom: Record<string, string | null> = {}, attrTo: Record<string, string | null> = {};
+  for (const k of ATTRS) {
+    if (x[k] === undefined) continue;
+    const v = x[k]?.trim() || null;
+    const was = b[k];
+    if ((was ?? null) !== v) { attrFrom[k] = was ?? null; attrTo[k] = v; }
+  }
+  if (Object.keys(attrTo).length) {
+    const keys = Object.keys(attrTo);
+    await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => attrTo[k])]);
+    await event(c, id, uid, "attributes", { from: attrFrom, to: attrTo });
+  }
   if (x.tio_code !== undefined) {
     const code = x.tio_code?.trim() || null;
     if (code !== b.internal_code) {
@@ -190,6 +211,48 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
     }
   }
   return { ok: true };
+}
+
+/**
+ * Bulk edit (owner 2026-11-27 07:22 CT "multiple selector … to edit in mass and bulk"): the same edit applied to every selected item
+ * through updateItemFile, so each item gets its own history event and the same identity checks. All or nothing: if one item cannot
+ * take the change (e.g. it would become a copy of another item), nothing is saved and the answer names that item. Flags are added
+ * or removed, never replaced wholesale.
+ */
+export const itemBulkSchema = z.object({
+  ids: z.array(z.string().uuid()).min(1).max(500),
+  set: itemEditSchema.omit({ name: true, tio_code: true, flags: true }),
+  flags_add: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
+  flags_remove: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
+});
+export async function bulkEditItems(c: pg.PoolClient, uid: string, x: z.infer<typeof itemBulkSchema>) {
+  const ids = [...new Set(x.ids)];
+  const hasSet = Object.values(x.set).some((v) => v !== undefined);
+  if (!hasSet && !x.flags_add?.length && !x.flags_remove?.length) throw new ItemInvalid("Choose at least one field to change.");
+  await c.query("SAVEPOINT bulk_items");
+  try {
+    for (const id of ids) {
+      const it = await liveItem(c, id);
+      let flags: string[] | undefined;
+      if (x.flags_add?.length || x.flags_remove?.length) {
+        const cur = new Set<string>(it.flags ?? []);
+        for (const f of x.flags_add ?? []) cur.add(f);
+        for (const f of x.flags_remove ?? []) cur.delete(f);
+        flags = [...cur];
+      }
+      try {
+        await updateItemFile(c, uid, id, { ...x.set, ...(flags ? { flags: flags as z.infer<typeof itemEditSchema>["flags"] } : {}) });
+      } catch (e) {
+        if (e instanceof ItemInvalid) throw new ItemInvalid(`"${it.display_name}": ${e.message} Nothing was saved.`);
+        throw e;
+      }
+    }
+  } catch (e) {
+    await c.query("ROLLBACK TO SAVEPOINT bulk_items");
+    throw e;
+  }
+  await c.query("RELEASE SAVEPOINT bulk_items");
+  return { updated: ids.length };
 }
 
 /** A UPC onto this item: new, or moved from the item that had it (both items' files say so). */

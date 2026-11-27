@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { addHkCode, addUpc, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, linkage, listItemFile, updateItemFile } from "./items.service.js";
+import { addHkCode, addUpc, bulkEditItems, fillCodesApply, fillCodesPreview, getItemFile, ItemInvalid, linkage, listItemFile, updateItemFile } from "./items.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
@@ -99,5 +99,32 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     expect(lk.lines.map((l) => [l.vendor, l.description, l.found_by]).sort()).toEqual([
       ["ZZQ Offer", "ZZQ ALPHA EDP 100ML (M)", "upc"], ["ZZQ Offer", "ZZQ BRAVO EDP 100ML (M)", "item"], ["ZZQ PCA", "ZZQ ALPHA 3.4 EDP M", "upc"],
     ].sort());
+  });
+  it("item attributes (model, type, category, description) save with history; bulk edit is all-or-nothing", async () => {
+    const d = await item("DELTA"), e = await item("ECHO"), f = await item("FOXTROT");
+    await updateItemFile(db as never, TEST_OWNER_USER_ID, d, { model: "Queen of Seduction", product_type: "Woman", category: "Perfume", description: "Red box" });
+    const fd = await getItemFile(db as never, d) as { item: Record<string, unknown>; events: Array<{ kind: string; detail: { to?: Record<string, unknown> } }> };
+    expect(fd.item).toMatchObject({ model: "Queen of Seduction", product_type: "Woman", category: "Perfume", description: "Red box" });
+    expect(fd.events.at(-1)).toMatchObject({ kind: "attributes", detail: { to: { model: "Queen of Seduction", product_type: "Woman" } } });
+    // Clearing one attribute; the identity (and the name) does not change.
+    await updateItemFile(db as never, TEST_OWNER_USER_ID, d, { description: "" });
+    expect(((await getItemFile(db as never, d)) as { item: Record<string, unknown> }).item).toMatchObject({ description: null, name: "DELTA" });
+
+    // Bulk: type + category + a flag on two items, each with its own history row.
+    expect(await bulkEditItems(db as never, TEST_OWNER_USER_ID, { ids: [e, f], set: { product_type: "Tester", category: "Perfume", conc: "EDT" }, flags_add: ["TESTER"] })).toEqual({ updated: 2 });
+    const rows = (await listItemFile(db as never, { q: "ZZQ", limit: 50, offset: 0, scope: "all" })).rows.filter((r) => [e, f].includes(r.id));
+    expect(rows.map((r) => [r.product_type, r.category, r.conc, (r.flags ?? []).includes("TESTER")])).toEqual([["Tester", "Perfume", "EDT", true], ["Tester", "Perfume", "EDT", true]]);
+    const ev = await db.query<{ n: number }>(`SELECT count(*)::int n FROM perfume.item_events WHERE item_id = ANY($1::uuid[]) AND kind = 'attributes'`, [[e, f]]);
+    expect(ev.rows[0]!.n).toBe(2);
+
+    // All or nothing: HOTEL 75 ml exists; a bulk "size 75" on ECHO and a second HOTEL (100 ml) would make that one a copy of it,
+    // so the whole bulk is refused, names the item, and ECHO keeps its size.
+    const h = await item("HOTEL");
+    await updateItemFile(db as never, TEST_OWNER_USER_ID, h, { size_ml: 75 });
+    const h2 = await item("HOTEL");
+    await expect(bulkEditItems(db as never, TEST_OWNER_USER_ID, { ids: [e, h2], set: { size_ml: 75 } })).rejects.toThrow(/Nothing was saved/);
+    const eNow = (await getItemFile(db as never, e)) as { item: { size_ml: string } };
+    expect(Number(eNow.item.size_ml)).toBe(100);
+    await expect(bulkEditItems(db as never, TEST_OWNER_USER_ID, { ids: [e], set: {} })).rejects.toThrow(/at least one field/);
   });
 });
