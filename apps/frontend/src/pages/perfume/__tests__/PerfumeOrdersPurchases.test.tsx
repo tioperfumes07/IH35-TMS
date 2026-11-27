@@ -27,8 +27,9 @@ const po: PerfumePo = { ...prow("p1", "PO-000001", "open"), lines: [{ id: "pl1",
   description: "ZZO NIGHT EDP 3.4OZ M", upc: "8099922233441", qty: 10, qty_received: 0, unit_cost_cents: 1000 }], events: [] };
 const calls: Array<[string, unknown]> = [];
 let made = false;
+let linkedB = false;
 beforeEach(() => {
-  calls.length = 0; made = false;
+  calls.length = 0; made = false; linkedB = false;
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (opts?.method) calls.push([path, opts.body]);
     if (path === "/api/v1/perfume/orders") return { orders: [orow("o1", "SO-000001", "open", made ? 1 : 0), orow("o2", "SO-000002", "shipped", 1)] };
@@ -50,6 +51,13 @@ beforeEach(() => {
         state: "FL", country: "US", status: "active", people: 2, email: "sales@vendora.test" },
       lists: [{ id: "L1", list_date: "2026-11-26", label: null, file_name: "a.xlsx", source_kind: "xlsx", rows_saved: 120, is_current: true, voided_at: null, matched: 118, waiting: 2 }],
       items: 118, waiting: 2, codes: 118, words: 117, confirmed: 3, purchase_orders: [prow("p1", "PO-000001", "open")], po_total_cents: 10000, po_open: 1 } satisfies PerfumeVendorProfile;
+    if (path === "/api/v1/perfume/vendors/vB/company") { linkedB = true; return { ok: true }; }
+    if (path === "/api/v1/perfume/vendors/vB/profile") {
+      const co = { id: "co7", name: "Vendor B Inc", role: "vendor", vendor_type: null, customer_type: null, phone: null, website: null, address: null, city: "Doral",
+        state: "FL", country: "US", status: "active", people: 1, email: null };
+      return { vendor: { id: "vB", name: "Vendor B", short_name: "VB", kind: "buy", roles: [], contact: null, company_id: linkedB ? "co7" : null },
+        company: linkedB ? co : null, suggestions: linkedB ? [] : [co], lists: [], items: 0, waiting: 0, codes: 0, words: 0, confirmed: 0, purchase_orders: [], po_total_cents: 0, po_open: 0 } satisfies PerfumeVendorProfile;
+    }
     if (path === "/api/v1/perfume/items/i1/profile") return { item: { id: "i1", internal_code: "T-1", brand: "ZZ", name: "NIGHT", size_ml: "100", conc: "EDP", gender: "M", flags: [], display_name: "ZZ · NIGHT · 100 ml" },
       upcs: ["8099922233441"], best_cost_cents: 1000,
       vendor_lines: [{ id: "r1", vendor_id: "vA", vendor: "Vendor A", kind: "buy", sku: "A-NIGHT", upc: null, brand: null, description: "ZZO NIGHT EDP 3.4OZ M", size_text: null, price_cents: 1000, qty: null, match_method: "alias", list_date: "2026-11-26" }],
@@ -127,6 +135,15 @@ describe("profiles", () => {
     await waitFor(() => expect(within(p).getByTestId("perfume-vendor-company").textContent).toContain("Vendor A LLC"));
     expect(within(within(p).getByTestId("perfume-vendor-kpis")).getByText("117")).toBeTruthy();
     expect(within(p).getAllByText("PO-000001").length).toBeGreaterThan(0);
+  });
+  it("an unlinked supplier offers its same-name Contacts company; one click links it and the profile shows it", async () => {
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers&open=vB");
+    const btn = await screen.findByTestId("perfume-vendor-suggest-co7");
+    expect(btn.textContent).toContain("Vendor B Inc");
+    fireEvent.click(btn);
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendors/vB/company", { company_id: "co7" }]));
+    await waitFor(() => expect(screen.getByTestId("perfume-vendor-company").textContent).toContain("Doral"));
+    expect(screen.queryByTestId("perfume-vendor-suggestions")).toBeNull();
   });
   it("item profile: every vendor's code and words, what is remembered, and its documents", async () => {
     mount(<PerfumeItemProfilesPanel />, "/perfume?tab=items&open=i1");

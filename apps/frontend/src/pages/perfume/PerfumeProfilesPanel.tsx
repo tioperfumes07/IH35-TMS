@@ -144,7 +144,17 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => void link(null)} data-testid="perfume-vendor-unlink">{tr("perfume.profiles.unlink", "Unlink")}</Button>
           </div>
         ) : (
-          <div className="relative">
+          <div className="relative space-y-2">
+            {(p.suggestions?.length ?? 0) > 0 ? (
+              <div className="flex flex-wrap items-center gap-2" data-testid="perfume-vendor-suggestions">
+                <span className="text-[#64748B]">{tr("perfume.profiles.suggest", "Same name in Contacts — click the right one to link:")}</span>
+                {p.suggestions!.map((s) => (
+                  <Button key={s.id} type="button" variant="secondary" className="h-[28px] px-2 text-left text-xs" onClick={() => void link(s.id)} data-testid={`perfume-vendor-suggest-${s.id}`}>
+                    {s.name}{[s.city, s.country].filter(Boolean).length ? ` · ${[s.city, s.country].filter(Boolean).join(", ")}` : ""}{` · ${s.people} ${s.people === 1 ? "person" : "people"}`}
+                  </Button>
+                ))}
+              </div>
+            ) : null}
             <input className={`${ctl} w-[320px]`} aria-label={tr("perfume.profiles.link", "Link to a company in Contacts")} placeholder={tr("perfume.profiles.link_ph", "Not linked — type the company name")}
               value={find} onChange={(e) => setFind(e.target.value)} data-testid="perfume-vendor-link-find" />
             {find.trim().length >= 2 && (found.data?.rows?.length ?? 0) > 0 ? (

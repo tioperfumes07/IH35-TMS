@@ -681,6 +681,8 @@ export type PerfumeProfileCompany = { id: string; name: string; role: string | n
 export type PerfumeVendorProfile = {
   vendor: { id: string; name: string; short_name: string | null; kind: PerfumeVendorKind; roles: string[]; contact: string | null; company_id: string | null };
   company: PerfumeProfileCompany | null;
+  /** Contacts companies whose name matches, while the supplier is not linked — never linked on its own. */
+  suggestions?: PerfumeProfileCompany[];
   lists: Array<{ id: string; list_date: string; label: string | null; file_name: string; source_kind: string; rows_saved: number; is_current: boolean; voided_at: string | null; matched: number; waiting: number }>;
   items: number; waiting: number; codes: number; words: number; confirmed: number; purchase_orders: PerfumePoRow[]; po_total_cents: number; po_open: number;
 };
