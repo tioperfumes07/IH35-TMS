@@ -1118,7 +1118,8 @@
     "202617130100",
     "202617140100",
     "202617150100",
-    "202617160100"
+    "202617160100",
+    "202617170100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1426,5 +1427,6 @@
   "202617130100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX vendor credits for returned billed units: crosswalk PO line -> vendor credit (Dr A/P / Cr GRNI via the one vendor-credit writer) (owner 2026-11-27 15:05 CT)"},
   "202617140100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX literal ENABLE/FORCE RLS for sales_returns, sales_return_lines, purchase_order_bill_lines, purchase_order_vendor_credit_lines (rls-migration-scan reads literals; ROUND P1.31 L3a)"},
   "202617150100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME item margin groups: items.is_exclusive + items.is_new_launch (owner 2026-11-27 15:40 CT margins by group: exclusive, new launches, testers, minis, sets, regular)"},
-  "202617160100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME customer purchase history (USA store monthly, Mexico yearly; no balances) for A/B/C customer ranking (ROUND P1.31 L1, owner 15:45 CT item 10)"}
+  "202617160100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME customer purchase history (USA store monthly, Mexico yearly; no balances) for A/B/C customer ranking (ROUND P1.31 L1, owner 15:45 CT item 10)"},
+  "202617170100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate companies merged into one: contact_companies.merged_into_id / merged_at (merged rows kept as locations), owner 16:32 CT"}
 }
