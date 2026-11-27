@@ -23,6 +23,7 @@ const ctl = "h-[30px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
 const NOTES: Partial<Record<PerfumeCatalogKind, string>> = {
   source_kind: "Where each lead came from. Set by the app from the origin (email, leaked list, phone, each research source) — add a kind, archive one.",
   product_type: "Written out on every perfume list — never letter codes. The number is how many items carry it; a rename moves those items.",
+  olfactory_family: "Scent families — what an item family can be (floral, woody, amber …). The number is how many item families carry it; a rename moves them.",
   item_category: "Item categories — what the item creator, the item editor and the bulk bar offer. The number is how many items carry it; a rename moves those items.",
 };
 
@@ -75,7 +76,7 @@ function CatalogBox({ cat, onChanged }: { cat: PerfumeCatalogs["kinds"][number];
             ) : (
               <>
                 <span className="min-w-0 flex-1 truncate font-semibold text-[#1F2A44]">{v.value}</span>
-                <span className="tabular-nums text-[#64748B]" title={cat.used_by === "items" ? tr("perfume.cat.used_items", "Items with this value") : tr("perfume.cat.used", "Contacts with this value")}>{v.contacts.toLocaleString()}</span>
+                <span className="tabular-nums text-[#64748B]" title={cat.used_by === "families" ? tr("perfume.cat.used_families", "Item families with this value") : cat.used_by === "items" ? tr("perfume.cat.used_items", "Items with this value") : tr("perfume.cat.used", "Contacts with this value")}>{v.contacts.toLocaleString()}</span>
                 {cat.kind !== "source_kind" ? (
                   <button type="button" className="text-xs text-[#14314F] underline" onClick={() => setEdit({ id: v.id, value: v.value })}>{tr("perfume.cat.rename", "Rename")}</button>
                 ) : null}

@@ -57,7 +57,8 @@ export async function setVendorCompany(c: pg.PoolClient, vendorId: string, compa
 
 export async function itemProfile(c: pg.PoolClient, itemId: string) {
   const item = (await c.query(
-    `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.model, i.product_type, i.category, i.description, i.display_name, i.merged_into_id, i.created_at FROM perfume.items i WHERE i.id = $1`, [itemId])).rows[0];
+    `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.model, i.product_type, i.category, i.description, i.family_id,
+            (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family, i.display_name, i.merged_into_id, i.created_at FROM perfume.items i WHERE i.id = $1`, [itemId])).rows[0];
   if (!item) throw new ProfileNotFound();
   if (item.merged_into_id) return { merged_into_id: item.merged_into_id as string };
   const upcs = (await c.query(`SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = $1 ORDER BY u.upc`, [itemId])).rows.map((r) => r.upc as string);

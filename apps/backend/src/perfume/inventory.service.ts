@@ -178,11 +178,23 @@ export async function listMoves(c: pg.PoolClient, f: { item_id?: string; locatio
       ${where.length ? `WHERE ${where.join(" AND ")}` : ""} ORDER BY m.moved_at DESC, m.id LIMIT $${args.length}`, args)).rows;
 }
 
-export async function setReorder(c: pg.PoolClient, itemId: string, loc: string, min: number | null, max: number | null) {
+export async function setReorder(c: pg.PoolClient, itemId: string, loc: string, min: number | null, max: number | null,
+  extra: { bin?: string | null; reorder_qty?: number | null } = {}) {
   if (min != null && max != null && max < min) throw new InvInvalid("Max cannot be below min.");
   await assertSite(c, loc);
   await stockRow(c, itemId, loc);
   await c.query(`UPDATE perfume.item_stock SET min_qty = $3, max_qty = $4, updated_at = now() WHERE item_id = $1 AND location_code = $2`, [itemId, loc, min, max]);
+  // Bin and usual reorder quantity (migration 202617040100) — only touched when sent.
+  if (extra.bin !== undefined) await c.query(`UPDATE perfume.item_stock SET bin = $3 WHERE item_id = $1 AND location_code = $2`, [itemId, loc, extra.bin?.trim() || null]);
+  if (extra.reorder_qty !== undefined) await c.query(`UPDATE perfume.item_stock SET reorder_qty = $3 WHERE item_id = $1 AND location_code = $2`, [itemId, loc, extra.reorder_qty]);
+}
+
+/** One item's settings and stock at every own site (the item profile's "Sites" block). */
+export async function itemSites(c: pg.PoolClient, itemId: string) {
+  return (await c.query(
+    `SELECT l.code AS location_code, l.name AS location_name, l.kind, coalesce(s.qty, 0)::int AS on_hand, s.avg_cost_cents, s.min_qty, s.max_qty, s.bin, s.reorder_qty
+       FROM perfume.locations l LEFT JOIN perfume.item_stock s ON s.location_code = l.code AND s.item_id = $1
+      WHERE l.active AND l.own ORDER BY l.sort_order, l.code`, [itemId])).rows;
 }
 
 /* ------------------------------------------------------------------ transfers */

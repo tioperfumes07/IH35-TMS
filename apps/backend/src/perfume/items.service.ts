@@ -19,6 +19,7 @@ import { identify, looseKey, normalizeUpc } from "./normalize.js";
 import { displayNameOf } from "./matching.js";
 import { itemProfile } from "./profiles.service.js";
 import { confirmRow, invalidateGridCache } from "./desk.service.js";
+import { setItemFamily } from "./families.service.js";
 
 export class ItemInvalid extends Error {}
 export class ItemNotFound extends Error { constructor() { super("not_found"); } }
@@ -85,9 +86,10 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
   const total = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.items i WHERE ${where}`, args)).rows[0]!.n;
   args.push(f.limit, f.offset);
   const page = (await c.query<{ id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null;
-    flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null }>(
+    flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null; family_id: string | null; family: string | null }>(
     `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code,
-            i.model, i.product_type, i.category, i.description
+            i.model, i.product_type, i.category, i.description, i.family_id,
+            (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
   if (!page.length) return { total, rows: [] };
   const ids = page.map((r) => r.id);
@@ -162,6 +164,8 @@ export const itemEditSchema = z.object({
   product_type: z.string().trim().max(60).nullable().optional(),
   category: z.string().trim().max(60).nullable().optional(),
   description: z.string().trim().max(2000).nullable().optional(),
+  // Owner 2026-11-27 08:10 CT — the item's family (one fragrance line over its sizes / testers / sets); null takes it out.
+  family_id: z.string().uuid().nullable().optional(),
 });
 const ATTRS = ["model", "product_type", "category", "description"] as const;
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
@@ -198,6 +202,7 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
     await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => attrTo[k])]);
     await event(c, id, uid, "attributes", { from: attrFrom, to: attrTo });
   }
+  if (x.family_id !== undefined) await setItemFamily(c, uid, id, x.family_id, b.display_name);
   if (x.tio_code !== undefined) {
     const code = x.tio_code?.trim() || null;
     if (code !== b.internal_code) {
@@ -231,6 +236,7 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   tio_code: z.string().trim().max(40).nullable().optional(),
   upc: z.string().trim().max(40).nullable().optional(),
+  family_id: z.string().uuid().nullable().optional(),
 });
 export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeof itemCreateSchema>) {
   const flags = x.flags ?? [];
@@ -261,6 +267,7 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
   const id = ins.rows[0]!.id;
   if (upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ($1, $2)`, [upc, id]);
   await event(c, id, uid, "created", { ...x, flags, upc });
+  if (x.family_id) await setItemFamily(c, uid, id, x.family_id, displayNameOf(id2));
   invalidateGridCache();
   return { id, display_name: displayNameOf(id2) };
 }
