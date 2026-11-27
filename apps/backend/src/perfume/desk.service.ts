@@ -519,10 +519,13 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
   if (body.replaces_current !== false && !(own && body.save_as_new)) {
     // A full list REPLACES the vendor's older lists (owner 2026-11-12: "we cannot have old lists we replace with the new
     // ones"): they are voided — gone from the Lists tab, the grid and review — and kept only as the audit record.
-    await c.query(
+    const why = `Replaced by ${body.file_name} (${body.list_date})`;
+    const gone = await c.query<{ id: string }>(
       `UPDATE perfume.price_lists SET is_current = false, voided_at = now(), void_reason = $3
-        WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL`,
-      [vendor.id, listId, `Replaced by ${body.file_name} (${body.list_date})`]);
+        WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL RETURNING id`,
+      [vendor.id, listId, why]);
+    // Each list a new one replaced is in the void history, so the Lists tab can show it and bring it back.
+    for (const g of gone.rows) await listEvent(c, g.id, "voided", why, userId, { replaced_by_list_id: listId });
   }
 
   // Pass 1 — match every line in memory. New items get a temporary id so later lines of the same file
@@ -711,15 +714,64 @@ export async function listLists(c: PoolClient) {
       WHERE l.voided_at IS NULL ORDER BY l.imported_at DESC`)).rows;
 }
 
-export async function voidList(c: PoolClient, listId: string, reason: string) {
+/** One void or restore, written once (perfume.price_list_events): price_lists keeps only the latest state. */
+async function listEvent(c: PoolClient, listId: string, kind: "voided" | "restored", reason: string, uid: string | null, detail: Record<string, unknown> = {}) {
+  await c.query(`INSERT INTO perfume.price_list_events (list_id, kind, reason, detail, created_by) VALUES ($1, $2, $3, $4::jsonb, $5)`,
+    [listId, kind, reason, JSON.stringify(detail), uid]);
+}
+
+export class ListRestoreError extends Error {}
+
+/** Voided lists, newest void first (owner 2026-11-27 08:51 CT: "restore buttons"): what was voided, when, why, and its lines. */
+export type VoidedList = { id: string; vendor_id: string; vendor_name: string; list_date: string; label: string | null; file_name: string;
+  rows_saved: number; voided_at: string; void_reason: string; linked: number; vendor_has_current: boolean };
+export async function listVoidedLists(c: PoolClient, limit = 200): Promise<VoidedList[]> {
+  return (await c.query<VoidedList>(
+    `SELECT l.id, l.vendor_id, COALESCE(NULLIF(btrim(v.short_name), ''), v.name) AS vendor_name, l.list_date::text, l.label, l.file_name,
+            l.rows_saved, l.voided_at, l.void_reason,
+            (SELECT count(*)::int FROM perfume.price_list_rows r WHERE r.list_id = l.id AND r.item_id IS NOT NULL) AS linked,
+            EXISTS (SELECT 1 FROM perfume.price_lists o WHERE o.vendor_id = l.vendor_id AND o.voided_at IS NULL AND o.is_current) AS vendor_has_current
+       FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE l.voided_at IS NOT NULL AND v.archived_at IS NULL ORDER BY l.voided_at DESC LIMIT $1`, [limit])).rows;
+}
+
+export async function voidList(c: PoolClient, listId: string, reason: string, uid: string | null = null) {
   const r = await c.query(`UPDATE perfume.price_lists SET voided_at = now(), void_reason = $2, is_current = false WHERE id = $1 AND voided_at IS NULL RETURNING vendor_id`, [listId, reason]);
   if (!r.rowCount) throw new Error("list_not_found");
+  await listEvent(c, listId, "voided", reason, uid);
   // If that left the vendor with no current list, its newest remaining list becomes current again.
   await c.query(
     `UPDATE perfume.price_lists SET is_current = true WHERE id = (
        SELECT id FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL ORDER BY list_date DESC, imported_at DESC LIMIT 1)
        AND NOT EXISTS (SELECT 1 FROM perfume.price_lists WHERE vendor_id = $1 AND voided_at IS NULL AND is_current)`,
     [r.rows[0].vendor_id]);
+}
+
+/**
+ * Bring a voided list back (owner 2026-11-27 08:51 CT). With `replace` the vendor's other full lists in use are voided in the
+ * same transaction (each one written to the history, reason "Replaced by restoring …"), and the restored list is the one in
+ * use — the same rule as importing a full list. Without it the list comes back next to the lists in use, counted in the grid
+ * only if the vendor had none. Labelled lists (specials, my saved lists) are never voided by a restore.
+ */
+export async function restoreList(c: PoolClient, listId: string, reason: string, uid: string, replace: boolean): Promise<{ voided_now: string[]; is_current: boolean }> {
+  const l = (await c.query<{ vendor_id: string; file_name: string; list_date: string; label: string | null }>(
+    `UPDATE perfume.price_lists SET voided_at = NULL, void_reason = NULL, is_current = false WHERE id = $1 AND voided_at IS NOT NULL
+      RETURNING vendor_id, file_name, list_date::text, label`, [listId])).rows[0];
+  if (!l) throw new ListRestoreError("list_not_voided");
+  const voidedNow: string[] = [];
+  if (replace) {
+    const why = `Replaced by restoring ${l.file_name} (${l.list_date.slice(0, 10)})`;
+    const gone = await c.query<{ id: string }>(
+      `UPDATE perfume.price_lists SET is_current = false, voided_at = now(), void_reason = $3
+        WHERE vendor_id = $1 AND id <> $2 AND voided_at IS NULL AND label IS NULL RETURNING id`, [l.vendor_id, listId, why]);
+    for (const g of gone.rows) { voidedNow.push(g.id); await listEvent(c, g.id, "voided", why, uid, { replaced_by_list_id: listId }); }
+  }
+  const cur = await c.query(
+    `UPDATE perfume.price_lists SET is_current = true WHERE id = $1
+       AND ($2 OR NOT EXISTS (SELECT 1 FROM perfume.price_lists WHERE vendor_id = $3 AND id <> $1 AND voided_at IS NULL AND is_current))`,
+    [listId, replace, l.vendor_id]);
+  await listEvent(c, listId, "restored", reason, uid, { replace, voided_now: voidedNow });
+  return { voided_now: voidedNow, is_current: (cur.rowCount ?? 0) > 0 };
 }
 
 /** My saved lists (offer / inventory). A saved list is every live list of that vendor sharing one name (label); a list

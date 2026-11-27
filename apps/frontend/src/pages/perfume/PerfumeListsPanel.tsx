@@ -9,8 +9,8 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  extractPerfumeLines, listPerfumeLists, listPerfumeLocations, listPerfumeVendors, previewPerfumeImport, savePerfumeLocation, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel,
-  PERFUME_VENDOR_ROLES, type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeLocation, type PerfumeVendor, type PerfumeVendorKind, type PerfumeVendorRole,
+  extractPerfumeLines, listPerfumeLists, listPerfumeLocations, listPerfumeVendors, previewPerfumeImport, savePerfumeLocation, savePerfumeImport, savePerfumeVendor, setPerfumeListCurrent, voidPerfumeList, downloadPerfumeListExcel, listPerfumeVoidedLists, restorePerfumeList,
+  PERFUME_VENDOR_ROLES, type PerfumeImportBody, type PerfumeImportCheck, type PerfumeList, type PerfumeLocation, type PerfumeVendor, type PerfumeVendorKind, type PerfumeVendorRole, type PerfumeVoidedList,
 } from "../../api/perfume";
 import {
   extractRows, FIELDS, findHeaderRow, guessMapping, isPictureFile, locationColumns, pictureLinesToExtracted, priceToCents, readAnyFile, readPictureFiles,
@@ -63,7 +63,66 @@ export function PerfumeListsPanel() {
           rowActionsWidth={320}
         />
       </section>
+      <VoidedListsCard />
     </div>
+  );
+}
+
+/** Voided lists with a Restore button (owner 2026-11-27 08:51 CT: "Add void buttons etc restore buttons"). */
+export function VoidedListsCard() {
+  const q = useQuery({ queryKey: ["perfume", "lists", "voided"], queryFn: listPerfumeVoidedLists });
+  if (q.isError) return <ListErrorState title={tr("perfume.lists.voidedError", "Couldn't load voided lists")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
+  return (
+    <section className="space-y-1" aria-label={tr("perfume.lists.voided", "Voided lists")}>
+      <div className="text-section-header">{tr("perfume.lists.voided", "Voided lists")}</div>
+      <ParityTable<PerfumeVoidedList>
+        rows={q.data?.lists ?? []}
+        rowKey={(l) => l.id}
+        loading={q.isLoading}
+        storageKey="perfume-desk-voided-lists-v1"
+        emptyText="No voided lists."
+        columns={[
+          { key: "vendor_name", label: "Vendor", sortable: true, render: (l) => <EntityLink kind="perfume_vendor" id={l.vendor_id} label={l.vendor_name} /> },
+          { key: "list_date", label: "List date", sortable: true, render: (l) => l.list_date.slice(0, 10) },
+          { key: "file_name", label: "File", sortable: true },
+          { key: "rows_saved", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
+          { key: "linked", label: "Linked", sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
+          { key: "voided_at", label: "Voided", sortable: true, render: (l) => new Date(l.voided_at).toLocaleString("en-US", { timeZone: "America/Chicago" }) },
+          { key: "void_reason", label: "Why", sortable: true },
+        ]}
+        rowActions={(l) => <RestoreListButton list={l} />}
+        rowActionsWidth={420}
+      />
+    </section>
+  );
+}
+
+function RestoreListButton({ list }: { list: PerfumeVoidedList }) {
+  const qc = useQueryClient();
+  const { pushToast } = useToast();
+  const [reason, setReason] = useState<string | null>(null);
+  // A full list replaces the vendor's list in use by default (same rule as importing one); a saved/special list sits next to it.
+  const [replace, setReplace] = useState(list.label == null);
+  const [busy, setBusy] = useState(false);
+  if (reason == null) return <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" data-testid="perfume-list-restore" onClick={() => setReason("")}>{tr("perfume.lists.restore", "Restore")}</Button>;
+  return (
+    <span className="flex items-center gap-1">
+      <input aria-label={tr("perfume.lists.4", "Reason")} placeholder={tr("perfume.lists.5", "Reason")} value={reason} onChange={(e) => setReason(e.target.value)} className="h-[34px] w-[150px] rounded-sm border border-gray-300 px-2 text-xs" />
+      <button type="button" aria-pressed={replace} data-testid="perfume-list-restore-replace" onClick={() => setReplace(!replace)}
+        className={`h-[34px] rounded-sm border px-2 text-xs ${replace ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)]"}`}>
+        {replace ? tr("perfume.lists.restoreReplace", "Replaces list in use") : tr("perfume.lists.restoreBeside", "Next to list in use")}
+      </button>
+      <Button type="button" className="h-[34px] px-2 text-xs" data-testid="perfume-list-restore-save" disabled={busy || reason.trim().length < 3} onClick={async () => {
+        setBusy(true);
+        try {
+          const r = await restorePerfumeList(list.id, reason.trim(), replace);
+          await qc.invalidateQueries({ queryKey: ["perfume"] });
+          pushToast(`List restored${r.voided_now.length ? ` · ${r.voided_now.length} list${r.voided_now.length === 1 ? "" : "s"} it replaced voided` : ""}`, "success");
+        } catch (e) { pushToast(userFacingApiError(e, "Not restored"), "error"); }
+        finally { setBusy(false); }
+      }}>{tr("perfume.lists.6", "Save")}</Button>
+      <Button type="button" variant="secondary" className="h-[34px] px-2 text-xs" onClick={() => setReason(null)}>{tr("perfume.lists.7", "Close")}</Button>
+    </span>
   );
 }
 
