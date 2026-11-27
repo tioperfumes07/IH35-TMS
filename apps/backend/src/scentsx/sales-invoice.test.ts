@@ -30,9 +30,12 @@ describe("ScentsX sales-order invoicing (real Postgres, rolled back)", () => {
     const so = await db.query<{ id: string }>(
       `INSERT INTO perfume.sales_orders (company_id, customer_name) VALUES ($1::uuid, 'Invoice test buyer') RETURNING id::text`, [co.rows[0]!.id]
     );
+    // The item carries its trade data (migration 202617060100): an export invoice line names HS code + origin; a domestic one does not.
+    const item = await db.query<{ id: string }>(
+      `INSERT INTO perfume.items (brand, name, display_name, identity_key, loose_key, hs_code, origin_country) VALUES ('ZZI', 'Test EDP', 'Test EDP 100ml', 'zzi-test-edp', 'zzi-test-edp', '330300', 'FR') RETURNING id::text`);
     await db.query(
-      `INSERT INTO perfume.sales_order_lines (order_id, line_no, description, qty, qty_shipped, unit_price_cents) VALUES ($1::uuid, 1, 'Test EDP 100ml', 10, 4, 2500)`,
-      [so.rows[0]!.id]
+      `INSERT INTO perfume.sales_order_lines (order_id, line_no, item_id, description, qty, qty_shipped, unit_price_cents) VALUES ($1::uuid, 1, $2::uuid, 'Test EDP 100ml', 10, 4, 2500)`,
+      [so.rows[0]!.id, item.rows[0]!.id]
     );
     await db.query("SAVEPOINT nolink");
     await expect(invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id)).rejects.toBeInstanceOf(ScentsxLinkInvalid);
@@ -82,5 +85,8 @@ describe("ScentsX sales-order invoicing (real Postgres, rolled back)", () => {
       `SELECT a.account_number AS acct FROM accounting.invoice_lines il JOIN catalogs.accounts a ON a.id = il.account_id WHERE il.invoice_id = $1::uuid`, [second.invoice_id]
     );
     expect(acct2.rows[0]!.acct).toBe("4020");
+    const desc = async (invoiceId: string) => (await db.query<{ d: string }>(`SELECT description AS d FROM accounting.invoice_lines WHERE invoice_id = $1::uuid`, [invoiceId])).rows[0]!.d;
+    expect(await desc(second.invoice_id)).toContain("HS 330300 · Origin FR");
+    expect(await desc(first.invoice_id)).not.toContain("HS ");
   });
 });

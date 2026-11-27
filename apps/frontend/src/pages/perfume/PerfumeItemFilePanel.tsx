@@ -160,6 +160,10 @@ export function PerfumeItemFilePanel() {
             { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", sortable: true, render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
             { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
             { className: "text-left", key: "description", label: "Description", render: (r) => r.description ?? DASH, exportValue: (r) => r.description ?? "" },
+            { key: "case_pack", label: "Case pack", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.case_pack == null ? DASH : String(r.case_pack)), exportValue: (r) => r.case_pack ?? "" },
+            { key: "min_order_qty", label: "Min order", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.min_order_qty == null ? DASH : String(r.min_order_qty)), exportValue: (r) => r.min_order_qty ?? "" },
+            { className: "text-left", key: "origin_country", label: "Origin", sortable: true, render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
+            { className: "text-left", key: "hs_code", label: "HS code", sortable: true, render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
             { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
             { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
@@ -262,6 +266,16 @@ export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChang
               onChange={(e) => setEdit({ ...edit, flags: e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl) })} data-testid={`perfume-itemfile-flag-${fl}`} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
           ))}
         </span>
+        <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={val("case_pack", it.case_pack ?? null) ?? ""}
+          onChange={(e) => setEdit({ ...edit, case_pack: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-case-pack" /></label>
+        <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[80px] text-right`} value={val("min_order_qty", it.min_order_qty ?? null) ?? ""}
+          onChange={(e) => setEdit({ ...edit, min_order_qty: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-moq" /></label>
+        <label>{tr("perfume.itemfile.weight", "Weight g")} <input type="number" min={0} className={`${ctl} block w-[80px] text-right`} value={val("weight_g", it.weight_g ?? null) ?? ""}
+          onChange={(e) => setEdit({ ...edit, weight_g: e.target.value === "" ? null : Number(e.target.value) })} data-testid="perfume-itemfile-weight" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[60px] uppercase`} placeholder="FR" value={val("origin_country", it.origin_country ?? null) ?? ""}
+          onChange={(e) => setEdit({ ...edit, origin_country: e.target.value.toUpperCase() || null })} data-testid="perfume-itemfile-origin" /></label>
+        <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[110px]`} placeholder="3303.00" value={val("hs_code", it.hs_code ?? null) ?? ""}
+          onChange={(e) => setEdit({ ...edit, hs_code: e.target.value || null })} data-testid="perfume-itemfile-hs" /></label>
         <label className="w-full">{tr("perfume.itemfile.description", "Description")}
           <textarea className={`${ctl} block h-16 w-full py-1`} maxLength={2000} value={val("description", it.description ?? null) ?? ""} onChange={(e) => setEdit({ ...edit, description: e.target.value })} data-testid="perfume-itemfile-description" />
         </label>
@@ -479,7 +493,7 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
   const { pushToast } = useToast();
   const cats = useItemCatalogs();
   const CLEAR = "__clear__";
-  const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "" });
+  const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "", case_pack: "", moq: "", origin: "", hs: "" });
   const [busy, setBusy] = useState(false);
   const txt = (x: string) => (x === CLEAR ? null : x.trim() || undefined);
   const apply = async () => {
@@ -490,6 +504,10 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
     if (v.gender) set.gender = v.gender === CLEAR ? "" : v.gender;
     if (v.size.trim()) set.size_ml = Number(v.size);
     if (v.family) set.family_id = v.family === CLEAR ? null : v.family;
+    if (v.case_pack.trim()) set.case_pack = Number(v.case_pack);
+    if (v.moq.trim()) set.min_order_qty = Number(v.moq);
+    if (v.origin.trim()) set.origin_country = v.origin.trim().toUpperCase();
+    if (v.hs.trim()) set.hs_code = v.hs.trim();
     const flags = v.flag ? { [v.flagMode === "add" ? "flags_add" : "flags_remove"]: [v.flag] } : {};
     if (!Object.keys(set).length && !v.flag) { pushToast("Fill at least one field to change", "error"); return; }
     setBusy(true);
@@ -531,6 +549,10 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
             </select>
           </span>
         </label>
+        <label>{tr("perfume.itemfile.case_pack", "Case pack")} <input type="number" min={1} className={`${ctl} block w-[70px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-bulk-case-pack" /></label>
+        <label>{tr("perfume.itemfile.moq", "Min order")} <input type="number" min={1} className={`${ctl} block w-[70px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-bulk-moq" /></label>
+        <label>{tr("perfume.itemfile.origin", "Origin")} <input maxLength={2} className={`${ctl} block w-[56px] uppercase`} value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-bulk-origin" /></label>
+        <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[100px]`} value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-bulk-hs" /></label>
         <label className="min-w-[220px] flex-1">{tr("perfume.itemfile.description", "Description")} <input className={`${ctl} block w-full`} value={v.description === CLEAR ? "" : v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-bulk-description" /></label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
       </div>
@@ -547,7 +569,7 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
   const { pushToast } = useToast();
   const cats = useItemCatalogs();
   const opts = useQuery({ queryKey: ["perfume", "item-options"], queryFn: getPerfumeItemOptions, staleTime: 60_000 });
-  const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "" });
+  const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "", family_id: "", case_pack: "", moq: "", weight: "", origin: "", hs: "" });
   const [flags, setFlags] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const ok = v.brand.trim() && v.name.trim() && (v.size === "" || Number(v.size) >= 0);
@@ -557,7 +579,9 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
     try {
       const r = await createPerfumeItem({ brand: v.brand.trim(), name: v.name.trim(), size_ml: v.size === "" ? null : Number(v.size), conc: v.conc, gender: v.gender, flags,
         model: v.model.trim() || null, product_type: v.product_type || null, category: v.category || null, description: v.description.trim() || null,
-        tio_code: v.tio_code.trim() || null, upc: v.upc.trim() || null, family_id: v.family_id || null });
+        tio_code: v.tio_code.trim() || null, upc: v.upc.trim() || null, family_id: v.family_id || null,
+        case_pack: v.case_pack ? Number(v.case_pack) : null, min_order_qty: v.moq ? Number(v.moq) : null, weight_g: v.weight ? Number(v.weight) : null,
+        origin_country: v.origin.trim().toUpperCase() || null, hs_code: v.hs.trim() || null });
       pushToast(`Item created: ${r.display_name}`, "success"); onCreated(r.id);
     } catch (e) { pushToast(userFacingApiError(e, "Item not created"), "error"); } finally { setBusy(false); }
   };
@@ -592,6 +616,11 @@ export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) 
           <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)} onChange={(e) => setFlags(e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl))} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
         ))}</span>))}
       {row(tr("perfume.itemfile.description", "Description"), <textarea className={`${ctl} h-14 w-full py-1`} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-new-description" />)}
+      {row(tr("perfume.itemfile.case_pack", "Case pack"), <input type="number" min={1} className={`${ctl} w-[120px] text-right`} value={v.case_pack} onChange={(e) => setV({ ...v, case_pack: e.target.value })} data-testid="perfume-new-case-pack" />)}
+      {row(tr("perfume.itemfile.moq", "Min order"), <input type="number" min={1} className={`${ctl} w-[120px] text-right`} value={v.moq} onChange={(e) => setV({ ...v, moq: e.target.value })} data-testid="perfume-new-moq" />)}
+      {row(tr("perfume.itemfile.weight", "Weight g"), <input type="number" min={0} className={`${ctl} w-[120px] text-right`} value={v.weight} onChange={(e) => setV({ ...v, weight: e.target.value })} data-testid="perfume-new-weight" />)}
+      {row(tr("perfume.itemfile.origin", "Country of origin"), <input maxLength={2} className={`${ctl} w-[80px] uppercase`} placeholder="FR" value={v.origin} onChange={(e) => setV({ ...v, origin: e.target.value })} data-testid="perfume-new-origin" />)}
+      {row(tr("perfume.itemfile.hs", "HS code"), <input className={`${ctl} w-[160px]`} placeholder="3303.00" value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-new-hs" />)}
       {row(tr("perfume.itemfile.tio_code", "TIO code"), <input className={`${ctl} w-[160px]`} value={v.tio_code} onChange={(e) => setV({ ...v, tio_code: e.target.value })} data-testid="perfume-new-tio" />)}
       {row(tr("perfume.itemfile.upc", "UPC"), <input inputMode="numeric" className={`${ctl} w-[200px]`} value={v.upc} onChange={(e) => setV({ ...v, upc: e.target.value })} data-testid="perfume-new-upc" />)}
       <div className="mt-2 flex justify-end">

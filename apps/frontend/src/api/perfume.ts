@@ -683,7 +683,8 @@ export type PerfumeItemVendorLine = { id: string; vendor_id: string; vendor: str
   description: string; size_text: string | null; price_cents: number | null; qty: number | null; match_method: string | null; list_date: string };
 export type PerfumeItemProfile = {
   item: { id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string;
-    model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null; family?: string | null };
+    model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null; family?: string | null;
+  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
   upcs: string[]; vendor_lines: PerfumeItemVendorLine[];
   remembered: Array<{ id: string; vendor: string; vendor_id: string; sku: string | null; text_key: string | null; method: string; confirmed_at: string | null }>;
   quotes: PerfumeQuoteRow[]; orders: PerfumeOrderRow[]; purchase_orders: PerfumePoRow[]; best_cost_cents: number | null;
@@ -821,6 +822,7 @@ export const decidePerfumeCreditApplication = (id: string, b: { decision: "appro
 /* ------------------------------------------------------------------ Item file + linkage (owner 2026-11-26 22:51 CT) */
 export type PerfumeItemFileRow = { id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null; flags: string[] | null;
   model: string | null; product_type: string | null; category: string | null; description: string | null; family_id?: string | null; family?: string | null;
+  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null;
   tio_code: string | null; upcs: string[]; hk_codes: string[]; lists_linked: number; best_cost_cents: number | null; my_avg_cost_cents: number | null; my_last_cost_cents: number | null };
 export type PerfumeItemFileHas = "tio" | "no_tio" | "hk" | "no_hk" | "upc" | "no_upc" | "mine";
 export type PerfumeItemScope = "mine" | "vendors" | "all";
@@ -831,10 +833,12 @@ export type PerfumeItemFile = PerfumeItemProfile & {
   events: Array<{ id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null }>;
 };
 export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null;
-  model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null };
+  model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null;
+  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
 export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags">; flags_add?: string[]; flags_remove?: string[] };
 export type PerfumeItemCreate = { brand: string; name: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; model?: string | null;
-  product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; upc?: string | null; family_id?: string | null };
+  product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; upc?: string | null; family_id?: string | null;
+  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
 export const createPerfumeItem = (b: PerfumeItemCreate) => apiRequest<{ id: string; display_name: string }>("/api/v1/perfume/item-file", { method: "POST", body: b });
 export const getPerfumeItemOptions = () => apiRequest<{ brands: string[]; models: string[]; sizes: string[] }>("/api/v1/perfume/item-file-options");
 export const bulkEditPerfumeItems = (b: PerfumeItemBulk) => apiRequest<{ updated: number }>("/api/v1/perfume/item-file-bulk", { method: "POST", body: b });
@@ -942,3 +946,14 @@ export const getPerfumeReorder = (location_code?: string) =>
 export const makePerfumeReorderPos = (b: { location_code: string; item_ids: string[]; expected_by?: string | null }) =>
   apiRequest<{ purchase_orders: Array<{ id: string; number: string; vendor_id: string; lines: number }>; skipped: Array<{ item_id: string; display_name: string; reason: string }> }>(
     "/api/v1/perfume/inventory/reorder-report/purchase-orders", { method: "POST", body: b });
+
+/* ------------------------------------------------------------------ wholesale lists (owner 2026-11-27 08:10 CT) */
+export type PerfumeWholesaleRow = { item_id: string; tio_code: string | null; display_name: string; brand: string; family: string | null; category: string | null;
+  product_type: string | null; size_ml: number | null; conc: string | null; gender: string | null; upc: string | null; case_pack: number | null; min_order_qty: number | null;
+  available: number; origin_country: string | null; hs_code: string | null; price_cents: number | null; case_price_cents: number | null; price_from: "fixed" | "rule" | null;
+  breaks: Array<{ min_qty: number; price_cents: number }>; price_set_on: string | null };
+export type PerfumeWholesaleFilter = { level_id: string; q?: string; category?: string; family_id?: string; in_stock?: "1" };
+const wholesaleQs = (f: PerfumeWholesaleFilter) => new URLSearchParams(Object.entries(f).filter(([, v]) => v) as Array<[string, string]>).toString();
+export const getPerfumeWholesaleList = (f: PerfumeWholesaleFilter) =>
+  apiRequest<{ level: { id: string; name: string; channel: string; active: boolean }; rows: PerfumeWholesaleRow[]; priced: number }>(`/api/v1/perfume/wholesale-list?${wholesaleQs(f)}`);
+export const perfumeWholesaleExportPath = (f: PerfumeWholesaleFilter) => `/api/v1/perfume/wholesale-list.xlsx?${wholesaleQs(f)}`;

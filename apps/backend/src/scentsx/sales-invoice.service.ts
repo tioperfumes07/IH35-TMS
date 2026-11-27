@@ -21,13 +21,16 @@ type Q = Pick<pg.PoolClient, "query">;
 export type SalesChannel = "wholesale" | "retail" | "export";
 const REVENUE_ACCOUNT: Record<SalesChannel, string> = { wholesale: "4000", retail: "4010", export: "4020" };
 
-export type BillableLine = { so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; to_bill: number; unit_price_cents: number };
+export type BillableLine = { so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; to_bill: number; unit_price_cents: number;
+  hs_code?: string | null; origin_country?: string | null };
 
 /** Every line of the order with shipped units, units already on a live (non-void) ScentsX invoice, and what is left to bill. */
 export async function billableLines(c: Q, salesOrderId: string): Promise<BillableLine[]> {
   await scopeToScentsx(c);
-  const r = await c.query<{ so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; unit_price_cents: string }>(
+  const r = await c.query<{ so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; unit_price_cents: string;
+    hs_code: string | null; origin_country: string | null }>(
     `SELECT l.id::text AS so_line_id, l.line_no, l.description, l.upc, l.qty_shipped AS shipped,
+            (SELECT i.hs_code FROM perfume.items i WHERE i.id = l.item_id) AS hs_code, (SELECT i.origin_country FROM perfume.items i WHERE i.id = l.item_id) AS origin_country,
             coalesce((SELECT sum(x.qty) FROM scentsx.sales_order_invoice_lines x JOIN accounting.invoices i ON i.id = x.invoice_id
                        WHERE x.so_line_id = l.id AND i.voided_at IS NULL AND coalesce(i.status, '') <> 'void'), 0)::int AS billed,
             l.unit_price_cents::text
@@ -89,7 +92,10 @@ export async function invoiceSalesOrder(c: Q, uid: string, salesOrderId: string,
       operatingCompanyId: co,
       invoiceId: inv.id,
       line_type: "other",
-      description: [l.description, l.upc ? `UPC ${l.upc}` : null].filter(Boolean).join(" · ").slice(0, 400),
+      // An export invoice carries each line's HS tariff code and country of origin (commercial invoice / pedimento), from the item.
+      description: [l.description, l.upc ? `UPC ${l.upc}` : null,
+        channel === "export" && l.hs_code ? `HS ${l.hs_code}` : null, channel === "export" && l.origin_country ? `Origin ${l.origin_country}` : null]
+        .filter(Boolean).join(" · ").slice(0, 400),
       quantity: l.to_bill,
       unit_amount_cents: l.unit_price_cents,
       account_id: revenueAccountId,

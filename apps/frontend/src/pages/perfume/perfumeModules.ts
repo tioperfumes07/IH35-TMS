@@ -20,7 +20,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "catalogs", label: "Catalogs", Icon: BookOpen, tabs: ["catalogs"] },
   // Owner 2026-11-26 18:13 CT: "we need quotations, and then historoy for quotations"; 19:12 CT: "sales order and purchase ordres
   // should already be created, i need my complete customer and vendors profile".
-  { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders", "accounts", "levels"] },
+  { id: "sales", label: "Sales", Icon: FileText, tabs: ["quotes", "orders", "accounts", "levels", "pricelists"] },
   { id: "purchasing", label: "Purchasing", Icon: ShoppingCart, tabs: ["purchases", "suppliers"] },
   // Owner 2026-11-26 22:51 CT: "THE ITEM FILE FOR EACH ITEM … SO WE CAN EDIT … AND THE LINKAGE SCREEN THAT SHOWS THE ITEM UPC AND
   // LINKED TO AND DESCRIPTIONS TO ALL LINKED".
