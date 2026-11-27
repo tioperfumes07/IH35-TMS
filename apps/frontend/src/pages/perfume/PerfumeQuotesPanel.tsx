@@ -237,7 +237,7 @@ function QuoteEditor({ id, onClose, onChanged, onOpen }: { id: string; onClose: 
         ))}
         <label className="ml-2">{tr("perfume.quotes.valid_until", "Valid until")} <DatePicker aria-label={tr("perfume.quotes.valid_until", "Valid until")} value={q.valid_until ?? ""} onChange={(v) => void patch({ valid_until: v || null })} /></label>
         <select className={ctl} aria-label={tr("perfume.quotes.currency", "Currency")} value={q.currency} onChange={(e) => void patch({ currency: e.target.value as "USD" | "MXN" })}>
-          <option value="USD">USD</option><option value="MXN">MXN</option>
+          <option value="USD">{"USD"}</option><option value="MXN">{"MXN"}</option>
         </select>
       </div>
       <div className="relative flex flex-wrap items-center gap-2">
