@@ -9,6 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.service.js";
 import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
+import { salesReport } from "./sales-report.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
 import { withCurrentUser } from "../auth/db.js";
@@ -112,6 +113,13 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const asOf = (req.query as { as_of?: string }).as_of;
     try { return await withCurrentUser(uid, async (c) => ({ tie_out: await inventoryTieOut(c, asOf) })); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/reports/sales", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = req.query as { by?: string; from?: string; to?: string };
+    const by = q.by === "item" ? "item" : q.by === "customer" ? "customer" : null;
+    if (!by || !q.from || !q.to) return reply.code(400).send({ error: "invalid_query", message: "by=customer|item, from and to (YYYY-MM-DD) are required" });
+    try { return await withCurrentUser(uid, async (c) => ({ report: await salesReport(c, by, q.from!, q.to!) })); } catch (e) { return fail(reply, e); }
   });
   app.get("/api/v1/scentsx/stock-moves/pending", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

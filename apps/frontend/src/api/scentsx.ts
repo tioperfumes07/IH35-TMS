@@ -138,3 +138,17 @@ export const addScentsxPagare = (body: { contact_company_id: string; amount_cent
   apiRequest<{ id: string; pagare_no: string }>("/api/v1/scentsx/compliance/pagares", { method: "POST", body });
 export const closeScentsxPagare = (id: string, action: "return" | "void", note: string) =>
   apiRequest<{ id: string; status: string }>(`/api/v1/scentsx/compliance/pagares/${encodeURIComponent(id)}/${action}`, { method: "POST", body: { note } });
+
+// SCENTSX B13 — Sales by Customer / Sales by Item (issued invoices, income lines)
+export type ScentsxSalesRow = { key: string; name: string; invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null; pct_of_sales: number };
+export type ScentsxSalesReport = { from: string; to: string; by: "customer" | "item"; rows: ScentsxSalesRow[]; total: { invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null } };
+export const getScentsxSalesReport = (by: "customer" | "item", from: string, to: string) =>
+  apiRequest<{ report: ScentsxSalesReport }>(`/api/v1/scentsx/reports/sales?by=${by}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
+
+// SCENTSX B13 — a TIO Perfumes vendor becomes ScentsX's vendor (A/P): canonical vendor create + scentsx.vendor_links
+export const listScentsxVendorLinks = (deskId: string) => apiRequest<{ links: ScentsxLink[] }>(`/api/v1/scentsx/vendor-links?desk_id=${encodeURIComponent(deskId)}`);
+export const linkScentsxVendor = (deskId: string, engineId: string) =>
+  apiRequest<{ link: { id: string }; screening: { result: string } | null }>("/api/v1/scentsx/vendor-links", { method: "POST", body: { desk_id: deskId, engine_id: engineId } });
+/** The canonical vendor create (mdata.vendors) for ScentsX's company — the same route every vendor goes through. */
+export const createScentsxVendor = (companyId: string, name: string) =>
+  apiRequest<{ id?: string; vendor?: { id: string } }>("/api/v1/mdata/vendors", { method: "POST", body: { operating_company_id: companyId, name, vendor_type: "Perfume supplier" } });

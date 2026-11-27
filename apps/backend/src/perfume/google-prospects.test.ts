@@ -48,19 +48,21 @@ describe("GUARD — perfume mask has every business field; the trucking mask is 
 });
 
 describe("the city × keyword plan", () => {
-  it("44 cities (27 US + 17 MX) × 10 keywords, English and Spanish; 'beauty supply' once", () => {
+  it("44 cities (27 US + 17 MX) × 5 keywords (no liquor / tobacco / beer), English and Spanish; 'beauty supply' once", () => {
     expect(PROSPECT_CITIES.filter((c) => c.country === "US")).toHaveLength(27);
     expect(PROSPECT_CITIES.filter((c) => c.country === "MX")).toHaveLength(17);
-    expect(PROSPECT_KEYWORDS).toHaveLength(10);
+    expect(PROSPECT_KEYWORDS).toHaveLength(5);
+    expect(PROSPECT_KEYWORDS.map((k) => k.category)).not.toEqual(expect.arrayContaining(["Liquor"]));
+    expect(PROSPECT_KEYWORDS.some((k) => /liquor|licor|tobacco|tabaco|cigar|puros|beer|cerveza/i.test(`${k.en} ${k.es}`))).toBe(false);
     const plan = buildPlan();
-    expect(planCounts(plan)).toEqual({ searches: 44 * 19, maxRequests: 44 * 19 * 3, cities: 44 });
+    expect(planCounts(plan)).toEqual({ searches: 44 * 9, maxRequests: 44 * 9 * 3, cities: 44 });
     expect(plan.filter((p) => p.textQuery === "perfumería en Nuevo Laredo, Tamaulipas, México")).toHaveLength(1);
     expect(plan.filter((p) => p.textQuery === "perfume store in Laredo, TX")).toHaveLength(1);
   });
-  it("the first run is Nuevo Laredo only — 19 searches, at most 57 requests", () => {
+  it("the first run is Nuevo Laredo only — 9 searches, at most 27 requests", () => {
     expect(FIRST_RUN_CITY).toBe(cityLabel({ city: "Nuevo Laredo", state: "Tamaulipas", country: "MX" }));
-    expect(planCounts(planFor(FIRST_RUN_CITY))).toEqual({ searches: 19, maxRequests: 57, cities: 1 });
-    expect(batchPlan().first_city.searches).toBe(19);
+    expect(planCounts(planFor(FIRST_RUN_CITY))).toEqual({ searches: 9, maxRequests: 27, cities: 1 });
+    expect(batchPlan().first_city.searches).toBe(9);
     expect(planFor("Nowhere, XX")).toHaveLength(0);
   });
 });

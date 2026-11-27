@@ -11,6 +11,9 @@ import {
   addWriteoffLine, createWriteoff, getWriteoff, InvInvalid, postWriteoff, stockIn, stockOnHand, stockOut, submitWriteoff, valuation,
 } from "./inventory.service.js";
 import { addPurchaseLine, approvePurchase, createPurchaseOrder, getPurchaseOrder, PoInvalid, receivePurchase, setPoApprovalOverCents, updatePurchaseLine } from "./purchases.service.js";
+import { createLink } from "../scentsx/links.service.js";
+import { loadSanctionsList, screenParty } from "../scentsx/sanctions.service.js";
+import { fixtureFetcher } from "../scentsx/__fixtures__/ofac-fixture.js";
 
 const SECOND = "a0000000-0000-4000-8000-00000000c0df";
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -78,6 +81,19 @@ describeIntegration("ScentsX quarantine, write-offs, valuation, PO approval (rea
     await setPoApprovalOverCents(db as never, TEST_OWNER_USER_ID, 1_000_000);
     expect((await getPurchaseOrder(db as never, po.id)).needs_approval).toBe(false);
     await setPoApprovalOverCents(db as never, TEST_OWNER_USER_ID, 500000);
+    // SCENTSX B13: ScentsX approves no PO to a vendor that is not its vendor, or not screened clear against OFAC.
+    await db.query("SAVEPOINT nolink");
+    await expect(approvePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toThrow(/not a ScentsX vendor yet/);
+    await db.query("ROLLBACK TO SAVEPOINT nolink");
+    const ev = (await db.query<{ id: string }>(
+      `INSERT INTO mdata.vendors (vendor_name, vendor_type, operating_company_id, is_sample_data) VALUES ('ZZW Vendor', 'Other', scentsx.company_id(), true) RETURNING id::text`
+    )).rows[0].id;
+    await createLink(db as never, TEST_OWNER_USER_ID, "vendor", v, ev);
+    await loadSanctionsList(db as never, TEST_OWNER_USER_ID, fixtureFetcher);
+    await db.query("SAVEPOINT unscreened");
+    await expect(approvePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toThrow(/not been screened against the OFAC list/);
+    await db.query("ROLLBACK TO SAVEPOINT unscreened");
+    expect((await screenParty(db as never, TEST_OWNER_USER_ID, { kind: "vendor", id: ev })).result).toBe("clear");
     await approvePurchase(db as never, TEST_OWNER_USER_ID, po.id, "ok for Q4");
     await expect(approvePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toBeInstanceOf(PoInvalid);
     await updatePurchaseLine(db as never, TEST_OWNER_USER_ID, l.id, { qty: 12 });
