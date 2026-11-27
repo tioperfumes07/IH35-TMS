@@ -8,7 +8,7 @@ import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import {
-  CashComplianceBlocked, complianceDesk, createPayer, markCaseFiled, missingIdentity, openVoluntaryCase, recordCashReceipt, updatePayer, voidCashReceipt,
+  CashComplianceBlocked, addCmirDeclaration, complianceDesk, createPayer, isMexicoCountry, markCaseFiled, missingIdentity, voidCmirDeclaration, openVoluntaryCase, recordCashReceipt, updatePayer, voidCashReceipt,
 } from "./cash-compliance.service.js";
 
 describe("missingIdentity (pure)", () => {
@@ -18,6 +18,13 @@ describe("missingIdentity (pure)", () => {
     );
     expect(missingIdentity({ payer_kind: "business", legal_name: "B", address_line: "1 Main", city: "Laredo", country: "US", occupation: "Retail perfume", tin_kind: "ein", tin_last4: "8798" })).toEqual([]);
     expect(missingIdentity({ payer_kind: "business", legal_name: "B", address_line: "x", city: "x", country: "MX", occupation: "x", tin_kind: "foreign_none" })).toEqual([]);
+  });
+});
+
+describe("isMexicoCountry (pure)", () => {
+  it("MX / MEX / Mexico / México count; the US and blanks do not", () => {
+    expect(["MX", "mex", "Mexico", "México", " méxico "].every(isMexicoCountry)).toBe(true);
+    expect(["US", "USA", "", null, undefined, "New Mexico"].some(isMexicoCountry)).toBe(false);
   });
 });
 
@@ -100,6 +107,41 @@ describe("ScentsX Form 8300 engine (real Postgres, rolled back)", () => {
 
     const v = await openVoluntaryCase(db, u, b.receipt_id, "two payments just under $10,000 four days apart");
     expect(v.due_on).toBe("2026-11-20");
+  });
+
+  it("a Mexico payer's Form 8300 cannot be marked filed until their signed FinCEN 105 declaration is attached", async () => {
+    const u = TEST_OWNER_USER_ID;
+    const file = async (n: string) => (await db.query<{ id: string }>(
+      `INSERT INTO docs.files (operating_company_id, original_filename, mime_type, size_bytes, r2_key, uploader_user_id)
+       VALUES (scentsx.company_id(), $2, 'application/pdf', 1, 'test/' || $2, $1::uuid) RETURNING id::text`, [u, n]
+    )).rows[0]!.id;
+    const payer = await createPayer(db, u, { payer_kind: "business", legal_name: "Comprador Prueba SA", address_line: "Av. Test 1", city: "Nuevo Laredo", country: "México", occupation: "Perfumeria", tin_kind: "foreign_none" });
+    const r = await recordCashReceipt(db, u, { payer_id: payer.id, received_at: "2026-11-24T11:00:00-06:00", payment_form: "currency_usd", amount_cents: 1500000 });
+    expect(r.case).not.toBeNull();
+    const caseId = r.case!.id;
+
+    expect((await complianceDesk(db)).cases.find((x) => (x as { id: string }).id === caseId)).toMatchObject({ cmir_required: true, cmir_declaration_no: null });
+
+    await db.query("SAVEPOINT f1");
+    await expect(markCaseFiled(db, u, caseId, "BSA-MX-1", null)).rejects.toMatchObject({ missing: ["fincen105_declaration"] });
+    await db.query("ROLLBACK TO SAVEPOINT f1");
+
+    await db.query("SAVEPOINT f2");
+    await expect(addCmirDeclaration(db, u, { case_id: caseId, crossed_on: "2026-11-24", port_of_entry: "Laredo", amount_declared_cents: 1500000, currency: "USD", signed_on: "2026-11-23", signed_declaration_file_id: await file("decl-bad.pdf") }))
+      .rejects.toThrow(/signed on or after/);
+    await db.query("ROLLBACK TO SAVEPOINT f2");
+
+    const d = await addCmirDeclaration(db, u, { case_id: caseId, crossed_on: "2026-11-24", port_of_entry: "Laredo - Lincoln-Juarez Bridge", amount_declared_cents: 1500000, currency: "USD", signed_on: "2026-11-24", signed_declaration_file_id: await file("decl.pdf") });
+    expect(d.declaration_no).toMatch(/^CMIR-2026-\d{4}$/);
+    expect((await complianceDesk(db)).cases.find((x) => (x as { id: string }).id === caseId)).toMatchObject({ cmir_declaration_no: d.declaration_no });
+
+    expect(await markCaseFiled(db, u, caseId, "BSA-MX-1", null)).toEqual({ filed: true });
+    // Once the form is filed, its declaration cannot be voided.
+    await db.query("SAVEPOINT f3");
+    await expect(voidCmirDeclaration(db, u, d.id, "wrong file")).rejects.toThrow(/already filed/);
+    await db.query("ROLLBACK TO SAVEPOINT f3");
+
+    // A US payer's case needs no declaration (the first test files one without it).
   });
 
   it("the wall refuses a payer that names another company's customer", async () => {

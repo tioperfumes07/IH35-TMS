@@ -20,7 +20,7 @@ export const linkScentsxCustomer = (deskId: string, engineId: string) =>
   apiRequest<{ link: { id: string } }>("/api/v1/scentsx/customer-links", { method: "POST", body: { desk_id: deskId, engine_id: engineId } });
 /** The canonical customer create (mdata.customers) for ScentsX's company — the same route every customer goes through. */
 export const createScentsxCustomer = (companyId: string, input: { name: string; email: string; phone?: string | null }) =>
-  apiRequest<{ id: string }>("/api/v1/mdata/customers", { method: "POST", body: { operating_company_id: companyId, legal_name: input.name, email: input.email, phone: input.phone ?? undefined } });
+  apiRequest<{ id: string }>("/api/v1/mdata/customers", { method: "POST", body: { operating_company_id: companyId, legal_name: input.name, email: input.email, phone: input.phone ?? undefined, customer_type: "direct" } });
 export type ScentsxRegisterLine = {
   posting_id: string; journal_entry_id: string; entry_date: string; memo: string | null; debit_or_credit: "debit" | "credit";
   amount_cents: string; source_transaction_type: string | null; source_transaction_id: string | null;
@@ -46,7 +46,7 @@ export const getScentsxCredit = (contactCompanyId: string) =>
 // SCENTSX B9 — cash log + Form 8300
 export type ScentsxPaymentForm = "currency_usd" | "currency_foreign" | "cashiers_check" | "money_order" | "bank_draft" | "travelers_check" | "personal_check" | "wire" | "card";
 export type ScentsxCashPayer = { id: string; payer_kind: "individual" | "business"; legal_name: string; contact_company_id: string | null; customer_id: string | null; identity_complete: boolean };
-export type Scentsx8300Case = { id: string; case_no: string; reason: string; status: string; total_cash_cents: string; due_on: string; filed_at: string | null; bsa_confirmation: string | null; payer_statement_sent_on: string | null; payer_id: string; payer_name: string; overdue: boolean };
+export type Scentsx8300Case = { id: string; case_no: string; reason: string; status: string; total_cash_cents: string; due_on: string; filed_at: string | null; bsa_confirmation: string | null; payer_statement_sent_on: string | null; payer_id: string; payer_name: string; overdue: boolean; payer_country: string | null; cmir_required: boolean; cmir_declaration_no: string | null; cmir_declaration_id: string | null };
 export type ScentsxCashReceipt = { id: string; receipt_no: string; received_at: string; payment_form: ScentsxPaymentForm; amount_cents: string; counts_as_cash: boolean; voided_at: string | null; void_reason: string | null; payment_id: string | null; invoice_id: string | null; sales_order_id: string | null; case_no: string | null; payer_name: string; payer_id: string };
 export type ScentsxStructuringAlert = { id: string; receipt_count: number; window_total_cents: string; created_at: string; reviewed_at: string | null; review_note: string | null; payer_name: string; receipt_no: string };
 export type ScentsxUnloggedCash = { id: string; display_id: string | null; payment_date: string; amount_cents: string; customer_id: string | null };
@@ -80,6 +80,12 @@ export const markScentsxReceiptSuspicious = (id: string, reason: string) =>
   apiRequest<{ case: { id: string; case_no: string; due_on: string } }>(`/api/v1/scentsx/compliance/receipts/${encodeURIComponent(id)}/suspicious`, { method: "POST", body: { reason } });
 export const markScentsx8300Filed = (id: string, bsa_confirmation: string, filed_copy_file_id?: string | null) =>
   apiRequest<{ filed: boolean }>(`/api/v1/scentsx/compliance/cases/${encodeURIComponent(id)}/filed`, { method: "POST", body: { bsa_confirmation, filed_copy_file_id } });
+// SCENTSX B14 — a Mexico payer's signed FinCEN 105 declaration on a Form 8300 case.
+export type ScentsxCmirInput = { crossed_on: string; port_of_entry: string; amount_declared_cents: number; currency: "USD" | "MXN"; signed_on: string; signed_declaration_file_id: string; fincen105_copy_file_id?: string | null; notes?: string | null };
+export const addScentsxCmirDeclaration = (caseId: string, input: ScentsxCmirInput) =>
+  apiRequest<{ id: string; declaration_no: string }>(`/api/v1/scentsx/compliance/cases/${encodeURIComponent(caseId)}/fincen105`, { method: "POST", body: input });
+export const voidScentsxCmirDeclaration = (id: string, reason: string) =>
+  apiRequest<{ voided: boolean }>(`/api/v1/scentsx/compliance/fincen105/${encodeURIComponent(id)}/void`, { method: "POST", body: { reason } });
 export const markScentsx8300StatementSent = (id: string, sent_on: string) =>
   apiRequest<{ ok: boolean }>(`/api/v1/scentsx/compliance/cases/${encodeURIComponent(id)}/statement-sent`, { method: "POST", body: { sent_on } });
 export const reviewScentsxStructuringAlert = (id: string, note: string) =>

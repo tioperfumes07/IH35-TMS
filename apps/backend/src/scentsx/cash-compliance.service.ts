@@ -254,9 +254,76 @@ export async function openVoluntaryCase(c: Q, uid: string, receiptId: string, su
   return { id: cs.rows[0]!.id, case_no: caseNo, due_on: cs.rows[0]!.due_on };
 }
 
+/** A payer from Mexico (country typed as MX / MEX / Mexico / México, any case). */
+export function isMexicoCountry(country: string | null | undefined): boolean {
+  const k = String(country ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase().replace(/[^a-z]/g, "");
+  return k === "mx" || k === "mex" || k === "mexico";
+}
+
+/**
+ * SCENTSX B14 (migration 202616990100) — owner 2026-11-27 07:10 CT: a Mexico payer on a Form 8300 must sign a document stating they
+ * declared the money at U.S. Customs and filed FinCEN Form 105 (CMIR, 31 CFR 1010.340). The payer files the 105, not ScentsX; ScentsX
+ * keeps the signed statement (and the payer's copy of the 105 when given), and the case cannot be marked filed without it.
+ */
+export type CmirInput = {
+  case_id: string; crossed_on: string; port_of_entry: string; amount_declared_cents: number; currency: "USD" | "MXN";
+  signed_on: string; signed_declaration_file_id: string; fincen105_copy_file_id?: string | null; notes?: string | null;
+};
+
+export async function addCmirDeclaration(c: Q, uid: string, x: CmirInput) {
+  const co = await scopeToScentsx(c);
+  if (!x.port_of_entry.trim()) throw new ScentsxLinkInvalid("enter the port of entry where the money was declared");
+  if (!(x.amount_declared_cents > 0)) throw new ScentsxLinkInvalid("enter the amount declared to U.S. Customs");
+  if (x.signed_on < x.crossed_on) throw new ScentsxLinkInvalid("the declaration is signed on or after the day the money crossed");
+  const cs = await c.query<{ payer_id: string; status: string }>(
+    `SELECT payer_id::text, status FROM scentsx.form_8300_cases WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [x.case_id, co]
+  );
+  const k = cs.rows[0];
+  if (!k) throw new ScentsxLinkNotFound("Form 8300 case not found");
+  if (k.status === "void") throw new ScentsxLinkInvalid("this Form 8300 case is void");
+  const y = x.signed_on.slice(0, 4);
+  const n = await c.query<{ n: number }>(`SELECT count(*)::int + 1 AS n FROM scentsx.cmir_declarations WHERE operating_company_id = $1::uuid AND declaration_no LIKE $2`, [co, `CMIR-${y}-%`]);
+  const no = `CMIR-${y}-${String(n.rows[0]!.n).padStart(4, "0")}`;
+  const r = await c.query<{ id: string }>(
+    `INSERT INTO scentsx.cmir_declarations (operating_company_id, declaration_no, payer_id, case_id, crossed_on, port_of_entry, amount_declared_cents,
+        currency, signed_on, signed_declaration_file_id, fincen105_copy_file_id, notes, created_by)
+     VALUES ($1::uuid, $2, $3::uuid, $4::uuid, $5::date, $6, $7, $8, $9::date, $10::uuid, $11::uuid, $12, $13::uuid) RETURNING id::text`,
+    [co, no, k.payer_id, x.case_id, x.crossed_on, x.port_of_entry.trim(), x.amount_declared_cents, x.currency, x.signed_on,
+     x.signed_declaration_file_id, x.fincen105_copy_file_id ?? null, x.notes?.trim() || null, uid]
+  );
+  return { id: r.rows[0]!.id, declaration_no: no };
+}
+
+export async function voidCmirDeclaration(c: Q, uid: string, id: string, reason: string) {
+  await scopeToScentsx(c);
+  if (!reason.trim()) throw new ScentsxLinkInvalid("a void needs a written reason");
+  const r = await c.query(
+    `UPDATE scentsx.cmir_declarations d SET voided_at = now(), voided_by = $2::uuid, void_reason = $3
+      WHERE d.id = $1::uuid AND d.voided_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM scentsx.form_8300_cases f WHERE f.id = d.case_id AND f.status = 'filed')`,
+    [id, uid, reason.trim()]
+  );
+  if (!r.rowCount) throw new ScentsxLinkInvalid("declaration not found, already void, or its Form 8300 is already filed");
+  return { voided: true };
+}
+
+/** Whether a case needs the FinCEN 105 declaration (Mexico payer) and whether an active one is on file. */
+export async function cmirStatus(c: Q, caseId: string): Promise<{ required: boolean; on_file: boolean }> {
+  const r = await c.query<{ country: string | null; on_file: boolean }>(
+    `SELECT p.country, EXISTS (SELECT 1 FROM scentsx.cmir_declarations d WHERE d.case_id = f.id AND d.voided_at IS NULL) AS on_file
+       FROM scentsx.form_8300_cases f JOIN scentsx.cash_payers p ON p.id = f.payer_id WHERE f.id = $1::uuid`, [caseId]
+  );
+  const x = r.rows[0];
+  return { required: isMexicoCountry(x?.country), on_file: Boolean(x?.on_file) };
+}
+
 export async function markCaseFiled(c: Q, uid: string, caseId: string, bsaConfirmation: string, filedCopyFileId: string | null) {
   await scopeToScentsx(c);
   if (!bsaConfirmation.trim()) throw new ScentsxLinkInvalid("enter the BSA e-filing confirmation number");
+  const cmir = await cmirStatus(c, caseId);
+  if (cmir.required && !cmir.on_file) {
+    throw new CashComplianceBlocked("This payer is from Mexico: attach their signed declaration that they declared the money at U.S. Customs and filed FinCEN Form 105 before marking the Form 8300 filed.", ["fincen105_declaration"]);
+  }
   const r = await c.query(
     `UPDATE scentsx.form_8300_cases SET status = 'filed', filed_at = now(), filed_by = $2::uuid, bsa_confirmation = $3, filed_copy_file_id = $4::uuid
       WHERE id = $1::uuid AND status = 'open'`,
@@ -291,7 +358,9 @@ export async function complianceDesk(c: Q) {
   // Sequential on purpose: one client cannot run queries in parallel.
   const cases = await c.query(`SELECT f.id::text, f.case_no, f.reason, f.status, f.total_cash_cents::text, f.due_on::text, f.filed_at, f.bsa_confirmation,
                     f.payer_statement_sent_on::text, p.id::text AS payer_id, p.legal_name AS payer_name,
-                    (f.status = 'open' AND f.due_on < (now() AT TIME ZONE 'America/Chicago')::date) AS overdue
+                    (f.status = 'open' AND f.due_on < (now() AT TIME ZONE 'America/Chicago')::date) AS overdue, p.country AS payer_country,
+                    (SELECT d.declaration_no FROM scentsx.cmir_declarations d WHERE d.case_id = f.id AND d.voided_at IS NULL ORDER BY d.created_at DESC LIMIT 1) AS cmir_declaration_no,
+                    (SELECT d.id::text FROM scentsx.cmir_declarations d WHERE d.case_id = f.id AND d.voided_at IS NULL ORDER BY d.created_at DESC LIMIT 1) AS cmir_declaration_id
                FROM scentsx.form_8300_cases f JOIN scentsx.cash_payers p ON p.id = f.payer_id
               WHERE f.operating_company_id = $1::uuid ORDER BY (f.status = 'open') DESC, f.due_on`, [co]);
   const alerts = await c.query(`SELECT a.id::text, a.receipt_count, a.window_total_cents::text, a.created_at, a.reviewed_at, a.review_note, p.legal_name AS payer_name,
@@ -309,5 +378,5 @@ export async function complianceDesk(c: Q) {
               ORDER BY pm.payment_date DESC LIMIT 200`, [co]);
   const payers = await c.query(`SELECT id::text, payer_kind, legal_name, contact_company_id::text, customer_id::text, identity_completed_at IS NOT NULL AS identity_complete
                FROM scentsx.cash_payers WHERE operating_company_id = $1::uuid AND voided_at IS NULL ORDER BY legal_name`, [co]);
-  return { settings: await complianceSettings(c), cases: cases.rows, alerts: alerts.rows, receipts: receipts.rows, unlogged_cash_payments: unlogged.rows, payers: payers.rows };
+  return { settings: await complianceSettings(c), cases: cases.rows.map((x) => ({ ...x, cmir_required: isMexicoCountry(x.payer_country as string | null) })), alerts: alerts.rows, receipts: receipts.rows, unlogged_cash_payments: unlogged.rows, payers: payers.rows };
 }
