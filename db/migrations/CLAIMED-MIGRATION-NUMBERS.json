@@ -1082,7 +1082,8 @@
     "202616760100",
     "202616770100",
     "202616780100",
-    "202616790100"
+    "202616790100",
+    "202616800100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1252,6 +1253,7 @@
   "202616770100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME trade show contact data: organizer, register link, email, phone on perfume.trade_shows (owner 2026-11-26 17:08 CT)"},
   "202616780100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME leads: perfume.catalog_values (vendor/customer types, business categories, source kinds, product types, genders) + lead source_kind / leak sender on contacts + contact Excel round-trip imports (owner 2026-11-26 17:38 CT)"},
   "202616790100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME quotations: perfume.quotes + quote_lines + quote_events (number, customer, lines from desk items, status, history, Excel/PDF export) — owner 2026-11-26 18:13 CT"},
+  "202616800100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME sales orders + purchase orders: perfume.sales_orders / sales_order_lines / sales_order_events (from an accepted quote, shipped qty) and perfume.purchase_orders / purchase_order_lines / purchase_order_events (to a vendor, from an order or by hand, received qty) — history, Excel/PDF — owner 2026-11-26 19:08 + 19:12 CT"},
   "202616750100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
