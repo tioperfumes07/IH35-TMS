@@ -22,7 +22,8 @@ import {
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
-import { perfumeContactHistory, perfumeContactTrades, perfumeQuotesOfContact, type PerfumeContactTrade, type PerfumeQuoteRow } from "../../api/perfume";
+import { perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
+import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -150,8 +151,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
 function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
   const p = useQuery({ queryKey: ["perfume", "contact", id], queryFn: () => getPerfumeContact(id) });
-  // Reverse links (fully-wired item f): the quotes and trades that name this company, and its history (item g).
-  const quotes = useQuery({ queryKey: ["perfume", "contact", id, "quotes"], queryFn: () => perfumeQuotesOfContact(id) });
+  // Reverse links (fully-wired item f): its quotes / orders / POs (P1 activity block), trades, and its history (item g).
   const trades = useQuery({ queryKey: ["perfume", "contact", id, "trades"], queryFn: () => perfumeContactTrades(id) });
   const history = useQuery({ queryKey: ["perfume", "contact", id, "history"], queryFn: () => perfumeContactHistory(id) });
   const co = p.data?.company;
@@ -207,24 +207,8 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
               { key: "email_count", label: "Emails", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.email_count) },
             ]}
           />
-          <ParityTable<PerfumeQuoteRow>
-            title={tr("perfume.contacts.quotes", "Quotes")}
-            rows={quotes.data?.quotes ?? []}
-            rowKey={(x) => x.id}
-            loading={quotes.isLoading}
-            storageKey="perfume-contact-quotes-v1"
-            exportFilename="TIO contact quotes"
-            exportExcel
-            suppressToolbarSearch
-            emptyText="No quote for this company yet."
-            columns={[
-              { key: "number", label: "Quote", sortable: true, render: (x) => <a className="font-semibold text-[#14314F] underline" href={`/perfume?tab=quotes&quote=${encodeURIComponent(x.id)}`}>{x.number}</a> },
-              { key: "quote_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.quote_date) },
-              { key: "status", label: "Status", sortable: true },
-              { key: "lines", label: "Lines", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.lines) },
-              { key: "total_cents", label: "Total", sortable: true, cellClass: "text-right tabular-nums", render: (x) => `${x.currency} ${(Number(x.total_cents) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` },
-            ]}
-          />
+          {/* ROUND P1.12 A — the P1 seat's activity block: quotes, sales orders, linked vendors and the POs to it, each opening its document. */}
+          <PerfumeCompanyActivity companyId={id} />
           <ParityTable<PerfumeContactTrade>
             title={tr("perfume.contacts.trades", "Trades")}
             rows={trades.data?.trades ?? []}

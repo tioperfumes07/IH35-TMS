@@ -172,8 +172,8 @@ export function PerfumeTradersPanel() {
             columns={[
               { key: "sender", label: "Whose list", sortable: true, render: (r) => <span className="font-semibold">{r.sender}</span> },
               { key: "buyers", label: "Buyers shown", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => r.buyers.toLocaleString() },
-              { key: "first_on", label: "First seen", sortable: true, render: (r) => usDate(r.first_on) },
-              { key: "last_on", label: "Last seen", sortable: true, render: (r) => usDate(r.last_on) },
+              { key: "first_on", label: "First list date", sortable: true, render: (r) => usDate(r.first_on) },
+              { key: "last_on", label: "Last list date", sortable: true, render: (r) => usDate(r.last_on) },
             ]}
           />
         </section>
