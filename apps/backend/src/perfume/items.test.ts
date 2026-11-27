@@ -65,6 +65,13 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     // Moved to BRAVO: both files say so.
     const mv = await addUpc(db as never, TEST_OWNER_USER_ID, b, "812256028475");
     expect(mv.moved_from).toBe(a);
+    // Confirming the UPC on the item that already has it still brings over a line another item carries with it (owner 13:09 CT:
+    // the item most vendors name is the one) — before, the early return left that line where it was.
+    await db.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE id = $1`, [pcaLine, a]);
+    const again = await addUpc(db as never, TEST_OWNER_USER_ID, b, "812256028475");
+    expect([again.moved_from, again.lines_relinked]).toEqual([null, 1]);
+    expect((await db.query(`SELECT item_id FROM perfume.price_list_rows WHERE id = $1`, [pcaLine])).rows[0].item_id).toBe(b);
+    expect((await db.query(`SELECT count(*)::int AS n FROM perfume.item_events WHERE item_id = $1 AND kind = 'line_linked' AND detail->>'by_upc' = '812256028475'`, [b])).rows[0].n).toBe(1);
     const fa = await getItemFile(db as never, a) as { events: Array<{ kind: string }> };
     expect(fa.events.map((e) => e.kind)).toEqual(["codes_filled", "upc_added", "upc_moved_out"]);
 
@@ -73,7 +80,7 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     expect((await addHkCode(db as never, TEST_OWNER_USER_ID, b, "Z200001")).moved_from).toBe(a);
     const fb = await getItemFile(db as never, b) as { hk_codes: Array<{ sku: string }>; events: Array<{ kind: string }> };
     expect(fb.hk_codes.map((h) => h.sku)).toContain("Z200001");
-    expect(fb.events.map((e) => e.kind)).toEqual(["tio_code", "upc_moved_in", "hk_code_moved_in"]);
+    expect(fb.events.map((e) => e.kind)).toEqual(["tio_code", "upc_moved_in", "line_linked", "hk_code_moved_in"]);
 
     // Editing ALPHA into BRAVO's reading is refused; a real edit is kept with before / after.
     await expect(updateItemFile(db as never, TEST_OWNER_USER_ID, a, { name: "BRAVO" })).rejects.toBeInstanceOf(ItemInvalid);
