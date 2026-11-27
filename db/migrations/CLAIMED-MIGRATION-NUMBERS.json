@@ -1100,7 +1100,8 @@
     "202616940100",
     "202616950100",
     "202616960100",
-    "202616970100"
+    "202616970100",
+    "202616980100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1297,5 +1298,6 @@
   "202616940100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME item file + linkage (owner 2026-11-26 22:51 CT: UPCs, TIO internal codes, HK internal codes, the item file for each item to edit, and the linkage screen showing each UPC/code, what it is linked to and every linked description): perfume.item_events append-only history of item edits"},
   "202616950100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B11: complete books — bank / cash / card / loan / payroll / other income-expense accounts, role bindings (operating_bank etc.), ScentsX catalogs (payment terms, payment methods, void reasons, vendor types, expense categories, products & services) and the generic finance posting flags ON for SCENTSX — owner 2026-11-26 23:19 CT full books"},
   "202616960100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B12: compliance module — party KYC (RFC, CURP, passport, visa, EIN, Texas sales tax permit), W-9 / W-8BEN / W-8BEN-E tracking, pagarés tied to credit accounts, linked to contacts, ScentsX customers (A/R) and vendors (A/P) — owner 2026-11-26 23:17 CT"},
-  "202616970100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME desk speed (owner 2026-11-26 23:23 CT: \"IN ITEMS COULDNT LOAD THE ITEM FILE\"): the 57 perfume owner-only policies evaluate perfume.is_owner() once per query ((SELECT perfume.is_owner())) instead of once per row — same rule, same tables"}
+  "202616970100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME desk speed (owner 2026-11-26 23:23 CT: \"IN ITEMS COULDNT LOAD THE ITEM FILE\"): the 57 perfume owner-only policies evaluate perfume.is_owner() once per query ((SELECT perfume.is_owner())) instead of once per row — same rule, same tables"},
+  "202616980100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX B13: ScentsX accounting periods (Jan 2026 - Dec 2027, all open, same seed pattern as USMCA 202607020000)"}
 }
