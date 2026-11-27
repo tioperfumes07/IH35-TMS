@@ -9,7 +9,7 @@ import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import {
   addOrderLine, archiveOrder, createOrder, getOrder, listOrders, ORDER_STATUSES, OrderInvalid, orderFromQuote, orderLinePatchSchema, orderLineSchema,
-  OrderNotFound, orderPdf, orderSchema, ordersListXlsx, ordersOfCompany, ordersOfItem, orderXlsx, removeOrderLine, setOrderStatus, shipAll, updateOrder, updateOrderLine,
+  OrderNotFound, orderPdf, orderSchema, ordersListXlsx, ordersOfCompany, ordersOfItem, orderXlsx, removeOrderLine, setOrderStatus, shipOrder, shipSchema, updateOrder, updateOrderLine,
 } from "./orders.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -92,7 +92,9 @@ export async function registerPerfumeOrderRoutes(app: FastifyInstance) {
   app.post("/api/v1/perfume/orders/:id/ship-all", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
-    try { return await withCurrentUser(uid, (c) => shipAll(c, uid, id.data)); } catch (e) { return fail(reply, e); }
+    const p = shipSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
+    try { return await withCurrentUser(uid, (c) => shipOrder(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/orders/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

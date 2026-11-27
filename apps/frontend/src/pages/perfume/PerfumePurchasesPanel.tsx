@@ -20,7 +20,7 @@ import {
   type PerfumePo, type PerfumePoLine, type PerfumePoRow, type PerfumePoStatus,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
-import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, toCents, useOpenDoc, usDate } from "./perfumeDocParts";
+import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, SitePicker, toCents, useOpenDoc, usDate } from "./perfumeDocParts";
 import { PO_STATUS_CLASS as STATUS_CLASS, PO_STATUS_TEXT as STATUS_TEXT } from "./PerfumeOrdersPanel";
 
 export function PerfumePurchasesPanel() {
@@ -164,6 +164,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
+        <label>{tr("perfume.pos.arrives_at", "Arrives at")} <SitePicker value={p.location_code} onChange={(v) => void patch({ location_code: v })} label={tr("perfume.pos.arrives_at", "Arrives at")} testId="perfume-po-site" /></label>
         <label>{tr("perfume.pos.expected", "Expected by")} <DatePicker aria-label={tr("perfume.pos.expected", "Expected by")} value={p.expected_by ?? ""} onChange={(v) => void patch({ expected_by: v || null })} /></label>
         <select className={ctl} aria-label={tr("perfume.pos.currency", "Currency")} value={p.currency} onChange={(e) => void patch({ currency: e.target.value as "USD" | "MXN" })}>
           <option value="USD">{"USD"}</option><option value="MXN">{"MXN"}</option>

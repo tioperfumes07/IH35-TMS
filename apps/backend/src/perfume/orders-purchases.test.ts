@@ -67,6 +67,9 @@ describeIntegration("sales orders, purchase orders, profiles (real Postgres, rol
     await addLine(db as never, TEST_OWNER_USER_ID, q.id, { description: "Gift bag", qty: 1, unit_price_cents: 100 });
 
     const o = await orderFromQuote(db as never, TEST_OWNER_USER_ID, q.id);
+    // The order ships from (and its POs arrive at) one of my own sites — goods move through the inventory ledger.
+    await db.query(`INSERT INTO perfume.locations (code, name, sort_order, kind, own) VALUES ('ZOP', 'ZZ Orders site', 900, 'warehouse', true)`);
+    await db.query(`UPDATE perfume.sales_orders SET location_code = 'ZOP' WHERE id = $1`, [o.id]);
     expect(o.number).toMatch(/^SO-\d{6}$/);
     expect((await orderFromQuote(db as never, TEST_OWNER_USER_ID, q.id)).id).toBe(o.id); // never two orders for one quote
     const qa = await getQuote(db as never, q.id);
@@ -100,6 +103,7 @@ describeIntegration("sales orders, purchase orders, profiles (real Postgres, rol
     // Ship the order; shipped comes from the lines.
     const so = await getOrder(db as never, o.id);
     await expect(updateOrderLine(db as never, TEST_OWNER_USER_ID, so.lines[0]!.id, { qty_shipped: 99 })).rejects.toBeInstanceOf(OrderInvalid);
+    await receiveAll(db as never, TEST_OWNER_USER_ID, poB.id);
     await shipAll(db as never, TEST_OWNER_USER_ID, o.id);
     const shipped = await getOrder(db as never, o.id);
     expect([shipped.status, shipped["purchase_orders"]]).toEqual(["shipped", 2]);

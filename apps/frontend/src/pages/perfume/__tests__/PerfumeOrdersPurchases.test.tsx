@@ -49,6 +49,8 @@ beforeEach(() => {
       vendor_lines: [{ id: "r1", vendor_id: "vA", vendor: "Vendor A", kind: "buy", sku: "A-NIGHT", upc: null, brand: null, description: "ZZO NIGHT EDP 3.4OZ M", size_text: null, price_cents: 1000, qty: null, match_method: "alias", list_date: "2026-11-26" }],
       remembered: [{ id: "a1", vendor: "Vendor A", vendor_id: "vA", sku: null, text_key: "ZZO NIGHT EDP 3.4OZ M", method: "import", confirmed_at: null }],
       quotes: [], orders: [orow("o1", "SO-000001", "open", 1)], purchase_orders: [prow("p1", "PO-000001", "open")] } satisfies PerfumeItemProfile;
+    if (path === "/api/v1/perfume/inventory/sites") return { sites: [{ code: "008", name: "Perfume Bodega Laredo", kind: "warehouse", own: true, active: true, address: null, sort_order: 10, units: 0, items: 0, fifo_value_cents: 0 }] };
+    if (path === "/api/v1/perfume/items/i1/lots") return { lots: [{ id: "lt1", location_code: "008", lot_code: "L-A", source: "receipt", received_on: "2026-11-26", qty_in: 10, qty_left: 4, unit_cost_cents: 1000, vendor: "Vendor A", po_line_id: "pl1", po_number: "PO-000001", po_id: "p1" }], stock: [] };
     throw new Error(`unexpected ${path}`);
   });
 });
@@ -105,5 +107,7 @@ describe("profiles", () => {
     expect(within(p).getAllByText("Their words (remembered)").length).toBeGreaterThan(0);
     expect(within(p).getByTestId("perfume-item-upcs").textContent).toContain("8099922233441");
     expect(within(p).getAllByText("SO-000001").length).toBeGreaterThan(0);
+    // Its stock: each lot with its vendor and the PO that brought it in.
+    await waitFor(() => expect(within(p).getAllByText("4 of 10").length).toBeGreaterThan(0));
   });
 });
