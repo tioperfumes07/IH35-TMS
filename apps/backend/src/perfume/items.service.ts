@@ -32,7 +32,7 @@ async function liveItem(c: pg.PoolClient, id: string) {
     gender: string | null; flags: string[] | null; identity_key: string; model: string | null; product_type: string | null; category: string | null; description: string | null;
     case_pack: number | null; min_order_qty: number | null; weight_g: string | null; origin_country: string | null; hs_code: string | null } & ControlRow>(
     `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key, model, product_type, category, description,
-            case_pack, min_order_qty, weight_g::text, origin_country, hs_code, pos_code, ticket_description, sold_by, units_per_pack, preferred_vendor_id, is_stock_item, is_active, special_price_cents::float8 AS special_price_cents, min_price_cents::float8 AS min_price_cents, price_locked
+            case_pack, min_order_qty, weight_g::text, origin_country, hs_code, pos_code, ticket_description, sold_by, units_per_pack, preferred_vendor_id, is_stock_item, is_active, special_price_cents::float8 AS special_price_cents, min_price_cents::float8 AS min_price_cents, price_locked, is_exclusive, is_new_launch
        FROM perfume.items WHERE id = $1 AND merged_into_id IS NULL FOR UPDATE`, [id])).rows[0];
   if (!r) throw new ItemNotFound();
   return r;
@@ -96,7 +96,7 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
             i.model, i.product_type, i.category, i.description, i.family_id,
             i.case_pack, i.min_order_qty, i.weight_g::float8 AS weight_g, i.origin_country, i.hs_code,
             i.pos_code, i.ticket_description, i.sold_by, i.units_per_pack, i.preferred_vendor_id, i.is_stock_item, i.is_active,
-            i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked,
+            i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked, i.is_exclusive, i.is_new_launch,
             (SELECT COALESCE(NULLIF(btrim(v.short_name), ''), v.name) FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
             (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
@@ -195,15 +195,19 @@ export const itemEditSchema = z.object({
   special_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
   min_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
   price_locked: z.boolean().optional(),
+  // Margin groups (migration 202617150100): the owner's own Exclusive / New launch marks.
+  is_exclusive: z.boolean().optional(),
+  is_new_launch: z.boolean().optional(),
 });
 const ATTRS = ["model", "product_type", "category", "description"] as const;
 const TRADE = ["case_pack", "min_order_qty", "weight_g", "origin_country", "hs_code"] as const;
 
 /** CONTROL item fields (migration 202617100100). */
 type ControlRow = { pos_code: string | null; ticket_description: string | null; sold_by: "piece" | "pack"; units_per_pack: number | null;
-  preferred_vendor_id: string | null; is_stock_item: boolean; is_active: boolean; special_price_cents: number | null; min_price_cents: number | null; price_locked: boolean };
+  preferred_vendor_id: string | null; is_stock_item: boolean; is_active: boolean; special_price_cents: number | null; min_price_cents: number | null; price_locked: boolean;
+  is_exclusive: boolean; is_new_launch: boolean };
 const CONTROL = ["pos_code", "ticket_description", "sold_by", "units_per_pack", "preferred_vendor_id", "is_stock_item", "is_active",
-  "special_price_cents", "min_price_cents", "price_locked"] as const;
+  "special_price_cents", "min_price_cents", "price_locked", "is_exclusive", "is_new_launch"] as const;
 type ControlIn = Partial<{ [K in (typeof CONTROL)[number]]: unknown }>;
 /** What the CONTROL fields become after this edit, checked: one live item per POS code, a live vendor, a pack has its units. */
 async function controlTarget(c: pg.PoolClient, id: string | null, cur: ControlRow, x: ControlIn) {
@@ -227,7 +231,7 @@ async function controlTarget(c: pg.PoolClient, id: string | null, cur: ControlRo
   return want;
 }
 const CONTROL_DEFAULT: ControlRow = { pos_code: null, ticket_description: null, sold_by: "piece", units_per_pack: null, preferred_vendor_id: null,
-  is_stock_item: true, is_active: true, special_price_cents: null, min_price_cents: null, price_locked: false };
+  is_stock_item: true, is_active: true, special_price_cents: null, min_price_cents: null, price_locked: false, is_exclusive: false, is_new_launch: false };
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
  *  keeps matching vendors' lines; when another item already IS that reading, the edit is refused and names it. */
 /** A tester's regular version (migration 202617070100). Only a TESTER takes one; the regular must be a live, non-tester item. One 'attributes' event. */
@@ -362,6 +366,9 @@ export const itemCreateSchema = z.object({
   special_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
   min_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
   price_locked: z.boolean().optional(),
+  // Margin groups (migration 202617150100): the owner's own Exclusive / New launch marks.
+  is_exclusive: z.boolean().optional(),
+  is_new_launch: z.boolean().optional(),
 });
 export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeof itemCreateSchema>) {
   const flags = x.flags ?? [];

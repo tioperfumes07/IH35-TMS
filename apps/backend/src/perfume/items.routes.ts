@@ -63,7 +63,7 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
       // CONTROL item fields (migration 202617100100).
       { header: "POS code", width: 12 }, { header: "Ticket description", width: 26 }, { header: "Sold by", width: 8 }, { header: "Units / pack", width: 10 },
       { header: "Preferred vendor", width: 22 }, { header: "Stock item", width: 9 }, { header: "Active", width: 8 }, { header: "Special price", width: 12 },
-      { header: "Minimum price", width: 12 }, { header: "Change price", width: 11 }];
+      { header: "Minimum price", width: 12 }, { header: "Change price", width: 11 }, { header: "Exclusive", width: 9 }, { header: "New launch", width: 10 }];
     const yn = (b: unknown) => (b === false ? "N" : "Y");
     for (const r of all) {
       ws.addRow([r.display_name, r.tio_code ?? "", (r.hk_codes as string[]).join(", "), (r.upcs as string[]).join(", "), r.brand, r.size_ml ?? "", r.conc ?? "", r.gender ?? "",
@@ -72,7 +72,7 @@ export async function registerPerfumeItemFileRoutes(app: FastifyInstance) {
         r.my_last_cost_cents == null ? "" : Number(r.my_last_cost_cents) / 100,
         r.pos_code ?? "", r.ticket_description ?? "", r.sold_by === "pack" ? "Pack" : "Piece", r.units_per_pack ?? "", r.preferred_vendor ?? "",
         yn(r.is_stock_item), yn(r.is_active), r.special_price_cents == null ? "" : Number(r.special_price_cents) / 100,
-        r.min_price_cents == null ? "" : Number(r.min_price_cents) / 100, yn(!r.price_locked)]);
+        r.min_price_cents == null ? "" : Number(r.min_price_cents) / 100, yn(!r.price_locked), r.is_exclusive ? "Y" : "N", r.is_new_launch ? "Y" : "N"]);
     }
     for (const n of [14, 15, 16, 24, 25]) ws.getColumn(n).numFmt = '"$"#,##0.00';
     ws.getRow(1).font = { bold: true, name: "Arial" };

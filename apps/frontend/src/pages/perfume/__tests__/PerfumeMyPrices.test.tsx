@@ -89,12 +89,14 @@ describe("Perfume desk — my list price, costs, margins", () => {
   });
   it("the competitor description switches off and back on", async () => {
     mount("wholesale");
+    // Owner 2026-11-27 15:40 CT: "by default we do not need their description. just list and real price" — off by default, one click on.
     const t = await screen.findByTestId("perfume-desc-toggle");
-    expect(screen.getAllByRole("columnheader", { name: /^Their description/ }).length).toBeGreaterThan(0);
+    expect(screen.queryByRole("columnheader", { name: /^Their description/ })).toBeNull();
+    expect(t.textContent).toContain("Show competitor description");
     fireEvent.click(t);
-    await waitFor(() => expect(screen.queryByRole("columnheader", { name: /^Their description/ })).toBeNull());
-    fireEvent.click(screen.getByTestId("perfume-desc-toggle"));
     await waitFor(() => expect(screen.getAllByRole("columnheader", { name: /^Their description/ }).length).toBeGreaterThan(0));
     expect(within(document.body).getByTestId("perfume-desc-toggle").textContent).toContain("Hide competitor description");
+    fireEvent.click(screen.getByTestId("perfume-desc-toggle"));
+    await waitFor(() => expect(screen.queryByRole("columnheader", { name: /^Their description/ })).toBeNull());
   });
 });

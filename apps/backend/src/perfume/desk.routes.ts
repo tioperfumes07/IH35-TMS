@@ -73,6 +73,9 @@ const rulesSchema = z.object({
   wholesale_targets_pct: z.array(z.number().min(0).max(99)).max(6).optional(),
   competitor_cushion_tiers: z.array(z.object({ over_cents: z.number().int().min(0).max(1_000_000), cushion_cents: z.number().int().min(0).max(10_000) })).max(6).optional(),
   match_under_cents: z.number().int().min(0).max(10_000).optional(),
+  // Owner 2026-11-27 15:40 CT: margin % per group (my margin; the % vendors earn on Trading). null clears a group.
+  group_margins: z.record(z.enum(["new_launch", "exclusive", "tester", "set", "mini", "regular"]), z.number().min(0).max(99).nullable()).optional(),
+  group_earn: z.record(z.enum(["new_launch", "exclusive", "tester", "set", "mini", "regular"]), z.number().min(0).max(99).nullable()).optional(),
   columns: z.record(z.string(), z.array(z.string()).max(200)).optional(),
 });
 const rowSchema = z.object({
@@ -128,6 +131,7 @@ const gridQuery = z.object({
   brand: z.string().max(4000).default(""),
   size: z.string().max(1000).default(""),
   vendor: z.string().max(4000).default(""),
+  group: z.string().max(400).default(""),
   // The margin the owner types on the grid; drives the "My target" columns.
   target_pct: z.coerce.number().min(0).max(95).optional(),
   // The % the owner believes his vendors earn — the Trading tab's box.
@@ -474,7 +478,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     // Per-request: text search and facet picks only; sort is already applied in vp.sorted.
     const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
-    const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) };
+    const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor), group: splitPicks(q.data.group) };
     const hasPicksArr = [...picks.category, ...picks.gender, ...picks.brand, ...(picks.size ?? []), ...(picks.vendor ?? [])];
     const rows = hasPicksArr.length > 0 ? filterFacets(viewRows, picks) : viewRows;
     const facets = hasPicksArr.length > 0 ? gridFacets(viewRows, picks) : vp.facets0;
@@ -488,7 +492,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, sortKey, q.data.dir, q.data.base, q.data.match, splitPicks(q.data.comps ?? ""));
     const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
-    const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor) });
+    const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor), group: splitPicks(q.data.group) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
     const picked = want ? want.map((k) => g.cols.find((c) => c.key === k)).filter((c): c is NonNullable<typeof c> => Boolean(c)) : g.cols;
     // List analysis = the owner's PERFUME ENGINE FORMATS.xlsx, every column of it, always (owner 2026-11-15 13:17 CT:
