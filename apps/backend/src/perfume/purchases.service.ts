@@ -10,6 +10,8 @@
  * item → its POs (purchaseOrdersOfItem); sales order → its POs (purchaseOrdersOfOrder) and its history ('purchased').
  */
 import type pg from "pg";
+import { assertNotSanctionsBlocked } from "../scentsx/sanctions.service.js";
+import { ScentsxLinkInvalid } from "../scentsx/links.service.js";
 import { z } from "zod";
 import ExcelJS from "exceljs";
 import { esc, money, usDate } from "./quotes.service.js";
@@ -120,6 +122,19 @@ export async function approvePurchase(c: pg.PoolClient, uid: string, poId: strin
   if (po.approved_at) throw new PoInvalid("This PO is already approved.");
   const total = await poTotal(c, poId);
   if (total <= 0) throw new PoInvalid("Add the lines first.");
+  // SCENTSX B13 (Lead; design §8 "every new customer and vendor is screened"): ScentsX may not buy from a vendor that is not
+  // screened clear against the OFAC list. The vendor must be ScentsX's vendor (scentsx.vendor_links) so it can be screened.
+  const v = (await c.query<{ engine_id: string | null }>(
+    `SELECT l.vendor_id::text AS engine_id FROM perfume.purchase_orders po
+       LEFT JOIN scentsx.vendor_links l ON l.perfume_vendor_id = po.vendor_id AND l.voided_at IS NULL
+      WHERE po.id = $1 LIMIT 1`, [poId])).rows[0];
+  if (!v?.engine_id) throw new PoInvalid("PO not approved: this vendor is not a ScentsX vendor yet — open it on Lists → Vendors and press \"Make ScentsX vendor\" so it is screened against the OFAC list.");
+  try {
+    await assertNotSanctionsBlocked(c, { kind: "vendor", id: v.engine_id }, "PO not approved");
+  } catch (e) {
+    if (e instanceof ScentsxLinkInvalid) throw new PoInvalid(e.message);
+    throw e;
+  }
   await c.query(`UPDATE perfume.purchase_orders SET approved_by = $2, approved_at = now(), approval_note = $3, updated_at = now() WHERE id = $1`, [poId, uid, note]);
   await event(c, poId, uid, "approved", { total_cents: total, note });
   return { approved: true, total_cents: total };

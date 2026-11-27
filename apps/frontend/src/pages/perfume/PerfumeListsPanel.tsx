@@ -17,6 +17,7 @@ import {
   type Mapping, type PictureLine, type ReadFile,
 } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
+import { ScentsxVendorLink } from "./ScentsxVendorLink";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { useSearchParams } from "react-router-dom";
@@ -180,6 +181,8 @@ function VendorsCard({ vendors }: { vendors: PerfumeVendor[] }) {
           <label className="flex items-center gap-1 text-xs text-gray-600"><input type="checkbox" checked={Boolean(edit.sells_by_box)} onChange={(e) => setEdit({ ...edit, sells_by_box: e.target.checked })} />{tr("perfume.lists.17", "Sells by full box only")}</label>
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!edit.name?.trim()} onClick={() => void save()}>{tr("perfume.lists.18", "Save")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setEdit(null)}>{tr("perfume.lists.19", "Close")}</Button>
+          {/* SCENTSX B13 (Lead): this vendor in ScentsX's books — A/P link, OFAC screen, KYC and W-9 / W-8. */}
+          {edit.id ? <ScentsxVendorLink vendorId={edit.id} name={edit.name ?? ""} /> : null}
         </div>
       ) : null}
       <ParityTable<PerfumeVendor>

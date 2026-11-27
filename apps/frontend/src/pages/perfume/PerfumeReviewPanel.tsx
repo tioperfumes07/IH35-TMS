@@ -165,18 +165,20 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
               );
             } }] : []),
           { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="perfume_vendor" id={r.vendor_id} label={r.vendor_name} data-testid="perfume-review-vendor-link" /> },
-          { key: "row_no", label: "Row", sortable: true, defaultHidden: true, kind: "number" },
+          // Owner 2026-11-27 06:47 CT "Find a solution you do it" + 2026-10-25 "columns can be added or removed in the gear filter":
+          // every column shows by default (additive-only law); hide any of them in the gear menu.
+          { key: "row_no", label: "Row", sortable: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
-          { key: "sku", label: "Vendor code", sortable: true, defaultHidden: true },
+          { key: "sku", label: "Vendor code", sortable: true },
           { key: "brand_name", label: "Brand", sortable: true, render: (r) => r.brand_name ?? "—" },
           { key: "model", label: "Model", sortable: true, allowWrap: true, minWidth: 180, render: (r) => r.model ?? "—" },
           { key: "size_ml", label: "Size ml", sortable: true, kind: "number", render: (r) => (r.size_ml == null ? "—" : String(r.size_ml)) },
           { key: "conc", label: "Type", sortable: true, render: (r) => r.conc || "—" },
           { key: "gender", label: "Gender", sortable: true, render: (r) => r.gender || "—" },
-          { key: "category", label: "Category", sortable: true, defaultHidden: true, render: (r) => r.category || "—" },
+          { key: "category", label: "Category", sortable: true, render: (r) => r.category || "—" },
           { key: "flags", label: "Tester / set", sortable: true, render: (r) => r.flags || "—" },
-          { key: "country", label: "Country", sortable: true, defaultHidden: true, render: (r) => r.country ?? "—" },
-          { key: "case_pack", label: "Case pack", sortable: true, defaultHidden: true, kind: "number", render: (r) => (r.case_pack == null ? "—" : String(r.case_pack)) },
+          { key: "country", label: "Country", sortable: true, render: (r) => r.country ?? "—" },
+          { key: "case_pack", label: "Case pack", sortable: true, kind: "number", render: (r) => (r.case_pack == null ? "—" : String(r.case_pack)) },
           { key: "description", label: "Their line", sortable: true, allowWrap: true, minWidth: 220 },
           { key: "price_cents", label: "Price", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.price_cents) },
           // Owner 2026-11-12: "the percentage in likeness should be in its own column."

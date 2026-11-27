@@ -1501,7 +1501,7 @@ export function DispatchBoard({
 
   // DESIGN-CONTRACT-DISPATCH-BOARD-2026-09-05 §A — "every column in the board model ... is
   // default-visible in Table AND List (the preview shows one grid; there is no hidden default)."
-  // BRD-25's DEFAULT_VISIBLE_BOARD_KEYS/defaultHidden restriction (a viewport-width workaround)
+  // BRD-25's default-visible board-keys list / hidden-by-default restriction (a viewport-width workaround)
   // was an ADDITIVE-ONLY LAW breach (docs/LAW.md L379: never remove/hide a column) with no
   // OWNER-REMOVE line in its own PR — removed entirely. The Columns ▾ chooser still exists for
   // per-user hiding; nothing here is ever forced hidden by default EXCEPT the four columns that

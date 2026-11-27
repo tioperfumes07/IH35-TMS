@@ -306,7 +306,7 @@ function GoogleCard({ onChanged }: { onChanged: () => void }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-section-header">{tr("perfume.contacts.google_business_search", "Google business search")}</div>
-          <div className="text-xs text-[#64748B]">{tr("perfume.contacts.phone_website_address_hours_and_rating_f", "Phone, website, address, hours and rating for perfume, cosmetics, duty free, liquor, tobacco and beer stores. Google gives no email — those read “needs email”.")}</div>
+          <div className="text-xs text-[#64748B]">{tr("perfume.contacts.phone_website_address_hours_and_rating_g", "Phone, website, address, hours and rating for perfume, cosmetics, beauty supply and duty free stores. Google gives no email — those read “needs email”.")}</div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!d?.configured || Boolean(d?.running) || busy} data-testid="perfume-google-first"

@@ -45,17 +45,15 @@ export const PROSPECT_CITIES: ProspectCity[] = [
   { city: "Tecate", state: "Baja California", country: "MX" }, { city: "Guadalajara y Zapopan", state: "Jalisco", country: "MX" },
 ];
 
+// Owner 2026-11-26 22:48 CT: duty-free liquor and tobacco cannot be sold in the US — "no licor and tobaco … only leave perfumes,
+// cosmetics, beauty". So the search never looks for liquor, tobacco, cigar or beer sellers (it was re-adding the 891 the
+// cleanup archived). Perfume, cosmetics, beauty supply and duty-free stores only.
 export const PROSPECT_KEYWORDS: ProspectKeyword[] = [
   { en: "perfume store", es: "perfumería", category: "Perfume", customerType: "Retailer" },
   { en: "perfume wholesale", es: "perfumes mayoreo", category: "Perfume", customerType: "Wholesale" },
   { en: "cosmetics store", es: "cosméticos", category: "Cosmetics", customerType: "Retailer" },
   { en: "beauty supply", es: "beauty supply", category: "Cosmetics", customerType: "Retailer" },
   { en: "duty free", es: "free shop", category: "Duty free", customerType: "Duty free" },
-  { en: "liquor store", es: "vinos y licores", category: "Liquor", customerType: "Retailer" },
-  { en: "liquor wholesale", es: "distribuidora de licores", category: "Liquor", customerType: "Wholesale" },
-  { en: "tobacco shop", es: "tabaquería", category: "Tobacco", customerType: "Retailer" },
-  { en: "cigar shop", es: "puros", category: "Tobacco", customerType: "Retailer" },
-  { en: "beer depot", es: "depósito de cerveza", category: "Beer", customerType: "Retailer" },
 ];
 
 export type PlannedSearch = { city: ProspectCity; keyword: ProspectKeyword; lang: "en" | "es"; textQuery: string };

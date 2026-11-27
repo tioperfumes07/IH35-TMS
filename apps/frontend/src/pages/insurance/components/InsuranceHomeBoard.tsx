@@ -102,11 +102,10 @@ const premiumColumns: ParityColumn<PremiumShareRow>[] = [
     render: (row) => <span data-quantity="share-pct">{formatQuantityTable(row.share, 1)}%</span>,
   },
   // Gear column (Rule 07 additive; owner 2026-10-25 "columns can be added or removed in the gear filter") —
-  // the policy's expiration date. Hidden by default, one click to show.
+  // the policy's expiration date. Shown by default (additive-only law, owner 2026-11-27 06:47 CT); hide it in the gear menu.
   {
     key: "expiry_date",
     label: "Expires",
-    defaultHidden: true,
     sortable: true,
     sortValue: (row) => row.expiry_date ?? "",
     render: (row) => (row.expiry_date ? formatCalendarDateUS(row.expiry_date) || "—" : "—"),
