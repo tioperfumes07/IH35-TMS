@@ -499,6 +499,7 @@ import { registerPerfumeContactsRoutes } from "./perfume/contacts.routes.js";
 import { registerPerfumeTradeShowRoutes } from "./perfume/trade-shows.routes.js";
 import { registerPerfumeQuoteRoutes } from "./perfume/quotes.routes.js";
 import { registerPerfumeOrderRoutes } from "./perfume/orders.routes.js";
+import { registerScentsxLinkRoutes } from "./scentsx/links.routes.js";
 import { registerPerfumePurchaseRoutes } from "./perfume/purchases.routes.js";
 import { registerPerfumeProfileRoutes } from "./perfume/profiles.routes.js";
 import { registerPerfumeInventoryRoutes } from "./perfume/inventory.routes.js";
@@ -1481,6 +1482,7 @@ async function main() {
   await registerPerfumeTradeShowRoutes(app);
   await registerPerfumeQuoteRoutes(app);
   await registerPerfumeOrderRoutes(app);
+  await registerScentsxLinkRoutes(app);
   await registerPerfumePurchaseRoutes(app);
   await registerPerfumeProfileRoutes(app);
   await registerPerfumeInventoryRoutes(app);
