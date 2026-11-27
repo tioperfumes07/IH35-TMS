@@ -163,4 +163,19 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
       expect(f.events.at(-1)).toMatchObject({ kind: "attributes", detail: { via: "catalog_rename" } });
     }
   });
+  it("trade data: case pack, minimum order, weight, origin, HS code save, clear and are checked", async () => {
+    const u = TEST_OWNER_USER_ID;
+    const it = await createItem(db as never, u, { brand: "ZZT", name: "TANGO", size_ml: 100, case_pack: 24, min_order_qty: 6, weight_g: 410, origin_country: "FR", hs_code: "330300" });
+    const f = async () => ((await getItemFile(db as never, it.id)) as { item: Record<string, unknown>; events: Array<{ kind: string; detail: { to?: Record<string, unknown> } }> });
+    expect((await f()).item).toMatchObject({ case_pack: 24, min_order_qty: 6, weight_g: 410, origin_country: "FR", hs_code: "330300" });
+    await updateItemFile(db as never, u, it.id, { case_pack: 12, hs_code: null });
+    const g = await f();
+    expect(g.item).toMatchObject({ case_pack: 12, hs_code: null, origin_country: "FR" });
+    expect(g.events.at(-1)).toMatchObject({ kind: "attributes", detail: { to: { case_pack: 12, hs_code: null } } });
+    const row = (await listItemFile(db as never, { q: "ZZT", limit: 5, offset: 0, scope: "all" })).rows[0]!;
+    expect(row).toMatchObject({ case_pack: 12, min_order_qty: 6, origin_country: "FR" });
+    await db.query("SAVEPOINT tr");
+    await expect(db.query(`UPDATE perfume.items SET hs_code = '33.03' WHERE id = $1`, [it.id])).rejects.toThrow(/perfume_items_trade_check/);
+    await db.query("ROLLBACK TO SAVEPOINT tr");
+  });
 });

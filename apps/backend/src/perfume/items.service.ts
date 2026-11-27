@@ -29,8 +29,10 @@ async function event(c: pg.PoolClient, itemId: string, uid: string | null, kind:
 }
 async function liveItem(c: pg.PoolClient, id: string) {
   const r = (await c.query<{ id: string; display_name: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string | null;
-    gender: string | null; flags: string[] | null; identity_key: string; model: string | null; product_type: string | null; category: string | null; description: string | null }>(
-    `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key, model, product_type, category, description
+    gender: string | null; flags: string[] | null; identity_key: string; model: string | null; product_type: string | null; category: string | null; description: string | null;
+    case_pack: number | null; min_order_qty: number | null; weight_g: string | null; origin_country: string | null; hs_code: string | null }>(
+    `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key, model, product_type, category, description,
+            case_pack, min_order_qty, weight_g::text, origin_country, hs_code
        FROM perfume.items WHERE id = $1 AND merged_into_id IS NULL FOR UPDATE`, [id])).rows[0];
   if (!r) throw new ItemNotFound();
   return r;
@@ -86,9 +88,11 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
   const total = (await c.query<{ n: number }>(`SELECT count(*)::int AS n FROM perfume.items i WHERE ${where}`, args)).rows[0]!.n;
   args.push(f.limit, f.offset);
   const page = (await c.query<{ id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null;
-    flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null; family_id: string | null; family: string | null }>(
+    flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null; family_id: string | null; family: string | null;
+    case_pack: number | null; min_order_qty: number | null; weight_g: number | null; origin_country: string | null; hs_code: string | null }>(
     `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code,
             i.model, i.product_type, i.category, i.description, i.family_id,
+            i.case_pack, i.min_order_qty, i.weight_g::float8 AS weight_g, i.origin_country, i.hs_code,
             (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
   if (!page.length) return { total, rows: [] };
@@ -166,8 +170,15 @@ export const itemEditSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   // Owner 2026-11-27 08:10 CT — the item's family (one fragrance line over its sizes / testers / sets); null takes it out.
   family_id: z.string().uuid().nullable().optional(),
+  // Trade data (migration 202617060100): case pack, minimum order, unit weight, country of origin, HS tariff code.
+  case_pack: z.number().int().min(1).max(100000).nullable().optional(),
+  min_order_qty: z.number().int().min(1).max(1000000).nullable().optional(),
+  weight_g: z.number().positive().max(1000000).nullable().optional(),
+  origin_country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Country of origin is 2 letters (FR, US, AE …)").nullable().optional(),
+  hs_code: z.string().trim().transform((v) => v.replace(/[.\s]/g, "")).pipe(z.string().regex(/^[0-9]{6,10}$/, "HS code is 6 to 10 digits")).nullable().optional(),
 });
 const ATTRS = ["model", "product_type", "category", "description"] as const;
+const TRADE = ["case_pack", "min_order_qty", "weight_g", "origin_country", "hs_code"] as const;
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
  *  keeps matching vendors' lines; when another item already IS that reading, the edit is refused and names it. */
 export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, x: z.infer<typeof itemEditSchema>) {
@@ -201,6 +212,19 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
     const keys = Object.keys(attrTo);
     await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => attrTo[k])]);
     await event(c, id, uid, "attributes", { from: attrFrom, to: attrTo });
+  }
+  // Trade data: written as given (null clears), one 'attributes' event with what changed.
+  const tFrom: Record<string, unknown> = {}, tTo: Record<string, unknown> = {};
+  for (const k of TRADE) {
+    if (x[k] === undefined) continue;
+    const v = x[k] === "" ? null : x[k];
+    const was = b[k] == null ? null : (k === "weight_g" ? Number(b[k]) : b[k]);
+    if (was !== (v ?? null)) { tFrom[k] = was; tTo[k] = v ?? null; }
+  }
+  if (Object.keys(tTo).length) {
+    const keys = Object.keys(tTo);
+    await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => tTo[k])]);
+    await event(c, id, uid, "attributes", { from: tFrom, to: tTo });
   }
   if (x.family_id !== undefined) await setItemFamily(c, uid, id, x.family_id, b.display_name);
   if (x.tio_code !== undefined) {
@@ -237,6 +261,12 @@ export const itemCreateSchema = z.object({
   tio_code: z.string().trim().max(40).nullable().optional(),
   upc: z.string().trim().max(40).nullable().optional(),
   family_id: z.string().uuid().nullable().optional(),
+  // Trade data (migration 202617060100): case pack, minimum order, unit weight, country of origin, HS tariff code.
+  case_pack: z.number().int().min(1).max(100000).nullable().optional(),
+  min_order_qty: z.number().int().min(1).max(1000000).nullable().optional(),
+  weight_g: z.number().positive().max(1000000).nullable().optional(),
+  origin_country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Country of origin is 2 letters (FR, US, AE …)").nullable().optional(),
+  hs_code: z.string().trim().transform((v) => v.replace(/[.\s]/g, "")).pipe(z.string().regex(/^[0-9]{6,10}$/, "HS code is 6 to 10 digits")).nullable().optional(),
 });
 export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeof itemCreateSchema>) {
   const flags = x.flags ?? [];
@@ -268,6 +298,8 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
   if (upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ($1, $2)`, [upc, id]);
   await event(c, id, uid, "created", { ...x, flags, upc });
   if (x.family_id) await setItemFamily(c, uid, id, x.family_id, displayNameOf(id2));
+  const trade = TRADE.filter((k) => x[k] != null);
+  if (trade.length) await c.query(`UPDATE perfume.items SET ${trade.map((k, i) => `${k} = $${i + 2}`).join(", ")} WHERE id = $1`, [id, ...trade.map((k) => x[k])]);
   invalidateGridCache();
   return { id, display_name: displayNameOf(id2) };
 }
