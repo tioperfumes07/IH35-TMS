@@ -127,8 +127,10 @@ describeIntegration("leads Excel round trip (real Postgres, rolled back)", () =>
     expect((await db.query(`SELECT vendor_type FROM perfume.contact_companies WHERE name = 'LDTEST Shop Two'`)).rows[0].vendor_type).toBe("LDTEST Trader");
     const cats = await listCatalogs(db as never);
     expect(cats.kinds.find((k) => k.kind === "vendor_type")!.values.find((x) => x.value === "LDTEST Trader")!.contacts).toBe(1);
-    expect(cats.kinds.find((k) => k.kind === "product_type")!.values.map((x) => x.value)).toEqual(
-      ["Tester", "Tester Man", "Tester Woman", "Man", "Woman", "Man Set", "Woman Set", "Body Mist"]);
+    // Product types: the original eight plus every kind the item file holds (migration 202617070100, owner 2026-11-27 12:04 CT).
+    expect(cats.kinds.find((k) => k.kind === "product_type")!.values.map((x) => x.value)).toEqual(expect.arrayContaining(
+      ["Tester", "Tester Man", "Tester Woman", "Man", "Woman", "Man Set", "Woman Set", "Body Mist", "Unisex", "Perfume", "Set", "Mini", "Sample / Vial",
+        "Gift with purchase", "Bag", "Box / Packaging", "Display", "Accessory", "Blotter", "Deodorant", "Body care", "Hair care", "Cosmetics", "Home fragrance"]));
 
     const wb = new ExcelJS.Workbook();
     await wb.xlsx.load((await exportWorkbook(db as never, { q: "ldtest shop two" })).buf);

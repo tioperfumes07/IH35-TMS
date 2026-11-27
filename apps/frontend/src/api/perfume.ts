@@ -684,7 +684,8 @@ export type PerfumeItemVendorLine = { id: string; vendor_id: string; vendor: str
 export type PerfumeItemProfile = {
   item: { id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string;
     model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null; family?: string | null;
-  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
+  case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null;
+  regular_item_id?: string | null; regular_name?: string | null; };
   upcs: string[]; vendor_lines: PerfumeItemVendorLine[];
   remembered: Array<{ id: string; vendor: string; vendor_id: string; sku: string | null; text_key: string | null; method: string; confirmed_at: string | null }>;
   quotes: PerfumeQuoteRow[]; orders: PerfumeOrderRow[]; purchase_orders: PerfumePoRow[]; best_cost_cents: number | null;
@@ -788,7 +789,7 @@ export const applyPerfumeOpening = (onDate: string) =>
 
 /* ------------------------------------------------------------------ Price levels + customer accounts (owner 2026-11-26 20:21 / 20:28 CT) */
 export type PerfumePriceLevel = { id: string; name: string; channel: "retail" | "wholesale" | "distributor" | "export"; method: "markup" | "margin"; pct: number | null;
-  cost_basis: "avg" | "best_vendor"; floor_pct: number | null; active: boolean; sort_order: number; fixed_prices: number; customers: number };
+  cost_basis: "avg" | "best_vendor"; floor_pct: number | null; tester_pct: number; active: boolean; sort_order: number; fixed_prices: number; customers: number };
 export type PerfumeLevelItem = { id: string; item_id: string; display_name: string; min_qty: number; price_cents: number };
 export type PerfumeAccountType = "cash" | "prepaid" | "credit" | "export";
 export type PerfumeCustomerAccount = { company_id: string; company_name: string; city: string | null; country: string | null; account_type: PerfumeAccountType;
@@ -799,7 +800,7 @@ export type PerfumeCreditApplication = { id: string; company_id: string; company
   requested_terms_days: number; status: "submitted" | "approved" | "rejected" | "withdrawn"; approved_limit_cents: number | null; approved_terms_days: number | null;
   decision_note?: string | null; created_at: string; decided_at: string | null; decided_by_email: string | null };
 export const listPerfumePriceLevels = () => apiRequest<{ levels: PerfumePriceLevel[]; costs?: { stock: number; my_avg_cost: number; inventory_file: number; vendor_lists: number; any_cost: number } }>("/api/v1/perfume/price-levels");
-export const savePerfumePriceLevel = (id: string | null, b: Partial<Pick<PerfumePriceLevel, "name" | "channel" | "method" | "pct" | "cost_basis" | "floor_pct" | "active">>) =>
+export const savePerfumePriceLevel = (id: string | null, b: Partial<Pick<PerfumePriceLevel, "name" | "channel" | "method" | "pct" | "cost_basis" | "floor_pct" | "tester_pct" | "active">>) =>
   id ? apiRequest<{ id: string }>(`/api/v1/perfume/price-levels/${id}`, { method: "PATCH", body: b }) : apiRequest<{ id: string }>("/api/v1/perfume/price-levels", { method: "POST", body: b });
 export const listPerfumeLevelItems = (id: string) => apiRequest<{ items: PerfumeLevelItem[] }>(`/api/v1/perfume/price-levels/${id}/items`);
 export const setPerfumeLevelItem = (id: string, b: { item_id: string; min_qty: number; price_cents: number | null }) =>
@@ -833,9 +834,9 @@ export type PerfumeItemFile = PerfumeItemProfile & {
   events: Array<{ id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null }>;
 };
 export type PerfumeItemEdit = { brand?: string; name?: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; tio_code?: string | null;
-  model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null;
+  model?: string | null; product_type?: string | null; category?: string | null; description?: string | null; family_id?: string | null; regular_item_id?: string | null;
   case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
-export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags">; flags_add?: string[]; flags_remove?: string[] };
+export type PerfumeItemBulk = { ids: string[]; set: Omit<PerfumeItemEdit, "name" | "tio_code" | "flags" | "regular_item_id">; flags_add?: string[]; flags_remove?: string[] };
 export type PerfumeItemCreate = { brand: string; name: string; size_ml?: number | null; conc?: string; gender?: string; flags?: string[]; model?: string | null;
   product_type?: string | null; category?: string | null; description?: string | null; tio_code?: string | null; upc?: string | null; family_id?: string | null;
   case_pack?: number | null; min_order_qty?: number | null; weight_g?: number | null; origin_country?: string | null; hs_code?: string | null; };
@@ -950,10 +951,10 @@ export const makePerfumeReorderPos = (b: { location_code: string; item_ids: stri
 /* ------------------------------------------------------------------ wholesale lists (owner 2026-11-27 08:10 CT) */
 export type PerfumeWholesaleRow = { item_id: string; tio_code: string | null; display_name: string; brand: string; family: string | null; category: string | null;
   product_type: string | null; size_ml: number | null; conc: string | null; gender: string | null; upc: string | null; case_pack: number | null; min_order_qty: number | null;
-  available: number; origin_country: string | null; hs_code: string | null; price_cents: number | null; case_price_cents: number | null; price_from: "fixed" | "rule" | null;
+  available: number; origin_country: string | null; hs_code: string | null; price_cents: number | null; case_price_cents: number | null; price_from: "fixed" | "rule" | "tester" | null; regular_item_id: string | null; regular_name: string | null;
   breaks: Array<{ min_qty: number; price_cents: number }>; price_set_on: string | null };
 export type PerfumeWholesaleFilter = { level_id: string; q?: string; category?: string; family_id?: string; in_stock?: "1" };
 const wholesaleQs = (f: PerfumeWholesaleFilter) => new URLSearchParams(Object.entries(f).filter(([, v]) => v) as Array<[string, string]>).toString();
 export const getPerfumeWholesaleList = (f: PerfumeWholesaleFilter) =>
-  apiRequest<{ level: { id: string; name: string; channel: string; active: boolean }; rows: PerfumeWholesaleRow[]; priced: number }>(`/api/v1/perfume/wholesale-list?${wholesaleQs(f)}`);
+  apiRequest<{ level: { id: string; name: string; channel: string; active: boolean; tester_pct: number }; rows: PerfumeWholesaleRow[]; priced: number }>(`/api/v1/perfume/wholesale-list?${wholesaleQs(f)}`);
 export const perfumeWholesaleExportPath = (f: PerfumeWholesaleFilter) => `/api/v1/perfume/wholesale-list.xlsx?${wholesaleQs(f)}`;

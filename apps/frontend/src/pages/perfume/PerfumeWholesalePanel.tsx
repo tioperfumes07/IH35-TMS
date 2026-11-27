@@ -33,6 +33,7 @@ export function PerfumeWholesalePanel() {
   const list = useQuery({ queryKey: ["perfume", "wholesale-list", filter], queryFn: () => getPerfumeWholesaleList(filter), enabled: Boolean(levelId) });
   if (list.isError) return <ListErrorState title={tr("perfume.wl.error", "Couldn't build the list")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
   const rows = list.data?.rows ?? [];
+  const tester = list.data?.level.tester_pct ?? 70;
   const categories = (cats.data?.kinds.find((k) => k.kind === "item_category")?.values ?? []).map((v) => v.value);
   const download = () => void downloadPerfumeFile(perfumeWholesaleExportPath(filter), `TIO Perfumes ${list.data?.level.name ?? ""} price list.xlsx`)
     .catch((e) => pushToast(userFacingApiError(e, "Export failed"), "error"));
@@ -66,7 +67,7 @@ export function PerfumeWholesalePanel() {
             onChange={(e) => setTyped(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") setF({ ...f, q: typed.trim() || undefined }); }} />
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!rows.length} onClick={download} data-testid="perfume-wl-xlsx">{tr("perfume.wl.xlsx", "Download Excel to send")}</Button>
         </div>
-        <div className="text-xs text-[#64748B]">{tr("perfume.wl.how", "Price = this level's fixed price at the item's minimum order (Price levels → fixed prices and quantity breaks), else the level's markup / margin on cost. Set case pack, minimum order, origin and HS code on each item (or with the bulk bar on Item file).")}</div>
+        <div className="text-xs text-[#64748B]">{tr("perfume.wl.how", "Price = this level's fixed price at the item's minimum order (Price levels → fixed prices and quantity breaks), else the level's markup / margin on cost. A tester with no fixed price of its own = the level's testers % (Price levels) of its regular version's price. Set case pack, minimum order, origin and HS code on each item (or with the bulk bar on Item file).")}</div>
         <ParityTable<PerfumeWholesaleRow> rows={rows} rowKey={(r) => r.item_id} loading={list.isLoading} storageKey="perfume-wholesale-list-v1" exportFilename={`TIO ${list.data?.level.name ?? ""} price list`} exportExcel
           emptyText="No items — our items are the ones in stock or on my inventory / offer list."
           columns={[
@@ -74,6 +75,7 @@ export function PerfumeWholesalePanel() {
             { className: "text-left", key: "display_name", label: "Item", sortable: true, render: (r) => <DocLink tab="items" id={r.item_id}>{r.display_name}</DocLink>, exportValue: (r) => r.display_name },
             { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => r.family ?? DASH, exportValue: (r) => r.family ?? "" },
             { className: "text-left", key: "category", label: "Category", sortable: true, render: (r) => r.category ?? DASH, exportValue: (r) => r.category ?? "" },
+            { className: "text-left", key: "product_type", label: "Type", sortable: true, render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
             { className: "text-left", key: "conc", label: "EDT / EDP / Parfum", sortable: true, render: (r) => r.conc || DASH, exportValue: (r) => r.conc ?? "" },
             { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
             { className: "text-left", key: "upc", label: "UPC", render: (r) => r.upc ?? DASH, exportValue: (r) => r.upc ?? "" },
@@ -82,8 +84,12 @@ export function PerfumeWholesalePanel() {
             { key: "available", label: "Available", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.available.toLocaleString("en-US") },
             { key: "price_cents", label: "Price", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (r) => (r.price_cents == null ? <span className="text-[#B91C1C]">No price</span> : money(r.price_cents)), exportValue: (r) => (r.price_cents == null ? "" : r.price_cents / 100) },
             { key: "case_price_cents", label: "Case price", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.case_price_cents), exportValue: (r) => (r.case_price_cents == null ? "" : r.case_price_cents / 100) },
+            { className: "text-left", key: "price_from", label: "Priced from", render: (r) => (r.price_from === "tester" && r.regular_item_id
+                ? <span>{`${tr("perfume.wl.tester_of", "Tester")} ${tester}% ${tr("perfume.wl.of", "of")} `}<DocLink tab="items" id={r.regular_item_id}>{r.regular_name ?? tr("perfume.wl.regular", "regular")}</DocLink></span>
+                : r.price_from === "fixed" ? tr("perfume.wl.fixed", "Fixed price") : r.price_from === "rule" ? tr("perfume.wl.rule", "Level rule on cost") : DASH),
+              exportValue: (r) => (r.price_from === "tester" ? `Tester ${tester}% of ${r.regular_name ?? ""}` : r.price_from ?? "") },
             { className: "text-left", key: "breaks", label: "Quantity breaks", render: (r) => (r.breaks.length ? r.breaks.map((b) => `${b.min_qty}+ ${money(b.price_cents)}`).join(" · ") : DASH), exportValue: (r) => r.breaks.map((b) => `${b.min_qty}+ ${(b.price_cents / 100).toFixed(2)}`).join(" · ") },
-            { key: "price_set_on", label: "Price date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.price_set_on ? usDate(r.price_set_on) : "By rule"), exportValue: (r) => r.price_set_on ?? "" },
+            { key: "price_set_on", label: "Price date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.price_set_on ? usDate(r.price_set_on) : r.price_from === "tester" ? "Tester rule" : "By rule"), exportValue: (r) => r.price_set_on ?? "" },
             { className: "text-left", key: "origin_country", label: "Origin", render: (r) => r.origin_country ?? DASH, exportValue: (r) => r.origin_country ?? "" },
             { className: "text-left", key: "hs_code", label: "HS code", render: (r) => r.hs_code ?? DASH, exportValue: (r) => r.hs_code ?? "" },
           ]} />

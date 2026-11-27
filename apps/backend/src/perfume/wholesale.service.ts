@@ -23,15 +23,41 @@ export const wholesaleQuery = z.object({
 export type WholesaleRow = {
   item_id: string; tio_code: string | null; display_name: string; brand: string; family: string | null; category: string | null; product_type: string | null;
   size_ml: number | null; conc: string | null; gender: string | null; upc: string | null; case_pack: number | null; min_order_qty: number | null; available: number;
-  origin_country: string | null; hs_code: string | null; price_cents: number | null; case_price_cents: number | null; price_from: "fixed" | "rule" | null;
+  origin_country: string | null; hs_code: string | null; price_cents: number | null; case_price_cents: number | null; price_from: "fixed" | "rule" | "tester" | null;
+  regular_item_id: string | null; regular_name: string | null;
   breaks: Array<{ min_qty: number; price_cents: number }>; price_set_on: string | null;
 };
 
 const MINE = `('inventory', 'offer')`;
 
+/** The level's fixed breaks, the average cost and the best supplier price of the item aliased `x` (stock row `xs`) — one place, used for the item and its regular version. */
+const priceInputs = (x: string, xs: string, prefix: string) => `
+            (SELECT json_agg(json_build_object('min_qty', p.min_qty, 'price_cents', p.price_cents) ORDER BY p.min_qty) FROM perfume.price_level_items p
+              WHERE p.level_id = $1 AND p.item_id = ${x}.id AND p.archived_at IS NULL) AS ${prefix}breaks,
+            coalesce(${xs}.stock_avg, (SELECT k.avg_cost_cents FROM perfume.item_costs k WHERE k.item_id = ${x}.id AND k.avg_cost_cents > 0),
+              (SELECT avg(r.price_cents) FROM perfume.price_lists l2 JOIN perfume.vendors v ON v.id = l2.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l2.id
+                WHERE v.kind = 'inventory' AND l2.is_current AND l2.voided_at IS NULL AND r.item_id = ${x}.id AND r.price_cents >= 100))::text AS ${prefix}avg_cost,
+            (SELECT min(r.price_cents) FROM perfume.price_list_rows r JOIN perfume.price_lists l3 ON l3.id = r.list_id JOIN perfume.vendors v ON v.id = l3.vendor_id
+              WHERE r.item_id = ${x}.id AND l3.is_current AND l3.voided_at IS NULL AND r.price_cents > 0 AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL)::text AS ${prefix}best_vendor`;
+
+type Inputs = { breaks: Array<{ min_qty: number; price_cents: number }> | null; avg_cost: string | null; best_vendor: string | null };
+type Level = { method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor" };
+
+/** levelPriceFor's own-price rule: the fixed break for the quantity, else the level's rule on cost. */
+function ownPrice(level: Level, x: Inputs, atQty: number): { cents: number; from: "fixed" | "rule" } | null {
+  const breaks = (x.breaks ?? []).map((b) => ({ min_qty: Number(b.min_qty), price_cents: Number(b.price_cents) }));
+  const fixed = breaks.filter((b) => b.min_qty <= atQty).pop();
+  if (fixed) return { cents: fixed.price_cents, from: "fixed" };
+  if (level.pct == null) return null;
+  const cost = level.cost_basis === "avg" ? (x.avg_cost != null ? Math.round(Number(x.avg_cost)) : x.best_vendor != null ? Number(x.best_vendor) : null)
+    : (x.best_vendor != null ? Number(x.best_vendor) : null);
+  if (cost == null || cost <= 0) return null;
+  return { cents: priceFromCost(cost, Number(level.pct), level.method), from: "rule" };
+}
+
 export async function wholesaleList(c: pg.PoolClient, f: z.infer<typeof wholesaleQuery>) {
-  const level = (await c.query<{ id: string; name: string; channel: string; method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor"; active: boolean }>(
-    `SELECT id, name, channel, method, pct::text, cost_basis, active FROM perfume.price_levels WHERE id = $1`, [f.level_id])).rows[0];
+  const level = (await c.query<{ id: string; name: string; channel: string; method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor"; active: boolean; tester_pct: string }>(
+    `SELECT id, name, channel, method, pct::text, cost_basis, active, tester_pct::text FROM perfume.price_levels WHERE id = $1`, [f.level_id])).rows[0];
   if (!level) throw new WholesaleInvalid("That price level is not on the desk.");
   const args: unknown[] = [f.level_id];
   const where = ["i.merged_into_id IS NULL", `(coalesce(st.on_hand, 0) > 0 OR EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
@@ -44,7 +70,8 @@ export async function wholesaleList(c: pg.PoolClient, f: z.infer<typeof wholesal
     item_id: string; tio_code: string | null; display_name: string; brand: string; family: string | null; category: string | null; product_type: string | null;
     size_ml: number | null; conc: string | null; gender: string | null; upc: string | null; case_pack: number | null; min_order_qty: number | null; available: number;
     origin_country: string | null; hs_code: string | null; breaks: Array<{ min_qty: number; price_cents: number }> | null; avg_cost: string | null; best_vendor: string | null;
-    price_set_on: string | null;
+    price_set_on: string | null; is_tester: boolean; regular_item_id: string | null; regular_name: string | null;
+    reg_breaks: Inputs["breaks"]; reg_avg_cost: string | null; reg_best_vendor: string | null;
   }>(
     `WITH st AS (
        SELECT s.item_id, sum(s.qty)::int AS on_hand, (sum(s.qty * s.avg_cost_cents) FILTER (WHERE s.qty > 0) / nullif(sum(s.qty) FILTER (WHERE s.qty > 0), 0)) AS stock_avg
@@ -52,32 +79,32 @@ export async function wholesaleList(c: pg.PoolClient, f: z.infer<typeof wholesal
      SELECT i.id AS item_id, i.internal_code AS tio_code, i.display_name, i.brand, f.name AS family, i.category, i.product_type, i.size_ml::float8 AS size_ml,
             i.conc, i.gender, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc, i.case_pack, i.min_order_qty,
             greatest(coalesce(st.on_hand, 0), 0) AS available, i.origin_country, i.hs_code,
-            (SELECT json_agg(json_build_object('min_qty', p.min_qty, 'price_cents', p.price_cents) ORDER BY p.min_qty) FROM perfume.price_level_items p
-              WHERE p.level_id = $1 AND p.item_id = i.id AND p.archived_at IS NULL) AS breaks,
             (SELECT max(p.updated_at)::date::text FROM perfume.price_level_items p WHERE p.level_id = $1 AND p.item_id = i.id AND p.archived_at IS NULL) AS price_set_on,
-            coalesce(st.stock_avg, (SELECT k.avg_cost_cents FROM perfume.item_costs k WHERE k.item_id = i.id AND k.avg_cost_cents > 0),
-              (SELECT avg(r.price_cents) FROM perfume.price_lists l2 JOIN perfume.vendors v ON v.id = l2.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l2.id
-                WHERE v.kind = 'inventory' AND l2.is_current AND l2.voided_at IS NULL AND r.item_id = i.id AND r.price_cents >= 100))::text AS avg_cost,
-            (SELECT min(r.price_cents) FROM perfume.price_list_rows r JOIN perfume.price_lists l3 ON l3.id = r.list_id JOIN perfume.vendors v ON v.id = l3.vendor_id
-              WHERE r.item_id = i.id AND l3.is_current AND l3.voided_at IS NULL AND r.price_cents > 0 AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL)::text AS best_vendor
+            ('TESTER' = ANY(coalesce(i.flags, '{}'))) AS is_tester, ri.id AS regular_item_id, ri.display_name AS regular_name,${priceInputs("i", "st", "")},${priceInputs("ri", "rst", "reg_")}
        FROM perfume.items i LEFT JOIN st ON st.item_id = i.id LEFT JOIN perfume.item_families f ON f.id = i.family_id
+       LEFT JOIN perfume.items ri ON ri.id = i.regular_item_id AND ri.merged_into_id IS NULL LEFT JOIN st rst ON rst.item_id = ri.id
       WHERE ${where.join(" AND ")}
       ORDER BY lower(i.brand), lower(i.display_name) LIMIT 10000`, args)).rows;
   const out: WholesaleRow[] = rows.map((r) => {
     const breaks = (r.breaks ?? []).map((b) => ({ min_qty: Number(b.min_qty), price_cents: Number(b.price_cents) }));
-    // The price at the item's minimum order (or 1): a fixed break when one applies, else the level's rule — as levelPriceFor does.
+    // The price at the item's minimum order (or 1) — exactly levelPriceFor / priceAtLevel: a TESTER with no fixed price of its own and a
+    // regular version linked is the level's tester_pct of the regular's price; otherwise its own fixed break, else the level's rule.
     const atQty = Math.max(1, r.min_order_qty ?? 1);
-    const fixed = [...breaks].filter((b) => b.min_qty <= atQty).pop();
-    let price: number | null = fixed ? fixed.price_cents : null;
-    let from: WholesaleRow["price_from"] = fixed ? "fixed" : null;
-    if (price == null && level.pct != null) {
-      const cost = level.cost_basis === "avg" ? (r.avg_cost != null ? Math.round(Number(r.avg_cost)) : r.best_vendor != null ? Number(r.best_vendor) : null)
-        : (r.best_vendor != null ? Number(r.best_vendor) : null);
-      if (cost != null && cost > 0) { price = priceFromCost(cost, Number(level.pct), level.method); from = "rule"; }
+    const ownFixed = breaks.some((b) => b.min_qty <= atQty);
+    let price: number | null = null;
+    let from: WholesaleRow["price_from"] = null;
+    if (r.is_tester && r.regular_item_id && !ownFixed) {
+      const reg = ownPrice(level, { breaks: r.reg_breaks, avg_cost: r.reg_avg_cost, best_vendor: r.reg_best_vendor }, atQty);
+      if (reg) { price = Math.round((reg.cents * Number(level.tester_pct)) / 100); from = "tester"; }
+    }
+    if (price == null) {
+      const own = ownPrice(level, r, atQty);
+      if (own) { price = own.cents; from = own.from; }
     }
     return { item_id: r.item_id, tio_code: r.tio_code, display_name: r.display_name, brand: r.brand, family: r.family, category: r.category, product_type: r.product_type,
       size_ml: r.size_ml, conc: r.conc, gender: r.gender, upc: r.upc, case_pack: r.case_pack, min_order_qty: r.min_order_qty, available: r.available,
-      origin_country: r.origin_country, hs_code: r.hs_code, price_cents: price, case_price_cents: price != null && r.case_pack ? price * r.case_pack : null, price_from: from, breaks, price_set_on: r.price_set_on };
+      origin_country: r.origin_country, hs_code: r.hs_code, price_cents: price, case_price_cents: price != null && r.case_pack ? price * r.case_pack : null, price_from: from, breaks, price_set_on: r.price_set_on,
+      regular_item_id: r.regular_item_id, regular_name: r.regular_name };
   });
-  return { level: { id: level.id, name: level.name, channel: level.channel, active: level.active }, rows: out, priced: out.filter((r) => r.price_cents != null).length };
+  return { level: { id: level.id, name: level.name, channel: level.channel, active: level.active, tester_pct: Number(level.tester_pct) }, rows: out, priced: out.filter((r) => r.price_cents != null).length };
 }
