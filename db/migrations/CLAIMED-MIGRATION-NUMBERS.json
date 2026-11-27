@@ -1104,7 +1104,8 @@
     "202616980100",
     "202616990100",
     "202617000100",
-    "202617010100"
+    "202617010100",
+    "202617020100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1397,5 +1398,6 @@
     "purpose": "SCENTSX B14: FinCEN 105 (CMIR) signed declarations for Mexico cash payers on Form 8300 cases"
   },
   "202617000100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item attributes: model, product_type, category, description on perfume.items (owner 2026-11-27 07:22 CT) + bulk edit"},
-  "202617010100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item creator: item_events kind created (owner 2026-11-27 07:37 CT)"}
+  "202617010100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item creator: item_events kind created (owner 2026-11-27 07:37 CT)"},
+  "202617020100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item catalogs: catalog_values kind item_category (owner 2026-11-27 07:51 CT)"}
 }
