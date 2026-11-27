@@ -1269,5 +1269,9 @@
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
     "purpose": "PERFUME campaigns + saved segments + traders (perfume.contact_segments, perfume.campaigns, perfume.trades, perfume.trade_buyers) — owner 2026-11-26 16:59 CT \"get this all completely done now\" (design boards 3 and 4)"
-  }
+  },
+  "202616820100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B1: org.company_type gains 'distributor' (ScentsX LLC / TIO Perfumes as its own company in the accounting engine) — owner 2026-11-26 20:13 CT \"Own company, same engine\""},
+  "202616820200": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B1: org.companies row SCENTSX (ScentsX LLC, short name TIO Perfumes, company_type distributor) — owner 2026-11-26 20:13 / 20:16 CT"},
+  "202616830100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B2: ScentsX native chart of accounts (catalogs.accounts, goods-trading chart, zero balances) + account role bindings + first accounting periods — owner 2026-11-26 20:16 / 20:18 CT"},
+  "202616840100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B3: goods posting source types + perfume <-> accounting link columns + the two database walls (perfume links only on SCENTSX rows) — owner 2026-11-26 20:16 CT"}
 }
