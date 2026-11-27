@@ -21,7 +21,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { createPayment, voidPayment, type PaymentMethod } from "../../api/accounting";
 import { getScentsxAging, getScentsxCustomerAccount, type ScentsxAgingDays, type ScentsxAgingRow, type ScentsxArInvoice, type ScentsxArPayment, type ScentsxBuckets } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
-import { ReturnForm, ReturnsList } from "./PerfumeReturnsParts";
+import { CustomerStatement, ReturnForm, ReturnsList } from "./PerfumeReturnsParts";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const TENDERS: Array<[PaymentMethod, string]> = [["cash", "Cash"], ["check", "Check"], ["wire", "Wire"], ["ach", "ACH"], ["credit_card", "Card"], ["other", "Other"]];
@@ -135,6 +135,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
         />
       ) : null}
       <PaymentsList companyId={a.operating_company_id} rows={a.payments} onDone={refresh} />
+      <CustomerStatement companyId={a.operating_company_id} customerId={a.customer.id} />
     </section>
   );
 }
