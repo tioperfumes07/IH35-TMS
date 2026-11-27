@@ -180,6 +180,8 @@ export function PerfumeItemFilePanel() {
             { key: "special_price_cents", label: "Special price", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.special_price_cents ?? null), exportValue: (r) => (r.special_price_cents == null ? "" : r.special_price_cents / 100) },
             { key: "min_price_cents", label: "Minimum price", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.min_price_cents ?? null), exportValue: (r) => (r.min_price_cents == null ? "" : r.min_price_cents / 100) },
             { className: "text-left", key: "price_locked", label: "Change price", sortable: true, render: (r) => yn(!r.price_locked), exportValue: (r) => yn(!r.price_locked) },
+            { className: "text-left", key: "is_exclusive", label: "Exclusive", sortable: true, render: (r) => (r.is_exclusive ? "Y" : "N"), exportValue: (r) => (r.is_exclusive ? "Y" : "N") },
+            { className: "text-left", key: "is_new_launch", label: "New launch", sortable: true, render: (r) => (r.is_new_launch ? "Y" : "N"), exportValue: (r) => (r.is_new_launch ? "Y" : "N") },
             { className: "text-left", key: "hk_codes", label: "HK codes", render: (r) => codes(r.hk_codes), exportValue: (r) => r.hk_codes.join(", ") },
             { className: "text-left", key: "upcs", label: "UPCs", render: (r) => codes(r.upcs), exportValue: (r) => r.upcs.join(", ") },
             { key: "lists_linked", label: "Lists linked", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.lists_linked.toLocaleString("en-US") },
@@ -509,7 +511,7 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
   const cats = useItemCatalogs();
   const CLEAR = "__clear__";
   const [v, setV] = useState({ brand: "", model: "", product_type: "", category: "", conc: "", gender: "", size: "", description: "", flag: "", flagMode: "add" as "add" | "remove", family: "", case_pack: "", moq: "", origin: "", hs: "",
-    vendor: "", stock: "", active: "", change_price: "" });
+    vendor: "", stock: "", active: "", change_price: "", exclusive: "", new_launch: "" });
   const [minCents, setMinCents] = useState<number | null>(null);
   const [clearMin, setClearMin] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -530,6 +532,8 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
     if (v.stock) set.is_stock_item = v.stock === "Y";
     if (v.active) set.is_active = v.active === "Y";
     if (v.change_price) set.price_locked = v.change_price === "N";
+    if (v.exclusive) set.is_exclusive = v.exclusive === "Y";
+    if (v.new_launch) set.is_new_launch = v.new_launch === "Y";
     if (clearMin) set.min_price_cents = null;
     else if (minCents != null) set.min_price_cents = minCents;
     const flags = v.flag ? { [v.flagMode === "add" ? "flags_add" : "flags_remove"]: [v.flag] } : {};
@@ -579,7 +583,7 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
         <label>{tr("perfume.itemfile.hs", "HS code")} <input className={`${ctl} block w-[100px]`} value={v.hs} onChange={(e) => setV({ ...v, hs: e.target.value })} data-testid="perfume-bulk-hs" /></label>
         <label>{tr("perfume.itemfile.pref_vendor", "Preferred vendor")} <VendorSelect value={v.vendor} onChange={(x) => setV({ ...v, vendor: x })} testId="perfume-bulk-pref-vendor"
           head={<><option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value={CLEAR}>{tr("perfume.bulk.clear", "Clear")}</option></>} /></label>
-        {([["stock", "Stock item?", "perfume-bulk-stock-item"], ["active", "Active?", "perfume-bulk-active"], ["change_price", "Change price?", "perfume-bulk-change-price"]] as const).map(([k, label, tid]) => (
+        {([["stock", "Stock item?", "perfume-bulk-stock-item"], ["active", "Active?", "perfume-bulk-active"], ["change_price", "Change price?", "perfume-bulk-change-price"], ["exclusive", "Exclusive?", "perfume-bulk-exclusive"], ["new_launch", "New launch?", "perfume-bulk-new-launch"]] as const).map(([k, label, tid]) => (
           <label key={k}>{tr(`perfume.bulk.${k}`, label)}
             <select className={`${ctl} block w-[80px]`} value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} data-testid={tid}>
               <option value="">{tr("perfume.bulk.keep", "— keep —")}</option><option value="Y">Y</option><option value="N">N</option>

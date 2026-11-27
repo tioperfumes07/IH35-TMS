@@ -70,6 +70,10 @@ export function ItemControlFields({ value, edit, onChange, prefix }: {
       <label>{tr("perfume.itemfile.min_price", "Minimum price")}
         <span className="block w-[110px]" data-testid={`${prefix}-min-price`}>
           <MoneyInput valueCents={v("min_price_cents") ?? null} onChangeCents={(c) => onChange({ min_price_cents: c })} ariaLabel={tr("perfume.itemfile.min_price", "Minimum price")} /></span></label>
+      <label>{tr("perfume.itemfile.exclusive", "Exclusive?")}
+        <YN value={v("is_exclusive") ?? false} onChange={(x) => onChange({ is_exclusive: x })} testId={`${prefix}-exclusive`} label="Exclusive?" /></label>
+      <label>{tr("perfume.itemfile.new_launch", "New launch?")}
+        <YN value={v("is_new_launch") ?? false} onChange={(x) => onChange({ is_new_launch: x })} testId={`${prefix}-new-launch`} label="New launch?" /></label>
       <label title={tr("perfume.itemfile.change_price_hint", "N = an order line takes the customer's level price and cannot be retyped without a written reason")}>
         {tr("perfume.itemfile.change_price", "Change price?")}
         <YN value={!(v("price_locked") ?? false)} onChange={(x) => onChange({ price_locked: !x })} testId={`${prefix}-change-price`} label="Change price?" /></label>
