@@ -10874,6 +10874,47 @@
       "void_reason",
       "voided_at"
     ],
+    "perfume.quote_events": [
+      "created_at",
+      "created_by",
+      "detail",
+      "id",
+      "kind",
+      "quote_id"
+    ],
+    "perfume.quote_lines": [
+      "archived_at",
+      "cost_cents",
+      "cost_vendor_id",
+      "created_at",
+      "description",
+      "id",
+      "item_id",
+      "line_no",
+      "qty",
+      "quote_id",
+      "unit_price_cents",
+      "upc",
+      "updated_at"
+    ],
+    "perfume.quotes": [
+      "archived_at",
+      "company_id",
+      "created_at",
+      "created_by",
+      "currency",
+      "customer_email",
+      "customer_name",
+      "customer_phone",
+      "id",
+      "notes",
+      "number",
+      "quote_date",
+      "status",
+      "terms",
+      "updated_at",
+      "valid_until"
+    ],
     "perfume.settings": [
       "id",
       "rules",
