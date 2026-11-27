@@ -1,6 +1,6 @@
 {
   "generated_note": "Prod relation snapshot (read-only) \u2014 canonical set for the phantom-relation CI guard. Regenerate via scripts/gen-canonical-relations.mjs after schema changes. GATED prod access (CLAUDE.md \u00a71.5).",
-  "count": 994,
+  "count": 996,
   "relations": [
     "_system._schema_migrations",
     "_system.admin_jobs",
@@ -914,6 +914,8 @@
     "scentsx.party_kyc",
     "scentsx.resale_certificates",
     "scentsx.sales_order_invoice_lines",
+    "scentsx.sales_return_lines",
+    "scentsx.sales_returns",
     "scentsx.sanctions_list_entries",
     "scentsx.sanctions_list_loads",
     "scentsx.sanctions_screenings",

@@ -21,6 +21,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { createPayment, voidPayment, type PaymentMethod } from "../../api/accounting";
 import { getScentsxAging, getScentsxCustomerAccount, type ScentsxAgingDays, type ScentsxAgingRow, type ScentsxArInvoice, type ScentsxArPayment, type ScentsxBuckets } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
+import { ReturnForm, ReturnsList } from "./PerfumeReturnsParts";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const TENDERS: Array<[PaymentMethod, string]> = [["cash", "Cash"], ["check", "Check"], ["wire", "Wire"], ["ach", "ACH"], ["credit_card", "Card"], ["other", "Other"]];
@@ -74,6 +75,7 @@ export function PerfumeReceivablesPanel() {
         />
       </section>
       {openId ? <CustomerAccount key={openId} customerId={openId} asOf={asOf} days={days} onChanged={() => void aging.refetch()} /> : null}
+      <section className="rounded-[3px] border border-[#D8E0E8] bg-white p-3"><ReturnsList /></section>
     </div>
   );
 }
@@ -81,6 +83,7 @@ export function PerfumeReceivablesPanel() {
 function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: string; asOf: string; days: ScentsxAgingDays; onChanged: () => void }) {
   const acct = useQuery({ queryKey: ["scentsx", "ar-customer", customerId, asOf, days], queryFn: () => getScentsxCustomerAccount(customerId, asOf, days) });
   const [openInv, setOpenInv] = useState<string | null>(null);
+  const [returnInv, setReturnInv] = useState<string | null>(null);
   if (acct.isError) return <ListErrorState title={tr("perfume.ar.cust_error", "Couldn't load the customer's account")} status={0} message={(acct.error as Error)?.message} onRetry={() => void acct.refetch()} />;
   const a = acct.data;
   if (!a) return null;
@@ -111,8 +114,12 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
           { key: "total_cents", label: "Amount", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.total_cents), exportValue: (r) => r.total_cents / 100 },
           { key: "paid_cents", label: "Payments", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.paid_cents), exportValue: (r) => r.paid_cents / 100 },
           { key: "open_cents", label: "Balance", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.open_cents), exportValue: (r) => r.open_cents / 100 },
+          { key: "return", label: "", render: (r) => (["sent", "partial", "paid"].includes(r.status)
+            ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setReturnInv(r.id); }} data-testid={`perfume-ar-return-${r.id}`}>{tr("perfume.ar.return", "Return")}</Button>
+            : null) },
         ]}
       />
+      {returnInv ? <ReturnForm key={returnInv} invoiceId={returnInv} onClose={() => setReturnInv(null)} onDone={() => void refresh()} /> : null}
       {shown ? (
         <ParityTable<ScentsxArInvoice["payments"][number]>
           title={`${tr("perfume.ar.payments_on", "Payments on invoice")} ${shown.number ?? ""} · ${tr("perfume.ar.amount", "amount")} ${money(shown.total_cents)} · ${tr("perfume.ar.paid", "paid")} ${money(shown.paid_cents)} · ${tr("perfume.ar.balance", "A/R balance")} ${money(shown.open_cents)}`}
