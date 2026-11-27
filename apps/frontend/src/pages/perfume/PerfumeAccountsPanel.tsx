@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { useToast } from "../../components/Toast";
@@ -77,19 +78,19 @@ function PctCell({ value, label, testId, onSave }: { value: number | null; label
 function LevelItems({ level, onChanged }: { level: PerfumePriceLevel; onChanged: () => void }) {
   const { pushToast } = useToast();
   const items = useQuery({ queryKey: ["perfume", "price-level-items", level.id], queryFn: () => listPerfumeLevelItems(level.id) });
-  const [price, setPrice] = useState("");
+  const [price, setPrice] = useState<number | null>(null);
   if (items.isError) return <ListErrorState title={tr("perfume.acct.itemsError", "Couldn't load the fixed prices")} status={0} message={(items.error as Error)?.message} onRetry={() => void items.refetch()} />;
   const refresh = async () => { await items.refetch(); onChanged(); };
   const add = (itemId: string, minQty: number) => {
-    const c = toCents(price);
-    if (c == null) { pushToast("Type the price first", "error"); return; }
+    const c = price;
+    if (c == null || c <= 0) { pushToast("Type the price first", "error"); return; }
     void setPerfumeLevelItem(level.id, { item_id: itemId, min_qty: minQty, price_cents: c }).then(refresh).catch(err(pushToast));
   };
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-level-items" aria-label={level.name}>
       <div className="text-section-header">{`${level.name} — ${tr("perfume.acct.fixed", "fixed prices")}`}</div>
       <div className="flex flex-wrap items-end gap-2 text-xs">
-        <label>{tr("perfume.acct.price", "Price")} <input className={`${ctl} block w-[100px] text-right`} value={price} onChange={(e) => setPrice(e.target.value)} data-testid="perfume-level-price" /></label>
+        <label>{tr("perfume.acct.price", "Price")} <MoneyInput className="block w-[100px]" ariaLabel={tr("perfume.acct.price", "Price")} valueCents={price} onChangeCents={setPrice} /></label>
         <span className="text-[#64748B]">{tr("perfume.acct.fixed_help", "then pick the item; Qty = the quantity from which this price applies")}</span>
       </div>
       <ItemFinder testId="perfume-level-find" onPick={add} />
