@@ -17,6 +17,7 @@ import {
 import { tr } from "./perfumeI18n";
 import { downloadXlsx } from "../../components/parity/useParityServerView";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
+import { PerfumeCatalogCleanup } from "./PerfumeCatalogCleanup";
 import { perfumeHistoryOf } from "../../api/perfume";
 
 const ctl = "h-[30px] rounded-sm border border-[#C6D1DC] bg-white px-2 text-xs";
@@ -34,7 +35,8 @@ export function PerfumeCatalogsPanel() {
   if (cats.isError) return <ListErrorState title={tr("perfume.cat.error", "Couldn't load the catalogs")} status={0} message={(cats.error as Error)?.message} onRetry={() => void cats.refetch()} />;
   return (
     <div className="space-y-2" data-testid="perfume-catalogs-panel">
-    <div className="flex justify-end">
+    <div className="flex justify-end gap-2">
+      <PerfumeCatalogCleanup onDone={() => void cats.refetch()} />
       <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={exportAll} disabled={!cats.data} data-testid="perfume-catalogs-export">
         {tr("perfume.cat.export", "Export all lists (Excel)")}</Button>
     </div>

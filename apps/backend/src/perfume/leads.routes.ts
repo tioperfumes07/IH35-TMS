@@ -8,6 +8,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "./desk.routes.js";
 import { contactQueryFrom, listSchema } from "./contacts.routes.js";
+import { applyCleanup, applyCleanupSchema, previewCleanup } from "./catalog-cleanup.service.js";
 import {
   addCatalogValue, applySchema, archiveCatalogValue, catalogValueSchema, discardUpload, exportWorkbook, getUpload, healStaleApplies,
   LeadsError, listCatalogs, listUploads, renameCatalogValue, saveUpload, startApply, uploadSchema,
@@ -47,6 +48,16 @@ export async function registerPerfumeLeadsRoutes(app: FastifyInstance) {
     const id = idParam.safeParse(req.params); const b = z.object({ value: z.string().trim().min(1).max(200) }).safeParse(req.body ?? {});
     if (!id.success || !b.success) return reply.code(400).send({ error: "validation_error" });
     try { return await withCurrentUser(uid, (c) => renameCatalogValue(c, id.data.id, b.data.value, uid)); } catch (e) { return fail(reply, e); }
+  });
+  // Owner 2026-11-27 17:35 CT: clean the catalogs — product types without genders, customer types without overlaps. Preview, then Apply.
+  app.get("/api/v1/perfume/catalogs/cleanup", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => previewCleanup(c));
+  });
+  app.post("/api/v1/perfume/catalogs/cleanup/apply", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = applyCleanupSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => applyCleanup(c, uid, b.data.keys));
   });
   app.post("/api/v1/perfume/catalogs/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

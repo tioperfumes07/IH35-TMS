@@ -84,39 +84,48 @@ export async function renameCatalogValue(c: pg.PoolClient, id: string, value: st
   const clash = await c.query(`SELECT 1 FROM perfume.catalog_values WHERE kind = $1 AND lower(btrim(value)) = lower(btrim($2)) AND id <> $3 AND archived_at IS NULL`, [cur.kind, value, id]);
   if (clash.rowCount) throw new LeadsError("exists", `"${value}" is already in ${CATALOG_LABELS[cur.kind]}.`);
   await c.query(`UPDATE perfume.catalog_values SET value = $2, updated_at = now() WHERE id = $1`, [id, value]);
-  const col = cur.kind === "vendor_type" ? "vendor_type" : cur.kind === "customer_type" ? "customer_type" : cur.kind === "segment" ? "segment" : null;
+  const { moved, itemsMoved } = await moveCatalogCarriers(c, cur.kind, cur.value, value, uid, "catalog_rename");
+  await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved, items_moved: itemsMoved } });
+  return { moved, items_moved: itemsMoved };
+}
+
+/**
+ * Every contact / item / family carrying a catalog value's text moves to another text (a rename, or a merge into a value that already
+ * exists — owner 2026-11-27 17:35 CT "overlapping or the same, just other wording"). Each item and family writes its own history row.
+ */
+export async function moveCatalogCarriers(c: pg.PoolClient, kind: CatalogKind, from: string, to: string, uid: string | null, via: string) {
+  const col = kind === "vendor_type" ? "vendor_type" : kind === "customer_type" ? "customer_type" : kind === "segment" ? "segment" : null;
   let moved = 0;
-  if (col) moved = (await c.query(`UPDATE perfume.contact_companies SET ${col} = $2, updated_at = now() WHERE ${col} = $1`, [cur.value, value])).rowCount ?? 0;
-  if (cur.kind === "category") {
+  if (col) moved = (await c.query(`UPDATE perfume.contact_companies SET ${col} = $2, updated_at = now() WHERE ${col} = $1`, [from, to])).rowCount ?? 0;
+  if (kind === "category") {
     moved = (await c.query(
       `UPDATE perfume.contact_companies SET main_category = CASE WHEN main_category = $1 THEN $2 ELSE main_category END,
           categories = array_replace(categories, $1, $2), updated_at = now()
-        WHERE main_category = $1 OR $1 = ANY(categories)`, [cur.value, value])).rowCount ?? 0;
+        WHERE main_category = $1 OR $1 = ANY(categories)`, [from, to])).rowCount ?? 0;
   }
   // Item lists: every item carrying the old value follows the rename, and each item's own history says so.
-  const itemCol = ITEM_CATALOG_COLUMN[cur.kind];
+  const itemCol = ITEM_CATALOG_COLUMN[kind];
   let itemsMoved = 0;
   if (itemCol) {
     const it = await c.query<{ id: string }>(
-      `UPDATE perfume.items SET ${itemCol} = $2, updated_at = now() WHERE ${itemCol} = $1 AND merged_into_id IS NULL RETURNING id`, [cur.value, value]);
+      `UPDATE perfume.items SET ${itemCol} = $2, updated_at = now() WHERE ${itemCol} = $1 AND merged_into_id IS NULL RETURNING id`, [from, to]);
     itemsMoved = it.rowCount ?? 0;
-    for (const r of it.rows) {
-      await c.query(`INSERT INTO perfume.item_events (item_id, kind, detail, created_by) VALUES ($1, 'attributes', $2::jsonb, $3)`,
-        [r.id, JSON.stringify({ from: { [itemCol]: cur.value }, to: { [itemCol]: value }, via: "catalog_rename" }), uid]);
+    if (it.rows.length) {
+      await c.query(`INSERT INTO perfume.item_events (item_id, kind, detail, created_by) SELECT x, 'attributes', $2::jsonb, $3 FROM unnest($1::uuid[]) AS x`,
+        [it.rows.map((r) => r.id), JSON.stringify({ from: { [itemCol]: from }, to: { [itemCol]: to }, via }), uid]);
     }
   }
   // Scent families are carried by item families: they follow the rename, and each family's history says so.
-  if (cur.kind === "olfactory_family") {
+  if (kind === "olfactory_family") {
     const fs = await c.query<{ id: string }>(
-      `UPDATE perfume.item_families SET olfactory_family = $2, updated_at = now() WHERE olfactory_family = $1 AND archived_at IS NULL RETURNING id`, [cur.value, value]);
+      `UPDATE perfume.item_families SET olfactory_family = $2, updated_at = now() WHERE olfactory_family = $1 AND archived_at IS NULL RETURNING id`, [from, to]);
     itemsMoved = fs.rowCount ?? 0;
     for (const r of fs.rows) {
       await c.query(`INSERT INTO perfume.item_family_events (family_id, kind, detail, created_by) VALUES ($1, 'edited', $2::jsonb, $3)`,
-        [r.id, JSON.stringify({ from: { olfactory_family: cur.value }, to: { olfactory_family: value }, via: "catalog_rename" }), uid]);
+        [r.id, JSON.stringify({ from: { olfactory_family: from }, to: { olfactory_family: to }, via }), uid]);
     }
   }
-  await logEvent(c, uid, { entity: "catalog_value", entity_id: id, action: "renamed", detail: { kind: cur.kind, from: cur.value, to: value, contacts_moved: moved, items_moved: itemsMoved } });
-  return { moved, items_moved: itemsMoved };
+  return { moved, itemsMoved };
 }
 
 export async function archiveCatalogValue(c: pg.PoolClient, id: string, uid: string | null = null) {
