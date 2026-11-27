@@ -10,7 +10,7 @@ import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { ListErrorState } from "../../components/ListErrorState";
-import { searchPerfumeQuoteItems, type PerfumeQuoteEvent } from "../../api/perfume";
+import { listPerfumeSites, searchPerfumeQuoteItems, type PerfumeQuoteEvent } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 
 export const DASH = "—";
