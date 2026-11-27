@@ -38,6 +38,7 @@ import { PerfumeCatalogsPanel } from "./PerfumeCatalogsPanel";
 import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
+import { DocLink } from "./perfumeDocParts";
 import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 import { perfumeModuleOf } from "./perfumeModules";
@@ -320,6 +321,8 @@ const EDIT_FIELD: Record<string, PerfumeMyPriceField> = {
 };
 /** Which row / line a box writes, or null when the box is not mine to type in (an item not on my offer list has no list
  *  price of mine; a competitor line not linked to an item has no cost of mine). */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function editTarget(r: PerfumeGridRow, key: string): { item_id: string | null; line_id: string | null } | null {
   const field = EDIT_FIELD[key];
   if (!field) return null;
@@ -656,6 +659,11 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         // My list ↔ competitor, the match box sits in the OTHER side's description: my line → theirs; their line → mine.
         if (matchDesk && c.key === "a:c_desc" && String(r.id).startsWith("m:")) return <MatchCell key={String(r.id)} row={r} current={(r["a:c_desc"] as string) ?? null} />;
         if (matchDesk && c.key === "a:name" && String(r.id).startsWith("c:")) return <MatchCell key={String(r.id)} row={r} current={(r["a:name"] as string) ?? null} />;
+        // Owner 2026-11-27 06:57 CT: clicking an item opens its profile, where it is edited.
+        if ((c.key === "name" || (c.key === "a:name" && !matchDesk)) && v != null && v !== "") {
+          const itemId = view === "analysis" ? (r.item_id == null ? "" : String(r.item_id)) : String(r.id);
+          if (UUID_RE.test(itemId)) return <DocLink tab="items" id={itemId} testId="perfume-grid-item-link">{String(v)}</DocLink>;
+        }
         if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
         if (c.key === "upc" && Number(r.upc_count) > 1) return <span title={String(r.upcs ?? "")}>{String(v)} <span className="text-gray-500">+{Number(r.upc_count) - 1}</span></span>;

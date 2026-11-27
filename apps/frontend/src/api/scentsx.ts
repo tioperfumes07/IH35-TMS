@@ -19,8 +19,8 @@ export const listScentsxCustomerLinks = (deskId: string) => apiRequest<{ links: 
 export const linkScentsxCustomer = (deskId: string, engineId: string) =>
   apiRequest<{ link: { id: string } }>("/api/v1/scentsx/customer-links", { method: "POST", body: { desk_id: deskId, engine_id: engineId } });
 /** The canonical customer create (mdata.customers) for ScentsX's company — the same route every customer goes through. */
-export const createScentsxCustomer = (companyId: string, input: { name: string; billing_email?: string | null; billing_phone?: string | null }) =>
-  apiRequest<{ id: string }>("/api/v1/mdata/customers", { method: "POST", body: { operating_company_id: companyId, legal_name: input.name, billing_email: input.billing_email ?? undefined, billing_phone: input.billing_phone ?? undefined } });
+export const createScentsxCustomer = (companyId: string, input: { name: string; email: string; phone?: string | null }) =>
+  apiRequest<{ id: string }>("/api/v1/mdata/customers", { method: "POST", body: { operating_company_id: companyId, legal_name: input.name, email: input.email, phone: input.phone ?? undefined } });
 export type ScentsxRegisterLine = {
   posting_id: string; journal_entry_id: string; entry_date: string; memo: string | null; debit_or_credit: "debit" | "credit";
   amount_cents: string; source_transaction_type: string | null; source_transaction_id: string | null;
@@ -140,7 +140,7 @@ export const closeScentsxPagare = (id: string, action: "return" | "void", note: 
   apiRequest<{ id: string; status: string }>(`/api/v1/scentsx/compliance/pagares/${encodeURIComponent(id)}/${action}`, { method: "POST", body: { note } });
 
 // SCENTSX B13 — Sales by Customer / Sales by Item (issued invoices, income lines)
-export type ScentsxSalesRow = { key: string; name: string; invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null; pct_of_sales: number };
+export type ScentsxSalesRow = { key: string; name: string; last_sale_date: string | null; invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null; pct_of_sales: number };
 export type ScentsxSalesReport = { from: string; to: string; by: "customer" | "item"; rows: ScentsxSalesRow[]; total: { invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null } };
 export const getScentsxSalesReport = (by: "customer" | "item", from: string, to: string) =>
   apiRequest<{ report: ScentsxSalesReport }>(`/api/v1/scentsx/reports/sales?by=${by}&from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);

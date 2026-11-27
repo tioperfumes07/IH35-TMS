@@ -130,7 +130,8 @@ function FillCodes({ onDone }: { onDone: () => void }) {
   );
 }
 
-function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () => void; onClose: () => void }) {
+/** The one item editor — the Item file tab and every item profile (PerfumeProfilesPanel ItemProfile) render this same form. */
+export function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () => void; onClose?: () => void }) {
   const { pushToast } = useToast();
   const { open } = useOpenDoc();
   const f = useQuery({ queryKey: ["perfume", "item-file", "one", id], queryFn: () => getPerfumeItemFile(id) });
@@ -159,7 +160,7 @@ function ItemFileEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
         <div className="text-section-header">{it.display_name}</div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => open("linkage", x.upcs[0] ?? it.internal_code ?? it.display_name)} data-testid="perfume-itemfile-linkage">{tr("perfume.itemfile.to_linkage", "Linkage")}</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.itemfile.close", "Close")}</Button>
+          {onClose ? <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.itemfile.close", "Close")}</Button> : null}
         </div>
       </div>
       <div className="flex flex-wrap items-end gap-2 text-xs" data-testid="perfume-itemfile-fields">

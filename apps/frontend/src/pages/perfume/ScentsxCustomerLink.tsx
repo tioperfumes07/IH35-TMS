@@ -10,6 +10,7 @@ import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { addScentsxResaleCertificate, createScentsxCustomer, getScentsxCompany, getScentsxCredit, getScentsxCustomerCompliance, linkScentsxCustomer, listScentsxCustomerLinks, screenScentsxParty } from "../../api/scentsx";
 import { uploadSourceDocumentFromFile } from "../../api/docs";
+import { getPerfumeContact } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ScentsxKycBlock } from "./ScentsxKycBlock";
@@ -29,7 +30,18 @@ export function ScentsxCustomerLink({ contactId, name, email, phone }: { contact
     if (!companyId) return;
     setBusy(true);
     try {
-      const created = await createScentsxCustomer(companyId, { name, billing_email: email, billing_phone: phone });
+      // The canonical customer route requires an email. A company row rarely carries one — its people do — so the
+      // company's own email is used first, else the first person's (owner 2026-11-27: the button failed "expected string").
+      let mail = email ?? null;
+      let tel = phone ?? null;
+      if (!mail) {
+        const prof = await getPerfumeContact(contactId);
+        const withMail = (prof.people ?? []).find((p) => p.email);
+        mail = withMail?.email ?? null;
+        tel = tel ?? withMail?.phones?.[0] ?? (prof.people ?? []).find((p) => p.phones?.length)?.phones[0] ?? null;
+      }
+      if (!mail) throw new Error("This contact has no email on any person — add one to the contact first, then make it a ScentsX customer.");
+      const created = await createScentsxCustomer(companyId, { name, email: mail, phone: tel });
       const customerId = (created as { id?: string }).id;
       if (!customerId) throw new Error("The customer was created but its id did not come back — open Customers to link it.");
       await linkScentsxCustomer(contactId, customerId);

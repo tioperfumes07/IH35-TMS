@@ -23,6 +23,7 @@ import {
 import { tr } from "./perfumeI18n";
 import { Badge, ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 import { PO_STATUS_CLASS, PO_STATUS_TEXT } from "./PerfumeOrdersPanel";
+import { ItemFileEditor } from "./PerfumeItemFilePanel";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
 const METHOD_TEXT: Record<string, string> = { upc: "Barcode", sku: "Their code", alias: "Their words (remembered)", key: "Same name", name: "Same bottle, other spelling",
@@ -219,6 +220,9 @@ function ItemProfile({ id }: { id: string }) {
         <KpiCard label={tr("perfume.profiles.kpi_orders", "Sales orders")} number={p.orders.length.toLocaleString("en-US")} to="/perfume?tab=orders" />
         <KpiCard label={tr("perfume.profiles.kpi_item_pos", "Purchase orders")} number={p.purchase_orders.length.toLocaleString("en-US")} to="/perfume?tab=purchases" />
       </div>
+      {/* Owner 2026-11-27 06:57 CT: "I click on an item and it does not take me to profile so I can edit" — every item link opens
+          this profile, and the profile edits the item itself (the same editor as the Item file tab). */}
+      <ItemFileEditor id={id} onChanged={() => void prof.refetch()} />
       <div className="text-xs" data-testid="perfume-item-upcs"><span className="text-[#64748B]">{tr("perfume.profiles.upcs", "Barcodes:")}</span> {p.upcs.length ? p.upcs.join(" · ") : DASH}</div>
       <ParityTable<PerfumeItemVendorLine> title={tr("perfume.profiles.vendor_lines", "Every vendor's line for it (their code, their words, their price)")} rows={p.vendor_lines} rowKey={(l) => l.id}
         storageKey="perfume-item-vendor-lines-v1" exportFilename="TIO item vendor lines" exportExcel emptyText="No current list carries it."

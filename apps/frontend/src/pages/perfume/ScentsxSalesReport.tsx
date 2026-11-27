@@ -10,6 +10,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { DatePicker } from "../../components/forms/DatePicker";
 import { getScentsxSalesReport, type ScentsxSalesRow } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
+import { usDate } from "./perfumeDocParts";
 
 const money = (c: number | null) => (c == null ? "—" : (c / 100).toLocaleString("en-US", { style: "currency", currency: "USD" }));
 const yearStart = () => `${new Date().getFullYear()}-01-01`;
@@ -47,6 +48,7 @@ export function ScentsxSalesReport() {
           emptyText={tr("scentsx.sales.empty", "No issued ScentsX invoice in these dates.")}
           columns={[
             { key: "name", label: by === "customer" ? tr("scentsx.sales.col_customer", "Customer") : tr("scentsx.sales.col_item", "Item"), sortable: true },
+            { key: "last_sale_date", label: tr("scentsx.sales.col_last", "Last sale"), sortable: true, render: (x) => (x.last_sale_date ? usDate(x.last_sale_date) : "—") },
             { key: "invoices", label: tr("scentsx.sales.col_invoices", "Invoices"), sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "units", label: tr("scentsx.sales.col_units", "Units"), sortable: true, kind: "number", cellClass: "text-right tabular-nums" },
             { key: "sales_cents", label: tr("scentsx.sales.col_sales", "Sales"), sortable: true, cellClass: "text-right tabular-nums", render: (x) => money(x.sales_cents) },

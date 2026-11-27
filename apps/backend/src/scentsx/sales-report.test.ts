@@ -68,7 +68,7 @@ describe("ScentsX sales reports and periods (real Postgres, rolled back)", () =>
     await db.query(`UPDATE accounting.invoices SET status = 'sent', sent_at = now(), issue_date = $2::date WHERE id = $1::uuid`, [inv.invoice_id, today]);
     const byCustomer = await salesReport(db, "customer", "2026-01-01", "2027-12-31");
     expect(byCustomer.rows).toEqual([
-      expect.objectContaining({ name: "Report Test Buyer", invoices: 1, units: 10, sales_cents: 26000, cost_cents: 15000, margin_cents: 11000, pct_of_sales: 100 }),
+      expect.objectContaining({ name: "Report Test Buyer", last_sale_date: today, invoices: 1, units: 10, sales_cents: 26000, cost_cents: 15000, margin_cents: 11000, pct_of_sales: 100 }),
     ]);
     expect(byCustomer.total).toMatchObject({ invoices: 1, sales_cents: 26000 });
 
