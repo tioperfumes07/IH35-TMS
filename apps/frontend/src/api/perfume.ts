@@ -564,3 +564,43 @@ export const getPerfumeContactUpload = (id: string) => apiRequest<PerfumeUpload>
 export const applyPerfumeContactUpload = (id: string, b: PerfumeApplyOptions) =>
   apiRequest<{ status: "applying" }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/apply`, { method: "POST", body: b });
 export const discardPerfumeContactUpload = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/discard`, { method: "POST", body: {} });
+
+/* ------------------------------------------------------------------ Quotations (owner 2026-11-26 18:13 CT) */
+export type PerfumeQuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
+export type PerfumeQuoteRow = { id: string; number: string; company_id: string | null; customer_name: string; customer_email: string | null;
+  customer_phone: string | null; quote_date: string; valid_until: string | null; status: PerfumeQuoteStatus; currency: "USD" | "MXN";
+  terms: string | null; notes: string | null; total_cents: string | number; cost_cents: string | number; costed_total_cents: string | number; lines: number; units: number };
+export type PerfumeQuoteLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number;
+  unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null; item_name: string | null };
+export type PerfumeQuoteEvent = { id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null };
+export type PerfumeQuote = Omit<PerfumeQuoteRow, "lines"> & { lines: PerfumeQuoteLine[]; events: PerfumeQuoteEvent[] };
+export type PerfumeQuoteItem = { id: string; display_name: string; upc: string | null; best: { cents: number; vendor_id: string; vendor: string } | null };
+export const listPerfumeQuotes = () => apiRequest<{ quotes: PerfumeQuoteRow[] }>("/api/v1/perfume/quotes");
+export const getPerfumeQuote = (id: string) => apiRequest<PerfumeQuote>(`/api/v1/perfume/quotes/${id}`);
+export const createPerfumeQuote = (b: { company_id?: string | null; customer_name?: string | null; valid_until?: string | null; currency?: "USD" | "MXN" }) =>
+  apiRequest<{ id: string; number: string }>("/api/v1/perfume/quotes", { method: "POST", body: b });
+export const updatePerfumeQuote = (id: string, b: Partial<Pick<PerfumeQuoteRow, "customer_name" | "customer_email" | "customer_phone" | "valid_until" | "currency" | "terms" | "notes" | "quote_date">>) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}`, { method: "PATCH", body: b });
+export const setPerfumeQuoteStatus = (id: string, status: PerfumeQuoteStatus) => apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}/status`, { method: "POST", body: { status } });
+export const archivePerfumeQuote = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}/archive`, { method: "POST", body: {} });
+export const copyPerfumeQuote = (id: string) => apiRequest<{ id: string; number: string }>(`/api/v1/perfume/quotes/${id}/copy`, { method: "POST", body: {} });
+export const addPerfumeQuoteLine = (id: string, b: { item_id?: string | null; description?: string | null; qty: number; unit_price_cents?: number | null }) =>
+  apiRequest<{ id: string; unit_price_cents: number }>(`/api/v1/perfume/quotes/${id}/lines`, { method: "POST", body: b });
+export const updatePerfumeQuoteLine = (lineId: string, b: { qty?: number; unit_price_cents?: number; description?: string }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/quote-lines/${lineId}`, { method: "PATCH", body: b });
+export const removePerfumeQuoteLine = (lineId: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/quote-lines/${lineId}/archive`, { method: "POST", body: {} });
+export const searchPerfumeQuoteItems = (q: string) => apiRequest<{ items: PerfumeQuoteItem[] }>(`/api/v1/perfume/quote-items?q=${encodeURIComponent(q)}`);
+export const perfumeQuotesOfContact = (companyId: string) => apiRequest<{ quotes: PerfumeQuoteRow[] }>(`/api/v1/perfume/contacts/${companyId}/quotes`);
+export const perfumeQuotesOfItem = (itemId: string) => apiRequest<{ quotes: PerfumeQuoteRow[] }>(`/api/v1/perfume/items/${itemId}/quotes`);
+/** Downloads a file the server builds (quote Excel / PDF, the quotes list). */
+export async function downloadPerfumeFile(path: string, fallbackName: string) {
+  const res = await fetch(resolveApiUrl(path), { credentials: "include" });
+  if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") ?? "")?.[1] ?? fallbackName;
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.rel = "noopener"; a.style.display = "none";
+  document.body.appendChild(a); a.click();
+  window.setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60_000);
+}
