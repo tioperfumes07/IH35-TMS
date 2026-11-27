@@ -39,6 +39,7 @@ import { PerfumeSavedListsBar } from "./PerfumeSavedListsBar";
 import { MarginGroupsEditor } from "./PerfumeMarginGroups";
 import { PerfumeReviewPanel } from "./PerfumeReviewPanel";
 import { tr } from "./perfumeI18n";
+import { brandShort } from "./perfumeBrandShort";
 import { DocLink } from "./perfumeDocParts";
 import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
@@ -714,8 +715,8 @@ function GridPanel({ view, mine, matchDesk = false }: { view: PerfumeGridView; m
         // Brand → the grid narrowed to that brand (the Brand filter), one click.
         if ((c.key === "brand" || c.key === "a:brand") && v != null && v !== "" && !matchDesk) {
           const b = String(v);
-          return <button type="button" className="font-semibold text-[#14314F] underline" data-testid="perfume-grid-brand-link"
-            onClick={(e) => { e.stopPropagation(); setPicks((p) => ({ ...p, brand: [b] })); setPage(1); }}>{b}</button>;
+          return <button type="button" className="font-semibold text-[#14314F] underline" data-testid="perfume-grid-brand-link" title={b}
+            onClick={(e) => { e.stopPropagation(); setPicks((p) => ({ ...p, brand: [b] })); setPage(1); }}>{brandShort(b)}</button>;
         }
         if (c.key === "a:match") return <span className={r.matched === 1 ? "text-[#1F8A4C] font-semibold" : "text-[#C76A0A] font-semibold"}>{String(v ?? "—")}</span>;
         if (c.key === "best_vendor" && r.tied) return <span title={tr("perfume.desk.5", "Tied lowest price")} className="rounded-sm bg-slate-100 px-1">{String(v)}</span>;
