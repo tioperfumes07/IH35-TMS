@@ -8,12 +8,73 @@ import { useQuery } from "@tanstack/react-query";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
-import { getPerfumeCustomerRanking, type PerfumeRankRow } from "../../api/perfume";
+import { getPerfumeCustomerRanking, importPerfumePurchaseHistory, type PerfumeHistoryRow, type PerfumeRankRow } from "../../api/perfume";
+import { useToast } from "../../components/Toast";
+import { userFacingApiError } from "../../lib/api-error-message";
+import { readSpreadsheet } from "./perfumeFileReaders";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, DocLink, usDate } from "./perfumeDocParts";
 
 const fmt = (c: number, cur: string) => (c / 100).toLocaleString("en-US", { style: "currency", currency: cur, maximumFractionDigits: 0 });
 const TIER_CLASS: Record<string, string> = { A: "bg-[#DCFCE7] text-[#166534]", B: "bg-[#FEF9C3] text-[#854D0E]", C: "bg-[#F1F5F9] text-[#475569]" };
+
+
+/** Owner's workbook (TIO-Customers-Sales-USA-and-Mexico): "Detalle Mensual" (USA, one row per customer per month: no., name, month,
+ *  invoices, sub-total, tax, total) and "Clientes México" (no., name, 2020 … 2025 in MXN). Purchases only — the Open Balance column is
+ *  never read (owner 14:12 CT). A customer with no name in the store system keeps its number: "Customer #22522 (no name in store system)". */
+export function historyRowsFromWorkbook(sheets: Array<{ name: string; cells: Array<Array<string | number | null>> }>): PerfumeHistoryRow[] {
+  const out: PerfumeHistoryRow[] = [];
+  const excelDate = (v: unknown): string | null => {
+    if (typeof v === "number") { const d = new Date(Math.round((v - 25569) * 86400000)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-01`; }
+    if (v instanceof Date) return `${v.getUTCFullYear()}-${String(v.getUTCMonth() + 1).padStart(2, "0")}-01`;
+    if (typeof v === "string" && /^\d{4}-\d{2}/.test(v)) return `${v.slice(0, 7)}-01`;
+    return null;
+  };
+  const usa = sheets.find((s) => s.name.trim().toLowerCase() === "detalle mensual");
+  for (const r of usa?.cells.slice(4) ?? []) {
+    const [no, name, month, inv, , , total] = r;
+    const period = excelDate(month);
+    if (no == null || period == null || total == null || typeof total !== "number") continue;
+    out.push({ source: "usa_store", customer_no: String(no), customer_name: name ? String(name).trim() : `Customer #${no} (no name in store system)`, period_kind: "month",
+      period_start: period, invoices: typeof inv === "number" ? inv : 0, amount_cents: Math.round(total * 100), currency: "USD" });
+  }
+  const mx = sheets.find((s) => s.name.trim().toLowerCase() === "clientes méxico" || s.name.trim().toLowerCase() === "clientes mexico");
+  for (const r of mx?.cells.slice(4) ?? []) {
+    const [no, name] = r;
+    if (typeof no !== "number" || !name) continue;
+    for (let i = 0; i < 6; i += 1) {
+      const v = r[2 + i];
+      if (typeof v !== "number" || v === 0) continue;
+      out.push({ source: "mexico_file", customer_no: String(no), customer_name: String(name).trim(), period_kind: "year", period_start: `${2020 + i}-01-01`, invoices: null,
+        amount_cents: Math.round(v * 100), currency: "MXN" });
+    }
+  }
+  return out;
+}
+
+function ImportHistory({ onDone }: { onDone: () => void }) {
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  const run = async (f: File) => {
+    setBusy(true);
+    try {
+      const rows = historyRowsFromWorkbook((await readSpreadsheet(f)).sheets);
+      if (!rows.length) { pushToast("No 'Detalle Mensual' / 'Clientes México' rows in this file", "error"); return; }
+      let n = 0;
+      for (let i = 0; i < rows.length; i += 2000) n += (await importPerfumePurchaseHistory(rows.slice(i, i + 2000))).rows;
+      const usd = rows.filter((x) => x.currency === "USD").reduce((s, x) => s + x.amount_cents, 0);
+      pushToast(`${n.toLocaleString("en-US")} rows imported — USA $${(usd / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`, "success");
+      onDone();
+    } catch (e) { pushToast(userFacingApiError(e, "History not imported"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <label className="text-xs" data-testid="perfume-rank-import">
+      <span className="mr-2 text-[#64748B]">{tr("perfume.rank.import", "Import purchase history (customer sales workbook)")}</span>
+      <input type="file" accept=".xlsx,.xls" aria-label={tr("perfume.rank.import", "Import purchase history")} disabled={busy}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) void run(f); e.target.value = ""; }} data-testid="perfume-rank-import-file" />
+    </label>
+  );
+}
 
 export function PerfumeRankingPanel() {
   const [cur, setCur] = useState<"USD" | "MXN">("USD");
@@ -32,6 +93,7 @@ export function PerfumeRankingPanel() {
               <option value="USD">{"USD — USA store + ScentsX"}</option><option value="MXN">{"MXN — Mexico"}</option>
             </select>
           </label>
+          <ImportHistory onDone={() => void q.refetch()} />
           <span className="text-[#64748B]">{tr("perfume.rank.basis", "A = customers making the first 80% of purchases, B = the next 15%, C = the rest. Purchases only — no balances.")}</span>
         </div>
         {d ? (

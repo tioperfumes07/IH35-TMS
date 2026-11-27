@@ -1017,3 +1017,17 @@ export type PerfumeRankRow = { key: string; company_id: string | null; customer:
 export const getPerfumeCustomerRanking = (currency: "USD" | "MXN") =>
   apiRequest<{ currency: string; total_cents: number; customers: number; tiers: { A: number; B: number; C: number }; linked: number; rows: PerfumeRankRow[] }>(
     `/api/v1/perfume/customers/ranking?currency=${currency}`);
+
+/** Owner 16:32 CT: one company, many contacts — duplicate companies (same match key) merged into one; the others kept as its locations. */
+export type PerfumeDupMember = { id: string; name: string; role: string | null; city: string | null; state: string | null; people: number; docs: number; sx_link: boolean; account: boolean; created_at: string };
+export type PerfumeDupGroup = { key: string; name: string; keep: PerfumeDupMember; merge: PerfumeDupMember[]; companies: number };
+export const getPerfumeDuplicates = () => apiRequest<{ groups: number; extra: number; rows: PerfumeDupGroup[] }>("/api/v1/perfume/contacts/duplicates");
+export const mergePerfumeDuplicates = (keys: string[]) =>
+  apiRequest<{ groups: number; merged: number; kept: string[] }>("/api/v1/perfume/contacts/duplicates/merge", { method: "POST", body: { keys } });
+export type PerfumeCompanyLocation = { id: string; name: string; address: string | null; city: string | null; state: string | null; zip: string | null; country: string | null; phone: string | null; merged_at: string | null };
+export const getPerfumeCompanyLocations = (id: string) => apiRequest<{ locations: PerfumeCompanyLocation[] }>(`/api/v1/perfume/contacts/${encodeURIComponent(id)}/locations`);
+/** ROUND P1.31 L1: the old systems' purchase history (no balances) → POST in chunks of up to 5,000 rows. */
+export type PerfumeHistoryRow = { source: "usa_store" | "mexico_file"; customer_no: string; customer_name: string; period_kind: "month" | "year"; period_start: string;
+  invoices: number | null; amount_cents: number; currency: "USD" | "MXN" };
+export const importPerfumePurchaseHistory = (rows: PerfumeHistoryRow[]) =>
+  apiRequest<{ rows: number; inserted: number; updated: number }>("/api/v1/perfume/customers/purchase-history/import", { method: "POST", body: { rows } });
