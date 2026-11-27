@@ -1010,3 +1010,10 @@ export type PerfumeVendorTierRow = { vendor_id: string; vendor: string; items_co
 export const getPerfumeVendorTiers = (q: { min_items?: number; low_below?: number; high_above?: number } = {}) =>
   apiRequest<{ rows: PerfumeVendorTierRow[]; total: { vendors: number; low: number; medium: number; high: number; too_few: number } }>(
     `/api/v1/perfume/reports/vendor-tiers?${perfumeReportQs(Object.fromEntries(Object.entries(q).map(([k, v]) => [k, v == null ? undefined : String(v)])))}`);
+
+/** ROUND P1.31 L1: customers ranked A/B/C on purchases (old systems' history + ScentsX invoices), per currency. */
+export type PerfumeRankRow = { key: string; company_id: string | null; customer: string; role: string | null; linked: boolean; sources: string[];
+  lifetime_cents: number; last12_cents: number; invoices: number; months: number; first_period: string | null; last_period: string | null; tier: "A" | "B" | "C"; rank: number; share: number };
+export const getPerfumeCustomerRanking = (currency: "USD" | "MXN") =>
+  apiRequest<{ currency: string; total_cents: number; customers: number; tiers: { A: number; B: number; C: number }; linked: number; rows: PerfumeRankRow[] }>(
+    `/api/v1/perfume/customers/ranking?currency=${currency}`);

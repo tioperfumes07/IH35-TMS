@@ -118,6 +118,6 @@ describeIntegration("campaigns and traders (real Postgres, rolled back)", () => 
     expect(o.common_buyers.some((x: { name: string }) => x.name === "CMPTEST Buyer Two")).toBe(false);
     expect(o.exposed_lists.find((x: { sender: string }) => x.sender === "Cmptestvendora")?.buyers).toBe(2);
     expect(o.matrix_brands).toEqual(["CMPTESTBRAND"]);
-    expect(o.matrix.find((r) => r.vendor === "CMPT")?.brands).toEqual({ CMPTESTBRAND: 2 });
+    expect(o.matrix.find((r) => r.vendor === "CMPTEST TRADER")?.brands).toEqual({ CMPTESTBRAND: 2 });
   });
 });

@@ -17,6 +17,7 @@ import {
   batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
+import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -71,6 +72,22 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 
+  // ROUND P1.31 L1 (owner 15:45 CT item 10): customer ranking A/B/C on purchases (history import has no balances — owner 14:12 CT).
+  app.get("/api/v1/perfume/customers/ranking", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = rankingQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
+    return withCurrentUser(uid, (c) => customerRanking(c, q.data));
+  });
+  app.post("/api/v1/perfume/customers/purchase-history/import", { config: { rateLimit: { max: 30, timeWindow: "1 minute" }, bodyLimit: 8 * 1024 * 1024 } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = historyImportSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error", message: b.error.issues[0]?.message });
+    return withCurrentUser(uid, (c) => importPurchaseHistory(c, uid, b.data.rows));
+  });
+  app.get("/api/v1/perfume/contacts/:id/tier", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    return withCurrentUser(uid, (c) => companyTier(c, id.data));
+  });
   // ROUND P1.31 L2 (owner 15:47 CT): company names in proper format — preview, then Apply (one history row per rename).
   app.get("/api/v1/perfume/contacts/name-format/preview", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

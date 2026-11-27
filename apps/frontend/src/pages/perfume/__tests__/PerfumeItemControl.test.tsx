@@ -35,7 +35,7 @@ describe("CONTROL item fields", () => {
     const box = await screen.findByTestId("perfume-itemfile-control");
     expect((within(within(box).getByTestId("perfume-itemfile-min-price")).getByRole("textbox") as HTMLInputElement).value).toBe("15.00");
     expect((within(box).getByTestId("perfume-itemfile-units-per-pack") as HTMLInputElement).disabled).toBe(true);
-    await waitFor(() => expect(within(box).getByText("PCA")).toBeTruthy());
+    await waitFor(() => expect(within(box).getByText("Perfume Center of America")).toBeTruthy()); // full vendor name (owner 2026-11-27 15:47 CT)
     fireEvent.change(within(box).getByTestId("perfume-itemfile-pos-code"), { target: { value: "ZZ-01" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-ticket"), { target: { value: "ZZ ONE 100" } });
     fireEvent.change(within(box).getByTestId("perfume-itemfile-sold-by"), { target: { value: "pack" } });

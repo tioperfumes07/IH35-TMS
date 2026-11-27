@@ -87,7 +87,7 @@ describe("wholesaler picker", () => {
     };
     const mine = getOrBuildView(g as never, "analysis", undefined, undefined, "asc", "mine", "all", ["bw"]).sorted;
     expect(mine[0]!["a:esp"]).toBe(3200);
-    expect(mine[0]!["a:c_vendor"]).toBe("BW");
+    expect(mine[0]!["a:c_vendor"]).toBe("bw"); // the full name (owner 2026-11-27 15:47 CT); this fixture's full name is its id
     expect(getOrBuildView(g as never, "analysis", undefined, undefined, "asc", "theirs", "all", ["bw"]).sorted.map((r) => r.id)).toEqual(["c:2"]);
     expect(getOrBuildView(g as never, "wholesale", undefined, undefined, "asc", "mine", "all", ["bw"]).sorted.map((r) => r.id)).toEqual(["i1"]);
     // A supplier id, or every wholesaler picked, is the same as no pick.

@@ -30,7 +30,7 @@ export async function itemInquiry(c: pg.PoolClient, id: string) {
             i.internal_code AS tio_code, i.pos_code, i.ticket_description, i.sold_by, i.units_per_pack, i.is_stock_item, i.is_active,
             i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked, i.case_pack,
             i.family_id, (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family,
-            i.preferred_vendor_id, (SELECT COALESCE(NULLIF(btrim(v.short_name), ''), v.name) FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
+            i.preferred_vendor_id, (SELECT v.name FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
             i.merged_into_id
        FROM perfume.items i WHERE i.id = $1`, [id])).rows[0];
   if (!it) throw new ReportNotFound();
