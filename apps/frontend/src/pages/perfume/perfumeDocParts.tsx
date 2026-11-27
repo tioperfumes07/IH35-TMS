@@ -9,7 +9,7 @@ import { useSearchParams } from "react-router-dom";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
-import { searchPerfumeQuoteItems, type PerfumeQuoteEvent } from "../../api/perfume";
+import { listPerfumeSites, searchPerfumeQuoteItems, type PerfumeQuoteEvent } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 
 export const DASH = "—";
@@ -132,5 +132,17 @@ export function ItemFinder({ testId, onPick }: { testId: string; onPick: (itemId
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** One of my own stock sites (warehouses and stores; never In transit). */
+export function SitePicker({ value, onChange, label, testId, allowEmpty = true }: { value: string | null; onChange: (code: string | null) => void; label: string; testId: string; allowEmpty?: boolean }) {
+  const sites = useQuery({ queryKey: ["perfume", "inventory", "sites"], queryFn: listPerfumeSites });
+  const own = (sites.data?.sites ?? []).filter((s) => s.own && s.active && s.kind !== "transit");
+  return (
+    <select className={ctl} aria-label={label} value={value ?? ""} onChange={(e) => onChange(e.target.value || null)} data-testid={testId}>
+      {allowEmpty ? <option value="">{tr("perfume.docs.pick_site", "Pick a site")}</option> : null}
+      {own.map((s) => <option key={s.code} value={s.code}>{`${s.code} · ${s.name}`}</option>)}
+    </select>
   );
 }

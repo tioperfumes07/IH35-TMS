@@ -10,7 +10,7 @@ import { deskAllowed } from "./desk.routes.js";
 import {
   addPurchaseLine, archivePurchaseOrder, createPurchaseOrder, getPurchaseOrder, listPurchaseOrders, PO_STATUSES, PoInvalid, poLinePatchSchema, poLineSchema,
   PoNotFound, poSchema, purchaseOrderPdf, purchaseOrdersFromOrder, purchaseOrdersListXlsx, purchaseOrdersOfItem, purchaseOrdersOfOrder, purchaseOrdersOfVendor,
-  purchaseOrderXlsx, receiveAll, removePurchaseLine, setPurchaseOrderStatus, updatePurchaseLine, updatePurchaseOrder,
+  purchaseOrderXlsx, receivePurchase, receiveSchema, removePurchaseLine, setPurchaseOrderStatus, updatePurchaseLine, updatePurchaseOrder,
 } from "./purchases.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -99,7 +99,9 @@ export async function registerPerfumePurchaseRoutes(app: FastifyInstance) {
   app.post("/api/v1/perfume/purchase-orders/:id/receive-all", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
-    try { return await withCurrentUser(uid, (c) => receiveAll(c, uid, id.data)); } catch (e) { return fail(reply, e); }
+    const p = receiveSchema.safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
+    try { return await withCurrentUser(uid, (c) => receivePurchase(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/purchase-orders/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

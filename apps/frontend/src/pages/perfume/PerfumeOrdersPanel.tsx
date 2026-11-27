@@ -20,7 +20,7 @@ import {
   updatePerfumeOrderLine, type PerfumeOrder, type PerfumeOrderLine, type PerfumeOrderRow, type PerfumeOrderStatus, type PerfumePoRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
-import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, useOpenDoc, usDate } from "./perfumeDocParts";
+import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, SitePicker, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const STATUS_TEXT: Record<PerfumeOrderStatus, string> = { open: "Open", shipped: "Shipped", cancelled: "Cancelled" };
 const STATUS_CLASS: Record<PerfumeOrderStatus, string> = { open: "bg-[#14314F]", shipped: "bg-[#1F6B32]", cancelled: "bg-[#9B2C2C]" };
@@ -167,7 +167,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </div>
         <div className="flex flex-wrap gap-2">
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={locked || !o.lines.length} onClick={() => void buy()} data-testid="perfume-order-buy">{tr("perfume.orders.buy", "Buy (make purchase orders)")}</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={locked || o.status === "shipped"} onClick={() => void run(() => shipAllPerfumeOrder(id), "Everything shipped")} data-testid="perfume-order-ship-all">{tr("perfume.orders.ship_all", "Ship all")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={locked || o.status === "shipped"} onClick={() => void run(() => shipAllPerfumeOrder(id, o.location_code ?? undefined), "Everything shipped")} data-testid="perfume-order-ship-all">{tr("perfume.orders.ship_all", "Ship all")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => void file("xlsx")} data-testid="perfume-order-xlsx">{tr("perfume.orders.xlsx", "Excel")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => void file("pdf")} data-testid="perfume-order-pdf">{tr("perfume.orders.pdf", "PDF")}</Button>
           {o.status === "cancelled"
@@ -181,6 +181,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
+        <label>{tr("perfume.orders.ship_from", "Ships from")} <SitePicker value={o.location_code} onChange={(v) => void patch({ location_code: v })} label={tr("perfume.orders.ship_from", "Ships from")} testId="perfume-order-site" /></label>
         <label>{tr("perfume.orders.ship_by", "Ship by")} <DatePicker aria-label={tr("perfume.orders.ship_by", "Ship by")} value={o.ship_by ?? ""} onChange={(v) => void patch({ ship_by: v || null })} /></label>
         <select className={ctl} aria-label={tr("perfume.orders.currency", "Currency")} value={o.currency} onChange={(e) => void patch({ currency: e.target.value as "USD" | "MXN" })}>
           <option value="USD">{"USD"}</option><option value="MXN">{"MXN"}</option>

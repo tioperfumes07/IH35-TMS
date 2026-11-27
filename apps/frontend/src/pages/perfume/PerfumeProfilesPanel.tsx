@@ -17,8 +17,8 @@ import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
-  getPerfumeCompanyActivity, getPerfumeItemProfile, getPerfumeVendorProfile, listPerfumeContacts, listPerfumeVendors, searchPerfumeItems, setPerfumeVendorCompany,
-  type PerfumeItemProfile, type PerfumeItemVendorLine, type PerfumeOrderRow, type PerfumePoRow, type PerfumeQuoteRow, type PerfumeVendor, type PerfumeVendorProfile,
+  getPerfumeCompanyActivity, getPerfumeItemProfile, getPerfumeVendorProfile, listPerfumeContacts, listPerfumeVendors, perfumeItemLots, searchPerfumeItems, setPerfumeVendorCompany,
+  type PerfumeItemProfile, type PerfumeItemVendorLine, type PerfumeLot, type PerfumeOrderRow, type PerfumePoRow, type PerfumeQuoteRow, type PerfumeVendor, type PerfumeVendorProfile,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { Badge, ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
@@ -201,6 +201,7 @@ export function PerfumeItemProfilesPanel() {
 function ItemProfile({ id }: { id: string }) {
   const { open } = useOpenDoc();
   const prof = useQuery({ queryKey: ["perfume", "item-profile", id], queryFn: () => getPerfumeItemProfile(id) });
+  const lots = useQuery({ queryKey: ["perfume", "item-lots", id], queryFn: () => perfumeItemLots(id) });
   const merged = prof.data && "merged_into_id" in prof.data ? prof.data.merged_into_id : null;
   useEffect(() => { if (merged) open("items", merged); }, [merged, open]);
   if (prof.isError) return <ListErrorState title={tr("perfume.profiles.itemError", "Couldn't load the item")} status={0} message={(prof.error as Error)?.message} onRetry={() => void prof.refetch()} />;
@@ -238,6 +239,17 @@ function ItemProfile({ id }: { id: string }) {
           { key: "what", label: "What", render: (a) => (a.sku ? "Their code" : "Their words"), exportValue: (a) => (a.sku ? "Their code" : "Their words") },
           { key: "value", label: "Code / words", render: (a) => a.sku ?? a.text_key ?? DASH, exportValue: (a) => a.sku ?? a.text_key ?? "" },
           { key: "method", label: "From", render: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk"), exportValue: (a) => (a.method === "confirmed" ? "Confirmed by me" : "Linked by the desk") },
+        ]} />
+      <ParityTable<PerfumeLot> title={tr("perfume.profiles.lots", "Stock and lots (FIFO — each lot keeps its vendor and PO)")} rows={lots.data?.lots ?? []} rowKey={(l) => l.id}
+        storageKey="perfume-item-lots-v1" exportFilename="TIO item lots" exportExcel emptyText="No stock of this item yet."
+        columns={[
+          { key: "location_code", label: "Site", render: (l) => l.location_code },
+          { key: "lot_code", label: "Lot", render: (l) => l.lot_code ?? DASH, exportValue: (l) => l.lot_code ?? "" },
+          { key: "received_on", label: "Received", cellClass: "text-right tabular-nums", render: (l) => usDate(l.received_on) },
+          { key: "qty_left", label: "Left", kind: "number", cellClass: "text-right tabular-nums", render: (l) => `${l.qty_left} of ${l.qty_in}`, exportValue: (l) => l.qty_left },
+          { key: "unit_cost_cents", label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money(l.unit_cost_cents), exportValue: (l) => Number(l.unit_cost_cents) / 100 },
+          { key: "vendor", label: "Vendor", render: (l) => l.vendor ?? DASH, exportValue: (l) => l.vendor ?? "" },
+          { key: "po_number", label: "PO", render: (l) => (l.po_id && l.po_number ? <DocLink tab="purchases" id={l.po_id}>{l.po_number}</DocLink> : DASH), exportValue: (l) => l.po_number ?? "" },
         ]} />
       <QuotesTable rows={p.quotes} storageKey="perfume-item-quotes-v1" />
       <OrdersTable rows={p.orders} storageKey="perfume-item-orders-v1" />

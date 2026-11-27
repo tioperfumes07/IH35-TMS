@@ -12,6 +12,7 @@ import ExcelJS from "exceljs";
 import { bestCostOf, customerOf, esc, getQuote, money, quoteEvent, QuoteNotFound, usDate } from "./quotes.service.js";
 import { getRules } from "./desk.service.js";
 import { priceFromCost } from "./pricing.js";
+import { InvInvalid, stockIn, stockOut } from "./inventory.service.js";
 
 export const ORDER_STATUSES = ["open", "shipped", "cancelled"] as const;
 export type OrderStatus = typeof ORDER_STATUSES[number];
@@ -22,6 +23,8 @@ const cents = z.number().int().min(0).max(100_000_000_00);
 export const orderSchema = z.object({
   company_id: z.string().uuid().nullable().optional(),
   customer_name: text(300), customer_email: text(200), customer_phone: text(80), ship_to: text(1000),
+  /** The own site the goods ship from (inventory). */
+  location_code: z.string().min(1).max(40).nullable().optional(),
   order_date: date.optional(), ship_by: date.nullable().optional(),
   currency: z.enum(["USD", "MXN"]).optional(), terms: text(4000), notes: text(4000),
 });
@@ -46,7 +49,7 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_price_cents), 0)::bigint FRO
   (SELECT coalesce(sum(l.qty), 0)::int FROM perfume.sales_order_lines l WHERE l.order_id = o.id AND l.archived_at IS NULL) AS units,
   (SELECT coalesce(sum(l.qty_shipped), 0)::int FROM perfume.sales_order_lines l WHERE l.order_id = o.id AND l.archived_at IS NULL) AS units_shipped`;
 const HEADER = `o.id, o.number, o.quote_id, (SELECT q.number FROM perfume.quotes q WHERE q.id = o.quote_id) AS quote_number, o.company_id, o.customer_name,
-  o.customer_email, o.customer_phone, o.ship_to, o.order_date::text, o.ship_by::text, o.status, o.currency, o.terms, o.notes, o.created_at, o.updated_at,
+  o.customer_email, o.customer_phone, o.ship_to, o.order_date::text, o.ship_by::text, o.status, o.currency, o.terms, o.notes, o.created_at, o.updated_at, o.location_code,
   (SELECT count(*)::int FROM perfume.purchase_orders p WHERE p.sales_order_id = o.id AND p.archived_at IS NULL AND p.status <> 'cancelled') AS purchase_orders`;
 
 export type OrderLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number; qty_shipped: number;
@@ -87,10 +90,10 @@ export async function createOrder(c: pg.PoolClient, uid: string, x: z.infer<type
   const name = x.customer_name ?? cu?.name;
   if (!name) throw new OrderInvalid("Pick a customer or type its name.");
   const r = await c.query<{ id: string; number: string }>(
-    `INSERT INTO perfume.sales_orders (company_id, customer_name, customer_email, customer_phone, ship_to, order_date, ship_by, currency, terms, notes, created_by)
-     VALUES ($1,$2,$3,$4,$5,coalesce($6::date, current_date),$7,coalesce($8,'USD'),$9,$10,$11) RETURNING id, number`,
+    `INSERT INTO perfume.sales_orders (company_id, customer_name, customer_email, customer_phone, ship_to, order_date, ship_by, currency, terms, notes, created_by, location_code)
+     VALUES ($1,$2,$3,$4,$5,coalesce($6::date, current_date),$7,coalesce($8,'USD'),$9,$10,$11,$12) RETURNING id, number`,
     [x.company_id ?? null, name, x.customer_email ?? cu?.email ?? null, x.customer_phone ?? cu?.phone ?? null, x.ship_to, x.order_date ?? null, x.ship_by ?? null,
-     x.currency ?? null, x.terms, x.notes, uid]);
+     x.currency ?? null, x.terms, x.notes, uid, x.location_code ?? null]);
   await event(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, customer: name });
   return r.rows[0]!;
 }
@@ -129,9 +132,9 @@ export async function updateOrder(c: pg.PoolClient, uid: string, id: string, x: 
   const keep = <T>(v: T | undefined, old: T) => (v !== undefined ? v : old);
   await c.query(
     `UPDATE perfume.sales_orders SET customer_name = $2, customer_email = $3, customer_phone = $4, ship_to = $5, ship_by = $6, currency = $7, terms = $8, notes = $9,
-            updated_at = now() WHERE id = $1`,
+            location_code = $10, updated_at = now() WHERE id = $1`,
     [id, x.customer_name ?? b.customer_name, keep(x.customer_email, b.customer_email), keep(x.customer_phone, b.customer_phone), keep(x.ship_to, b.ship_to),
-     keep(x.ship_by, b.ship_by), x.currency ?? b.currency, keep(x.terms, b.terms), keep(x.notes, b.notes)]);
+     keep(x.ship_by, b.ship_by), x.currency ?? b.currency, keep(x.terms, b.terms), keep(x.notes, b.notes), keep(x.location_code, b.location_code)]);
   await event(c, id, uid, "edited", { fields: Object.keys(x).filter((k) => x[k as keyof typeof x] !== undefined) });
 }
 
@@ -192,28 +195,85 @@ export async function updateOrderLine(c: pg.PoolClient, uid: string, lineId: str
   const b = (await c.query(`SELECT order_id, line_no, qty, qty_shipped, unit_price_cents FROM perfume.sales_order_lines WHERE id = $1 AND archived_at IS NULL`, [lineId])).rows[0];
   if (!b) throw new OrderNotFound();
   await assertEditable(c, b.order_id);
-  const qty = x.qty ?? b.qty, shipped = x.qty_shipped ?? b.qty_shipped;
-  if (shipped > qty) throw new OrderInvalid("Shipped cannot be more than ordered.");
-  await c.query(`UPDATE perfume.sales_order_lines SET qty = $2, qty_shipped = $3, unit_price_cents = coalesce($4, unit_price_cents), updated_at = now() WHERE id = $1`,
-    [lineId, qty, shipped, x.unit_price_cents ?? null]);
-  if (x.qty_shipped !== undefined && x.qty_shipped !== b.qty_shipped) await event(c, b.order_id, uid, "shipped", { line_no: b.line_no, from: b.qty_shipped, to: x.qty_shipped });
+  const qty = x.qty ?? b.qty;
+  if (b.qty_shipped > qty || (x.qty_shipped ?? 0) > qty) throw new OrderInvalid("Shipped cannot be more than ordered.");
+  // Shipped pieces move stock: more = a shipment out of the order's site (FIFO), fewer = a customer return back in.
+  if (x.qty_shipped !== undefined && x.qty_shipped !== b.qty_shipped) {
+    if (x.qty_shipped > b.qty_shipped) await shipOrder(c, uid, b.order_id, { lines: [{ line_id: lineId, qty: x.qty_shipped - b.qty_shipped }] });
+    else await customerReturn(c, uid, lineId, b.qty_shipped - x.qty_shipped);
+  }
+  await c.query(`UPDATE perfume.sales_order_lines SET qty = $2, unit_price_cents = coalesce($3, unit_price_cents), updated_at = now() WHERE id = $1`,
+    [lineId, qty, x.unit_price_cents ?? null]);
   if ((x.qty !== undefined && x.qty !== b.qty) || (x.unit_price_cents !== undefined && x.unit_price_cents !== Number(b.unit_price_cents))) {
     await event(c, b.order_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_price_cents: Number(b.unit_price_cents) }, to: { qty: x.qty, unit_price_cents: x.unit_price_cents } });
   }
   await refreshShipped(c, uid, b.order_id);
 }
 
-/** Ship everything still open on the order in one step. */
-export async function shipAll(c: pg.PoolClient, uid: string, orderId: string) {
-  await assertEditable(c, orderId);
-  const open = (await c.query<{ id: string; line_no: number; qty: number; qty_shipped: number }>(
-    `SELECT id, line_no, qty, qty_shipped FROM perfume.sales_order_lines WHERE order_id = $1 AND archived_at IS NULL AND qty_shipped < qty ORDER BY line_no`, [orderId])).rows;
-  for (const l of open) {
-    await c.query(`UPDATE perfume.sales_order_lines SET qty_shipped = qty, updated_at = now() WHERE id = $1`, [l.id]);
-    await event(c, orderId, uid, "shipped", { line_no: l.line_no, from: l.qty_shipped, to: l.qty });
+export const shipSchema = z.object({
+  location_code: z.string().min(1).max(40).optional(),
+  lines: z.array(z.object({ line_id: z.string().uuid(), qty: z.number().int().min(1).max(1_000_000) })).max(2000).optional(),
+});
+/** Goods leave: each item line out of the site, oldest lots first; the cost of what left is kept in the history. No lines = all. */
+export async function shipOrder(c: pg.PoolClient, uid: string, orderId: string, x: z.infer<typeof shipSchema> = {}) {
+  const o = (await c.query<{ location_code: string | null; status: OrderStatus }>(
+    `SELECT location_code, status FROM perfume.sales_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [orderId])).rows[0];
+  if (!o) throw new OrderNotFound();
+  if (o.status === "cancelled") throw new OrderInvalid("The order is cancelled.");
+  const loc = x.location_code ?? o.location_code;
+  const lines = (await c.query<{ id: string; line_no: number; item_id: string | null; qty: number; qty_shipped: number }>(
+    `SELECT id, line_no, item_id, qty, qty_shipped FROM perfume.sales_order_lines WHERE order_id = $1 AND archived_at IS NULL ORDER BY line_no FOR UPDATE`, [orderId])).rows;
+  const want = x.lines ?? lines.filter((l) => l.qty_shipped < l.qty).map((l) => ({ line_id: l.id, qty: l.qty - l.qty_shipped }));
+  if (!want.length) throw new OrderInvalid("Nothing left to ship on this order.");
+  let cost = 0;
+  for (const w of want) {
+    const l = lines.find((r) => r.id === w.line_id);
+    if (!l) throw new OrderInvalid("That line is not on this order.");
+    if (l.qty_shipped + w.qty > l.qty) throw new OrderInvalid(`Line ${l.line_no}: only ${l.qty - l.qty_shipped} still to ship.`);
+    let lineCost = 0;
+    if (l.item_id) {
+      if (!loc) throw new OrderInvalid("Pick the site the order ships from.");
+      try {
+        const slices = await stockOut(c, uid, { kind: "shipment", item_id: l.item_id, location_code: loc, qty: w.qty, sales_order_id: orderId, so_line_id: l.id });
+        lineCost = slices.reduce((t, s) => t + s.qty * s.unit_cost_cents, 0);
+      } catch (e) { if (e instanceof InvInvalid) throw new OrderInvalid(e.message); throw e; }
+    }
+    await c.query(`UPDATE perfume.sales_order_lines SET qty_shipped = qty_shipped + $2, updated_at = now() WHERE id = $1`, [l.id, w.qty]);
+    await event(c, orderId, uid, "shipped", { line_no: l.line_no, from: l.qty_shipped, to: l.qty_shipped + w.qty, location: l.item_id ? loc : null, cost_cents: Math.round(lineCost) });
+    l.qty_shipped += w.qty; cost += lineCost;
   }
+  if (loc && loc !== o.location_code) await c.query(`UPDATE perfume.sales_orders SET location_code = $2, updated_at = now() WHERE id = $1`, [orderId, loc]);
   await refreshShipped(c, uid, orderId);
-  return { lines: open.length };
+  return { lines: want.length, cost_cents: Math.round(cost) };
+}
+
+/** A customer sends pieces back: into the order's site at the average cost they left at (a new lot, source 'return'). */
+export async function customerReturn(c: pg.PoolClient, uid: string, lineId: string, qty: number) {
+  const l = (await c.query<{ order_id: string; line_no: number; item_id: string | null; qty_shipped: number; location_code: string | null }>(
+    `SELECT l.order_id, l.line_no, l.item_id, l.qty_shipped, o.location_code FROM perfume.sales_order_lines l JOIN perfume.sales_orders o ON o.id = l.order_id
+      WHERE l.id = $1 AND l.archived_at IS NULL FOR UPDATE OF l`, [lineId])).rows[0];
+  if (!l) throw new OrderNotFound();
+  if (qty > l.qty_shipped) throw new OrderInvalid(`Only ${l.qty_shipped} were shipped on line ${l.line_no}.`);
+  if (l.item_id) {
+    const out = (await c.query<{ loc: string | null; units: number; cost: string | null }>(
+      `SELECT max(location_code) AS loc, coalesce(-sum(qty), 0)::int AS units, sum(-qty * unit_cost_cents)::text AS cost
+         FROM perfume.stock_moves WHERE so_line_id = $1 AND kind = 'shipment'`, [lineId])).rows[0]!;
+    const loc = out.loc ?? l.location_code;
+    if (!loc) throw new OrderInvalid("Pick the site the order ships from.");
+    const unit = out.units > 0 ? Number(out.cost) / out.units : 0;
+    try {
+      await stockIn(c, uid, { kind: "return", item_id: l.item_id, location_code: loc, qty, unit_cost_cents: unit, source: "return", sales_order_id: l.order_id, so_line_id: lineId, reason: "customer return" });
+    } catch (e) { if (e instanceof InvInvalid) throw new OrderInvalid(e.message); throw e; }
+  }
+  await c.query(`UPDATE perfume.sales_order_lines SET qty_shipped = qty_shipped - $2, updated_at = now() WHERE id = $1`, [lineId, qty]);
+  await event(c, l.order_id, uid, "shipped", { line_no: l.line_no, from: l.qty_shipped, to: l.qty_shipped - qty, returned: qty });
+  await refreshShipped(c, uid, l.order_id);
+}
+
+/** Ship everything still open on the order in one step. */
+export async function shipAll(c: pg.PoolClient, uid: string, orderId: string, location_code?: string) {
+  await assertEditable(c, orderId);
+  return shipOrder(c, uid, orderId, { location_code });
 }
 
 export async function removeOrderLine(c: pg.PoolClient, uid: string, lineId: string) {

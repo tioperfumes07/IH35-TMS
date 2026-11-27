@@ -27,6 +27,7 @@ import { PerfumeQuotesPanel } from "./PerfumeQuotesPanel";
 import { PerfumeOrdersPanel } from "./PerfumeOrdersPanel";
 import { PerfumePurchasesPanel } from "./PerfumePurchasesPanel";
 import { PerfumeItemProfilesPanel, PerfumeSupplierProfilesPanel } from "./PerfumeProfilesPanel";
+import { PerfumeCountsPanel, PerfumeMovesPanel, PerfumeSitesPanel, PerfumeStockPanel, PerfumeTransfersPanel } from "./PerfumeInventoryPanel";
 import { PerfumeCampaignPanel } from "./PerfumeCampaignPanel";
 import { PerfumeTradersPanel } from "./PerfumeTradersPanel";
 import { PerfumeLeadsExcelPanel } from "./PerfumeLeadsExcelPanel";
@@ -38,10 +39,10 @@ import { PerfumePhoneCards, useIsPhone } from "./PerfumePhoneCards";
 import { usePerfumeHeldXls } from "./usePerfumeHeldXls";
 import { perfumeModuleOf } from "./perfumeModules";
 
-type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "vendors" | "customers" | "excel" | "catalogs" | "campaign" | "traders" | "shows" | "quotes" | "orders" | "purchases" | "suppliers" | "items" | "review" | "rules";
+type Tab = PerfumeGridView | "lists" | "mail" | "contacts" | "vendors" | "customers" | "excel" | "catalogs" | "campaign" | "traders" | "shows" | "quotes" | "orders" | "purchases" | "suppliers" | "items" | "stock" | "moves" | "transfers" | "counts" | "sites" | "review" | "rules";
 const TABS: Array<[Tab, string]> = [
   ["buy", "Purchase · compare vendors"], ["trade", "Trading · sell to my vendors"], ["wholesale", "Wholesale · vs competition"], ["comp", "Competition · their margin"], ["analysis", "List analysis"], ["all", "All items"],
-  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "All leads"], ["vendors", "Vendors"], ["customers", "Customers"], ["excel", "Excel update"], ["catalogs", "Catalogs"], ["campaign", "Campaigns"], ["traders", "Traders"], ["shows", "Trade shows"], ["quotes", "Quotes"], ["orders", "Sales orders"], ["purchases", "Purchase orders"], ["suppliers", "Supplier profiles"], ["items", "Item profiles"], ["review", "Review"], ["rules", "Rules"],
+  ["lists", "Price lists & import"], ["mail", "Mail price lists"], ["contacts", "All leads"], ["vendors", "Vendors"], ["customers", "Customers"], ["excel", "Excel update"], ["catalogs", "Catalogs"], ["campaign", "Campaigns"], ["traders", "Traders"], ["shows", "Trade shows"], ["quotes", "Quotes"], ["orders", "Sales orders"], ["purchases", "Purchase orders"], ["suppliers", "Supplier profiles"], ["items", "Item profiles"], ["stock", "Stock on hand"], ["moves", "Stock moves"], ["transfers", "Transfers"], ["counts", "Counts"], ["sites", "Sites"], ["review", "Review"], ["rules", "Rules"],
 ];
 
 export const money = (c: unknown) => (c == null || c === "" ? "—" : `${Number(c) < 0 ? "−" : ""}$${(Math.abs(Number(c)) / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
@@ -146,7 +147,7 @@ export default function PerfumeDeskPage() {
           </span>
         </div>
       )}
-      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel key="all" /> : tab === "vendors" ? <PerfumeContactsPanel key="vendor" initialRole="vendor" /> : tab === "customers" ? <PerfumeContactsPanel key="customer" initialRole="customer" /> : tab === "excel" ? <PerfumeLeadsExcelPanel /> : tab === "catalogs" ? <PerfumeCatalogsPanel /> : tab === "campaign" ? <PerfumeCampaignPanel /> : tab === "traders" ? <PerfumeTradersPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "quotes" ? <PerfumeQuotesPanel /> : tab === "orders" ? <PerfumeOrdersPanel /> : tab === "purchases" ? <PerfumePurchasesPanel /> : tab === "suppliers" ? <PerfumeSupplierProfilesPanel /> : tab === "items" ? <PerfumeItemProfilesPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
+      {tab === "lists" ? <PerfumeListsPanel /> : tab === "mail" ? <PerfumeMailPanel /> : tab === "contacts" ? <PerfumeContactsPanel key="all" /> : tab === "vendors" ? <PerfumeContactsPanel key="vendor" initialRole="vendor" /> : tab === "customers" ? <PerfumeContactsPanel key="customer" initialRole="customer" /> : tab === "excel" ? <PerfumeLeadsExcelPanel /> : tab === "catalogs" ? <PerfumeCatalogsPanel /> : tab === "campaign" ? <PerfumeCampaignPanel /> : tab === "traders" ? <PerfumeTradersPanel /> : tab === "shows" ? <PerfumeTradeShowsPanel /> : tab === "quotes" ? <PerfumeQuotesPanel /> : tab === "orders" ? <PerfumeOrdersPanel /> : tab === "purchases" ? <PerfumePurchasesPanel /> : tab === "suppliers" ? <PerfumeSupplierProfilesPanel /> : tab === "items" ? <PerfumeItemProfilesPanel /> : tab === "stock" ? <PerfumeStockPanel /> : tab === "moves" ? <PerfumeMovesPanel /> : tab === "transfers" ? <PerfumeTransfersPanel /> : tab === "counts" ? <PerfumeCountsPanel /> : tab === "sites" ? <PerfumeSitesPanel /> : tab === "review" ? <ReviewDesk mine={mine} /> : tab === "rules" ? <RulesPanel /> : <GridPanel view={tab} mine={mine} />}
     </div>
   );
 }

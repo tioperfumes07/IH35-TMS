@@ -612,21 +612,21 @@ export async function downloadPerfumeFile(path: string, fallbackName: string) {
 export type PerfumeOrderStatus = "open" | "shipped" | "cancelled";
 export type PerfumeOrderRow = { id: string; number: string; quote_id: string | null; quote_number: string | null; company_id: string | null; customer_name: string;
   customer_email: string | null; customer_phone: string | null; ship_to: string | null; order_date: string; ship_by: string | null; status: PerfumeOrderStatus;
-  currency: "USD" | "MXN"; terms: string | null; notes: string | null; purchase_orders: number; total_cents: string | number; cost_cents: string | number;
+  currency: "USD" | "MXN"; terms: string | null; notes: string | null; purchase_orders: number; location_code: string | null; total_cents: string | number; cost_cents: string | number;
   costed_total_cents: string | number; lines: number; units: number; units_shipped: number };
 export type PerfumeOrderLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number; qty_shipped: number;
   unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null };
 export type PerfumeOrder = Omit<PerfumeOrderRow, "lines"> & { lines: PerfumeOrderLine[]; events: PerfumeQuoteEvent[] };
 export const listPerfumeOrders = () => apiRequest<{ orders: PerfumeOrderRow[] }>("/api/v1/perfume/orders");
 export const getPerfumeOrder = (id: string) => apiRequest<PerfumeOrder>(`/api/v1/perfume/orders/${id}`);
-export const createPerfumeOrder = (b: { company_id?: string | null; customer_name?: string | null; ship_by?: string | null }) =>
+export const createPerfumeOrder = (b: { company_id?: string | null; customer_name?: string | null; ship_by?: string | null; location_code?: string | null }) =>
   apiRequest<{ id: string; number: string }>("/api/v1/perfume/orders", { method: "POST", body: b });
 export const orderFromPerfumeQuote = (quoteId: string, b: { ship_by?: string | null } = {}) =>
   apiRequest<{ id: string; number: string; created: boolean }>(`/api/v1/perfume/quotes/${quoteId}/order`, { method: "POST", body: b });
-export const updatePerfumeOrder = (id: string, b: Partial<Pick<PerfumeOrderRow, "customer_name" | "customer_email" | "customer_phone" | "ship_to" | "ship_by" | "currency" | "terms" | "notes">>) =>
+export const updatePerfumeOrder = (id: string, b: Partial<Pick<PerfumeOrderRow, "customer_name" | "customer_email" | "customer_phone" | "ship_to" | "ship_by" | "currency" | "terms" | "notes" | "location_code">>) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/orders/${id}`, { method: "PATCH", body: b });
 export const setPerfumeOrderStatus = (id: string, status: "open" | "cancelled") => apiRequest<{ ok: true }>(`/api/v1/perfume/orders/${id}/status`, { method: "POST", body: { status } });
-export const shipAllPerfumeOrder = (id: string) => apiRequest<{ lines: number }>(`/api/v1/perfume/orders/${id}/ship-all`, { method: "POST", body: {} });
+export const shipAllPerfumeOrder = (id: string, location_code?: string) => apiRequest<{ lines: number; cost_cents: number }>(`/api/v1/perfume/orders/${id}/ship-all`, { method: "POST", body: location_code ? { location_code } : {} });
 export const archivePerfumeOrder = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/orders/${id}/archive`, { method: "POST", body: {} });
 export const addPerfumeOrderLine = (id: string, b: { item_id?: string | null; description?: string | null; qty: number; unit_price_cents?: number }) =>
   apiRequest<{ id: string; unit_price_cents: number }>(`/api/v1/perfume/orders/${id}/lines`, { method: "POST", body: b });
@@ -640,21 +640,21 @@ export const perfumeOrdersOfItem = (itemId: string) => apiRequest<{ orders: Perf
 export type PerfumePoStatus = "open" | "received" | "cancelled";
 export type PerfumePoRow = { id: string; number: string; vendor_id: string; vendor_name: string; vendor_contact: string | null; sales_order_id: string | null;
   sales_order_number: string | null; sales_order_customer: string | null; order_date: string; expected_by: string | null; status: PerfumePoStatus;
-  currency: "USD" | "MXN"; terms: string | null; notes: string | null; total_cents: string | number; lines: number; units: number; units_received: number };
+  currency: "USD" | "MXN"; terms: string | null; notes: string | null; location_code: string | null; total_cents: string | number; lines: number; units: number; units_received: number };
 export type PerfumePoLine = { id: string; line_no: number; sales_order_line_id: string | null; item_id: string | null; price_list_row_id: string | null;
   vendor_sku: string | null; description: string; upc: string | null; qty: number; qty_received: number; unit_cost_cents: number };
 export type PerfumePo = Omit<PerfumePoRow, "lines"> & { lines: PerfumePoLine[]; events: PerfumeQuoteEvent[] };
 export const listPerfumePurchaseOrders = () => apiRequest<{ purchase_orders: PerfumePoRow[] }>("/api/v1/perfume/purchase-orders");
 export const getPerfumePurchaseOrder = (id: string) => apiRequest<PerfumePo>(`/api/v1/perfume/purchase-orders/${id}`);
-export const createPerfumePurchaseOrder = (b: { vendor_id: string; expected_by?: string | null }) =>
+export const createPerfumePurchaseOrder = (b: { vendor_id: string; expected_by?: string | null; location_code?: string | null }) =>
   apiRequest<{ id: string; number: string }>("/api/v1/perfume/purchase-orders", { method: "POST", body: b });
 export const purchaseFromPerfumeOrder = (orderId: string, b: { expected_by?: string | null } = {}) =>
   apiRequest<{ purchase_orders: Array<{ id: string; number: string; vendor_id: string; lines: number }>; skipped: Array<{ line_no: number; description: string; reason: string }> }>(
     `/api/v1/perfume/orders/${orderId}/purchase`, { method: "POST", body: b });
-export const updatePerfumePurchaseOrder = (id: string, b: Partial<Pick<PerfumePoRow, "expected_by" | "currency" | "terms" | "notes" | "order_date">>) =>
+export const updatePerfumePurchaseOrder = (id: string, b: Partial<Pick<PerfumePoRow, "expected_by" | "currency" | "terms" | "notes" | "order_date" | "location_code">>) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/purchase-orders/${id}`, { method: "PATCH", body: b });
 export const setPerfumePurchaseOrderStatus = (id: string, status: "open" | "cancelled") => apiRequest<{ ok: true }>(`/api/v1/perfume/purchase-orders/${id}/status`, { method: "POST", body: { status } });
-export const receiveAllPerfumePurchaseOrder = (id: string) => apiRequest<{ lines: number }>(`/api/v1/perfume/purchase-orders/${id}/receive-all`, { method: "POST", body: {} });
+export const receiveAllPerfumePurchaseOrder = (id: string, location_code?: string) => apiRequest<{ lines: number; units: number }>(`/api/v1/perfume/purchase-orders/${id}/receive-all`, { method: "POST", body: location_code ? { location_code } : {} });
 export const archivePerfumePurchaseOrder = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/purchase-orders/${id}/archive`, { method: "POST", body: {} });
 export const addPerfumePurchaseLine = (id: string, b: { item_id?: string | null; description?: string | null; qty: number; unit_cost_cents?: number }) =>
   apiRequest<{ id: string; unit_cost_cents: number }>(`/api/v1/perfume/purchase-orders/${id}/lines`, { method: "POST", body: b });
@@ -695,3 +695,58 @@ export const perfumeHistoryOf = (kind: "trades" | "campaigns" | "segments" | "ca
 export type PerfumeContactTrade = { id: string; item: string; brand: string | null; stage: PerfumeTradeStage; buy_cents: number | null; sell_cents: number | null;
   qty: number | null; updated_at: string; side: "offered by them" | "offered to them"; buyer_status: string | null; offer_cents: number | null };
 export const perfumeContactTrades = (id: string) => apiRequest<{ trades: PerfumeContactTrade[] }>(`/api/v1/perfume/contacts/${encodeURIComponent(id)}/trades`);
+
+/* ------------------------------------------------------------------ Inventory (ScentsX stock ledger, owner 2026-11-26 20:21 CT) */
+export type PerfumeSite = { code: string; name: string; kind: "warehouse" | "store" | "transit" | "consignment" | null; own: boolean; active: boolean; address: string | null;
+  sort_order: number; units: number; items: number; fifo_value_cents: string | number };
+export type PerfumeStockRow = { item_id: string; display_name: string; internal_code: string | null; location_code: string; location_name: string; qty: number;
+  avg_cost_cents: number; fifo_value_cents: number; oldest_lot: string | null; min_qty: number | null; max_qty: number | null };
+export type PerfumeMove = { id: string; moved_at: string; kind: string; item_id: string; display_name: string; location_code: string; qty: number; unit_cost_cents: number;
+  qty_after: number; avg_cost_after_cents: number; lot_id: string | null; lot_code: string | null; reason: string | null; journal_entry_id: string | null;
+  purchase_order_id: string | null; po_number: string | null; sales_order_id: string | null; so_number: string | null; transfer_id: string | null; transfer_number: string | null;
+  count_id: string | null; count_number: string | null; by_email: string | null };
+export type PerfumeLot = { id: string; location_code: string; lot_code: string | null; source: string; received_on: string; qty_in: number; qty_left: number; unit_cost_cents: number;
+  vendor: string | null; po_line_id: string | null; po_number: string | null; po_id: string | null };
+export type PerfumeTransferRow = { id: string; number: string; from_code: string; to_code: string; status: "draft" | "shipped" | "received" | "cancelled"; notes: string | null;
+  created_at: string; shipped_at: string | null; received_at: string | null; lines: number; units: number };
+export type PerfumeTransfer = PerfumeTransferRow & { lines: Array<{ id: string; item_id: string; display_name: string; qty: number; on_hand_from: number }>;
+  moves: Array<{ kind: string; location_code: string; qty: number; unit_cost_cents: number; moved_at: string; display_name: string }> };
+export type PerfumeCountRow = { id: string; number: string; location_code: string; status: "draft" | "submitted" | "posted" | "cancelled"; diff_value_cents: number | null;
+  created_at: string; submitted_at: string | null; approved_at: string | null; submitted_by_email: string | null; approved_by_email: string | null; lines: number };
+export type PerfumeCount = Omit<PerfumeCountRow, "lines"> & { lines: Array<{ id: string; item_id: string; display_name: string; expected_qty: number; counted_qty: number;
+  on_hand_now: number; unit_cost_cents: number }>; needs_second_person: boolean; notes: string | null };
+export type PerfumeOpening = { lists: string[]; lines: number; units: number; value_cents: number; skipped_no_cost: number; skipped_unknown_site: number;
+  by_site: Array<{ code: string; units: number; value: number; lines: number }>; already_applied: boolean };
+const qs = (o: Record<string, string | number | boolean | null | undefined>) => {
+  const p = Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "" && v !== false).map(([k, v]) => `${k}=${encodeURIComponent(v === true ? "1" : String(v))}`);
+  return p.length ? `?${p.join("&")}` : "";
+};
+export const listPerfumeSites = () => apiRequest<{ sites: PerfumeSite[] }>("/api/v1/perfume/inventory/sites");
+export const updatePerfumeSite = (code: string, b: { name?: string; kind?: "warehouse" | "store" | "consignment" | null; own?: boolean; active?: boolean; address?: string | null }) =>
+  apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/sites/${encodeURIComponent(code)}`, { method: "PATCH", body: b });
+export const listPerfumeStock = (f: { location?: string; q?: string; item_id?: string; low?: boolean } = {}) =>
+  apiRequest<{ stock: PerfumeStockRow[] }>(`/api/v1/perfume/inventory/stock${qs(f)}`);
+export const perfumeStockExportPath = (f: { location?: string; q?: string; low?: boolean } = {}) => `/api/v1/perfume/inventory/stock/export.xlsx${qs(f)}`;
+export const setPerfumeReorder = (b: { item_id: string; location_code: string; min_qty: number | null; max_qty: number | null }) =>
+  apiRequest<{ ok: true }>("/api/v1/perfume/inventory/reorder", { method: "PUT", body: b });
+export const perfumeItemLots = (itemId: string) => apiRequest<{ lots: PerfumeLot[]; stock: PerfumeStockRow[] }>(`/api/v1/perfume/items/${itemId}/lots`);
+export const listPerfumeMoves = (f: { item_id?: string; location?: string; kind?: string; purchase_order_id?: string; sales_order_id?: string; limit?: number } = {}) =>
+  apiRequest<{ moves: PerfumeMove[] }>(`/api/v1/perfume/inventory/moves${qs(f)}`);
+export const listPerfumeTransfers = () => apiRequest<{ transfers: PerfumeTransferRow[] }>("/api/v1/perfume/inventory/transfers");
+export const getPerfumeTransfer = (id: string) => apiRequest<PerfumeTransfer>(`/api/v1/perfume/inventory/transfers/${id}`);
+export const createPerfumeTransfer = (b: { from_code: string; to_code: string; notes?: string | null }) =>
+  apiRequest<{ id: string; number: string }>("/api/v1/perfume/inventory/transfers", { method: "POST", body: b });
+export const addPerfumeTransferLine = (id: string, b: { item_id: string; qty: number }) => apiRequest<{ id: string }>(`/api/v1/perfume/inventory/transfers/${id}/lines`, { method: "POST", body: b });
+export const removePerfumeTransferLine = (lineId: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/transfer-lines/${lineId}/archive`, { method: "POST", body: {} });
+export const perfumeTransferAction = (id: string, action: "ship" | "receive" | "cancel") => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/transfers/${id}/${action}`, { method: "POST", body: {} });
+export const listPerfumeCounts = () => apiRequest<{ counts: PerfumeCountRow[] }>("/api/v1/perfume/inventory/counts");
+export const getPerfumeCount = (id: string) => apiRequest<PerfumeCount>(`/api/v1/perfume/inventory/counts/${id}`);
+export const createPerfumeCount = (b: { location_code: string; all_items?: boolean; notes?: string | null }) =>
+  apiRequest<{ id: string; number: string }>("/api/v1/perfume/inventory/counts", { method: "POST", body: b });
+export const setPerfumeCountLine = (id: string, b: { item_id: string; counted_qty: number }) => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/counts/${id}/lines`, { method: "PUT", body: b });
+export const submitPerfumeCount = (id: string) => apiRequest<{ diff_value_cents: number; needs_second_person: boolean }>(`/api/v1/perfume/inventory/counts/${id}/submit`, { method: "POST", body: {} });
+export const postPerfumeCount = (id: string) => apiRequest<{ lines_moved: number }>(`/api/v1/perfume/inventory/counts/${id}/post`, { method: "POST", body: {} });
+export const cancelPerfumeCount = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/inventory/counts/${id}/cancel`, { method: "POST", body: {} });
+export const getPerfumeOpening = () => apiRequest<PerfumeOpening>("/api/v1/perfume/inventory/opening");
+export const applyPerfumeOpening = (onDate: string) =>
+  apiRequest<{ lines: number; units: number; value_cents: number }>("/api/v1/perfume/inventory/opening", { method: "POST", body: { on_date: onDate, confirm: true } });
