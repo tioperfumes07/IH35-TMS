@@ -39,7 +39,8 @@ beforeEach(() => {
     if (path === "/api/v1/perfume/purchase-orders/p1") return po;
     if (path === "/api/v1/perfume/purchase-orders/p1/receive-all") return { lines: 1 };
     if (path === "/api/v1/scentsx/purchase-orders/p1/billable") return { lines: [{ po_line_id: "pl1", line_no: 1, item_id: "i1", description: "ZZO NIGHT EDP 3.4OZ M", ordered: 10,
-      received: 10, received_value_cents: 10000, billed: 4, billed_received_value_cents: 4000, to_bill: 6, unit_cost_cents: 1000 }], bills: [] };
+      received: 10, received_value_cents: 10000, billed: 4, billed_received_value_cents: 4000, billed_value_cents: 4000, credited: 0, credited_received_value_cents: 0,
+      credited_value_cents: 0, to_bill: 6, to_credit: 0, unit_cost_cents: 1000 }], bills: [] };
     if (path === "/api/v1/scentsx/accounts") return { accounts: [{ id: "a5000", account_number: "5000", account_name: "Cost of Goods Sold", account_type: "cogs", account_subtype: null, roles: [], debit_cents: "0", credit_cents: "0" }] };
     if (path === "/api/v1/scentsx/purchase-orders/p1/bill") return { bill_id: "b1", display_id: "BILL-2026-00001", amount_cents: 7850, journal_entry_id: "j1", variance_cents: -600,
       variance_journal_entry_id: "j2", units: 6 };
