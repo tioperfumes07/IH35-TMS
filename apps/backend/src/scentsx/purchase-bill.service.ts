@@ -18,6 +18,7 @@
 import type pg from "pg";
 import { z } from "zod";
 import { createBillInClientTx, postBillDocumentInClientTx } from "../accounting/bills.service.js";
+import { createVendorCreditInClientTx } from "../accounting/vendor-credits.service.js";
 import { createJournalEntryOnClient } from "../accounting/journal-entries.service.js";
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { scopeToScentsx, ScentsxLinkInvalid, ScentsxLinkNotFound } from "./links.service.js";
@@ -25,10 +26,12 @@ import { assertNotSanctionsBlocked } from "./sanctions.service.js";
 
 type Q = pg.PoolClient;
 const LIVE_BILL = `b.status NOT IN ('void', 'voided') AND b.revoked_at IS NULL`;
+const LIVE_CREDIT = `vc.status <> 'voided' AND vc.voided_at IS NULL`;
 
 export type BillablePoLine = {
   po_line_id: string; line_no: number; item_id: string | null; description: string; ordered: number; received: number;
-  received_value_cents: number; billed: number; billed_received_value_cents: number; to_bill: number; unit_cost_cents: number;
+  received_value_cents: number; billed: number; billed_received_value_cents: number; billed_value_cents: number;
+  credited: number; credited_received_value_cents: number; credited_value_cents: number; to_bill: number; to_credit: number; unit_cost_cents: number;
 };
 
 /** Every line of the PO: units received (net of vendor returns) and their GRNI value, units already on a live bill, what is left. */
@@ -36,7 +39,8 @@ export async function billablePoLines(c: Q, poId: string): Promise<BillablePoLin
   await scopeToScentsx(c);
   if (!(await c.query(`SELECT 1 FROM perfume.purchase_orders WHERE id = $1::uuid AND archived_at IS NULL`, [poId])).rowCount) throw new ScentsxLinkNotFound();
   const r = await c.query<{ po_line_id: string; line_no: number; item_id: string | null; description: string; ordered: number; received: number;
-    moved_qty: string | null; moved_value: string | null; billed: number; billed_value: string; unit_cost_cents: string }>(
+    moved_qty: string | null; moved_value: string | null; billed: number; billed_value: string; billed_vendor_value: string;
+    credited: number; credited_value: string; credited_vendor_value: string; unit_cost_cents: string }>(
     `SELECT l.id::text AS po_line_id, l.line_no, l.item_id::text,
             coalesce(nullif(l.description, ''), i.display_name, 'Line ' || l.line_no) AS description,
             l.qty AS ordered, l.qty_received AS received,
@@ -46,6 +50,14 @@ export async function billablePoLines(c: Q, poId: string): Promise<BillablePoLin
                        WHERE x.po_line_id = l.id AND ${LIVE_BILL}), 0)::int AS billed,
             coalesce((SELECT sum(x.received_value_cents) FROM scentsx.purchase_order_bill_lines x JOIN accounting.bills b ON b.id = x.bill_id
                        WHERE x.po_line_id = l.id AND ${LIVE_BILL}), 0)::text AS billed_value,
+            coalesce((SELECT sum(x.billed_value_cents) FROM scentsx.purchase_order_bill_lines x JOIN accounting.bills b ON b.id = x.bill_id
+                       WHERE x.po_line_id = l.id AND ${LIVE_BILL}), 0)::text AS billed_vendor_value,
+            coalesce((SELECT sum(y.qty) FROM scentsx.purchase_order_vendor_credit_lines y JOIN accounting.vendor_credits vc ON vc.id = y.vendor_credit_id
+                       WHERE y.po_line_id = l.id AND ${LIVE_CREDIT}), 0)::int AS credited,
+            coalesce((SELECT sum(y.received_value_cents) FROM scentsx.purchase_order_vendor_credit_lines y JOIN accounting.vendor_credits vc ON vc.id = y.vendor_credit_id
+                       WHERE y.po_line_id = l.id AND ${LIVE_CREDIT}), 0)::text AS credited_value,
+            coalesce((SELECT sum(y.credited_value_cents) FROM scentsx.purchase_order_vendor_credit_lines y JOIN accounting.vendor_credits vc ON vc.id = y.vendor_credit_id
+                       WHERE y.po_line_id = l.id AND ${LIVE_CREDIT}), 0)::text AS credited_vendor_value,
             l.unit_cost_cents::text
        FROM perfume.purchase_order_lines l LEFT JOIN perfume.items i ON i.id = l.item_id
       WHERE l.po_id = $1::uuid AND l.archived_at IS NULL
@@ -58,10 +70,14 @@ export async function billablePoLines(c: Q, poId: string): Promise<BillablePoLin
     const stocked = x.item_id != null;
     const received = stocked ? Number(x.moved_qty ?? 0) : x.received;
     const value = stocked ? Math.round(Number(x.moved_value ?? 0)) : received * Number(x.unit_cost_cents);
+    // Units still owed to TIO by the vendor = billed units that came back and were not credited yet; units still to bill = received
+    // units beyond what the vendor billed net of its credits.
+    const netBilled = x.billed - x.credited;
     return {
       po_line_id: x.po_line_id, line_no: x.line_no, item_id: x.item_id, description: x.description, ordered: x.ordered, received,
-      received_value_cents: value, billed: x.billed, billed_received_value_cents: Number(x.billed_value), to_bill: Math.max(0, received - x.billed),
-      unit_cost_cents: Number(x.unit_cost_cents),
+      received_value_cents: value, billed: x.billed, billed_received_value_cents: Number(x.billed_value), billed_value_cents: Number(x.billed_vendor_value),
+      credited: x.credited, credited_received_value_cents: Number(x.credited_value), credited_value_cents: Number(x.credited_vendor_value),
+      to_bill: Math.max(0, received - netBilled), to_credit: Math.max(0, netBilled - received), unit_cost_cents: Number(x.unit_cost_cents),
     };
   });
 }
@@ -130,7 +146,7 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     if (!l) throw new ScentsxLinkInvalid(`that line is not on ${po.number}`);
     if (w.qty > l.to_bill) throw new ScentsxLinkInvalid(`${po.number} line ${l.line_no}: ${l.to_bill} received and not billed yet — ${w.qty} asked`);
     // GRNI held for these units: all that is left when the line is billed out, else the line's average received cost.
-    const leftValue = l.received_value_cents - l.billed_received_value_cents;
+    const leftValue = l.received_value_cents - (l.billed_received_value_cents - l.credited_received_value_cents);
     const received = w.qty === l.to_bill ? leftValue : Math.round((w.qty * l.received_value_cents) / Math.max(1, l.received));
     const billed = w.unit_price_cents === undefined ? received : w.qty * w.unit_price_cents;
     if (billed <= 0) throw new ScentsxLinkInvalid(`${po.number} line ${l.line_no}: a bill line must be above $0`);
@@ -195,4 +211,68 @@ export async function purchaseOrderBills(c: Q, poId: string) {
        FROM accounting.bills b
       WHERE b.id IN (SELECT DISTINCT x.bill_id FROM scentsx.purchase_order_bill_lines x WHERE x.purchase_order_id = $1::uuid)
       ORDER BY b.created_at DESC, b.display_id DESC`, [poId])).rows;
+}
+
+export const vendorReturnCreditSchema = z.object({
+  credit_date: dateStr,
+  notes: z.string().trim().max(500).nullable().optional(),
+  lines: z.array(z.object({ po_line_id: z.string().uuid(), qty: z.number().int().min(1).max(10_000_000) })).min(1).max(2000),
+});
+
+/**
+ * Billed units sent back to the vendor → a ScentsX vendor credit through the ONE vendor-credit writer (Dr A/P / Cr GRNI) at the
+ * vendor's billed price for those units; the difference against their received cost moves between GRNI and COGS through the shared
+ * journal-entry writer, so GRNI nets to zero for the returned units. One transaction. Applied to an open bill by the existing route.
+ */
+export async function creditVendorReturn(c: Q, uid: string, poId: string, x: z.infer<typeof vendorReturnCreditSchema>) {
+  const co = await scopeToScentsx(c);
+  const po = (await c.query<{ number: string; vendor_id: string; vendor_name: string }>(
+    `SELECT p.number, p.vendor_id::text, v.name AS vendor_name FROM perfume.purchase_orders p JOIN perfume.vendors v ON v.id = p.vendor_id
+      WHERE p.id = $1::uuid AND p.archived_at IS NULL FOR UPDATE OF p`, [poId])).rows[0];
+  if (!po) throw new ScentsxLinkNotFound();
+  const vendorId = (await c.query<{ vendor_id: string }>(
+    `SELECT vendor_id::text FROM scentsx.vendor_links WHERE perfume_vendor_id = $1::uuid AND voided_at IS NULL LIMIT 1`, [po.vendor_id])).rows[0]?.vendor_id;
+  if (!vendorId) throw new ScentsxLinkInvalid(`${po.vendor_name} is not a ScentsX vendor yet — use "Make ScentsX vendor" on its profile`);
+  const lines = await billablePoLines(c, poId);
+  const grni = await resolveRoleAccount(c as never, co, "goods_received_not_billed");
+  const cogs = await resolveRoleAccount(c as never, co, "cogs_goods");
+  const rows: { l: BillablePoLine; qty: number; received: number; credit: number }[] = [];
+  for (const w of x.lines) {
+    const l = lines.find((o) => o.po_line_id === w.po_line_id);
+    if (!l) throw new ScentsxLinkInvalid(`that line is not on ${po.number}`);
+    if (rows.some((r) => r.l.po_line_id === l.po_line_id)) throw new ScentsxLinkInvalid("a PO line is on this credit twice");
+    if (w.qty > l.to_credit) throw new ScentsxLinkInvalid(`${po.number} line ${l.line_no}: ${l.to_credit} billed and returned and not credited yet — ${w.qty} asked`);
+    const netUnits = Math.max(1, l.billed - l.credited);
+    const received = Math.round((w.qty * (l.billed_received_value_cents - l.credited_received_value_cents)) / netUnits);
+    const credit = Math.round((w.qty * (l.billed_value_cents - l.credited_value_cents)) / netUnits);
+    rows.push({ l, qty: w.qty, received, credit });
+  }
+  const total = rows.reduce((s, r) => s + r.credit, 0);
+  if (total <= 0) throw new ScentsxLinkInvalid("nothing to credit");
+  const vc = await createVendorCreditInClientTx(c, {
+    operatingCompanyId: co, vendorId, issueDate: x.credit_date, amountCents: total, accountId: grni, userId: uid,
+    notes: (x.notes?.trim() || `TIO Perfumes ${po.number} · goods returned to ${po.vendor_name}`).slice(0, 500),
+  });
+  // GRNI got the credit value; the returned units carried `received` there. received − credit > 0 → Dr COGS / Cr GRNI, < 0 → Dr GRNI / Cr COGS.
+  const diff = rows.reduce((s, r) => s + r.received - r.credit, 0);
+  let varianceJe: string | null = null;
+  if (diff !== 0) {
+    const amt = Math.abs(diff);
+    const desc = `${po.number} returned-goods price difference · vendor credit ${vc.display_id}`;
+    const je = await createJournalEntryOnClient(c as never, {
+      operating_company_id: co, entry_date: x.credit_date, memo: desc, source: "auto",
+      source_transaction_type: "scentsx_purchase_price_variance", source_transaction_id: vc.id,
+      postings: diff > 0
+        ? [{ account_id: cogs, debit_or_credit: "debit", amount_cents: amt, description: desc }, { account_id: grni, debit_or_credit: "credit", amount_cents: amt, description: desc }]
+        : [{ account_id: grni, debit_or_credit: "debit", amount_cents: amt, description: desc }, { account_id: cogs, debit_or_credit: "credit", amount_cents: amt, description: desc }],
+    } as never, { userId: uid, role: "system" });
+    varianceJe = String((je as { id: string }).id);
+  }
+  for (const r of rows) {
+    await c.query(
+      `INSERT INTO scentsx.purchase_order_vendor_credit_lines (operating_company_id, po_line_id, purchase_order_id, vendor_credit_id, qty, received_value_cents, credited_value_cents, created_by)
+       VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5, $6, $7, $8::uuid)`, [co, r.l.po_line_id, poId, vc.id, r.qty, r.received, r.credit, uid]);
+  }
+  return { vendor_credit_id: vc.id, display_id: vc.display_id, amount_cents: total, journal_entry_id: vc.journal_entry_id, variance_cents: diff, variance_journal_entry_id: varianceJe,
+    units: rows.reduce((s, r) => s + r.qty, 0) };
 }

@@ -14,7 +14,7 @@ import { loadSanctionsList, screenParty } from "./sanctions.service.js";
 import { fixtureFetcher } from "./__fixtures__/ofac-fixture.js";
 import { receivePurchase, returnToVendor } from "../perfume/purchases.service.js";
 import { postPendingStockMoves } from "./stock-move-poster.service.js";
-import { billablePoLines, billPurchaseOrder, purchaseOrderBills } from "./purchase-bill.service.js";
+import { billablePoLines, billPurchaseOrder, creditVendorReturn, purchaseOrderBills } from "./purchase-bill.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 describeIntegration("ScentsX purchase bills (real Postgres, rolled back)", () => {
@@ -103,6 +103,22 @@ describeIntegration("ScentsX purchase bills (real Postgres, rolled back)", () =>
     expect(await net("2050", all)).toBe(0);
     expect(await net("2000", all)).toBe(-(10850 + 4500));
     expect((await purchaseOrderBills(db as never, po.id)).map((b) => b.units)).toEqual([3, 6]);
+
+    // 2 of the billed units go back to the vendor → 2 owed as credit; a credit at the vendor's billed price ($16.00 for the first-bill units
+    // averaged with the $15.00 units of bill 2 → $15.25 avg … the credit is the billed value of the net billed units pro rata).
+    await returnToVendor(db as never, u, line, 2);
+    await postPendingStockMoves(db, { userId: u, role: "system" });
+    const l3 = (await billablePoLines(db as never, po.id))[0]!;
+    expect(l3).toMatchObject({ received: 7, billed: 9, to_bill: 0, to_credit: 2 });
+    await expect(creditVendorReturn(db as never, u, po.id, { credit_date: "2026-11-27", lines: [{ po_line_id: line, qty: 3 }] })).rejects.toThrow(/2 billed and returned/);
+    const vc = await creditVendorReturn(db as never, u, po.id, { credit_date: "2026-11-27", lines: [{ po_line_id: line, qty: 2 }] });
+    // billed value of the 9 units = 9600 + 4500 = 14100 → 2 units = 3133; received value of the 9 = 9000 + 4500 = 13500 → 3000.
+    expect(vc).toMatchObject({ amount_cents: 3133, variance_cents: 3000 - 3133, units: 2 });
+    expect((await billablePoLines(db as never, po.id))[0]).toMatchObject({ credited: 2, to_credit: 0, to_bill: 0 });
+    const ret2 = (await db.query<{ id: string }>(`SELECT id::text FROM perfume.stock_moves WHERE po_line_id = $1::uuid AND kind = 'return'`, [line])).rows.map((r) => r.id);
+    const all2 = [...new Set([...all, ...ret2, vc.vendor_credit_id])];
+    expect(await net("2050", all2)).toBe(0); // GRNI clean again
+    expect(await net("2000", all2)).toBe(-(10850 + 4500 - 3133)); // A/P reduced by the credit
 
     // Same vendor invoice number again → refused by the bill writer's duplicate control.
     await db.query(`INSERT INTO perfume.purchase_order_lines (po_id, line_no, item_id, description, qty, qty_received, unit_cost_cents) VALUES ($1::uuid, 2, NULL, 'Handling', 1, 1, 700)`, [po.id]);

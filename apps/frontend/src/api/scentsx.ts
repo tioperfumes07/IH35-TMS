@@ -211,7 +211,8 @@ export const createScentsxReturn = (b: { invoice_id: string; return_date?: strin
 
 /** Purchase bills (migration 202617120100): a received perfume PO billed through the one bill writer + poster (GRNI -> A/P). */
 export type ScentsxBillablePoLine = { po_line_id: string; line_no: number; item_id: string | null; description: string; ordered: number; received: number;
-  received_value_cents: number; billed: number; billed_received_value_cents: number; to_bill: number; unit_cost_cents: number };
+  received_value_cents: number; billed: number; billed_received_value_cents: number; billed_value_cents: number; credited: number; credited_received_value_cents: number;
+  credited_value_cents: number; to_bill: number; to_credit: number; unit_cost_cents: number };
 export type ScentsxPoBill = { id: string; display_id: string | null; bill_number: string | null; bill_date: string; due_date: string | null; status: string;
   amount_cents: number; voided: boolean; units: number | null };
 export const getScentsxPoBillable = (poId: string) =>
@@ -253,3 +254,5 @@ export const getScentsxPayablesAging = (asOf: string) =>
   apiRequest<{ as_of: string; operating_company_id: string; totals: ScentsxApBuckets; vendors: ScentsxApAgingRow[] }>(`/api/v1/scentsx/payables/aging?as_of=${encodeURIComponent(asOf)}`);
 export const getScentsxVendorAccount = (vendorId: string, asOf: string) =>
   apiRequest<ScentsxVendorAccount>(`/api/v1/scentsx/payables/vendors/${encodeURIComponent(vendorId)}?as_of=${encodeURIComponent(asOf)}`);
+export const creditScentsxVendorReturn = (poId: string, b: { credit_date: string; notes?: string | null; lines: Array<{ po_line_id: string; qty: number }> }) =>
+  apiRequest<{ vendor_credit_id: string; display_id: string; amount_cents: number; variance_cents: number; units: number }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/vendor-credit`, { method: "POST", body: b });
