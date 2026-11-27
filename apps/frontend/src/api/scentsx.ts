@@ -193,3 +193,18 @@ export const getScentsxAging = (asOf: string | undefined, d: ScentsxAgingDays) =
   apiRequest<{ as_of: string; days: ScentsxAgingDays; totals: ScentsxBuckets; customers: ScentsxAgingRow[] }>(`/api/v1/scentsx/receivables/aging?${agingQs(asOf, d)}`);
 export const getScentsxCustomerAccount = (customerId: string, asOf: string | undefined, d: ScentsxAgingDays) =>
   apiRequest<ScentsxCustomerAccount>(`/api/v1/scentsx/receivables/customers/${encodeURIComponent(customerId)}?${agingQs(asOf, d)}`);
+
+/* ---- Sales returns (migration 202617080100 — CONTROL Returns) ---- */
+export type ScentsxReturnReason = "damaged" | "wrong_item" | "not_ordered" | "overshipped" | "customer_changed_mind" | "billing_error" | "other";
+export type ScentsxReturnable = {
+  invoice: { id: string; number: string | null; status: string; customer_id: string; customer: string | null; issue_date: string; total_cents: number };
+  lines: Array<{ so_line_id: string; line_no: number; item_id: string | null; description: string; unit_price_cents: number; billed: number; returned: number; can_return: number }>;
+  returns: Array<{ id: string; return_no: string; return_date: string; reason: string; merchandise_cents: number; tax_cents: number; credit_memo_ids: string[] }>;
+};
+export type ScentsxReturnRow = { id: string; return_no: string; return_date: string; reason: string; merchandise_cents: number; tax_cents: number; invoice_id: string; invoice_no: string | null;
+  customer_id: string; customer: string | null; units: number; restocked: number; credit_memo_ids: string[] };
+export const getScentsxReturnable = (invoiceId: string) => apiRequest<ScentsxReturnable>(`/api/v1/scentsx/invoices/${encodeURIComponent(invoiceId)}/returnable`);
+export const listScentsxReturns = () => apiRequest<{ returns: ScentsxReturnRow[] }>("/api/v1/scentsx/returns");
+export const createScentsxReturn = (b: { invoice_id: string; return_date?: string; reason: ScentsxReturnReason; notes?: string | null;
+  lines: Array<{ so_line_id: string; qty: number; restock: boolean; location_code?: string | null }> }) =>
+  apiRequest<{ id: string; return_no: string; merchandise_cents: number; tax_cents: number; credit_memo_ids: string[] }>("/api/v1/scentsx/returns", { method: "POST", body: b });

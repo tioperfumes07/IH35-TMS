@@ -4,16 +4,16 @@ import { entityIdFilterSchema, entityIdFilterValues } from "../_helpers/entity-f
 import { appendCrudAudit } from "../audit/crud-audit.js";
 import { companyQuerySchema, currentAuthUser, validationError, withCompanyScope } from "./shared.js";
 import { companyBusinessDate } from "../lib/company-business-date.js";
-import { DuplicateDocumentNumberError, nextCreditMemoDisplayId, resolveCreditMemoDisplayId } from "./display-id.js";
+import { DuplicateDocumentNumberError, nextCreditMemoDisplayId } from "./display-id.js";
 import { duplicateDocumentNumberBody, suggestFromLastSaved } from "../lib/qbo-custom-document-number.js";
-import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { PostingEngineError, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import {
   reinstateDocumentThenVoidReversal,
   ReinstateDocumentError,
 } from "./reinstate-document.service.js";
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
 import { applyCreditMemoToInvoicesInClientTx } from "./credit-memo-apply.service.js";
-import { creditMemoTargetInvoiceRefusal, recordFactoredInvoiceCreditMemoLink } from "./credit-memo-from-invoice.service.js";
+import { createBodySchema, createCreditMemoInClientTx } from "./credit-memo-create.service.js";
 
 // ACCT-F5606 — AR credit memo CRUD + apply-to-invoice + void, mirroring vendor-credits.routes.ts's
 // proven AP shape (CUSTVEND-PAR-1) column-for-column and check-for-check. Closes LV-CREDITMEMO-NOPATH's
@@ -25,44 +25,6 @@ import { creditMemoTargetInvoiceRefusal, recordFactoredInvoiceCreditMemoLink } f
 // it through the engine in the same transaction. Applying it to invoices moves the subledger only.
 
 const idParamSchema = z.object({ id: z.string().uuid() });
-
-const CREDIT_MEMO_REASONS = [
-  "damage",
-  "shortage",
-  "rate_dispute",
-  "duplicate_billing",
-  "detention_dispute",
-  "late_delivery",
-  "missing_paperwork",
-  "lumper_receipt_missing",
-  "detention_denied",
-  "factoring_dilution",
-  "unknown_pending_backup",
-  "billing_error_ours",
-  "penalty_assessed",
-  "agreed_concession",
-  "quick_pay_discount",
-  "unauthorized_deduction",
-  "unearned_discount",
-  "rate_underpaid",
-  "other",
-] as const;
-
-const createBodySchema = z.object({
-  customer_id: z.string().trim().uuid(),
-  issue_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  amount_cents: z.coerce.number().int().positive(),
-  reason: z.enum(CREDIT_MEMO_REASONS),
-  // ROUND 373.4 — the income (or contra-income) account this credit reduces. Required: a credit memo posts.
-  account_id: z.string().trim().uuid(),
-  notes: z.string().trim().max(2000).optional().nullable(),
-  display_id: z.string().trim().min(1).max(40).optional(),
-  // ACCT-F11101 (owner 11-04: "7-ok folow qb") — "Create credit memo" from a SENT invoice: the invoice it corrects
-  // (related_invoice_id) and, like QuickBooks, whether it is applied to that invoice now (lowers its open balance) or left
-  // unapplied as customer credit.
-  related_invoice_id: z.string().trim().uuid().optional(),
-  apply_to_invoice: z.boolean().optional(),
-});
 
 const applyBodySchema = z.object({
   applications: z.array(
@@ -274,106 +236,7 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
     let result;
     try {
       result = await withCompanyScope(user.uuid, query.data.operating_company_id, async (client) => {
-      const customerRes = await client.query(
-        `SELECT id FROM mdata.customers WHERE id = $1::uuid AND operating_company_id = $2::uuid LIMIT 1`,
-        [body.data.customer_id, query.data.operating_company_id]
-      );
-      if (!customerRes.rows[0]) return { code: 404 as const, error: "customer_not_found" };
-
-      const issueDate = body.data.issue_date ?? companyBusinessDate();
-
-      // ROUND 373.4 — the account must be this company's, active and postable; never guessed, never defaulted.
-      const acctRes = await client.query(
-        `SELECT id FROM catalogs.accounts
-          WHERE id = $1::uuid AND operating_company_id = $2::uuid AND deactivated_at IS NULL AND COALESCE(is_postable, true)
-          LIMIT 1`,
-        [body.data.account_id, query.data.operating_company_id]
-      );
-      if (!acctRes.rows[0]) return { code: 400 as const, error: "account_not_postable_for_company" };
-
-      // ACCT-F11101 — a credit memo created FROM an invoice: issued (not draft / proforma / void), same customer, and when
-      // applied now, no more than the invoice's open balance. Refused before anything is written.
-      const relatedInvoiceId = body.data.related_invoice_id ?? null;
-      const applyToInvoice = Boolean(relatedInvoiceId && body.data.apply_to_invoice);
-      if (body.data.apply_to_invoice && !relatedInvoiceId) return { code: 400 as const, error: "apply_to_invoice_requires_related_invoice_id" };
-      if (relatedInvoiceId) {
-        const refusal = await creditMemoTargetInvoiceRefusal(client as never, {
-          operatingCompanyId: query.data.operating_company_id, invoiceId: relatedInvoiceId, customerId: body.data.customer_id,
-          amountCents: body.data.amount_cents, applyToInvoice,
-        });
-        if (refusal) return refusal;
-      }
-
-      // Canonical generator (same advisory-lock + MAX pattern nextVendorCreditDisplayId uses).
-      const displayId = await resolveCreditMemoDisplayId(
-        client,
-        query.data.operating_company_id,
-        new Date(`${issueDate}T00:00:00Z`),
-        body.data.display_id
-      );
-
-      const insRes = await client.query(
-        `INSERT INTO accounting.credit_memos
-           (operating_company_id, customer_id, display_id, status, reason, issue_date, amount_cents, notes, created_by_user_id, account_id, related_invoice_id)
-         VALUES ($1, $2, $3, 'issued', $4, $5, $6, $7, $8, $9::uuid, $10::uuid)
-         RETURNING id, display_id, status, reason, issue_date, amount_cents, amount_applied_cents, (amount_cents - amount_applied_cents) AS amount_unapplied_cents, account_id, related_invoice_id`,
-        [
-          query.data.operating_company_id,
-          body.data.customer_id,
-          displayId,
-          body.data.reason,
-          issueDate,
-          body.data.amount_cents,
-          body.data.notes ?? null,
-          user.uuid,
-          body.data.account_id,
-          relatedInvoiceId,
-        ]
-      );
-      const credit = insRes.rows[0];
-      if (!credit) return { code: 500 as const, error: "credit_memo_create_failed" };
-
-      // ROUND 373.4 — post on this transaction (Dr account / Cr A/R); a posting failure rolls the credit memo back.
-      const posting = await postSourceTransactionInClientTx(
-        client as never,
-        { operating_company_id: query.data.operating_company_id, source_transaction_type: "credit_memo", source_transaction_id: String(credit.id) },
-        { userId: user.uuid }
-      );
-      const jeId = (posting as { journal_entry_id?: string | null })?.journal_entry_id ?? null;
-      if (jeId) {
-        await client.query(`UPDATE accounting.credit_memos SET journal_entry_id = $2::uuid WHERE id = $1::uuid`, [credit.id, jeId]);
-      }
-      credit.journal_entry_id = jeId;
-
-      if (relatedInvoiceId) {
-        // ACCT-F11101 — a factored invoice: the credit memo's legs are linked to the Faro purchase / advance (no Faro posting).
-        credit.factoring = await recordFactoredInvoiceCreditMemoLink(client as never, {
-          operatingCompanyId: query.data.operating_company_id, creditMemoId: String(credit.id), invoiceId: relatedInvoiceId,
-          journalEntryId: jeId, amountCents: body.data.amount_cents, userId: user.uuid,
-        });
-        if (applyToInvoice) {
-          // THE apply (same transaction): the invoice's open balance drops by the credit memo, exactly like QBO.
-          const applied = await applyCreditMemoToInvoicesInClientTx(client as never, {
-            operatingCompanyId: query.data.operating_company_id, creditMemoId: String(credit.id), userId: user.uuid,
-            applications: [{ invoice_id: relatedInvoiceId, applied_cents: body.data.amount_cents, idempotency_key: `credit_memo_from_invoice:${String(credit.id)}` }],
-          });
-          if ("error" in applied) throw new Error(`credit_memo_apply_failed:${String(applied.error)}`);
-          credit.amount_applied_cents = body.data.amount_cents;
-          credit.amount_unapplied_cents = 0;
-          credit.status = "applied";
-        }
-      }
-
-      await appendCrudAudit(
-        client,
-        user.uuid,
-        "accounting.credit_memos.created",
-        { resource_type: "accounting.credit_memos", resource_id: String(credit.id), display_id: displayId, customer_id: body.data.customer_id },
-        "info",
-        "ACCT-F5606"
-      );
-
-      return { code: 201 as const, data: credit };
+      return createCreditMemoInClientTx(client, { operatingCompanyId: query.data.operating_company_id, userId: user.uuid, input: body.data });
     });
     } catch (error) {
       if (error instanceof DuplicateDocumentNumberError) {
