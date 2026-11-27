@@ -497,6 +497,7 @@ import { registerPerfumeDeskRoutes } from "./perfume/desk.routes.js";
 import { registerPerfumeMailRoutes } from "./perfume/mail/mail.routes.js";
 import { registerPerfumeContactsRoutes } from "./perfume/contacts.routes.js";
 import { registerPerfumeTradeShowRoutes } from "./perfume/trade-shows.routes.js";
+import { registerPerfumeQuoteRoutes } from "./perfume/quotes.routes.js";
 import { registerPerfumeCampaignRoutes } from "./perfume/campaigns.routes.js";
 import { registerPerfumeLeadsRoutes } from "./perfume/leads.routes.js";
 import { startOutboxProcessor, stopOutboxProcessor } from "./outbox/index.js";
@@ -1473,6 +1474,7 @@ async function main() {
   await registerPerfumeMailRoutes(app);
   await registerPerfumeContactsRoutes(app);
   await registerPerfumeTradeShowRoutes(app);
+  await registerPerfumeQuoteRoutes(app);
   await registerPerfumeCampaignRoutes(app);
   await registerPerfumeLeadsRoutes(app);
   await registerDailyTasksRoutes(app);

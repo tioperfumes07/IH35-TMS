@@ -4,10 +4,10 @@
  * and nothing from the carriers; on any carrier page none of these show. Each module is a set of desk tabs.
  * The data stays walled (perfume schema, FORCE RLS owner-only) — this file only decides what the menu shows.
  */
-import { BookOpen, CalendarDays, Handshake, Mail, Send, Tags, Users } from "lucide-react";
+import { BookOpen, CalendarDays, FileText, Handshake, Mail, Send, Tags, Users } from "lucide-react";
 import type { ComponentType } from "react";
 
-export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs";
+export type PerfumeModuleId = "desk" | "mail" | "leads" | "campaigns" | "traders" | "shows" | "catalogs" | "quotes";
 export type PerfumeModule = { id: PerfumeModuleId; label: string; Icon: ComponentType<{ className?: string }>; tabs: string[] };
 
 export const PERFUME_MODULES: PerfumeModule[] = [
@@ -18,6 +18,8 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "traders", label: "Traders", Icon: Handshake, tabs: ["traders"] },
   { id: "shows", label: "Trade shows", Icon: CalendarDays, tabs: ["shows"] },
   { id: "catalogs", label: "Catalogs", Icon: BookOpen, tabs: ["catalogs"] },
+  // Owner 2026-11-26 18:13 CT: "we need quotations, and then historoy for quotations".
+  { id: "quotes", label: "Quotes", Icon: FileText, tabs: ["quotes"] },
 ];
 
 /** The module a desk tab belongs to (unknown / missing tab → the price desk). */
