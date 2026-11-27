@@ -27,6 +27,7 @@ import { PO_STATUS_CLASS, PO_STATUS_TEXT } from "./PerfumeOrdersPanel";
 import { ItemCreator, ItemFileEditor } from "./PerfumeItemFilePanel";
 import { ItemSitesBlock } from "./PerfumeFamiliesPanel";
 import { ScentsxItemAccountLine } from "./ScentsxItemAccounts";
+import { VendorLinkReview } from "./PerfumeVendorLinkReview";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
 const METHOD_TEXT: Record<string, string> = { upc: "Barcode", sku: "Their code", alias: "Their words (remembered)", key: "Same name", name: "Same bottle, other spelling",
@@ -99,6 +100,7 @@ export function PerfumeSupplierProfilesPanel() {
   );
   return (
     <div className="space-y-3" data-testid="perfume-suppliers-panel">
+      <VendorLinkReview />
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.profiles.suppliers", "Supplier profiles")}>
         <input type="search" className={`${ctl} w-full max-w-[420px]`} aria-label={tr("perfume.profiles.find_vendor", "Find a vendor")} placeholder={tr("perfume.profiles.find_vendor_ph", "Find a vendor")}
           value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-suppliers-search" />

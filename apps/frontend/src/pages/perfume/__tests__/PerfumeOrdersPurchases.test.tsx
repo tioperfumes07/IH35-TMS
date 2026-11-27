@@ -28,8 +28,9 @@ const po: PerfumePo = { ...prow("p1", "PO-000001", "open"), lines: [{ id: "pl1",
 const calls: Array<[string, unknown]> = [];
 let made = false;
 let linkedB = false;
+let linkRows = false;
 beforeEach(() => {
-  calls.length = 0; made = false; linkedB = false;
+  calls.length = 0; made = false; linkedB = false; linkRows = false;
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (opts?.method) calls.push([path, opts.body]);
     if (path === "/api/v1/perfume/orders") return { orders: [orow("o1", "SO-000001", "open", made ? 1 : 0), orow("o2", "SO-000002", "shipped", 1)] };
@@ -51,6 +52,13 @@ beforeEach(() => {
         state: "FL", country: "US", status: "active", people: 2, email: "sales@vendora.test" },
       lists: [{ id: "L1", list_date: "2026-11-26", label: null, file_name: "a.xlsx", source_kind: "xlsx", rows_saved: 120, is_current: true, voided_at: null, matched: 118, waiting: 2 }],
       items: 118, waiting: 2, codes: 118, words: 117, confirmed: 3, purchase_orders: [prow("p1", "PO-000001", "open")], po_total_cents: 10000, po_open: 1 } satisfies PerfumeVendorProfile;
+    if (path === "/api/v1/perfume/vendor-links/preview") return linkRows ? { linked: 3, unlinked: 2, proposals: [
+      { vendor_id: "vA", vendor: "Vendor A — ARABIC list", short_name: "VA", kind: "buy", company_name: "Vendor A", action: "choose", company_id: "co9",
+        candidates: [{ id: "co9", name: "Vendor A LLC", role: "vendor", city: "Miami", state: "FL", country: "US", people: 2, exact: true },
+          { id: "co8", name: "Vendor A LLC", role: "customer", city: "Doral", state: "FL", country: "US", people: 0, exact: true }] },
+      { vendor_id: "vN", vendor: "Nobody Fragrance (NF)", short_name: "NF", kind: "buy", company_name: "Nobody Fragrance", action: "create", company_id: null, candidates: [] }] }
+      : { linked: 3, unlinked: 0, proposals: [] };
+    if (path === "/api/v1/perfume/vendor-links/apply") { linkRows = false; return { linked: 2, created: 1 }; }
     if (path === "/api/v1/perfume/vendors/vB/company") { linkedB = true; return { ok: true }; }
     if (path === "/api/v1/perfume/vendors/vB/profile") {
       const co = { id: "co7", name: "Vendor B Inc", role: "vendor", vendor_type: null, customer_type: null, phone: null, website: null, address: null, city: "Doral",
@@ -135,6 +143,18 @@ describe("profiles", () => {
     await waitFor(() => expect(within(p).getByTestId("perfume-vendor-company").textContent).toContain("Vendor A LLC"));
     expect(within(within(p).getByTestId("perfume-vendor-kpis")).getByText("117")).toBeTruthy();
     expect(within(p).getAllByText("PO-000001").length).toBeGreaterThan(0);
+  });
+  it("lists not linked to a company: pick the right one, name the new one, Link all sends every decision", async () => {
+    linkRows = true;
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");
+    const review = await screen.findByTestId("perfume-vendor-link-review");
+    expect(review.textContent).toContain("Pick one");
+    fireEvent.change(within(review).getByTestId("perfume-vendor-link-pick-vA"), { target: { value: "co8" } });
+    fireEvent.change(within(review).getByTestId("perfume-vendor-link-name-vN"), { target: { value: "Nobody Fragrance House" } });
+    fireEvent.click(within(review).getByTestId("perfume-vendor-link-apply"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
+      { vendor_id: "vA", company_id: "co8" }, { vendor_id: "vN", create_name: "Nobody Fragrance House" }] }]));
+    await waitFor(() => expect(screen.queryByTestId("perfume-vendor-link-review")).toBeNull());
   });
   it("clicking a supplier in the list opens its profile in place of the list, at the top; All suppliers goes back", async () => {
     mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");
