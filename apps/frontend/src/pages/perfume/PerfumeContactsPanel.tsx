@@ -24,6 +24,7 @@ import { tr } from "./perfumeI18n";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
 import { perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
 import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
+import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 
 const DASH = "—";
 const ROLE_TEXT: Record<PerfumeContactRole, string> = { vendor: "Vendor", customer: "Customer", both: "Vendor + customer" };
@@ -230,6 +231,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
           <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-contact-history-v1" exportName="TIO contact history" />
         </div>
         <div className="text-xs">
+          {co ? <ScentsxCustomerLink contactId={id} name={String(co.name ?? "")} email={(co["email"] as string | null) ?? null} phone={(co["phone"] as string | null) ?? null} /> : null}
           {([["Website", "website"], ["Phone", "phone"], ["Address", "address"], ["City", "city"], ["State", "state"], ["Country", "country"], ["Categories", "categories"],
             ["Customer type", "customer_type"], ["Vendor type", "vendor_type"], ["Google rating", "google_rating"], ["Google reviews", "google_rating_count"],
             ["Open hours", "google_hours"], ["Google status", "google_business_status"], ["Owner", "owner_name"], ["LinkedIn", "linkedin"], ["Source", "source"]] as const).map(([l, k]) => (

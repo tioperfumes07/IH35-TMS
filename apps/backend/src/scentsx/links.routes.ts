@@ -10,7 +10,7 @@ import { pendingStockMoves, postPendingStockMoves } from "./stock-move-poster.se
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import {
-  createLink, listDocumentLinks, listLinks, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
+  createLink, listDocumentLinks, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
 } from "./links.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -44,6 +44,12 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
     try { return await withCurrentUser(uid, async (c) => ({ accounts: await scentsxChart(c) })); } catch (e) { return fail(reply, e); }
   });
 
+  app.get("/api/v1/scentsx/accounts/:id/register", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = uuid.safeParse((req.params as { id?: string }).id);
+    if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, async (c) => ({ lines: await scentsxAccountRegister(c, id.data) })); } catch (e) { return fail(reply, e); }
+  });
   app.get("/api/v1/scentsx/stock-moves/pending", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     try { return await withCurrentUser(uid, async (c) => ({ pending: (await pendingStockMoves(c)).count })); } catch (e) { return fail(reply, e); }

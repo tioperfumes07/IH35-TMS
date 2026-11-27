@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
+import { scentsxAccountRegister } from "./links.service.js";
 import { moveValueCents, pendingStockMoves, postPendingStockMoves, postStockMove, rolesForMove, STOCK_MOVE_SOURCE } from "./stock-move-poster.service.js";
 
 describe("stock-move posting map (pure)", () => {
@@ -70,5 +71,9 @@ describe("ScentsX stock-move poster (real Postgres, rolled back)", () => {
     expect(of(receipt)).toEqual([["credit", "2050", "12500", "SCENTSX"], ["debit", "1200", "12500", "SCENTSX"]]);
     expect(of(shipment)).toEqual([["credit", "1200", "5000", "SCENTSX"], ["debit", "5000", "5000", "SCENTSX"]]);
     expect((await pendingStockMoves(db)).ids).not.toEqual(expect.arrayContaining([receipt]));
+    const inv = await db.query<{ id: string }>(`SELECT id::text FROM catalogs.accounts WHERE operating_company_id = scentsx.company_id() AND account_number = '1200'`);
+    const reg = await scentsxAccountRegister(db, inv.rows[0]!.id);
+    expect(reg.filter((l) => [receipt, shipment].includes(String(l.source_transaction_id))).map((l) => [l.debit_or_credit, l.amount_cents]).sort())
+      .toEqual([["credit", "5000"], ["debit", "12500"]]);
   });
 });

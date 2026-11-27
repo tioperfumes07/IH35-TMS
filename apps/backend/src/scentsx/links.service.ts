@@ -145,3 +145,23 @@ export async function scentsxChart(c: Q) {
   );
   return r.rows;
 }
+
+/** One ScentsX account's register: every posted line on it, newest first, with the document it came from. */
+export async function scentsxAccountRegister(c: Q, accountId: string) {
+  const co = await scopeToScentsx(c);
+  const own = await c.query(`SELECT 1 FROM catalogs.accounts WHERE id = $1::uuid AND operating_company_id = $2::uuid`, [accountId, co]);
+  if (!own.rows.length) throw new ScentsxLinkNotFound();
+  const r = await c.query<{
+    posting_id: string; journal_entry_id: string; entry_date: string; memo: string | null; debit_or_credit: string;
+    amount_cents: string; source_transaction_type: string | null; source_transaction_id: string | null;
+  }>(
+    `SELECT p.id::text AS posting_id, j.id::text AS journal_entry_id, j.entry_date::text, coalesce(p.description, j.memo) AS memo,
+            p.debit_or_credit, p.amount_cents::text, p.source_transaction_type, p.source_transaction_id
+       FROM accounting.journal_entry_postings p JOIN accounting.journal_entries j ON j.id = p.journal_entry_uuid
+      WHERE p.account_id = $1::uuid AND j.operating_company_id = $2::uuid AND j.status = 'posted'
+      ORDER BY j.entry_date DESC, j.created_at DESC
+      LIMIT 500`,
+    [accountId, co]
+  );
+  return r.rows;
+}
