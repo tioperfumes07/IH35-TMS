@@ -11,6 +11,7 @@ import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
 import { creditExposure } from "./credit-exposure.service.js";
 import { salesReport } from "./sales-report.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
+import { accountMapSchema, itemAccountMap, itemPostingAccounts, setCategoryAccounts, setItemAccounts } from "./item-accounts.service.js";
 import { hasExportProof, hasResaleCertificate, partyStatus, screenParty } from "./sanctions.service.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
@@ -39,6 +40,30 @@ function fail(reply: FastifyReply, e: unknown) {
 }
 
 export async function registerScentsxLinkRoutes(app: FastifyInstance) {
+  // Item → Inventory / COGS accounts (owner 2026-11-27 08:10 CT, migration 202617050100).
+  app.get("/api/v1/scentsx/item-accounts", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    try { return await withCurrentUser(uid, (c) => itemAccountMap(c)); } catch (e) { return fail(reply, e); }
+  });
+  app.put("/api/v1/scentsx/item-accounts/category", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = accountMapSchema.extend({ category: z.string().trim().min(1).max(60) }).safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, (c) => setCategoryAccounts(c, uid, b.data.category, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.put("/api/v1/scentsx/item-accounts/item/:id", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id);
+    const b = accountMapSchema.safeParse(req.body ?? {});
+    if (!id.success || !b.success) return reply.code(400).send({ error: "invalid_body" });
+    try { return await withCurrentUser(uid, (c) => setItemAccounts(c, uid, id.data, b.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/scentsx/item-accounts/item/:id", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, (c) => itemPostingAccounts(c, id.data)); } catch (e) { return fail(reply, e); }
+  });
+
   app.get("/api/v1/scentsx/company", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     try { return await withCurrentUser(uid, async (c) => ({ company: await scentsxSummary(c) })); } catch (e) { return fail(reply, e); }

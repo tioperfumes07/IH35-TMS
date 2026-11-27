@@ -158,3 +158,19 @@ export const linkScentsxVendor = (deskId: string, engineId: string) =>
 /** The canonical vendor create (mdata.vendors) for ScentsX's company — the same route every vendor goes through. */
 export const createScentsxVendor = (companyId: string, name: string) =>
   apiRequest<{ id?: string; vendor?: { id: string } }>("/api/v1/mdata/vendors", { method: "POST", body: { operating_company_id: companyId, name, vendor_type: "Perfume supplier" } });
+// SCENTSX item → Inventory / COGS accounts (migration 202617050100).
+export type ScentsxItemAccountMap = {
+  categories: Array<{ value: string; items: number }>;
+  mappings: Array<{ id: string; scope: "category" | "item"; category: string | null; item_id: string | null; item: string | null; inventory_account_id: string | null;
+    cogs_account_id: string | null; inventory_account: string | null; cogs_account: string | null; created_at: string }>;
+  history: Array<{ id: string; scope: string; category: string | null; item: string | null; inventory_account: string | null; cogs_account: string | null; created_at: string;
+    archived_at: string | null; created_by: string | null; archived_by: string | null }>;
+  defaults: { inventory_asset?: string | null; cogs_goods?: string | null };
+};
+export const getScentsxItemAccounts = () => apiRequest<ScentsxItemAccountMap>("/api/v1/scentsx/item-accounts");
+export const setScentsxCategoryAccounts = (category: string, b: { inventory_account_id: string | null; cogs_account_id: string | null }) =>
+  apiRequest<{ changed: boolean }>("/api/v1/scentsx/item-accounts/category", { method: "PUT", body: { category, ...b } });
+export const setScentsxItemAccounts = (itemId: string, b: { inventory_account_id: string | null; cogs_account_id: string | null }) =>
+  apiRequest<{ changed: boolean }>(`/api/v1/scentsx/item-accounts/item/${encodeURIComponent(itemId)}`, { method: "PUT", body: b });
+export const getScentsxItemPostingAccounts = (itemId: string) =>
+  apiRequest<{ inventory_account_id: string | null; cogs_account_id: string | null; source: "item" | "category" | "role" }>(`/api/v1/scentsx/item-accounts/item/${encodeURIComponent(itemId)}`);
