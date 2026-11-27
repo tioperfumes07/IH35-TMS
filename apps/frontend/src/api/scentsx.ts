@@ -208,3 +208,16 @@ export const listScentsxReturns = () => apiRequest<{ returns: ScentsxReturnRow[]
 export const createScentsxReturn = (b: { invoice_id: string; return_date?: string; reason: ScentsxReturnReason; notes?: string | null;
   lines: Array<{ so_line_id: string; qty: number; restock: boolean; location_code?: string | null }> }) =>
   apiRequest<{ id: string; return_no: string; merchandise_cents: number; tax_cents: number; credit_memo_ids: string[] }>("/api/v1/scentsx/returns", { method: "POST", body: b });
+
+/** Purchase bills (migration 202617120100): a received perfume PO billed through the one bill writer + poster (GRNI -> A/P). */
+export type ScentsxBillablePoLine = { po_line_id: string; line_no: number; item_id: string | null; description: string; ordered: number; received: number;
+  received_value_cents: number; billed: number; billed_received_value_cents: number; to_bill: number; unit_cost_cents: number };
+export type ScentsxPoBill = { id: string; display_id: string | null; bill_number: string | null; bill_date: string; due_date: string | null; status: string;
+  amount_cents: number; voided: boolean; units: number | null };
+export const getScentsxPoBillable = (poId: string) =>
+  apiRequest<{ lines: ScentsxBillablePoLine[]; bills: ScentsxPoBill[] }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/billable`);
+export const billScentsxPurchaseOrder = (poId: string, b: { vendor_invoice_number: string; bill_date: string; due_date?: string | null; memo?: string | null;
+  lines: Array<{ po_line_id: string; qty: number; unit_price_cents?: number; account_id?: string }>;
+  charges: Array<{ account_id: string; description: string; amount_cents: number }> }) =>
+  apiRequest<{ bill_id: string; display_id: string | null; amount_cents: number; journal_entry_id: string | null; variance_cents: number;
+    variance_journal_entry_id: string | null; units: number }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/bill`, { method: "POST", body: b });

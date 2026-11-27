@@ -38,6 +38,11 @@ beforeEach(() => {
     if (path === "/api/v1/perfume/purchase-orders") return { purchase_orders: [prow("p1", "PO-000001", "open"), prow("p2", "PO-000002", "received")] };
     if (path === "/api/v1/perfume/purchase-orders/p1") return po;
     if (path === "/api/v1/perfume/purchase-orders/p1/receive-all") return { lines: 1 };
+    if (path === "/api/v1/scentsx/purchase-orders/p1/billable") return { lines: [{ po_line_id: "pl1", line_no: 1, item_id: "i1", description: "ZZO NIGHT EDP 3.4OZ M", ordered: 10,
+      received: 10, received_value_cents: 10000, billed: 4, billed_received_value_cents: 4000, to_bill: 6, unit_cost_cents: 1000 }], bills: [] };
+    if (path === "/api/v1/scentsx/accounts") return { accounts: [{ id: "a5000", account_number: "5000", account_name: "Cost of Goods Sold", account_type: "cogs", account_subtype: null, roles: [], debit_cents: "0", credit_cents: "0" }] };
+    if (path === "/api/v1/scentsx/purchase-orders/p1/bill") return { bill_id: "b1", display_id: "BILL-2026-00001", amount_cents: 7850, journal_entry_id: "j1", variance_cents: -600,
+      variance_journal_entry_id: "j2", units: 6 };
     if (path === "/api/v1/perfume/vendors") return { vendors: [{ id: "vA", name: "Vendor A", short_name: "VA", kind: "buy", roles: [], contact: null }] };
     if (path === "/api/v1/perfume/vendors/vA/profile") return { vendor: { id: "vA", name: "Vendor A", short_name: "VA", kind: "buy", roles: [], contact: null, company_id: "co9" },
       company: { id: "co9", name: "Vendor A LLC", role: "vendor", vendor_type: null, customer_type: null, phone: "+1 305 000 0000", website: "vendora.test", address: null, city: "Miami",
@@ -89,6 +94,28 @@ describe("purchase orders", () => {
     await waitFor(() => expect(calls.map((c) => c[0])).toContain("/api/v1/perfume/purchase-orders/p1/receive-all"));
     fireEvent.click(within(ed).getByTestId("perfume-po-vendor-link"));
     await waitFor(() => expect(screen.getByTestId("where").textContent).toBe("?tab=suppliers&open=vA"));
+  });
+});
+
+describe("vendor bill from a received PO", () => {
+  it("bills the units received and not billed at the vendor's price, with freight, through the ScentsX bill route", async () => {
+    mount(<PerfumePurchasesPanel />, "/perfume?tab=purchases&open=p1");
+    const box = await screen.findByTestId("perfume-po-bills");
+    await waitFor(() => expect(box.textContent).toContain("6 units received and not billed"));
+    fireEvent.click(within(box).getByTestId("perfume-po-bill-open"));
+    const f = await within(box).findByTestId("perfume-po-bill-form");
+    expect((within(f).getByTestId("perfume-po-bill-save") as HTMLButtonElement).disabled).toBe(true); // no vendor invoice # yet
+    fireEvent.change(within(f).getByTestId("perfume-po-bill-no"), { target: { value: "INV-77" } });
+    fireEvent.change(within(f).getByLabelText("Vendor price line 1"), { target: { value: "11.00" } });
+    fireEvent.click(within(f).getByTestId("perfume-po-bill-add-charge"));
+    fireEvent.change(within(f).getByLabelText("Charge 1 account"), { target: { value: "a5000" } });
+    fireEvent.change(within(f).getByLabelText("Charge 1 description"), { target: { value: "Freight in" } });
+    fireEvent.change(within(f).getByLabelText("Charge 1 amount"), { target: { value: "12.00" } });
+    await waitFor(() => expect(within(f).getByTestId("perfume-po-bill-total").textContent).toContain("$78.00"));
+    expect(within(f).getByTestId("perfume-po-bill-variance").textContent).toContain("$6.00");
+    fireEvent.click(within(f).getByTestId("perfume-po-bill-save"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/scentsx/purchase-orders/p1/bill", expect.objectContaining({ vendor_invoice_number: "INV-77",
+      lines: [{ po_line_id: "pl1", qty: 6, unit_price_cents: 1100 }], charges: [{ account_id: "a5000", description: "Freight in", amount_cents: 1200 }] })]));
   });
 });
 

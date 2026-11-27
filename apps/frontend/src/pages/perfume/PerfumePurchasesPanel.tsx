@@ -3,7 +3,7 @@
  * be created"). Made from a sales order (Sales orders → Buy: each line to the vendor with the lowest current price) or started
  * here for one vendor. Every line carries the vendor's own code and words from their current list. Receive per line or all;
  * the PO is received when every line is. Links both ways: vendor profile, the sales order. History, Excel, PDF.
- * Nothing is deleted. Never posts to accounting.
+ * Nothing is deleted. Received units are billed to ScentsX A/P from here (PurchaseBillForm, migration 202617120100).
  */
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -23,6 +23,7 @@ import {
 import { MoneyInput } from "../../components/forms/MoneyInput";
 import { tr } from "./perfumeI18n";
 import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, SitePicker, toCents, useOpenDoc, usDate } from "./perfumeDocParts";
+import { PurchaseBillForm } from "./PerfumePurchaseBillParts";
 import { PO_STATUS_CLASS as STATUS_CLASS, PO_STATUS_TEXT as STATUS_TEXT } from "./PerfumeOrdersPanel";
 
 export function PerfumePurchasesPanel() {
@@ -246,6 +247,7 @@ function PoEditor({ id, onClose, onChanged }: { id: string; onClose: () => void;
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={p.notes ?? ""} onBlur={(e) => { if (e.target.value !== (p.notes ?? "")) void patch({ notes: e.target.value || null }); }} />
         </label>
       </div>
+      {p.currency === "USD" ? <PurchaseBillForm poId={id} poNumber={p.number} onDone={() => void refresh()} /> : null}
       <HistoryTable events={p.events} storageKey="perfume-po-history-v1" exportFilename="TIO purchase order history" />
     </section>
   );

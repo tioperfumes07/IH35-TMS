@@ -28,7 +28,9 @@ export function rolesForMove(kind: MoveKind, qty: number): { debit: CoaRole; cre
     case "opening": return { debit: "inventory_asset", credit: "opening_balance_equity" };
     case "receipt": return { debit: "inventory_asset", credit: "goods_received_not_billed" };
     case "shipment": return { debit: "cogs_goods", credit: "inventory_asset" };
-    case "return": return { debit: "inventory_asset", credit: "cogs_goods" };
+    // A customer return comes IN (qty > 0): back to inventory, out of COGS. A return TO THE VENDOR goes OUT (qty < 0,
+    // purchases.service returnToVendor): it reverses the receipt — Dr GRNI / Cr Inventory (was Dr Inventory / Cr COGS for both).
+    case "return": return qty > 0 ? { debit: "inventory_asset", credit: "cogs_goods" } : { debit: "goods_received_not_billed", credit: "inventory_asset" };
     case "transfer_out": return { debit: "inventory_in_transit", credit: "inventory_asset" };
     case "transfer_in": return { debit: "inventory_asset", credit: "inventory_in_transit" };
     case "write_down": return { debit: "inventory_writedown", credit: "inventory_asset" };
