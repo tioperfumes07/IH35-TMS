@@ -109,3 +109,36 @@ describe("same bottle, another spelling (owner 2026-11-26 17:48 CT)", () => {
     expect(matchLine(two, "s", { description: "LACOSTE ESSENTIAL 125 ML EDT", brand: "LACOSTE" }, { allowNewItem: false }).itemId).toBe("a");
   });
 });
+
+describeIntegration("Rematch heals an item an older rule named (real Postgres, rolled back)", () => {
+  let db: pg.Client;
+  beforeAll(async () => {
+    await ensureIntegrationPrerequisites();
+    db = new pg.Client(buildPgClientConfig(process.env.DATABASE_URL!));
+    await db.connect();
+    await db.query("BEGIN");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+  });
+  afterAll(async () => {
+    await db?.query("ROLLBACK").catch(() => {});
+    await db?.end().catch(() => {});
+  });
+
+  it("P&C's 'TT ATKINSONS …' item becomes the TESTER it is; a confirmed item is never touched", async () => {
+    const v = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('HEAL TT TEST', 'buy') RETURNING id`)).rows[0].id;
+    const item = (await db.query<{ id: string }>(
+      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name)
+       VALUES ('ATKINSONS', 'TT ATKINSONS ZZAMBER EMPIRE', 100, 'EDT', 'U', '{}', 'ATKINSONS|TT ATKINSONS ZZAMBER EMPIRE|100|EDT|U|', 'x', 'old') RETURNING id`)).rows[0].id;
+    const list = (await db.query<{ id: string }>(
+      `INSERT INTO perfume.price_lists (vendor_id, list_date, file_name, source_kind, rows_read, rows_saved, rows_skipped, price_total_file_cents, price_total_saved_cents, is_current)
+       VALUES ($1, '2026-11-26', 'pc.xlsx', 'xlsx', 1, 1, 0, 100, 100, true) RETURNING id`, [v])).rows[0].id;
+    await db.query(
+      `INSERT INTO perfume.price_list_rows (list_id, row_no, raw, sku, brand, description, price_cents, identity_key, loose_key, item_id, match_method, match_status)
+       VALUES ($1, 1, '{}', 'PCZZ1', 'ATKINSONS', 'TT ATKINSONS ZZAmber Empire (U) edt 100 ml vapo', 100, 'x', 'x', $2, 'sku', 'matched')`, [list, item]);
+    const out = await rematchReview(db as never, TEST_OWNER_USER_ID);
+    expect(out.items_renamed).toBeGreaterThanOrEqual(1);
+    const it = (await db.query(`SELECT name, flags FROM perfume.items WHERE id = $1`, [item])).rows[0];
+    expect(it.flags).toContain("TESTER");
+    expect(it.name).not.toMatch(/^TT /);
+  });
+});
