@@ -8,6 +8,8 @@ import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { createLink, ScentsxLinkInvalid } from "./links.service.js";
 import { billableLines, invoiceSalesOrder } from "./sales-invoice.service.js";
+import { addExportProof, loadSanctionsList, screenParty } from "./sanctions.service.js";
+import { fixtureFetcher } from "./__fixtures__/ofac-fixture.js";
 
 describe("ScentsX sales-order invoicing (real Postgres, rolled back)", () => {
   let db: pg.Client;
@@ -41,6 +43,13 @@ describe("ScentsX sales-order invoicing (real Postgres, rolled back)", () => {
     );
     await createLink(db, TEST_OWNER_USER_ID, "customer", co.rows[0]!.id, cust.rows[0]!.id);
 
+    // OFAC: an unscreened customer cannot be invoiced; once screened clear, it can.
+    await loadSanctionsList(db, TEST_OWNER_USER_ID, fixtureFetcher);
+    await db.query("SAVEPOINT unscreened");
+    await expect(invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id)).rejects.toThrow(/not been screened/);
+    await db.query("ROLLBACK TO SAVEPOINT unscreened");
+    expect((await screenParty(db, TEST_OWNER_USER_ID, { kind: "customer", id: cust.rows[0]!.id })).result).toBe("clear");
+
     const first = await invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id);
     expect(first).toMatchObject({ lines: 1, units: 4 });
     const inv = await db.query<{ co: string; status: string; total_cents: string; acct: string; qty: string }>(
@@ -58,6 +67,15 @@ describe("ScentsX sales-order invoicing (real Postgres, rolled back)", () => {
 
     await db.query(`UPDATE perfume.sales_order_lines SET qty_shipped = 10 WHERE order_id = $1::uuid`, [so.rows[0]!.id]);
     expect((await billableLines(db, so.rows[0]!.id))[0]).toMatchObject({ shipped: 10, billed: 4, to_bill: 6 });
+    // Export is refused without proof the goods left the US; with a pedimento on file it bills on 4020.
+    await db.query("SAVEPOINT noproof");
+    await expect(invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id, "export")).rejects.toThrow(/no export proof/);
+    await db.query("ROLLBACK TO SAVEPOINT noproof");
+    const f = await db.query<{ id: string }>(
+      `INSERT INTO docs.files (operating_company_id, original_filename, mime_type, size_bytes, r2_key, uploader_user_id)
+       VALUES (scentsx.company_id(), 'pedimento-test.pdf', 'application/pdf', 1, 'test/pedimento-invoice-test.pdf', $1::uuid) RETURNING id::text`, [TEST_OWNER_USER_ID]
+    );
+    await addExportProof(db, TEST_OWNER_USER_ID, { sales_order_id: so.rows[0]!.id, proof_kind: "foreign_import_papers", document_number: "26 24 3999 6001234", file_id: f.rows[0]!.id });
     const second = await invoiceSalesOrder(db, TEST_OWNER_USER_ID, so.rows[0]!.id, "export");
     expect(second).toMatchObject({ units: 6 });
     const acct2 = await db.query<{ acct: string }>(
