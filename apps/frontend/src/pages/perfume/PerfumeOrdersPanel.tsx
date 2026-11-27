@@ -192,7 +192,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
       {locked ? null : <ItemFinder testId="perfume-order-find-item" onPick={(itemId, qty) => void run(() => addPerfumeOrderLine(id, { item_id: itemId, qty }), undefined, "Not added")} />}
       {locked ? null : (
         <label className="block text-xs">{tr("perfume.orders.override", "Price override reason")}
-          <input className={`${ctl} block w-full max-w-[460px]`} maxLength={500} value={override} onChange={(e) => setOverride(e.target.value)} data-testid="perfume-order-override-reason"
+          <input className={`${ctl} block w-full max-w-[460px]`} maxLength={500} value={override} onChange={(e) => setOverride(e.target.value)} data-testid="perfume-order-override-reason" aria-label={tr("perfume.orders.override", "Price override reason")}
             placeholder={tr("perfume.orders.override_ph", "Only to sell below an item's minimum price, or off a locked price — goes in the item's history")} />
         </label>
       )}

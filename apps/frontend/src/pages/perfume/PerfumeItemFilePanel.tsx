@@ -587,7 +587,7 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
             </select>
           </label>
         ))}
-        <label>{tr("perfume.itemfile.min_price", "Minimum price $")} <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} placeholder="clear" value={v.min_price} onChange={(e) => setV({ ...v, min_price: e.target.value })} data-testid="perfume-bulk-min-price" /></label>
+        <label>{tr("perfume.itemfile.min_price", "Minimum price $")} <input inputMode="decimal" className={`${ctl} block w-[90px] text-right`} placeholder="clear" aria-label={tr("perfume.itemfile.min_price", "Minimum price $")} value={v.min_price} onChange={(e) => setV({ ...v, min_price: e.target.value })} data-testid="perfume-bulk-min-price" /></label>
         <label className="min-w-[220px] flex-1">{tr("perfume.itemfile.description", "Description")} <input className={`${ctl} block w-full`} value={v.description === CLEAR ? "" : v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-bulk-description" /></label>
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
       </div>
