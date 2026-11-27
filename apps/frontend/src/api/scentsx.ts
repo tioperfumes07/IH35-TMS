@@ -95,7 +95,7 @@ export const clearScentsxScreening = (id: string, reason: string) => apiRequest<
 export const confirmScentsxMatch = (id: string) => apiRequest<{ confirmed: boolean }>(`/api/v1/scentsx/compliance/sanctions/${encodeURIComponent(id)}/confirm`, { method: "POST", body: {} });
 export const addScentsxExportProof = (input: { sales_order_id: string; proof_kind: "broker_export_certification" | "foreign_import_papers" | "bill_of_lading_outside_us"; document_number?: string | null; crossed_on?: string | null; port?: string | null; file_id: string }) =>
   apiRequest<{ proof: { id: string } }>("/api/v1/scentsx/compliance/export-proofs", { method: "POST", body: input });
-export const addScentsxResaleCertificate = (input: { contact_company_id: string; customer_id?: string | null; form_code?: "01-339" | "out_of_state" | "mexico_export_buyer"; purchaser_tax_id?: string | null; signed_on: string; file_id: string }) =>
+export const addScentsxResaleCertificate = (input: { contact_company_id: string; customer_id?: string | null; form_code?: "01-339" | "out_of_state" | "mexico_export_buyer"; purchaser_tax_number?: string | null; signed_on: string; file_id: string }) =>
   apiRequest<{ certificate: { id: string } }>("/api/v1/scentsx/compliance/resale-certificates", { method: "POST", body: input });
 export const screenScentsxParty = (kind: "contact_company" | "customer" | "vendor" | "cash_payer", id: string) =>
   apiRequest<{ screening: { screening_id: string; result: string; best_score: number; hits: number } }>("/api/v1/scentsx/compliance/sanctions/screen", { method: "POST", body: { kind, id } });

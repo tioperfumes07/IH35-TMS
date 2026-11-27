@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS scentsx.resale_certificates (
   contact_company_id uuid NOT NULL REFERENCES perfume.contact_companies(id),
   customer_id uuid REFERENCES mdata.customers(id),
   form_code text NOT NULL DEFAULT '01-339' CHECK (form_code IN ('01-339', 'out_of_state', 'mexico_export_buyer')),
-  purchaser_tax_id text,
+  purchaser_tax_number text,
   signed_on date NOT NULL,
   file_id uuid NOT NULL REFERENCES docs.files(id),
   notes text,

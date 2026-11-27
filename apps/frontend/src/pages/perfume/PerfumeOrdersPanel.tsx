@@ -20,6 +20,7 @@ import {
   updatePerfumeOrderLine, type PerfumeOrder, type PerfumeOrderLine, type PerfumeOrderRow, type PerfumeOrderStatus, type PerfumePoRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { ScentsxSalesOrderInvoice } from "./ScentsxSalesOrderInvoice";
 import { Badge, ctl, DASH, DocLink, HistoryTable, ItemFinder, money, NumberCell, SitePicker, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const STATUS_TEXT: Record<PerfumeOrderStatus, string> = { open: "Open", shipped: "Shipped", cancelled: "Cancelled" };
@@ -215,6 +216,8 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         <span>{`${o.lines.length} line${o.lines.length === 1 ? "" : "s"} · ${o.lines.reduce((t, l) => t + l.qty, 0).toLocaleString("en-US")} units · ${o.lines.reduce((t, l) => t + l.qty_shipped, 0).toLocaleString("en-US")} shipped`}</span>
         <span data-testid="perfume-order-total">{money(total, o.currency)}</span>
       </div>
+      {/* SCENTSX B3c (Lead): shipped units become a ScentsX LLC invoice through the existing invoice engine — billed once. */}
+      {o.lines.some((l) => l.qty_shipped > 0) ? <ScentsxSalesOrderInvoice salesOrderId={id} /> : null}
       {skipped.length ? (
         <div className="border-l-4 border-[#E8C48A] bg-[#FFF8EB] p-2 text-xs" data-testid="perfume-order-skipped">
           {tr("perfume.orders.skipped", "Not bought — pick these by hand on a purchase order:")} {skipped.map((s) => `#${s.line_no} ${s.description} (${s.reason})`).join("; ")}

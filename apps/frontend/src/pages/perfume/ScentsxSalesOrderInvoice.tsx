@@ -13,6 +13,7 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { addScentsxExportProof, getScentsxCompany, getScentsxSalesOrderBilling, invoiceScentsxSalesOrder } from "../../api/scentsx";
 import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { tr } from "./perfumeI18n";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -37,7 +38,7 @@ export function ScentsxSalesOrderInvoice({ salesOrderId }: { salesOrderId: strin
       <div className="text-section-header">{tr("scentsx.inv.title", "ScentsX invoice")}</div>
       <div className="flex flex-wrap items-center gap-2">
         <span>{tr("scentsx.inv.left", "Shipped units not yet invoiced")}: <b className="tabular-nums">{toBill}</b></span>
-        <select className="h-[30px] rounded-sm border border-[#C6D1DC] px-2" aria-label={tr("scentsx.inv.channel", "Sales channel")} value={channel}
+        <select className="h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs" aria-label={tr("scentsx.inv.channel", "Sales channel")} value={channel}
           onChange={(e) => setChannel(e.target.value as typeof channel)}>
           <option value="wholesale">{tr("scentsx.inv.wholesale", "Wholesale")}</option>
           <option value="retail">{tr("scentsx.inv.retail", "Retail")}</option>
@@ -102,12 +103,12 @@ function ExportProofBox({ salesOrderId, proofs, onDone }: { salesOrderId: string
       <div className="font-semibold">{tr("scentsx.inv.proof", "Export proof")}</div>
       {proofs.map((p) => <div key={p.id} className="text-[#64748B]">{label[p.proof_kind as keyof typeof label] ?? p.proof_kind}{p.document_number ? ` · ${p.document_number}` : ""}{p.crossed_on ? ` · crossed ${p.crossed_on}` : ""}</div>)}
       <div className="flex flex-wrap items-center gap-2">
-        <select className="h-[30px] rounded-sm border border-[#C6D1DC] px-2" aria-label="Proof kind" value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
+        <select className="h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs" aria-label={tr("scentsx.salesorderinvoice.proof_kind", "Proof kind")} value={kind} onChange={(e) => setKind(e.target.value as typeof kind)}>
           {Object.entries(label).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
-        <input className="h-[30px] rounded-sm border border-[#C6D1DC] px-2" placeholder="Document number" aria-label="Document number" value={docNo} onChange={(e) => setDocNo(e.target.value)} />
-        <input type="date" className="h-[30px] rounded-sm border border-[#C6D1DC] px-2" aria-label="Crossed on" value={crossed} onChange={(e) => setCrossed(e.target.value)} />
-        <input type="file" accept="image/*,application/pdf" aria-label="Proof file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <input className="h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs" placeholder={tr("scentsx.salesorderinvoice.document_number", "Document number")} aria-label={tr("scentsx.salesorderinvoice.document_number", "Document number")} value={docNo} onChange={(e) => setDocNo(e.target.value)} />
+        <DatePicker aria-label={tr("scentsx.salesorderinvoice.crossed_on", "Crossed on")} value={crossed} onChange={setCrossed} />
+        <input type="file" accept="image/*,application/pdf" aria-label={tr("scentsx.salesorderinvoice.proof_file", "Proof file")} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
         <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy || !file || !co.data} onClick={() => void save()}>{tr("scentsx.inv.proof_save", "Save proof")}</Button>
       </div>
     </div>

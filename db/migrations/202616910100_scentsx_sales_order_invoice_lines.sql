@@ -10,6 +10,11 @@
 
 BEGIN;
 
+-- CANONICAL-CHECK: sales_order_billing_crosswalk. scentsx.sales_order_invoice_lines is NOT a money ledger and NOT a second
+--   invoice-line table: it holds no amount and no account. It is a crosswalk row per (perfume sales-order line → invoice line)
+--   carrying only the UNITS billed, so a shipped line is invoiced once. The money lives ONLY in the canonical
+--   accounting.invoices / accounting.invoice_lines (written by the existing invoice engine) and their journal entry in
+--   accounting.journal_entries. It does NOT duplicate accounting.invoice_lines (it points at it, 1:1 by invoice_line_id).
 CREATE TABLE IF NOT EXISTS scentsx.sales_order_invoice_lines (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   operating_company_id uuid NOT NULL REFERENCES org.companies(id),

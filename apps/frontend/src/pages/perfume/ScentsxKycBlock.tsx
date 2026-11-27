@@ -15,6 +15,8 @@ import {
   type ScentsxKycKind, type ScentsxKycProfile, type ScentsxTaxForm,
 } from "../../api/scentsx";
 import { VoidReasonModal } from "../../components/accounting/VoidReasonModal";
+import { DatePicker } from "../../components/forms/DatePicker";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { tr } from "./perfumeI18n";
 
 const LABEL: Record<string, string> = {
@@ -27,7 +29,7 @@ const LABEL: Record<string, string> = {
 };
 const label = (k: string) => LABEL[k] ?? k.replace(/_/g, " ");
 const money = (cents: number, cur: string) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: cur });
-const input = "h-[28px] rounded-sm border border-[#C6D1DC] px-2 text-xs";
+const input = "h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs";
 
 type Draft = Partial<ScentsxKycProfile>;
 type FileKey = "passport_file_id" | "visa_file_id" | "ine_file_id" | "constancia_fiscal_file_id" | "sales_tax_permit_file_id" | "proof_of_address_file_id";
@@ -44,8 +46,11 @@ export function ScentsxKycBlock({ kind, partyId, companyId, defaultName }: { kin
   if (!d) return null;
   const p: Draft = { residency: "mexico", entity_kind: "individual", legal_name: defaultName, ...(d.profile ?? {}), ...draft };
   const set = (k: keyof ScentsxKycProfile) => (e: { target: { value: string } }) => setDraft((x) => ({ ...x, [k]: e.target.value }));
-  const field = (k: keyof ScentsxKycProfile, ph: string, w = "w-40", type = "text") => (
-    <input className={`${input} ${w}`} type={type} aria-label={ph} placeholder={ph} value={String(p[k] ?? "")} onChange={set(k)} data-testid={`kyc-${String(k)}`} />
+  const field = (k: keyof ScentsxKycProfile, ph: string, w = "w-40") => (
+    <input className={`${input} ${w}`} aria-label={ph} placeholder={ph} value={String(p[k] ?? "")} onChange={set(k)} data-testid={`kyc-${String(k)}`} />
+  );
+  const dateField = (k: "passport_expires_on" | "visa_expires_on", ph: string) => (
+    <DatePicker aria-label={ph} value={String(p[k] ?? "")} onChange={(v) => setDraft((x) => ({ ...x, [k]: v || null }))} data-testid={`kyc-${k}`} />
   );
   const fileIn = (k: FileKey, ph: string) => (
     <label className="flex items-center gap-1 text-[#64748B]">
@@ -82,20 +87,19 @@ export function ScentsxKycBlock({ kind, partyId, companyId, defaultName }: { kin
   return (
     <div className="mt-2 space-y-1 border-t border-[#E5EAF0] pt-2" data-testid={`scentsx-kyc-${kind}`}>
       <div className="flex items-center justify-between gap-2">
-        <span className={chip} data-testid="scentsx-kyc-status">
-          KYC: {d.status === "complete" ? (d.profile?.reviewed_at ? "complete, reviewed" : "complete — not reviewed yet") : d.status === "none" ? "not started" : `missing ${d.missing.map(label).join(", ")}`}
+        <span className={chip} data-testid="scentsx-kyc-status">{tr("scentsx.kycblock.kyc", "KYC:")}{" "}{d.status === "complete" ? (d.profile?.reviewed_at ? "complete, reviewed" : "complete — not reviewed yet") : d.status === "none" ? "not started" : `missing ${d.missing.map(label).join(", ")}`}
         </span>
         <button type="button" className="underline" onClick={() => setOpen((x) => !x)} data-testid="scentsx-kyc-toggle">{open ? "Close" : d.profile ? "Edit" : "Start"}</button>
       </div>
-      {d.warnings.length ? <div className="text-[#B45309]" data-testid="scentsx-kyc-warnings">Expiring: {d.warnings.map((w) => w.replace(/_expires_/, " on ").replace(/_/g, " ")).join(" · ")}</div> : null}
+      {d.warnings.length ? <div className="text-[#B45309]" data-testid="scentsx-kyc-warnings">{tr("scentsx.kycblock.expiring", "Expiring:")}{" "}{d.warnings.map((w) => w.replace(/_expires_/, " on ").replace(/_/g, " ")).join(" · ")}</div> : null}
       {open ? (
         <div className="space-y-1 rounded-[3px] bg-[#F8FAFC] p-2">
           <div className="flex flex-wrap gap-2">
-            <select className={input} aria-label="Residency" value={p.residency} onChange={set("residency")}>
-              <option value="mexico">Mexico</option><option value="us">United States</option><option value="other">Other country</option>
+            <select className={input} aria-label={tr("scentsx.kycblock.residency", "Residency")} value={p.residency} onChange={set("residency")}>
+              <option value="mexico">{tr("scentsx.kycblock.mexico", "Mexico")}</option><option value="us">{tr("scentsx.kycblock.united_states", "United States")}</option><option value="other">{tr("scentsx.kycblock.other_country", "Other country")}</option>
             </select>
-            <select className={input} aria-label="Kind" value={p.entity_kind} onChange={set("entity_kind")}>
-              <option value="individual">Individual</option><option value="business">Business</option>
+            <select className={input} aria-label={tr("scentsx.kycblock.kind", "Kind")} value={p.entity_kind} onChange={set("entity_kind")}>
+              <option value="individual">{tr("scentsx.kycblock.individual", "Individual")}</option><option value="business">{tr("scentsx.kycblock.business", "Business")}</option>
             </select>
             {field("legal_name", "Legal name", "w-56")}{field("dba_name", "DBA / trade name")}
           </div>
@@ -120,21 +124,21 @@ export function ScentsxKycBlock({ kind, partyId, companyId, defaultName }: { kin
           ) : null}
           {!us && ind ? (
             <div className="flex flex-wrap gap-2">
-              {field("passport_number", "Passport number")}{field("passport_country", "Passport country", "w-28")}{field("passport_expires_on", "Passport expiry", "w-36", "date")}{fileIn("passport_file_id", "Passport copy")}
+              {field("passport_number", "Passport number")}{field("passport_country", "Passport country", "w-28")}{dateField("passport_expires_on", "Passport expiry")}{fileIn("passport_file_id", "Passport copy")}
             </div>
           ) : null}
           {mx && ind ? (
             <div className="flex flex-wrap gap-2">
-              <select className={input} aria-label="Visa kind" value={p.visa_kind ?? ""} onChange={set("visa_kind")}>
-                <option value="">Visa kind…</option><option value="border_crossing_card">Border crossing card (laser visa)</option><option value="b1_b2">B1/B2 visa</option><option value="other">Other</option>
+              <select className={input} aria-label={tr("scentsx.kycblock.visa_kind", "Visa kind")} value={p.visa_kind ?? ""} onChange={set("visa_kind")}>
+                <option value="">{tr("scentsx.kycblock.visa_kind", "Visa kind…")}</option><option value="border_crossing_card">{tr("scentsx.kycblock.border_crossing_card_laser_visa", "Border crossing card (laser visa)")}</option><option value="b1_b2">{tr("scentsx.kycblock.b1_b2_visa", "B1/B2 visa")}</option><option value="other">{tr("scentsx.kycblock.other", "Other")}</option>
               </select>
-              {field("visa_number", "Visa / card number")}{field("visa_expires_on", "Visa expiry", "w-36", "date")}{fileIn("visa_file_id", "Visa copy")}
+              {field("visa_number", "Visa / card number")}{dateField("visa_expires_on", "Visa expiry")}{fileIn("visa_file_id", "Visa copy")}
             </div>
           ) : null}
           {field("notes", "Notes", "w-full")}
           <div className="flex gap-2">
-            <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || (!d.profile && !p.legal_name)} onClick={() => void save()} data-testid="scentsx-kyc-save">Save KYC</Button>
-            {d.status === "complete" && !d.profile?.reviewed_at ? <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy} onClick={() => void reviewed()}>Mark reviewed</Button> : null}
+            <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || (!d.profile && !p.legal_name)} onClick={() => void save()} data-testid="scentsx-kyc-save">{tr("scentsx.kycblock.save_kyc", "Save KYC")}</Button>
+            {d.status === "complete" && !d.profile?.reviewed_at ? <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy} onClick={() => void reviewed()}>{tr("scentsx.kycblock.mark_reviewed", "Mark reviewed")}</Button> : null}
           </div>
           {d.profile ? <TaxForms kind={kind} partyId={partyId} forms={d.tax_forms} upload={upload} onDone={() => void q.refetch()} /> : null}
         </div>
@@ -159,20 +163,20 @@ function TaxForms({ kind, partyId, forms, upload, onDone }: { kind: ScentsxKycKi
   };
   return (
     <div className="space-y-1 border-t border-[#E5EAF0] pt-1" data-testid="scentsx-kyc-taxforms">
-      <div className="font-semibold text-[#1F2A44]">IRS tax forms</div>
+      <div className="font-semibold text-[#1F2A44]">{tr("scentsx.kycblock.irs_tax_forms", "IRS tax forms")}</div>
       {forms.filter((f) => !f.voided_at).map((f) => (
         <div key={f.id} className="flex justify-between gap-2">
-          <span>{f.form_kind} · signed {f.signed_on}{f.expires_on ? ` · valid to ${f.expires_on}` : " · no expiry"}</span>
-          <button type="button" className="underline" onClick={() => setVoiding(f)}>Void</button>
+          <span>{f.form_kind}{" "}{tr("scentsx.kycblock.signed", "· signed")}{" "}{f.signed_on}{f.expires_on ? ` · valid to ${f.expires_on}` : " · no expiry"}</span>
+          <button type="button" className="underline" onClick={() => setVoiding(f)}>{tr("scentsx.kycblock.void", "Void")}</button>
         </div>
       ))}
       <div className="flex flex-wrap items-center gap-2">
-        <select className={input} aria-label="Form" value={form} onChange={(e) => setForm(e.target.value as ScentsxTaxForm["form_kind"])}>
-          <option>W-8BEN</option><option>W-8BEN-E</option><option>W-9</option><option>W-8ECI</option>
+        <select className={input} aria-label={tr("scentsx.kycblock.form", "Form")} value={form} onChange={(e) => setForm(e.target.value as ScentsxTaxForm["form_kind"])}>
+          <option value="W-8BEN">{tr("scentsx.kycblock.w_8ben", "W-8BEN")}</option><option value="W-8BEN-E">{tr("scentsx.kycblock.w_8ben_e", "W-8BEN-E")}</option><option value="W-9">{tr("scentsx.kycblock.w_9", "W-9")}</option><option value="W-8ECI">{tr("scentsx.kycblock.w_8eci", "W-8ECI")}</option>
         </select>
-        <input type="date" className={input} aria-label="Signed on" value={signed} onChange={(e) => setSigned(e.target.value)} />
-        <input type="file" accept="image/*,application/pdf" aria-label="Signed form" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-        <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !signed} onClick={() => void add()}>Add form</Button>
+        <DatePicker aria-label={tr("scentsx.kycblock.signed_on", "Signed on")} value={signed} onChange={setSigned} />
+        <input type="file" accept="image/*,application/pdf" aria-label={tr("scentsx.kycblock.signed_form", "Signed form")} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+        <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !signed} onClick={() => void add()}>{tr("scentsx.kycblock.add_form", "Add form")}</Button>
       </div>
       <VoidReasonModal open={voiding != null} title={voiding ? `Void ${voiding.form_kind} signed ${voiding.signed_on}` : ""} minLength={10}
         onClose={() => setVoiding(null)} onSubmit={async (why) => { if (!voiding) return; await voidScentsxTaxForm(voiding.id, why); setVoiding(null); onDone(); }} />
@@ -183,7 +187,8 @@ function TaxForms({ kind, partyId, forms, upload, onDone }: { kind: ScentsxKycKi
 function Pagares({ contactId, pagares, upload, suscriptor, onDone }: { contactId: string; pagares: import("../../api/scentsx").ScentsxPagare[]; upload: (f: File) => Promise<string>; suscriptor: string; onDone: () => void }) {
   const { pushToast } = useToast();
   const [adding, setAdding] = useState(false);
-  const [v, setV] = useState({ amount: "", currency: "USD" as "USD" | "MXN", issued_on: "", due_on: "", place: "Laredo, Texas", suscriptor, aval: "", rate: "" });
+  const [amountCents, setAmountCents] = useState<number | null>(null);
+  const [v, setV] = useState({ currency: "USD" as "USD" | "MXN", issued_on: "", due_on: "", place: "Laredo, Texas", suscriptor, aval: "", rate: "" });
   const [file, setFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [voiding, setVoiding] = useState<import("../../api/scentsx").ScentsxPagare | null>(null);
@@ -191,7 +196,7 @@ function Pagares({ contactId, pagares, upload, suscriptor, onDone }: { contactId
   const [note, setNote] = useState("");
   const held = pagares.filter((x) => x.status === "held");
   const add = async () => {
-    const cents = Math.round(Number(v.amount) * 100);
+    const cents = amountCents ?? 0;
     if (!file || !v.issued_on || !(cents > 0)) return;
     setBusy(true);
     try {
@@ -206,7 +211,7 @@ function Pagares({ contactId, pagares, upload, suscriptor, onDone }: { contactId
   return (
     <div className="space-y-1" data-testid="scentsx-pagares">
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-[#1F2A44]">Pagarés held{held.length ? ` (${held.length})` : ""}</span>
+        <span className="font-semibold text-[#1F2A44]">{tr("scentsx.kycblock.pagare_s_held", "Pagarés held")}{held.length ? ` (${held.length})` : ""}</span>
         <button type="button" className="underline" onClick={() => setAdding((x) => !x)}>{adding ? "Cancel" : "Add pagaré"}</button>
       </div>
       {held.map((x) => (
@@ -214,11 +219,11 @@ function Pagares({ contactId, pagares, upload, suscriptor, onDone }: { contactId
           <span>{x.pagare_no} · {money(x.amount_cents, x.currency)} · {x.issued_on}{x.due_on ? ` → ${x.due_on}` : " (a la vista)"}{x.aval_name ? ` · aval ${x.aval_name}` : ""}</span>
           {returning === x.id ? (
             <span className="flex gap-1">
-              <input className={`${input} w-56`} aria-label="Why returned" placeholder="Why returned (10+ characters)" value={note} onChange={(e) => setNote(e.target.value)} />
-              <Button type="button" className="h-[28px] px-2 text-xs" disabled={note.trim().length < 10} onClick={() => void giveBack(x.id)}>Returned</Button>
+              <input className={`${input} w-56`} aria-label={tr("scentsx.kycblock.why_returned", "Why returned")} placeholder={tr("scentsx.kycblock.why_returned_10_characters", "Why returned (10+ characters)")} value={note} onChange={(e) => setNote(e.target.value)} />
+              <Button type="button" className="h-[28px] px-2 text-xs" disabled={note.trim().length < 10} onClick={() => void giveBack(x.id)}>{tr("scentsx.kycblock.returned", "Returned")}</Button>
             </span>
           ) : (
-            <span className="flex gap-2"><button type="button" className="underline" onClick={() => { setReturning(x.id); setNote(""); }}>Return</button><button type="button" className="underline" onClick={() => setVoiding(x)}>Void</button></span>
+            <span className="flex gap-2"><button type="button" className="underline" onClick={() => { setReturning(x.id); setNote(""); }}>{tr("scentsx.kycblock.return", "Return")}</button><button type="button" className="underline" onClick={() => setVoiding(x)}>{tr("scentsx.kycblock.void", "Void")}</button></span>
           )}
         </div>
       ))}
@@ -226,16 +231,16 @@ function Pagares({ contactId, pagares, upload, suscriptor, onDone }: { contactId
         onClose={() => setVoiding(null)} onSubmit={async (why) => { if (!voiding) return; await closeScentsxPagare(voiding.id, "void", why); setVoiding(null); onDone(); }} />
       {adding ? (
         <div className="flex flex-wrap items-center gap-2 rounded-[3px] bg-[#F8FAFC] p-2">
-          <input className={`${input} w-28`} aria-label="Amount" placeholder="Amount" inputMode="decimal" value={v.amount} onChange={(e) => setV({ ...v, amount: e.target.value })} />
-          <select className={input} aria-label="Currency" value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "USD" | "MXN" })}><option>USD</option><option>MXN</option></select>
-          <input type="date" className={input} aria-label="Issued on" value={v.issued_on} onChange={(e) => setV({ ...v, issued_on: e.target.value })} />
-          <input type="date" className={input} aria-label="Due on (blank = a la vista)" value={v.due_on} onChange={(e) => setV({ ...v, due_on: e.target.value })} />
-          <input className={`${input} w-40`} aria-label="Place of payment" placeholder="Place of payment" value={v.place} onChange={(e) => setV({ ...v, place: e.target.value })} />
-          <input className={`${input} w-44`} aria-label="Suscriptor" placeholder="Suscriptor (who signs)" value={v.suscriptor} onChange={(e) => setV({ ...v, suscriptor: e.target.value })} />
-          <input className={`${input} w-40`} aria-label="Aval" placeholder="Aval (guarantor)" value={v.aval} onChange={(e) => setV({ ...v, aval: e.target.value })} />
-          <input className={`${input} w-24`} aria-label="Moratorio rate %" placeholder="Moratorio %" inputMode="decimal" value={v.rate} onChange={(e) => setV({ ...v, rate: e.target.value })} />
-          <input type="file" accept="image/*,application/pdf" aria-label="Signed pagaré" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-          <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !v.issued_on || !v.amount || !v.suscriptor.trim() || !v.place.trim()} onClick={() => void add()}>Save pagaré</Button>
+          <MoneyInput valueCents={amountCents} onChangeCents={setAmountCents} ariaLabel="Pagaré amount" />
+          <select className={input} aria-label={tr("scentsx.kycblock.currency", "Currency")} value={v.currency} onChange={(e) => setV({ ...v, currency: e.target.value as "USD" | "MXN" })}><option value="USD">{tr("scentsx.kycblock.usd", "USD")}</option><option value="MXN">{tr("scentsx.kycblock.mxn", "MXN")}</option></select>
+          <DatePicker aria-label={tr("scentsx.kycblock.issued_on", "Issued on")} value={v.issued_on} onChange={(x) => setV({ ...v, issued_on: x })} />
+          <DatePicker aria-label={tr("scentsx.kycblock.due_on_blank_a_la_vista", "Due on (blank = a la vista)")} value={v.due_on} onChange={(x) => setV({ ...v, due_on: x })} />
+          <input className={`${input} w-40`} aria-label={tr("scentsx.kycblock.place_of_payment", "Place of payment")} placeholder={tr("scentsx.kycblock.place_of_payment", "Place of payment")} value={v.place} onChange={(e) => setV({ ...v, place: e.target.value })} />
+          <input className={`${input} w-44`} aria-label={tr("scentsx.kycblock.suscriptor", "Suscriptor")} placeholder={tr("scentsx.kycblock.suscriptor_who_signs", "Suscriptor (who signs)")} value={v.suscriptor} onChange={(e) => setV({ ...v, suscriptor: e.target.value })} />
+          <input className={`${input} w-40`} aria-label={tr("scentsx.kycblock.aval", "Aval")} placeholder={tr("scentsx.kycblock.aval_guarantor", "Aval (guarantor)")} value={v.aval} onChange={(e) => setV({ ...v, aval: e.target.value })} />
+          <input className={`${input} w-24`} aria-label={tr("scentsx.kycblock.moratorio_rate", "Moratorio rate %")} placeholder={tr("scentsx.kycblock.moratorio", "Moratorio %")} inputMode="decimal" value={v.rate} onChange={(e) => setV({ ...v, rate: e.target.value })} />
+          <input type="file" accept="image/*,application/pdf" aria-label={tr("scentsx.kycblock.signed_pagare", "Signed pagaré")} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !v.issued_on || !amountCents || !v.suscriptor.trim() || !v.place.trim()} onClick={() => void add()}>{tr("scentsx.kycblock.save_pagare", "Save pagaré")}</Button>
         </div>
       ) : null}
     </div>

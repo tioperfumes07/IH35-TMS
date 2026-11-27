@@ -13,6 +13,7 @@ import { uploadSourceDocumentFromFile } from "../../api/docs";
 import { tr } from "./perfumeI18n";
 import { EntityLink } from "../../components/shared/EntityLink";
 import { ScentsxKycBlock } from "./ScentsxKycBlock";
+import { DatePicker } from "../../components/forms/DatePicker";
 
 const money = (cents: number) => (cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 
@@ -150,8 +151,8 @@ function CustomerCompliance({ contactId, companyId }: { contactId: string; compa
       ) : (
         <div className="flex flex-wrap items-center gap-2" data-testid="scentsx-customer-resale">
           <span className="text-[#64748B]">{tr("scentsx.comp.resale_none", "No resale certificate — Texas sales tax applies.")}</span>
-          <input type="date" className="h-[28px] rounded-sm border border-[#C6D1DC] px-2" aria-label="Signed on" value={signed} onChange={(e) => setSigned(e.target.value)} />
-          <input type="file" accept="image/*,application/pdf" aria-label="Resale certificate file" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+          <DatePicker aria-label={tr("scentsx.customerlink.signed_on", "Signed on")} value={signed} onChange={setSigned} />
+          <input type="file" accept="image/*,application/pdf" aria-label={tr("scentsx.customerlink.resale_certificate_file", "Resale certificate file")} onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
           <Button type="button" className="h-[28px] px-2 text-xs" disabled={busy || !file || !signed || !companyId} onClick={() => void saveCert()}>{tr("scentsx.comp.resale_save", "Save certificate")}</Button>
         </div>
       )}

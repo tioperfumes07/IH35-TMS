@@ -13324,7 +13324,7 @@
       "id",
       "notes",
       "operating_company_id",
-      "purchaser_tax_id",
+      "purchaser_tax_number",
       "signed_on",
       "void_reason",
       "voided_at",

@@ -33,7 +33,7 @@ const FORMS: Array<[ScentsxPaymentForm, string]> = [
   ["bank_draft", "Bank draft"], ["travelers_check", "Traveler's check"], ["personal_check", "Personal check"], ["wire", "Wire"], ["card", "Card"],
 ];
 const INSTRUMENT = new Set<ScentsxPaymentForm>(["cashiers_check", "money_order", "bank_draft", "travelers_check"]);
-const inputCls = "h-[30px] rounded-sm border border-[#C6D1DC] px-2";
+const inputCls = "h-10 rounded-sm border border-[#C6D1DC] px-2 text-xs";
 
 export function ScentsxCompliancePanel() {
   const { pushToast } = useToast();
@@ -174,7 +174,7 @@ export function ScentsxCompliancePanel() {
           { key: "amount_cents", label: "Amount", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents) },
           { key: "counts_as_cash", label: "Counts as cash", sortable: true, render: (r) => (r.counts_as_cash ? "Yes" : "No") },
           { key: "case_no", label: "Form 8300", sortable: true, render: (r) => r.case_no ?? "—" },
-          { key: "payment_id", label: "Payment", render: (r) => (r.payment_id ? <EntityLink kind="payment" id={r.payment_id} label="Open" /> : "—") },
+          { key: "payment_id", label: "Payment", render: (r) => (r.payment_id ? <EntityLink kind="payment" id={r.payment_id} label={tr("scentsx.compliancepanel.open", "Open")} /> : "—") },
           { key: "actions", label: "", render: (r) => r.voided_at ? `Voided: ${r.void_reason}` : (noteBox(r.id, "suspicious", "Why suspicious") ?? (
             <span className="flex gap-2">
               <button type="button" className="underline" onClick={() => setVoiding(r)}>{tr("scentsx.cash.void", "Void")}</button>
@@ -229,29 +229,29 @@ function ReceiptForm({ payers, companyId, unlogged, onDone }: { payers: Array<{ 
     <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="scentsx-cash-form">
       <div className="text-section-header">{tr("scentsx.cash.log", "Log a cash receipt")}</div>
       <div className="flex flex-wrap items-center gap-2">
-        <select className={inputCls} aria-label="Payer" value={payerId} onChange={(e) => setPayerId(e.target.value)}>
+        <select className={inputCls} aria-label={tr("scentsx.compliancepanel.payer", "Payer")} value={payerId} onChange={(e) => setPayerId(e.target.value)}>
           <option value="">{tr("scentsx.cash.pick_payer", "Payer…")}</option>
           {payers.map((p) => <option key={p.id} value={p.id}>{p.legal_name}{p.identity_complete ? "" : " (identity incomplete)"}</option>)}
         </select>
         <button type="button" className="underline" onClick={() => setNewPayer((v) => !v)}>{tr("scentsx.cash.new_payer", "New payer")}</button>
-        <select className={inputCls} aria-label="Payment form" value={form} onChange={(e) => setForm(e.target.value as ScentsxPaymentForm)}>
+        <select className={inputCls} aria-label={tr("scentsx.compliancepanel.payment_form", "Payment form")} value={form} onChange={(e) => setForm(e.target.value as ScentsxPaymentForm)}>
           {FORMS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
         <MoneyInput valueCents={cents} onChangeCents={setCents} ariaLabel="Amount" />
-        <input type="datetime-local" className={inputCls} aria-label="Received" value={when} onChange={(e) => setWhen(e.target.value)} />
-        <select className={inputCls} aria-label="ScentsX payment" value={paymentId} onChange={(e) => setPaymentId(e.target.value)}>
+        <input type="datetime-local" className={inputCls} aria-label={tr("scentsx.compliancepanel.received", "Received")} value={when} onChange={(e) => setWhen(e.target.value)} />
+        <select className={inputCls} aria-label={tr("scentsx.compliancepanel.scentsx_payment", "ScentsX payment")} value={paymentId} onChange={(e) => setPaymentId(e.target.value)}>
           <option value="">{tr("scentsx.cash.no_payment", "Payment in the books (optional)")}</option>
           {unlogged.map((p) => <option key={p.id} value={p.id}>{p.payment_date} · {money(p.amount_cents)}</option>)}
         </select>
       </div>
       {INSTRUMENT.has(form) ? (
         <div className="flex flex-wrap items-center gap-2">
-          <input className={inputCls} placeholder="Issuer (bank)" aria-label="Issuer" value={issuer} onChange={(e) => setIssuer(e.target.value)} />
-          <input className={inputCls} placeholder="Serial number" aria-label="Serial number" value={serial} onChange={(e) => setSerial(e.target.value)} />
+          <input className={inputCls} placeholder={tr("scentsx.compliancepanel.issuer_bank", "Issuer (bank)")} aria-label={tr("scentsx.compliancepanel.issuer", "Issuer")} value={issuer} onChange={(e) => setIssuer(e.target.value)} />
+          <input className={inputCls} placeholder={tr("scentsx.compliancepanel.serial_number", "Serial number")} aria-label={tr("scentsx.compliancepanel.serial_number", "Serial number")} value={serial} onChange={(e) => setSerial(e.target.value)} />
           <label className="flex items-center gap-1"><input type="checkbox" checked={durable} onChange={(e) => setDurable(e.target.checked)} />{tr("scentsx.cash.durable", "Retail sale of a consumer durable")}</label>
         </div>
       ) : null}
-      {form === "currency_foreign" ? <input className={inputCls} aria-label="Currency" value={ccy} maxLength={3} onChange={(e) => setCcy(e.target.value.toUpperCase())} /> : null}
+      {form === "currency_foreign" ? <input className={inputCls} aria-label={tr("scentsx.compliancepanel.currency", "Currency")} value={ccy} maxLength={3} onChange={(e) => setCcy(e.target.value.toUpperCase())} /> : null}
       {needIdentity ? <div className="font-semibold text-[#B91C1C]" data-testid="scentsx-cash-identity-needed">{tr("scentsx.cash.identity_needed", "Complete the payer's identity first")}: {needIdentity.join(", ")}</div> : null}
       <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy || !payerId || !cents} onClick={() => void save()} data-testid="scentsx-cash-save">{tr("scentsx.cash.save_receipt", "Log receipt")}</Button>
       {newPayer || (needIdentity && payerId) ? <PayerForm companyId={companyId} payerId={needIdentity ? payerId : null} onDone={(id) => { setPayerId(id); setNewPayer(false); setNeedIdentity(null); onDone(); }} /> : null}
@@ -284,21 +284,21 @@ function PayerForm({ companyId, payerId, onDone }: { companyId: string | null; p
     <div className="space-y-2 border-t border-[#E5EAF0] pt-2" data-testid="scentsx-payer-form">
       <div className="font-semibold">{payerId ? tr("scentsx.cash.complete_identity", "Complete payer identity (Form 8300)") : tr("scentsx.cash.new_payer", "New payer")}</div>
       <div className="flex flex-wrap items-center gap-2">
-        <select className={inputCls} aria-label="Payer kind" value={p.payer_kind} onChange={(e) => setP((x) => ({ ...x, payer_kind: e.target.value as "individual" | "business" }))}>
-          <option value="individual">Individual</option><option value="business">Business</option>
+        <select className={inputCls} aria-label={tr("scentsx.compliancepanel.payer_kind", "Payer kind")} value={p.payer_kind} onChange={(e) => setP((x) => ({ ...x, payer_kind: e.target.value as "individual" | "business" }))}>
+          <option value="individual">{tr("scentsx.compliancepanel.individual", "Individual")}</option><option value="business">{tr("scentsx.compliancepanel.business", "Business")}</option>
         </select>
         {field("legal_name", "Legal name")}{field("address_line", "Street address")}{field("city", "City")}{field("state_region", "State")}
         {field("postal_code", "ZIP")}{field("country", "Country")}{field("occupation", p.payer_kind === "business" ? "Nature of business" : "Occupation (specific)")}
         {p.payer_kind === "individual" ? field("date_of_birth", "Date of birth", "date") : null}
-        <select className={inputCls} aria-label="Tax ID kind" value={p.tin_kind ?? ""} onChange={(e) => setP((x) => ({ ...x, tin_kind: (e.target.value || null) as ScentsxPayerInput["tin_kind"] }))}>
-          <option value="">Tax ID…</option><option value="ssn">SSN</option><option value="itin">ITIN</option><option value="ein">EIN</option><option value="foreign_none">Foreign, none</option>
+        <select className={inputCls} aria-label={tr("scentsx.compliancepanel.tax_id_kind", "Tax ID kind")} value={p.tin_kind ?? ""} onChange={(e) => setP((x) => ({ ...x, tin_kind: (e.target.value || null) as ScentsxPayerInput["tin_kind"] }))}>
+          <option value="">{tr("scentsx.compliancepanel.tax_id", "Tax ID…")}</option><option value="ssn">{tr("scentsx.compliancepanel.ssn", "SSN")}</option><option value="itin">{tr("scentsx.compliancepanel.itin", "ITIN")}</option><option value="ein">{tr("scentsx.compliancepanel.ein", "EIN")}</option><option value="foreign_none">{tr("scentsx.compliancepanel.foreign_none", "Foreign, none")}</option>
         </select>
         {p.tin_kind && p.tin_kind !== "foreign_none" ? field("tin_last4", "Tax ID last 4") : null}
         {p.payer_kind === "individual" ? (
           <>
-            <select className={inputCls} aria-label="ID type" value={p.id_type ?? ""} onChange={(e) => setP((x) => ({ ...x, id_type: (e.target.value || null) as ScentsxPayerInput["id_type"] }))}>
-              <option value="">ID…</option><option value="drivers_license">Driver's license</option><option value="passport">Passport</option>
-              <option value="alien_registration">Alien registration</option><option value="ine_mexico">INE (Mexico)</option><option value="other_government">Other government ID</option>
+            <select className={inputCls} aria-label={tr("scentsx.compliancepanel.id_type", "ID type")} value={p.id_type ?? ""} onChange={(e) => setP((x) => ({ ...x, id_type: (e.target.value || null) as ScentsxPayerInput["id_type"] }))}>
+              <option value="">{tr("scentsx.compliancepanel.id", "ID…")}</option><option value="drivers_license">{tr("scentsx.compliancepanel.driver_s_license", "Driver's license")}</option><option value="passport">{tr("scentsx.compliancepanel.passport", "Passport")}</option>
+              <option value="alien_registration">{tr("scentsx.compliancepanel.alien_registration", "Alien registration")}</option><option value="ine_mexico">{tr("scentsx.compliancepanel.ine_mexico", "INE (Mexico)")}</option><option value="other_government">{tr("scentsx.compliancepanel.other_government_id", "Other government ID")}</option>
             </select>
             {field("id_issuer", "ID issued by")}{field("id_number_last4", "ID number last 4")}
             <label className="flex items-center gap-1">{tr("scentsx.cash.id_copy", "ID copy")}<input type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} /></label>
@@ -356,7 +356,7 @@ function SanctionsBlock() {
           { key: "hits", label: "Listed as", render: (s) => (s.hits ?? []).slice(0, 3).map((h) => `${h.name} (${h.program ?? "—"}, ${Math.round(h.score * 100)}%)`).join(" · ") },
           { key: "actions", label: "", render: (s) => clearing === s.id ? (
             <span className="flex items-center gap-1">
-              <input className={inputCls} autoFocus placeholder="Why it is not them" aria-label="Why it is not them" value={why} onChange={(e) => setWhy(e.target.value)} />
+              <input className={inputCls} autoFocus placeholder={tr("scentsx.compliancepanel.why_it_is_not_them", "Why it is not them")} aria-label={tr("scentsx.compliancepanel.why_it_is_not_them", "Why it is not them")} value={why} onChange={(e) => setWhy(e.target.value)} />
               <Button type="button" className="h-[28px] px-2 text-xs" disabled={why.trim().length < 10} onClick={() => void decide(s.id, false)}>{tr("scentsx.ofac.clear", "Not them — clear")}</Button>
               <button type="button" className="underline" onClick={() => setClearing(null)}>{tr("scentsx.cash.cancel", "Cancel")}</button>
             </span>
@@ -380,20 +380,21 @@ const KYC_LABEL: Record<string, string> = { kyc_profile: "no profile", phone_or_
 function KycDeskBlock({ companyId }: { companyId: string | null }) {
   const q = useQuery({ queryKey: ["scentsx", "kyc-desk"], queryFn: getScentsxKycDesk });
   const [open, setOpen] = useState<string | null>(null);
+  const [only, setOnly] = useState<"all" | "complete" | "incomplete" | "none" | "expiring">("all");
   if (q.isError) return <ListErrorState title={tr("scentsx.kyc.desk_error", "Couldn't load KYC")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
   const d = q.data;
   type Row = ScentsxKycDesk["parties"][number];
   return (
     <div className="space-y-2" data-testid="scentsx-kyc-desk">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <KpiCard label={tr("scentsx.kyc.complete", "KYC complete")} number={String(d?.counts.complete ?? "—")} />
-        <KpiCard label={tr("scentsx.kyc.incomplete", "KYC missing documents")} number={String(d?.counts.incomplete ?? "—")} />
-        <KpiCard label={tr("scentsx.kyc.none", "No KYC yet")} number={String(d?.counts.none ?? "—")} />
-        <KpiCard label={tr("scentsx.kyc.expiring", "Documents expiring ≤ 60 days")} number={String(d?.counts.expiring ?? "—")} />
+        <KpiCard label={tr("scentsx.kyc.complete", "KYC complete")} number={String(d?.counts.complete ?? "—")} onClick={() => setOnly(only === "complete" ? "all" : "complete")} />
+        <KpiCard label={tr("scentsx.kyc.incomplete", "KYC missing documents")} number={String(d?.counts.incomplete ?? "—")} onClick={() => setOnly(only === "incomplete" ? "all" : "incomplete")} />
+        <KpiCard label={tr("scentsx.kyc.none", "No KYC yet")} number={String(d?.counts.none ?? "—")} onClick={() => setOnly(only === "none" ? "all" : "none")} />
+        <KpiCard label={tr("scentsx.kyc.expiring", "Documents expiring ≤ 60 days")} number={String(d?.counts.expiring ?? "—")} onClick={() => setOnly(only === "expiring" ? "all" : "expiring")} />
       </div>
       <ParityTable<Row>
         title={tr("scentsx.kyc.title", "Customers & vendors — KYC and tax forms")}
-        rows={d?.parties ?? []}
+        rows={(d?.parties ?? []).filter((r) => only === "all" || (only === "expiring" ? r.warnings.length > 0 : r.status === only))}
         rowKey={(r) => `${r.kind}:${r.party_id}`}
         loading={q.isLoading}
         storageKey="scentsx-kyc-desk-v1"

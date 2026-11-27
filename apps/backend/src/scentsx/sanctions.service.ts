@@ -215,12 +215,12 @@ export async function rescreenAll(c: Q, uid: string | null) {
 
 // ---- Texas resale certificates + export proof ---------------------------------------------------------------------------
 
-export async function addResaleCertificate(c: Q, uid: string, input: { contact_company_id: string; customer_id?: string | null; form_code?: "01-339" | "out_of_state" | "mexico_export_buyer"; purchaser_tax_id?: string | null; signed_on: string; file_id: string; notes?: string | null }) {
+export async function addResaleCertificate(c: Q, uid: string, input: { contact_company_id: string; customer_id?: string | null; form_code?: "01-339" | "out_of_state" | "mexico_export_buyer"; purchaser_tax_number?: string | null; signed_on: string; file_id: string; notes?: string | null }) {
   const co = await scopeToScentsx(c);
   const r = await c.query<{ id: string }>(
-    `INSERT INTO scentsx.resale_certificates (operating_company_id, contact_company_id, customer_id, form_code, purchaser_tax_id, signed_on, file_id, notes, created_by)
+    `INSERT INTO scentsx.resale_certificates (operating_company_id, contact_company_id, customer_id, form_code, purchaser_tax_number, signed_on, file_id, notes, created_by)
      VALUES ($1::uuid, $2::uuid, $3::uuid, $4, $5, $6::date, $7::uuid, $8, $9::uuid) RETURNING id::text`,
-    [co, input.contact_company_id, input.customer_id ?? null, input.form_code ?? "01-339", input.purchaser_tax_id ?? null, input.signed_on, input.file_id, input.notes ?? null, uid]
+    [co, input.contact_company_id, input.customer_id ?? null, input.form_code ?? "01-339", input.purchaser_tax_number ?? null, input.signed_on, input.file_id, input.notes ?? null, uid]
   );
   return { id: r.rows[0]!.id };
 }

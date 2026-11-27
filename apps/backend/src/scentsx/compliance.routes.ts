@@ -165,7 +165,7 @@ export async function registerScentsxComplianceRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = z.object({
       contact_company_id: uuid, customer_id: uuid.nullish(), form_code: z.enum(["01-339", "out_of_state", "mexico_export_buyer"]).optional(),
-      purchaser_tax_id: z.string().trim().max(40).nullish(), signed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), file_id: uuid, notes: z.string().max(2000).nullish(),
+      purchaser_tax_number: z.string().trim().max(40).nullish(), signed_on: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), file_id: uuid, notes: z.string().max(2000).nullish(),
     }).safeParse(req.body ?? {});
     if (!b.success) return reply.code(400).send({ error: "invalid_body", issues: b.error.issues });
     try { return await withCurrentUser(uid, async (c) => ({ certificate: await addResaleCertificate(c, uid, b.data) })); } catch (e) { return fail(reply, e); }
