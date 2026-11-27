@@ -14,8 +14,8 @@ import { scopeToScentsx, ScentsxLinkInvalid } from "./links.service.js";
 
 type Q = Pick<pg.PoolClient, "query">;
 
-export type SalesRow = { key: string; name: string; invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null; pct_of_sales: number };
-export type SalesReport = { from: string; to: string; by: "customer" | "item"; rows: SalesRow[]; total: Omit<SalesRow, "key" | "name" | "pct_of_sales"> };
+export type SalesRow = { key: string; name: string; last_sale_date: string | null; invoices: number; units: number; sales_cents: number; cost_cents: number | null; margin_cents: number | null; pct_of_sales: number };
+export type SalesReport = { from: string; to: string; by: "customer" | "item"; rows: SalesRow[]; total: Omit<SalesRow, "key" | "name" | "pct_of_sales" | "last_sale_date"> };
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -25,9 +25,9 @@ export async function salesReport(c: Q, by: "customer" | "item", from: string, t
   const group = by === "customer"
     ? `coalesce(cu.id::text, 'none') AS key, coalesce(cu.customer_name, '(no customer)') AS name`
     : `coalesce(it.id::text, 'none') AS key, coalesce(it.display_name, it.name, '(not from a sales order)') AS name`;
-  const r = await c.query<{ key: string; name: string; invoices: number; units: string; sales: string; cost: string | null; costed: string }>(
+  const r = await c.query<{ key: string; name: string; last_sale: string | null; invoices: number; units: string; sales: string; cost: string | null; costed: string }>(
     `WITH lines AS (
-       SELECT i.id AS invoice_id, i.customer_id, l.line_total_cents::bigint AS amount,
+       SELECT i.id AS invoice_id, i.customer_id, i.issue_date, l.line_total_cents::bigint AS amount,
               x.qty AS units, sol.item_id, CASE WHEN x.id IS NULL OR sol.cost_cents IS NULL THEN NULL ELSE x.qty * sol.cost_cents::bigint END AS cost
          FROM accounting.invoices i
          JOIN accounting.invoice_lines l ON l.invoice_id = i.id
@@ -39,7 +39,7 @@ export async function salesReport(c: Q, by: "customer" | "item", from: string, t
           AND coalesce(i.is_sample_data, false) = false
           AND i.issue_date BETWEEN $2::date AND $3::date
      )
-     SELECT ${group}, count(DISTINCT lines.invoice_id)::int AS invoices, coalesce(sum(lines.units), 0)::text AS units,
+     SELECT ${group}, max(lines.issue_date)::text AS last_sale, count(DISTINCT lines.invoice_id)::int AS invoices, coalesce(sum(lines.units), 0)::text AS units,
             coalesce(sum(lines.amount), 0)::text AS sales, sum(lines.cost)::text AS cost, count(lines.cost)::text AS costed
        FROM lines
        LEFT JOIN mdata.customers cu ON cu.id = lines.customer_id
@@ -52,7 +52,7 @@ export async function salesReport(c: Q, by: "customer" | "item", from: string, t
     const sales = Number(x.sales);
     const cost = x.cost == null ? null : Number(x.cost);
     return {
-      key: x.key, name: x.name, invoices: x.invoices, units: Number(x.units), sales_cents: sales, cost_cents: cost,
+      key: x.key, name: x.name, last_sale_date: x.last_sale, invoices: x.invoices, units: Number(x.units), sales_cents: sales, cost_cents: cost,
       margin_cents: cost == null ? null : sales - cost, pct_of_sales: total ? Math.round((sales / total) * 10000) / 100 : 0,
     };
   });
