@@ -59,6 +59,9 @@ export async function itemProfile(c: pg.PoolClient, itemId: string) {
   const item = (await c.query(
     `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.model, i.product_type, i.category, i.description, i.family_id,
             i.case_pack, i.min_order_qty, i.weight_g::float8 AS weight_g, i.origin_country, i.hs_code, i.regular_item_id,
+            i.pos_code, i.ticket_description, i.sold_by, i.units_per_pack, i.preferred_vendor_id, i.is_stock_item, i.is_active,
+            i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked,
+            (SELECT COALESCE(NULLIF(btrim(pv.short_name), ''), pv.name) FROM perfume.vendors pv WHERE pv.id = i.preferred_vendor_id) AS preferred_vendor,
             (SELECT r.display_name FROM perfume.items r WHERE r.id = i.regular_item_id) AS regular_name,
             (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family, i.display_name, i.merged_into_id, i.created_at FROM perfume.items i WHERE i.id = $1`, [itemId])).rows[0];
   if (!item) throw new ProfileNotFound();

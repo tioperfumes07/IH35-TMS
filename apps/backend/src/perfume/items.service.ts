@@ -30,9 +30,9 @@ async function event(c: pg.PoolClient, itemId: string, uid: string | null, kind:
 async function liveItem(c: pg.PoolClient, id: string) {
   const r = (await c.query<{ id: string; display_name: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string | null;
     gender: string | null; flags: string[] | null; identity_key: string; model: string | null; product_type: string | null; category: string | null; description: string | null;
-    case_pack: number | null; min_order_qty: number | null; weight_g: string | null; origin_country: string | null; hs_code: string | null }>(
+    case_pack: number | null; min_order_qty: number | null; weight_g: string | null; origin_country: string | null; hs_code: string | null } & ControlRow>(
     `SELECT id, display_name, internal_code, brand, name, size_ml::text, conc, gender, flags, identity_key, model, product_type, category, description,
-            case_pack, min_order_qty, weight_g::text, origin_country, hs_code
+            case_pack, min_order_qty, weight_g::text, origin_country, hs_code, pos_code, ticket_description, sold_by, units_per_pack, preferred_vendor_id, is_stock_item, is_active, special_price_cents::float8 AS special_price_cents, min_price_cents::float8 AS min_price_cents, price_locked
        FROM perfume.items WHERE id = $1 AND merged_into_id IS NULL FOR UPDATE`, [id])).rows[0];
   if (!r) throw new ItemNotFound();
   return r;
@@ -44,7 +44,7 @@ const nameOf = async (c: pg.PoolClient, id: string) => (await c.query<{ display_
 const MINE_KINDS = `('inventory', 'offer')`;
 export const listQuery = z.object({
   q: z.string().trim().max(200).optional(),
-  has: z.enum(["tio", "no_tio", "hk", "no_hk", "upc", "no_upc", "mine"]).optional(),
+  has: z.enum(["tio", "no_tio", "hk", "no_hk", "upc", "no_upc", "mine", "active", "inactive"]).optional(),
   /** Owner 23:23 CT: "SHOW ALL ITEMS OUR AND VENDORS BUT HAVE TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL". Ours = on my
    *  inventory / offer list in use; vendors = on a supplier's or competitor's list in use and not on mine. */
   scope: z.enum(["mine", "vendors", "all"]).default("all"),
@@ -60,7 +60,7 @@ function filters(f: z.infer<typeof listQuery>, args: unknown[]) {
     args.push(`%${q.toLowerCase()}%`); const like = `$${args.length}`;
     args.push(q); const exact = `$${args.length}`;
     args.push(normalizeUpc(q) || null); const u = `$${args.length}`;
-    where.push(`(lower(i.display_name) LIKE ${like} OR lower(i.brand || ' ' || i.name) LIKE ${like} OR i.internal_code = ${exact}
+    where.push(`(lower(i.display_name) LIKE ${like} OR lower(i.brand || ' ' || i.name) LIKE ${like} OR i.internal_code = ${exact} OR upper(i.pos_code) = upper(${exact})
       OR EXISTS (SELECT 1 FROM perfume.item_upcs x WHERE x.item_id = i.id AND x.upc = ${u})
       OR EXISTS (SELECT 1 FROM perfume.item_aliases a WHERE a.item_id = i.id AND a.sku = ${exact}))`);
   }
@@ -70,6 +70,8 @@ function filters(f: z.infer<typeof listQuery>, args: unknown[]) {
   if (f.has === "no_hk") where.push(`NOT ${hk}`);
   if (f.has === "upc") where.push(upc);
   if (f.has === "no_upc") where.push(`NOT ${upc}`);
+  if (f.has === "active") where.push("i.is_active");
+  if (f.has === "inactive") where.push("NOT i.is_active");
   const onMine = `EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
       WHERE r.item_id = i.id AND v.kind IN ${MINE_KINDS} AND l.is_current AND l.voided_at IS NULL)`;
   const onVendor = `EXISTS (SELECT 1 FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
@@ -89,10 +91,13 @@ export async function listItemFile(c: pg.PoolClient, f: z.infer<typeof listQuery
   args.push(f.limit, f.offset);
   const page = (await c.query<{ id: string; display_name: string; brand: string; name: string; size_ml: number | null; conc: string | null; gender: string | null;
     flags: string[] | null; tio_code: string | null; model: string | null; product_type: string | null; category: string | null; description: string | null; family_id: string | null; family: string | null;
-    case_pack: number | null; min_order_qty: number | null; weight_g: number | null; origin_country: string | null; hs_code: string | null }>(
+    case_pack: number | null; min_order_qty: number | null; weight_g: number | null; origin_country: string | null; hs_code: string | null } & ControlRow & { preferred_vendor: string | null }>(
     `SELECT i.id, i.display_name, i.brand, i.name, i.size_ml::float8 AS size_ml, i.conc, i.gender, i.flags, i.internal_code AS tio_code,
             i.model, i.product_type, i.category, i.description, i.family_id,
             i.case_pack, i.min_order_qty, i.weight_g::float8 AS weight_g, i.origin_country, i.hs_code,
+            i.pos_code, i.ticket_description, i.sold_by, i.units_per_pack, i.preferred_vendor_id, i.is_stock_item, i.is_active,
+            i.special_price_cents::float8 AS special_price_cents, i.min_price_cents::float8 AS min_price_cents, i.price_locked,
+            (SELECT COALESCE(NULLIF(btrim(v.short_name), ''), v.name) FROM perfume.vendors v WHERE v.id = i.preferred_vendor_id) AS preferred_vendor,
             (SELECT f.name FROM perfume.item_families f WHERE f.id = i.family_id) AS family
        FROM perfume.items i WHERE ${where} ORDER BY i.display_name, i.id LIMIT $${args.length - 1} OFFSET $${args.length}`, args)).rows;
   if (!page.length) return { total, rows: [] };
@@ -178,9 +183,51 @@ export const itemEditSchema = z.object({
   weight_g: z.number().positive().max(1000000).nullable().optional(),
   origin_country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Country of origin is 2 letters (FR, US, AE …)").nullable().optional(),
   hs_code: z.string().trim().transform((v) => v.replace(/[.\s]/g, "")).pipe(z.string().regex(/^[0-9]{6,10}$/, "HS code is 6 to 10 digits")).nullable().optional(),
+  // CONTROL item fields (migration 202617100100, LEAD L.20): POS code, ticket description, sold by piece / pack, preferred vendor,
+  // stock item, active, special and minimum price, change-price lock.
+  pos_code: z.string().trim().regex(/^[A-Za-z0-9-]{1,30}$/, "POS code is letters, digits or - (up to 30)").nullable().optional(),
+  ticket_description: z.string().trim().max(40, "Ticket description is up to 40 characters").nullable().optional(),
+  sold_by: z.enum(["piece", "pack"]).optional(),
+  units_per_pack: z.number().int().min(2, "A pack has 2 or more units").max(100000).nullable().optional(),
+  preferred_vendor_id: z.string().uuid().nullable().optional(),
+  is_stock_item: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  special_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  min_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  price_locked: z.boolean().optional(),
 });
 const ATTRS = ["model", "product_type", "category", "description"] as const;
 const TRADE = ["case_pack", "min_order_qty", "weight_g", "origin_country", "hs_code"] as const;
+
+/** CONTROL item fields (migration 202617100100). */
+type ControlRow = { pos_code: string | null; ticket_description: string | null; sold_by: "piece" | "pack"; units_per_pack: number | null;
+  preferred_vendor_id: string | null; is_stock_item: boolean; is_active: boolean; special_price_cents: number | null; min_price_cents: number | null; price_locked: boolean };
+const CONTROL = ["pos_code", "ticket_description", "sold_by", "units_per_pack", "preferred_vendor_id", "is_stock_item", "is_active",
+  "special_price_cents", "min_price_cents", "price_locked"] as const;
+type ControlIn = Partial<{ [K in (typeof CONTROL)[number]]: unknown }>;
+/** What the CONTROL fields become after this edit, checked: one live item per POS code, a live vendor, a pack has its units. */
+async function controlTarget(c: pg.PoolClient, id: string | null, cur: ControlRow, x: ControlIn) {
+  const want: ControlRow = { ...cur };
+  for (const k of CONTROL) if (x[k] !== undefined) (want as Record<string, unknown>)[k] = typeof x[k] === "string" ? (x[k] as string).trim() || null : x[k];
+  if (x.sold_by === "piece" && x.units_per_pack === undefined) want.units_per_pack = null; // piece clears the units unless they were typed (then refused below)
+  if (want.sold_by === "pack" && !want.units_per_pack) throw new ItemInvalid("Sold by pack: type the units per pack (2 or more).");
+  if (want.sold_by === "piece" && want.units_per_pack != null) throw new ItemInvalid("Units per pack is only for an item sold by pack.");
+  if (want.pos_code && want.pos_code !== cur.pos_code) {
+    const used = (await c.query<{ display_name: string }>(
+      `SELECT display_name FROM perfume.items WHERE upper(pos_code) = upper($1) AND merged_into_id IS NULL AND id IS DISTINCT FROM $2::uuid LIMIT 1`, [want.pos_code, id])).rows[0];
+    if (used) throw new ItemInvalid(`POS code ${want.pos_code} is already on "${used.display_name}".`);
+  }
+  if (want.preferred_vendor_id && want.preferred_vendor_id !== cur.preferred_vendor_id) {
+    const v = (await c.query(`SELECT 1 FROM perfume.vendors WHERE id = $1 AND archived_at IS NULL`, [want.preferred_vendor_id])).rowCount;
+    if (!v) throw new ItemInvalid("The preferred vendor must be a vendor in the file.");
+  }
+  if (want.special_price_cents != null && want.min_price_cents != null && want.special_price_cents < want.min_price_cents) {
+    throw new ItemInvalid("The special price is below the minimum price.");
+  }
+  return want;
+}
+const CONTROL_DEFAULT: ControlRow = { pos_code: null, ticket_description: null, sold_by: "piece", units_per_pack: null, preferred_vendor_id: null,
+  is_stock_item: true, is_active: true, special_price_cents: null, min_price_cents: null, price_locked: false };
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
  *  keeps matching vendors' lines; when another item already IS that reading, the edit is refused and names it. */
 /** A tester's regular version (migration 202617070100). Only a TESTER takes one; the regular must be a live, non-tester item. One 'attributes' event. */
@@ -245,6 +292,19 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
     await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => tTo[k])]);
     await event(c, id, uid, "attributes", { from: tFrom, to: tTo });
   }
+  // CONTROL fields: checked together (pack ↔ units, POS code unique, vendor live), one 'attributes' event with what changed.
+  if (CONTROL.some((k) => x[k] !== undefined)) {
+    const cur: ControlRow = Object.fromEntries(CONTROL.map((k) => [k, b[k]])) as ControlRow;
+    const want = await controlTarget(c, id, cur, x);
+    const cFrom: Record<string, unknown> = {}, cTo: Record<string, unknown> = {};
+    for (const k of CONTROL) if ((cur[k] ?? null) !== (want[k] ?? null)) { cFrom[k] = cur[k] ?? null; cTo[k] = want[k] ?? null; }
+    if (Object.keys(cTo).length) {
+      const keys = Object.keys(cTo);
+      await c.query(`UPDATE perfume.items SET ${keys.map((k, i) => `${k} = $${i + 2}`).join(", ")}, updated_at = now() WHERE id = $1`, [id, ...keys.map((k) => cTo[k])]);
+      await event(c, id, uid, "attributes", { from: cFrom, to: cTo });
+      invalidateGridCache();
+    }
+  }
   if (x.family_id !== undefined) await setItemFamily(c, uid, id, x.family_id, b.display_name);
   if (x.regular_item_id !== undefined) await setRegularItem(c, uid, id, x.regular_item_id);
   if (x.tio_code !== undefined) {
@@ -290,6 +350,18 @@ export const itemCreateSchema = z.object({
   weight_g: z.number().positive().max(1000000).nullable().optional(),
   origin_country: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "Country of origin is 2 letters (FR, US, AE …)").nullable().optional(),
   hs_code: z.string().trim().transform((v) => v.replace(/[.\s]/g, "")).pipe(z.string().regex(/^[0-9]{6,10}$/, "HS code is 6 to 10 digits")).nullable().optional(),
+  // CONTROL item fields (migration 202617100100, LEAD L.20): POS code, ticket description, sold by piece / pack, preferred vendor,
+  // stock item, active, special and minimum price, change-price lock.
+  pos_code: z.string().trim().regex(/^[A-Za-z0-9-]{1,30}$/, "POS code is letters, digits or - (up to 30)").nullable().optional(),
+  ticket_description: z.string().trim().max(40, "Ticket description is up to 40 characters").nullable().optional(),
+  sold_by: z.enum(["piece", "pack"]).optional(),
+  units_per_pack: z.number().int().min(2, "A pack has 2 or more units").max(100000).nullable().optional(),
+  preferred_vendor_id: z.string().uuid().nullable().optional(),
+  is_stock_item: z.boolean().optional(),
+  is_active: z.boolean().optional(),
+  special_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  min_price_cents: z.number().int().min(0).max(100_000_000).nullable().optional(),
+  price_locked: z.boolean().optional(),
 });
 export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeof itemCreateSchema>) {
   const flags = x.flags ?? [];
@@ -319,6 +391,7 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
         WHERE a.sku = $1 AND i.merged_into_id IS NULL LIMIT 1`, [hk])).rows[0];
     if (had) throw new ItemInvalid(`HK code ${hk} is already on "${had.display_name}" — open that item instead.`);
   }
+  const control = await controlTarget(c, null, CONTROL_DEFAULT, x);
   const attr = (v: string | null | undefined) => v?.trim() || null;
   const ins = await c.query<{ id: string }>(
     `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, internal_code, model, product_type, category, description, created_by)
@@ -332,6 +405,8 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
   if (hk) await addHkCode(c, uid, id, hk);
   const trade = TRADE.filter((k) => x[k] != null);
   if (trade.length) await c.query(`UPDATE perfume.items SET ${trade.map((k, i) => `${k} = $${i + 2}`).join(", ")} WHERE id = $1`, [id, ...trade.map((k) => x[k])]);
+  const ctl = CONTROL.filter((k) => control[k] !== CONTROL_DEFAULT[k]);
+  if (ctl.length) await c.query(`UPDATE perfume.items SET ${ctl.map((k, i) => `${k} = $${i + 2}`).join(", ")} WHERE id = $1`, [id, ...ctl.map((k) => control[k])]);
   invalidateGridCache();
   return { id, display_name: displayNameOf(id2) };
 }
@@ -354,7 +429,7 @@ export async function itemOptions(c: pg.PoolClient) {
  */
 export const itemBulkSchema = z.object({
   ids: z.array(z.string().uuid()).min(1).max(500),
-  set: itemEditSchema.omit({ name: true, tio_code: true, flags: true }),
+  set: itemEditSchema.omit({ name: true, tio_code: true, flags: true, pos_code: true, ticket_description: true }),
   flags_add: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
   flags_remove: z.array(z.enum(["TESTER", "SET", "MINI", "REFILL", "DAMAGED", "UNBOXED"])).max(6).optional(),
 });
