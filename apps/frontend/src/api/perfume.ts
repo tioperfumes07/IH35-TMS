@@ -41,7 +41,12 @@ export type PerfumeRules = {
   competitor_cushion_tiers: Array<{ over_cents: number; cushion_cents: number }>;
   /** I match the competitor's price less this (owner 2026-11-20: "the .25 difference"). */
   match_under_cents?: number;
+  /** Owner 2026-11-27 15:40 CT: % per margin group — my margin, and what a vendor earns on Trading. null / missing = the tab's %. */
+  group_margins?: Partial<Record<PerfumeMarginGroup, number | null>>;
+  group_earn?: Partial<Record<PerfumeMarginGroup, number | null>>;
 };
+export type PerfumeMarginGroup = "new_launch" | "exclusive" | "tester" | "set" | "mini" | "regular";
+export const PERFUME_MARGIN_GROUPS: Array<[PerfumeMarginGroup, string]> = [["regular", "Regular"], ["exclusive", "Exclusive"], ["new_launch", "New launch"], ["tester", "Tester"], ["mini", "Mini"], ["set", "Set"]];
 export type PerfumeGridCol = { key: string; label: string; group: string; kind: "text" | "money" | "pct" | "int"; /** "List 11/25/2026" — the vendor's list in use. */ sub?: string };
 export type PerfumeGridRow = Record<string, string | number | null>;
 export type PerfumeGridView = "buy" | "trade" | "wholesale" | "comp" | "analysis" | "all";
@@ -59,7 +64,7 @@ export type PerfumeGrid = {
   facets?: Record<PerfumeFacetKey, Array<{ value: string; count: number }>>;
   measured_at: string;
 };
-export type PerfumeFacetKey = "category" | "gender" | "brand" | "size" | "vendor";
+export type PerfumeFacetKey = "category" | "gender" | "brand" | "size" | "vendor" | "group";
 export type PerfumeImportRow = {
   sheet?: string | null;
   row_no: number;
@@ -262,10 +267,10 @@ export const searchPerfumeLines = (q: string, gender?: string | null) => apiRequ
 export const setPerfumeInternalCode = (itemId: string, code: string | null) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/items/${itemId}/internal-code`, { method: "PUT", body: { internal_code: code } });
 
-export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean; base?: "mine" | "theirs"; match?: "all" | "matched" | "unmatched"; comps?: string[] }) {
+export function perfumeGridQuery(p: { view: PerfumeGridView; sort?: string; dir?: "asc" | "desc"; q?: string; offset?: number; limit?: number; category?: string[]; gender?: string[]; brand?: string[]; size?: string[]; vendor?: string[]; group?: string[]; target_pct?: number | null; earn_pct?: number | null; mine?: "offer" | "inventory" | "need" | null; carried?: boolean; base?: "mine" | "theirs"; match?: "all" | "matched" | "unmatched"; comps?: string[] }) {
   const s = new URLSearchParams({ view: p.view, dir: p.dir ?? "asc", q: p.q ?? "", offset: String(p.offset ?? 0), limit: String(p.limit ?? 200) });
   if (p.sort) s.set("sort", p.sort);
-  for (const k of ["category", "gender", "brand", "size", "vendor"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
+  for (const k of ["category", "gender", "brand", "size", "vendor", "group"] as const) if (p[k]?.length) s.set(k, p[k]!.join(","));
   if (p.target_pct != null) s.set("target_pct", String(p.target_pct));
   if (p.earn_pct != null) s.set("earn_pct", String(p.earn_pct));
   if (p.mine) s.set("mine", p.mine);
@@ -681,7 +686,8 @@ export type PerfumeVendorProfile = {
 };
 /** CONTROL item fields (migration 202617100100, LEAD L.20). Prices in cents. */
 export type PerfumeItemControl = { pos_code?: string | null; ticket_description?: string | null; sold_by?: "piece" | "pack"; units_per_pack?: number | null;
-  preferred_vendor_id?: string | null; is_stock_item?: boolean; is_active?: boolean; special_price_cents?: number | null; min_price_cents?: number | null; price_locked?: boolean };
+  preferred_vendor_id?: string | null; is_stock_item?: boolean; is_active?: boolean; special_price_cents?: number | null; min_price_cents?: number | null; price_locked?: boolean;
+  /** Margin groups (migration 202617150100). */ is_exclusive?: boolean; is_new_launch?: boolean };
 export type PerfumeItemVendorLine = { id: string; vendor_id: string; vendor: string; kind: PerfumeVendorKind; sku: string | null; upc: string | null; brand: string | null;
   description: string; size_text: string | null; price_cents: number | null; qty: number | null; match_method: string | null; list_date: string };
 export type PerfumeItemProfile = {
