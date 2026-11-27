@@ -57,6 +57,9 @@ describeIntegration("price levels and customer accounts (real Postgres, rolled b
     await db.query(`INSERT INTO perfume.price_list_rows (list_id, row_no, raw, description, price_cents, identity_key, loose_key, item_id, match_method, match_status)
        VALUES ($1, 1, '{}', 'ZZA FILE', 700, 'x', 'x', $2, 'key', 'matched')`, [fl, item2]);
     expect(await levelPriceFor(db as never, co, item2, 1, 900)).toMatchObject({ cents: 840, how: "avg", cost_cents: 700, cost_source: "inventory_file" });
+    // My average cost typed / imported on the desk wins over the file's last cost.
+    await db.query(`INSERT INTO perfume.item_costs (item_id, avg_cost_cents) VALUES ($1, 650)`, [item2]);
+    expect(await levelPriceFor(db as never, co, item2, 1, 900)).toMatchObject({ cents: 780, cost_cents: 650, cost_source: "my_avg_cost" });
 
     // A quote and an order for this customer take the level's price when none is typed.
     const q = await createQuote(db as never, TEST_OWNER_USER_ID, { company_id: co });

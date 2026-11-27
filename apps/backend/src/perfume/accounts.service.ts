@@ -69,29 +69,35 @@ export async function setLevelItem(c: pg.PoolClient, uid: string, levelId: strin
 }
 
 /** The item's cost on the level's basis: moving average across my sites (weighted by what is on hand), else none. */
-/** "My average cost" (owner 20:28 CT: "we use avg cost for lists"; 22:50 CT: "right now we are not worried about stock, we need to worry
- *  about having the costs"): the moving average of the stock ledger where the item has stock; until then the average cost on his current
- *  inventory file (the avg cost column he keeps); null when neither has it (the caller then uses the best supplier cost). */
-export async function avgCostOf(c: pg.PoolClient, itemId: string): Promise<{ cents: number; source: "stock" | "inventory_file" } | null> {
+/** "My average cost" (owner 20:28 CT: "we use avg cost for lists"; 22:50 CT: "right now we are not worried about stock, we need to
+ *  worry about having the costs"), in this order — the same costs the price desk shows:
+ *   1. the stock ledger's moving average, where the item is in stock;
+ *   2. my average cost (perfume.item_costs.avg_cost_cents — the desk's "My avg cost");
+ *   3. my last cost on my current inventory file (the desk's "My last cost");
+ *  null when none (the caller then uses the best supplier cost). A file cost under $1.00 is the file's placeholder (e.g. $0.01), not a cost. */
+export async function avgCostOf(c: pg.PoolClient, itemId: string): Promise<{ cents: number; source: "stock" | "my_avg_cost" | "inventory_file" } | null> {
   const r = (await c.query<{ v: string | null }>(
     `SELECT (sum(qty * avg_cost_cents) / nullif(sum(qty), 0))::text AS v FROM perfume.item_stock WHERE item_id = $1 AND qty > 0`, [itemId])).rows[0];
   if (r?.v != null) return { cents: Math.round(Number(r.v)), source: "stock" };
+  const t = (await c.query<{ v: number | null }>(`SELECT avg_cost_cents AS v FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents > 0`, [itemId])).rows[0];
+  if (t?.v != null) return { cents: Number(t.v), source: "my_avg_cost" };
   const f = (await c.query<{ v: string | null }>(
     `SELECT avg(r.price_cents)::text AS v FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
-      WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id = $1 AND r.price_cents > 0`, [itemId])).rows[0];
+      WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id = $1 AND r.price_cents >= 100`, [itemId])).rows[0];
   return f?.v == null ? null : { cents: Math.round(Number(f.v)), source: "inventory_file" };
 }
 
 /** How many items have a cost each way — what the levels can price today. */
 export async function costCoverage(c: pg.PoolClient) {
-  return (await c.query<{ stock: number; inventory_file: number; vendor_lists: number; any_cost: number }>(
+  return (await c.query<{ stock: number; my_avg_cost: number; inventory_file: number; vendor_lists: number; any_cost: number }>(
     `WITH s AS (SELECT DISTINCT item_id FROM perfume.item_stock WHERE qty > 0),
+          t AS (SELECT item_id FROM perfume.item_costs WHERE avg_cost_cents > 0),
           f AS (SELECT DISTINCT r.item_id FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
-                 WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.price_cents > 0),
+                 WHERE v.kind = 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.price_cents >= 100),
           b AS (SELECT DISTINCT r.item_id FROM perfume.price_lists l JOIN perfume.vendors v ON v.id = l.vendor_id JOIN perfume.price_list_rows r ON r.list_id = l.id
                  WHERE v.kind <> 'inventory' AND l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL AND r.price_cents > 0)
-     SELECT (SELECT count(*) FROM s)::int AS stock, (SELECT count(*) FROM f)::int AS inventory_file, (SELECT count(*) FROM b)::int AS vendor_lists,
-            (SELECT count(*) FROM (SELECT item_id FROM s UNION SELECT item_id FROM f UNION SELECT item_id FROM b) u)::int AS any_cost`)).rows[0]!;
+     SELECT (SELECT count(*) FROM s)::int AS stock, (SELECT count(*) FROM t)::int AS my_avg_cost, (SELECT count(*) FROM f)::int AS inventory_file, (SELECT count(*) FROM b)::int AS vendor_lists,
+            (SELECT count(*) FROM (SELECT item_id FROM s UNION SELECT item_id FROM t UNION SELECT item_id FROM f UNION SELECT item_id FROM b) u)::int AS any_cost`)).rows[0]!;
 }
 
 /** A customer's price for an item at a quantity, from their account's level. null = no level, or the level has no rule and no
