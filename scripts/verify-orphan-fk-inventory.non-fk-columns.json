@@ -1,6 +1,11 @@
 {
   "_comment": "443.101 R2 — per-column register of *_id columns that CANNOT take a foreign key, each with its kind and reason. Shrink-only: an entry whose column no longer appears (or gained an FK) fails the guard until removed. Kinds are name-checked (external_id must name an external system, display_label must be a display id, authorization_code must be auth_id, tombstone_id must be merged_*, polymorphic must name a type column present in the same migration). Everything else is a missing FK — add it.",
   "columns": {
+    "202616810100_perfume_lead_events.sql::entity_id": {
+      "kind": "polymorphic",
+      "reason": "Perfume desk activity log: the row it points at is in the table named by entity (company / person / catalog_value / campaign / segment / trade / trade_buyer / contact_upload, CHECK-constrained), so no single FK can hold.",
+      "type_column": "entity"
+    },
     "202614330000_check_engine_expenses_fields_and_registry.sql::source_id": {
       "kind": "polymorphic",
       "reason": "Check-number registry source: the row it points at is in the table named by source_kind (expense / bill payment / ...), so no single FK can hold.",
