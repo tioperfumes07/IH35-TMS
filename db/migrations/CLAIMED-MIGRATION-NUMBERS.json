@@ -1111,7 +1111,8 @@
     "202617050100",
     "202617060100",
     "202617070100",
-    "202617080100"
+    "202617080100",
+    "202617100100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1412,5 +1413,6 @@
   "202617060500": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME price-list events: void + restore history (who, when, why) and the restore button (owner 2026-11-27 08:51 CT)"},
   "202617060100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item trade data: case pack, minimum order, weight, country of origin, HS tariff code (owner 2026-11-27 08:10 / 09:12 CT)"},
   "202617070100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME product types on every item (classifier + backfill + insert trigger), tester -> regular item link, price level tester_pct (owner 2026-11-27 12:03 / 12:04 CT)"},
-  "202617080100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX sales returns: return record + lines (credit memo to 4800 + tax, restock at shipped cost) — CONTROL Returns parity (owner 2026-11-27 13:50 CT)"}
+  "202617080100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX sales returns: return record + lines (credit memo to 4800 + tax, restock at shipped cost) — CONTROL Returns parity (owner 2026-11-27 13:50 CT)"},
+  "202617100100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME CONTROL item fields: POS code, ticket description, sold by pack/piece + units per pack, preferred vendor, stock item, active, special price, minimum price, change-price lock; item_events kind price_override (LEAD L.20, owner 2026-11-27 13:50 / 14:16 CT)"}
 }
