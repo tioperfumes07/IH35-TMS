@@ -174,3 +174,22 @@ export const setScentsxItemAccounts = (itemId: string, b: { inventory_account_id
   apiRequest<{ changed: boolean }>(`/api/v1/scentsx/item-accounts/item/${encodeURIComponent(itemId)}`, { method: "PUT", body: b });
 export const getScentsxItemPostingAccounts = (itemId: string) =>
   apiRequest<{ inventory_account_id: string | null; cogs_account_id: string | null; source: "item" | "category" | "role" }>(`/api/v1/scentsx/item-accounts/item/${encodeURIComponent(itemId)}`);
+
+/* ---- Receivables (owner 2026-11-27 13:50 CT — CONTROL's Aging Balance Report / Customer Account Status / Invoice History) ---- */
+export type ScentsxBuckets = { current: number; b1: number; b2: number; b3: number; total: number };
+export type ScentsxAgingDays = { d1: number; d2: number; d3: number };
+export type ScentsxAgingRow = ScentsxBuckets & { customer_id: string; customer: string; perfume_company_id: string | null; invoices: number; oldest_days: number };
+export type ScentsxInvoicePayment = { payment_id: string; payment_no: string | null; date: string | null; method: string | null; reference: string | null; amount_cents: number;
+  counted: boolean; voided: boolean; unapplied: boolean };
+export type ScentsxArInvoice = { id: string; number: string | null; status: string; issue_date: string; due_date: string | null; days: number; total_cents: number;
+  paid_cents: number; open_cents: number; bucket: "current" | "b1" | "b2" | "b3" | null; payments: ScentsxInvoicePayment[] };
+export type ScentsxArPayment = { id: string; number: string | null; date: string; method: string; reference: string | null; amount_cents: number; applied_cents: number;
+  unapplied_cents: number; voided_at: string | null; void_reason: string | null };
+export type ScentsxCustomerAccount = { as_of: string; days: ScentsxAgingDays; operating_company_id: string;
+  customer: { id: string; name: string; perfume_company_id: string | null; terms_days: number | null; credit_limit_cents: number | null };
+  buckets: ScentsxBuckets; open_invoices: ScentsxArInvoice[]; invoices: ScentsxArInvoice[]; payments: ScentsxArPayment[] };
+const agingQs = (asOf: string | undefined, d: ScentsxAgingDays) => new URLSearchParams({ ...(asOf ? { as_of: asOf } : {}), d1: String(d.d1), d2: String(d.d2), d3: String(d.d3) }).toString();
+export const getScentsxAging = (asOf: string | undefined, d: ScentsxAgingDays) =>
+  apiRequest<{ as_of: string; days: ScentsxAgingDays; totals: ScentsxBuckets; customers: ScentsxAgingRow[] }>(`/api/v1/scentsx/receivables/aging?${agingQs(asOf, d)}`);
+export const getScentsxCustomerAccount = (customerId: string, asOf: string | undefined, d: ScentsxAgingDays) =>
+  apiRequest<ScentsxCustomerAccount>(`/api/v1/scentsx/receivables/customers/${encodeURIComponent(customerId)}?${agingQs(asOf, d)}`);
