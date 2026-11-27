@@ -11,6 +11,7 @@ import { z } from "zod";
 import ExcelJS from "exceljs";
 import { getRules } from "./desk.service.js";
 import { priceFromCost } from "./pricing.js";
+import { levelPriceFor } from "./accounts.service.js";
 
 export const QUOTE_STATUSES = ["draft", "sent", "accepted", "rejected", "expired"] as const;
 export type QuoteStatus = typeof QUOTE_STATUSES[number];
@@ -177,7 +178,7 @@ export async function searchQuoteItems(c: pg.PoolClient, q: string) {
 }
 
 export async function addLine(c: pg.PoolClient, uid: string, quoteId: string, x: z.infer<typeof lineSchema>) {
-  const q = await c.query(`SELECT 1 FROM perfume.quotes WHERE id = $1 AND archived_at IS NULL`, [quoteId]);
+  const q = await c.query<{ company_id: string | null }>(`SELECT company_id FROM perfume.quotes WHERE id = $1 AND archived_at IS NULL`, [quoteId]);
   if (!q.rowCount) throw new QuoteNotFound();
   let description = x.description, upc = x.upc, cost: Awaited<ReturnType<typeof bestCostOf>> = null;
   if (x.item_id) {
@@ -191,6 +192,8 @@ export async function addLine(c: pg.PoolClient, uid: string, quoteId: string, x:
   }
   if (!description) throw new QuoteInvalid("A line needs an item or a description.");
   let price = x.unit_price_cents ?? null;
+  // The customer's price level first (owner 2026-11-26 20:28 CT), then the desk's first wholesale target on the best cost.
+  if (price == null && x.item_id) price = (await levelPriceFor(c, q.rows[0]!.company_id, x.item_id, x.qty, cost?.cents ?? null))?.cents ?? null;
   if (price == null) {
     if (!cost) throw new QuoteInvalid("No supplier cost for this item — type the price.");
     const rules = await getRules(c);
