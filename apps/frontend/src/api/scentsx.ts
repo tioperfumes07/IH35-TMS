@@ -81,3 +81,12 @@ export const markScentsx8300StatementSent = (id: string, sent_on: string) =>
   apiRequest<{ ok: boolean }>(`/api/v1/scentsx/compliance/cases/${encodeURIComponent(id)}/statement-sent`, { method: "POST", body: { sent_on } });
 export const reviewScentsxStructuringAlert = (id: string, note: string) =>
   apiRequest<{ ok: boolean }>(`/api/v1/scentsx/compliance/alerts/${encodeURIComponent(id)}/review`, { method: "POST", body: { note } });
+// SCENTSX B9b — OFAC screening, resale certificates, export proof
+export type ScentsxSanctionsHit = { ent_num: number; name: string; program: string | null; sdn_type: string | null; score: number };
+export type ScentsxScreening = { id: string; party_kind: string; screened_name: string; best_score: number; hits?: ScentsxSanctionsHit[]; result?: string; created_at: string; cleared_at?: string | null; clear_reason?: string | null; confirmed_match_at?: string | null };
+export type ScentsxSanctionsDesk = { list: { id: string; source_url: string; published_on: string | null; sdn_rows: number; alt_rows: number; loaded_at: string } | null; open_matches: ScentsxScreening[]; recent: ScentsxScreening[] };
+export const getScentsxSanctions = () => apiRequest<ScentsxSanctionsDesk>("/api/v1/scentsx/compliance/sanctions");
+export const loadScentsxSanctionsList = () =>
+  apiRequest<{ load: { load_id: string; new_load: boolean; names: number }; rescreen: { screened: number; possible_matches: number } }>("/api/v1/scentsx/compliance/sanctions/load", { method: "POST", body: {} });
+export const clearScentsxScreening = (id: string, reason: string) => apiRequest<{ cleared: boolean }>(`/api/v1/scentsx/compliance/sanctions/${encodeURIComponent(id)}/clear`, { method: "POST", body: { reason } });
+export const confirmScentsxMatch = (id: string) => apiRequest<{ confirmed: boolean }>(`/api/v1/scentsx/compliance/sanctions/${encodeURIComponent(id)}/confirm`, { method: "POST", body: {} });

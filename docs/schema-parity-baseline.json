@@ -13204,6 +13204,23 @@
       "void_reason",
       "voided_at"
     ],
+    "scentsx.export_proofs": [
+      "created_at",
+      "created_by",
+      "crossed_on",
+      "document_number",
+      "file_id",
+      "id",
+      "invoice_id",
+      "notes",
+      "operating_company_id",
+      "port",
+      "proof_kind",
+      "sales_order_id",
+      "void_reason",
+      "voided_at",
+      "voided_by"
+    ],
     "scentsx.form_8300_cases": [
       "bsa_confirmation",
       "case_no",
@@ -13225,6 +13242,22 @@
       "total_cash_cents",
       "void_reason"
     ],
+    "scentsx.resale_certificates": [
+      "contact_company_id",
+      "created_at",
+      "created_by",
+      "customer_id",
+      "file_id",
+      "form_code",
+      "id",
+      "notes",
+      "operating_company_id",
+      "purchaser_tax_id",
+      "signed_on",
+      "void_reason",
+      "voided_at",
+      "voided_by"
+    ],
     "scentsx.sales_order_invoice_lines": [
       "created_at",
       "created_by",
@@ -13234,6 +13267,50 @@
       "operating_company_id",
       "qty",
       "so_line_id"
+    ],
+    "scentsx.sanctions_list_entries": [
+      "alt_num",
+      "ent_num",
+      "id",
+      "load_id",
+      "name",
+      "name_norm",
+      "program",
+      "remarks",
+      "sdn_type"
+    ],
+    "scentsx.sanctions_list_loads": [
+      "alt_rows",
+      "content_sha256",
+      "id",
+      "loaded_at",
+      "loaded_by",
+      "published_on",
+      "sdn_rows",
+      "source",
+      "source_url"
+    ],
+    "scentsx.sanctions_screenings": [
+      "best_score",
+      "cash_payer_id",
+      "clear_reason",
+      "cleared_at",
+      "cleared_by",
+      "confirmed_by",
+      "confirmed_match_at",
+      "contact_company_id",
+      "created_at",
+      "created_by",
+      "customer_id",
+      "hits",
+      "id",
+      "list_load_id",
+      "operating_company_id",
+      "party_kind",
+      "result",
+      "screened_name",
+      "threshold",
+      "vendor_id"
     ],
     "scentsx.structuring_alerts": [
       "case_id",
