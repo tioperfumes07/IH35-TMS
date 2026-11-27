@@ -1087,11 +1087,14 @@
     "202616810100",
     "202616850100",
     "202616860100",
+    "202616890100",
     "202616820100",
     "202616820200",
     "202616830100",
     "202616840100",
-    "202616880100"
+    "202616880100",
+    "202616900100",
+    "202616910100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1265,6 +1268,7 @@
   "202616810100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME lead history: perfume.lead_events append-only who/when for contacts, catalogs, campaigns, segments, trades (fully-wired item g, owner 2026-11-26 18:13 CT)"},
   "202616850100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME inventory ledger (ScentsX): stock sites kind/own, lots (FIFO layers), append-only stock moves with FIFO and moving-average cost, transfers, cycle counts with second-person approval, PO receive into a site, SO ship from a site, price levels — owner 2026-11-26 20:21 CT (D2/D6/D7/D8 answered)"},
   "202616860100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME price levels + customer accounts (ScentsX): perfume.price_levels / price_level_items (Retail, Wholesale, Distributor, Export Mexico — owner 20:28 CT), perfume.customer_accounts (type, terms, limit, hold) and perfume.credit_applications with owner approval, append-only account history — owner 2026-11-26 20:21 CT"},
+  "202616890100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX company facts the owner gave 2026-11-26 21:24 CT: EIN 51-0538798, fiscal year ends 12-31, formed 04/01/2005 — org.companies.tax_id plus two nullable columns fiscal_year_end (MM-DD) and formed_on"},
   "202616750100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
@@ -1279,5 +1283,7 @@
   "202616820200": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B1: org.companies row SCENTSX (ScentsX LLC, short name TIO Perfumes, company_type distributor) — owner 2026-11-26 20:13 / 20:16 CT"},
   "202616830100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B2: ScentsX native chart of accounts (catalogs.accounts, goods-trading chart, zero balances) + account role bindings + first accounting periods — owner 2026-11-26 20:16 / 20:18 CT"},
   "202616840100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B3: goods posting source types + perfume <-> accounting link columns + the two database walls (perfume links only on SCENTSX rows) — owner 2026-11-26 20:16 CT"},
-  "202616880100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B3b: goods posting roles (inventory, in transit, goods received not billed, COGS, shrink, write-down, opening balance equity) bound for SCENTSX + the ScentsX stock-move poster flag — owner 2026-11-26 20:16 CT"}
+  "202616880100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B3b: goods posting roles (inventory, in transit, goods received not billed, COGS, shrink, write-down, opening balance equity) bound for SCENTSX + the ScentsX stock-move poster flag — owner 2026-11-26 20:16 CT"},
+  "202616900100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "PERFUME B5 + B8 (ScentsX): quarantine sites (stock that cannot be sold or shipped), stock write-offs (damaged / expired / counterfeit; over $500 a second person posts), PO approval (owner-set amount in perfume.settings; a PO at or above it is received only once approved) — owner 2026-11-26 20:21 CT approvals, 21:24 CT create the engines and complete"},
+  "202616910100": {"claimed_at": "2026-11-26", "claimed_by": "lead", "purpose": "SCENTSX B3c: invoice a shipped TIO Perfumes sales order in ScentsX's books — scentsx.sales_order_invoice_lines (sales order line <-> invoice line, qty) so partial shipments invoice exactly once — owner 2026-11-26 21:37 CT"}
 }

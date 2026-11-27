@@ -9,7 +9,7 @@ import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
 import { deskAllowed } from "../perfume/desk.routes.js";
 import {
-  createLink, listDocumentLinks, listLinks, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
+  createLink, listDocumentLinks, listLinks, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
 } from "./links.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -36,6 +36,11 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
   app.get("/api/v1/scentsx/company", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     try { return await withCurrentUser(uid, async (c) => ({ company: await scentsxSummary(c) })); } catch (e) { return fail(reply, e); }
+  });
+
+  app.get("/api/v1/scentsx/accounts", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    try { return await withCurrentUser(uid, async (c) => ({ accounts: await scentsxChart(c) })); } catch (e) { return fail(reply, e); }
   });
 
   for (const kind of ["customer", "vendor"] as LinkKind[]) {
