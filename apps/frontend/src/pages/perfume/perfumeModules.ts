@@ -28,7 +28,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   // Owner 2026-11-26 20:21 CT: "multiple inventories warehouses retail locations" — the ScentsX stock ledger.
   { id: "inventory", label: "Inventory", Icon: Boxes, tabs: ["stock", "reorder", "moves", "transfers", "counts", "writeoffs", "valuation", "sites"] },
   // LEAD ROUND L.20 (owner 2026-11-27 13:50 CT "bring what we need from CONTROL"): CONTROL's inquiry screens and reports.
-  { id: "reports", label: "Inquiry & reports", Icon: FileSearch, tabs: ["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport"] },
+  { id: "reports", label: "Inquiry & reports", Icon: FileSearch, tabs: ["iteminquiry", "salesinquiry", "pricebook", "invstatus", "famreport", "vendortiers"] },
   // Owner 2026-11-26 20:13 CT "Own company, same engine": ScentsX LLC's own books (chart, roles, balances).
   { id: "books", label: "Books", Icon: Landmark, tabs: ["books"] },
 ];
