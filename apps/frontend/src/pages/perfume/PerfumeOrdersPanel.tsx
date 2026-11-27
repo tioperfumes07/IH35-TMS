@@ -215,7 +215,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         <span data-testid="perfume-order-total">{money(total, o.currency)}</span>
       </div>
       {skipped.length ? (
-        <div className="rounded-sm border border-[#E8C48A] bg-[#FFF8EB] p-2 text-xs" data-testid="perfume-order-skipped">
+        <div className="border-l-4 border-[#E8C48A] bg-[#FFF8EB] p-2 text-xs" data-testid="perfume-order-skipped">
           {tr("perfume.orders.skipped", "Not bought — pick these by hand on a purchase order:")} {skipped.map((s) => `#${s.line_no} ${s.description} (${s.reason})`).join("; ")}
         </div>
       ) : null}

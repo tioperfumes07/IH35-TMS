@@ -128,7 +128,7 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
         <KpiCard label={tr("perfume.profiles.kpi_pos", "Open purchase orders")} number={p.po_open.toLocaleString("en-US")} to="/perfume?tab=purchases" />
         <KpiCard label={tr("perfume.profiles.kpi_spend", "Bought (POs not cancelled)")} number={money(p.po_total_cents)} to="/perfume?tab=purchases" />
       </div>
-      <div className="rounded-sm border border-[#E8EDF2] p-2 text-xs" data-testid="perfume-vendor-company">
+      <div className="border-t border-[#E8EDF2] pt-2 text-xs" data-testid="perfume-vendor-company">
         <div className="text-section-header mb-1">{tr("perfume.profiles.company", "Company in Contacts")}</div>
         {c ? (
           <div className="flex flex-wrap items-center gap-3">
