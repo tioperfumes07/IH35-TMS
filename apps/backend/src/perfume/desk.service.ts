@@ -1736,20 +1736,25 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
   // Owner 2026-11-14: "in purchase compare vendors i need … my last cost, date, quantity purchased, current inventory,
   // qty sold … the last price i purchased is important because prices change weekly". Stock comes from my inventory
   // file, else the quantities on my offer list ("you uploaded my price list and quantities").
-  if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty" : "Inv qty (my list)", group: "Mine", kind: "int" });
-  // One stock column per location of my inventory, "number · name" from the locations register.
-  for (const code of locCodes) {
-    const nm = locName.get(code);
-    mineCols.push({ key: `loc:${code}`, label: `Qty ${code}${nm && nm !== code ? ` · ${nm}` : ""}`, group: "Mine", kind: "int" });
-  }
+  // Owner 2026-11-27 15:40 CT (Purchase · compare vendors): "i need first my last purchase date, qty, qty sold, and my current
+  // inventory. i need my avg cost, last cost" — and 15:42 CT "laredo warehouse stock is 008 warehouse": these lead the Mine group,
+  // the Laredo warehouse (008) first among the stock columns, then the total and every other site.
   mineCols.push(
-    { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
-    { key: "my_avg_cost", label: "My avg cost", group: "Mine", kind: "money" },
-    { key: "low_buy_price", label: "Lowest supplier price", group: "Mine", kind: "money" },
-    { key: "low_buy_vendor", label: "Lowest supplier", group: "Mine", kind: "text" },
-    { key: "my_purchase_date", label: "Purchase date", group: "Mine", kind: "text" },
+    { key: "my_purchase_date", label: "Last purchase date", group: "Mine", kind: "text" },
     { key: "my_qty_purchased", label: "Qty purchased", group: "Mine", kind: "int" },
     { key: "my_qty_sold", label: "Qty sold", group: "Mine", kind: "int" },
+  );
+  const LAREDO = "008";
+  const locLabel = (code: string) => { const nm = locName.get(code); return `Qty ${code}${nm && nm !== code ? ` · ${nm}` : ""}`; };
+  if (locCodes.includes(LAREDO)) mineCols.push({ key: `loc:${LAREDO}`, label: locLabel(LAREDO), group: "Mine", kind: "int" });
+  if (hasInv || hasOffer) mineCols.push({ key: "my_qty", label: hasInv ? "Inv qty (all sites)" : "Inv qty (my list)", group: "Mine", kind: "int" });
+  // One stock column per other location of my inventory, "number · name" from the locations register.
+  for (const code of locCodes) if (code !== LAREDO) mineCols.push({ key: `loc:${code}`, label: locLabel(code), group: "Mine", kind: "int" });
+  mineCols.push(
+    { key: "my_avg_cost", label: "My avg cost", group: "Mine", kind: "money" },
+    { key: "my_last_cost", label: "My last cost", group: "Mine", kind: "money" },
+    { key: "low_buy_price", label: "Lowest supplier price", group: "Mine", kind: "money" },
+    { key: "low_buy_vendor", label: "Lowest supplier", group: "Mine", kind: "text" },
   );
   if (hasOffer) mineCols.push(
     { key: "my_offer_desc", label: "My description", group: "Mine", kind: "text" },
