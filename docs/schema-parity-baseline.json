@@ -12903,6 +12903,40 @@
       "unit_id",
       "updated_at"
     ],
+    "scentsx.customer_links": [
+      "contact_company_id",
+      "created_at",
+      "created_by",
+      "customer_id",
+      "id",
+      "operating_company_id",
+      "void_reason",
+      "voided_at"
+    ],
+    "scentsx.document_links": [
+      "bill_id",
+      "created_at",
+      "created_by",
+      "id",
+      "invoice_id",
+      "journal_entry_id",
+      "operating_company_id",
+      "purchase_order_id",
+      "quote_id",
+      "sales_order_id",
+      "void_reason",
+      "voided_at"
+    ],
+    "scentsx.vendor_links": [
+      "created_at",
+      "created_by",
+      "id",
+      "operating_company_id",
+      "perfume_vendor_id",
+      "vendor_id",
+      "void_reason",
+      "voided_at"
+    ],
     "search.universal_index": [
       "display_text",
       "entity_type",

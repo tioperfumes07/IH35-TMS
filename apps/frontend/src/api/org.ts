@@ -1,6 +1,6 @@
 import { apiRequest } from "./client";
 
-export type CompanyType = "asset_holder" | "operating_carrier";
+export type CompanyType = "asset_holder" | "operating_carrier" | "distributor";
 
 export type MyCompany = {
   id: string;
