@@ -20,8 +20,10 @@ import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
   listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs, addPerfumeCatalogValue, createPerfumeItem, getPerfumeItemOptions,
   type PerfumeItemControl, type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
+  type PerfumeItemFilters,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { PerfumeItemFilterBar } from "./PerfumeItemFilters";
 import { FamilySelect } from "./PerfumeFamiliesPanel";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 import { ItemControlFields, VendorSelect } from "./PerfumeItemControlFields";
@@ -99,13 +101,14 @@ export function PerfumeItemFilePanel() {
   // Owner 23:23 CT: "TOGGLE ONLY OUR ITEMS AND THEN ONLY VENDORS OR ALL" — our stock items first.
   const [scope, setScope] = useState<PerfumeItemScope>("mine");
   const [offset, setOffset] = useState(0);
+  const [filters, setFilters] = useState<PerfumeItemFilters>({});
   // Owner 2026-11-27 07:22 CT: "in items list should have multiple selector as well to edit in mass and bulk".
   const [picked, setPicked] = useState<string[]>([]);
   // Owner 2026-11-27 13:41 CT: "i click on an item and it does not take me to the profile" — every item here opens its profile (Items tab),
   // which carries the same editor plus barcodes, vendors' lines, quotes, orders, sites, accounts and history.
   useEffect(() => { if (openId) open("items", openId); }, [openId, open]);
-  useEffect(() => { setPicked([]); }, [q, has, scope, offset]);
-  const list = useQuery({ queryKey: ["perfume", "item-file", q, has, scope, offset], queryFn: () => listPerfumeItemFile({ q, has, scope, limit: PAGE, offset }) });
+  useEffect(() => { setPicked([]); }, [q, has, scope, offset, filters]);
+  const list = useQuery({ queryKey: ["perfume", "item-file", q, has, scope, offset, filters], queryFn: () => listPerfumeItemFile({ q, has, scope, limit: PAGE, offset, filters }) });
   const { pushToast } = useToast();
   if (list.isError) return <ListErrorState title={tr("perfume.itemfile.error", "Couldn't load the item file")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
   const c = list.data?.counts;
@@ -146,8 +149,9 @@ export function PerfumeItemFilePanel() {
             <option value="inactive">{tr("perfume.itemfile.only_inactive", "Inactive items")}</option>
           </select>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" data-testid="perfume-itemfile-xlsx"
-            onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has, scope }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
+            onClick={() => void downloadPerfumeFile(perfumeItemFileExportPath({ q, has, scope, filters }), "TIO item file.xlsx").catch(fail(pushToast, "Export failed"))}>{tr("perfume.itemfile.xlsx", "Excel (all matching)")}</Button>
         </div>
+        <PerfumeItemFilterBar value={filters} onChange={(v) => { setFilters(v); setOffset(0); }} />
         <FillCodes onDone={() => void list.refetch()} />
         {picked.length ? <BulkEdit ids={picked} onDone={() => { setPicked([]); void list.refetch(); }} onClear={() => setPicked([])} /> : null}
         <ParityTable<PerfumeItemFileRow>
