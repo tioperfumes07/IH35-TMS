@@ -587,24 +587,11 @@ export async function importList(c: PoolClient, userId: string, body: ImportIn):
     const cur = ix.items.get(l.itemId);
     if (cur && cur.identityKey !== l.identity.key) heals.set(l.itemId, l.identity);
   }
-  const mergedTo = new Map<string, string>();
+  const healed = await healItems(c, heals);
+  const mergedTo = healed.mergedTo;
+  check.items_merged += healed.merged;
+  check.items_renamed += healed.renamed;
   for (const [itemId, id] of heals) {
-    const holder = (await c.query<{ id: string }>(
-      `SELECT id FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL AND id <> $2 LIMIT 1`, [id.key, itemId])).rows[0]?.id;
-    if (holder) {
-      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [itemId, holder]);
-      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
-      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
-      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
-      mergedTo.set(itemId, holder);
-      check.items_merged += 1;
-    } else {
-      await c.query(
-        `UPDATE perfume.items SET brand = $2, name = $3, size_ml = $4, conc = $5, gender = $6, flags = $7, identity_key = $8,
-                loose_key = $9, display_name = $10, updated_at = now() WHERE id = $1`,
-        [itemId, id.brand, id.nameText, id.sizeMl, id.conc, id.gender, id.flags, id.key, looseKey(id), displayNameOf(id)]);
-      check.items_renamed += 1;
-    }
     // A line of this same file that would have created that identity as a NEW item is the healed item instead.
     const dup = newItems.findIndex((n) => n.identity_key === id.key);
     if (dup >= 0) { real.set(newItems[dup].tmp, mergedTo.get(itemId) ?? itemId); newItems.splice(dup, 1); }
@@ -1025,7 +1012,64 @@ export async function bulkReview(c: PoolClient, userId: string, b: BulkAction) {
  * links by itself, and every other line gets fresh suggestions under today's rules. Run after the engine
  * improves or new lists bring new items. The vendor's text and the owner's gender corrections are kept.
  */
+/**
+ * HEAL (import pass 1b, and Rematch since owner 2026-11-26 18:03 CT "CONTINUE"): an engine-made item takes the identity its
+ * lines read today; if another live item already holds that identity, the stale one is MERGED into it (merged_into_id;
+ * UPCs, aliases and rows repointed). Measured 00:05Z: P&C items created before the Euro "TT" tester rule (#29857) still
+ * read "TT ATKINSONS AMBER EMPIRE" with no TESTER flag, so P&C's own tester lines sat in Review against them.
+ */
+export async function healItems(c: PoolClient, heals: Map<string, Identity>): Promise<{ renamed: number; merged: number; mergedTo: Map<string, string> }> {
+  const mergedTo = new Map<string, string>();
+  let renamed = 0, merged = 0;
+  for (const [itemId, id] of heals) {
+    const holder = (await c.query<{ id: string }>(
+      `SELECT id FROM perfume.items WHERE identity_key = $1 AND merged_into_id IS NULL AND id <> $2 LIMIT 1`, [id.key, itemId])).rows[0]?.id;
+    if (holder) {
+      await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.item_upcs SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.item_aliases SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      await c.query(`UPDATE perfume.price_list_rows SET item_id = $2 WHERE item_id = $1`, [itemId, holder]);
+      mergedTo.set(itemId, holder);
+      merged += 1;
+    } else {
+      await c.query(
+        `UPDATE perfume.items SET brand = $2, name = $3, size_ml = $4, conc = $5, gender = $6, flags = $7, identity_key = $8,
+                loose_key = $9, display_name = $10, updated_at = now() WHERE id = $1`,
+        [itemId, id.brand, id.nameText, id.sizeMl, id.conc, id.gender, id.flags, id.key, looseKey(id), displayNameOf(id)]);
+      renamed += 1;
+    }
+  }
+  return { renamed, merged, mergedTo };
+}
+
+/** Rematch's heal: an item only one vendor carries, never confirmed, no internal code, whose every linked line of that
+ *  vendor (by barcode, code or as its new item) reads one same identity today that differs from the item's. */
+async function healStaleItems(c: PoolClient, ix: MatchIndex): Promise<{ renamed: number; merged: number }> {
+  const rows = (await c.query<{ item_id: string; vendor_id: string; method: string | null; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
+    `SELECT r.item_id, l.vendor_id, r.match_method AS method, r.brand, r.description, r.size_text, r.gender_override
+       FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id
+      WHERE l.is_current AND l.voided_at IS NULL AND r.item_id IS NOT NULL
+        AND r.item_id NOT IN (SELECT item_id FROM perfume.item_aliases WHERE method = 'confirmed')
+        AND r.item_id NOT IN (SELECT id FROM perfume.items WHERE internal_code IS NOT NULL)`)).rows;
+  const by = new Map<string, typeof rows>();
+  for (const r of rows) { const a = by.get(r.item_id) ?? []; a.push(r); by.set(r.item_id, a); }
+  const heals = new Map<string, Identity>();
+  for (const [itemId, lines] of by) {
+    if (new Set(lines.map((l) => l.vendor_id)).size !== 1) continue;
+    if (!lines.every((l) => l.method === "upc" || l.method === "sku" || l.method === "new_item")) continue;
+    const cur = ix.items.get(itemId);
+    if (!cur) continue;
+    const ids = lines.map((l) => identify({ description: l.description, brand: l.brand, size: l.size_text, gender: l.gender_override, brandAliases: ix.brandAliases }));
+    const key = ids[0]!.key;
+    if (!ids.every((x) => x.key === key) || key === cur.identityKey || !ids[0]!.brand || !ids[0]!.nameWords.length) continue;
+    heals.set(itemId, ids[0]!);
+  }
+  const h = await healItems(c, heals);
+  return { renamed: h.renamed, merged: h.merged };
+}
+
 export async function rematchReview(c: PoolClient, userId: string | null = null) {
+  const healed = await healStaleItems(c, await loadIndex(c));
   const ix = await loadIndex(c);
   const rows = await c.query<{ id: string; vendor_id: string; vendor_kind: VendorRow["kind"]; upc: string | null; sku: string | null; brand: string | null; description: string; size_text: string | null; gender_override: string | null }>(
     `SELECT r.id, l.vendor_id, v.kind AS vendor_kind, r.upc, r.sku, r.brand, r.description, r.size_text, r.gender_override
@@ -1133,7 +1177,7 @@ export async function rematchReview(c: PoolClient, userId: string | null = null)
     kindClash++;
   }
   const split = await relinkSplitItems(c, ix);
-  return { ...out, kind_clash_to_review: kindClash, ...split };
+  return { ...out, items_renamed: healed.renamed, items_merged: healed.merged, kind_clash_to_review: kindClash, ...split };
 }
 
 /**
