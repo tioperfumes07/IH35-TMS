@@ -25,6 +25,10 @@ beforeEach(() => {
       open_invoices: [inv("i2", "INV-2", "2026-07-30", 120, 30000, 30000, "b3"), inv("i1", "INV-1", "2026-11-27", 0, 10000, 10000, "current")],
       invoices: [inv("i2", "INV-2", "2026-07-30", 120, 30000, 30000, "b3"), inv("i1", "INV-1", "2026-11-27", 0, 10000, 10000, "current")], payments: [] };
     if (path === "/api/v1/scentsx/returns" && !opts?.method) return { returns: [] };
+    if (path.startsWith("/api/v1/accounting/customers/c1/statement")) return { counterparty_id: "c1", counterparty_name: "SHOPEASY LLC", from_date: "2026-01-01", to_date: "2026-11-27",
+      opening_balance_cents: 0, closing_balance_cents: 40000, lines: [
+        { date: "2026-07-30", type: "invoice", reference: "INV-2", description: "Invoice INV-2", debit_cents: 30000, credit_cents: 0, running_balance_cents: 30000, link_kind: "invoice", link_id: "i2" },
+        { date: "2026-11-27", type: "invoice", reference: "INV-1", description: "Invoice INV-1", debit_cents: 10000, credit_cents: 0, running_balance_cents: 40000, link_kind: "invoice", link_id: "i1" }] };
     if (path === "/api/v1/scentsx/returns") return { id: "r1", return_no: "RET-2026-00001", merchandise_cents: 5000, tax_cents: 0, credit_memo_ids: ["cm1"] };
     if (path.startsWith("/api/v1/scentsx/invoices/i2/returnable")) return { invoice: { id: "i2", number: "INV-2", status: "sent", customer_id: "c1", customer: "SHOPEASY LLC", issue_date: "2026-07-30", total_cents: 30000 },
       lines: [{ so_line_id: "l1", line_no: 1, item_id: "it1", description: "GOOD GIRL 80ml", unit_price_cents: 2500, billed: 12, returned: 0, can_return: 12 }], returns: [] };
@@ -66,5 +70,13 @@ describe("receivables", () => {
     fireEvent.click(within(f).getByTestId("perfume-return-save"));
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/scentsx/returns", expect.objectContaining({ invoice_id: "i2", reason: "wrong_item",
       lines: [{ so_line_id: "l1", qty: 2, restock: true, location_code: null }] })]));
+  });
+  it("customer statement: opening balance, the activity with running balance, closing balance", async () => {
+    mount("/perfume?tab=receivables&open=c1");
+    const st = await screen.findByTestId("perfume-ar-statement");
+    await waitFor(() => expect(st.textContent).toContain("Closing balance"));
+    expect(st.textContent).toContain("Opening balance");
+    expect(st.textContent).toContain("Invoice INV-2");
+    expect(st.textContent).toContain("$400.00");
   });
 });

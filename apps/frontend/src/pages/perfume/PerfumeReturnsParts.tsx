@@ -13,6 +13,8 @@ import { DatePicker } from "../../components/forms/DatePicker";
 import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
+import { openPrintableDocument } from "../../lib/openPrintableDocument";
+import { getCustomerStatementOfAccount, type CounterpartyStatementLine } from "../../api/reports";
 import { createScentsxReturn, getScentsxReturnable, listScentsxReturns, type ScentsxReturnable, type ScentsxReturnReason, type ScentsxReturnRow } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, money, SitePicker, usDate } from "./perfumeDocParts";
@@ -112,5 +114,49 @@ export function ReturnsList() {
         { key: "credit", label: "Credit", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.merchandise_cents + r.tax_cents), exportValue: (r) => (r.merchandise_cents + r.tax_cents) / 100 },
       ]}
     />
+  );
+}
+
+/**
+ * CONTROL "Statements" — the customer's statement of account for a date range: opening balance, every invoice, payment and credit
+ * memo with the running balance, closing balance. Read from the books' own statement engine (GET /api/v1/accounting/customers/:id/
+ * statement, the same open-amount math as the aging); Print / PDF opens its printable statement.
+ */
+type StmtRow = { key: string; date: string; reference: string; description: string; debit_cents: number; credit_cents: number; balance_cents: number; bold?: boolean };
+export function CustomerStatement({ companyId, customerId }: { companyId: string; customerId: string }) {
+  const first = () => { const d = new Date(new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" })); return `${d.getFullYear()}-01-01`; };
+  const [from, setFrom] = useState(first());
+  const [to, setTo] = useState(todayCT());
+  const q = useQuery({ queryKey: ["scentsx", "statement", customerId, from, to], enabled: from <= to,
+    queryFn: () => getCustomerStatementOfAccount({ operating_company_id: companyId, customer_id: customerId, from_date: from, to_date: to }) });
+  const s = q.data;
+  const rows: StmtRow[] = s ? [
+    { key: "open", date: s.from_date, reference: "", description: tr("perfume.stmt.opening", "Opening balance"), debit_cents: 0, credit_cents: 0, balance_cents: s.opening_balance_cents, bold: true },
+    ...s.lines.map((l: CounterpartyStatementLine, i: number) => ({ key: `${l.link_id}-${i}`, date: l.date, reference: l.reference, description: l.description, debit_cents: l.debit_cents, credit_cents: l.credit_cents, balance_cents: l.running_balance_cents })),
+    { key: "close", date: s.to_date, reference: "", description: tr("perfume.stmt.closing", "Closing balance"), debit_cents: 0, credit_cents: 0, balance_cents: s.closing_balance_cents, bold: true },
+  ] : [];
+  const print = `/api/v1/accounting/customers/${encodeURIComponent(customerId)}/statement.html?operating_company_id=${encodeURIComponent(companyId)}&from_date=${from}&to_date=${to}`;
+  return (
+    <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] p-3" data-testid="perfume-ar-statement">
+      <div className="flex flex-wrap items-end gap-2 text-xs">
+        <span className="font-semibold text-[#1F2A44]">{tr("perfume.stmt.title", "Statement")}</span>
+        <label>{tr("perfume.stmt.from", "From")} <DatePicker aria-label={tr("perfume.stmt.from", "From")} value={from} onChange={(v) => setFrom(v || first())} /></label>
+        <label>{tr("perfume.stmt.to", "To")} <DatePicker aria-label={tr("perfume.stmt.to", "To")} value={to} onChange={(v) => setTo(v || todayCT())} /></label>
+        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!s} onClick={() => openPrintableDocument(print)} data-testid="perfume-ar-statement-print">{tr("perfume.stmt.print", "Print / PDF")}</Button>
+        {from > to ? <span className="text-[#B91C1C]">{tr("perfume.stmt.order", "From must be on or before To")}</span> : null}
+      </div>
+      {q.isError ? <ListErrorState title={tr("perfume.stmt.error", "Couldn't load the statement")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
+        <ParityTable<StmtRow>
+          rows={rows} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-ar-statement-v1" exportFilename={`TIO statement ${from} to ${to}`} exportExcel emptyText="No statement."
+          columns={[
+            { key: "date", label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+            { className: "text-left", key: "reference", label: "Reference", render: (r) => r.reference || DASH, exportValue: (r) => r.reference },
+            { className: "text-left", key: "description", label: "Description", render: (r) => <span className={r.bold ? "font-semibold" : ""}>{r.description}</span>, exportValue: (r) => r.description },
+            { key: "debit_cents", label: "Charge", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.debit_cents ? money(r.debit_cents) : DASH), exportValue: (r) => r.debit_cents / 100 },
+            { key: "credit_cents", label: "Payment / credit", kind: "number", cellClass: "text-right tabular-nums", render: (r) => (r.credit_cents ? money(r.credit_cents) : DASH), exportValue: (r) => r.credit_cents / 100 },
+            { key: "balance_cents", label: "Balance", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.balance_cents), exportValue: (r) => r.balance_cents / 100 },
+          ]}
+        />)}
+    </div>
   );
 }
