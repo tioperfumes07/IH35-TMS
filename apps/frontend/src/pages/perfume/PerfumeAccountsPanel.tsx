@@ -41,6 +41,10 @@ export function PerfumePriceLevelsPanel() {
     <div className="space-y-3" data-testid="perfume-levels-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.acct.levels", "Price levels")}>
         <div className="text-xs text-[#64748B]">{tr("perfume.acct.levels_help", "A line with no price typed takes the customer's level: its fixed price for the quantity, else its % on the cost. A level with no % only uses its fixed prices.")}</div>
+        {levels.data?.costs ? (
+          <div className="text-xs" data-testid="perfume-level-costs">
+            {`${tr("perfume.acct.costs", "Items with a cost")}: ${levels.data.costs.any_cost.toLocaleString("en-US")} — ${tr("perfume.acct.costs_file", "my inventory file (average cost)")} ${levels.data.costs.inventory_file.toLocaleString("en-US")} · ${tr("perfume.acct.costs_vendor", "supplier lists")} ${levels.data.costs.vendor_lists.toLocaleString("en-US")} · ${tr("perfume.acct.costs_stock", "in stock")} ${levels.data.costs.stock.toLocaleString("en-US")}. ${tr("perfume.acct.costs_rule", "My average cost = stock average when in stock, else my inventory file's cost, else the best supplier cost.")}`}
+          </div>) : null}
         <ParityTable<PerfumePriceLevel>
           rows={rows} rowKey={(l) => `${l.id}-${l.pct}-${l.method}-${l.cost_basis}-${l.floor_pct}`} loading={levels.isLoading} storageKey="perfume-levels-v1" exportFilename="TIO price levels" exportExcel
           emptyText="No price levels." onRowClick={(l) => setSelected(l.id)}

@@ -64,7 +64,7 @@ describeIntegration("ScentsX quarantine, write-offs, valuation, PO approval (rea
     expect((await valuation(db as never, "2000-01-01")).rows.filter((r) => r.item_id === it1)).toEqual([]);
   });
 
-  it("PO approval: at or over the owner's amount a PO is received only once approved; a later change takes the approval off", async () => {
+  it("PO approval: over the owner's amount a PO is received only once approved; a later change takes the approval off", async () => {
     const it2 = await item("PO");
     const v = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZW Vendor', 'buy') RETURNING id`)).rows[0].id;
     const po = await createPurchaseOrder(db as never, TEST_OWNER_USER_ID, { vendor_id: v, location_code: "ZQW", terms: null, notes: null } as never);
@@ -72,8 +72,12 @@ describeIntegration("ScentsX quarantine, write-offs, valuation, PO approval (rea
     await setPoApprovalOverCents(db as never, TEST_OWNER_USER_ID, 500000); // $5,000
     const g1 = await getPurchaseOrder(db as never, po.id);
     expect([g1.needs_approval, g1.awaiting_approval, g1.approval_over_cents]).toEqual([true, true, 500000]);
-    await expect(receivePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toThrow(/\$10,000\.00 — at or over your approval amount of \$5,000\.00/);
+    await expect(receivePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toThrow(/\$10,000\.00 — over your approval amount of \$5,000\.00/);
     await expect(receivePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toBeInstanceOf(PoInvalid);
+    // Owner 22:50 CT "over 50K": a PO exactly at the amount does not need approval.
+    await setPoApprovalOverCents(db as never, TEST_OWNER_USER_ID, 1_000_000);
+    expect((await getPurchaseOrder(db as never, po.id)).needs_approval).toBe(false);
+    await setPoApprovalOverCents(db as never, TEST_OWNER_USER_ID, 500000);
     await approvePurchase(db as never, TEST_OWNER_USER_ID, po.id, "ok for Q4");
     await expect(approvePurchase(db as never, TEST_OWNER_USER_ID, po.id)).rejects.toBeInstanceOf(PoInvalid);
     await updatePurchaseLine(db as never, TEST_OWNER_USER_ID, l.id, { qty: 12 });
