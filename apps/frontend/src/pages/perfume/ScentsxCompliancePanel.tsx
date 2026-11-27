@@ -20,6 +20,7 @@ import { uploadSourceDocumentFromFile } from "../../api/docs";
 import {
   createScentsxCashPayer, getScentsxCompany, getScentsxCompliance, markScentsx8300Filed, markScentsx8300StatementSent, markScentsxReceiptSuspicious,
   recordScentsxCashReceipt, reviewScentsxStructuringAlert, updateScentsxCashPayer, voidScentsxCashReceipt,
+  clearScentsxScreening, confirmScentsxMatch, getScentsxSanctions, loadScentsxSanctionsList, type ScentsxScreening,
   type Scentsx8300Case, type ScentsxCashReceipt, type ScentsxPayerInput, type ScentsxPaymentForm, type ScentsxStructuringAlert, type ScentsxUnloggedCash,
 } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
@@ -86,6 +87,8 @@ export function ScentsxCompliancePanel() {
           {overdue.map((c) => `${c.case_no} (${c.payer_name}) was due ${c.due_on}`).join(" · ")}
         </div>
       ) : null}
+
+      <SanctionsBlock />
 
       <ReceiptForm payers={d?.payers ?? []} companyId={co.data?.company.id ?? null} unlogged={unlogged} onDone={() => void desk.refetch()} />
 
@@ -300,6 +303,68 @@ function PayerForm({ companyId, payerId, onDone }: { companyId: string | null; p
         ) : null}
       </div>
       <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy || (!payerId && !p.legal_name.trim())} onClick={() => void save()}>{tr("scentsx.cash.save_payer", "Save payer")}</Button>
+    </div>
+  );
+}
+
+/** OFAC: the list in use, "Load the newest list" (re-screens every ScentsX party), and possible matches waiting for a decision. */
+function SanctionsBlock() {
+  const { pushToast } = useToast();
+  const q = useQuery({ queryKey: ["scentsx", "sanctions"], queryFn: getScentsxSanctions });
+  const [busy, setBusy] = useState(false);
+  const [clearing, setClearing] = useState<string | null>(null);
+  const [why, setWhy] = useState("");
+  if (q.isError) return <ListErrorState title={tr("scentsx.ofac.error", "Couldn't load the OFAC screening")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} />;
+  const load = async () => {
+    setBusy(true);
+    try {
+      const r = await loadScentsxSanctionsList();
+      pushToast(`${r.load.new_load ? "New OFAC list loaded" : "OFAC list unchanged"} (${r.load.names.toLocaleString("en-US")} names) — ${r.rescreen.screened} re-screened, ${r.rescreen.possible_matches} possible matches`, "success");
+      void q.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not loaded"), "error"); } finally { setBusy(false); }
+  };
+  const decide = async (id: string, confirm: boolean) => {
+    try {
+      if (confirm) await confirmScentsxMatch(id); else await clearScentsxScreening(id, why);
+      setClearing(null); setWhy(""); void q.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not saved"), "error"); }
+  };
+  const list = q.data?.list;
+  return (
+    <div className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3 text-xs" data-testid="scentsx-ofac">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-section-header">{tr("scentsx.ofac.title", "OFAC sanctions screening")}</div>
+          <div className="text-[#64748B]">{list ? `List loaded ${day(list.loaded_at)} · ${list.sdn_rows.toLocaleString("en-US")} names + ${list.alt_rows.toLocaleString("en-US")} aliases · refreshed daily` : tr("scentsx.ofac.none", "No OFAC list loaded yet — nobody can be cleared to buy or sell until it is.")}</div>
+        </div>
+        <Button type="button" className="h-[30px] px-3 text-xs" disabled={busy} onClick={() => void load()} data-testid="scentsx-ofac-load">{tr("scentsx.ofac.load", "Load the newest list")}</Button>
+      </div>
+      <ParityTable<ScentsxScreening>
+        title={tr("scentsx.ofac.open", "Possible matches waiting for you")}
+        rows={q.data?.open_matches ?? []}
+        rowKey={(s) => s.id}
+        loading={q.isLoading}
+        storageKey="scentsx-ofac-open-v1"
+        emptyText="No possible matches."
+        columns={[
+          { key: "created_at", label: "Screened on", sortable: true, render: (s) => day(s.created_at) },
+          { key: "screened_name", label: "Name screened", sortable: true },
+          { key: "party_kind", label: "Who", sortable: true, render: (s) => s.party_kind.replace("_", " ") },
+          { key: "hits", label: "Listed as", render: (s) => (s.hits ?? []).slice(0, 3).map((h) => `${h.name} (${h.program ?? "—"}, ${Math.round(h.score * 100)}%)`).join(" · ") },
+          { key: "actions", label: "", render: (s) => clearing === s.id ? (
+            <span className="flex items-center gap-1">
+              <input className={inputCls} autoFocus placeholder="Why it is not them" aria-label="Why it is not them" value={why} onChange={(e) => setWhy(e.target.value)} />
+              <Button type="button" className="h-[28px] px-2 text-xs" disabled={why.trim().length < 10} onClick={() => void decide(s.id, false)}>{tr("scentsx.ofac.clear", "Not them — clear")}</Button>
+              <button type="button" className="underline" onClick={() => setClearing(null)}>{tr("scentsx.cash.cancel", "Cancel")}</button>
+            </span>
+          ) : (
+            <span className="flex gap-2">
+              <button type="button" className="underline" onClick={() => { setClearing(s.id); setWhy(""); }}>{tr("scentsx.ofac.not_them", "Not them")}</button>
+              <button type="button" className="font-semibold text-[#B91C1C] underline" onClick={() => void decide(s.id, true)}>{tr("scentsx.ofac.confirm", "It is them — block")}</button>
+            </span>
+          ) },
+        ]}
+      />
     </div>
   );
 }
