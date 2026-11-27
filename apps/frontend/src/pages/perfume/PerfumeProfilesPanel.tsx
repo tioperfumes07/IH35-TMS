@@ -18,10 +18,10 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   getPerfumeCompanyActivity, getPerfumeItemProfile, getPerfumeVendorProfile, listPerfumeContacts, listPerfumeVendors, perfumeItemLots, searchPerfumeItems, setPerfumeVendorCompany,
-  type PerfumeItemProfile, type PerfumeItemVendorLine, type PerfumeLot, type PerfumeOrderRow, type PerfumePoRow, type PerfumeQuoteRow, type PerfumeVendor, type PerfumeVendorProfile,
+  updatePerfumeItemFile, type PerfumeItemProfile, type PerfumeItemVendorLine, type PerfumeLot, type PerfumeOrderRow, type PerfumePoRow, type PerfumeQuoteRow, type PerfumeVendor, type PerfumeVendorProfile,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
-import { Badge, ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
+import { Badge, ctl, DASH, DocLink, ItemFinder, money, useOpenDoc, usDate } from "./perfumeDocParts";
 import { PO_STATUS_CLASS, PO_STATUS_TEXT } from "./PerfumeOrdersPanel";
 import { ItemCreator, ItemFileEditor } from "./PerfumeItemFilePanel";
 import { ItemSitesBlock } from "./PerfumeFamiliesPanel";
@@ -232,6 +232,7 @@ function ItemProfile({ id }: { id: string }) {
           this profile, and the profile edits the item itself (the same editor as the Item file tab). */}
       <ItemFileEditor id={id} onChanged={() => void prof.refetch()} />
       {p.item.family_id ? <div className="text-xs"><span className="text-[#64748B]">{tr("perfume.profiles.family", "Family:")}</span> <DocLink tab="families" id={p.item.family_id}>{p.item.family ?? ""}</DocLink></div> : null}
+      {p.item.flags.includes("TESTER") ? <RegularVersionLine itemId={id} regularId={p.item.regular_item_id ?? null} regularName={p.item.regular_name ?? null} onChanged={() => void prof.refetch()} /> : null}
       <ScentsxItemAccountLine itemId={id} />
       <ItemSitesBlock itemId={id} />
       <div className="text-xs" data-testid="perfume-item-upcs"><span className="text-[#64748B]">{tr("perfume.profiles.upcs", "Barcodes:")}</span> {p.upcs.length ? p.upcs.join(" · ") : DASH}</div>
@@ -299,6 +300,25 @@ export function PerfumeCompanyActivity({ companyId }: { companyId: string }) {
       <QuotesTable rows={a.quotes} storageKey="perfume-company-quotes-v1" />
       <OrdersTable rows={a.orders} storageKey="perfume-company-orders-v1" />
       <PosTable rows={a.purchase_orders} storageKey="perfume-company-pos-v1" />
+    </div>
+  );
+}
+
+/** A tester's regular version (owner 2026-11-27 12:03 CT): the tester sells at the price level's testers % of this item's price. */
+function RegularVersionLine({ itemId, regularId, regularName, onChanged }: { itemId: string; regularId: string | null; regularName: string | null; onChanged: () => void }) {
+  const { pushToast } = useToast();
+  const [picking, setPicking] = useState(false);
+  const set = (rid: string | null) => void updatePerfumeItemFile(itemId, { regular_item_id: rid }).then(() => { setPicking(false); onChanged(); })
+    .catch((e: unknown) => pushToast(userFacingApiError(e, "Not saved"), "error"));
+  return (
+    <div className="space-y-1 text-xs" data-testid="perfume-item-regular">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-[#64748B]">{tr("perfume.profiles.regular", "Regular version (testers sell at the level's testers % of its price):")}</span>
+        {regularId ? <DocLink tab="items" id={regularId}>{regularName ?? ""}</DocLink> : <span className="text-[#B91C1C]">{tr("perfume.profiles.no_regular", "None linked — priced by its own cost")}</span>}
+        <Button type="button" variant="secondary" className="h-[26px] px-2 text-xs" onClick={() => setPicking((x) => !x)} data-testid="perfume-item-regular-change">{tr("perfume.profiles.change", "Change")}</Button>
+        {regularId ? <Button type="button" variant="secondary" className="h-[26px] px-2 text-xs" onClick={() => set(null)} data-testid="perfume-item-regular-clear">{tr("perfume.profiles.unlink", "Unlink")}</Button> : null}
+      </div>
+      {picking ? <ItemFinder testId="perfume-item-regular-find" onPick={(rid) => set(rid)} /> : null}
     </div>
   );
 }

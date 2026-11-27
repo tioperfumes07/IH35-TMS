@@ -25,7 +25,7 @@ async function event(c: pg.PoolClient, companyId: string, uid: string | null, ki
 
 export async function listLevels(c: pg.PoolClient) {
   return (await c.query(
-    `SELECT l.id, l.name, l.channel, l.method, l.pct::float8 AS pct, l.cost_basis, l.floor_pct::float8 AS floor_pct, l.active, l.sort_order, l.updated_at,
+    `SELECT l.id, l.name, l.channel, l.method, l.pct::float8 AS pct, l.cost_basis, l.floor_pct::float8 AS floor_pct, l.tester_pct::float8 AS tester_pct, l.active, l.sort_order, l.updated_at,
             (SELECT count(*)::int FROM perfume.price_level_items i WHERE i.level_id = l.id AND i.archived_at IS NULL) AS fixed_prices,
             (SELECT count(*)::int FROM perfume.customer_accounts a WHERE a.price_level_id = l.id) AS customers
        FROM perfume.price_levels l ORDER BY l.sort_order, l.name`)).rows;
@@ -33,7 +33,7 @@ export async function listLevels(c: pg.PoolClient) {
 export const levelSchema = z.object({
   name: z.string().trim().min(1).max(80).optional(), channel: z.enum(["retail", "wholesale", "distributor", "export"]).optional(),
   method: z.enum(["markup", "margin"]).optional(), pct: z.number().min(0).max(999).nullable().optional(), cost_basis: z.enum(["avg", "best_vendor"]).optional(),
-  floor_pct: z.number().min(0).max(999).nullable().optional(), active: z.boolean().optional(), sort_order: z.number().int().optional(),
+  floor_pct: z.number().min(0).max(999).nullable().optional(), tester_pct: z.number().gt(0).max(100).optional(), active: z.boolean().optional(), sort_order: z.number().int().optional(),
 });
 export async function saveLevel(c: pg.PoolClient, uid: string, id: string | null, x: z.infer<typeof levelSchema>) {
   if ((x.method === "margin" || x.method === undefined) && x.pct != null && x.pct >= 100) {
@@ -43,15 +43,15 @@ export async function saveLevel(c: pg.PoolClient, uid: string, id: string | null
   if (!id) {
     if (!x.name || !x.channel) throw new AcctInvalid("A level needs a name and a channel.");
     return (await c.query<{ id: string }>(
-      `INSERT INTO perfume.price_levels (name, channel, method, pct, cost_basis, floor_pct, sort_order, updated_by) VALUES ($1,$2,coalesce($3,'markup'),$4,coalesce($5,'avg'),$6,coalesce($7,100),$8) RETURNING id`,
-      [x.name, x.channel, x.method ?? null, x.pct ?? null, x.cost_basis ?? null, x.floor_pct ?? null, x.sort_order ?? null, uid])).rows[0]!;
+      `INSERT INTO perfume.price_levels (name, channel, method, pct, cost_basis, floor_pct, sort_order, updated_by, tester_pct) VALUES ($1,$2,coalesce($3,'markup'),$4,coalesce($5,'avg'),$6,coalesce($7,100),$8,coalesce($9,70)) RETURNING id`,
+      [x.name, x.channel, x.method ?? null, x.pct ?? null, x.cost_basis ?? null, x.floor_pct ?? null, x.sort_order ?? null, uid, x.tester_pct ?? null])).rows[0]!;
   }
   const b = (await c.query(`SELECT * FROM perfume.price_levels WHERE id = $1`, [id])).rows[0];
   if (!b) throw new AcctNotFound();
   const keep = <T>(v: T | undefined, old: T) => (v !== undefined ? v : old);
   await c.query(
-    `UPDATE perfume.price_levels SET name = $2, channel = $3, method = $4, pct = $5, cost_basis = $6, floor_pct = $7, active = $8, sort_order = $9, updated_by = $10, updated_at = now() WHERE id = $1`,
-    [id, x.name ?? b.name, x.channel ?? b.channel, x.method ?? b.method, keep(x.pct, b.pct), x.cost_basis ?? b.cost_basis, keep(x.floor_pct, b.floor_pct), keep(x.active, b.active), x.sort_order ?? b.sort_order, uid]);
+    `UPDATE perfume.price_levels SET name = $2, channel = $3, method = $4, pct = $5, cost_basis = $6, floor_pct = $7, active = $8, sort_order = $9, updated_by = $10, tester_pct = $11, updated_at = now() WHERE id = $1`,
+    [id, x.name ?? b.name, x.channel ?? b.channel, x.method ?? b.method, keep(x.pct, b.pct), x.cost_basis ?? b.cost_basis, keep(x.floor_pct, b.floor_pct), keep(x.active, b.active), x.sort_order ?? b.sort_order, uid, x.tester_pct ?? b.tester_pct]);
   return { id };
 }
 export async function levelItems(c: pg.PoolClient, levelId: string) {
@@ -102,12 +102,18 @@ export async function costCoverage(c: pg.PoolClient) {
 
 /** A customer's price for an item at a quantity, from their account's level. null = no level, or the level has no rule and no
  *  fixed price for it (the caller then falls back or asks for the price). */
-export async function levelPriceFor(c: pg.PoolClient, companyId: string | null, itemId: string, qty: number, bestVendorCents: number | null) {
-  if (!companyId) return null;
-  const l = (await c.query<{ id: string; name: string; method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor"; floor_pct: string | null }>(
-    `SELECT l.id, l.name, l.method, l.pct::text, l.cost_basis, l.floor_pct::text FROM perfume.customer_accounts a JOIN perfume.price_levels l ON l.id = a.price_level_id AND l.active
-      WHERE a.company_id = $1`, [companyId])).rows[0];
-  if (!l) return null;
+type LevelRow = { id: string; name: string; method: "markup" | "margin"; pct: string | null; cost_basis: "avg" | "best_vendor"; floor_pct: string | null; tester_pct: string };
+
+/** The cheapest current supplier price of an item (buy / both lists). */
+export async function bestBuyCents(c: pg.PoolClient, itemId: string): Promise<number | null> {
+  const r = await c.query<{ p: string | null }>(
+    `SELECT min(r.price_cents)::text p FROM perfume.price_list_rows r JOIN perfume.price_lists l ON l.id = r.list_id JOIN perfume.vendors v ON v.id = l.vendor_id
+      WHERE r.item_id = $1 AND l.is_current AND l.voided_at IS NULL AND r.price_cents > 0 AND v.kind IN ('buy', 'both') AND v.archived_at IS NULL`, [itemId]);
+  return r.rows[0]?.p == null ? null : Number(r.rows[0].p);
+}
+
+/** One item's price at one level: its fixed price break for the quantity, else the level's rule on its cost. */
+async function ownLevelPrice(c: pg.PoolClient, l: LevelRow, itemId: string, qty: number, bestVendorCents: number | null) {
   const fixed = (await c.query<{ price_cents: string }>(
     `SELECT price_cents::text FROM perfume.price_level_items WHERE level_id = $1 AND item_id = $2 AND min_qty <= $3 AND archived_at IS NULL ORDER BY min_qty DESC LIMIT 1`,
     [l.id, itemId, Math.max(1, qty)])).rows[0];
@@ -118,6 +124,37 @@ export async function levelPriceFor(c: pg.PoolClient, companyId: string | null, 
   if (cost == null) return null;
   return { cents: priceFromCost(cost, Number(l.pct), l.method), level: l.name, how: avg ? ("avg" as const) : ("best_vendor" as const), cost_cents: cost,
     cost_source: avg?.source ?? ("best_vendor" as const) };
+}
+
+/**
+ * The price an account's level gives an item. A TESTER (owner 2026-11-27 12:03 CT "sold at around 70 percent of the selling price of the
+ * regular goods") with no fixed price of its own is priced at the level's tester_pct (default 70 %) of its regular item's price at the
+ * same level (perfume.items.regular_item_id, migration 202617070100); with no regular linked or no regular price, the tester's own rule.
+ */
+export async function levelPriceFor(c: pg.PoolClient, companyId: string | null, itemId: string, qty: number, bestVendorCents: number | null) {
+  if (!companyId) return null;
+  const l = (await c.query<LevelRow>(
+    `SELECT l.id, l.name, l.method, l.pct::text, l.cost_basis, l.floor_pct::text, l.tester_pct::text FROM perfume.customer_accounts a JOIN perfume.price_levels l ON l.id = a.price_level_id AND l.active
+      WHERE a.company_id = $1`, [companyId])).rows[0];
+  if (!l) return null;
+  return priceAtLevel(c, l, itemId, qty, bestVendorCents);
+}
+
+export async function priceAtLevel(c: pg.PoolClient, l: LevelRow, itemId: string, qty: number, bestVendorCents: number | null) {
+  const it = (await c.query<{ tester: boolean; regular_item_id: string | null }>(
+    `SELECT 'TESTER' = ANY(coalesce(flags, '{}')) AS tester, regular_item_id FROM perfume.items WHERE id = $1`, [itemId])).rows[0];
+  if (it?.tester && it.regular_item_id) {
+    const ownFixed = (await c.query(`SELECT 1 FROM perfume.price_level_items WHERE level_id = $1 AND item_id = $2 AND min_qty <= $3 AND archived_at IS NULL LIMIT 1`,
+      [l.id, itemId, Math.max(1, qty)])).rowCount;
+    if (!ownFixed) {
+      const reg = await ownLevelPrice(c, l, it.regular_item_id, qty, await bestBuyCents(c, it.regular_item_id));
+      if (reg) {
+        return { cents: Math.round((reg.cents * Number(l.tester_pct)) / 100), level: l.name, how: "tester_of_regular" as const,
+          regular_item_id: it.regular_item_id, regular_cents: reg.cents, tester_pct: Number(l.tester_pct) };
+      }
+    }
+  }
+  return ownLevelPrice(c, l, itemId, qty, bestVendorCents);
 }
 
 /* ------------------------------------------------------------------ customer accounts */

@@ -46,7 +46,7 @@ export function PerfumePriceLevelsPanel() {
             {`${tr("perfume.acct.costs", "Items with a cost")}: ${levels.data.costs.any_cost.toLocaleString("en-US")} — ${tr("perfume.acct.costs_avg", "my avg cost")} ${levels.data.costs.my_avg_cost.toLocaleString("en-US")} · ${tr("perfume.acct.costs_file", "my inventory file (last cost)")} ${levels.data.costs.inventory_file.toLocaleString("en-US")} · ${tr("perfume.acct.costs_vendor", "supplier lists")} ${levels.data.costs.vendor_lists.toLocaleString("en-US")} · ${tr("perfume.acct.costs_stock", "in stock")} ${levels.data.costs.stock.toLocaleString("en-US")}. ${tr("perfume.acct.costs_rule", "My average cost = stock average when in stock, else my avg cost, else my inventory file's last cost, else the best supplier cost.")}`}
           </div>) : null}
         <ParityTable<PerfumePriceLevel>
-          rows={rows} rowKey={(l) => `${l.id}-${l.pct}-${l.method}-${l.cost_basis}-${l.floor_pct}`} loading={levels.isLoading} storageKey="perfume-levels-v1" exportFilename="TIO price levels" exportExcel
+          rows={rows} rowKey={(l) => `${l.id}-${l.pct}-${l.method}-${l.cost_basis}-${l.floor_pct}-${l.tester_pct}`} loading={levels.isLoading} storageKey="perfume-levels-v1" exportFilename="TIO price levels" exportExcel
           emptyText="No price levels." onRowClick={(l) => setSelected(l.id)}
           columns={[
             { key: "name", label: "Level", render: (l) => <span className="font-semibold">{l.name}</span> },
@@ -60,6 +60,8 @@ export function PerfumePriceLevelsPanel() {
                 <option value="avg">{tr("perfume.acct.avg", "My average cost")}</option><option value="best_vendor">{tr("perfume.acct.best", "Best supplier cost")}</option>
               </select>), exportValue: (l) => l.cost_basis },
             { key: "floor_pct", label: "Floor %", render: (l) => <PctCell value={l.floor_pct} label={`${l.name} floor %`} testId={`perfume-level-floor-${l.name}`} onSave={(v) => save(l.id, { floor_pct: v })} />, exportValue: (l) => l.floor_pct ?? "" },
+            { key: "tester_pct", label: "Testers % of regular", render: (l) => <PctCell value={l.tester_pct} label={`${l.name} testers %`} testId={`perfume-level-tester-${l.name}`}
+              onSave={(v) => { if (v == null || v <= 0 || v > 100) { pushToast(tr("perfume.acct.tester_bad", "Testers % must be above 0 and at most 100"), "error"); return; } save(l.id, { tester_pct: v }); }} />, exportValue: (l) => l.tester_pct },
             { key: "fixed_prices", label: "Fixed prices", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.fixed_prices.toLocaleString("en-US") },
             { key: "customers", label: "Customers", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.customers.toLocaleString("en-US") },
           ]}

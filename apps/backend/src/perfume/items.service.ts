@@ -170,6 +170,8 @@ export const itemEditSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   // Owner 2026-11-27 08:10 CT — the item's family (one fragrance line over its sizes / testers / sets); null takes it out.
   family_id: z.string().uuid().nullable().optional(),
+  // Owner 2026-11-27 12:03 CT — a tester's regular (non-tester) version, whose price the tester sells at a % of; null takes it off.
+  regular_item_id: z.string().uuid().nullable().optional(),
   // Trade data (migration 202617060100): case pack, minimum order, unit weight, country of origin, HS tariff code.
   case_pack: z.number().int().min(1).max(100000).nullable().optional(),
   min_order_qty: z.number().int().min(1).max(1000000).nullable().optional(),
@@ -181,6 +183,23 @@ const ATTRS = ["model", "product_type", "category", "description"] as const;
 const TRADE = ["case_pack", "min_order_qty", "weight_g", "origin_country", "hs_code"] as const;
 /** The item's name, brand, size, type, gender and flags go through the same reading every list line goes through, so the item
  *  keeps matching vendors' lines; when another item already IS that reading, the edit is refused and names it. */
+/** A tester's regular version (migration 202617070100). Only a TESTER takes one; the regular must be a live, non-tester item. One 'attributes' event. */
+export async function setRegularItem(c: pg.PoolClient, uid: string, id: string, regularId: string | null) {
+  const it = (await c.query<{ flags: string[] | null; regular_item_id: string | null }>(`SELECT flags, regular_item_id FROM perfume.items WHERE id = $1`, [id])).rows[0];
+  if (!it) throw new ItemInvalid("That item is not on the desk.");
+  if ((it.regular_item_id ?? null) === regularId) return false;
+  if (regularId) {
+    if (!(it.flags ?? []).includes("TESTER")) throw new ItemInvalid("Only a tester has a regular version — mark the item TESTER first.");
+    if (regularId === id) throw new ItemInvalid("An item can't be its own regular version.");
+    const r = (await c.query<{ flags: string[] | null; merged_into_id: string | null }>(`SELECT flags, merged_into_id FROM perfume.items WHERE id = $1`, [regularId])).rows[0];
+    if (!r || r.merged_into_id) throw new ItemInvalid("The regular version must be a live item.");
+    if ((r.flags ?? []).includes("TESTER")) throw new ItemInvalid("The regular version can't itself be a tester.");
+  }
+  await c.query(`UPDATE perfume.items SET regular_item_id = $2, updated_at = now() WHERE id = $1`, [id, regularId]);
+  await event(c, id, uid, "attributes", { from: { regular_item_id: it.regular_item_id }, to: { regular_item_id: regularId } });
+  return true;
+}
+
 export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, x: z.infer<typeof itemEditSchema>) {
   const b = await liveItem(c, id);
   const before = { brand: b.brand, name: b.name, size_ml: b.size_ml == null ? null : Number(b.size_ml), conc: b.conc ?? "", gender: b.gender ?? "", flags: b.flags ?? [] };
@@ -227,6 +246,7 @@ export async function updateItemFile(c: pg.PoolClient, uid: string, id: string, 
     await event(c, id, uid, "attributes", { from: tFrom, to: tTo });
   }
   if (x.family_id !== undefined) await setItemFamily(c, uid, id, x.family_id, b.display_name);
+  if (x.regular_item_id !== undefined) await setRegularItem(c, uid, id, x.regular_item_id);
   if (x.tio_code !== undefined) {
     const code = x.tio_code?.trim() || null;
     if (code !== b.internal_code) {
