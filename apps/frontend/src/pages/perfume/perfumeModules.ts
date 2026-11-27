@@ -14,7 +14,7 @@ export const PERFUME_MODULES: PerfumeModule[] = [
   { id: "desk", label: "Price desk", Icon: Tags, tabs: ["buy", "trade", "wholesale", "comp", "analysis", "all", "lists", "review", "rules"] },
   { id: "mail", label: "Mail lists", Icon: Mail, tabs: ["mail"] },
   { id: "leads", label: "Leads", Icon: Users, tabs: ["contacts", "vendors", "customers", "excel"] },
-  { id: "campaigns", label: "Campaigns", Icon: Send, tabs: ["campaign"] },
+  { id: "campaigns", label: "Campaigns", Icon: Send, tabs: ["campaign", "sendlist"] },
   { id: "traders", label: "Traders", Icon: Handshake, tabs: ["traders"] },
   { id: "shows", label: "Trade shows", Icon: CalendarDays, tabs: ["shows"] },
   { id: "catalogs", label: "Catalogs", Icon: BookOpen, tabs: ["catalogs"] },
