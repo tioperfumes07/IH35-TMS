@@ -185,4 +185,19 @@ describeIntegration("item file + linkage (real Postgres, rolled back)", () => {
     await expect(db.query(`UPDATE perfume.items SET hs_code = '33.03' WHERE id = $1`, [it.id])).rejects.toThrow(/perfume_items_trade_check/);
     await db.query("ROLLBACK TO SAVEPOINT tr");
   });
+
+  it("the creator files our TIO code and the HK code on the new item, links our own list lines to it, refuses a used HK code", async () => {
+    const inv = (await db.query<{ id: string }>(`INSERT INTO perfume.vendors (name, kind) VALUES ('ZZH Inventory', 'inventory') RETURNING id`)).rows[0]!.id;
+    const hl = await list(inv);
+    await line(hl, 1, null, "HK-ZZH-1", null, "ZZH ALFA 100", 1500);
+    const made = await createItem(db as never, TEST_OWNER_USER_ID, { brand: "ZZH", name: "ALFA", size_ml: 100, tio_code: "ZH0001", hk_code: "HK-ZZH-1" });
+    const f = await getItemFile(db as never, made.id);
+    if (!("item" in f)) throw new Error("merged");
+    expect(f.item.internal_code).toBe("ZH0001");
+    expect(f.hk_codes.map((h: { sku: string }) => h.sku)).toEqual(["HK-ZZH-1"]);
+    expect((await db.query(`SELECT item_id FROM perfume.price_list_rows WHERE list_id = $1`, [hl])).rows[0]!.item_id).toBe(made.id);
+    const ev = (await db.query<{ kind: string }>(`SELECT kind FROM perfume.item_events WHERE item_id = $1 ORDER BY created_at, id`, [made.id])).rows.map((r) => r.kind);
+    expect(ev).toEqual(expect.arrayContaining(["created", "hk_code_added"]));
+    await expect(createItem(db as never, TEST_OWNER_USER_ID, { brand: "ZZH", name: "BRAVO", hk_code: "HK-ZZH-1" })).rejects.toThrow(/HK code HK-ZZH-1 is already on/);
+  });
 });

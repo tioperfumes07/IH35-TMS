@@ -280,6 +280,9 @@ export const itemCreateSchema = z.object({
   description: z.string().trim().max(2000).nullable().optional(),
   tio_code: z.string().trim().max(40).nullable().optional(),
   upc: z.string().trim().max(40).nullable().optional(),
+  // Owner 2026-11-27 13:58 CT "we should have our internal codes, and we should have hk globals skus as well. all linked" — the HK code
+  // (his HK inventory report / offer list item number) filed on the new item through addHkCode, which also links his own lists' lines.
+  hk_code: z.string().trim().max(40).nullable().optional(),
   family_id: z.string().uuid().nullable().optional(),
   // Trade data (migration 202617060100): case pack, minimum order, unit weight, country of origin, HS tariff code.
   case_pack: z.number().int().min(1).max(100000).nullable().optional(),
@@ -308,6 +311,14 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
       `SELECT i.display_name FROM perfume.item_upcs u JOIN perfume.items i ON i.id = u.item_id WHERE u.upc = $1`, [upc])).rows[0];
     if (had) throw new ItemInvalid(`UPC ${upc} is already on "${had.display_name}" — open that item instead.`);
   }
+  const hk = x.hk_code?.trim() || null;
+  if (hk) {
+    if (!/^[A-Za-z0-9-]{1,40}$/.test(hk)) throw new ItemInvalid("Type the HK code (letters / digits).");
+    const had = (await c.query<{ display_name: string }>(
+      `SELECT i.display_name FROM perfume.item_aliases a JOIN perfume.vendors v ON v.id = a.vendor_id AND v.kind IN ${MINE_KINDS} JOIN perfume.items i ON i.id = a.item_id
+        WHERE a.sku = $1 AND i.merged_into_id IS NULL LIMIT 1`, [hk])).rows[0];
+    if (had) throw new ItemInvalid(`HK code ${hk} is already on "${had.display_name}" — open that item instead.`);
+  }
   const attr = (v: string | null | undefined) => v?.trim() || null;
   const ins = await c.query<{ id: string }>(
     `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, flags, identity_key, loose_key, display_name, internal_code, model, product_type, category, description, created_by)
@@ -318,6 +329,7 @@ export async function createItem(c: pg.PoolClient, uid: string, x: z.infer<typeo
   if (upc) await c.query(`INSERT INTO perfume.item_upcs (upc, item_id) VALUES ($1, $2)`, [upc, id]);
   await event(c, id, uid, "created", { ...x, flags, upc });
   if (x.family_id) await setItemFamily(c, uid, id, x.family_id, displayNameOf(id2));
+  if (hk) await addHkCode(c, uid, id, hk);
   const trade = TRADE.filter((k) => x[k] != null);
   if (trade.length) await c.query(`UPDATE perfume.items SET ${trade.map((k, i) => `${k} = $${i + 2}`).join(", ")} WHERE id = $1`, [id, ...trade.map((k) => x[k])]);
   invalidateGridCache();
