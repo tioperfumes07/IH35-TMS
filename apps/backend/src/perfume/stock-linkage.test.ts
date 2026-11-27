@@ -9,7 +9,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { getItemFile, ItemInvalid, linkItemTo, stockLinkQueue, strictLinkApply, strictLinkPreview } from "./items.service.js";
+import { getItemFile, ItemInvalid, linkItemTo, sizesAreSameBottle, stockLinkQueue, strictLinkApply, strictLinkPreview } from "./items.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
 describeIntegration("stock linkage (real Postgres, rolled back)", () => {
@@ -97,10 +97,12 @@ describeIntegration("stock linkage (real Postgres, rolled back)", () => {
     const f = await getItemFile(db as never, vend) as { events: Array<{ kind: string }> };
     expect(f.events.map((e) => e.kind)).toContain("line_linked");
 
-    // Same bottle written two ways (4 oz = 118 vs 120 ml): refused unless the owner says so on the link, and only within 2.5 %.
-    const green118 = await item("ZZS", "GREEN", 118, "M"), green120 = await item("ZZS", "GREEN", 120, "M"), green100 = await item("ZZS", "GREEN", 100, "M");
+    // Same bottle written two ways (4 oz = 118 vs 120 ml): refused unless the link says so, and only within the owner's
+    // 13:09 CT rule (up to 1.35 ×); 90 vs 30 is a different bottle.
+    const green118 = await item("ZZS", "GREEN", 118, "M"), green120 = await item("ZZS", "GREEN", 120, "M"), green30 = await item("ZZS", "GREEN", 30, "M");
     await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green120)).rejects.toThrow(/same bottle sizes/);
-    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green100, { sameBottleSizes: true })).rejects.toThrow(/^Different sizes: 118 ml vs 100 ml\.$/);
+    await expect(linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green30, { sameBottleSizes: true })).rejects.toThrow(/^Different sizes: 118 ml vs 30 ml\.$/);
+    expect([sizesAreSameBottle(90, 120), sizesAreSameBottle(4.5, 5), sizesAreSameBottle(90, 30), sizesAreSameBottle(100, 136)]).toEqual([true, true, false, false]);
     expect(await linkItemTo(db as never, TEST_OWNER_USER_ID, green118, green120, { sameBottleSizes: true })).toMatchObject({ into: expect.stringContaining("GREEN") });
     expect((await db.query(`SELECT merged_into_id FROM perfume.items WHERE id = $1`, [green118])).rows[0].merged_into_id).toBe(green120);
     expect((await db.query(`SELECT detail->'same_bottle_sizes' AS s FROM perfume.item_events WHERE item_id = $1 AND kind = 'line_linked'`, [green120])).rows[0].s).toEqual({ from_ml: 118, to_ml: 120 });

@@ -573,10 +573,12 @@ export async function stockLinkQueue(c: pg.PoolClient, f: z.infer<typeof stockQu
 
 /** Link OUR item to the vendors' item: every line of it moves (remembered by HK code and words for the next import), its UPCs,
  *  TIO code, my avg cost and HK codes follow, and ours is retired as merged into it. Both items' files record it. */
-/** Two sizes that are one bottle written two ways — oz rounded to ml (4 oz = 118 vs 120 ml; 84 vs 85 ml): within 2.5 %. */
-export const SAME_BOTTLE_SIZE_SHARE = 0.025;
+/** Two sizes that can be one bottle written two ways. Owner 2026-11-27 13:09 CT: "IF THE SIZES ARE SIMILIAR, 90ML INSTEAD OF
+ *  100 OR 105 OR 120, IT IS USUALLY THE SAME, THERE IS ISSUES WHEN IT SAYS 90ML AND ITS 30ML" — so the larger may be up to
+ *  1.35 × the smaller (90 → 120). Only used when the link says same_bottle_sizes; nothing links on size alone. */
+export const SAME_BOTTLE_SIZE_RATIO = 1.35;
 export function sizesAreSameBottle(a: number, b: number) {
-  return Math.abs(a - b) <= SAME_BOTTLE_SIZE_SHARE * Math.max(a, b);
+  return a > 0 && b > 0 && Math.max(a, b) / Math.min(a, b) <= SAME_BOTTLE_SIZE_RATIO;
 }
 
 export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, toId: string, opts: { sameBottleSizes?: boolean } = {}) {
@@ -586,8 +588,8 @@ export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, 
   const kind = (f: string[] | null) => (f ?? []).filter((x) => ["SET", "TESTER", "MINI", "BODY", "OIL", "VARIOUS", "REFILL"].includes(x)).sort().join("+");
   const fromSize = from.size_ml == null ? null : Number(from.size_ml);
   const toSize = to.size_ml == null ? null : Number(to.size_ml);
-  // Owner 2026-11-27 12:05 CT ("continue working on the rest"): a size written two ways (118 vs 120 ml) is one bottle only when the
-  // owner says so on this link (same_bottle_sizes) and the two are within 2.5 %; anything else stays refused.
+  // A size written two ways (118 vs 120 ml, 4.5 vs 5 ml) is one bottle only when this link says so (same_bottle_sizes) and the
+  // two are within the owner's 13:09 CT rule (SAME_BOTTLE_SIZE_RATIO); 90 vs 30 stays refused.
   const roundedSize = fromSize != null && toSize != null && fromSize !== toSize;
   if (roundedSize && !(opts.sameBottleSizes && sizesAreSameBottle(fromSize, toSize))) {
     throw new ItemInvalid(sizesAreSameBottle(fromSize, toSize)
