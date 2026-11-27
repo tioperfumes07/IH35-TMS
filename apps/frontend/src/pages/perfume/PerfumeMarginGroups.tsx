@@ -63,21 +63,20 @@ export function MarginGroupsEditor() {
       {open && draft ? (
         <div className="absolute left-0 z-30 mt-1 w-[360px] space-y-2 rounded-[3px] border border-[#C6D1DC] bg-white p-3 text-xs shadow-lg" role="dialog" aria-label={tr("perfume.groups.button", "Margins by group")}>
           <div className="font-semibold text-[#1F2A44]">{tr("perfume.groups.title", "Margin % by group — blank = the tab's %")}</div>
-          <table className="w-full text-left">
-            <thead><tr className="text-[#5B6B82]"><th className="py-1 font-medium">{tr("perfume.groups.group", "Group")}</th>
-              <th className="py-1 font-medium">{tr("perfume.groups.mine", "My margin %")}</th><th className="py-1 font-medium">{tr("perfume.groups.earn", "Vendors earn % (Trading)")}</th></tr></thead>
-            <tbody>
-              {PERFUME_MARGIN_GROUPS.map(([g, label]) => (
-                <tr key={g}>
-                  <td className="py-1 pr-2">{label}</td>
-                  <td className="py-1 pr-2"><input inputMode="decimal" className={`${ctl} w-[80px] text-right`} value={draft[g].mine} aria-label={`${label} — my margin %`} data-testid={`perfume-group-${g}-mine`}
-                    onChange={(e) => setDraft({ ...draft, [g]: { ...draft[g], mine: e.target.value } })} /></td>
-                  <td className="py-1"><input inputMode="decimal" className={`${ctl} w-[80px] text-right`} value={draft[g].earn} aria-label={`${label} — vendors earn %`} data-testid={`perfume-group-${g}-earn`}
-                    onChange={(e) => setDraft({ ...draft, [g]: { ...draft[g], earn: e.target.value } })} /></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <div className="grid grid-cols-[1fr_90px_110px] items-center gap-x-2 gap-y-1 text-left" role="group" aria-label={tr("perfume.groups.title", "Margin % by group")}>
+            <span className="font-medium text-[#5B6B82]">{tr("perfume.groups.group", "Group")}</span>
+            <span className="font-medium text-[#5B6B82]">{tr("perfume.groups.mine", "My margin %")}</span>
+            <span className="font-medium text-[#5B6B82]">{tr("perfume.groups.earn", "Vendors earn % (Trading)")}</span>
+            {PERFUME_MARGIN_GROUPS.map(([g, label]) => (
+              <div key={g} className="contents">
+                <span>{label}</span>
+                <input inputMode="decimal" className={`${ctl} w-[80px] text-right`} value={draft[g].mine} aria-label={`${label} — my margin %`} data-testid={`perfume-group-${g}-mine`}
+                  onChange={(e) => setDraft({ ...draft, [g]: { ...draft[g], mine: e.target.value } })} />
+                <input inputMode="decimal" className={`${ctl} w-[80px] text-right`} value={draft[g].earn} aria-label={`${label} — vendors earn %`} data-testid={`perfume-group-${g}-earn`}
+                  onChange={(e) => setDraft({ ...draft, [g]: { ...draft[g], earn: e.target.value } })} />
+              </div>
+            ))}
+          </div>
           <div className="text-[#5B6B82]">{tr("perfume.groups.hint", "Group = New launch / Exclusive (marked on the item), else Tester / Set / Mini (flags), else Regular. A % typed on the tab overrides every group.")}</div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="secondary" className="h-[30px] px-3 text-xs" onClick={() => setOpen(false)}>{tr("perfume.groups.cancel", "Cancel")}</Button>
