@@ -68,6 +68,13 @@ describeIntegration("stock linkage (real Postgres, rolled back)", () => {
     expect(qm.candidates[0]).toMatchObject({ id: vend, exact: true, same_brand: true });
     expect(qm.candidates.some((cd) => cd.id === vend50 || cd.id === vendT)).toBe(false);
 
+    // Skincare / cosmetics / hair care are their own category (owner 07:50 CT): never in the perfume queue.
+    const cream = await item("ZZS", "NOIR NIGHT CREAM", 50, null);
+    await line(invL, 9, cream, "Z700009", null, "ZZS NOIR NIGHT CREAM 50ML", 2000);
+    await db.query(`UPDATE perfume.items SET category = 'Skincare' WHERE id = $1`, [cream]);
+    expect((await stockLinkQueue(db as never, { q: "zzs", perfumes_only: true, limit: 50, offset: 0 })).rows.some((r) => r.id === cream)).toBe(false);
+    expect((await stockLinkQueue(db as never, { q: "zzs", perfumes_only: false, limit: 50, offset: 0 })).rows.some((r) => r.id === cream)).toBe(true);
+
     // Strict: only ours → vend; the BLEU pair is two-to-one and stays for him.
     const strict = (await strictLinkPreview(db as never)).filter((p) => p.mine.startsWith("ZZS"));
     expect(strict.map((p) => [p.mine_id, p.vend_id])).toEqual([[mine, vend]]);

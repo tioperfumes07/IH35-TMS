@@ -460,6 +460,9 @@ const SAME_BOTTLE = `v.size_ml IS NOT DISTINCT FROM m.size_ml AND ${KIND_SQL("m"
     AND (coalesce(m.conc, '') = coalesce(v.conc, '') OR coalesce(m.conc, '') = '' OR coalesce(v.conc, '') = '')
     AND (m.brand = v.brand OR coalesce(m.brand, '') = '' OR coalesce(v.brand, '') = '')`;
 
+/** Item categories that are their own line of goods, not perfume (owner 2026-11-27 07:50 CT). */
+export const NOT_PERFUME_CATEGORIES = ["Skincare", "Cosmetics", "Hair care"] as const;
+const NOT_PERFUME = `(${NOT_PERFUME_CATEGORIES.map((x) => `'${x}'`).join(", ")})`;
 export const stockQueueQuery = z.object({
   q: z.string().trim().max(200).optional(),
   perfumes_only: z.preprocess((v) => (v === "false" || v === false ? false : v === undefined ? undefined : true), z.boolean().default(true)),
@@ -469,7 +472,8 @@ export const stockQueueQuery = z.object({
 export async function stockLinkQueue(c: pg.PoolClient, f: z.infer<typeof stockQueueQuery>) {
   const args: unknown[] = [];
   const where = ["i.id IN (SELECT item_id FROM mine)", "i.id NOT IN (SELECT item_id FROM vend)", "i.merged_into_id IS NULL"];
-  if (f.perfumes_only) where.push("i.size_ml IS NOT NULL AND NOT ('VARIOUS' = ANY(coalesce(i.flags, '{}')))");
+  // Owner 2026-11-27 07:50 CT: "Skincare and cosmetics are their own category" — they are not perfumes waiting for a vendor match.
+  if (f.perfumes_only) where.push(`i.size_ml IS NOT NULL AND NOT ('VARIOUS' = ANY(coalesce(i.flags, '{}'))) AND coalesce(i.category, '') NOT IN ${NOT_PERFUME}`);
   if (f.q) { args.push(`%${f.q.toLowerCase()}%`); where.push(`lower(i.display_name) LIKE $${args.length}`); }
   const total = (await c.query<{ n: number }>(`${UNLINKED_MINE} SELECT count(*)::int AS n FROM perfume.items i WHERE ${where.join(" AND ")}`, args)).rows[0]!.n;
   const linked = (await c.query<{ mine: number; linked: number }>(`${UNLINKED_MINE}
