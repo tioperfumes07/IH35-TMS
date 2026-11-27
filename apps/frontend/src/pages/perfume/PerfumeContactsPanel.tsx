@@ -6,7 +6,8 @@
  * The first Google batch is ONE city (Nuevo Laredo) — research session ROUND P1.4 #5; the full matrix unlocks only after a
  * finished batch. Every batch shows how many Google requests it can use and waits for a second click.
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useOpenDoc } from "./perfumeDocParts";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -64,7 +65,12 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
   const [role, setRole] = useState<PerfumeContactRole | "none" | "all">(initialRole);
   const [source, setSource] = useState<string>("");
   const [q, setQ] = useState("");
-  const [selected, setSelected] = useState<string | null>(null);
+  // ?open=<company id> opens that company's profile (a supplier's company link, owner 2026-11-27 17:25 CT: one record).
+  const { openId } = useOpenDoc();
+  const [selected, setSelected] = useState<string | null>(openId);
+  useEffect(() => { if (openId) setSelected(openId); }, [openId]);
+  // The profile mounts under the list: bring it on screen when one is opened (same fix as Supplier profiles, #29981).
+  useEffect(() => { if (selected) setTimeout(() => document.querySelector('[data-testid="perfume-contact-profile"]')?.scrollIntoView?.({ block: "start" }), 50); }, [selected]);
   const [picks, setPicks] = useState<PerfumeContactPicks>({});
   const list = useQuery({ queryKey: ["perfume", "contacts", role, source, q, picks], queryFn: () => listPerfumeContacts({ role, source, q, limit: 300, ...picks }) });
   const anyPick = Object.values(picks).some((v) => (v?.length ?? 0) > 0);

@@ -28,6 +28,7 @@ import { ItemCreator, ItemFileEditor } from "./PerfumeItemFilePanel";
 import { ItemSitesBlock } from "./PerfumeFamiliesPanel";
 import { ScentsxItemAccountLine } from "./ScentsxItemAccounts";
 import { VendorLinkReview } from "./PerfumeVendorLinkReview";
+import { CompanyRoleEditor } from "./PerfumeCompanyRole";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
 const METHOD_TEXT: Record<string, string> = { upc: "Barcode", sku: "Their code", alias: "Their words (remembered)", key: "Same name", name: "Same bottle, other spelling",
@@ -138,9 +139,9 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
       </div>
       <div className="text-xs" data-testid="perfume-vendor-company">
         <div className="text-section-header mb-1">{tr("perfume.profiles.company", "Company in Contacts")}</div>
-        {c ? (
+        {c ? (<>
           <div className="flex flex-wrap items-center gap-3">
-            <span className="font-semibold">{c.name}</span>
+            <DocLink tab="vendors" id={c.id} testId="perfume-vendor-company-open">{c.name}</DocLink>
             <span className="text-[#64748B]">{[c.city, c.state, c.country].filter(Boolean).join(", ") || DASH}</span>
             {c.phone ? <span>{c.phone}</span> : null}
             {c.email ? <span>{c.email}</span> : null}
@@ -148,7 +149,8 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
             <span>{`${c.people} ${c.people === 1 ? "person" : "people"}`}</span>
             <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={() => void link(null)} data-testid="perfume-vendor-unlink">{tr("perfume.profiles.unlink", "Unlink")}</Button>
           </div>
-        ) : (
+          <div className="mt-2"><CompanyRoleEditor company={c} /></div>
+        </>) : (
           <div className="relative space-y-2">
             {(p.suggestions?.length ?? 0) > 0 ? (
               <div className="flex flex-wrap items-center gap-2" data-testid="perfume-vendor-suggestions">
@@ -306,6 +308,7 @@ export function PerfumeCompanyActivity({ companyId }: { companyId: string }) {
   const a = act.data;
   return (
     <div className="space-y-3" data-testid="perfume-company-activity">
+      <CompanyRoleEditor company={a.company} />
       <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6">
         <KpiCard label={tr("perfume.profiles.kpi_c_quotes", "Quotes")} number={a.quotes.length.toLocaleString("en-US")} to="/perfume?tab=quotes" />
         <KpiCard label={tr("perfume.profiles.kpi_c_quoted", "Quoted (not rejected)")} number={money(a.quoted_cents)} to="/perfume?tab=quotes" />

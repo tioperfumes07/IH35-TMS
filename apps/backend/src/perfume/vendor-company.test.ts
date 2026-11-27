@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { applyVendorLinks, companyNameOf, vendorLinkPreview } from "./vendor-company.service.js";
+import { applyVendorLinks, companyNameOf, setCompanyRole, vendorLinkPreview } from "./vendor-company.service.js";
 
 describe("companyNameOf", () => {
   it("drops the list's own label", () => {
@@ -69,5 +69,22 @@ describeIntegration("price-list vendors → one company in Contacts (real Postgr
       { vendor_id: v, create_name: "Zqbad Perfumes" }, { vendor_id: v, company_id: "00000000-0000-4000-8000-000000000000" }] })).rejects.toThrow(/not in Contacts/);
     expect((await db.query(`SELECT company_id FROM perfume.vendors WHERE id = $1`, [v])).rows[0].company_id).toBeNull();
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_companies WHERE name = 'Zqbad Perfumes'`)).rows[0].n).toBe(0);
+  });
+
+  it("Convert to vendor / customer / both with a catalog type; one history row; a type not in Catalogs or a vendor turned customer-only is refused", async () => {
+    const co = await company("Zqrole Flippers", null);
+    await db.query(`INSERT INTO perfume.catalog_values (kind, value) VALUES ('customer_type', 'Zq Trader') ON CONFLICT DO NOTHING`);
+    const r = await setCompanyRole(db as never, TEST_OWNER_USER_ID, co, { role: "customer", customer_type: "Zq Trader" });
+    expect(r).toMatchObject({ changed: true, role: "customer", customer_type: "Zq Trader" });
+    expect((await db.query(`SELECT role, customer_type FROM perfume.contact_companies WHERE id = $1`, [co])).rows[0]).toEqual({ role: "customer", customer_type: "Zq Trader" });
+    const ev = (await db.query(`SELECT detail FROM perfume.lead_events WHERE company_id = $1 AND action = 'role_type_set'`, [co])).rows;
+    expect(ev).toHaveLength(1);
+    expect(ev[0].detail.before.role).toBeNull();
+    await expect(setCompanyRole(db as never, TEST_OWNER_USER_ID, co, { customer_type: "Not A Type" })).rejects.toThrow(/not a customer type/);
+    expect((await setCompanyRole(db as never, TEST_OWNER_USER_ID, co, { role: "customer" })).changed).toBe(false);
+    const v = await vendor("Zqrole Flippers", "buy");
+    await applyVendorLinks(db as never, TEST_OWNER_USER_ID, { decisions: [{ vendor_id: v, company_id: co }] });
+    expect((await db.query(`SELECT role FROM perfume.contact_companies WHERE id = $1`, [co])).rows[0].role).toBe("both");
+    await expect(setCompanyRole(db as never, TEST_OWNER_USER_ID, co, { role: "customer" })).rejects.toThrow(/stays a vendor/);
   });
 });
