@@ -38,6 +38,16 @@ describe("ScentsX books end to end (real Postgres, rolled back)", () => {
     await db.query("SET LOCAL app.bypass_rls = 'lucia'");
     co = (await db.query<{ id: string }>(`SELECT id::text FROM org.companies WHERE code = 'SCENTSX'`)).rows[0]!.id;
     await db.query(`SELECT set_config('app.operating_company_id', $1, true)`, [co]);
+    // Precondition (same pattern as driver-reimbursement-idempotent.db.test.ts): 202616950100 turns the money flags ON for
+    // SCENTSX only when an Owner user exists — prod has one, a fresh CI database does not — so the test sets the per-entity
+    // overrides the posting chain reads, inside its rolled-back transaction.
+    await db.query(
+      `INSERT INTO lib.feature_flag_overrides (flag_key, operating_company_id, enabled, set_by_user_uuid)
+       SELECT f.flag_key, $1::uuid, true, $2::uuid FROM lib.feature_flags f
+        WHERE f.flag_key = ANY ($3::text[])
+       ON CONFLICT (flag_key, operating_company_id) WHERE user_uuid IS NULL AND operating_company_id IS NOT NULL DO UPDATE SET enabled = true`,
+      [co, TEST_OWNER_USER_ID, ["GL_POSTING_ENABLED", "INVOICE_AR_GL_POSTING_ENABLED", "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", "BILL_GL_POSTING_ENABLED", "BILL_PAYMENT_GL_POSTING_ENABLED"]]
+    );
   });
   afterAll(async () => {
     await db?.query("ROLLBACK").catch(() => {});
