@@ -16,7 +16,8 @@ const COLS = [
   { key: "name", label: "Name", group: "Item", kind: "text" },
   { key: "best_vendor", label: "Buy from", group: "Mine", kind: "text" },
 ];
-const ROWS = [{ id: "11111111-1111-4111-8111-111111111111", brand: "ARMAF", name: "CDN", best_vendor: "Perfume Center of America (Kanak) | Miami Trading Zone (MTZ)" }];
+const ROWS = [{ id: "11111111-1111-4111-8111-111111111111", brand: "ARMAF", name: "CDN", best_vendor: "Perfume Center of America (Kanak) | Miami Trading Zone (MTZ)" },
+  { id: "22222222-2222-4222-8222-222222222222", brand: "PACO RABANNE", name: "1 MILLION", best_vendor: null }];
 const gridCalls: string[] = [];
 function Where() { return <span data-testid="where">{useLocation().search}</span>; }
 beforeEach(() => {
@@ -45,7 +46,16 @@ describe("desk grid click-through", () => {
   it("brand click asks the grid for that brand only", async () => {
     render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider>
       <MemoryRouter initialEntries={["/perfume?tab=all"]}><PerfumeDeskPage /></MemoryRouter></ToastProvider></QueryClientProvider>);
-    fireEvent.click(await screen.findByTestId("perfume-grid-brand-link"));
+    fireEvent.click((await screen.findAllByTestId("perfume-grid-brand-link"))[0]!);
     await waitFor(() => expect(gridCalls.some((p) => p.includes("brand=ARMAF"))).toBe(true));
+  });
+  it("a large brand shows its short form (Paco R.), the full name on hover, and filters by the full name", async () => {
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider>
+      <MemoryRouter initialEntries={["/perfume?tab=all"]}><PerfumeDeskPage /></MemoryRouter></ToastProvider></QueryClientProvider>);
+    const links = await screen.findAllByTestId("perfume-grid-brand-link");
+    const paco = links.find((l) => l.textContent === "Paco R.")!;
+    expect(paco.getAttribute("title")).toBe("PACO RABANNE");
+    fireEvent.click(paco);
+    await waitFor(() => expect(gridCalls.some((p) => p.includes("brand=PACO") && p.includes("RABANNE"))).toBe(true));
   });
 });
