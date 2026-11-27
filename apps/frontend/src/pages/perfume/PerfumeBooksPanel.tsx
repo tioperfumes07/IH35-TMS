@@ -5,11 +5,12 @@
  * TABLE_DATE_OMIT: a chart of accounts lists accounts, not dated events — the balance is "all posted entries to date". Read-only: accounts are added through the
  * chart migration / Accounting; journal entries come from the posting engine, never typed here.
  */
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { ListErrorState } from "../../components/ListErrorState";
 import { KpiCard } from "../../components/layout/KpiCard";
-import { getScentsxCompany, getScentsxPendingMoves, listScentsxAccounts, postScentsxPendingMoves, type ScentsxAccount } from "../../api/scentsx";
+import { getScentsxAccountRegister, getScentsxCompany, getScentsxPendingMoves, type ScentsxRegisterLine, listScentsxAccounts, postScentsxPendingMoves, type ScentsxAccount } from "../../api/scentsx";
 import { Button } from "../../components/Button";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
@@ -28,6 +29,7 @@ export function PerfumeBooksPanel() {
   const co = useQuery({ queryKey: ["scentsx", "company"], queryFn: getScentsxCompany });
   const accts = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
   const [showNumbers, setShowNumbers] = useShowAccountNumbers();
+  const [openAcct, setOpenAcct] = useState<ScentsxAccount | null>(null);
   const pending = useQuery({ queryKey: ["scentsx", "pending-moves"], queryFn: getScentsxPendingMoves });
   const { pushToast } = useToast();
   const postNow = async () => {
@@ -86,7 +88,9 @@ export function PerfumeBooksPanel() {
             exportExcel
             emptyText="No accounts."
             columns={[
-              { key: "account_name", label: "Account", sortable: true, render: (a) => <span className="font-semibold">{formatAccountDisplayLabel(a, { showNumber: showNumbers })}</span> },
+              { key: "account_name", label: "Account", sortable: true, render: (a) => (
+                <button type="button" className="font-semibold text-[#14314F] underline" onClick={() => setOpenAcct(openAcct?.id === a.id ? null : a)} data-testid={`scentsx-books-acct-${a.id}`}>
+                  {formatAccountDisplayLabel(a, { showNumber: showNumbers })}</button>) },
               { key: "account_type", label: "Type", sortable: true },
               { key: "account_subtype", label: "Detail type", sortable: true, render: (a) => a.account_subtype ?? DASH },
               { key: "roles", label: "Poster role", sortable: true, render: (a) => (a.roles.length ? a.roles.join(", ") : DASH) },
@@ -95,6 +99,32 @@ export function PerfumeBooksPanel() {
           />
         )}
       </div>
+      {openAcct ? <AccountRegister account={openAcct} label={formatAccountDisplayLabel(openAcct, { showNumber: showNumbers })} /> : null}
     </div>
+  );
+}
+
+/** The opened account's register — every posted ScentsX line on it, from the same journal the reports read. */
+function AccountRegister({ account, label }: { account: ScentsxAccount; label: string }) {
+  const reg = useQuery({ queryKey: ["scentsx", "register", account.id], queryFn: () => getScentsxAccountRegister(account.id) });
+  if (reg.isError) return <ListErrorState title={tr("scentsx.books.reg_error", "Couldn't load the register")} status={0} message={(reg.error as Error)?.message} onRetry={() => void reg.refetch()} />;
+  return (
+    <ParityTable<ScentsxRegisterLine>
+      title={`${tr("scentsx.books.register", "Register")} · ${label}`}
+      rows={reg.data?.lines ?? []}
+      rowKey={(l) => l.posting_id}
+      loading={reg.isLoading}
+      storageKey="scentsx-register-v1"
+      exportFilename={`ScentsX register ${account.account_name}`}
+      exportExcel
+      emptyText="Nothing posted to this account yet."
+      columns={[
+        { key: "entry_date", label: "Entry date", sortable: true, render: (l) => new Date(`${l.entry_date}T12:00:00`).toLocaleDateString("en-US") },
+        { key: "memo", label: "Memo", sortable: true, render: (l) => l.memo ?? DASH },
+        { key: "source_transaction_type", label: "From", sortable: true, render: (l) => (l.source_transaction_type ?? "journal entry").replace(/_/g, " ") },
+        { key: "debit", label: "Debit", sortable: true, cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "debit" ? money(Number(l.amount_cents)) : "") },
+        { key: "credit", label: "Credit", sortable: true, cellClass: "text-right tabular-nums", render: (l) => (l.debit_or_credit === "credit" ? money(Number(l.amount_cents)) : "") },
+      ]}
+    />
   );
 }
