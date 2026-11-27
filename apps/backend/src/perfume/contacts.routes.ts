@@ -16,6 +16,7 @@ import { googleKey, GoogleProspectsNotConfigured, PERFUME_PROSPECT_FIELD_MASK } 
 import {
   batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
+import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -70,6 +71,16 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 
+  // ROUND P1.31 L2 (owner 15:47 CT): company names in proper format — preview, then Apply (one history row per rename).
+  app.get("/api/v1/perfume/contacts/name-format/preview", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => { const fixes = await previewNameFixes(c); return { count: fixes.length, fixes }; });
+  });
+  app.post("/api/v1/perfume/contacts/name-format/apply", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = applyNameFixesSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => applyNameFixes(c, uid, b.data.ids));
+  });
   app.get("/api/v1/perfume/contacts/:id", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = z.string().uuid().safeParse((req.params as { id?: string }).id);
