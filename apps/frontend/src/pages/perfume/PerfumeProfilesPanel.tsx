@@ -23,7 +23,7 @@ import {
 import { tr } from "./perfumeI18n";
 import { Badge, ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 import { PO_STATUS_CLASS, PO_STATUS_TEXT } from "./PerfumeOrdersPanel";
-import { ItemFileEditor } from "./PerfumeItemFilePanel";
+import { ItemCreator, ItemFileEditor } from "./PerfumeItemFilePanel";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
 const METHOD_TEXT: Record<string, string> = { upc: "Barcode", sku: "Their code", alias: "Their words (remembered)", key: "Same name", name: "Same bottle, other spelling",
@@ -177,12 +177,17 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
 export function PerfumeItemProfilesPanel() {
   const { openId, open } = useOpenDoc();
   const [q, setQ] = useState("");
+  // Owner 2026-11-27 07:40 CT: "Items creator should live in items".
+  const [creating, setCreating] = useState(false);
   const hits = useQuery({ queryKey: ["perfume", "item-profile-search", q], queryFn: () => searchPerfumeItems(q), enabled: q.trim().length >= 2 });
   return (
     <div className="space-y-3" data-testid="perfume-items-panel">
       <section className="relative space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.profiles.items", "Item profiles")}>
+        <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => setCreating((x) => !x)} data-testid="perfume-items-new">{creating ? tr("perfume.profiles.cancel_new", "Cancel new item") : tr("perfume.profiles.new_item", "New item")}</Button>
         <input type="search" className={`${ctl} w-full max-w-[460px]`} aria-label={tr("perfume.profiles.find_item", "Find an item")} placeholder={tr("perfume.profiles.find_item_ph", "Find an item — name, brand, barcode or my code")}
           value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-items-search" />
+        </div>
         {q.trim().length >= 2 && (hits.data?.items?.length ?? 0) > 0 ? (
           <div className="absolute z-20 max-h-72 w-full max-w-[460px] overflow-y-auto border border-gray-300 bg-white shadow-lg" role="listbox">
             {hits.data!.items.map((it) => (
@@ -194,7 +199,8 @@ export function PerfumeItemProfilesPanel() {
           </div>
         ) : null}
       </section>
-      {openId ? <ItemProfile id={openId} /> : null}
+      {creating ? <ItemCreator onCreated={(newId) => { setCreating(false); open("items", newId); }} /> : null}
+      {openId && !creating ? <ItemProfile id={openId} /> : null}
     </div>
   );
 }

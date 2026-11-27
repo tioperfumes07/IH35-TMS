@@ -8,7 +8,7 @@
  * Linkage: type a UPC, a TIO / HK / vendor code or words — the item(s) it points to and every line on every current list that carries
  * it, each vendor's own code and description; a line linked elsewhere is linked to the item in one click.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { ParityTable } from "../../components/parity/ParityTable";
@@ -18,7 +18,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import {
   addPerfumeItemHkCode, addPerfumeItemUpc, applyPerfumeFillCodes, applyPerfumeStrictLinks, confirmPerfumeRow, getPerfumeStockLinkage, getPerfumeStrictLinks, linkPerfumeStockItem, downloadPerfumeFile, getPerfumeFillCodes, getPerfumeItemFile, getPerfumeLinkage,
-  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs,
+  listPerfumeItemFile, perfumeItemFileExportPath, updatePerfumeItemFile, bulkEditPerfumeItems, listPerfumeCatalogs, createPerfumeItem, getPerfumeItemOptions,
   type PerfumeItemEdit, type PerfumeItemFile, type PerfumeItemFileHas, type PerfumeItemFileRow, type PerfumeItemScope, type PerfumeLinkageLine, type PerfumeStockLinkRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
@@ -485,5 +485,71 @@ function BulkEdit({ ids, onDone, onClear }: { ids: string[]; onDone: () => void;
         <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void apply()} data-testid="perfume-bulk-apply">{tr("perfume.bulk.apply", "Apply to selected")}</Button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Item creator (owner 2026-11-27 07:37 CT "in the item creator it should have those rows and should be able to select from list for each
+ * one"). One row per field. Brand, model and size offer what is already in the file (type to add a new one); product type and category
+ * come from his own lists; EDT / EDP / Parfum and gender are fixed lists. A copy of an item that already exists is refused by name.
+ */
+export function ItemCreator({ onCreated }: { onCreated: (id: string) => void }) {
+  const { pushToast } = useToast();
+  const cats = useItemCatalogs();
+  const opts = useQuery({ queryKey: ["perfume", "item-options"], queryFn: getPerfumeItemOptions, staleTime: 60_000 });
+  const [v, setV] = useState({ brand: "", model: "", name: "", product_type: "", category: "", size: "", conc: "", gender: "", description: "", tio_code: "", upc: "" });
+  const [flags, setFlags] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const ok = v.brand.trim() && v.name.trim() && (v.size === "" || Number(v.size) >= 0);
+  const save = async () => {
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const r = await createPerfumeItem({ brand: v.brand.trim(), name: v.name.trim(), size_ml: v.size === "" ? null : Number(v.size), conc: v.conc, gender: v.gender, flags,
+        model: v.model.trim() || null, product_type: v.product_type || null, category: v.category || null, description: v.description.trim() || null,
+        tio_code: v.tio_code.trim() || null, upc: v.upc.trim() || null });
+      pushToast(`Item created: ${r.display_name}`, "success"); onCreated(r.id);
+    } catch (e) { pushToast(userFacingApiError(e, "Item not created"), "error"); } finally { setBusy(false); }
+  };
+  const row = (label: string, field: ReactNode) => (
+    <div className="grid grid-cols-[150px_1fr] items-center gap-2 border-b border-[#EEF2F6] py-1"><span className="text-[#475569]">{label}</span><span>{field}</span></div>
+  );
+  return (
+    <section className="max-w-[720px] rounded-[3px] border border-[#C6D1DC] bg-[#F8FAFC] p-3 text-xs" data-testid="perfume-item-creator" aria-label={tr("perfume.itemfile.new", "New item")}>
+      <div className="mb-2 font-semibold text-[#1F2A44]">{tr("perfume.itemfile.new", "New item")}</div>
+      <datalist id="perfume-brands">{(opts.data?.brands ?? []).map((b) => <option key={b} value={b} />)}</datalist>
+      <datalist id="perfume-models">{(opts.data?.models ?? []).map((b) => <option key={b} value={b} />)}</datalist>
+      <datalist id="perfume-sizes">{(opts.data?.sizes ?? []).map((b) => <option key={b} value={b} />)}</datalist>
+      {row(`${tr("perfume.itemfile.brand", "Brand")} *`, <input list="perfume-brands" className={`${ctl} w-full`} value={v.brand} onChange={(e) => setV({ ...v, brand: e.target.value })} data-testid="perfume-new-brand" />)}
+      {row(tr("perfume.itemfile.model", "Model"), <input list="perfume-models" className={`${ctl} w-full`} value={v.model} onChange={(e) => setV({ ...v, model: e.target.value })} data-testid="perfume-new-model" />)}
+      {row(`${tr("perfume.itemfile.name", "Name")} *`, <input className={`${ctl} w-full`} value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} data-testid="perfume-new-name" />)}
+      {row(tr("perfume.itemfile.product_type", "Product type"), (
+        <select className={`${ctl} w-full`} value={v.product_type} onChange={(e) => setV({ ...v, product_type: e.target.value })} data-testid="perfume-new-product-type">
+          <option value="">{DASH}</option>{cats.types.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>))}
+      {row(tr("perfume.itemfile.category", "Category"), (
+        <select className={`${ctl} w-full`} value={v.category} onChange={(e) => setV({ ...v, category: e.target.value })} data-testid="perfume-new-category">
+          <option value="">{DASH}</option>{cats.categories.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>))}
+      {row(tr("perfume.itemfile.size", "Size ml"), <input list="perfume-sizes" type="number" min={0} className={`${ctl} w-[120px] text-right`} value={v.size} onChange={(e) => setV({ ...v, size: e.target.value })} data-testid="perfume-new-size" />)}
+      {row(tr("perfume.itemfile.conc", "EDT / EDP / Parfum"), (
+        <select className={`${ctl} w-[160px]`} value={v.conc} onChange={(e) => setV({ ...v, conc: e.target.value })} data-testid="perfume-new-conc">
+          {CONC.map((x) => <option key={x} value={x}>{x || DASH}</option>)}
+        </select>))}
+      {row(tr("perfume.itemfile.gender", "Gender"), (
+        <select className={`${ctl} w-[160px]`} value={v.gender} onChange={(e) => setV({ ...v, gender: e.target.value })} data-testid="perfume-new-gender">
+          {Object.entries(GENDER).map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+        </select>))}
+      {row(tr("perfume.itemfile.flags", "Flags"), (
+        <span className="flex flex-wrap gap-2">{FLAGS.map((fl) => (
+          <label key={fl} className="flex items-center gap-1"><input type="checkbox" checked={flags.includes(fl)} onChange={(e) => setFlags(e.target.checked ? [...flags, fl] : flags.filter((y) => y !== fl))} />{fl.charAt(0) + fl.slice(1).toLowerCase()}</label>
+        ))}</span>))}
+      {row(tr("perfume.itemfile.description", "Description"), <textarea className={`${ctl} h-14 w-full py-1`} maxLength={2000} value={v.description} onChange={(e) => setV({ ...v, description: e.target.value })} data-testid="perfume-new-description" />)}
+      {row(tr("perfume.itemfile.tio_code", "TIO code"), <input className={`${ctl} w-[160px]`} value={v.tio_code} onChange={(e) => setV({ ...v, tio_code: e.target.value })} data-testid="perfume-new-tio" />)}
+      {row(tr("perfume.itemfile.upc", "UPC"), <input inputMode="numeric" className={`${ctl} w-[200px]`} value={v.upc} onChange={(e) => setV({ ...v, upc: e.target.value })} data-testid="perfume-new-upc" />)}
+      <div className="mt-2 flex justify-end">
+        <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void save()} data-testid="perfume-new-save">{tr("perfume.itemfile.create", "Create item")}</Button>
+      </div>
+    </section>
   );
 }
