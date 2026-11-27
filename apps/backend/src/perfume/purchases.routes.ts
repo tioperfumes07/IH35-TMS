@@ -11,6 +11,7 @@ import {
   addPurchaseLine, archivePurchaseOrder, createPurchaseOrder, getPurchaseOrder, listPurchaseOrders, PO_STATUSES, PoInvalid, poLinePatchSchema, poLineSchema,
   PoNotFound, poSchema, purchaseOrderPdf, purchaseOrdersFromOrder, purchaseOrdersListXlsx, purchaseOrdersOfItem, purchaseOrdersOfOrder, purchaseOrdersOfVendor,
   purchaseOrderXlsx, receivePurchase, receiveSchema, removePurchaseLine, setPurchaseOrderStatus, updatePurchaseLine, updatePurchaseOrder,
+  approvePurchase, poApprovalOverCents, setPoApprovalOverCents,
 } from "./purchases.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -102,6 +103,23 @@ export async function registerPerfumePurchaseRoutes(app: FastifyInstance) {
     const p = receiveSchema.safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error", details: p.error.flatten() });
     try { return await withCurrentUser(uid, (c) => receivePurchase(c, uid, id.data, p.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.post("/api/v1/perfume/purchase-orders/:id/approve", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const p = z.object({ note: z.string().trim().max(2000).nullable().optional() }).safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => approvePurchase(c, uid, id.data, p.data.note ?? null)); } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/purchase-orders-approval", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => ({ approval_over_cents: await poApprovalOverCents(c) }));
+  });
+  app.put("/api/v1/perfume/purchase-orders-approval", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const p = z.object({ approval_over_cents: z.number().int().min(1).max(100_000_000_00).nullable() }).safeParse(req.body ?? {});
+    if (!p.success) return reply.code(400).send({ error: "validation_error" });
+    try { return await withCurrentUser(uid, (c) => setPoApprovalOverCents(c, uid, p.data.approval_over_cents)); } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/purchase-orders/:id/archive", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

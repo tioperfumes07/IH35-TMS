@@ -54,7 +54,8 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_cost_cents), 0)::bigint FROM
 const HEADER = `p.id, p.number, p.vendor_id, v.name AS vendor_name, v.contact AS vendor_contact, p.sales_order_id,
   (SELECT o.number FROM perfume.sales_orders o WHERE o.id = p.sales_order_id) AS sales_order_number,
   (SELECT o.customer_name FROM perfume.sales_orders o WHERE o.id = p.sales_order_id) AS sales_order_customer,
-  p.order_date::text, p.expected_by::text, p.status, p.currency, p.terms, p.notes, p.created_at, p.updated_at, p.location_code`;
+  p.order_date::text, p.expected_by::text, p.status, p.currency, p.terms, p.notes, p.created_at, p.updated_at, p.location_code,
+  p.approved_at, p.approval_note, (SELECT u.email FROM identity.users u WHERE u.id = p.approved_by) AS approved_by_email`;
 const FROM = `perfume.purchase_orders p JOIN perfume.vendors v ON v.id = p.vendor_id`;
 
 export type PoLine = { id: string; line_no: number; sales_order_line_id: string | null; item_id: string | null; price_list_row_id: string | null; vendor_sku: string | null;
@@ -86,7 +87,57 @@ export async function getPurchaseOrder(c: pg.PoolClient, id: string): Promise<Po
   const events = (await c.query(
     `SELECT e.id, e.kind, e.detail, e.created_at, u.email AS by_email FROM perfume.purchase_order_events e LEFT JOIN identity.users u ON u.id = e.created_by
       WHERE e.po_id = $1 ORDER BY e.created_at, e.id`, [id])).rows;
-  return { ...(h as PoFull), lines: lines.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }) as PoLine), events };
+  const over = await poApprovalOverCents(c);
+  const needs = over != null && Number(h.total_cents) >= over;
+  return { ...(h as PoFull), approval_over_cents: over, needs_approval: needs, awaiting_approval: needs && !h.approved_at,
+    lines: lines.map((l) => ({ ...l, unit_cost_cents: Number(l.unit_cost_cents) }) as PoLine), events };
+}
+
+/* ---------------- PO approval (owner-set amount; NULL = no approval step) ---------------- */
+
+export async function poApprovalOverCents(c: pg.PoolClient): Promise<number | null> {
+  const v = (await c.query<{ v: string | null }>(`SELECT rules->>'po_approval_over_cents' AS v FROM perfume.settings WHERE id = 1`)).rows[0]?.v;
+  return v == null || v === "" ? null : Number(v);
+}
+export async function setPoApprovalOverCents(c: pg.PoolClient, uid: string, cents: number | null) {
+  if (cents != null && (!Number.isInteger(cents) || cents <= 0)) throw new PoInvalid("The approval amount must be above $0 (or blank for none).");
+  await c.query(
+    `INSERT INTO perfume.settings (id, rules, updated_by, updated_at) VALUES (1, jsonb_build_object('po_approval_over_cents', $1::bigint), $2, now())
+     ON CONFLICT (id) DO UPDATE SET rules = CASE WHEN $1::bigint IS NULL THEN perfume.settings.rules - 'po_approval_over_cents'
+                                                 ELSE perfume.settings.rules || jsonb_build_object('po_approval_over_cents', $1::bigint) END,
+                                    updated_by = $2, updated_at = now()`, [cents, uid]);
+  return { approval_over_cents: cents };
+}
+async function poTotal(c: pg.PoolClient, poId: string) {
+  return Number((await c.query<{ t: string }>(
+    `SELECT coalesce(sum(qty * unit_cost_cents), 0)::text AS t FROM perfume.purchase_order_lines WHERE po_id = $1 AND archived_at IS NULL`, [poId])).rows[0]!.t);
+}
+export async function approvePurchase(c: pg.PoolClient, uid: string, poId: string, note: string | null = null) {
+  const po = (await c.query<{ status: PoStatus; approved_at: string | null }>(
+    `SELECT status, approved_at FROM perfume.purchase_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [poId])).rows[0];
+  if (!po) throw new PoNotFound();
+  if (po.status === "cancelled") throw new PoInvalid("The PO is cancelled.");
+  if (po.approved_at) throw new PoInvalid("This PO is already approved.");
+  const total = await poTotal(c, poId);
+  if (total <= 0) throw new PoInvalid("Add the lines first.");
+  await c.query(`UPDATE perfume.purchase_orders SET approved_by = $2, approved_at = now(), approval_note = $3, updated_at = now() WHERE id = $1`, [poId, uid, note]);
+  await event(c, poId, uid, "approved", { total_cents: total, note });
+  return { approved: true, total_cents: total };
+}
+/** A change to what is bought or what it costs after approval takes the approval off; it is approved again at the new total. */
+async function dropApprovalOnChange(c: pg.PoolClient, uid: string, poId: string, why: string) {
+  const r = await c.query(`UPDATE perfume.purchase_orders SET approved_by = NULL, approved_at = NULL, approval_note = NULL, updated_at = now()
+                            WHERE id = $1 AND approved_at IS NOT NULL RETURNING id`, [poId]);
+  if (r.rowCount) await event(c, poId, uid, "approval_removed", { why, total_cents: await poTotal(c, poId) });
+}
+async function assertApprovedToReceive(c: pg.PoolClient, poId: string, approvedAt: string | null) {
+  const over = await poApprovalOverCents(c);
+  if (over == null || approvedAt) return;
+  const total = await poTotal(c, poId);
+  if (total >= over) {
+    const $ = (n: number) => `$${(n / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    throw new PoInvalid(`This PO is ${$(total)} — at or over your approval amount of ${$(over)}. Approve it before receiving.`);
+  }
 }
 
 /** This vendor's own line for the item on their current list (lowest price first): their code, their words, their price. */
@@ -234,6 +285,7 @@ export async function addPurchaseLine(c: pg.PoolClient, uid: string, poId: strin
     `INSERT INTO perfume.purchase_order_lines (po_id, line_no, item_id, price_list_row_id, vendor_sku, description, upc, qty, unit_cost_cents)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`, [poId, no, x.item_id ?? null, rowId, sku, description, upc, x.qty, unit]);
   await event(c, poId, uid, "line_added", { line_no: no, description, qty: x.qty, unit_cost_cents: unit });
+  await dropApprovalOnChange(c, uid, poId, "line added");
   await refreshReceived(c, uid, poId);
   return { id: r.rows[0]!.id, unit_cost_cents: unit };
 }
@@ -254,6 +306,7 @@ export async function updatePurchaseLine(c: pg.PoolClient, uid: string, lineId: 
     [lineId, qty, x.unit_cost_cents ?? null]);
   if ((x.qty !== undefined && x.qty !== b.qty) || (x.unit_cost_cents !== undefined && x.unit_cost_cents !== Number(b.unit_cost_cents))) {
     await event(c, b.po_id, uid, "line_changed", { line_no: b.line_no, from: { qty: b.qty, unit_cost_cents: Number(b.unit_cost_cents) }, to: { qty: x.qty, unit_cost_cents: x.unit_cost_cents } });
+    await dropApprovalOnChange(c, uid, b.po_id, "line changed");
   }
   await refreshReceived(c, uid, b.po_id);
 }
@@ -264,10 +317,11 @@ export const receiveSchema = z.object({
 });
 /** Goods arrive: each line into stock at the site, a lot at the PO line's cost with the vendor on it; no lines = everything still open. */
 export async function receivePurchase(c: pg.PoolClient, uid: string, poId: string, x: z.infer<typeof receiveSchema> = {}) {
-  const po = (await c.query<{ vendor_id: string; location_code: string | null; status: PoStatus }>(
-    `SELECT vendor_id, location_code, status FROM perfume.purchase_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [poId])).rows[0];
+  const po = (await c.query<{ vendor_id: string; location_code: string | null; status: PoStatus; approved_at: string | null }>(
+    `SELECT vendor_id, location_code, status, approved_at FROM perfume.purchase_orders WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [poId])).rows[0];
   if (!po) throw new PoNotFound();
   if (po.status === "cancelled") throw new PoInvalid("The PO is cancelled.");
+  await assertApprovedToReceive(c, poId, po.approved_at);
   const loc = x.location_code ?? po.location_code;
   const open = (await c.query<{ id: string; line_no: number; item_id: string | null; qty: number; qty_received: number; unit_cost_cents: string }>(
     `SELECT id, line_no, item_id, qty, qty_received, unit_cost_cents::text FROM perfume.purchase_order_lines WHERE po_id = $1 AND archived_at IS NULL ORDER BY line_no FOR UPDATE`, [poId])).rows;

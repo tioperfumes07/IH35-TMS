@@ -181,7 +181,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 text-xs">
-        <label>{tr("perfume.orders.ship_from", "Ships from")} <SitePicker value={o.location_code} onChange={(v) => void patch({ location_code: v })} label={tr("perfume.orders.ship_from", "Ships from")} testId="perfume-order-site" /></label>
+        <label>{tr("perfume.orders.ship_from", "Ships from")} <SitePicker value={o.location_code} onChange={(v) => void patch({ location_code: v })} label={tr("perfume.orders.ship_from", "Ships from")} testId="perfume-order-site" selling /></label>
         <label>{tr("perfume.orders.ship_by", "Ship by")} <DatePicker aria-label={tr("perfume.orders.ship_by", "Ship by")} value={o.ship_by ?? ""} onChange={(v) => void patch({ ship_by: v || null })} /></label>
         <select className={ctl} aria-label={tr("perfume.orders.currency", "Currency")} value={o.currency} onChange={(e) => void patch({ currency: e.target.value as "USD" | "MXN" })}>
           <option value="USD">{"USD"}</option><option value="MXN">{"MXN"}</option>
