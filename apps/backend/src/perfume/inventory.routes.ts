@@ -7,11 +7,12 @@ import ExcelJS from "exceljs";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
 import { withCurrentUser } from "../auth/db.js";
+import { wrapPdfDocument } from "../render/pdf-template.js";
 import { deskAllowed } from "./desk.routes.js";
 import { reorderMakeSchema, reorderQuery, reorderReport, reorderToPurchaseOrders } from "./replenishment.service.js";
 import { PoInvalid } from "./purchases.service.js";
 import {
-  addTransferLine, cancelCount, cancelTransfer, createCount, createTransfer, getCount, getTransfer, InvInvalid, InvNotFound, itemLots, listCounts, listMoves,
+  addTransferLine, cancelCount, cancelTransfer, countSelectionSchema, countSheetBody, createCount, createTransfer, getCount, getTransfer, InvInvalid, InvNotFound, itemLots, listCounts, listMoves,
   listSites, listTransfers, openingApply, openingPreview, postCount, receiveTransfer, removeTransferLine, setCountLine, setReorder, itemSites, shipTransfer, siteSchema,
   stockOnHand, submitCount, transferSchema, updateSite,
   addWriteoffLine, cancelWriteoff, createWriteoff, getWriteoff, listWriteoffs, postWriteoff, removeWriteoffLine, submitWriteoff, valuation, writeoffSchema,
@@ -148,7 +149,7 @@ export async function registerPerfumeInventoryRoutes(app: FastifyInstance) {
   });
   app.post("/api/v1/perfume/inventory/counts", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    const p = z.object({ location_code: z.string().min(1).max(40), all_items: z.boolean().optional(), notes: z.string().trim().max(2000).nullable().optional() }).safeParse(req.body ?? {});
+    const p = countSelectionSchema.extend({ location_code: z.string().min(1).max(40), notes: z.string().trim().max(2000).nullable().optional() }).safeParse(req.body ?? {});
     if (!p.success) return reply.code(400).send({ error: "validation_error" });
     try { return await withCurrentUser(uid, (c) => createCount(c, uid, p.data.location_code, p.data)); } catch (e) { return fail(reply, e); }
   });
@@ -157,11 +158,21 @@ export async function registerPerfumeInventoryRoutes(app: FastifyInstance) {
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { return await withCurrentUser(uid, (c) => getCount(c, id.data)); } catch (e) { return fail(reply, e); }
   });
+  app.get("/api/v1/perfume/inventory/counts/:id/sheet.html", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try {
+      const doc = await withCurrentUser(uid, (c) => countSheetBody(c, id.data));
+      reply.header("Content-Type", "text/html; charset=utf-8");
+      reply.header("Cache-Control", "no-store");
+      return reply.send(wrapPdfDocument(doc));
+    } catch (e) { return fail(reply, e); }
+  });
   app.put("/api/v1/perfume/inventory/counts/:id/lines", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idOf(req); const p = z.object({ item_id: uuid, counted_qty: z.number().int().min(0).max(10_000_000) }).safeParse(req.body ?? {});
     if (!id.success || !p.success) return reply.code(400).send({ error: "validation_error" });
-    try { await withCurrentUser(uid, (c) => setCountLine(c, id.data, p.data.item_id, p.data.counted_qty)); return { ok: true }; } catch (e) { return fail(reply, e); }
+    try { await withCurrentUser(uid, (c) => setCountLine(c, id.data, p.data.item_id, p.data.counted_qty, uid)); return { ok: true }; } catch (e) { return fail(reply, e); }
   });
   app.post("/api/v1/perfume/inventory/counts/:id/submit", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;

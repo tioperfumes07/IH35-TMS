@@ -4,6 +4,7 @@
  * adjustments over $500 need a second person). Stock is never typed: every number here is the sum of the stock ledger.
  * Views: Stock on hand · Stock moves · Transfers · Counts · Write-offs · Valuation · Sites (with opening stock from the inventory file).
  */
+import { openPrintableDocument } from "../../lib/openPrintableDocument";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -17,11 +18,13 @@ import {
   addPerfumeTransferLine, applyPerfumeOpening, cancelPerfumeCount, createPerfumeCount, createPerfumeTransfer, downloadPerfumeFile, getPerfumeCount, getPerfumeOpening,
   getPerfumeTransfer, listPerfumeCounts, listPerfumeMoves, listPerfumeSites, listPerfumeStock, listPerfumeTransfers, perfumeStockExportPath, perfumeTransferAction,
   postPerfumeCount, removePerfumeTransferLine, setPerfumeCountLine, setPerfumeReorder, submitPerfumeCount, updatePerfumeSite,
-  type PerfumeCountRow, type PerfumeMove, type PerfumeSite, type PerfumeStockRow, type PerfumeTransferRow,
+  type PerfumeCountLine, type PerfumeCountRow, type PerfumeMove, type PerfumeSite, type PerfumeStockRow, type PerfumeTransferRow,
   addPerfumeWriteoffLine, createPerfumeWriteoff, getPerfumeValuation, getPerfumeWriteoff, listPerfumeWriteoffs, perfumeValuationExportPath, perfumeWriteoffAction,
   removePerfumeWriteoffLine, type PerfumeValuationRow, type PerfumeWriteoffReason, type PerfumeWriteoffRow,
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
+import { FamilySelect } from "./PerfumeFamiliesPanel";
+import { useItemCatalogs } from "./PerfumeItemFilePanel";
 import { Badge, ctl, DASH, DocLink, ItemFinder, money, NumberCell, SitePicker, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const KIND_TEXT: Record<string, string> = { opening: "Opening stock", receipt: "Received", shipment: "Shipped", transfer_out: "Transfer out", transfer_in: "Transfer in",
@@ -206,36 +209,63 @@ function TransferEditor({ id, onChanged, onClose }: { id: string; onChanged: () 
 const CC_TEXT = { draft: "Counting", submitted: "Waiting to post", posted: "Posted", cancelled: "Cancelled" } as const;
 const CC_CLASS = { draft: "bg-[#64748B]", submitted: "bg-[#8A4208]", posted: "bg-[#1F6B32]", cancelled: "bg-[#9B2C2C]" } as const;
 
+/**
+ * Physical count cycle (CONTROL Physical Inventory Process, owner 2026-11-27 13:50 CT; migration 202617110100):
+ * 1 pick the site and the items for the sheet (all, or by category / brand / product type / family; with or without 0 on hand) →
+ * 2 print the BLIND count sheet (by bin; no expected quantity) → 3 type what is on the shelf (each line keeps the on-hand at the moment
+ * it is counted) → 4 the variance report (counted − on hand when counted, gains / losses / net) → 5 submit and post (over $500 a second
+ * person posts). Lines never counted move nothing.
+ */
 export function PerfumeCountsPanel() {
   const { pushToast } = useToast();
   const { openId } = useOpenDoc();
   const list = useQuery({ queryKey: ["perfume", "inventory", "counts"], queryFn: listPerfumeCounts });
+  const cats = useItemCatalogs();
   const [site, setSite] = useState<string | null>(null);
+  const [sel, setSel] = useState<{ category: string; brand: string; product_type: string; family_id: string; include_zero: boolean }>({ category: "", brand: "", product_type: "", family_id: "", include_zero: false });
   const [selected, setSelected] = useState<string | null>(openId);
   useEffect(() => { if (openId) setSelected(openId); }, [openId]);
   if (list.isError) return <ListErrorState title={tr("perfume.inv.ccError", "Couldn't load the counts")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
-  const start = (all: boolean) => {
+  const start = (mode: "sheet" | "spot") => {
     if (!site) { pushToast("Pick the site", "error"); return; }
-    void createPerfumeCount({ location_code: site, all_items: all }).then((r) => { pushToast(`Count ${r.number} started`, "success"); setSelected(r.id); void list.refetch(); }).catch(fail(pushToast));
+    const filtered = Boolean(sel.category || sel.brand || sel.product_type || sel.family_id);
+    const body = mode === "spot" ? { location_code: site } : { location_code: site, all_items: !filtered, category: sel.category || null, brand: sel.brand.trim() || null,
+      product_type: sel.product_type || null, family_id: sel.family_id || null, include_zero: sel.include_zero };
+    void createPerfumeCount(body).then((r) => { pushToast(`Count ${r.number} started`, "success"); setSelected(r.id); void list.refetch(); }).catch(fail(pushToast));
   };
   return (
     <div className="space-y-3" data-testid="perfume-counts-panel">
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.inv.counts", "Counts")}>
+        <div className="text-section-header">{tr("perfume.inv.count_new", "New count sheet")}</div>
         <div className="flex flex-wrap items-end gap-2 text-xs">
           <label>{tr("perfume.inv.site", "Site")} <SitePicker value={site} onChange={setSite} label={tr("perfume.inv.site", "Site")} testId="perfume-count-site" /></label>
-          <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => start(true)} data-testid="perfume-count-full">{tr("perfume.inv.full_count", "Count the whole site")}</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => start(false)} data-testid="perfume-count-spot">{tr("perfume.inv.spot_count", "Count or adjust a few items")}</Button>
-          <span className="text-[#64748B]">{tr("perfume.inv.count_rule", "A difference worth more than $500 is posted by a second person.")}</span>
+          <label>{tr("perfume.itemfile.category", "Category")}
+            <select className={`${ctl} block`} value={sel.category} onChange={(e) => setSel({ ...sel, category: e.target.value })} data-testid="perfume-count-category">
+              <option value="">{tr("perfume.inv.any", "All")}</option>{cats.categories.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </label>
+          <label>{tr("perfume.itemfile.product_type", "Product type")}
+            <select className={`${ctl} block`} value={sel.product_type} onChange={(e) => setSel({ ...sel, product_type: e.target.value })} data-testid="perfume-count-type">
+              <option value="">{tr("perfume.inv.any", "All")}</option>{cats.types.map((v) => <option key={v} value={v}>{v}</option>)}
+            </select>
+          </label>
+          <label>{tr("perfume.itemfile.brand", "Brand")} <input className={`${ctl} block w-[160px]`} aria-label={tr("perfume.itemfile.brand", "Brand")} value={sel.brand} onChange={(e) => setSel({ ...sel, brand: e.target.value })} data-testid="perfume-count-brand" /></label>
+          <label>{tr("perfume.itemfile.family", "Family")} <FamilySelect value={sel.family_id} onChange={(x) => setSel({ ...sel, family_id: x })} testId="perfume-count-family" /></label>
+          <label className="flex items-center gap-1"><input type="checkbox" checked={sel.include_zero} onChange={(e) => setSel({ ...sel, include_zero: e.target.checked })} data-testid="perfume-count-zero" />{tr("perfume.inv.zero", "Include items at 0 on hand")}</label>
+          <Button type="button" className="h-[34px] px-3 text-xs" onClick={() => start("sheet")} data-testid="perfume-count-full">{tr("perfume.inv.start_sheet", "Start count sheet")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => start("spot")} data-testid="perfume-count-spot">{tr("perfume.inv.spot_count", "Count or adjust a few items")}</Button>
         </div>
+        <div className="text-xs text-[#64748B]">{tr("perfume.inv.count_rule2", "The sheet is blind (no expected quantity). Each line keeps the on-hand at the moment it is counted, so sales during the count are never counted twice. Lines left blank move nothing. A difference worth more than $500 is posted by a second person.")}</div>
         <ParityTable<PerfumeCountRow>
           rows={list.data?.counts ?? []} rowKey={(k) => k.id} loading={list.isLoading} storageKey="perfume-counts-v1" exportFilename="TIO counts" exportExcel emptyText="No counts yet." onRowClick={(k) => setSelected(k.id)}
           columns={[
             { key: "number", label: "Count", sortable: true, render: (k) => <span className="font-semibold">{k.number}</span> },
+            { key: "created_at", label: "Started", sortable: true, cellClass: "text-right tabular-nums", render: (k) => usDate(k.created_at), exportValue: (k) => k.created_at },
             { key: "location_code", label: "Site", sortable: true, render: (k) => k.location_code },
             { key: "status", label: "Status", sortable: true, render: (k) => <Badge text={CC_TEXT[k.status]} color={CC_CLASS[k.status]} />, exportValue: (k) => CC_TEXT[k.status] },
             { key: "lines", label: "Lines", kind: "number", cellClass: "text-right tabular-nums", render: (k) => k.lines.toLocaleString("en-US") },
-            { key: "diff_value_cents", label: "Difference", kind: "number", cellClass: "text-right tabular-nums", render: (k) => money(k.diff_value_cents), exportValue: (k) => (k.diff_value_cents == null ? "" : k.diff_value_cents / 100) },
-            { key: "submitted_by_email", label: "Counted by", render: (k) => k.submitted_by_email ?? DASH },
+            { key: "diff_value_cents", label: "Variance", kind: "number", cellClass: "text-right tabular-nums", render: (k) => money(k.diff_value_cents), exportValue: (k) => (k.diff_value_cents == null ? "" : k.diff_value_cents / 100) },
+            { key: "submitted_by_email", label: "Submitted by", render: (k) => k.submitted_by_email ?? DASH },
             { key: "approved_by_email", label: "Posted by", render: (k) => k.approved_by_email ?? DASH },
           ]}
         />
@@ -245,37 +275,68 @@ export function PerfumeCountsPanel() {
   );
 }
 
+/** The shelf count of one line: blank until counted (blank is "not counted", never 0); saved when the box is left. */
+function CountCell({ value, label, testId, onSave }: { value: number | null; label: string; testId: string; onSave: (n: number) => Promise<unknown> }) {
+  const { pushToast } = useToast();
+  const [v, setV] = useState(value == null ? "" : String(value));
+  useEffect(() => setV(value == null ? "" : String(value)), [value]);
+  const save = () => {
+    if (v.trim() === "") { setV(value == null ? "" : String(value)); return; }
+    const n = Number(v);
+    if (!Number.isInteger(n) || n < 0) { pushToast("Type a whole number, 0 or more", "error"); setV(value == null ? "" : String(value)); return; }
+    if (n === value) return;
+    void onSave(n).catch((e) => { pushToast(userFacingApiError(e, "Not saved"), "error"); setV(value == null ? "" : String(value)); });
+  };
+  return <input className={`${ctl} w-[80px] text-right`} inputMode="numeric" aria-label={label} placeholder={tr("perfume.inv.not_counted", "Not counted")} value={v}
+    onChange={(e) => setV(e.target.value)} onBlur={save} onClick={(e) => e.stopPropagation()} data-testid={testId} />;
+}
+
 function CountEditor({ id, onChanged, onClose }: { id: string; onChanged: () => void; onClose: () => void }) {
   const { pushToast } = useToast();
   const k = useQuery({ queryKey: ["perfume", "inventory", "count", id], queryFn: () => getPerfumeCount(id) });
   if (k.isError) return <ListErrorState title={tr("perfume.inv.ccOneError", "Couldn't load the count")} status={0} message={(k.error as Error)?.message} onRetry={() => void k.refetch()} />;
   if (!k.data) return null;
   const x = k.data;
+  const t = x.totals;
   const run = (f: () => Promise<unknown>, ok?: string) => void f().then(async () => { await k.refetch(); onChanged(); if (ok) pushToast(ok, "success"); }).catch(fail(pushToast));
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-count-editor" aria-label={x.number}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-section-header">{x.number} · {x.location_code} <Badge text={CC_TEXT[x.status]} color={CC_CLASS[x.status]} />
-          {x.diff_value_cents != null ? <span className="ml-2 text-xs">{`${tr("perfume.inv.diff", "Difference")} ${money(x.diff_value_cents)}`}{x.needs_second_person ? ` · ${tr("perfume.inv.second", "a second person posts it")}` : ""}</span> : null}
+          {x.needs_second_person ? <span className="ml-2 text-xs">{tr("perfume.inv.second", "a second person posts it")}</span> : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "draft" || !x.lines.length} onClick={() => run(() => submitPerfumeCount(id), "Submitted")} data-testid="perfume-count-submit">{tr("perfume.inv.submit", "Submit")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!x.lines.length} onClick={() => openPrintableDocument(`/api/v1/perfume/inventory/counts/${encodeURIComponent(x.id)}/sheet.html`)} data-testid="perfume-count-print">{tr("perfume.inv.print_sheet", "Print count sheet")}</Button>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "draft" || !t.counted} onClick={() => run(() => submitPerfumeCount(id), "Submitted")} data-testid="perfume-count-submit">{tr("perfume.inv.submit", "Submit")}</Button>
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={x.status !== "submitted"} onClick={() => run(() => postPerfumeCount(id), "Posted to stock")} data-testid="perfume-count-post">{tr("perfume.inv.post", "Post to stock")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={x.status === "posted" || x.status === "cancelled"} onClick={() => run(() => cancelPerfumeCount(id))} data-testid="perfume-count-cancel">{tr("perfume.inv.cancel", "Cancel")}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.inv.close", "Close")}</Button>
         </div>
       </div>
+      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-5" data-testid="perfume-count-totals">
+        <KpiCard label={tr("perfume.inv.k_lines", "Lines on the sheet")} number={t.lines.toLocaleString("en-US")} disabled />
+        <KpiCard label={tr("perfume.inv.k_counted", "Counted")} number={`${t.counted.toLocaleString("en-US")} · ${t.not_counted.toLocaleString("en-US")} ${tr("perfume.inv.k_left", "left")}`} disabled />
+        <KpiCard label={tr("perfume.inv.k_gain", "Gains")} number={money(t.gain_cents)} disabled />
+        <KpiCard label={tr("perfume.inv.k_loss", "Losses")} number={money(t.loss_cents)} accent={t.loss_cents < 0 ? "#B91C1C" : undefined} disabled />
+        <KpiCard label={tr("perfume.inv.k_net", "Net variance")} number={money(t.net_cents)} disabled />
+      </div>
       {x.status === "draft" ? <ItemFinder testId="perfume-count-find" onPick={(itemId, qty) => run(() => setPerfumeCountLine(id, { item_id: itemId, counted_qty: qty }))} /> : null}
-      <ParityTable<typeof x.lines[number]>
-        title={tr("perfume.inv.lines", "Lines")} rows={x.lines} rowKey={(l) => `${l.id}-${l.counted_qty}`} storageKey="perfume-count-lines-v1" exportFilename="TIO count lines" exportExcel emptyText="No lines yet — add an item above."
+      <ParityTable<PerfumeCountLine>
+        title={tr("perfume.inv.variance", "Count entry and variance report")} rows={x.lines} rowKey={(l) => `${l.id}-${l.counted_qty ?? "x"}`} storageKey="perfume-count-lines-v2"
+        exportFilename={`TIO ${x.number} variance`} exportExcel emptyText="No lines yet — add an item above."
         columns={[
-          { key: "display_name", label: "Item", render: (l) => l.display_name },
-          { key: "on_hand_now", label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_now.toLocaleString("en-US") },
+          { key: "bin", label: "Bin", sortable: true, render: (l) => l.bin ?? DASH, exportValue: (l) => l.bin ?? "" },
+          { key: "tio_code", label: "TIO code", sortable: true, render: (l) => l.tio_code ?? DASH, exportValue: (l) => l.tio_code ?? "" },
+          { key: "display_name", label: "Item", sortable: true, render: (l) => l.display_name },
           { key: "counted_qty", label: "Counted", render: (l) => (x.status === "draft"
-            ? <NumberCell value={l.counted_qty} label={tr("perfume.inv.counted", "Counted")} testId={`perfume-count-qty-${l.item_id}`} onSave={(n) => setPerfumeCountLine(id, { item_id: l.item_id, counted_qty: n }).then(() => k.refetch())} />
-            : l.counted_qty.toLocaleString("en-US")), exportValue: (l) => l.counted_qty },
-          { key: "diff", label: "Difference", kind: "number", cellClass: "text-right tabular-nums", render: (l) => { const d = l.counted_qty - l.on_hand_now; return d > 0 ? `+${d}` : String(d); }, exportValue: (l) => l.counted_qty - l.on_hand_now },
-          { key: "value", label: "Value", kind: "number", cellClass: "text-right tabular-nums", render: (l) => money((l.counted_qty - l.on_hand_now) * l.unit_cost_cents), exportValue: (l) => ((l.counted_qty - l.on_hand_now) * l.unit_cost_cents) / 100 },
+            ? <CountCell value={l.counted_qty} label={`${tr("perfume.inv.counted", "Counted")} ${l.display_name}`} testId={`perfume-count-qty-${l.item_id}`}
+                onSave={(n) => setPerfumeCountLine(id, { item_id: l.item_id, counted_qty: n }).then(() => k.refetch())} />
+            : l.counted_qty == null ? tr("perfume.inv.not_counted", "Not counted") : l.counted_qty.toLocaleString("en-US")), exportValue: (l) => l.counted_qty ?? "" },
+          { key: "expected_qty", label: "On hand when counted", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.counted_at ? l.expected_qty.toLocaleString("en-US") : DASH), exportValue: (l) => (l.counted_at ? l.expected_qty : "") },
+          { key: "variance", label: "Variance", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (l) => (l.variance == null ? DASH : l.variance > 0 ? `+${l.variance}` : String(l.variance)), exportValue: (l) => l.variance ?? "" },
+          { key: "value", label: "Variance $", kind: "number", cellClass: "text-right tabular-nums", render: (l) => (l.variance == null ? DASH : money(l.variance * l.unit_cost_cents)), exportValue: (l) => (l.variance == null ? "" : (l.variance * l.unit_cost_cents) / 100) },
+          { key: "on_hand_now", label: "On hand now", kind: "number", cellClass: "text-right tabular-nums", render: (l) => l.on_hand_now.toLocaleString("en-US") },
+          { key: "counted_at", label: "Counted at", cellClass: "text-right tabular-nums", render: (l) => (l.counted_at ? `${usDate(l.counted_at)} ${l.counted_by_email ?? ""}` : DASH), exportValue: (l) => l.counted_at ?? "" },
         ]}
       />
     </section>

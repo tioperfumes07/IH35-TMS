@@ -10,6 +10,7 @@
  */
 import type pg from "pg";
 import { z } from "zod";
+import { escapeHtml, formatDate } from "../render/pdf-template.js";
 
 export class InvInvalid extends Error {}
 export class InvNotFound extends Error { constructor() { super("not_found"); } }
@@ -279,14 +280,40 @@ export async function getTransfer(c: pg.PoolClient, id: string) {
 
 /* ------------------------------------------------------------------ counts (and every adjustment) */
 
-export async function createCount(c: pg.PoolClient, uid: string, loc: string, opts: { all_items?: boolean; notes?: string | null } = {}) {
+/**
+ * Physical count cycle (migration 202617110100 — CONTROL's Physical Inventory Process, owner 2026-11-27 13:50 CT).
+ * Start: pick the site and which items go on the sheet (all stocked items, or by category / brand / product type / family; with or
+ * without the items at 0 on hand). The sheet is BLIND — every line starts not counted.
+ * Count: typing a line stamps who counted and when, and takes the on-hand at that moment as expected (the line's cut-off).
+ * Variance = counted − expected. Submit values the variance; over $500 a second person posts. Post moves stock by each line's variance
+ * against today's stock, so a sale between counting and posting is never counted twice. Lines never counted move nothing.
+ */
+export const countSelectionSchema = z.object({
+  all_items: z.boolean().optional(),
+  category: z.string().trim().max(60).nullable().optional(),
+  brand: z.string().trim().max(80).nullable().optional(),
+  product_type: z.string().trim().max(60).nullable().optional(),
+  family_id: z.string().uuid().nullable().optional(),
+  include_zero: z.boolean().optional(),
+});
+export async function createCount(c: pg.PoolClient, uid: string, loc: string, opts: z.infer<typeof countSelectionSchema> & { notes?: string | null } = {}) {
   await assertSite(c, loc);
+  const sel = { category: opts.category || null, brand: opts.brand || null, product_type: opts.product_type || null, family_id: opts.family_id || null,
+    include_zero: Boolean(opts.include_zero), all_items: Boolean(opts.all_items) };
   const h = (await c.query<{ id: string; number: string }>(
-    `INSERT INTO perfume.stock_counts (location_code, notes, created_by) VALUES ($1,$2,$3) RETURNING id, number`, [loc, opts.notes ?? null, uid])).rows[0]!;
-  if (opts.all_items) {
+    `INSERT INTO perfume.stock_counts (location_code, notes, created_by, selection) VALUES ($1,$2,$3,$4::jsonb) RETURNING id, number`,
+    [loc, opts.notes ?? null, uid, JSON.stringify(sel)])).rows[0]!;
+  if (sel.all_items || sel.category || sel.brand || sel.product_type || sel.family_id) {
     await c.query(
       `INSERT INTO perfume.stock_count_lines (count_id, item_id, expected_qty, counted_qty, unit_cost_cents)
-       SELECT $1, s.item_id, s.qty, s.qty, s.avg_cost_cents FROM perfume.item_stock s WHERE s.location_code = $2 AND s.qty > 0`, [h.id, loc]);
+       SELECT $1, s.item_id, s.qty, NULL, s.avg_cost_cents
+         FROM perfume.item_stock s JOIN perfume.items i ON i.id = s.item_id AND i.merged_into_id IS NULL
+        WHERE s.location_code = $2 AND (s.qty > 0 OR $7::boolean)
+          AND ($3::text IS NULL OR lower(btrim(i.category)) = lower(btrim($3)))
+          AND ($4::text IS NULL OR lower(btrim(i.brand)) = lower(btrim($4)))
+          AND ($5::text IS NULL OR lower(btrim(i.product_type)) = lower(btrim($5)))
+          AND ($6::uuid IS NULL OR i.family_id = $6::uuid)`,
+      [h.id, loc, sel.category, sel.brand, sel.product_type, sel.family_id, sel.include_zero]);
   }
   return h;
 }
@@ -295,43 +322,45 @@ async function countHead(c: pg.PoolClient, id: string) {
   if (!h) throw new InvNotFound();
   return h as { id: string; location_code: string; status: string; submitted_by: string | null; diff_value_cents: string | null };
 }
-/** Type what is on the shelf for an item (adds the line when it is not there yet). */
-export async function setCountLine(c: pg.PoolClient, countId: string, itemId: string, counted: number) {
+/** Type what is on the shelf for an item (adds the line when it is not on the sheet). The on-hand right now is the line's cut-off. */
+export async function setCountLine(c: pg.PoolClient, countId: string, itemId: string, counted: number, uid: string | null = null) {
   const h = await countHead(c, countId);
   if (h.status !== "draft") throw new InvInvalid("Only a draft count is typed into.");
   if (!Number.isInteger(counted) || counted < 0) throw new InvInvalid("Counted must be a whole number, 0 or more.");
   const s = (await c.query<{ qty: number; avg: string }>(`SELECT qty, avg_cost_cents::text AS avg FROM perfume.item_stock WHERE item_id = $1 AND location_code = $2`, [itemId, h.location_code])).rows[0];
   await c.query(
-    `INSERT INTO perfume.stock_count_lines (count_id, item_id, expected_qty, counted_qty, unit_cost_cents) VALUES ($1,$2,$3,$4,$5)
-     ON CONFLICT (count_id, item_id) DO UPDATE SET counted_qty = EXCLUDED.counted_qty, updated_at = now()`,
-    [countId, itemId, s?.qty ?? 0, counted, s?.avg ?? 0]);
+    `INSERT INTO perfume.stock_count_lines (count_id, item_id, expected_qty, counted_qty, unit_cost_cents, counted_at, counted_by) VALUES ($1,$2,$3,$4,$5, now(), $6)
+     ON CONFLICT (count_id, item_id) DO UPDATE SET counted_qty = EXCLUDED.counted_qty, expected_qty = EXCLUDED.expected_qty,
+       unit_cost_cents = EXCLUDED.unit_cost_cents, counted_at = now(), counted_by = EXCLUDED.counted_by, updated_at = now()`,
+    [countId, itemId, s?.qty ?? 0, counted, s?.avg ?? 0, uid]);
 }
-/** Submit: the difference is valued at today's on hand and moving average. Over $500 the poster must be someone else. */
+/** Submit: the variance (counted − on hand when counted) of every counted line, valued at the line's cost. Over $500 the poster must be someone else. */
 export async function submitCount(c: pg.PoolClient, uid: string, countId: string) {
   const h = await countHead(c, countId);
   if (h.status !== "draft") throw new InvInvalid("This count was already submitted.");
-  const v = (await c.query<{ diff: string }>(
-    `SELECT coalesce(sum((l.counted_qty - coalesce(s.qty, 0)) * coalesce(s.avg_cost_cents, l.unit_cost_cents)), 0)::text AS diff
-       FROM perfume.stock_count_lines l LEFT JOIN perfume.item_stock s ON s.item_id = l.item_id AND s.location_code = $2 WHERE l.count_id = $1`,
-    [countId, h.location_code])).rows[0]!;
+  const v = (await c.query<{ diff: string; counted: number; lines: number }>(
+    `SELECT coalesce(sum((l.counted_qty - l.expected_qty) * l.unit_cost_cents) FILTER (WHERE l.counted_at IS NOT NULL), 0)::text AS diff,
+            count(*) FILTER (WHERE l.counted_at IS NOT NULL)::int AS counted, count(*)::int AS lines
+       FROM perfume.stock_count_lines l WHERE l.count_id = $1`, [countId])).rows[0]!;
+  if (!v.counted) throw new InvInvalid("Nothing has been counted on this sheet yet.");
   await c.query(`UPDATE perfume.stock_counts SET status = 'submitted', diff_value_cents = $2, submitted_by = $3, submitted_at = now(), updated_at = now() WHERE id = $1`,
     [countId, Number(v.diff).toFixed(2), uid]);
-  return { diff_value_cents: Number(v.diff), needs_second_person: Math.abs(Number(v.diff)) > ADJUST_SECOND_PERSON_CENTS };
+  return { diff_value_cents: Number(v.diff), needs_second_person: Math.abs(Number(v.diff)) > ADJUST_SECOND_PERSON_CENTS, counted: v.counted, not_counted: v.lines - v.counted };
 }
-/** Post: each difference against what is on hand NOW — a gain comes in at the moving average, a loss leaves FIFO. */
+/** Post: each counted line's variance against today's stock — a gain comes in at the moving average, a loss leaves FIFO. */
 export async function postCount(c: pg.PoolClient, uid: string, countId: string) {
   const h = await countHead(c, countId);
   if (h.status !== "submitted") throw new InvInvalid("Submit the count first.");
   if (Math.abs(Number(h.diff_value_cents ?? 0)) > ADJUST_SECOND_PERSON_CENTS && h.submitted_by === uid) {
     throw new InvInvalid("This count moves more than $500 — a second person posts it.");
   }
-  const lines = (await c.query<{ item_id: string; counted_qty: number; unit_cost_cents: string }>(
-    `SELECT item_id, counted_qty, unit_cost_cents::text FROM perfume.stock_count_lines WHERE count_id = $1`, [countId])).rows;
+  const lines = (await c.query<{ item_id: string; counted_qty: number; expected_qty: number; unit_cost_cents: string }>(
+    `SELECT item_id, counted_qty, expected_qty, unit_cost_cents::text FROM perfume.stock_count_lines WHERE count_id = $1 AND counted_at IS NOT NULL`, [countId])).rows;
   let moved = 0;
   for (const l of lines) {
-    const s = await stockRow(c, l.item_id, h.location_code);
-    const diff = l.counted_qty - s.qty;
+    const diff = l.counted_qty - l.expected_qty;
     if (diff > 0) {
+      const s = await stockRow(c, l.item_id, h.location_code);
       const cost = s.qty > 0 ? Number(s.avg) : Number(l.unit_cost_cents);
       await stockIn(c, uid, { kind: "count", item_id: l.item_id, location_code: h.location_code, qty: diff, unit_cost_cents: cost, source: "count", count_id: countId, reason: "count gain" });
       moved++;
@@ -360,11 +389,38 @@ export async function getCount(c: pg.PoolClient, id: string) {
   const h = (await c.query(`SELECT * FROM perfume.stock_counts WHERE id = $1`, [id])).rows[0];
   if (!h) throw new InvNotFound();
   const lines = (await c.query(
-    `SELECT l.id, l.item_id, i.display_name, l.expected_qty, l.counted_qty, coalesce(s.qty, 0)::int AS on_hand_now,
-            coalesce(s.avg_cost_cents, l.unit_cost_cents)::float8 AS unit_cost_cents
+    `SELECT l.id, l.item_id, i.display_name, i.internal_code AS tio_code, i.brand,
+            (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = l.item_id ORDER BY u.upc LIMIT 1) AS upc,
+            s.bin, l.expected_qty, l.counted_qty, l.counted_at, cu.email AS counted_by_email, coalesce(s.qty, 0)::int AS on_hand_now,
+            l.unit_cost_cents::float8 AS unit_cost_cents,
+            CASE WHEN l.counted_at IS NULL THEN NULL ELSE l.counted_qty - l.expected_qty END AS variance
        FROM perfume.stock_count_lines l JOIN perfume.items i ON i.id = l.item_id
-       LEFT JOIN perfume.item_stock s ON s.item_id = l.item_id AND s.location_code = $2 WHERE l.count_id = $1 ORDER BY i.display_name`, [id, h.location_code])).rows;
-  return { ...h, diff_value_cents: h.diff_value_cents == null ? null : Number(h.diff_value_cents), lines, needs_second_person: Math.abs(Number(h.diff_value_cents ?? 0)) > ADJUST_SECOND_PERSON_CENTS };
+       LEFT JOIN perfume.item_stock s ON s.item_id = l.item_id AND s.location_code = $2 LEFT JOIN identity.users cu ON cu.id = l.counted_by
+      WHERE l.count_id = $1 ORDER BY s.bin NULLS LAST, lower(i.brand), i.display_name`, [id, h.location_code])).rows;
+  let gain = 0, loss = 0, counted = 0;
+  for (const l of lines) {
+    if (l.variance == null) continue;
+    counted++;
+    const v = Number(l.variance) * Number(l.unit_cost_cents);
+    if (v > 0) gain += v; else loss += v;
+  }
+  return { ...h, diff_value_cents: h.diff_value_cents == null ? null : Number(h.diff_value_cents), lines,
+    totals: { lines: lines.length, counted, not_counted: lines.length - counted, gain_cents: Math.round(gain), loss_cents: Math.round(loss), net_cents: Math.round(gain + loss) },
+    needs_second_person: Math.abs(Number(h.diff_value_cents ?? 0)) > ADJUST_SECOND_PERSON_CENTS };
+}
+
+/** The blind count sheet (CONTROL "Print Count Sheets"): the lines by bin with TIO code and UPC and an empty box to write the
+ *  shelf count. Blind on purpose — the expected (on-hand) quantity is never printed, so the counter writes what is on the shelf. */
+export async function countSheetBody(c: pg.PoolClient, id: string): Promise<{ title: string; body: string }> {
+  const x = await getCount(c, id);
+  const rows = x.lines.map((l: { bin: string | null; tio_code: string | null; upc: string | null; display_name: string }, i: number) =>
+    `<tr><td>${i + 1}</td><td>${escapeHtml(l.bin ?? "")}</td><td>${escapeHtml(l.tio_code ?? "")}</td><td>${escapeHtml(l.upc ?? "")}</td><td>${escapeHtml(l.display_name)}</td><td style="width:90px"></td></tr>`).join("");
+  const title = `Count sheet ${x.number}`;
+  const body = `<h1>TIO Perfumes · ${escapeHtml(title)}</h1>
+<p>Site ${escapeHtml(String(x.location_code))} · started ${escapeHtml(formatDate(x.created_at))} · ${x.lines.length} lines</p>
+<p>Counted by: ______________________________ &nbsp; Date: ______________ &nbsp; Checked by: ______________________________</p>
+<table><thead><tr><th>#</th><th>Bin</th><th>TIO code</th><th>UPC</th><th>Item</th><th>Counted</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return { title, body };
 }
 
 /* ------------------------------------------------------------------ write-offs (damaged / expired / stolen / counterfeit) */
