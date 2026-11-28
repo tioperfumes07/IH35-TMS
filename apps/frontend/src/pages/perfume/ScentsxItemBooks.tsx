@@ -114,6 +114,7 @@ export function ScentsxItemBooks() {
           </span>
         ) : null}
       </div>
+      {/* TABLE_DATE_OMIT: an item-to-account setup list — each row is an item's current account mapping, not a dated event (LEAD fix for main red after #30023). */}
       <ParityTable<ScentsxItemBookRow> selectable
         rows={d?.rows ?? []} rowKey={(r) => r.id} loading={q.isLoading} storageKey="scentsx-item-books-v1" exportFilename="ScentsX items to books" exportExcel
         hidePager page={1} pageSize={PAGE} emptyText="No items match."
