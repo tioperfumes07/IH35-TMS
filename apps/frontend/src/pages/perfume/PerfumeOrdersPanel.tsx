@@ -5,6 +5,7 @@
  * current price, one PO per vendor. Links both ways: the quote it came from, the POs it made, the customer. History, Excel, PDF.
  * Nothing is deleted. Never posts to accounting.
  */
+import { DocCatalogPickers } from "./PerfumeDocCatalogPickers";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -248,12 +249,10 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
           { key: "total_cents", label: "Cost", kind: "number", cellClass: "text-right tabular-nums", render: (p) => money(p.total_cents, p.currency), exportValue: (p) => Number(p.total_cents) / 100 },
         ]}
       />
+      <DocCatalogPickers doc={o} docDate={o.order_date} withTax={true} onPatch={(b) => void patch(b)} testId="perfume-orders-picks" dueAfter="invoice date" />
       <div className="flex flex-wrap gap-2">
         <label className="flex-1 text-xs">{tr("perfume.orders.ship_to", "Ship to")}
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={o.ship_to ?? ""} onBlur={(e) => { if (e.target.value !== (o.ship_to ?? "")) void patch({ ship_to: e.target.value || null }); }} />
-        </label>
-        <label className="flex-1 text-xs">{tr("perfume.orders.terms", "Terms")}
-          <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={o.terms ?? ""} onBlur={(e) => { if (e.target.value !== (o.terms ?? "")) void patch({ terms: e.target.value || null }); }} />
         </label>
         <label className="flex-1 text-xs">{tr("perfume.orders.notes", "Notes")}
           <textarea className="block min-h-[56px] w-full rounded-sm border border-[#C6D1DC] p-2 text-xs" defaultValue={o.notes ?? ""} onBlur={(e) => { if (e.target.value !== (o.notes ?? "")) void patch({ notes: e.target.value || null }); }} />

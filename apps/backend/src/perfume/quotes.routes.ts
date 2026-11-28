@@ -2,6 +2,7 @@
  * PERFUME-QUOTES routes — quotations with history, Excel and PDF (owner 2026-11-26 18:13 CT). Desk owner only (Owner role
  * AND perfume.desk_users), like every perfume route. Quotes and lines are archived, never deleted; history is append-only.
  */
+import { DocCatalogInvalid, docCatalogs } from "./doc-catalogs.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -30,11 +31,17 @@ const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof QuoteNotFound) return reply.code(404).send({ error: "not_found" });
   if (e instanceof QuoteInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof DocCatalogInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   throw e;
 }
 const contentDisposition = (name: string) => `attachment; filename="${name.replace(/"/g, "")}"`;
 
 export async function registerPerfumeQuoteRoutes(app: FastifyInstance) {
+  // M20: the pick lists for every document form (terms with days, shipping methods, sales-tax codes, payment methods).
+  app.get("/api/v1/perfume/doc-catalogs", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => docCatalogs(c));
+  });
   app.get("/api/v1/perfume/quotes", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = z.object({ status: z.enum(QUOTE_STATUSES).optional(), q: z.string().max(200).optional() }).safeParse(req.query ?? {});

@@ -581,13 +581,20 @@ export const applyPerfumeContactUpload = (id: string, b: PerfumeApplyOptions) =>
   apiRequest<{ status: "applying" }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/apply`, { method: "POST", body: b });
 export const discardPerfumeContactUpload = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/contacts/uploads/${encodeURIComponent(id)}/discard`, { method: "POST", body: {} });
 
+/* ------------------------------------------------------------------ M20 document catalogs (LEAD ROUND L.32) */
+/** The picks on a quote / sales order / PO: terms from the engine's terms list (due date = date + days), shipping method, sales-tax code. */
+export type PerfumeDocPicks = { payment_terms_id?: string | null; terms_days?: number | null; shipping_method?: string | null; tax_code_id?: string | null; tax_code_name?: string | null };
+export type PerfumeDocPickPatch = { payment_terms_id?: string | null; shipping_method?: string | null; tax_code_id?: string | null };
+export type PerfumeDocCatalogs = { terms: Array<{ id: string; name: string; days: number }>; shipping_methods: string[];
+  tax_codes: Array<{ id: string; code: string; name: string; rate_pct: number | null }>; payment_methods: Array<{ code: string; name: string }> };
+export const getPerfumeDocCatalogs = () => apiRequest<PerfumeDocCatalogs>("/api/v1/perfume/doc-catalogs");
 /* ------------------------------------------------------------------ Quotations (owner 2026-11-26 18:13 CT) */
 export type PerfumeQuoteStatus = "draft" | "sent" | "accepted" | "rejected" | "expired";
 export type PerfumeQuoteRow = { id: string; number: string; company_id: string | null; customer_name: string; customer_email: string | null;
   customer_phone: string | null; quote_date: string; valid_until: string | null; status: PerfumeQuoteStatus; currency: "USD" | "MXN";
   terms: string | null; notes: string | null; total_cents: string | number; cost_cents: string | number; costed_total_cents: string | number; lines: number; units: number;
   /** The sales order this quote became (one per quote). */
-  order_id?: string | null; order_number?: string | null };
+  order_id?: string | null; order_number?: string | null } & PerfumeDocPicks;
 export type PerfumeQuoteLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number;
   unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null; item_name: string | null };
 export type PerfumeQuoteEvent = { id: string; kind: string; detail: Record<string, unknown>; created_at: string; by_email: string | null };
@@ -597,7 +604,7 @@ export const listPerfumeQuotes = () => apiRequest<{ quotes: PerfumeQuoteRow[] }>
 export const getPerfumeQuote = (id: string) => apiRequest<PerfumeQuote>(`/api/v1/perfume/quotes/${id}`);
 export const createPerfumeQuote = (b: { company_id?: string | null; customer_name?: string | null; valid_until?: string | null; currency?: "USD" | "MXN" }) =>
   apiRequest<{ id: string; number: string }>("/api/v1/perfume/quotes", { method: "POST", body: b });
-export const updatePerfumeQuote = (id: string, b: Partial<Pick<PerfumeQuoteRow, "customer_name" | "customer_email" | "customer_phone" | "valid_until" | "currency" | "terms" | "notes" | "quote_date">>) =>
+export const updatePerfumeQuote = (id: string, b: Partial<Pick<PerfumeQuoteRow, "customer_name" | "customer_email" | "customer_phone" | "valid_until" | "currency" | "terms" | "notes" | "quote_date">> & PerfumeDocPickPatch) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}`, { method: "PATCH", body: b });
 export const setPerfumeQuoteStatus = (id: string, status: PerfumeQuoteStatus) => apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}/status`, { method: "POST", body: { status } });
 export const archivePerfumeQuote = (id: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/quotes/${id}/archive`, { method: "POST", body: {} });
@@ -628,7 +635,7 @@ export type PerfumeOrderStatus = "open" | "shipped" | "cancelled";
 export type PerfumeOrderRow = { id: string; number: string; quote_id: string | null; quote_number: string | null; company_id: string | null; customer_name: string;
   customer_email: string | null; customer_phone: string | null; ship_to: string | null; order_date: string; ship_by: string | null; status: PerfumeOrderStatus;
   currency: "USD" | "MXN"; terms: string | null; notes: string | null; purchase_orders: number; location_code: string | null; total_cents: string | number; cost_cents: string | number;
-  costed_total_cents: string | number; lines: number; units: number; units_shipped: number };
+  costed_total_cents: string | number; lines: number; units: number; units_shipped: number } & PerfumeDocPicks;
 export type PerfumeOrderLine = { id: string; line_no: number; item_id: string | null; description: string; upc: string | null; qty: number; qty_shipped: number;
   unit_price_cents: number; cost_cents: number | null; cost_vendor_id: string | null; cost_vendor: string | null };
 export type PerfumeOrder = Omit<PerfumeOrderRow, "lines"> & { lines: PerfumeOrderLine[]; events: PerfumeQuoteEvent[] };
@@ -638,7 +645,7 @@ export const createPerfumeOrder = (b: { company_id?: string | null; customer_nam
   apiRequest<{ id: string; number: string }>("/api/v1/perfume/orders", { method: "POST", body: b });
 export const orderFromPerfumeQuote = (quoteId: string, b: { ship_by?: string | null } = {}) =>
   apiRequest<{ id: string; number: string; created: boolean }>(`/api/v1/perfume/quotes/${quoteId}/order`, { method: "POST", body: b });
-export const updatePerfumeOrder = (id: string, b: Partial<Pick<PerfumeOrderRow, "customer_name" | "customer_email" | "customer_phone" | "ship_to" | "ship_by" | "currency" | "terms" | "notes" | "location_code">>) =>
+export const updatePerfumeOrder = (id: string, b: Partial<Pick<PerfumeOrderRow, "customer_name" | "customer_email" | "customer_phone" | "ship_to" | "ship_by" | "currency" | "terms" | "notes" | "location_code">> & PerfumeDocPickPatch) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/orders/${id}`, { method: "PATCH", body: b });
 export const setPerfumeOrderStatus = (id: string, status: "open" | "cancelled") => apiRequest<{ ok: true }>(`/api/v1/perfume/orders/${id}/status`, { method: "POST", body: { status } });
 export const shipAllPerfumeOrder = (id: string, location_code?: string) => apiRequest<{ lines: number; cost_cents: number }>(`/api/v1/perfume/orders/${id}/ship-all`, { method: "POST", body: location_code ? { location_code } : {} });
@@ -655,7 +662,7 @@ export const perfumeOrdersOfItem = (itemId: string) => apiRequest<{ orders: Perf
 export type PerfumePoStatus = "open" | "received" | "cancelled";
 export type PerfumePoRow = { id: string; number: string; vendor_id: string; vendor_name: string; vendor_contact: string | null; sales_order_id: string | null;
   sales_order_number: string | null; sales_order_customer: string | null; order_date: string; expected_by: string | null; status: PerfumePoStatus;
-  currency: "USD" | "MXN"; terms: string | null; notes: string | null; location_code: string | null; total_cents: string | number; lines: number; units: number; units_received: number };
+  currency: "USD" | "MXN"; terms: string | null; notes: string | null; location_code: string | null; total_cents: string | number; lines: number; units: number; units_received: number } & PerfumeDocPicks;
 export type PerfumePoLine = { id: string; line_no: number; sales_order_line_id: string | null; item_id: string | null; price_list_row_id: string | null;
   vendor_sku: string | null; description: string; upc: string | null; qty: number; qty_received: number; unit_cost_cents: number };
 export type PerfumePo = Omit<PerfumePoRow, "lines"> & { lines: PerfumePoLine[]; events: PerfumeQuoteEvent[]; approved_at?: string | null; approval_note?: string | null;
@@ -667,7 +674,7 @@ export const createPerfumePurchaseOrder = (b: { vendor_id: string; expected_by?:
 export const purchaseFromPerfumeOrder = (orderId: string, b: { expected_by?: string | null } = {}) =>
   apiRequest<{ purchase_orders: Array<{ id: string; number: string; vendor_id: string; lines: number }>; skipped: Array<{ line_no: number; description: string; reason: string }> }>(
     `/api/v1/perfume/orders/${orderId}/purchase`, { method: "POST", body: b });
-export const updatePerfumePurchaseOrder = (id: string, b: Partial<Pick<PerfumePoRow, "expected_by" | "currency" | "terms" | "notes" | "order_date" | "location_code">>) =>
+export const updatePerfumePurchaseOrder = (id: string, b: Partial<Pick<PerfumePoRow, "expected_by" | "currency" | "terms" | "notes" | "order_date" | "location_code">> & Omit<PerfumeDocPickPatch, "tax_code_id">) =>
   apiRequest<{ ok: true }>(`/api/v1/perfume/purchase-orders/${id}`, { method: "PATCH", body: b });
 export const setPerfumePurchaseOrderStatus = (id: string, status: "open" | "cancelled") => apiRequest<{ ok: true }>(`/api/v1/perfume/purchase-orders/${id}/status`, { method: "POST", body: { status } });
 export const receiveAllPerfumePurchaseOrder = (id: string, location_code?: string) => apiRequest<{ lines: number; units: number }>(`/api/v1/perfume/purchase-orders/${id}/receive-all`, { method: "POST", body: location_code ? { location_code } : {} });

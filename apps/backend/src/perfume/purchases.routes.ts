@@ -2,6 +2,7 @@
  * PERFUME-PURCHASE-ORDERS routes (owner 2026-11-26 19:12 CT). Desk owner only (Owner role AND perfume.desk_users). POs and lines
  * are archived, never deleted; history is append-only.
  */
+import { DocCatalogInvalid, docCatalogs } from "./doc-catalogs.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -33,6 +34,7 @@ const listQuery = z.object({ status: z.enum(PO_STATUSES).optional(), vendor_id: 
 function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof PoNotFound) return reply.code(404).send({ error: "not_found" });
   if (e instanceof PoInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof DocCatalogInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   throw e;
 }
 
