@@ -29,6 +29,7 @@ import { ItemSitesBlock } from "./PerfumeFamiliesPanel";
 import { ScentsxItemAccountLine } from "./ScentsxItemAccounts";
 import { VendorLinkReview } from "./PerfumeVendorLinkReview";
 import { CompanyNameCheck } from "./PerfumeCompanyNameCheck";
+import { ScentsxVendorLink } from "./ScentsxVendorLink";
 import { CompanyRoleEditor } from "./PerfumeCompanyRole";
 
 const KIND_TEXT: Record<string, string> = { buy: "Supplier", sell: "Competitor", both: "Supplier + competitor", offer: "My offer list", inventory: "My inventory" };
@@ -178,6 +179,7 @@ function VendorProfile({ id, onClose }: { id: string; onClose: () => void }) {
           </div>
         )}
       </div>
+      {p.vendor.kind === "buy" ? <ScentsxVendorLink vendorId={p.vendor.id} name={c?.name ?? p.vendor.name} /> : null}
       <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-vendor-kpis">
         <KpiCard label={tr("perfume.profiles.kpi_items", "Items it carries")} number={p.items.toLocaleString("en-US")} disabled />
         <KpiCard label={tr("perfume.profiles.kpi_waiting", "Lines waiting in Review")} number={p.waiting.toLocaleString("en-US")} to="/perfume?tab=review" />
