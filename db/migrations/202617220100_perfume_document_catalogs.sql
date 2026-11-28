@@ -42,13 +42,7 @@ SELECT 'shipping_method', t.v, t.s
                ('Export — customs broker', 70)) AS t(v, s)
  WHERE NOT EXISTS (SELECT 1 FROM perfume.catalog_values x WHERE x.kind = 'shipping_method' AND lower(x.value) = lower(t.v) AND x.archived_at IS NULL);
 
--- Terms already written as text on a document (none today) get their catalog row when the name matches.
-UPDATE perfume.quotes d SET payment_terms_id = pt.id FROM catalogs.payment_terms pt
- WHERE d.payment_terms_id IS NULL AND d.terms IS NOT NULL AND pt.operating_company_id = scentsx.company_id() AND pt.deactivated_at IS NULL AND lower(pt.terms_name) = lower(btrim(d.terms));
-UPDATE perfume.sales_orders d SET payment_terms_id = pt.id FROM catalogs.payment_terms pt
- WHERE d.payment_terms_id IS NULL AND d.terms IS NOT NULL AND pt.operating_company_id = scentsx.company_id() AND pt.deactivated_at IS NULL AND lower(pt.terms_name) = lower(btrim(d.terms));
-UPDATE perfume.purchase_orders d SET payment_terms_id = pt.id FROM catalogs.payment_terms pt
- WHERE d.payment_terms_id IS NULL AND d.terms IS NOT NULL AND pt.operating_company_id = scentsx.company_id() AND pt.deactivated_at IS NULL AND lower(pt.terms_name) = lower(btrim(d.terms));
+-- No backfill: 0 quotes / sales orders / purchase orders exist (measured above); terms typed later are picked from the list.
 
 INSERT INTO catalogs.tax_codes (operating_company_id, code, display_name, description, metadata, is_active, sort_order)
 SELECT scentsx.company_id(), t.code, t.name, t.descr, jsonb_build_object('rate_pct', 0, 'exempt', true), true, t.s
