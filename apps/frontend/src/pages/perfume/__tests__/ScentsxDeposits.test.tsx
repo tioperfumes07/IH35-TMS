@@ -21,6 +21,10 @@ beforeEach(() => {
       { id: "bank-1000", account_name: "Operating Checking", account_type: "checking", ledger_account_id: "l1000" },
       { id: "bank-1010", account_name: "Store Cash Registers", account_type: "cash_on_hand", ledger_account_id: "l1010" },
       { id: "bank-2010", account_name: "Business Credit Card", account_type: "credit_card", ledger_account_id: "l2010" }] };
+    if (path === "/api/v1/scentsx/accounts") return { accounts: [
+      { id: "l6100", account_number: "6100", account_name: "Card Processing Fees", account_type: "Expense", account_subtype: "Bank Charges", roles: [], debit_cents: "0", credit_cents: "0" },
+      { id: "l6110", account_number: "6110", account_name: "Bank Service Charges & Wire Fees", account_type: "Expense", account_subtype: "Bank Charges", roles: [], debit_cents: "0", credit_cents: "0" },
+      { id: "l1000", account_number: "1000", account_name: "Operating Checking", account_type: "Asset", account_subtype: "Checking", roles: [], debit_cents: "0", credit_cents: "0" }] };
     throw new Error(`unexpected ${path}`);
   });
 });
@@ -34,5 +38,16 @@ describe("ScentsX bank deposits", () => {
     await waitFor(() => expect([...sel.options].map((o) => o.value)).toEqual(["bank-1000"]));
     fireEvent.click(screen.getByTestId("scentsx-deposit-save"));
     await waitFor(() => expect(posts).toContainEqual(["/api/v1/accounting/bank-deposits", expect.objectContaining({ operating_company_id: "sx1", bank_account_id: "bank-1000", payment_ids: ["p1"] })]));
+  });
+
+  it("M9 card settlement: the fee the processor withheld posts as less cash back to 6100; the deposit is the net", async () => {
+    render(<MemoryRouter><QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ToastProvider><ScentsxDepositsPanel /></ToastProvider></QueryClientProvider></MemoryRouter>);
+    expect(await screen.findByText("Perfumes El Sol")).toBeTruthy();
+    fireEvent.click(screen.getAllByLabelText("Select row")[0]!);
+    const fee = await screen.findByLabelText("Card fees withheld"); fireEvent.change(fee, { target: { value: "4.35" } }); fireEvent.blur(fee);
+    await waitFor(() => expect(screen.getByTestId("scentsx-deposit-net").textContent).toMatch(/\$150\.00 − fees \$4\.35 = deposit \$145\.65/));
+    await waitFor(() => expect((screen.getByTestId("scentsx-deposit-fee-account") as HTMLSelectElement).value).toBe("l6100"));
+    fireEvent.click(screen.getByTestId("scentsx-deposit-save"));
+    await waitFor(() => expect(posts).toContainEqual(["/api/v1/accounting/bank-deposits", expect.objectContaining({ bank_account_id: "bank-1000", payment_ids: ["p1"], cash_back_cents: 435, cash_back_account_id: "l6100" })]));
   });
 });
