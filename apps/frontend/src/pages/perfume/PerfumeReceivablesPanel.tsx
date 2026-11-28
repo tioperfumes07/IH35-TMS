@@ -7,6 +7,7 @@
  * Reads /api/v1/scentsx/receivables/*; records and voids through the one payment engine (/api/v1/accounting/payments), which posts
  * Dr cash / Cr A/R. Nothing here computes money of its own beyond adding up the books' open balances for the screen.
  */
+import { PerfumeCustomerCredits } from "./PerfumeCustomerCredits";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
@@ -103,6 +104,7 @@ function CustomerAccount({ customerId, asOf, days, onChanged }: { customerId: st
       </div>
       <BucketStrip b={a.buckets} d={a.days} testId="perfume-ar-customer-buckets" />
       <PaymentEntry acctId={a.operating_company_id} customerId={a.customer.id} open={a.open_invoices} onDone={refresh} />
+      <PerfumeCustomerCredits companyId={a.operating_company_id} customerId={a.customer.id} open={a.open_invoices} onDone={refresh} />
       <ParityTable<ScentsxArInvoice> selectable
         cardTitle title={tr("perfume.ar.history", "Invoice history — click an invoice for its payments")} rows={a.invoices} rowKey={(r) => r.id} storageKey="perfume-ar-invoices-v1"
         exportFilename={`TIO invoices ${a.customer.name}`} exportExcel emptyText="No invoices on ScentsX's books for this customer." onRowClick={(r) => setOpenInv(r.id === openInv ? null : r.id)}
