@@ -13,6 +13,11 @@ import type pg from "pg";
 import { z } from "zod";
 import { scopeToScentsx, ScentsxLinkNotFound } from "./links.service.js";
 
+/** A supplier (perfume.vendors) that is not yet a ScentsX vendor — no A/P account exists for it on ScentsX's books. */
+export class ScentsxVendorNotOnBooks extends Error {
+  constructor(readonly supplierName: string) { super(`${supplierName} is not a ScentsX vendor yet`); }
+}
+
 type Q = Pick<pg.PoolClient, "query">;
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -98,14 +103,24 @@ export async function payablesAging(c: Q, f: z.infer<typeof payablesQuery>) {
 }
 
 /** One vendor's account: its buckets, open bills, every bill and every payment on its bills, plus ScentsX's bank accounts to pay from. */
-export async function vendorAccount(c: Q, vendorId: string, f: z.infer<typeof payablesQuery>) {
+export async function vendorAccount(c: Q, requestedId: string, f: z.infer<typeof payablesQuery>) {
   const co = await scopeToScentsx(c);
   const asOf = await asOfDate(c, f.as_of);
   const v = (await c.query<{ id: string; name: string; perfume_vendor_id: string | null; perfume_vendor: string | null }>(
     `SELECT v.id::text, v.vendor_name AS name, l.perfume_vendor_id::text, pv.name AS perfume_vendor
        FROM mdata.vendors v LEFT JOIN scentsx.vendor_links l ON l.vendor_id = v.id AND l.voided_at IS NULL LEFT JOIN perfume.vendors pv ON pv.id = l.perfume_vendor_id
-      WHERE v.id = $1::uuid AND v.operating_company_id = $2::uuid LIMIT 1`, [vendorId, co])).rows[0];
-  if (!v) throw new ScentsxLinkNotFound();
+      WHERE v.operating_company_id = $2::uuid
+        AND (v.id = $1::uuid
+             OR v.id IN (SELECT x.vendor_id FROM scentsx.vendor_links x WHERE x.perfume_vendor_id = $1::uuid AND x.voided_at IS NULL))
+      ORDER BY (v.id = $1::uuid) DESC LIMIT 1`, [requestedId, co])).rows[0];
+  if (!v) {
+    // L.37 red (CC3): a supplier opened from the Vendors desk carries its perfume.vendors id. When that supplier is not yet a
+    // ScentsX vendor there is no account to show — say so (409 vendor_not_on_books, with the supplier's name) instead of a bare 404.
+    const pv = (await c.query<{ name: string }>(`SELECT name FROM perfume.vendors WHERE id = $1::uuid LIMIT 1`, [requestedId])).rows[0];
+    if (pv) throw new ScentsxVendorNotOnBooks(pv.name);
+    throw new ScentsxLinkNotFound();
+  }
+  const vendorId = v.id;
   const open = await openBills(c, co, asOf, vendorId);
   const buckets = zero();
   for (const b of open) { buckets[b.bucket] += b.open_cents; buckets.total += b.open_cents; }

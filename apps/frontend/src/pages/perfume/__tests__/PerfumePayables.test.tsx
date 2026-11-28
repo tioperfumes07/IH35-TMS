@@ -24,6 +24,7 @@ beforeEach(() => {
       bills: [], payments: [], bank_accounts: [{ id: "bk1", name: "Operating Checking", account_type: "checking", account_number: "1000" }] };
     if (path.startsWith("/api/v1/accounting/vendors/v1/statement")) return { counterparty_id: "v1", counterparty_name: "FRAGRANCE DIST LLC", from_date: "2026-01-01", to_date: "2026-11-27",
       opening_balance_cents: 0, closing_balance_cents: 30000, lines: [] };
+    if (path.startsWith("/api/v1/scentsx/payables/vendors/pv9")) throw new clientApi.ApiError(409, { error: "vendor_not_on_books", supplier_name: "Awesome Perfumes Wholesale" });
     if (path.startsWith("/api/v1/accounting/bills/bl2/pay")) return { payment: { id: "bp1" } };
     throw new Error(`unexpected ${path}`);
   });
@@ -50,5 +51,13 @@ describe("payables", () => {
       amount_cents: 20000, payment_method: "check", from_bank_account_id: "bk1", check_number: "1042" })]));
     expect(calls[0]![0]).toContain("operating_company_id=sx");
     expect(screen.getByTestId("perfume-ap-statement").textContent).toContain("Vendor statement");
+  });
+  it("a supplier that is not a ScentsX vendor yet: says so and points to Make ScentsX vendor (no red error)", async () => {
+    mount("/perfume?tab=payables&open=pv9");
+    const box = await screen.findByTestId("perfume-ap-not-on-books");
+    expect(box.textContent).toContain("Awesome Perfumes Wholesale");
+    expect(box.textContent).toContain("Not a ScentsX vendor yet");
+    expect(screen.getByTestId("perfume-ap-make-vendor").getAttribute("href")).toBe("/perfume?tab=suppliers");
+    expect(screen.queryByText("Couldn't load the vendor's account")).toBeNull();
   });
 });
