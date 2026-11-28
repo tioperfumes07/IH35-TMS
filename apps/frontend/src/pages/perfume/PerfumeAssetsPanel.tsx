@@ -5,6 +5,7 @@
  * depreciation to date and book value, and post a month's depreciation through the existing FIN-21 poster (Dr 6800 / Cr 1600). The
  * purchase itself is the bill / expense / check coded to 1500 — registering posts nothing. QuickBooks-style pop-up.
  */
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -53,6 +54,7 @@ export function PerfumeAssetsPanel() {
         <KpiCard label={tr("scentsx.fa.kpi_dep", "Depreciation to date")} number={formatUsdCents(rows.reduce((s, a) => s + Number(a.depreciation_to_date_cents), 0))} disabled />
         <KpiCard label={tr("scentsx.fa.kpi_nbv", "Book value")} number={formatUsdCents(rows.reduce((s, a) => s + Number(a.net_book_value_cents), 0))} disabled />
       </div>
+      <CappedListNotice shown={rows.length} limit={200} total={list.data?.total} />
       {list.isError ? <ListErrorState title={tr("scentsx.fa.error", "Couldn't load the assets")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} /> : (
         <ParityTable<FixedAssetListItem> selectable
           rows={rows} rowKey={(a) => a.id} loading={list.isLoading || co.isLoading} storageKey="scentsx-fa-v1" exportFilename="ScentsX fixed assets" exportExcel
