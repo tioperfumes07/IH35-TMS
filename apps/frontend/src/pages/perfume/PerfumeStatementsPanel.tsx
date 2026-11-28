@@ -4,6 +4,8 @@
  * read from the ONE accounting report engine (/api/v1/accounting/profit-loss, balance-sheet, trial-balance, cash-flow) scoped to ScentsX's
  * operating company — the same numbers the books' own pages show, nothing computed here. Every account line opens its register
  * (posted lines, each from its document); PDF and Excel from the engine's own exports. A/R and A/P aging live on Receivables and Payables.
+ * General Ledger (owner 22:54 CT "… fully total and complete"): every ScentsX account's opening balance, each posted line in the period with
+ * its document and a running balance, and the closing balance (read only — /api/v1/scentsx/general-ledger); Excel from the table.
  */
 import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { useState } from "react";
@@ -20,16 +22,17 @@ import {
   exportBalanceSheetReport, exportCashFlowStatementReport, exportProfitLossReport, exportTrialBalanceReport, getBalanceSheetReport,
   getCashFlowStatementReport, getProfitLossReport, getTrialBalanceReport, type AccountingBasis,
 } from "../../api/reports";
-import { getScentsxAccountRegister, getScentsxCompany, type ScentsxRegisterLine } from "../../api/scentsx";
+import { getScentsxAccountRegister, getScentsxCompany, getScentsxGeneralLedger, type ScentsxRegisterLine } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
 import { DASH, usDate } from "./perfumeDocParts";
 
+type GlRow = { key: string; account_id: string; account: string; date: string; from: string; memo: string; debit: number; credit: number; balance: number; bold: boolean };
 type Line = { key: string; account_id: string | null; account: string; type: string; amount: number; section: string };
 const todayCT = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
 const yearStart = () => `${todayCT().slice(0, 4)}-01-01`;
 const money = (c: number) => (c ? formatUsdCents(c) : DASH);
-type Report = "pl" | "bs" | "tb" | "cf";
-const REPORTS: Array<[Report, string]> = [["pl", "Profit & Loss"], ["bs", "Balance Sheet"], ["tb", "Trial Balance"], ["cf", "Cash flow"]];
+type Report = "pl" | "bs" | "tb" | "cf" | "gl";
+const REPORTS: Array<[Report, string]> = [["pl", "Profit & Loss"], ["bs", "Balance Sheet"], ["tb", "Trial Balance"], ["cf", "Cash flow"], ["gl", "General ledger"]];
 
 export function PerfumeStatementsPanel() {
   const { pushToast } = useToast();
@@ -45,7 +48,8 @@ export function PerfumeStatementsPanel() {
   const bs = useQuery({ queryKey: ["scentsx", "bs", id, to, basis], queryFn: () => getBalanceSheetReport({ operating_company_id: id, as_of_date: to, basis }), enabled: on && report === "bs" });
   const tb = useQuery({ queryKey: ["scentsx", "tb", id, from, to, basis], queryFn: () => getTrialBalanceReport({ operating_company_id: id, from_date: from, to_date: to, basis }), enabled: on && report === "tb" });
   const cf = useQuery({ queryKey: ["scentsx", "cf", id, from, to, basis], queryFn: () => getCashFlowStatementReport({ operating_company_id: id, from_date: from, to_date: to, basis }), enabled: on && report === "cf" });
-  const q = report === "pl" ? pl : report === "bs" ? bs : report === "tb" ? tb : cf;
+  const gl = useQuery({ queryKey: ["scentsx", "gl", id, from, to], queryFn: () => getScentsxGeneralLedger(from, to), enabled: on && report === "gl" });
+  const q = report === "pl" ? pl : report === "bs" ? bs : report === "tb" ? tb : report === "cf" ? cf : gl;
 
   const lines: Line[] = [];
   const add = (section: string, ls: Array<{ account_id?: string | null; account_code?: string | null; account_number?: string | null; account_name?: string | null; label?: string; account_type: string; amount: number }>) =>
@@ -63,13 +67,26 @@ export function PerfumeStatementsPanel() {
     tb.data.rows.forEach((r) => lines.push({ key: r.account_id, account_id: r.account_id, account: formatAccountDisplayLabel({ account_number: r.account_code, account_name: r.account_name }), type: r.account_type, amount: r.net_balance, section: `Dr ${money(r.total_debits)} / Cr ${money(r.total_credits)}` }));
     kpis.push(["Total debits", tb.data.summary.grand_total_debits], ["Total credits", tb.data.summary.grand_total_credits]);
   }
+  const glRows: GlRow[] = [];
+  if (report === "gl" && gl.data) {
+    for (const a of gl.data.accounts) {
+      const name = formatAccountDisplayLabel({ account_number: a.account_number, account_name: a.account_name });
+      glRows.push({ key: `${a.account_id}-open`, account_id: a.account_id, account: name, date: from, from: "Opening balance", memo: "", debit: 0, credit: 0, balance: a.opening_cents, bold: true });
+      for (const l of a.lines) glRows.push({ key: l.posting_id, account_id: a.account_id, account: name, date: l.entry_date, from: (l.source_transaction_type ?? "journal entry").replace(/_/g, " "),
+        memo: l.memo ?? "", debit: l.debit_cents, credit: l.credit_cents, balance: l.balance_cents, bold: false });
+      glRows.push({ key: `${a.account_id}-close`, account_id: a.account_id, account: name, date: to, from: "Closing balance", memo: "", debit: a.debit_cents, credit: a.credit_cents, balance: a.closing_cents, bold: true });
+    }
+    kpis.push(["Total debits", gl.data.totals.debit_cents], ["Total credits", gl.data.totals.credit_cents]);
+  }
   if (report === "cf" && cf.data) {
     add("Operating", cf.data.operating.lines); add("Investing", cf.data.investing.lines); add("Financing", cf.data.financing.lines);
     kpis.push(["Cash at start", cf.data.cash_at_start], ["Operating", cf.data.operating.total], ["Investing", cf.data.investing.total], ["Financing", cf.data.financing.total], ["Cash at end", cf.data.cash_at_end]);
   }
   const check = report === "bs" && bs.data ? (bs.data.balanced ? "Balanced: assets = liabilities + equity" : "NOT BALANCED — assets ≠ liabilities + equity")
     : report === "tb" && tb.data ? (tb.data.summary.balanced ? "Balanced: debits = credits" : "NOT BALANCED — debits ≠ credits")
-    : report === "cf" && cf.data ? (cf.data.reconciled ? "Reconciled to the cash accounts" : `Not reconciled — ${cf.data.unclassified_leg_count} unclassified lines`) : null;
+    : report === "cf" && cf.data ? (cf.data.reconciled ? "Reconciled to the cash accounts" : `Not reconciled — ${cf.data.unclassified_leg_count} unclassified lines`)
+    : report === "gl" && gl.data ? (gl.data.capped ? `NOT COMPLETE — more than ${gl.data.max_lines} lines; narrow the dates`
+      : gl.data.totals.debit_cents === gl.data.totals.credit_cents ? "Balanced: debits = credits" : "NOT BALANCED — debits ≠ credits") : null;
   const exp = async (format: "pdf" | "xlsx") => {
     try {
       if (report === "pl") await exportProfitLossReport({ operating_company_id: id, from_date: from, to_date: to, format });
@@ -89,17 +106,33 @@ export function PerfumeStatementsPanel() {
           </span>
           {report !== "bs" ? <label>{tr("scentsx.st.from", "From")} <DatePicker aria-label="From" value={from} onChange={(v) => setFrom(v || yearStart())} /></label> : null}
           <label>{report === "bs" ? tr("scentsx.st.as_of", "As of") : tr("scentsx.st.to", "To")} <DatePicker aria-label={report === "bs" ? "As of" : "To"} value={to} onChange={(v) => setTo(v || todayCT())} /></label>
-          <label>{tr("scentsx.st.basis", "Basis")}
+          {report !== "gl" ? <label>{tr("scentsx.st.basis", "Basis")}
             <select className="block h-[34px] rounded-sm border border-[#C6D1DC] px-2 text-xs" value={basis} onChange={(e) => setBasis(e.target.value as AccountingBasis)} data-testid="scentsx-st-basis">
               <option value="accrual">Accrual</option><option value="cash">Cash</option>
             </select>
-          </label>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!on} onClick={() => void exp("pdf")} data-testid="scentsx-st-pdf">PDF</Button>
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!on} onClick={() => void exp("xlsx")} data-testid="scentsx-st-xlsx">Excel</Button>
+          </label> : null}
+          {report !== "gl" ? <>
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!on} onClick={() => void exp("pdf")} data-testid="scentsx-st-pdf">PDF</Button>
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!on} onClick={() => void exp("xlsx")} data-testid="scentsx-st-xlsx">Excel</Button>
+          </> : null}
         </div>
         {kpis.length ? <div className="grid grid-cols-2 gap-[10px] md:grid-cols-5">{kpis.map(([l, v]) => <KpiCard key={l} label={l} number={formatUsdCents(v)} disabled />)}</div> : null}
         {check ? <div className={`text-xs font-semibold ${/NOT/.test(check) ? "text-[#B91C1C]" : "text-[#166534]"}`} data-testid="scentsx-st-check">{check}</div> : null}
-        {q.isError ? <ListErrorState title={tr("scentsx.st.error", "Couldn't load the report")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
+        {q.isError ? <ListErrorState title={tr("scentsx.st.error", "Couldn't load the report")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : report === "gl" ? (
+          <ParityTable<GlRow> selectable
+            rows={glRows} rowKey={(r) => r.key} loading={gl.isLoading || co.isLoading} storageKey="scentsx-st-gl-v1" exportFilename={`ScentsX General ledger ${from} to ${to}`} exportExcel
+            emptyText="Nothing posted in this period — ScentsX opened at $0." onRowClick={(r) => setAcct({ id: r.account_id, label: r.account })}
+            columns={[
+              { className: "text-left", cellClass: "text-left font-semibold", key: "account", label: "Account", sortable: true, render: (r) => r.account, exportValue: (r) => r.account },
+              { key: "date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.date), exportValue: (r) => r.date },
+              { className: "text-left", cellClass: "text-left", key: "from", label: "From", sortable: true, render: (r) => (r.bold ? <span className="font-semibold">{r.from}</span> : r.from), exportValue: (r) => r.from },
+              { className: "text-left", cellClass: "text-left", key: "memo", label: "Memo", sortable: true, render: (r) => r.memo || DASH, exportValue: (r) => r.memo },
+              { key: "debit", label: "Debit", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.debit), exportValue: (r) => r.debit / 100 },
+              { key: "credit", label: "Credit", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.credit), exportValue: (r) => r.credit / 100 },
+              { key: "balance", label: "Balance", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (r) => formatUsdCents(r.balance), exportValue: (r) => r.balance / 100 },
+            ]}
+          />
+        ) : (
           <ParityTable<Line> selectable
             rows={lines} rowKey={(l) => l.key} loading={q.isLoading || co.isLoading} storageKey={`scentsx-st-${report}-v1`} exportFilename={`ScentsX ${REPORTS.find((r) => r[0] === report)![1]} ${from} to ${to}`} exportExcel
             emptyText="Nothing posted in this period — ScentsX opened at $0." onRowClick={(l) => { if (l.account_id) setAcct({ id: l.account_id, label: l.account }); }}

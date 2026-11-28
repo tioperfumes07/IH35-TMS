@@ -25,6 +25,14 @@ export type ScentsxRegisterLine = {
   posting_id: string; journal_entry_id: string; entry_date: string; memo: string | null; debit_or_credit: "debit" | "credit";
   amount_cents: string; source_transaction_type: string | null; source_transaction_id: string | null;
 };
+/** ROUND L.31 M16 — General Ledger: every account's opening balance, posted lines in the period with a running balance, and closing. */
+export type ScentsxGlLine = { posting_id: string; journal_entry_id: string; entry_date: string; memo: string | null; source_transaction_type: string | null;
+  source_transaction_id: string | null; debit_cents: number; credit_cents: number; balance_cents: number };
+export type ScentsxGlAccount = { account_id: string; account_number: string | null; account_name: string; account_type: string; normal_side: "debit" | "credit";
+  opening_cents: number; debit_cents: number; credit_cents: number; closing_cents: number; lines: ScentsxGlLine[] };
+export const getScentsxGeneralLedger = (from: string, to: string) =>
+  apiRequest<{ from: string; to: string; capped: boolean; max_lines: number; totals: { debit_cents: number; credit_cents: number }; accounts: ScentsxGlAccount[] }>(
+    `/api/v1/scentsx/general-ledger?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`);
 export const getScentsxAccountRegister = (accountId: string) =>
   apiRequest<{ lines: ScentsxRegisterLine[] }>(`/api/v1/scentsx/accounts/${encodeURIComponent(accountId)}/register`);
 export type ScentsxBillableLine = { so_line_id: string; line_no: number; description: string; upc: string | null; shipped: number; billed: number; to_bill: number; unit_price_cents: number };
