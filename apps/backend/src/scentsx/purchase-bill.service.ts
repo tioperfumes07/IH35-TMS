@@ -15,6 +15,7 @@
  * Received value per line = the value the receipt moves put into GRNI (receipts − vendor returns, qty × lot cost), so a later
  * edit of the PO cost cannot leave GRNI unbalanced. A unit is billed once: units on a live (not voided) bill are not billable.
  */
+import { dueFromPickedTerms } from "../perfume/doc-catalogs.service.js";
 import type pg from "pg";
 import { z } from "zod";
 import { createBillInClientTx, postBillDocumentInClientTx } from "../accounting/bills.service.js";
@@ -121,8 +122,9 @@ async function scentsxAccount(c: Q, co: string, id: string): Promise<string> {
 
 export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: PurchaseBillInput) {
   const co = await scopeToScentsx(c);
-  const po = (await c.query<{ id: string; number: string; vendor_id: string; vendor_name: string; currency: string; terms: string | null; status: string }>(
-    `SELECT p.id::text, p.number, p.vendor_id::text, v.name AS vendor_name, p.currency, p.terms, p.status
+  const po = (await c.query<{ id: string; number: string; vendor_id: string; vendor_name: string; currency: string; terms: string | null; status: string;
+    payment_terms_id: string | null }>(
+    `SELECT p.id::text, p.number, p.vendor_id::text, v.name AS vendor_name, p.currency, p.terms, p.status, p.payment_terms_id::text
        FROM perfume.purchase_orders p JOIN perfume.vendors v ON v.id = p.vendor_id WHERE p.id = $1::uuid AND p.archived_at IS NULL FOR UPDATE OF p`, [poId])).rows[0];
   if (!po) throw new ScentsxLinkNotFound();
   if (po.currency !== "USD") throw new ScentsxLinkInvalid(`${po.number} is in ${po.currency}; ScentsX bills are in USD`);
@@ -169,7 +171,8 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     billNumber: x.vendor_invoice_number,
     autoDisplayId: true,
     billDate: x.bill_date,
-    dueDate: x.due_date ?? dueFromTerms(x.bill_date, po.terms),
+    // M20: the PO's picked terms (catalog days) first; else "Net N" in its text; else due on receipt.
+    dueDate: x.due_date ?? (await dueFromPickedTerms(c, po.payment_terms_id, x.bill_date)) ?? dueFromTerms(x.bill_date, po.terms),
     amountCents: total,
     memo,
     lines: billLines,

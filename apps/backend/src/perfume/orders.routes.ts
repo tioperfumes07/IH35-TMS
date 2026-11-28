@@ -2,6 +2,7 @@
  * PERFUME-SALES-ORDERS routes (owner 2026-11-26 19:08 CT). Desk owner only (Owner role AND perfume.desk_users). Orders and lines
  * are archived, never deleted; history is append-only.
  */
+import { DocCatalogInvalid, docCatalogs } from "./doc-catalogs.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { requireAuth } from "../auth/session-middleware.js";
@@ -30,6 +31,7 @@ const cd = (name: string) => `attachment; filename="${name.replace(/"/g, "")}"`;
 function fail(reply: FastifyReply, e: unknown) {
   if (e instanceof OrderNotFound) return reply.code(404).send({ error: "not_found" });
   if (e instanceof OrderInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
+  if (e instanceof DocCatalogInvalid) return reply.code(400).send({ error: "invalid", message: e.message });
   throw e;
 }
 

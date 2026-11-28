@@ -9,6 +9,7 @@
  * Wired both ways: PO → vendor, sales order, items, the vendor's list row; vendor → its POs (purchaseOrdersOfVendor);
  * item → its POs (purchaseOrdersOfItem); sales order → its POs (purchaseOrdersOfOrder) and its history ('purchased').
  */
+import { applyDocCatalogs, docCatalogColumns, docCatalogFields } from "./doc-catalogs.service.js";
 import type pg from "pg";
 import { assertNotSanctionsBlocked } from "../scentsx/sanctions.service.js";
 import { ScentsxLinkInvalid } from "../scentsx/links.service.js";
@@ -30,6 +31,7 @@ export const poSchema = z.object({
   location_code: z.string().min(1).max(40).nullable().optional(),
   order_date: date.optional(), expected_by: date.nullable().optional(),
   currency: z.enum(["USD", "MXN"]).optional(), terms: text(4000), notes: text(4000),
+  payment_terms_id: docCatalogFields.payment_terms_id, shipping_method: docCatalogFields.shipping_method,
 });
 export const poLineSchema = z.object({
   item_id: z.string().uuid().nullable().optional(), description: text(400), upc: text(40), vendor_sku: text(120),
@@ -56,7 +58,7 @@ const TOTALS = `(SELECT coalesce(sum(l.qty * l.unit_cost_cents), 0)::bigint FROM
 const HEADER = `p.id, p.number, p.vendor_id, v.name AS vendor_name, v.contact AS vendor_contact, p.sales_order_id,
   (SELECT o.number FROM perfume.sales_orders o WHERE o.id = p.sales_order_id) AS sales_order_number,
   (SELECT o.customer_name FROM perfume.sales_orders o WHERE o.id = p.sales_order_id) AS sales_order_customer,
-  p.order_date::text, p.expected_by::text, p.status, p.currency, p.terms, p.notes, p.created_at, p.updated_at, p.location_code,
+  p.order_date::text, p.expected_by::text, p.status, p.currency, p.terms, p.notes, p.created_at, p.updated_at, p.location_code, ${docCatalogColumns("p", false)},
   p.approved_at, p.approval_note, (SELECT u.email FROM identity.users u WHERE u.id = p.approved_by) AS approved_by_email`;
 const FROM = `perfume.purchase_orders p JOIN perfume.vendors v ON v.id = p.vendor_id`;
 
@@ -64,7 +66,7 @@ export type PoLine = { id: string; line_no: number; sales_order_line_id: string 
   description: string; upc: string | null; qty: number; qty_received: number; unit_cost_cents: number };
 export type PoFull = Record<string, unknown> & { id: string; number: string; vendor_id: string; vendor_name: string; vendor_contact: string | null;
   sales_order_id: string | null; sales_order_number: string | null; order_date: string; expected_by: string | null; status: PoStatus; currency: string;
-  terms: string | null; notes: string | null; lines: PoLine[]; events: Array<Record<string, unknown>> };
+  terms: string | null; notes: string | null; payment_terms_id: string | null; shipping_method: string | null; terms_days: number | null; lines: PoLine[]; events: Array<Record<string, unknown>> };
 
 export async function listPurchaseOrders(c: pg.PoolClient, f: { status?: string; vendor_id?: string; item_id?: string; sales_order_id?: string; q?: string } = {}) {
   const where = ["p.archived_at IS NULL"];
@@ -184,6 +186,7 @@ export async function createPurchaseOrder(c: pg.PoolClient, uid: string, x: z.in
     `INSERT INTO perfume.purchase_orders (vendor_id, sales_order_id, order_date, expected_by, currency, terms, notes, created_by, location_code)
      VALUES ($1,$2,coalesce($3::date, current_date),$4,coalesce($5,'USD'),$6,$7,$8,$9) RETURNING id, number`,
     [x.vendor_id, salesOrderId, x.order_date ?? null, x.expected_by ?? null, x.currency ?? null, x.terms, x.notes, uid, x.location_code ?? null]);
+  await applyDocCatalogs(c, "purchase_orders", r.rows[0]!.id, x);
   await event(c, r.rows[0]!.id, uid, "created", { number: r.rows[0]!.number, vendor_id: x.vendor_id, sales_order_id: salesOrderId });
   return r.rows[0]!;
 }
@@ -249,6 +252,7 @@ export async function updatePurchaseOrder(c: pg.PoolClient, uid: string, id: str
   const keep = <T>(v: T | undefined, old: T) => (v !== undefined ? v : old);
   await c.query(`UPDATE perfume.purchase_orders SET order_date = $2, expected_by = $3, currency = $4, terms = $5, notes = $6, location_code = $7, updated_at = now() WHERE id = $1`,
     [id, x.order_date ?? b.order_date, keep(x.expected_by, b.expected_by), x.currency ?? b.currency, keep(x.terms, b.terms), keep(x.notes, b.notes), keep(x.location_code, b.location_code)]);
+  await applyDocCatalogs(c, "purchase_orders", id, x);
   await event(c, id, uid, "edited", { fields: Object.keys(x).filter((k) => x[k as keyof typeof x] !== undefined && k !== "vendor_id") });
 }
 
