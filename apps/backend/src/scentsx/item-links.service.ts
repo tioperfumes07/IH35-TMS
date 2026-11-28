@@ -184,6 +184,8 @@ export async function syncScentsxItemAccounts(c: Q, uid: string, max = 500) {
  * inactive item with its history — with a catalogs.items.updated audit row and the QuickBooks item push. No journal entry.
  */
 export async function carryItemLinkOnMerge(c: Q, uid: string, fromId: string, toId: string, intoName: string) {
+  // scentsx.item_links / catalogs.items are entity-scoped (RLS): without the ScentsX scope the link reads as absent (bug in #30053).
+  await scopeToScentsx(c);
   const from = (await c.query<{ id: string; co: string; catalog_item_id: string }>(
     `SELECT id::text, operating_company_id::text AS co, catalog_item_id::text FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL`, [fromId])).rows[0];
   if (!from) return { moved: false, deactivated: false };
@@ -207,4 +209,29 @@ export async function carryItemLinkOnMerge(c: Q, uid: string, fromId: string, to
     await enqueueTmsItemPushRequested(c as pg.PoolClient, { operating_company_id: from.co, item_id: from.catalog_item_id, operation: "update" });
   }
   return { moved: false, deactivated: r.rowCount === 1 };
+}
+
+/**
+ * Items merged before the merge carried the ScentsX product (#30053 ran without the ScentsX scope): every live link whose perfume
+ * item is merged is carried to the item it finally merged into (following the merge chain), the same way a new merge does.
+ */
+export async function repairMergedItemLinks(c: Q, uid: string) {
+  await scopeToScentsx(c);
+  const rows = (await c.query<{ from_id: string; to_id: string; to_name: string }>(
+    `WITH RECURSIVE ch AS (
+       SELECT l.perfume_item_id AS from_id, i.merged_into_id AS cur, 1 AS depth
+         FROM scentsx.item_links l JOIN perfume.items i ON i.id = l.perfume_item_id
+        WHERE l.voided_at IS NULL AND i.merged_into_id IS NOT NULL
+       UNION ALL
+       SELECT ch.from_id, i.merged_into_id, ch.depth + 1 FROM ch JOIN perfume.items i ON i.id = ch.cur
+        WHERE i.merged_into_id IS NOT NULL AND ch.depth < 20)
+     SELECT ch.from_id::text, ch.cur::text AS to_id, t.display_name AS to_name
+       FROM ch JOIN perfume.items t ON t.id = ch.cur AND t.merged_into_id IS NULL`)).rows;
+  let moved = 0, deactivated = 0;
+  for (const r of rows) {
+    const x = await carryItemLinkOnMerge(c, uid, r.from_id, r.to_id, r.to_name);
+    if (x.moved) moved++;
+    if (x.deactivated) deactivated++;
+  }
+  return { carried: rows.length, moved, deactivated };
 }
