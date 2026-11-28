@@ -20,7 +20,7 @@ import {
   postSourceTransactionInClientTx,
   reversePostedSourceTransactionInClientTx,
 } from "./posting-engine.service.js";
-import { isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
+import { BILL_PAYMENT_GL_POSTING_FLAG_KEY, isBillPaymentGlPostingEnabled } from "./bill-payment-gl.service.js";
 import { rollupSettlementPaidStatusInClientTx } from "../driver-finance/settlement-paid-rollup.service.js";
 import { insertTransferInClient, type TransferInput } from "../banking/transfers.service.js";
 import { isEnabled } from "../lib/feature-flags/service.js";
@@ -3770,7 +3770,9 @@ export async function payBillInClientTx(client: pg.PoolClient, input: PayBillInp
   if (input.amountCents <= 0) throw new Error("bill_payment_amount_must_be_positive");
   if (input.paymentMethod === "check" && !input.checkNumber?.trim()) throw new Error("check_number_required");
   await client.query(`SELECT set_config('app.operating_company_id', $1::text, true)`, [input.operatingCompanyId]);
-  const glPostingEnabled = await isBillPaymentGlPostingEnabled(input.operatingCompanyId, userId);
+  // Read on the caller's own transaction (same flag, same scope as isBillPaymentGlPostingEnabled), so a flag state the caller's
+  // transaction can see is the one the payment obeys — the other connection could disagree with it.
+  const glPostingEnabled = await isEnabled(client, BILL_PAYMENT_GL_POSTING_FLAG_KEY, { operating_company_id: input.operatingCompanyId, user_uuid: userId });
   const pettyCashTransferEnabled = await isEnabled(client, "PETTY_CASH_CHECK_TRANSFER_ENABLED", { operating_company_id: input.operatingCompanyId, user_uuid: userId });
   const state = { pettyCashTransferId: null as string | null };
   const payment = await payBillRowInClientTx(client, input, userId, { glPostingEnabled, pettyCashTransferEnabled }, state);

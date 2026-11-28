@@ -6,8 +6,8 @@
  *
  * READ ONLY — no new money math. An invoice's open balance as of a date is the books' own reconstruction, the same expression the
  * accounting A/R aging uses (accounting.invoice_applied_cents_as_of + credit-memo applications on or before the date, factored /
- * recoursed invoices off trade A/R, drafts / proformas / voids / sample rows excluded), so these screens tie to the A/R control
- * account to the cent. Payments are recorded and voided by the existing payment engine (POST /api/v1/accounting/payments,
+ * recoursed invoices off trade A/R, drafts / proformas / voids / sample rows excluded), less each customer's unapplied credit memos
+ * and payments (they posted Cr A/R), so the aging total ties to the A/R control account to the cent. Payments are recorded and voided by the existing payment engine (POST /api/v1/accounting/payments,
  * /payments/:id/void) — this file never writes.
  *
  * Aging basis = days since the invoice date (CONTROL's "Days" column, the way TIO has always aged); the due date is shown beside it.
@@ -28,11 +28,41 @@ export const agingQuery = z.object({
   d3: z.coerce.number().int().min(1).max(3650).default(90),
 }).refine((x) => x.d1 < x.d2 && x.d2 < x.d3, { message: "Aging days must go up: 30 < 60 < 90." });
 
-export type Buckets = { current: number; b1: number; b2: number; b3: number; total: number };
-const zero = (): Buckets => ({ current: 0, b1: 0, b2: 0, b3: 0, total: 0 });
+/** credits = the customer's unapplied credit memos and unapplied payments (both already Cr A/R), shown negative the QuickBooks way;
+ *  total = the open invoices in the buckets − credits, so the report total equals the A/R control account. */
+export type Buckets = { current: number; b1: number; b2: number; b3: number; credits: number; total: number };
+const zero = (): Buckets => ({ current: 0, b1: 0, b2: 0, b3: 0, credits: 0, total: 0 });
+
+/**
+ * Each ScentsX customer's unapplied credit as of $2: credit memos (posted, not void) less what was applied to invoices or refunded
+ * (customer_refunds) on or before the date, plus payments (not void) less what was applied on or before the date. Each of these
+ * posted Cr A/R when it was made, so the aging nets them to tie to the books.
+ */
+const CREDITS_SQL = `
+  WITH cm AS (
+    SELECT m.customer_id, m.amount_cents
+             - coalesce((SELECT sum(a.applied_cents) FROM accounting.credit_memo_applications a WHERE a.credit_memo_id = m.id AND a.voided_at IS NULL
+                          AND (a.applied_at AT TIME ZONE 'UTC')::date <= $2::date), 0)
+             - coalesce((SELECT sum(r.amount_cents) FROM accounting.customer_refunds r WHERE r.credit_memo_id = m.id AND r.voided_at IS NULL
+                          AND r.refund_date <= $2::date), 0) AS left_cents
+      FROM accounting.credit_memos m
+     WHERE m.operating_company_id = $1::uuid AND m.journal_entry_id IS NOT NULL AND m.issue_date <= $2::date
+       AND (m.voided_at IS NULL OR m.voided_at::date > $2::date) AND coalesce(m.status, '') NOT IN ('void', 'voided')),
+  pay AS (
+    SELECT p.customer_id, p.amount_cents
+             - coalesce((SELECT sum(pa.amount_cents) FROM accounting.payment_applications pa WHERE pa.payment_id = p.id
+                          AND (pa.applied_at AT TIME ZONE 'UTC')::date <= $2::date
+                          AND (pa.unapplied_at IS NULL OR (pa.unapplied_at AT TIME ZONE 'UTC')::date > $2::date)), 0) AS left_cents
+      FROM accounting.payments p
+     WHERE p.operating_company_id = $1::uuid AND p.payment_date <= $2::date AND p.is_sample_data = false
+       AND (p.voided_at IS NULL OR p.voided_at::date > $2::date))
+  SELECT x.customer_id::text, coalesce(cu.customer_name, '') AS customer, sum(x.left_cents)::text AS credit_cents
+    FROM (SELECT * FROM cm UNION ALL SELECT * FROM pay) x LEFT JOIN mdata.customers cu ON cu.id = x.customer_id
+   WHERE x.left_cents > 0 AND x.customer_id IS NOT NULL
+   GROUP BY 1, 2`;
 
 /** Which bucket an invoice of `days` age falls in (CONTROL: Current < d1 ≤ 30 Days < d2 ≤ 60 Days < d3 ≤ 90+ Days). */
-export function bucketOf(days: number, d1: number, d2: number, d3: number): keyof Omit<Buckets, "total"> {
+export function bucketOf(days: number, d1: number, d2: number, d3: number): keyof Omit<Buckets, "total" | "credits"> {
   if (days < d1) return "current";
   if (days < d2) return "b1";
   if (days < d3) return "b2";
@@ -73,6 +103,15 @@ export async function agingReport(c: Q, f: z.infer<typeof agingQuery>) {
     row[k] += amt; row.total += amt; row.invoices += 1; row.oldest_days = Math.max(row.oldest_days, r.days);
     by.set(r.customer_id, row);
     totals[k] += amt; totals.total += amt;
+  }
+  for (const r of (await c.query<{ customer_id: string; customer: string; credit_cents: string }>(CREDITS_SQL, [co, asOf])).rows) {
+    const amt = Number(r.credit_cents);
+    const row = by.get(r.customer_id) ?? { customer_id: r.customer_id, customer: r.customer,
+      perfume_company_id: (await c.query<{ id: string | null }>(`SELECT l.contact_company_id::text AS id FROM scentsx.customer_links l WHERE l.customer_id = $1::uuid AND l.voided_at IS NULL LIMIT 1`, [r.customer_id])).rows[0]?.id ?? null,
+      invoices: 0, oldest_days: 0, ...zero() };
+    row.credits += amt; row.total -= amt;
+    by.set(r.customer_id, row);
+    totals.credits += amt; totals.total -= amt;
   }
   return { as_of: asOf, days: { d1: f.d1, d2: f.d2, d3: f.d3 }, totals, customers: [...by.values()].sort((a, b) => a.customer.localeCompare(b.customer)) };
 }

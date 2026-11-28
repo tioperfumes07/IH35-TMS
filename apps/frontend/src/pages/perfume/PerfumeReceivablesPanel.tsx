@@ -73,6 +73,7 @@ export function PerfumeReceivablesPanel() {
             { key: "b1", label: `${d?.days.d1 ?? 30} days`, kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.b1), exportValue: (r) => r.b1 / 100 },
             { key: "b2", label: `${d?.days.d2 ?? 60} days`, kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => money(r.b2), exportValue: (r) => r.b2 / 100 },
             { key: "b3", label: `${d?.days.d3 ?? 90}+ days`, kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => <span className={r.b3 > 0 ? "text-[#B91C1C]" : ""}>{money(r.b3)}</span>, exportValue: (r) => r.b3 / 100 },
+            { key: "credits", label: "Unapplied credits", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.credits ? <span className="text-[#166534]">{money(-r.credits)}</span> : money(0)), exportValue: (r) => -(r.credits ?? 0) / 100 },
             { key: "total", label: "A/R balance", kind: "number", sortable: true, cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.total), exportValue: (r) => r.total / 100 },
             { key: "invoices", label: "Open invoices", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.invoices.toLocaleString("en-US") },
             { key: "oldest_days", label: "Oldest (days)", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => r.oldest_days.toLocaleString("en-US") },

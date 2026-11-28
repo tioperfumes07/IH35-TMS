@@ -10,6 +10,8 @@
  *   waiting to post       = the same sum over moves that have no posted journal entry yet
  *   difference            = sub-ledger − GL − waiting   (must be 0; anything else is a defect to investigate)
  * Goods in transit (1290) tie the same way to the transfer_out moves whose transfer_in has not happened.
+ * Landed cost capitalized into lots on hand (scentsx.purchase_order_landed_costs.capitalized_cents) is added to the sub-ledger: it
+ * changes the lots' cost with its own journal entry and no stock move, so without it every landed charge shows as a false difference.
  */
 import type pg from "pg";
 import { resolveRoleAccountOptional } from "../accounting/coa-roles/resolver.service.js";
@@ -57,8 +59,17 @@ export async function inventoryTieOut(c: Q, asOf?: string): Promise<TieOut> {
     );
     gl = Number(g.rows[0]!.bal);
   }
+  // Landed cost (freight-in / customs on a PO bill, migration 202617250100) raises the cost of the lots still on hand without a
+  // stock move: its capitalized part is part of the inventory sub-ledger, posted by its own journal entry (Dr Inventory / Cr 5100|5110).
+  const landed = (await c.query<{ total: string; waiting: string }>(
+    `SELECT coalesce(sum(lc.capitalized_cents), 0)::text AS total,
+            coalesce(sum(lc.capitalized_cents) FILTER (WHERE j.id IS NULL OR j.status <> 'posted'), 0)::text AS waiting
+       FROM scentsx.purchase_order_landed_costs lc LEFT JOIN accounting.journal_entries j ON j.id = lc.journal_entry_id
+      WHERE lc.operating_company_id = $1::uuid
+        AND ($2::date IS NULL OR coalesce(j.entry_date, (lc.created_at AT TIME ZONE 'America/Chicago')::date) <= $2::date)`,
+    [co, day])).rows[0]!;
   const s = sub.rows[0]!;
-  const subledger = Number(s.total), waiting = Number(s.waiting);
+  const subledger = Number(s.total) + Number(landed.total), waiting = Number(s.waiting) + Number(landed.waiting);
   const difference = subledger - gl - waiting;
   return { as_of: s.as_of, account_id: acct, account_ids: accounts, subledger_cents: subledger, gl_cents: gl, waiting_cents: waiting, waiting_moves: s.waiting_n,
     difference_cents: difference, ties: difference === 0, zero_cost_moves: s.zero_n };

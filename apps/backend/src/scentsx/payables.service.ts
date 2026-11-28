@@ -5,8 +5,8 @@
  *
  * READ ONLY — no new money math. A bill's open balance as of a date is the SAME reconstruction the accounting A/P aging uses
  * (accounting/ap-aging.service.ts AP_AGING_OPEN_BILLS_SQL: amount − bill payments on or before the date, not revoked − vendor-credit
- * applications − payment applications to the bill; drafts, voids, revoked and sample bills excluded), so this screen ties to the
- * A/P control account and to the books' A/P aging to the cent (purchase-bill.test.ts / payables.test.ts tie it). Bills are paid
+ * applications − payment applications to the bill; drafts, voids, revoked and sample bills excluded), less each vendor's unapplied
+ * vendor credits (Dr A/P when made), so this screen ties to the A/P control account to the cent (purchase-bill.test.ts / payables.test.ts tie it). Bills are paid
  * and voided by the existing bill engine (POST /api/v1/accounting/bills/:id/pay, /bills/:id/void) — this file never writes.
  */
 import type pg from "pg";
@@ -23,11 +23,25 @@ type Q = Pick<pg.PoolClient, "query">;
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 export const payablesQuery = z.object({ as_of: isoDate.optional() });
 
-export type ApBuckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; total: number };
-const zero = (): ApBuckets => ({ current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d90_plus: 0, total: 0 });
+/** credits = the vendor's unapplied vendor credits (Dr A/P when made), shown negative; total = open bills − credits = the A/P control. */
+export type ApBuckets = { current: number; d1_30: number; d31_60: number; d61_90: number; d90_plus: number; credits: number; total: number };
+const zero = (): ApBuckets => ({ current: 0, d1_30: 0, d31_60: 0, d61_90: 0, d90_plus: 0, credits: 0, total: 0 });
+
+/** Each ScentsX vendor's unapplied credit as of $2: vendor credits (not void) less applications to bills and refunds received. */
+const VENDOR_CREDITS_SQL = `
+  SELECT vc.vendor_id::text,
+         sum(vc.amount_cents
+             - coalesce((SELECT sum(a.applied_cents) FROM accounting.vendor_credit_applications a WHERE a.credit_id = vc.id AND a.voided_at IS NULL
+                          AND (a.applied_at AT TIME ZONE 'UTC')::date <= $2::date), 0)
+             - coalesce((SELECT sum(r.amount_cents) FROM accounting.vendor_refunds r WHERE r.vendor_credit_id = vc.id AND r.voided_at IS NULL
+                          AND r.refund_date <= $2::date), 0))::text AS credit_cents
+    FROM accounting.vendor_credits vc
+   WHERE vc.operating_company_id = $1::uuid AND vc.issue_date <= $2::date AND (vc.voided_at IS NULL OR vc.voided_at::date > $2::date)
+     AND coalesce(vc.status, '') NOT IN ('void', 'voided')
+   GROUP BY 1`;
 
 /** The books' A/P bucket for a bill `pastDue` days past its due date (≤ 0 = not yet due = Current). */
-export function apBucketOf(pastDue: number): keyof Omit<ApBuckets, "total"> {
+export function apBucketOf(pastDue: number): keyof Omit<ApBuckets, "total" | "credits"> {
   if (pastDue <= 0) return "current";
   if (pastDue <= 30) return "d1_30";
   if (pastDue <= 60) return "d31_60";
@@ -59,7 +73,7 @@ async function asOfDate(c: Q, asOf?: string) {
 }
 
 type OpenBill = { id: string; display_id: string | null; bill_number: string | null; vendor_id: string | null; bill_date: string; due_date: string;
-  past_due: number; amount_cents: number; settled_cents: number; open_cents: number; bucket: keyof Omit<ApBuckets, "total">; purchase_order_id: string | null; po_number: string | null };
+  past_due: number; amount_cents: number; settled_cents: number; open_cents: number; bucket: keyof Omit<ApBuckets, "total" | "credits">; purchase_order_id: string | null; po_number: string | null };
 
 async function openBills(c: Q, co: string, asOf: string, vendorId: string | null): Promise<OpenBill[]> {
   const r = await c.query<{ id: string; display_id: string | null; bill_number: string | null; vendor_id: string | null; bill_date: string; due_date: string;
@@ -98,6 +112,14 @@ export async function payablesAging(c: Q, f: z.infer<typeof payablesQuery>) {
     row[b.bucket] += b.open_cents; row.total += b.open_cents; row.bills += 1; row.oldest_past_due = Math.max(row.oldest_past_due, b.past_due);
     totals[b.bucket] += b.open_cents; totals.total += b.open_cents;
     byVendor.set(key, row);
+  }
+  for (const r of (await c.query<{ vendor_id: string; credit_cents: string }>(VENDOR_CREDITS_SQL, [co, asOf])).rows) {
+    const amt = Number(r.credit_cents);
+    if (amt <= 0) continue;
+    const v = names.get(r.vendor_id);
+    const row = byVendor.get(r.vendor_id) ?? { ...zero(), vendor_id: r.vendor_id, vendor: v?.name ?? "Unknown vendor", perfume_vendor_id: v?.perfume_vendor_id ?? null, bills: 0, oldest_past_due: 0 };
+    row.credits += amt; row.total -= amt; totals.credits += amt; totals.total -= amt;
+    byVendor.set(r.vendor_id, row);
   }
   return { as_of: asOf, operating_company_id: co, totals, vendors: [...byVendor.values()].sort((a, b) => b.total - a.total || a.vendor.localeCompare(b.vendor)) };
 }
