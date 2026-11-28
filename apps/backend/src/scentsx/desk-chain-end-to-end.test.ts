@@ -132,6 +132,12 @@ describeIntegration("ScentsX desk chain end to end (real Postgres, rolled back)"
     expect(await bal("2000")).toBe(-20400); // A/P owes the vendor
     // Landed cost by value: A gets 1400 × 15000/19000 = 1105, B 295 → A $16.105/unit, B $10.7375/unit on hand.
     expect([await bal("1201"), await bal("1200")]).toEqual([15000 + 1105, 4000 + 295]);
+    // Each stocked bill line names its ScentsX product, qty and rate (the vendor-bill line drills to the item, both ways).
+    const productOf = async (perfumeId: string) => (await db.query<{ id: string }>(
+      `SELECT catalog_item_id::text AS id FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL`, [perfumeId])).rows[0]!.id;
+    const billLines = (await db.query<{ item_id: string | null; quantity: string | null; amount_cents: string }>(
+      `SELECT item_id::text, quantity::text, round(amount * 100)::text AS amount_cents FROM accounting.bill_lines WHERE bill_id = $1::uuid AND item_id IS NOT NULL ORDER BY amount DESC`, [bill.bill_id])).rows;
+    expect(billLines.map((l) => [l.item_id, Number(l.quantity), Number(l.amount_cents)])).toEqual([[await productOf(A), 10, 15000], [await productOf(B), 4, 4000]]);
 
     // ── 3. Pay the bill from Operating Checking (Dr A/P / Cr 1000) ──
     const bank = (await db.query<{ id: string }>(`SELECT id::text FROM banking.bank_accounts WHERE operating_company_id = $1::uuid AND account_name = 'Operating Checking'`, [co])).rows[0]!.id;
