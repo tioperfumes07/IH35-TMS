@@ -66,6 +66,14 @@ export type LoanApplicationPrefill = {
   /** ROUND 443.22-2e — debit CoA (Relay Fuel Wallet) when seeded as paid-direct. */
   funding_account_id?: string;
   intermediary_name?: string;
+  /** ROUND L.31 M13 — a desk button names the loan kind: who the lender is and which liability account (by number, e.g. 2400
+   *  Loans from Owner / 2500 Notes Payable). The account is pre-selected in the picker the user sees and confirms on review —
+   *  never a silent fallback (DoD-D): an unknown number leaves the picker empty. */
+  relationship?: LoanRelationship;
+  counterparty_kind?: LoanCounterpartyKind;
+  account_number?: string;
+  /** Repay a running loan: its liability account id (from the facility row). */
+  account_id?: string;
 };
 
 type Props = {
@@ -243,6 +251,9 @@ function formFromPrefill(prefill: LoanApplicationPrefill | null | undefined): Fo
     funding_source_note: prefill.funding_source_note?.trim() ?? "",
     funding_account_id: prefill.funding_account_id?.trim() ?? "",
     intermediary_name: prefill.intermediary_name?.trim() ?? "",
+    relationship: prefill.relationship ?? EMPTY.relationship,
+    counterparty_kind: prefill.counterparty_kind ?? EMPTY.counterparty_kind,
+    account_id: prefill.account_id?.trim() ?? "",
   };
 }
 
@@ -282,6 +293,12 @@ export function LoanApplicationWizard({ open, operatingCompanyId, onClose, onCre
   });
 
   const accounts = accountsQuery.data?.accounts ?? [];
+  // ROUND L.31 M13 — resolve the prefilled account number to the entity's own account once the chart loads.
+  const prefillAccountNumber = prefill?.account_number?.trim() ?? "";
+  const prefillAccountId = prefillAccountNumber ? accounts.find((a) => a.account_number === prefillAccountNumber)?.id ?? "" : "";
+  useEffect(() => {
+    if (prefillAccountId) setForm((prev) => (prev.account_id ? prev : { ...prev, account_id: prefillAccountId }));
+  }, [prefillAccountId]);
   const facilities = facilitiesQuery.data?.facilities ?? [];
   const matchedFacility = useMemo(() => {
     if (!isRepayment || !form.account_id) return null;

@@ -22,7 +22,7 @@ import { formatUsdCents } from "../../lib/money";
 import { createJournalEntry, listJournalEntries, type JournalEntry } from "../../api/accounting";
 import { getScentsxCompany, listScentsxAccounts, type ScentsxAccount } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
-import { LoanApplicationWizard } from "../accounting/loans/LoanApplicationWizard";
+import { LoanApplicationWizard, type LoanApplicationPrefill } from "../accounting/loans/LoanApplicationWizard";
 import { ctl, DASH, usDate } from "./perfumeDocParts";
 
 const todayCT = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
@@ -42,6 +42,9 @@ export function PerfumeJournalPanel() {
   const list = useQuery({ queryKey: ["scentsx", "je", id], queryFn: () => listJournalEntries(id, { source: "manual", limit: 200 }), enabled: Boolean(id) });
   const [open, setOpen] = useState<string | null>(null);
   const [loan, setLoan] = useState<"in" | "repay" | null>(null);
+  // Held per opening, not rebuilt each render — a background refetch must never reset the wizard mid-entry. Owner loans go to 2400.
+  const loanPrefill = useMemo<LoanApplicationPrefill | null>(() => (loan === "in" ? { direction: "in", relationship: "owner", counterparty_kind: "user", account_number: "2400", interest_rate_pct: "4.00", entry_date: todayCT() }
+    : loan ? { direction: "out", target_type: "repayment", entry_date: todayCT() } : null), [loan]);
   if (co.isError) return <ListErrorState title={tr("scentsx.je.co_error", "Couldn't load ScentsX")} status={0} message={(co.error as Error)?.message} onRetry={() => void co.refetch()} />;
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-journal-panel" aria-label={tr("scentsx.je.title", "Journal entries")}>
@@ -68,7 +71,7 @@ export function PerfumeJournalPanel() {
       )}
       {loan ? (
         <LoanApplicationWizard open operatingCompanyId={id} onClose={() => setLoan(null)} onCreated={() => { setLoan(null); void list.refetch(); }}
-          prefill={loan === "in" ? { direction: "in", interest_rate_pct: "4.00", entry_date: todayCT() } : { direction: "out", target_type: "repayment", entry_date: todayCT() }} />
+          prefill={loanPrefill} />
       ) : null}
       {open && accts.data ? <JournalModal companyId={id} accounts={accts.data.accounts} template={TEMPLATES.find((t) => t.key === open) ?? null} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); void list.refetch(); }} /> : null}
     </section>
