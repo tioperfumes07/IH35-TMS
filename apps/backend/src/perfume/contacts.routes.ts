@@ -18,6 +18,7 @@ import {
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 import { deleteContacts, deleteContactsSchema, restoreContacts } from "./contact-delete.service.js";
+import { findContactInfo, findContactInfoSchema, unreachableCounts } from "./contact-enrich.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
 import { vendorRanking } from "../scentsx/vendor-ranking.service.js";
@@ -152,6 +153,22 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const b = deleteContactsSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
     return withCurrentUser(uid, async (c) => { const r = await deleteContacts(c, uid, b.data.ids); await scanDuplicates(c); return r; });
+  });
+  // Owner 2026-11-28 14:24–14:26 CT: a lead with no email or phone — find its contact info (Google Places + its own website).
+  app.get("/api/v1/perfume/contacts/no-contact-info", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => ({ configured: googleKey() != null, ...(await unreachableCounts(c)) }));
+  });
+  app.post("/api/v1/perfume/contacts/find-contact-info", RL_SEARCH, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = findContactInfoSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    if (!googleKey()) return reply.code(503).send({ error: "google_places_key_missing" });
+    try { return await findContactInfo((fn) => withCurrentUser(uid, (c) => fn(c)), uid, b.data); }
+    catch (e) {
+      if (e instanceof GoogleProspectsNotConfigured) return reply.code(503).send({ error: "google_places_key_missing" });
+      req.log.error({ err: (e as Error).message }, "perfume find contact info failed");
+      return reply.code(502).send({ error: "find_contact_info_failed", message: (e as Error).message });
+    }
   });
   app.post("/api/v1/perfume/contacts/restore", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
