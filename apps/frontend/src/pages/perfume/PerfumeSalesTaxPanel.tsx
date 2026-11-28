@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { Modal } from "../../components/Modal";
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { ParityTable } from "../../components/parity/ParityTable";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { MoneyInput } from "../../components/forms/MoneyInput";
@@ -109,6 +110,7 @@ export function PerfumeSalesTaxPanel() {
         )}
       </section>
       <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("scentsx.stx.returns", "Sales tax returns")}>
+        <CappedListNotice shown={returns.data?.returns.length ?? 0} total={returns.data?.total} limit={100} />
         {returns.isError ? <ListErrorState title={tr("scentsx.stx.returns_error", "Couldn't load the returns")} status={0} message={(returns.error as Error)?.message} onRetry={() => void returns.refetch()} /> : (
           <ParityTable<SalesTaxReturn> selectable
             cardTitle title={tr("scentsx.stx.returns", "Sales tax returns")} rows={returns.data?.returns ?? []} rowKey={(r) => r.id} loading={returns.isLoading} storageKey="scentsx-stx-returns-v1"

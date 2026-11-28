@@ -34,6 +34,7 @@ import { recordCustomerPaymentInClientTx } from "../accounting/payment-writer.se
 import { createReturn } from "./returns.service.js";
 import { inventoryTieOut } from "./inventory-tieout.service.js";
 import { agingReport, agingQuery } from "./receivables.service.js";
+import { makeItemsSchema, makeScentsxItems } from "./item-links.service.js";
 import { payablesAging } from "./payables.service.js";
 
 const FLAGS = ["GL_POSTING_ENABLED", "INVOICE_AR_GL_POSTING_ENABLED", "CUSTOMER_PAYMENT_GL_POSTING_ENABLED", "BILL_GL_POSTING_ENABLED",
@@ -108,6 +109,9 @@ describeIntegration("ScentsX desk chain end to end (real Postgres, rolled back)"
        VALUES ($1, 'Chain Brand', $2, $2, $3, $3, $4) RETURNING id::text`, [code, name, `chain-${code}`, category])).rows[0]!.id;
     const A = await mkItem("CHAIN-A", "Chain A EDP 100ml", "ZZChain Perfume");
     const B = await mkItem("CHAIN-B", "Chain B EDT 50ml", null);
+    // Each becomes a ScentsX Products & Services item (income 4000, expense = its category COGS: A 5001, B 5000).
+    expect((await makeScentsxItems(db, u, makeItemsSchema.parse({ item_ids: [A, B] }))).created).toBe(2);
+    const product = async (item: string) => (await db.query<{ id: string }>(`SELECT catalog_item_id::text AS id FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL`, [item])).rows[0]!.id;
 
     // ── 1. Purchase order → receive at the warehouse (Dr Inventory / Cr GRNI) ──
     const po = await createPurchaseOrder(db as never, u, { vendor_id: pv, location_code: "ZZWH" });
@@ -156,6 +160,9 @@ describeIntegration("ScentsX desk chain end to end (real Postgres, rolled back)"
     expect((sent as { ok: boolean }).ok).toBe(true);
     expect(await bal("4000")).toBe(-7500);
     expect(await bal("1100")).toBe(7500);
+    // The invoice line names A's ScentsX product (Sales by product, the QuickBooks item).
+    expect((await db.query<{ item_id: string | null }>(`SELECT item_id::text FROM accounting.invoice_lines WHERE invoice_id = $1::uuid`, [inv1.invoice_id])).rows)
+      .toEqual([{ item_id: await product(A) }]);
     await recordCustomerPaymentInClientTx(db, {
       row: { operating_company_id: co, customer_id: cust, payment_method: "check", payment_date: today, reference: "CHAIN CHK 1", amount_cents: 7500,
         deposited_to_account_id: await acct("1000"), notes: null, created_by_user_id: u, is_sample_data: false },
@@ -176,7 +183,11 @@ describeIntegration("ScentsX desk chain end to end (real Postgres, rolled back)"
     await addOrderLine(db as never, u, so2.id, { item_id: B, description: "Chain B EDT 50ml", qty: 2, unit_price_cents: 2000, price_override_reason: "chain test price" });
     await shipOrder(db as never, u, so2.id);
     expect((await post()).failed).toEqual([]);
-    const inv2 = await invoiceSalesOrder(db, u, so2.id);
+    // Billed as a retail (store) sale: revenue 4010, the product still named on the line, the channel recorded as the reason.
+    const inv2 = await invoiceSalesOrder(db, u, so2.id, "retail");
+    expect((await db.query<{ item_id: string | null; acct: string; why: string | null }>(
+      `SELECT l.item_id::text, a.account_number AS acct, l.item_account_override_reason AS why FROM accounting.invoice_lines l JOIN catalogs.accounts a ON a.id = l.account_id
+        WHERE l.invoice_id = $1::uuid`, [inv2.invoice_id])).rows).toEqual([{ item_id: await product(B), acct: "4010", why: expect.stringMatching(/retail sale/) }]);
     await sendDraftInvoice(db as never, { invoiceId: inv2.invoice_id, operatingCompanyId: co, userId: u, mode: "historical_backfill" });
 
     // ── 8. Reverse a purchase: 1 of B goes back to the vendor after it was billed → vendor credit (Dr A/P / Cr GRNI); GRNI back to 0 ──
@@ -243,7 +254,7 @@ describeIntegration("ScentsX desk chain end to end (real Postgres, rolled back)"
     // Income statement lines to the cent.
     // B: 2 shipped at $10.7375 (2148) + the returned unit's freight share (74) that the vendor credit does not cover → COGS.
     const cogsB = Math.round(2 * (4295 / 4)) + (Math.round(4295 / 4) - 1000);
-    expect([await bal("4000"), await bal("4800"), await bal("5000"), await bal("5100")]).toEqual([-(7500 + 4000), 2500, cogsB, 0]);
+    expect([await bal("4000"), await bal("4010"), await bal("4800"), await bal("5000"), await bal("5100")]).toEqual([-7500, -4000, 2500, cogsB, 0]);
     expect(await bal("5001")).toBe(cogs3 - Math.round(unitA));
 
     // Data not mixed: every posting of the chain is ScentsX's, on ScentsX accounts; nothing written for any other company.
