@@ -71,4 +71,14 @@ describeIntegration("import into the contacts database (real Postgres, rolled ba
     // Two "Sin Nombre" depots with different DENUE ids stay two, even with one phone and one name; the same id again is one.
     expect((await db.query(`SELECT count(*)::int AS n FROM perfume.contact_companies WHERE name = 'Sin Nombre' AND city = 'IMPTEST City'`)).rows[0].n).toBe(2);
   });
+
+  it("a person already on file gets blanks filled from the email signature, nothing overwritten (owner 2026-11-28 15:01 CT)", async () => {
+    await importRecords(db as never, [rec({ company: { name: "IMPTEST Sig Co", domain: "imptest-sig.com" }, people: [{ name: "Parvin", email: "parvin@imptest-sig.com" }] })], TEST_OWNER_USER_ID);
+    await importRecords(db as never, [rec({ company: { name: "IMPTEST Sig Co", domain: "imptest-sig.com", phone: "212-327-0555", address: "2300 Marcus Ave, Suite C, New Hyde Park, NY 11042", website: "www.imptest-sig.com" },
+      people: [{ name: "Parvinder Saini", title: "Buying / Sales Manager", email: "parvin@imptest-sig.com", phones: ["+1 (917) 292-9269"] }] })], TEST_OWNER_USER_ID);
+    const p = (await db.query(`SELECT name, title, phones FROM perfume.contact_people WHERE email = 'parvin@imptest-sig.com'`)).rows;
+    expect(p).toEqual([{ name: "Parvin", title: "Buying / Sales Manager", phones: ["+1 (917) 292-9269"] }]);
+    const co = (await db.query(`SELECT phone, address, website FROM perfume.contact_companies WHERE domain = 'imptest-sig.com'`)).rows;
+    expect(co).toEqual([{ phone: "212-327-0555", address: "2300 Marcus Ave, Suite C, New Hyde Park, NY 11042", website: "www.imptest-sig.com" }]);
+  });
 });
