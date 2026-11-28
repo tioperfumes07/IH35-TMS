@@ -16,7 +16,7 @@ import {
 } from "./extract.service.js";
 import { deskListRows,
   buildGrid, bulkReview, withUpcColumns, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
-  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, listVoidedLists, restoreList, ListRestoreError, type GridView,
+  canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, confirmPricesIntoList, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, listVoidedLists, restoreList, ListRestoreError, type GridView,
 } from "./desk.service.js";
 
 type RematchJob = { state: "idle" | "running" | "done" | "failed"; started_at: string | null; finished_at: string | null; result: unknown; error: string | null };
@@ -455,6 +455,23 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
       return { ok: true, ...result };
     } catch (e) {
       if (e instanceof MyPriceError) return reply.code(e.message === "not_on_my_list" ? 409 : 400).send({ error: e.message });
+      throw e;
+    }
+  });
+  // L.30 item 11: confirm the ticked items' "My price @ my margin" into my current offer list (one transaction).
+  app.post("/api/v1/perfume/mine/confirm-prices", RL_WRITE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const body = z.object({
+      item_ids: z.array(z.string().uuid()).min(1).max(5000),
+      target_pct: z.number().min(0).max(95).nullable().optional(), earn_pct: z.number().min(0).max(95).nullable().optional(),
+    }).safeParse(req.body);
+    if (!body.success) return bad(reply, body.error);
+    try {
+      const result = await withCurrentUser(uid, (c) => confirmPricesIntoList(c, uid, body.data));
+      if (result.updated) dataChanged({ itemsUnchanged: true });
+      return { ok: true, ...result };
+    } catch (e) {
+      if (e instanceof MyPriceError) return reply.code(409).send({ error: e.message });
       throw e;
     }
   });
