@@ -12,12 +12,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { Modal } from "../../components/Modal";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { useToast } from "../../components/Toast";
 import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
+  deletePerfumeContacts, restorePerfumeContacts, type PerfumeContactDeleteResult,
   getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
   type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
@@ -80,6 +82,31 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
   const [picks, setPicks] = useState<PerfumeContactPicks>({});
   const list = useQuery({ queryKey: ["perfume", "contacts", role, source, q, picks], queryFn: () => listPerfumeContacts({ role, source, q, limit: 300, ...picks }) });
   const anyPick = Object.values(picks).some((v) => (v?.length ?? 0) > 0);
+  // Owner 2026-11-27 21:39 CT: select several → Delete (contacts that are not for the business). Confirmed in the page, never a browser dialog.
+  const { pushToast } = useToast();
+  const [checked, setChecked] = useState<string[]>([]);
+  const [askDelete, setAskDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [lastDeleted, setLastDeleted] = useState<{ ids: string[]; result: PerfumeContactDeleteResult } | null>(null);
+  const doDelete = async () => {
+    setBusy(true);
+    try {
+      const ids = [...checked];
+      const r = await deletePerfumeContacts(ids);
+      const keptIds = new Set(r.kept.map((k) => k.id));
+      setLastDeleted({ ids: ids.filter((x) => !keptIds.has(x)), result: r });
+      pushToast(`${r.deleted.toLocaleString("en-US")} deleted (${r.people.toLocaleString("en-US")} people)${r.kept.length ? ` · ${r.kept.length} kept — they have business on file` : ""}`, r.kept.length ? "info" : "success");
+      setChecked([]); setAskDelete(false);
+      if (selected && !keptIds.has(selected) && ids.includes(selected)) setSelected(null);
+      await list.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not deleted"), "error"); } finally { setBusy(false); }
+  };
+  const undoDelete = async () => {
+    if (!lastDeleted) return;
+    setBusy(true);
+    try { const r = await restorePerfumeContacts(lastDeleted.ids); pushToast(`${r.restored.toLocaleString("en-US")} put back`, "success"); setLastDeleted(null); await list.refetch(); }
+    catch (e) { pushToast(userFacingApiError(e, "Not put back"), "error"); } finally { setBusy(false); }
+  };
 
   if (list.isError) {
     return <ListErrorState title={tr("perfume.contacts.loadError", "Couldn't load the contacts")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
@@ -148,7 +175,22 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           <input type="search" aria-label={tr("perfume.contacts.search_contacts", "Search contacts")} placeholder={`Search all ${n(c?.companies)} — company, person, email, phone, city`}
             className={`${ctl} min-w-[240px] flex-1`} value={q} onChange={(e) => setQ(e.target.value)} data-testid="perfume-contacts-search" />
         </div>
-        <ParityTable<PerfumeContactRow> selectable
+        <div className="flex flex-wrap items-center gap-2" data-testid="perfume-contacts-bulk">
+          <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={!checked.length || busy} onClick={() => setAskDelete(true)} data-testid="perfume-contacts-delete">
+            {`Delete ${checked.length ? checked.length.toLocaleString("en-US") + " " : ""}selected`}
+          </Button>
+          {lastDeleted && lastDeleted.ids.length ? (
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void undoDelete()} data-testid="perfume-contacts-undo-delete">
+              {`Undo — put back the ${lastDeleted.result.deleted.toLocaleString("en-US")} just deleted`}
+            </Button>
+          ) : null}
+          {lastDeleted?.result.kept.length ? (
+            <span className="text-xs text-[#8A4208]" data-testid="perfume-contacts-kept">
+              {`Kept ${lastDeleted.result.kept.length}: ${lastDeleted.result.kept.slice(0, 5).map((k) => `${k.name} (${k.reason})`).join(" · ")}${lastDeleted.result.kept.length > 5 ? " …" : ""}`}
+            </span>
+          ) : null}
+        </div>
+        <ParityTable<PerfumeContactRow> selectable selectedKeys={checked} onSelectionChange={setChecked}
           rows={list.data?.rows ?? []}
           rowKey={(r) => r.id}
           loading={list.isLoading}
@@ -176,6 +218,20 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
         <div className="text-xs text-[#64748B]">{list.data ? `Showing ${list.data.rows.length.toLocaleString("en-US")} of ${list.data.total.toLocaleString("en-US")}` : ""}</div>
       </section>
 
+      {askDelete ? (
+        <Modal open onClose={() => setAskDelete(false)} title={`Delete ${checked.length.toLocaleString("en-US")} contact${checked.length === 1 ? "" : "s"}?`} size="sm" data-testid="perfume-contacts-delete-modal">
+          <div className="space-y-3 text-xs">
+            <p>{`The ${checked.length.toLocaleString("en-US")} selected compan${checked.length === 1 ? "y" : "ies"} and their people leave Vendors, Customers and All leads. Each one's history records the delete, and "Undo" puts them back.`}</p>
+            <p>A company that already has quotes, orders, purchase orders, price lists, a ScentsX link, an account, a pagaré or a resale certificate is kept — you are told which and why.</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setAskDelete(false)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
+              <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void doDelete()} data-testid="perfume-contacts-delete-confirm">
+                {`Delete ${checked.length.toLocaleString("en-US")}`}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
       {selected ? <ContactProfile id={selected} onClose={() => setSelected(null)} /> : null}
     </div>
   );
