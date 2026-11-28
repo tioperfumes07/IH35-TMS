@@ -1605,6 +1605,8 @@ export function createExpense(
     attachment_draft_id?: string;
     expense_number?: string;
     vendor_document_number?: string;
+    /** L.31 M5 — the Products & Services item the line names (expense_lines_item_id_required); its default expense account. */
+    item_id?: string;
   }
 ) {
   return apiRequest<{ expense_id: string; posting_status: "posted" | "unposted"; journal_entry_id: string | null; feed_gate?: { intake_id: string; status: string; checks_failed: number; checks_total: number } | null }>(
