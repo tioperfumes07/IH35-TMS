@@ -8,6 +8,7 @@
  * loans, posted by its flag-gated poster, RELATED_PARTY_LOAN_GL_POSTING_ENABLED on for ScentsX). Saved through the ONE journal entry writer (POST /api/v1/accounting/journal-entries, membership checked,
  * balanced or refused); listed with the engine's own list; each entry's lines open in its register on Financial statements.
  */
+import { CappedListNotice } from "../../components/CappedListNotice";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
@@ -57,6 +58,7 @@ export function PerfumeJournalPanel() {
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!id} onClick={() => setLoan("repay")} data-testid="scentsx-je-loan_out">{tr("scentsx.je.loan_out", "+ Repay owner loan")}</Button>
         </div>
       </div>
+      <CappedListNotice shown={(list.data?.journal_entries ?? []).length} limit={200} />
       {list.isError ? <ListErrorState title={tr("scentsx.je.error", "Couldn't load the journal entries")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} /> : (
         <ParityTable<JournalEntry> selectable
           rows={list.data?.journal_entries ?? []} rowKey={(j) => j.id} loading={list.isLoading || co.isLoading} storageKey="scentsx-je-v1" exportFilename="ScentsX journal entries" exportExcel
