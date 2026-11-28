@@ -17,6 +17,7 @@ import {
   batchPlan, batchRunning, contactCounts, contactFacets, FIRST_RUN_CITY, getContact, listContacts, listRuns, singleSearch, startBatch, stopBatch,
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
+import { deleteContacts, deleteContactsSchema, restoreContacts } from "./contact-delete.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
 import { vendorRanking } from "../scentsx/vendor-ranking.service.js";
@@ -103,6 +104,17 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     return withCurrentUser(uid, (c) => companyTier(c, id.data));
+  });
+  // Owner 2026-11-27 21:39 CT: delete the selected contacts that are not for the business (companies with business on file are kept).
+  app.post("/api/v1/perfume/contacts/delete", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = deleteContactsSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, async (c) => { const r = await deleteContacts(c, uid, b.data.ids); await scanDuplicates(c); return r; });
+  });
+  app.post("/api/v1/perfume/contacts/restore", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = deleteContactsSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => restoreContacts(c, uid, b.data.ids));
   });
   // Owner 16:32 CT: one company, many contacts — duplicate companies merged into one (the others kept as its locations).
   app.get("/api/v1/perfume/contacts/duplicates", RL_READ, async (req, reply) => {

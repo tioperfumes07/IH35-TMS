@@ -42,6 +42,11 @@ beforeEach(() => {
       const n = (opts.body as { records: unknown[] }).records.length;
       return { records: n, inserted: n - 1, matched: 1, by: { domain: 1 }, people_inserted: n, people_existing: 0, origins: n };
     }
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/delete") {
+      posts.push([path, opts.body]);
+      return { deleted: 1, people: 21, already_deleted: 0, not_found: 0, kept: [{ id: "c2", name: "Perfumería La Rosa", reason: "has quotes" }] };
+    }
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/restore") { posts.push([path, opts.body]); return { restored: 1 }; }
     if (opts?.method === "POST") { posts.push([path, opts.body]); return { run_id: "run-1" }; }
     throw new Error(`unexpected ${path}`);
   });
@@ -96,5 +101,25 @@ describe("Contacts", () => {
     await waitFor(() => expect(screen.getByText("Nuevo Laredo (1)")).toBeTruthy());
     fireEvent.click(screen.getByText("Nuevo Laredo (1)"));
     await waitFor(() => expect(gets.some((g) => g.includes("cities=Nuevo+Laredo"))).toBe(true));
+  });
+
+  it("select several → Delete asks in the page, deletes, names the one kept and why, and Undo puts the deleted back", async () => {
+    mount();
+    const panel = await screen.findByTestId("perfume-contacts-panel");
+    await waitFor(() => expect(within(panel).getAllByText("Perfume Center").length).toBeGreaterThan(0));
+    const del = screen.getByTestId("perfume-contacts-delete") as HTMLButtonElement;
+    expect(del.disabled).toBe(true);
+    const row = (name: string) => within(panel).getAllByText(name).map((el) => el.closest("tr")).find(Boolean)!;
+    fireEvent.click(within(row("Perfume Center")).getByRole("checkbox"));
+    fireEvent.click(within(row("Perfumería La Rosa")).getByRole("checkbox"));
+    await waitFor(() => expect(del.disabled).toBe(false));
+    expect(del.textContent).toContain("Delete 2 selected");
+    fireEvent.click(del);
+    expect(posts).toHaveLength(0);
+    fireEvent.click(await screen.findByTestId("perfume-contacts-delete-confirm"));
+    await waitFor(() => expect(posts[0]).toEqual(["/api/v1/perfume/contacts/delete", { ids: ["c1", "c2"] }]));
+    expect((await screen.findByTestId("perfume-contacts-kept")).textContent).toContain("Perfumería La Rosa (has quotes)");
+    fireEvent.click(screen.getByTestId("perfume-contacts-undo-delete"));
+    await waitFor(() => expect(posts[1]).toEqual(["/api/v1/perfume/contacts/restore", { ids: ["c1"] }]));
   });
 });

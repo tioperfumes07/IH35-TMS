@@ -430,6 +430,12 @@ export const perfumeGoogleSearch = (b: { query: string; city?: string; state?: s
 export const startPerfumeGoogleRun = (city: string) => apiRequest<{ run_id: string }>("/api/v1/perfume/prospects/google-run", { method: "POST", body: { city } });
 export const stopPerfumeGoogleRun = (id: string) => apiRequest<{ stopping: boolean }>(`/api/v1/perfume/prospects/google-run/${encodeURIComponent(id)}/stop`, { method: "POST", body: {} });
 export type PerfumeContactImportTally = { records: number; inserted: number; matched: number; by: Record<string, number>; people_inserted: number; people_existing: number; origins: number };
+/** Owner 2026-11-27 21:39 CT: delete the selected contacts that are not for the business (a company with business on file is kept, with the reason). */
+export type PerfumeContactDeleteResult = { deleted: number; people: number; already_deleted: number; not_found: number; kept: Array<{ id: string; name: string; reason: string }> };
+export const deletePerfumeContacts = (ids: string[]) =>
+  apiRequest<PerfumeContactDeleteResult>("/api/v1/perfume/contacts/delete", { method: "POST", body: { ids } });
+export const restorePerfumeContacts = (ids: string[]) =>
+  apiRequest<{ restored: number }>("/api/v1/perfume/contacts/restore", { method: "POST", body: { ids } });
 export const importPerfumeContacts = (records: unknown[]) =>
   apiRequest<PerfumeContactImportTally>("/api/v1/perfume/contacts/import", { method: "POST", body: { records } });
 
