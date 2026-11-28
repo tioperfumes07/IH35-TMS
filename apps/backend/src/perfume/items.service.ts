@@ -20,6 +20,7 @@ import { displayNameOf } from "./matching.js";
 import { itemProfile } from "./profiles.service.js";
 import { confirmRow, invalidateGridCache } from "./desk.service.js";
 import { setItemFamily } from "./families.service.js";
+import { carryItemLinkOnMerge } from "../scentsx/item-links.service.js";
 
 export class ItemInvalid extends Error {}
 export class ItemNotFound extends Error { constructor() { super("not_found"); } }
@@ -760,11 +761,13 @@ export async function linkItemTo(c: pg.PoolClient, uid: string, fromId: string, 
     `INSERT INTO perfume.item_costs (item_id, avg_cost_cents, updated_by, updated_at)
      SELECT $2, avg_cost_cents, $3, now() FROM perfume.item_costs WHERE item_id = $1 AND avg_cost_cents IS NOT NULL ON CONFLICT (item_id) DO NOTHING`, [fromId, toId, uid]);
   await c.query(`UPDATE perfume.items SET merged_into_id = $2, updated_at = now() WHERE id = $1`, [fromId, toId]);
+  // The merged-away item's ScentsX product moves to the survivor, or is made inactive when the survivor already has one.
+  const scentsx = await carryItemLinkOnMerge(c, uid, fromId, toId, to.display_name);
   const sizes = roundedSize ? { same_bottle_sizes: { from_ml: fromSize, to_ml: toSize } } : {};
   await event(c, fromId, uid, "line_linked", { merged_into_item_id: toId, into: to.display_name, lines: rows.length, ...sizes });
   await event(c, toId, uid, "line_linked", { merged_from_item_id: fromId, from: from.display_name, lines: rows.length, tio_code: from.internal_code, ...sizes });
   invalidateGridCache();
-  return { lines: rows.length, into: to.display_name };
+  return { lines: rows.length, into: to.display_name, scentsx };
 }
 
 /** The strict rule, shown before anything links: same words (ignoring EDP / EDT / for him / pour homme …), same brand, same size,

@@ -176,3 +176,35 @@ export async function syncScentsxItemAccounts(c: Q, uid: string, max = 500) {
   }
   return { updated: rows.length, remaining: await itemAccountDrift(c) };
 }
+
+/**
+ * Two perfume items merged into one (the item file's "link to", owner 2026-11-27 22:38 CT "merge duplicates"): the merged-away item
+ * must not keep a live ScentsX product. If the surviving item has no product yet, the old product moves to it (one product, its
+ * history kept); if both had one, the old link is voided and its product made inactive — never deleted, the way QuickBooks keeps an
+ * inactive item with its history — with a catalogs.items.updated audit row and the QuickBooks item push. No journal entry.
+ */
+export async function carryItemLinkOnMerge(c: Q, uid: string, fromId: string, toId: string, intoName: string) {
+  const from = (await c.query<{ id: string; co: string; catalog_item_id: string }>(
+    `SELECT id::text, operating_company_id::text AS co, catalog_item_id::text FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL`, [fromId])).rows[0];
+  if (!from) return { moved: false, deactivated: false };
+  const to = (await c.query<{ id: string }>(`SELECT id::text FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL`, [toId])).rows[0];
+  await c.query(`UPDATE scentsx.item_links SET voided_at = now(), voided_by = $2::uuid, void_reason = $3 WHERE id = $1::uuid`,
+    [from.id, uid, `Item merged into "${intoName}".`.slice(0, 500)]);
+  if (!to) {
+    await c.query(`INSERT INTO scentsx.item_links (operating_company_id, perfume_item_id, catalog_item_id, created_by) VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid)`,
+      [from.co, toId, from.catalog_item_id, uid]);
+    return { moved: true, deactivated: false };
+  }
+  const r = await c.query<{ old: string | null }>(
+    `UPDATE catalogs.items ci SET deactivated_at = now(), updated_at = now(), updated_by_user_id = $2::uuid
+       FROM (SELECT id, deactivated_at AS old FROM catalogs.items WHERE id = $1::uuid FOR UPDATE) o
+      WHERE ci.id = o.id AND ci.deactivated_at IS NULL RETURNING o.old::text`, [from.catalog_item_id, uid]);
+  if (r.rowCount) {
+    await appendCrudAudit(c as pg.PoolClient, uid, "catalogs.items.updated", {
+      resource_id: from.catalog_item_id, resource_type: "catalogs.items",
+      changes: { deactivated_at: { from: null, to: "now" } }, reason: `perfume item merged into "${intoName}"`,
+    });
+    await enqueueTmsItemPushRequested(c as pg.PoolClient, { operating_company_id: from.co, item_id: from.catalog_item_id, operation: "update" });
+  }
+  return { moved: false, deactivated: r.rowCount === 1 };
+}

@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts } from "./item-links.service.js";
+import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts, carryItemLinkOnMerge } from "./item-links.service.js";
 import { setCategoryAccounts } from "./item-accounts.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -83,5 +83,25 @@ describeIntegration("ScentsX item books (real Postgres, rolled back)", () => {
     const ev = await db.query(`SELECT 1 FROM audit.audit_events WHERE payload->>'resource_id' = $1 AND payload->'changes' ? 'default_expense_account_id'`, [bp.id]);
     expect(ev.rowCount).toBe(1);
     expect((await syncScentsxItemAccounts(db, TEST_OWNER_USER_ID, 500)).updated).toBe(0);
+  });
+
+  it("merging two items: the old product moves when the survivor has none; else it is voided and made inactive (audit row)", async () => {
+    const mk = async (name: string) => (await db.query<{ id: string }>(
+      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, identity_key, loose_key, display_name, category)
+       VALUES ('ZZMRG', $1, 100, 'EDP', 'W', $2, 'x', $3, 'Perfume') RETURNING id::text`, [name, `ZZMRG|${name}`, `ZZMRG · ${name}`])).rows[0]!.id;
+    const a = await mk("A"), b = await mk("B"), c3 = await mk("C");
+    await makeScentsxItems(db, TEST_OWNER_USER_ID, makeItemsSchema.parse({ item_ids: [a, c3] }));
+    const link = async (id: string) => (await db.query<{ cat: string; off: string | null }>(
+      `SELECT l.catalog_item_id::text AS cat, ci.deactivated_at::text AS off FROM scentsx.item_links l JOIN catalogs.items ci ON ci.id = l.catalog_item_id
+        WHERE l.perfume_item_id = $1::uuid AND l.voided_at IS NULL`, [id])).rows[0];
+    const aCat = (await link(a))!.cat;
+    expect(await carryItemLinkOnMerge(db, TEST_OWNER_USER_ID, a, b, "ZZMRG · B")).toEqual({ moved: true, deactivated: false });
+    expect(await link(a)).toBeUndefined();
+    expect((await link(b))!.cat).toBe(aCat);
+    expect(await carryItemLinkOnMerge(db, TEST_OWNER_USER_ID, b, c3, "ZZMRG · C")).toEqual({ moved: false, deactivated: true });
+    expect(await link(b)).toBeUndefined();
+    expect((await db.query<{ off: string | null }>(`SELECT deactivated_at::text AS off FROM catalogs.items WHERE id = $1::uuid`, [aCat])).rows[0]!.off).not.toBeNull();
+    expect((await db.query(`SELECT 1 FROM audit.audit_events WHERE payload->>'resource_id' = $1 AND payload->'changes' ? 'deactivated_at'`, [aCat])).rowCount).toBe(1);
+    expect(await carryItemLinkOnMerge(db, TEST_OWNER_USER_ID, b, c3, "ZZMRG · C")).toEqual({ moved: false, deactivated: false });
   });
 });
