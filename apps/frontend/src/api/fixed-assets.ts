@@ -138,3 +138,18 @@ export function registerTrkOwnedUnits(body: RegisterTrkUnitsInput) {
     body,
   });
 }
+
+/** ROUND L.31 M14 — asset classes of a company, a non-truck asset register, and the FIN-21 depreciation poster. */
+export type FixedAssetClass = { id: string; class_code: string; class_name: string; default_useful_life_months: number };
+export function getFixedAssetClasses(operating_company_id: string) {
+  return apiRequest<{ classes: FixedAssetClass[] }>(`/api/v1/accounting/fixed-asset-classes?operating_company_id=${encodeURIComponent(operating_company_id)}`);
+}
+export type RegisterFixedAssetInput = { operating_company_id: string; class_id: string; name: string; asset_number?: string | null; serial?: string | null;
+  purchase_price_cents: number; salvage_value_cents?: number; purchase_date: string; in_service_date: string; useful_life_months?: number };
+export function registerFixedAsset(input: RegisterFixedAssetInput) {
+  return apiRequest<{ id: string }>("/api/v1/accounting/fixed-assets/register", { method: "POST", body: input });
+}
+export function postAssetDepreciation(operating_company_id: string, asset_id: string, run_date: string) {
+  return apiRequest<{ result: string }>(`/api/v1/accounting/amortization-posting/depreciation/post?operating_company_id=${encodeURIComponent(operating_company_id)}`,
+    { method: "POST", body: { asset_id, run_date } });
+}
