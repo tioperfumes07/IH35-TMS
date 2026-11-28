@@ -1109,3 +1109,10 @@ export const updatePerfumeCompanyDetails = (id: string, b: PerfumeCompanyDetails
 /** LEAD item 23: re-link the purchase history to companies (after customers are imported or merged). */
 export const relinkPerfumePurchaseHistory = () =>
   apiRequest<{ followed_merge: number; linked: number; unlinked_customers: number }>("/api/v1/perfume/customers/purchase-history/relink", { method: "POST", body: {} });
+
+/* M22: packing slip + invoice print / e-mail from the sales order. */
+export type PerfumeOrderInvoice = { id: string; display_id: string | null; status: string; total_cents: string | null; issue_date: string };
+export const getPerfumeOrderInvoices = (orderId: string) =>
+  apiRequest<{ invoices: PerfumeOrderInvoice[]; operating_company_id: string | null }>(`/api/v1/perfume/orders/${orderId}/invoices`);
+export const emailPerfumeOrderDocument = (orderId: string, b: { doc: "packing_slip" | "invoice"; invoice_id?: string; to: string; subject?: string; message?: string }) =>
+  apiRequest<{ ok: true; batch_id: string; recipients: number; file: string }>(`/api/v1/perfume/orders/${orderId}/email-document`, { method: "POST", body: b });

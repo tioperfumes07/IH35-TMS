@@ -2,6 +2,8 @@
  * PERFUME-SALES-ORDERS routes (owner 2026-11-26 19:08 CT). Desk owner only (Owner role AND perfume.desk_users). Orders and lines
  * are archived, never deleted; history is append-only.
  */
+import { emailDocSchema, htmlToPdf, orderInvoices, packingSlipHtml, recordDocSent } from "./print-docs.service.js";
+import { parseRecipients, PERFUME_SENDER, SendError, startSend } from "./mail/send.js";
 import { DocCatalogInvalid, docCatalogs } from "./doc-catalogs.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -127,6 +129,56 @@ export async function registerPerfumeOrderRoutes(app: FastifyInstance) {
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { const f = await withCurrentUser(uid, (c) => orderXlsx(c, uid, id.data)); return reply.header("Content-Type", XLSX).header("Content-Disposition", cd(f.filename)).send(f.buffer); }
     catch (e) { return fail(reply, e); }
+  });
+  // M22: packing slip (no prices) printed from the order, like the count sheet; the order's ScentsX invoices; e-mail either as a PDF.
+  app.get("/api/v1/perfume/orders/:id/packing-slip.html", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try {
+      const html = await withCurrentUser(uid, (c) => packingSlipHtml(c, id.data));
+      return reply.header("Content-Type", "text/html; charset=utf-8").header("Cache-Control", "no-store").send(html);
+    } catch (e) { return fail(reply, e); }
+  });
+  app.get("/api/v1/perfume/orders/:id/invoices", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    return withCurrentUser(uid, async (c) => ({ invoices: await orderInvoices(c, id.data), operating_company_id: (await c.query<{ id: string }>(`SELECT scentsx.company_id()::text AS id`)).rows[0]?.id ?? null }));
+  });
+  app.post("/api/v1/perfume/orders/:id/email-document", RL_FILE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const b = emailDocSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid_body" });
+    const { emails, invalid } = parseRecipients(b.data.to);
+    if (invalid.length) return reply.code(400).send({ error: "invalid", message: `Not an email address: ${invalid.join(", ")}` });
+    if (!emails.length) return reply.code(400).send({ error: "invalid", message: "Add at least one email address." });
+    try {
+      const o = await withCurrentUser(uid, (c) => getOrder(c, id.data));
+      let html: string, fileName: string, what: string;
+      if (b.data.doc === "packing_slip") {
+        html = await withCurrentUser(uid, (c) => packingSlipHtml(c, id.data));
+        fileName = `Packing slip ${o.number}.pdf`; what = `packing slip ${o.number}`;
+      } else {
+        const inv = await withCurrentUser(uid, async (c) => {
+          const list = await orderInvoices(c, id.data);
+          const pick = b.data.invoice_id ? list.find((x) => x.id === b.data.invoice_id) : list[0];
+          return { pick, co: (await c.query<{ id: string }>(`SELECT scentsx.company_id()::text AS id`)).rows[0]?.id ?? null };
+        });
+        if (!inv.pick || !inv.co) return reply.code(400).send({ error: "invalid", message: `${o.number} has no ScentsX invoice yet — invoice the shipped units first.` });
+        // The books' own invoice document (one renderer), rendered with the owner's session.
+        const r = await app.inject({ method: "GET", url: `/api/v1/accounting/invoices/${inv.pick.id}.html?operating_company_id=${inv.co}`, headers: { cookie: String(req.headers.cookie ?? "") } });
+        if (r.statusCode !== 200) return reply.code(502).send({ error: "invoice_render_failed", message: `The invoice document did not render (${r.statusCode}).` });
+        html = r.body; fileName = `Invoice ${inv.pick.display_id ?? inv.pick.id.slice(0, 8)} ${o.number}.pdf`; what = `invoice ${inv.pick.display_id ?? ""} for ${o.number}`;
+      }
+      const pdf = await htmlToPdf(html);
+      const subject = b.data.subject ?? `TIO Perfumes ${what}`.replace(/\s+/g, " ").trim();
+      const body = b.data.message ?? `Hello ${o.customer_name},\n\nAttached is the ${what}.\n\nThank you,\nTIO Perfumes`;
+      const sent = await startSend(uid, { from: PERFUME_SENDER, recipients: emails, subject, body, attachments: [{ fileName: fileName.replace(/[^\w .#-]+/g, ""), content: pdf, mimeType: "application/pdf" }] });
+      await withCurrentUser(uid, (c) => recordDocSent(c, id.data, uid, { doc: b.data.doc, invoice_id: b.data.invoice_id ?? null, emailed_to: emails, batch_id: sent.batch_id }));
+      return { ok: true, ...sent, file: fileName };
+    } catch (e) {
+      if (e instanceof SendError) return reply.code(400).send({ error: e.code, message: e.message });
+      return fail(reply, e);
+    }
   });
   app.get("/api/v1/perfume/orders/:id/export.pdf", RL_FILE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
