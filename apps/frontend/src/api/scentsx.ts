@@ -283,3 +283,13 @@ export const makeScentsxItems = (b: { item_ids: string[] } | { filter: ScentsxIt
 /** Brings up to 500 ScentsX products whose expense account no longer matches the item's COGS account in line (audit row each). */
 export const syncScentsxItemAccounts = (max = 500) =>
   apiRequest<{ updated: number; remaining: number }>("/api/v1/scentsx/item-books/sync-accounts", { method: "POST", body: { max } });
+
+// ROUND L.31 M8 — the day's posted transactions (read only, from the books) + end-of-shift drawer count (over / short via the JE writer).
+export type ScentsxDailyEntry = { journal_entry_id: string; source_transaction_type: string | null; source_transaction_id: string | null; memo: string | null; amount_cents: number };
+export type ScentsxDailyReport = { date: string; entries: ScentsxDailyEntry[]; by_type: Array<{ type: string; count: number; amount_cents: number }>;
+  totals: { entries: number; sales_cents: number; cash_in_cents: number; cash_out_cents: number } };
+export const getScentsxDailyReport = (date: string) => apiRequest<ScentsxDailyReport>(`/api/v1/scentsx/daily-report?date=${encodeURIComponent(date)}`);
+export type ScentsxDrawerCount = { date: string; register: { bank_account_id: string; name: string }; counted_cents: number; book_cents: number; variance_cents: number;
+  direction: "over" | "short" | "exact"; journal_entry_id: string | null };
+export const postScentsxDrawerCount = (b: { date: string; counted_cents: number; bank_account_id?: string; memo?: string }) =>
+  apiRequest<ScentsxDrawerCount>("/api/v1/scentsx/drawer-count", { method: "POST", body: b });
