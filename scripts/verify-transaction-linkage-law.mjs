@@ -118,6 +118,9 @@ export const TABLE_REGISTRY = {
   "accounting.credit_memo_applications": { status: "OUT_OF_SCOPE", reason: "AR" },
   "accounting.credit_memos": { status: "OUT_OF_SCOPE", reason: "AR" },
   "accounting.customer_classifications": { status: "NOT_TRANSACTIONAL", reason: "catalog" },
+  // CUSTOMER / VENDOR REFUNDS (202617280100 / 202617290100, LEAD) — A/R and A/P settlement documents, same scope as credit_memos /
+  // vendor_credits: a refund pays a credit back (customer_refund JE Dr A/R / Cr bank; vendor_refund JE Dr bank / Cr A/P), no truck or trip.
+  "accounting.customer_refunds": { status: "OUT_OF_SCOPE", reason: "AR refund of a credit memo (customer_refund JE) — same scope as credit_memos / payments" },
   // B-2 Make Deposit (202615171200) — UF receipts → bank JE; not a truck/trip expense origin.
   "accounting.deposit_lines": { status: "OUT_OF_SCOPE", reason: "Make Deposit line (customer payment / factoring advance / cash-back); money moves via deposit JE" },
   "accounting.deposits": { status: "OUT_OF_SCOPE", reason: "Make Deposit header (bank deposit of undeposited funds); posts bank_deposit JE, not a truck transaction" },
@@ -214,6 +217,7 @@ export const TABLE_REGISTRY = {
   "accounting.vendor_classifications": { status: "NOT_TRANSACTIONAL", reason: "catalog" },
   "accounting.vendor_credit_applications": { status: "OUT_OF_SCOPE", reason: "AP" },
   "accounting.vendor_credits": { status: "OUT_OF_SCOPE" },
+  "accounting.vendor_refunds": { status: "OUT_OF_SCOPE", reason: "AP refund of a vendor credit (vendor_refund JE) — same scope as vendor_credits / bill_payments" },
   "accounting.vendor_payment_methods": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "accounting.vendor_subtype_pse_map": { status: "NOT_TRANSACTIONAL", reason: "config" },
   "accounting.warranty_reimburse_postings": { status: "NEEDS_JOIN_PATH", tier: TIER.TIER2 },
