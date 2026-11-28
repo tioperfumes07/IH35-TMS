@@ -1084,3 +1084,6 @@ export type PerfumeCompanyDetails = Partial<Record<"phone" | "website" | "domain
   & { categories?: string[]; review_tags?: string[] };
 export const updatePerfumeCompanyDetails = (id: string, b: PerfumeCompanyDetails) =>
   apiRequest<{ changed: number }>(`/api/v1/perfume/companies/${encodeURIComponent(id)}/details`, { method: "PATCH", body: b });
+/** LEAD item 23: re-link the purchase history to companies (after customers are imported or merged). */
+export const relinkPerfumePurchaseHistory = () =>
+  apiRequest<{ followed_merge: number; linked: number; unlinked_customers: number }>("/api/v1/perfume/customers/purchase-history/relink", { method: "POST", body: {} });

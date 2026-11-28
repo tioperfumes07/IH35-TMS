@@ -4,7 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { abcTiers, companyTier, customerRanking, importPurchaseHistory } from "./customer-ranking.service.js";
+import { abcTiers, companyTier, customerRanking, importPurchaseHistory, relinkPurchaseHistory } from "./customer-ranking.service.js";
 
 describe("abcTiers (Pareto: first 80 % A, next 15 % B, rest C)", () => {
   it("70 / 20 / 6 / 4 → A A B C", () => expect(abcTiers([70, 20, 6, 4])).toEqual(["A", "A", "B", "C"]));
@@ -42,5 +42,19 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("customer ranking (real P
     expect(t.MXN).toMatchObject({ tier: "A", rank: 1, of: 1, lifetime_cents: 5000000 });
     const cols = (await db.query(`SELECT column_name FROM information_schema.columns WHERE table_schema = 'perfume' AND table_name = 'customer_purchase_history'`)).rows.map((x) => x.column_name);
     expect(cols.some((col: string) => /balance|open|credit/.test(col))).toBe(false); // owner 14:12 CT: no balances
+  });
+
+  it("re-link: a row with no company links once the customer exists; a row on a merged company follows the one that stayed", async () => {
+    await importPurchaseHistory(db, TEST_OWNER_USER_ID, [
+      { source: "usa_store", customer_no: "ZQR-1", customer_name: "Zqr Late Customer LLC", period_kind: "month", period_start: "2026-01-01", invoices: 1, amount_cents: 1000, currency: "USD" }]);
+    expect((await db.query(`SELECT company_id FROM perfume.customer_purchase_history WHERE customer_no = 'ZQR-1'`)).rows[0].company_id).toBeNull();
+    const late = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source, role) VALUES ('Zqr Late Customer', 'test', 'customer') RETURNING id::text`)).rows[0]!.id;
+    const r = await relinkPurchaseHistory(db);
+    expect(r.linked).toBeGreaterThanOrEqual(1);
+    expect((await db.query(`SELECT company_id::text FROM perfume.customer_purchase_history WHERE customer_no = 'ZQR-1'`)).rows[0].company_id).toBe(late);
+    const stays = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source, role) VALUES ('Zqr Stays', 'test', 'customer') RETURNING id::text`)).rows[0]!.id;
+    await db.query(`UPDATE perfume.contact_companies SET merged_into_id = $2::uuid, merged_at = now(), archived_at = now() WHERE id = $1::uuid`, [late, stays]);
+    expect((await relinkPurchaseHistory(db)).followed_merge).toBeGreaterThanOrEqual(1);
+    expect((await db.query(`SELECT company_id::text FROM perfume.customer_purchase_history WHERE customer_no = 'ZQR-1'`)).rows[0].company_id).toBe(stays);
   });
 });
