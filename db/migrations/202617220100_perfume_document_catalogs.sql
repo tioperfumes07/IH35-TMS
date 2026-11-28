@@ -17,6 +17,9 @@
 --   3) ScentsX sales-tax codes: only the two Texas exemptions the invoice engine already checks (resale certificate, export
 --      with proof), 0%. A taxable rate is NOT guessed — the owner adds it on Catalogs with its rate.
 
+-- Rehearsed 2026-11-28 01:59 UTC on Neon branch br-lucky-sea-akrbcfq1 forked from br-fancy-credit-akjnd07a: applied clean; the new
+-- kind CHECK validated all 156 existing catalog rows; 7 shipping methods + 2 ScentsX tax codes inserted (163 catalog rows after).
+
 BEGIN;
 
 ALTER TABLE perfume.quotes ADD COLUMN IF NOT EXISTS payment_terms_id uuid REFERENCES catalogs.payment_terms(id);
