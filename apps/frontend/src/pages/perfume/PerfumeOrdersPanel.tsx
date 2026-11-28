@@ -5,6 +5,7 @@
  * current price, one PO per vendor. Links both ways: the quote it came from, the POs it made, the customer. History, Excel, PDF.
  * Nothing is deleted. Never posts to accounting.
  */
+import { PerfumeOrderDocuments } from "./PerfumeOrderDocuments";
 import { DocCatalogPickers } from "./PerfumeDocCatalogPickers";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -226,6 +227,7 @@ function OrderEditor({ id, onClose, onChanged }: { id: string; onClose: () => vo
       </div>
       {/* SCENTSX B3c (Lead): shipped units become a ScentsX LLC invoice through the existing invoice engine — billed once. */}
       {o.lines.some((l) => l.qty_shipped > 0) ? <ScentsxSalesOrderInvoice salesOrderId={id} /> : null}
+      <PerfumeOrderDocuments orderId={id} number={o.number} customerEmail={o.customer_email} />
       {skipped.length ? (
         <div className="border-l-4 border-[#E8C48A] bg-[#FFF8EB] p-2 text-xs" data-testid="perfume-order-skipped">
           {tr("perfume.orders.skipped", "Not bought — pick these by hand on a purchase order:")} {skipped.map((s) => `#${s.line_no} ${s.description} (${s.reason})`).join("; ")}
