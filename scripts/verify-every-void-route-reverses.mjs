@@ -98,6 +98,12 @@ const REVERSAL_WRAPPERS = [
   // releaseDriverPayAccrualInClientTx -> voidBillInClientTx (named above) before it void-stamps. Verified in source;
   // pinned by verify-rows-94-124.
   "voidStrayPracticalBasisDriverBill",
+  // CUSTOMER / VENDOR REFUNDS (202617280100 / 202617290100, LEAD) — accounting/customer-refunds.service.ts voidCustomerRefundInClientTx()
+  // and accounting/vendor-refunds.service.ts voidVendorRefundInClientTx() (POST /api/v1/accounting/{customer,vendor}-refunds/:id/void)
+  // reverse the refund's posting through reversePostedSourceTransactionInClientTx (source customer_refund / vendor_refund) before they
+  // stamp voided_at. Verified in source; proven by scentsx/customer-refund.test.ts and scentsx/vendor-refund.test.ts (void nets to 0).
+  "voidCustomerRefundInClientTx",
+  "voidVendorRefundInClientTx",
 ];
 
 /** All function names that satisfy the reversal requirement. */
@@ -121,6 +127,7 @@ const EXEMPT_ROUTES = [
   { pattern: /\/scentsx\/compliance\/pagares\/:id\/void$/, reason: "SCENTSX B12 pagaré record void — a promissory note held as security for A/R that is already on the books; the note itself is never posted, so voiding it reverses nothing; void-not-delete with a 10-character reason (kyc.test.ts)" },
   { pattern: /\/scentsx\/compliance\/export-proofs\/:id\/void$/, reason: "SCENTSX B9b export proof record void — a customs / bill-of-lading document on the sales order, no amount, no ledger; void-not-delete with reason" },
   { pattern: /\/perfume\/lists\/:id\/void/, reason: "perfume desk vendor-list void — isolated perfume.* schema, no TMS ledger/JE (MAIN-RED-2026-11-12e)" },
+  { pattern: /\/perfume\/lists\/voided$/, reason: "perfume desk GET of the voided vendor price lists (read only, desk.routes.ts app.get) — a list, not a void action; no amount, no ledger" },
   { pattern: /\/fuel\/card-assignments\/:id\/void/, reason: "E-22 card -> truck registry (master data, no amount, no ledger); void-not-delete with reason" },
   { pattern: /\/catalogs\/payment-methods\/.*\/void/, reason: "catalog config void" },
   { pattern: /\/mdata\/vendors\/.*\/payment-methods\/.*\/void/, reason: "vendor payment method config" },
