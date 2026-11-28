@@ -18,6 +18,7 @@ import {
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 import { deleteContacts, deleteContactsSchema, restoreContacts } from "./contact-delete.service.js";
+import { updateCompanyDetails } from "./company-details.service.js";
 import { approveCompanies, approveSchema, unapproveCompanies, unapproveSchema } from "./lead-approval.service.js";
 import { findContactInfo, findContactInfoSchema, unreachableCounts } from "./contact-enrich.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
@@ -265,6 +266,11 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
       let id: string | null = null, inserted = false;
       await importRecords(c, [b.data], uid, emptyTally(), (cid, ins) => { id = cid; inserted = ins; });
       // A customer / vendor the owner creates by hand is approved at once (owner 2026-11-28 14:30 CT) — imports stay leads.
+      // Several Relationship / Business type values from the creator — through the one details writer (catalog-checked, history row).
+      const lists = { relationships: b.data.company.relationships, business_types: b.data.company.business_types };
+      if (id && inserted && (lists.relationships?.length || lists.business_types?.length)) {
+        await updateCompanyDetails(c, uid, id, Object.fromEntries(Object.entries(lists).filter(([, v]) => v?.length)) as never);
+      }
       const role = (b.data as { company?: { role?: string | null } }).company?.role;
       if (id && (role === "customer" || role === "vendor" || role === "both")) await approveCompanies(c, uid, [id], role);
       await scanDuplicates(c);

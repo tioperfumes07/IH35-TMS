@@ -17,6 +17,10 @@ export const companyDetailsSchema = z.object({
   notes: txt(5000), segment: txt(200), main_category: txt(200),
   categories: z.array(z.string().trim().min(1).max(200)).max(50).optional(),
   review_tags: z.array(z.string().trim().min(1).max(200)).max(50).optional(),
+  // Owner 2026-11-28 14:58 CT (migration 202617330100): Relationship and Business type take several values; the first is the primary
+  // (main_category / segment, kept in step by trigger).
+  relationships: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
+  business_types: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
 }).strict();
 export type CompanyDetails = z.infer<typeof companyDetailsSchema>;
 
@@ -24,11 +28,11 @@ export class CompanyDetailsError extends Error {
   constructor(public readonly code: string, message: string) { super(message); }
 }
 
-const LIST_KIND: Record<string, string> = { segment: "segment", main_category: "category", categories: "industry", review_tags: "review_tag" };
+const LIST_KIND: Record<string, string> = { segment: "segment", main_category: "category", categories: "industry", review_tags: "review_tag", relationships: "category", business_types: "segment" };
 
 export async function updateCompanyDetails(c: pg.PoolClient, uid: string, id: string, x: CompanyDetails) {
   const cur = (await c.query<Record<string, unknown>>(
-    `SELECT phone, website, domain, address, city, state, zip, country, notes, segment, main_category, categories, review_tags
+    `SELECT phone, website, domain, address, city, state, zip, country, notes, segment, main_category, categories, review_tags, relationships, business_types
        FROM perfume.contact_companies WHERE id = $1::uuid AND archived_at IS NULL FOR UPDATE`, [id])).rows[0];
   if (!cur) throw new CompanyDetailsError("not_found", "Company not found.");
   // Every list value must be a live value of its own list (no free text sneaking a new category in).

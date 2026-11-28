@@ -74,14 +74,14 @@ export function contactWhere(q: ContactListQuery): { where: string[]; args: unkn
   if (q.cities?.length) add("co.city = ANY(?::text[])", q.cities);
   if (q.sources?.length) add("co.source = ANY(?::text[])", q.sources);
   if (q.categories?.length) { args.push(q.categories); where.push(`(co.main_category = ANY($${args.length}::text[]) OR co.categories && $${args.length}::text[])`); }
-  if (q.relationships?.length) add("co.main_category = ANY(?::text[])", q.relationships);
+  if (q.relationships?.length) add("co.relationships && ?::text[]", q.relationships);
   if (q.industries?.length) add("co.categories && ?::text[]", q.industries);
   if (q.tags?.length) add("co.review_tags && ?::text[]", q.tags);
   if (q.hows?.length) add("EXISTS (SELECT 1 FROM perfume.contact_origins o WHERE o.company_id = co.id AND o.how = ANY(?::text[]))", q.hows);
   if (q.regions?.length) add("co.region = ANY(?::text[])", q.regions);
   if (q.ctypes?.length) add("co.customer_type = ANY(?::text[])", q.ctypes);
   if (q.vtypes?.length) add("co.vendor_type = ANY(?::text[])", q.vtypes);
-  if (q.segments?.length) add("co.segment = ANY(?::text[])", q.segments);
+  if (q.segments?.length) add("co.business_types && ?::text[]", q.segments);
   if (q.statuses?.length) add("co.status = ANY(?::text[])", q.statuses);
   if (q.shows?.length) add(`EXISTS (SELECT 1 FROM perfume.trade_show_contacts x JOIN perfume.trade_shows s ON s.id = x.show_id
       WHERE x.company_id = co.id AND x.archived_at IS NULL AND s.archived_at IS NULL AND s.name = ANY(?::text[]))`, q.shows);
@@ -127,9 +127,9 @@ export async function contactFacets(c: pg.PoolClient, q: ContactListQuery): Prom
   const expr: Record<ContactFacet, string> = {
     country: "co.country", state: "co.state", city: "co.city", source: "co.source",
     category: "unnest(array_remove(array_cat(ARRAY[co.main_category], coalesce(co.categories, '{}'::text[])), NULL))",
-    relationship: "co.main_category", industry: "unnest(co.categories)", tag: "unnest(co.review_tags)",
+    relationship: "unnest(co.relationships)", industry: "unnest(co.categories)", tag: "unnest(co.review_tags)",
     how: "(SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1)",
-    region: "co.region", ctype: "co.customer_type", vtype: "co.vendor_type", segment: "co.segment", status: "co.status",
+    region: "co.region", ctype: "co.customer_type", vtype: "co.vendor_type", segment: "unnest(co.business_types)", status: "co.status",
     show: `unnest(ARRAY(SELECT s.name FROM perfume.trade_show_contacts x JOIN perfume.trade_shows s ON s.id = x.show_id
              WHERE x.company_id = co.id AND x.archived_at IS NULL AND s.archived_at IS NULL))`,
     reach: REACH_SQL,

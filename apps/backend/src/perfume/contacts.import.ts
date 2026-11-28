@@ -25,6 +25,9 @@ export const importRecordSchema = z.object({
     first_contact_on: date, last_email_on: date, notes: z.string().max(5000).nullable().optional(),
     external_source: str, external_directory_id: str, external_ref: z.record(z.string(), z.unknown()).nullable().optional(), segment: str, scian_code: str,
     categories: z.array(z.string().max(200)).max(50).optional(), brands: z.array(z.string().max(200)).max(200).optional(),
+    // Owner 2026-11-28 14:58 CT (migration 202617330100): several Relationship / Business type values — written by the create route
+    // through the details editor (catalog-checked); the importer itself keeps main_category / segment and the trigger fills the lists.
+    relationships: z.array(z.string().trim().min(1).max(200)).max(20).optional(), business_types: z.array(z.string().trim().min(1).max(200)).max(20).optional(),
   }),
   people: z.array(z.object({
     name: str, title: str, email: z.string().trim().toLowerCase().max(320).regex(/^[^@\s]+@[^@\s]+$/).nullable().optional(),

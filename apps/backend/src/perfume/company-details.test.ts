@@ -30,4 +30,16 @@ describe.skipIf(process.env.GITHUB_ACTIONS !== "true")("company details (real Po
     await expect(u({ categories: ["Not A Real Industry"] })).rejects.toThrow(/not in the Industry list/);
     expect(await u({ city: "Nuevo Laredo" })).toEqual({ changed: 0 });
   });
+
+  it("owner 14:58 CT: Relationship and Business type take several values; the first is the primary single column", async () => {
+    for (const [k, v] of [["category", "Zqm Supplier"], ["category", "Zqm Customer"], ["segment", "Zqm Retail"], ["segment", "Zqm Wholesale"]]) {
+      await db.query(`INSERT INTO perfume.catalog_values (kind, value) VALUES ($1, $2)`, [k, v]);
+    }
+    const id = (await db.query<{ id: string }>(`INSERT INTO perfume.contact_companies (name, source) VALUES ('Zqm Co', 'test') RETURNING id::text`)).rows[0]!.id;
+    const u = (x: unknown) => updateCompanyDetails(db as unknown as pg.PoolClient, TEST_OWNER_USER_ID, id, companyDetailsSchema.parse(x));
+    expect(await u({ relationships: ["Zqm Supplier", "Zqm Customer"], business_types: ["Zqm Wholesale", "Zqm Retail"] })).toEqual({ changed: 2 });
+    expect((await db.query(`SELECT relationships, main_category, business_types, segment FROM perfume.contact_companies WHERE id = $1::uuid`, [id])).rows[0])
+      .toEqual({ relationships: ["Zqm Supplier", "Zqm Customer"], main_category: "Zqm Supplier", business_types: ["Zqm Wholesale", "Zqm Retail"], segment: "Zqm Wholesale" });
+    await expect(u({ business_types: ["Zqm Retail", "Not A Business Type"] })).rejects.toThrow(/not in the Business types list/);
+  });
 });
