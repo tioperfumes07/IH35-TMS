@@ -31,6 +31,7 @@ async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<stri
 
 const RL_READ = { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } } as const;
 const RL_SEARCH = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } } as const;
+const RL_WRITE_ONE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
 export const listSchema = z.object({
   role: z.enum(["vendor", "customer", "both", "none", "all"]).optional(),
   q: z.string().max(200).optional(),
@@ -112,11 +113,11 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
   // Owner 17:17 CT: automatic duplicate detector — recommendations (same / similar name, phone, domain, address); the owner confirms.
   app.get("/api/v1/perfume/contacts/duplicate-recommendations", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
-    // The scan already runs after every import / Excel update / merge; on open it re-runs only when the last scan is over 10 minutes
+    // The scan already runs after every import / Excel update / merge; on open it re-runs only when the last scan is over 60 minutes
     // old (measured 2026-11-27: a full scan of 3,810 live companies took 19.5 s in the owner's browser).
     return withCurrentUser(uid, async (c) => {
       const stale = (await c.query<{ stale: boolean }>(
-        `SELECT coalesce(max(last_seen_at) < now() - interval '10 minutes', true) AS stale FROM perfume.duplicate_candidates`)).rows[0]!.stale;
+        `SELECT coalesce(max(last_seen_at) < now() - interval '60 minutes', true) AS stale FROM perfume.duplicate_candidates`)).rows[0]!.stale;
       const scan = stale ? await scanDuplicates(c) : null;
       return { ...(await listRecommendations(c)), found: scan?.found ?? null, scanned: stale };
     });
@@ -153,6 +154,21 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const out = await withCurrentUser(uid, (c) => getContact(c, id.data));
     if (!out) return reply.code(404).send({ error: "not_found" });
     return out;
+  });
+
+  // Owner 2026-11-27 18:21 CT: "we are missing create vendor create customer, and the correct pop up and profile creator". One company
+  // through the same import engine (match key / phone / domain → never a second record for a company already on file); returns its id
+  // and whether it already existed, so the pop-up opens the profile either way.
+  app.post("/api/v1/perfume/contacts/create", RL_WRITE_ONE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = importRecordSchema.safeParse(req.body ?? {});
+    if (!b.success) return reply.code(400).send({ error: "validation_error", details: b.error.issues.slice(0, 5) });
+    return withCurrentUser(uid, async (c) => {
+      let id: string | null = null, inserted = false;
+      await importRecords(c, [b.data], uid, emptyTally(), (cid, ins) => { id = cid; inserted = ins; });
+      await scanDuplicates(c);
+      return { id, existed: !inserted };
+    });
   });
 
   // The Master Database and the INEGI DENUE pull, sent from the Contacts tab in batches of up to 500 (one transaction each).

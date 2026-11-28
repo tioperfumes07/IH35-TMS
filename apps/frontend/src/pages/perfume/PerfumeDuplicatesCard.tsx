@@ -47,11 +47,10 @@ export function PerfumeDuplicatesCard({ onDone }: { onDone: () => void }) {
       </div>
       {open ? (q.isError ? <ListErrorState title={tr("perfume.dups.error", "Couldn't load duplicates")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
         <ParityTable<PerfumeDupGroup>
-          rows={q.data?.rows ?? []} rowKey={(g) => g.key} loading={q.isLoading} storageKey="perfume-dups-v1" exportFilename="TIO duplicate companies" exportExcel
+          rows={q.data?.rows ?? []} rowKey={(g) => g.key} loading={q.isLoading} storageKey="perfume-dups-v1"
+          selectable selectedKeys={picked} onSelectionChange={(k) => { const on = new Set(k); setOff(new Set((q.data?.rows ?? []).map((g) => g.key).filter((x) => !on.has(x)))); }} exportFilename="TIO duplicate companies" exportExcel
           emptyText="No duplicate companies — every company is one record."
           columns={[
-            { key: "pick", label: "Merge", render: (g) => <input type="checkbox" aria-label={`Merge ${g.name}`} checked={!off.has(g.key)}
-              onChange={(e) => { const n = new Set(off); if (e.target.checked) n.delete(g.key); else n.add(g.key); setOff(n); }} /> },
             { className: "text-left", cellClass: "text-left font-semibold", key: "name", label: "Company that stays", sortable: true, render: (g) => (
               <button type="button" className="text-left font-semibold text-[#1D4ED8] hover:underline" onClick={() => setView(g)} data-testid={`perfume-dups-view-${g.key}`}>{g.keep.name}</button>),
               exportValue: (g) => g.keep.name },
