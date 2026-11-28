@@ -21,6 +21,8 @@ import { deleteContacts, deleteContactsSchema, restoreContacts } from "./contact
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
 import { vendorRanking } from "../scentsx/vendor-ranking.service.js";
+import { assignBody, assignSalesperson, companySalesperson, createSalesperson, listSalespeople, salesBySalesperson, salespersonBody, salespersonCustomers, salespersonPatch,
+  SalespersonInvalid, salesRepQuery, updateSalesperson } from "./salespeople.service.js";
 import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery, relinkPurchaseHistory } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -79,6 +81,46 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     return withCurrentUser(uid, async (c) => ({ counts: await contactCounts(c), facets: await contactFacets(c, query), ...(await listContacts(c, query)) }));
   });
 
+  // ROUND L.31 M18 E3 — salespeople, a customer's salesperson (with history), sales / commission by salesperson (read only).
+  const spFail = (reply: FastifyReply, e: unknown) => { if (e instanceof SalespersonInvalid) return reply.code(400).send({ error: "invalid", message: e.message }); throw e; };
+  app.get("/api/v1/perfume/salespeople", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, async (c) => ({ salespeople: await listSalespeople(c) }));
+  });
+  app.post("/api/v1/perfume/salespeople", RL_WRITE_ONE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = salespersonBody.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", issues: b.error.issues });
+    try { return reply.code(201).send(await withCurrentUser(uid, (c) => createSalesperson(c, uid, b.data))); } catch (e) { return spFail(reply, e); }
+  });
+  app.patch("/api/v1/perfume/salespeople/:id", RL_WRITE_ONE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const b = salespersonPatch.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", issues: b.error.issues });
+    try { return await withCurrentUser(uid, (c) => updateSalesperson(c, id.data, b.data)); } catch (e) { return spFail(reply, e); }
+  });
+  app.post("/api/v1/perfume/salespeople/assign", RL_WRITE_ONE, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = assignBody.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "invalid", issues: b.error.issues });
+    try { return await withCurrentUser(uid, (c) => assignSalesperson(c, uid, b.data)); } catch (e) { return spFail(reply, e); }
+  });
+  app.get("/api/v1/perfume/companies/:id/salesperson", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = z.string().uuid().safeParse((req.params as { id?: string }).id); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    return withCurrentUser(uid, (c) => companySalesperson(c, id.data));
+  });
+  app.get("/api/v1/perfume/salespeople/report", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const q = salesRepQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid", issues: q.error.issues });
+    return withCurrentUser(uid, (c) => salesBySalesperson(c, q.data));
+  });
+  app.get("/api/v1/perfume/salespeople/report/customers", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const raw = req.query as { salesperson_id?: string };
+    const sp = raw.salesperson_id && raw.salesperson_id !== "unassigned" ? z.string().uuid().safeParse(raw.salesperson_id) : { success: true as const, data: null };
+    if (!sp.success) return reply.code(400).send({ error: "invalid_salesperson" });
+    const q = salesRepQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid", issues: q.error.issues });
+    return withCurrentUser(uid, async (c) => ({ customers: await salespersonCustomers(c, sp.data, q.data) }));
+  });
   // ROUND P1.31 L1 (owner 15:45 CT item 10): customer ranking A/B/C on purchases (history import has no balances — owner 14:12 CT).
   app.get("/api/v1/perfume/customers/ranking", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
