@@ -186,3 +186,47 @@ export async function setCompanyRole(c: pg.PoolClient, uid: string, companyId: s
     [companyId, JSON.stringify({ before: co, after: next }), uid]);
   return { changed: true, ...next };
 }
+
+/* ------------------------------------------------------------------ the company's real name (owner 2026-11-27 18:32 CT) */
+
+export const companyNameSchema = z.object({ name: z.string().trim().min(1).max(300) });
+
+/** Rename a company in Contacts — one history row (from → to). The owner's words: "get this fixed now … for those
+ *  unassigned company name i will assign, they stay in the screen so i can assign". */
+export async function renameCompany(c: pg.PoolClient, uid: string, companyId: string, name: string) {
+  const co = (await c.query<{ name: string }>(`SELECT name FROM perfume.contact_companies WHERE id = $1 AND archived_at IS NULL FOR UPDATE`, [companyId])).rows[0];
+  if (!co) throw new ProfileNotFound();
+  const to = name.trim();
+  if (to === co.name) return { changed: false, name: to };
+  await c.query(`UPDATE perfume.contact_companies SET name = $2, updated_at = now() WHERE id = $1`, [companyId, to]);
+  await c.query(`INSERT INTO perfume.lead_events (entity, entity_id, company_id, action, detail, created_by) VALUES ('company', $1, $1, 'renamed', $2::jsonb, $3)`,
+    [companyId, JSON.stringify({ from: co.name, to, why: "company name check (price-list vendor)" }), uid]);
+  return { changed: true, name: to };
+}
+
+/** Linked lists whose company carries another name than the list (a name made from an email domain — "Bsfragrances" —
+ *  or a person's name holding the supplier's email). They stay on the screen until the owner saves a name. A name the owner
+ *  saved is never asked again: a 'renamed' or 'name_checked' history row marks it. */
+export async function companyNameCheck(c: pg.PoolClient) {
+  const rows = (await c.query<{ vendor_id: string; vendor: string; company_id: string; company: string }>(
+    `SELECT v.id AS vendor_id, v.name AS vendor, cc.id AS company_id, cc.name AS company
+       FROM perfume.vendors v JOIN perfume.contact_companies cc ON cc.id = v.company_id AND cc.archived_at IS NULL
+      WHERE v.archived_at IS NULL AND v.kind IN ('buy', 'sell')
+        AND NOT EXISTS (SELECT 1 FROM perfume.lead_events e WHERE e.company_id = cc.id AND e.action IN ('renamed', 'name_checked'))
+      ORDER BY v.name`)).rows;
+  return {
+    rows: rows.filter((r) => {
+      const a = matchKey(companyNameOf(r.vendor)), b = matchKey(r.company);
+      return !(a === b || (a.length >= 4 && b.startsWith(a) && /\s/.test(r.company.trim())));
+    }).map((r) => ({ ...r, proposed: companyNameOf(r.vendor) })),
+  };
+}
+
+/** "This name is right" — keeps the company's name and takes it off the check (one history row). */
+export async function confirmCompanyName(c: pg.PoolClient, uid: string, companyId: string) {
+  const co = (await c.query<{ name: string }>(`SELECT name FROM perfume.contact_companies WHERE id = $1 AND archived_at IS NULL`, [companyId])).rows[0];
+  if (!co) throw new ProfileNotFound();
+  await c.query(`INSERT INTO perfume.lead_events (entity, entity_id, company_id, action, detail, created_by) VALUES ('company', $1, $1, 'name_checked', $2::jsonb, $3)`,
+    [companyId, JSON.stringify({ name: co.name }), uid]);
+  return { ok: true };
+}

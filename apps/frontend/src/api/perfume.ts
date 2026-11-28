@@ -710,6 +710,11 @@ export const setPerfumeVendorCompany = (vendorId: string, companyId: string | nu
 export type PerfumeLinkCandidate = { id: string; name: string; role: string | null; city: string | null; state: string | null; country: string | null; people: number; exact: boolean; by_email?: "email" | "domain" };
 export type PerfumeLinkProposal = { vendor_id: string; vendor: string; short_name: string | null; kind: string; company_name: string;
   action: "link" | "choose" | "create"; company_id: string | null; candidates: PerfumeLinkCandidate[] };
+export type PerfumeNameCheckRow = { vendor_id: string; vendor: string; company_id: string; company: string; proposed: string };
+export const getPerfumeCompanyNameCheck = () => apiRequest<{ rows: PerfumeNameCheckRow[] }>("/api/v1/perfume/vendor-links/names");
+export const renamePerfumeCompany = (companyId: string, name: string) =>
+  apiRequest<{ changed: boolean; name: string }>(`/api/v1/perfume/companies/${companyId}/name`, { method: "PATCH", body: { name } });
+export const confirmPerfumeCompanyName = (companyId: string) => apiRequest<{ ok: true }>(`/api/v1/perfume/companies/${companyId}/name-ok`, { method: "POST", body: {} });
 export const getPerfumeVendorLinkPreview = () => apiRequest<{ proposals: PerfumeLinkProposal[]; linked: number; unlinked: number }>("/api/v1/perfume/vendor-links/preview");
 export const applyPerfumeVendorLinks = (decisions: Array<{ vendor_id: string; company_id?: string; create_name?: string }>) =>
   apiRequest<{ linked: number; created: number }>("/api/v1/perfume/vendor-links/apply", { method: "POST", body: { decisions } });
