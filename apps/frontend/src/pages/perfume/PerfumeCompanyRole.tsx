@@ -24,7 +24,7 @@ export function CompanyRoleEditor({ company }: { company: PerfumeProfileCompany 
   const [ct, setCt] = useState(company.customer_type ?? "");
   const [busy, setBusy] = useState(false);
   useEffect(() => { setRole((company.role as Role) ?? ""); setVt(company.vendor_type ?? ""); setCt(company.customer_type ?? ""); }, [company.id, company.role, company.vendor_type, company.customer_type]);
-  const values = (kind: string) => cats.data?.kinds.find((k) => k.kind === kind)?.values.map((v) => v.value) ?? [];
+  const values = (kind: string) => cats.data?.kinds?.find((k) => k.kind === kind)?.values?.map((v) => v.value) ?? [];
   const isVendor = role === "vendor" || role === "both";
   const isCustomer = role === "customer" || role === "both";
   const dirty = role !== ((company.role as Role) ?? "") || vt !== (company.vendor_type ?? "") || ct !== (company.customer_type ?? "");

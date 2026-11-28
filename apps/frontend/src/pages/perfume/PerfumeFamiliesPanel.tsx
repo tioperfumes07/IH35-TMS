@@ -25,6 +25,7 @@ import {
 } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, DocLink, money, useOpenDoc } from "./perfumeDocParts";
+import { brandShort } from "./perfumeBrandShort";
 
 const GENDER: Record<string, string> = { M: "Men", W: "Women", U: "Unisex" };
 const NEW = "__new__";
@@ -32,7 +33,7 @@ const fail = (push: (m: string, k: "error") => void, what = "Not saved") => (e: 
 
 function useScentFamilies() {
   const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
-  return (q.data?.kinds.find((k) => k.kind === "olfactory_family")?.values ?? []).map((v) => v.value);
+  return (q.data?.kinds?.find((k) => k.kind === "olfactory_family")?.values ?? []).map((v) => v.value);
 }
 
 /* ------------------------------------------------------------------ family form (create + edit) */
@@ -136,7 +137,7 @@ export function PerfumeFamiliesPanel() {
           emptyText="No families yet — create one, then put items in it from the item editor or the bulk bar." onRowClick={(r) => open("families", r.id)}
           columns={[
             { className: "text-left", key: "name", label: "Family", sortable: true, render: (r) => <span className="font-semibold">{r.name}</span> },
-            { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand ?? DASH, exportValue: (r) => r.brand ?? "" },
+            { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand ? brandShort(r.brand) : DASH, exportValue: (r) => r.brand ?? "" },
             { className: "text-left", key: "olfactory_family", label: "Scent family", sortable: true, render: (r) => r.olfactory_family ?? DASH, exportValue: (r) => r.olfactory_family ?? "" },
             { className: "text-left", key: "gender", label: "Gender", sortable: true, render: (r) => GENDER[r.gender ?? ""] ?? DASH, exportValue: (r) => GENDER[r.gender ?? ""] ?? "" },
             { key: "launch_year", label: "Launch year", kind: "number", sortable: true, cellClass: "text-right tabular-nums", render: (r) => (r.launch_year ? String(r.launch_year) : DASH), exportValue: (r) => r.launch_year ?? "" },

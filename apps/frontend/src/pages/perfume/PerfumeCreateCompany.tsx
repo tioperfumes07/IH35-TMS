@@ -34,7 +34,7 @@ function CreateModal({ role, onClose, onCreated, onOpen }: { role: "vendor" | "c
   const cats = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs });
   const [v, setV] = useState({ ...EMPTY, role: role as Role });
   const [busy, setBusy] = useState(false);
-  const values = (kind: string) => (cats.data?.kinds.find((k) => k.kind === kind)?.values ?? []).map((x) => x.value);
+  const values = (kind: string) => (cats.data?.kinds?.find((k) => k.kind === kind)?.values ?? []).map((x) => x.value);
   const typeKind = v.role === "customer" ? "customer_type" : "vendor_type";
   const set = (k: keyof typeof EMPTY) => (e: { target: { value: string } }) => setV({ ...v, [k]: e.target.value });
   const nul = (s: string) => (s.trim() ? s.trim() : null);

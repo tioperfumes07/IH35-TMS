@@ -26,6 +26,7 @@ import {
 import { tr } from "./perfumeI18n";
 import { ScentsxKycBlock } from "./ScentsxKycBlock";
 import { DatePicker } from "../../components/forms/DatePicker";
+import { DateTimePicker } from "../../components/forms/DateTimePicker";
 
 const money = (cents: number | string) => (Number(cents) / 100).toLocaleString("en-US", { style: "currency", currency: "USD" });
 const day = (iso: string | null) => (iso ? String(iso).slice(0, 10) : "—");
@@ -113,9 +114,9 @@ export function ScentsxCompliancePanel() {
             { key: "payer_name", label: "Payer", sortable: true },
             { key: "reason", label: "Why", sortable: true, render: (c) => (c.reason === "voluntary_suspicious" ? "Suspicious (voluntary)" : "Cash over the line") },
             { key: "total_cash_cents", label: "Cash", sortable: true, cellClass: "text-right tabular-nums", render: (c) => money(c.total_cash_cents) },
-            { key: "due_on", label: "Due date", sortable: true, render: (c) => <span className={c.overdue ? "font-semibold text-[#B91C1C]" : ""}>{c.due_on}</span> },
+            { key: "due_on", label: "Due date", sortable: true, render: (c) => <span className={c.overdue ? "font-semibold text-[#B91C1C]" : ""}>{day(c.due_on)}</span> },
             { key: "status", label: "Status", sortable: true, render: (c) => (c.status === "filed" ? `Filed ${day(c.filed_at)} · ${c.bsa_confirmation}` : c.status) },
-            { key: "payer_statement_sent_on", label: "Payer statement sent", sortable: true, render: (c) => c.payer_statement_sent_on ?? (c.status === "filed" ? (
+            { key: "payer_statement_sent_on", label: "Payer statement sent", sortable: true, render: (c) => c.payer_statement_sent_on ? day(c.payer_statement_sent_on) : (c.status === "filed" ? (
               <button type="button" className="underline" onClick={() => void markScentsx8300StatementSent(c.id, new Date().toISOString().slice(0, 10)).then(() => desk.refetch()).catch((e) => pushToast(userFacingApiError(e, "Not saved"), "error"))}>
                 {tr("scentsx.cash.sent_today", "Sent today")}</button>) : "—") },
             { key: "cmir_declaration_no", label: "FinCEN 105", sortable: true, render: (c) => !c.cmir_required ? "Not needed" : c.cmir_declaration_no ? (
@@ -249,7 +250,7 @@ function ReceiptForm({ payers, companyId, unlogged, onDone }: { payers: Array<{ 
           {FORMS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}
         </select>
         <MoneyInput valueCents={cents} onChangeCents={setCents} ariaLabel="Amount" />
-        <input type="datetime-local" className={inputCls} aria-label={tr("scentsx.compliancepanel.received", "Received")} value={when} onChange={(e) => setWhen(e.target.value)} />
+        <DateTimePicker value={when} onChange={setWhen} className={inputCls} aria-label={tr("scentsx.compliancepanel.received", "Received")} />
         <select className={inputCls} aria-label={tr("scentsx.compliancepanel.scentsx_payment", "ScentsX payment")} value={paymentId} onChange={(e) => setPaymentId(e.target.value)}>
           <option value="">{tr("scentsx.cash.no_payment", "Payment in the books (optional)")}</option>
           {unlogged.map((p) => <option key={p.id} value={p.id}>{p.payment_date} · {money(p.amount_cents)}</option>)}

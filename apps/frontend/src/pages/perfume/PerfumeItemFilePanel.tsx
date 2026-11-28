@@ -28,6 +28,7 @@ import { PerfumeOriginSelect } from "./PerfumeOriginSelect";
 import { countryLabel } from "./perfumeCountries";
 import { FamilySelect } from "./PerfumeFamiliesPanel";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
+import { brandShort } from "./perfumeBrandShort";
 import { ItemControlFields, VendorSelect } from "./PerfumeItemControlFields";
 import { MoneyInput } from "../../components/forms/MoneyInput";
 
@@ -37,7 +38,7 @@ const yn = (b: boolean | undefined) => (b === false ? "N" : "Y");
 /** The owner's own item lists (Catalogs → Item product types / Item categories), so a value matches what he keeps there. */
 export function useItemCatalogs() {
   const q = useQuery({ queryKey: ["perfume", "catalogs"], queryFn: listPerfumeCatalogs, staleTime: 60_000 });
-  const of = (k: string) => (q.data?.kinds.find((x) => x.kind === k)?.values ?? []).map((v) => v.value);
+  const of = (k: string) => (q.data?.kinds?.find((x) => x.kind === k)?.values ?? []).map((v) => v.value);
   return { types: of("product_type"), categories: of("item_category") };
 }
 
@@ -165,7 +166,7 @@ export function PerfumeItemFilePanel() {
             { className: "text-left", key: "tio_code", label: "TIO code", sortable: true, render: (r) => r.tio_code ?? DASH, exportValue: (r) => r.tio_code ?? "" },
             { className: "text-left", key: "pos_code", label: "POS code", sortable: true, render: (r) => r.pos_code ?? DASH, exportValue: (r) => r.pos_code ?? "" },
             { className: "text-left", key: "ticket_description", sortable: true, label: "Ticket description", render: (r) => r.ticket_description ?? DASH, exportValue: (r) => r.ticket_description ?? "" },
-            { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand || DASH, exportValue: (r) => r.brand ?? "" },
+            { className: "text-left", key: "brand", label: "Brand", sortable: true, render: (r) => r.brand ? brandShort(r.brand) : DASH, exportValue: (r) => r.brand ?? "" },
             { className: "text-left", key: "family", label: "Family", sortable: true, render: (r) => (r.family_id ? <DocLink tab="families" id={r.family_id}>{r.family ?? ""}</DocLink> : DASH), exportValue: (r) => r.family ?? "" },
             { className: "text-left", key: "model", label: "Model", sortable: true, render: (r) => r.model ?? DASH, exportValue: (r) => r.model ?? "" },
             { className: "text-left", key: "product_type", label: "Product type", sortable: true, render: (r) => r.product_type ?? DASH, exportValue: (r) => r.product_type ?? "" },
@@ -470,7 +471,7 @@ export function PerfumeStockLinkagePanel() {
                 { key: "as_of", sortable: true, label: "As of", cellClass: "text-right tabular-nums", render: () => usDate(new Date().toISOString().slice(0, 10)) },
               ]}
             />
-            {strict.data?.pairs.length ? (
+            {strict.data?.pairs?.length ? (
               <Button type="button" className="h-[32px] px-3 text-xs" disabled={busy} onClick={applyStrict} data-testid="perfume-stock-link-strict-apply">
                 {`Link these ${strict.data.pairs.length}`}</Button>) : null}
           </div>) : null}

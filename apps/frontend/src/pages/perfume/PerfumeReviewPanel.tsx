@@ -12,6 +12,7 @@ import { tr } from "./perfumeI18n";
 import { itemSaysMore } from "./perfumeMatchText";
 import { ListErrorState } from "../../components/ListErrorState";
 import { EntityLink } from "../../components/shared/EntityLink";
+import { brandShort } from "./perfumeBrandShort";
 
 const money = (c: number) => `$${(c / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
@@ -164,13 +165,13 @@ export function PerfumeReviewPanel({ mine = null }: { mine?: "offer" | null } = 
                 </span>
               );
             } }] : []),
-          { key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="perfume_vendor" id={r.vendor_id} label={r.vendor_name} data-testid="perfume-review-vendor-link" /> },
+          { className: "text-left", key: "vendor_name", label: "Vendor", sortable: true, render: (r) => <EntityLink kind="perfume_vendor" id={r.vendor_id} label={r.vendor_name} data-testid="perfume-review-vendor-link" /> },
           // Owner 2026-11-27 06:47 CT "Find a solution you do it" + 2026-10-25 "columns can be added or removed in the gear filter":
           // every column shows by default (additive-only law); hide any of them in the gear menu.
           { key: "row_no", label: "Row", sortable: true, kind: "number" },
           { key: "upc", label: "UPC", sortable: true },
           { key: "sku", label: "Vendor code", sortable: true },
-          { key: "brand_name", label: "Brand", sortable: true, render: (r) => r.brand_name ?? "—" },
+          { className: "text-left", key: "brand_name", label: "Brand", sortable: true, render: (r) => r.brand_name ? brandShort(r.brand_name) : "—" },
           { key: "model", label: "Model", sortable: true, allowWrap: true, minWidth: 180, render: (r) => r.model ?? "—" },
           { key: "size_ml", label: "Size ml", sortable: true, kind: "number", render: (r) => (r.size_ml == null ? "—" : String(r.size_ml)) },
           { key: "conc", label: "Type", sortable: true, render: (r) => r.conc || "—" },
