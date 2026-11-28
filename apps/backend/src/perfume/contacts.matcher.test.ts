@@ -13,10 +13,11 @@ describe("contact matcher — the same keys and order as the SQL it replaces", (
   m.addCompanyRow(row("g", { google_place_id: "ChIJ-1" }));
   m.addPerson("a", "Ronak@PC.com", ["9565550102"]);
 
-  it("finds by outside key, place, phone (company then person), email, domain, name + city — in that order", () => {
+  it("finds by outside key, place, email, phone (company then person), domain, name + city — in that order (email before phone: owner 2026-11-28)", () => {
     expect(m.find({ externalSource: "INEGI DENUE", externalId: "d-1", phones: [], emails: [] })).toEqual(["b", "outside key"]);
     expect(m.find({ placeId: "ChIJ-1", phones: ["5165550101"], emails: [] })).toEqual(["g", "place_id"]);
-    expect(m.find({ phones: [phone10("(516) 555-0101")!], emails: ["ronak@pc.com"] })).toEqual(["a", "phone"]);
+    expect(m.find({ phones: [phone10("(516) 555-0101")!], emails: ["ronak@pc.com"] })).toEqual(["a", "email"]);
+    expect(m.find({ phones: ["8670000001"], emails: ["ronak@pc.com"] })).toEqual(["a", "email"]); // a shared phone never beats the email
     expect(m.find({ phones: ["9565550102"], emails: [] })).toEqual(["a", "phone"]);
     expect(m.find({ phones: [], emails: ["RONAK@pc.com"] })).toEqual(["a", "email"]);
     expect(m.find({ phones: [], emails: [], domain: "pc.com" })).toEqual(["a", "domain"]);
