@@ -14,7 +14,7 @@ export type ContactRole = "vendor" | "customer" | "both";
 
 /* ------------------------------------------------------------------ list / profile */
 
-export type ContactListQuery = { role?: ContactRole | "none" | "all"; q?: string; source?: string; country?: string; limit?: number; offset?: number;
+export type ContactListQuery = { role?: ContactRole | "none" | "all"; stage?: "lead" | "approved" | "all"; q?: string; source?: string; country?: string; limit?: number; offset?: number;
   /** Owner 2026-11-26 15:56 CT: "the boxes are not drop down filter combobox so i can typ city etc." — each one any of several values. */
   countries?: string[]; states?: string[]; cities?: string[]; categories?: string[]; sources?: string[]; hows?: string[];
   /** Owner 2026-11-26 16:59 CT "get this all completely done" — the rest of the designed boxes: region, customer type (Duty
@@ -41,6 +41,9 @@ export async function contactCounts(c: pg.PoolClient) {
             count(*) FILTER (WHERE role = 'customer')::int AS customers,
             count(*) FILTER (WHERE role = 'both')::int AS both,
             count(*) FILTER (WHERE role IS NULL)::int AS unclassified,
+            count(*) FILTER (WHERE approved_at IS NULL)::int AS leads,
+            count(*) FILTER (WHERE approved_at IS NOT NULL AND role IN ('customer', 'both'))::int AS approved_customers,
+            count(*) FILTER (WHERE approved_at IS NOT NULL AND role IN ('vendor', 'both'))::int AS approved_vendors,
             count(*) FILTER (WHERE source = 'Google')::int AS from_google,
             count(*) FILTER (WHERE NOT EXISTS (SELECT 1 FROM perfume.contact_people p WHERE p.company_id = co.id AND p.email IS NOT NULL AND p.archived_at IS NULL))::int AS needs_email
        FROM perfume.contact_companies co WHERE co.archived_at IS NULL`);
@@ -56,8 +59,14 @@ export function contactWhere(q: ContactListQuery): { where: string[]; args: unkn
   const args: unknown[] = [];
   const add = (sql: string, v: unknown) => { args.push(v); where.push(sql.replace("?", `$${args.length}`)); };
   if (q.role && q.role !== "all") {
-    if (q.role === "none") where.push("co.role IS NULL"); else add("co.role = ?", q.role);
+    // A vendor + customer is a customer AND a vendor (QuickBooks): the Customers list includes "both", so does Vendors.
+    if (q.role === "none") where.push("co.role IS NULL");
+    else if (q.role === "both") add("co.role = ?", q.role);
+    else add("co.role IN (?, 'both')", q.role);
   }
+  // Owner 2026-11-28 14:30 CT: a lead is not a customer or vendor until approved (migration 202617320100).
+  if (q.stage === "lead") where.push("co.approved_at IS NULL");
+  if (q.stage === "approved") where.push("co.approved_at IS NOT NULL");
   if (q.source) add("co.source = ?", q.source);
   if (q.country) add("co.country = ?", q.country);
   if (q.countries?.length) add("co.country = ANY(?::text[])", q.countries);

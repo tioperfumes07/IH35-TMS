@@ -23,7 +23,7 @@ import { ApiError } from "../../api/client";
 import { listCustomers } from "../../api/catalog-customers";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
-  deletePerfumeContacts, restorePerfumeContacts, mergeOnePerfumeDuplicate, type PerfumeContactDeleteResult,
+  deletePerfumeContacts, restorePerfumeContacts, mergeOnePerfumeDuplicate, approvePerfumeContacts, unapprovePerfumeContacts, type PerfumeContactDeleteResult,
   getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
   type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
@@ -83,7 +83,9 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
   // The profile mounts under the list: bring it on screen when one is opened (same fix as Supplier profiles, #29981).
   useEffect(() => { if (selected) setTimeout(() => document.querySelector('[data-testid="perfume-contact-profile"]')?.scrollIntoView?.({ block: "start" }), 50); }, [selected]);
   const [picks, setPicks] = useState<PerfumeContactPicks>({});
-  const list = useQuery({ queryKey: ["perfume", "contacts", role, source, q, picks], queryFn: () => listPerfumeContacts({ role, source, q, limit: 300, ...picks }) });
+  // Owner 2026-11-28 14:30 CT: Leads = not approved; Customers / Vendors = approved only (one record, it changes list when approved).
+  const stage: "lead" | "approved" = isLeads ? "lead" : "approved";
+  const list = useQuery({ queryKey: ["perfume", "contacts", stage, role, source, q, picks], queryFn: () => listPerfumeContacts({ stage, role, source, q, limit: 300, ...picks }) });
   const anyPick = Object.values(picks).some((v) => (v?.length ?? 0) > 0);
   // Owner 2026-11-27 21:39 CT: select several → Delete (contacts that are not for the business). Confirmed in the page, never a browser dialog.
   const { pushToast } = useToast();
@@ -120,6 +122,24 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
       await list.refetch();
     } catch (e) { pushToast(userFacingApiError(e, "Not merged"), "error"); } finally { setBusy(false); }
   };
+  const [askApprove, setAskApprove] = useState<PerfumeContactRole | null>(null);
+  const [askSendBack, setAskSendBack] = useState(false);
+  const doApprove = async (r: PerfumeContactRole) => {
+    setBusy(true);
+    try {
+      const res = await approvePerfumeContacts([...checked], r);
+      pushToast(`${res.approved.toLocaleString("en-US")} approved as ${r === "both" ? "vendor + customer" : r} — now under ${r === "vendor" ? "Vendors" : r === "customer" ? "Customers" : "Customers and Vendors"}`, "success");
+      setChecked([]); setAskApprove(null); await list.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not approved"), "error"); } finally { setBusy(false); }
+  };
+  const doSendBack = async () => {
+    setBusy(true);
+    try {
+      const res = await unapprovePerfumeContacts([...checked]);
+      pushToast(`${res.sent_back.toLocaleString("en-US")} sent back to Leads${res.kept.length ? ` · ${res.kept.length} kept — ${res.kept.slice(0, 3).map((k) => `${k.name} (${k.reason})`).join(" · ")}` : ""}`, res.kept.length ? "info" : "success");
+      setChecked([]); setAskSendBack(false); await list.refetch();
+    } catch (e) { pushToast(userFacingApiError(e, "Not sent back"), "error"); } finally { setBusy(false); }
+  };
   const undoDelete = async () => {
     if (!lastDeleted) return;
     setBusy(true);
@@ -129,7 +149,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
   // Owner 2026-11-28 13:57 CT: a company opens its own PROFILE PAGE in place (Customers stays Customers) — not a block under the list.
   if (selected) {
-    const back = initialRole === "customer" ? "Back to Customers" : initialRole === "vendor" ? "Back to Vendors" : "Back to All leads";
+    const back = initialRole === "customer" ? "Back to Customers" : initialRole === "vendor" ? "Back to Vendors" : "Back to Leads";
     return <PerfumeCompanyProfile id={selected} backLabel={back} onClose={() => { setSelected(null); clearOpen(); }} />;
   }
   if (list.isError) {
@@ -145,8 +165,9 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
 
   return (
     <div className="space-y-3" data-testid="perfume-contacts-panel">
-      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6" data-testid="perfume-contacts-kpis">
-        <KpiCard label={`Companies · ${n(c?.people)} people`} number={n(c?.companies)} onClick={() => { setRole("all"); setSource(""); }} />
+      <div className="grid grid-cols-2 gap-[10px] md:grid-cols-7" data-testid="perfume-contacts-kpis">
+        <KpiCard label={isLeads ? "Leads — not approved yet" : initialRole === "vendor" ? "Approved vendors" : "Approved customers"} number={n(isLeads ? c?.leads : initialRole === "vendor" ? c?.approved_vendors : c?.approved_customers)} onClick={() => { setRole("all"); setSource(""); }} />
+        <KpiCard label={`All companies · ${n(c?.people)} people`} number={n(c?.companies)} disabled disabledReason="Every company on file — leads plus approved customers and vendors." />
         <KpiCard label={tr("perfume.contacts.vendors", "Vendors")} number={n(c?.vendors)} onClick={() => setRole("vendor")} />
         <KpiCard label={tr("perfume.contacts.customers", "Customers")} number={n(c?.customers)} onClick={() => setRole("customer")} />
         <KpiCard label={tr("perfume.contacts.vendor_customer", "Vendor + customer")} number={n(c?.both)} onClick={() => setRole("both")} />
@@ -209,6 +230,15 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
             onClick={() => { setKeepId(checked[0] ?? null); setAskMerge(true); }} data-testid="perfume-contacts-merge">
             {`Merge ${checked.length >= 2 ? checked.length.toLocaleString("en-US") + " " : ""}selected`}
           </Button>
+          {isLeads ? (["customer", "vendor", "both"] as const).map((r) => (
+            <Button key={r} type="button" variant="primary" className="h-[34px] px-3 text-xs" disabled={!checked.length || busy} onClick={() => setAskApprove(r)} data-testid={`perfume-contacts-approve-${r}`}>
+              {`Approve as ${r === "both" ? "vendor + customer" : r}${checked.length ? ` (${checked.length.toLocaleString("en-US")})` : ""}`}
+            </Button>
+          )) : (
+            <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!checked.length || busy} onClick={() => setAskSendBack(true)} data-testid="perfume-contacts-sendback">
+              {`Send back to leads${checked.length ? ` (${checked.length.toLocaleString("en-US")})` : ""}`}
+            </Button>
+          )}
           {lastDeleted && lastDeleted.ids.length ? (
             <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void undoDelete()} data-testid="perfume-contacts-undo-delete">
               {`Undo — put back the ${lastDeleted.result.deleted.toLocaleString("en-US")} just deleted`}
@@ -261,6 +291,28 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
               <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void doDelete()} data-testid="perfume-contacts-delete-confirm">
                 {`Delete ${checked.length.toLocaleString("en-US")}`}
               </Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+      {askApprove ? (
+        <Modal open onClose={() => setAskApprove(null)} title={`Approve ${checked.length.toLocaleString("en-US")} as ${askApprove === "both" ? "vendor + customer" : askApprove}?`} size="sm" data-testid="perfume-contacts-approve-modal">
+          <div className="space-y-3 text-xs">
+            <p>{`The ${checked.length.toLocaleString("en-US")} selected leave Leads and show under ${askApprove === "vendor" ? "Vendors" : askApprove === "customer" ? "Customers" : "Customers and Vendors"}. Same record — nothing is copied. Each one's history records the approval; "Send back to leads" undoes it.`}</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setAskApprove(null)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
+              <Button type="button" variant="primary" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void doApprove(askApprove)} data-testid="perfume-contacts-approve-confirm">Approve</Button>
+            </div>
+          </div>
+        </Modal>
+      ) : null}
+      {askSendBack ? (
+        <Modal open onClose={() => setAskSendBack(false)} title={`Send ${checked.length.toLocaleString("en-US")} back to Leads?`} size="sm" data-testid="perfume-contacts-sendback-modal">
+          <div className="space-y-3 text-xs">
+            <p>They leave this list and return to Leads until approved again. A company with quotes, orders, purchase orders, price lists, a ScentsX link or an account stays — you are told which and why.</p>
+            <div className="flex justify-end gap-2">
+              <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={() => setAskSendBack(false)}>{tr("perfume.cat.cancel", "Cancel")}</Button>
+              <Button type="button" variant="danger" className="h-[34px] px-3 text-xs" disabled={busy} onClick={() => void doSendBack()} data-testid="perfume-contacts-sendback-confirm">Send back</Button>
             </div>
           </div>
         </Modal>

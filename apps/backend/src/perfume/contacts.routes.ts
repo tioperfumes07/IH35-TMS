@@ -18,6 +18,7 @@ import {
 } from "./contacts.service.js";
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 import { deleteContacts, deleteContactsSchema, restoreContacts } from "./contact-delete.service.js";
+import { approveCompanies, approveSchema, unapproveCompanies, unapproveSchema } from "./lead-approval.service.js";
 import { findContactInfo, findContactInfoSchema, unreachableCounts } from "./contact-enrich.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
@@ -39,6 +40,8 @@ const RL_SEARCH = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }
 const RL_WRITE_ONE = { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } } as const;
 export const listSchema = z.object({
   role: z.enum(["vendor", "customer", "both", "none", "all"]).optional(),
+  // Owner 2026-11-28 14:30 CT: Leads = not approved yet; Customers / Vendors = approved only.
+  stage: z.enum(["lead", "approved", "all"]).optional(),
   q: z.string().max(200).optional(),
   source: z.string().max(120).optional(),
   country: z.string().max(60).optional(),
@@ -154,6 +157,17 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const b = deleteContactsSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
     return withCurrentUser(uid, async (c) => { const r = await deleteContacts(c, uid, b.data.ids); await scanDuplicates(c); return r; });
   });
+  // Owner 2026-11-28 14:30 CT: leads become customers / vendors only when approved; "Send back to leads" undoes it.
+  app.post("/api/v1/perfume/contacts/approve", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = approveSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => approveCompanies(c, uid, b.data.ids, b.data.role));
+  });
+  app.post("/api/v1/perfume/contacts/unapprove", { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const b = unapproveSchema.safeParse(req.body ?? {}); if (!b.success) return reply.code(400).send({ error: "validation_error" });
+    return withCurrentUser(uid, (c) => unapproveCompanies(c, uid, b.data.ids));
+  });
   // Owner 2026-11-28 14:24–14:26 CT: a lead with no email or phone — find its contact info (Google Places + its own website).
   app.get("/api/v1/perfume/contacts/no-contact-info", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
@@ -250,6 +264,9 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     return withCurrentUser(uid, async (c) => {
       let id: string | null = null, inserted = false;
       await importRecords(c, [b.data], uid, emptyTally(), (cid, ins) => { id = cid; inserted = ins; });
+      // A customer / vendor the owner creates by hand is approved at once (owner 2026-11-28 14:30 CT) — imports stay leads.
+      const role = (b.data as { company?: { role?: string | null } }).company?.role;
+      if (id && (role === "customer" || role === "vendor" || role === "both")) await approveCompanies(c, uid, [id], role);
       await scanDuplicates(c);
       return { id, existed: !inserted };
     });

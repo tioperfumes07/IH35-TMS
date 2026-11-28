@@ -388,7 +388,9 @@ export async function downloadPerfumeMailFile(id: string, fileName: string) {
 /* PERFUME-CONTACTS (owner 2026-11-25 22:04 / 22:11 CT) — the contacts database, and the Google business search (22:09 CT). */
 export type PerfumeContactRole = "vendor" | "customer" | "both";
 export type PerfumeContactCounts = { companies: number; vendors: number; customers: number; both: number; unclassified: number; from_google: number;
-  needs_email: number; people: number; with_email: number; phone_only: number };
+  needs_email: number; people: number; with_email: number; phone_only: number;
+  /** Owner 2026-11-28 14:30 CT (migration 202617320100): not approved yet = a lead; approved customers / vendors. */
+  leads?: number; approved_customers?: number; approved_vendors?: number };
 export type PerfumeContactRow = { id: string; name: string; domain: string | null; role: PerfumeContactRole | null; vendor_type: string | null;
   customer_type: string | null; main_category: string | null; categories: string[]; city: string | null; state: string | null; country: string | null;
   phone: string | null; website: string | null; maps_uri: string | null; google_rating: string | null; google_rating_count: number | null;
@@ -400,7 +402,7 @@ export type PerfumeContactList = { counts: PerfumeContactCounts; total: number; 
   facets?: Record<PerfumeContactFacet, Array<{ value: string; count: number }>> };
 /** Several values per filter box ("|"-separated on the wire — a city name can hold a comma). */
 export type PerfumeContactPicks = Partial<Record<"countries" | "states" | "cities" | "categories" | "sources" | "hows" | "regions" | "ctypes" | "vtypes" | "segments" | "statuses" | "shows" | "reach" | "kinds" | "relationships" | "industries" | "tags", string[]>>;
-export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; q?: string; source?: string; limit?: number; offset?: number } & PerfumeContactPicks) {
+export function listPerfumeContacts(q: { role?: PerfumeContactRole | "none" | "all"; stage?: "lead" | "approved" | "all"; q?: string; source?: string; limit?: number; offset?: number } & PerfumeContactPicks) {
   const p = new URLSearchParams();
   for (const [k, v] of Object.entries(q)) {
     if (Array.isArray(v)) { if (v.length) p.set(k, v.join("|")); }
@@ -436,6 +438,11 @@ export type PerfumeContactImportTally = { records: number; inserted: number; mat
 export type PerfumeContactDeleteResult = { deleted: number; people: number; already_deleted: number; not_found: number; kept: Array<{ id: string; name: string; reason: string }> };
 export const deletePerfumeContacts = (ids: string[]) =>
   apiRequest<PerfumeContactDeleteResult>("/api/v1/perfume/contacts/delete", { method: "POST", body: { ids } });
+/** Owner 2026-11-28 14:30 CT: a lead becomes a customer / vendor only when approved; "Send back to leads" undoes it. */
+export const approvePerfumeContacts = (ids: string[], role: PerfumeContactRole) =>
+  apiRequest<{ approved: number; not_found: number }>("/api/v1/perfume/contacts/approve", { method: "POST", body: { ids, role } });
+export const unapprovePerfumeContacts = (ids: string[]) =>
+  apiRequest<{ sent_back: number; kept: Array<{ id: string; name: string; reason: string }> }>("/api/v1/perfume/contacts/unapprove", { method: "POST", body: { ids } });
 export const restorePerfumeContacts = (ids: string[]) =>
   apiRequest<{ restored: number }>("/api/v1/perfume/contacts/restore", { method: "POST", body: { ids } });
 /** Owner 2026-11-28 14:24 CT: leads with no email or phone — how many, and the lookup that finds it (Google Places + the company's own website). */
