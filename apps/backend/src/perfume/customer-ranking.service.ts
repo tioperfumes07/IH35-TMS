@@ -106,3 +106,21 @@ export async function companyTier(c: Q, companyId: string) {
   }
   return res;
 }
+
+/**
+ * LEAD item 23: re-link the imported purchase history to its contact companies — after customers are imported / merged, the rows that
+ * had no company (measured 2026-11-27: 1,441 customer numbers) are matched again by the shared match key (perfume.name_key), and a row
+ * whose company was merged into another follows it to the company that stayed. Rows already linked to a live company never change.
+ */
+export async function relinkPurchaseHistory(c: Q) {
+  const merged = await c.query(
+    `UPDATE perfume.customer_purchase_history h SET company_id = cc.merged_into_id
+       FROM perfume.contact_companies cc WHERE cc.id = h.company_id AND cc.merged_into_id IS NOT NULL`);
+  const linked = await c.query(
+    `UPDATE perfume.customer_purchase_history h SET company_id = m.id
+       FROM (SELECT DISTINCT ON (cc.name_key) cc.name_key, cc.id FROM perfume.contact_companies cc WHERE cc.archived_at IS NULL AND cc.name_key IS NOT NULL
+              ORDER BY cc.name_key, cc.role = 'customer' DESC, cc.role = 'both' DESC, cc.created_at) m
+      WHERE h.company_id IS NULL AND m.name_key = perfume.name_key(h.customer_name)`);
+  const left = (await c.query<{ n: number }>(`SELECT count(DISTINCT (source, customer_no))::int n FROM perfume.customer_purchase_history WHERE company_id IS NULL`)).rows[0]!.n;
+  return { followed_merge: merged.rowCount ?? 0, linked: linked.rowCount ?? 0, unlinked_customers: left };
+}

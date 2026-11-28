@@ -6,9 +6,10 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ParityTable } from "../../components/parity/ParityTable";
+import { Button } from "../../components/Button";
 import { KpiCard } from "../../components/layout/KpiCard";
 import { ListErrorState } from "../../components/ListErrorState";
-import { getPerfumeCustomerRanking, importPerfumePurchaseHistory, type PerfumeHistoryRow, type PerfumeRankRow } from "../../api/perfume";
+import { getPerfumeCustomerRanking, importPerfumePurchaseHistory, relinkPerfumePurchaseHistory, type PerfumeHistoryRow, type PerfumeRankRow } from "../../api/perfume";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { readSpreadsheet } from "./perfumeFileReaders";
@@ -76,6 +77,18 @@ function ImportHistory({ onDone }: { onDone: () => void }) {
   );
 }
 
+/** Matches the history rows with no company again (after a customer import or a merge). */
+function RelinkHistory({ onDone }: { onDone: () => void }) {
+  const { pushToast } = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy} data-testid="perfume-ranking-relink"
+      onClick={() => { setBusy(true); void relinkPerfumePurchaseHistory().then((r) => { pushToast(`${r.linked.toLocaleString("en-US")} history rows linked · ${r.followed_merge.toLocaleString("en-US")} followed a merge · ${r.unlinked_customers.toLocaleString("en-US")} customer numbers still without a company`, "success"); onDone(); })
+        .catch((e) => pushToast(userFacingApiError(e, "Not re-linked"), "error")).finally(() => setBusy(false)); }}>
+      {tr("perfume.rank.relink", "Re-link to companies")}</Button>
+  );
+}
+
 export function PerfumeRankingPanel() {
   const [cur, setCur] = useState<"USD" | "MXN">("USD");
   const [tier, setTier] = useState<"" | "A" | "B" | "C">("");
@@ -94,6 +107,7 @@ export function PerfumeRankingPanel() {
             </select>
           </label>
           <ImportHistory onDone={() => void q.refetch()} />
+          <RelinkHistory onDone={() => void q.refetch()} />
           <span className="text-[#64748B]">{tr("perfume.rank.basis", "A = customers making the first 80% of purchases, B = the next 15%, C = the rest. Purchases only — no balances.")}</span>
         </div>
         {d ? (

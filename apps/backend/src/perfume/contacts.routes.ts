@@ -19,7 +19,7 @@ import {
 import { applyNameFixes, applyNameFixesSchema, previewNameFixes } from "./company-names.service.js";
 import { companyLocations, duplicateGroups, mergeCompanies, mergeDuplicateGroups, mergeOneSchema, mergeSchema } from "./company-merge.service.js";
 import { confirmDuplicates, decideSchema, dismissDuplicates, listRecommendations, scanDuplicates } from "./duplicate-detector.service.js";
-import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery } from "./customer-ranking.service.js";
+import { companyTier, customerRanking, historyImportSchema, importPurchaseHistory, rankingQuery, relinkPurchaseHistory } from "./customer-ranking.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
   if (!requireAuth(req, reply)) return null;
@@ -82,6 +82,11 @@ export async function registerPerfumeContactsRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const q = rankingQuery.safeParse(req.query ?? {}); if (!q.success) return reply.code(400).send({ error: "invalid_query" });
     return withCurrentUser(uid, (c) => customerRanking(c, q.data));
+  });
+  // LEAD item 23: re-link the purchase history to companies after customers are imported or merged (owner presses it on Ranking).
+  app.post("/api/v1/perfume/customers/purchase-history/relink", { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } }, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    return withCurrentUser(uid, (c) => relinkPurchaseHistory(c));
   });
   app.post("/api/v1/perfume/customers/purchase-history/import", { config: { rateLimit: { max: 30, timeWindow: "1 minute" }, bodyLimit: 8 * 1024 * 1024 } }, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
