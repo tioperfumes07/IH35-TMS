@@ -68,6 +68,7 @@ export async function listCatalogs(c: pg.PoolClient) {
 }
 
 export async function addCatalogValue(c: pg.PoolClient, uid: string, v: z.infer<typeof catalogValueSchema>) {
+  if (v.kind === "origin_country" && !/^[A-Z]{2}$/.test(v.value)) throw new LeadsError("country_code", "A country of origin is its 2-letter code (FR, US, AE …) — the same code the items carry.");
   const r = await c.query<{ id: string }>(
     `INSERT INTO perfume.catalog_values (kind, value, sort, created_by)
      SELECT $1, $2, coalesce($3, 100), $4
@@ -86,6 +87,7 @@ export async function renameCatalogValue(c: pg.PoolClient, id: string, value: st
   const cur = (await c.query<{ kind: CatalogKind; value: string }>(`SELECT kind, value FROM perfume.catalog_values WHERE id = $1 AND archived_at IS NULL`, [id])).rows[0];
   if (!cur) throw new LeadsError("not_found", "Catalog value not found.");
   if (cur.kind === "source_kind") throw new LeadsError("source_kind_fixed", "A source kind comes from where the lead was found; add a new one instead.");
+  if (cur.kind === "origin_country" && !/^[A-Z]{2}$/.test(value)) throw new LeadsError("country_code", "A country of origin is its 2-letter code (FR, US, AE …) — the same code the items carry.");
   const clash = await c.query(`SELECT 1 FROM perfume.catalog_values WHERE kind = $1 AND lower(btrim(value)) = lower(btrim($2)) AND id <> $3 AND archived_at IS NULL`, [cur.kind, value, id]);
   if (clash.rowCount) throw new LeadsError("exists", `"${value}" is already in ${CATALOG_LABELS[cur.kind]}.`);
   await c.query(`UPDATE perfume.catalog_values SET value = $2, updated_at = now() WHERE id = $1`, [id, value]);
