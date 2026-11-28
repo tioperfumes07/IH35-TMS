@@ -10,12 +10,12 @@
 
 | bucket | n | meaning |
 |---|---:|---|
-| **create** (collection POST) | 411 | `POST /api/v1/mdata/customers` — creates a top-level record |
-| **nested create** (child POST) | 334 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
-| action (NOT a create) | 294 | `/:id/approve`, `/scan` — operates on an existing row |
+| **create** (collection POST) | 434 | `POST /api/v1/mdata/customers` — creates a top-level record |
+| **nested create** (child POST) | 341 | `POST /…/loads/:id/stops` — needs its parent to exist first, so it is ordered after it |
+| action (NOT a create) | 309 | `/:id/approve`, `/scan` — operates on an existing row |
 | infra (NOT a surface) | 73 | auth, webhooks, feature flags, integrations plumbing |
-| **TOTAL POST endpoints** | 1112 | |
-| UI files with `+ Create`/`+ Book` | 199 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
+| **TOTAL POST endpoints** | 1157 | |
+| UI files with `+ Create`/`+ Book` | 201 | product vocabulary is locked to those two labels, which is what makes the UI side greppable |
 
 Counting the 200 actions as create-surfaces would inflate the denominator and make the coverage
 report a lie, so every endpoint lands in exactly one bucket and nothing is silently dropped.
@@ -54,7 +54,96 @@ blocking the wire — per the owner's standing instruction.
 expected downstream effect (balanced JE, both-way link) — that is CC-3's verification, handed over
 after creation; a GL/posting failure goes to CC-1.
 
-### accounting — 80 create-surface(s)
+### perfume — 84 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| create | `/api/v1/perfume/campaigns` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/campaigns/:id/attachments` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/campaigns/:id/attachments/:attachmentId/remove` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/campaigns/:id/test` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/campaigns/audience` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/catalogs` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/catalogs/:id/rename` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/companies/:id/name-ok` | `apps/backend/src/perfume/profiles.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/companies/:id/people` | `apps/backend/src/perfume/profiles.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/contacts/:id/account/hold` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/contacts/:id/credit-applications` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/create` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/delete` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/duplicate-recommendations/confirm` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/duplicate-recommendations/dismiss` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/duplicates/merge-one` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/find-contact-info` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/unapprove` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/contacts/uploads` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/contacts/uploads/:id/discard` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/credit-applications/:id/decide` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/customers/purchase-history/relink` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/families` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/inventory/counts` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/inventory/opening` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/inventory/reorder-report/purchase-orders` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/inventory/transfers` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/inventory/transfers/:id/${verb}` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/inventory/transfers/:id/lines` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/inventory/writeoffs` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/inventory/writeoffs/:id/${verb}` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/inventory/writeoffs/:id/lines` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/item-file` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/item-file-bulk` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/item-file-fill-codes` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/item-file/:id/hk-codes` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/item-file/:id/upcs` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/items/canonicalize-brands` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/items/rekey` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/locations` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/accounts/:email/disconnect` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/files/:id/xls-cells` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/optouts/remove` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mail/rules` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/mail/rules/:id/off` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mine/confirm-prices` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/mine/saved-lists/use` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/orders` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/orders/:id/email-document` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/orders/:id/lines` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/orders/:id/purchase` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/orders/:id/ship-all` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/orders/:id/status` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/people/:id/remove` | `apps/backend/src/perfume/profiles.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/price-levels` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/prospects/google-run` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/prospects/google-search` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/purchase-orders` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/purchase-orders/:id/lines` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/purchase-orders/:id/receive-all` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/purchase-orders/:id/status` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/quotes` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/quotes/:id/copy` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/quotes/:id/lines` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/quotes/:id/order` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/quotes/:id/status` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/salespeople` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/segments` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/send-list/attach` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/send-list/export.xlsx` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/stock-linkage/strict` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/trade-shows` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trade-shows/:id/contacts` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trade-shows/:id/i-go` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/trades` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trades/:id/buyers` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| nested | `/api/v1/perfume/trades/:id/stage` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
+| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
+
+### accounting — 83 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
 |---|---|---|---|---|---|
@@ -78,6 +167,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/company-settlements/open` | `apps/backend/src/accounting/company-settlement-open-close.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/credit-memos` | `apps/backend/src/accounting/credit-memos.routes.ts` | — | — | — |
 | nested | `/api/v1/accounting/credit-memos/:id/unvoid` | `apps/backend/src/accounting/credit-memos.routes.ts` | — | — | — |
+| create | `/api/v1/accounting/customer-refunds` | `apps/backend/src/accounting/customer-refunds.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/escrow/deposit` | `apps/backend/src/accounting/escrow/routes.ts` | — | — | — |
 | create | `/api/v1/accounting/escrow/open` | `apps/backend/src/accounting/escrow/routes.ts` | — | — | — |
 | create | `/api/v1/accounting/expense-category-map` | `apps/backend/src/accounting/expense-category-map/routes.ts` | — | — | — |
@@ -90,6 +180,7 @@ after creation; a GL/posting failure goes to CC-1.
 | nested | `/api/v1/accounting/factoring-advances/:id/recourse-return` | `apps/backend/src/accounting/factoring-advances.routes.ts` | — | — | — |
 | nested | `/api/v1/accounting/factoring-advances/:id/reserve-held` | `apps/backend/src/accounting/factoring-advances.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/dispose` | `apps/backend/src/accounting/amortization-posting/amortization-posting.routes.ts` | — | — | — |
+| create | `/api/v1/accounting/fixed-assets/register` | `apps/backend/src/accounting/fixed-assets.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-trk-units` | `apps/backend/src/accounting/fixed-assets.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/fixed-assets/register-unit` | `apps/backend/src/accounting/fixed-assets.routes.ts` | — | — | — |
 | nested | `/api/v1/accounting/invoice-disputes/:id/fault` | `apps/backend/src/accounting/invoice-disputes.routes.ts` | — | — | — |
@@ -137,6 +228,7 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/accounting/settlement-posting/bill-payment-post` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/settlement-posting/recover-from-driver` | `apps/backend/src/accounting/settlement-posting/settlement-posting.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/vendor-credits` | `apps/backend/src/accounting/vendor-credits.routes.ts` | — | — | — |
+| create | `/api/v1/accounting/vendor-refunds` | `apps/backend/src/accounting/vendor-refunds.routes.ts` | — | — | — |
 | create | `/api/v1/accounting/vendors/batch-categorize` | `apps/backend/src/accounting/vendor-category.routes.ts` | — | — | — |
 
 ### safety — 68 create-surface(s)
@@ -211,76 +303,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/safety/training-records` | `apps/backend/src/safety/training-records.routes.ts` | — | — | — |
 | create | `/api/v1/safety/v5/complaints` | `apps/backend/src/safety/safety-v5.routes.ts` | — | — | — |
 | create | `/api/v1/safety/v5/dot-inspections` | `apps/backend/src/safety/safety-v5.routes.ts` | — | — | — |
-
-### perfume — 65 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| create | `/api/v1/perfume/campaigns` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/campaigns/:id/attachments` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/campaigns/:id/attachments/:attachmentId/remove` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/campaigns/:id/test` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/campaigns/audience` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/catalogs` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/catalogs/:id/rename` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/contacts/:id/account/hold` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/contacts/:id/credit-applications` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/contacts/uploads` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/contacts/uploads/:id/discard` | `apps/backend/src/perfume/leads.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/credit-applications/:id/decide` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/extract` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/inventory/counts` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/inventory/opening` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/inventory/transfers` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/inventory/transfers/:id/${verb}` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/inventory/transfers/:id/lines` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/inventory/writeoffs` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/inventory/writeoffs/:id/${verb}` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/inventory/writeoffs/:id/lines` | `apps/backend/src/perfume/inventory.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/item-file-fill-codes` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/item-file/:id/hk-codes` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/item-file/:id/upcs` | `apps/backend/src/perfume/items.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/items/canonicalize-brands` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/items/rekey` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/lists` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/lists/:id/current` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/locations` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/mail/accounts/:email/disconnect` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/mail/files/:id/xls-cells` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/optouts` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/optouts/remove` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mail/rules` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/mail/rules/:id/off` | `apps/backend/src/perfume/mail/mail.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/mine/saved-lists/use` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/orders` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/orders/:id/lines` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/orders/:id/purchase` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/orders/:id/ship-all` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/orders/:id/status` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/price-levels` | `apps/backend/src/perfume/accounts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/prospects/google-run` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/prospects/google-search` | `apps/backend/src/perfume/contacts.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/purchase-orders` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/purchase-orders/:id/lines` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/purchase-orders/:id/receive-all` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/purchase-orders/:id/status` | `apps/backend/src/perfume/purchases.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/quotes` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/quotes/:id/copy` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/quotes/:id/lines` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/quotes/:id/order` | `apps/backend/src/perfume/orders.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/quotes/:id/status` | `apps/backend/src/perfume/quotes.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/review/rematch` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/rows/:id/confirm` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/segments` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/send-list/attach` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/send-list/export.xlsx` | `apps/backend/src/perfume/sendlist.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/trade-shows` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/trade-shows/:id/contacts` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/trade-shows/:id/i-go` | `apps/backend/src/perfume/trade-shows.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/trades` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/trades/:id/buyers` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| nested | `/api/v1/perfume/trades/:id/stage` | `apps/backend/src/perfume/campaigns.routes.ts` | — | — | — |
-| create | `/api/v1/perfume/vendors` | `apps/backend/src/perfume/desk.routes.ts` | — | — | — |
 
 ### mdata — 56 create-surface(s)
 
@@ -554,6 +576,36 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/catalogs/wo-cancellation-reasons` | `apps/backend/src/catalogs/wo-cancellation-reasons.routes.ts` | — | — | — |
 | create | `/api/v1/catalogs/workflow-requests` | `apps/backend/src/catalogs/workflow-routes.ts` | — | — | — |
 
+### scentsx — 25 create-surface(s)
+
+| kind | endpoint | route file | created | registered | gap |
+|---|---|---|---|---|---|
+| nested | `/api/v1/scentsx/compliance/cases/:id/filed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/cases/:id/fincen105` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/cases/:id/statement-sent` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/export-proofs` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/reviewed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/tax-forms` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/pagares` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/pagares/:id/return` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/payers` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/receipts` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/receipts/:id/suspicious` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/resale-certificates` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/sanctions/:id/clear` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/compliance/sanctions/:id/confirm` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/sanctions/load` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/compliance/sanctions/screen` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/drawer-count` | `apps/backend/src/scentsx/inquiry.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/item-books/make-items` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/item-books/repair-merged` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/item-books/sync-accounts` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/purchase-orders/:id/bill` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/purchase-orders/:id/vendor-credit` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/returns` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| nested | `/api/v1/scentsx/sales-orders/:id/invoice` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+| create | `/api/v1/scentsx/stock-moves/post-pending` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
+
 ### legal — 22 create-surface(s)
 
 | kind | endpoint | route file | created | registered | gap |
@@ -647,28 +699,6 @@ after creation; a GL/posting failure goes to CC-1.
 | create | `/api/v1/fuel/statement-discounts/card-credit-repair` | `apps/backend/src/accounting/owner-data-repair.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/transactions` | `apps/backend/src/fuel/fuel-transactions.routes.ts` | — | — | — |
 | create | `/api/v1/fuel/wex/statement-import` | `apps/backend/src/fuel/fuel-transaction-import.routes.ts` | — | — | — |
-
-### scentsx — 17 create-surface(s)
-
-| kind | endpoint | route file | created | registered | gap |
-|---|---|---|---|---|---|
-| nested | `/api/v1/scentsx/compliance/cases/:id/filed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/cases/:id/statement-sent` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/export-proofs` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/reviewed` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/kyc/:kind/:partyId/tax-forms` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/pagares` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/pagares/:id/return` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/payers` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/receipts` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/receipts/:id/suspicious` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/resale-certificates` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/sanctions/:id/clear` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/compliance/sanctions/:id/confirm` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/sanctions/load` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/compliance/sanctions/screen` | `apps/backend/src/scentsx/compliance.routes.ts` | — | — | — |
-| nested | `/api/v1/scentsx/sales-orders/:id/invoice` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
-| create | `/api/v1/scentsx/stock-moves/post-pending` | `apps/backend/src/scentsx/links.routes.ts` | — | — | — |
 
 ### compliance — 11 create-surface(s)
 
