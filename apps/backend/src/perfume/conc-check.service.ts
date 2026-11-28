@@ -37,23 +37,23 @@ export async function concCheck(c: Pick<pg.PoolClient, "query">, f: z.infer<type
   if (f.product_type) { args.push(f.product_type === "(none)" ? "" : f.product_type); w.push(`coalesce(i.product_type, '') = $${args.length}`); }
   if (f.q) { args.push(`%${f.q.toLowerCase()}%`); w.push(`lower(i.display_name) LIKE $${args.length}`); }
   const sql = `
-    WITH t AS (SELECT i.id, i.display_name, coalesce(i.product_type, '') AS product_type, i.size_ml, upper(i.brand) AS b, ${KEY("i.name")} AS k
+    WITH t AS MATERIALIZED (SELECT i.id, i.display_name, coalesce(i.product_type, '') AS product_type, i.size_ml, upper(i.brand) AS b, ${KEY("i.name")} AS k
                  FROM perfume.items i WHERE ${w.join(" AND ")}),
-         ref AS (SELECT upper(r.brand) AS b, ${KEY("r.name")} AS k, r.size_ml, r.conc, r.display_name
+         ref AS MATERIALIZED (SELECT upper(r.brand) AS b, ${KEY("r.name")} AS k, r.size_ml, r.conc, r.display_name
                    FROM perfume.items r WHERE r.merged_into_id IS NULL AND coalesce(r.conc, '') NOT IN ('', 'MIST')),
-         ev AS (
+         ev AS MATERIALIZED (
            SELECT t.id, ref.conc AS c, 'item' AS src, ref.display_name AS what, (ref.size_ml IS NOT DISTINCT FROM t.size_ml) AS same_size
              FROM t JOIN ref ON ref.b = t.b AND ref.k = t.k AND length(t.k) >= 3
            UNION ALL
            SELECT t.id, ${TOKEN("upper(pl.description)")}, 'line', pl.description, true
              FROM t JOIN perfume.price_list_rows pl ON pl.item_id = t.id),
-         agg AS (SELECT t.id, t.display_name, t.product_type, t.size_ml,
-                        count(DISTINCT e.c) AS kinds, min(e.c) AS one, string_agg(DISTINCT e.c, ' / ') AS concs,
-                        count(*) FILTER (WHERE e.c IS NOT NULL) AS agree_n,
-                        count(*) FILTER (WHERE e.c IS NOT NULL AND e.src = 'item') AS items_n,
-                        count(*) FILTER (WHERE e.c IS NOT NULL AND e.src = 'line') AS lines_n,
-                        (array_agg(e.what ORDER BY e.same_size DESC, e.src) FILTER (WHERE e.c IS NOT NULL))[1:3] AS evidence
-                   FROM t LEFT JOIN ev e ON e.id = t.id GROUP BY t.id, t.display_name, t.product_type, t.size_ml),
+         ea AS MATERIALIZED (SELECT e.id, count(DISTINCT e.c) AS kinds, min(e.c) AS one, string_agg(DISTINCT e.c, ' / ') AS concs, count(*) AS agree_n,
+                        count(*) FILTER (WHERE e.src = 'item') AS items_n, count(*) FILTER (WHERE e.src = 'line') AS lines_n,
+                        (array_agg(e.what ORDER BY e.same_size DESC, e.src))[1:3] AS evidence
+                   FROM ev e WHERE e.c IS NOT NULL GROUP BY e.id),
+         agg AS (SELECT t.id, t.display_name, t.product_type, t.size_ml, coalesce(ea.kinds, 0) AS kinds, ea.one, ea.concs,
+                        coalesce(ea.agree_n, 0) AS agree_n, coalesce(ea.items_n, 0) AS items_n, coalesce(ea.lines_n, 0) AS lines_n, ea.evidence
+                   FROM t LEFT JOIN ea ON ea.id = t.id),
          s AS (SELECT *, CASE WHEN kinds = 1 THEN 'proposed' WHEN kinds > 1 THEN 'conflict' ELSE 'none' END AS status FROM agg)`;
   const st = f.status ? (args.push(f.status), `WHERE status = $${args.length}`) : "";
   const counts = (await c.query<{ status: string; n: string }>(`${sql} SELECT status, count(*)::text n FROM s GROUP BY 1`, args.slice(0, f.status ? -1 : undefined))).rows;
