@@ -18,6 +18,8 @@ export type ScentsxLink = { id: string; desk_id: string; engine_id: string; engi
 export const listScentsxCustomerLinks = (deskId: string) => apiRequest<{ links: ScentsxLink[] }>(`/api/v1/scentsx/customer-links?desk_id=${encodeURIComponent(deskId)}`);
 export const linkScentsxCustomer = (deskId: string, engineId: string) =>
   apiRequest<{ link: { id: string } }>("/api/v1/scentsx/customer-links", { method: "POST", body: { desk_id: deskId, engine_id: engineId } });
+export type EligibleScentsxContact = { id: string; name: string; email: string; phone: string | null };
+export const getEligibleScentsxCustomers = (limit = 500) => apiRequest<{ total: number; contacts: EligibleScentsxContact[] }>(`/api/v1/scentsx/customer-links/eligible?limit=${limit}`);
 /** The canonical customer create (mdata.customers) for ScentsX's company — the same route every customer goes through. */
 export const createScentsxCustomer = (companyId: string, input: { name: string; email: string; phone?: string | null }) =>
   apiRequest<{ id: string }>("/api/v1/mdata/customers", { method: "POST", body: { operating_company_id: companyId, legal_name: input.name, email: input.email, phone: input.phone ?? undefined, customer_type: "direct" } });

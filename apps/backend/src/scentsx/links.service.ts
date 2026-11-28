@@ -170,3 +170,34 @@ export async function scentsxAccountRegister(c: Q, accountId: string) {
   );
   return r.rows;
 }
+
+/**
+ * L.31 M18 E2 — perfume customer companies (live: not archived, not merged into another) with at least one email that are not yet a
+ * ScentsX customer (no live scentsx.customer_links row). The canonical customer create needs an email, so a company without one is
+ * left out and counted separately.
+ */
+export async function eligibleForScentsxCustomer(c: Q, limit = 500): Promise<{ total: number; contacts: Array<{ id: string; name: string; email: string; phone: string | null }> }> {
+  const totalR = await c.query<{ n: string }>(
+    `SELECT count(DISTINCT cc.id)::text AS n
+       FROM perfume.contact_companies cc
+       JOIN perfume.contact_people p ON p.company_id = cc.id AND p.email IS NOT NULL AND p.email <> ''
+      WHERE cc.role IN ('customer', 'both')
+        AND cc.archived_at IS NULL AND cc.merged_into_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM scentsx.customer_links l WHERE l.contact_company_id = cc.id AND l.voided_at IS NULL)`
+  );
+  const total = Number(totalR.rows[0]?.n ?? 0);
+  if (total === 0) return { total: 0, contacts: [] };
+  const rows = await c.query<{ id: string; name: string; email: string; phone: string | null }>(
+    `SELECT DISTINCT ON (cc.id) cc.id::text, cc.name, p.email,
+            (SELECT ph FROM unnest(p.phones) ph LIMIT 1) AS phone
+       FROM perfume.contact_companies cc
+       JOIN perfume.contact_people p ON p.company_id = cc.id AND p.email IS NOT NULL AND p.email <> ''
+      WHERE cc.role IN ('customer', 'both')
+        AND cc.archived_at IS NULL AND cc.merged_into_id IS NULL
+        AND NOT EXISTS (SELECT 1 FROM scentsx.customer_links l WHERE l.contact_company_id = cc.id AND l.voided_at IS NULL)
+      ORDER BY cc.id, p.email
+      LIMIT $1`,
+    [limit]
+  );
+  return { total, contacts: rows.rows };
+}

@@ -23,7 +23,7 @@ import { deskAllowed } from "../perfume/desk.routes.js";
 import { generalLedger, glQuery } from "./general-ledger.service.js";
 import { salesTaxLiability, salesTaxQuery, ScentsxSalesTaxNotMapped } from "./sales-tax.service.js";
 import {
-  createLink, listDocumentLinks, scopeToScentsx, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
+  createLink, eligibleForScentsxCustomer, listDocumentLinks, scopeToScentsx, listLinks, scentsxAccountRegister, scentsxChart, scentsxSummary, ScentsxLinkInvalid, ScentsxLinkNotFound, ScentsxNotSetUp, voidLink, type LinkKind,
 } from "./links.service.js";
 
 async function ownerOnly(req: FastifyRequest, reply: FastifyReply): Promise<string | null> {
@@ -255,6 +255,13 @@ export async function registerScentsxLinkRoutes(app: FastifyInstance) {
   app.post("/api/v1/scentsx/stock-moves/post-pending", RL_WRITE, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     try { return await withCurrentUser(uid, async (c) => ({ result: await postPendingStockMoves(c, { userId: uid, role: "Owner" }) })); } catch (e) { return fail(reply, e); }
+  });
+
+  // E2: contacts eligible for bulk "Make ScentsX customer" (have email, not yet linked).
+  app.get("/api/v1/scentsx/customer-links/eligible", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const limit = Math.min(Number((req.query as { limit?: string }).limit ?? 500), 500);
+    try { return await withCurrentUser(uid, (c) => eligibleForScentsxCustomer(c, limit)); } catch (e) { return fail(reply, e); }
   });
 
   for (const kind of ["customer", "vendor"] as LinkKind[]) {
