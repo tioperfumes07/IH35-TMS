@@ -54,3 +54,15 @@ export function buildStatementExportUrl(
   const q = new URLSearchParams({ operating_company_id });
   return resolveApiUrl(`/api/v1/accounting/${statementKey}/export/${format}?${q}`);
 }
+
+/** ROUND L.31 M17 — close a period on the one period engine (sets the closing-date lock; FY-end posts the retained-earnings JE). */
+export function closeAccountingPeriod(periodId: string, operating_company_id: string, closing_notes?: string) {
+  return apiRequest<{ ok: true; retained_earnings_entry_id: string | null }>(`/api/v1/accounting/periods/${encodeURIComponent(periodId)}/close`, {
+    method: "POST", body: { operating_company_id, ...(closing_notes?.trim() ? { closing_notes: closing_notes.trim() } : {}) },
+  });
+}
+
+/** ROUND L.31 M17 — reopen a closed period (Owner only, reason required). */
+export function reopenAccountingPeriod(periodId: string, operating_company_id: string, reason: string) {
+  return apiRequest<{ ok: true }>(`/api/v1/accounting/periods/${encodeURIComponent(periodId)}/reopen`, { method: "POST", body: { operating_company_id, reason } });
+}
