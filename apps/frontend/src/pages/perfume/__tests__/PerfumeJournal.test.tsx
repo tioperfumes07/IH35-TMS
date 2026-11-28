@@ -18,6 +18,7 @@ beforeEach(() => {
     if (path === "/api/v1/scentsx/accounts") return { accounts: [acct("b1", "1000", "Operating Checking"), acct("b2", "1010", "Store Cash Registers"), acct("e1", "3000", "Owner's Capital / Contributions"), acct("e2", "3100", "Owner's Draws"), acct("l1", "2400", "Loans from Owner")] };
     if (path.startsWith("/api/v1/accounting/journal-entries") && opts?.method === "POST") { posts.push(opts.body); return { id: "je1" }; }
     if (path.startsWith("/api/v1/accounting/journal-entries")) return { journal_entries: [] };
+    if (path.includes("/accounts")) return { accounts: [] };
     throw new Error(`unexpected ${path}`);
   });
 });
@@ -45,5 +46,11 @@ describe("ScentsX journal entries", () => {
     const a1 = screen.getByLabelText("Amount line 2"); fireEvent.change(a1, { target: { value: "9.00" } }); fireEvent.blur(a1);
     await waitFor(() => expect(screen.getByTestId("scentsx-je-totals").textContent).toMatch(/off by \$1\.00/));
     expect((screen.getByTestId("scentsx-je-save") as HTMLButtonElement).disabled).toBe(true);
+  });
+  it("Loan from owner opens the loan engine's wizard (one running loan per person), not a journal entry", async () => {
+    mount();
+    const b = await screen.findByTestId("scentsx-je-loan_in"); await waitFor(() => expect((b as HTMLButtonElement).disabled).toBe(false)); fireEvent.click(b);
+    expect(await screen.findAllByText(/Direction/)).toBeTruthy();
+    expect(screen.queryByTestId("scentsx-je-modal")).toBeNull();
   });
 });
