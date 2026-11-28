@@ -41,7 +41,20 @@ export async function importPurchaseHistory(c: Q, uid: string, rows: z.infer<typ
        invoices = EXCLUDED.invoices, amount_cents = EXCLUDED.amount_cents, currency = EXCLUDED.currency, imported_by = EXCLUDED.imported_by, imported_at = now()
      RETURNING (xmax = 0) AS inserted`,
     [JSON.stringify(rows.map((x) => ({ ...x, invoices: x.invoices ?? null }))), uid]);
-  return { rows: r.rowCount ?? 0, inserted: r.rows.filter((x) => x.inserted).length, updated: r.rows.filter((x) => !x.inserted).length };
+  // A company that bought from TIO is a customer, not a lead (owner 2026-11-28 14:30 CT, migration 202617320100): approve the companies
+  // this history links to that are still leads, with one 'approved' history row each.
+  const ap = await c.query<{ id: string }>(
+    `UPDATE perfume.contact_companies co SET approved_at = now(), approved_by = $2::uuid, role = coalesce(co.role, 'customer'), updated_at = now()
+      WHERE co.approved_at IS NULL AND co.archived_at IS NULL
+        AND co.id IN (SELECT h.company_id FROM perfume.customer_purchase_history h WHERE h.company_id IS NOT NULL
+                        AND (h.source, h.customer_no) IN (SELECT x.source, x.customer_no FROM jsonb_to_recordset($1::jsonb) AS x(source text, customer_no text)))
+      RETURNING co.id::text`, [JSON.stringify(rows.map((x) => ({ source: x.source, customer_no: x.customer_no }))), uid]);
+  if (ap.rows.length) {
+    await c.query(`INSERT INTO perfume.lead_events (entity, entity_id, company_id, action, detail, created_by)
+                   SELECT 'company', x, x, 'approved', '{"how":"bought from TIO (purchase history import)"}'::jsonb, $2::uuid FROM unnest($1::uuid[]) AS x`,
+      [ap.rows.map((x) => x.id), uid]);
+  }
+  return { rows: r.rowCount ?? 0, inserted: r.rows.filter((x) => x.inserted).length, updated: r.rows.filter((x) => !x.inserted).length, approved: ap.rows.length };
 }
 
 export type Tier = "A" | "B" | "C";

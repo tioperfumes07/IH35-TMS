@@ -47,14 +47,16 @@ beforeEach(() => {
       return { deleted: 1, people: 21, already_deleted: 0, not_found: 0, kept: [{ id: "c2", name: "Perfumería La Rosa", reason: "has quotes" }] };
     }
     if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/duplicates/merge-one") { posts.push([path, opts.body]); return { merged: 1 }; }
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/approve") { posts.push([path, opts.body]); return { approved: 2, not_found: 0 }; }
+    if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/unapprove") { posts.push([path, opts.body]); return { sent_back: 1, kept: [] }; }
     if (opts?.method === "POST" && path === "/api/v1/perfume/contacts/restore") { posts.push([path, opts.body]); return { restored: 1 }; }
     if (opts?.method === "POST") { posts.push([path, opts.body]); return { run_id: "run-1" }; }
     throw new Error(`unexpected ${path}`);
   });
 });
-const mount = () => render(
+const mount = (initialRole?: "customer" | "vendor") => render(
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-    <ToastProvider><MemoryRouter initialEntries={["/perfume?tab=contacts"]}><PerfumeContactsPanel /></MemoryRouter></ToastProvider>
+    <ToastProvider><MemoryRouter initialEntries={["/perfume?tab=contacts"]}>{initialRole ? <PerfumeContactsPanel initialRole={initialRole} /> : <PerfumeContactsPanel />}</MemoryRouter></ToastProvider>
   </QueryClientProvider>);
 
 describe("Contacts", () => {
@@ -142,5 +144,32 @@ describe("Contacts", () => {
     expect(posts).toHaveLength(0);
     fireEvent.click(within(modal).getByTestId("perfume-contacts-merge-confirm"));
     await waitFor(() => expect(posts[0]).toEqual(["/api/v1/perfume/contacts/duplicates/merge-one", { keep: "c2", ids: ["c1"] }]));
+  });
+
+  it("owner 14:30 CT: Leads list only leads and approve them; Customers lists only approved and can send back to Leads", async () => {
+    mount();
+    const panel = await screen.findByTestId("perfume-contacts-panel");
+    await waitFor(() => expect(within(panel).getAllByText("Perfume Center").length).toBeGreaterThan(0));
+    expect(gets.some((g) => g.includes("stage=lead"))).toBe(true);
+    const row = (name: string) => within(panel).getAllByText(name).map((el) => el.closest("tr")).find(Boolean)!;
+    fireEvent.click(within(row("Perfume Center")).getByRole("checkbox"));
+    fireEvent.click(within(row("Perfumería La Rosa")).getByRole("checkbox"));
+    fireEvent.click(screen.getByTestId("perfume-contacts-approve-customer"));
+    expect(posts).toHaveLength(0); // asked in the page first
+    fireEvent.click(await screen.findByTestId("perfume-contacts-approve-confirm"));
+    await waitFor(() => expect(posts[0]).toEqual(["/api/v1/perfume/contacts/approve", { ids: ["c1", "c2"], role: "customer" }]));
+  });
+  it("Customers: the list asks for approved only and offers Send back to leads (no Approve)", async () => {
+    gets.length = 0;
+    mount("customer");
+    const panel = await screen.findByTestId("perfume-contacts-panel");
+    await waitFor(() => expect(within(panel).getAllByText("Perfume Center").length).toBeGreaterThan(0));
+    expect(gets.some((g) => g.includes("stage=approved") && g.includes("role=customer"))).toBe(true);
+    expect(screen.queryByTestId("perfume-contacts-approve-customer")).toBeNull();
+    const row = (name: string) => within(panel).getAllByText(name).map((el) => el.closest("tr")).find(Boolean)!;
+    fireEvent.click(within(row("Perfume Center")).getByRole("checkbox"));
+    fireEvent.click(screen.getByTestId("perfume-contacts-sendback"));
+    fireEvent.click(await screen.findByTestId("perfume-contacts-sendback-confirm"));
+    await waitFor(() => expect(posts[0]).toEqual(["/api/v1/perfume/contacts/unapprove", { ids: ["c1"] }]));
   });
 });
