@@ -132,7 +132,19 @@ async function load(c: pg.PoolClient, m: ContactMatcher, rec0: ImportRecord, nam
       if (keys.length) pid = (await c.query<{ id: string }>(`SELECT id FROM perfume.contact_people WHERE company_id = $1 AND archived_at IS NULL AND phone_keys && $2::text[] LIMIT 1`, [id, keys])).rows[0]?.id ?? null;
       if (!pid && p.name) pid = (await c.query<{ id: string }>(`SELECT id FROM perfume.contact_people WHERE company_id = $1 AND archived_at IS NULL AND lower(btrim(name)) = lower(btrim($2)) LIMIT 1`, [id, p.name])).rows[0]?.id ?? null;
     }
-    if (pid) { t.people_existing += 1; personIds.push(pid); continue; }
+    if (pid) {
+      // Owner 2026-11-28 15:01 CT "get the correct data from all the emails": a person already on file gets the blanks filled from
+      // this record — name, title, more phones, and more emails — never overwriting what is there (QuickBooks merges, it does not replace).
+      await c.query(
+        `UPDATE perfume.contact_people SET name = coalesce(name, $2), title = coalesce(title, $3),
+            phones = (SELECT coalesce(array_agg(DISTINCT x), '{}') FROM unnest(phones || $4::text[]) x WHERE btrim(x) <> ''),
+            other_emails = (SELECT coalesce(array_agg(DISTINCT x), '{}') FROM unnest(other_emails || $5::text[]) x WHERE x <> coalesce(email, '')),
+            updated_at = now()
+          WHERE id = $1 AND (name IS NULL AND $2::text IS NOT NULL OR title IS NULL AND $3::text IS NOT NULL
+                OR NOT (phones @> $4::text[]) OR NOT (other_emails @> $5::text[]))`,
+        [pid, p.name ?? null, p.title ?? null, p.phones ?? [], (p.other_emails ?? []).filter((e) => e !== p.email)]);
+      t.people_existing += 1; personIds.push(pid); continue;
+    }
     if (!p.email && !(p.phones ?? []).length && !p.name) { personIds.push(null); continue; }
     const r = await c.query<{ id: string; email: string | null; phone_keys: string[] | null }>(
       `INSERT INTO perfume.contact_people (company_id, name, title, email, other_emails, phones, role, how_started, found_in, first_contact_on, last_email_on,
