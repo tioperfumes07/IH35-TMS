@@ -69,9 +69,14 @@ export async function listLinks(c: Q, kind: LinkKind, filter: { desk_id?: string
 export async function createLink(c: Q, uid: string, kind: LinkKind, deskId: string, engineId: string) {
   const s = SPEC[kind];
   const co = await scopeToScentsx(c);
+  // Owner 2026-11-27 18:38 CT ("a vendor can have multiple lists"): a ScentsX vendor may serve several price lists of the SAME
+  // company (trigger scentsx.vendor_link_one_company, migration 202617190100). A list still has one live vendor; a customer
+  // link stays one-to-one both ways.
   const dup = await c.query(
-    `SELECT 1 FROM ${s.table} WHERE voided_at IS NULL AND (${s.deskCol} = $1::uuid OR ${s.engineCol} = $2::uuid) LIMIT 1`,
-    [deskId, engineId]
+    kind === "vendor"
+      ? `SELECT 1 FROM ${s.table} WHERE voided_at IS NULL AND ${s.deskCol} = $1::uuid LIMIT 1`
+      : `SELECT 1 FROM ${s.table} WHERE voided_at IS NULL AND (${s.deskCol} = $1::uuid OR ${s.engineCol} = $2::uuid) LIMIT 1`,
+    kind === "vendor" ? [deskId] : [deskId, engineId]
   );
   if (dup.rows.length) throw new ScentsxLinkInvalid(`this ${kind} is already linked — void the old link first`);
   try {
