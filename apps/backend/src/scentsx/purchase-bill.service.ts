@@ -24,6 +24,7 @@ import { createJournalEntryOnClient } from "../accounting/journal-entries.servic
 import { resolveRoleAccount } from "../accounting/coa-roles/resolver.service.js";
 import { scopeToScentsx, ScentsxLinkInvalid, ScentsxLinkNotFound } from "./links.service.js";
 import { assertNotSanctionsBlocked } from "./sanctions.service.js";
+import { itemPostingAccounts } from "./item-accounts.service.js";
 
 type Q = pg.PoolClient;
 const LIVE_BILL = `b.status NOT IN ('void', 'voided') AND b.revoked_at IS NULL`;
@@ -98,10 +99,13 @@ export const purchaseBillSchema = z.object({
     account_id: z.string().uuid().optional(),
   })).min(1).max(2000),
   charges: z.array(z.object({
-    account_id: z.string().uuid(),
+    /** Any other charge: the ScentsX account it is billed to. A landed cost names its kind instead (5100 / 5110 are used). */
+    account_id: z.string().uuid().optional(),
     description: z.string().trim().min(1).max(200),
     amount_cents: z.number().int().min(1).max(100_000_000_00),
-  })).max(20).default([]),
+    /** M15: freight-in (5100) or customs / broker fees (5110) — spread over the bill's stocked lines into the on-hand units' cost. */
+    landed: z.enum(["freight_in", "customs"]).optional(),
+  }).refine((ch) => ch.landed || ch.account_id, { message: "pick the account for a charge that is not a landed cost" })).max(20).default([]),
 });
 export type PurchaseBillInput = z.infer<typeof purchaseBillSchema>;
 
@@ -158,8 +162,16 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     billLines.push({ amountCents: billed, accountId: account, description: `${po.number} L${l.line_no} · ${w.qty} × ${l.description}`.slice(0, 400) });
     rows.push({ line: l, qty: w.qty, received: l.item_id ? received : billed, billed });
   }
+  const landedAcct: Record<"freight_in" | "customs", string | null> = { freight_in: null, customs: null };
   for (const ch of x.charges) {
-    billLines.push({ amountCents: ch.amount_cents, accountId: await scentsxAccount(c, co, ch.account_id), description: `${po.number} · ${ch.description}`.slice(0, 400) });
+    let acct: string;
+    if (ch.landed) {
+      acct = landedAcct[ch.landed] ?? (landedAcct[ch.landed] = await accountByNumber(c, co, LANDED_ACCOUNT[ch.landed]));
+    } else acct = await scentsxAccount(c, co, ch.account_id!);
+    billLines.push({ amountCents: ch.amount_cents, accountId: acct, description: `${po.number} · ${ch.landed ? `${LANDED_LABEL[ch.landed]}: ` : ""}${ch.description}`.slice(0, 400) });
+  }
+  if (x.charges.some((ch) => ch.landed) && !rows.some((r) => r.line.item_id)) {
+    throw new ScentsxLinkInvalid("a landed cost needs at least one stocked (item) line on the bill to spread over");
   }
   const total = billLines.reduce((s, l) => s + l.amountCents, 0);
   const memo = (x.memo?.trim() || `TIO Perfumes ${po.number} · ${po.vendor_name} invoice ${x.vendor_invoice_number}`).slice(0, 500);
@@ -191,6 +203,8 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     } as never, { userId: uid, role: "system" });
     varianceJe = String((je as { id: string }).id);
   }
+  const landed = await capitalizeLandedCost(c, uid, co, { poId, poNumber: po.number, billId: bill.id, billDate: x.bill_date, vendor: po.vendor_name,
+    invoice: x.vendor_invoice_number, charges: x.charges, accounts: landedAcct, rows });
   for (const r of rows) {
     await c.query(
       `INSERT INTO scentsx.purchase_order_bill_lines (operating_company_id, po_line_id, purchase_order_id, bill_id, qty, received_value_cents, billed_value_cents, created_by)
@@ -201,7 +215,124 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     `INSERT INTO scentsx.document_links (operating_company_id, purchase_order_id, bill_id, created_by) VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid) ON CONFLICT DO NOTHING`,
     [co, poId, bill.id, uid]);
   return { bill_id: bill.id, display_id: (bill as { display_id?: string }).display_id ?? null, amount_cents: total, journal_entry_id: posting.journal_entry_id ?? null,
-    variance_cents: variance, variance_journal_entry_id: varianceJe, units: rows.reduce((s, r) => s + r.qty, 0) };
+    variance_cents: variance, variance_journal_entry_id: varianceJe, units: rows.reduce((s, r) => s + r.qty, 0), landed };
+}
+
+const LANDED_ACCOUNT = { freight_in: "5100", customs: "5110" } as const;
+const LANDED_LABEL = { freight_in: "Freight in", customs: "Customs / broker" } as const;
+
+async function accountByNumber(c: Q, co: string, num: string): Promise<string> {
+  const a = await c.query<{ id: string }>(
+    `SELECT id::text FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = $2 AND deactivated_at IS NULL AND is_postable LIMIT 1`, [co, num]);
+  if (!a.rows[0]) throw new ScentsxLinkInvalid(`ScentsX account ${num} is missing`);
+  return a.rows[0].id;
+}
+
+/** Split `total` cents by `weights` (largest remainder — the parts always sum to the total). */
+export function splitCents(total: number, weights: number[]): number[] {
+  const w = weights.reduce((s, x) => s + x, 0);
+  if (w <= 0) return weights.map((_, i) => (i === 0 ? total : 0));
+  const raw = weights.map((x) => (total * x) / w);
+  const out = raw.map(Math.floor);
+  let left = total - out.reduce((s, x) => s + x, 0);
+  const order = raw.map((r, i) => [r - Math.floor(r), i] as const).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  for (const [, i] of order) { if (left <= 0) break; out[i]! += 1; left--; }
+  return out;
+}
+
+/**
+ * M15 landed cost: each landed charge is spread over the bill's stocked lines by billed value; each line's share goes into the cost
+ * of its units still on hand (the PO line's receipt lots and the lots transferred from them, oldest first, up to the units billed),
+ * and the share of units already gone stays in 5100 / 5110. One balanced entry through the one journal-entry writer:
+ * Dr each item's inventory account / Cr 5100 | 5110. Every slice is a scentsx.purchase_order_landed_costs row.
+ */
+async function capitalizeLandedCost(c: Q, uid: string, co: string, a: {
+  poId: string; poNumber: string; billId: string; billDate: string; vendor: string; invoice: string;
+  charges: PurchaseBillInput["charges"]; accounts: Record<"freight_in" | "customs", string | null>;
+  rows: { line: BillablePoLine; qty: number; billed: number }[];
+}) {
+  const stocked = a.rows.filter((r) => r.line.item_id);
+  const out = { allocated_cents: 0, capitalized_cents: 0, expensed_cents: 0, journal_entry_id: null as string | null };
+  const pending: Array<{ kind: "freight_in" | "customs"; r: (typeof stocked)[number]; alloc: number; lots: Array<{ id: string; qty: number; cost: string; take: number; cap: number }> }> = [];
+  const dr = new Map<string, number>(), cr = new Map<string, number>();
+  for (const ch of a.charges) {
+    if (!ch.landed) continue;
+    const parts = splitCents(ch.amount_cents, stocked.map((r) => r.billed));
+    for (let i = 0; i < stocked.length; i++) {
+      const r = stocked[i]!, alloc = parts[i]!;
+      if (alloc <= 0) continue;
+      // The PO line's receipt lots and every lot transferred out of them, oldest first, that still hold units.
+      const lots = (await c.query<{ id: string; qty_left: number; cost: string }>(
+        `WITH RECURSIVE t AS (
+           SELECT l.id, l.qty_left, l.unit_cost_cents, l.received_on, l.created_at FROM perfume.inventory_lots l WHERE l.po_line_id = $1::uuid
+           UNION ALL
+           SELECT k.id, k.qty_left, k.unit_cost_cents, k.received_on, k.created_at FROM perfume.inventory_lots k JOIN t ON k.parent_lot_id = t.id)
+         SELECT id::text, qty_left, unit_cost_cents::text AS cost FROM t WHERE qty_left > 0 ORDER BY received_on, created_at, id`,
+        [r.line.po_line_id])).rows;
+      let want = r.qty;
+      const picked: Array<{ id: string; qty: number; cost: string; take: number; cap: number }> = [];
+      for (const l of lots) { if (want <= 0) break; const take = Math.min(want, l.qty_left); picked.push({ id: l.id, qty: l.qty_left, cost: l.cost, take, cap: 0 }); want -= take; }
+      const onHand = picked.reduce((s, l) => s + l.take, 0);
+      const cap = Math.round((alloc * onHand) / Math.max(1, r.qty));
+      const caps = splitCents(cap, picked.map((l) => l.take));
+      picked.forEach((l, k) => { l.cap = caps[k]!; });
+      pending.push({ kind: ch.landed, r, alloc, lots: picked });
+      out.allocated_cents += alloc; out.capitalized_cents += cap; out.expensed_cents += alloc - cap;
+      if (cap > 0) {
+        const inv = await inventoryAccountOf(c, co, r.line.item_id!);
+        dr.set(inv, (dr.get(inv) ?? 0) + cap);
+        const from = a.accounts[ch.landed]!;
+        cr.set(from, (cr.get(from) ?? 0) + cap);
+      }
+    }
+  }
+  if (out.capitalized_cents > 0) {
+    const desc = `${a.poNumber} landed cost into inventory · ${a.vendor} invoice ${a.invoice}`;
+    const je = await createJournalEntryOnClient(c as never, {
+      operating_company_id: co, entry_date: a.billDate, memo: desc, source: "auto",
+      source_transaction_type: "scentsx_landed_cost", source_transaction_id: a.billId,
+      postings: [
+        ...[...dr].map(([account_id, amount_cents]) => ({ account_id, debit_or_credit: "debit", amount_cents, description: desc })),
+        ...[...cr].map(([account_id, amount_cents]) => ({ account_id, debit_or_credit: "credit", amount_cents, description: desc })),
+      ],
+    } as never, { userId: uid, role: "system" });
+    out.journal_entry_id = String((je as { id: string }).id);
+  }
+  for (const p of pending) {
+    const lotsCap = p.lots.reduce((s, l) => s + l.cap, 0);
+    if (!p.lots.length) {
+      await c.query(
+        `INSERT INTO scentsx.purchase_order_landed_costs (operating_company_id, bill_id, purchase_order_id, po_line_id, lot_id, kind, allocated_cents, capitalized_cents,
+           expensed_cents, units_on_hand, journal_entry_id, created_by) VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, NULL, $5, $6, 0, $6, 0, NULL, $7::uuid)`,
+        [co, a.billId, a.poId, p.r.line.po_line_id, p.kind, p.alloc, uid]);
+      continue;
+    }
+    // The expensed part rides on the first lot's row, so the rows of one (charge, line) sum to its allocation.
+    const parts = p.lots.map((l, k) => ({ l, alloc: l.cap + (k === 0 ? p.alloc - lotsCap : 0) }));
+    for (const { l, alloc } of parts) {
+      let after: string | null = l.cost;
+      if (l.cap > 0) {
+        const u = (await c.query<{ after: string; item_id: string; loc: string }>(
+          `UPDATE perfume.inventory_lots SET unit_cost_cents = unit_cost_cents + ($2::numeric / qty_left) WHERE id = $1::uuid
+           RETURNING unit_cost_cents::text AS after, item_id::text, location_code AS loc`, [l.id, l.cap])).rows[0]!;
+        after = u.after;
+        // The site's average cost follows: (qty × avg + capitalized) / qty.
+        await c.query(`UPDATE perfume.item_stock SET avg_cost_cents = CASE WHEN qty > 0 THEN avg_cost_cents + ($3::numeric / qty) ELSE avg_cost_cents END, updated_at = now()
+                        WHERE item_id = $1::uuid AND location_code = $2`, [u.item_id, u.loc, l.cap]);
+      }
+      await c.query(
+        `INSERT INTO scentsx.purchase_order_landed_costs (operating_company_id, bill_id, purchase_order_id, po_line_id, lot_id, kind, allocated_cents, capitalized_cents,
+           expensed_cents, units_on_hand, unit_cost_before, unit_cost_after, journal_entry_id, created_by)
+         VALUES ($1::uuid, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6, $7, $8, $9, $10, $11, $12, $13, $14::uuid)`,
+        [co, a.billId, a.poId, p.r.line.po_line_id, l.id, p.kind, alloc, l.cap, alloc - l.cap, l.take, l.cost, after, l.cap > 0 ? out.journal_entry_id : null, uid]);
+    }
+  }
+  return out;
+}
+
+async function inventoryAccountOf(c: Q, co: string, itemId: string): Promise<string> {
+  const m = await itemPostingAccounts(c, itemId);
+  return m.inventory_account_id ?? (await resolveRoleAccount(c as never, co, "inventory_asset"));
 }
 
 /** The bills made from a PO (newest first), with their status and open balance. */

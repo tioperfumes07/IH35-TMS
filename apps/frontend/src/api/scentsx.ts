@@ -219,9 +219,10 @@ export const getScentsxPoBillable = (poId: string) =>
   apiRequest<{ lines: ScentsxBillablePoLine[]; bills: ScentsxPoBill[] }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/billable`);
 export const billScentsxPurchaseOrder = (poId: string, b: { vendor_invoice_number: string; bill_date: string; due_date?: string | null; memo?: string | null;
   lines: Array<{ po_line_id: string; qty: number; unit_price_cents?: number; account_id?: string }>;
-  charges: Array<{ account_id: string; description: string; amount_cents: number }> }) =>
+  charges: Array<{ account_id?: string; description: string; amount_cents: number; landed?: "freight_in" | "customs" }> }) =>
   apiRequest<{ bill_id: string; display_id: string | null; amount_cents: number; journal_entry_id: string | null; variance_cents: number;
-    variance_journal_entry_id: string | null; units: number }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/bill`, { method: "POST", body: b });
+    variance_journal_entry_id: string | null; units: number;
+    landed?: { allocated_cents: number; capitalized_cents: number; expensed_cents: number; journal_entry_id: string | null } }>(`/api/v1/scentsx/purchase-orders/${encodeURIComponent(poId)}/bill`, { method: "POST", body: b });
 
 /* ------------------------------------------------------------------ Sales inquiry (LEAD ROUND L.20 item 3, CONTROL parity) */
 export type ScentsxInquiryFilter = { from: string; to: string; item_id?: string; customer_id?: string; invoice_id?: string };
