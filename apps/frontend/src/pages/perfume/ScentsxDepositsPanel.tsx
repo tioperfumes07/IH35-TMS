@@ -12,7 +12,7 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { useToast } from "../../components/Toast";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { companyToday } from "../../lib/businessDate";
-import { formatAccountDisplayLabel } from "../../lib/show-account-numbers";
+import { accountIdByNumber, formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { getAllAccounts } from "../../api/banking";
 import {
   createBankDeposit,
@@ -21,7 +21,8 @@ import {
   type BankDepositSummary,
   type UndepositedReceipt,
 } from "../../api/bankDeposits";
-import { getScentsxCompany } from "../../api/scentsx";
+import { getScentsxCompany, listScentsxAccounts } from "../../api/scentsx";
+import { MoneyInput } from "../../components/forms/MoneyInput";
 import { tr } from "./perfumeI18n";
 
 const money = (cents: number | string) =>
@@ -62,14 +63,23 @@ function DepositsContent({ companyId }: { companyId: string }) {
   const [date, setDate] = useState(companyToday());
   const [memo, setMemo] = useState("");
   const [busy, setBusy] = useState(false);
+  // ROUND L.31 M9 (LEAD): a card-processor settlement is a deposit of the card receipts LESS the fee the processor withheld — the
+  // deposit engine's "less cash back" line (Dr fee expense / Dr bank net / Cr 1090 gross), exactly as QuickBooks records it.
+  const [feeCents, setFeeCents] = useState<number | null>(null);
+  const [feeAccountId, setFeeAccountId] = useState("");
+  const ledger = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
+  const expenseAccounts = (ledger.data?.accounts ?? []).filter((a) => a.account_type === "Expense");
+  const effectiveFeeAccountId = feeAccountId || accountIdByNumber(expenseAccounts, "6100") || "";
 
   const receipts: UndepositedReceipt[] = undeposited.data?.rows ?? [];
   const totalSelected = receipts.filter((r) => selectedIds.includes(r.id)).reduce((s, r) => s + r.amount_cents, 0);
 
   const effectiveBankId = bankId || operatingBankId || banks[0]?.id || "";
+  const fee = feeCents ?? 0;
+  const feeProblem = fee < 0 ? "The fee cannot be negative." : fee > 0 && fee >= totalSelected ? "The fee must be less than the receipts." : fee > 0 && !effectiveFeeAccountId ? "Pick the fee account." : null;
 
   const deposit = async () => {
-    if (!effectiveBankId || selectedIds.length === 0) return;
+    if (!effectiveBankId || selectedIds.length === 0 || feeProblem) return;
     setBusy(true);
     try {
       const res = await createBankDeposit({
@@ -79,6 +89,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
         memo: memo.trim() || null,
         payment_ids: selectedIds.filter((id) => receipts.find((r) => r.id === id)?.kind === "customer_payment"),
         factoring_advance_ids: selectedIds.filter((id) => receipts.find((r) => r.id === id)?.kind === "factoring_advance"),
+        ...(fee > 0 ? { cash_back_cents: fee, cash_back_account_id: effectiveFeeAccountId } : {}),
       });
       pushToast(
         `Deposit ${res.deposit.display_id} posted · JE ${res.deposit.journal_entry_id.slice(0, 8)} · ${money(res.deposit.amount_deposited_cents)}`,
@@ -86,6 +97,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
       );
       setSelectedIds([]);
       setMemo("");
+      setFeeCents(null);
       await Promise.all([undeposited.refetch(), deposits.refetch(), qc.invalidateQueries({ queryKey: ["scentsx", "accounts"] })]);
     } catch (e) {
       pushToast(userFacingApiError(e, "Deposit not recorded"), "error");
@@ -96,7 +108,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
 
   return (
     <section className="space-y-3 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="scentsx-deposits-panel" aria-label="Bank deposits">
-      <div className="text-card-title">{tr("scentsx.deposits.title", "Bank deposits · 1090 → 1000")}</div>
+      <div className="text-card-title">{tr("scentsx.deposits.title", "Bank deposits & card settlements")}</div>
       <div className="text-xs text-[#64748B]">
         {tr("scentsx.deposits.note", "Select undeposited receipts and move them to the bank account.")}
       </div>
@@ -109,7 +121,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
         rowKey={(r) => r.id}
         loading={undeposited.isLoading}
         storageKey="scentsx-undeposited-v1"
-        emptyText="No undeposited receipts — 1090 is empty."
+        emptyText="No undeposited receipts — everything received is in the bank."
         onSelectionChange={setSelectedIds}
         columns={[
           { key: "receipt_date", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (r) => usDate(r.receipt_date) },
@@ -156,15 +168,34 @@ function DepositsContent({ companyId }: { companyId: string }) {
               />
             </label>
           </div>
+          <div className="flex flex-wrap items-end gap-2 text-xs" data-testid="scentsx-deposit-fee-row">
+            <label>
+              {tr("scentsx.deposits.fee", "Card fees withheld (less cash back)")}
+              <MoneyInput className="block w-[140px]" ariaLabel="Card fees withheld" valueCents={feeCents} onChangeCents={setFeeCents} />
+            </label>
+            {fee > 0 ? (
+              <label>
+                {tr("scentsx.deposits.fee_account", "Fee account")}
+                <select className="ml-1 rounded border border-[#D1D5DB] bg-white px-2 py-1 text-xs" value={effectiveFeeAccountId} onChange={(e) => setFeeAccountId(e.target.value)}
+                  aria-label="Fee account" data-testid="scentsx-deposit-fee-account">
+                  {expenseAccounts.map((a) => <option key={a.id} value={a.id}>{formatAccountDisplayLabel(a)}</option>)}
+                </select>
+              </label>
+            ) : null}
+            <span className="tabular-nums text-[#1F2A44]" data-testid="scentsx-deposit-net">
+              {`${tr("scentsx.deposits.receipts", "Receipts")} ${money(totalSelected)}${fee > 0 ? ` − ${tr("scentsx.deposits.fees", "fees")} ${money(fee)}` : ""} = ${tr("scentsx.deposits.net", "deposit")} ${money(totalSelected - fee)}`}
+            </span>
+            {feeProblem ? <span className="text-[#B91C1C]">{feeProblem}</span> : null}
+          </div>
           <div className="flex justify-end">
             <Button
               type="button"
               className="h-[34px] px-3 text-xs"
-              disabled={busy || !effectiveBankId}
+              disabled={busy || !effectiveBankId || Boolean(feeProblem)}
               onClick={() => void deposit()}
               data-testid="scentsx-deposit-save"
             >
-              {busy ? tr("scentsx.deposits.posting", "Posting…") : tr("scentsx.deposits.post", `Post deposit ${money(totalSelected)}`)}
+              {busy ? tr("scentsx.deposits.posting", "Posting…") : tr("scentsx.deposits.post", `Post deposit ${money(totalSelected - fee)}`)}
             </Button>
           </div>
         </div>
