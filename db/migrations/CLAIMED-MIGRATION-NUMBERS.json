@@ -1126,7 +1126,8 @@
     "202617210100",
     "202617220100",
     "202617230100",
-    "202617240100"
+    "202617240100",
+    "202617250100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1442,5 +1443,6 @@
   "202617210100": {"claimed_at": "2026-11-28", "claimed_by": "lead", "purpose": "PERFUME country-of-origin catalog values as the items' 2-letter codes (FR, US, AE …) — fixes 202617200100 seeding names"},
   "202617220100": {"claimed_at": "2026-11-28", "claimed_by": "claude (p1-11-02)", "purpose": "PERFUME M20 catalogs on documents: payment terms / shipping method / sales-tax code on quotes, sales orders, purchase orders (catalogs.payment_terms, catalogs.tax_codes, catalog kind shipping_method)"},
   "202617230100": {"claimed_at": "2026-11-28", "claimed_by": "lead", "purpose": "SCENTSX fixed asset classes (store fixtures, furniture, computers, leasehold improvements) on 1500 / 1600 / 6800 for the fixed-assets engine (ROUND L.31 M14)"},
-  "202617240100": {"claimed_at": "2026-11-28", "claimed_by": "claude (p1-11-02)", "purpose": "SCENTSX M21 perfume item → ScentsX Products & Services link (scentsx.item_links: perfume.items ↔ catalogs.items, one live link per item)"}
+  "202617240100": {"claimed_at": "2026-11-28", "claimed_by": "claude (p1-11-02)", "purpose": "SCENTSX M21 perfume item → ScentsX Products & Services link (scentsx.item_links: perfume.items ↔ catalogs.items, one live link per item)"},
+  "202617250100": {"claimed_at": "2026-11-28", "claimed_by": "claude (p1-11-02)", "purpose": "SCENTSX M15 landed cost on a PO bill: scentsx.purchase_order_landed_costs (freight-in 5100 / customs 5110 allocated to the billed lines, capitalized into the on-hand lots)"}
 }
