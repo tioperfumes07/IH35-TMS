@@ -1072,3 +1072,5 @@ export const getPerfumeItemFacets = () => apiRequest<PerfumeItemFacets>("/api/v1
 /** Owner 16:57 CT: merge a duplicate catalog value into another of the same list. */
 export const mergePerfumeCatalogValue = (id: string, intoId: string) =>
   apiRequest<{ moved: number; into: string }>(`/api/v1/perfume/catalogs/${encodeURIComponent(id)}/merge`, { method: "POST", body: { into_id: intoId } });
+/** Owner 18:21 CT: Create vendor / Create customer — one company through the import engine (never a second record for one on file). */
+export const createPerfumeCompany = (record: unknown) => apiRequest<{ id: string | null; existed: boolean }>("/api/v1/perfume/contacts/create", { method: "POST", body: record });

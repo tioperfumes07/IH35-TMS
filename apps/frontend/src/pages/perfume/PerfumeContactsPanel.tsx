@@ -27,6 +27,7 @@ import { getPerfumeCompanyLocations, perfumeContactHistory, perfumeContactTrades
 import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
+import { PerfumeCreateCompany } from "./PerfumeCreateCompany";
 import { PerfumeCompanyLocations, PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
 import { PerfumeDupRecommendations } from "./PerfumeDupRecommendations";
 
@@ -63,6 +64,7 @@ function RoleBadge({ role }: { role: PerfumeContactRole | null }) {
 /** `initialRole`: the Leads module's Vendors / Customers tabs open this list already on that role (owner 2026-11-26 17:38 CT "where is vendors and customers?"). */
 export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: PerfumeContactRole | "none" | "all" } = {}) {
   const [role, setRole] = useState<PerfumeContactRole | "none" | "all">(initialRole);
+  const isLeads = initialRole === "all" || initialRole === "none";
   const [source, setSource] = useState<string>("");
   const [q, setQ] = useState("");
   // ?open=<company id> opens that company's profile (a supplier's company link, owner 2026-11-27 17:25 CT: one record).
@@ -97,9 +99,18 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
         <KpiCard label={tr("perfume.contacts.needs_email_never_in_a_send", "Needs email — never in a send")} number={n(c?.needs_email)} disabled disabledReason="Companies with no email on file; Google gives no email." />
       </div>
 
-      <ImportCard onDone={() => void list.refetch()} />
-      <GoogleCard onChanged={() => void list.refetch()} />
-      <PerfumeNameFormatCard onDone={() => void list.refetch()} />
+      {/* Owner 2026-11-27 18:21 CT: "the google business search should be in leads not customers, customers is for customer accounts and
+          their data not leads etc., vendors the same." Lead-finding tools (import, Google, name format) live on All leads only; Vendors
+          and Customers get their own Create pop-up. */}
+      {isLeads ? (
+        <>
+          <ImportCard onDone={() => void list.refetch()} />
+          <GoogleCard onChanged={() => void list.refetch()} />
+          <PerfumeNameFormatCard onDone={() => void list.refetch()} />
+        </>
+      ) : (
+        <PerfumeCreateCompany role={initialRole === "vendor" ? "vendor" : "customer"} onCreated={(name) => { setQ(name); void list.refetch(); }} onOpen={(id) => setSelected(id)} />
+      )}
       <PerfumeDuplicatesCard onDone={() => void list.refetch()} />
       <PerfumeDupRecommendations onDone={() => void list.refetch()} />
 

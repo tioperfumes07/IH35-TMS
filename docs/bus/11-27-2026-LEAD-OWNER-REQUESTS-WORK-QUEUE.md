@@ -16,6 +16,12 @@ Times are Laredo Central. Status reflects what has merged on main.
 | Q9 | 17:28 | "IN ITEMS WE SHOLD ALSO HAVE FILTERS, MULTIPLE DROP DOWN, IN STOCK, NEVER PURCHASED, OUT OF STOCK" | item file: multi-select filters (stock status, brand, family, scent family, product type, gender, category) server-side | LEAD | MERGED #29987 |
 | Q10 | 17:28 | "ITEM FAMILIES, SCENT FAMILY, WELL SHOULD BE MULTIMPLE SELECTOR. BRAND SHOULD BE FILTER COMBOBOX" | families list: scent family multi-select, brand searchable filter | LEAD | MERGED #29987 |
 
+| Q11 | 18:21 | "the google business search should be in leads not customers, customers is for customer accounts and their data not leads etc., vendors the same" | Google search / import / name format only on All leads; Vendors / Customers get their own create pop-up | LEAD | THIS PR (dup-signals) |
+| Q12 | 18:21 | "we are missing create vendor create customer, and the correct pop up and profile creator" | + Create vendor / + Create customer pop-up (company + type + business type + address + contact person) through the import engine (no second record); opens the profile | LEAD | THIS PR (dup-signals) |
+| Q13 | 18:21 | "b&s global and b&s group should be the same, check emails, contact names etc." | detector: same contact e-mail, same contact on a near-same domain, same name without "(distributor)" notes / "(B&S Group)" alias, same brand initials on vendors | LEAD | THIS PR (dup-signals) |
+| Q14 | 18:21 | "we are missing in all lists or selectors to select all in teh page etc so i can merge all those" | duplicate lists use ParityTable select-all-on-page + select all matching; every bulk list must have it | LEAD (dup lists) · ALL seats (their lists) | THIS PR (dup lists) |
+| Q15 | 18:06 | "make sure all coders are doing their work now. no drifting no deviating" | ROUND L.27 (CC1) · L.28 (CC2) · L.29 (CC3) · L.30 (P1) with measured numbers + UTC deadlines | LEAD | POSTED 18:10 CT |
+
 Measured on production 2026-11-27 (perfume.items): product_type "Woman" 6,447 (all gender W) · "Man" 5,250 (M) · "Unisex" 3,819 (U) ·
 "Perfume" 2,327 · "Tester Woman" 1,678 (W) · "Man Set" 1,251 (M) · "Woman Set" 1,235 (W) · "Tester Man" 1,060 (M). The gender is already
 on every one of those items, so the cleanup moves only the kind. Margin groups read the TESTER / SET / MINI flags, not product_type
