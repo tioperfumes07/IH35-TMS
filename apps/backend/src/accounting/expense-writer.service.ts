@@ -583,6 +583,16 @@ export const createExpenseBodySchema = z.object({
   unit_of_measure: z.string().trim().min(1).max(40).optional().nullable(),
 });
 
+/** OWNER RULING 2026-11-27 22:40 CT — the one company exempt from GO-19-1b's unit rule: ScentsX LLC (no trucks). */
+async function isNoFleetScentsxCompany(client: { query: (sql: string, values?: unknown[]) => Promise<{ rows: unknown[] }> }, operatingCompanyId: string): Promise<boolean> {
+  try {
+    const r = await client.query(`SELECT (scentsx.company_id() = $1::uuid) AS is_scentsx`, [operatingCompanyId]);
+    return Boolean((r.rows[0] as { is_scentsx?: boolean } | undefined)?.is_scentsx);
+  } catch {
+    return false; // no scentsx schema → not exempt: the rule holds
+  }
+}
+
 export async function createExpenseInClientTx(client: any, body: CreateExpenseBody, userId: string) {
   if (!(await relationExists(client, "accounting.expenses"))) {
     return { unavailable: true as const };
@@ -827,12 +837,20 @@ export async function createExpenseInClientTx(client: any, body: CreateExpenseBo
       }
       if (!resolvedUnitId) resolvedUnitId = loadAssignedUnitId;
     }
-    if (!resolvedUnitId) {
-      return { unitIdRequired: true as const };
+    // OWNER RULING 2026-11-27 22:40 CT (LEAD L.31 M5): "Exempt ScentsX" — ScentsX LLC (TIO Perfumes) owns no trucks, so its
+    // expenses carry no unit. The exemption is ScentsX ONLY (resolved by its company code through scentsx.company_id(), never a
+    // flag or a name guess); every trucking company keeps the hard reject below (verify-expense-unit-id-mandatory G1 + G4).
+    const noFleetCompany = !resolvedUnitId && (await isNoFleetScentsxCompany(client, body.operating_company_id));
+    if (!noFleetCompany) {
+      if (!resolvedUnitId) {
+        return { unitIdRequired: true as const };
+      }
     }
-    columns.push(`unit_id`);
-    values.push(resolvedUnitId);
-    headerUnitId = resolvedUnitId;
+    if (resolvedUnitId) {
+      columns.push(`unit_id`);
+      values.push(resolvedUnitId);
+      headerUnitId = resolvedUnitId;
+    }
   }
 
   if (hasTrailerId) {
