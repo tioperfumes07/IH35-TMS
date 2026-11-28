@@ -8,6 +8,7 @@
  *  - PerfumeCompanyActivity (exported): a customer's / company's quotes, orders and the POs to it as a vendor — mounted by
  *    the Contacts profile (10-23-2026 agent's lane).
  */
+import { PerfumeCompanyCenter } from "./PerfumeCompanyCenter";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
@@ -313,6 +314,7 @@ export function PerfumeCompanyActivity({ companyId }: { companyId: string }) {
   return (
     <div className="space-y-3" data-testid="perfume-company-activity">
       <CompanyRoleEditor company={a.company} />
+      <PerfumeCompanyCenter companyId={companyId} />
       <div className="grid grid-cols-2 gap-[10px] md:grid-cols-6">
         <KpiCard label={tr("perfume.profiles.kpi_c_quotes", "Quotes")} number={a.quotes.length.toLocaleString("en-US")} to="/perfume?tab=quotes" />
         <KpiCard label={tr("perfume.profiles.kpi_c_quoted", "Quoted (not rejected)")} number={money(a.quoted_cents)} to="/perfume?tab=quotes" />

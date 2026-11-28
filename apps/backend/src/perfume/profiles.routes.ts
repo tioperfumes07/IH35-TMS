@@ -1,6 +1,7 @@
 /**
  * PERFUME-PROFILES routes (owner 2026-11-26 19:12 CT). Desk owner only. Reads, plus linking a vendor to its Contacts company.
  */
+import { companyCenter, companyNotesSchema, saveCompanyNotes } from "./company-center.service.js";
 import { CompanyDetailsError, companyDetailsSchema, updateCompanyDetails } from "./company-details.service.js";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { z } from "zod";
@@ -87,6 +88,18 @@ export async function registerPerfumeProfileRoutes(app: FastifyInstance) {
     const uid = await ownerOnly(req, reply); if (!uid) return;
     const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
     try { return await withCurrentUser(uid, (c) => itemProfile(c, id.data)); } catch (e) { return fail(reply, e); }
+  });
+  // M19: customer center / vendor center on the one company record — open A/R + A/P, every transaction, notes.
+  app.get("/api/v1/perfume/companies/:id/center", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    try { return await withCurrentUser(uid, (c) => companyCenter(c, id.data)); } catch (e) { return fail(reply, e); }
+  });
+  app.put("/api/v1/perfume/companies/:id/notes", RL_READ, async (req, reply) => {
+    const uid = await ownerOnly(req, reply); if (!uid) return;
+    const id = idOf(req); if (!id.success) return reply.code(400).send({ error: "invalid_id" });
+    const b = companyNotesSchema.safeParse(req.body); if (!b.success) return reply.code(400).send({ error: "invalid_body" });
+    return withCurrentUser(uid, (c) => saveCompanyNotes(c, uid, id.data, b.data.notes));
   });
   app.get("/api/v1/perfume/contacts/:id/activity", RL_READ, async (req, reply) => {
     const uid = await ownerOnly(req, reply); if (!uid) return;
