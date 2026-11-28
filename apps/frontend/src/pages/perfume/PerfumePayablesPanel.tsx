@@ -24,6 +24,7 @@ import { getVendorStatementOfAccount, type CounterpartyStatementLine } from "../
 import { getScentsxPayablesAging, getScentsxVendorAccount, type ScentsxApAgingRow, type ScentsxApBill, type ScentsxApBuckets, type ScentsxApOpenBill,
   type ScentsxApPayment, type ScentsxBank } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
+import { PerfumeVendorCredits } from "./PerfumeApplyVendorCredit";
 import { ctl, DASH, DocLink, money, useOpenDoc, usDate } from "./perfumeDocParts";
 
 const METHODS: Array<[BillPaymentMethod, string]> = [["check", "Check"], ["ach", "ACH"], ["wire", "Wire"], ["cash", "Cash"], ["credit_card", "Card"]];
@@ -110,6 +111,7 @@ function VendorAccount({ vendorId, asOf, onChanged }: { vendorId: string; asOf: 
         ]}
       />
       {bill ? <PayBill key={bill.id} bill={bill} companyId={a.operating_company_id} banks={a.bank_accounts} onClose={() => setPaying(null)} onDone={async () => { setPaying(null); await refresh(); }} /> : null}
+      <PerfumeVendorCredits credits={a.credits ?? []} openBills={a.open_bills} companyId={a.operating_company_id} onDone={refresh} />
       <ParityTable<ScentsxApPayment>
         cardTitle title={tr("perfume.ap.payments", "Payments")} rows={a.payments} rowKey={(r) => r.id} storageKey="perfume-ap-payments-v1" exportFilename={`TIO vendor payments ${a.vendor.name}`} exportExcel
         emptyText="No payments to this vendor."

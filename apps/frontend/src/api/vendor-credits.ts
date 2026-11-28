@@ -77,7 +77,7 @@ export function getVendorCredit(
 export function applyVendorCredit(
   operatingCompanyId: string,
   creditId: string,
-  applications: Array<{ bill_id: string; applied_cents: number }>
+  applications: Array<{ bill_id: string; applied_cents: number; idempotency_key?: string }>
 ): Promise<{ applicationIds: string[] }> {
   return apiRequest<{ applicationIds: string[] }>(
     `/api/v1/accounting/vendor-credits/${encodeURIComponent(creditId)}/apply?operating_company_id=${encodeURIComponent(operatingCompanyId)}`,

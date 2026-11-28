@@ -10,6 +10,7 @@ import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { createBillInClientTx, payBillInClientTx } from "../accounting/bills.service.js";
 import { AP_AGING_OPEN_BILLS_SQL } from "../accounting/ap-aging.service.js";
+import { createVendorCreditInClientTx } from "../accounting/vendor-credits.service.js";
 import { apBucketOf, payablesAging, vendorAccount } from "./payables.service.js";
 
 describe("A/P bucket (the books' ladder: days past due)", () => {
@@ -67,5 +68,10 @@ describeIntegration("ScentsX payables (real Postgres, rolled back)", () => {
 
     // As of before the payment: the full $250.00 is open on AP-2.
     expect((await vendorAccount(db, vendor, { as_of: "2026-11-24" })).buckets.total).toBe(35000);
+
+    // LEAD item 26: an open vendor credit shows on the vendor account with what is left to apply (applied through the one engine).
+    const vc = await createVendorCreditInClientTx(db as never, { operatingCompanyId: co, vendorId: vendor, issueDate: "2026-11-26", amountCents: 4000, accountId: acct, notes: "returned 2 units", userId: u });
+    const withCredit = await vendorAccount(db, vendor, { as_of: asOf });
+    expect(withCredit.credits).toEqual([expect.objectContaining({ id: String(vc.id), amount_cents: 4000, applied_cents: 0, unapplied_cents: 4000, notes: "returned 2 units" })]);
   });
 });
