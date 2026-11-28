@@ -13,7 +13,8 @@ import { ListErrorState } from "../../components/ListErrorState";
 import { userFacingApiError } from "../../lib/api-error-message";
 import { confirmPerfumeDuplicates, dismissPerfumeDuplicates, getPerfumeDupRecommendations, type PerfumeDupCard, type PerfumeDupRec } from "../../api/perfume";
 import { tr } from "./perfumeI18n";
-import { DocLink, usDate } from "./perfumeDocParts";
+import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
+import { ctl, DocLink, usDate } from "./perfumeDocParts";
 
 const REASON: Record<string, string> = { same_name: "Same name", similar_name: "Similar name", same_phone: "Same phone", same_domain: "Same website / e-mail domain", same_address: "Same address",
   same_contact_email: "Same contact e-mail", same_contact_similar_domain: "Same contact, near-same domain", same_core_name: "Same name without notes / alias", same_brand_initials: "Same brand initials (vendors)" };
@@ -31,7 +32,14 @@ export function PerfumeDupRecommendations({ onDone }: { onDone: () => void }) {
   const [picked, setPicked] = useState<Set<string>>(new Set());
   const [keep, setKeep] = useState<Record<string, "a" | "b">>({});
   const [busy, setBusy] = useState(false);
-  const rows = q.data?.rows ?? [];
+  const [why, setWhy] = useState<string[]>([]);
+  const [find, setFind] = useState("");
+  const all = q.data?.rows ?? [];
+  // Owner 18:21 CT: narrow to one kind of match (e.g. "Same contact e-mail") or a name, then select all on the page and merge.
+  const rows = all.filter((r) => (!why.length || r.reasons.some((x) => why.includes(x)))
+    && (!find.trim() || `${r.a.name} ${r.b.name}`.toLowerCase().includes(find.trim().toLowerCase())));
+  const whyOpts = Object.entries(all.reduce<Record<string, number>>((m, r) => { for (const x of r.reasons) m[x] = (m[x] ?? 0) + 1; return m; }, {}))
+    .map(([k, n]) => ({ value: k, label: `${REASON[k] ?? k} (${n.toLocaleString("en-US")})` }));
   const ids = useMemo(() => rows.filter((r) => picked.has(r.id)).map((r) => r.id), [rows, picked]);
   const act = async (kind: "confirm" | "dismiss") => {
     setBusy(true);
@@ -49,6 +57,11 @@ export function PerfumeDupRecommendations({ onDone }: { onDone: () => void }) {
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ids.length} onClick={() => void act("confirm")} data-testid="perfume-duprec-confirm">{`${tr("perfume.duprec.confirm", "Confirm — merge")} (${ids.length})`}</Button>
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={busy || !ids.length} onClick={() => void act("dismiss")} data-testid="perfume-duprec-dismiss">{`${tr("perfume.duprec.dismiss", "Not a duplicate")} (${ids.length})`}</Button>
         </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 text-xs">
+        <MultiSelectDropdown label={tr("perfume.duprec.why", "Why")} allLabel="Every reason" options={whyOpts} selected={why} onChange={setWhy} data-testid="perfume-duprec-why" />
+        <input type="search" className={`${ctl} w-[260px]`} aria-label={tr("perfume.duprec.find", "Find a company")} placeholder={tr("perfume.duprec.find_ph", "Find a company")} value={find} onChange={(e) => setFind(e.target.value)} />
+        <span>{`${rows.length.toLocaleString("en-US")} ${tr("perfume.duprec.shown", "shown")}`}</span>
       </div>
       {q.isError ? <ListErrorState title={tr("perfume.duprec.error", "Couldn't load the recommendations")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
         <ParityTable<PerfumeDupRec>
