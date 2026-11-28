@@ -48,10 +48,9 @@ function CleanupModal({ onClose, onDone }: { onClose: () => void; onDone: () => 
         {adds.length ? <p data-testid="perfume-cleanup-adds">{`${tr("perfume.cleanup.adds", "Also added")}: ${adds.map((a) => `${a.value} (${a.list})`).join(" · ")}`}</p> : null}
         {q.isError ? <ListErrorState title={tr("perfume.cleanup.error", "Couldn't load the cleanup")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
           <ParityTable<PerfumeCleanupRow>
-            rows={q.data?.rows ?? []} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-cleanup-v1" exportFilename="TIO catalog cleanup" exportExcel emptyText="Nothing to clean."
+            rows={todo} rowKey={(r) => r.key} loading={q.isLoading} storageKey="perfume-cleanup-v1"
+            selectable selectedKeys={keys} onSelectionChange={(k) => { const on = new Set(k); setOff(new Set(todo.map((r) => r.key).filter((x) => !on.has(x)))); }} exportFilename="TIO catalog cleanup" exportExcel emptyText="Nothing left to clean — every row is done."
             columns={[
-              { key: "pick", label: "Apply", render: (r) => (r.done ? "Done" : <input type="checkbox" aria-label={`Merge ${r.from} into ${r.to}`} checked={!off.has(r.key)}
-                onChange={(e) => { const n = new Set(off); if (e.target.checked) n.delete(r.key); else n.add(r.key); setOff(n); }} />), exportValue: (r) => (r.done ? "Done" : "") },
               { className: "text-left", cellClass: "text-left", key: "list", label: "List", sortable: true, render: (r) => r.list, exportValue: (r) => r.list },
               { className: "text-left", cellClass: "text-left", key: "from", label: "Value now", sortable: true, render: (r) => r.from, exportValue: (r) => r.from },
               { className: "text-left", cellClass: "text-left font-semibold", key: "to", label: "Becomes", sortable: true, render: (r) => r.to, exportValue: (r) => r.to },

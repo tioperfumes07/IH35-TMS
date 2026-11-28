@@ -43,11 +43,10 @@ export function PerfumeNameFormatCard({ onDone }: { onDone: () => void }) {
       </div>
       {open ? (q.isError ? <ListErrorState title={tr("perfume.names.error", "Couldn't load the names")} status={0} message={(q.error as Error)?.message} onRetry={() => void q.refetch()} /> : (
         <ParityTable<PerfumeNameFix>
-          rows={q.data?.fixes ?? []} rowKey={(f) => f.id} loading={q.isLoading} storageKey="perfume-name-format-v1" exportFilename="TIO name format preview" exportExcel
+          rows={q.data?.fixes ?? []} rowKey={(f) => f.id} loading={q.isLoading} storageKey="perfume-name-format-v1"
+          selectable selectedKeys={picked} onSelectionChange={(k) => { const on = new Set(k); setOff(new Set((q.data?.fixes ?? []).map((f) => f.id).filter((x) => !on.has(x)))); }} exportFilename="TIO name format preview" exportExcel
           emptyText="Every company name is already in proper format."
           columns={[
-            { key: "pick", label: "Apply", render: (f) => <input type="checkbox" aria-label={`Apply ${f.to}`} checked={!off.has(f.id)}
-              onChange={(e) => { const n = new Set(off); if (e.target.checked) n.delete(f.id); else n.add(f.id); setOff(n); }} data-testid={`perfume-name-pick-${f.id}`} /> },
             { className: "text-left", cellClass: "text-left", key: "from", label: "Now", sortable: true, render: (f) => f.from, exportValue: (f) => f.from },
             { className: "text-left", cellClass: "text-left font-semibold", key: "to", label: "Will read", sortable: true, render: (f) => f.to, exportValue: (f) => f.to },
             { key: "added_date", label: "Added", sortable: true, cellClass: "text-right tabular-nums", render: (f) => (f.added_on ? usDate(f.added_on) : "—"), exportValue: (f) => f.added_on ?? "" },
