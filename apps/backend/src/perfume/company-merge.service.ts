@@ -50,11 +50,13 @@ export async function duplicateGroups(c: Q, opts: { key?: string } = {}): Promis
   }).sort((a, b) => b.companies - a.companies || a.key.localeCompare(b.key));
 }
 
-/** Tables whose company column simply moves to the company that stays. */
+/** Tables whose company column simply moves to the company that stays. Append-only event logs (perfume.customer_account_events,
+ *  perfume.lead_events — SELECT/INSERT only, never UPDATE) are NOT rewritten: they stay on the merged duplicate and the readers include
+ *  the companies merged into this one (owner 2026-11-28 14:05 CT: merge failed "permission denied for table customer_account_events"). */
 const MOVE: Array<[string, string]> = [
   ["perfume.contact_people", "company_id"], ["perfume.quotes", "company_id"], ["perfume.sales_orders", "company_id"],
-  ["perfume.customer_account_events", "company_id"], ["perfume.credit_applications", "company_id"], ["perfume.contact_origins", "company_id"],
-  ["perfume.lead_events", "company_id"], ["perfume.customer_purchase_history", "company_id"], ["perfume.vendors", "company_id"],
+  ["perfume.credit_applications", "company_id"], ["perfume.contact_origins", "company_id"],
+  ["perfume.customer_purchase_history", "company_id"], ["perfume.vendors", "company_id"],
   ["scentsx.cash_payers", "contact_company_id"], ["scentsx.pagares", "contact_company_id"], ["scentsx.resale_certificates", "contact_company_id"],
   ["scentsx.sanctions_screenings", "contact_company_id"],
 ];

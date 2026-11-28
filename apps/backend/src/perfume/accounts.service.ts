@@ -183,7 +183,8 @@ export async function getAccount(c: pg.PoolClient, companyId: string) {
        FROM perfume.credit_applications x LEFT JOIN identity.users d ON d.id = x.decided_by WHERE x.company_id = $1 ORDER BY x.created_at DESC`, [companyId])).rows;
   const events = (await c.query(
     `SELECT e.id, e.kind, e.detail, e.created_at, u.email AS by_email FROM perfume.customer_account_events e LEFT JOIN identity.users u ON u.id = e.created_by
-      WHERE e.company_id = $1 ORDER BY e.created_at, e.id`, [companyId])).rows;
+      WHERE e.company_id = $1 OR e.company_id IN (SELECT m.id FROM perfume.contact_companies m WHERE m.merged_into_id = $1)
+      ORDER BY e.created_at, e.id`, [companyId])).rows;
   return { account: a, applications, events };
 }
 

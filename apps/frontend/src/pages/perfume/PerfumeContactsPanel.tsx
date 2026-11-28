@@ -8,6 +8,8 @@
  */
 import { useEffect, useState } from "react";
 import { useOpenDoc } from "./perfumeDocParts";
+import { useSearchParams } from "react-router-dom";
+import { PerfumeCompanyProfile } from "./PerfumeCompanyProfile";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "../../components/Button";
 import { MultiSelectDropdown } from "../../components/forms/MultiSelectDropdown";
@@ -22,19 +24,14 @@ import { listCustomers } from "../../api/catalog-customers";
 import { formatDateTimeUS } from "../../lib/formatDate";
 import {
   deletePerfumeContacts, restorePerfumeContacts, mergeOnePerfumeDuplicate, type PerfumeContactDeleteResult,
-  getPerfumeContact, getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
-  type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactProfile, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
+  getPerfumeGooglePlan, importPerfumeContacts, listPerfumeContacts, perfumeGoogleSearch, startPerfumeGoogleRun, stopPerfumeGoogleRun,
+  type PerfumeContactFacet, type PerfumeContactImportTally, type PerfumeContactPicks, type PerfumeContactRole, type PerfumeContactRow, type PerfumeGoogleResult, type PerfumeGoogleRun,
 } from "../../api/perfume";
 import { createScentsxCustomer, getEligibleScentsxCustomers, getScentsxCompany, linkScentsxCustomer, type EligibleScentsxContact } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
-import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
-import { getPerfumeCompanyLocations, perfumeContactHistory, perfumeContactTrades, type PerfumeContactTrade } from "../../api/perfume";
-import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
-import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
 import { PerfumeCreateCompany } from "./PerfumeCreateCompany";
-import { PerfumeCompanyEdit } from "./PerfumeCompanyEdit";
-import { PerfumeCompanyLocations, PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
+import { PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
 import { PerfumeDupRecommendations } from "./PerfumeDupRecommendations";
 
 const DASH = "—";
@@ -78,6 +75,8 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
   const [q, setQ] = useState("");
   // ?open=<company id> opens that company's profile (a supplier's company link, owner 2026-11-27 17:25 CT: one record).
   const { openId } = useOpenDoc();
+  const [, setParams] = useSearchParams();
+  const clearOpen = () => setParams((prev) => { const n = new URLSearchParams(prev); n.delete("open"); return n; });
   const [selected, setSelected] = useState<string | null>(openId);
   useEffect(() => { if (openId) setSelected(openId); }, [openId]);
   // The profile mounts under the list: bring it on screen when one is opened (same fix as Supplier profiles, #29981).
@@ -127,6 +126,11 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
     catch (e) { pushToast(userFacingApiError(e, "Not put back"), "error"); } finally { setBusy(false); }
   };
 
+  // Owner 2026-11-28 13:57 CT: a company opens its own PROFILE PAGE in place (Customers stays Customers) — not a block under the list.
+  if (selected) {
+    const back = initialRole === "customer" ? "Back to Customers" : initialRole === "vendor" ? "Back to Vendors" : "Back to All leads";
+    return <PerfumeCompanyProfile id={selected} backLabel={back} onClose={() => { setSelected(null); clearOpen(); }} />;
+  }
   if (list.isError) {
     return <ListErrorState title={tr("perfume.contacts.loadError", "Couldn't load the contacts")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} />;
   }
@@ -281,106 +285,7 @@ export function PerfumeContactsPanel({ initialRole = "all" }: { initialRole?: Pe
           </div>
         </Modal>
       ) : null}
-      {selected ? <ContactProfile id={selected} onClose={() => setSelected(null)} /> : null}
     </div>
-  );
-}
-
-function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
-  const p = useQuery({ queryKey: ["perfume", "contact", id], queryFn: () => getPerfumeContact(id) });
-  const locs = useQuery({ queryKey: ["perfume", "contact-locations", id], queryFn: () => getPerfumeCompanyLocations(id) });
-  // Reverse links (fully-wired item f): its quotes / orders / POs (P1 activity block), trades, and its history (item g).
-  const trades = useQuery({ queryKey: ["perfume", "contact", id, "trades"], queryFn: () => perfumeContactTrades(id) });
-  const history = useQuery({ queryKey: ["perfume", "contact", id, "history"], queryFn: () => perfumeContactHistory(id) });
-  const co = p.data?.company;
-  const val = (k: string) => { const v = co?.[k]; return v == null || v === "" ? DASH : Array.isArray(v) ? (v.length ? v.join(" · ") : DASH) : String(v); };
-  return (
-    <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.company_profile", "Company profile")} data-testid="perfume-contact-profile">
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2"><span className="text-card-title">{co?.name ?? "…"}</span><RoleBadge role={(co?.["role"] as PerfumeContactRole) ?? null} /></div>
-        <div className="flex gap-2">
-          {co ? <PerfumeCompanyEdit id={id} co={co} onSaved={() => { void p.refetch(); void history.refetch(); }} /> : null}
-          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.contacts.close", "Close")}</Button>
-        </div>
-      </div>
-      <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="space-y-3">
-          <ParityTable<PerfumeContactProfile["origins"][number]> selectable
-            cardTitle title={tr("perfume.contacts.how_and_when_this_relationship_started", "How and when this relationship started")}
-            rows={p.data?.origins ?? []}
-            rowKey={(o) => o.id}
-            loading={p.isLoading}
-            storageKey="perfume-contact-origins-v1"
-
-            exportFilename="TIO contact origins"
-
-            exportExcel
-            suppressToolbarSearch
-            emptyText="No origin recorded."
-            columns={[
-              { key: "occurred_on", label: "Date", sortable: true, cellClass: "text-right tabular-nums", render: (o) => usDate(o.occurred_on) },
-              { key: "how", label: "How", sortable: true },
-              { key: "source", label: "Where (source)", sortable: true, render: (o) => (o.source_url ? <a className="text-[#14314F] underline" href={o.source_url} target="_blank" rel="noreferrer">{o.source}</a> : o.source) },
-              { key: "person_name", label: "Who", sortable: true, render: (o) => o.person_name ?? DASH },
-              { key: "detail", label: "Detail", sortable: true, render: (o) => o.detail ?? DASH },
-            ]}
-          />
-          <ParityTable<PerfumeContactProfile["people"][number]> selectable
-            cardTitle title={tr("perfume.contacts.people", "People")}
-            rows={p.data?.people ?? []}
-            rowKey={(x) => x.id}
-            loading={p.isLoading}
-            storageKey="perfume-contact-people-v1"
-
-            exportFilename="TIO contact people"
-
-            exportExcel
-            suppressToolbarSearch
-            emptyText="No person on file — needs email."
-            columns={[
-              { key: "name", label: "Name", sortable: true, render: (x) => <span className="font-semibold">{x.name ?? DASH}</span> },
-              { key: "email", label: "Email", sortable: true, render: (x) => x.email ?? DASH },
-              { key: "phones", sortable: true, label: "Phones", render: (x) => x.phones.join(" · ") || DASH },
-              { key: "role", label: "Role", sortable: true, render: (x) => <RoleBadge role={x.role} /> },
-              { key: "how_started", label: "How it started", sortable: true, render: (x) => x.how_started ?? DASH },
-              { key: "first_contact_on", label: "First", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.first_contact_on) },
-              { key: "last_email_on", label: "Last", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.last_email_on) },
-              { key: "email_count", label: "Emails", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.email_count) },
-            ]}
-          />
-          {/* ROUND P1.12 A — the P1 seat's activity block: quotes, sales orders, linked vendors and the POs to it, each opening its document. */}
-          <PerfumeCompanyActivity companyId={id} />
-          <ParityTable<PerfumeContactTrade> selectable
-            cardTitle title={tr("perfume.contacts.trades", "Trades")}
-            rows={trades.data?.trades ?? []}
-            rowKey={(x) => x.id}
-            loading={trades.isLoading}
-            storageKey="perfume-contact-trades-v1"
-            exportFilename="TIO contact trades"
-            exportExcel
-            suppressToolbarSearch
-            emptyText="No trade with this company yet."
-            columns={[
-              { key: "item", label: "Item", sortable: true, render: (x) => <a className="font-semibold text-[#14314F] underline" href="/perfume?tab=traders">{x.item}</a> },
-              { key: "side", label: "Side", sortable: true },
-              { key: "stage", label: "Stage", sortable: true, render: (x) => x.stage.replace(/_/g, " ") },
-              { key: "buyer_status", label: "Their status", sortable: true, render: (x) => x.buyer_status ?? DASH },
-              { key: "qty", label: "Qty", sortable: true, kind: "number", cellClass: "text-right tabular-nums", render: (x) => n(x.qty) },
-            ]}
-          />
-          <PerfumeCompanyLocations rows={locs.data?.locations ?? []} />
-          <PerfumeHistoryTable events={history.data?.events ?? []} loading={history.isLoading} storageKey="perfume-contact-history-v1" exportName="TIO contact history" />
-        </div>
-        <div className="text-xs">
-          {co ? <ScentsxCustomerLink contactId={id} name={String(co.name ?? "")} email={(co["email"] as string | null) ?? null} phone={(co["phone"] as string | null) ?? null} /> : null}
-          {([["Website", "website"], ["Phone", "phone"], ["Address", "address"], ["City", "city"], ["State", "state"], ["Country", "country"], ["Relationship", "main_category"], ["Industry", "categories"], ["Review tags", "review_tags"], ["Business type", "segment"],
-            ["Customer type", "customer_type"], ["Vendor type", "vendor_type"], ["Google rating", "google_rating"], ["Google reviews", "google_rating_count"],
-            ["Open hours", "google_hours"], ["Google status", "google_business_status"], ["Owner", "owner_name"], ["LinkedIn", "linkedin"], ["Source", "source"]] as const).map(([l, k]) => (
-            <div key={k} className="flex justify-between gap-3 border-b border-[#E8EDF2] py-1.5"><span className="text-[#64748B]">{l}</span><span className="text-right">{val(k)}</span></div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
 
