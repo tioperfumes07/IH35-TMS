@@ -63,6 +63,10 @@ beforeEach(() => {
       { vendor_id: "vS", vendor: "Sushmaa Intl Inc", company_id: "coT", company: "Andy Tilani", proposed: "Sushmaa Intl Inc" }] : [] };
     if (path === "/api/v1/perfume/companies/coB/name") { nameRows = false; return { changed: true, name: "B&S Fragrances and Cosmetics" }; }
     if (path === "/api/v1/perfume/companies/coT/name-ok") return { ok: true };
+    if (path === "/api/v1/scentsx/company") return { company: { id: "sx1", name: "ScentsX LLC" } };
+    if (path.startsWith("/api/v1/scentsx/vendor-links?")) return { links: [] };
+    if (path === "/api/v1/mdata/vendors") return { id: "mv1" };
+    if (path === "/api/v1/scentsx/vendor-links") return { link: { id: "l1" }, screening: { result: "clear" } };
     if (path === "/api/v1/perfume/vendor-links/preview") return linkRows ? { linked: 3, unlinked: 2, proposals: [
       { vendor_id: "vA", vendor: "Vendor A — ARABIC list", short_name: "VA", kind: "buy", company_name: "Vendor A", action: "choose", company_id: "co9",
         candidates: [{ id: "co9", name: "Vendor A LLC", role: "vendor", city: "Miami", state: "FL", country: "US", people: 2, exact: true },
@@ -166,6 +170,14 @@ describe("profiles", () => {
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
       { vendor_id: "vA", company_id: "co8" }, { vendor_id: "vN", create_name: "Nobody Fragrance House" }] }]));
     await waitFor(() => expect(screen.queryByTestId("perfume-vendor-link-review")).toBeNull());
+  });
+  it("a supplier's profile makes it a ScentsX vendor (A/P) under its company name: canonical vendor route, then the link", async () => {
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers&open=vA");
+    await screen.findByTestId("perfume-vendor-profile");
+    const btn = await screen.findByRole("button", { name: /ScentsX vendor/i });
+    fireEvent.click(btn);
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/mdata/vendors", { operating_company_id: "sx1", name: "Vendor A LLC", vendor_type: "Perfume supplier" }]));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/scentsx/vendor-links", { desk_id: "vA", engine_id: "mv1" }]));
   });
   it("company names to fix: Save sends the typed name; Name is right keeps it", async () => {
     nameRows = true;
