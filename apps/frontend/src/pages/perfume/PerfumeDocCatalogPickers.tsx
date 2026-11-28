@@ -33,7 +33,7 @@ export function DocCatalogPickers({ doc, docDate, withTax, onPatch, testId, dueA
           <option value="">{legacy ? `— ${legacy} (typed, pick one) —` : "— Pick terms —"}</option>
           {(cats?.terms ?? []).map((t) => <option key={t.id} value={t.id}>{`${t.name} (${t.days} day${t.days === 1 ? "" : "s"})`}</option>)}
         </select>
-        <span className="text-[11px] text-gray-600" data-testid={`${testId}-due`}>
+        <span className="text-xs text-gray-600" data-testid={`${testId}-due`}>
           {days == null ? "No terms picked — due on the customer's / vendor's own terms."
             : dueAfter ? `Due ${days} days after the ${dueAfter}`
             : docDate ? `Due ${addDays(docDate, days)} (${days} days from ${docDate})` : `Due ${days} days after the invoice date`}
