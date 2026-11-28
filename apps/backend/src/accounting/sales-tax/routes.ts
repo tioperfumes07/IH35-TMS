@@ -184,14 +184,17 @@ export async function registerSalesTaxRoutes(app: FastifyInstance) {
     const created = await withCompanyScope(user.uuid, body.data.operating_company_id, async (client) => {
       const computed = await client.query(
         `
+          -- ROUND L.31 M11 (LEAD): taxable = sales on invoices that carry tax, non-taxable = sales on invoices with none (resale
+          -- certificate / export) — it was a constant 0 and every sale was reported taxable. Drafts are not sales yet.
           SELECT
-            COALESCE(SUM(i.subtotal_cents), 0)::bigint AS taxable_sales_cents,
-            0::bigint AS non_taxable_sales_cents,
+            COALESCE(SUM(i.subtotal_cents) FILTER (WHERE COALESCE(i.tax_cents, 0) > 0), 0)::bigint AS taxable_sales_cents,
+            COALESCE(SUM(i.subtotal_cents) FILTER (WHERE COALESCE(i.tax_cents, 0) = 0), 0)::bigint AS non_taxable_sales_cents,
             COALESCE(SUM(i.tax_cents), 0)::bigint AS tax_collected_cents
           FROM accounting.invoices i
           WHERE i.operating_company_id = $1::uuid
             AND i.issue_date BETWEEN $2::date AND $3::date
             AND i.voided_at IS NULL
+            AND i.status::text NOT IN ('draft', 'voided')
         `,
         [body.data.operating_company_id, body.data.period_start, body.data.period_end]
       );
