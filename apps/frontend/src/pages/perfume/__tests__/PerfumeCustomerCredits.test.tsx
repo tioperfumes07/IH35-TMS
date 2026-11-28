@@ -17,6 +17,13 @@ beforeEach(() => {
     if (opts?.method === "POST") { posts.push([path, opts.body]); return { id: "cmN", display_id: "CM-2026-0002", applicationIds: ["a1"] }; }
     if (path.startsWith("/api/v1/accounting/credit-memos?")) return { credit_memos: [{ id: "cm1", customer_id: "cu1", display_id: "CM-2026-0001", status: "issued", reason: "damage",
       issue_date: "2026-11-20", amount_cents: 5000, amount_applied_cents: 0, amount_unapplied_cents: 5000, notes: "2 broken testers", created_at: "2026-11-20", created_by_user_id: null }] };
+    if (path.startsWith("/api/v1/accounting/customer-refunds?")) return { refunds: [{ id: "rf1", display_id: "RF-2026-00001", customer_id: "cu1", credit_memo_id: "cm0",
+      credit_memo_display_id: "CM-2026-0000", refund_date: "2026-11-21", amount_cents: 1500, method: "check", reference: "1040", bank_account_id: "b1",
+      bank_account_name: "Operating Checking", memo: null, journal_entry_id: "je1", created_at: "2026-11-21", voided_at: null, void_reason: null }] };
+    if (path.startsWith("/api/v1/banking/accounts/all?")) return { accounts: [
+      { id: "b1", account_name: "Operating Checking", account_type: "checking", ledger_account_id: "l1000" },
+      { id: "b2", account_name: "Business Credit Card", account_type: "credit_card", ledger_account_id: "l2010" },
+      { id: "b3", account_name: "Store Cash Registers", account_type: "cash_on_hand", ledger_account_id: "l1010" }] };
     if (path === "/api/v1/scentsx/accounts") return { accounts: [acc("a4000", "4000", "Sales of Goods - Wholesale", "Income"), acc("a4800", "4800", "Sales Returns & Allowances", "Income"), acc("a6700", "6700", "Bad Debt Expense", "Expense")] };
     throw new Error(`unexpected ${path}`);
   });
@@ -56,5 +63,24 @@ describe("customer credits & write-offs", () => {
     fireEvent.click(screen.getByTestId("perfume-ar-credit-save"));
     await waitFor(() => expect(posts.some(([p, b]) => p.startsWith("/api/v1/accounting/credit-memos?") && (b as { account_id: string; amount_cents: number; related_invoice_id?: string }).account_id === "a4800"
       && (b as { amount_cents: number }).amount_cents === 2500 && !(b as { related_invoice_id?: string }).related_invoice_id)).toBe(true));
+  });
+  it("refund a credit memo: from a bank or cash account (never the card), by check, capped at what is left; refunds listed and voidable", async () => {
+    mount();
+    await screen.findByText("RF-2026-00001");
+    fireEvent.click(await screen.findByTestId("perfume-ar-refund-cm1"));
+    const from = await screen.findByTestId("perfume-ar-refund-from");
+    await waitFor(() => expect(Array.from((from as HTMLSelectElement).options).map((o) => o.value)).toEqual(["b1", "b3"]));
+    const amt = screen.getByLabelText("Refund amount"); fireEvent.change(amt, { target: { value: "60.00" } }); fireEvent.blur(amt);
+    await waitFor(() => expect((screen.getByTestId("perfume-ar-refund-save") as HTMLButtonElement).disabled).toBe(true));
+    fireEvent.change(amt, { target: { value: "30.00" } }); fireEvent.blur(amt);
+    fireEvent.change(screen.getByTestId("perfume-ar-refund-ref"), { target: { value: "1042" } });
+    await waitFor(() => expect((screen.getByTestId("perfume-ar-refund-save") as HTMLButtonElement).disabled).toBe(false));
+    fireEvent.click(screen.getByTestId("perfume-ar-refund-save"));
+    await waitFor(() => expect(posts).toContainEqual([expect.stringMatching(/^\/api\/v1\/accounting\/customer-refunds\?operating_company_id=sx1/), expect.objectContaining({
+      credit_memo_id: "cm1", bank_account_id: "b1", amount_cents: 3000, method: "check", reference: "1042", idempotency_key: expect.stringMatching(/^refund:cm1:/) })]));
+    fireEvent.click(await screen.findByTestId("perfume-ar-refund-void-rf1"));
+    fireEvent.change(await screen.findByTestId("perfume-ar-refund-void-reason"), { target: { value: "check never cashed" } });
+    fireEvent.click(screen.getByTestId("perfume-ar-refund-void-confirm"));
+    await waitFor(() => expect(posts).toContainEqual(["/api/v1/accounting/customer-refunds/rf1/void?operating_company_id=sx1", { reason: "check never cashed" }]));
   });
 });

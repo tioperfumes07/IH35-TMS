@@ -55,6 +55,7 @@ import {
 } from "./void.service.js";
 import { voidBillInClientTx, voidBillPaymentInClientTx, type BillMutationClient } from "./bills.service.js";
 import { reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
+import { liveRefundCentsForCreditMemo } from "./customer-refunds.service.js";
 import { reverseExpenseDocumentInClientTx } from "./expense-void-reversal.js";
 import { expenseVoidReversalMemo } from "./expense-void.service.js";
 import { reverseFactoringAdvanceEvent } from "./factoring-posting/poster.service.js";
@@ -240,6 +241,10 @@ export async function voidDocument(
       // (verify-credit-memo-liability-zero-posting-lines) fired in CI the first time one posted. The void reverses that
       // posting through the engine on this transaction, exactly as credit-memos.routes.ts's /void does; a credit memo whose
       // GL is owned elsewhere (payment overpayment, Faro short-pay) never posted and has nothing to reverse.
+      // CUSTOMER REFUNDS — a credit memo with a live refund cannot be voided (the refund's Dr A/R would be left unmatched).
+      if ((await liveRefundCentsForCreditMemo(client as never, input.operatingCompanyId, input.id)) > 0) {
+        throw Object.assign(new Error("Void the refund of this credit memo first"), { code: "CREDIT_MEMO_HAS_REFUNDS", statusCode: 409 });
+      }
       let reversalJournalEntryId: string | null = null;
       try {
         const rev = await reversePostedSourceTransactionInClientTx(

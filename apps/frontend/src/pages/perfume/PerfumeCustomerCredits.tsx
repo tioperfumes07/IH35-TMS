@@ -6,6 +6,9 @@
  *     discounts 4810 …) optionally applied to an invoice at once.
  *   · M3 — "Write off" an open invoice as bad debt: a credit memo for its open balance coded to 6700 Bad Debt Expense, applied to that
  *     invoice (Dr 6700 / Cr A/R), with the reason kept on the memo. Never a delete, never a void of the invoice.
+ *   · Refund (owner 2026-11-27 22:40 CT "Build refund engine") — pay a credit memo's credit back by check / ACH / wire / card / cash
+ *     from Operating Checking or a cash account (POST /api/v1/accounting/customer-refunds: Dr A/R / Cr that account), the refunds
+ *     listed under it, each voidable (the posting reverses and the credit comes back).
  * No GL math here.
  */
 import { useState } from "react";
@@ -20,6 +23,9 @@ import { userFacingApiError } from "../../lib/api-error-message";
 import { accountIdByNumber, formatAccountDisplayLabel } from "../../lib/show-account-numbers";
 import { applyCreditMemo, createCreditMemo, listCreditMemos, type CreditMemo, type CreditMemoReason } from "../../api/credit-memos";
 import { listScentsxAccounts, type ScentsxArInvoice } from "../../api/scentsx";
+import { createCustomerRefund, listCustomerRefunds, voidCustomerRefund, type CustomerRefund, type RefundMethod } from "../../api/customer-refunds";
+import { getAllAccounts } from "../../api/banking";
+import { DatePicker } from "../../components/forms/DatePicker";
 import { tr } from "./perfumeI18n";
 import { ctl, DASH, money, usDate } from "./perfumeDocParts";
 
@@ -30,6 +36,7 @@ const REASONS: Array<{ value: CreditMemoReason; label: string }> = [
   { value: "billing_error_ours", label: "Our billing error" }, { value: "agreed_concession", label: "Agreed allowance" },
   { value: "quick_pay_discount", label: "Early-payment discount" }, { value: "other", label: "Other" },
 ];
+const METHOD_LABEL: Record<RefundMethod, string> = { check: "Check", ach: "ACH", wire: "Wire", card: "Card", cash: "Cash" };
 const invLabel = (i: ScentsxArInvoice) => `${i.number ?? i.id.slice(0, 8)} · ${usDate(i.issue_date)} · open ${money(i.open_cents)}`;
 
 export function PerfumeCustomerCredits({ companyId, customerId, open, onDone }: { companyId: string; customerId: string; open: ScentsxArInvoice[]; onDone: () => Promise<void> }) {
@@ -38,8 +45,12 @@ export function PerfumeCustomerCredits({ companyId, customerId, open, onDone }: 
   const [applying, setApplying] = useState<CreditMemo | null>(null);
   const [creating, setCreating] = useState(false);
   const [writeOff, setWriteOff] = useState<ScentsxArInvoice | null>(null);
+  const [refunding, setRefunding] = useState<CreditMemo | null>(null);
+  const [voiding, setVoiding] = useState<CustomerRefund | null>(null);
+  const refunds = useQuery({ queryKey: ["scentsx", "customer-refunds", customerId], queryFn: () => listCustomerRefunds(companyId, { customer_id: customerId }) });
   const rows = memos.data?.credit_memos ?? [];
-  const done = async () => { setApplying(null); setCreating(false); setWriteOff(null); await memos.refetch(); await onDone(); };
+  const refundRows = refunds.data?.refunds ?? [];
+  const done = async () => { setApplying(null); setCreating(false); setWriteOff(null); setRefunding(null); setVoiding(null); await memos.refetch(); await refunds.refetch(); await onDone(); };
   const accounts = ledger.data?.accounts ?? [];
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] p-3" data-testid="perfume-ar-credits" aria-label={tr("perfume.ar.credits", "Credits & write-offs")}>
@@ -61,11 +72,36 @@ export function PerfumeCustomerCredits({ companyId, customerId, open, onDone }: 
             { className: "text-left", cellClass: "text-left", key: "notes", sortable: true, label: "Reason", render: (r) => r.notes || REASONS.find((x) => x.value === r.reason)?.label || r.reason, exportValue: (r) => r.notes ?? r.reason },
             { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
             { key: "amount_unapplied_cents", sortable: true, label: "Left to apply", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.amount_unapplied_cents), exportValue: (r) => r.amount_unapplied_cents / 100 },
-            { key: "apply", sortable: false, label: "", render: (r) => (r.amount_unapplied_cents > 0 && open.length
-              ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setApplying(r); }} data-testid={`perfume-ar-apply-${r.id}`}>{tr("perfume.ar.apply", "Apply to invoice")}</Button> : DASH) },
+            { key: "apply", sortable: false, label: "", render: (r) => (r.amount_unapplied_cents > 0
+              ? <span className="inline-flex gap-1">
+                  {open.length ? <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setApplying(r); }} data-testid={`perfume-ar-apply-${r.id}`}>{tr("perfume.ar.apply", "Apply to invoice")}</Button> : null}
+                  <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setRefunding(r); }} data-testid={`perfume-ar-refund-${r.id}`}>{tr("perfume.ar.refund", "Refund")}</Button>
+                </span> : DASH) },
           ]}
         />
       )}
+      {refunds.isError ? <ListErrorState title={tr("perfume.ar.refunds_error", "Couldn't load the refunds")} status={0} message={(refunds.error as Error)?.message} onRetry={() => void refunds.refetch()} /> : refundRows.length ? (
+        <>
+          <div className="text-xs font-semibold">{tr("perfume.ar.refunds", "Refunds paid")}</div>
+          <ParityTable<CustomerRefund> selectable
+            rows={refundRows} rowKey={(r) => r.id} loading={refunds.isLoading} storageKey="perfume-ar-refunds-v1" exportFilename="TIO customer refunds" exportExcel
+            emptyText="No refunds for this customer."
+            columns={[
+              { className: "text-left", cellClass: "text-left font-semibold", key: "display_id", sortable: true, label: "Refund", render: (r) => r.display_id, exportValue: (r) => r.display_id },
+              { key: "refund_date", sortable: true, label: "Date", cellClass: "text-right tabular-nums", render: (r) => usDate(r.refund_date), exportValue: (r) => r.refund_date },
+              { className: "text-left", cellClass: "text-left", key: "credit_memo_display_id", sortable: true, label: "Credit memo", render: (r) => r.credit_memo_display_id ?? DASH, exportValue: (r) => r.credit_memo_display_id ?? "" },
+              { className: "text-left", cellClass: "text-left", key: "method", sortable: true, label: "Paid by", render: (r) => `${METHOD_LABEL[r.method]}${r.reference ? ` ${r.reference}` : ""}`, exportValue: (r) => `${r.method} ${r.reference ?? ""}`.trim() },
+              { className: "text-left", cellClass: "text-left", key: "bank_account_name", sortable: true, label: "From", render: (r) => r.bank_account_name ?? DASH, exportValue: (r) => r.bank_account_name ?? "" },
+              { key: "amount_cents", sortable: true, label: "Amount", kind: "number", cellClass: "text-right tabular-nums font-semibold", render: (r) => money(r.amount_cents), exportValue: (r) => r.amount_cents / 100 },
+              { className: "text-left", cellClass: "text-left", key: "voided_at", sortable: true, label: "Status", render: (r) => (r.voided_at ? `Voided · ${r.void_reason ?? ""}` : "Paid"), exportValue: (r) => (r.voided_at ? "voided" : "paid") },
+              { key: "void", sortable: false, label: "", render: (r) => (r.voided_at ? DASH
+                : <Button type="button" variant="secondary" className="h-[28px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setVoiding(r); }} data-testid={`perfume-ar-refund-void-${r.id}`}>{tr("perfume.ar.void", "Void")}</Button>) },
+            ]}
+          />
+        </>
+      ) : null}
+      {refunding ? <RefundModal memo={refunding} companyId={companyId} onClose={() => setRefunding(null)} onDone={done} /> : null}
+      {voiding ? <VoidRefundModal refund={voiding} companyId={companyId} onClose={() => setVoiding(null)} onDone={done} /> : null}
       {applying ? <ApplyModal memo={applying} companyId={companyId} open={open} onClose={() => setApplying(null)} onDone={done} /> : null}
       {creating ? <CreditModal companyId={companyId} customerId={customerId} open={open} accounts={accounts} onClose={() => setCreating(false)} onDone={done} /> : null}
       {writeOff ? <WriteOffModal companyId={companyId} customerId={customerId} open={open} first={writeOff} badDebtId={accountIdByNumber(accounts, "6700")} onClose={() => setWriteOff(null)} onDone={done} /> : null}
@@ -185,6 +221,85 @@ function WriteOffModal({ companyId, customerId, open, first, badDebtId, onClose,
           <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.ar.cancel", "Cancel")}</Button>
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void go()} data-testid="perfume-ar-writeoff-confirm">
             {`${tr("perfume.ar.writeoff_confirm", "Write off")} ${inv ? money(inv.open_cents) : ""}`}</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/** Where a refund can come from: ScentsX's bank and cash accounts (never the credit card or Undeposited Funds). */
+const REFUND_FROM_TYPES = /^(checking|savings|money_market|cash_on_hand|petty_cash)$/i;
+
+function RefundModal({ memo, companyId, onClose, onDone }: { memo: CreditMemo; companyId: string; onClose: () => void; onDone: () => Promise<void> }) {
+  const { pushToast } = useToast();
+  const banks = useQuery({ queryKey: ["scentsx", "banks", companyId], queryFn: () => getAllAccounts(companyId) });
+  const from = (banks.data?.accounts ?? []).filter((r) => r.ledger_account_id && REFUND_FROM_TYPES.test(String(r.account_type ?? "")))
+    .map((r) => ({ id: String(r.id), name: String(r.account_name ?? r.name ?? ""), type: String(r.account_type ?? "") }));
+  const [bankId, setBankId] = useState("");
+  const [cents, setCents] = useState<number | null>(memo.amount_unapplied_cents);
+  const [method, setMethod] = useState<RefundMethod>("check");
+  const [ref, setRef] = useState("");
+  const [date, setDate] = useState(todayCT());
+  const [memoText, setMemoText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [key] = useState(() => `refund:${memo.id}:${Date.now()}`);
+  const bank = from.find((b) => b.id === (bankId || from[0]?.id));
+  const ok = Boolean(bank) && (cents ?? 0) > 0 && (cents ?? 0) <= memo.amount_unapplied_cents;
+  const go = async () => {
+    setBusy(true);
+    try {
+      const r = await createCustomerRefund(companyId, { credit_memo_id: memo.id, bank_account_id: bank!.id, amount_cents: cents!, refund_date: date, method,
+        ...(ref.trim() ? { reference: ref.trim() } : {}), ...(memoText.trim() ? { memo: memoText.trim() } : {}), idempotency_key: key });
+      pushToast(`${r.refund.display_id} · ${money(cents!)} ${tr("perfume.ar.refunded", "refunded")} · ${memo.display_id}`, "success"); await onDone();
+    } catch (e) { pushToast(userFacingApiError(e, "Not refunded"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`${tr("perfume.ar.refund", "Refund")} · ${memo.display_id}`} size="md" variant="drawer" data-testid="perfume-ar-refund-modal">
+      <div className="space-y-3 text-xs">
+        <p>{`${money(memo.amount_unapplied_cents)} ${tr("perfume.ar.left_refund", "of credit left to refund")}`}</p>
+        <label className="block">{tr("perfume.ar.amount", "Amount")} *<MoneyInput className="block w-[160px]" ariaLabel="Refund amount" valueCents={cents} onChangeCents={setCents} /></label>
+        {(cents ?? 0) > memo.amount_unapplied_cents ? <p className="text-[#B91C1C]">{`${tr("perfume.ar.max", "At most")} ${money(memo.amount_unapplied_cents)}`}</p> : null}
+        <label className="block">{tr("perfume.ar.date", "Date")}<DatePicker aria-label="Refund date" value={date} onChange={(v) => setDate(v || todayCT())} /></label>
+        <label className="block">{tr("perfume.ar.paid_from", "Paid from")}
+          <select className={`${ctl} block w-full`} value={bank?.id ?? ""} onChange={(e) => setBankId(e.target.value)} data-testid="perfume-ar-refund-from">
+            {from.map((b) => <option key={b.id} value={b.id}>{formatAccountDisplayLabel({ account_name: b.name })}</option>)}
+          </select>
+        </label>
+        <label className="block">{tr("perfume.ar.method", "Paid by")}
+          <select className={`${ctl} block w-full`} value={method} onChange={(e) => setMethod(e.target.value as RefundMethod)} data-testid="perfume-ar-refund-method">
+            {(Object.keys(METHOD_LABEL) as RefundMethod[]).map((m) => <option key={m} value={m}>{METHOD_LABEL[m]}</option>)}
+          </select>
+        </label>
+        <label className="block">{tr("perfume.ar.ref", "Check no. / reference")}<input className={`${ctl} block w-[180px]`} aria-label="Refund check number or reference" value={ref} onChange={(e) => setRef(e.target.value)} data-testid="perfume-ar-refund-ref" /></label>
+        <label className="block">{tr("perfume.ar.memo", "Memo")}<input className={`${ctl} block w-full`} aria-label="Refund memo" value={memoText} onChange={(e) => setMemoText(e.target.value)} data-testid="perfume-ar-refund-memo" /></label>
+        {!banks.isLoading && !from.length ? <p className="text-[#B91C1C]">{tr("perfume.ar.no_bank", "ScentsX has no bank or cash account to refund from.")}</p> : null}
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.ar.cancel", "Cancel")}</Button>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !ok} onClick={() => void go()} data-testid="perfume-ar-refund-save">
+            {`${tr("perfume.ar.refund_confirm", "Refund")} ${ok ? money(cents!) : ""}`}</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+function VoidRefundModal({ refund, companyId, onClose, onDone }: { refund: CustomerRefund; companyId: string; onClose: () => void; onDone: () => Promise<void> }) {
+  const { pushToast } = useToast();
+  const [why, setWhy] = useState("");
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    setBusy(true);
+    try { await voidCustomerRefund(companyId, refund.id, why.trim()); pushToast(`${refund.display_id} ${tr("perfume.ar.voided", "voided")}`, "success"); await onDone(); }
+    catch (e) { pushToast(userFacingApiError(e, "Not voided"), "error"); } finally { setBusy(false); }
+  };
+  return (
+    <Modal open onClose={onClose} title={`${tr("perfume.ar.void_refund", "Void refund")} · ${refund.display_id}`} size="sm" data-testid="perfume-ar-refund-void-modal">
+      <div className="space-y-3 text-xs">
+        <p>{tr("perfume.ar.void_refund_help", "The refund's entry is reversed and the credit goes back to the credit memo. The refund stays on record as voided.")}</p>
+        <label className="block">{tr("perfume.ar.why", "Reason")} *<textarea className={`${ctl} block h-[56px] w-full py-1`} value={why} onChange={(e) => setWhy(e.target.value)} data-testid="perfume-ar-refund-void-reason" /></label>
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.ar.cancel", "Cancel")}</Button>
+          <Button type="button" className="h-[34px] px-3 text-xs" disabled={busy || !why.trim()} onClick={() => void go()} data-testid="perfume-ar-refund-void-confirm">{tr("perfume.ar.void", "Void")}</Button>
         </div>
       </div>
     </Modal>

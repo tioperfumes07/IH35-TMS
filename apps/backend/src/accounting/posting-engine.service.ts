@@ -83,6 +83,10 @@ export const POSTING_SOURCE_TYPES = [
   // creation. sourceId = accounting.credit_memos.id. Credits whose GL is owned elsewhere (payment overpayment, Faro
   // short-pay write-down) carry no account and never reach this poster.
   "credit_memo",
+  // CUSTOMER REFUNDS (owner 2026-11-27 22:40 CT "Build refund engine") — paying a customer's credit back: Dr ar_control / Cr the
+  // bank (or cash) ledger the money left from. sourceId = accounting.customer_refunds.id. The credit memo it refunds already
+  // posted Cr A/R; this is the leg that clears that credit balance.
+  "customer_refund",
   // ROUND 394 RULING 2 — a driver liability that is a DRIVER RECEIVABLE (accident damage, civil / internal
   // fine) posts at creation: Dr the receivable role (1255 / 1256) / Cr the matching recovery role.
   // sourceId = driver_finance.driver_liabilities.id. A write-off is the reversal of this posting.
@@ -2134,6 +2138,39 @@ async function buildCreditMemoLines(client: DbClient, operatingCompanyId: string
   };
 }
 
+async function buildCustomerRefundLines(client: DbClient, operatingCompanyId: string, sourceId: string): Promise<PostingDraft> {
+  const res = await client.query<{
+    id: string; display_id: string; refund_date: string; amount_cents: number; bank_ledger_account_id: string;
+    voided_at: string | null; method: string; reference: string | null; memo_label: string | null;
+  }>(
+    `SELECT r.id::text, r.display_id, r.refund_date::text, r.amount_cents::bigint AS amount_cents, r.bank_ledger_account_id::text,
+            r.voided_at::text, r.method, r.reference, cm.display_id AS memo_label
+       FROM accounting.customer_refunds r
+       JOIN accounting.credit_memos cm ON cm.id = r.credit_memo_id AND cm.operating_company_id = r.operating_company_id
+      WHERE r.operating_company_id = $1::uuid AND r.id::text = $2
+      LIMIT 1
+      FOR UPDATE OF r`,
+    [operatingCompanyId, sourceId]
+  );
+  const refund = res.rows[0];
+  if (!refund) throw new PostingEngineError("SOURCE_NOT_FOUND", "Customer refund not found");
+  if (refund.voided_at) throw new PostingEngineError("PAYMENT_NOT_POSTING_ELIGIBLE", "Voided customer refund is not posting-eligible");
+  const ar = await resolveArAccountForCompany(client, operatingCompanyId);
+  if (!ar) throw new PostingEngineError("ACCOUNT_MAPPING_MISSING", "AR account mapping is missing");
+  const amount = Number(refund.amount_cents ?? 0);
+  if (amount <= 0) throw new PostingEngineError("UNBALANCED_ENTRY", "Customer refund amount_cents must be positive");
+  const label = `Refund ${refund.display_id}${refund.memo_label ? ` of credit memo ${refund.memo_label}` : ""}`;
+  const via = `${refund.method}${refund.reference ? ` ${refund.reference}` : ""}`;
+  return {
+    postingDate: refund.refund_date,
+    memo: `${label} (${via})`,
+    lines: [
+      { account_id: ar, debit_or_credit: "debit", amount_cents: amount, description: `${label} — customer credit cleared`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+      { account_id: refund.bank_ledger_account_id, debit_or_credit: "credit", amount_cents: amount, description: `${label} — paid by ${via}`, source_transaction_line_id: null, relationship_role: "source_transaction" },
+    ],
+  };
+}
+
 async function buildVendorCreditOverpayLines(
   client: DbClient,
   operatingCompanyId: string,
@@ -2987,6 +3024,7 @@ async function buildPostingDraft(
   if (sourceType === "bill_payment") return buildBillPaymentLines(client, operatingCompanyId, sourceId);
   if (sourceType === "vendor_credit") return buildVendorCreditOverpayLines(client, operatingCompanyId, sourceId);
   if (sourceType === "credit_memo") return buildCreditMemoLines(client, operatingCompanyId, sourceId);
+  if (sourceType === "customer_refund") return buildCustomerRefundLines(client, operatingCompanyId, sourceId);
   if (sourceType === "cash_advance") return buildCashAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "driver_advance") return buildDriverAdvanceLines(client, operatingCompanyId, sourceId, creditAccountId);
   if (sourceType === "bank_categorization") return buildBankCategorizationLines(client, operatingCompanyId, sourceId);

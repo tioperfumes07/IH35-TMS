@@ -503,3 +503,24 @@ export async function resolveVendorCreditDisplayId(
   }
   return nextVendorCreditDisplayId(client, operatingCompanyId, referenceDate);
 }
+
+/** CUSTOMER REFUNDS (owner 2026-11-27 22:40 CT) — RF-YYYY-NNNNN, one yearly series per company, same rules as the series above. */
+export async function nextCustomerRefundDisplayId(client: Queryable, operatingCompanyId: string, referenceDate: Date = new Date()) {
+  const year = toYear(referenceDate);
+  const prefix = `RF-${year}-`;
+  await withDisplayLock(client, `accounting.customer_refund.display_id:${operatingCompanyId}`);
+  const res = await client.query<{ next_number: number }>(
+    `
+      SELECT COALESCE(
+        MAX(CASE WHEN display_id ~ ('^' || $2 || '[0-9]+$') THEN substr(display_id, length($2) + 1)::bigint END),
+        0
+      ) + 1 AS next_number
+      FROM accounting.customer_refunds
+      WHERE operating_company_id = $1::uuid
+        AND display_id LIKE $2 || '%'
+    `,
+    [operatingCompanyId, prefix]
+  );
+  const nextNumber = Number(res.rows[0]?.next_number ?? 1);
+  return `${prefix}${String(nextNumber).padStart(5, "0")}`;
+}

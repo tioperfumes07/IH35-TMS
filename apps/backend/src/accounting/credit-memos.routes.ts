@@ -14,6 +14,7 @@ import {
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
 import { applyCreditMemoToInvoicesInClientTx } from "./credit-memo-apply.service.js";
 import { createBodySchema, createCreditMemoInClientTx } from "./credit-memo-create.service.js";
+import { liveRefundCentsForCreditMemo } from "./customer-refunds.service.js";
 
 // ACCT-F5606 — AR credit memo CRUD + apply-to-invoice + void, mirroring vendor-credits.routes.ts's
 // proven AP shape (CUSTVEND-PAR-1) column-for-column and check-for-check. Closes LV-CREDITMEMO-NOPATH's
@@ -311,6 +312,11 @@ export async function registerCreditMemosRoutes(app: FastifyInstance) {
       const credit = creditRes.rows[0];
       if (!credit) return { code: 404 as const, error: "credit_memo_not_found" };
       if (credit.status === "voided") return { code: 409 as const, error: "already_voided" };
+      // CUSTOMER REFUNDS — a refunded credit memo cannot be voided while its refund stands (the refund's Dr A/R would be left
+      // with nothing to clear): void the refund first, exactly like QuickBooks.
+      if ((await liveRefundCentsForCreditMemo(client, query.data.operating_company_id, params.data.id)) > 0) {
+        return { code: 409 as const, error: "credit_memo_has_refunds", detail: "Void the refund of this credit memo first" };
+      }
 
       // Reverse active applications before voiding (void-never-delete: mark voided_at on each)
       await client.query(
