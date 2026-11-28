@@ -87,7 +87,7 @@ export async function buildSendList(c: pg.PoolClient, x: SendListInput) {
      SELECT i.id AS item_id, i.display_name, i.brand, i.size_ml::text, i.conc, i.gender, i.flags, i.internal_code AS tio_code,
             s.inv_desc, o.offer_desc, coalesce(s.hk, o.hk) AS hk, coalesce(s.qty, 0) AS qty, o.offer_cents
        FROM perfume.items i LEFT JOIN stock s ON s.item_id = i.id LEFT JOIN offer o ON o.item_id = i.id
-      WHERE (s.item_id IS NOT NULL OR o.item_id IS NOT NULL) AND i.merged_into_id IS NULL`, [x.sites])).rows;
+      WHERE (s.item_id IS NOT NULL OR o.item_id IS NOT NULL) AND i.merged_into_id IS NULL AND i.is_active AND i.is_stock_item`, [x.sites])).rows;
   const ids = base.map((b) => b.item_id);
   const upcs = ids.length ? new Map((await c.query<{ item_id: string; upc: string }>(
     `SELECT item_id, min(upc) AS upc FROM perfume.item_upcs WHERE item_id = ANY($1::uuid[]) GROUP BY item_id`, [ids])).rows.map((r) => [r.item_id, r.upc])) : new Map<string, string>();
