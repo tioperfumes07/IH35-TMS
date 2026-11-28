@@ -29,8 +29,9 @@ const calls: Array<[string, unknown]> = [];
 let made = false;
 let linkedB = false;
 let linkRows = false;
+let nameRows = false;
 beforeEach(() => {
-  calls.length = 0; made = false; linkedB = false; linkRows = false;
+  calls.length = 0; made = false; linkedB = false; linkRows = false; nameRows = false;
   vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (opts?.method) calls.push([path, opts.body]);
     if (path === "/api/v1/perfume/orders") return { orders: [orow("o1", "SO-000001", "open", made ? 1 : 0), orow("o2", "SO-000002", "shipped", 1)] };
@@ -57,6 +58,11 @@ beforeEach(() => {
       { kind: "customer_type", label: "Customer types", values: [{ id: "t3", value: "Trader", sort: 15, contacts: 0 }, { id: "t4", value: "Retailer", sort: 20, contacts: 0 }] }] };
     if (path === "/api/v1/perfume/companies/co9/role") return { changed: true, role: "both", vendor_type: "Trader", customer_type: "Trader" };
     if (path.startsWith("/api/v1/perfume/contacts?") && path.includes("United")) return { rows: [{ id: "coU", name: "United Perfumes", role: "both", city: "Miami", state: "FL", country: "US", people: 3 }], total: 1 };
+    if (path === "/api/v1/perfume/vendor-links/names") return { rows: nameRows ? [
+      { vendor_id: "vA", vendor: "B&S Fragrances and Cosmetics", company_id: "coB", company: "Bsfragrances", proposed: "B&S Fragrances and Cosmetics" },
+      { vendor_id: "vS", vendor: "Sushmaa Intl Inc", company_id: "coT", company: "Andy Tilani", proposed: "Sushmaa Intl Inc" }] : [] };
+    if (path === "/api/v1/perfume/companies/coB/name") { nameRows = false; return { changed: true, name: "B&S Fragrances and Cosmetics" }; }
+    if (path === "/api/v1/perfume/companies/coT/name-ok") return { ok: true };
     if (path === "/api/v1/perfume/vendor-links/preview") return linkRows ? { linked: 3, unlinked: 2, proposals: [
       { vendor_id: "vA", vendor: "Vendor A — ARABIC list", short_name: "VA", kind: "buy", company_name: "Vendor A", action: "choose", company_id: "co9",
         candidates: [{ id: "co9", name: "Vendor A LLC", role: "vendor", city: "Miami", state: "FL", country: "US", people: 2, exact: true },
@@ -160,6 +166,17 @@ describe("profiles", () => {
     await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/vendor-links/apply", { decisions: [
       { vendor_id: "vA", company_id: "co8" }, { vendor_id: "vN", create_name: "Nobody Fragrance House" }] }]));
     await waitFor(() => expect(screen.queryByTestId("perfume-vendor-link-review")).toBeNull());
+  });
+  it("company names to fix: Save sends the typed name; Name is right keeps it", async () => {
+    nameRows = true;
+    mount(<PerfumeSupplierProfilesPanel />, "/perfume?tab=suppliers");
+    const box = await screen.findByTestId("perfume-company-name-check");
+    expect(box.textContent).toContain("Bsfragrances");
+    fireEvent.click(within(box).getByTestId("perfume-name-ok-coT"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/companies/coT/name-ok", {}]));
+    fireEvent.change(within(box).getByTestId("perfume-name-input-coB"), { target: { value: "B&S Fragrances and Cosmetics" } });
+    fireEvent.click(within(box).getByTestId("perfume-name-save-coB"));
+    await waitFor(() => expect(calls).toContainEqual(["/api/v1/perfume/companies/coB/name", { name: "B&S Fragrances and Cosmetics" }]));
   });
   it("Find another company… links a list to any company in Contacts, not only same-name ones", async () => {
     linkRows = true;
