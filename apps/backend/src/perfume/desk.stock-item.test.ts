@@ -7,6 +7,11 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
 import { buildGrid, deskListRows, invalidateGridCache } from "./desk.service.js";
+import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
+import { createItem, updateItemFile } from "./items.service.js";
+import { stockIn } from "./inventory.service.js";
+import { inventoryStatus, reportFilter } from "./reports.service.js";
+import { searchQuoteItems } from "./quotes.service.js";
 
 describe("deskListRows", () => {
   it("hides listed 0 rows unless searched", () => {
@@ -47,5 +52,17 @@ describeIntegration("Stock item N / inactive off the desk lists (real Postgres, 
     expect(listed).not.toContain(non);
     expect(listed).not.toContain(off);
     expect(deskListRows(g.rows, "ZZSTK NONSTOCK").map((r) => String(r.id))).toContain(non);
+  });
+
+  it("inventory status (active only) and the quote item picker leave a Stock item N out; the item stays found by the item search", async () => {
+    await db.query(`INSERT INTO perfume.locations (code, name, sort_order, kind, own) VALUES ('ZSK', 'ZZ stock-item', 903, 'warehouse', true)`);
+    const keep = (await createItem(db as never, TEST_OWNER_USER_ID, { brand: "ZZSKX", name: "KEEPER", size_ml: 100, tio_code: "ZSKX-001" })).id;
+    const non = (await createItem(db as never, TEST_OWNER_USER_ID, { brand: "ZZSKX", name: "NONSTOCKER", size_ml: 100, tio_code: "ZSKX-002" })).id;
+    for (const id of [keep, non]) await stockIn(db as never, TEST_OWNER_USER_ID, { kind: "opening", item_id: id, location_code: "ZSK", qty: 3, unit_cost_cents: 1000, source: "opening" });
+    await updateItemFile(db as never, TEST_OWNER_USER_ID, non, { is_stock_item: false });
+    const st = await inventoryStatus(db as never, reportFilter.parse({ code_from: "ZSKX-001", code_to: "ZSKX-002" }));
+    expect(st.rows.map((r) => r.tio_code)).toEqual(["ZSKX-001"]);
+    const picker = await searchQuoteItems(db as never, "ZZSKX");
+    expect(picker.map((r) => r.id)).toEqual([keep]);
   });
 });

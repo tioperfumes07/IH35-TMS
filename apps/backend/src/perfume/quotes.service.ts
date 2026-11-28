@@ -171,7 +171,7 @@ export async function searchQuoteItems(c: pg.PoolClient, q: string) {
   const rows = (await c.query<{ id: string; display_name: string; upc: string | null }>(
     `SELECT i.id, i.display_name, (SELECT u.upc FROM perfume.item_upcs u WHERE u.item_id = i.id ORDER BY u.upc LIMIT 1) AS upc
        FROM perfume.items i
-      WHERE i.merged_into_id IS NULL AND i.is_active
+      WHERE i.merged_into_id IS NULL AND i.is_active AND i.is_stock_item
         AND ((${conds.join(" AND ")}) OR upper(i.pos_code) = $2 OR ($1 <> '' AND EXISTS (SELECT 1 FROM perfume.item_upcs u WHERE u.item_id = i.id AND u.upc = $1)))
       ORDER BY (cardinality(coalesce(i.flags, '{}'::text[])) = 0) DESC, length(i.display_name), i.display_name LIMIT 25`, args)).rows;
   const out = [];

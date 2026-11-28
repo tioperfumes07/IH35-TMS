@@ -86,7 +86,8 @@ export const ROW_CAP = 5000;
 
 function itemWhere(f: ReportFilter, args: unknown[]) {
   const w = ["i.merged_into_id IS NULL"];
-  if (f.active_only) w.push("i.is_active");
+  // "Active only" also leaves out Stock item N (owner rule 2026-11-27 16:02 CT via LEAD L.22: hidden from lists, kept in search).
+  if (f.active_only) w.push("i.is_active AND i.is_stock_item");
   if (f.family_id) { args.push(f.family_id); w.push(`i.family_id = $${args.length}`); }
   if (f.family_from) { args.push(f.family_from.toLowerCase()); w.push(`lower(fam.name) >= $${args.length}`); }
   if (f.family_to) { args.push(f.family_to.toLowerCase()); w.push(`lower(fam.name) <= $${args.length}`); }
@@ -146,7 +147,7 @@ export async function priceBook(c: pg.PoolClient, f: z.infer<typeof priceBookQue
 /* ------------------------------------------------------------------ Product family report */
 
 export async function familyReport(c: pg.PoolClient, f: { active_only: boolean }) {
-  const act = f.active_only ? "AND i.is_active" : "";
+  const act = f.active_only ? "AND i.is_active AND i.is_stock_item" : "";
   const rows = (await c.query<{ family_id: string | null; family: string; brand: string | null; items: number; items_on_hand: number; on_hand: number; value_cents: number }>(
     `SELECT fam.id AS family_id, coalesce(fam.name, '(no family)') AS family, fam.brand, count(i.id)::int AS items,
             count(*) FILTER (WHERE coalesce(st.on_hand, 0) > 0)::int AS items_on_hand, coalesce(sum(st.on_hand), 0)::int AS on_hand,
