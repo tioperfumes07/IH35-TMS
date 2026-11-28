@@ -1666,8 +1666,8 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
       WHERE r.item_id IS NOT NULL AND l.is_current AND l.voided_at IS NULL
       ORDER BY r.item_id, l.vendor_id, l.list_date DESC, l.imported_at DESC, r.price_cents ASC`);
   const items = await c.query<{ id: string; internal_code: string | null; brand: string; name: string; size_ml: string | null; conc: string; gender: string; flags: string[]; display_name: string; upcs: string[] | null;
-    is_exclusive: boolean; is_new_launch: boolean }>(
-    `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name, i.is_exclusive, i.is_new_launch,
+    is_exclusive: boolean; is_new_launch: boolean; is_active: boolean; is_stock_item: boolean }>(
+    `SELECT i.id, i.internal_code, i.brand, i.name, i.size_ml::text, i.conc, i.gender, i.flags, i.display_name, i.is_exclusive, i.is_new_launch, i.is_active, i.is_stock_item,
             (SELECT array_agg(u.upc ORDER BY u.created_at) FROM perfume.item_upcs u WHERE u.item_id = i.id) AS upcs
        FROM perfume.items i WHERE i.merged_into_id IS NULL`);
   // Every LINE of my offer list (owner 2026-11-14: "my lists there are 583 rows - 1 header, so 582 items … why does the
@@ -1916,6 +1916,9 @@ async function buildGridUncached(c: PoolClient, opts: { targetPct?: number | nul
     const rowTarget = opts.targetPct != null ? target : groupPct(rules.group_margins, mGroup, target);
     const rowMin = opts.targetPct != null ? minMargin : groupPct(rules.group_margins, mGroup, minMargin);
     row.margin_group = MARGIN_GROUP_LABEL[mGroup];
+    // LEAD ROUND L.22 / owner 2026-11-27 16:10 CT: "Stock item N" (and inactive) = hidden from the desk's lists, still found by
+    // search. 1 = shown on the lists, 0 = only when searched (desk.routes filters on it).
+    row.listed = it.is_active === false || it.is_stock_item === false ? 0 : 1;
     row.margin_pct = rowTarget;
     const offers = presBuy.map((v) => ({
       vendorId: v.id, listedCents: offersMap.get(v.id)!.price,
@@ -2410,6 +2413,12 @@ export function filterView(rows: GridRow[], view: GridView, mine?: MineFilter): 
 
 /** Every typed word must appear, in any order, in the item's code, UPCs, brand, name, or the text of any current
  *  vendor line for it (so the owner's own wording finds the item). A 6+ digit query also matches a UPC. */
+/** The rows a desk list shows: searched → every match (inactive / "Stock item N" included, owner rule "keep in search");
+ *  not searched → only the listed ones (row.listed 1). */
+export function deskListRows(rows: GridRow[], q: string | undefined | null): GridRow[] {
+  return q && q.trim() ? searchRows(rows, q) : rows.filter((r) => r.listed !== 0);
+}
+
 export function searchRows(rows: GridRow[], q: string): GridRow[] {
   const s = stripAccentsLite(q).trim().toUpperCase();
   if (!s) return rows;

@@ -14,7 +14,7 @@ import {
   PERFUME_EXTRACT_MEDIA,
   PerfumeExtractInputError,
 } from "./extract.service.js";
-import {
+import { deskListRows,
   buildGrid, bulkReview, withUpcColumns, mySavedLists, useSavedList, SavedListError, filterMine, confirmRow, rematchReview, exportWorkbook, filterFacets, filterView, getOrBuildView, gridFacets, getRules, ImportCheckFailed, importList, invalidateGridCache, listLists, listVendors, previewImport, putRules,
   canonicalizeItemBrands, exportColumnsWithInputs, exportListWorkbook, rekeyItems, REVIEW_SUGGEST_BUCKETS, reviewQueue, searchCompetitorLines, searchItems, searchRows, setInternalCode, setMyPrice, MyPriceError, listLocations, saveLocation, LocationError, splitPicks, setListCurrent, sortRows, upsertVendor, voidList, listVoidedLists, restoreList, ListRestoreError, type GridView,
 } from "./desk.service.js";
@@ -476,7 +476,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     // Level-2 view cache: pre-sorted rows + zero-picks facets, cached per (version, view, mine, sort, dir).
     const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, q.data.sort, q.data.dir, q.data.base, q.data.match, splitPicks(q.data.comps ?? ""));
     // Per-request: text search and facet picks only; sort is already applied in vp.sorted.
-    const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const searched = deskListRows(vp.sorted, q.data.q);
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const picks = { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor), group: splitPicks(q.data.group) };
     const hasPicksArr = [...picks.category, ...picks.gender, ...picks.brand, ...(picks.size ?? []), ...(picks.vendor ?? [])];
@@ -490,7 +490,7 @@ export async function registerPerfumeDeskRoutes(app: FastifyInstance) {
     const g = await withCurrentUser(uid, (c) => buildGrid(c, { targetPct: q.data.target_pct, earnPct: q.data.earn_pct }));
     const sortKey = q.data.sort && g.cols.some((c) => c.key === q.data.sort) ? q.data.sort : undefined;
     const vp = getOrBuildView(g, q.data.view as GridView, q.data.mine, sortKey, q.data.dir, q.data.base, q.data.match, splitPicks(q.data.comps ?? ""));
-    const searched = q.data.q ? searchRows(vp.sorted, q.data.q) : vp.sorted;
+    const searched = deskListRows(vp.sorted, q.data.q);
     const viewRows = q.data.carried === "1" ? searched.filter((r) => r.low_sell != null) : searched;
     const rows = filterFacets(viewRows, { category: splitPicks(q.data.category), gender: splitPicks(q.data.gender), brand: splitPicks(q.data.brand), size: splitPicks(q.data.size), vendor: splitPicks(q.data.vendor), group: splitPicks(q.data.group) });
     const want = q.data.cols ? q.data.cols.split(",") : null;
