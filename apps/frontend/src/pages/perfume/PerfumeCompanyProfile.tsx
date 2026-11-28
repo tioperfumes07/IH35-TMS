@@ -26,6 +26,7 @@ import { KpiCard } from "../../components/layout/KpiCard";
 import { PerfumeCompanyLocations } from "./PerfumeDuplicatesCard";
 import { PerfumeHistoryTable } from "./PerfumeHistoryTable";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
+import { PersonDrawer, RemovePersonModal, RenameCompanyButton, type EditablePerson } from "./PerfumeCompanyPeople";
 
 const DASH = "—";
 const usDate = (d: string | null | undefined) => (d ? `${d.slice(5, 7)}/${d.slice(8, 10)}/${d.slice(0, 4)}` : DASH);
@@ -56,6 +57,8 @@ const money = (c: number | null | undefined) => (c == null ? DASH : (c / 100).to
 export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; onClose: () => void; backLabel: string }) {
   const p = useQuery({ queryKey: ["perfume", "contact", id], queryFn: () => getPerfumeContact(id) });
   const [tab, setTab] = useState<Tab>("txns");
+  const [editPerson, setEditPerson] = useState<EditablePerson | "new" | null>(null);
+  const [removing, setRemoving] = useState<EditablePerson | null>(null);
   const center = useQuery({ queryKey: ["perfume", "company-center", id], queryFn: () => getPerfumeCompanyCenter(id) });
   if (p.isError) return <ListErrorState title={tr("perfume.profile.error", "Couldn't load the company")} status={0} message={(p.error as Error)?.message} onRetry={() => void p.refetch()} />;
   const co = p.data?.company;
@@ -86,7 +89,12 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
               {[role ? ROLE_TEXT[role] : "Lead (not a customer or vendor yet)", s("customer_type"), s("vendor_type")].filter(Boolean).join(" · ")}
             </div>
           </div>
-          {co ? <PerfumeCompanyEdit id={id} co={co} onSaved={() => void p.refetch()} /> : null}
+          {co ? (
+            <div className="flex flex-wrap gap-2">
+              <RenameCompanyButton id={id} name={String(co.name ?? "")} onSaved={() => void p.refetch()} />
+              <PerfumeCompanyEdit id={id} co={co} onSaved={() => void p.refetch()} />
+            </div>
+          ) : null}
         </div>
         <div className="grid grid-cols-3 gap-[10px]" data-testid="perfume-profile-balances">
           <KpiCard label="Open balance (they owe us)" number={money(center.data?.open_ar_cents)} />
@@ -135,6 +143,9 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
       ) : null}
       {tab === "emails" ? (
         <div className="space-y-3">
+            <div className="flex justify-end">
+              <Button type="button" variant="primary" className="h-[34px] px-3 text-xs" onClick={() => setEditPerson("new")} data-testid="perfume-profile-add-person">+ Add person</Button>
+            </div>
             <ParityTable<EmailRow>
               cardTitle title={`${tr("perfume.profile.emails", "Emails")} (${emails.length})`}
               rows={emails}
@@ -171,8 +182,15 @@ export function PerfumeCompanyProfile({ id, onClose, backLabel }: { id: string; 
                 { key: "phones", label: "Phones", sortable: true, render: (x) => x.phones.join(" · ") || DASH },
                 { key: "role", label: "Role", sortable: true, render: (x) => (x.role ? ROLE_TEXT[x.role] : DASH) },
                 { key: "last_email_on", label: "Last email", sortable: true, cellClass: "text-right tabular-nums", render: (x) => usDate(x.last_email_on) },
+                { key: "actions", label: "", render: (x) => (
+                  <span className="flex gap-1">
+                    <Button type="button" variant="secondary" className="h-[26px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setEditPerson(x as EditablePerson); }} data-testid={`perfume-person-edit-${x.id}`}>Edit</Button>
+                    <Button type="button" variant="secondary" className="h-[26px] px-2 text-xs" onClick={(e) => { e.stopPropagation(); setRemoving(x as EditablePerson); }} data-testid={`perfume-person-remove-${x.id}`}>Remove</Button>
+                  </span>), exportValue: () => "" },
               ]}
             />
+            {editPerson ? <PersonDrawer companyId={id} person={editPerson === "new" ? null : editPerson} onClose={() => setEditPerson(null)} onSaved={() => void p.refetch()} /> : null}
+            {removing ? <RemovePersonModal person={removing} onClose={() => setRemoving(null)} onSaved={() => void p.refetch()} /> : null}
         </div>
       ) : null}
       {tab === "account" ? (

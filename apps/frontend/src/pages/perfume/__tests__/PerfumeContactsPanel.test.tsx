@@ -64,7 +64,7 @@ describe("Contacts", () => {
     await waitFor(() => expect(within(panel).getAllByText("Perfume Center").length).toBeGreaterThan(0));
     expect(within(panel).getAllByText("Vendor + customer").length).toBeGreaterThan(0);
     expect(within(panel).getAllByText("Google business search").length).toBe(2); // the card title and the row's how-it-started
-    expect(within(panel).getByText("needs email")).toBeTruthy();
+    expect(within(panel).getAllByText("needs email").length).toBeGreaterThan(0);
     expect(within(panel).getByText("08/19/2014")).toBeTruthy();
   });
 

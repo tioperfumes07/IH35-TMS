@@ -16,10 +16,13 @@ const people = [
   { id: "p1", name: "Brian Oberlender", title: "Buyer", email: "brian@darielle.com", other_emails: ["bryan200029@yahoo.com", "BRIAN@darielle.com"], phones: ["(305) 555-0101"], role: "customer", how_started: null, first_contact_on: null, last_email_on: "2026-10-01", email_count: 42 },
   { id: "p2", name: "Ana Lopez", title: null, email: "ana@darielle.com", other_emails: [], phones: [], role: "customer", how_started: null, first_contact_on: null, last_email_on: null, email_count: 3 },
 ];
+const posts: Array<[string, string, unknown]> = [];
 beforeEach(() => {
-  vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string) => {
+  posts.length = 0;
+  vi.mocked(clientApi.apiRequest).mockImplementation(async (path: string, opts?: { method?: string; body?: unknown }) => {
     if (path === "/api/v1/perfume/contacts/c1") return { company: { id: "c1", name: "Darielle", role: "both", customer_type: "Distributor", address: "100 Main St", city: "Miami", state: "FL", zip: "33101", country: "US", phone: "(305) 555-0100", website: "https://www.darielle.com/" }, people, origins: [] };
     if (path === "/api/v1/perfume/companies/c1/center") return { company: { id: "c1", name: "Darielle" }, notes: null, customer_ids: [], vendor_ids: [], open_ar_cents: 125000, open_ap_cents: 0, ar_aging: { current: 0, b1: 50000, b2: 0, b3: 0 }, ap_aging: { current: 0, b1: 0, b2: 0, b3: 0 }, quoted_cents: 0, ordered_cents: 0, bought_cents: 0, transactions: [], operating_company_id: "sx" };
+    if (opts?.method) { posts.push([path, opts.method, opts.body]); return path.endsWith("/name") ? { changed: true, name: "Darielle LLC" } : { person: { id: "p9" }, changed: [] }; }
     throw new Error(`not in this test: ${path}`);
   });
 });
@@ -42,5 +45,27 @@ describe("company profile page", () => {
     expect(await screen.findByText("bryan200029@yahoo.com")).toBeTruthy();
     fireEvent.click(screen.getByTestId("perfume-profile-tab-details"));
     expect(within(await screen.findByTestId("perfume-profile-info")).getByText("Distributor")).toBeTruthy();
+  });
+
+  it("owner 14:05 CT: rename the company, add a person and edit a person from the profile", async () => {
+    mount();
+    await waitFor(() => expect(screen.getByTestId("perfume-profile-name").textContent).toBe("Darielle"));
+    fireEvent.click(screen.getByTestId("perfume-profile-rename"));
+    fireEvent.change(await screen.findByTestId("perfume-profile-rename-input"), { target: { value: "Darielle LLC" } });
+    fireEvent.click(screen.getByTestId("perfume-profile-rename-save"));
+    await waitFor(() => expect(posts).toContainEqual(["/api/v1/perfume/companies/c1/name", "PATCH", { name: "Darielle LLC" }]));
+    fireEvent.click(screen.getByTestId("perfume-profile-tab-emails"));
+    fireEvent.click(await screen.findByTestId("perfume-profile-add-person"));
+    expect((screen.getByTestId("perfume-person-save") as HTMLButtonElement).disabled).toBe(true); // needs a name, email or phone
+    fireEvent.change(screen.getByTestId("perfume-person-name"), { target: { value: "Carlos Ruiz" } });
+    fireEvent.change(screen.getByTestId("perfume-person-email"), { target: { value: "carlos@darielle.com" } });
+    fireEvent.change(screen.getByTestId("perfume-person-phones"), { target: { value: "(305) 555-0199, (305) 555-0200" } });
+    fireEvent.click(screen.getByTestId("perfume-person-save"));
+    await waitFor(() => expect(posts).toContainEqual(["/api/v1/perfume/companies/c1/people", "POST",
+      { name: "Carlos Ruiz", title: null, email: "carlos@darielle.com", other_emails: [], phones: ["(305) 555-0199", "(305) 555-0200"], role: null }]));
+    fireEvent.click(await screen.findByTestId("perfume-person-edit-p1"));
+    fireEvent.change(screen.getByTestId("perfume-person-title"), { target: { value: "Owner" } });
+    fireEvent.click(screen.getByTestId("perfume-person-save"));
+    await waitFor(() => expect(posts.some(([p, m, b]) => p === "/api/v1/perfume/people/p1" && m === "PATCH" && (b as { title: string }).title === "Owner")).toBe(true));
   });
 });

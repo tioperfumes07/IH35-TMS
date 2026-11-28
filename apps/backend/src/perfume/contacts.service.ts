@@ -99,8 +99,13 @@ export async function listContacts(c: pg.PoolClient, q: ContactListQuery) {
             co.first_contact_on, co.last_email_on,
             (SELECT count(*)::int FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL) AS people,
             (SELECT count(*)::int FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL AND p.email IS NOT NULL) AS with_email,
-            (SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1) AS how_started
+            (SELECT o.how FROM perfume.contact_origins o WHERE o.company_id = co.id ORDER BY o.occurred_on NULLS LAST, o.created_at LIMIT 1) AS how_started,
+            -- Owner 2026-11-28 14:05 CT: the list shows WHICH contact — the main person (most emails exchanged, then a name), their
+            -- email and phone — one row per company, never one row per person.
+            mp.name AS main_contact, mp.email AS main_email, coalesce(mp.phones[1], co.phone) AS main_phone
        FROM perfume.contact_companies co
+       LEFT JOIN LATERAL (SELECT p.name, p.email, p.phones FROM perfume.contact_people p WHERE p.company_id = co.id AND p.archived_at IS NULL
+                           ORDER BY (p.email IS NULL), p.email_count DESC NULLS LAST, (p.name IS NULL), p.created_at LIMIT 1) mp ON true
       WHERE ${where.join(" AND ")}
       ORDER BY co.last_email_on DESC NULLS LAST, co.name
       LIMIT ${limit} OFFSET ${offset}`, args)).rows;
