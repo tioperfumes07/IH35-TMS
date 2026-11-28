@@ -38,6 +38,16 @@ export function staticProblems(files, read) {
   if (!/'driver_settlement' AND NEW\.debit_or_credit = 'debit'/.test(s)) out.push("RULE 1 the settlement application is no longer debit-only");
   if (!/v_depth % 2 = 1/.test(s)) out.push("RULE 1 the odd-depth (removes-an-amount) reversal rule is gone");
   if (!/BEFORE INSERT ON accounting\.journal_entry_postings/i.test(s)) out.push("RULE 1 the trigger is not BEFORE INSERT on journal_entry_postings");
+  // RULE 2b (202617290100, vendor refunds): a later migration that REDEFINES the refusal must keep every original document type
+  // (bill / bill_payment / vendor_credit), the debit-only settlement rule and the odd-depth reversal rule — it may only ADD a document.
+  for (const f of files.filter((f) => f.slice(0, 12) > MIG)) {
+    const t = strip(read(f));
+    if (/CREATE\s+OR\s+REPLACE\s+FUNCTION\s+accounting\.refuse_ap_control_write_without_document/i.test(t)) {
+      if (!/IN \('bill', 'bill_payment', 'vendor_credit'(, '[a-z_]+')*\)/.test(t)) out.push(`RULE 2b ${f} redefines the A/P refusal without the bill / bill_payment / vendor_credit list`);
+      if (!/'driver_settlement' AND NEW\.debit_or_credit = 'debit'/.test(t)) out.push(`RULE 2b ${f} redefines the A/P refusal without the debit-only settlement rule`);
+      if (!/v_depth % 2 = 1/.test(t)) out.push(`RULE 2b ${f} redefines the A/P refusal without the odd-depth reversal rule`);
+    }
+  }
   for (const f of files.filter((f) => f.slice(0, 12) > MIG)) {
     if (/DROP\s+(TRIGGER|FUNCTION)\s+(IF\s+EXISTS\s+)?(trg_ap_control_written_only_by_documents|accounting\.refuse_ap_control_write_without_document)/i.test(strip(read(f)))) out.push(`RULE 2 ${f} drops the A/P document refusal`);
   }
@@ -68,6 +78,8 @@ if (isMain) {
       ["the shipped shape passes", staticProblems(files, () => good).length === 0],
       ["resolving A/P by number fails", staticProblems(files, () => good.replace("chart_of_accounts_roles r WHERE r.role = 'ap_control'", "catalogs.accounts WHERE account_number = '2000'")).some((x) => x.startsWith("RULE 1"))],
       ["dropping the depth rule fails", staticProblems(files, () => good.replace("v_depth % 2 = 1", "true")).some((x) => x.includes("odd-depth"))],
+      ["a later redefinition that adds a document passes", staticProblems([...files, "202699990000_x.sql"], (f) => (f.startsWith(MIG) ? good : "CREATE OR REPLACE FUNCTION accounting.refuse_ap_control_write_without_document() IF NEW.source_transaction_type IN ('bill', 'bill_payment', 'vendor_credit', 'vendor_refund') THEN; IF NEW.source_transaction_type = 'driver_settlement' AND NEW.debit_or_credit = 'debit' THEN; IF v_depth % 2 = 1 THEN")).length === 0],
+      ["a later redefinition that drops a document fails", staticProblems([...files, "202699990000_x.sql"], (f) => (f.startsWith(MIG) ? good : "CREATE OR REPLACE FUNCTION accounting.refuse_ap_control_write_without_document() IF NEW.source_transaction_type IN ('bill', 'vendor_refund') THEN; IF NEW.source_transaction_type = 'driver_settlement' AND NEW.debit_or_credit = 'debit' THEN; IF v_depth % 2 = 1 THEN")).some((x) => x.startsWith("RULE 2b"))],
       ["a later migration dropping the trigger fails", staticProblems([...files, "202699990000_x.sql"], (f) => (f.startsWith(MIG) ? good : "DROP TRIGGER IF EXISTS trg_ap_control_written_only_by_documents ON x;")).some((x) => x.startsWith("RULE 2"))],
       ["live clean passes", liveProblems({ applied: true, trigger: { enabled: "O" }, undocumentedSince: 0 }).length === 0],
       ["a missing trigger fails", liveProblems({ applied: true, trigger: null, undocumentedSince: 0 }).some((x) => x.startsWith("RULE 3"))],
@@ -90,7 +102,7 @@ if (isMain) {
     const apLines = `FROM accounting.journal_entry_postings p JOIN accounting.chart_of_accounts_roles r ON r.account_id = p.account_id AND r.operating_company_id = p.operating_company_id AND r.role = 'ap_control' AND r.is_active`;
     const undocumentedSince = applied
       ? (await client.query(`SELECT count(*)::int n ${apLines} WHERE p.created_at >= $1 AND p.reversal_of_line_id IS NULL
-            AND NOT (COALESCE(p.source_transaction_type, '') IN ('bill', 'bill_payment', 'vendor_credit') OR (p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit'))`, [applied])).rows[0].n
+            AND NOT (COALESCE(p.source_transaction_type, '') IN ('bill', 'bill_payment', 'vendor_credit', 'vendor_refund') OR (p.source_transaction_type = 'driver_settlement' AND p.debit_or_credit = 'debit'))`, [applied])).rows[0].n
       : 0;
     const legacy = (await client.query(`SELECT count(*)::int n, COALESCE(sum(CASE WHEN p.debit_or_credit = 'credit' THEN p.amount_cents ELSE -p.amount_cents END), 0)::bigint net ${apLines} WHERE p.source_transaction_type = 'journal_entry'`)).rows[0];
     await client.query("ROLLBACK");

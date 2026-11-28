@@ -92,7 +92,7 @@ export class RelatedPartyPostingWithoutPartyError extends Error {
  * classified, so a new poster can never silently write party-less lines.
  */
 export const PARTY_FROM_DOCUMENT_SOURCE_TYPES = [
-  "invoice", "bill", "bill_payment", "expense", "customer_payment", "credit_memo", "vendor_credit", "customer_refund",
+  "invoice", "bill", "bill_payment", "expense", "customer_payment", "credit_memo", "vendor_credit", "customer_refund", "vendor_refund",
   "driver_settlement", "driver_advance", "cash_advance", "driver_reimbursement", "driver_liability", "relay_deposit",
   "bank_categorization", "fuel_event",
   // LEAD 443.185 G8 — every advance leg is with the factor (resolvePostingSourceEntity: factoring_company_vendor_id).
@@ -201,6 +201,8 @@ export async function resolvePostingSourceEntity(
     customer_payment: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.payments WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     credit_memo: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.credit_memos WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     customer_refund: `SELECT customer_id::text AS e, 'customer' AS t FROM accounting.customer_refunds WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
+    vendor_refund: `SELECT CASE WHEN vendor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN vendor_id END AS e, 'vendor' AS t
+                      FROM accounting.vendor_refunds WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     vendor_credit: `SELECT CASE WHEN vendor_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$' THEN vendor_id END AS e, 'vendor' AS t
                       FROM accounting.vendor_credits WHERE id = $1::uuid AND operating_company_id = $2::uuid`,
     cash_advance: `SELECT driver_id::text AS e, 'driver' AS t FROM driver_finance.cash_advance_requests WHERE id = $1::uuid AND operating_company_id = $2::uuid`,

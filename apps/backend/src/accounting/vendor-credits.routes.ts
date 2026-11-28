@@ -10,6 +10,7 @@ import { resolveVendorIdentitySet } from "./vendor-identity.js";
 import { PostingEngineError, postSourceTransactionInClientTx, reversePostedSourceTransactionInClientTx } from "./posting-engine.service.js";
 import { createVendorCreditInClientTx, VendorCreditCreateError } from "./vendor-credits.service.js";
 import { statusListCondition, statusListParam } from "../lib/status-list.js";
+import { liveRefundCentsForVendorCredit } from "./vendor-refunds.service.js";
 
 // CUSTVEND-PAR-1: Vendor credit CRUD + apply-to-bill + void.
 // NO GL posting — marks QBO-parity data only. GL rides the existing bill-GL chain when flags turn ON.
@@ -486,6 +487,11 @@ export async function registerVendorCreditsRoutes(app: FastifyInstance) {
       const credit = creditRes.rows[0];
       if (!credit) return { code: 404 as const, error: "vendor_credit_not_found" };
       if (credit.status === "voided") return { code: 409 as const, error: "already_voided" };
+      // VENDOR REFUNDS — a refunded vendor credit cannot be voided while its refund stands (the refund's Cr A/P would be left with
+      // nothing to clear): void the refund first, exactly like QuickBooks.
+      if ((await liveRefundCentsForVendorCredit(client, query.data.operating_company_id, params.data.id)) > 0) {
+        return { code: 409 as const, error: "vendor_credit_has_refunds", detail: "Void the refund of this vendor credit first" };
+      }
 
       // Reverse active applications before voiding (void-never-delete: mark voided_at on each)
       await client.query(
