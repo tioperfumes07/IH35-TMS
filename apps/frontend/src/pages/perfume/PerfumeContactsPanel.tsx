@@ -28,6 +28,7 @@ import { PerfumeCompanyActivity } from "./PerfumeProfilesPanel";
 import { ScentsxCustomerLink } from "./ScentsxCustomerLink";
 import { PerfumeNameFormatCard } from "./PerfumeNameFormatCard";
 import { PerfumeCreateCompany } from "./PerfumeCreateCompany";
+import { PerfumeCompanyEdit } from "./PerfumeCompanyEdit";
 import { PerfumeCompanyLocations, PerfumeDuplicatesCard } from "./PerfumeDuplicatesCard";
 import { PerfumeDupRecommendations } from "./PerfumeDupRecommendations";
 
@@ -188,7 +189,10 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" aria-label={tr("perfume.contacts.company_profile", "Company profile")} data-testid="perfume-contact-profile">
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2"><span className="text-card-title">{co?.name ?? "…"}</span><RoleBadge role={(co?.["role"] as PerfumeContactRole) ?? null} /></div>
-        <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.contacts.close", "Close")}</Button>
+        <div className="flex gap-2">
+          {co ? <PerfumeCompanyEdit id={id} co={co} onSaved={() => { void p.refetch(); void history.refetch(); }} /> : null}
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" onClick={onClose}>{tr("perfume.contacts.close", "Close")}</Button>
+        </div>
       </div>
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_320px]">
         <div className="space-y-3">
@@ -260,7 +264,7 @@ function ContactProfile({ id, onClose }: { id: string; onClose: () => void }) {
         </div>
         <div className="text-xs">
           {co ? <ScentsxCustomerLink contactId={id} name={String(co.name ?? "")} email={(co["email"] as string | null) ?? null} phone={(co["phone"] as string | null) ?? null} /> : null}
-          {([["Website", "website"], ["Phone", "phone"], ["Address", "address"], ["City", "city"], ["State", "state"], ["Country", "country"], ["Categories", "categories"],
+          {([["Website", "website"], ["Phone", "phone"], ["Address", "address"], ["City", "city"], ["State", "state"], ["Country", "country"], ["Relationship", "main_category"], ["Industry", "categories"], ["Review tags", "review_tags"], ["Business type", "segment"],
             ["Customer type", "customer_type"], ["Vendor type", "vendor_type"], ["Google rating", "google_rating"], ["Google reviews", "google_rating_count"],
             ["Open hours", "google_hours"], ["Google status", "google_business_status"], ["Owner", "owner_name"], ["LinkedIn", "linkedin"], ["Source", "source"]] as const).map(([l, k]) => (
             <div key={k} className="flex justify-between gap-3 border-b border-[#E8EDF2] py-1.5"><span className="text-[#64748B]">{l}</span><span className="text-right">{val(k)}</span></div>
