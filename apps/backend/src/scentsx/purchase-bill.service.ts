@@ -142,7 +142,11 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
   const grni = await resolveRoleAccount(c as never, co, "goods_received_not_billed");
   const cogs = await resolveRoleAccount(c as never, co, "cogs_goods");
   const seen = new Set<string>();
-  const billLines: { amountCents: number; description: string; accountId: string }[] = [];
+  const billLines: { amountCents: number; description: string; accountId: string;
+    itemId?: string; quantity?: number; rateCents?: number; unitOfMeasure?: string; itemAccountOverrideReason?: string }[] = [];
+  // Each stocked line names its ScentsX product (scentsx.item_links), with qty × rate = amount (bill_lines_item_qty_rate_amount_check).
+  const productOf = async (perfumeItemId: string) => (await c.query<{ id: string }>(
+    `SELECT catalog_item_id::text AS id FROM scentsx.item_links WHERE perfume_item_id = $1::uuid AND voided_at IS NULL LIMIT 1`, [perfumeItemId])).rows[0]?.id ?? null;
   const rows: { line: BillablePoLine; qty: number; received: number; billed: number }[] = [];
   let variance = 0; // received value − billed value on stocked lines: > 0 → Dr GRNI / Cr COGS
   for (const w of x.lines) {
@@ -159,7 +163,13 @@ export async function billPurchaseOrder(c: Q, uid: string, poId: string, x: Purc
     const account = l.item_id ? grni : w.account_id ? await scentsxAccount(c, co, w.account_id) : null;
     if (!account) throw new ScentsxLinkInvalid(`${po.number} line ${l.line_no} has no item — pick the account it is billed to`);
     if (l.item_id) variance += received - billed;
-    billLines.push({ amountCents: billed, accountId: account, description: `${po.number} L${l.line_no} · ${w.qty} × ${l.description}`.slice(0, 400) });
+    const product = l.item_id ? await productOf(l.item_id) : null;
+    const rate = Math.round((billed / w.qty) * 10000) / 10000;
+    // Received goods are billed against GRNI, not the product's COGS account — recorded as the line's reason (line-categorization.ts).
+    const itemFields = product && Math.round(w.qty * rate) === billed
+      ? { itemId: product, quantity: w.qty, rateCents: rate, unitOfMeasure: "each", itemAccountOverrideReason: "received inventory billed against Goods Received Not Billed" }
+      : {};
+    billLines.push({ amountCents: billed, accountId: account, description: `${po.number} L${l.line_no} · ${w.qty} × ${l.description}`.slice(0, 400), ...itemFields });
     rows.push({ line: l, qty: w.qty, received: l.item_id ? received : billed, billed });
   }
   const landedAcct: Record<"freight_in" | "customs", string | null> = { freight_in: null, customs: null };
