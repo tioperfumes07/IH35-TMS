@@ -25,13 +25,14 @@ import { logEvent, logEvents, type LeadEvent } from "./leads.events.js";
 
 /* ------------------------------------------------------------------ catalogs */
 
-export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "segment", "source_kind", "product_type", "gender", "item_category", "olfactory_family"] as const;
+export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "industry", "segment", "source_kind", "review_tag", "product_type", "gender", "item_category", "olfactory_family", "origin_country"] as const;
 /** Lists whose values are carried by ITEMS (perfume.items), not contacts — counted and renamed on items (owner 2026-11-27 07:51 CT). */
-export const ITEM_CATALOG_COLUMN: Partial<Record<string, "product_type" | "category">> = { product_type: "product_type", item_category: "category" };
+export const ITEM_CATALOG_COLUMN: Partial<Record<string, "product_type" | "category" | "origin_country">> = { product_type: "product_type", item_category: "category", origin_country: "origin_country" };
 export type CatalogKind = typeof CATALOG_KINDS[number];
 export const CATALOG_LABELS: Record<CatalogKind, string> = {
-  vendor_type: "Vendor types", customer_type: "Customer types", category: "Categories", segment: "Business types",
-  source_kind: "Lead source kinds", product_type: "Item product types", gender: "Genders", item_category: "Item categories", olfactory_family: "Scent families (olfactory)",
+  vendor_type: "Vendor types", customer_type: "Customer types", category: "Relationship", industry: "Industry", segment: "Business types",
+  source_kind: "Lead source kinds", review_tag: "Review tags", product_type: "Item product types", gender: "Genders", item_category: "Item categories",
+  olfactory_family: "Scent families (olfactory)", origin_country: "Country of origin",
 };
 export const catalogValueSchema = z.object({ kind: z.enum(CATALOG_KINDS), value: z.string().trim().min(1).max(200), sort: z.number().int().min(0).max(10000).optional() });
 
@@ -49,6 +50,10 @@ export async function listCatalogs(c: pg.PoolClient) {
      UNION ALL SELECT 'category', v, count(DISTINCT id)::int FROM (SELECT id, unnest(array_remove(array_cat(ARRAY[main_category], categories), NULL)) AS v
                  FROM perfume.contact_companies WHERE archived_at IS NULL) x GROUP BY 2
      UNION ALL SELECT 'segment', segment, count(*)::int FROM perfume.contact_companies WHERE archived_at IS NULL AND segment IS NOT NULL GROUP BY 2
+     UNION ALL SELECT 'industry', v, count(DISTINCT id)::int FROM (SELECT id, unnest(categories) AS v FROM perfume.contact_companies WHERE archived_at IS NULL) x GROUP BY 2
+     UNION ALL SELECT 'review_tag', v, count(DISTINCT id)::int FROM (SELECT id, unnest(array_cat(review_tags, CASE WHEN main_category IS NOT NULL THEN ARRAY[main_category] ELSE '{}'::text[] END) || categories) AS v
+                 FROM perfume.contact_companies WHERE archived_at IS NULL) x GROUP BY 2
+     UNION ALL SELECT 'origin_country', origin_country, count(*)::int FROM perfume.items WHERE merged_into_id IS NULL AND origin_country IS NOT NULL GROUP BY 2
      UNION ALL SELECT 'source_kind', k, count(DISTINCT company_id)::int FROM (
                  SELECT o.company_id, o.source_kind AS k FROM perfume.contact_origins o JOIN perfume.contact_companies co ON co.id = o.company_id AND co.archived_at IS NULL
                  UNION ALL SELECT id, source_kind FROM perfume.contact_companies WHERE archived_at IS NULL) y WHERE k IS NOT NULL GROUP BY 2
@@ -97,6 +102,13 @@ export async function moveCatalogCarriers(c: pg.PoolClient, kind: CatalogKind, f
   const col = kind === "vendor_type" ? "vendor_type" : kind === "customer_type" ? "customer_type" : kind === "segment" ? "segment" : null;
   let moved = 0;
   if (col) moved = (await c.query(`UPDATE perfume.contact_companies SET ${col} = $2, updated_at = now() WHERE ${col} = $1`, [from, to])).rowCount ?? 0;
+  // Industry lives in categories[]; review tags in review_tags[] (migration 202617200100, owner 16:54 CT "not mix").
+  if (kind === "industry") {
+    moved = (await c.query(`UPDATE perfume.contact_companies SET categories = array_replace(categories, $1, $2), updated_at = now() WHERE $1 = ANY(categories)`, [from, to])).rowCount ?? 0;
+  }
+  if (kind === "review_tag") {
+    moved = (await c.query(`UPDATE perfume.contact_companies SET review_tags = array_replace(review_tags, $1, $2), updated_at = now() WHERE $1 = ANY(review_tags)`, [from, to])).rowCount ?? 0;
+  }
   if (kind === "category") {
     moved = (await c.query(
       `UPDATE perfume.contact_companies SET main_category = CASE WHEN main_category = $1 THEN $2 ELSE main_category END,

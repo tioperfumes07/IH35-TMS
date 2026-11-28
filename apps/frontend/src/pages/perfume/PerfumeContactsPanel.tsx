@@ -43,7 +43,10 @@ const CONTACT_FILTERS: Array<{ facet: PerfumeContactFacet; pick: keyof PerfumeCo
   { facet: "country", pick: "countries", label: "Country", all: "All countries" },
   { facet: "state", pick: "states", label: "State", all: "All states" },
   { facet: "city", pick: "cities", label: "City", all: "All cities" },
-  { facet: "category", pick: "categories", label: "Category", all: "All categories" },
+  // Owner 2026-11-27 16:54 CT "not mix": the old Category box was three things — now Relationship, Industry and Review tag.
+  { facet: "relationship", pick: "relationships", label: "Relationship", all: "Every relationship" },
+  { facet: "industry", pick: "industries", label: "Industry", all: "Every industry" },
+  { facet: "tag", pick: "tags", label: "Review tag", all: "Any review tag" },
   { facet: "source", pick: "sources", label: "Source", all: "Every source" },
   { facet: "how", pick: "hows", label: "How it started", all: "Any start" },
   { facet: "region", pick: "regions", label: "Region", all: "All regions" },

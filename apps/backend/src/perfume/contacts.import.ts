@@ -69,7 +69,28 @@ export function findCompany(m: ContactMatcher, rec: ImportRecord, nameKey: strin
 /** Called once per record with the company it landed on (history: an import says which contacts it added or joined). */
 export type OnCompany = (companyId: string, inserted: boolean, rec: ImportRecord) => void;
 
-async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, nameKey: string | null, owner: string, t: ImportTally, onCompany?: OnCompany) {
+/** Owner 2026-11-27 16:54 CT "not mix" (migration 202617200100): an imported category that is a review note ("Phone: …", "US - OTHER",
+ *  "International contact") goes to review_tags, and "X (Market Directory)" is the relationship X plus the tag "Market Directory". */
+const isReviewNote = (v: string) => /^phone:/i.test(v) || v === "US - OTHER" || v === "International contact";
+export function splitImportedCategories(main: string | null | undefined, cats: string[]) {
+  const tags = new Set<string>();
+  const fix = (v: string) => { const m = /^(.*) \(Market Directory\)$/.exec(v); if (m) { tags.add("Market Directory"); return m[1]!; } return v; };
+  let mainOut: string | null = main ? fix(main) : null;
+  if (mainOut && isReviewNote(mainOut)) { tags.add(mainOut); mainOut = null; }
+  const rel = new Set(["Potential customer", "Customer", "Supplier / Brand", "Other business contact"]);
+  const out: string[] = [];
+  for (const raw of cats) {
+    const v = fix(raw);
+    if (isReviewNote(v)) tags.add(v);
+    else if (rel.has(v)) { if (!mainOut) mainOut = v; }
+    else out.push(v);
+  }
+  return { main: mainOut, categories: [...new Set(out)], tags: [...tags] };
+}
+
+async function load(c: pg.PoolClient, m: ContactMatcher, rec0: ImportRecord, nameKey: string | null, owner: string, t: ImportTally, onCompany?: OnCompany) {
+  const split = splitImportedCategories(rec0.company.main_category, rec0.company.categories ?? []);
+  const rec: ImportRecord = { ...rec0, company: { ...rec0.company, main_category: split.main, categories: split.categories } };
   const co = rec.company;
   let [id, how] = findCompany(m, rec, nameKey);
   if (id) {
@@ -92,6 +113,9 @@ async function load(c: pg.PoolClient, m: ContactMatcher, rec: ImportRecord, name
        VALUES (${[...cols, "categories", "brands", "created_by"].map((_, i) => `$${i + 1}`).join(", ")}) RETURNING id`,
       [...cols.map((k) => (k === "external_ref" && co[k] != null ? JSON.stringify(co[k]) : co[k])), co.categories ?? [], co.brands ?? [], owner]);
     id = r.rows[0]!.id; t.inserted += 1;
+  }
+  if (split.tags.length) {
+    await c.query(`UPDATE perfume.contact_companies SET review_tags = (SELECT array(SELECT DISTINCT unnest(review_tags || $2::text[]))) WHERE id = $1`, [id, split.tags]);
   }
   await m.refreshCompany(c, id);
   onCompany?.(id, how == null, rec);
