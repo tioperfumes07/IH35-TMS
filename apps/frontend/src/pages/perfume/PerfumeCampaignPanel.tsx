@@ -34,12 +34,12 @@ const when = (iso: string | null | undefined) => (iso ? new Date(iso).toLocaleSt
 const STATUS_TEXT: Record<PerfumeCampaign["status"], string> = { draft: "Draft", scheduled: "Scheduled", sending: "Sending", sent: "Sent", stopped: "Stopped", failed: "Failed" };
 const ROLES: Array<[PerfumeContactRole | "none", string]> = [["customer", "Customers"], ["vendor", "Vendors"], ["both", "Vendor + customer"], ["none", "Not classified"]];
 const FACETS: Array<{ facet: PerfumeContactFacet; key: keyof PerfumeCampaignFilters; label: string; all: string }> = [
-  { facet: "country", key: "countries", sortable: true, label: "Country", all: "All countries" },
-  { facet: "state", key: "states", sortable: true, label: "State", all: "All states" },
-  { facet: "city", key: "cities", sortable: true, label: "City", all: "All cities" },
-  { facet: "category", key: "categories", sortable: true, label: "Category", all: "All categories" },
-  { facet: "source", key: "sources", sortable: true, label: "Source", all: "All sources" },
-  { facet: "how", key: "hows", sortable: true, label: "How it started", all: "Every way" },
+  { facet: "country", key: "countries", label: "Country", all: "All countries" },
+  { facet: "state", key: "states", label: "State", all: "All states" },
+  { facet: "city", key: "cities", label: "City", all: "All cities" },
+  { facet: "category", key: "categories", label: "Category", all: "All categories" },
+  { facet: "source", key: "sources", label: "Source", all: "All sources" },
+  { facet: "how", key: "hows", label: "How it started", all: "Every way" },
 ];
 
 type Draft = PerfumeCampaignInput & { status?: PerfumeCampaign["status"] };
