@@ -8,7 +8,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts, carryItemLinkOnMerge } from "./item-links.service.js";
+import { itemBooks, itemBooksQuery, makeItemsSchema, makeScentsxItems, syncScentsxItemAccounts, carryItemLinkOnMerge, repairMergedItemLinks } from "./item-links.service.js";
 import { setCategoryAccounts } from "./item-accounts.service.js";
 
 const describeIntegration = describe.skipIf(process.env.GITHUB_ACTIONS !== "true");
@@ -103,5 +103,29 @@ describeIntegration("ScentsX item books (real Postgres, rolled back)", () => {
     expect((await db.query<{ off: string | null }>(`SELECT deactivated_at::text AS off FROM catalogs.items WHERE id = $1::uuid`, [aCat])).rows[0]!.off).not.toBeNull();
     expect((await db.query(`SELECT 1 FROM audit.audit_events WHERE payload->>'resource_id' = $1 AND payload->'changes' ? 'deactivated_at'`, [aCat])).rowCount).toBe(1);
     expect(await carryItemLinkOnMerge(db, TEST_OWNER_USER_ID, b, c3, "ZZMRG · C")).toEqual({ moved: false, deactivated: false });
+  });
+
+  it("under the app role (RLS on, no ScentsX scope set) the merge still finds and carries the link; repair carries old merges", async () => {
+    const mk = async (name: string) => (await db.query<{ id: string }>(
+      `INSERT INTO perfume.items (brand, name, size_ml, conc, gender, identity_key, loose_key, display_name, category)
+       VALUES ('ZZRLS', $1, 100, 'EDP', 'W', $2, 'x', $3, 'Perfume') RETURNING id::text`, [name, `ZZRLS|${name}`, `ZZRLS · ${name}`])).rows[0]!.id;
+    const a = await mk("A"), b = await mk("B"), c3 = await mk("C"), d4 = await mk("D");
+    await makeScentsxItems(db, TEST_OWNER_USER_ID, makeItemsSchema.parse({ item_ids: [a, c3] }));
+    await db.query("SAVEPOINT rls");
+    await db.query("SET LOCAL app.bypass_rls = ''");
+    await db.query("SELECT set_config('app.operating_company_id', '', true)");
+    await db.query("SELECT set_config('app.current_user_id', $1::text, true)", [TEST_OWNER_USER_ID]);
+    await db.query("SET LOCAL ROLE ih35_app");
+    const r = await carryItemLinkOnMerge(db, TEST_OWNER_USER_ID, a, b, "ZZRLS · B");
+    await db.query("RESET ROLE");
+    await db.query("SET LOCAL app.bypass_rls = 'lucia'");
+    expect(r).toEqual({ moved: true, deactivated: false });
+    // An item merged the old way (link left live): repair carries it to the final survivor.
+    await db.query(`UPDATE perfume.items SET merged_into_id = $2 WHERE id = $1`, [c3, d4]);
+    const fixed = await repairMergedItemLinks(db, TEST_OWNER_USER_ID);
+    expect(fixed.carried).toBeGreaterThanOrEqual(1);
+    const live = (await db.query<{ p: string }>(`SELECT perfume_item_id::text AS p FROM scentsx.item_links l JOIN perfume.items i ON i.id = l.perfume_item_id
+      WHERE l.voided_at IS NULL AND i.merged_into_id IS NOT NULL`)).rows;
+    expect(live).toEqual([]);
   });
 });
