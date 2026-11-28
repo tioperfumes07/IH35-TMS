@@ -133,7 +133,7 @@ function DepositsContent({ companyId }: { companyId: string }) {
                 data-testid="scentsx-deposit-bank"
               >
                 {banks.map((b) => (
-                  <option key={b.id} value={b.id}>{`${b.account_number ?? ""} ${b.name}`.trim()}</option>
+                  <option key={b.id} value={b.id}>{`${b.account_number ?? ""} ${b.account_name}`.trim()}</option>
                 ))}
               </select>
             </label>
