@@ -137,5 +137,17 @@ export async function vendorAccount(c: Q, vendorId: string, f: z.infer<typeof pa
     `SELECT b.id::text, b.account_name AS name, b.account_type, a.account_number
        FROM banking.bank_accounts b LEFT JOIN catalogs.accounts a ON a.id = b.ledger_account_id
       WHERE b.operating_company_id = $1::uuid AND b.is_active = true AND b.deactivated_at IS NULL ORDER BY a.account_number NULLS LAST, b.account_name`, [co])).rows;
-  return { as_of: asOf, operating_company_id: co, vendor: v, buckets, open_bills: open, bills, payments, credits, bank_accounts: banks };
+  // ROUND L.31 M6 — supplier deposits (money paid to this vendor BEFORE the goods, a deposit bill coded to 1310 Supplier Deposits) less
+  // what was already used on a bill (a vendor credit on 1310 applied to it). Read only; the deposit and its use go through the bill /
+  // bill-payment / vendor-credit engines.
+  const dep = (await c.query<{ paid: string; used: string; account_id: string | null }>(
+    `WITH a AS (SELECT id FROM catalogs.accounts WHERE operating_company_id = $1::uuid AND account_number = '1310' AND deactivated_at IS NULL LIMIT 1)
+     SELECT (SELECT id::text FROM a) AS account_id,
+            coalesce((SELECT sum(round(bl.amount * 100))::bigint FROM accounting.bill_lines bl JOIN accounting.bills b ON b.id = bl.bill_id
+                       WHERE bl.account_id = (SELECT id FROM a) AND bl.voided_at IS NULL AND ${ON_BOOKS("b")} AND ${VENDOR_OF("b")} = $3::uuid), 0)::text AS paid,
+            coalesce((SELECT sum(vc.amount_cents)::bigint FROM accounting.vendor_credits vc
+                       WHERE vc.operating_company_id = $1::uuid AND vc.vendor_id = $3::text AND vc.account_id = (SELECT id FROM a) AND vc.status <> 'voided' AND vc.voided_at IS NULL), 0)::text AS used`,
+    [co, asOf, vendorId])).rows[0]!;
+  const deposits = { account_id: dep.account_id, paid_cents: Number(dep.paid), used_cents: Number(dep.used), available_cents: Math.max(0, Number(dep.paid) - Number(dep.used)) };
+  return { as_of: asOf, operating_company_id: co, vendor: v, buckets, open_bills: open, bills, payments, credits, bank_accounts: banks, deposits };
 }
