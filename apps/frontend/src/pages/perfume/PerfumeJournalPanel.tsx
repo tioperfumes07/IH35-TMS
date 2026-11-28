@@ -2,8 +2,10 @@
  * TIO Perfumes · Books · Journal entries — ROUND L.31 M17 + M12 (owner 2026-11-27 19:38 CT "ASSETS, LIABILITIES … ACCOUNTING, CHART OF
  * ACCOUNTS … ALL FULLY COMPLETELY DONE"). ScentsX LLC's manual journal entries, QuickBooks style: a pop-up with lines (account from the
  * ScentsX chart, debit or credit, memo), totals that must balance before Save, and ready-made entries for the owner's own money —
- * Owner contribution (Dr bank / Cr 3000), Owner draw (Dr 3100 / Cr bank), Loan from owner (Dr bank / Cr 2400), Loan repayment
- * (Dr 2400 / Cr bank). Saved through the ONE journal entry writer (POST /api/v1/accounting/journal-entries, membership checked,
+ * Owner contribution (Dr bank / Cr 3000) and Owner draw (Dr 3100 / Cr bank). A loan from the owner is NOT a journal entry: the owner's
+ * rule (2026-10-10/11) is that every loan creates a loan document on ONE running loan per person (default 4% a year), so "+ Loan from owner"
+ * and "+ Repay owner loan" open the one related-party loan engine's wizard (LoanApplicationWizard → POST /api/v1/accounting/related-party-
+ * loans, posted by its flag-gated poster, RELATED_PARTY_LOAN_GL_POSTING_ENABLED on for ScentsX). Saved through the ONE journal entry writer (POST /api/v1/accounting/journal-entries, membership checked,
  * balanced or refused); listed with the engine's own list; each entry's lines open in its register on Financial statements.
  */
 import { useMemo, useState } from "react";
@@ -20,6 +22,7 @@ import { formatUsdCents } from "../../lib/money";
 import { createJournalEntry, listJournalEntries, type JournalEntry } from "../../api/accounting";
 import { getScentsxCompany, listScentsxAccounts, type ScentsxAccount } from "../../api/scentsx";
 import { tr } from "./perfumeI18n";
+import { LoanApplicationWizard } from "../accounting/loans/LoanApplicationWizard";
 import { ctl, DASH, usDate } from "./perfumeDocParts";
 
 const todayCT = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Chicago" });
@@ -30,8 +33,6 @@ const blank = (): Row => ({ account_id: "", side: "debit", cents: null, memo: ""
 const TEMPLATES: Array<{ key: string; label: string; memo: string; debit: string | "bank"; credit: string | "bank" }> = [
   { key: "contribution", label: "Owner contribution", memo: "Owner contribution", debit: "bank", credit: "3000" },
   { key: "draw", label: "Owner draw", memo: "Owner draw", debit: "3100", credit: "bank" },
-  { key: "loan_in", label: "Loan from owner", memo: "Loan from owner", debit: "bank", credit: "2400" },
-  { key: "loan_out", label: "Repay owner loan", memo: "Repayment of loan from owner", debit: "2400", credit: "bank" },
 ];
 
 export function PerfumeJournalPanel() {
@@ -40,6 +41,7 @@ export function PerfumeJournalPanel() {
   const accts = useQuery({ queryKey: ["scentsx", "accounts"], queryFn: listScentsxAccounts });
   const list = useQuery({ queryKey: ["scentsx", "je", id], queryFn: () => listJournalEntries(id, { source: "manual", limit: 200 }), enabled: Boolean(id) });
   const [open, setOpen] = useState<string | null>(null);
+  const [loan, setLoan] = useState<"in" | "repay" | null>(null);
   if (co.isError) return <ListErrorState title={tr("scentsx.je.co_error", "Couldn't load ScentsX")} status={0} message={(co.error as Error)?.message} onRetry={() => void co.refetch()} />;
   return (
     <section className="space-y-2 rounded-[3px] border border-[#D8E0E8] bg-white p-3" data-testid="perfume-journal-panel" aria-label={tr("scentsx.je.title", "Journal entries")}>
@@ -48,6 +50,8 @@ export function PerfumeJournalPanel() {
         <div className="flex flex-wrap gap-2">
           <Button type="button" className="h-[34px] px-3 text-xs" disabled={!id || !accts.data} onClick={() => setOpen("blank")} data-testid="scentsx-je-new">{tr("scentsx.je.new", "+ Journal entry")}</Button>
           {TEMPLATES.map((t) => <Button key={t.key} type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!id || !accts.data} onClick={() => setOpen(t.key)} data-testid={`scentsx-je-${t.key}`}>{`+ ${t.label}`}</Button>)}
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!id} onClick={() => setLoan("in")} data-testid="scentsx-je-loan_in">{tr("scentsx.je.loan_in", "+ Loan from owner")}</Button>
+          <Button type="button" variant="secondary" className="h-[34px] px-3 text-xs" disabled={!id} onClick={() => setLoan("repay")} data-testid="scentsx-je-loan_out">{tr("scentsx.je.loan_out", "+ Repay owner loan")}</Button>
         </div>
       </div>
       {list.isError ? <ListErrorState title={tr("scentsx.je.error", "Couldn't load the journal entries")} status={0} message={(list.error as Error)?.message} onRetry={() => void list.refetch()} /> : (
@@ -62,6 +66,10 @@ export function PerfumeJournalPanel() {
           ]}
         />
       )}
+      {loan ? (
+        <LoanApplicationWizard open operatingCompanyId={id} onClose={() => setLoan(null)} onCreated={() => { setLoan(null); void list.refetch(); }}
+          prefill={loan === "in" ? { direction: "in", interest_rate_pct: "4.00", entry_date: todayCT() } : { direction: "out", target_type: "repayment", entry_date: todayCT() }} />
+      ) : null}
       {open && accts.data ? <JournalModal companyId={id} accounts={accts.data.accounts} template={TEMPLATES.find((t) => t.key === open) ?? null} onClose={() => setOpen(null)} onSaved={() => { setOpen(null); void list.refetch(); }} /> : null}
     </section>
   );
