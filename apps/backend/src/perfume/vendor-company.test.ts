@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildPgClientConfig } from "../lib/pg-connection-options.js";
 import { TEST_OWNER_USER_ID } from "../../test-helpers/constants.js";
 import { ensureIntegrationPrerequisites } from "../../test-helpers/db-fixture.js";
-import { applyVendorLinks, companyNameOf, setCompanyRole, vendorLinkPreview } from "./vendor-company.service.js";
+import { applyVendorLinks, companyNameCheck, companyNameOf, confirmCompanyName, renameCompany, setCompanyRole, vendorLinkPreview } from "./vendor-company.service.js";
 
 describe("companyNameOf", () => {
   it("drops the list's own label", () => {
@@ -125,5 +125,22 @@ describeIntegration("price-list vendors → one company in Contacts (real Postgr
     expect(by[j]!.candidates.map((c) => c.id)).toContain(look);
     expect(by[q]!.company_id).toBe(qfgCo);
     expect(by[g]!.candidates.map((c) => c.id)).not.toContain(gm);
+  });
+
+  it("company name check: a domain-made name is listed with the list's name proposed; rename and 'name is right' each write history and leave the list", async () => {
+    const dom = await company("Zqbsfragrances", "vendor");
+    const ok = await company("Zqclean Distributors", "vendor");
+    const per = await company("Zqbrian Person", "both");
+    const a = await vendor("ZqB&S Fragrances and Cosmetics", "buy"); const b = await vendor("Zqclean Distributors — ARABIC list", "buy"); const d = await vendor("Zqdarielle", "buy");
+    await applyVendorLinks(db as never, TEST_OWNER_USER_ID, { decisions: [{ vendor_id: a, company_id: dom }, { vendor_id: b, company_id: ok }, { vendor_id: d, company_id: per }] });
+    const ids = () => companyNameCheck(db as never).then((r) => r.rows.filter((x) => [a, b, d].includes(x.vendor_id)));
+    const first = await ids();
+    expect(first.map((x) => [x.company, x.proposed])).toEqual([["Zqbsfragrances", "ZqB&S Fragrances and Cosmetics"], ["Zqbrian Person", "Zqdarielle"]]);
+    expect(await renameCompany(db as never, TEST_OWNER_USER_ID, dom, "ZqB&S Fragrances and Cosmetics")).toEqual({ changed: true, name: "ZqB&S Fragrances and Cosmetics" });
+    await confirmCompanyName(db as never, TEST_OWNER_USER_ID, per);
+    expect(await ids()).toEqual([]);
+    const ev = (await db.query(`SELECT action, detail FROM perfume.lead_events WHERE company_id = ANY($1::uuid[]) AND action IN ('renamed', 'name_checked') ORDER BY action`, [[dom, per]])).rows;
+    expect(ev.map((e) => e.action)).toEqual(["name_checked", "renamed"]);
+    expect(ev[1].detail).toMatchObject({ from: "Zqbsfragrances", to: "ZqB&S Fragrances and Cosmetics" });
   });
 });

@@ -1120,7 +1120,8 @@
     "202617150100",
     "202617160100",
     "202617170100",
-    "202617180100"
+    "202617180100",
+    "202617190100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1430,5 +1431,6 @@
   "202617150100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME item margin groups: items.is_exclusive + items.is_new_launch (owner 2026-11-27 15:40 CT margins by group: exclusive, new launches, testers, minis, sets, regular)"},
   "202617160100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME customer purchase history (USA store monthly, Mexico yearly; no balances) for A/B/C customer ranking (ROUND P1.31 L1, owner 15:45 CT item 10)"},
   "202617170100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate companies merged into one: contact_companies.merged_into_id / merged_at (merged rows kept as locations), owner 16:32 CT"},
-  "202617180100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate detector engine: perfume.duplicate_candidates (company pairs, reasons, score, open/merged/dismissed) owner 17:17 CT"}
+  "202617180100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate detector engine: perfume.duplicate_candidates (company pairs, reasons, score, open/merged/dismissed) owner 17:17 CT"},
+  "202617190100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "SCENTSX one vendor many price lists: drop uq_scentsx_vendor_links_vendor; a ScentsX vendor links to several perfume lists of the SAME company only (owner 2026-11-27 18:38 CT)"}
 }
