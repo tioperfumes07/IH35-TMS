@@ -87,12 +87,12 @@
   "202615201200": {
     "claimed_at": "2026-10-01",
     "claimed_by": "cursor",
-    "purpose": "B-1b Account Register ✓ blank↔C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
+    "purpose": "B-1b Account Register \u2713 blank\u2194C: accounting.journal_entry_postings.register_cleared (+at/by) so register can toggle cleared without inventing a second engine; R stays locked via closed reconciliation."
   },
   "202615230100": {
     "claimed_at": "2026-10-02",
     "claimed_by": "CC-1",
-    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date — the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
+    "purpose": "ROUND 326 audit M2: maintenance.pm_schedules.last_service_date \u2014 the auto PM engine evaluates days-based PMs through evaluatePmDue (it had no last-service date, so a days PM never auto-created a WO). Additive, nullable."
   },
   "202615230200": {
     "claimed_at": "2026-10-02",
@@ -102,12 +102,12 @@
   "202615400850": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-2",
-    "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) — live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
+    "purpose": "Declare catalogs.accounts.posts_to_financials (boolean NOT NULL DEFAULT true) \u2014 live on prod with no creating migration, so a fresh database dies at 202615400930 (CC-3 finding 2026-10-04). ADD COLUMN IF NOT EXISTS: no-op on prod; sorts before 202615400930 on a fresh chain."
   },
   "202615410930": {
     "claimed_at": "2026-10-04",
     "claimed_by": "CC-3",
-    "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) — the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
+    "purpose": "fuel provider-transaction uniqueness per PRODUCT LINE: one ticket may carry diesel + DEF + reefer; key (company, vendor, receipt, fuel_type) \u2014 the 202615370600 trigger refused/merged every DEF sharing a ticket with its diesel"
   },
   "202615410940": {
     "claimed_at": "2026-10-04",
@@ -117,7 +117,7 @@
   "202615410950": {
     "claimed_at": "2026-10-04",
     "claimed_by": "CC-3",
-    "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel — fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
+    "purpose": "ACCT-F403 (Lead ruling Option 1): a settlement-derived fuel row on the Relay rail posts NO fuel \u2014 fuel.fuel_transactions.relay_fuel_transaction_id links it to its Relay fill, and only a Relay fill (or a reversal) may credit the fuel_wallet_relay account"
   },
   "202615420900": {
     "claimed_at": "2026-10-05",
@@ -132,12 +132,12 @@
   "202615430900": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-3",
-    "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files — docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
+    "purpose": "ROUND 435: every legal contract instance is filed as a PDF in docs.files \u2014 docs.file_links accepts entity_type 'contract_instance', legal.contract_instances.pdf_file_id references the current filed PDF"
   },
   "202615431000": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-2",
-    "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation — one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
+    "purpose": "FARO-F435 (Lead patch, applied by CC-2): views.factoring_repurchase_obligation \u2014 one row per factoring purchase line; day-35 default interest, repurchase deadline from the owner-decision due event, partial payment leaves it open. Unblocks three Faro guards that exited on the missing view."
   },
   "202615440700": {
     "claimed_at": "2026-10-06",
@@ -147,7 +147,7 @@
   "202615440900": {
     "claimed_at": "2026-10-06",
     "claimed_by": "CC-3",
-    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version — an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
+    "purpose": "Contract PDF format versioning: legal.contract_instances.pdf_format_version \u2014 an unsigned contract whose filed PDF predates the current legal-document format (12pt, 1in margins, Page X of Y) is re-filed in the current format on open; executed PDFs are never re-rendered"
   },
   "202615451400": {
     "claimed_by": "cursor",
@@ -157,7 +157,7 @@
   "202615480900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-10",
-    "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) — additive, no data written"
+    "purpose": "ROUND 443.28 same-entity FK for 443.16: UNIQUE (operating_company_id, id) on telematics.unit_stop_events + composite FK mdata.load_stops (operating_company_id, actual_stop_event_id) -> unit_stop_events (verify-money-lines-same-entity-fks red on main) \u2014 additive, no data written"
   },
   "202615490300": {
     "claimed_by": "CC-2",
@@ -222,7 +222,7 @@
   "202615600900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-11",
-    "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer — bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
+    "purpose": "RULING 443.67 #1 a-c: USMCA line categorization refused at the DB for every writer \u2014 bill / expense / invoice lines need an item (resolved from the account when exactly one item maps), line account = item default unless an override reason; expenses posted => status posted; items need an account and a category (named exemptions); company flag, NOT VALID -> VALIDATE"
   },
   "202615610900": {
     "claimed_by": "CC-3",
@@ -247,7 +247,7 @@
   "202615650900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "RULING 443.90 #4: printed trailer decision — mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
+    "purpose": "RULING 443.90 #4: printed trailer decision \u2014 mdata.loads.trailer_source + non_owned_trailer_id, accounting.expenses.non_owned_trailer_id"
   },
   "202615660900": {
     "claimed_by": "CC-3",
@@ -257,7 +257,7 @@
   "202615670900": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it — RLS bypass on prod; live-defects F3)"
+    "purpose": "443.91 #4 batch 1: restore security_invoker on views.live_loads (202614670900 CREATE OR REPLACE dropped it \u2014 RLS bypass on prod; live-defects F3)"
   },
   "202615680900": {
     "claimed_by": "CC-3",
@@ -292,7 +292,7 @@
   "202615730917": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-12",
-    "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) — present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
+    "purpose": "443.100 C2 lane 3: restate accounting.factoring_advances.status_before_void (text NULL) \u2014 present on prod, created by no migration (verify-sql-write-targets phantom write in void-cancel-executors.ts)"
   },
   "202615740913": {
     "claimed_by": "CC-3",
@@ -312,12 +312,12 @@
   "202615781200": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-12",
-    "purpose": "443.106: refuse_driver_bill_without_links (vendor/driver/load/unit on live driver bills); bill_payments.vendor_id NOT NULL; expense_lines refuse driver/unit attribution that differs from a load-bearing header — trailer clause deferred (prod still has 4 bills without trailer); expense load/exemption already 202615770700 (CC-2; 5 EXP rows still open)"
+    "purpose": "443.106: refuse_driver_bill_without_links (vendor/driver/load/unit on live driver bills); bill_payments.vendor_id NOT NULL; expense_lines refuse driver/unit attribution that differs from a load-bearing header \u2014 trailer clause deferred (prod still has 4 bills without trailer); expense load/exemption already 202615770700 (CC-2; 5 EXP rows still open)"
   },
   "202615790700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.108: trailer choice required on Book / Edit Load — mdata.loads.trailer_source allows 'none' (bobtail / power only); the expense trailer fill carries a customer (non-owned) trailer from its load"
+    "purpose": "443.108: trailer choice required on Book / Edit Load \u2014 mdata.loads.trailer_source allows 'none' (bobtail / power only); the expense trailer fill carries a customer (non-owned) trailer from its load"
   },
   "202615800700": {
     "claimed_by": "CC-2",
@@ -332,27 +332,27 @@
   "202615890700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.128 C: team driver bills recognized at delivery — driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
+    "purpose": "443.128 C: team driver bills recognized at delivery \u2014 driver_bills.accrued_team_bill_id (the co-driver's delivery-posted A/P bill) + the settlement spine keyed per driver bill AND accounting bill (two team drivers close the same driver bill)"
   },
   "202615910700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-12",
-    "purpose": "443.134 AJK-13: reports.ifta_filings versions — a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
+    "purpose": "443.134 AJK-13: reports.ifta_filings versions \u2014 a re-prepare of an approved / filed quarter is a NEW draft version (version + supersedes_filing_uuid); the unique key becomes (company, quarter, version); a filed / approved filing is never modified"
   },
   "202616040700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.204 (owner 10-21 15:27 CT): driver DQ gate — mdata.drivers.dq_file_on_paper_since set for every driver existing at migration time (files held in person); the gate never blocks a flagged driver; new drivers need the full file at create"
+    "purpose": "443.204 (owner 10-21 15:27 CT): driver DQ gate \u2014 mdata.drivers.dq_file_on_paper_since set for every driver existing at migration time (files held in person); the gate never blocks a flagged driver; new drivers need the full file at create"
   },
   "202616050700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap — same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
+    "purpose": "443.209 (Lead 21:25Z, moved from Codex): unit overlap \u2014 same tour + prior leg delivered-by-schedule before this leg's pickup is not an overlap; tracks mdata.refuse_overlapping_unit_assignment in migrations; fresh-DB uq_loads_one_active_unit parity with prod"
   },
   "202616060700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.208R (Lead 22:58Z): one load-change signal — AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
+    "purpose": "443.208R (Lead 22:58Z): one load-change signal \u2014 AFTER INSERT/UPDATE/DELETE triggers pg_notify('load_changed', {company_id, load_ids, table, op}) on load and load-linked money tables"
   },
   "202616070100": {
     "claimed_by": "CC-3",
@@ -362,22 +362,22 @@
   "202616070700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-21",
-    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump — fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
+    "purpose": "443.214 (Lead 22:40Z): fuel follows the truck at the pump \u2014 fuel.fuel_transactions provider fill moment + station coords + card_unit / gps_unit / distance / minutes / truck + load resolution reason"
   },
   "202616090100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb — the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
+    "purpose": "443.215 extension (Lead 22:55Z): driver_finance.driver_settlements.source_fingerprint jsonb \u2014 the printed source (settlement no, printed date, TOTAL DUE, Net Revenue, normalized lines, line hash) a settlement was posted from; a later source is compared against it (source changed: repost needed)"
   },
   "202616100100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) — the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
+    "purpose": "443.211R (Lead 22:58Z): mdata.load_status_edge_allowed(from, to, kind) \u2014 the SQL mirror of the one load status machine (load-state-machine.ts edges); accounting.revert_load_on_invoice_death validates its revert through it (CREATE OR REPLACE FUNCTION)"
   },
   "202616110700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles — a booked load always has its driver bill (priced when short miles land)"
+    "purpose": "CC-2 Lead 443.220: driver_bills status awaiting_short_miles \u2014 a booked load always has its driver bill (priced when short miles land)"
   },
   "202616120700": {
     "claimed_by": "CC-2",
@@ -387,7 +387,7 @@
   "202616130100": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-22",
-    "purpose": "443.238 (owner 11:23 AM CT): dispatch.load_shuttle_legs — the local yard-shuttle leg of a load (shuttle unit / driver, pickup stop -> yard), evidence + precision; RLS + audit; CREATE only"
+    "purpose": "443.238 (owner 11:23 AM CT): dispatch.load_shuttle_legs \u2014 the local yard-shuttle leg of a load (shuttle unit / driver, pickup stop -> yard), evidence + precision; RLS + audit; CREATE only"
   },
   "202616131600": {
     "claimed_by": "Cursor",
@@ -397,17 +397,17 @@
   "202616142000": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.244 (owner 2:10 PM CT): a truck holds ONE load in motion plus advance bookings — the unit backstop triggers refuse only a second load in motion"
+    "purpose": "CC-3 LEAD 443.244 (owner 2:10 PM CT): a truck holds ONE load in motion plus advance bookings \u2014 the unit backstop triggers refuse only a second load in motion"
   },
   "202616150100": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.244 (replaces 202616142000 — lane band HH 00-05): a truck holds ONE load in motion plus advance bookings — the unit backstop triggers refuse only a second load in motion"
+    "purpose": "CC-3 LEAD 443.244 (replaces 202616142000 \u2014 lane band HH 00-05): a truck holds ONE load in motion plus advance bookings \u2014 the unit backstop triggers refuse only a second load in motion"
   },
   "202616150700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.243: fuel attribution — fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
+    "purpose": "CC-2 Lead 443.243: fuel attribution \u2014 fuel.settlement_fuel_purchases (rule 1 settlement first) + fuel.settlement_trip_windows (document trip window) + fuel.fuel_assignment_questions (create-if-absent in Cursor's 202616140700 shape + current_load_id / uncertainty_reasons + audit trigger)"
   },
   "202616160100": {
     "claimed_by": "claude",
@@ -417,12 +417,12 @@
   "202616160200": {
     "claimed_by": "claude",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address — 13536 / 13573 / 13660)"
+    "purpose": "CC-3 LEAD 443.248: mdata.load_stops.document_address (the signed settlement's printed address of record, kept beside the GPS / geocoded address \u2014 13536 / 13573 / 13660)"
   },
   "202616160700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-22",
-    "purpose": "CC-2 Lead 443.241: ONE lane store — catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
+    "purpose": "CC-2 Lead 443.241: ONE lane store \u2014 catalogs.lane_mileage gains median/count/last-load + shipper->receiver location-pair rows; catalogs.lane_mileage_observations (one per lane x load: document/history short, practical, empty miles)"
   },
   "202616170700": {
     "claimed_by": "CC-2",
@@ -437,17 +437,17 @@
   "202616190700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit — a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
+    "purpose": "CC-2 Lead 443.258.5 ruling 2 (writer shape B): accounting.expenses.is_credit \u2014 a card credit (QBO Credit Card Credit) posts Dr payment account / Cr category; the fuel-card statement discount becomes a document instead of a handwritten JE"
   },
   "202616210300": {
     "claimed_by": "CC-3",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-3 Lead 443.281-E: person names normalized at write — mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
+    "purpose": "CC-3 Lead 443.281-E: person names normalized at write \u2014 mdata.drivers BEFORE INSERT/UPDATE trigger proper-cases ALL-CAPS / all-lowercase first/last names (mixed case kept), and normalizes the existing ALL-CAPS rows through it"
   },
   "202616220700": {
     "claimed_by": "CC-2",
     "claimed_at": "2026-10-23",
-    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of — a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
+    "purpose": "CC-2 OWNER RULING 443.288-A: accounting.expenses.parent_expense_id (same-company FK) + transaction_source_links role statement_card_difference_of \u2014 a statement card credit / card difference is linked to its receipt and always moves with it; idempotent link backfill by statement marker"
   },
   "202616230300": {
     "claimed_by": "CC-3",
@@ -462,12 +462,12 @@
   "202616230800": {
     "claimed_by": "CC-1",
     "claimed_at": "2026-10-24",
-    "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger — driver_finance.tg_settlement_non_bookended_close_requires_posting"
+    "purpose": "ENG-01 (443.322): settlement non-load-bookended close requires posting trigger \u2014 driver_finance.tg_settlement_non_bookended_close_requires_posting"
   },
   "202616240100": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
-    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) — Maintenance In Shop bay board"
+    "purpose": "LEAD 443.301 register row 59: maintenance.work_orders bay_number / bay_assigned_at / bay_released_at + one occupied bay per company per bay number (partial unique) + maintenance_settings.shop_bay_count (default 4) \u2014 Maintenance In Shop bay board"
   },
   "202616240200": {
     "claimed_by": "LEAD",
@@ -477,7 +477,7 @@
   "202616240300": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-24",
-    "purpose": "LEAD 443.339: uq_driver_settlements_one_open_per_driver counts only settlements open FOR NEW LOADS (status 'open' AND trip_closed_at IS NULL) — a trip-closed settlement waiting on its after-commit post no longer blocks the driver's next settlement"
+    "purpose": "LEAD 443.339: uq_driver_settlements_one_open_per_driver counts only settlements open FOR NEW LOADS (status 'open' AND trip_closed_at IS NULL) \u2014 a trip-closed settlement waiting on its after-commit post no longer blocks the driver's next settlement"
   },
   "202616240400": {
     "claimed_by": "LEAD",
@@ -487,27 +487,27 @@
   "202616251000": {
     "claimed_at": "2026-10-24",
     "claimed_by": "cc-1",
-    "purpose": "443.346b — adds bank_wire_gap_account_id uuid NULL FK on accounting.factoring_advances; routes Faro gap to configurable account instead of always 1230 (renumbered from 202616240400: collision with LEAD #27579 bank_line_check_number)"
+    "purpose": "443.346b \u2014 adds bank_wire_gap_account_id uuid NULL FK on accounting.factoring_advances; routes Faro gap to configurable account instead of always 1230 (renumbered from 202616240400: collision with LEAD #27579 bank_line_check_number)"
   },
   "202616261600": {
     "claimed_at": "2026-10-25",
     "claimed_by": "Cursor",
-    "purpose": "LEAD 443.326 CI unblock — follow-up entity walls on telematics.vehicle_latest_position_cache (opco FK → org.companies, unit_id FK → mdata.units, FORCE RLS + FOR ALL policy). CREATE-only; does not edit 202616200100 (already on main)."
+    "purpose": "LEAD 443.326 CI unblock \u2014 follow-up entity walls on telematics.vehicle_latest_position_cache (opco FK \u2192 org.companies, unit_id FK \u2192 mdata.units, FORCE RLS + FOR ALL policy). CREATE-only; does not edit 202616200100 (already on main)."
   },
   "202616261700": {
     "claimed_at": "2026-10-25",
     "claimed_by": "LEAD",
-    "purpose": "LEAD 443.301 register row 59 (re-claim): maintenance.work_orders shop-bay columns + one occupied bay per company per bay number + maintenance_settings.shop_bay_count — 202616240100 was taken on main by ACCT-443346 factoring_advance_bank_wire_cents (c9f9cb2b3d) before row 59 landed"
+    "purpose": "LEAD 443.301 register row 59 (re-claim): maintenance.work_orders shop-bay columns + one occupied bay per company per bay number + maintenance_settings.shop_bay_count \u2014 202616240100 was taken on main by ACCT-443346 factoring_advance_bank_wire_cents (c9f9cb2b3d) before row 59 landed"
   },
   "202616270000": {
     "claimed_by": "cc-1",
     "claimed_at": "2026-10-25",
-    "purpose": "443.277-B: USMCA fuel_card_payable_dreamline (2510) + fuel_card_payable_wex (2520) role bindings — rolling ledger shows card payable balances"
+    "purpose": "443.277-B: USMCA fuel_card_payable_dreamline (2510) + fuel_card_payable_wex (2520) role bindings \u2014 rolling ledger shows card payable balances"
   },
   "202616280000": {
     "claimed_by": "LEAD",
     "claimed_at": "2026-10-25",
-    "purpose": "LEAD: sms.queue / whatsapp.queue prod drift — 0166 CREATE TABLE IF NOT EXISTS skipped pre-existing prod tables, so prod lacks operating_company_id (+ sms to_phone), RLS and the company policy; every SMS/WhatsApp dispatch insert fails (verify-sql-write-targets live)"
+    "purpose": "LEAD: sms.queue / whatsapp.queue prod drift \u2014 0166 CREATE TABLE IF NOT EXISTS skipped pre-existing prod tables, so prod lacks operating_company_id (+ sms to_phone), RLS and the company policy; every SMS/WhatsApp dispatch insert fails (verify-sql-write-targets live)"
   },
   "202616290000": {
     "claimed_by": "LEAD",
@@ -522,12 +522,12 @@
   "202616301201": {
     "claimed_by": "cursor",
     "claimed_at": "2026-10-26",
-    "purpose": "ENG-12: USMCA seed fine_recovery→4910 permit_recovery→5700; rebind Fine/I-94 driver-deduction items off 7200"
+    "purpose": "ENG-12: USMCA seed fine_recovery\u21924910 permit_recovery\u21925700; rebind Fine/I-94 driver-deduction items off 7200"
   },
   "202616310100": {
     "claimed_by": "claude",
     "claimed_at": "2026-11-02",
-    "purpose": "ENG-60: retire insurance.lawsuit — drop legal.matters.insurance_lawsuit_id + insurance.claim.lawsuit_id + the table (refuses unless 0 rows / 0 links all entities)"
+    "purpose": "ENG-60: retire insurance.lawsuit \u2014 drop legal.matters.insurance_lawsuit_id + insurance.claim.lawsuit_id + the table (refuses unless 0 rows / 0 links all entities)"
   },
   "202616310200": {
     "claimed_by": "cc-1",
@@ -535,13 +535,13 @@
     "purpose": "ROW-261: add projected_expense_cents to forecast.cash_flow_projection_snapshots"
   },
   "_band": {
-    "claude": "HH 00–11 (morning)",
-    "cursor": "HH 12–23 (afternoon)",
+    "claude": "HH 00\u201311 (morning)",
+    "cursor": "HH 12\u201323 (afternoon)",
     "locked": "2026-08-10",
     "note": "Mirrors scripts/verify-steps/CLAIMED-NUMBERS.json for migration timestamps. Claim-before-author required."
   },
   "_how_to_claim": "Open a claim-only PR (chore/claim-migration-YYYYMMDDHHMM-*) that adds the timestamp to 'claimed' below; merge to origin/main; THEN author the .sql file on a feature branch. CI fails if a new db/migrations/*.sql timestamp is not already claimed on origin/main. Same-lane intra-branch collisions are prevented because the registry is merged before the migration file exists.",
-  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00–11 / 12–23) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
+  "_why": "202612350000 was claimed twice by two concurrently-open CC-1 branches. The migration lane-band guard (HH 00\u201311 / 12\u201323) only prevents inter-lane collisions; it cannot see two unmerged branches in the same lane. A registry merged before authorship converts the invisible race into a git conflict.",
   "claimed": [
     "202608120900",
     "202608121800",
@@ -1120,7 +1120,8 @@
     "202617150100",
     "202617160100",
     "202617170100",
-    "202617180100"
+    "202617180100",
+    "202617190100"
   ],
   "202616330100": {
     "claimed_at": "2026-11-03",
@@ -1140,12 +1141,12 @@
   "202616360100": {
     "claimed_at": "2026-11-04",
     "claimed_by": "claude",
-    "purpose": "ACCT-F11094 row 257: telematics.vehicle_latest_position SET (security_invoker = true) — D074 (202616200100) re-created the view without it; fresh-DB F3 guard red."
+    "purpose": "ACCT-F11094 row 257: telematics.vehicle_latest_position SET (security_invoker = true) \u2014 D074 (202616200100) re-created the view without it; fresh-DB F3 guard red."
   },
   "202616360200": {
     "claimed_at": "2026-11-04",
     "claimed_by": "claude",
-    "purpose": "ACCT-F11094 row 257: accounting.payment_applications.payment_id DROP NOT NULL — prod already nullable (drift); the migration chain kept NOT NULL so a fresh DB refuses the ACCT-F11070 payment-less relief application."
+    "purpose": "ACCT-F11094 row 257: accounting.payment_applications.payment_id DROP NOT NULL \u2014 prod already nullable (drift); the migration chain kept NOT NULL so a fresh DB refuses the ACCT-F11070 payment-less relief application."
   },
   "202616370100": {
     "claimed_at": "2026-11-03",
@@ -1180,37 +1181,37 @@
   "202616490100": {
     "claimed_at": "2026-11-12",
     "claimed_by": "claude",
-    "purpose": "PERFUME-DESK: owner-only hidden perfume price desk — new isolated schema perfume.* (items, UPCs, aliases, vendors, price lists, rows, matches); no carrier, USMCA or GL linkage"
+    "purpose": "PERFUME-DESK: owner-only hidden perfume price desk \u2014 new isolated schema perfume.* (items, UPCs, aliases, vendors, price lists, rows, matches); no carrier, USMCA or GL linkage"
   },
   "202616490900": {
     "claimed_at": "2026-11-11",
     "claimed_by": "claude",
-    "purpose": "dispatch capacity audit triggers — audit.tg_audit_row() on 5 dispatch.capacity_* tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_postings); additive guard fix for verify-dispatch-tables-audited-and-rls-forced"
+    "purpose": "dispatch capacity audit triggers \u2014 audit.tg_audit_row() on 5 dispatch.capacity_* tables (capacity_offer_sends, capacity_offer_suppressions, capacity_settings, capacity_unit_offers, load_board_postings); additive guard fix for verify-dispatch-tables-audited-and-rls-forced"
   },
   "202616501200": {
     "claimed_at": "2026-11-12",
     "claimed_by": "cursor",
-    "purpose": "Codex cert / verify-money-lines-same-entity-fks: company-composite FK for driver_finance.settlement_lines.reinstated_from_void_je_id → accounting.journal_entries (operating_company_id, id)"
+    "purpose": "Codex cert / verify-money-lines-same-entity-fks: company-composite FK for driver_finance.settlement_lines.reinstated_from_void_je_id \u2192 accounting.journal_entries (operating_company_id, id)"
   },
   "202616510100": {
     "claimed_at": "2026-11-12",
     "claimed_by": "CC-1",
-    "purpose": "ACCT-F11152 batch82: settlement_lines composite same-entity FK (reinstated_je) — renumbered from 202616490100 (collision with PERFUME-DESK migration already on main)"
+    "purpose": "ACCT-F11152 batch82: settlement_lines composite same-entity FK (reinstated_je) \u2014 renumbered from 202616490100 (collision with PERFUME-DESK migration already on main)"
   },
   "202616480200": {
     "claimed_at": "2026-11-12",
     "claimed_by": "CC-1",
-    "purpose": "ACCT-F11152 batch82: dispatch capacity audit triggers backfill — audit.tg_audit_row() on dispatch.capacity_* tables (D3 standing order backfill); held migration DO NOT RUN ON PROD"
+    "purpose": "ACCT-F11152 batch82: dispatch capacity audit triggers backfill \u2014 audit.tg_audit_row() on dispatch.capacity_* tables (D3 standing order backfill); held migration DO NOT RUN ON PROD"
   },
   "202616590100": {
     "claimed_at": "2026-11-12",
     "claimed_by": "CC-3",
-    "purpose": "ENG-27 R8.20 — backfill journal_entry_postings.load_id for bank_categorization postings where bt.categorization_load_id IS NOT NULL but posting was written before G8 engine fix (resolvePostingSourceLoad had no bank_categorization branch)"
+    "purpose": "ENG-27 R8.20 \u2014 backfill journal_entry_postings.load_id for bank_categorization postings where bt.categorization_load_id IS NOT NULL but posting was written before G8 engine fix (resolvePostingSourceLoad had no bank_categorization branch)"
   },
   "202616590900": {
     "claimed_at": "2026-11-13",
     "claimed_by": "CC-3",
-    "purpose": "ENG-27 R8.20 — bank_cat load_id backfill migration in CC-3 band (HH=09); replaces erroneous claim 202616590100 (HH=01, outside CC-3 band 09–11)"
+    "purpose": "ENG-27 R8.20 \u2014 bank_cat load_id backfill migration in CC-3 band (HH=09); replaces erroneous claim 202616590100 (HH=01, outside CC-3 band 09\u201311)"
   },
   "202616600100": {
     "claimed_at": "2026-11-13",
@@ -1225,27 +1226,27 @@
   "202616620100": {
     "claimed_at": "2026-11-14",
     "claimed_by": "lead",
-    "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows — owner 2026-11-14"
+    "purpose": "PERFUME inventory purchase fields (purchase_date, qty_purchased, qty_sold) on perfume.price_list_rows \u2014 owner 2026-11-14"
   },
   "202616630100": {
     "claimed_at": "2026-11-14",
     "claimed_by": "lead",
-    "purpose": "PERFUME my-list lines without a price (owner offer/inventory lists): perfume.price_list_rows.price_cents nullable — owner 2026-11-14"
+    "purpose": "PERFUME my-list lines without a price (owner offer/inventory lists): perfume.price_list_rows.price_cents nullable \u2014 owner 2026-11-14"
   },
   "202616640100": {
     "claimed_at": "2026-11-16",
     "claimed_by": "lead",
-    "purpose": "E-12: safety.harsh_events.event_kind adds following_distance, railroad_crossing, lane_departure, unsafe_parking — Samsara safety events measured on /fleet/safety-events that were counted and dropped (no kind)"
+    "purpose": "E-12: safety.harsh_events.event_kind adds following_distance, railroad_crossing, lane_departure, unsafe_parking \u2014 Samsara safety events measured on /fleet/safety-events that were counted and dropped (no kind)"
   },
   "202616650100": {
     "claimed_at": "2026-11-16",
     "claimed_by": "lead",
-    "purpose": "E-29: integrations.auto_status_switch_events.case_id adds 'D' (dispatched → at_pickup when the truck is parked in the pickup fence)"
+    "purpose": "E-29: integrations.auto_status_switch_events.case_id adds 'D' (dispatched \u2192 at_pickup when the truck is parked in the pickup fence)"
   },
   "202616660100": {
     "claimed_at": "2026-11-17",
     "claimed_by": "lead",
-    "purpose": "PERFUME my own costs per item (last cost, average cost) typed on the desk: perfume.item_costs — owner 2026-11-17 14:04 CT"
+    "purpose": "PERFUME my own costs per item (last cost, average cost) typed on the desk: perfume.item_costs \u2014 owner 2026-11-17 14:04 CT"
   },
   "202616670100": {
     "claimed_at": "2026-11-18",
@@ -1255,37 +1256,37 @@
   "202616680100": {
     "claimed_at": "2026-11-20",
     "claimed_by": "lead",
-    "purpose": "PERFUME locations register (number + name) and my inventory qty by location: perfume.locations, price_list_rows.qty_by_location — owner 2026-11-20 20:38 CT"
+    "purpose": "PERFUME locations register (number + name) and my inventory qty by location: perfume.locations, price_list_rows.qty_by_location \u2014 owner 2026-11-20 20:38 CT"
   },
   "202616690100": {
     "claimed_at": "2026-11-23",
     "claimed_by": "lead",
-    "purpose": "PERFUME vendor roles (purchase / trading / wholesale toggles): perfume.vendors.roles — owner 2026-11-23 12:32 CT"
+    "purpose": "PERFUME vendor roles (purchase / trading / wholesale toggles): perfume.vendors.roles \u2014 owner 2026-11-23 12:32 CT"
   },
   "202616700100": {
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
-    "purpose": "PERFUME mail price-list engine: perfume.mail_accounts / mail_rules / mail_runs / mail_files — owner 2026-11-25 17:29 CT"
+    "purpose": "PERFUME mail price-list engine: perfume.mail_accounts / mail_rules / mail_runs / mail_files \u2014 owner 2026-11-25 17:29 CT"
   },
   "202616710100": {
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
-    "purpose": "PERFUME mail send from jpm@tioperfumes.com: perfume.mail_accounts.can_send, perfume.mail_send_batches / mail_sends / mail_optouts — owner 2026-11-25 22:50 CT"
+    "purpose": "PERFUME mail send from jpm@tioperfumes.com: perfume.mail_accounts.can_send, perfume.mail_send_batches / mail_sends / mail_optouts \u2014 owner 2026-11-25 22:50 CT"
   },
   "202616720100": {
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
-    "purpose": "PERFUME mail engine third mailbox tio-perfumes@hotmail.com (Microsoft): perfume.mail_accounts.provider — owner 2026-11-25 23:25 CT"
+    "purpose": "PERFUME mail engine third mailbox tio-perfumes@hotmail.com (Microsoft): perfume.mail_accounts.provider \u2014 owner 2026-11-25 23:25 CT"
   },
   "202616730100": {
     "claimed_at": "2026-11-25",
     "claimed_by": "lead",
-    "purpose": "PERFUME vendor tags: perfume.vendors.roles adds distributor + customer (owner tags vendors only / trading / distributor / customer as well) — owner 2026-11-25 23:41 CT"
+    "purpose": "PERFUME vendor tags: perfume.vendors.roles adds distributor + customer (owner tags vendors only / trading / distributor / customer as well) \u2014 owner 2026-11-25 23:41 CT"
   },
   "202616740100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME contacts database (vendor / customer / both, start date, how) + Google business search — PR #29837 (owner 2026-11-25)"
+    "purpose": "PERFUME contacts database (vendor / customer / both, start date, how) + Google business search \u2014 PR #29837 (owner 2026-11-25)"
   },
   "202616770100": {
     "claimed_at": "2026-11-26",
@@ -1300,12 +1301,12 @@
   "202616790100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME quotations: perfume.quotes + quote_lines + quote_events (number, customer, lines from desk items, status, history, Excel/PDF export) — owner 2026-11-26 18:13 CT"
+    "purpose": "PERFUME quotations: perfume.quotes + quote_lines + quote_events (number, customer, lines from desk items, status, history, Excel/PDF export) \u2014 owner 2026-11-26 18:13 CT"
   },
   "202616800100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME sales orders + purchase orders: perfume.sales_orders / sales_order_lines / sales_order_events (from an accepted quote, shipped qty) and perfume.purchase_orders / purchase_order_lines / purchase_order_events (to a vendor, from an order or by hand, received qty) — history, Excel/PDF — owner 2026-11-26 19:08 + 19:12 CT"
+    "purpose": "PERFUME sales orders + purchase orders: perfume.sales_orders / sales_order_lines / sales_order_events (from an accepted quote, shipped qty) and perfume.purchase_orders / purchase_order_lines / purchase_order_events (to a vendor, from an order or by hand, received qty) \u2014 history, Excel/PDF \u2014 owner 2026-11-26 19:08 + 19:12 CT"
   },
   "202616810100": {
     "claimed_at": "2026-11-26",
@@ -1315,72 +1316,72 @@
   "202616850100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME inventory ledger (ScentsX): stock sites kind/own, lots (FIFO layers), append-only stock moves with FIFO and moving-average cost, transfers, cycle counts with second-person approval, PO receive into a site, SO ship from a site, price levels — owner 2026-11-26 20:21 CT (D2/D6/D7/D8 answered)"
+    "purpose": "PERFUME inventory ledger (ScentsX): stock sites kind/own, lots (FIFO layers), append-only stock moves with FIFO and moving-average cost, transfers, cycle counts with second-person approval, PO receive into a site, SO ship from a site, price levels \u2014 owner 2026-11-26 20:21 CT (D2/D6/D7/D8 answered)"
   },
   "202616860100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME price levels + customer accounts (ScentsX): perfume.price_levels / price_level_items (Retail, Wholesale, Distributor, Export Mexico — owner 20:28 CT), perfume.customer_accounts (type, terms, limit, hold) and perfume.credit_applications with owner approval, append-only account history — owner 2026-11-26 20:21 CT"
+    "purpose": "PERFUME price levels + customer accounts (ScentsX): perfume.price_levels / price_level_items (Retail, Wholesale, Distributor, Export Mexico \u2014 owner 20:28 CT), perfume.customer_accounts (type, terms, limit, hold) and perfume.credit_applications with owner approval, append-only account history \u2014 owner 2026-11-26 20:21 CT"
   },
   "202616890100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX company facts the owner gave 2026-11-26 21:24 CT: EIN 51-0538798, fiscal year ends 12-31, formed 04/01/2005 — org.companies.tax_id plus two nullable columns fiscal_year_end (MM-DD) and formed_on"
+    "purpose": "SCENTSX company facts the owner gave 2026-11-26 21:24 CT: EIN 51-0538798, fiscal year ends 12-31, formed 04/01/2005 \u2014 org.companies.tax_id plus two nullable columns fiscal_year_end (MM-DD) and formed_on"
   },
   "202616750100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME trade show planner: perfume.trade_shows + perfume.trade_show_contacts (shows, I go, contacts / meetings per show) — owner 2026-11-26 15:56 CT"
+    "purpose": "PERFUME trade show planner: perfume.trade_shows + perfume.trade_show_contacts (shows, I go, contacts / meetings per show) \u2014 owner 2026-11-26 15:56 CT"
   },
   "202616760100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME campaigns + saved segments + traders (perfume.contact_segments, perfume.campaigns, perfume.trades, perfume.trade_buyers) — owner 2026-11-26 16:59 CT \"get this all completely done now\" (design boards 3 and 4)"
+    "purpose": "PERFUME campaigns + saved segments + traders (perfume.contact_segments, perfume.campaigns, perfume.trades, perfume.trade_buyers) \u2014 owner 2026-11-26 16:59 CT \"get this all completely done now\" (design boards 3 and 4)"
   },
   "202616820100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B1: org.company_type gains 'distributor' (ScentsX LLC / TIO Perfumes as its own company in the accounting engine) — owner 2026-11-26 20:13 CT \"Own company, same engine\""
+    "purpose": "SCENTSX B1: org.company_type gains 'distributor' (ScentsX LLC / TIO Perfumes as its own company in the accounting engine) \u2014 owner 2026-11-26 20:13 CT \"Own company, same engine\""
   },
   "202616820200": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B1: org.companies row SCENTSX (ScentsX LLC, short name TIO Perfumes, company_type distributor) — owner 2026-11-26 20:13 / 20:16 CT"
+    "purpose": "SCENTSX B1: org.companies row SCENTSX (ScentsX LLC, short name TIO Perfumes, company_type distributor) \u2014 owner 2026-11-26 20:13 / 20:16 CT"
   },
   "202616830100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B2: ScentsX native chart of accounts (catalogs.accounts, goods-trading chart, zero balances) + account role bindings + first accounting periods — owner 2026-11-26 20:16 / 20:18 CT"
+    "purpose": "SCENTSX B2: ScentsX native chart of accounts (catalogs.accounts, goods-trading chart, zero balances) + account role bindings + first accounting periods \u2014 owner 2026-11-26 20:16 / 20:18 CT"
   },
   "202616840100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B3: goods posting source types + perfume <-> accounting link columns + the two database walls (perfume links only on SCENTSX rows) — owner 2026-11-26 20:16 CT"
+    "purpose": "SCENTSX B3: goods posting source types + perfume <-> accounting link columns + the two database walls (perfume links only on SCENTSX rows) \u2014 owner 2026-11-26 20:16 CT"
   },
   "202616880100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B3b: goods posting roles (inventory, in transit, goods received not billed, COGS, shrink, write-down, opening balance equity) bound for SCENTSX + the ScentsX stock-move poster flag — owner 2026-11-26 20:16 CT"
+    "purpose": "SCENTSX B3b: goods posting roles (inventory, in transit, goods received not billed, COGS, shrink, write-down, opening balance equity) bound for SCENTSX + the ScentsX stock-move poster flag \u2014 owner 2026-11-26 20:16 CT"
   },
   "202616900100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "PERFUME B5 + B8 (ScentsX): quarantine sites (stock that cannot be sold or shipped), stock write-offs (damaged / expired / counterfeit; over $500 a second person posts), PO approval (owner-set amount in perfume.settings; a PO at or above it is received only once approved) — owner 2026-11-26 20:21 CT approvals, 21:24 CT create the engines and complete"
+    "purpose": "PERFUME B5 + B8 (ScentsX): quarantine sites (stock that cannot be sold or shipped), stock write-offs (damaged / expired / counterfeit; over $500 a second person posts), PO approval (owner-set amount in perfume.settings; a PO at or above it is received only once approved) \u2014 owner 2026-11-26 20:21 CT approvals, 21:24 CT create the engines and complete"
   },
   "202616910100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B3c: invoice a shipped TIO Perfumes sales order in ScentsX's books — scentsx.sales_order_invoice_lines (sales order line <-> invoice line, qty) so partial shipments invoice exactly once — owner 2026-11-26 21:37 CT"
+    "purpose": "SCENTSX B3c: invoice a shipped TIO Perfumes sales order in ScentsX's books \u2014 scentsx.sales_order_invoice_lines (sales order line <-> invoice line, qty) so partial shipments invoice exactly once \u2014 owner 2026-11-26 21:37 CT"
   },
   "202616920100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B9: cash log + Form 8300 cases (12-month related cash over $10,000, 15-day due date, payer identity gate, structuring alerts, settings) linked to accounting.payments — owner 2026-11-26 20:18 CT compliance for money forms / FinCEN"
+    "purpose": "SCENTSX B9: cash log + Form 8300 cases (12-month related cash over $10,000, 15-day due date, payer identity gate, structuring alerts, settings) linked to accounting.payments \u2014 owner 2026-11-26 20:18 CT compliance for money forms / FinCEN"
   },
   "202616930100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B9b: OFAC SDN list load + sanctions screening of customers / vendors / cash payers (block until cleared with a reason), Texas resale certificates (Form 01-339) and export proof per sales order (export invoice refused without it) — owner 2026-11-26 20:18 CT compliance"
+    "purpose": "SCENTSX B9b: OFAC SDN list load + sanctions screening of customers / vendors / cash payers (block until cleared with a reason), Texas resale certificates (Form 01-339) and export proof per sales order (export invoice refused without it) \u2014 owner 2026-11-26 20:18 CT compliance"
   },
   "202616940100": {
     "claimed_at": "2026-11-26",
@@ -1390,17 +1391,17 @@
   "202616950100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B11: complete books — bank / cash / card / loan / payroll / other income-expense accounts, role bindings (operating_bank etc.), ScentsX catalogs (payment terms, payment methods, void reasons, vendor types, expense categories, products & services) and the generic finance posting flags ON for SCENTSX — owner 2026-11-26 23:19 CT full books"
+    "purpose": "SCENTSX B11: complete books \u2014 bank / cash / card / loan / payroll / other income-expense accounts, role bindings (operating_bank etc.), ScentsX catalogs (payment terms, payment methods, void reasons, vendor types, expense categories, products & services) and the generic finance posting flags ON for SCENTSX \u2014 owner 2026-11-26 23:19 CT full books"
   },
   "202616960100": {
     "claimed_at": "2026-11-26",
     "claimed_by": "lead",
-    "purpose": "SCENTSX B12: compliance module — party KYC (RFC, CURP, passport, visa, EIN, Texas sales tax permit), W-9 / W-8BEN / W-8BEN-E tracking, pagarés tied to credit accounts, linked to contacts, ScentsX customers (A/R) and vendors (A/P) — owner 2026-11-26 23:17 CT"
+    "purpose": "SCENTSX B12: compliance module \u2014 party KYC (RFC, CURP, passport, visa, EIN, Texas sales tax permit), W-9 / W-8BEN / W-8BEN-E tracking, pagar\u00e9s tied to credit accounts, linked to contacts, ScentsX customers (A/R) and vendors (A/P) \u2014 owner 2026-11-26 23:17 CT"
   },
   "202616970100": {
     "claimed_at": "2026-11-27",
     "claimed_by": "lead",
-    "purpose": "PERFUME desk speed (owner 2026-11-26 23:23 CT: \"IN ITEMS COULDNT LOAD THE ITEM FILE\"): the 57 perfume owner-only policies evaluate perfume.is_owner() once per query ((SELECT perfume.is_owner())) instead of once per row — same rule, same tables"
+    "purpose": "PERFUME desk speed (owner 2026-11-26 23:23 CT: \"IN ITEMS COULDNT LOAD THE ITEM FILE\"): the 57 perfume owner-only policies evaluate perfume.is_owner() once per query ((SELECT perfume.is_owner())) instead of once per row \u2014 same rule, same tables"
   },
   "202616980100": {
     "claimed_at": "2026-11-27",
@@ -1412,23 +1413,104 @@
     "claimed_by": "lead",
     "purpose": "SCENTSX B14: FinCEN 105 (CMIR) signed declarations for Mexico cash payers on Form 8300 cases"
   },
-  "202617000100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item attributes: model, product_type, category, description on perfume.items (owner 2026-11-27 07:22 CT) + bulk edit"},
-  "202617010100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item creator: item_events kind created (owner 2026-11-27 07:37 CT)"},
-  "202617020100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item catalogs: catalog_values kind item_category (owner 2026-11-27 07:51 CT)"},
-  "202617030100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item families (parent over sizes/testers/sets) + olfactory family list (owner 2026-11-27 08:10 CT)"},
-  "202617040100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item per-location settings: bin, min/max, reorder qty + reorder report (owner 2026-11-27 08:10 CT)"},
-  "202617050100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX item account mapping: item category / item -> Inventory + COGS accounts used by the stock-move poster and the tie-out (owner 2026-11-27 08:10 CT)"},
-  "202617060500": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME price-list events: void + restore history (who, when, why) and the restore button (owner 2026-11-27 08:51 CT)"},
-  "202617060100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME item trade data: case pack, minimum order, weight, country of origin, HS tariff code (owner 2026-11-27 08:10 / 09:12 CT)"},
-  "202617070100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME product types on every item (classifier + backfill + insert trigger), tester -> regular item link, price level tester_pct (owner 2026-11-27 12:03 / 12:04 CT)"},
-  "202617080100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX sales returns: return record + lines (credit memo to 4800 + tax, restock at shipped cost) — CONTROL Returns parity (owner 2026-11-27 13:50 CT)"},
-  "202617100100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME CONTROL item fields: POS code, ticket description, sold by pack/piece + units per pack, preferred vendor, stock item, active, special price, minimum price, change-price lock; item_events kind price_override (LEAD L.20, owner 2026-11-27 13:50 / 14:16 CT)"},
-  "202617110100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME physical count cycle: per-line counted_at / counted_by cutoff (variance vs on hand at the moment counted), count sheet selection + blind sheet (CONTROL Physical Inventory parity, owner 2026-11-27 13:50 CT)"},
-  "202617120100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX purchase bills: bill a received perfume PO through the bill writer (GRNI -> A/P), per-line billed qty (owner 2026-11-27 15:05 CT)"},
-  "202617130100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX vendor credits for returned billed units: crosswalk PO line -> vendor credit (Dr A/P / Cr GRNI via the one vendor-credit writer) (owner 2026-11-27 15:05 CT)"},
-  "202617140100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "SCENTSX literal ENABLE/FORCE RLS for sales_returns, sales_return_lines, purchase_order_bill_lines, purchase_order_vendor_credit_lines (rls-migration-scan reads literals; ROUND P1.31 L3a)"},
-  "202617150100": {"claimed_at": "2026-11-27", "claimed_by": "p1-11-02", "purpose": "PERFUME item margin groups: items.is_exclusive + items.is_new_launch (owner 2026-11-27 15:40 CT margins by group: exclusive, new launches, testers, minis, sets, regular)"},
-  "202617160100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME customer purchase history (USA store monthly, Mexico yearly; no balances) for A/B/C customer ranking (ROUND P1.31 L1, owner 15:45 CT item 10)"},
-  "202617170100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate companies merged into one: contact_companies.merged_into_id / merged_at (merged rows kept as locations), owner 16:32 CT"},
-  "202617180100": {"claimed_at": "2026-11-27", "claimed_by": "lead", "purpose": "PERFUME duplicate detector engine: perfume.duplicate_candidates (company pairs, reasons, score, open/merged/dismissed) owner 17:17 CT"}
+  "202617000100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item attributes: model, product_type, category, description on perfume.items (owner 2026-11-27 07:22 CT) + bulk edit"
+  },
+  "202617010100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item creator: item_events kind created (owner 2026-11-27 07:37 CT)"
+  },
+  "202617020100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item catalogs: catalog_values kind item_category (owner 2026-11-27 07:51 CT)"
+  },
+  "202617030100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item families (parent over sizes/testers/sets) + olfactory family list (owner 2026-11-27 08:10 CT)"
+  },
+  "202617040100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item per-location settings: bin, min/max, reorder qty + reorder report (owner 2026-11-27 08:10 CT)"
+  },
+  "202617050100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "SCENTSX item account mapping: item category / item -> Inventory + COGS accounts used by the stock-move poster and the tie-out (owner 2026-11-27 08:10 CT)"
+  },
+  "202617060500": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "p1-11-02",
+    "purpose": "PERFUME price-list events: void + restore history (who, when, why) and the restore button (owner 2026-11-27 08:51 CT)"
+  },
+  "202617060100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME item trade data: case pack, minimum order, weight, country of origin, HS tariff code (owner 2026-11-27 08:10 / 09:12 CT)"
+  },
+  "202617070100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME product types on every item (classifier + backfill + insert trigger), tester -> regular item link, price level tester_pct (owner 2026-11-27 12:03 / 12:04 CT)"
+  },
+  "202617080100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "SCENTSX sales returns: return record + lines (credit memo to 4800 + tax, restock at shipped cost) \u2014 CONTROL Returns parity (owner 2026-11-27 13:50 CT)"
+  },
+  "202617100100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "p1-11-02",
+    "purpose": "PERFUME CONTROL item fields: POS code, ticket description, sold by pack/piece + units per pack, preferred vendor, stock item, active, special price, minimum price, change-price lock; item_events kind price_override (LEAD L.20, owner 2026-11-27 13:50 / 14:16 CT)"
+  },
+  "202617110100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME physical count cycle: per-line counted_at / counted_by cutoff (variance vs on hand at the moment counted), count sheet selection + blind sheet (CONTROL Physical Inventory parity, owner 2026-11-27 13:50 CT)"
+  },
+  "202617120100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "SCENTSX purchase bills: bill a received perfume PO through the bill writer (GRNI -> A/P), per-line billed qty (owner 2026-11-27 15:05 CT)"
+  },
+  "202617130100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "SCENTSX vendor credits for returned billed units: crosswalk PO line -> vendor credit (Dr A/P / Cr GRNI via the one vendor-credit writer) (owner 2026-11-27 15:05 CT)"
+  },
+  "202617140100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "SCENTSX literal ENABLE/FORCE RLS for sales_returns, sales_return_lines, purchase_order_bill_lines, purchase_order_vendor_credit_lines (rls-migration-scan reads literals; ROUND P1.31 L3a)"
+  },
+  "202617150100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "p1-11-02",
+    "purpose": "PERFUME item margin groups: items.is_exclusive + items.is_new_launch (owner 2026-11-27 15:40 CT margins by group: exclusive, new launches, testers, minis, sets, regular)"
+  },
+  "202617160100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME customer purchase history (USA store monthly, Mexico yearly; no balances) for A/B/C customer ranking (ROUND P1.31 L1, owner 15:45 CT item 10)"
+  },
+  "202617170100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME duplicate companies merged into one: contact_companies.merged_into_id / merged_at (merged rows kept as locations), owner 16:32 CT"
+  },
+  "202617180100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "lead",
+    "purpose": "PERFUME duplicate detector engine: perfume.duplicate_candidates (company pairs, reasons, score, open/merged/dismissed) owner 17:17 CT"
+  },
+  "202617190100": {
+    "claimed_at": "2026-11-27",
+    "claimed_by": "p1",
+    "purpose": "SCENTSX one vendor many price lists: drop uq_scentsx_vendor_links_vendor; trigger allows one ScentsX vendor linked to several perfume lists of the SAME company (owner 18:38 CT)"
+  }
 }
