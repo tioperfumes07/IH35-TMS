@@ -25,7 +25,7 @@ import { logEvent, logEvents, type LeadEvent } from "./leads.events.js";
 
 /* ------------------------------------------------------------------ catalogs */
 
-export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "industry", "segment", "source_kind", "review_tag", "product_type", "gender", "item_category", "olfactory_family", "origin_country"] as const;
+export const CATALOG_KINDS = ["vendor_type", "customer_type", "category", "industry", "segment", "source_kind", "review_tag", "product_type", "gender", "item_category", "olfactory_family", "origin_country", "shipping_method"] as const;
 /** Lists whose values are carried by ITEMS (perfume.items), not contacts — counted and renamed on items (owner 2026-11-27 07:51 CT). */
 export const ITEM_CATALOG_COLUMN: Partial<Record<string, "product_type" | "category" | "origin_country">> = { product_type: "product_type", item_category: "category", origin_country: "origin_country" };
 export type CatalogKind = typeof CATALOG_KINDS[number];
@@ -33,6 +33,7 @@ export const CATALOG_LABELS: Record<CatalogKind, string> = {
   vendor_type: "Vendor types", customer_type: "Customer types", category: "Relationship", industry: "Industry", segment: "Business types",
   source_kind: "Lead source kinds", review_tag: "Review tags", product_type: "Item product types", gender: "Genders", item_category: "Item categories",
   olfactory_family: "Scent families (olfactory)", origin_country: "Country of origin",
+  shipping_method: "Shipping methods (quotes, orders, POs)",
 };
 export const catalogValueSchema = z.object({ kind: z.enum(CATALOG_KINDS), value: z.string().trim().min(1).max(200), sort: z.number().int().min(0).max(10000).optional() });
 
