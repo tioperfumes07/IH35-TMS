@@ -44,7 +44,7 @@ export function PerfumeCompanyCenter({ companyId, view }: { companyId: string; v
   };
   const tabBtn = (k: typeof tab, label: string) => (
     <button type="button" onClick={() => setTab(k)} data-testid={`perfume-center-tab-${k}`} aria-pressed={tab === k}
-      className={`h-[30px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-white text-[#1F2A44]"}`}>{label}</button>
+      className={`h-[30px] rounded-sm border px-3 text-xs font-semibold ${tab === k ? "border-[#1F2A44] bg-[#1F2A44] text-white" : "border-gray-300 bg-[var(--surface-unselected)] text-[#1F2A44] hover:bg-[var(--surface-hover)]"}`}>{label}</button>
   );
   return (
     <div className="space-y-3" data-testid="perfume-company-center">
